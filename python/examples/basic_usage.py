@@ -2,11 +2,11 @@ import os
 import sys
 import time
 
-# Add the parent directory to the path so we can import the wuying_agentbay package
+# Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from wuying_agentbay import AgentBay
-from wuying_agentbay.exceptions import AgentBayError
+from agentbay import AgentBay
+from agentbay.exceptions import AgentBayError
 
 
 def main():
