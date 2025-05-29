@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-from darabonba.model import DaraModel
-from ._get_mcp_resource_response_body import GetMcpResourceResponseBody
+from darabonba.model import DaraModel 
+from alibabacloud_wuyingai20250506 import models as main_models 
 from typing import Dict
-from agentbay.api import models as main_models
 
 
 class GetMcpResourceResponse(DaraModel):
-
     def __init__(
         self,
         headers: Dict[str, str] = None,
         status_code: int = None,
-        body: GetMcpResourceResponseBody = None,
+        body: main_models.GetMcpResourceResponseBody = None,
     ):
         self.headers = headers
         self.status_code = status_code
@@ -52,3 +50,4 @@ class GetMcpResourceResponse(DaraModel):
             self.body = temp_model.from_map(m.get('body'))
 
         return self
+

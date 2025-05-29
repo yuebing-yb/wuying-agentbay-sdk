@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-from darabonba.model import DaraModel
-from ._get_mcp_resource_response_body_data_desktop_info import (
-    GetMcpResourceResponseBodyDataDesktopInfo,
-)
-from agentbay.api import models as main_models
+from darabonba.model import DaraModel 
+from alibabacloud_wuyingai20250506 import models as main_models 
 
 
 class GetMcpResourceResponseBodyData(DaraModel):
     def __init__(
         self,
-        desktop_info: GetMcpResourceResponseBodyDataDesktopInfo = None,
+        desktop_info: main_models.GetMcpResourceResponseBodyDataDesktopInfo = None,
         resource_url: str = None,
         session_id: str = None,
     ):
@@ -52,3 +49,4 @@ class GetMcpResourceResponseBodyData(DaraModel):
             self.session_id = m.get('SessionId')
 
         return self
+

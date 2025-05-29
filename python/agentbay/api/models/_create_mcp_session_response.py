@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-from darabonba.model import DaraModel
-from ._create_mcp_session_response_body import CreateMcpSessionResponseBody
-from agentbay.api import models as main_models
+from darabonba.model import DaraModel 
+from alibabacloud_wuyingai20250506 import models as main_models 
 from typing import Dict
 
 
@@ -12,7 +11,7 @@ class CreateMcpSessionResponse(DaraModel):
         self,
         headers: Dict[str, str] = None,
         status_code: int = None,
-        body: CreateMcpSessionResponseBody = None,
+        body: main_models.CreateMcpSessionResponseBody = None,
     ):
         self.headers = headers
         self.status_code = status_code
@@ -51,3 +50,4 @@ class CreateMcpSessionResponse(DaraModel):
             self.body = temp_model.from_map(m.get('body'))
 
         return self
+
