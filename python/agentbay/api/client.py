@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-
 from typing import Dict
 
 from alibabacloud_tea_openapi import utils_models as open_api_util_models

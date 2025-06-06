@@ -26,7 +26,6 @@ class CallMcpToolResponseBody(DaraModel):
 
     def validate(self):
         pass
-
     def to_map(self):
         result = dict()
         _map = super().to_map()

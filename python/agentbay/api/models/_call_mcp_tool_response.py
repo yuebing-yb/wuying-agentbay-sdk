@@ -23,7 +23,6 @@ class CallMcpToolResponse(DaraModel):
     def validate(self):
         if self.body:
             self.body.validate()
-
     def to_map(self) -> Dict:
         result = dict()
         _map = super().to_map()
