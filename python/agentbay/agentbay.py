@@ -98,18 +98,15 @@ class AgentBay:
                     f"Failed to get session_id from response: {response}"
                 )
 
-            # Check if ResourceUrl is present
+            # ResourceUrl is optional in CreateMcpSession response
             resource_url = data.get("ResourceUrl")
-            if not resource_url:
-                raise AgentBayError(
-                    f"Failed to get resource_url from response: {response}"
-                )
 
             print("session_id =", session_id)
             print("resource_url =", resource_url)
 
             session = Session(self, session_id)
-            session.resource_url = resource_url
+            if resource_url:
+                session.resource_url = resource_url
 
             with self._lock:
                 self._sessions[session_id] = session
