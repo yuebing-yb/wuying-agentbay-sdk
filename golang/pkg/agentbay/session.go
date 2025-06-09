@@ -14,8 +14,13 @@ import (
 
 // SessionInfo contains information about a session.
 type SessionInfo struct {
-	SessionId   string
-	ResourceUrl string
+	SessionId            string
+	ResourceUrl          string
+	AppId                string
+	AuthCode             string
+	ConnectionProperties string
+	ResourceId           string
+	ResourceType         string
 }
 
 // Session represents a session in the AgentBay cloud environment.
@@ -172,8 +177,13 @@ func (s *Session) Info() (*SessionInfo, error) {
 
 	if response != nil && response.Body != nil && response.Body.Data != nil {
 		sessionInfo := &SessionInfo{
-			SessionId:   "",
-			ResourceUrl: "",
+			SessionId:            "",
+			ResourceUrl:          "",
+			AppId:                "",
+			AuthCode:             "",
+			ConnectionProperties: "",
+			ResourceId:           "",
+			ResourceType:         "",
 		}
 
 		if response.Body.Data.SessionId != nil {
@@ -184,6 +194,25 @@ func (s *Session) Info() (*SessionInfo, error) {
 			sessionInfo.ResourceUrl = *response.Body.Data.ResourceUrl
 			// Update the session's ResourceUrl with the latest value
 			s.ResourceUrl = *response.Body.Data.ResourceUrl
+		}
+
+		// Transfer DesktopInfo fields to SessionInfo
+		if response.Body.Data.DesktopInfo != nil {
+			if response.Body.Data.DesktopInfo.AppId != nil {
+				sessionInfo.AppId = *response.Body.Data.DesktopInfo.AppId
+			}
+			if response.Body.Data.DesktopInfo.AuthCode != nil {
+				sessionInfo.AuthCode = *response.Body.Data.DesktopInfo.AuthCode
+			}
+			if response.Body.Data.DesktopInfo.ConnectionProperties != nil {
+				sessionInfo.ConnectionProperties = *response.Body.Data.DesktopInfo.ConnectionProperties
+			}
+			if response.Body.Data.DesktopInfo.ResourceId != nil {
+				sessionInfo.ResourceId = *response.Body.Data.DesktopInfo.ResourceId
+			}
+			if response.Body.Data.DesktopInfo.ResourceType != nil {
+				sessionInfo.ResourceType = *response.Body.Data.DesktopInfo.ResourceType
+			}
 		}
 
 		return sessionInfo, nil
