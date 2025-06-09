@@ -100,13 +100,13 @@ export class AgentBay {
           throw new APIError('Invalid session ID in response');
         }
         
+        // ResourceUrl is optional in CreateMcpSession response
         const resourceUrl = response.body?.data?.resourceUrl;
-        if (!resourceUrl) {
-          throw new APIError('Invalid resource URL in response');
-        }
         
         const session = new Session(this, sessionId);
-        session.resourceUrl = resourceUrl;
+        if (resourceUrl) {
+          session.resourceUrl = resourceUrl;
+        }
         
         this.sessions.set(session.sessionId, session);
         return session;

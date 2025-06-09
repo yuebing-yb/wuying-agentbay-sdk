@@ -49,11 +49,6 @@ func TestSession_Properties(t *testing.T) {
 	if session.AgentBay != agentBay {
 		t.Errorf("Expected AgentBay to be the same instance")
 	}
-
-	// Test ResourceUrl field
-	if session.ResourceUrl == "" {
-		t.Errorf("Expected non-empty ResourceUrl")
-	}
 	t.Logf("Session ResourceUrl: %s", session.ResourceUrl)
 
 	// Test GetSessionId method
