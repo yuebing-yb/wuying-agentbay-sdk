@@ -154,6 +154,12 @@ describe('Session', () => {
       expect(session.sessionId.length).toBeGreaterThan(0);
     });
     
+    it('should have valid resourceUrl', () => {
+      expect(session.resourceUrl).toBeDefined();
+      expect(session.resourceUrl.length).toBeGreaterThan(0);
+      console.log(`Session resourceUrl: ${session.resourceUrl}`);
+    });
+    
     it('should have filesystem, command, and adb properties', () => {
       expect(session.filesystem).toBeDefined();
       expect(session.command).toBeDefined();
@@ -213,7 +219,7 @@ describe('Session', () => {
       if (session.command) {
         console.log('Executing command...');
         try {
-          const response = await session.command.execute_command('ls');
+          const response = await session.command.executeCommand('ls');
           console.log(`Command execution result: ${response}`);
           expect(response).toBeDefined();
           // Check if response contains "tool not found"
@@ -233,7 +239,7 @@ describe('Session', () => {
       if (session.filesystem) {
         console.log('Reading file...');
         try {
-          const content = await session.filesystem.read_file('/etc/hosts');
+          const content = await session.filesystem.readFile('/etc/hosts');
           console.log(`ReadFile result: content='${content}'`);
           expect(content).toBeDefined();
           // Check if response contains "tool not found"

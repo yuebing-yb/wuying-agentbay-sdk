@@ -7,6 +7,7 @@ The `Session` class represents a session in the AgentBay cloud environment. A se
 ### Python
 
 - `session_id`: The ID of the session.
+- `resource_url`: The resource URL associated with the session.
 - `filesystem`: The FileSystem instance for this session.
 - `command`: The Command instance for this session.
 - `adb`: The Adb instance for this session.
@@ -16,6 +17,7 @@ The `Session` class represents a session in the AgentBay cloud environment. A se
 ### TypeScript
 
 - `sessionId`: The ID of the session.
+- `resourceUrl`: The resource URL associated with the session.
 - `filesystem`: The FileSystem instance for this session.
 - `command`: The Command instance for this session.
 - `adb`: The Adb instance for this session.
@@ -25,6 +27,7 @@ The `Session` class represents a session in the AgentBay cloud environment. A se
 ### Golang
 
 - `SessionID`: The ID of the session.
+- `ResourceUrl`: The resource URL associated with the session.
 - `FileSystem`: The FileSystem instance for this session.
 - `Command`: The Command instance for this session.
 - `Adb`: The Adb instance for this session.
