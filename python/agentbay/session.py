@@ -2,13 +2,23 @@ import json
 from typing import Dict, Optional
 
 from agentbay.adb import Adb
-from agentbay.api.models import (GetLabelRequest, ReleaseMcpSessionRequest,
+from agentbay.api.models import (GetLabelRequest, GetMcpResourceRequest, ReleaseMcpSessionRequest,
                                  SetLabelRequest)
 from agentbay.application import ApplicationManager
 from agentbay.command import Command
 from agentbay.exceptions import SessionError
 from agentbay.filesystem import FileSystem
 from agentbay.window import WindowManager
+
+
+class SessionInfo:
+    """
+    SessionInfo contains information about a session.
+    """
+
+    def __init__(self, session_id: str = "", resource_url: str = ""):
+        self.session_id = session_id
+        self.resource_url = resource_url
 
 
 class Session:
@@ -112,4 +122,47 @@ class Session:
             print("Error calling get_label:", e)
             raise SessionError(
                 f"Failed to get labels for session {self.session_id}: {e}"
+            )
+
+    def info(self) -> SessionInfo:
+        """
+        Gets information about this session.
+
+        Returns:
+            SessionInfo: Information about the session.
+
+        Raises:
+            SessionError: If the operation fails.
+        """
+        try:
+            request = GetMcpResourceRequest(
+                authorization=f"Bearer {self.get_api_key()}", session_id=self.session_id
+            )
+
+            print("API Call: GetMcpResource")
+            print(f"Request: SessionId={self.session_id}")
+
+            response = self.get_client().get_mcp_resource(request)
+            print(f"Response from GetMcpResource: {response}")
+
+            # Extract session info from response
+            response_map = response.to_map()
+            data = response_map.get("body", {}).get("Data", {})
+            
+            session_info = SessionInfo()
+            
+            if "SessionId" in data:
+                session_info.session_id = data["SessionId"]
+                
+            if "ResourceUrl" in data:
+                session_info.resource_url = data["ResourceUrl"]
+                # Update the session's resource_url with the latest value
+                self.resource_url = data["ResourceUrl"]
+                
+            return session_info
+            
+        except Exception as e:
+            print("Error calling GetMcpResource:", e)
+            raise SessionError(
+                f"Failed to get session info for session {self.session_id}: {e}"
             )

@@ -6,8 +6,16 @@ import { Adb } from './adb';
 import { ApplicationManager } from './application';
 import { WindowManager } from './window';
 import Client from './api/client';
-import { ReleaseMcpSessionRequest, SetLabelRequest, GetLabelRequest } from './api/models/model';
+import { ReleaseMcpSessionRequest, SetLabelRequest, GetLabelRequest, GetMcpResourceRequest } from './api/models/model';
 import * as $_client from './api';
+
+/**
+ * Contains information about a session.
+ */
+export interface SessionInfo {
+  sessionId: string;
+  resourceUrl: string;
+}
 
 /**
  * Represents a session in the AgentBay cloud environment.
@@ -159,5 +167,42 @@ export class Session {
    */
   getSessionId(): string {
     return this.sessionId;
+  }
+  
+  /**
+   * Gets information about this session.
+   * 
+   * @returns Information about the session.
+   * @throws APIError if the operation fails.
+   */
+  async info(): Promise<SessionInfo> {
+    try {
+      const request = new GetMcpResourceRequest({
+        authorization: `Bearer ${this.getAPIKey()}`,
+        sessionId: this.sessionId
+      });
+      
+      console.log("API Call: GetMcpResource");
+      console.log(`Request: SessionId=${this.sessionId}`);
+      
+      const response = await this.client.getMcpResource(request);
+      console.log(`Response from GetMcpResource: ${JSON.stringify(response)}`);
+      
+      // Extract session info from response
+      const sessionInfo: SessionInfo = {
+        sessionId: response.body?.data?.sessionId || "",
+        resourceUrl: response.body?.data?.resourceUrl || ""
+      };
+      
+      // Update the session's resourceUrl with the latest value
+      if (response.body?.data?.resourceUrl) {
+        this.resourceUrl = response.body.data.resourceUrl;
+      }
+      
+      return sessionInfo;
+    } catch (error) {
+      console.error("Error calling GetMcpResource:", error);
+      throw new APIError(`Failed to get session info for session ${this.sessionId}: ${error}`);
+    }
   }
 }
