@@ -153,7 +153,7 @@ GetLabels() (string, error)
 
 ### info
 
-Gets information about the session, including the session ID and resource URL.
+Gets information about the session, including the session ID and resource URL. This method also updates the session's ResourceUrl field with the latest value from the server.
 
 #### Python
 
