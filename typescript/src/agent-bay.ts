@@ -97,12 +97,19 @@ export class AgentBay {
         console.log('agentBay create session response',response);
         const sessionId = response.body?.data?.sessionId;
         if (!sessionId) {
-          throw new APIError('Invalid session ID in response')
-        }else{
-          const session =  new Session(this, response.body?.data?.sessionId||'');
-          this.sessions.set(session.sessionId, session);
-          return session;
+          throw new APIError('Invalid session ID in response');
         }
+        
+        const resourceUrl = response.body?.data?.resourceUrl;
+        if (!resourceUrl) {
+          throw new APIError('Invalid resource URL in response');
+        }
+        
+        const session = new Session(this, sessionId);
+        session.resourceUrl = resourceUrl;
+        
+        this.sessions.set(session.sessionId, session);
+        return session;
        
     } catch (error) {
       throw new APIError(`Failed to create session: ${error}`);

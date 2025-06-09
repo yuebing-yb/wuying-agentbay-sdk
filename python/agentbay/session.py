@@ -19,6 +19,7 @@ class Session:
     def __init__(self, agent_bay: "AgentBay", session_id: str):
         self.agent_bay = agent_bay
         self.session_id = session_id
+        self.resource_url = ""
 
         # Initialize file system, command, and adb handlers
         self.file_system = FileSystem(self)

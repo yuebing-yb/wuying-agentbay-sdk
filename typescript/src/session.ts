@@ -16,6 +16,7 @@ export class Session {
   private agentBay: AgentBay;
   public client:  $_client.Client;
   public sessionId: string;
+  public resourceUrl: string = "";
   
   // File, command, and adb handlers
   public filesystem: FileSystem;

@@ -14,8 +14,9 @@ import (
 
 // Session represents a session in the AgentBay cloud environment.
 type Session struct {
-	AgentBay  *AgentBay
-	SessionID string
+	AgentBay    *AgentBay
+	SessionID   string
+	ResourceUrl string
 
 	// File, command, and adb handlers
 	FileSystem *filesystem.FileSystem
