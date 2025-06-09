@@ -16,9 +16,16 @@ class SessionInfo:
     SessionInfo contains information about a session.
     """
 
-    def __init__(self, session_id: str = "", resource_url: str = ""):
+    def __init__(self, session_id: str = "", resource_url: str = "", app_id: str = "", 
+                 auth_code: str = "", connection_properties: str = "", 
+                 resource_id: str = "", resource_type: str = ""):
         self.session_id = session_id
         self.resource_url = resource_url
+        self.app_id = app_id
+        self.auth_code = auth_code
+        self.connection_properties = connection_properties
+        self.resource_id = resource_id
+        self.resource_type = resource_type
 
 
 class Session:
@@ -158,6 +165,20 @@ class Session:
                 session_info.resource_url = data["ResourceUrl"]
                 # Update the session's resource_url with the latest value
                 self.resource_url = data["ResourceUrl"]
+            
+            # Transfer DesktopInfo fields to SessionInfo
+            if "DesktopInfo" in data:
+                desktop_info = data["DesktopInfo"]
+                if "AppId" in desktop_info:
+                    session_info.app_id = desktop_info["AppId"]
+                if "AuthCode" in desktop_info:
+                    session_info.auth_code = desktop_info["AuthCode"]
+                if "ConnectionProperties" in desktop_info:
+                    session_info.connection_properties = desktop_info["ConnectionProperties"]
+                if "ResourceId" in desktop_info:
+                    session_info.resource_id = desktop_info["ResourceId"]
+                if "ResourceType" in desktop_info:
+                    session_info.resource_type = desktop_info["ResourceType"]
                 
             return session_info
             

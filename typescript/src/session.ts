@@ -15,6 +15,11 @@ import * as $_client from './api';
 export interface SessionInfo {
   sessionId: string;
   resourceUrl: string;
+  appId?: string;
+  authCode?: string;
+  connectionProperties?: string;
+  resourceId?: string;
+  resourceType?: string;
 }
 
 /**
@@ -197,6 +202,16 @@ export class Session {
       // Update the session's resourceUrl with the latest value
       if (response.body?.data?.resourceUrl) {
         this.resourceUrl = response.body.data.resourceUrl;
+      }
+      
+      // Transfer DesktopInfo fields to SessionInfo
+      if (response.body?.data?.desktopInfo) {
+        const desktopInfo = response.body.data.desktopInfo;
+        sessionInfo.appId = desktopInfo.appId;
+        sessionInfo.authCode = desktopInfo.authCode;
+        sessionInfo.connectionProperties = desktopInfo.connectionProperties;
+        sessionInfo.resourceId = desktopInfo.resourceId;
+        sessionInfo.resourceType = desktopInfo.resourceType;
       }
       
       return sessionInfo;
