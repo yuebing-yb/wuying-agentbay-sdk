@@ -151,6 +151,50 @@ GetLabels() (string, error)
 - `string`: A JSON string of labels for the session.
 - `error`: An error if getting the labels fails.
 
+### info
+
+Gets information about the session, including the session ID and resource URL.
+
+#### Python
+
+```python
+info() -> SessionInfo
+```
+
+**Returns:**
+- `SessionInfo`: An object containing information about the session, with the following properties:
+  - `session_id` (str): The ID of the session.
+  - `resource_url` (str): The resource URL associated with the session.
+
+**Raises:**
+- `SessionError`: If getting the session information fails.
+
+#### TypeScript
+
+```typescript
+info(): Promise<SessionInfo>
+```
+
+**Returns:**
+- `Promise<SessionInfo>`: A promise that resolves to an object containing information about the session, with the following properties:
+  - `sessionId` (string): The ID of the session.
+  - `resourceUrl` (string): The resource URL associated with the session.
+
+**Throws:**
+- `APIError`: If getting the session information fails.
+
+#### Golang
+
+```go
+Info() (*SessionInfo, error)
+```
+
+**Returns:**
+- `*SessionInfo`: An object containing information about the session, with the following properties:
+  - `SessionId` (string): The ID of the session.
+  - `ResourceUrl` (string): The resource URL associated with the session.
+- `error`: An error if getting the session information fails.
+
 ## Related Classes
 
 The Session class provides access to several other classes that provide specific functionality:
@@ -197,6 +241,11 @@ active_window = session.window.get_active_window()
 # Get session labels
 labels = session.get_labels()
 
+# Get session info
+session_info = session.info()
+print(f"Session ID: {session_info.session_id}")
+print(f"Resource URL: {session_info.resource_url}")
+
 # Delete the session
 session.delete()
 ```
@@ -232,6 +281,11 @@ const activeWindow = await session.window.getActiveWindow();
 
 // Get session labels
 const labels = await session.getLabels();
+
+// Get session info
+const sessionInfo = await session.info();
+console.log(`Session ID: ${sessionInfo.sessionId}`);
+console.log(`Resource URL: ${sessionInfo.resourceUrl}`);
 
 // Delete the session
 await session.delete();
@@ -292,6 +346,14 @@ labels, err := session.GetLabels()
 if err != nil {
     // Handle error
 }
+
+// Get session info
+sessionInfo, err := session.Info()
+if err != nil {
+    // Handle error
+}
+fmt.Printf("Session ID: %s\n", sessionInfo.SessionId)
+fmt.Printf("Resource URL: %s\n", sessionInfo.ResourceUrl)
 
 // Delete the session
 err = client.Delete(session)

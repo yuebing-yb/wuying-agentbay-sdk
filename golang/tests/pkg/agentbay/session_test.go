@@ -2,10 +2,21 @@ package agentbay_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
+
+// Helper function to extract resourceId from a URL
+func extractResourceId(url string) string {
+	re := regexp.MustCompile(`resourceId=([^&]+)`)
+	matches := re.FindStringSubmatch(url)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
+}
 
 func TestSession_Properties(t *testing.T) {
 	// Initialize AgentBay client
@@ -97,6 +108,68 @@ func TestSession_DeleteMethod(t *testing.T) {
 	for _, s := range sessions {
 		if s.SessionID == session.SessionID {
 			t.Errorf("Session with ID %s still exists after deletion", session.SessionID)
+		}
+	}
+}
+
+func TestSession_InfoMethod(t *testing.T) {
+	// Initialize AgentBay client
+	apiKey := getTestAPIKey(t)
+	agentBay, err := agentbay.NewAgentBay(apiKey)
+	if err != nil {
+		t.Fatalf("Error initializing AgentBay client: %v", err)
+	}
+
+	// Create a session
+	fmt.Println("Creating a new session for info testing...")
+	session, err := agentBay.Create(nil)
+	if err != nil {
+		t.Fatalf("Error creating session: %v", err)
+	}
+	t.Logf("Session created with ID: %s", session.SessionID)
+	defer func() {
+		// Clean up the session after test
+		fmt.Println("Cleaning up: Deleting the session...")
+		err := agentBay.Delete(session)
+		if err != nil {
+			t.Logf("Warning: Error deleting session: %v", err)
+		}
+	}()
+
+	// Test Info method
+	fmt.Println("Testing session.Info method...")
+	sessionInfo, err := session.Info()
+	if err != nil {
+		t.Fatalf("Error getting session info: %v", err)
+	}
+
+	// Verify the session info
+	if sessionInfo == nil {
+		t.Fatalf("Expected non-nil SessionInfo")
+	}
+
+	// Check SessionId field
+	if sessionInfo.SessionId == "" {
+		t.Errorf("Expected non-empty SessionId in SessionInfo")
+	}
+	if sessionInfo.SessionId != session.SessionID {
+		t.Errorf("Expected SessionId to be '%s', got '%s'", session.SessionID, sessionInfo.SessionId)
+	}
+
+	// Check ResourceUrl field
+	if sessionInfo.ResourceUrl == "" {
+		t.Errorf("Expected non-empty ResourceUrl in SessionInfo")
+	}
+	t.Logf("Session ResourceUrl from Info: %s", sessionInfo.ResourceUrl)
+
+	// Note: We don't compare the exact ResourceUrl values because the authcode in the URL
+	// can change between session creation and when we call the Info method
+	// Instead, we just check that both URLs contain the same resourceId
+	if session.ResourceUrl != "" {
+		expectedResourceId := extractResourceId(session.ResourceUrl)
+		actualResourceId := extractResourceId(sessionInfo.ResourceUrl)
+		if expectedResourceId != actualResourceId {
+			t.Errorf("Expected ResourceUrl to contain resourceId '%s', got '%s'", expectedResourceId, actualResourceId)
 		}
 	}
 }
