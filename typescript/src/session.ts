@@ -194,6 +194,11 @@ export class Session {
         resourceUrl: response.body?.data?.resourceUrl || ""
       };
       
+      // Update the session's resourceUrl with the latest value
+      if (response.body?.data?.resourceUrl) {
+        this.resourceUrl = response.body.data.resourceUrl;
+      }
+      
       return sessionInfo;
     } catch (error) {
       console.error("Error calling GetMcpResource:", error);

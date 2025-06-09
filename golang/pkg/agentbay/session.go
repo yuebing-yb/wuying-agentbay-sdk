@@ -182,6 +182,8 @@ func (s *Session) Info() (*SessionInfo, error) {
 
 		if response.Body.Data.ResourceUrl != nil {
 			sessionInfo.ResourceUrl = *response.Body.Data.ResourceUrl
+			// Update the session's ResourceUrl with the latest value
+			s.ResourceUrl = *response.Body.Data.ResourceUrl
 		}
 
 		return sessionInfo, nil

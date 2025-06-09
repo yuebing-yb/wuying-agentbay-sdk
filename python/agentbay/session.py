@@ -156,6 +156,8 @@ class Session:
                 
             if "ResourceUrl" in data:
                 session_info.resource_url = data["ResourceUrl"]
+                # Update the session's resource_url with the latest value
+                self.resource_url = data["ResourceUrl"]
                 
             return session_info
             
