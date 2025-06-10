@@ -214,9 +214,9 @@ describe('Session', () => {
   });
   
   describe('command', () => {
-    it('should execute a command', async () => {
+    it('should execute a command with default timeout', async () => {
       if (session.command) {
-        console.log('Executing command...');
+        console.log('Executing command with default timeout...');
         try {
           const response = await session.command.executeCommand('ls');
           console.log(`Command execution result: ${response}`);
@@ -229,6 +229,96 @@ describe('Session', () => {
         }
       } else {
         console.log('Note: Command interface is nil, skipping command test');
+      }
+    });
+    
+    it('should execute a command with custom timeout', async () => {
+      if (session.command) {
+        console.log('Executing command with custom timeout...');
+        try {
+          const customTimeout = 2000; // 2 seconds
+          const response = await session.command.executeCommand('ls', customTimeout);
+          console.log(`Command execution result with custom timeout: ${response}`);
+          expect(response).toBeDefined();
+          // Check if response contains "tool not found"
+          expect(response.toLowerCase().includes('tool not found')).toBe(false);
+        } catch (error) {
+          console.log(`Note: Command execution with custom timeout failed: ${error}`);
+          // Don't fail the test if command execution is not supported
+        }
+      } else {
+        console.log('Note: Command interface is nil, skipping command test');
+      }
+    });
+    
+    it('should execute Python code with default timeout', async () => {
+      if (session.command) {
+        console.log('Executing Python code with default timeout...');
+        try {
+          const pythonCode = `
+print("Hello, world!")
+x = 1 + 1
+print(x)
+`;
+          const response = await session.command.runCode(pythonCode, 'python');
+          console.log(`Python code execution result: ${response}`);
+          expect(response).toBeDefined();
+          // Check if response contains "tool not found"
+          expect(response.toLowerCase().includes('tool not found')).toBe(false);
+          // Check if response contains expected output
+          expect(response.includes('Hello, world!')).toBe(true);
+          expect(response.includes('2')).toBe(true);
+        } catch (error) {
+          console.log(`Note: Python code execution failed: ${error}`);
+          // Don't fail the test if code execution is not supported
+        }
+      } else {
+        console.log('Note: Command interface is nil, skipping code execution test');
+      }
+    });
+    
+    it('should execute JavaScript code with custom timeout', async () => {
+      if (session.command) {
+        console.log('Executing JavaScript code with custom timeout...');
+        try {
+          const jsCode = `
+console.log("Hello, world!");
+const x = 1 + 1;
+console.log(x);
+`;
+          const customTimeout = 600; // 10 minutes
+          const response = await session.command.runCode(jsCode, 'javascript', customTimeout);
+          console.log(`JavaScript code execution result: ${response}`);
+          expect(response).toBeDefined();
+          // Check if response contains "tool not found"
+          expect(response.toLowerCase().includes('tool not found')).toBe(false);
+          // Check if response contains expected output
+          expect(response.includes('Hello, world!')).toBe(true);
+          expect(response.includes('2')).toBe(true);
+        } catch (error) {
+          console.log(`Note: JavaScript code execution failed: ${error}`);
+          // Don't fail the test if code execution is not supported
+        }
+      } else {
+        console.log('Note: Command interface is nil, skipping code execution test');
+      }
+    });
+    
+    it('should reject invalid language', async () => {
+      if (session.command) {
+        console.log('Testing with invalid language...');
+        try {
+          await session.command.runCode('print("test")', 'invalid_language');
+          // Should not reach here
+          console.log('Error: Expected error for invalid language, but got success');
+          expect(false).toBe(true); // Force test to fail
+        } catch (error) {
+          console.log(`Correctly received error for invalid language: ${error}`);
+          expect(error).toBeDefined();
+          expect(String(error).includes('Unsupported language')).toBe(true);
+        }
+      } else {
+        console.log('Note: Command interface is nil, skipping code execution test');
       }
     });
   });

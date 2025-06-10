@@ -36,13 +36,33 @@ func TestFileSystem_ReadFile(t *testing.T) {
 
 	// Test FileSystem read operations
 	if session.FileSystem != nil {
+		// Create a test file with known content in Windows C drive root directory
+		fmt.Println("Creating a test file for reading...")
+		testContent := "This is a test file content for ReadFile test."
+		// Use Windows C drive root directory
+		testFilePath := "C:/test_read.txt"
+		_, err = session.FileSystem.WriteFile(testFilePath, testContent, "overwrite")
+		if err != nil {
+			t.Fatalf("Failed to create test file for reading: %v", err)
+		}
+		t.Log("Test file created successfully")
+
+		// Now read the file
 		fmt.Println("Reading file...")
-		content, err := session.FileSystem.ReadFile("/etc/hosts")
+		content, err := session.FileSystem.ReadFile(testFilePath)
 		t.Logf("ReadFile result: content='%s', err=%v", content, err)
 		if err != nil {
-			t.Logf("Note: File read failed: %v", err)
+			t.Errorf("File read failed: %v", err)
 		} else {
 			t.Logf("File read successful, content length: %d bytes", len(content))
+
+			// Verify the content matches what was written
+			if content != testContent {
+				t.Errorf("File content mismatch. Expected: %s, Got: %s", testContent, content)
+			} else {
+				t.Log("File content verified successfully")
+			}
+
 			// Check if response contains "tool not found"
 			if containsToolNotFound(content) {
 				t.Errorf("FileSystem.ReadFile returned 'tool not found'")
@@ -84,7 +104,7 @@ func TestFileSystem_WriteFile(t *testing.T) {
 	if session.FileSystem != nil {
 		fmt.Println("Writing file...")
 		testContent := "This is a test file content for WriteFile test."
-		success, err := session.FileSystem.WriteFile("/tmp/test_write.txt", testContent, "overwrite")
+		success, err := session.FileSystem.WriteFile("C:/test_write.txt", testContent, "overwrite")
 		t.Logf("WriteFile result: success=%v, err=%v", success, err)
 		if err != nil {
 			t.Errorf("File write failed: %v", err)
@@ -92,7 +112,7 @@ func TestFileSystem_WriteFile(t *testing.T) {
 			t.Log("File write successful")
 
 			// Verify the file was written correctly by reading it back
-			content, err := session.FileSystem.ReadFile("/tmp/test_write.txt")
+			content, err := session.FileSystem.ReadFile("C:/test_write.txt")
 			if err != nil {
 				t.Errorf("Failed to read back written file: %v", err)
 			} else if content != testContent {
@@ -136,7 +156,7 @@ func TestFileSystem_CreateDirectory(t *testing.T) {
 	// Test FileSystem directory creation
 	if session.FileSystem != nil {
 		fmt.Println("Creating directory...")
-		success, err := session.FileSystem.CreateDirectory("/tmp/test_directory")
+		success, err := session.FileSystem.CreateDirectory("C:/test_directory")
 		t.Logf("CreateDirectory result: success=%v, err=%v", success, err)
 		if err != nil {
 			t.Errorf("Directory creation failed: %v", err)
@@ -144,7 +164,7 @@ func TestFileSystem_CreateDirectory(t *testing.T) {
 			t.Log("Directory creation successful")
 
 			// Verify the directory was created by listing its parent directory
-			entries, err := session.FileSystem.ListDirectory("/tmp")
+			entries, err := session.FileSystem.ListDirectory("C:/")
 			if err != nil {
 				t.Errorf("Failed to list directory: %v", err)
 			} else {
@@ -199,7 +219,7 @@ func TestFileSystem_EditFile(t *testing.T) {
 	if session.FileSystem != nil {
 		// First create a file to edit
 		initialContent := "This is the original content.\nLine to be replaced.\nThis is the final line."
-		_, err := session.FileSystem.WriteFile("/tmp/test_edit.txt", initialContent, "overwrite")
+		_, err := session.FileSystem.WriteFile("C:/test_edit.txt", initialContent, "overwrite")
 		if err != nil {
 			t.Fatalf("Failed to create file for editing: %v", err)
 		}
@@ -212,7 +232,7 @@ func TestFileSystem_EditFile(t *testing.T) {
 				"newText": "This line has been edited.",
 			},
 		}
-		success, err := session.FileSystem.EditFile("/tmp/test_edit.txt", edits, false)
+		success, err := session.FileSystem.EditFile("C:/test_edit.txt", edits, false)
 		t.Logf("EditFile result: success=%v, err=%v", success, err)
 		if err != nil {
 			t.Errorf("File edit failed: %v", err)
@@ -220,7 +240,7 @@ func TestFileSystem_EditFile(t *testing.T) {
 			t.Log("File edit successful")
 
 			// Verify the file was edited correctly by reading it back
-			content, err := session.FileSystem.ReadFile("/tmp/test_edit.txt")
+			content, err := session.FileSystem.ReadFile("C:/test_edit.txt")
 			if err != nil {
 				t.Errorf("Failed to read back edited file: %v", err)
 			} else {
@@ -268,13 +288,13 @@ func TestFileSystem_GetFileInfo(t *testing.T) {
 	if session.FileSystem != nil {
 		// First create a file to get info for
 		testContent := "This is a test file for GetFileInfo."
-		_, err := session.FileSystem.WriteFile("/tmp/test_info.txt", testContent, "overwrite")
+		_, err := session.FileSystem.WriteFile("C:/test_info.txt", testContent, "overwrite")
 		if err != nil {
 			t.Fatalf("Failed to create file for info test: %v", err)
 		}
 
 		fmt.Println("Getting file info...")
-		fileInfo, err := session.FileSystem.GetFileInfo("/tmp/test_info.txt")
+		fileInfo, err := session.FileSystem.GetFileInfo("C:/test_info.txt")
 		t.Logf("GetFileInfo result: fileInfo=%v, err=%v", fileInfo, err)
 		if err != nil {
 			t.Errorf("Get file info failed: %v", err)
@@ -327,7 +347,7 @@ func TestFileSystem_ListDirectory(t *testing.T) {
 	// Test FileSystem list directory
 	if session.FileSystem != nil {
 		fmt.Println("Listing directory...")
-		entries, err := session.FileSystem.ListDirectory("/tmp")
+		entries, err := session.FileSystem.ListDirectory("C:/")
 		t.Logf("ListDirectory result: entries count=%d, err=%v", len(entries), err)
 		if err != nil {
 			t.Errorf("List directory failed: %v", err)
@@ -381,13 +401,13 @@ func TestFileSystem_MoveFile(t *testing.T) {
 	if session.FileSystem != nil {
 		// First create a file to move
 		testContent := "This is a test file for MoveFile."
-		_, err := session.FileSystem.WriteFile("/tmp/test_source.txt", testContent, "overwrite")
+		_, err := session.FileSystem.WriteFile("C:/test_source.txt", testContent, "overwrite")
 		if err != nil {
 			t.Fatalf("Failed to create file for move test: %v", err)
 		}
 
 		fmt.Println("Moving file...")
-		success, err := session.FileSystem.MoveFile("/tmp/test_source.txt", "/tmp/test_destination.txt")
+		success, err := session.FileSystem.MoveFile("C:/test_source.txt", "C:/test_destination.txt")
 		t.Logf("MoveFile result: success=%v, err=%v", success, err)
 		if err != nil {
 			t.Errorf("File move failed: %v", err)
@@ -395,7 +415,7 @@ func TestFileSystem_MoveFile(t *testing.T) {
 			t.Log("File move successful")
 
 			// Verify the file was moved correctly by reading it back
-			content, err := session.FileSystem.ReadFile("/tmp/test_destination.txt")
+			content, err := session.FileSystem.ReadFile("C:/test_destination.txt")
 			if err != nil {
 				t.Errorf("Failed to read back moved file: %v", err)
 			} else if content != testContent {
@@ -405,7 +425,7 @@ func TestFileSystem_MoveFile(t *testing.T) {
 			}
 
 			// Verify the source file no longer exists
-			_, err = session.FileSystem.GetFileInfo("/tmp/test_source.txt")
+			_, err = session.FileSystem.GetFileInfo("C:/test_source.txt")
 			if err == nil {
 				t.Errorf("Source file still exists after move")
 			} else {
@@ -449,17 +469,17 @@ func TestFileSystem_ReadMultipleFiles(t *testing.T) {
 		// First create some test files
 		file1Content := "This is test file 1 content."
 		file2Content := "This is test file 2 content."
-		_, err := session.FileSystem.WriteFile("/tmp/test_file1.txt", file1Content, "overwrite")
+		_, err := session.FileSystem.WriteFile("C:/test_file1.txt", file1Content, "overwrite")
 		if err != nil {
 			t.Fatalf("Failed to create test file 1: %v", err)
 		}
-		_, err = session.FileSystem.WriteFile("/tmp/test_file2.txt", file2Content, "overwrite")
+		_, err = session.FileSystem.WriteFile("C:/test_file2.txt", file2Content, "overwrite")
 		if err != nil {
 			t.Fatalf("Failed to create test file 2: %v", err)
 		}
 
 		fmt.Println("Reading multiple files...")
-		paths := []string{"/tmp/test_file1.txt", "/tmp/test_file2.txt"}
+		paths := []string{"C:/test_file1.txt", "C:/test_file2.txt"}
 		contents, err := session.FileSystem.ReadMultipleFiles(paths)
 		t.Logf("ReadMultipleFiles result: contents count=%d, err=%v", len(contents), err)
 		if err != nil {
@@ -468,13 +488,13 @@ func TestFileSystem_ReadMultipleFiles(t *testing.T) {
 			t.Log("Read multiple files successful")
 
 			// Verify the contents of each file
-			if content, ok := contents["/tmp/test_file1.txt"]; !ok || content != file1Content {
+			if content, ok := contents["C:/test_file1.txt"]; !ok || content != file1Content {
 				t.Errorf("File 1 content mismatch or missing. Expected: %s, Got: %s", file1Content, content)
 			} else {
 				t.Log("File 1 content verified successfully")
 			}
 
-			if content, ok := contents["/tmp/test_file2.txt"]; !ok || content != file2Content {
+			if content, ok := contents["C:/test_file2.txt"]; !ok || content != file2Content {
 				t.Errorf("File 2 content mismatch or missing. Expected: %s, Got: %s", file2Content, content)
 			} else {
 				t.Log("File 2 content verified successfully")
@@ -519,15 +539,15 @@ func TestFileSystem_SearchFiles(t *testing.T) {
 		file2Content := "This is another file without the pattern."
 		file3Content := "This file also has the SEARCHABLE_PATTERN present."
 
-		_, err := session.FileSystem.WriteFile("/tmp/search_test1.txt", file1Content, "overwrite")
+		_, err := session.FileSystem.WriteFile("C:/search_test1.txt", file1Content, "overwrite")
 		if err != nil {
 			t.Fatalf("Failed to create search test file 1: %v", err)
 		}
-		_, err = session.FileSystem.WriteFile("/tmp/search_test2.txt", file2Content, "overwrite")
+		_, err = session.FileSystem.WriteFile("C:/search_test2.txt", file2Content, "overwrite")
 		if err != nil {
 			t.Fatalf("Failed to create search test file 2: %v", err)
 		}
-		_, err = session.FileSystem.WriteFile("/tmp/search_test3.txt", file3Content, "overwrite")
+		_, err = session.FileSystem.WriteFile("C:/search_test3.txt", file3Content, "overwrite")
 		if err != nil {
 			t.Fatalf("Failed to create search test file 3: %v", err)
 		}
@@ -535,7 +555,7 @@ func TestFileSystem_SearchFiles(t *testing.T) {
 		fmt.Println("Searching files...")
 		searchPattern := "SEARCHABLE_PATTERN"
 		excludePatterns := []string{"ignored_pattern"}
-		results, err := session.FileSystem.SearchFiles("/tmp", searchPattern, excludePatterns)
+		results, err := session.FileSystem.SearchFiles("C:/", searchPattern, excludePatterns)
 		t.Logf("SearchFiles result: results count=%d, err=%v", len(results), err)
 		if err != nil {
 			t.Errorf("Search files failed: %v", err)
@@ -559,9 +579,9 @@ func TestFileSystem_SearchFiles(t *testing.T) {
 					continue
 				}
 
-				if path == "/tmp/search_test1.txt" {
+				if path == "C:/search_test1.txt" {
 					foundFile1 = true
-				} else if path == "/tmp/search_test3.txt" {
+				} else if path == "C:/search_test3.txt" {
 					foundFile3 = true
 				}
 			}
