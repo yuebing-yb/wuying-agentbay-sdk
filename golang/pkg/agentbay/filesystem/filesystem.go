@@ -3,6 +3,7 @@ package filesystem
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
@@ -164,6 +165,94 @@ func (fs *FileSystem) GetFileInfo(path string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("invalid response data format")
 	}
 
+	// Check if there's an error in the response
+	isError, ok := data["isError"].(bool)
+	if ok && isError {
+		// Try to extract the error message from the content field
+		contentArray, ok := data["content"].([]interface{})
+		if ok && len(contentArray) > 0 {
+			contentItem, ok := contentArray[0].(map[string]interface{})
+			if ok {
+				text, ok := contentItem["text"].(string)
+				if ok && strings.Contains(text, "No such file or directory") {
+					return nil, fmt.Errorf("file not found: %s", path)
+				} else if ok {
+					return nil, fmt.Errorf("%s", text)
+				}
+			}
+		}
+		return nil, fmt.Errorf("error getting file info")
+	}
+
+	// Try to parse file info from the content field
+	contentArray, ok := data["content"].([]interface{})
+	if ok && len(contentArray) > 0 {
+		contentItem, ok := contentArray[0].(map[string]interface{})
+		if ok {
+			text, ok := contentItem["text"].(string)
+			if ok {
+				// Parse the text to extract file info
+				// Format is expected to be:
+				// size: 36
+				// modified: 2025-06-10 20:56:39
+				// created: N/A
+				// accessed: N/A
+				// isDirectory: false
+				// isFile: true
+				// permissions: rw-r--r--
+				result := make(map[string]interface{})
+
+				// Extract the file name from the path
+				parts := strings.Split(path, "/")
+				if len(parts) > 0 {
+					result["name"] = parts[len(parts)-1]
+				}
+
+				lines := strings.Split(text, "\n")
+				for _, line := range lines {
+					line = strings.TrimSpace(line)
+					if line == "" {
+						continue
+					}
+
+					parts := strings.SplitN(line, ":", 2)
+					if len(parts) != 2 {
+						continue
+					}
+
+					key := strings.TrimSpace(parts[0])
+					value := strings.TrimSpace(parts[1])
+
+					switch key {
+					case "size":
+						// Try to parse size as a number
+						var size float64
+						fmt.Sscanf(value, "%f", &size)
+						result["size"] = size
+					case "isDirectory":
+						result["isDirectory"] = value == "true"
+					case "isFile":
+						result["isFile"] = value == "true"
+					case "modified":
+						result["modifiedTime"] = value
+					case "created":
+						if value != "N/A" {
+							result["createdTime"] = value
+						}
+					case "accessed":
+						if value != "N/A" {
+							result["accessedTime"] = value
+						}
+					case "permissions":
+						result["permissions"] = value
+					}
+				}
+
+				return result, nil
+			}
+		}
+	}
+
 	return data, nil
 }
 
@@ -210,18 +299,69 @@ func (fs *FileSystem) ListDirectory(path string) ([]map[string]interface{}, erro
 		return nil, fmt.Errorf("invalid response data format")
 	}
 
+	// First try to get the entries field
 	entries, ok := data["entries"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("entries field not found or not an array")
+	if ok {
+		result := make([]map[string]interface{}, 0, len(entries))
+		for _, entry := range entries {
+			entryMap, ok := entry.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			result = append(result, entryMap)
+		}
+		return result, nil
 	}
 
-	result := make([]map[string]interface{}, 0, len(entries))
-	for _, entry := range entries {
-		entryMap, ok := entry.(map[string]interface{})
+	// If entries field is not found, try to parse from content field
+	contentArray, ok := data["content"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("neither entries nor content field found in response")
+	}
+
+	// Parse the content from the text chunks
+	result := make([]map[string]interface{}, 0)
+	for _, item := range contentArray {
+		contentItem, ok := item.(map[string]interface{})
 		if !ok {
 			continue
 		}
-		result = append(result, entryMap)
+
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		// Parse the text to extract directory entries
+		// Format is expected to be:
+		// [DIR] directory_name
+		// [FILE] file_name
+		lines := strings.Split(text, "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+
+			entryMap := make(map[string]interface{})
+			if strings.HasPrefix(line, "[DIR]") {
+				entryMap["isDirectory"] = true
+				entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[DIR]"))
+			} else if strings.HasPrefix(line, "[FILE]") {
+				entryMap["isDirectory"] = false
+				entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[FILE]"))
+			} else {
+				// Skip lines that don't match the expected format
+				continue
+			}
+
+			result = append(result, entryMap)
+		}
+	}
+
+	// If we couldn't parse any entries, return an error
+	if len(result) == 0 {
+		return nil, fmt.Errorf("could not parse directory entries from response")
 	}
 
 	return result, nil
@@ -342,7 +482,7 @@ func (fs *FileSystem) ReadFile(path string, optionalParams ...int) (string, erro
 		}
 
 		var fullText string
-		for _, item := range contentArray {
+		for i, item := range contentArray {
 			// Try to assert each element is a map[string]interface{}
 			contentItem, ok := item.(map[string]interface{})
 			if !ok {
@@ -355,7 +495,11 @@ func (fs *FileSystem) ReadFile(path string, optionalParams ...int) (string, erro
 				continue
 			}
 
-			fullText += text + "\n" // Concatenate text content
+			fullText += text
+			// Only add newline if not the last item
+			if i < len(contentArray)-1 {
+				fullText += "\n"
+			}
 		}
 
 		return fullText, nil
@@ -407,18 +551,89 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, erro
 		return nil, fmt.Errorf("invalid response data format")
 	}
 
+	// First try to get the files field
 	filesData, ok := data["files"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("files field not found or not a map")
+	if ok {
+		result := make(map[string]string)
+		for path, content := range filesData {
+			contentStr, ok := content.(string)
+			if !ok {
+				continue
+			}
+			result[path] = contentStr
+		}
+		return result, nil
 	}
 
+	// If files field is not found, try to parse from content field
+	contentArray, ok := data["content"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("neither files nor content field found in response")
+	}
+
+	// Parse the content from the text chunks
 	result := make(map[string]string)
-	for path, content := range filesData {
-		contentStr, ok := content.(string)
+	for _, item := range contentArray {
+		contentItem, ok := item.(map[string]interface{})
 		if !ok {
 			continue
 		}
-		result[path] = contentStr
+
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		// Parse the text to extract file contents
+		// Format is expected to be:
+		// /path/to/file1:
+		// content1
+		//
+		// ---
+		// /path/to/file2:
+		// content2
+		//
+		lines := strings.Split(text, "\n")
+		var currentPath string
+		var currentContent strings.Builder
+		inContent := false
+
+		for _, line := range lines {
+			if strings.HasSuffix(line, ":") {
+				// This is a file path line
+				if currentPath != "" && currentContent.Len() > 0 {
+					// Save the previous file content
+					result[currentPath] = strings.TrimSpace(currentContent.String())
+					currentContent.Reset()
+				}
+				currentPath = strings.TrimSuffix(line, ":")
+				inContent = true
+			} else if line == "---" {
+				// This is a separator line
+				if currentPath != "" && currentContent.Len() > 0 {
+					// Save the previous file content
+					result[currentPath] = strings.TrimSpace(currentContent.String())
+					currentContent.Reset()
+				}
+				inContent = false
+			} else if inContent {
+				// This is a content line
+				if currentContent.Len() > 0 {
+					currentContent.WriteString("\n")
+				}
+				currentContent.WriteString(line)
+			}
+		}
+
+		// Save the last file content
+		if currentPath != "" && currentContent.Len() > 0 {
+			result[currentPath] = strings.TrimSpace(currentContent.String())
+		}
+	}
+
+	// If we couldn't parse any files, return an error
+	if len(result) == 0 {
+		return nil, fmt.Errorf("could not parse file contents from response")
 	}
 
 	return result, nil
@@ -476,18 +691,127 @@ func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string
 		return nil, fmt.Errorf("invalid response data format")
 	}
 
+	// First try to get the results field
 	results, ok := data["results"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("results field not found or not an array")
+	if ok {
+		searchResults := make([]map[string]interface{}, 0, len(results))
+		for _, result := range results {
+			resultMap, ok := result.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			searchResults = append(searchResults, resultMap)
+		}
+		return searchResults, nil
 	}
 
-	searchResults := make([]map[string]interface{}, 0, len(results))
-	for _, result := range results {
-		resultMap, ok := result.(map[string]interface{})
+	// If results field is not found, try to parse from content field
+	contentArray, ok := data["content"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("neither results nor content field found in response")
+	}
+
+	// Parse the content from the text chunks
+	searchResults := make([]map[string]interface{}, 0)
+	for _, item := range contentArray {
+		contentItem, ok := item.(map[string]interface{})
 		if !ok {
 			continue
 		}
-		searchResults = append(searchResults, resultMap)
+
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		// Check if no matches were found
+		if strings.Contains(text, "No matches found") {
+			// Return an empty array for no matches
+			return searchResults, nil
+		}
+
+		// First, try to parse as a simple list of file paths
+		// This format is just a list of file paths separated by newlines
+		if !strings.Contains(text, "File:") && !strings.Contains(text, "Line") {
+			lines := strings.Split(text, "\n")
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				if line == "" {
+					continue
+				}
+
+				// Create a result entry for each file path
+				resultMap := map[string]interface{}{
+					"path": line,
+				}
+				searchResults = append(searchResults, resultMap)
+			}
+
+			// If we found any results in this format, return them
+			if len(searchResults) > 0 {
+				return searchResults, nil
+			}
+		}
+
+		// If not a simple list of paths, try the more complex format
+		// Format is expected to be:
+		// File: /path/to/file1.txt
+		// Line 5: This is a line with the search pattern
+		// Line 10: This is another line with the search pattern
+		//
+		// File: /path/to/file2.txt
+		// Line 3: This is a line with the search pattern
+		lines := strings.Split(text, "\n")
+		var currentFile string
+		var matches []map[string]interface{}
+
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+
+			if strings.HasPrefix(line, "File:") {
+				// This is a file path line
+				if currentFile != "" && len(matches) > 0 {
+					// Save the previous file's matches
+					resultMap := map[string]interface{}{
+						"path":    currentFile,
+						"matches": matches,
+					}
+					searchResults = append(searchResults, resultMap)
+					matches = nil
+				}
+				currentFile = strings.TrimSpace(strings.TrimPrefix(line, "File:"))
+				matches = make([]map[string]interface{}, 0)
+			} else if strings.HasPrefix(line, "Line") && currentFile != "" {
+				// This is a match line
+				parts := strings.SplitN(line, ":", 2)
+				if len(parts) == 2 {
+					lineNum := strings.TrimSpace(strings.TrimPrefix(parts[0], "Line"))
+					lineContent := strings.TrimSpace(parts[1])
+
+					// Try to parse line number
+					var lineNumber int
+					fmt.Sscanf(lineNum, "%d", &lineNumber)
+
+					match := map[string]interface{}{
+						"line":    lineNumber,
+						"content": lineContent,
+					}
+					matches = append(matches, match)
+				}
+			}
+		}
+
+		// Save the last file's matches
+		if currentFile != "" && len(matches) > 0 {
+			resultMap := map[string]interface{}{
+				"path":    currentFile,
+				"matches": matches,
+			}
+			searchResults = append(searchResults, resultMap)
+		}
 	}
 
 	return searchResults, nil
