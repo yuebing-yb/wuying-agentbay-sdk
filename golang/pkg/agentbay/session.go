@@ -9,6 +9,7 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/window"
 )
 
@@ -33,6 +34,7 @@ type Session struct {
 	FileSystem *filesystem.FileSystem
 	Command    *command.Command
 	Adb        *adb.Adb
+	Oss        *oss.Oss
 
 	// Application and window management
 	Application *application.ApplicationManager
@@ -50,6 +52,7 @@ func NewSession(agentBay *AgentBay, sessionID string) *Session {
 	session.FileSystem = filesystem.NewFileSystem(session)
 	session.Command = command.NewCommand(session)
 	session.Adb = adb.NewAdb(session)
+	session.Oss = oss.NewOss(session)
 
 	// Initialize application and window managers
 	session.Application = application.NewApplicationManager(session)

@@ -6,4 +6,5 @@ export * from './exceptions';
 export * from './filesystem';
 export * from './command';
 export * from './adb';
+export * from './oss';
 export * from './api';
