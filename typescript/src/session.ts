@@ -3,6 +3,7 @@ import { APIError } from './exceptions';
 import { FileSystem } from './filesystem';
 import { Command } from './command';
 import { Adb } from './adb';
+import { Oss } from './oss';
 import { ApplicationManager } from './application';
 import { WindowManager } from './window';
 import Client from './api/client';
@@ -31,10 +32,11 @@ export class Session {
   public sessionId: string;
   public resourceUrl: string = "";
   
-  // File, command, and adb handlers
+  // File, command, adb, and oss handlers
   public filesystem: FileSystem;
   public command: Command;
   public adb: Adb;
+  public oss: Oss;
   
   // Application and window management
   public application: ApplicationManager;
@@ -52,10 +54,11 @@ export class Session {
     this.client = agentBay.getClient();
     console.log(`Session created with ID: ${sessionId}`);
     
-    // Initialize filesystem, command, and adb handlers
+    // Initialize filesystem, command, adb, and oss handlers
     this.filesystem = new FileSystem(this);
     this.command = new Command(this);
     this.adb = new Adb(this);
+    this.oss = new Oss(this);
     
     // Initialize application and window managers
     this.application = new ApplicationManager(this);

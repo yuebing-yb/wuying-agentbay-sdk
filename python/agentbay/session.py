@@ -7,6 +7,7 @@ from agentbay.application import ApplicationManager
 from agentbay.command import Command
 from agentbay.exceptions import SessionError
 from agentbay.filesystem import FileSystem
+from agentbay.oss import Oss
 from agentbay.window import WindowManager
 from agentbay.mobile import MobileSystem
 
@@ -41,6 +42,7 @@ class Session:
         # Initialize file system, command handlers
         self.file_system = FileSystem(self)
         self.command = Command(self)
+        self.oss = Oss(self)
 
         # Initialize application and window managers
         self.application = ApplicationManager(self)
@@ -166,7 +168,6 @@ class Session:
                 session_info.resource_url = data["ResourceUrl"]
                 # Update the session's resource_url with the latest value
                 self.resource_url = data["ResourceUrl"]
-
             # Transfer DesktopInfo fields to SessionInfo
             if "DesktopInfo" in data:
                 desktop_info = data["DesktopInfo"]
@@ -180,7 +181,6 @@ class Session:
                     session_info.resource_id = desktop_info["ResourceId"]
                 if "ResourceType" in desktop_info:
                     session_info.resource_type = desktop_info["ResourceType"]
-
             return session_info
 
         except Exception as e:
