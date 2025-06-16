@@ -28,12 +28,13 @@ func NewOss(session interface {
 	}
 }
 
-// CreateClient creates an OSS client with the provided credentials.
-func (o *Oss) CreateClient(accessKeyId, accessKeySecret, endpoint, region string) (string, error) {
-	// Prepare arguments for the oss_client_create tool
+// EnvInit creates and initializes OSS environment variables with the specified credentials.
+func (o *Oss) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region string) (string, error) {
+	// Prepare arguments for the oss_env_init tool
 	args := map[string]interface{}{
 		"access_key_id":     accessKeyId,
 		"access_key_secret": accessKeySecret,
+		"security_token":    securityToken,
 	}
 
 	// Add optional parameters if provided
@@ -52,23 +53,23 @@ func (o *Oss) CreateClient(accessKeyId, accessKeySecret, endpoint, region string
 	callToolRequest := &mcp.CallMcpToolRequest{
 		Authorization: tea.String("Bearer " + o.Session.GetAPIKey()),
 		SessionId:     tea.String(o.Session.GetSessionId()),
-		Name:          tea.String("oss_client_create"),
+		Name:          tea.String("oss_env_init"),
 		Args:          tea.String(string(argsJSON)),
 	}
 
 	// Log API request
-	fmt.Println("API Call: CallMcpTool - oss_client_create")
+	fmt.Println("API Call: CallMcpTool - oss_env_init")
 	fmt.Printf("Request: SessionId=%s\n", *callToolRequest.SessionId)
 
 	response, err := o.Session.GetClient().CallMcpTool(callToolRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling CallMcpTool - oss_client_create:", err)
-		return "", fmt.Errorf("failed to create OSS client: %w", err)
+		fmt.Println("Error calling CallMcpTool - oss_env_init:", err)
+		return "", fmt.Errorf("failed to initialize OSS environment: %w", err)
 	}
 	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - oss_client_create:", response.Body)
+		fmt.Println("Response from CallMcpTool - oss_env_init:", response.Body)
 	}
 
 	// Convert interface{} to map
