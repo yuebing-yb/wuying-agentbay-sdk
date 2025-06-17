@@ -211,7 +211,7 @@ func TestOss_UploadAnonymous(t *testing.T) {
 		fmt.Println("Uploading file anonymously...")
 		uploadUrl := os.Getenv("OSS_TEST_UPLOAD_URL")
 		if uploadUrl == "" {
-			uploadUrl = "https://example.com/upload"
+			uploadUrl = "https://example.com/upload/test-file.txt"
 		}
 		result, err := session.Oss.UploadAnonymous(uploadUrl, testFilePath)
 		t.Logf("UploadAnonymous result: %s, err=%v", result, err)
