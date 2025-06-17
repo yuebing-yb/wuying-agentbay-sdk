@@ -5,11 +5,11 @@ import (
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/adb"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/ui"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/window"
 )
 
@@ -30,13 +30,13 @@ type Session struct {
 	SessionID   string
 	ResourceUrl string
 
-	// File, command, and adb handlers
+	// File and command handlers
 	FileSystem *filesystem.FileSystem
 	Command    *command.Command
-	Adb        *adb.Adb
 	Oss        *oss.Oss
 
-	// Application and window management
+	// UI, application and window management
+	UI          *ui.UI
 	Application *application.ApplicationManager
 	Window      *window.WindowManager
 }
@@ -48,11 +48,13 @@ func NewSession(agentBay *AgentBay, sessionID string) *Session {
 		SessionID: sessionID,
 	}
 
-	// Initialize filesystem, command, and adb handlers
+	// Initialize filesystem and command handlers
 	session.FileSystem = filesystem.NewFileSystem(session)
 	session.Command = command.NewCommand(session)
-	session.Adb = adb.NewAdb(session)
 	session.Oss = oss.NewOss(session)
+
+	// Initialize UI
+	session.UI = ui.NewUI(session)
 
 	// Initialize application and window managers
 	session.Application = application.NewApplicationManager(session)

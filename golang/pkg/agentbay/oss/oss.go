@@ -78,13 +78,52 @@ func (o *Oss) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, reg
 		return "", fmt.Errorf("invalid response data format")
 	}
 
-	// Get result field
-	result, ok := data["result"].(string)
-	if !ok {
-		return "", fmt.Errorf("result field not found or not a string")
+	// Check if the operation failed
+	isError, ok := data["isError"].(bool)
+	if ok && isError {
+		// Get content field and parse as array to extract error message
+		contentArray, ok := data["content"].([]interface{})
+		if ok && len(contentArray) > 0 {
+			// Extract error message from content
+			contentItem, ok := contentArray[0].(map[string]interface{})
+			if ok {
+				text, ok := contentItem["text"].(string)
+				if ok {
+					return "", fmt.Errorf("%s", text)
+				}
+			}
+		}
+		return "", fmt.Errorf("operation failed")
 	}
 
-	return result, nil
+	// Get content field and parse as array
+	contentArray, ok := data["content"].([]interface{})
+	if !ok {
+		// Try to get result field directly (for backward compatibility)
+		result, ok := data["result"].(string)
+		if !ok {
+			return "", fmt.Errorf("neither content array nor result field found")
+		}
+		return result, nil
+	}
+
+	var fullText string
+	for _, item := range contentArray {
+		// Assert each element is map[string]interface{}
+		contentItem, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Extract text field
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		fullText += text + "\n" // Concatenate text content
+	}
+	return fullText, nil
 }
 
 // Upload uploads a local file or directory to OSS.
@@ -130,13 +169,52 @@ func (o *Oss) Upload(bucket, object, path string) (string, error) {
 		return "", fmt.Errorf("invalid response data format")
 	}
 
-	// Get result field
-	result, ok := data["result"].(string)
-	if !ok {
-		return "", fmt.Errorf("result field not found or not a string")
+	// Check if the operation failed
+	isError, ok := data["isError"].(bool)
+	if ok && isError {
+		// Get content field and parse as array to extract error message
+		contentArray, ok := data["content"].([]interface{})
+		if ok && len(contentArray) > 0 {
+			// Extract error message from content
+			contentItem, ok := contentArray[0].(map[string]interface{})
+			if ok {
+				text, ok := contentItem["text"].(string)
+				if ok {
+					return "", fmt.Errorf("%s", text)
+				}
+			}
+		}
+		return "", fmt.Errorf("operation failed")
 	}
 
-	return result, nil
+	// Get content field and parse as array
+	contentArray, ok := data["content"].([]interface{})
+	if !ok {
+		// Try to get result field directly (for backward compatibility)
+		result, ok := data["result"].(string)
+		if !ok {
+			return "", fmt.Errorf("neither content array nor result field found")
+		}
+		return result, nil
+	}
+
+	var fullText string
+	for _, item := range contentArray {
+		// Assert each element is map[string]interface{}
+		contentItem, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Extract text field
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		fullText += text + "\n" // Concatenate text content
+	}
+	return fullText, nil
 }
 
 // UploadAnonymous uploads a local file or directory to a URL anonymously.
@@ -181,13 +259,52 @@ func (o *Oss) UploadAnonymous(url, path string) (string, error) {
 		return "", fmt.Errorf("invalid response data format")
 	}
 
-	// Get result field
-	result, ok := data["result"].(string)
-	if !ok {
-		return "", fmt.Errorf("result field not found or not a string")
+	// Check if the operation failed
+	isError, ok := data["isError"].(bool)
+	if ok && isError {
+		// Get content field and parse as array to extract error message
+		contentArray, ok := data["content"].([]interface{})
+		if ok && len(contentArray) > 0 {
+			// Extract error message from content
+			contentItem, ok := contentArray[0].(map[string]interface{})
+			if ok {
+				text, ok := contentItem["text"].(string)
+				if ok {
+					return "", fmt.Errorf("%s", text)
+				}
+			}
+		}
+		return "", fmt.Errorf("operation failed")
 	}
 
-	return result, nil
+	// Get content field and parse as array
+	contentArray, ok := data["content"].([]interface{})
+	if !ok {
+		// Try to get result field directly (for backward compatibility)
+		result, ok := data["result"].(string)
+		if !ok {
+			return "", fmt.Errorf("neither content array nor result field found")
+		}
+		return result, nil
+	}
+
+	var fullText string
+	for _, item := range contentArray {
+		// Assert each element is map[string]interface{}
+		contentItem, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Extract text field
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		fullText += text + "\n" // Concatenate text content
+	}
+	return fullText, nil
 }
 
 // Download downloads an object from OSS to a local file.
@@ -233,13 +350,52 @@ func (o *Oss) Download(bucket, object, path string) (string, error) {
 		return "", fmt.Errorf("invalid response data format")
 	}
 
-	// Get result field
-	result, ok := data["result"].(string)
-	if !ok {
-		return "", fmt.Errorf("result field not found or not a string")
+	// Check if the operation failed
+	isError, ok := data["isError"].(bool)
+	if ok && isError {
+		// Get content field and parse as array to extract error message
+		contentArray, ok := data["content"].([]interface{})
+		if ok && len(contentArray) > 0 {
+			// Extract error message from content
+			contentItem, ok := contentArray[0].(map[string]interface{})
+			if ok {
+				text, ok := contentItem["text"].(string)
+				if ok {
+					return "", fmt.Errorf("%s", text)
+				}
+			}
+		}
+		return "", fmt.Errorf("operation failed")
 	}
 
-	return result, nil
+	// Get content field and parse as array
+	contentArray, ok := data["content"].([]interface{})
+	if !ok {
+		// Try to get result field directly (for backward compatibility)
+		result, ok := data["result"].(string)
+		if !ok {
+			return "", fmt.Errorf("neither content array nor result field found")
+		}
+		return result, nil
+	}
+
+	var fullText string
+	for _, item := range contentArray {
+		// Assert each element is map[string]interface{}
+		contentItem, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Extract text field
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		fullText += text + "\n" // Concatenate text content
+	}
+	return fullText, nil
 }
 
 // DownloadAnonymous downloads a file from a URL anonymously to a local file.
@@ -284,11 +440,50 @@ func (o *Oss) DownloadAnonymous(url, path string) (string, error) {
 		return "", fmt.Errorf("invalid response data format")
 	}
 
-	// Get result field
-	result, ok := data["result"].(string)
-	if !ok {
-		return "", fmt.Errorf("result field not found or not a string")
+	// Check if the operation failed
+	isError, ok := data["isError"].(bool)
+	if ok && isError {
+		// Get content field and parse as array to extract error message
+		contentArray, ok := data["content"].([]interface{})
+		if ok && len(contentArray) > 0 {
+			// Extract error message from content
+			contentItem, ok := contentArray[0].(map[string]interface{})
+			if ok {
+				text, ok := contentItem["text"].(string)
+				if ok {
+					return "", fmt.Errorf("%s", text)
+				}
+			}
+		}
+		return "", fmt.Errorf("operation failed")
 	}
 
-	return result, nil
+	// Get content field and parse as array
+	contentArray, ok := data["content"].([]interface{})
+	if !ok {
+		// Try to get result field directly (for backward compatibility)
+		result, ok := data["result"].(string)
+		if !ok {
+			return "", fmt.Errorf("neither content array nor result field found")
+		}
+		return result, nil
+	}
+
+	var fullText string
+	for _, item := range contentArray {
+		// Assert each element is map[string]interface{}
+		contentItem, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Extract text field
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		fullText += text + "\n" // Concatenate text content
+	}
+	return fullText, nil
 }

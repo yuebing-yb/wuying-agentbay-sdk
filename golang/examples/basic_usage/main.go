@@ -65,14 +65,14 @@ func main() {
 		fmt.Printf("File content: %s\n", content)
 	}
 
-	// Execute ADB shell command (for mobile environments)
-	fmt.Println("\nExecute ADB shell command...")
-	adbResponse, err := session.Adb.Shell("ls /sdcard")
+	// Take a screenshot using the UI module
+	fmt.Println("\nTaking a screenshot...")
+	screenshot, err := session.UI.Screenshot()
 	if err != nil {
-		fmt.Printf("Error execute ADB shell command: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("Error taking screenshot: %v\n", err)
+	} else {
+		fmt.Printf("Screenshot data length: %d bytes\n", len(screenshot))
 	}
-	fmt.Println("ADB shell command result: " + adbResponse)
 
 	// Delete the session
 	fmt.Println("\nDeleting the session...")
