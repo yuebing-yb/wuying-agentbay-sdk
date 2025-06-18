@@ -76,18 +76,18 @@ async function main() {
   
   // Execute a command
   const result = await session.command.executeCommand('ls -la');
-  console.log(result);
+  log(result);
 
   // Read a file
   const content = await session.filesystem.readFile('/path/to/file.txt');
-  console.log(content);
+  log(content);
 
   // Execute an ADB shell command (for mobile environments)
   const adbResult = await session.adb.shell('ls /sdcard');
-  console.log(adbResult);
+  log(adbResult);
 }
 
-main().catch(console.error);
+main().catch(logError);
 ```
 
 ### Golang

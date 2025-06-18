@@ -9,6 +9,7 @@ import Client from './api/client';
 import { CreateMcpSessionRequest, CreateMcpSessionResponse, ListSessionRequest } from './api/models/model';
 import { loadConfig } from './config';
 import 'dotenv/config';
+import { log, logError } from './utils/logger';
 /**
  * Main class for interacting with the AgentBay cloud runtime environment.
  */
@@ -60,7 +61,7 @@ export class AgentBay {
       // Initialize context service
       this.context = new ContextService(this);
     }catch(error){
-      console.log( `Failed to constructor: ${error}`)
+      logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);
     }
     
@@ -95,26 +96,33 @@ export class AgentBay {
         createSessionRequest.labels = JSON.stringify(options.labels);
       }
       
-        const response = await this.client.createMcpSession(createSessionRequest);
-        
-        
-        const sessionId = response.body?.data?.sessionId;
-        if (!sessionId) {
-          throw new APIError('Invalid session ID in response');
-        }
-        
-        // ResourceUrl is optional in CreateMcpSession response
-        const resourceUrl = response.body?.data?.resourceUrl;
-        
-        const session = new Session(this, sessionId);
-        if (resourceUrl) {
-          session.resourceUrl = resourceUrl;
-        }
-        
-        this.sessions.set(session.sessionId, session);
-        return session;
+      // Log API request
+      log("API Call: CreateMcpSession");
+      log(`Request: ${options.contextId ? `ContextId=${options.contextId}, ` : ''}${options.labels ? `Labels=${JSON.stringify(options.labels)}, ` : ''}${options.imageId ? `ImageId=${options.imageId}` : ''}`);
+      
+      const response = await this.client.createMcpSession(createSessionRequest);
+      
+      // Log API response
+      log(`Response from CreateMcpSession:`, response.body);
+      
+      const sessionId = response.body?.data?.sessionId;
+      if (!sessionId) {
+        throw new APIError('Invalid session ID in response');
+      }
+      
+      // ResourceUrl is optional in CreateMcpSession response
+      const resourceUrl = response.body?.data?.resourceUrl;
+      
+      const session = new Session(this, sessionId);
+      if (resourceUrl) {
+        session.resourceUrl = resourceUrl;
+      }
+      
+      this.sessions.set(session.sessionId, session);
+      return session;
        
     } catch (error) {
+      logError("Error calling CreateMcpSession:", error);
       throw new APIError(`Failed to create session: ${error}`);
     }
   }
@@ -145,8 +153,14 @@ export class AgentBay {
         labels: labelsJSON
       });
       
+      // Log API request
+      log("API Call: ListSession");
+      log(`Request: Labels=${labelsJSON}`);
+      
       const response = await this.client.listSession(listSessionRequest);
       
+      // Log API response
+      log(`Response from ListSession:`, response.body);
       
       const sessions: Session[] = [];
       if (response.body?.data) {
@@ -162,6 +176,7 @@ export class AgentBay {
       
       return sessions;
     } catch (error) {
+      logError("Error calling ListSession:", error);
       throw new APIError(`Failed to list sessions by labels: ${error}`);
     }
   }

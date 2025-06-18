@@ -10,7 +10,7 @@ The `Session` class represents a session in the AgentBay cloud environment. A se
 - `resource_url`: The resource URL associated with the session.
 - `filesystem`: The FileSystem instance for this session.
 - `command`: The Command instance for this session.
-- `adb`: The Adb instance for this session.
+- `ui`: The UI instance for this session.
 - `application`: The Application instance for this session.
 - `window`: The Window instance for this session.
 
@@ -20,7 +20,7 @@ The `Session` class represents a session in the AgentBay cloud environment. A se
 - `resourceUrl`: The resource URL associated with the session.
 - `filesystem`: The FileSystem instance for this session.
 - `command`: The Command instance for this session.
-- `adb`: The Adb instance for this session.
+- `ui`: The UI instance for this session.
 - `application`: The Application instance for this session.
 - `window`: The Window instance for this session.
 
@@ -30,7 +30,7 @@ The `Session` class represents a session in the AgentBay cloud environment. A se
 - `ResourceUrl`: The resource URL associated with the session.
 - `FileSystem`: The FileSystem instance for this session.
 - `Command`: The Command instance for this session.
-- `Adb`: The Adb instance for this session.
+- `UI`: The UI instance for this session.
 - `Application`: The Application instance for this session.
 - `Window`: The Window instance for this session.
 
@@ -151,6 +151,44 @@ GetLabels() (string, error)
 - `string`: A JSON string of labels for the session.
 - `error`: An error if getting the labels fails.
 
+### get_link / getLink / GetLink
+
+Gets the link for the session.
+
+#### Python
+
+```python
+get_link() -> str
+```
+
+**Returns:**
+- `str`: The link for the session.
+
+**Raises:**
+- `AgentBayError`: If getting the link fails.
+
+#### TypeScript
+
+```typescript
+getLink(): Promise<string>
+```
+
+**Returns:**
+- `Promise<string>`: A promise that resolves to the link for the session.
+
+**Throws:**
+- `APIError`: If getting the link fails.
+
+#### Golang
+
+```go
+GetLink() (string, error)
+```
+
+**Returns:**
+- `string`: The link for the session.
+- `error`: An error if getting the link fails.
+
 ### info
 
 Gets information about the session, including the session ID, resource URL, and desktop information. This method also updates the session's ResourceUrl field with the latest value from the server.
@@ -216,7 +254,7 @@ The Session class provides access to several other classes that provide specific
 
 - [FileSystem](filesystem.md): Provides methods for reading files within a session.
 - [Command](command.md): Provides methods for executing commands within a session.
-- [Adb](adb.md): Provides methods for executing ADB shell commands within a mobile environment (Android).
+- [UI](ui.md): Provides methods for interacting with the UI elements in the cloud environment.
 - [Application](../concepts/applications.md): Provides methods for managing applications in the cloud environment.
 - [Window](../concepts/applications.md): Provides methods for managing windows in the cloud environment.
 
@@ -304,13 +342,13 @@ const labels = await session.getLabels();
 
 // Get session info
 const sessionInfo = await session.info();
-console.log(`Session ID: ${sessionInfo.sessionId}`);
-console.log(`Resource URL: ${sessionInfo.resourceUrl}`);
-console.log(`App ID: ${sessionInfo.appId}`);
-console.log(`Auth Code: ${sessionInfo.authCode}`);
-console.log(`Connection Properties: ${sessionInfo.connectionProperties}`);
-console.log(`Resource ID: ${sessionInfo.resourceId}`);
-console.log(`Resource Type: ${sessionInfo.resourceType}`);
+log(`Session ID: ${sessionInfo.sessionId}`);
+log(`Resource URL: ${sessionInfo.resourceUrl}`);
+log(`App ID: ${sessionInfo.appId}`);
+log(`Auth Code: ${sessionInfo.authCode}`);
+log(`Connection Properties: ${sessionInfo.connectionProperties}`);
+log(`Resource ID: ${sessionInfo.resourceId}`);
+log(`Resource Type: ${sessionInfo.resourceType}`);
 
 // Delete the session
 await session.delete();

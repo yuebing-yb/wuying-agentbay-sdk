@@ -2,6 +2,7 @@
 import * as $dara from '@darabonba/typescript';
 import OpenApi from '@alicloud/openapi-core';
 import { OpenApiUtil, $OpenApiUtil }from '@alicloud/openapi-core';
+import { log } from '../utils/logger';
 
 
 import * as $_model from './models/model';
@@ -87,7 +88,7 @@ export default class Client extends OpenApi {
       reqBodyType: "formData",
       bodyType: "json",
     });
-    console.log("API Call: CallMcpTool", request,req);
+    log("API Call: CallMcpTool", request,req);
     
     return $dara.cast<$_model.CallMcpToolResponse>(await this.callApi(params, req, runtime), new $_model.CallMcpToolResponse({}));
   }

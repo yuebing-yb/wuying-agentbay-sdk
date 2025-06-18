@@ -33,10 +33,10 @@ const request = {
 async function createSession() {
   try {
     const response = await apiClient.createMcpSession(request);
-    console.log('Session created successfully');
+    log('Session created successfully');
     return response;
   } catch (error) {
-    console.error('Failed to create session:', error);
+    logError('Failed to create session:', error);
     throw error;
   }
 }

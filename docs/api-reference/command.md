@@ -79,11 +79,11 @@ const session = await agentBay.create();
 
 // Execute a command with default timeout (1000ms)
 const result = await session.command.executeCommand('ls -la');
-console.log(`Command result: ${result}`);
+log(`Command result: ${result}`);
 
 // Execute a command with custom timeout (2000ms)
 const resultWithTimeout = await session.command.executeCommand('ls -la', 2000);
-console.log(`Command result with custom timeout: ${resultWithTimeout}`);
+log(`Command result with custom timeout: ${resultWithTimeout}`);
 ```
 
 ### Golang
@@ -182,9 +182,9 @@ print(f"Python code execution result: {result}")
 
 # Execute JavaScript code
 js_code = """
-console.log("Hello, world!");
+log("Hello, world!");
 const x = 1 + 1;
-console.log(x);
+log(x);
 """
 result_js = session.command.run_code(js_code, "javascript", timeout_s=600)
 print(f"JavaScript code execution result: {result_js}")
@@ -203,16 +203,16 @@ x = 1 + 1
 print(x)
 `;
 const result = await session.command.runCode(pythonCode, 'python');
-console.log(`Python code execution result: ${result}`);
+log(`Python code execution result: ${result}`);
 
 // Execute JavaScript code
 const jsCode = `
-console.log("Hello, world!");
+log("Hello, world!");
 const x = 1 + 1;
-console.log(x);
+log(x);
 `;
 const resultJs = await session.command.runCode(jsCode, 'javascript', 600);
-console.log(`JavaScript code execution result: ${resultJs}`);
+log(`JavaScript code execution result: ${resultJs}`);
 ```
 
 ### Golang
@@ -238,9 +238,9 @@ fmt.Printf("Python code execution result: %s\n", result)
 
 // Execute JavaScript code with custom timeout
 jsCode := `
-console.log("Hello, world!");
+log("Hello, world!");
 const x = 1 + 1;
-console.log(x);
+log(x);
 `
 resultJs, err := session.Command.RunCode(jsCode, "javascript", 600)
 if err != nil {

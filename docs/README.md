@@ -32,7 +32,7 @@ Detailed API reference documentation:
 - [Session Class](api-reference/session.md): Represents a session in the AgentBay cloud environment.
 - [FileSystem Class](api-reference/filesystem.md): Provides methods for reading files within a session.
 - [Command Class](api-reference/command.md): Provides methods for executing commands within a session.
-- [Adb Class](api-reference/adb.md): Provides methods for executing ADB shell commands within a mobile environment.
+- [UI Class](api-reference/ui.md): Provides methods for interacting with UI elements in the cloud environment.
 - [Application Class](concepts/applications.md): Provides methods for managing applications in the cloud environment.
 - [Window Class](concepts/applications.md): Provides methods for managing windows in the cloud environment.
 

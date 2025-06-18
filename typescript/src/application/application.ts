@@ -1,5 +1,6 @@
 import { CallMcpToolRequest } from '../api/models/CallMcpToolRequest';
 import Client from '../api/client';
+import { log } from '../utils/logger';
 /**
  * Represents an installed application.
  */
@@ -23,7 +24,7 @@ export interface Process {
 /**
  * Handles application management operations in the AgentBay cloud environment.
  */
-export class ApplicationManager {
+export class Application {
   private session: {
     getAPIKey(): string;
     getClient(): Client;
@@ -31,7 +32,7 @@ export class ApplicationManager {
   };
 
   /**
-   * Creates a new ApplicationManager instance.
+   * Creates a new Application instance.
    * @param session The session object that provides access to the AgentBay API.
    */
   constructor(session: {
@@ -61,16 +62,15 @@ export class ApplicationManager {
       });
 
       // Log API request
-      console.log(`API Call: CallMcpTool - ${name}`);
-      console.log(`Request: SessionId=${request.sessionId}, Args=${request.args}`);
+      log(`API Call: CallMcpTool - ${name}`);
+      log(`Request: SessionId=${request.sessionId}, Args=${request.args}`);
       
       const client = this.session.getClient();
       const response = await client.callMcpTool(request);
-      console.log(`Response from CallMcpTool - ${name}:`, response);
 
       // Log API response
       if (response && response.body) {
-        console.log(`Response from CallMcpTool - ${name}:`, response.body);
+        log(`Response from CallMcpTool - ${name}:`, response.body);
       }
 
       // Parse the response
@@ -87,15 +87,22 @@ export class ApplicationManager {
 
       // Extract text field from the first content item
       const contentItem = content[0];
-      console.log('Extracting text field from the first content item...',contentItem);
+      log('Extracting text field from the first content item...', contentItem);
       
       const jsonText = contentItem.text;
-      if (!jsonText) {
-        throw new Error('Text field not found or tool not found');
+      
+      // Handle empty text field as a valid response (return empty object)
+      if (jsonText === '') {
+        log('Empty text field received, returning empty object');
+        return {}; // Return empty object for operations with empty response
+      }
+      
+      if (typeof jsonText !== 'string') {
+        throw new Error('Text field not found or not a string');
       }
 
       // Parse the JSON text
-      console.log('Parsing JSON text...',jsonText);
+      log('Parsing JSON text...', jsonText);
       
       return JSON.parse(jsonText) as InstalledApp[];
     } catch (error) {
@@ -124,7 +131,7 @@ export class ApplicationManager {
 
     try {
       const result = await this.callMcpTool('get_installed_apps', args);
-      console.log('API Response:', result);
+      log('API Response:', result);
       
       return result as InstalledApp[];
     } catch (error) {
@@ -150,7 +157,7 @@ export class ApplicationManager {
 
     try {
       const result = await this.callMcpTool('start_app', args);
-      console.log('API Response start_app:', result);
+      log('API Response start_app:', result);
       
       return result as Process[];
     } catch (error) {
@@ -219,7 +226,7 @@ export class ApplicationManager {
 
     try {
       const result = await this.callMcpTool('list_visible_apps', args);
-      console.log('listVisibleApps Response:', result);
+      log('listVisibleApps Response:', result);
       
       return result as Process[];
     } catch (error) {

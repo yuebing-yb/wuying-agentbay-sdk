@@ -2,6 +2,7 @@ import { APIError } from '../exceptions';
 import { Session } from '../session';
 import Client from '../api/client';
 import { CallMcpToolRequest } from '../api/models/model';
+import { log, logError } from '../utils/logger';
 
 import * as $_client from '../api';
 /**
@@ -39,23 +40,38 @@ export class Command {
         sessionId: this.session.getSessionId(),
         name: 'shell',
         args: JSON.stringify(args)
-      })
-      console.log(callToolRequest,'callToolRequest');
+      });
       
+      // Log API request
+      log("API Call: CallMcpTool (shell)");
+      log(`Request: SessionId=${this.session.getSessionId()}, Name=shell, Args=${JSON.stringify(args)}`);
       
       const response = await this.session.getClient().callMcpTool(callToolRequest);
-      console.log(response,'response');
       
-      if (!response.body?.data) {
-        throw new Error('Invalid response data format');
-      }
-      
-      // Extract content from response
-      const data = response.body.data as any;
-      if (!data.content || !Array.isArray(data.content)) {
-        throw new Error('Content field not found or not an array');
-      }
-      
+    // Log API response
+    log(`Response from CallMcpTool (shell):`, response.body);
+    log(`Response data type: ${typeof response.body?.data}`);
+    
+    if (!response.body?.data) {
+      throw new Error('Invalid response data format');
+    }
+    
+    // Extract content from response
+    const data = response.body.data as any;
+    log(`Response data: ${JSON.stringify(data)}`);
+    
+    // Check if data is a string (direct output)
+    if (typeof data === 'string') {
+      return data;
+    }
+    
+    // Check if data has a 'stdout' field (common in shell command responses)
+    if (data.stdout) {
+      return data.stdout;
+    }
+    
+    // Check for content array structure
+    if (data.content && Array.isArray(data.content)) {
       // Concatenate all text fields
       let fullText = '';
       for (const item of data.content) {
@@ -63,9 +79,13 @@ export class Command {
           fullText += item.text + '\n';
         }
       }
-      
       return fullText;
+    }
+    
+    // If we can't parse the response in a known format, return the stringified data
+    return JSON.stringify(data);
     } catch (error) {
+      logError("Error calling CallMcpTool (shell):", error);
       throw new APIError(`Failed to execute command: ${error}`);
     }
   }
@@ -98,10 +118,15 @@ export class Command {
         name: 'run_code',
         args: JSON.stringify(args)
       });
-      console.log(callToolRequest, 'callToolRequest');
+      
+      // Log API request
+      log("API Call: CallMcpTool (run_code)");
+      log(`Request: SessionId=${this.session.getSessionId()}, Name=run_code, Language=${language}, TimeoutS=${timeoutS}`);
       
       const response = await this.session.getClient().callMcpTool(callToolRequest);
-      console.log(response, 'response');
+      
+      // Log API response
+      log(`Response from CallMcpTool (run_code):`, response.body);
       
       if (!response.body?.data) {
         throw new Error('Invalid response data format');
@@ -115,6 +140,7 @@ export class Command {
       
       return data.output;
     } catch (error) {
+      logError("Error calling CallMcpTool (run_code):", error);
       throw new APIError(`Failed to execute code: ${error}`);
     }
   }

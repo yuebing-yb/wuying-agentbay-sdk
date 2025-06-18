@@ -1,4 +1,5 @@
 import { CallMcpToolRequest } from '../api/models/CallMcpToolRequest';
+import { log } from '../utils/logger';
 
 /**
  * Represents a window in the system.
@@ -55,15 +56,15 @@ export class WindowManager {
       });
 
       // Log API request
-      console.log(`API Call: CallMcpTool - ${name}`);
-      console.log(`Request: SessionId=${request.sessionId}, Args=${request.args}`);
+      log(`API Call: CallMcpTool - ${name}`);
+      log(`Request: SessionId=${request.sessionId}, Args=${request.args}`);
 
       const response = await this.session.getClient().callMcpTool(request);
-      console.log(`Response from CallMcpTool - ${name}:`, JSON.stringify(response));
+      log(`Response from CallMcpTool - ${name}:`, JSON.stringify(response));
 
       // Log API response
       if (response && response.body) {
-        console.log(`Response from CallMcpTool - ${name}:`, response.body);
+        log(`Response from CallMcpTool - ${name}:`, JSON.stringify(response.body));
       }
 
       // Parse the response
@@ -81,7 +82,14 @@ export class WindowManager {
       // Extract text field from the first content item
       const contentItem = content[0];
       const jsonText = contentItem.text;
-      if (!jsonText) {
+      
+      // Handle empty text field as a valid response (return empty object)
+      if (jsonText === '') {
+        log('Empty text field received, returning empty object');
+        return {}; // Return empty object for operations with empty response
+      }
+
+      if (typeof jsonText !== 'string') {
         throw new Error('Text field not found or not a string');
       }
 
@@ -140,7 +148,7 @@ export class WindowManager {
 
     try {
       const result = await this.callMcpTool('list_root_windows', args);
-      console.log(result);
+      log(result);
       
       return result as Window[];
     } catch (error) {

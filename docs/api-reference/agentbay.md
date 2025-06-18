@@ -301,23 +301,23 @@ async function main() {
         environment: 'development'
       }
     });
-    console.log(`Session created with ID: ${session.sessionId}`);
+    log(`Session created with ID: ${session.sessionId}`);
     
     // List all sessions
     const allSessions = agentBay.list();
-    console.log(`Found ${allSessions.length} sessions`);
+    log(`Found ${allSessions.length} sessions`);
     
     // List sessions by labels
     const filteredSessions = await agentBay.listByLabels({
       purpose: 'demo'
     });
-    console.log(`Found ${filteredSessions.length} matching sessions`);
+    log(`Found ${filteredSessions.length} matching sessions`);
     
     // Delete the session
     await agentBay.delete(session);
-    console.log('Session deleted successfully');
+    log('Session deleted successfully');
   } catch (error) {
-    console.error('Error:', error);
+    logError('Error:', error);
   }
 }
 

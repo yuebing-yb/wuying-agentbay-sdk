@@ -72,21 +72,21 @@ async function main() {
   try {
     // Create a new session
     const session = await agentBay.create();
-    console.log(`Session created with ID: ${session.sessionId}`);
+    log(`Session created with ID: ${session.sessionId}`);
 
     // Execute a command
     const result = await session.command.execute_command('ls -la');
-    console.log('Command result:', result);
+    log('Command result:', result);
 
     // Read a file
     const content = await session.filesystem.read_file('/etc/hosts');
-    console.log(`File content: ${content}`);
+    log(`File content: ${content}`);
 
     // Delete the session
     await agentBay.delete(session);
-    console.log('Session deleted successfully');
+    log('Session deleted successfully');
   } catch (error) {
-    console.error('Error:', error);
+    logError('Error:', error);
   }
 }
 
