@@ -72,47 +72,47 @@ async function main() {
         environment: 'development'
       }
     });
-    console.log(`Session created with ID: ${session.sessionId}`);
+    log(`Session created with ID: ${session.sessionId}`);
     
     // Execute a command
     const result = await session.command.executeCommand('ls -la');
-    console.log(`Command result: ${result}`);
+    log(`Command result: ${result}`);
     
     // Read a file
     const content = await session.filesystem.readFile('/path/to/file.txt');
-    console.log(`File content: ${content}`);
+    log(`File content: ${content}`);
     
     // Get installed applications
     const apps = await session.application.getInstalledApps(true, false, true);
-    console.log(`Found ${apps.length} installed applications`);
+    log(`Found ${apps.length} installed applications`);
     
     // List visible applications
     const processes = await session.application.listVisibleApps();
-    console.log(`Found ${processes.length} visible applications`);
+    log(`Found ${processes.length} visible applications`);
     
     // List root windows
     const windows = await session.window.listRootWindows();
-    console.log(`Found ${windows.length} root windows`);
+    log(`Found ${windows.length} root windows`);
     
     // Get active window
     const activeWindow = await session.window.getActiveWindow();
-    console.log(`Active window: ${activeWindow.title}`);
+    log(`Active window: ${activeWindow.title}`);
     
     // Get session labels
     const labels = await session.getLabels();
-    console.log(`Session labels: ${JSON.stringify(labels)}`);
+    log(`Session labels: ${JSON.stringify(labels)}`);
     
     // List sessions by labels
     const filteredSessions = await agentBay.listByLabels({
       purpose: 'demo'
     });
-    console.log(`Found ${filteredSessions.length} matching sessions`);
+    log(`Found ${filteredSessions.length} matching sessions`);
     
     // Clean up
     await agentBay.delete(session);
-    console.log('Session deleted successfully');
+    log('Session deleted successfully');
   } catch (error) {
-    console.error('Error:', error);
+    logError('Error:', error);
   }
 }
 

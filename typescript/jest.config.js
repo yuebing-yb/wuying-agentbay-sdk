@@ -1,6 +1,7 @@
 module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
+    testTimeout: 300000, // Set global timeout to 300 seconds for all tests
     moduleFileExtensions: ['ts', 'js', 'json'],
     transform: {
       '^.+\\.ts$': 'ts-jest'

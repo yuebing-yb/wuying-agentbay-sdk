@@ -115,7 +115,7 @@ print(f"Session labels: {labels}")
 
 ```typescript
 const labels = await session.getLabels();
-console.log("Session labels:", labels);
+log("Session labels:", labels);
 ```
 
 ### Filtering Sessions by Labels
@@ -165,14 +165,14 @@ print(f"Found {len(sessions)} sessions with environment=development AND owner=te
 ```typescript
 // Find sessions with environment=development
 const sessions = await agentBay.listByLabels({ environment: "development" });
-console.log(`Found ${sessions.length} sessions with environment=development`);
+log(`Found ${sessions.length} sessions with environment=development`);
 
 // Find sessions with multiple labels
 const sessions2 = await agentBay.listByLabels({
   environment: "development",
   owner: "team-a"
 });
-console.log(`Found ${sessions2.length} sessions with environment=development AND owner=team-a`);
+log(`Found ${sessions2.length} sessions with environment=development AND owner=team-a`);
 ```
 
 ## Usage Examples
@@ -226,15 +226,15 @@ print("Session deleted successfully")
 ```typescript
 // Create a session
 const session = await agentBay.create();
-console.log(`Session created with ID: ${session.sessionId}`);
+log(`Session created with ID: ${session.sessionId}`);
 
 // Use the session to execute a command
 const result = await session.command.executeCommand('ls -la');
-console.log('Command result:', result);
+log('Command result:', result);
 
 // Delete the session
 await agentBay.delete(session);
-console.log('Session deleted successfully');
+log('Session deleted successfully');
 ```
 
 ## Related Resources

@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 // TestContext_GetNonExistentContext tests attempting to get a context that doesn't exist
 func TestContext_GetNonExistentContext(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -43,7 +44,7 @@ func TestContext_GetNonExistentContext(t *testing.T) {
 // TestContext_Create tests creating a new context
 func TestContext_Create(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -78,7 +79,7 @@ func TestContext_Create(t *testing.T) {
 // TestContext_Get tests retrieving a context by name
 func TestContext_Get(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -122,7 +123,7 @@ func TestContext_Get(t *testing.T) {
 // TestContext_List tests listing all contexts
 func TestContext_List(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -183,7 +184,7 @@ func TestContext_List(t *testing.T) {
 // TestContext_Update tests updating a context's name
 func TestContext_Update(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -238,7 +239,7 @@ func TestContext_Update(t *testing.T) {
 // TestContext_Delete tests deleting a context
 func TestContext_Delete(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)

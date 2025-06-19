@@ -2,12 +2,13 @@ import { AgentBay } from './agent-bay';
 import { APIError } from './exceptions';
 import { FileSystem } from './filesystem';
 import { Command } from './command';
-import { Adb } from './adb';
 import { Oss } from './oss';
-import { ApplicationManager } from './application';
+import { Application } from './application';
 import { WindowManager } from './window';
+import { UI } from './ui';
 import Client from './api/client';
-import { ReleaseMcpSessionRequest, SetLabelRequest, GetLabelRequest, GetMcpResourceRequest } from './api/models/model';
+import { ReleaseMcpSessionRequest, SetLabelRequest, GetLabelRequest, GetMcpResourceRequest, GetLinkRequest } from './api/models/model';
+import { log, logError } from './utils/logger';
 
 /**
  * Contains information about a session.
@@ -31,15 +32,15 @@ export class Session {
   public sessionId: string;
   public resourceUrl: string = "";
   
-  // File, command, adb, and oss handlers
+  // File, command, and oss handlers
   public filesystem: FileSystem;
   public command: Command;
-  public adb: Adb;
   public oss: Oss;
   
-  // Application and window management
-  public application: ApplicationManager;
+  // Application, window, and UI management
+  public Application: Application;
   public window: WindowManager;
+  public ui: UI;
 
   /**
    * Initialize a Session object.
@@ -51,17 +52,17 @@ export class Session {
     this.agentBay = agentBay;
     this.sessionId = sessionId;
     this.client = agentBay.getClient();
-    console.log(`Session created with ID: ${sessionId}`);
+    log(`Session created with ID: ${sessionId}`);
     
-    // Initialize filesystem, command, adb, and oss handlers
+    // Initialize filesystem, command, and oss handlers
     this.filesystem = new FileSystem(this);
     this.command = new Command(this);
-    this.adb = new Adb(this);
     this.oss = new Oss(this);
     
-    // Initialize application and window managers
-    this.application = new ApplicationManager(this);
+    // Initialize application, window, and UI managers
+    this.Application = new Application(this);
     this.window = new WindowManager(this);
+    this.ui = new UI(this);
   }
 
   /**
@@ -90,13 +91,20 @@ export class Session {
         authorization: `Bearer ${this.getAPIKey()}`,
         sessionId: this.sessionId
       });
-      console.log("API Call delete: ReleaseMcpSession",this.sessionId);
       
-      await this.client.releaseMcpSession(releaseSessionRequest);
+      // Log API request
+      log("API Call: ReleaseMcpSession");
+      log(`Request: SessionId=${this.sessionId}`);
+      
+      const response = await this.client.releaseMcpSession(releaseSessionRequest);
+      
+      // Log API response
+      log(`Response from ReleaseMcpSession:`, response.body);
      
       this.agentBay.removeSession(this.sessionId);
-    return true;
+      return true;
     } catch (error) {
+      logError("Error calling ReleaseMcpSession:", error);
       throw new APIError(`Failed to delete session: ${error}`);
     }
   }
@@ -120,10 +128,17 @@ export class Session {
         labels: labelsJSON
       });
       
-      const result = await this.client.setLabel(request);
-      console.log( 'response from setLabels',result);
+      // Log API request
+      log("API Call: SetLabel");
+      log(`Request: SessionId=${this.sessionId}, Labels=${labelsJSON}`);
+      
+      const response = await this.client.setLabel(request);
+      
+      // Log API response
+      log(`Response from SetLabel:`, response.body);
       
     } catch (error) {
+      logError("Error calling SetLabel:", error);
       throw new APIError(`Failed to set labels for session: ${error}`);
     }
   }
@@ -141,8 +156,14 @@ export class Session {
         sessionId: this.sessionId
       });
       
+      // Log API request
+      log("API Call: GetLabel");
+      log(`Request: SessionId=${this.sessionId}`);
+      
       const response = await this.client.getLabel(request);
-      console.log(`Response from GetLabel: ${JSON.stringify(response)}`);
+      
+      // Log API response
+      log(`Response from GetLabel:`, response.body);
       
       // Extract labels from response
       const labelsJSON = response.body?.data?.labels;
@@ -153,6 +174,7 @@ export class Session {
       
       return {};
     } catch (error) {
+      logError("Error calling GetLabel:", error);
       throw new APIError(`Failed to get labels for session: ${error}`);
     }
   }
@@ -198,11 +220,11 @@ export class Session {
         sessionId: this.sessionId
       });
       
-      console.log("API Call: GetMcpResource");
-      console.log(`Request: SessionId=${this.sessionId}`);
+      log("API Call: GetMcpResource");
+      log(`Request: SessionId=${this.sessionId}`);
       
       const response = await this.client.getMcpResource(request);
-      console.log(`Response from GetMcpResource: ${JSON.stringify(response)}`);
+      log(`Response from GetMcpResource:`, response.body);
       
       // Extract session info from response
       const sessionInfo: SessionInfo = {
@@ -227,8 +249,38 @@ export class Session {
       
       return sessionInfo;
     } catch (error) {
-      console.error("Error calling GetMcpResource:", error);
+      logError("Error calling GetMcpResource:", error);
       throw new APIError(`Failed to get session info for session ${this.sessionId}: ${error}`);
+    }
+  }
+  
+  /**
+   * Gets the link for this session.
+   * 
+   * @returns The link for the session.
+   * @throws APIError if the operation fails.
+   */
+  async getLink(): Promise<string> {
+    try {
+      const request = new GetLinkRequest({
+        authorization: `Bearer ${this.getAPIKey()}`,
+        sessionId: this.sessionId
+      });
+      
+      log("API Call: GetLink");
+      log(`Request: SessionId=${this.sessionId}`);
+      
+      const response = await this.client.getLink(request);
+      log(`Response from GetLink:`, response.body);
+      
+      if (response.body?.data) {
+        return response.body.data;
+      }
+      
+      return "";
+    } catch (error) {
+      logError("Error calling GetLink:", error);
+      throw new APIError(`Failed to get link for session ${this.sessionId}: ${error}`);
     }
   }
 }

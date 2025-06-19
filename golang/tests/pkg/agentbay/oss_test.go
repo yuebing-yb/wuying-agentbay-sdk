@@ -3,9 +3,11 @@ package agentbay_test
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 // Helper function to get OSS credentials from environment variables or use defaults
@@ -45,7 +47,7 @@ func getOssCredentials(t *testing.T) (string, string, string, string, string) {
 
 func TestOss_EnvInit(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -77,15 +79,18 @@ func TestOss_EnvInit(t *testing.T) {
 		accessKeyId, accessKeySecret, securityToken, endpoint, region := getOssCredentials(t)
 
 		fmt.Println("Initializing OSS environment...")
-		result, err := session.Oss.EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region)
-		t.Logf("EnvInit result: %s, err=%v", result, err)
+		rawResult, err := session.Oss.EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region)
 		if err != nil {
 			t.Errorf("OSS environment initialization failed: %v", err)
 		} else {
 			t.Log("OSS environment initialization successful")
 
+			// Extract text from the result
+			result := extractOssTextFromContent(rawResult)
+			t.Logf("EnvInit result: %s, err=%v", result, err)
+
 			// Check if response contains "tool not found"
-			if containsToolNotFound(result) {
+			if testutil.ContainsToolNotFound(result) {
 				t.Errorf("Oss.EnvInit returned 'tool not found'")
 			}
 		}
@@ -94,9 +99,37 @@ func TestOss_EnvInit(t *testing.T) {
 	}
 }
 
+// Helper function to extract text from content response
+func extractOssTextFromContent(rawContent interface{}) string {
+	contentArray, ok := rawContent.([]interface{})
+	if !ok {
+		return fmt.Sprintf("Failed to convert to []interface{}: %v", rawContent)
+	}
+
+	var result strings.Builder
+	for _, item := range contentArray {
+		contentItem, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		if result.Len() > 0 {
+			result.WriteString("\n")
+		}
+		result.WriteString(text)
+	}
+
+	return result.String()
+}
+
 func TestOss_Upload(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -149,15 +182,18 @@ func TestOss_Upload(t *testing.T) {
 			bucket = "test-bucket"
 		}
 		objectKey := "test-object.txt"
-		result, err := session.Oss.Upload(bucket, objectKey, testFilePath)
-		t.Logf("Upload result: %s, err=%v", result, err)
+		rawResult, err := session.Oss.Upload(bucket, objectKey, testFilePath)
 		if err != nil {
 			t.Errorf("OSS upload failed: %v", err)
 		} else {
 			t.Log("OSS upload successful")
 
+			// Extract text from the result
+			result := extractOssTextFromContent(rawResult)
+			t.Logf("Upload result: %s, err=%v", result, err)
+
 			// Check if response contains "tool not found"
-			if containsToolNotFound(result) {
+			if testutil.ContainsToolNotFound(result) {
 				t.Errorf("Oss.Upload returned 'tool not found'")
 			}
 		}
@@ -168,7 +204,7 @@ func TestOss_Upload(t *testing.T) {
 
 func TestOss_UploadAnonymous(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -213,15 +249,18 @@ func TestOss_UploadAnonymous(t *testing.T) {
 		if uploadUrl == "" {
 			uploadUrl = "https://example.com/upload/test-file.txt"
 		}
-		result, err := session.Oss.UploadAnonymous(uploadUrl, testFilePath)
-		t.Logf("UploadAnonymous result: %s, err=%v", result, err)
+		rawResult, err := session.Oss.UploadAnonymous(uploadUrl, testFilePath)
 		if err != nil {
 			t.Errorf("OSS anonymous upload failed: %v", err)
 		} else {
 			t.Log("OSS anonymous upload successful")
 
+			// Extract text from the result
+			result := extractOssTextFromContent(rawResult)
+			t.Logf("UploadAnonymous result: %s, err=%v", result, err)
+
 			// Check if response contains "tool not found"
-			if containsToolNotFound(result) {
+			if testutil.ContainsToolNotFound(result) {
 				t.Errorf("Oss.UploadAnonymous returned 'tool not found'")
 			}
 		}
@@ -232,7 +271,7 @@ func TestOss_UploadAnonymous(t *testing.T) {
 
 func TestOss_Download(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -274,19 +313,22 @@ func TestOss_Download(t *testing.T) {
 		}
 		objectKey := "test-object.txt"
 		downloadPath := "/tmp/test_oss_download.txt"
-		result, err := session.Oss.Download(bucket, objectKey, downloadPath)
-		t.Logf("Download result: %s, err=%v", result, err)
+		rawResult, err := session.Oss.Download(bucket, objectKey, downloadPath)
 		if err != nil {
 			t.Errorf("OSS download failed: %v", err)
 		} else {
 			t.Log("OSS download successful")
 
+			// Extract text from the result
+			result := extractOssTextFromContent(rawResult)
+			t.Logf("Download result: %s, err=%v", result, err)
+
 			// Check if response contains "tool not found"
-			if containsToolNotFound(result) {
+			if testutil.ContainsToolNotFound(result) {
 				t.Errorf("Oss.Download returned 'tool not found'")
 			}
 
-			// Verify the downloaded file exists
+			// Verify the file was downloaded
 			if session.FileSystem != nil {
 				fileInfo, err := session.FileSystem.GetFileInfo(downloadPath)
 				if err != nil {
@@ -303,7 +345,7 @@ func TestOss_Download(t *testing.T) {
 
 func TestOss_DownloadAnonymous(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -337,25 +379,28 @@ func TestOss_DownloadAnonymous(t *testing.T) {
 			downloadUrl = "https://example.com/download/test-file.txt"
 		}
 		downloadPath := "/tmp/test_oss_download_anon.txt"
-		result, err := session.Oss.DownloadAnonymous(downloadUrl, downloadPath)
-		t.Logf("DownloadAnonymous result: %s, err=%v", result, err)
+		rawResult, err := session.Oss.DownloadAnonymous(downloadUrl, downloadPath)
 		if err != nil {
 			t.Errorf("OSS anonymous download failed: %v", err)
 		} else {
 			t.Log("OSS anonymous download successful")
 
+			// Extract text from the result
+			result := extractOssTextFromContent(rawResult)
+			t.Logf("DownloadAnonymous result: %s, err=%v", result, err)
+
 			// Check if response contains "tool not found"
-			if containsToolNotFound(result) {
+			if testutil.ContainsToolNotFound(result) {
 				t.Errorf("Oss.DownloadAnonymous returned 'tool not found'")
 			}
 
-			// Verify the downloaded file exists
+			// Verify the file was downloaded
 			if session.FileSystem != nil {
 				fileInfo, err := session.FileSystem.GetFileInfo(downloadPath)
 				if err != nil {
-					t.Errorf("Failed to get info for downloaded file: %v", err)
+					t.Errorf("Failed to get info for anonymously downloaded file: %v", err)
 				} else {
-					t.Logf("Downloaded file info: %v", fileInfo)
+					t.Logf("Anonymously downloaded file info: %v", fileInfo)
 				}
 			}
 		}

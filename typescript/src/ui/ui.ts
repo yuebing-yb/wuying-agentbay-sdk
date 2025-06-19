@@ -1,7 +1,7 @@
-import { CallMcpToolRequest } from '../api/models/CallMcpToolRequest';
-import Client from '../api/client';
-import { log, logError } from '../utils/logger';
 import { APIError } from '../exceptions';
+import { Session } from '../session';
+import { CallMcpToolRequest } from '../api/models/model';
+import { log, logError } from '../utils/logger';
 
 /**
  * Result object for a CallMcpTool operation
@@ -15,46 +15,30 @@ interface CallMcpToolResult {
 }
 
 /**
- * Represents an installed application.
+ * KeyCode constants for mobile device input
  */
-export interface InstalledApp {
-  name: string;
-  start_cmd: string;
-  stop_cmd?: string;
-  work_directory?: string;
-}
+export const KeyCode = {
+  HOME: 3,
+  BACK: 4,
+  VOLUME_UP: 24,
+  VOLUME_DOWN: 25,
+  POWER: 26,
+  MENU: 82
+};
 
 /**
- * Represents a running process.
+ * UI handles UI operations in the AgentBay cloud environment.
  */
-export interface Process {
-  pname: string;
-  pid: number;
-  cmdline?: string;
-  path?: string;
-}
-
-/**
- * Handles application management operations in the AgentBay cloud environment.
- */
-export class Application {
-  private session: {
-    getAPIKey(): string;
-    getClient(): Client;
-    getSessionId(): string;
-  };
+export class UI {
+  private session: Session;
 
   /**
-   * Creates a new Application instance.
-   * @param session The session object that provides access to the AgentBay API.
+   * Initialize a UI object.
+   * 
+   * @param session - The Session instance that this UI belongs to.
    */
-  constructor(session: {
-    getAPIKey(): string;
-    getClient(): Client;
-    getSessionId(): string;
-  }) {
+  constructor(session: Session) {
     this.session = session;
-    
   }
 
   /**
@@ -73,7 +57,7 @@ export class Application {
   ): Promise<CallMcpToolResult> {
     try {
       const argsJSON = JSON.stringify(args);
-      const request = new CallMcpToolRequest({
+      const callToolRequest = new CallMcpToolRequest({
         authorization: `Bearer ${this.session.getAPIKey()}`,
         sessionId: this.session.getSessionId(),
         name: toolName,
@@ -82,21 +66,18 @@ export class Application {
       
       // Log API request
       log(`API Call: CallMcpTool - ${toolName}`);
-      log(`Request: SessionId=${request.sessionId}, Args=${request.args}`);
+      log(`Request: SessionId=${this.session.getSessionId()}, Args=${argsJSON}`);
       
-      const client = this.session.getClient();
-      const response = await client.callMcpTool(request);
+      const response = await this.session.getClient().callMcpTool(callToolRequest);
       
       // Log API response
-      if (response && response.body) {
-        log(`Response from CallMcpTool - ${toolName}:`, response.body);
-      }
+      log(`Response from CallMcpTool - ${toolName}:`, response.body);
       
-      // Extract data from response
       if (!response.body?.data) {
         throw new Error('Invalid response data format');
       }
       
+      // Extract data from response
       const data = response.body.data as Record<string, any>;
       
       // Create result object
@@ -137,112 +118,135 @@ export class Application {
   }
 
   /**
-   * Retrieves a list of installed applications.
-   * @param startMenu Whether to include applications from the start menu. Defaults to true.
-   * @param desktop Whether to include applications from the desktop. Defaults to true.
-   * @param ignoreSystemApps Whether to ignore system applications. Defaults to true.
+   * Retrieves all clickable UI elements within the specified timeout.
+   * 
+   * @param timeoutMs - The timeout in milliseconds. Default is 2000ms.
    * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async getInstalledApps(
-    startMenu: boolean = true,
-    desktop: boolean = true,
-    ignoreSystemApps: boolean = true
-  ): Promise<any> {
+  async getClickableUIElements(timeoutMs: number = 2000): Promise<any> {
     const args = {
-      start_menu: startMenu,
-      desktop,
-      ignore_system_apps: ignoreSystemApps
+      timeout_ms: timeoutMs
     };
-
-    const result = await this.callMcpTool('get_installed_apps', args, 'Failed to get installed apps');
+    
+    const result = await this.callMcpTool('get_clickable_ui_elements', args, 'Failed to get clickable UI elements');
     
     // Return the raw content field for the caller to parse
     return result.data.content;
   }
 
   /**
-   * Starts an application with the given command and optional working directory.
-   * @param startCmd The command to start the application.
-   * @param workDirectory The working directory for the application. Defaults to an empty string.
+   * Retrieves all UI elements within the specified timeout.
+   * 
+   * @param timeoutMs - The timeout in milliseconds. Default is 2000ms.
    * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async startApp(startCmd: string, workDirectory: string = ''): Promise<any> {
-    const args: any = {
-      start_cmd: startCmd
-    };
-
-    if (workDirectory) {
-      args.work_directory = workDirectory;
-    }
-
-    const result = await this.callMcpTool('start_app', args, 'Failed to start app');
-    
-    // Return the raw content field for the caller to parse
-    return result.data.content;
-  }
-
-  /**
-   * Stops an application by process name.
-   * @param pname The name of the process to stop.
-   * @returns The content field from the API response
-   * @throws Error if the operation fails.
-   */
-  async stopAppByPName(pname: string): Promise<any> {
+  async getAllUIElements(timeoutMs: number = 2000): Promise<any> {
     const args = {
-      pname
+      timeout_ms: timeoutMs
     };
-
-    const result = await this.callMcpTool('stop_app_by_pname', args, 'Failed to stop app by pname');
+    
+    const result = await this.callMcpTool('get_all_ui_elements', args, 'Failed to get all UI elements');
     
     // Return the raw content field for the caller to parse
     return result.data.content;
   }
 
   /**
-   * Stops an application by process ID.
-   * @param pid The ID of the process to stop.
+   * Sends a key press event.
+   * 
+   * @param key - The key code to send.
    * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async stopAppByPID(pid: number): Promise<any> {
+  async sendKey(key: number): Promise<any> {
     const args = {
-      pid
+      key
     };
-
-    const result = await this.callMcpTool('stop_app_by_pid', args, 'Failed to stop app by pid');
+    
+    const result = await this.callMcpTool('send_key', args, 'Failed to send key');
     
     // Return the raw content field for the caller to parse
     return result.data.content;
   }
 
   /**
-   * Stops an application by stop command.
-   * @param stopCmd The command to stop the application.
+   * Inputs text into the active field.
+   * 
+   * @param text - The text to input.
    * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async stopAppByCmd(stopCmd: string): Promise<any> {
+  async inputText(text: string): Promise<any> {
     const args = {
-      stop_cmd: stopCmd
+      text
     };
-
-    const result = await this.callMcpTool('stop_app_by_cmd', args, 'Failed to stop app by command');
+    
+    const result = await this.callMcpTool('input_text', args, 'Failed to input text');
     
     // Return the raw content field for the caller to parse
     return result.data.content;
   }
 
   /**
-   * Lists all currently visible applications.
+   * Performs a swipe gesture on the screen.
+   * 
+   * @param startX - The starting X coordinate.
+   * @param startY - The starting Y coordinate.
+   * @param endX - The ending X coordinate.
+   * @param endY - The ending Y coordinate.
+   * @param durationMs - The duration of the swipe in milliseconds. Default is 300ms.
    * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async listVisibleApps(): Promise<any> {
+  async swipe(startX: number, startY: number, endX: number, endY: number, durationMs: number = 300): Promise<any> {
+    const args = {
+      start_x: startX,
+      start_y: startY,
+      end_x: endX,
+      end_y: endY,
+      duration_ms: durationMs
+    };
+    
+    const result = await this.callMcpTool('swipe', args, 'Failed to perform swipe');
+    
+    // Return the raw content field for the caller to parse
+    return result.data.content;
+  }
+
+  /**
+   * Clicks on the screen at the specified coordinates.
+   * 
+   * @param x - The X coordinate.
+   * @param y - The Y coordinate.
+   * @param button - The mouse button to use. Default is 'left'.
+   * @returns The content field from the API response
+   * @throws Error if the operation fails.
+   */
+  async click(x: number, y: number, button: string = 'left'): Promise<any> {
+    const args = {
+      x,
+      y,
+      button
+    };
+    
+    const result = await this.callMcpTool('click', args, 'Failed to click');
+    
+    // Return the raw content field for the caller to parse
+    return result.data.content;
+  }
+
+  /**
+   * Takes a screenshot of the current screen.
+   * 
+   * @returns The content field from the API response containing the base64 encoded screenshot
+   * @throws Error if the operation fails.
+   */
+  async screenshot(): Promise<any> {
     const args = {};
-
-    const result = await this.callMcpTool('list_visible_apps', args, 'Failed to list visible apps');
+    
+    const result = await this.callMcpTool('screenshot', args, 'Failed to take screenshot');
     
     // Return the raw content field for the caller to parse
     return result.data.content;

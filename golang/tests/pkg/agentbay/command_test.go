@@ -6,34 +6,16 @@ import (
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 func TestCommand_ExecuteCommand(t *testing.T) {
-	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
-	agentBay, err := agentbay.NewAgentBay(apiKey)
-	if err != nil {
-		t.Fatalf("Error initializing AgentBay client: %v", err)
-	}
+	// Create session parameters with ImageId set to code_latest
+	params := agentbay.NewCreateSessionParams().WithImageId("code_latest")
 
-	// Create a session
-	fmt.Println("Creating a new session for command testing...")
-	session, err := agentBay.Create(nil)
-	if err != nil {
-		t.Fatalf("Error creating session: %v", err)
-	}
-	t.Logf("Session created with ID: %s", session.SessionID)
-
-	// IMPORTANT: Ensure cleanup of the session after test
-	defer func() {
-		fmt.Println("Cleaning up: Deleting the session...")
-		err := agentBay.Delete(session)
-		if err != nil {
-			t.Logf("Warning: Error deleting session: %v", err)
-		} else {
-			t.Log("Session successfully deleted")
-		}
-	}()
+	// Setup session with cleanup
+	session, cleanup := testutil.SetupAndCleanup(t, params)
+	defer cleanup()
 
 	// Test Command execution
 	if session.Command != nil {
@@ -43,14 +25,16 @@ func TestCommand_ExecuteCommand(t *testing.T) {
 		echoCmd := fmt.Sprintf("echo '%s'", testString)
 
 		// Test with default timeout
-		response, err := session.Command.ExecuteCommand(echoCmd)
+		rawResponse, err := session.Command.ExecuteCommand(echoCmd)
 		if err != nil {
 			t.Logf("Note: Echo command failed: %v", err)
 		} else {
+			// Extract text from raw response
+			response := extractTextFromContent(rawResponse)
 			t.Logf("Echo command result: %s", response)
 
 			// Check if response contains "tool not found"
-			if containsToolNotFound(response) {
+			if testutil.ContainsToolNotFound(response) {
 				t.Errorf("Command.ExecuteCommand returned 'tool not found'")
 			}
 
@@ -65,14 +49,16 @@ func TestCommand_ExecuteCommand(t *testing.T) {
 		// Test with custom timeout
 		fmt.Println("Executing echo command with custom timeout...")
 		customTimeout := 2000 // 2 seconds
-		responseWithTimeout, err := session.Command.ExecuteCommand(echoCmd, customTimeout)
+		rawResponseWithTimeout, err := session.Command.ExecuteCommand(echoCmd, customTimeout)
 		if err != nil {
 			t.Logf("Note: Echo command with custom timeout failed: %v", err)
 		} else {
+			// Extract text from raw response
+			responseWithTimeout := extractTextFromContent(rawResponseWithTimeout)
 			t.Logf("Echo command with custom timeout result: %s", responseWithTimeout)
 
 			// Check if response contains "tool not found"
-			if containsToolNotFound(responseWithTimeout) {
+			if testutil.ContainsToolNotFound(responseWithTimeout) {
 				t.Errorf("Command.ExecuteCommand with custom timeout returned 'tool not found'")
 			}
 
@@ -88,32 +74,41 @@ func TestCommand_ExecuteCommand(t *testing.T) {
 	}
 }
 
-func TestCommand_RunCode(t *testing.T) {
-	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
-	agentBay, err := agentbay.NewAgentBay(apiKey)
-	if err != nil {
-		t.Fatalf("Error initializing AgentBay client: %v", err)
+// Helper function to extract text from content response
+func extractTextFromContent(rawContent interface{}) string {
+	contentArray, ok := rawContent.([]interface{})
+	if !ok {
+		return fmt.Sprintf("Failed to convert to []interface{}: %v", rawContent)
 	}
 
-	// Create a session
-	fmt.Println("Creating a new session for run_code testing...")
-	session, err := agentBay.Create(nil)
-	if err != nil {
-		t.Fatalf("Error creating session: %v", err)
-	}
-	t.Logf("Session created with ID: %s", session.SessionID)
-
-	// IMPORTANT: Ensure cleanup of the session after test
-	defer func() {
-		fmt.Println("Cleaning up: Deleting the session...")
-		err := agentBay.Delete(session)
-		if err != nil {
-			t.Logf("Warning: Error deleting session: %v", err)
-		} else {
-			t.Log("Session successfully deleted")
+	var result strings.Builder
+	for _, item := range contentArray {
+		contentItem, ok := item.(map[string]interface{})
+		if !ok {
+			continue
 		}
-	}()
+
+		text, ok := contentItem["text"].(string)
+		if !ok {
+			continue
+		}
+
+		if result.Len() > 0 {
+			result.WriteString("\n")
+		}
+		result.WriteString(text)
+	}
+
+	return result.String()
+}
+
+func TestCommand_RunCode(t *testing.T) {
+	// Create session parameters with ImageId set to code_latest
+	params := agentbay.NewCreateSessionParams().WithImageId("code_latest")
+
+	// Setup session with cleanup
+	session, cleanup := testutil.SetupAndCleanup(t, params)
+	defer cleanup()
 
 	// Test RunCode execution
 	if session.Command != nil {
@@ -125,14 +120,16 @@ x = 1 + 1
 print(x)
 `
 		// Test with default timeout
-		response, err := session.Command.RunCode(pythonCode, "python")
+		rawResponse, err := session.Command.RunCode(pythonCode, "python")
 		if err != nil {
 			t.Logf("Note: Python code execution failed: %v", err)
 		} else {
+			// Extract text from raw response
+			response := extractTextFromContent(rawResponse)
 			t.Logf("Python code execution result: %s", response)
 
 			// Check if response contains "tool not found"
-			if containsToolNotFound(response) {
+			if testutil.ContainsToolNotFound(response) {
 				t.Errorf("Command.RunCode returned 'tool not found'")
 			}
 
@@ -152,14 +149,16 @@ const x = 1 + 1;
 console.log(x);
 `
 		customTimeout := 600 // 10 minutes
-		responseJs, err := session.Command.RunCode(jsCode, "javascript", customTimeout)
+		rawResponseJs, err := session.Command.RunCode(jsCode, "javascript", customTimeout)
 		if err != nil {
 			t.Logf("Note: JavaScript code execution with custom timeout failed: %v", err)
 		} else {
+			// Extract text from raw response
+			responseJs := extractTextFromContent(rawResponseJs)
 			t.Logf("JavaScript code execution with custom timeout result: %s", responseJs)
 
 			// Check if response contains "tool not found"
-			if containsToolNotFound(responseJs) {
+			if testutil.ContainsToolNotFound(responseJs) {
 				t.Errorf("Command.RunCode with custom timeout returned 'tool not found'")
 			}
 

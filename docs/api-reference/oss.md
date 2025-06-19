@@ -4,6 +4,25 @@ The OSS (Object Storage Service) module provides functionality for interacting w
 
 ## Go
 
+### Initializing OSS Environment
+
+```go
+func (o *Oss) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region string) (string, error)
+```
+
+Creates and initializes OSS environment variables with the specified credentials.
+
+**Parameters:**
+- `accessKeyId`: The Access Key ID for OSS authentication.
+- `accessKeySecret`: The Access Key Secret for OSS authentication.
+- `securityToken`: The security token for OSS authentication.
+- `endpoint`: The OSS service endpoint. If not specified, the default is used.
+- `region`: The OSS region. If not specified, the default is used.
+
+**Returns:**
+- `string`: The result of the environment initialization operation.
+- `error`: An error if the operation fails.
+
 ### Creating an OSS Client
 
 ```go
@@ -186,6 +205,33 @@ Downloads a file from a URL anonymously to a local file.
 - `OssError`: If the download fails.
 
 ## TypeScript
+
+### Initializing OSS Environment
+
+```typescript
+async envInit(
+  accessKeyId: string,
+  accessKeySecret: string,
+  securityToken: string,
+  endpoint?: string,
+  region?: string
+): Promise<string>
+```
+
+Initializes OSS environment variables with the specified credentials.
+
+**Parameters:**
+- `accessKeyId`: The Access Key ID for OSS authentication.
+- `accessKeySecret`: The Access Key Secret for OSS authentication.
+- `securityToken`: The security token for OSS authentication.
+- `endpoint`: The OSS service endpoint. If not specified, the default is used.
+- `region`: The OSS region. If not specified, the default is used.
+
+**Returns:**
+- `Promise<string>`: The result of the environment initialization operation.
+
+**Throws:**
+- `APIError`: If the environment initialization fails.
 
 ### Creating an OSS Client
 

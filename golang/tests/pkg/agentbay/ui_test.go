@@ -6,11 +6,12 @@ import (
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/ui"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 func TestUI_Screenshot(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -45,7 +46,7 @@ func TestUI_Screenshot(t *testing.T) {
 		} else {
 			t.Logf("Screenshot captured, data length: %d bytes", len(screenshot))
 			// Check if response contains "tool not found"
-			if containsToolNotFound(screenshot) {
+			if testutil.ContainsToolNotFound(screenshot) {
 				t.Errorf("UI.Screenshot returned 'tool not found'")
 			}
 		}
@@ -56,7 +57,7 @@ func TestUI_Screenshot(t *testing.T) {
 
 func TestUI_GetClickableUIElements(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -98,7 +99,7 @@ func TestUI_GetClickableUIElements(t *testing.T) {
 
 func TestUI_GetAllUIElements(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -144,7 +145,7 @@ func TestUI_GetAllUIElements(t *testing.T) {
 
 func TestUI_SendKey(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -186,7 +187,7 @@ func TestUI_SendKey(t *testing.T) {
 
 func TestUI_InputText(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -229,7 +230,7 @@ func TestUI_InputText(t *testing.T) {
 
 func TestUI_Click(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -272,7 +273,7 @@ func TestUI_Click(t *testing.T) {
 
 func TestUI_Swipe(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)

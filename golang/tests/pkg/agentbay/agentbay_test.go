@@ -3,30 +3,15 @@ package agentbay_test
 import (
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
-
-// Helper function to check if a string contains "tool not found"
-func containsToolNotFound(s string) bool {
-	return strings.Contains(strings.ToLower(s), "tool not found")
-}
-
-// Get API key for testing
-func getTestAPIKey(t *testing.T) string {
-	apiKey := os.Getenv("AGENTBAY_API_KEY")
-	if apiKey == "" {
-		apiKey = "akm-xxx" // Replace with your test API key
-		t.Logf("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.")
-	}
-	return apiKey
-}
 
 func TestNewAgentBay(t *testing.T) {
 	// Test with API key provided directly
-	testAPIKey := getTestAPIKey(t)
+	testAPIKey := testutil.GetTestAPIKey(t)
 	client, err := agentbay.NewAgentBay(testAPIKey)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -57,7 +42,7 @@ func TestNewAgentBay(t *testing.T) {
 
 func TestAgentBay_Create_List_Delete(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -124,7 +109,7 @@ func TestAgentBay_Create_List_Delete(t *testing.T) {
 // TestAgentBay_ListByLabels tests the functionality of listing sessions by labels
 func TestAgentBay_ListByLabels(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBayClient, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)

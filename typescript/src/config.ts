@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import 'dotenv/config';
+import { log } from './utils/logger';
 interface Config {
   region_id: string;
   endpoint: string;
@@ -37,7 +38,7 @@ export function loadConfig(): Config {
         if (fs.existsSync(possibleConfigPath)) {
           configPath = possibleConfigPath;
           found = true;
-          console.log(`Found config file at: ${possibleConfigPath}`);
+          log(`Found config file at: ${possibleConfigPath}`);
           break;
         }
         
@@ -52,11 +53,11 @@ export function loadConfig(): Config {
       
       if (!found) {
         // Config file not found, return default config
-        console.log('Warning: Configuration file not found, using default values');
+        log('Warning: Configuration file not found, using default values');
         return defaultConfig();
       }
     } catch (error) {
-      console.log(`Warning: Failed to search for configuration file: ${error}, using default values`);
+      log(`Warning: Failed to search for configuration file: ${error}, using default values`);
       return defaultConfig();
     }
   }
@@ -64,7 +65,7 @@ export function loadConfig(): Config {
   try {
     // Make sure configPath is defined
     if (!configPath) {
-      console.log('Warning: Configuration file path is undefined, using default values');
+      log('Warning: Configuration file path is undefined, using default values');
       return defaultConfig();
     }
     
@@ -82,7 +83,7 @@ export function loadConfig(): Config {
 
     return config;
   } catch (error) {
-    console.log(`Warning: Failed to read configuration file: ${error}, using default values`);
+    log(`Warning: Failed to read configuration file: ${error}, using default values`);
     return defaultConfig();
   }
 }

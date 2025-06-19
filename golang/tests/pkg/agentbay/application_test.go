@@ -1,17 +1,62 @@
 package agentbay_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
+
+// extractInstalledApps 从content数组中解析出InstalledApp对象列表
+func extractInstalledApps(content []map[string]interface{}) ([]application.InstalledApp, error) {
+	if len(content) == 0 {
+		return nil, fmt.Errorf("empty content array")
+	}
+
+	// 从content中获取text字段
+	textContent, ok := content[0]["text"].(string)
+	if !ok {
+		return nil, fmt.Errorf("text field not found or not a string")
+	}
+
+	// 将text解析为InstalledApp对象数组
+	var apps []application.InstalledApp
+	if err := json.Unmarshal([]byte(textContent), &apps); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal apps JSON: %w", err)
+	}
+
+	return apps, nil
+}
+
+// extractProcesses 从content数组中解析出Process对象列表
+func extractProcesses(content []map[string]interface{}) ([]application.Process, error) {
+	if len(content) == 0 {
+		return nil, fmt.Errorf("empty content array")
+	}
+
+	// 从content中获取text字段
+	textContent, ok := content[0]["text"].(string)
+	if !ok {
+		return nil, fmt.Errorf("text field not found or not a string")
+	}
+
+	// 将text解析为Process对象数组
+	var processes []application.Process
+	if err := json.Unmarshal([]byte(textContent), &processes); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal processes JSON: %w", err)
+	}
+
+	return processes, nil
+}
 
 func TestApplication_GetInstalledApps(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -39,10 +84,19 @@ func TestApplication_GetInstalledApps(t *testing.T) {
 	// Test GetInstalledApps
 	if session.Application != nil {
 		fmt.Println("Getting installed applications...")
-		apps, err := session.Application.GetInstalledApps(true, false, true)
+		content, err := session.Application.GetInstalledApps(true, false, true)
 		if err != nil {
 			t.Logf("Note: GetInstalledApps failed: %v", err)
 		} else {
+			t.Logf("Got response with %d content items", len(content))
+
+			// 解析content为InstalledApp对象列表
+			apps, err := extractInstalledApps(content)
+			if err != nil {
+				t.Errorf("Failed to extract InstalledApp from content: %v", err)
+				return
+			}
+
 			t.Logf("Found %d installed applications", len(apps))
 
 			// Verify we got some apps
@@ -64,7 +118,7 @@ func TestApplication_GetInstalledApps(t *testing.T) {
 			}
 
 			// Check if response contains "tool not found"
-			if len(apps) > 0 && containsToolNotFound(apps[0].Name) {
+			if len(apps) > 0 && testutil.ContainsToolNotFound(apps[0].Name) {
 				t.Errorf("Application.GetInstalledApps returned 'tool not found'")
 			}
 		}
@@ -75,7 +129,7 @@ func TestApplication_GetInstalledApps(t *testing.T) {
 
 func TestApplication_ListVisibleApps(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -103,10 +157,19 @@ func TestApplication_ListVisibleApps(t *testing.T) {
 	// Test ListVisibleApps
 	if session.Application != nil {
 		fmt.Println("Listing visible applications...")
-		visibleApps, err := session.Application.ListVisibleApps()
+		content, err := session.Application.ListVisibleApps()
 		if err != nil {
 			t.Logf("Note: ListVisibleApps failed: %v", err)
 		} else {
+			t.Logf("Got response with %d content items", len(content))
+
+			// 解析content为Process对象列表
+			visibleApps, err := extractProcesses(content)
+			if err != nil {
+				t.Errorf("Failed to extract Processes from content: %v", err)
+				return
+			}
+
 			t.Logf("Found %d visible applications", len(visibleApps))
 
 			// Verify we got some apps
@@ -131,7 +194,7 @@ func TestApplication_ListVisibleApps(t *testing.T) {
 			}
 
 			// Check if response contains "tool not found"
-			if len(visibleApps) > 0 && containsToolNotFound(visibleApps[0].PName) {
+			if len(visibleApps) > 0 && testutil.ContainsToolNotFound(visibleApps[0].PName) {
 				t.Errorf("Application.ListVisibleApps returned 'tool not found'")
 			}
 		}
@@ -150,7 +213,7 @@ func min(x, y int) int {
 
 func TestApplication_StartApp(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -183,13 +246,13 @@ func TestApplication_StartApp(t *testing.T) {
 		startCmd := "/usr/bin/google-chrome-stable"
 
 		// Call StartApp function
-		processes, err := session.Application.StartApp(startCmd, "")
+		content, err := session.Application.StartApp(startCmd, "")
 
 		if err != nil {
 			t.Logf("Note: StartApp failed: %v", err)
 
 			// Check if the error is due to the tool not being found
-			if err.Error() != "" && containsToolNotFound(err.Error()) {
+			if err.Error() != "" && testutil.ContainsToolNotFound(err.Error()) {
 				t.Logf("StartApp tool not found, skipping test")
 				return
 			}
@@ -201,6 +264,15 @@ func TestApplication_StartApp(t *testing.T) {
 				return
 			}
 		} else {
+			t.Logf("Got response with %d content items", len(content))
+
+			// 解析content为Process对象列表
+			processes, err := extractProcesses(content)
+			if err != nil {
+				t.Errorf("Failed to extract Processes from content: %v", err)
+				return
+			}
+
 			t.Logf("Application started successfully, returned %d processes", len(processes))
 
 			// Verify we got some processes back
@@ -222,7 +294,7 @@ func TestApplication_StartApp(t *testing.T) {
 					// Try to stop the process to clean up
 					if process.PID > 0 {
 						fmt.Printf("Attempting to stop process %s (PID: %d)...\n", process.PName, process.PID)
-						stopErr := session.Application.StopAppByPID(process.PID)
+						_, stopErr := session.Application.StopAppByPID(process.PID)
 						if stopErr != nil {
 							t.Logf("Warning: Failed to stop process: %v", stopErr)
 						} else {
@@ -233,7 +305,7 @@ func TestApplication_StartApp(t *testing.T) {
 			}
 
 			// Check if response contains "tool not found"
-			if len(processes) > 0 && containsToolNotFound(processes[0].PName) {
+			if len(processes) > 0 && testutil.ContainsToolNotFound(processes[0].PName) {
 				t.Errorf("Application.StartApp returned 'tool not found'")
 			}
 		}
@@ -244,7 +316,7 @@ func TestApplication_StartApp(t *testing.T) {
 
 func TestApplication_StopAppByPName(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -274,13 +346,13 @@ func TestApplication_StopAppByPName(t *testing.T) {
 		// First, start an application to get a process to stop
 		fmt.Println("Starting Google Chrome application...")
 		startCmd := "/usr/bin/google-chrome-stable"
-		processes, err := session.Application.StartApp(startCmd, "")
+		startContent, err := session.Application.StartApp(startCmd, "")
 
 		if err != nil {
 			t.Logf("Note: StartApp failed: %v", err)
 
 			// Check if the error is due to the tool not being found
-			if err.Error() != "" && containsToolNotFound(err.Error()) {
+			if err.Error() != "" && testutil.ContainsToolNotFound(err.Error()) {
 				t.Logf("StartApp tool not found, skipping test")
 				return
 			}
@@ -292,6 +364,13 @@ func TestApplication_StopAppByPName(t *testing.T) {
 				return
 			}
 		} else {
+			// 解析content为Process对象列表
+			processes, err := extractProcesses(startContent)
+			if err != nil {
+				t.Errorf("Failed to extract Processes from content: %v", err)
+				return
+			}
+
 			t.Logf("Application started successfully, returned %d processes", len(processes))
 
 			// Verify we got some processes back
@@ -305,24 +384,32 @@ func TestApplication_StopAppByPName(t *testing.T) {
 			t.Logf("Attempting to stop process by name: %s", processToStop)
 
 			// Call StopAppByPName function
-			err := session.Application.StopAppByPName(processToStop)
+			stopContent, err := session.Application.StopAppByPName(processToStop)
 			if err != nil {
 				t.Errorf("StopAppByPName failed: %v", err)
 
 				// Check if the error is due to the tool not being found
-				if err.Error() != "" && containsToolNotFound(err.Error()) {
+				if err.Error() != "" && testutil.ContainsToolNotFound(err.Error()) {
 					t.Logf("StopAppByPName tool not found, skipping test")
 					return
 				}
 			} else {
+				t.Logf("Got response with %d content items", len(stopContent))
 				t.Logf("Successfully stopped process by name: %s", processToStop)
 
 				// Verify the process was stopped by listing visible apps
 				time.Sleep(1 * time.Second) // Give some time for the process to be terminated
-				visibleApps, err := session.Application.ListVisibleApps()
+				visibleContent, err := session.Application.ListVisibleApps()
 				if err != nil {
 					t.Logf("Warning: Failed to list visible apps after stopping: %v", err)
 				} else {
+					// 解析content为Process对象列表
+					visibleApps, err := extractProcesses(visibleContent)
+					if err != nil {
+						t.Errorf("Failed to extract Processes from content: %v", err)
+						return
+					}
+
 					// Check if the process is still in the list
 					processStillRunning := false
 					for _, app := range visibleApps {

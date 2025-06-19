@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { log } from '../../src/utils/logger';
 
 // Define Node.js process if it's not available
 declare namespace NodeJS {
@@ -27,7 +28,7 @@ export function getTestApiKey(): string {
   }
   
   if (!apiKey) {
-    console.log('Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.');
+    log('Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.');
     return 'akm-xxx'; // Replace with your test API key
   }
   return apiKey;
