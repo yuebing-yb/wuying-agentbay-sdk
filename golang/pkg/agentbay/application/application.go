@@ -32,6 +32,105 @@ type ApplicationManager struct {
 	}
 }
 
+// callMcpToolResult represents the result of a CallMcpTool operation
+type callMcpToolResult struct {
+	Data       map[string]interface{}
+	Content    []map[string]interface{}
+	IsError    bool
+	ErrorMsg   string
+	StatusCode int32
+}
+
+// callMcpTool calls the MCP tool and checks for errors in the response
+func (am *ApplicationManager) callMcpTool(toolName string, args interface{}, defaultErrorMsg string) (*callMcpToolResult, error) {
+	// Marshal arguments to JSON
+	argsJSON, err := json.Marshal(args)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal args: %w", err)
+	}
+
+	// Create the request
+	callToolRequest := &mcp.CallMcpToolRequest{
+		Authorization: tea.String("Bearer " + am.Session.GetAPIKey()),
+		SessionId:     tea.String(am.Session.GetSessionId()),
+		Name:          tea.String(toolName),
+		Args:          tea.String(string(argsJSON)),
+	}
+
+	// Log API request
+	fmt.Println("API Call: CallMcpTool -", toolName)
+	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
+
+	// Call the MCP tool
+	response, err := am.Session.GetClient().CallMcpTool(callToolRequest)
+
+	// Log API response
+	if err != nil {
+		fmt.Println("Error calling CallMcpTool -", toolName, ":", err)
+		return nil, fmt.Errorf("failed to call %s: %w", toolName, err)
+	}
+	if response != nil && response.Body != nil {
+		fmt.Println("Response from CallMcpTool -", toolName, ":", response.Body)
+	}
+
+	// Extract data from response
+	data, ok := response.Body.Data.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid response data format")
+	}
+
+	// Create result object
+	result := &callMcpToolResult{
+		Data:       data,
+		StatusCode: *response.StatusCode,
+	}
+
+	// Check if there's an error in the response
+	isError, ok := data["isError"].(bool)
+	if ok && isError {
+		result.IsError = true
+
+		// Try to extract the error message from the content field
+		contentArray, ok := data["content"].([]interface{})
+		if ok && len(contentArray) > 0 {
+			// Convert content array to a more usable format
+			result.Content = make([]map[string]interface{}, 0, len(contentArray))
+			for _, item := range contentArray {
+				contentItem, ok := item.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				result.Content = append(result.Content, contentItem)
+			}
+
+			// Extract error message from the first content item
+			if len(result.Content) > 0 {
+				text, ok := result.Content[0]["text"].(string)
+				if ok {
+					result.ErrorMsg = text
+					return result, fmt.Errorf("%s", text)
+				}
+			}
+		}
+		return result, fmt.Errorf("%s", defaultErrorMsg)
+	}
+
+	// Extract content array if it exists
+	contentArray, ok := data["content"].([]interface{})
+	if ok {
+		result.Content = make([]map[string]interface{}, 0, len(contentArray))
+		for _, item := range contentArray {
+			contentItem, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			result.Content = append(result.Content, contentItem)
+		}
+	}
+
+	return result, nil
+}
+
 // NewApplicationManager creates a new ApplicationManager object.
 func NewApplicationManager(session interface {
 	GetAPIKey() string
@@ -44,76 +143,25 @@ func NewApplicationManager(session interface {
 }
 
 // GetInstalledApps retrieves a list of installed applications.
-func (am *ApplicationManager) GetInstalledApps(startMenu bool, desktop bool, ignoreSystemApps bool) ([]InstalledApp, error) {
+func (am *ApplicationManager) GetInstalledApps(startMenu bool, desktop bool, ignoreSystemApps bool) ([]map[string]interface{}, error) {
 	args := map[string]interface{}{
 		"start_menu":         startMenu,
 		"desktop":            desktop,
 		"ignore_system_apps": ignoreSystemApps,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := am.callMcpTool("get_installed_apps", args, "error getting installed apps")
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + am.Session.GetAPIKey()),
-		SessionId:     tea.String(am.Session.GetSessionId()),
-		Name:          tea.String("get_installed_apps"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - get_installed_apps")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := am.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - get_installed_apps:", err)
-		return nil, fmt.Errorf("failed to get installed apps: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - get_installed_apps:", response.Body)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to get installed apps: %w", err)
-	}
-
-	// Parse the response
-	data, ok := response.Body.Data.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid response data format")
-	}
-
-	// Extract content array
-	content, ok := data["content"].([]interface{})
-	if !ok || len(content) == 0 {
-		return nil, fmt.Errorf("invalid or empty content array in response")
-	}
-
-	// Extract text field from the first content item
-	contentItem, ok := content[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid content item format")
-	}
-
-	jsonText, ok := contentItem["text"].(string)
-	if !ok {
-		return nil, fmt.Errorf("text field not found or not a string")
-	}
-
-	// Parse the JSON text to get the apps array
-	var apps []InstalledApp
-	if err := json.Unmarshal([]byte(jsonText), &apps); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal apps JSON: %w", err)
-	}
-
-	return apps, nil
+	// Return the content array directly for the caller to parse
+	return mcpResult.Content, nil
 }
 
 // StartApp starts an application with the given command and optional working directory.
-func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) ([]Process, error) {
+func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) ([]map[string]interface{}, error) {
 	args := map[string]string{
 		"start_cmd": startCmd,
 	}
@@ -121,243 +169,74 @@ func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) ([
 		args["work_directory"] = workDirectory
 	}
 
-	argsJSON, err := json.Marshal(args)
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := am.callMcpTool("start_app", args, "error starting app")
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + am.Session.GetAPIKey()),
-		SessionId:     tea.String(am.Session.GetSessionId()),
-		Name:          tea.String("start_app"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - start_app")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := am.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - start_app:", err)
-		return nil, fmt.Errorf("failed to start app: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - start_app:", response.Body)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to start app: %w", err)
-	}
-
-	// Parse the response
-	data, ok := response.Body.Data.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid response data format")
-	}
-
-	// Extract content array
-	content, ok := data["content"].([]interface{})
-	if !ok || len(content) == 0 {
-		return nil, fmt.Errorf("invalid or empty content array in response")
-	}
-
-	// Extract text field from the first content item
-	contentItem, ok := content[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid content item format")
-	}
-
-	jsonText, ok := contentItem["text"].(string)
-	if !ok {
-		return nil, fmt.Errorf("text field not found or not a string")
-	}
-
-	// Parse the JSON text to get the processes array
-	var processes []Process
-	if err := json.Unmarshal([]byte(jsonText), &processes); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal processes JSON: %w", err)
-	}
-
-	return processes, nil
+	// Return the content array directly for the caller to parse
+	return mcpResult.Content, nil
 }
 
 // StopAppByPName stops an application by process name.
-func (am *ApplicationManager) StopAppByPName(pname string) error {
+func (am *ApplicationManager) StopAppByPName(pname string) ([]map[string]interface{}, error) {
 	args := map[string]string{
 		"pname": pname,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := am.callMcpTool("stop_app_by_pname", args, "error stopping app by process name")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + am.Session.GetAPIKey()),
-		SessionId:     tea.String(am.Session.GetSessionId()),
-		Name:          tea.String("stop_app_by_pname"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - stop_app_by_pname")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := am.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - stop_app_by_pname:", err)
-		return fmt.Errorf("failed to stop app by pname: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - stop_app_by_pname:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to stop app by pname: %w", err)
-	}
-
-	return nil
+	// Return the content array directly for the caller to parse
+	return mcpResult.Content, nil
 }
 
 // StopAppByPID stops an application by process ID.
-func (am *ApplicationManager) StopAppByPID(pid int) error {
+func (am *ApplicationManager) StopAppByPID(pid int) ([]map[string]interface{}, error) {
 	args := map[string]int{
 		"pid": pid,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := am.callMcpTool("stop_app_by_pid", args, "error stopping app by process ID")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + am.Session.GetAPIKey()),
-		SessionId:     tea.String(am.Session.GetSessionId()),
-		Name:          tea.String("stop_app_by_pid"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - stop_app_by_pid")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := am.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - stop_app_by_pid:", err)
-		return fmt.Errorf("failed to stop app by pid: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - stop_app_by_pid:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to stop app by pid: %w", err)
-	}
-
-	return nil
+	// Return the content array directly for the caller to parse
+	return mcpResult.Content, nil
 }
 
 // StopAppByCmd stops an application by stop command.
-func (am *ApplicationManager) StopAppByCmd(stopCmd string) error {
+func (am *ApplicationManager) StopAppByCmd(stopCmd string) ([]map[string]interface{}, error) {
 	args := map[string]string{
 		"stop_cmd": stopCmd,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := am.callMcpTool("stop_app_by_cmd", args, "error stopping app by command")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + am.Session.GetAPIKey()),
-		SessionId:     tea.String(am.Session.GetSessionId()),
-		Name:          tea.String("stop_app_by_cmd"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - stop_app_by_cmd")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := am.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - stop_app_by_cmd:", err)
-		return fmt.Errorf("failed to stop app by command: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - stop_app_by_cmd:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to stop app by command: %w", err)
-	}
-
-	return nil
+	// Return the content array directly for the caller to parse
+	return mcpResult.Content, nil
 }
 
 // ListVisibleApps lists all currently visible applications.
-func (am *ApplicationManager) ListVisibleApps() ([]Process, error) {
+func (am *ApplicationManager) ListVisibleApps() ([]map[string]interface{}, error) {
 	args := map[string]interface{}{}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := am.callMcpTool("list_visible_apps", args, "error listing visible apps")
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + am.Session.GetAPIKey()),
-		SessionId:     tea.String(am.Session.GetSessionId()),
-		Name:          tea.String("list_visible_apps"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - list_visible_apps")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := am.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - list_visible_apps:", err)
-		return nil, fmt.Errorf("failed to list visible apps: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - list_visible_apps:", response.Body)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to list visible apps: %w", err)
-	}
-
-	// Parse the response
-	data, ok := response.Body.Data.(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("invalid response data format")
-	}
-
-	// Extract content array
-	content, ok := data["content"].([]interface{})
-	if !ok || len(content) == 0 {
-		return nil, fmt.Errorf("invalid or empty content array in response")
-	}
-
-	// Extract text field from the first content item
-	contentItem, ok := content[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid content item format")
-	}
-
-	jsonText, ok := contentItem["text"].(string)
-	if !ok {
-		return nil, fmt.Errorf("text field not found or not a string")
-	}
-
-	// Parse the JSON text to get the processes array
-	var processes []Process
-	if err := json.Unmarshal([]byte(jsonText), &processes); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal processes JSON: %w", err)
-	}
-
-	return processes, nil
+	// Return the content array directly for the caller to parse
+	return mcpResult.Content, nil
 }

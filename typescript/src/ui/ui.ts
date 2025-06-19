@@ -4,6 +4,17 @@ import { CallMcpToolRequest } from '../api/models/model';
 import { log, logError } from '../utils/logger';
 
 /**
+ * Result object for a CallMcpTool operation
+ */
+interface CallMcpToolResult {
+  data: Record<string, any>;
+  content?: any[];
+  isError: boolean;
+  errorMsg?: string;
+  statusCode: number;
+}
+
+/**
  * KeyCode constants for mobile device input
  */
 export const KeyCode = {
@@ -31,82 +42,78 @@ export class UI {
   }
 
   /**
-   * Internal helper to call MCP tool and handle errors.
+   * Helper method to call MCP tools and handle common response processing
    * 
-   * @param name - The name of the tool to call.
-   * @param args - The arguments to pass to the tool.
-   * @returns The response from the tool.
-   * @throws Error if the tool call fails.
+   * @param toolName - Name of the MCP tool to call
+   * @param args - Arguments to pass to the tool
+   * @param defaultErrorMsg - Default error message if specific error details are not available
+   * @returns A CallMcpToolResult with the response data
+   * @throws APIError if the call fails
    */
-  private async callMcpTool(name: string, args: any): Promise<string> {
+  private async callMcpTool(
+    toolName: string, 
+    args: Record<string, any>,
+    defaultErrorMsg: string
+  ): Promise<CallMcpToolResult> {
     try {
       const argsJSON = JSON.stringify(args);
       const callToolRequest = new CallMcpToolRequest({
         authorization: `Bearer ${this.session.getAPIKey()}`,
         sessionId: this.session.getSessionId(),
-        name,
+        name: toolName,
         args: argsJSON
       });
       
       // Log API request
-      log(`API Call: CallMcpTool - ${name}`);
+      log(`API Call: CallMcpTool - ${toolName}`);
       log(`Request: SessionId=${this.session.getSessionId()}, Args=${argsJSON}`);
       
       const response = await this.session.getClient().callMcpTool(callToolRequest);
       
       // Log API response
-      log(`Response from CallMcpTool - ${name}:`, response.body);
+      log(`Response from CallMcpTool - ${toolName}:`, response.body);
       
       if (!response.body?.data) {
         throw new Error('Invalid response data format');
       }
       
+      // Extract data from response
+      const data = response.body.data as Record<string, any>;
+      
+      // Create result object
+      const result: CallMcpToolResult = {
+        data,
+        statusCode: response.statusCode || 0,
+        isError: false
+      };
+      
       // Check if there's an error in the response
-      const data = response.body.data as any;
-      if (data.isError) {
+      if (data.isError === true) {
+        result.isError = true;
+        
         // Try to extract the error message from the content field
-        if (data.content && Array.isArray(data.content) && data.content.length > 0) {
-          const errorMessages: string[] = [];
-          for (const item of data.content) {
-            if (item && typeof item === 'object' && 'text' in item) {
-              errorMessages.push(item.text);
-            }
-          }
-          if (errorMessages.length > 0) {
-            throw new Error(`Error in response: ${errorMessages.join('; ')}`);
+        const contentArray = data.content as any[] | undefined;
+        if (contentArray && contentArray.length > 0) {
+          result.content = contentArray;
+          
+          // Extract error message from the first content item
+          if (contentArray[0]?.text) {
+            result.errorMsg = contentArray[0].text;
+            throw new Error(contentArray[0].text);
           }
         }
-        throw new Error('Error in response');
+        throw new Error(defaultErrorMsg);
       }
       
-      // Extract content array
-      const content = data.content;
-      if (!content || !Array.isArray(content) || content.length === 0) {
-        throw new Error('No content found in response');
+      // Extract content array if it exists
+      if (Array.isArray(data.content)) {
+        result.content = data.content;
       }
       
-      // Extract text field from the first content item
-      const contentItem = content[0];
-      if (!contentItem || typeof contentItem !== 'object') {
-        throw new Error('Invalid content item format');
-      }
-      
-      const jsonText = contentItem.text;
-      
-      // Handle empty text field as a valid response
-      if (jsonText === '') {
-        log('Empty text field received, returning empty string');
-        return ''; // Return empty string for operations with empty response
-      }
-      
-      if (typeof jsonText !== 'string') {
-        throw new Error('Text field not found or not a string');
-      }
-      
-      return jsonText;
+      return result;
     } catch (error) {
-      logError(`Error calling CallMcpTool - ${name}:`, error);
-      throw new APIError(`Failed to call MCP tool ${name}: ${error}`);
+      logError(`Error calling CallMcpTool - ${toolName}:`, error);
+      throw new APIError(`Failed to call ${toolName}: ${error}`);
     }
   }
 
@@ -114,107 +121,72 @@ export class UI {
    * Retrieves all clickable UI elements within the specified timeout.
    * 
    * @param timeoutMs - The timeout in milliseconds. Default is 2000ms.
-   * @returns A list of clickable UI elements.
+   * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async getClickableUIElements(timeoutMs: number = 2000): Promise<any[]> {
+  async getClickableUIElements(timeoutMs: number = 2000): Promise<any> {
     const args = {
       timeout_ms: timeoutMs
     };
     
-    try {
-      const result = await this.callMcpTool('get_clickable_ui_elements', args);
-      return JSON.parse(result);
-    } catch (error) {
-      throw new APIError(`Failed to get clickable UI elements: ${error}`);
-    }
-  }
-
-  /**
-   * Helper function to recursively parse a UI element and its children.
-   * 
-   * @param element - The UI element to parse.
-   * @returns The parsed UI element.
-   */
-  private parseElement(element: any): any {
-    const parsed: any = {
-      bounds: element.bounds || '',
-      className: element.className || '',
-      text: element.text || '',
-      type: element.type || '',
-      resourceId: element.resourceId || '',
-      index: element.index !== undefined ? element.index : -1,
-      isParent: element.isParent !== undefined ? element.isParent : false
-    };
+    const result = await this.callMcpTool('get_clickable_ui_elements', args, 'Failed to get clickable UI elements');
     
-    if (element.children && Array.isArray(element.children) && element.children.length > 0) {
-      parsed.children = element.children.map((child: any) => this.parseElement(child));
-    } else {
-      parsed.children = [];
-    }
-    
-    return parsed;
+    // Return the raw content field for the caller to parse
+    return result.data.content;
   }
 
   /**
    * Retrieves all UI elements within the specified timeout.
    * 
    * @param timeoutMs - The timeout in milliseconds. Default is 2000ms.
-   * @returns A list of all UI elements.
+   * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async getAllUIElements(timeoutMs: number = 2000): Promise<any[]> {
+  async getAllUIElements(timeoutMs: number = 2000): Promise<any> {
     const args = {
       timeout_ms: timeoutMs
     };
     
-    try {
-      const result = await this.callMcpTool('get_all_ui_elements', args);
-      const elements = JSON.parse(result);
-      
-      // Parse each element
-      return elements.map((element: any) => this.parseElement(element));
-    } catch (error) {
-      throw new APIError(`Failed to get all UI elements: ${error}`);
-    }
+    const result = await this.callMcpTool('get_all_ui_elements', args, 'Failed to get all UI elements');
+    
+    // Return the raw content field for the caller to parse
+    return result.data.content;
   }
 
   /**
    * Sends a key press event.
    * 
    * @param key - The key code to send.
-   * @returns True if the key press was successful.
+   * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async sendKey(key: number): Promise<boolean> {
+  async sendKey(key: number): Promise<any> {
     const args = {
       key
     };
     
-    try {
-      const result = await this.callMcpTool('send_key', args);
-      return result === 'true' || result === 'True';
-    } catch (error) {
-      throw new APIError(`Failed to send key: ${error}`);
-    }
+    const result = await this.callMcpTool('send_key', args, 'Failed to send key');
+    
+    // Return the raw content field for the caller to parse
+    return result.data.content;
   }
 
   /**
    * Inputs text into the active field.
    * 
    * @param text - The text to input.
+   * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async inputText(text: string): Promise<void> {
+  async inputText(text: string): Promise<any> {
     const args = {
       text
     };
     
-    try {
-      await this.callMcpTool('input_text', args);
-    } catch (error) {
-      throw new APIError(`Failed to input text: ${error}`);
-    }
+    const result = await this.callMcpTool('input_text', args, 'Failed to input text');
+    
+    // Return the raw content field for the caller to parse
+    return result.data.content;
   }
 
   /**
@@ -225,9 +197,10 @@ export class UI {
    * @param endX - The ending X coordinate.
    * @param endY - The ending Y coordinate.
    * @param durationMs - The duration of the swipe in milliseconds. Default is 300ms.
+   * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async swipe(startX: number, startY: number, endX: number, endY: number, durationMs: number = 300): Promise<void> {
+  async swipe(startX: number, startY: number, endX: number, endY: number, durationMs: number = 300): Promise<any> {
     const args = {
       start_x: startX,
       start_y: startY,
@@ -236,11 +209,10 @@ export class UI {
       duration_ms: durationMs
     };
     
-    try {
-      await this.callMcpTool('swipe', args);
-    } catch (error) {
-      throw new APIError(`Failed to perform swipe: ${error}`);
-    }
+    const result = await this.callMcpTool('swipe', args, 'Failed to perform swipe');
+    
+    // Return the raw content field for the caller to parse
+    return result.data.content;
   }
 
   /**
@@ -249,35 +221,34 @@ export class UI {
    * @param x - The X coordinate.
    * @param y - The Y coordinate.
    * @param button - The mouse button to use. Default is 'left'.
+   * @returns The content field from the API response
    * @throws Error if the operation fails.
    */
-  async click(x: number, y: number, button: string = 'left'): Promise<void> {
+  async click(x: number, y: number, button: string = 'left'): Promise<any> {
     const args = {
       x,
       y,
       button
     };
     
-    try {
-      await this.callMcpTool('click', args);
-    } catch (error) {
-      throw new APIError(`Failed to perform click: ${error}`);
-    }
+    const result = await this.callMcpTool('click', args, 'Failed to click');
+    
+    // Return the raw content field for the caller to parse
+    return result.data.content;
   }
 
   /**
    * Takes a screenshot of the current screen.
    * 
-   * @returns The screenshot data.
+   * @returns The content field from the API response containing the base64 encoded screenshot
    * @throws Error if the operation fails.
    */
-  async screenshot(): Promise<string> {
+  async screenshot(): Promise<any> {
     const args = {};
     
-    try {
-      return await this.callMcpTool('system_screenshot', args);
-    } catch (error) {
-      throw new APIError(`Failed to take screenshot: ${error}`);
-    }
+    const result = await this.callMcpTool('screenshot', args, 'Failed to take screenshot');
+    
+    // Return the raw content field for the caller to parse
+    return result.data.content;
   }
 }

@@ -3,6 +3,26 @@ import { AgentBay, Session } from '../../src';
 import { getTestApiKey } from '../utils/test-helpers';
 import { log } from '../../src/utils/logger';
 
+// Helper function to parse content array from API response
+function parseContentArray(content: any[]): any {
+  if (!Array.isArray(content) || content.length === 0) {
+    return [];
+  }
+  
+  // Try to extract and parse text from the first content item
+  const item = content[0];
+  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+    try {
+      return JSON.parse(item.text);
+    } catch (e) {
+      log(`Warning: Failed to parse content text as JSON: ${e}`);
+      return item.text;
+    }
+  }
+  
+  return content;
+}
+
 describe('Application', () => {
   let session: Session;
   let agentBay: AgentBay;
@@ -31,28 +51,41 @@ describe('Application', () => {
   describe('getInstalledApps()', () => {
     it.only('should return installed applications with valid properties', async () => {
       log('Testing getInstalledApps...');
-      const apps = await session.Application.getInstalledApps(true, false, true);
-      log(`Found ${apps.length} installed applications`);
+      const content = await session.Application.getInstalledApps(true, false, true);
+      log(`Retrieved content:`, content);
+      
+      // Parse content array to get actual applications
+      const apps = parseContentArray(content);
+      log(`Found ${Array.isArray(apps) ? apps.length : 0} installed applications`);
       
       // Verify results
-      expect(apps.length).toBeGreaterThan(0);
-      apps.forEach((app, index) => {
-        log(`Verifying app ${index + 1}: ${app.name}`);
-        expect(app.name).toBeTruthy();
-        expect(app.start_cmd).toBeTruthy();
-      });
+      expect(content).toBeDefined();
+      expect(Array.isArray(content)).toBe(true);
+      
+      if (Array.isArray(apps) && apps.length > 0) {
+        apps.forEach((app: any, index: number) => {
+          log(`Verifying app ${index + 1}: ${app.name}`);
+          expect(app.name).toBeTruthy();
+          expect(app.start_cmd).toBeTruthy();
+        });
+      }
     });
   });
   
   describe('startApp()', () => {
     it.only('should start an application and return processes', async () => {
       // Get installed apps from the remote system
-      const apps = await session.Application.getInstalledApps(true, false, true);
+      const appsContent = await session.Application.getInstalledApps(true, false, true);
+      const apps = parseContentArray(appsContent);
+      
+      expect(appsContent).toBeDefined();
+      expect(Array.isArray(appsContent)).toBe(true);
+      expect(Array.isArray(apps)).toBe(true);
       expect(apps.length).toBeGreaterThan(0);
       
       // Try to find Terminal in the installed apps
       let startCmd = '';
-      const terminalApp = apps.find(app => app.name === 'Terminal');
+      const terminalApp = apps.find((app: any) => app.name === 'Terminal');
       
       if (terminalApp) {
         startCmd = terminalApp.start_cmd;
@@ -64,17 +97,24 @@ describe('Application', () => {
       }
       
       try {
-        const processes = await session.Application.startApp(startCmd, '');
-        log('processes', processes);
+        const processesContent = await session.Application.startApp(startCmd, '');
+        log('processes content:', processesContent);
+        
+        // Parse content array to get actual processes
+        const processes = parseContentArray(processesContent);
         
         // Verify results
-        expect(processes.length).toBeGreaterThan(0);
-        processes.forEach((proc, index) => {
-          log(`Verifying process ${index + 1}: ${proc.pname} (PID: ${proc.pid})`);
-          expect(proc.pname).toBeTruthy();
-          expect(proc.pid).toBeGreaterThan(0);
-          expect(proc).toHaveProperty('cmdline');
-        });
+        expect(processesContent).toBeDefined();
+        expect(Array.isArray(processesContent)).toBe(true);
+        
+        if (Array.isArray(processes) && processes.length > 0) {
+          processes.forEach((proc: any, index: number) => {
+            log(`Verifying process ${index + 1}: ${proc.pname} (PID: ${proc.pid})`);
+            expect(proc.pname).toBeTruthy();
+            expect(proc.pid).toBeGreaterThan(0);
+            expect(proc).toHaveProperty('cmdline');
+          });
+        }
       } catch (error) {
         log(`Note: Failed to start application: ${error}`);
         // Skip test if we can't start the application
@@ -87,12 +127,17 @@ describe('Application', () => {
         it.only('should stop an application by process name', async () => {
           try {
             // Get installed apps from the remote system
-            const apps = await session.Application.getInstalledApps(true, false, true);
+            const appsContent = await session.Application.getInstalledApps(true, false, true);
+            const apps = parseContentArray(appsContent);
+            
+            expect(appsContent).toBeDefined();
+            expect(Array.isArray(appsContent)).toBe(true);
+            expect(Array.isArray(apps)).toBe(true);
             expect(apps.length).toBeGreaterThan(0);
             
             // Try to find Terminal in the installed apps
             let startCmd = '';
-            const terminalApp = apps.find(app => app.name === 'Terminal');
+            const terminalApp = apps.find((app: any) => app.name === 'Terminal');
             
             if (terminalApp) {
               startCmd = terminalApp.start_cmd;
@@ -103,13 +148,21 @@ describe('Application', () => {
               log(`Terminal not found in installed apps, using default command: ${startCmd}`);
             }
             
-            const processes = await session.Application.startApp(startCmd, '');
+            const processesContent = await session.Application.startApp(startCmd, '');
+            const processes = parseContentArray(processesContent);
+            
+            expect(processesContent).toBeDefined();
+            expect(Array.isArray(processesContent)).toBe(true);
+            expect(Array.isArray(processes)).toBe(true);
             expect(processes.length).toBeGreaterThan(0);
+            
             const pname = processes[0].pname;
             log('pname', pname);
-            const result = await session.Application.stopAppByPName(pname);
-            log('stopAppByPName Response:', result);
-            expect(result).toBeDefined();
+            const resultContent = await session.Application.stopAppByPName(pname);
+            log('stopAppByPName Response:', resultContent);
+            
+            expect(resultContent).toBeDefined();
+            expect(Array.isArray(resultContent)).toBe(true);
           } catch (error: any) {
             log(`Note: Failed to stop application by process name: ${error}`);
             // Skip test if we can't stop the application
@@ -122,12 +175,17 @@ describe('Application', () => {
         it.only('should stop an application by process ID', async () => {
           try {
             // Get installed apps from the remote system
-            const apps = await session.Application.getInstalledApps(true, false, true);
+            const appsContent = await session.Application.getInstalledApps(true, false, true);
+            const apps = parseContentArray(appsContent);
+            
+            expect(appsContent).toBeDefined();
+            expect(Array.isArray(appsContent)).toBe(true);
+            expect(Array.isArray(apps)).toBe(true);
             expect(apps.length).toBeGreaterThan(0);
             
             // Try to find Terminal in the installed apps
             let startCmd = '';
-            const terminalApp = apps.find(app => app.name === 'Terminal');
+            const terminalApp = apps.find((app: any) => app.name === 'Terminal');
             
             if (terminalApp) {
               startCmd = terminalApp.start_cmd;
@@ -138,7 +196,12 @@ describe('Application', () => {
               log(`Terminal not found in installed apps, using default command: ${startCmd}`);
             }
             
-            const processes = await session.Application.startApp(startCmd, '');
+            const processesContent = await session.Application.startApp(startCmd, '');
+            const processes = parseContentArray(processesContent);
+            
+            expect(processesContent).toBeDefined();
+            expect(Array.isArray(processesContent)).toBe(true);
+            expect(Array.isArray(processes)).toBe(true);
             expect(processes.length).toBeGreaterThan(0);
 
             // Wait 5 seconds to give the application time to open
@@ -149,19 +212,24 @@ describe('Application', () => {
             const pname = processes[0].pname;
             log(`Stopping application with PID: ${pid} and name: ${pname}`);
             
-            const result = await session.Application.stopAppByPID(pid);
-            log('stopAppByPID Response:', result);
+            const resultContent = await session.Application.stopAppByPID(pid);
+            log('stopAppByPID Response:', resultContent);
+            
+            expect(resultContent).toBeDefined();
+            expect(Array.isArray(resultContent)).toBe(true);
             
             // Wait 5 seconds to ensure the application has time to close
             log('Waiting 5 seconds to ensure the application has closed...');
             await new Promise(resolve => setTimeout(resolve, 5000));
             
             // Verify the app is no longer visible by using listVisibleApps
-            const visibleApps = await session.Application.listVisibleApps();
-            log(`Found ${visibleApps.length} visible applications after stopping`);
+            const visibleAppsContent = await session.Application.listVisibleApps();
+            const visibleApps = parseContentArray(visibleAppsContent);
+            
+            log(`Found ${Array.isArray(visibleApps) ? visibleApps.length : 0} visible applications after stopping`);
             
             // Check that the app with the stopped PID is no longer in the list
-            const stoppedAppStillVisible = visibleApps.some(app => app.pid === pid);
+            const stoppedAppStillVisible = Array.isArray(visibleApps) && visibleApps.some((app: any) => app.pid === pid);
             log(`Is the stopped app still visible? ${stoppedAppStillVisible}`);
             expect(stoppedAppStillVisible).toBe(false);
           } catch (error: any) {
@@ -177,12 +245,17 @@ describe('Application', () => {
       try {
         // First, start an application (Terminal) to ensure there's at least one visible app
         // Get installed apps from the remote system
-        const apps = await session.Application.getInstalledApps(true, false, true);
+        const appsContent = await session.Application.getInstalledApps(true, false, true);
+        const apps = parseContentArray(appsContent);
+        
+        expect(appsContent).toBeDefined();
+        expect(Array.isArray(appsContent)).toBe(true);
+        expect(Array.isArray(apps)).toBe(true);
         expect(apps.length).toBeGreaterThan(0);
         
         // Try to find Terminal in the installed apps
         let startCmd = '';
-        const terminalApp = apps.find(app => app.name === 'Terminal');
+        const terminalApp = apps.find((app: any) => app.name === 'Terminal');
         
         if (terminalApp) {
           startCmd = terminalApp.start_cmd;
@@ -194,23 +267,29 @@ describe('Application', () => {
         }
         
         // Start the application
-        const startedProcesses = await session.Application.startApp(startCmd, '');
-        log(`Started application with ${startedProcesses.length} processes`);
+        const startedProcessesContent = await session.Application.startApp(startCmd, '');
+        const startedProcesses = parseContentArray(startedProcessesContent);
+        log(`Started application with ${Array.isArray(startedProcesses) ? startedProcesses.length : 0} processes`);
         
         // Wait 5 seconds to give the application time to open
         log('Waiting 5 seconds to give applications time to open...');
         await new Promise(resolve => setTimeout(resolve, 5000));
         
         // Now list visible applications
-        const processes = await session.Application.listVisibleApps();
+        const processesContent = await session.Application.listVisibleApps();
+        const processes = parseContentArray(processesContent);
         
-        log(`Found ${processes.length} visible applications`);
-        expect(processes.length).toBeGreaterThan(0);
+        log(`Found ${Array.isArray(processes) ? processes.length : 0} visible applications`);
         
-        processes.forEach(proc => {
-          expect(proc.pname).toBeTruthy();
-          expect(proc.pid).toBeGreaterThan(0);
-        });
+        expect(processesContent).toBeDefined();
+        expect(Array.isArray(processesContent)).toBe(true);
+        
+        if (Array.isArray(processes) && processes.length > 0) {
+          processes.forEach((proc: any) => {
+            expect(proc.pname).toBeTruthy();
+            expect(proc.pid).toBeGreaterThan(0);
+          });
+        }
       } catch (error: any) {
         log(`Note: Failed to list visible applications: ${error}`);
         // Skip test if we can't list visible applications

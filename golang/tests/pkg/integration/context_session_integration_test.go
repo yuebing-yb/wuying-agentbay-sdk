@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 // TestContextSessionManagement tests the context and session management functionality:
@@ -19,7 +20,7 @@ import (
 // 8. Clean up by releasing the session and deleting the context
 func TestContextSessionManagement(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	t.Logf("Using API key: %s", apiKey)
 
 	agentBay, err := agentbay.NewAgentBay(apiKey)
@@ -190,7 +191,7 @@ func TestContextSessionManagement(t *testing.T) {
 // 9. Clean up by releasing the session and deleting the context
 func TestContextLifecycle(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)

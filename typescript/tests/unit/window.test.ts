@@ -3,6 +3,64 @@ import { WindowManager } from '../../src/window/window';
 import { getTestApiKey } from '../utils/test-helpers';
 import { log } from '../../src/utils/logger';
 
+// Helper function to parse window data from content array
+function parseWindowsContent(content: any[]): any[] {
+  if (!Array.isArray(content) || content.length === 0) {
+    return [];
+  }
+  
+  // Try to extract and parse text from the first content item
+  const item = content[0];
+  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+    try {
+      return JSON.parse(item.text);
+    } catch (e) {
+      log(`Warning: Failed to parse content text as JSON: ${e}`);
+      return [];
+    }
+  }
+  
+  return [];
+}
+
+// Helper function to parse single window data from content array
+function parseWindowContent(content: any[]): any {
+  if (!Array.isArray(content) || content.length === 0) {
+    return null;
+  }
+  
+  // Try to extract and parse text from the first content item
+  const item = content[0];
+  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+    try {
+      return JSON.parse(item.text);
+    } catch (e) {
+      log(`Warning: Failed to parse content text as JSON: ${e}`);
+      return null;
+    }
+  }
+  
+  return null;
+}
+
+// Helper function to check if content has error
+function hasErrorInContent(content: any[]): boolean {
+  if (!Array.isArray(content)) {
+    return true;
+  }
+  
+  if (content.length === 0) {
+    return true;
+  }
+  
+  // Check if first content item has error text
+  return content.some(item => 
+    item && typeof item === 'object' && 
+    item.text && typeof item.text === 'string' && 
+    (item.text.includes('error') || item.text.includes('Error'))
+  );
+}
+
 // Type declarations are now in tests/jest.d.ts
 
 describe('WindowManager', () => {
@@ -38,7 +96,16 @@ describe('WindowManager', () => {
       log('Testing listRootWindows...');
       try {
         // Call the method
-        const windows = await windowManager.listRootWindows();
+        const content = await windowManager.listRootWindows();
+        log(`Retrieved content:`, content);
+        
+        // Verify content format
+        expect(content).toBeDefined();
+        expect(Array.isArray(content)).toBe(true);
+        expect(hasErrorInContent(content)).toBe(false);
+        
+        // Parse windows from content
+        const windows = parseWindowsContent(content);
         log(`Found ${windows.length} root windows`);
         
         // Verify the results
@@ -64,14 +131,26 @@ describe('WindowManager', () => {
     it.only('should return the active window', async () => {
       log('Testing getActiveWindow...');
       try {
-        const window = await windowManager.getActiveWindow();
-        log(`Active window: ${window.title} (ID: ${window.window_id})`);
+        const content = await windowManager.getActiveWindow();
+        log(`Active window content:`, content);
         
-        // Verify the results
-        expect(window.window_id).toBeDefined();
-        expect(window.title).toBeDefined();
-        expect(window.pid).toBeDefined();
-        expect(window.pname).toBeDefined();
+        // Verify content format
+        expect(content).toBeDefined();
+        expect(Array.isArray(content)).toBe(true);
+        expect(hasErrorInContent(content)).toBe(false);
+        
+        // Parse window from content
+        const window = parseWindowContent(content);
+        
+        if (window) {
+          log(`Active window: ${window.title} (ID: ${window.window_id})`);
+          
+          // Verify the results
+          expect(window.window_id).toBeDefined();
+          expect(window.title).toBeDefined();
+          expect(window.pid).toBeDefined();
+          expect(window.pname).toBeDefined();
+        }
       } catch (error: any) {
         log(`Error in getActiveWindow test: ${error}`);
         // Skip test if we can't get active window
@@ -85,7 +164,9 @@ describe('WindowManager', () => {
       log('Testing activateWindow...');
       try {
         // First get a list of windows
-        const windows = await windowManager.listRootWindows();
+        const listContent = await windowManager.listRootWindows();
+        const windows = parseWindowsContent(listContent);
+        
         if (windows.length === 0) {
           log('No windows available for testing activateWindow');
           return;
@@ -96,11 +177,15 @@ describe('WindowManager', () => {
         log(`Activating window with ID: ${windowId}`);
         
         // Call the method
-        await windowManager.activateWindow(windowId);
-        log('Window activated successfully');
+        const content = await windowManager.activateWindow(windowId);
+        log(`Activate window content:`, content);
         
-        // Success is implied if no exception is thrown
-        expect(true).toBe(true);
+        // Verify content format
+        expect(content).toBeDefined();
+        expect(Array.isArray(content)).toBe(true);
+        expect(hasErrorInContent(content)).toBe(false);
+        
+        log('Window activated successfully');
       } catch (error: any) {
         log(`Error in activateWindow test: ${error}`);
         // Skip test if we can't activate window
@@ -114,7 +199,9 @@ describe('WindowManager', () => {
       log('Testing maximizeWindow...');
       try {
         // First get a list of windows
-        const windows = await windowManager.listRootWindows();
+        const listContent = await windowManager.listRootWindows();
+        const windows = parseWindowsContent(listContent);
+        
         if (windows.length === 0) {
           log('No windows available for testing maximizeWindow');
           return;
@@ -125,11 +212,15 @@ describe('WindowManager', () => {
         log(`Maximizing window with ID: ${windowId}`);
         
         // Call the method
-        await windowManager.maximizeWindow(windowId);
-        log('Window maximized successfully');
+        const content = await windowManager.maximizeWindow(windowId);
+        log(`Maximize window content:`, content);
         
-        // Success is implied if no exception is thrown
-        expect(true).toBe(true);
+        // Verify content format
+        expect(content).toBeDefined();
+        expect(Array.isArray(content)).toBe(true);
+        expect(hasErrorInContent(content)).toBe(false);
+        
+        log('Window maximized successfully');
       } catch (error: any) {
         log(`Error in maximizeWindow test: ${error}`);
         // Skip test if we can't maximize window
@@ -143,7 +234,9 @@ describe('WindowManager', () => {
       log('Testing minimizeWindow...');
       try {
         // First get a list of windows
-        const windows = await windowManager.listRootWindows();
+        const listContent = await windowManager.listRootWindows();
+        const windows = parseWindowsContent(listContent);
+        
         if (windows.length === 0) {
           log('No windows available for testing minimizeWindow');
           return;
@@ -154,11 +247,15 @@ describe('WindowManager', () => {
         log(`Minimizing window with ID: ${windowId}`);
         
         // Call the method
-        await windowManager.minimizeWindow(windowId);
-        log('Window minimized successfully');
+        const content = await windowManager.minimizeWindow(windowId);
+        log(`Minimize window content:`, content);
         
-        // Success is implied if no exception is thrown
-        expect(true).toBe(true);
+        // Verify content format
+        expect(content).toBeDefined();
+        expect(Array.isArray(content)).toBe(true);
+        expect(hasErrorInContent(content)).toBe(false);
+        
+        log('Window minimized successfully');
       } catch (error: any) {
         log(`Error in minimizeWindow test: ${error}`);
         // Skip test if we can't minimize window
@@ -172,7 +269,9 @@ describe('WindowManager', () => {
       log('Testing restoreWindow...');
       try {
         // First get a list of windows
-        const windows = await windowManager.listRootWindows();
+        const listContent = await windowManager.listRootWindows();
+        const windows = parseWindowsContent(listContent);
+        
         if (windows.length === 0) {
           log('No windows available for testing restoreWindow');
           return;
@@ -183,11 +282,15 @@ describe('WindowManager', () => {
         log(`Restoring window with ID: ${windowId}`);
         
         // Call the method
-        await windowManager.restoreWindow(windowId);
-        log('Window restored successfully');
+        const content = await windowManager.restoreWindow(windowId);
+        log(`Restore window content:`, content);
         
-        // Success is implied if no exception is thrown
-        expect(true).toBe(true);
+        // Verify content format
+        expect(content).toBeDefined();
+        expect(Array.isArray(content)).toBe(true);
+        expect(hasErrorInContent(content)).toBe(false);
+        
+        log('Window restored successfully');
       } catch (error: any) {
         log(`Error in restoreWindow test: ${error}`);
         // Skip test if we can't restore window
@@ -201,7 +304,9 @@ describe('WindowManager', () => {
       log('Testing resizeWindow...');
       try {
         // First get a list of windows
-        const windows = await windowManager.listRootWindows();
+        const listContent = await windowManager.listRootWindows();
+        const windows = parseWindowsContent(listContent);
+        
         if (windows.length === 0) {
           log('No windows available for testing resizeWindow');
           return;
@@ -212,11 +317,15 @@ describe('WindowManager', () => {
         log(`Resizing window with ID: ${windowId} to 800x600`);
         
         // Call the method
-        await windowManager.resizeWindow(windowId, 800, 600);
-        log('Window resized successfully to 800x600');
+        const content = await windowManager.resizeWindow(windowId, 800, 600);
+        log(`Resize window content:`, content);
         
-        // Success is implied if no exception is thrown
-        expect(true).toBe(true);
+        // Verify content format
+        expect(content).toBeDefined();
+        expect(Array.isArray(content)).toBe(true);
+        expect(hasErrorInContent(content)).toBe(false);
+        
+        log('Window resized successfully to 800x600');
       } catch (error: any) {
         log(`Error in resizeWindow test: ${error}`);
         // Skip test if we can't resize window
@@ -230,11 +339,15 @@ describe('WindowManager', () => {
       log('Testing focusMode enable...');
       try {
         // Call the method
-        await windowManager.focusMode(true);
-        log('Focus mode enabled successfully');
+        const content = await windowManager.focusMode(true);
+        log(`Focus mode enable content:`, content);
         
-        // Success is implied if no exception is thrown
-        expect(true).toBe(true);
+        // Verify content format
+        expect(content).toBeDefined();
+        expect(Array.isArray(content)).toBe(true);
+        expect(hasErrorInContent(content)).toBe(false);
+        
+        log('Focus mode enabled successfully');
       } catch (error: any) {
         log(`Error in focusMode enable test: ${error}`);
         // Skip test if we can't enable focus mode
@@ -246,11 +359,15 @@ describe('WindowManager', () => {
       log('Testing focusMode disable...');
       try {
         // Call the method
-        await windowManager.focusMode(false);
-        log('Focus mode disabled successfully');
+        const content = await windowManager.focusMode(false);
+        log(`Focus mode disable content:`, content);
         
-        // Success is implied if no exception is thrown
-        expect(true).toBe(true);
+        // Verify content format
+        expect(content).toBeDefined();
+        expect(Array.isArray(content)).toBe(true);
+        expect(hasErrorInContent(content)).toBe(false);
+        
+        log('Focus mode disabled successfully');
       } catch (error: any) {
         log(`Error in focusMode disable test: ${error}`);
         // Skip test if we can't disable focus mode

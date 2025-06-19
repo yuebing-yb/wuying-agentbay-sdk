@@ -2,12 +2,12 @@ package integration_test
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 // Helper function to check if a string contains "tool not found"
@@ -15,23 +15,10 @@ func containsToolNotFound(s string) bool {
 	return strings.Contains(strings.ToLower(s), "tool not found")
 }
 
-// Get API key for testing
-func getTestAPIKey(t *testing.T) string {
-	apiKey := os.Getenv("AGENTBAY_API_KEY")
-	if apiKey == "" {
-		apiKey = "akm-xxx" // Replace with your test API key
-		t.Logf("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.")
-	}
-	return apiKey
-}
-
 // TestContextPersistence tests the persistence of files across sessions with the same context ID
 // and the isolation of files between different contexts.
 func TestContextPersistence(t *testing.T) {
-	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
-	t.Logf("Using API key: %s", apiKey)
-
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
@@ -105,7 +92,7 @@ func TestContextPersistence(t *testing.T) {
 	output, err := session1.Command.ExecuteCommand(createFileCmd)
 	if err != nil {
 		t.Logf("Warning: Command execution failed: %v", err)
-		if containsToolNotFound(output) {
+		if containsToolNotFound(fmt.Sprintf("%v", output)) {
 			t.Skip("Skipping test as execute_command tool is not available")
 		}
 	}
@@ -128,10 +115,11 @@ func TestContextPersistence(t *testing.T) {
 		t.Logf("File attributes: %s", lsOutput)
 	}
 
-	if !strings.Contains(output, testFileContent) {
-		t.Fatalf("File content verification failed. Expected to contain '%s', got: '%s'", testFileContent, output)
+	outputStr := fmt.Sprintf("%v", output)
+	if !strings.Contains(outputStr, testFileContent) {
+		t.Fatalf("File content verification failed. Expected to contain '%s', got: '%s'", testFileContent, outputStr)
 	}
-	t.Logf("File created and verified successfully with content: %s", output)
+	t.Logf("File created and verified successfully with content: %s", outputStr)
 
 	// Step 4: Release the session
 	t.Log("Releasing first session...")
@@ -194,8 +182,9 @@ func TestContextPersistence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error checking file existence in second session: %v", err)
 	}
-	if !strings.Contains(output, testFileContent) {
-		t.Fatalf("File persistence test failed. Expected file to exist with content '%s', got: '%s'", testFileContent, output)
+	outputStr := fmt.Sprintf("%v", output)
+	if !strings.Contains(outputStr, testFileContent) {
+		t.Fatalf("File persistence test failed. Expected file to exist with content '%s', got: '%s'", testFileContent, outputStr)
 	}
 	t.Logf("File persistence verified: file exists in the second session")
 

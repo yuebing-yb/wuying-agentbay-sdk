@@ -5,6 +5,102 @@ import { log } from '../../src/utils/logger';
 // Define test path prefix based on platform
 const TestPathPrefix = '/tmp';
 
+// Helper function to extract file data from content array
+function extractFileContent(content: any[]): string {
+  if (!Array.isArray(content) || content.length === 0) {
+    return '';
+  }
+  
+  // Concatenate all text fields from content items
+  let fullText = '';
+  for (const item of content) {
+    if (item && typeof item === 'object' && typeof item.text === 'string') {
+      fullText += item.text;
+    }
+  }
+  
+  return fullText;
+}
+
+// Helper function to parse directory entries from content array
+function parseDirectoryContent(content: any[]): any[] {
+  if (!Array.isArray(content) || content.length === 0) {
+    return [];
+  }
+  
+  // Try to extract and parse text from the first content item
+  const item = content[0];
+  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+    try {
+      return JSON.parse(item.text);
+    } catch (e) {
+      log(`Warning: Failed to parse content text as JSON: ${e}`);
+      
+      // Try to parse directory entries from text format
+      const entries = [];
+      const lines = item.text.split('\n');
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine === '') continue;
+        
+        const entry: any = {};
+        if (trimmedLine.startsWith('[DIR]')) {
+          entry.isDirectory = true;
+          entry.name = trimmedLine.substring('[DIR]'.length).trim();
+        } else if (trimmedLine.startsWith('[FILE]')) {
+          entry.isDirectory = false;
+          entry.name = trimmedLine.substring('[FILE]'.length).trim();
+        } else {
+          continue;
+        }
+        entries.push(entry);
+      }
+      
+      return entries;
+    }
+  }
+  
+  return [];
+}
+
+// Helper function to check if content has error
+function hasErrorInContent(content: any[]): boolean {
+  if (!Array.isArray(content)) {
+    return true;
+  }
+  
+  if (content.length === 0) {
+    return true;
+  }
+  
+  // Check if first content item has error text
+  return content.some(item => 
+    item && typeof item === 'object' && 
+    item.text && typeof item.text === 'string' && 
+    (item.text.includes('error') || item.text.includes('Error'))
+  );
+}
+
+// Helper function to parse file info from content
+function parseFileInfo(content: any[]): any {
+  if (!Array.isArray(content) || content.length === 0) {
+    return null;
+  }
+  
+  // Try to extract and parse text from the first content item
+  const item = content[0];
+  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+    try {
+      return JSON.parse(item.text);
+    } catch (e) {
+      log(`Warning: Failed to parse file info text as JSON: ${e}`);
+      return null;
+    }
+  }
+  
+  return null;
+}
+
 describe('FileSystem', () => {
   let agentBay: AgentBay;
   let session: Session;
@@ -219,14 +315,14 @@ describe('FileSystem', () => {
           log(`Created file for info test: ${testFilePath}`);
           
           // Get file info
-          const fileInfo = await session.filesystem.getFileInfo(testFilePath);
-          log(`GetFileInfo result: fileInfo=${JSON.stringify(fileInfo)}`);
+          const infoContent = await session.filesystem.getFileInfo(testFilePath);
+          log(`GetFileInfo result: infoContent=${JSON.stringify(infoContent)}`);
           
           // Verify the file info contains expected fields
-          expect(fileInfo.name).toBe(testFilePath.split('/').pop());
-          expect(typeof fileInfo.size).toBe('number');
-          expect(fileInfo.isDirectory).toBe(false);
-          expect(fileInfo.isFile).toBe(true);
+          expect(infoContent.name).toBe(testFilePath.split('/').pop());
+          expect(typeof infoContent.size).toBe('number');
+          expect(infoContent.isDirectory).toBe(false);
+          expect(infoContent.isFile).toBe(true);
           log('File info verified successfully');
           
           // Clean up the test file

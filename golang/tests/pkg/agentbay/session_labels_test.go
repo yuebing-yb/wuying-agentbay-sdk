@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 // generateUniqueID creates a unique identifier for test labels
@@ -23,7 +24,7 @@ func generateUniqueID() string {
 // TestSession_SetGetLabels tests the functionality of setting and getting labels for a session
 func TestSession_SetGetLabels(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBayClient, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)

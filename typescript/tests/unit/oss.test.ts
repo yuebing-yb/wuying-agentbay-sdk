@@ -41,6 +41,24 @@ function getOssCredentials(): {
   };
 }
 
+// Helper function to check if content has error
+function hasErrorInContent(content: any[]): boolean {
+  if (!Array.isArray(content)) {
+    return true;
+  }
+  
+  if (content.length === 0) {
+    return true;
+  }
+  
+  // Check if first content item has error text
+  return content.some(item => 
+    item && typeof item === 'object' && 
+    item.text && typeof item.text === 'string' && 
+    (item.text.includes('error') || item.text.includes('Error'))
+  );
+}
+
 describe('OSS', () => {
   let agentBay: AgentBay;
   let session: Session;
@@ -74,11 +92,13 @@ describe('OSS', () => {
         
         log('Initializing OSS environment...');
         try {
-          const result = await session.oss.envInit(accessKeyId, accessKeySecret, securityToken, endpoint, region);
-          log(`EnvInit result: ${result}`);
+          const content = await session.oss.envInit(accessKeyId, accessKeySecret, securityToken, endpoint, region);
+          log(`EnvInit content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(result)).toBe(false);
+          // Check if content has errors
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS environment initialization successful');
         } catch (error) {
@@ -108,11 +128,13 @@ describe('OSS', () => {
         const objectKey = 'test-object.txt';
         
         try {
-          const result = await session.oss.upload(bucket, objectKey, testFilePath);
-          log(`Upload result: ${result}`);
+          const content = await session.oss.upload(bucket, objectKey, testFilePath);
+          log(`Upload content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(result)).toBe(false);
+          // Check if content has errors
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS upload successful');
         } catch (error) {
@@ -137,11 +159,13 @@ describe('OSS', () => {
         const uploadUrl = process.env.OSS_TEST_UPLOAD_URL || 'https://example.com/upload/test-file.txt';
         
         try {
-          const result = await session.oss.uploadAnonymous(uploadUrl, testFilePath);
-          log(`UploadAnonymous result: ${result}`);
+          const content = await session.oss.uploadAnonymous(uploadUrl, testFilePath);
+          log(`UploadAnonymous content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(result)).toBe(false);
+          // Check if content has errors
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS anonymous upload successful');
         } catch (error) {
@@ -167,17 +191,19 @@ describe('OSS', () => {
         const downloadPath = "/tmp/test_oss_download.txt";
         
         try {
-          const result = await session.oss.download(bucket, objectKey, downloadPath);
-          log(`Download result: ${result}`);
+          const content = await session.oss.download(bucket, objectKey, downloadPath);
+          log(`Download content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(result)).toBe(false);
+          // Check if content has errors
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS download successful');
           
           // Verify the downloaded file exists
           const fileInfo = await session.filesystem.getFileInfo(downloadPath);
-          log(`Downloaded file info: ${JSON.stringify(fileInfo)}`);
+          log(`Downloaded file info:`, fileInfo);
           expect(fileInfo).toBeDefined();
         } catch (error) {
           log(`OSS download failed: ${error}`);
@@ -197,17 +223,19 @@ describe('OSS', () => {
         const downloadPath = "/tmp/test_oss_download_anon.txt";
         
         try {
-          const result = await session.oss.downloadAnonymous(downloadUrl, downloadPath);
-          log(`DownloadAnonymous result: ${result}`);
+          const content = await session.oss.downloadAnonymous(downloadUrl, downloadPath);
+          log(`DownloadAnonymous content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(result)).toBe(false);
+          // Check if content has errors
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS anonymous download successful');
           
           // Verify the downloaded file exists
           const fileInfo = await session.filesystem.getFileInfo(downloadPath);
-          log(`Downloaded file info: ${JSON.stringify(fileInfo)}`);
+          log(`Downloaded file info:`, fileInfo);
           expect(fileInfo).toBeDefined();
         } catch (error) {
           log(`OSS anonymous download failed: ${error}`);
@@ -227,11 +255,13 @@ describe('OSS', () => {
         
         log('Creating OSS client...');
         try {
-          const result = await session.oss.createClient(accessKeyId, accessKeySecret, endpoint, region);
-          log(`CreateClient result: ${result}`);
+          const content = await session.oss.createClient(accessKeyId, accessKeySecret, endpoint, region);
+          log(`CreateClient content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(result)).toBe(false);
+          // Check if content has errors
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS client creation successful');
         } catch (error) {

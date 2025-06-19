@@ -2,6 +2,40 @@ import { AgentBay, Session } from '../../src';
 import { getTestApiKey, containsToolNotFound } from '../utils/test-helpers';
 import { log } from '../../src/utils/logger';
 
+// Helper function to extract text from content array
+function extractTextFromContent(content: any[]): string {
+  if (!Array.isArray(content) || content.length === 0) {
+    return '';
+  }
+  
+  // Concatenate all text fields from content items
+  let fullText = '';
+  for (const item of content) {
+    if (item && typeof item === 'object' && typeof item.text === 'string') {
+      fullText += item.text;
+    }
+  }
+  
+  return fullText;
+}
+
+// Helper function to check if content has error
+function hasErrorInContent(content: any[]): boolean {
+  if (!Array.isArray(content)) {
+    return true;
+  }
+  
+  if (content.length === 0) {
+    return true;
+  }
+  
+  // Check if first content item has error text
+  return content.some(item => 
+    item && typeof item === 'object' && 
+    item.text && typeof item.text === 'string' && 
+    (item.text.includes('error') || item.text.includes('Error'))
+  );
+}
 
 describe('Command', () => {
   describe('runCode', () => {
@@ -42,15 +76,20 @@ print(x)
         
         try {
           // Test with default timeout
-          const response = await session.command.runCode(pythonCode, 'python');
-          log(`Python code execution result: ${response}`);
+          const content = await session.command.runCode(pythonCode, 'python');
+          log(`Python code execution content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(response)).toBe(false);
+          // Check if content has valid format
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
+          
+          // Extract text from content
+          const outputText = extractTextFromContent(content);
           
           // Verify the response contains expected output
-          expect(response.includes('Hello, world!')).toBe(true);
-          expect(response.includes('2')).toBe(true);
+          expect(outputText.includes('Hello, world!')).toBe(true);
+          expect(outputText.includes('2')).toBe(true);
           log('Python code execution verified successfully');
         } catch (error) {
           log(`Note: Python code execution failed: ${error}`);
@@ -74,15 +113,20 @@ console.log(x);
         try {
           // Test with custom timeout (10 minutes)
           const customTimeout = 600;
-          const response = await session.command.runCode(jsCode, 'javascript', customTimeout);
-          log(`JavaScript code execution result: ${response}`);
+          const content = await session.command.runCode(jsCode, 'javascript', customTimeout);
+          log(`JavaScript code execution content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(response)).toBe(false);
+          // Check if content has valid format
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
+          
+          // Extract text from content
+          const outputText = extractTextFromContent(content);
           
           // Verify the response contains expected output
-          expect(response.includes('Hello, world!')).toBe(true);
-          expect(response.includes('2')).toBe(true);
+          expect(outputText.includes('Hello, world!')).toBe(true);
+          expect(outputText.includes('2')).toBe(true);
           log('JavaScript code execution verified successfully');
         } catch (error) {
           log(`Note: JavaScript code execution failed: ${error}`);
@@ -148,14 +192,19 @@ console.log(x);
         
         try {
           // Increase the command execution timeout to 10 seconds (10000ms)
-          const response = await session.command.executeCommand(echoCmd, 10000);
-          log(`Echo command result: ${response}`);
+          const content = await session.command.executeCommand(echoCmd, 10000);
+          log(`Echo command content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(response)).toBe(false);
+          // Check if content has valid format
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
+          
+          // Extract text from content
+          const outputText = extractTextFromContent(content);
           
           // Verify the response contains the test string
-          expect(response.includes(testString)).toBe(true);
+          expect(outputText.includes(testString)).toBe(true);
           log('Echo command verified successfully');
         } catch (error) {
           log(`Note: Echo command failed: ${error}`);
@@ -173,12 +222,14 @@ console.log(x);
         const invalidCmd = 'invalid_command_that_does_not_exist';
         
         try {
-          const response = await session.command.executeCommand(invalidCmd);
-          log(`Invalid command result: ${response}`);
+          const content = await session.command.executeCommand(invalidCmd);
+          log(`Invalid command content:`, content);
           
-          // Even if the command doesn't exist, the API might return a response with an error message
-          // We're just checking that the promise resolves
-          expect(response).toBeDefined();
+          // Just check that we got a content array back
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          
+          // For invalid commands, the content may contain error information, which is fine
         } catch (error) {
           // If the API rejects the promise, that's also an acceptable behavior for an invalid command
           log(`Invalid command failed as expected: ${error}`);
@@ -199,15 +250,20 @@ console.log(x);
         
         try {
           // Increase the command execution timeout to 10 seconds (10000ms)
-          const response = await session.command.executeCommand(cmd, 10000);
-          log(`Command with arguments result: ${response}`);
+          const content = await session.command.executeCommand(cmd, 10000);
+          log(`Command with arguments content:`, content);
           
-          // Check if response contains "tool not found"
-          expect(containsToolNotFound(response)).toBe(false);
+          // Check if content has valid format
+          expect(content).toBeDefined();
+          expect(Array.isArray(content)).toBe(true);
+          expect(hasErrorInContent(content)).toBe(false);
+          
+          // Extract text from content
+          const outputText = extractTextFromContent(content);
           
           // Verify the response contains both arguments
-          expect(response.includes(arg1)).toBe(true);
-          expect(response.includes(arg2)).toBe(true);
+          expect(outputText.includes(arg1)).toBe(true);
+          expect(outputText.includes(arg2)).toBe(true);
           log('Command with arguments verified successfully');
         } catch (error) {
           log(`Note: Command with arguments failed: ${error}`);
