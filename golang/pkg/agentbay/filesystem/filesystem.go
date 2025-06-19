@@ -43,9 +43,18 @@ func (fs *FileSystem) callMcpTool(toolName string, args interface{}, defaultErro
 		Args:          tea.String(string(argsJSON)),
 	}
 
-	// Log API request
+	// Log API request with content length for file operations
 	fmt.Println("API Call: CallMcpTool -", toolName)
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
+
+	// Handle logging differently based on operation type
+	if isFileOperation(toolName) {
+		// For file operations, log content length instead of content
+		truncatedArgs := truncateContentForLogging(string(argsJSON))
+		fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, truncatedArgs)
+	} else {
+		// For non-file operations, log normally
+		fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
+	}
 
 	// Call the MCP tool
 	response, err := fs.Session.GetClient().CallMcpTool(callToolRequest)
@@ -55,8 +64,26 @@ func (fs *FileSystem) callMcpTool(toolName string, args interface{}, defaultErro
 		fmt.Println("Error calling CallMcpTool -", toolName, ":", err)
 		return nil, fmt.Errorf("failed to call %s: %w", toolName, err)
 	}
+
 	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool -", toolName, ":", response.Body)
+		if isFileOperation(toolName) {
+			// Log content size for file operations instead of full content
+			fmt.Println("Response from CallMcpTool -", toolName, "- status:", *response.StatusCode)
+
+			// Log only relevant response information without content
+			data, ok := response.Body.Data.(map[string]interface{})
+			if ok {
+				isError, _ := data["isError"].(bool)
+				if isError {
+					fmt.Println("Response contains error:", data["isError"])
+				} else {
+					fmt.Println("Response successful, content length info provided separately")
+				}
+			}
+		} else {
+			// Log full response for non-file operations
+			fmt.Println("Response from CallMcpTool -", toolName, ":", response.Body)
+		}
 	}
 
 	// Extract data from response
@@ -115,6 +142,47 @@ func (fs *FileSystem) callMcpTool(toolName string, args interface{}, defaultErro
 	}
 
 	return result, nil
+}
+
+// isFileOperation checks if the tool operation is file-related and might contain large content
+func isFileOperation(toolName string) bool {
+	fileOperations := map[string]bool{
+		"read_file":           true,
+		"write_file":          true,
+		"read_multiple_files": true,
+	}
+	return fileOperations[toolName]
+}
+
+// truncateContentForLogging replaces large content with size information in JSON args
+func truncateContentForLogging(jsonArgs string) string {
+	var args map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonArgs), &args); err != nil {
+		return fmt.Sprintf("[Could not parse args for logging: %s]", err)
+	}
+
+	// Check for content field and replace with length info
+	if content, ok := args["content"]; ok {
+		contentStr, isString := content.(string)
+		if isString {
+			contentLength := len(contentStr)
+			args["content"] = fmt.Sprintf("[Content length: %d bytes]", contentLength)
+		}
+	}
+
+	// Check for paths array and log number of paths instead of all paths
+	if paths, ok := args["paths"].([]interface{}); ok && len(paths) > 3 {
+		args["paths"] = fmt.Sprintf("[%d paths, first few: %v, %v, %v, ...]",
+			len(paths), paths[0], paths[1], paths[2])
+	}
+
+	// Serialize back to JSON
+	modifiedJSON, err := json.Marshal(args)
+	if err != nil {
+		return fmt.Sprintf("[Could not serialize modified args: %s]", err)
+	}
+
+	return string(modifiedJSON)
 }
 
 // NewFileSystem creates a new FileSystem object.
@@ -364,6 +432,171 @@ func (fs *FileSystem) WriteFile(path, content string, mode string) (bool, error)
 	if err != nil {
 		return false, err
 	}
+
+	return true, nil
+}
+
+// ChunkSize is the default size of chunks for large file operations (60KB)
+const ChunkSize = 60 * 1024
+
+// ReadLargeFile reads a large file in chunks to handle size limitations of the underlying API.
+// It automatically splits the read operation into multiple requests of chunkSize bytes each.
+// If chunkSize is <= 0, the default ChunkSize (60KB) will be used.
+func (fs *FileSystem) ReadLargeFile(path string, chunkSize int) (string, error) {
+	if chunkSize <= 0 {
+		chunkSize = ChunkSize
+	}
+
+	// First get the file size
+	fileInfo, err := fs.GetFileInfo(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to get file info: %w", err)
+	}
+
+	// Extract file size from the content array
+	contentArray, ok := fileInfo.([]interface{})
+	if !ok || len(contentArray) == 0 {
+		return "", fmt.Errorf("invalid file info format")
+	}
+
+	// Get the first content item
+	contentItem, ok := contentArray[0].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid file info content item format")
+	}
+
+	// Extract the text field which contains the file info
+	text, ok := contentItem["text"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid file info text format")
+	}
+
+	// Parse the size from the text
+	var size float64
+	for _, line := range strings.Split(text, "\n") {
+		if strings.HasPrefix(line, "size:") {
+			sizeStr := strings.TrimSpace(strings.TrimPrefix(line, "size:"))
+			if _, err := fmt.Sscanf(sizeStr, "%f", &size); err != nil {
+				return "", fmt.Errorf("couldn't parse file size: %w", err)
+			}
+			break
+		}
+	}
+
+	if size == 0 {
+		return "", fmt.Errorf("couldn't determine file size")
+	}
+
+	// Prepare to read the file in chunks
+	var result strings.Builder
+	offset := 0
+	fileSize := int(size)
+
+	fmt.Printf("ReadLargeFile: Starting chunked read of %s (total size: %d bytes, chunk size: %d bytes)\n",
+		path, fileSize, chunkSize)
+
+	chunkCount := 0
+	for offset < fileSize {
+		// Calculate how much to read in this chunk
+		length := chunkSize
+		if offset+length > fileSize {
+			length = fileSize - offset
+		}
+
+		fmt.Printf("ReadLargeFile: Reading chunk %d (%d bytes at offset %d/%d)\n",
+			chunkCount+1, length, offset, fileSize)
+
+		// Read the chunk
+		chunk, err := fs.ReadFile(path, offset, length)
+		if err != nil {
+			return "", fmt.Errorf("error reading chunk at offset %d: %w", offset, err)
+		}
+
+		// Extract text from the content array
+		contentArray, ok := chunk.([]interface{})
+		if !ok || len(contentArray) == 0 {
+			return "", fmt.Errorf("invalid chunk format at offset %d", offset)
+		}
+
+		// Process each content item
+		for _, item := range contentArray {
+			contentItem, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			text, ok := contentItem["text"].(string)
+			if !ok {
+				continue
+			}
+
+			result.WriteString(text)
+		}
+
+		// Move to the next chunk
+		offset += length
+		chunkCount++
+	}
+
+	fmt.Printf("ReadLargeFile: Successfully read %s in %d chunks (total: %d bytes)\n",
+		path, chunkCount, fileSize)
+
+	return result.String(), nil
+}
+
+// WriteLargeFile writes a large file in chunks to handle size limitations of the underlying API.
+// It automatically splits the write operation into multiple requests of chunkSize bytes each.
+// If chunkSize is <= 0, the default ChunkSize (60KB) will be used.
+func (fs *FileSystem) WriteLargeFile(path, content string, chunkSize int) (bool, error) {
+	if chunkSize <= 0 {
+		chunkSize = ChunkSize
+	}
+
+	contentLen := len(content)
+
+	fmt.Printf("WriteLargeFile: Starting chunked write to %s (total size: %d bytes, chunk size: %d bytes)\n",
+		path, contentLen, chunkSize)
+
+	// If content is small enough, use the regular WriteFile method
+	if contentLen <= chunkSize {
+		fmt.Printf("WriteLargeFile: Content size (%d bytes) is smaller than chunk size, using normal WriteFile\n",
+			contentLen)
+		return fs.WriteFile(path, content, "overwrite")
+	}
+
+	// Write the first chunk with "overwrite" mode to create/clear the file
+	firstChunkEnd := chunkSize
+	if firstChunkEnd > contentLen {
+		firstChunkEnd = contentLen
+	}
+
+	fmt.Printf("WriteLargeFile: Writing first chunk (0-%d bytes) with overwrite mode\n", firstChunkEnd)
+	_, err := fs.WriteFile(path, content[:firstChunkEnd], "overwrite")
+	if err != nil {
+		return false, fmt.Errorf("error writing first chunk: %w", err)
+	}
+
+	// Write the remaining chunks with "append" mode
+	chunkCount := 1 // Already wrote first chunk
+	for offset := firstChunkEnd; offset < contentLen; {
+		end := offset + chunkSize
+		if end > contentLen {
+			end = contentLen
+		}
+
+		fmt.Printf("WriteLargeFile: Writing chunk %d (%d-%d bytes) with append mode\n",
+			chunkCount+1, offset, end)
+		_, err := fs.WriteFile(path, content[offset:end], "append")
+		if err != nil {
+			return false, fmt.Errorf("error writing chunk at offset %d: %w", offset, err)
+		}
+
+		offset = end
+		chunkCount++
+	}
+
+	fmt.Printf("WriteLargeFile: Successfully wrote %s in %d chunks (total: %d bytes)\n",
+		path, chunkCount, contentLen)
 
 	return true, nil
 }

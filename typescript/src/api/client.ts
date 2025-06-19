@@ -88,7 +88,6 @@ export default class Client extends OpenApi {
       reqBodyType: "formData",
       bodyType: "json",
     });
-    log("API Call: CallMcpTool", request,req);
     
     return $dara.cast<$_model.CallMcpToolResponse>(await this.callApi(params, req, runtime), new $_model.CallMcpToolResponse({}));
   }
