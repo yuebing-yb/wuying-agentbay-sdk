@@ -92,7 +92,7 @@ func TestContextPersistence(t *testing.T) {
 	output, err := session1.Command.ExecuteCommand(createFileCmd)
 	if err != nil {
 		t.Logf("Warning: Command execution failed: %v", err)
-		if containsToolNotFound(fmt.Sprintf("%v", output)) {
+		if containsToolNotFound(output) {
 			t.Skip("Skipping test as execute_command tool is not available")
 		}
 	}
@@ -115,11 +115,10 @@ func TestContextPersistence(t *testing.T) {
 		t.Logf("File attributes: %s", lsOutput)
 	}
 
-	outputStr := fmt.Sprintf("%v", output)
-	if !strings.Contains(outputStr, testFileContent) {
-		t.Fatalf("File content verification failed. Expected to contain '%s', got: '%s'", testFileContent, outputStr)
+	if !strings.Contains(output, testFileContent) {
+		t.Fatalf("File content verification failed. Expected to contain '%s', got: '%s'", testFileContent, output)
 	}
-	t.Logf("File created and verified successfully with content: %s", outputStr)
+	t.Logf("File created and verified successfully with content: %s", output)
 
 	// Step 4: Release the session
 	t.Log("Releasing first session...")
@@ -182,9 +181,8 @@ func TestContextPersistence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error checking file existence in second session: %v", err)
 	}
-	outputStr := fmt.Sprintf("%v", output)
-	if !strings.Contains(outputStr, testFileContent) {
-		t.Fatalf("File persistence test failed. Expected file to exist with content '%s', got: '%s'", testFileContent, outputStr)
+	if !strings.Contains(output, testFileContent) {
+		t.Fatalf("File persistence test failed. Expected file to exist with content '%s', got: '%s'", testFileContent, output)
 	}
 	t.Logf("File persistence verified: file exists in the second session")
 

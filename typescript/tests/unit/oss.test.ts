@@ -42,20 +42,27 @@ function getOssCredentials(): {
 }
 
 // Helper function to check if content has error
-function hasErrorInContent(content: any[]): boolean {
+function hasErrorInContent(content: any[] | string): boolean {
+  // If content is a string, check if it contains error text
+  if (typeof content === 'string') {
+    return content.toLowerCase().includes('error');
+  }
+  
+  // If content is not an array, consider it an error
   if (!Array.isArray(content)) {
     return true;
   }
   
+  // If content is an empty array, consider it an error
   if (content.length === 0) {
     return true;
   }
   
-  // Check if first content item has error text
+  // Check if any content item has error text
   return content.some(item => 
     item && typeof item === 'object' && 
     item.text && typeof item.text === 'string' && 
-    (item.text.includes('error') || item.text.includes('Error'))
+    (item.text.toLowerCase().includes('error'))
   );
 }
 
@@ -97,7 +104,7 @@ describe('OSS', () => {
           
           // Check if content has errors
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
+          expect(typeof content).toBe('string');
           expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS environment initialization successful');
@@ -133,7 +140,7 @@ describe('OSS', () => {
           
           // Check if content has errors
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
+          expect(typeof content).toBe('string');
           expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS upload successful');
@@ -164,8 +171,8 @@ describe('OSS', () => {
           
           // Check if content has errors
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
-          expect(hasErrorInContent(content)).toBe(false);
+          expect(typeof content).toBe('string');
+          expect(content.toLowerCase().includes('error')).toBe(false);
           
           log('OSS anonymous upload successful');
         } catch (error) {
@@ -196,7 +203,7 @@ describe('OSS', () => {
           
           // Check if content has errors
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
+          expect(typeof content).toBe('string');
           expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS download successful');
@@ -228,7 +235,7 @@ describe('OSS', () => {
           
           // Check if content has errors
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
+          expect(typeof content).toBe('string');
           expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS anonymous download successful');
@@ -260,7 +267,7 @@ describe('OSS', () => {
           
           // Check if content has errors
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
+          expect(typeof content).toBe('string');
           expect(hasErrorInContent(content)).toBe(false);
           
           log('OSS client creation successful');

@@ -3,62 +3,42 @@ import { WindowManager } from '../../src/window/window';
 import { getTestApiKey } from '../utils/test-helpers';
 import { log } from '../../src/utils/logger';
 
-// Helper function to parse window data from content array
-function parseWindowsContent(content: any[]): any[] {
-  if (!Array.isArray(content) || content.length === 0) {
+// Helper function to parse window data from content string
+function parseWindowsContent(content: string): any[] {
+  if (!content || typeof content !== 'string') {
     return [];
   }
   
-  // Try to extract and parse text from the first content item
-  const item = content[0];
-  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
-    try {
-      return JSON.parse(item.text);
-    } catch (e) {
-      log(`Warning: Failed to parse content text as JSON: ${e}`);
-      return [];
-    }
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    log(`Warning: Failed to parse content text as JSON: ${e}`);
+    return [];
   }
-  
-  return [];
 }
 
-// Helper function to parse single window data from content array
-function parseWindowContent(content: any[]): any {
-  if (!Array.isArray(content) || content.length === 0) {
+// Helper function to parse single window data from content string
+function parseWindowContent(content: string): any {
+  if (!content || typeof content !== 'string') {
     return null;
   }
   
-  // Try to extract and parse text from the first content item
-  const item = content[0];
-  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
-    try {
-      return JSON.parse(item.text);
-    } catch (e) {
-      log(`Warning: Failed to parse content text as JSON: ${e}`);
-      return null;
-    }
+  try {
+    const windows = JSON.parse(content);
+    return Array.isArray(windows) && windows.length > 0 ? windows[0] : null;
+  } catch (e) {
+    log(`Warning: Failed to parse content text as JSON: ${e}`);
+    return null;
   }
-  
-  return null;
 }
 
 // Helper function to check if content has error
-function hasErrorInContent(content: any[]): boolean {
-  if (!Array.isArray(content)) {
+function hasErrorInContent(content: string): boolean {
+  if (!content || typeof content !== 'string') {
     return true;
   }
   
-  if (content.length === 0) {
-    return true;
-  }
-  
-  // Check if first content item has error text
-  return content.some(item => 
-    item && typeof item === 'object' && 
-    item.text && typeof item.text === 'string' && 
-    (item.text.includes('error') || item.text.includes('Error'))
-  );
+  return content.toLowerCase().includes('error');
 }
 
 // Type declarations are now in tests/jest.d.ts
@@ -101,7 +81,7 @@ describe('WindowManager', () => {
         
         // Verify content format
         expect(content).toBeDefined();
-        expect(Array.isArray(content)).toBe(true);
+        expect(typeof content).toBe('string');
         expect(hasErrorInContent(content)).toBe(false);
         
         // Parse windows from content
@@ -136,7 +116,7 @@ describe('WindowManager', () => {
         
         // Verify content format
         expect(content).toBeDefined();
-        expect(Array.isArray(content)).toBe(true);
+        expect(typeof content).toBe('string');
         expect(hasErrorInContent(content)).toBe(false);
         
         // Parse window from content
@@ -182,7 +162,7 @@ describe('WindowManager', () => {
         
         // Verify content format
         expect(content).toBeDefined();
-        expect(Array.isArray(content)).toBe(true);
+        expect(typeof content).toBe('string');
         expect(hasErrorInContent(content)).toBe(false);
         
         log('Window activated successfully');
@@ -217,7 +197,7 @@ describe('WindowManager', () => {
         
         // Verify content format
         expect(content).toBeDefined();
-        expect(Array.isArray(content)).toBe(true);
+        expect(typeof content).toBe('string');
         expect(hasErrorInContent(content)).toBe(false);
         
         log('Window maximized successfully');
@@ -252,7 +232,7 @@ describe('WindowManager', () => {
         
         // Verify content format
         expect(content).toBeDefined();
-        expect(Array.isArray(content)).toBe(true);
+        expect(typeof content).toBe('string');
         expect(hasErrorInContent(content)).toBe(false);
         
         log('Window minimized successfully');
@@ -287,7 +267,7 @@ describe('WindowManager', () => {
         
         // Verify content format
         expect(content).toBeDefined();
-        expect(Array.isArray(content)).toBe(true);
+        expect(typeof content).toBe('string');
         expect(hasErrorInContent(content)).toBe(false);
         
         log('Window restored successfully');
@@ -322,7 +302,7 @@ describe('WindowManager', () => {
         
         // Verify content format
         expect(content).toBeDefined();
-        expect(Array.isArray(content)).toBe(true);
+        expect(typeof content).toBe('string');
         expect(hasErrorInContent(content)).toBe(false);
         
         log('Window resized successfully to 800x600');
@@ -344,7 +324,7 @@ describe('WindowManager', () => {
         
         // Verify content format
         expect(content).toBeDefined();
-        expect(Array.isArray(content)).toBe(true);
+        expect(typeof content).toBe('string');
         expect(hasErrorInContent(content)).toBe(false);
         
         log('Focus mode enabled successfully');
@@ -364,7 +344,7 @@ describe('WindowManager', () => {
         
         // Verify content format
         expect(content).toBeDefined();
-        expect(Array.isArray(content)).toBe(true);
+        expect(typeof content).toBe('string');
         expect(hasErrorInContent(content)).toBe(false);
         
         log('Focus mode disabled successfully');

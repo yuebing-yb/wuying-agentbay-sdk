@@ -3,24 +3,18 @@ import { AgentBay, Session } from '../../src';
 import { getTestApiKey } from '../utils/test-helpers';
 import { log } from '../../src/utils/logger';
 
-// Helper function to parse content array from API response
-function parseContentArray(content: any[]): any {
-  if (!Array.isArray(content) || content.length === 0) {
+// Helper function to parse content string from API response
+function parseContentArray(content: string): any {
+  if (!content || typeof content !== 'string') {
     return [];
   }
   
-  // Try to extract and parse text from the first content item
-  const item = content[0];
-  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
-    try {
-      return JSON.parse(item.text);
-    } catch (e) {
-      log(`Warning: Failed to parse content text as JSON: ${e}`);
-      return item.text;
-    }
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    log(`Warning: Failed to parse content text as JSON: ${e}`);
+    return content;
   }
-  
-  return content;
 }
 
 describe('Application', () => {
@@ -60,7 +54,7 @@ describe('Application', () => {
       
       // Verify results
       expect(content).toBeDefined();
-      expect(Array.isArray(content)).toBe(true);
+      expect(typeof content).toBe('string');
       
       if (Array.isArray(apps) && apps.length > 0) {
         apps.forEach((app: any, index: number) => {
@@ -79,7 +73,7 @@ describe('Application', () => {
       const apps = parseContentArray(appsContent);
       
       expect(appsContent).toBeDefined();
-      expect(Array.isArray(appsContent)).toBe(true);
+      expect(typeof appsContent).toBe('string');
       expect(Array.isArray(apps)).toBe(true);
       expect(apps.length).toBeGreaterThan(0);
       
@@ -105,7 +99,7 @@ describe('Application', () => {
         
         // Verify results
         expect(processesContent).toBeDefined();
-        expect(Array.isArray(processesContent)).toBe(true);
+        expect(typeof processesContent).toBe('string');
         
         if (Array.isArray(processes) && processes.length > 0) {
           processes.forEach((proc: any, index: number) => {
@@ -131,7 +125,7 @@ describe('Application', () => {
             const apps = parseContentArray(appsContent);
             
             expect(appsContent).toBeDefined();
-            expect(Array.isArray(appsContent)).toBe(true);
+            expect(typeof appsContent).toBe('string');
             expect(Array.isArray(apps)).toBe(true);
             expect(apps.length).toBeGreaterThan(0);
             
@@ -152,7 +146,7 @@ describe('Application', () => {
             const processes = parseContentArray(processesContent);
             
             expect(processesContent).toBeDefined();
-            expect(Array.isArray(processesContent)).toBe(true);
+            expect(typeof processesContent).toBe('string');
             expect(Array.isArray(processes)).toBe(true);
             expect(processes.length).toBeGreaterThan(0);
             
@@ -162,7 +156,7 @@ describe('Application', () => {
             log('stopAppByPName Response:', resultContent);
             
             expect(resultContent).toBeDefined();
-            expect(Array.isArray(resultContent)).toBe(true);
+            expect(typeof resultContent).toBe('string');
           } catch (error: any) {
             log(`Note: Failed to stop application by process name: ${error}`);
             // Skip test if we can't stop the application
@@ -179,7 +173,7 @@ describe('Application', () => {
             const apps = parseContentArray(appsContent);
             
             expect(appsContent).toBeDefined();
-            expect(Array.isArray(appsContent)).toBe(true);
+            expect(typeof appsContent).toBe('string');
             expect(Array.isArray(apps)).toBe(true);
             expect(apps.length).toBeGreaterThan(0);
             
@@ -200,7 +194,7 @@ describe('Application', () => {
             const processes = parseContentArray(processesContent);
             
             expect(processesContent).toBeDefined();
-            expect(Array.isArray(processesContent)).toBe(true);
+            expect(typeof processesContent).toBe('string');
             expect(Array.isArray(processes)).toBe(true);
             expect(processes.length).toBeGreaterThan(0);
 
@@ -216,7 +210,7 @@ describe('Application', () => {
             log('stopAppByPID Response:', resultContent);
             
             expect(resultContent).toBeDefined();
-            expect(Array.isArray(resultContent)).toBe(true);
+            expect(typeof resultContent).toBe('string');
             
             // Wait 5 seconds to ensure the application has time to close
             log('Waiting 5 seconds to ensure the application has closed...');
@@ -249,7 +243,7 @@ describe('Application', () => {
         const apps = parseContentArray(appsContent);
         
         expect(appsContent).toBeDefined();
-        expect(Array.isArray(appsContent)).toBe(true);
+        expect(typeof appsContent).toBe('string');
         expect(Array.isArray(apps)).toBe(true);
         expect(apps.length).toBeGreaterThan(0);
         
@@ -282,7 +276,7 @@ describe('Application', () => {
         log(`Found ${Array.isArray(processes) ? processes.length : 0} visible applications`);
         
         expect(processesContent).toBeDefined();
-        expect(Array.isArray(processesContent)).toBe(true);
+        expect(typeof processesContent).toBe('string');
         
         if (Array.isArray(processes) && processes.length > 0) {
           processes.forEach((proc: any) => {

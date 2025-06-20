@@ -3,6 +3,7 @@ package command
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
@@ -19,11 +20,11 @@ type Command struct {
 
 // callMcpToolResult represents the result of a CallMcpTool operation
 type callMcpToolResult struct {
-	Data       map[string]interface{}
-	Content    []map[string]interface{}
-	IsError    bool
-	ErrorMsg   string
-	StatusCode int32
+	TextContent string // 提取的text字段内容
+	Data        map[string]interface{}
+	IsError     bool
+	ErrorMsg    string
+	StatusCode  int32
 }
 
 // callMcpTool calls the MCP tool and checks for errors in the response
@@ -78,39 +79,42 @@ func (c *Command) callMcpTool(toolName string, args interface{}, defaultErrorMsg
 		// Try to extract the error message from the content field
 		contentArray, ok := data["content"].([]interface{})
 		if ok && len(contentArray) > 0 {
-			// Convert content array to a more usable format
-			result.Content = make([]map[string]interface{}, 0, len(contentArray))
-			for _, item := range contentArray {
-				contentItem, ok := item.(map[string]interface{})
-				if !ok {
-					continue
-				}
-				result.Content = append(result.Content, contentItem)
-			}
-
 			// Extract error message from the first content item
-			if len(result.Content) > 0 {
-				text, ok := result.Content[0]["text"].(string)
+			if len(contentArray) > 0 {
+				contentItem, ok := contentArray[0].(map[string]interface{})
 				if ok {
-					result.ErrorMsg = text
-					return result, fmt.Errorf("%s", text)
+					text, ok := contentItem["text"].(string)
+					if ok {
+						result.ErrorMsg = text
+						return result, fmt.Errorf("%s", text)
+					}
 				}
 			}
 		}
 		return result, fmt.Errorf("%s", defaultErrorMsg)
 	}
 
-	// Extract content array if it exists
+	// Extract text from content array if it exists
 	contentArray, ok := data["content"].([]interface{})
-	if ok {
-		result.Content = make([]map[string]interface{}, 0, len(contentArray))
-		for _, item := range contentArray {
+	if ok && len(contentArray) > 0 {
+		var textBuilder strings.Builder
+		for i, item := range contentArray {
 			contentItem, ok := item.(map[string]interface{})
 			if !ok {
 				continue
 			}
-			result.Content = append(result.Content, contentItem)
+
+			text, ok := contentItem["text"].(string)
+			if !ok {
+				continue
+			}
+
+			if i > 0 {
+				textBuilder.WriteString("\n")
+			}
+			textBuilder.WriteString(text)
 		}
+		result.TextContent = textBuilder.String()
 	}
 
 	return result, nil
@@ -129,7 +133,7 @@ func NewCommand(session interface {
 
 // ExecuteCommand executes a command in the cloud environment with a specified timeout.
 // If timeoutMs is not provided or is 0, the default timeout of 1000ms will be used.
-func (c *Command) ExecuteCommand(command string, timeoutMs ...int) (interface{}, error) {
+func (c *Command) ExecuteCommand(command string, timeoutMs ...int) (string, error) {
 	// Set default timeout if not provided
 	timeout := 1000
 	if len(timeoutMs) > 0 && timeoutMs[0] > 0 {
@@ -145,16 +149,15 @@ func (c *Command) ExecuteCommand(command string, timeoutMs ...int) (interface{},
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := c.callMcpTool("shell", args, "error executing command")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	return mcpResult.TextContent, nil
 }
 
 // RunCode executes code in the specified language with a timeout.
 // If timeoutS is not provided or is 0, the default timeout of 300 seconds will be used.
-func (c *Command) RunCode(code string, language string, timeoutS ...int) (interface{}, error) {
+func (c *Command) RunCode(code string, language string, timeoutS ...int) (string, error) {
 	// Set default timeout if not provided
 	timeout := 300
 	if len(timeoutS) > 0 && timeoutS[0] > 0 {
@@ -176,9 +179,8 @@ func (c *Command) RunCode(code string, language string, timeoutS ...int) (interf
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := c.callMcpTool("run_code", args, "error executing code")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	return mcpResult.TextContent, nil
 }

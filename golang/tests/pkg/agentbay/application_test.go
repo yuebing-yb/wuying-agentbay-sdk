@@ -12,16 +12,10 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
-// extractInstalledApps 从content数组中解析出InstalledApp对象列表
-func extractInstalledApps(content []map[string]interface{}) ([]application.InstalledApp, error) {
-	if len(content) == 0 {
-		return nil, fmt.Errorf("empty content array")
-	}
-
-	// 从content中获取text字段
-	textContent, ok := content[0]["text"].(string)
-	if !ok {
-		return nil, fmt.Errorf("text field not found or not a string")
+// extractInstalledApps 从content字符串中解析出InstalledApp对象列表
+func extractInstalledApps(textContent string) ([]application.InstalledApp, error) {
+	if textContent == "" {
+		return nil, fmt.Errorf("empty content string")
 	}
 
 	// 将text解析为InstalledApp对象数组
@@ -33,16 +27,10 @@ func extractInstalledApps(content []map[string]interface{}) ([]application.Insta
 	return apps, nil
 }
 
-// extractProcesses 从content数组中解析出Process对象列表
-func extractProcesses(content []map[string]interface{}) ([]application.Process, error) {
-	if len(content) == 0 {
-		return nil, fmt.Errorf("empty content array")
-	}
-
-	// 从content中获取text字段
-	textContent, ok := content[0]["text"].(string)
-	if !ok {
-		return nil, fmt.Errorf("text field not found or not a string")
+// extractProcesses 从content字符串中解析出Process对象列表
+func extractProcesses(textContent string) ([]application.Process, error) {
+	if textContent == "" {
+		return nil, fmt.Errorf("empty content string")
 	}
 
 	// 将text解析为Process对象数组
@@ -88,7 +76,7 @@ func TestApplication_GetInstalledApps(t *testing.T) {
 		if err != nil {
 			t.Logf("Note: GetInstalledApps failed: %v", err)
 		} else {
-			t.Logf("Got response with %d content items", len(content))
+			t.Logf("Got response content")
 
 			// 解析content为InstalledApp对象列表
 			apps, err := extractInstalledApps(content)
@@ -161,7 +149,7 @@ func TestApplication_ListVisibleApps(t *testing.T) {
 		if err != nil {
 			t.Logf("Note: ListVisibleApps failed: %v", err)
 		} else {
-			t.Logf("Got response with %d content items", len(content))
+			t.Logf("Got response content")
 
 			// 解析content为Process对象列表
 			visibleApps, err := extractProcesses(content)
@@ -264,7 +252,7 @@ func TestApplication_StartApp(t *testing.T) {
 				return
 			}
 		} else {
-			t.Logf("Got response with %d content items", len(content))
+			t.Logf("Got response content")
 
 			// 解析content为Process对象列表
 			processes, err := extractProcesses(content)
@@ -384,7 +372,7 @@ func TestApplication_StopAppByPName(t *testing.T) {
 			t.Logf("Attempting to stop process by name: %s", processToStop)
 
 			// Call StopAppByPName function
-			stopContent, err := session.Application.StopAppByPName(processToStop)
+			_, err = session.Application.StopAppByPName(processToStop)
 			if err != nil {
 				t.Errorf("StopAppByPName failed: %v", err)
 
@@ -394,7 +382,7 @@ func TestApplication_StopAppByPName(t *testing.T) {
 					return
 				}
 			} else {
-				t.Logf("Got response with %d content items", len(stopContent))
+				t.Logf("Got response content")
 				t.Logf("Successfully stopped process by name: %s", processToStop)
 
 				// Verify the process was stopped by listing visible apps

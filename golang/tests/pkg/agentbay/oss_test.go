@@ -3,7 +3,6 @@ package agentbay_test
 import (
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
@@ -79,14 +78,11 @@ func TestOss_EnvInit(t *testing.T) {
 		accessKeyId, accessKeySecret, securityToken, endpoint, region := getOssCredentials(t)
 
 		fmt.Println("Initializing OSS environment...")
-		rawResult, err := session.Oss.EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region)
+		result, err := session.Oss.EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region)
 		if err != nil {
 			t.Errorf("OSS environment initialization failed: %v", err)
 		} else {
 			t.Log("OSS environment initialization successful")
-
-			// Extract text from the result
-			result := extractOssTextFromContent(rawResult)
 			t.Logf("EnvInit result: %s, err=%v", result, err)
 
 			// Check if response contains "tool not found"
@@ -97,34 +93,6 @@ func TestOss_EnvInit(t *testing.T) {
 	} else {
 		t.Logf("Note: OSS interface is nil, skipping OSS test")
 	}
-}
-
-// Helper function to extract text from content response
-func extractOssTextFromContent(rawContent interface{}) string {
-	contentArray, ok := rawContent.([]interface{})
-	if !ok {
-		return fmt.Sprintf("Failed to convert to []interface{}: %v", rawContent)
-	}
-
-	var result strings.Builder
-	for _, item := range contentArray {
-		contentItem, ok := item.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		text, ok := contentItem["text"].(string)
-		if !ok {
-			continue
-		}
-
-		if result.Len() > 0 {
-			result.WriteString("\n")
-		}
-		result.WriteString(text)
-	}
-
-	return result.String()
 }
 
 func TestOss_Upload(t *testing.T) {
@@ -182,14 +150,11 @@ func TestOss_Upload(t *testing.T) {
 			bucket = "test-bucket"
 		}
 		objectKey := "test-object.txt"
-		rawResult, err := session.Oss.Upload(bucket, objectKey, testFilePath)
+		result, err := session.Oss.Upload(bucket, objectKey, testFilePath)
 		if err != nil {
 			t.Errorf("OSS upload failed: %v", err)
 		} else {
 			t.Log("OSS upload successful")
-
-			// Extract text from the result
-			result := extractOssTextFromContent(rawResult)
 			t.Logf("Upload result: %s, err=%v", result, err)
 
 			// Check if response contains "tool not found"
@@ -249,14 +214,11 @@ func TestOss_UploadAnonymous(t *testing.T) {
 		if uploadUrl == "" {
 			uploadUrl = "https://example.com/upload/test-file.txt"
 		}
-		rawResult, err := session.Oss.UploadAnonymous(uploadUrl, testFilePath)
+		result, err := session.Oss.UploadAnonymous(uploadUrl, testFilePath)
 		if err != nil {
 			t.Errorf("OSS anonymous upload failed: %v", err)
 		} else {
 			t.Log("OSS anonymous upload successful")
-
-			// Extract text from the result
-			result := extractOssTextFromContent(rawResult)
 			t.Logf("UploadAnonymous result: %s, err=%v", result, err)
 
 			// Check if response contains "tool not found"
@@ -313,14 +275,11 @@ func TestOss_Download(t *testing.T) {
 		}
 		objectKey := "test-object.txt"
 		downloadPath := "/tmp/test_oss_download.txt"
-		rawResult, err := session.Oss.Download(bucket, objectKey, downloadPath)
+		result, err := session.Oss.Download(bucket, objectKey, downloadPath)
 		if err != nil {
 			t.Errorf("OSS download failed: %v", err)
 		} else {
 			t.Log("OSS download successful")
-
-			// Extract text from the result
-			result := extractOssTextFromContent(rawResult)
 			t.Logf("Download result: %s, err=%v", result, err)
 
 			// Check if response contains "tool not found"
@@ -379,14 +338,11 @@ func TestOss_DownloadAnonymous(t *testing.T) {
 			downloadUrl = "https://example.com/download/test-file.txt"
 		}
 		downloadPath := "/tmp/test_oss_download_anon.txt"
-		rawResult, err := session.Oss.DownloadAnonymous(downloadUrl, downloadPath)
+		result, err := session.Oss.DownloadAnonymous(downloadUrl, downloadPath)
 		if err != nil {
 			t.Errorf("OSS anonymous download failed: %v", err)
 		} else {
 			t.Log("OSS anonymous download successful")
-
-			// Extract text from the result
-			result := extractOssTextFromContent(rawResult)
 			t.Logf("DownloadAnonymous result: %s, err=%v", result, err)
 
 			// Check if response contains "tool not found"

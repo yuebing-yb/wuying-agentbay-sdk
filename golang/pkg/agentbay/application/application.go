@@ -3,6 +3,7 @@ package application
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
@@ -34,11 +35,12 @@ type ApplicationManager struct {
 
 // callMcpToolResult represents the result of a CallMcpTool operation
 type callMcpToolResult struct {
-	Data       map[string]interface{}
-	Content    []map[string]interface{}
-	IsError    bool
-	ErrorMsg   string
-	StatusCode int32
+	Data        map[string]interface{}
+	Content     []map[string]interface{}
+	TextContent string
+	IsError     bool
+	ErrorMsg    string
+	StatusCode  int32
 }
 
 // callMcpTool calls the MCP tool and checks for errors in the response
@@ -126,6 +128,21 @@ func (am *ApplicationManager) callMcpTool(toolName string, args interface{}, def
 			}
 			result.Content = append(result.Content, contentItem)
 		}
+
+		// Extract text content from the content items
+		var textBuilder strings.Builder
+		for _, item := range result.Content {
+			text, ok := item["text"].(string)
+			if !ok {
+				continue
+			}
+
+			if textBuilder.Len() > 0 {
+				textBuilder.WriteString("\n")
+			}
+			textBuilder.WriteString(text)
+		}
+		result.TextContent = textBuilder.String()
 	}
 
 	return result, nil
@@ -143,7 +160,7 @@ func NewApplicationManager(session interface {
 }
 
 // GetInstalledApps retrieves a list of installed applications.
-func (am *ApplicationManager) GetInstalledApps(startMenu bool, desktop bool, ignoreSystemApps bool) ([]map[string]interface{}, error) {
+func (am *ApplicationManager) GetInstalledApps(startMenu bool, desktop bool, ignoreSystemApps bool) (string, error) {
 	args := map[string]interface{}{
 		"start_menu":         startMenu,
 		"desktop":            desktop,
@@ -153,15 +170,15 @@ func (am *ApplicationManager) GetInstalledApps(startMenu bool, desktop bool, ign
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := am.callMcpTool("get_installed_apps", args, "error getting installed apps")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the content array directly for the caller to parse
-	return mcpResult.Content, nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
 // StartApp starts an application with the given command and optional working directory.
-func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) ([]map[string]interface{}, error) {
+func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) (string, error) {
 	args := map[string]string{
 		"start_cmd": startCmd,
 	}
@@ -172,15 +189,15 @@ func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) ([
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := am.callMcpTool("start_app", args, "error starting app")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the content array directly for the caller to parse
-	return mcpResult.Content, nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
 // StopAppByPName stops an application by process name.
-func (am *ApplicationManager) StopAppByPName(pname string) ([]map[string]interface{}, error) {
+func (am *ApplicationManager) StopAppByPName(pname string) (string, error) {
 	args := map[string]string{
 		"pname": pname,
 	}
@@ -188,31 +205,31 @@ func (am *ApplicationManager) StopAppByPName(pname string) ([]map[string]interfa
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := am.callMcpTool("stop_app_by_pname", args, "error stopping app by process name")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the content array directly for the caller to parse
-	return mcpResult.Content, nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
 // StopAppByPID stops an application by process ID.
-func (am *ApplicationManager) StopAppByPID(pid int) ([]map[string]interface{}, error) {
+func (am *ApplicationManager) StopAppByPID(pid int) (string, error) {
 	args := map[string]int{
 		"pid": pid,
 	}
 
 	// Use the helper method to call MCP tool and check for errors
-	mcpResult, err := am.callMcpTool("stop_app_by_pid", args, "error stopping app by process ID")
+	mcpResult, err := am.callMcpTool("stop_app_by_pid", args, "error stopping app by PID")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the content array directly for the caller to parse
-	return mcpResult.Content, nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
-// StopAppByCmd stops an application by stop command.
-func (am *ApplicationManager) StopAppByCmd(stopCmd string) ([]map[string]interface{}, error) {
+// StopAppByCmd stops an application using a specific command.
+func (am *ApplicationManager) StopAppByCmd(stopCmd string) (string, error) {
 	args := map[string]string{
 		"stop_cmd": stopCmd,
 	}
@@ -220,23 +237,23 @@ func (am *ApplicationManager) StopAppByCmd(stopCmd string) ([]map[string]interfa
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := am.callMcpTool("stop_app_by_cmd", args, "error stopping app by command")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the content array directly for the caller to parse
-	return mcpResult.Content, nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
-// ListVisibleApps lists all currently visible applications.
-func (am *ApplicationManager) ListVisibleApps() ([]map[string]interface{}, error) {
+// ListVisibleApps lists currently visible applications.
+func (am *ApplicationManager) ListVisibleApps() (string, error) {
 	args := map[string]interface{}{}
 
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := am.callMcpTool("list_visible_apps", args, "error listing visible apps")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the content array directly for the caller to parse
-	return mcpResult.Content, nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }

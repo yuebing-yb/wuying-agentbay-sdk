@@ -53,6 +53,7 @@ function truncateContentForLogging(args: Record<string, any>): Record<string, an
 interface CallMcpToolResult {
   data: Record<string, any>;
   content?: any[];
+  textContent?: string;
   isError: boolean;
   errorMsg?: string;
   statusCode: number;
@@ -188,6 +189,17 @@ export class FileSystem {
       // Extract content array if it exists
       if (Array.isArray(data.content)) {
         result.content = data.content;
+        
+        // Extract textContent from content items
+        if (result.content.length > 0) {
+          const textParts: string[] = [];
+          for (const item of result.content) {
+            if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+              textParts.push(item.text);
+            }
+          }
+          result.textContent = textParts.join('\n');
+        }
       }
       
       return result;
@@ -201,18 +213,18 @@ export class FileSystem {
    * Creates a new directory at the specified path.
    * 
    * @param path - Path to the directory to create.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws APIError if the operation fails.
    */
-  async createDirectory(path: string): Promise<any> {
+  async createDirectory(path: string): Promise<string> {
     const args = {
       path
     };
     
     const result = await this.callMcpTool('create_directory', args, 'Failed to create directory');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
@@ -221,10 +233,10 @@ export class FileSystem {
    * @param path - Path to the file to edit.
    * @param edits - Array of edit operations, each containing oldText and newText.
    * @param dryRun - Optional: If true, preview changes without applying them.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws APIError if the operation fails.
    */
-  async editFile(path: string, edits: Array<{oldText: string, newText: string}>, dryRun: boolean = false): Promise<any> {
+  async editFile(path: string, edits: Array<{oldText: string, newText: string}>, dryRun: boolean = false): Promise<string> {
     const args = {
       path,
       edits,
@@ -233,33 +245,33 @@ export class FileSystem {
     
     const result = await this.callMcpTool('edit_file', args, 'Failed to edit file');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
    * Gets information about a file or directory.
    * 
    * @param path - Path to the file or directory to inspect.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws APIError if the operation fails.
    */
-  async getFileInfo(path: string): Promise<any> {
+  async getFileInfo(path: string): Promise<string> {
     const args = {
       path
     };
     
     const result = await this.callMcpTool('get_file_info', args, 'Failed to get file info');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
    * Lists the contents of a directory.
    * 
    * @param path - Path to the directory to list.
-   * @returns The content field from the API response
+   * @returns Array of directory entries with properties like name, isDirectory
    * @throws APIError if the operation fails.
    */
   async listDirectory(path: string): Promise<any> {
@@ -269,8 +281,17 @@ export class FileSystem {
     
     const result = await this.callMcpTool('list_directory', args, 'Failed to list directory');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Parse the text content into directory entries
+    try {
+      if (result.textContent) {
+        return JSON.parse(result.textContent);
+      }
+    } catch (error) {
+      logError(`Error parsing directory entries: ${error}`);
+    }
+    
+    // Return the raw text content if parsing fails
+    return result.textContent || '';
   }
 
   /**
@@ -278,10 +299,10 @@ export class FileSystem {
    * 
    * @param source - Path to the source file or directory.
    * @param destination - Path to the destination file or directory.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws APIError if the operation fails.
    */
-  async moveFile(source: string, destination: string): Promise<any> {
+  async moveFile(source: string, destination: string): Promise<string> {
     const args = {
       source,
       destination
@@ -289,8 +310,8 @@ export class FileSystem {
     
     const result = await this.callMcpTool('move_file', args, 'Failed to move file');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
@@ -299,10 +320,10 @@ export class FileSystem {
    * @param path - Path to the file to read.
    * @param offset - Optional: Line offset to start reading from.
    * @param length - Optional: Number of lines to read. If 0, reads the entire file.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws APIError if the operation fails.
    */
-  async readFile(path: string, offset: number = 0, length: number = 0): Promise<any> {
+  async readFile(path: string, offset: number = 0, length: number = 0): Promise<string> {
     const args: Record<string, any> = {
       path
     };
@@ -317,26 +338,26 @@ export class FileSystem {
     
     const result = await this.callMcpTool('read_file', args, 'Failed to read file');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
    * Reads the content of multiple files.
    * 
    * @param paths - Array of file paths to read.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws APIError if the operation fails.
    */
-  async readMultipleFiles(paths: string[]): Promise<any> {
+  async readMultipleFiles(paths: string[]): Promise<string> {
     const args = {
       paths
     };
     
     const result = await this.callMcpTool('read_multiple_files', args, 'Failed to read multiple files');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
@@ -345,10 +366,10 @@ export class FileSystem {
    * @param path - Path to the directory to search in.
    * @param pattern - Pattern to search for. Supports glob patterns.
    * @param excludePatterns - Optional: Array of patterns to exclude.
-   * @returns The content field from the API response
+   * @returns Array of search results with properties like path
    * @throws APIError if the operation fails.
    */
-  async searchFiles(path: string, pattern: string, excludePatterns: string[] = []): Promise<any> {
+  async searchFiles(path: string, pattern: string, excludePatterns: string[] = []): Promise<any[]> {
     const args: Record<string, any> = {
       path,
       pattern
@@ -360,8 +381,17 @@ export class FileSystem {
     
     const result = await this.callMcpTool('search_files', args, 'Failed to search files');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Parse the text content into search results
+    try {
+      if (result.textContent) {
+        return JSON.parse(result.textContent);
+      }
+    } catch (error) {
+      logError(`Error parsing search results: ${error}`);
+    }
+    
+    // Return an empty array if parsing fails
+    return [];
   }
 
   /**
@@ -370,10 +400,10 @@ export class FileSystem {
    * @param path - Path to the file to write.
    * @param content - Content to write to the file.
    * @param mode - Optional: Write mode. One of "overwrite", "append", or "create_new". Default is "overwrite".
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws APIError if the operation fails.
    */
-  async writeFile(path: string, content: string, mode: string = 'overwrite'): Promise<any> {
+  async writeFile(path: string, content: string, mode: string = 'overwrite'): Promise<string> {
     // Validate mode
     const validModes = ['overwrite', 'append', 'create_new'];
     if (!validModes.includes(mode)) {
@@ -388,8 +418,8 @@ export class FileSystem {
     
     const result = await this.callMcpTool('write_file', args, 'Failed to write file');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
@@ -402,26 +432,14 @@ export class FileSystem {
    * @throws APIError if the operation fails.
    */
   async readLargeFile(path: string, chunkSize: number = DEFAULT_CHUNK_SIZE): Promise<string> {
-    // First get the file size
+    // First get the file info
     const fileInfo = await this.getFileInfo(path);
     
-    // Extract file size from the content array
-    if (!Array.isArray(fileInfo) || fileInfo.length === 0) {
-      throw new APIError('Invalid file info format');
-    }
-    
-    // Get the first content item
-    const contentItem = fileInfo[0];
-    if (!contentItem || typeof contentItem !== 'object' || !contentItem.text || typeof contentItem.text !== 'string') {
-      throw new APIError('Invalid file info content item format');
-    }
-    
-    // Extract the text field which contains the file info
-    const infoText = contentItem.text;
-    
-    // Parse the size from the text
+    // Parse the size from the file info
     let fileSize = 0;
-    for (const line of infoText.split('\n')) {
+    
+    // Parse the file info string to extract the size
+    for (const line of fileInfo.split('\n')) {
       if (line.startsWith('size:')) {
         const sizeStr = line.substring('size:'.length).trim();
         fileSize = parseInt(sizeStr, 10);
@@ -456,17 +474,8 @@ export class FileSystem {
         // Read the chunk
         const chunk = await this.readFile(path, offset, length);
         
-        // Extract text from the content array
-        if (!Array.isArray(chunk) || chunk.length === 0) {
-          throw new APIError(`Invalid chunk format at offset ${offset}`);
-        }
-        
-        // Process each content item
-        for (const item of chunk) {
-          if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
-            result += item.text;
-          }
-        }
+        // Since readFile returns a string, just append it to the result
+        result += chunk;
         
         // Move to the next chunk
         offset += length;

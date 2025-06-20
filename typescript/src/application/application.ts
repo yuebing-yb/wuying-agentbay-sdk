@@ -9,6 +9,7 @@ import { APIError } from '../exceptions';
 interface CallMcpToolResult {
   data: Record<string, any>;
   content?: any[];
+  textContent?: string;
   isError: boolean;
   errorMsg?: string;
   statusCode: number;
@@ -127,6 +128,17 @@ export class Application {
       // Extract content array if it exists
       if (Array.isArray(data.content)) {
         result.content = data.content;
+        
+        // Extract textContent from content items
+        if (result.content.length > 0) {
+          const textParts: string[] = [];
+          for (const item of result.content) {
+            if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+              textParts.push(item.text);
+            }
+          }
+          result.textContent = textParts.join('\n');
+        }
       }
       
       return result;
@@ -141,14 +153,14 @@ export class Application {
    * @param startMenu Whether to include applications from the start menu. Defaults to true.
    * @param desktop Whether to include applications from the desktop. Defaults to true.
    * @param ignoreSystemApps Whether to ignore system applications. Defaults to true.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
   async getInstalledApps(
     startMenu: boolean = true,
     desktop: boolean = true,
     ignoreSystemApps: boolean = true
-  ): Promise<any> {
+  ): Promise<string> {
     const args = {
       start_menu: startMenu,
       desktop,
@@ -157,18 +169,18 @@ export class Application {
 
     const result = await this.callMcpTool('get_installed_apps', args, 'Failed to get installed apps');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
    * Starts an application with the given command and optional working directory.
    * @param startCmd The command to start the application.
    * @param workDirectory The working directory for the application. Defaults to an empty string.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async startApp(startCmd: string, workDirectory: string = ''): Promise<any> {
+  async startApp(startCmd: string, workDirectory: string = ''): Promise<string> {
     const args: any = {
       start_cmd: startCmd
     };
@@ -179,72 +191,72 @@ export class Application {
 
     const result = await this.callMcpTool('start_app', args, 'Failed to start app');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
    * Stops an application by process name.
    * @param pname The name of the process to stop.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async stopAppByPName(pname: string): Promise<any> {
+  async stopAppByPName(pname: string): Promise<string> {
     const args = {
       pname
     };
 
     const result = await this.callMcpTool('stop_app_by_pname', args, 'Failed to stop app by pname');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
    * Stops an application by process ID.
    * @param pid The ID of the process to stop.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async stopAppByPID(pid: number): Promise<any> {
+  async stopAppByPID(pid: number): Promise<string> {
     const args = {
       pid
     };
 
     const result = await this.callMcpTool('stop_app_by_pid', args, 'Failed to stop app by pid');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
    * Stops an application by stop command.
    * @param stopCmd The command to stop the application.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async stopAppByCmd(stopCmd: string): Promise<any> {
+  async stopAppByCmd(stopCmd: string): Promise<string> {
     const args = {
       stop_cmd: stopCmd
     };
 
     const result = await this.callMcpTool('stop_app_by_cmd', args, 'Failed to stop app by command');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
    * Lists all currently visible applications.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async listVisibleApps(): Promise<any> {
+  async listVisibleApps(): Promise<string> {
     const args = {};
 
     const result = await this.callMcpTool('list_visible_apps', args, 'Failed to list visible apps');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 }
