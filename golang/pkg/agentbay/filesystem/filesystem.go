@@ -20,11 +20,11 @@ type FileSystem struct {
 
 // callMcpToolResult represents the result of a CallMcpTool operation
 type callMcpToolResult struct {
-	Data       map[string]interface{}
-	Content    []map[string]interface{}
-	IsError    bool
-	ErrorMsg   string
-	StatusCode int32
+	TextContent string // 提取的text字段内容
+	Data        map[string]interface{}
+	IsError     bool
+	ErrorMsg    string
+	StatusCode  int32
 }
 
 // callMcpTool calls the MCP tool and checks for errors in the response
@@ -106,39 +106,42 @@ func (fs *FileSystem) callMcpTool(toolName string, args interface{}, defaultErro
 		// Try to extract the error message from the content field
 		contentArray, ok := data["content"].([]interface{})
 		if ok && len(contentArray) > 0 {
-			// Convert content array to a more usable format
-			result.Content = make([]map[string]interface{}, 0, len(contentArray))
-			for _, item := range contentArray {
-				contentItem, ok := item.(map[string]interface{})
-				if !ok {
-					continue
-				}
-				result.Content = append(result.Content, contentItem)
-			}
-
 			// Extract error message from the first content item
-			if len(result.Content) > 0 {
-				text, ok := result.Content[0]["text"].(string)
+			if len(contentArray) > 0 {
+				contentItem, ok := contentArray[0].(map[string]interface{})
 				if ok {
-					result.ErrorMsg = text
-					return result, fmt.Errorf("%s", text)
+					text, ok := contentItem["text"].(string)
+					if ok {
+						result.ErrorMsg = text
+						return result, fmt.Errorf("%s", text)
+					}
 				}
 			}
 		}
 		return result, fmt.Errorf("%s", defaultErrorMsg)
 	}
 
-	// Extract content array if it exists
+	// Extract text from content array if it exists
 	contentArray, ok := data["content"].([]interface{})
-	if ok {
-		result.Content = make([]map[string]interface{}, 0, len(contentArray))
-		for _, item := range contentArray {
+	if ok && len(contentArray) > 0 {
+		var textBuilder strings.Builder
+		for i, item := range contentArray {
 			contentItem, ok := item.(map[string]interface{})
 			if !ok {
 				continue
 			}
-			result.Content = append(result.Content, contentItem)
+
+			text, ok := contentItem["text"].(string)
+			if !ok {
+				continue
+			}
+
+			if i > 0 {
+				textBuilder.WriteString("\n")
+			}
+			textBuilder.WriteString(text)
 		}
+		result.TextContent = textBuilder.String()
 	}
 
 	return result, nil
@@ -255,7 +258,7 @@ func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bo
 //	{
 //	  "path": "file/or/directory/path/to/inspect"
 //	}
-func (fs *FileSystem) GetFileInfo(path string) (interface{}, error) {
+func (fs *FileSystem) GetFileInfo(path string) (string, error) {
 	args := map[string]string{
 		"path": path,
 	}
@@ -265,13 +268,12 @@ func (fs *FileSystem) GetFileInfo(path string) (interface{}, error) {
 	if err != nil {
 		// Check if it's a "file not found" error
 		if strings.Contains(err.Error(), "No such file or directory") {
-			return nil, fmt.Errorf("file not found: %s", path)
+			return "", fmt.Errorf("file not found: %s", path)
 		}
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	return mcpResult.TextContent, nil
 }
 
 // ListDirectory lists the contents of a directory.
@@ -280,7 +282,7 @@ func (fs *FileSystem) GetFileInfo(path string) (interface{}, error) {
 //	{
 //	  "path": "directory/path/to/list"
 //	}
-func (fs *FileSystem) ListDirectory(path string) (interface{}, error) {
+func (fs *FileSystem) ListDirectory(path string) (string, error) {
 	args := map[string]string{
 		"path": path,
 	}
@@ -288,11 +290,10 @@ func (fs *FileSystem) ListDirectory(path string) (interface{}, error) {
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := fs.callMcpTool("list_directory", args, "error listing directory")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	return mcpResult.TextContent, nil
 }
 
 // MoveFile moves a file or directory from source to destination.
@@ -326,7 +327,7 @@ func (fs *FileSystem) MoveFile(source, destination string) (bool, error) {
 //	  "offset": 0,  // Optional: Start reading from this byte offset
 //	  "length": 0   // Optional: Number of bytes to read. If 0, read to end of file
 //	}
-func (fs *FileSystem) ReadFile(path string, optionalParams ...int) (interface{}, error) {
+func (fs *FileSystem) ReadFile(path string, optionalParams ...int) (string, error) {
 	// Handle optional parameters for backward compatibility
 	offset, length := 0, 0
 	if len(optionalParams) > 0 {
@@ -351,11 +352,10 @@ func (fs *FileSystem) ReadFile(path string, optionalParams ...int) (interface{},
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := fs.callMcpTool("read_file", args, "error reading file")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	return mcpResult.TextContent, nil
 }
 
 // ReadMultipleFiles reads the contents of multiple files.
@@ -364,7 +364,7 @@ func (fs *FileSystem) ReadFile(path string, optionalParams ...int) (interface{},
 //	{
 //	  "paths": ["file1/path", "file2/path", "file3/path"]
 //	}
-func (fs *FileSystem) ReadMultipleFiles(paths []string) (interface{}, error) {
+func (fs *FileSystem) ReadMultipleFiles(paths []string) (string, error) {
 	args := map[string]interface{}{
 		"paths": paths,
 	}
@@ -372,11 +372,10 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (interface{}, error) {
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := fs.callMcpTool("read_multiple_files", args, "error reading multiple files")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	return mcpResult.TextContent, nil
 }
 
 // SearchFiles searches for files matching a pattern in a directory.
@@ -387,7 +386,7 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (interface{}, error) {
 //	  "pattern": "pattern to match",
 //	  "excludePatterns": ["pattern1", "pattern2"]  // Optional: Patterns to exclude
 //	}
-func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (interface{}, error) {
+func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (string, error) {
 	args := map[string]interface{}{
 		"path":    path,
 		"pattern": pattern,
@@ -401,11 +400,10 @@ func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := fs.callMcpTool("search_files", args, "error searching files")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	return mcpResult.TextContent, nil
 }
 
 // WriteFile writes content to a file.
@@ -448,32 +446,14 @@ func (fs *FileSystem) ReadLargeFile(path string, chunkSize int) (string, error) 
 	}
 
 	// First get the file size
-	fileInfo, err := fs.GetFileInfo(path)
+	fileInfoText, err := fs.GetFileInfo(path)
 	if err != nil {
 		return "", fmt.Errorf("failed to get file info: %w", err)
 	}
 
-	// Extract file size from the content array
-	contentArray, ok := fileInfo.([]interface{})
-	if !ok || len(contentArray) == 0 {
-		return "", fmt.Errorf("invalid file info format")
-	}
-
-	// Get the first content item
-	contentItem, ok := contentArray[0].(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("invalid file info content item format")
-	}
-
-	// Extract the text field which contains the file info
-	text, ok := contentItem["text"].(string)
-	if !ok {
-		return "", fmt.Errorf("invalid file info text format")
-	}
-
 	// Parse the size from the text
 	var size float64
-	for _, line := range strings.Split(text, "\n") {
+	for _, line := range strings.Split(fileInfoText, "\n") {
 		if strings.HasPrefix(line, "size:") {
 			sizeStr := strings.TrimSpace(strings.TrimPrefix(line, "size:"))
 			if _, err := fmt.Sscanf(sizeStr, "%f", &size); err != nil {
@@ -507,31 +487,13 @@ func (fs *FileSystem) ReadLargeFile(path string, chunkSize int) (string, error) 
 			chunkCount+1, length, offset, fileSize)
 
 		// Read the chunk
-		chunk, err := fs.ReadFile(path, offset, length)
+		chunkText, err := fs.ReadFile(path, offset, length)
 		if err != nil {
 			return "", fmt.Errorf("error reading chunk at offset %d: %w", offset, err)
 		}
 
-		// Extract text from the content array
-		contentArray, ok := chunk.([]interface{})
-		if !ok || len(contentArray) == 0 {
-			return "", fmt.Errorf("invalid chunk format at offset %d", offset)
-		}
-
-		// Process each content item
-		for _, item := range contentArray {
-			contentItem, ok := item.(map[string]interface{})
-			if !ok {
-				continue
-			}
-
-			text, ok := contentItem["text"].(string)
-			if !ok {
-				continue
-			}
-
-			result.WriteString(text)
-		}
+		// Append the chunk text
+		result.WriteString(chunkText)
 
 		// Move to the next chunk
 		offset += length

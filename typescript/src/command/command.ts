@@ -12,6 +12,7 @@ import * as $_client from '../api';
 interface CallMcpToolResult {
   data: Record<string, any>;
   content?: any[];
+  textContent?: string;
   isError: boolean;
   errorMsg?: string;
   statusCode: number;
@@ -101,6 +102,17 @@ export class Command {
       // Extract content array if it exists
       if (Array.isArray(data.content)) {
         result.content = data.content;
+        
+        // Extract textContent from content items
+        if (result.content.length > 0) {
+          const textParts: string[] = [];
+          for (const item of result.content) {
+            if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+              textParts.push(item.text);
+            }
+          }
+          result.textContent = textParts.join('\n');
+        }
       }
       
       return result;
@@ -115,9 +127,9 @@ export class Command {
    * 
    * @param command - The command to execute.
    * @param timeoutMs - The timeout for the command execution in milliseconds. Default is 1000ms.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    */
-  async executeCommand(command: string, timeoutMs: number = 1000): Promise<any> {
+  async executeCommand(command: string, timeoutMs: number = 1000): Promise<string> {
     const args = {
       command,
       timeout_ms: timeoutMs
@@ -125,8 +137,8 @@ export class Command {
     
     const result = await this.callMcpTool('shell', args, 'Failed to execute command');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
   
   /**
@@ -135,10 +147,10 @@ export class Command {
    * @param code - The code to execute.
    * @param language - The programming language of the code. Must be either 'python' or 'javascript'.
    * @param timeoutS - The timeout for the code execution in seconds. Default is 300s.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    * @throws APIError if the code execution fails or if an unsupported language is specified.
    */
-  async runCode(code: string, language: string, timeoutS: number = 300): Promise<any> {
+  async runCode(code: string, language: string, timeoutS: number = 300): Promise<string> {
     // Validate language
     if (language !== 'python' && language !== 'javascript') {
       throw new Error(`Unsupported language: ${language}. Supported languages are 'python' and 'javascript'`);
@@ -152,7 +164,7 @@ export class Command {
     
     const result = await this.callMcpTool('run_code', args, 'Failed to execute code');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 }

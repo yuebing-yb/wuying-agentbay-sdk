@@ -77,7 +77,7 @@ describe('Context Session Integration', () => {
         
         // Wait for the system to update the context status
         log('Waiting for context status to update...');
-        await wait(3000);
+        await wait(15000); // Increased from 3s to 15s to allow more time for resources to be released
         
         // Step 6: Get the context directly and verify that its status is "available"
         log('Step 6: Checking context status after session release...');

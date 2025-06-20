@@ -12,6 +12,7 @@ import * as $_client from '../api';
 interface CallMcpToolResult {
   data: Record<string, any>;
   content?: any[];
+  textContent?: string;
   isError: boolean;
   errorMsg?: string;
   statusCode: number;
@@ -100,6 +101,17 @@ export class Oss {
       // Extract content array if it exists
       if (Array.isArray(data.content)) {
         result.content = data.content;
+        
+        // Extract textContent from content items
+        if (result.content.length > 0) {
+          const textParts: string[] = [];
+          for (const item of result.content) {
+            if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+              textParts.push(item.text);
+            }
+          }
+          result.textContent = textParts.join('\n');
+        }
       }
       
       return result;
@@ -117,7 +129,7 @@ export class Oss {
    * @param securityToken - The security token for OSS authentication.
    * @param endpoint - The OSS service endpoint. If not specified, the default is used.
    * @param region - The OSS region. If not specified, the default is used.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    */
   async envInit(
     accessKeyId: string, 
@@ -125,7 +137,7 @@ export class Oss {
     securityToken: string,
     endpoint?: string, 
     region?: string
-  ): Promise<any> {
+  ): Promise<string> {
     const args: Record<string, any> = {
       access_key_id: accessKeyId,
       access_key_secret: accessKeySecret,
@@ -142,8 +154,8 @@ export class Oss {
     
     const result = await this.callMcpTool('oss_env_init', args, 'error initializing OSS environment');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
@@ -153,14 +165,14 @@ export class Oss {
    * @param accessKeySecret - The Access Key Secret for OSS authentication.
    * @param endpoint - The OSS service endpoint. If not specified, the default is used.
    * @param region - The OSS region. If not specified, the default is used.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    */
   async createClient(
     accessKeyId: string, 
     accessKeySecret: string, 
     endpoint?: string, 
     region?: string
-  ): Promise<any> {
+  ): Promise<string> {
     const args: Record<string, any> = {
       access_key_id: accessKeyId,
       access_key_secret: accessKeySecret
@@ -176,8 +188,8 @@ export class Oss {
     
     const result = await this.callMcpTool('oss_client_create', args, 'error creating OSS client');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
@@ -186,9 +198,9 @@ export class Oss {
    * @param bucket - OSS bucket name.
    * @param object - Object key in OSS.
    * @param path - Local file or directory path to upload.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    */
-  async upload(bucket: string, object: string, path: string): Promise<any> {
+  async upload(bucket: string, object: string, path: string): Promise<string> {
     const args = {
       bucket,
       object,
@@ -197,18 +209,18 @@ export class Oss {
     
     const result = await this.callMcpTool('oss_upload', args, 'error uploading to OSS');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
-   * Upload a local file or directory to a URL anonymously.
+   * Upload a local file or directory to OSS using a pre-signed URL.
    * 
-   * @param url - The HTTP/HTTPS URL to upload the file to.
+   * @param url - Pre-signed URL for anonymous upload.
    * @param path - Local file or directory path to upload.
-   * @returns The content field from the API response
+   * @returns The extracted text content from the API response
    */
-  async uploadAnonymous(url: string, path: string): Promise<any> {
+  async uploadAnonymous(url: string, path: string): Promise<string> {
     const args = {
       url,
       path
@@ -216,19 +228,19 @@ export class Oss {
     
     const result = await this.callMcpTool('oss_upload_annon', args, 'error uploading anonymously');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
-   * Download an object from OSS to a local file.
+   * Download an object from OSS to a local file or directory.
    * 
    * @param bucket - OSS bucket name.
    * @param object - Object key in OSS.
-   * @param path - Local path to save the downloaded file.
-   * @returns The content field from the API response
+   * @param path - Local file or directory path to save the downloaded content.
+   * @returns The extracted text content from the API response
    */
-  async download(bucket: string, object: string, path: string): Promise<any> {
+  async download(bucket: string, object: string, path: string): Promise<string> {
     const args = {
       bucket,
       object,
@@ -237,18 +249,18 @@ export class Oss {
     
     const result = await this.callMcpTool('oss_download', args, 'error downloading from OSS');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 
   /**
-   * Download a file from a URL anonymously to a local file.
+   * Download an object from OSS using a pre-signed URL.
    * 
-   * @param url - The HTTP/HTTPS URL to download the file from.
-   * @param path - The full local file path to save the downloaded file.
-   * @returns The content field from the API response
+   * @param url - Pre-signed URL for anonymous download.
+   * @param path - Local file or directory path to save the downloaded content.
+   * @returns The extracted text content from the API response
    */
-  async downloadAnonymous(url: string, path: string): Promise<any> {
+  async downloadAnonymous(url: string, path: string): Promise<string> {
     const args = {
       url,
       path
@@ -256,7 +268,7 @@ export class Oss {
     
     const result = await this.callMcpTool('oss_download_annon', args, 'error downloading anonymously');
     
-    // Return the raw content field for the caller to parse
-    return result.data.content;
+    // Return the extracted text content
+    return result.textContent || '';
   }
 }

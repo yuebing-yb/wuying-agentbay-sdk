@@ -161,11 +161,32 @@ func TestContextSessionManagement(t *testing.T) {
 
 	// Step 7: Create another session with the same context_id (expect success)
 	t.Log("Step 7: Creating a new session with the same context ID...")
-	session3, err := agentBay.Create(params)
-	if err != nil {
-		t.Fatalf("Error creating new session with same context ID: %v", err)
+
+	// Add retry mechanism for handling temporary unavailability
+	var session3 *agentbay.Session
+	maxRetries := 5
+	retryDelay := 5 * time.Second
+	var lastErr error
+
+	for i := 0; i < maxRetries; i++ {
+		session3, err = agentBay.Create(params)
+		if err == nil {
+			t.Logf("New session created successfully with ID: %s", session3.SessionID)
+			break
+		}
+
+		lastErr = err
+		t.Logf("Attempt %d: Failed to create session: %v", i+1, err)
+
+		if i < maxRetries-1 {
+			t.Logf("Waiting %s before retrying...", retryDelay)
+			time.Sleep(retryDelay)
+		}
 	}
-	t.Logf("New session created successfully with ID: %s", session3.SessionID)
+
+	if session3 == nil {
+		t.Fatalf("Error creating new session with same context ID after %d attempts: %v", maxRetries, lastErr)
+	}
 
 	// Step 8: Clean up by releasing the session
 	t.Log("Step 8: Cleaning up - releasing the third session...")

@@ -72,15 +72,19 @@ describe('UI', () => {
           
           // Verify the content
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
+          expect(typeof content).toBe('string');
           
-          // Try to parse UI elements from content
-          const elements = parseUIContent(content);
-          log(`Parsed ${elements.length} clickable UI elements`);
-          
-          // Additional checks on parsed elements if available
-          if (elements.length > 0) {
-            log('First UI element:', elements[0]);
+          // Try to parse UI elements from content if it's JSON
+          try {
+            const elements = JSON.parse(content);
+            log(`Parsed UI elements:`, elements);
+            
+            // Additional checks on parsed elements if available
+            if (Array.isArray(elements) && elements.length > 0) {
+              log('First UI element:', elements[0]);
+            }
+          } catch (e) {
+            log(`Content is not JSON parseable: ${e}`);
           }
         } catch (error) {
           log(`Note: UI.getClickableUIElements execution failed: ${error}`);
@@ -102,15 +106,19 @@ describe('UI', () => {
           
           // Verify the content
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
+          expect(typeof content).toBe('string');
           
-          // Try to parse UI elements from content
-          const elements = parseUIContent(content);
-          log(`Parsed ${elements.length} UI elements`);
-          
-          // Log the first element if available
-          if (elements.length > 0) {
-            log('First UI element:', elements[0]);
+          // Try to parse UI elements from content if it's JSON
+          try {
+            const elements = JSON.parse(content);
+            log(`Parsed UI elements:`, elements);
+            
+            // Log the first element if available
+            if (Array.isArray(elements) && elements.length > 0) {
+              log('First UI element:', elements[0]);
+            }
+          } catch (e) {
+            log(`Content is not JSON parseable: ${e}`);
           }
         } catch (error) {
           log(`Note: UI.getAllUIElements execution failed: ${error}`);
@@ -133,7 +141,7 @@ describe('UI', () => {
           
           // Verify the content
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
+          expect(typeof content).toBe('string');
         } catch (error) {
           log(`Note: UI.sendKey execution failed: ${error}`);
           // Don't fail the test if the method is not fully implemented
@@ -150,14 +158,16 @@ describe('UI', () => {
         log('Testing UI.screenshot method...');
         try {
           const content = await session.ui.screenshot();
-          log(`Screenshot content length: ${Array.isArray(content) ? content.length : 0} items`);
+          log(`Screenshot content:`, content);
           
           // Verify the screenshot content
           expect(content).toBeDefined();
-          expect(Array.isArray(content)).toBe(true);
+          expect(typeof content).toBe('string');
           
-          // Check if the content contains base64 image data
-          const hasImageData = containsBase64Image(content);
+          // Check if the content contains image URL or base64 data
+          const hasImageData = content.includes('https://') || 
+                              content.includes('data:image') || 
+                              content.includes('base64');
           expect(hasImageData).toBe(true);
           
         } catch (error) {

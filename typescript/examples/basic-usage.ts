@@ -1,10 +1,11 @@
 import { AgentBay } from '../src';
 import { log, logError } from '../src/utils/logger';
+import { getTestApiKey } from '../tests/utils/test-helpers';
 async function main() {
   try {
-    // In a real environment, you would get this from process.env.AGENTBAY_API_KEY
-    const apiKey = 'your_api_key_here';
-    log('Note: In a production environment, use an environment variable for the API key.');
+    // Use the test API key function from test-helpers
+    const apiKey = getTestApiKey();
+    log('Using test API key for demonstration purposes.');
 
     // Initialize the AgentBay client
     const agentBay = new AgentBay({ apiKey });
@@ -46,7 +47,8 @@ async function main() {
     // List all sessions
     log('\nListing all sessions...');
     const sessions = await agentBay.list();
-    log('Available sessions:', sessions);
+    log('Available sessions count:', sessions.length);
+    log('Session IDs:', sessions.map(s => s.sessionId));
 
     // Delete the session
     log('\nDeleting the session...');

@@ -32,35 +32,13 @@ func TestFileSystem_ReadFile(t *testing.T) {
 
 		// Now read the file
 		fmt.Println("Reading file...")
-		rawContent, err := session.FileSystem.ReadFile(testFilePath)
-		t.Logf("ReadFile result: rawContent=%v, err=%v", rawContent, err)
+		content, err := session.FileSystem.ReadFile(testFilePath)
+		t.Logf("ReadFile result: content length=%d, err=%v", len(content), err)
 		if err != nil {
 			t.Errorf("File read failed: %v", err)
 		} else {
-			// Extract the text from the content field
-			var content string
-
-			// Try to extract from content array
-			contentArray, ok := rawContent.([]interface{})
-			if ok && len(contentArray) > 0 {
-				contentItem, ok := contentArray[0].(map[string]interface{})
-				if ok {
-					text, ok := contentItem["text"].(string)
-					if ok {
-						content = text
-					}
-				}
-			}
-
-			// If we couldn't extract from content array, try as a string
 			if content == "" {
-				if contentStr, ok := rawContent.(string); ok {
-					content = contentStr
-				}
-			}
-
-			if content == "" {
-				t.Errorf("Failed to extract text from content field")
+				t.Errorf("Failed to read file content")
 				return
 			}
 
@@ -101,36 +79,14 @@ func TestFileSystem_WriteFile(t *testing.T) {
 			t.Log("File write successful")
 
 			// Verify the file was written correctly by reading it back
-			rawContent, err := session.FileSystem.ReadFile(testFilePath)
+			content, err := session.FileSystem.ReadFile(testFilePath)
 			if err != nil {
 				t.Errorf("Failed to read back written file: %v", err)
 				return
 			}
 
-			// Extract the text from the content field
-			var content string
-
-			// Try to extract from content array
-			contentArray, ok := rawContent.([]interface{})
-			if ok && len(contentArray) > 0 {
-				contentItem, ok := contentArray[0].(map[string]interface{})
-				if ok {
-					text, ok := contentItem["text"].(string)
-					if ok {
-						content = text
-					}
-				}
-			}
-
-			// If we couldn't extract from content array, try as a string
 			if content == "" {
-				if contentStr, ok := rawContent.(string); ok {
-					content = contentStr
-				}
-			}
-
-			if content == "" {
-				t.Errorf("Failed to extract text from content field")
+				t.Errorf("Failed to read file content")
 				return
 			}
 
@@ -164,56 +120,36 @@ func TestFileSystem_CreateDirectory(t *testing.T) {
 			t.Log("Directory creation successful")
 
 			// Verify the directory was created by listing the parent directory
-			rawEntries, err := session.FileSystem.ListDirectory(TestPathPrefix + "/")
+			dirContent, err := session.FileSystem.ListDirectory(TestPathPrefix + "/")
 			if err != nil {
 				t.Errorf("Failed to list directory: %v", err)
 			} else {
-				// Process the raw entries
-				var entries []map[string]interface{}
+				// Process the directory content
+				var entries []map[string]string
 
-				// Extract directory entries from content
-				contentArray, ok := rawEntries.([]interface{})
-				if !ok {
-					t.Errorf("ListDirectory did not return expected []interface{} type, got %T", rawEntries)
-					return
-				}
-
-				for _, item := range contentArray {
-					contentItem, ok := item.(map[string]interface{})
-					if !ok {
+				// Parse the text to extract directory entries
+				lines := strings.Split(dirContent, "\n")
+				for _, line := range lines {
+					line = strings.TrimSpace(line)
+					if line == "" {
 						continue
 					}
 
-					text, ok := contentItem["text"].(string)
-					if !ok {
-						continue
-					}
-
-					// Parse the text to extract directory entries
-					lines := strings.Split(text, "\n")
-					for _, line := range lines {
-						line = strings.TrimSpace(line)
-						if line == "" {
-							continue
-						}
-
-						entryMap := make(map[string]interface{})
-						if strings.HasPrefix(line, "[DIR]") {
-							entryMap["isDirectory"] = true
-							entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[DIR]"))
-							entries = append(entries, entryMap)
-						} else if strings.HasPrefix(line, "[FILE]") {
-							entryMap["isDirectory"] = false
-							entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[FILE]"))
-							entries = append(entries, entryMap)
-						}
+					entryMap := make(map[string]string)
+					if strings.HasPrefix(line, "[DIR]") {
+						entryMap["type"] = "directory"
+						entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[DIR]"))
+						entries = append(entries, entryMap)
+					} else if strings.HasPrefix(line, "[FILE]") {
+						entryMap["type"] = "file"
+						entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[FILE]"))
+						entries = append(entries, entryMap)
 					}
 				}
 
 				directoryFound := false
 				for _, entry := range entries {
-					name, ok := entry["name"].(string)
-					if ok && name == "test_directory" {
+					if entry["type"] == "directory" && entry["name"] == "test_directory" {
 						directoryFound = true
 						break
 					}
@@ -261,36 +197,14 @@ func TestFileSystem_EditFile(t *testing.T) {
 			t.Log("File edit successful")
 
 			// Verify the file was edited correctly by reading it back
-			rawContent, err := session.FileSystem.ReadFile(testFilePath)
+			content, err := session.FileSystem.ReadFile(testFilePath)
 			if err != nil {
 				t.Errorf("Failed to read back edited file: %v", err)
 				return
 			}
 
-			// Extract the text from the content field
-			var content string
-
-			// Try to extract from content array
-			contentArray, ok := rawContent.([]interface{})
-			if ok && len(contentArray) > 0 {
-				contentItem, ok := contentArray[0].(map[string]interface{})
-				if ok {
-					text, ok := contentItem["text"].(string)
-					if ok {
-						content = text
-					}
-				}
-			}
-
-			// If we couldn't extract from content array, try as a string
 			if content == "" {
-				if contentStr, ok := rawContent.(string); ok {
-					content = contentStr
-				}
-			}
-
-			if content == "" {
-				t.Errorf("Failed to extract text from content field")
+				t.Errorf("Failed to read file content")
 				return
 			}
 
@@ -323,42 +237,22 @@ func TestFileSystem_GetFileInfo(t *testing.T) {
 		}
 
 		fmt.Println("Getting file info...")
-		fileInfo, err := session.FileSystem.GetFileInfo(testFilePath)
-		t.Logf("GetFileInfo result: fileInfo=%v, err=%v", fileInfo, err)
+		fileInfoText, err := session.FileSystem.GetFileInfo(testFilePath)
+		t.Logf("GetFileInfo result: fileInfoText length=%d, err=%v", len(fileInfoText), err)
 		if err != nil {
 			t.Errorf("Get file info failed: %v", err)
 		} else {
 			t.Log("Get file info successful")
 
-			// Now fileInfo directly contains the content field
-			contentArray, ok := fileInfo.([]interface{})
-			if !ok || len(contentArray) == 0 {
-				t.Errorf("Content is not in expected format: %T", fileInfo)
-			} else {
-				// Verify the first content item has a text field
-				contentItem, ok := contentArray[0].(map[string]interface{})
-				if !ok {
-					t.Errorf("Content item is not a map: %T", contentArray[0])
-				} else if contentItem["text"] == nil {
-					t.Errorf("Content item missing text field")
-				} else {
-					// Verify the text contains expected information
-					text, ok := contentItem["text"].(string)
-					if !ok {
-						t.Errorf("Text field is not a string")
-					} else {
-						// Check that the text contains expected information
-						if !strings.Contains(text, "size:") {
-							t.Errorf("Text does not contain size information")
-						}
-						if !strings.Contains(text, "isDirectory: false") {
-							t.Errorf("Text does not contain directory information")
-						}
-						if !strings.Contains(text, "isFile: true") {
-							t.Errorf("Text does not contain file information")
-						}
-					}
-				}
+			// Check that the text contains expected information
+			if !strings.Contains(fileInfoText, "size:") {
+				t.Errorf("Text does not contain size information")
+			}
+			if !strings.Contains(fileInfoText, "isDirectory: false") {
+				t.Errorf("Text does not contain directory information")
+			}
+			if !strings.Contains(fileInfoText, "isFile: true") {
+				t.Errorf("Text does not contain file information")
 			}
 		}
 	} else {
@@ -374,64 +268,46 @@ func TestFileSystem_ListDirectory(t *testing.T) {
 	// Test FileSystem list directory
 	if session.FileSystem != nil {
 		fmt.Println("Listing directory...")
-		rawEntries, err := session.FileSystem.ListDirectory(TestPathPrefix + "/")
+		dirContent, err := session.FileSystem.ListDirectory(TestPathPrefix + "/")
 		if err != nil {
 			t.Errorf("List directory failed: %v", err)
 		} else {
 			t.Log("List directory successful")
 
-			// Process the raw entries
-			entriesArray, ok := rawEntries.([]interface{})
-			if !ok {
-				t.Errorf("ListDirectory did not return expected []interface{} type, got %T", rawEntries)
-				return
+			// Process the directory content
+			var entries []map[string]string
+
+			// Parse the text to extract directory entries
+			lines := strings.Split(dirContent, "\n")
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				if line == "" {
+					continue
+				}
+
+				entryMap := make(map[string]string)
+				if strings.HasPrefix(line, "[DIR]") {
+					entryMap["type"] = "directory"
+					entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[DIR]"))
+					entries = append(entries, entryMap)
+				} else if strings.HasPrefix(line, "[FILE]") {
+					entryMap["type"] = "file"
+					entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[FILE]"))
+					entries = append(entries, entryMap)
+				}
 			}
 
 			// Print the count of entries for debugging
-			t.Logf("ListDirectory result: entries count=%d, err=%v", len(entriesArray), err)
-
-			// Extract directory entries from content
-			var entries []map[string]interface{}
-			for _, item := range entriesArray {
-				contentItem, ok := item.(map[string]interface{})
-				if !ok {
-					continue
-				}
-
-				text, ok := contentItem["text"].(string)
-				if !ok {
-					continue
-				}
-
-				// Parse the text to extract directory entries
-				lines := strings.Split(text, "\n")
-				for _, line := range lines {
-					line = strings.TrimSpace(line)
-					if line == "" {
-						continue
-					}
-
-					entryMap := make(map[string]interface{})
-					if strings.HasPrefix(line, "[DIR]") {
-						entryMap["isDirectory"] = true
-						entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[DIR]"))
-						entries = append(entries, entryMap)
-					} else if strings.HasPrefix(line, "[FILE]") {
-						entryMap["isDirectory"] = false
-						entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[FILE]"))
-						entries = append(entries, entryMap)
-					}
-				}
-			}
+			t.Logf("ListDirectory result: entries count=%d, err=%v", len(entries), err)
 
 			// Verify the entries contain expected fields
 			if len(entries) > 0 {
 				firstEntry := entries[0]
-				if _, ok := firstEntry["name"].(string); !ok {
+				if _, ok := firstEntry["name"]; !ok {
 					t.Errorf("Directory entry missing name field")
 				}
-				if _, ok := firstEntry["isDirectory"].(bool); !ok {
-					t.Errorf("Directory entry missing isDirectory field")
+				if _, ok := firstEntry["type"]; !ok {
+					t.Errorf("Directory entry missing type field")
 				}
 			}
 		}
@@ -466,36 +342,14 @@ func TestFileSystem_MoveFile(t *testing.T) {
 			t.Log("File move successful")
 
 			// Verify the file was moved correctly by reading it back
-			rawContent, err := session.FileSystem.ReadFile(destFilePath)
+			content, err := session.FileSystem.ReadFile(destFilePath)
 			if err != nil {
 				t.Errorf("Failed to read back moved file: %v", err)
 				return
 			}
 
-			// Extract the text from the content field
-			var content string
-
-			// Try to extract from content array
-			contentArray, ok := rawContent.([]interface{})
-			if ok && len(contentArray) > 0 {
-				contentItem, ok := contentArray[0].(map[string]interface{})
-				if ok {
-					text, ok := contentItem["text"].(string)
-					if ok {
-						content = text
-					}
-				}
-			}
-
-			// If we couldn't extract from content array, try as a string
 			if content == "" {
-				if contentStr, ok := rawContent.(string); ok {
-					content = contentStr
-				}
-			}
-
-			if content == "" {
-				t.Errorf("Failed to extract text from content field")
+				t.Errorf("Failed to read file content")
 				return
 			}
 
@@ -543,80 +397,60 @@ func TestFileSystem_ReadMultipleFiles(t *testing.T) {
 
 		fmt.Println("Reading multiple files...")
 		paths := []string{testFile1Path, testFile2Path}
-		rawContents, err := session.FileSystem.ReadMultipleFiles(paths)
+		multiFileContent, err := session.FileSystem.ReadMultipleFiles(paths)
 		if err != nil {
 			t.Errorf("Read multiple files failed: %v", err)
 		} else {
 			t.Log("Read multiple files successful")
+			t.Logf("ReadMultipleFiles result: content length=%d, err=%v", len(multiFileContent), err)
 
-			// Process the raw contents
-			contentArray, ok := rawContents.([]interface{})
-			if !ok {
-				t.Errorf("ReadMultipleFiles did not return expected []interface{} type, got %T", rawContents)
-				return
+			// Extract file contents from the text content
+			contents := make(map[string]string)
+
+			// Parse the text to extract file contents
+			// Format is expected to be:
+			// /path/to/file1:
+			// content1
+			//
+			// ---
+			// /path/to/file2:
+			// content2
+			//
+			lines := strings.Split(multiFileContent, "\n")
+			var currentPath string
+			var currentContent strings.Builder
+			inContent := false
+
+			for _, line := range lines {
+				if strings.HasSuffix(line, ":") {
+					// This is a file path line
+					if currentPath != "" && currentContent.Len() > 0 {
+						// Save the previous file content
+						contents[currentPath] = strings.TrimSpace(currentContent.String())
+						currentContent.Reset()
+					}
+					currentPath = strings.TrimSuffix(line, ":")
+					inContent = true
+				} else if line == "---" {
+					// This is a separator line
+					if currentPath != "" && currentContent.Len() > 0 {
+						// Save the previous file content
+						contents[currentPath] = strings.TrimSpace(currentContent.String())
+						currentContent.Reset()
+					}
+					inContent = false
+				} else if inContent {
+					// This is a content line
+					if currentContent.Len() > 0 {
+						currentContent.WriteString("\n")
+					}
+					currentContent.WriteString(line)
+				}
 			}
 
-			// Print the count of entries for debugging
-			t.Logf("ReadMultipleFiles result: content items count=%d, err=%v", len(contentArray), err)
-
-			// Extract file contents from content
-			contents := make(map[string]string)
-			for _, item := range contentArray {
-				contentItem, ok := item.(map[string]interface{})
-				if !ok {
-					continue
-				}
-
-				text, ok := contentItem["text"].(string)
-				if !ok {
-					continue
-				}
-
-				// Parse the text to extract file contents
-				// Format is expected to be:
-				// /path/to/file1:
-				// content1
-				//
-				// ---
-				// /path/to/file2:
-				// content2
-				//
-				lines := strings.Split(text, "\n")
-				var currentPath string
-				var currentContent strings.Builder
-				inContent := false
-
-				for _, line := range lines {
-					if strings.HasSuffix(line, ":") {
-						// This is a file path line
-						if currentPath != "" && currentContent.Len() > 0 {
-							// Save the previous file content
-							contents[currentPath] = strings.TrimSpace(currentContent.String())
-							currentContent.Reset()
-						}
-						currentPath = strings.TrimSuffix(line, ":")
-						inContent = true
-					} else if line == "---" {
-						// This is a separator line
-						if currentPath != "" && currentContent.Len() > 0 {
-							// Save the previous file content
-							contents[currentPath] = strings.TrimSpace(currentContent.String())
-							currentContent.Reset()
-						}
-						inContent = false
-					} else if inContent {
-						// This is a content line
-						if currentContent.Len() > 0 {
-							currentContent.WriteString("\n")
-						}
-						currentContent.WriteString(line)
-					}
-				}
-
-				// Save the last file content
-				if currentPath != "" && currentContent.Len() > 0 {
-					contents[currentPath] = strings.TrimSpace(currentContent.String())
-				}
+			// Save the last file content
+			if currentPath != "" && currentContent.Len() > 0 {
+				contents[currentPath] = strings.TrimSpace(currentContent.String())
 			}
 
 			// Verify the contents of each file
@@ -682,42 +516,22 @@ func TestFileSystem_SearchFiles(t *testing.T) {
 		// Search for files with names containing the pattern
 		searchPattern := "SEARCHABLE_PATTERN"
 		excludePatterns := []string{"ignored_pattern"}
-		rawResults, err := session.FileSystem.SearchFiles(testSubdirPath, searchPattern, excludePatterns)
+		searchResults, err := session.FileSystem.SearchFiles(testSubdirPath, searchPattern, excludePatterns)
 		if err != nil {
 			t.Errorf("Search files failed: %v", err)
 		} else {
 			t.Log("Search files successful")
-
-			// Process the raw results
-			contentArray, ok := rawResults.([]interface{})
-			if !ok {
-				t.Errorf("SearchFiles did not return expected []interface{} type, got %T", rawResults)
-				return
-			}
-
-			// Print the count of entries for debugging
-			t.Logf("SearchFiles result: content items count=%d, err=%v", len(contentArray), err)
+			t.Logf("SearchFiles result: content length=%d, err=%v", len(searchResults), err)
 
 			// Extract search results from content
-			var results []map[string]interface{}
-			for _, item := range contentArray {
-				contentItem, ok := item.(map[string]interface{})
-				if !ok {
-					continue
-				}
+			var results []map[string]string
 
-				text, ok := contentItem["text"].(string)
-				if !ok {
-					continue
-				}
-
-				// Check if no matches were found
-				if strings.Contains(text, "No matches found") {
-					break
-				}
-
+			// Check if no matches were found
+			if strings.Contains(searchResults, "No matches found") {
+				t.Logf("No matches found in search results")
+			} else {
 				// Parse as a simple list of file paths
-				lines := strings.Split(text, "\n")
+				lines := strings.Split(searchResults, "\n")
 				for _, line := range lines {
 					line = strings.TrimSpace(line)
 					if line == "" {
@@ -725,7 +539,7 @@ func TestFileSystem_SearchFiles(t *testing.T) {
 					}
 
 					// Create a result entry for each file path
-					resultMap := map[string]interface{}{
+					resultMap := map[string]string{
 						"path": line,
 					}
 					results = append(results, resultMap)
@@ -744,10 +558,7 @@ func TestFileSystem_SearchFiles(t *testing.T) {
 			foundFile3 := false
 
 			for _, result := range results {
-				path, ok := result["path"].(string)
-				if !ok {
-					continue
-				}
+				path := result["path"]
 
 				// Normalize paths for comparison (replace backslashes with forward slashes)
 				normalizedPath := path

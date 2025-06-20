@@ -3,6 +3,7 @@ package oss
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
@@ -19,11 +20,12 @@ type Oss struct {
 
 // callMcpToolResult represents the result of a CallMcpTool operation
 type callMcpToolResult struct {
-	Data       map[string]interface{}
-	Content    []map[string]interface{}
-	IsError    bool
-	ErrorMsg   string
-	StatusCode int32
+	Data        map[string]interface{}
+	Content     []map[string]interface{}
+	TextContent string // 提取的text字段内容
+	IsError     bool
+	ErrorMsg    string
+	StatusCode  int32
 }
 
 // callMcpTool calls the MCP tool and checks for errors in the response
@@ -111,6 +113,21 @@ func (o *Oss) callMcpTool(toolName string, args interface{}, defaultErrorMsg str
 			}
 			result.Content = append(result.Content, contentItem)
 		}
+
+		// Extract text content from the content items
+		var textBuilder strings.Builder
+		for i, item := range result.Content {
+			text, ok := item["text"].(string)
+			if !ok {
+				continue
+			}
+
+			if i > 0 {
+				textBuilder.WriteString("\n")
+			}
+			textBuilder.WriteString(text)
+		}
+		result.TextContent = textBuilder.String()
 	}
 
 	return result, nil
@@ -128,7 +145,7 @@ func NewOss(session interface {
 }
 
 // EnvInit creates and initializes OSS environment variables with the specified credentials.
-func (o *Oss) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region string) (interface{}, error) {
+func (o *Oss) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region string) (string, error) {
 	// Prepare arguments for the oss_env_init tool
 	args := map[string]interface{}{
 		"access_key_id":     accessKeyId,
@@ -147,15 +164,15 @@ func (o *Oss) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, reg
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := o.callMcpTool("oss_env_init", args, "error initializing OSS environment")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
 // Upload uploads a local file or directory to OSS.
-func (o *Oss) Upload(bucket, object, path string) (interface{}, error) {
+func (o *Oss) Upload(bucket, object, path string) (string, error) {
 	// Prepare arguments for the oss_upload tool
 	args := map[string]interface{}{
 		"bucket": bucket,
@@ -166,15 +183,15 @@ func (o *Oss) Upload(bucket, object, path string) (interface{}, error) {
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := o.callMcpTool("oss_upload", args, "error uploading to OSS")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
 // UploadAnonymous uploads a local file or directory to a URL anonymously.
-func (o *Oss) UploadAnonymous(url, path string) (interface{}, error) {
+func (o *Oss) UploadAnonymous(url, path string) (string, error) {
 	// Prepare arguments for the oss_upload_annon tool
 	args := map[string]interface{}{
 		"url":  url,
@@ -184,15 +201,15 @@ func (o *Oss) UploadAnonymous(url, path string) (interface{}, error) {
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := o.callMcpTool("oss_upload_annon", args, "error uploading anonymously")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
 // Download downloads an object from OSS to a local file.
-func (o *Oss) Download(bucket, object, path string) (interface{}, error) {
+func (o *Oss) Download(bucket, object, path string) (string, error) {
 	// Prepare arguments for the oss_download tool
 	args := map[string]interface{}{
 		"bucket": bucket,
@@ -203,15 +220,15 @@ func (o *Oss) Download(bucket, object, path string) (interface{}, error) {
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := o.callMcpTool("oss_download", args, "error downloading from OSS")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
 // DownloadAnonymous downloads a file from a URL anonymously to a local file.
-func (o *Oss) DownloadAnonymous(url, path string) (interface{}, error) {
+func (o *Oss) DownloadAnonymous(url, path string) (string, error) {
 	// Prepare arguments for the oss_download_annon tool
 	args := map[string]interface{}{
 		"url":  url,
@@ -221,9 +238,9 @@ func (o *Oss) DownloadAnonymous(url, path string) (interface{}, error) {
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := o.callMcpTool("oss_download_annon", args, "error downloading anonymously")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }

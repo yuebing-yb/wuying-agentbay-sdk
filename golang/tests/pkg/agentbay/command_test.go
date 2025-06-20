@@ -25,12 +25,10 @@ func TestCommand_ExecuteCommand(t *testing.T) {
 		echoCmd := fmt.Sprintf("echo '%s'", testString)
 
 		// Test with default timeout
-		rawResponse, err := session.Command.ExecuteCommand(echoCmd)
+		response, err := session.Command.ExecuteCommand(echoCmd)
 		if err != nil {
 			t.Logf("Note: Echo command failed: %v", err)
 		} else {
-			// Extract text from raw response
-			response := extractTextFromContent(rawResponse)
 			t.Logf("Echo command result: %s", response)
 
 			// Check if response contains "tool not found"
@@ -49,12 +47,10 @@ func TestCommand_ExecuteCommand(t *testing.T) {
 		// Test with custom timeout
 		fmt.Println("Executing echo command with custom timeout...")
 		customTimeout := 2000 // 2 seconds
-		rawResponseWithTimeout, err := session.Command.ExecuteCommand(echoCmd, customTimeout)
+		responseWithTimeout, err := session.Command.ExecuteCommand(echoCmd, customTimeout)
 		if err != nil {
 			t.Logf("Note: Echo command with custom timeout failed: %v", err)
 		} else {
-			// Extract text from raw response
-			responseWithTimeout := extractTextFromContent(rawResponseWithTimeout)
 			t.Logf("Echo command with custom timeout result: %s", responseWithTimeout)
 
 			// Check if response contains "tool not found"
@@ -72,34 +68,6 @@ func TestCommand_ExecuteCommand(t *testing.T) {
 	} else {
 		t.Logf("Note: Command interface is nil, skipping command test")
 	}
-}
-
-// Helper function to extract text from content response
-func extractTextFromContent(rawContent interface{}) string {
-	contentArray, ok := rawContent.([]interface{})
-	if !ok {
-		return fmt.Sprintf("Failed to convert to []interface{}: %v", rawContent)
-	}
-
-	var result strings.Builder
-	for _, item := range contentArray {
-		contentItem, ok := item.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		text, ok := contentItem["text"].(string)
-		if !ok {
-			continue
-		}
-
-		if result.Len() > 0 {
-			result.WriteString("\n")
-		}
-		result.WriteString(text)
-	}
-
-	return result.String()
 }
 
 func TestCommand_RunCode(t *testing.T) {
@@ -120,12 +88,10 @@ x = 1 + 1
 print(x)
 `
 		// Test with default timeout
-		rawResponse, err := session.Command.RunCode(pythonCode, "python")
+		response, err := session.Command.RunCode(pythonCode, "python")
 		if err != nil {
 			t.Logf("Note: Python code execution failed: %v", err)
 		} else {
-			// Extract text from raw response
-			response := extractTextFromContent(rawResponse)
 			t.Logf("Python code execution result: %s", response)
 
 			// Check if response contains "tool not found"
@@ -149,12 +115,10 @@ const x = 1 + 1;
 console.log(x);
 `
 		customTimeout := 600 // 10 minutes
-		rawResponseJs, err := session.Command.RunCode(jsCode, "javascript", customTimeout)
+		responseJs, err := session.Command.RunCode(jsCode, "javascript", customTimeout)
 		if err != nil {
 			t.Logf("Note: JavaScript code execution with custom timeout failed: %v", err)
 		} else {
-			// Extract text from raw response
-			responseJs := extractTextFromContent(rawResponseJs)
 			t.Logf("JavaScript code execution with custom timeout result: %s", responseJs)
 
 			// Check if response contains "tool not found"

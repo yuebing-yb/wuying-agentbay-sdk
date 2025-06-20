@@ -3,6 +3,7 @@ package window
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
@@ -32,11 +33,12 @@ type WindowManager struct {
 
 // callMcpToolResult represents the result of a CallMcpTool operation
 type callMcpToolResult struct {
-	Data       map[string]interface{}
-	Content    []map[string]interface{}
-	IsError    bool
-	ErrorMsg   string
-	StatusCode int32
+	Data        map[string]interface{}
+	Content     []map[string]interface{}
+	TextContent string
+	IsError     bool
+	ErrorMsg    string
+	StatusCode  int32
 }
 
 // callMcpTool calls the MCP tool and checks for errors in the response
@@ -124,6 +126,21 @@ func (wm *WindowManager) callMcpTool(toolName string, args interface{}, defaultE
 			}
 			result.Content = append(result.Content, contentItem)
 		}
+
+		// Extract text content from the content items
+		var textBuilder strings.Builder
+		for _, item := range result.Content {
+			text, ok := item["text"].(string)
+			if !ok {
+				continue
+			}
+
+			if textBuilder.Len() > 0 {
+				textBuilder.WriteString("\n")
+			}
+			textBuilder.WriteString(text)
+		}
+		result.TextContent = textBuilder.String()
 	}
 
 	return result, nil
@@ -141,31 +158,31 @@ func NewWindowManager(session interface {
 }
 
 // ListRootWindows lists all root windows in the system.
-func (wm *WindowManager) ListRootWindows() (interface{}, error) {
+func (wm *WindowManager) ListRootWindows() (string, error) {
 	args := map[string]interface{}{}
 
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := wm.callMcpTool("list_root_windows", args, "error listing root windows")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
 // GetActiveWindow gets the currently active window.
-func (wm *WindowManager) GetActiveWindow() (interface{}, error) {
+func (wm *WindowManager) GetActiveWindow() (string, error) {
 	args := map[string]interface{}{}
 
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := wm.callMcpTool("get_active_window", args, "error getting active window")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Return the raw content field for the caller to parse
-	return mcpResult.Data["content"], nil
+	// Return the extracted text content
+	return mcpResult.TextContent, nil
 }
 
 // ActivateWindow activates a window by ID.

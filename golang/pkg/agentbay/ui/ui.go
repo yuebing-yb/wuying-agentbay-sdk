@@ -125,7 +125,7 @@ func (u *UI) callMcpTool(name string, args interface{}) (string, error) {
 }
 
 // GetClickableUIElements retrieves all clickable UI elements within the specified timeout
-func (u *UI) GetClickableUIElements(timeoutMs int) ([]map[string]interface{}, error) {
+func (u *UI) GetClickableUIElements(timeoutMs int) (string, error) {
 	if timeoutMs <= 0 {
 		timeoutMs = 2000 // Default timeout
 	}
@@ -136,70 +136,14 @@ func (u *UI) GetClickableUIElements(timeoutMs int) ([]map[string]interface{}, er
 
 	result, err := u.callMcpTool("get_clickable_ui_elements", args)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get clickable UI elements: %w", err)
+		return "", fmt.Errorf("failed to get clickable UI elements: %w", err)
 	}
 
-	var elements []map[string]interface{}
-	if err := json.Unmarshal([]byte(result), &elements); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal UI elements: %w", err)
-	}
-
-	return elements, nil
-}
-
-// parseElement recursively parses a UI element and its children
-func parseElement(element map[string]interface{}) map[string]interface{} {
-	parsed := map[string]interface{}{
-		"bounds":     element["bounds"],
-		"className":  element["className"],
-		"text":       element["text"],
-		"type":       element["type"],
-		"resourceId": element["resourceId"],
-		"index":      element["index"],
-		"isParent":   element["isParent"],
-	}
-
-	// Handle nil values
-	if parsed["bounds"] == nil {
-		parsed["bounds"] = ""
-	}
-	if parsed["className"] == nil {
-		parsed["className"] = ""
-	}
-	if parsed["text"] == nil {
-		parsed["text"] = ""
-	}
-	if parsed["type"] == nil {
-		parsed["type"] = ""
-	}
-	if parsed["resourceId"] == nil {
-		parsed["resourceId"] = ""
-	}
-	if parsed["index"] == nil {
-		parsed["index"] = -1
-	}
-	if parsed["isParent"] == nil {
-		parsed["isParent"] = false
-	}
-
-	children, ok := element["children"].([]interface{})
-	if ok && len(children) > 0 {
-		parsedChildren := make([]map[string]interface{}, 0, len(children))
-		for _, child := range children {
-			if childMap, ok := child.(map[string]interface{}); ok {
-				parsedChildren = append(parsedChildren, parseElement(childMap))
-			}
-		}
-		parsed["children"] = parsedChildren
-	} else {
-		parsed["children"] = []map[string]interface{}{}
-	}
-
-	return parsed
+	return result, nil
 }
 
 // GetAllUIElements retrieves all UI elements within the specified timeout
-func (u *UI) GetAllUIElements(timeoutMs int) ([]map[string]interface{}, error) {
+func (u *UI) GetAllUIElements(timeoutMs int) (string, error) {
 	if timeoutMs <= 0 {
 		timeoutMs = 2000 // Default timeout
 	}
@@ -210,58 +154,42 @@ func (u *UI) GetAllUIElements(timeoutMs int) ([]map[string]interface{}, error) {
 
 	result, err := u.callMcpTool("get_all_ui_elements", args)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all UI elements: %w", err)
+		return "", fmt.Errorf("failed to get all UI elements: %w", err)
 	}
 
-	var elements []map[string]interface{}
-	if err := json.Unmarshal([]byte(result), &elements); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal UI elements: %w", err)
-	}
-
-	// Parse each element
-	parsedElements := make([]map[string]interface{}, 0, len(elements))
-	for _, element := range elements {
-		parsedElements = append(parsedElements, parseElement(element))
-	}
-
-	return parsedElements, nil
+	return result, nil
 }
 
 // SendKey sends a key press event
-func (u *UI) SendKey(key int) (bool, error) {
+func (u *UI) SendKey(key int) (string, error) {
 	args := map[string]interface{}{
 		"key": key,
 	}
 
 	result, err := u.callMcpTool("send_key", args)
 	if err != nil {
-		return false, fmt.Errorf("failed to send key: %w", err)
+		return "", fmt.Errorf("failed to send key: %w", err)
 	}
 
-	// The result is expected to be a boolean string ("true" or "false")
-	return result == "true" || result == "True", nil
+	return result, nil
 }
 
 // InputText inputs text into the active field
-func (u *UI) InputText(text string) error {
+func (u *UI) InputText(text string) (string, error) {
 	args := map[string]interface{}{
 		"text": text,
 	}
 
-	_, err := u.callMcpTool("input_text", args)
+	result, err := u.callMcpTool("input_text", args)
 	if err != nil {
-		return fmt.Errorf("failed to input text: %w", err)
+		return "", fmt.Errorf("failed to input text: %w", err)
 	}
 
-	return nil
+	return result, nil
 }
 
-// Swipe performs a swipe gesture on the screen
-func (u *UI) Swipe(startX, startY, endX, endY, durationMs int) error {
-	if durationMs <= 0 {
-		durationMs = 300 // Default duration
-	}
-
+// Swipe performs a swipe gesture from start to end coordinates
+func (u *UI) Swipe(startX, startY, endX, endY, durationMs int) (string, error) {
 	args := map[string]interface{}{
 		"start_x":     startX,
 		"start_y":     startY,
@@ -270,35 +198,31 @@ func (u *UI) Swipe(startX, startY, endX, endY, durationMs int) error {
 		"duration_ms": durationMs,
 	}
 
-	_, err := u.callMcpTool("swipe", args)
+	result, err := u.callMcpTool("swipe", args)
 	if err != nil {
-		return fmt.Errorf("failed to perform swipe: %w", err)
+		return "", fmt.Errorf("failed to perform swipe: %w", err)
 	}
 
-	return nil
+	return result, nil
 }
 
-// Click clicks on the screen at the specified coordinates
-func (u *UI) Click(x, y int, button string) error {
-	if button == "" {
-		button = "left" // Default button
-	}
-
+// Click performs a click at the specified coordinates
+func (u *UI) Click(x, y int, button string) (string, error) {
 	args := map[string]interface{}{
 		"x":      x,
 		"y":      y,
 		"button": button,
 	}
 
-	_, err := u.callMcpTool("click", args)
+	result, err := u.callMcpTool("click", args)
 	if err != nil {
-		return fmt.Errorf("failed to perform click: %w", err)
+		return "", fmt.Errorf("failed to perform click: %w", err)
 	}
 
-	return nil
+	return result, nil
 }
 
-// Screenshot takes a screenshot of the current screen
+// Screenshot takes a screenshot and returns the base64 encoded image
 func (u *UI) Screenshot() (string, error) {
 	args := map[string]interface{}{}
 

@@ -1,6 +1,7 @@
 package agentbay_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -86,11 +87,17 @@ func TestUI_GetClickableUIElements(t *testing.T) {
 	// Test UI get clickable elements functionality
 	if session.UI != nil {
 		fmt.Println("Getting clickable UI elements...")
-		elements, err := session.UI.GetClickableUIElements(2000)
+		elementsJson, err := session.UI.GetClickableUIElements(2000)
 		if err != nil {
 			t.Logf("Note: GetClickableUIElements failed: %v", err)
 		} else {
-			t.Logf("Found %d clickable UI elements", len(elements))
+			// Parse the JSON string to get the actual elements
+			var elements []map[string]interface{}
+			if err := json.Unmarshal([]byte(elementsJson), &elements); err != nil {
+				t.Errorf("Failed to parse clickable UI elements JSON: %v", err)
+			} else {
+				t.Logf("Found %d clickable UI elements", len(elements))
+			}
 		}
 	} else {
 		t.Logf("Note: UI interface is nil, skipping UI test")
@@ -128,14 +135,20 @@ func TestUI_GetAllUIElements(t *testing.T) {
 	// Test UI get all elements functionality
 	if session.UI != nil {
 		fmt.Println("Getting all UI elements...")
-		elements, err := session.UI.GetAllUIElements(2000)
+		elementsJson, err := session.UI.GetAllUIElements(2000)
 		if err != nil {
 			t.Logf("Note: GetAllUIElements failed: %v", err)
 		} else {
-			t.Logf("Found %d UI elements", len(elements))
-			// Print the first element if available
-			if len(elements) > 0 {
-				t.Logf("First element: %v", elements[0])
+			// Parse the JSON string to get the actual elements
+			var elements []map[string]interface{}
+			if err := json.Unmarshal([]byte(elementsJson), &elements); err != nil {
+				t.Errorf("Failed to parse all UI elements JSON: %v", err)
+			} else {
+				t.Logf("Found %d UI elements", len(elements))
+				// Print the first element if available
+				if len(elements) > 0 {
+					t.Logf("First element: %v", elements[0])
+				}
 			}
 		}
 	} else {
@@ -217,11 +230,11 @@ func TestUI_InputText(t *testing.T) {
 	if session.UI != nil {
 		text := "Hello, world!"
 		fmt.Printf("Inputting text: %s\n", text)
-		err := session.UI.InputText(text)
+		result, err := session.UI.InputText(text)
 		if err != nil {
 			t.Logf("Note: InputText failed: %v", err)
 		} else {
-			t.Logf("InputText successful")
+			t.Logf("InputText successful, result: %s", result)
 		}
 	} else {
 		t.Logf("Note: UI interface is nil, skipping UI test")
@@ -260,11 +273,11 @@ func TestUI_Click(t *testing.T) {
 	if session.UI != nil {
 		x, y := 100, 200
 		fmt.Printf("Clicking at coordinates (%d, %d)...\n", x, y)
-		err := session.UI.Click(x, y, "left")
+		result, err := session.UI.Click(x, y, "left")
 		if err != nil {
 			t.Logf("Note: Click failed: %v", err)
 		} else {
-			t.Logf("Click successful")
+			t.Logf("Click successful, result: %s", result)
 		}
 	} else {
 		t.Logf("Note: UI interface is nil, skipping UI test")
@@ -303,11 +316,11 @@ func TestUI_Swipe(t *testing.T) {
 	if session.UI != nil {
 		startX, startY, endX, endY, durationMs := 100, 200, 300, 400, 500
 		fmt.Printf("Swiping from (%d, %d) to (%d, %d) in %dms...\n", startX, startY, endX, endY, durationMs)
-		err := session.UI.Swipe(startX, startY, endX, endY, durationMs)
+		result, err := session.UI.Swipe(startX, startY, endX, endY, durationMs)
 		if err != nil {
 			t.Logf("Note: Swipe failed: %v", err)
 		} else {
-			t.Logf("Swipe successful")
+			t.Logf("Swipe successful, result: %s", result)
 		}
 	} else {
 		t.Logf("Note: UI interface is nil, skipping UI test")
