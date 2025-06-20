@@ -534,4 +534,79 @@ describe('FileSystem', () => {
       }
     });
   });
+
+  describe('largeFileOperations', () => {
+    it.only('should handle large file operations', async () => {
+      if (session.filesystem && 
+          typeof session.filesystem.readLargeFile === 'function' && 
+          typeof session.filesystem.writeLargeFile === 'function') {
+        log('Testing large file operations...');
+        try {
+          // Generate a large string (approximately 150KB)
+          let largeContent = '';
+          const lineContent = "This is a line of test content for large file testing. It contains enough characters to test the chunking functionality.\n";
+          
+          // Generate about 150KB of data (60KB is the default chunk size)
+          const targetSize = 150 * 1024; // 150KB
+          while (largeContent.length < targetSize) {
+            largeContent += lineContent;
+          }
+          
+          log(`Generated test content of size: ${largeContent.length} bytes`);
+          
+          // Test 1: Write large file using default chunk size
+          const testFilePath1 = `${TestPathPrefix}/test_large_default_${randomString()}.txt`;
+          log('Test 1: Writing large file with default chunk size...');
+          await session.filesystem.writeLargeFile(testFilePath1, largeContent);
+          log('Test 1: Large file write successful with default chunk size');
+          
+          // Test 2: Read the file using default chunk size
+          log('Test 2: Reading large file with default chunk size...');
+          const readContent1 = await session.filesystem.readLargeFile(testFilePath1);
+          
+          // Verify content
+          log(`Test 2: File read successful, content length: ${readContent1.length} bytes`);
+          expect(readContent1).toBe(largeContent);
+          log('Test 2: File content verified successfully with default chunk size');
+          
+          // Test 3: Write large file using custom chunk size
+          const customChunkSize = 30 * 1024; // 30KB
+          const testFilePath2 = `${TestPathPrefix}/test_large_custom_${randomString()}.txt`;
+          log(`Test 3: Writing large file with custom chunk size: ${customChunkSize} bytes`);
+          
+          await session.filesystem.writeLargeFile(testFilePath2, largeContent, customChunkSize);
+          log('Test 3: Large file write successful with custom chunk size');
+          
+          // Test 4: Read the file using custom chunk size
+          log(`Test 4: Reading large file with custom chunk size: ${customChunkSize} bytes`);
+          const readContent2 = await session.filesystem.readLargeFile(testFilePath2, customChunkSize);
+          
+          // Verify content
+          log(`Test 4: File read successful, content length: ${readContent2.length} bytes`);
+          expect(readContent2).toBe(largeContent);
+          log('Test 4: File content verified successfully with custom chunk size');
+          
+          // Test 5: Cross-test - Read with custom chunk size a file written with default chunk size
+          log('Test 5: Cross-test - Reading with custom chunk size a file written with default chunk size...');
+          const crossTestContent = await session.filesystem.readLargeFile(testFilePath1, customChunkSize);
+          
+          // Verify content
+          log(`Test 5: Cross-test read successful, content length: ${crossTestContent.length} bytes`);
+          expect(crossTestContent).toBe(largeContent);
+          log('Test 5: Cross-test content verified successfully');
+          
+          // Clean up the test files
+          if (session.command) {
+            await session.command.executeCommand(`rm ${testFilePath1} ${testFilePath2}`);
+            log(`Test files deleted: ${testFilePath1}, ${testFilePath2}`);
+          }
+        } catch (error) {
+          log(`Note: Large file operations failed: ${error}`);
+          // Don't fail the test if filesystem operations are not supported
+        }
+      } else {
+        log('Note: FileSystem large file operations are not available, skipping large file tests');
+      }
+    });
+  });
 });

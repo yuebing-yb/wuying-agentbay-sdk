@@ -779,3 +779,117 @@ func TestFileSystem_SearchFiles(t *testing.T) {
 		t.Logf("Note: FileSystem interface is nil, skipping search files test")
 	}
 }
+
+func TestFileSystem_LargeFileOperations(t *testing.T) {
+	// Setup session with cleanup
+	session, cleanup := testutil.SetupAndCleanup(t, nil)
+	defer cleanup()
+
+	// Test FileSystem large file operations
+	if session.FileSystem != nil {
+		// Generate a large string (approximately 150KB)
+		var largeContent strings.Builder
+		lineContent := "This is a line of test content for large file testing. It contains enough characters to test the chunking functionality.\n"
+
+		// Generate about 150KB of data (60KB is the default chunk size)
+		targetSize := 150 * 1024 // 150KB
+		for largeContent.Len() < targetSize {
+			largeContent.WriteString(lineContent)
+		}
+
+		testContent := largeContent.String()
+		t.Logf("Generated test content of size: %d bytes", len(testContent))
+
+		// Test 1: Write large file using default chunk size
+		testFilePath1 := TestPathPrefix + "/test_large_default.txt"
+		fmt.Println("Test 1: Writing large file with default chunk size...")
+		success, err := session.FileSystem.WriteLargeFile(testFilePath1, testContent, 0)
+		if err != nil {
+			t.Fatalf("WriteLargeFile failed with default chunk size: %v", err)
+		}
+		if !success {
+			t.Errorf("WriteLargeFile returned false with default chunk size")
+		} else {
+			t.Log("Test 1: Large file write successful with default chunk size")
+		}
+
+		// Test 2: Read the file using default chunk size
+		fmt.Println("Test 2: Reading large file with default chunk size...")
+		readContent1, err := session.FileSystem.ReadLargeFile(testFilePath1, 0)
+		if err != nil {
+			t.Fatalf("ReadLargeFile failed with default chunk size: %v", err)
+		}
+
+		// Verify content
+		t.Logf("Test 2: File read successful, content length: %d bytes", len(readContent1))
+		if readContent1 != testContent {
+			t.Errorf("File content mismatch with default chunk size. Expected length: %d, Got length: %d",
+				len(testContent), len(readContent1))
+
+			// Find first mismatch position
+			minLen := len(testContent)
+			if len(readContent1) < minLen {
+				minLen = len(readContent1)
+			}
+
+			for i := 0; i < minLen; i++ {
+				if testContent[i] != readContent1[i] {
+					t.Errorf("First mismatch at position %d: expected '%c', got '%c'",
+						i, testContent[i], readContent1[i])
+					break
+				}
+			}
+		} else {
+			t.Log("Test 2: File content verified successfully with default chunk size")
+		}
+
+		// Test 3: Write large file using custom chunk size
+		customChunkSize := 30 * 1024 // 30KB
+		testFilePath2 := TestPathPrefix + "/test_large_custom.txt"
+		fmt.Printf("Test 3: Writing large file with custom chunk size: %d bytes\n", customChunkSize)
+
+		success, err = session.FileSystem.WriteLargeFile(testFilePath2, testContent, customChunkSize)
+		if err != nil {
+			t.Fatalf("WriteLargeFile failed with custom chunk size: %v", err)
+		}
+		if !success {
+			t.Errorf("WriteLargeFile returned false with custom chunk size")
+		} else {
+			t.Log("Test 3: Large file write successful with custom chunk size")
+		}
+
+		// Test 4: Read the file using custom chunk size
+		fmt.Printf("Test 4: Reading large file with custom chunk size: %d bytes\n", customChunkSize)
+		readContent2, err := session.FileSystem.ReadLargeFile(testFilePath2, customChunkSize)
+		if err != nil {
+			t.Fatalf("ReadLargeFile failed with custom chunk size: %v", err)
+		}
+
+		// Verify content
+		t.Logf("Test 4: File read successful, content length: %d bytes", len(readContent2))
+		if readContent2 != testContent {
+			t.Errorf("File content mismatch with custom chunk size. Expected length: %d, Got length: %d",
+				len(testContent), len(readContent2))
+		} else {
+			t.Log("Test 4: File content verified successfully with custom chunk size")
+		}
+
+		// Test 5: Cross-test - Write with default chunk size, read with custom chunk size
+		fmt.Println("Test 5: Cross-test - Reading with custom chunk size a file written with default chunk size...")
+		crossTestContent, err := session.FileSystem.ReadLargeFile(testFilePath1, customChunkSize)
+		if err != nil {
+			t.Fatalf("ReadLargeFile cross-test failed: %v", err)
+		}
+
+		// Verify content
+		t.Logf("Test 5: Cross-test read successful, content length: %d bytes", len(crossTestContent))
+		if crossTestContent != testContent {
+			t.Errorf("File content mismatch in cross-test. Expected length: %d, Got length: %d",
+				len(testContent), len(crossTestContent))
+		} else {
+			t.Log("Test 5: Cross-test content verified successfully")
+		}
+	} else {
+		t.Logf("Note: FileSystem interface is nil, skipping large file operations test")
+	}
+}
