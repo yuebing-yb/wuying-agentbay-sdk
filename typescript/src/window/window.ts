@@ -141,133 +141,130 @@ export class WindowManager {
   }
 
   /**
+   * Helper method to parse JSON string into Window objects
+   * @param jsonStr - JSON string to parse
+   * @returns Array of Window objects or single Window object
+   */
+  private parseWindowsFromJSON(jsonStr: string): Window[] {
+    try {
+      const parsed = JSON.parse(jsonStr);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch (error) {
+      throw new Error(`Failed to parse window data: ${error}`);
+    }
+  }
+
+  /**
    * Lists all root windows in the system.
-   * @returns The extracted text content from the API response
+   * @returns Array of Window objects
    * @throws Error if the operation fails.
    */
-  async listRootWindows(): Promise<string> {
+  async listRootWindows(): Promise<Window[]> {
     const args = {};
 
     const result = await this.callMcpTool('list_root_windows', args, 'Failed to list root windows');
     
-    // Return the extracted text content
-    return result.textContent || '';
+    if (!result.textContent) {
+      return [];
+    }
+    
+    return this.parseWindowsFromJSON(result.textContent);
   }
 
   /**
    * Gets the currently active window.
-   * @returns The extracted text content from the API response
+   * @returns Window object or null if no active window
    * @throws Error if the operation fails.
    */
-  async getActiveWindow(): Promise<string> {
+  async getActiveWindow(): Promise<Window | null> {
     const args = {};
 
     const result = await this.callMcpTool('get_active_window', args, 'Failed to get active window');
     
-    // Return the extracted text content
-    return result.textContent || '';
+    if (!result.textContent) {
+      return null;
+    }
+    
+    const windows = this.parseWindowsFromJSON(result.textContent);
+    return windows.length > 0 ? windows[0] : null;
   }
 
   /**
    * Activates a window by ID.
    * @param windowId The ID of the window to activate.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async activateWindow(windowId: number): Promise<string> {
+  async activateWindow(windowId: number): Promise<void> {
     const args = {
       window_id: windowId
     };
 
-    const result = await this.callMcpTool('activate_window', args, 'Failed to activate window');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('activate_window', args, 'Failed to activate window');
   }
 
   /**
    * Maximizes a window by ID.
    * @param windowId The ID of the window to maximize.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async maximizeWindow(windowId: number): Promise<string> {
+  async maximizeWindow(windowId: number): Promise<void> {
     const args = {
       window_id: windowId
     };
 
-    const result = await this.callMcpTool('maximize_window', args, 'Failed to maximize window');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('maximize_window', args, 'Failed to maximize window');
   }
 
   /**
    * Minimizes a window by ID.
    * @param windowId The ID of the window to minimize.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async minimizeWindow(windowId: number): Promise<string> {
+  async minimizeWindow(windowId: number): Promise<void> {
     const args = {
       window_id: windowId
     };
 
-    const result = await this.callMcpTool('minimize_window', args, 'Failed to minimize window');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('minimize_window', args, 'Failed to minimize window');
   }
 
   /**
    * Restores a window by ID.
    * @param windowId The ID of the window to restore.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async restoreWindow(windowId: number): Promise<string> {
+  async restoreWindow(windowId: number): Promise<void> {
     const args = {
       window_id: windowId
     };
 
-    const result = await this.callMcpTool('restore_window', args, 'Failed to restore window');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('restore_window', args, 'Failed to restore window');
   }
 
   /**
    * Closes a window by ID.
    * @param windowId The ID of the window to close.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async closeWindow(windowId: number): Promise<string> {
+  async closeWindow(windowId: number): Promise<void> {
     const args = {
       window_id: windowId
     };
 
-    const result = await this.callMcpTool('close_window', args, 'Failed to close window');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('close_window', args, 'Failed to close window');
   }
 
   /**
    * Sets a window to fullscreen by ID.
    * @param windowId The ID of the window to set to fullscreen.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async fullscreenWindow(windowId: number): Promise<string> {
+  async fullscreenWindow(windowId: number): Promise<void> {
     const args = {
       window_id: windowId
     };
 
-    const result = await this.callMcpTool('fullscreen_window', args, 'Failed to set window to fullscreen');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('fullscreen_window', args, 'Failed to set window to fullscreen');
   }
 
   /**
@@ -275,36 +272,28 @@ export class WindowManager {
    * @param windowId The ID of the window to resize.
    * @param width The new width of the window.
    * @param height The new height of the window.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async resizeWindow(windowId: number, width: number, height: number): Promise<string> {
+  async resizeWindow(windowId: number, width: number, height: number): Promise<void> {
     const args = {
       window_id: windowId,
       width,
       height
     };
 
-    const result = await this.callMcpTool('resize_window', args, 'Failed to resize window');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('resize_window', args, 'Failed to resize window');
   }
 
   /**
    * Enables or disables focus mode.
    * @param on Whether to enable focus mode.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async focusMode(on: boolean): Promise<string> {
+  async focusMode(on: boolean): Promise<void> {
     const args = {
       on
     };
 
-    const result = await this.callMcpTool('focus_mode', args, 'Failed to set focus mode');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('focus_mode', args, 'Failed to set focus mode');
   }
 }

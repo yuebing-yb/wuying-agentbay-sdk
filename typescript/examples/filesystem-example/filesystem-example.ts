@@ -3,94 +3,6 @@ import { AgentBay } from '../../src';
 // Define test path prefix
 const TestPathPrefix = '/tmp';
 
-/**
- * 解析纯文本格式的目录列表或处理已经是数组格式的结果
- */
-function parseDirectoryEntries(response: any): { name: string, isDirectory: boolean }[] {
-  // 如果已经是数组，则直接返回
-  if (Array.isArray(response)) {
-    return response.map(item => ({
-      name: item.name || '',
-      isDirectory: !!item.isDirectory
-    }));
-  }
-  
-  // 如果是字符串，尝试解析
-  const textContent = String(response || '');
-  
-  if (!textContent) {
-    return [];
-  }
-
-  try {
-    // 首先尝试解析为JSON
-    return JSON.parse(textContent);
-  } catch (error) {
-    // 如果JSON解析失败，采用纯文本解析
-    const entries: { name: string, isDirectory: boolean }[] = [];
-    const lines = textContent.split('\n');
-    
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (!trimmedLine) continue;
-      
-      if (trimmedLine.startsWith('[DIR]')) {
-        entries.push({
-          name: trimmedLine.substring('[DIR]'.length).trim(),
-          isDirectory: true
-        });
-      } else if (trimmedLine.startsWith('[FILE]')) {
-        entries.push({
-          name: trimmedLine.substring('[FILE]'.length).trim(),
-          isDirectory: false
-        });
-      }
-    }
-    
-    return entries;
-  }
-}
-
-/**
- * 解析纯文本格式的搜索结果或处理已经是数组格式的结果
- */
-function parseSearchResults(response: any): { path: string, isDirectory: boolean }[] {
-  // 如果已经是数组，则直接返回
-  if (Array.isArray(response)) {
-    return response.map(item => ({
-      path: item.path || '',
-      isDirectory: !!item.isDirectory
-    }));
-  }
-  
-  // 如果是字符串，尝试解析
-  const textContent = String(response || '');
-  
-  try {
-    // 首先尝试解析为JSON
-    return JSON.parse(textContent);
-  } catch (error) {
-    // 如果JSON解析失败，采用纯文本解析
-    const results: { path: string, isDirectory: boolean }[] = [];
-    const lines = textContent.split('\n');
-    
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (!trimmedLine) continue;
-      
-      // 简单地假设所有行都是文件路径
-      // 判断是否为目录（如果路径以/结尾）
-      const isDirectory = trimmedLine.endsWith('/');
-      results.push({
-        path: trimmedLine,
-        isDirectory: isDirectory
-      });
-    }
-    
-    return results;
-  }
-}
-
 async function main() {
   // Get API key from environment variable or use default value for testing
   const apiKey = process.env.AGENTBAY_API_KEY || 'akm-xxx'; // Replace with your actual API key for testing
@@ -148,7 +60,7 @@ async function main() {
     console.log(`\nGetting file info for: ${testFilePath}`);
     try {
       const fileInfo = await session.filesystem.getFileInfo(testFilePath);
-      console.log(`File info: ${fileInfo}`);
+      console.log(`File info: Name=${fileInfo.name}, Path=${fileInfo.path}, Size=${fileInfo.size}, IsDirectory=${fileInfo.isDirectory}`);
     } catch (error) {
       console.log(`Error getting file info: ${error}`);
     }
@@ -156,19 +68,11 @@ async function main() {
     // 5. List directory
     console.log(`\nListing directory: ${testDirPath}`);
     try {
-      const dirResponse = await session.filesystem.listDirectory(testDirPath);
+      const entries = await session.filesystem.listDirectory(testDirPath);
       console.log('Directory entries:');
-      
-      // 使用自定义函数解析目录结果
-      const entries = parseDirectoryEntries(dirResponse);
-      if (entries.length > 0) {
-        entries.forEach(entry => {
-          console.log(`${entry.isDirectory ? '[DIR]' : '[FILE]'} ${entry.name}`);
-        });
-      } else {
-        // 如果解析失败或没有项目，直接输出原始响应
-        console.log(dirResponse);
-      }
+      entries.forEach(entry => {
+        console.log(`${entry.isDirectory ? '[DIR]' : '[FILE]'} ${entry.name}`);
+      });
     } catch (error) {
       console.log(`Error listing directory: ${error}`);
     }
@@ -195,13 +99,10 @@ async function main() {
     // 7. Search files
     console.log(`\nSearching for files in ${TestPathPrefix} containing 'sample'`);
     try {
-      const searchResponse = await session.filesystem.searchFiles(TestPathPrefix, "sample", undefined);
-      
-      // 使用自定义函数解析搜索结果
-      const searchResults = parseSearchResults(searchResponse);
+      const searchResults = await session.filesystem.searchFiles(TestPathPrefix, "sample", undefined);
       console.log(`Search results: ${searchResults.length} files found`);
-      searchResults.forEach(result => {
-        console.log(`- ${result.path} (${result.isDirectory ? 'Directory' : 'File'})`);
+      searchResults.forEach(path => {
+        console.log(`- ${path}`);
       });
     } catch (error) {
       console.log(`Error searching files: ${error}`);
@@ -215,19 +116,11 @@ async function main() {
       console.log(`File moved successfully: ${success}`);
 
       // List directory again to verify the move
-      const dirResponse = await session.filesystem.listDirectory(testDirPath);
+      const entries = await session.filesystem.listDirectory(testDirPath);
       console.log('Directory entries after move:');
-      
-      // 使用自定义函数解析目录结果
-      const entries = parseDirectoryEntries(dirResponse);
-      if (entries.length > 0) {
-        entries.forEach(entry => {
-          console.log(`${entry.isDirectory ? '[DIR]' : '[FILE]'} ${entry.name}`);
-        });
-      } else {
-        // 如果解析失败或没有项目，直接输出原始响应
-        console.log(dirResponse);
-      }
+      entries.forEach(entry => {
+        console.log(`${entry.isDirectory ? '[DIR]' : '[FILE]'} ${entry.name}`);
+      });
     } catch (error) {
       console.log(`Error moving file: ${error}`);
     }

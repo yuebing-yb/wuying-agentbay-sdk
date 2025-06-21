@@ -9,6 +9,18 @@ import (
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 )
 
+// UIElement represents a UI element in the UI hierarchy
+type UIElement struct {
+	Bounds     string       `json:"bounds"`
+	ClassName  string       `json:"className"`
+	Text       string       `json:"text"`
+	Type       string       `json:"type"`
+	ResourceId string       `json:"resourceId"`
+	Index      int          `json:"index"`
+	IsParent   bool         `json:"isParent"`
+	Children   []*UIElement `json:"children,omitempty"`
+}
+
 // KeyCode constants for mobile device input
 var KeyCode = struct {
 	HOME        int
@@ -125,7 +137,7 @@ func (u *UI) callMcpTool(name string, args interface{}) (string, error) {
 }
 
 // GetClickableUIElements retrieves all clickable UI elements within the specified timeout
-func (u *UI) GetClickableUIElements(timeoutMs int) (string, error) {
+func (u *UI) GetClickableUIElements(timeoutMs int) ([]*UIElement, error) {
 	if timeoutMs <= 0 {
 		timeoutMs = 2000 // Default timeout
 	}
@@ -136,14 +148,20 @@ func (u *UI) GetClickableUIElements(timeoutMs int) (string, error) {
 
 	result, err := u.callMcpTool("get_clickable_ui_elements", args)
 	if err != nil {
-		return "", fmt.Errorf("failed to get clickable UI elements: %w", err)
+		return nil, fmt.Errorf("failed to get clickable UI elements: %w", err)
 	}
 
-	return result, nil
+	// Parse the JSON string into a slice of UIElement structs
+	var elements []*UIElement
+	if err := json.Unmarshal([]byte(result), &elements); err != nil {
+		return nil, fmt.Errorf("failed to parse UI elements: %w", err)
+	}
+
+	return elements, nil
 }
 
 // GetAllUIElements retrieves all UI elements within the specified timeout
-func (u *UI) GetAllUIElements(timeoutMs int) (string, error) {
+func (u *UI) GetAllUIElements(timeoutMs int) ([]*UIElement, error) {
 	if timeoutMs <= 0 {
 		timeoutMs = 2000 // Default timeout
 	}
@@ -154,10 +172,16 @@ func (u *UI) GetAllUIElements(timeoutMs int) (string, error) {
 
 	result, err := u.callMcpTool("get_all_ui_elements", args)
 	if err != nil {
-		return "", fmt.Errorf("failed to get all UI elements: %w", err)
+		return nil, fmt.Errorf("failed to get all UI elements: %w", err)
 	}
 
-	return result, nil
+	// Parse the JSON string into a slice of UIElement structs
+	var elements []*UIElement
+	if err := json.Unmarshal([]byte(result), &elements); err != nil {
+		return nil, fmt.Errorf("failed to parse UI elements: %w", err)
+	}
+
+	return elements, nil
 }
 
 // SendKey sends a key press event

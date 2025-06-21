@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
@@ -73,4 +74,10 @@ func SetupAndCleanup(t *testing.T, params *agentbay.CreateSessionParams) (*agent
 // ContainsToolNotFound checks if a string contains "tool not found"
 func ContainsToolNotFound(s string) bool {
 	return strings.Contains(strings.ToLower(s), "tool not found")
+}
+
+// SleepWithMessage waits for the specified number of seconds with a message
+func SleepWithMessage(seconds int, message string) {
+	fmt.Println(message)
+	time.Sleep(time.Duration(seconds) * time.Second)
 }

@@ -120,36 +120,16 @@ func TestFileSystem_CreateDirectory(t *testing.T) {
 			t.Log("Directory creation successful")
 
 			// Verify the directory was created by listing the parent directory
-			dirContent, err := session.FileSystem.ListDirectory(TestPathPrefix + "/")
+			entries, err := session.FileSystem.ListDirectory(TestPathPrefix + "/")
 			if err != nil {
 				t.Errorf("Failed to list directory: %v", err)
 			} else {
-				// Process the directory content
-				var entries []map[string]string
-
-				// Parse the text to extract directory entries
-				lines := strings.Split(dirContent, "\n")
-				for _, line := range lines {
-					line = strings.TrimSpace(line)
-					if line == "" {
-						continue
-					}
-
-					entryMap := make(map[string]string)
-					if strings.HasPrefix(line, "[DIR]") {
-						entryMap["type"] = "directory"
-						entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[DIR]"))
-						entries = append(entries, entryMap)
-					} else if strings.HasPrefix(line, "[FILE]") {
-						entryMap["type"] = "file"
-						entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[FILE]"))
-						entries = append(entries, entryMap)
-					}
-				}
+				// Print the count of entries for debugging
+				t.Logf("ListDirectory result: entries count=%d, err=%v", len(entries), err)
 
 				directoryFound := false
 				for _, entry := range entries {
-					if entry["type"] == "directory" && entry["name"] == "test_directory" {
+					if entry.IsDirectory && entry.Name == "test_directory" {
 						directoryFound = true
 						break
 					}
@@ -237,23 +217,32 @@ func TestFileSystem_GetFileInfo(t *testing.T) {
 		}
 
 		fmt.Println("Getting file info...")
-		fileInfoText, err := session.FileSystem.GetFileInfo(testFilePath)
-		t.Logf("GetFileInfo result: fileInfoText length=%d, err=%v", len(fileInfoText), err)
+		fileInfo, err := session.FileSystem.GetFileInfo(testFilePath)
+		t.Logf("GetFileInfo result: fileInfo=%+v, err=%v", fileInfo, err)
 		if err != nil {
 			t.Errorf("Get file info failed: %v", err)
 		} else {
 			t.Log("Get file info successful")
 
-			// Check that the text contains expected information
-			if !strings.Contains(fileInfoText, "size:") {
-				t.Errorf("Text does not contain size information")
+			// Print detailed file information
+			t.Logf("File Info Details:")
+			t.Logf("  Name: %q", fileInfo.Name)
+			t.Logf("  Path: %q", fileInfo.Path)
+			t.Logf("  Size: %d bytes", fileInfo.Size)
+			t.Logf("  IsDirectory: %v", fileInfo.IsDirectory)
+			t.Logf("  ModTime: %q", fileInfo.ModTime)
+			t.Logf("  Mode (permissions): %q", fileInfo.Mode)
+			t.Logf("  Owner: %q", fileInfo.Owner)
+			t.Logf("  Group: %q", fileInfo.Group)
+
+			// Check that the fileInfo contains expected information
+			if fileInfo.Size <= 0 {
+				t.Errorf("FileInfo does not contain valid size information")
 			}
-			if !strings.Contains(fileInfoText, "isDirectory: false") {
-				t.Errorf("Text does not contain directory information")
+			if fileInfo.IsDirectory {
+				t.Errorf("FileInfo incorrectly indicates this is a directory")
 			}
-			if !strings.Contains(fileInfoText, "isFile: true") {
-				t.Errorf("Text does not contain file information")
-			}
+			// Don't check for Name since it's not returned by the server
 		}
 	} else {
 		t.Logf("Note: FileSystem interface is nil, skipping file info test")
@@ -268,34 +257,11 @@ func TestFileSystem_ListDirectory(t *testing.T) {
 	// Test FileSystem list directory
 	if session.FileSystem != nil {
 		fmt.Println("Listing directory...")
-		dirContent, err := session.FileSystem.ListDirectory(TestPathPrefix + "/")
+		entries, err := session.FileSystem.ListDirectory(TestPathPrefix + "/")
 		if err != nil {
 			t.Errorf("List directory failed: %v", err)
 		} else {
 			t.Log("List directory successful")
-
-			// Process the directory content
-			var entries []map[string]string
-
-			// Parse the text to extract directory entries
-			lines := strings.Split(dirContent, "\n")
-			for _, line := range lines {
-				line = strings.TrimSpace(line)
-				if line == "" {
-					continue
-				}
-
-				entryMap := make(map[string]string)
-				if strings.HasPrefix(line, "[DIR]") {
-					entryMap["type"] = "directory"
-					entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[DIR]"))
-					entries = append(entries, entryMap)
-				} else if strings.HasPrefix(line, "[FILE]") {
-					entryMap["type"] = "file"
-					entryMap["name"] = strings.TrimSpace(strings.TrimPrefix(line, "[FILE]"))
-					entries = append(entries, entryMap)
-				}
-			}
 
 			// Print the count of entries for debugging
 			t.Logf("ListDirectory result: entries count=%d, err=%v", len(entries), err)
@@ -303,12 +269,10 @@ func TestFileSystem_ListDirectory(t *testing.T) {
 			// Verify the entries contain expected fields
 			if len(entries) > 0 {
 				firstEntry := entries[0]
-				if _, ok := firstEntry["name"]; !ok {
+				if firstEntry.Name == "" {
 					t.Errorf("Directory entry missing name field")
 				}
-				if _, ok := firstEntry["type"]; !ok {
-					t.Errorf("Directory entry missing type field")
-				}
+				t.Logf("First entry: Name=%s, IsDirectory=%v", firstEntry.Name, firstEntry.IsDirectory)
 			}
 		}
 	} else {
@@ -397,73 +361,44 @@ func TestFileSystem_ReadMultipleFiles(t *testing.T) {
 
 		fmt.Println("Reading multiple files...")
 		paths := []string{testFile1Path, testFile2Path}
-		multiFileContent, err := session.FileSystem.ReadMultipleFiles(paths)
+		contents, err := session.FileSystem.ReadMultipleFiles(paths)
 		if err != nil {
 			t.Errorf("Read multiple files failed: %v", err)
 		} else {
 			t.Log("Read multiple files successful")
-			t.Logf("ReadMultipleFiles result: content length=%d, err=%v", len(multiFileContent), err)
+			t.Logf("ReadMultipleFiles result: contents count=%d, err=%v", len(contents), err)
 
-			// Extract file contents from the text content
-			contents := make(map[string]string)
-
-			// Parse the text to extract file contents
-			// Format is expected to be:
-			// /path/to/file1:
-			// content1
-			//
-			// ---
-			// /path/to/file2:
-			// content2
-			//
-			lines := strings.Split(multiFileContent, "\n")
-			var currentPath string
-			var currentContent strings.Builder
-			inContent := false
-
-			for _, line := range lines {
-				if strings.HasSuffix(line, ":") {
-					// This is a file path line
-					if currentPath != "" && currentContent.Len() > 0 {
-						// Save the previous file content
-						contents[currentPath] = strings.TrimSpace(currentContent.String())
-						currentContent.Reset()
-					}
-					currentPath = strings.TrimSuffix(line, ":")
-					inContent = true
-				} else if line == "---" {
-					// This is a separator line
-					if currentPath != "" && currentContent.Len() > 0 {
-						// Save the previous file content
-						contents[currentPath] = strings.TrimSpace(currentContent.String())
-						currentContent.Reset()
-					}
-					inContent = false
-				} else if inContent {
-					// This is a content line
-					if currentContent.Len() > 0 {
-						currentContent.WriteString("\n")
-					}
-					currentContent.WriteString(line)
+			// Verify the contents of each file
+			if content, ok := contents[testFile1Path]; !ok {
+				t.Errorf("File 1 content missing")
+			} else {
+				// Trim trailing newline if present
+				trimmedContent := strings.TrimSuffix(content, "\n")
+				if trimmedContent != file1Content {
+					t.Errorf("File 1 content mismatch. Expected: %q (len=%d), Got: %q (len=%d)",
+						file1Content, len(file1Content), trimmedContent, len(trimmedContent))
+					// Print byte by byte comparison for debugging
+					t.Logf("Expected bytes: %v", []byte(file1Content))
+					t.Logf("Actual bytes: %v", []byte(trimmedContent))
+				} else {
+					t.Log("File 1 content verified successfully")
 				}
 			}
 
-			// Save the last file content
-			if currentPath != "" && currentContent.Len() > 0 {
-				contents[currentPath] = strings.TrimSpace(currentContent.String())
-			}
-
-			// Verify the contents of each file
-			if content, ok := contents[testFile1Path]; !ok || content != file1Content {
-				t.Errorf("File 1 content mismatch or missing. Expected: %s, Got: %s", file1Content, content)
+			if content, ok := contents[testFile2Path]; !ok {
+				t.Errorf("File 2 content missing")
 			} else {
-				t.Log("File 1 content verified successfully")
-			}
-
-			if content, ok := contents[testFile2Path]; !ok || content != file2Content {
-				t.Errorf("File 2 content mismatch or missing. Expected: %s, Got: %s", file2Content, content)
-			} else {
-				t.Log("File 2 content verified successfully")
+				// Trim trailing newline if present
+				trimmedContent := strings.TrimSuffix(content, "\n")
+				if trimmedContent != file2Content {
+					t.Errorf("File 2 content mismatch. Expected: %q (len=%d), Got: %q (len=%d)",
+						file2Content, len(file2Content), trimmedContent, len(trimmedContent))
+					// Print byte by byte comparison for debugging
+					t.Logf("Expected bytes: %v", []byte(file2Content))
+					t.Logf("Actual bytes: %v", []byte(trimmedContent))
+				} else {
+					t.Log("File 2 content verified successfully")
+				}
 			}
 		}
 	} else {
@@ -521,26 +456,25 @@ func TestFileSystem_SearchFiles(t *testing.T) {
 			t.Errorf("Search files failed: %v", err)
 		} else {
 			t.Log("Search files successful")
-			t.Logf("SearchFiles result: content length=%d, err=%v", len(searchResults), err)
+			t.Logf("SearchFiles result: found %d files, err=%v", len(searchResults), err)
 
-			// Extract search results from content
+			// Extract search results
 			var results []map[string]string
 
 			// Check if no matches were found
-			if strings.Contains(searchResults, "No matches found") {
+			if len(searchResults) == 0 {
 				t.Logf("No matches found in search results")
 			} else {
-				// Parse as a simple list of file paths
-				lines := strings.Split(searchResults, "\n")
-				for _, line := range lines {
-					line = strings.TrimSpace(line)
-					if line == "" {
+				// Process each result path
+				for _, path := range searchResults {
+					path = strings.TrimSpace(path)
+					if path == "" {
 						continue
 					}
 
 					// Create a result entry for each file path
 					resultMap := map[string]string{
-						"path": line,
+						"path": path,
 					}
 					results = append(results, resultMap)
 				}

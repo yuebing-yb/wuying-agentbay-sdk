@@ -26,87 +26,6 @@ interface Process {
   pname: string;
 }
 
-// Helper function to extract windows from content response
-function extractWindowsFromContent(rawContent: string): Window[] {
-  if (!rawContent) {
-    return [];
-  }
-
-  // Check if the response contains an error message
-  if (rawContent.includes('Unfortunately') || rawContent.includes('Error')) {
-    throw new Error(rawContent);
-  }
-
-  try {
-    // Extract the JSON array
-    const startIdx = rawContent.indexOf('[');
-    const endIdx = rawContent.lastIndexOf(']');
-    if (startIdx >= 0 && endIdx > startIdx) {
-      const jsonText = rawContent.substring(startIdx, endIdx + 1);
-      return JSON.parse(jsonText);
-    }
-
-    // If no JSON array found, try to parse the whole text
-    return JSON.parse(rawContent.trim());
-  } catch (error) {
-    throw new Error(`Failed to parse windows JSON: ${error}`);
-  }
-}
-
-// Helper function to extract apps from content response
-function extractAppsFromContent(rawContent: string): App[] {
-  if (!rawContent) {
-    return [];
-  }
-
-  // Check if the response contains an error message
-  if (rawContent.includes('Unfortunately') || rawContent.includes('Error')) {
-    throw new Error(rawContent);
-  }
-
-  try {
-    // Extract the JSON array
-    const startIdx = rawContent.indexOf('[');
-    const endIdx = rawContent.lastIndexOf(']');
-    if (startIdx >= 0 && endIdx > startIdx) {
-      const jsonText = rawContent.substring(startIdx, endIdx + 1);
-      return JSON.parse(jsonText);
-    }
-
-    // If no JSON array found, try to parse the whole text
-    return JSON.parse(rawContent.trim());
-  } catch (error) {
-    throw new Error(`Failed to parse apps JSON: ${error}`);
-  }
-}
-
-// Helper function to extract processes from content response
-function extractProcessesFromContent(rawContent: string): Process[] {
-  if (!rawContent) {
-    return [];
-  }
-
-  // Check if the response contains an error message
-  if (rawContent.includes('Unfortunately') || rawContent.includes('Error')) {
-    throw new Error(rawContent);
-  }
-
-  try {
-    // Extract the JSON array
-    const startIdx = rawContent.indexOf('[');
-    const endIdx = rawContent.lastIndexOf(']');
-    if (startIdx >= 0 && endIdx > startIdx) {
-      const jsonText = rawContent.substring(startIdx, endIdx + 1);
-      return JSON.parse(jsonText);
-    }
-
-    // If no JSON array found, try to parse the whole text
-    return JSON.parse(rawContent.trim());
-  } catch (error) {
-    throw new Error(`Failed to parse processes JSON: ${error}`);
-  }
-}
-
 async function main() {
   // Get API key from environment variable or use default value for testing
   const apiKey = process.env.AGENTBAY_API_KEY || 'akm-xxx'; // Replace with your actual API key for testing
@@ -129,8 +48,7 @@ async function main() {
     // Get installed applications
     console.log('\nGetting installed applications...');
     try {
-      const appsText = await session.Application.getInstalledApps(true, false, true);
-      const apps = extractAppsFromContent(appsText);
+      const apps = await session.Application.getInstalledApps(true, false, true);
       console.log(`Found ${apps.length} installed applications`);
       
       // Print the first 3 apps or fewer if less than 3 are available
@@ -145,8 +63,7 @@ async function main() {
     // List visible applications
     console.log('\nListing visible applications...');
     try {
-      const visibleAppsText = await session.Application.listVisibleApps();
-      const visibleApps = extractProcessesFromContent(visibleAppsText);
+      const visibleApps = await session.Application.listVisibleApps();
       console.log(`Found ${visibleApps.length} visible applications`);
       
       // Print the first 3 apps or fewer if less than 3 are available
@@ -164,8 +81,7 @@ async function main() {
     // List root windows
     console.log('\nListing root windows...');
     try {
-      const rootWindowsText = await session.window.listRootWindows();
-      const rootWindows = extractWindowsFromContent(rootWindowsText);
+      const rootWindows = await session.window.listRootWindows();
       console.log(`Found ${rootWindows.length} root windows`);
       
       // Print the first 3 windows or fewer if less than 3 are available
@@ -180,8 +96,7 @@ async function main() {
     // Get active window
     console.log('\nGetting active window...');
     try {
-      const activeWindowText = await session.window.getActiveWindow();
-      const activeWindow = extractWindowsFromContent(activeWindowText)[0];
+      const activeWindow = await session.window.getActiveWindow();
       if (activeWindow) {
         console.log(`Active window: ${activeWindow.title} (ID: ${activeWindow.window_id})`);
       } else {
@@ -194,8 +109,7 @@ async function main() {
     // Use the active window info instead of trying to get window by ID
     console.log('\nGetting window details from active window...');
     try {
-      const activeWindowText = await session.window.getActiveWindow();
-      const activeWindow = extractWindowsFromContent(activeWindowText)[0];
+      const activeWindow = await session.window.getActiveWindow();
       
       if (activeWindow) {
         console.log(`Window details: ${activeWindow.title} (ID: ${activeWindow.window_id})`);

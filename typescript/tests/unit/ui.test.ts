@@ -72,19 +72,11 @@ describe('UI', () => {
           
           // Verify the content
           expect(content).toBeDefined();
-          expect(typeof content).toBe('string');
+          expect(Array.isArray(content)).toBe(true);
           
-          // Try to parse UI elements from content if it's JSON
-          try {
-            const elements = JSON.parse(content);
-            log(`Parsed UI elements:`, elements);
-            
-            // Additional checks on parsed elements if available
-            if (Array.isArray(elements) && elements.length > 0) {
-              log('First UI element:', elements[0]);
-            }
-          } catch (e) {
-            log(`Content is not JSON parseable: ${e}`);
+          // Log the first element if available
+          if (content.length > 0) {
+            log('First UI element:', content[0]);
           }
         } catch (error) {
           log(`Note: UI.getClickableUIElements execution failed: ${error}`);
@@ -106,19 +98,11 @@ describe('UI', () => {
           
           // Verify the content
           expect(content).toBeDefined();
-          expect(typeof content).toBe('string');
+          expect(Array.isArray(content)).toBe(true);
           
-          // Try to parse UI elements from content if it's JSON
-          try {
-            const elements = JSON.parse(content);
-            log(`Parsed UI elements:`, elements);
-            
-            // Log the first element if available
-            if (Array.isArray(elements) && elements.length > 0) {
-              log('First UI element:', elements[0]);
-            }
-          } catch (e) {
-            log(`Content is not JSON parseable: ${e}`);
+          // Log the first element if available
+          if (content.length > 0) {
+            log('First UI element:', content[0]);
           }
         } catch (error) {
           log(`Note: UI.getAllUIElements execution failed: ${error}`);

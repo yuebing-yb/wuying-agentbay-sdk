@@ -46,16 +46,7 @@ describe('Window Operations Integration', () => {
         
         let processes: any[] = [];
         try {
-          const processesStr = await session.Application.startApp(startCmd, '');
-          
-          // Parse the string result into an array of Process objects
-          try {
-            processes = JSON.parse(processesStr);
-          } catch (error) {
-            log(`Failed to parse processes: ${error}`);
-            processes = [];
-          }
-          
+          processes = await session.Application.startApp(startCmd, '');
           log(`Terminal started successfully, returned ${processes.length} processes`);
           
           // Give Terminal some time to initialize
@@ -85,15 +76,7 @@ describe('Window Operations Integration', () => {
           // Make sure to call the cleanup function at the end of the test
           try {
             // Get a list of root windows
-            const rootWindowsStr = await session.window.listRootWindows();
-            
-            // Parse the string result into an array of Window objects
-            let rootWindows: Array<{window_id: number, pname?: string}> = [];
-            try {
-              rootWindows = JSON.parse(rootWindowsStr);
-            } catch (error) {
-              log(`Failed to parse root windows: ${error}`);
-            }
+            const rootWindows = await session.window.listRootWindows();
             
             if (!rootWindows || rootWindows.length === 0) {
               log('No windows available for testing window operations');
@@ -182,16 +165,7 @@ describe('Window Operations Integration', () => {
             
             let terminalProcesses: any[] = [];
             try {
-              const terminalProcessesStr = await session.Application.startApp(terminalCmd, '');
-              
-              // Parse the string result into an array of Process objects
-              try {
-                terminalProcesses = JSON.parse(terminalProcessesStr);
-              } catch (error) {
-                log(`Failed to parse terminal processes: ${error}`);
-                terminalProcesses = [];
-              }
-              
+              terminalProcesses = await session.Application.startApp(terminalCmd, '');
               log(`Terminal started successfully, returned ${terminalProcesses.length} processes`);
               
               // Give terminal some time to initialize

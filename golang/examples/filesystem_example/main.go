@@ -84,7 +84,8 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error getting file info: %v\n", err)
 	} else {
-		fmt.Printf("File info: %s\n", fileInfo)
+		fmt.Printf("File info: Name=%s, Path=%s, Size=%d, IsDirectory=%t\n",
+			fileInfo.Name, fileInfo.Path, fileInfo.Size, fileInfo.IsDirectory)
 	}
 
 	// 5. List directory
@@ -93,7 +94,14 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error listing directory: %v\n", err)
 	} else {
-		fmt.Printf("Directory entries:\n%s\n", entries)
+		fmt.Println("Directory entries:")
+		for _, entry := range entries {
+			entryType := "FILE"
+			if entry.IsDirectory {
+				entryType = "DIR"
+			}
+			fmt.Printf("  [%s] %s\n", entryType, entry.Name)
+		}
 	}
 
 	// 6. Edit file
@@ -125,7 +133,10 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error searching files: %v\n", err)
 	} else {
-		fmt.Printf("Search results:\n%s\n", searchResults)
+		fmt.Println("Search results:")
+		for _, result := range searchResults {
+			fmt.Printf("  %s\n", result)
+		}
 	}
 
 	// 8. Move/Rename file
@@ -142,7 +153,14 @@ func main() {
 		if err != nil {
 			fmt.Printf("Error listing directory after move: %v\n", err)
 		} else {
-			fmt.Printf("Directory entries after move:\n%s\n", entries)
+			fmt.Println("Directory entries after move:")
+			for _, entry := range entries {
+				entryType := "FILE"
+				if entry.IsDirectory {
+					entryType = "DIR"
+				}
+				fmt.Printf("  [%s] %s\n", entryType, entry.Name)
+			}
 		}
 	}
 }

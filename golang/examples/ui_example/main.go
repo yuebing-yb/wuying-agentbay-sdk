@@ -2,14 +2,12 @@ package main
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/ui"
 )
 
 func main() {
@@ -75,75 +73,61 @@ func main() {
 
 	// 2. Get all UI elements
 	fmt.Println("\n2. Getting all UI elements...")
-	elementsJson, err := session.UI.GetAllUIElements(2000) // 2 second timeout
+	elements, err := session.UI.GetAllUIElements(2000) // 2 second timeout
 	if err != nil {
 		fmt.Printf("Error getting UI elements: %v\n", err)
 	} else {
-		// Parse the JSON string to get the actual elements
-		var elements []map[string]interface{}
-		if err := json.Unmarshal([]byte(elementsJson), &elements); err != nil {
-			fmt.Printf("Error parsing UI elements JSON: %v\n", err)
-		} else {
-			fmt.Printf("Found %d UI elements\n", len(elements))
-			// Print details of the first few elements if available
-			elementsToShow := 3
-			if len(elements) < elementsToShow {
-				elementsToShow = len(elements)
-			}
+		fmt.Printf("Found %d UI elements\n", len(elements))
+		// Print details of the first few elements if available
+		elementsToShow := 3
+		if len(elements) < elementsToShow {
+			elementsToShow = len(elements)
+		}
 
-			fmt.Println("\nSample of UI elements found:")
-			for i := 0; i < elementsToShow; i++ {
-				elem := elements[i]
-				fmt.Printf("Element #%d:\n", i+1)
-				fmt.Printf("  Type: %v\n", elem["type"])
-				fmt.Printf("  Text: %v\n", elem["text"])
-				fmt.Printf("  Bounds: %v\n", elem["bounds"])
-				fmt.Printf("  ResourceId: %v\n", elem["resourceId"])
-				fmt.Println()
-			}
+		fmt.Println("\nSample of UI elements found:")
+		for i := 0; i < elementsToShow; i++ {
+			elem := elements[i]
+			fmt.Printf("Element #%d:\n", i+1)
+			fmt.Printf("  Type: %v\n", elem.Type)
+			fmt.Printf("  Text: %v\n", elem.Text)
+			fmt.Printf("  Bounds: %v\n", elem.Bounds)
+			fmt.Printf("  ResourceId: %v\n", elem.ResourceId)
+			fmt.Println()
 		}
 	}
 
 	// 3. Get clickable UI elements
 	fmt.Println("\n3. Getting clickable UI elements...")
-	clickableElementsJson, err := session.UI.GetClickableUIElements(2000) // 2 second timeout
+	clickableElements, err := session.UI.GetClickableUIElements(2000) // 2 second timeout
 	if err != nil {
 		fmt.Printf("Error getting clickable UI elements: %v\n", err)
 	} else {
-		// Parse the JSON string to get the actual elements
-		var clickableElements []map[string]interface{}
-		if err := json.Unmarshal([]byte(clickableElementsJson), &clickableElements); err != nil {
-			fmt.Printf("Error parsing clickable UI elements JSON: %v\n", err)
-		} else {
-			fmt.Printf("Found %d clickable UI elements\n", len(clickableElements))
-			// Print details of the first few clickable elements if available
-			elementsToShow := 3
-			if len(clickableElements) < elementsToShow {
-				elementsToShow = len(clickableElements)
-			}
+		fmt.Printf("Found %d clickable UI elements\n", len(clickableElements))
+		// Print details of the first few clickable elements if available
+		elementsToShow := 3
+		if len(clickableElements) < elementsToShow {
+			elementsToShow = len(clickableElements)
+		}
 
-			fmt.Println("\nSample of clickable UI elements found:")
-			for i := 0; i < elementsToShow; i++ {
-				elem := clickableElements[i]
-				fmt.Printf("Element #%d:\n", i+1)
-				fmt.Printf("  Type: %v\n", elem["type"])
-				fmt.Printf("  Text: %v\n", elem["text"])
-				fmt.Printf("  Bounds: %v\n", elem["bounds"])
-				fmt.Printf("  ResourceId: %v\n", elem["resourceId"])
-				fmt.Println()
-			}
+		fmt.Println("\nSample of clickable UI elements found:")
+		for i := 0; i < elementsToShow; i++ {
+			elem := clickableElements[i]
+			fmt.Printf("Element #%d:\n", i+1)
+			fmt.Printf("  Type: %v\n", elem.Type)
+			fmt.Printf("  Text: %v\n", elem.Text)
+			fmt.Printf("  Bounds: %v\n", elem.Bounds)
+			fmt.Printf("  ResourceId: %v\n", elem.ResourceId)
+			fmt.Println()
 		}
 	}
 
 	// 4. Send key event (HOME key)
 	fmt.Println("\n4. Sending HOME key event...")
-	resultJson, err := session.UI.SendKey(3) // 3 is HOME key code
+	result, err := session.UI.SendKey(ui.KeyCode.HOME) // Use KeyCode.HOME constant
 	if err != nil {
 		fmt.Printf("Error sending HOME key: %v\n", err)
 	} else {
-		// Try to parse the result as a boolean if it's a simple "true" or "false" string
-		success := resultJson == "true" || resultJson == "True"
-		fmt.Printf("HOME key sent successfully: %t\n", success)
+		fmt.Println("HOME key sent successfully, response:", result)
 	}
 
 	// Sleep briefly to allow UI to update after HOME key
@@ -151,11 +135,11 @@ func main() {
 
 	// 5. Input text
 	fmt.Println("\n5. Inputting text...")
-	resultText, err := session.UI.InputText("Hello from AgentBay SDK!")
+	response, err := session.UI.InputText("Hello from AgentBay SDK!")
 	if err != nil {
 		fmt.Printf("Error inputting text: %v\n", err)
 	} else {
-		fmt.Printf("Text input successful, result: %s\n", resultText)
+		fmt.Println("Text input successful, response:", response)
 	}
 
 	// 6. Click a position on screen
@@ -163,11 +147,11 @@ func main() {
 	// Coordinates for center of screen (example values)
 	x := 540
 	y := 960
-	clickResult, err := session.UI.Click(x, y, "left")
+	clickResponse, err := session.UI.Click(x, y, "left")
 	if err != nil {
 		fmt.Printf("Error clicking on position (%d,%d): %v\n", x, y, err)
 	} else {
-		fmt.Printf("Successfully clicked at position (%d,%d), result: %s\n", x, y, clickResult)
+		fmt.Printf("Successfully clicked at position (%d,%d), response: %s\n", x, y, clickResponse)
 	}
 
 	// Sleep briefly to allow UI to update after click
@@ -180,13 +164,13 @@ func main() {
 	endX := 540
 	endY := 500
 	swipeDuration := 500 // milliseconds
-	swipeResult, err := session.UI.Swipe(startX, startY, endX, endY, swipeDuration)
+	swipeResponse, err := session.UI.Swipe(startX, startY, endX, endY, swipeDuration)
 	if err != nil {
 		fmt.Printf("Error performing swipe from (%d,%d) to (%d,%d): %v\n",
 			startX, startY, endX, endY, err)
 	} else {
-		fmt.Printf("Successfully swiped from (%d,%d) to (%d,%d), result: %s\n",
-			startX, startY, endX, endY, swipeResult)
+		fmt.Printf("Successfully swiped from (%d,%d) to (%d,%d), response: %s\n",
+			startX, startY, endX, endY, swipeResponse)
 	}
 
 	// 8. Take another screenshot after interactions
@@ -220,49 +204,4 @@ func main() {
 	}
 
 	fmt.Println("\nUI examples completed successfully!")
-}
-
-// Helper function to extract bounds from a bounds string like "[0,100][200,300]"
-// Returns x1, y1, x2, y2
-func parseBounds(boundsStr string) (int, int, int, int, error) {
-	if len(boundsStr) < 9 {
-		return 0, 0, 0, 0, fmt.Errorf("invalid bounds format")
-	}
-
-	// Remove brackets and split by "]["
-	cleaned := boundsStr[1 : len(boundsStr)-1]
-	parts := strings.Split(cleaned, "][")
-	if len(parts) != 2 {
-		return 0, 0, 0, 0, fmt.Errorf("invalid bounds format")
-	}
-
-	// Parse the coordinates
-	topLeft := strings.Split(parts[0], ",")
-	bottomRight := strings.Split(parts[1], ",")
-
-	if len(topLeft) != 2 || len(bottomRight) != 2 {
-		return 0, 0, 0, 0, fmt.Errorf("invalid bounds coordinates")
-	}
-
-	x1, err := strconv.Atoi(topLeft[0])
-	if err != nil {
-		return 0, 0, 0, 0, err
-	}
-
-	y1, err := strconv.Atoi(topLeft[1])
-	if err != nil {
-		return 0, 0, 0, 0, err
-	}
-
-	x2, err := strconv.Atoi(bottomRight[0])
-	if err != nil {
-		return 0, 0, 0, 0, err
-	}
-
-	y2, err := strconv.Atoi(bottomRight[1])
-	if err != nil {
-		return 0, 0, 0, 0, err
-	}
-
-	return x1, y1, x2, y2, nil
 }

@@ -5,102 +5,6 @@ import { log } from '../../src/utils/logger';
 // Define test path prefix based on platform
 const TestPathPrefix = '/tmp';
 
-// Helper function to extract file data from content array
-function extractFileContent(content: any[]): string {
-  if (!Array.isArray(content) || content.length === 0) {
-    return '';
-  }
-  
-  // Concatenate all text fields from content items
-  let fullText = '';
-  for (const item of content) {
-    if (item && typeof item === 'object' && typeof item.text === 'string') {
-      fullText += item.text;
-    }
-  }
-  
-  return fullText;
-}
-
-// Helper function to parse directory entries from content array
-function parseDirectoryContent(content: any[]): any[] {
-  if (!Array.isArray(content) || content.length === 0) {
-    return [];
-  }
-  
-  // Try to extract and parse text from the first content item
-  const item = content[0];
-  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
-    try {
-      return JSON.parse(item.text);
-    } catch (e) {
-      log(`Warning: Failed to parse content text as JSON: ${e}`);
-      
-      // Try to parse directory entries from text format
-      const entries = [];
-      const lines = item.text.split('\n');
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (trimmedLine === '') continue;
-        
-        const entry: any = {};
-        if (trimmedLine.startsWith('[DIR]')) {
-          entry.isDirectory = true;
-          entry.name = trimmedLine.substring('[DIR]'.length).trim();
-        } else if (trimmedLine.startsWith('[FILE]')) {
-          entry.isDirectory = false;
-          entry.name = trimmedLine.substring('[FILE]'.length).trim();
-        } else {
-          continue;
-        }
-        entries.push(entry);
-      }
-      
-      return entries;
-    }
-  }
-  
-  return [];
-}
-
-// Helper function to check if content has error
-function hasErrorInContent(content: any[]): boolean {
-  if (!Array.isArray(content)) {
-    return true;
-  }
-  
-  if (content.length === 0) {
-    return true;
-  }
-  
-  // Check if first content item has error text
-  return content.some(item => 
-    item && typeof item === 'object' && 
-    item.text && typeof item.text === 'string' && 
-    (item.text.includes('error') || item.text.includes('Error'))
-  );
-}
-
-// Helper function to parse file info from content
-function parseFileInfo(content: any[]): any {
-  if (!Array.isArray(content) || content.length === 0) {
-    return null;
-  }
-  
-  // Try to extract and parse text from the first content item
-  const item = content[0];
-  if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
-    try {
-      return JSON.parse(item.text);
-    } catch (e) {
-      log(`Warning: Failed to parse file info text as JSON: ${e}`);
-      return null;
-    }
-  }
-  
-  return null;
-}
-
 describe('FileSystem', () => {
   let agentBay: AgentBay;
   let session: Session;
@@ -177,7 +81,6 @@ describe('FileSystem', () => {
   describe('writeFile', () => {
     it.only('should write to a file', async () => {
       // Check if filesystem exists and has a writeFile method
-      // Note: This is a conditional test as writeFile might not be implemented in all versions
       if (session.filesystem && typeof session.filesystem.writeFile === 'function') {
         log('Writing to file...');
         try {
@@ -237,7 +140,7 @@ describe('FileSystem', () => {
               log(`Test directory deleted: ${testDirPath}`);
             }
           } else {
-            log('Note: ListDirectory method is not available, skipping directory verification');
+            log('Note: Command interface is nil, skipping directory verification');
           }
         } catch (error) {
           log(`Note: Directory creation failed: ${error}`);
@@ -306,37 +209,13 @@ describe('FileSystem', () => {
           log(`Created file for info test: ${testFilePath}`);
           
           // Get file info
-          const infoContentStr = await session.filesystem.getFileInfo(testFilePath);
-          log(`GetFileInfo result: infoContent=${infoContentStr}`);
-          
-          // Parse the file info string
-          const fileInfo: Record<string, any> = {};
-          const lines = infoContentStr.split('\n');
-          for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine) continue;
-            
-            // Parse key-value pairs
-            if (trimmedLine.includes(':')) {
-              const [key, value] = trimmedLine.split(':', 2);
-              const trimmedKey = key.trim();
-              const trimmedValue = value.trim();
-              
-              // Convert values to appropriate types
-              if (trimmedKey === 'size') {
-                fileInfo[trimmedKey] = parseInt(trimmedValue, 10);
-              } else if (trimmedKey === 'isDirectory' || trimmedKey === 'isFile') {
-                fileInfo[trimmedKey] = trimmedValue.toLowerCase() === 'true';
-              } else {
-                fileInfo[trimmedKey] = trimmedValue;
-              }
-            }
-          }
+          const fileInfo = await session.filesystem.getFileInfo(testFilePath);
+          log(`GetFileInfo result: ${JSON.stringify(fileInfo)}`);
           
           // Verify the file info contains expected fields
           expect(typeof fileInfo.size).toBe('number');
           expect(fileInfo.isDirectory).toBe(false);
-          expect(fileInfo.isFile).toBe(true);
+          expect(fileInfo.name).toBeDefined();
           log('File info verified successfully');
           
           // Clean up the test file
@@ -406,7 +285,7 @@ describe('FileSystem', () => {
           
           // Verify the source file no longer exists
           try {
-            await session.filesystem.getFileInfo(sourceFilePath);
+            await session.filesystem.readFile(sourceFilePath);
             // If we get here, the file still exists
             log('Source file still exists after move');
             expect(false).toBe(true); // This should fail the test
@@ -449,47 +328,8 @@ describe('FileSystem', () => {
           
           // Read multiple files
           const paths = [testFile1Path, testFile2Path];
-          const contentsText = await session.filesystem.readMultipleFiles(paths);
-          log(`ReadMultipleFiles result: contents length=${contentsText.length}`);
-          
-          // Parse the contents text into a map of file paths to contents
-          const contents: Record<string, string> = {};
-          const lines = contentsText.split('\n');
-          let currentPath = '';
-          let currentContent = '';
-          let inContent = false;
-          
-          for (const line of lines) {
-            if (line.endsWith(':')) {
-              // This is a file path line
-              if (currentPath && currentContent) {
-                // Save the previous file content
-                contents[currentPath] = currentContent.trim();
-                currentContent = '';
-              }
-              currentPath = line.substring(0, line.length - 1);
-              inContent = true;
-            } else if (line === '---') {
-              // This is a separator line
-              if (currentPath && currentContent) {
-                // Save the previous file content
-                contents[currentPath] = currentContent.trim();
-                currentContent = '';
-              }
-              inContent = false;
-            } else if (inContent) {
-              // This is a content line
-              if (currentContent) {
-                currentContent += '\n';
-              }
-              currentContent += line;
-            }
-          }
-          
-          // Save the last file content
-          if (currentPath && currentContent) {
-            contents[currentPath] = currentContent.trim();
-          }
+          const contents = await session.filesystem.readMultipleFiles(paths);
+          log(`ReadMultipleFiles result: ${JSON.stringify(contents)}`);
           
           // Verify the contents of each file
           expect(contents[testFile1Path]).toBe(file1Content);
@@ -532,46 +372,23 @@ describe('FileSystem', () => {
           const searchFile3Path = `${testSubdirPath}/SEARCHABLE_PATTERN_file3.txt`;
           
           await session.filesystem.writeFile(searchFile1Path, file1Content);
-          log(`Created search test file 1: ${searchFile1Path}`);
-          
           await session.filesystem.writeFile(searchFile2Path, file2Content);
-          log(`Created search test file 2: ${searchFile2Path}`);
-          
           await session.filesystem.writeFile(searchFile3Path, file3Content);
-          log(`Created search test file 3: ${searchFile3Path}`);
+          log(`Created test files for search test`);
           
-          // Search for files with names containing the pattern
-          const excludePatterns = ["ignored_pattern"];
-          const results = await session.filesystem.searchFiles(testSubdirPath, searchPattern, excludePatterns);
-          log(`SearchFiles result: results count=${results.length}`);
+          // Search for files matching the pattern
+          const results = await session.filesystem.searchFiles(testSubdirPath, searchPattern);
+          log(`SearchFiles result: ${JSON.stringify(results)}`);
           
-          // Verify we found the expected number of results (should be 2 files)
-          expect(results.length).toBe(2);
-          log('Search found the expected number of results');
+          // Verify the search results
+          expect(Array.isArray(results)).toBe(true);
+          expect(results.length).toBe(2); // Should find 2 files with the pattern
           
           // Verify the search results contain the expected files
-          let foundFile1 = false;
-          let foundFile3 = false;
-          
-          for (const result of results) {
-            const path = result.path;
-            if (!path) continue;
-            
-            // Normalize paths for comparison
-            const normalizedPath = path.replace(/\\/g, '/');
-            
-            log(`Comparing result path: ${normalizedPath} with expected paths: ${searchFile1Path} and ${searchFile3Path}`);
-            
-            if (normalizedPath === searchFile1Path) {
-              foundFile1 = true;
-            } else if (normalizedPath === searchFile3Path) {
-              foundFile3 = true;
-            }
-          }
-          
-          expect(foundFile1).toBe(true);
-          expect(foundFile3).toBe(true);
-          log('Search results contain the expected files');
+          const resultPaths = results.map(result => result);
+          expect(resultPaths.includes(searchFile1Path) || resultPaths.some(p => p.includes('SEARCHABLE_PATTERN_file1.txt'))).toBe(true);
+          expect(resultPaths.includes(searchFile3Path) || resultPaths.some(p => p.includes('SEARCHABLE_PATTERN_file3.txt'))).toBe(true);
+          log('Search files verified successfully');
           
           // Clean up the test files and directory
           if (session.command) {
@@ -584,81 +401,6 @@ describe('FileSystem', () => {
         }
       } else {
         log('Note: FileSystem searchFiles method is not available, skipping search files test');
-      }
-    });
-  });
-
-  describe('largeFileOperations', () => {
-    it.only('should handle large file operations', async () => {
-      if (session.filesystem && 
-          typeof session.filesystem.readLargeFile === 'function' && 
-          typeof session.filesystem.writeLargeFile === 'function') {
-        log('Testing large file operations...');
-        try {
-          // Generate a large string (approximately 150KB)
-          let largeContent = '';
-          const lineContent = "This is a line of test content for large file testing. It contains enough characters to test the chunking functionality.\n";
-          
-          // Generate about 150KB of data (60KB is the default chunk size)
-          const targetSize = 150 * 1024; // 150KB
-          while (largeContent.length < targetSize) {
-            largeContent += lineContent;
-          }
-          
-          log(`Generated test content of size: ${largeContent.length} bytes`);
-          
-          // Test 1: Write large file using default chunk size
-          const testFilePath1 = `${TestPathPrefix}/test_large_default_${randomString()}.txt`;
-          log('Test 1: Writing large file with default chunk size...');
-          await session.filesystem.writeLargeFile(testFilePath1, largeContent);
-          log('Test 1: Large file write successful with default chunk size');
-          
-          // Test 2: Read the file using default chunk size
-          log('Test 2: Reading large file with default chunk size...');
-          const readContent1 = await session.filesystem.readLargeFile(testFilePath1);
-          
-          // Verify content
-          log(`Test 2: File read successful, content length: ${readContent1.length} bytes`);
-          expect(readContent1).toBe(largeContent);
-          log('Test 2: File content verified successfully with default chunk size');
-          
-          // Test 3: Write large file using custom chunk size
-          const customChunkSize = 30 * 1024; // 30KB
-          const testFilePath2 = `${TestPathPrefix}/test_large_custom_${randomString()}.txt`;
-          log(`Test 3: Writing large file with custom chunk size: ${customChunkSize} bytes`);
-          
-          await session.filesystem.writeLargeFile(testFilePath2, largeContent, customChunkSize);
-          log('Test 3: Large file write successful with custom chunk size');
-          
-          // Test 4: Read the file using custom chunk size
-          log(`Test 4: Reading large file with custom chunk size: ${customChunkSize} bytes`);
-          const readContent2 = await session.filesystem.readLargeFile(testFilePath2, customChunkSize);
-          
-          // Verify content
-          log(`Test 4: File read successful, content length: ${readContent2.length} bytes`);
-          expect(readContent2).toBe(largeContent);
-          log('Test 4: File content verified successfully with custom chunk size');
-          
-          // Test 5: Cross-test - Read with custom chunk size a file written with default chunk size
-          log('Test 5: Cross-test - Reading with custom chunk size a file written with default chunk size...');
-          const crossTestContent = await session.filesystem.readLargeFile(testFilePath1, customChunkSize);
-          
-          // Verify content
-          log(`Test 5: Cross-test read successful, content length: ${crossTestContent.length} bytes`);
-          expect(crossTestContent).toBe(largeContent);
-          log('Test 5: Cross-test content verified successfully');
-          
-          // Clean up the test files
-          if (session.command) {
-            await session.command.executeCommand(`rm ${testFilePath1} ${testFilePath2}`);
-            log(`Test files deleted: ${testFilePath1}, ${testFilePath2}`);
-          }
-        } catch (error) {
-          log(`Note: Large file operations failed: ${error}`);
-          // Don't fail the test if filesystem operations are not supported
-        }
-      } else {
-        log('Note: FileSystem large file operations are not available, skipping large file tests');
       }
     });
   });

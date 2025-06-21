@@ -1,46 +1,14 @@
 package agentbay_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
-
-// extractInstalledApps 从content字符串中解析出InstalledApp对象列表
-func extractInstalledApps(textContent string) ([]application.InstalledApp, error) {
-	if textContent == "" {
-		return nil, fmt.Errorf("empty content string")
-	}
-
-	// 将text解析为InstalledApp对象数组
-	var apps []application.InstalledApp
-	if err := json.Unmarshal([]byte(textContent), &apps); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal apps JSON: %w", err)
-	}
-
-	return apps, nil
-}
-
-// extractProcesses 从content字符串中解析出Process对象列表
-func extractProcesses(textContent string) ([]application.Process, error) {
-	if textContent == "" {
-		return nil, fmt.Errorf("empty content string")
-	}
-
-	// 将text解析为Process对象数组
-	var processes []application.Process
-	if err := json.Unmarshal([]byte(textContent), &processes); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal processes JSON: %w", err)
-	}
-
-	return processes, nil
-}
 
 func TestApplication_GetInstalledApps(t *testing.T) {
 	// Initialize AgentBay client
@@ -72,18 +40,11 @@ func TestApplication_GetInstalledApps(t *testing.T) {
 	// Test GetInstalledApps
 	if session.Application != nil {
 		fmt.Println("Getting installed applications...")
-		content, err := session.Application.GetInstalledApps(true, false, true)
+		apps, err := session.Application.GetInstalledApps(true, false, true)
 		if err != nil {
 			t.Logf("Note: GetInstalledApps failed: %v", err)
 		} else {
 			t.Logf("Got response content")
-
-			// 解析content为InstalledApp对象列表
-			apps, err := extractInstalledApps(content)
-			if err != nil {
-				t.Errorf("Failed to extract InstalledApp from content: %v", err)
-				return
-			}
 
 			t.Logf("Found %d installed applications", len(apps))
 
@@ -145,18 +106,11 @@ func TestApplication_ListVisibleApps(t *testing.T) {
 	// Test ListVisibleApps
 	if session.Application != nil {
 		fmt.Println("Listing visible applications...")
-		content, err := session.Application.ListVisibleApps()
+		visibleApps, err := session.Application.ListVisibleApps()
 		if err != nil {
 			t.Logf("Note: ListVisibleApps failed: %v", err)
 		} else {
 			t.Logf("Got response content")
-
-			// 解析content为Process对象列表
-			visibleApps, err := extractProcesses(content)
-			if err != nil {
-				t.Errorf("Failed to extract Processes from content: %v", err)
-				return
-			}
 
 			t.Logf("Found %d visible applications", len(visibleApps))
 
@@ -234,7 +188,7 @@ func TestApplication_StartApp(t *testing.T) {
 		startCmd := "/usr/bin/google-chrome-stable"
 
 		// Call StartApp function
-		content, err := session.Application.StartApp(startCmd, "")
+		processes, err := session.Application.StartApp(startCmd, "")
 
 		if err != nil {
 			t.Logf("Note: StartApp failed: %v", err)
@@ -253,13 +207,6 @@ func TestApplication_StartApp(t *testing.T) {
 			}
 		} else {
 			t.Logf("Got response content")
-
-			// 解析content为Process对象列表
-			processes, err := extractProcesses(content)
-			if err != nil {
-				t.Errorf("Failed to extract Processes from content: %v", err)
-				return
-			}
 
 			t.Logf("Application started successfully, returned %d processes", len(processes))
 
@@ -282,7 +229,7 @@ func TestApplication_StartApp(t *testing.T) {
 					// Try to stop the process to clean up
 					if process.PID > 0 {
 						fmt.Printf("Attempting to stop process %s (PID: %d)...\n", process.PName, process.PID)
-						_, stopErr := session.Application.StopAppByPID(process.PID)
+						stopErr := session.Application.StopAppByPID(process.PID)
 						if stopErr != nil {
 							t.Logf("Warning: Failed to stop process: %v", stopErr)
 						} else {
@@ -334,7 +281,7 @@ func TestApplication_StopAppByPName(t *testing.T) {
 		// First, start an application to get a process to stop
 		fmt.Println("Starting Google Chrome application...")
 		startCmd := "/usr/bin/google-chrome-stable"
-		startContent, err := session.Application.StartApp(startCmd, "")
+		processes, err := session.Application.StartApp(startCmd, "")
 
 		if err != nil {
 			t.Logf("Note: StartApp failed: %v", err)
@@ -352,12 +299,6 @@ func TestApplication_StopAppByPName(t *testing.T) {
 				return
 			}
 		} else {
-			// 解析content为Process对象列表
-			processes, err := extractProcesses(startContent)
-			if err != nil {
-				t.Errorf("Failed to extract Processes from content: %v", err)
-				return
-			}
 
 			t.Logf("Application started successfully, returned %d processes", len(processes))
 
@@ -372,7 +313,7 @@ func TestApplication_StopAppByPName(t *testing.T) {
 			t.Logf("Attempting to stop process by name: %s", processToStop)
 
 			// Call StopAppByPName function
-			_, err = session.Application.StopAppByPName(processToStop)
+			err = session.Application.StopAppByPName(processToStop)
 			if err != nil {
 				t.Errorf("StopAppByPName failed: %v", err)
 
@@ -387,16 +328,10 @@ func TestApplication_StopAppByPName(t *testing.T) {
 
 				// Verify the process was stopped by listing visible apps
 				time.Sleep(1 * time.Second) // Give some time for the process to be terminated
-				visibleContent, err := session.Application.ListVisibleApps()
+				visibleApps, err := session.Application.ListVisibleApps()
 				if err != nil {
 					t.Logf("Warning: Failed to list visible apps after stopping: %v", err)
 				} else {
-					// 解析content为Process对象列表
-					visibleApps, err := extractProcesses(visibleContent)
-					if err != nil {
-						t.Errorf("Failed to extract Processes from content: %v", err)
-						return
-					}
 
 					// Check if the process is still in the list
 					processStillRunning := false

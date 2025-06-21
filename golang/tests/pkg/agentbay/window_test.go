@@ -52,17 +52,10 @@ func TestWindow_ListRootWindows(t *testing.T) {
 	// Test ListRootWindows
 	if session.Window != nil {
 		fmt.Println("Listing root windows...")
-		rawWindows, err := session.Window.ListRootWindows()
+		rootWindows, err := session.Window.ListRootWindows()
 		if err != nil {
 			t.Logf("Note: ListRootWindows failed: %v", err)
 		} else {
-			// Process the raw windows data
-			rootWindows, err := extractWindowsFromContent(rawWindows)
-			if err != nil {
-				t.Errorf("Failed to extract windows: %v", err)
-				return
-			}
-
 			t.Logf("Found %d root windows", len(rootWindows))
 
 			// Verify we got some windows
@@ -154,17 +147,10 @@ func TestWindow_GetActiveWindow(t *testing.T) {
 	// Test GetActiveWindow
 	if session.Window != nil {
 		fmt.Println("Getting active window...")
-		rawActiveWindow, err := session.Window.GetActiveWindow()
+		activeWindow, err := session.Window.GetActiveWindow()
 		if err != nil {
 			t.Logf("Note: GetActiveWindow failed: %v", err)
 		} else {
-			// Process the raw window data
-			activeWindow, err := extractWindowFromContent(rawActiveWindow)
-			if err != nil {
-				t.Errorf("Failed to extract active window: %v", err)
-				return
-			}
-
 			t.Logf("Active window: %s (ID: %d, Process: %s, PID: %d)",
 				activeWindow.Title, activeWindow.WindowID, activeWindow.PName, activeWindow.PID)
 
@@ -258,20 +244,24 @@ func TestWindow_FocusMode(t *testing.T) {
 		fmt.Println("Enabling focus mode...")
 		err := session.Window.FocusMode(true)
 		if err != nil {
-			t.Logf("Note: Enabling focus mode failed: %v", err)
+			t.Logf("Note: FocusMode(true) failed: %v", err)
 		} else {
-			t.Logf("Focus mode enabled successfully")
+			t.Log("Focus mode enabled successfully")
 		}
+
+		// Wait a short time
+		fmt.Println("Waiting briefly...")
+		testutil.SleepWithMessage(2, "Focus mode is active...")
 
 		// Disable focus mode
 		fmt.Println("Disabling focus mode...")
 		err = session.Window.FocusMode(false)
 		if err != nil {
-			t.Logf("Note: Disabling focus mode failed: %v", err)
+			t.Logf("Note: FocusMode(false) failed: %v", err)
 		} else {
-			t.Logf("Focus mode disabled successfully")
+			t.Log("Focus mode disabled successfully")
 		}
 	} else {
-		t.Logf("Note: Window interface is nil, skipping focus mode test")
+		t.Logf("Note: Window interface is nil, skipping window test")
 	}
 }

@@ -19,6 +19,24 @@ interface CallMcpToolResult {
 }
 
 /**
+ * Represents the result of a command execution
+ */
+export interface CommandResult {
+  output: string;
+  exitCode?: number;
+  durationMs?: number;
+}
+
+/**
+ * Represents the result of code execution
+ */
+export interface CodeExecutionResult {
+  output: string;
+  durationMs?: number;
+  memoryKb?: number;
+}
+
+/**
  * Handles command execution operations in the AgentBay cloud environment.
  */
 export class Command {
@@ -123,11 +141,22 @@ export class Command {
   }
 
   /**
+   * Helper method to parse JSON string or return a simple object with output
+   */
+  private parseCommandResult(text: string): CommandResult {
+    try {
+      return JSON.parse(text) as CommandResult;
+    } catch (error) {
+      return { output: text };
+    }
+  }
+
+  /**
    * Execute a command in the cloud environment with a specified timeout.
    * 
    * @param command - The command to execute.
    * @param timeoutMs - The timeout for the command execution in milliseconds. Default is 1000ms.
-   * @returns The extracted text content from the API response
+   * @returns A string containing the command output
    */
   async executeCommand(command: string, timeoutMs: number = 1000): Promise<string> {
     const args = {
@@ -137,8 +166,19 @@ export class Command {
     
     const result = await this.callMcpTool('shell', args, 'Failed to execute command');
     
-    // Return the extracted text content
+    // Return the text content directly
     return result.textContent || '';
+  }
+  
+  /**
+   * Helper method to parse JSON string or return a simple object with output
+   */
+  private parseCodeExecutionResult(text: string): CodeExecutionResult {
+    try {
+      return JSON.parse(text) as CodeExecutionResult;
+    } catch (error) {
+      return { output: text };
+    }
   }
   
   /**
@@ -147,7 +187,7 @@ export class Command {
    * @param code - The code to execute.
    * @param language - The programming language of the code. Must be either 'python' or 'javascript'.
    * @param timeoutS - The timeout for the code execution in seconds. Default is 300s.
-   * @returns The extracted text content from the API response
+   * @returns A string containing the code execution output
    * @throws APIError if the code execution fails or if an unsupported language is specified.
    */
   async runCode(code: string, language: string, timeoutS: number = 300): Promise<string> {
@@ -164,7 +204,7 @@ export class Command {
     
     const result = await this.callMcpTool('run_code', args, 'Failed to execute code');
     
-    // Return the extracted text content
+    // Return the text content directly
     return result.textContent || '';
   }
 }

@@ -54,7 +54,7 @@ func main() {
 		fmt.Printf("Error execute command: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Execute command result: " + response)
+	fmt.Printf("Execute command result: %s\n", response)
 
 	// Read a file
 	fmt.Println("\nReading a file...")
