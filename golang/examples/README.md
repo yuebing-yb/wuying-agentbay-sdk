@@ -9,6 +9,7 @@ This directory contains examples demonstrating how to use the Wuying AgentBay SD
 - **session_params/**: Demonstrates how to use session parameters and labels.
 - **context_management/**: Shows how to create, list, update, and delete contexts, and how to use them with sessions.
 - **application_window/**: Demonstrates application and window management features.
+- **command_example/**: Demonstrates command execution and code running features, including Python and JavaScript code execution.
 
 ## Running Examples
 
@@ -45,7 +46,6 @@ The basic usage example demonstrates the fundamental operations of the SDK, incl
 - Creating a session
 - Executing commands
 - Reading files
-- Using ADB shell commands
 - Listing and deleting sessions
 
 ### Session Creation
@@ -82,3 +82,12 @@ The application and window management example demonstrates how to interact with 
 - Getting the active window
 - Window operations (activate, maximize, minimize, restore, resize)
 - Focus mode
+
+### Command Execution
+
+The command example demonstrates how to execute shell commands and run code in different languages, including:
+- Executing simple and complex shell commands
+- Setting custom timeouts for commands
+- Running Python code
+- Running JavaScript code
+- Processing command and code execution results

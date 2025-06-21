@@ -181,7 +181,7 @@ log(`Found ${sessions2.length} sessions with environment=development AND owner=t
 
 ```go
 // Create a session
-session, err := client.Create()
+session, err := client.Create(nil)
 if err != nil {
     fmt.Printf("Error creating session: %v\n", err)
     os.Exit(1)
@@ -217,7 +217,7 @@ result = session.command.execute_command("ls -la")
 print(f"Command result: {result}")
 
 # Delete the session
-agent_bay.delete(session.session_id)
+agent_bay.delete(session)
 print("Session deleted successfully")
 ```
 

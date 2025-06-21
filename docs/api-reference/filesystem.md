@@ -11,14 +11,14 @@ Creates a new directory at the specified path.
 #### TypeScript
 
 ```typescript
-createDirectory(path: string): Promise<boolean>
+createDirectory(path: string): Promise<string>
 ```
 
 **Parameters:**
 - `path` (string): The path of the directory to create.
 
 **Returns:**
-- `Promise<boolean>`: A promise that resolves to true if the directory was created successfully.
+- `Promise<string>`: A promise that resolves to the response text content if the directory was created successfully.
 
 **Throws:**
 - `APIError`: If the directory creation fails.
@@ -36,6 +36,21 @@ CreateDirectory(path string) (bool, error)
 - `bool`: True if the directory was created successfully.
 - `error`: An error if the directory creation fails.
 
+#### Python
+
+```python
+create_directory(path: str) -> bool
+```
+
+**Parameters:**
+- `path` (str): The path of the directory to create.
+
+**Returns:**
+- `bool`: True if the directory was created successfully.
+
+**Raises:**
+- `FileError`: If the directory creation fails.
+
 ### edit_file / editFile / EditFile
 
 Edits a file by replacing occurrences of oldText with newText.
@@ -43,7 +58,7 @@ Edits a file by replacing occurrences of oldText with newText.
 #### TypeScript
 
 ```typescript
-editFile(path: string, edits: Array<{oldText: string, newText: string}>, dryRun?: boolean): Promise<boolean>
+editFile(path: string, edits: Array<{oldText: string, newText: string}>, dryRun?: boolean): Promise<string>
 ```
 
 **Parameters:**
@@ -52,7 +67,7 @@ editFile(path: string, edits: Array<{oldText: string, newText: string}>, dryRun?
 - `dryRun` (boolean, optional): If true, preview changes without applying them. Default is false.
 
 **Returns:**
-- `Promise<boolean>`: A promise that resolves to true if the file was edited successfully.
+- `Promise<string>`: A promise that resolves to the response text content if the file was edited successfully.
 
 **Throws:**
 - `APIError`: If the file editing fails.
@@ -72,6 +87,23 @@ EditFile(path string, edits []map[string]string, dryRun bool) (bool, error)
 - `bool`: True if the file was edited successfully.
 - `error`: An error if the file editing fails.
 
+#### Python
+
+```python
+edit_file(path: str, edits: List[Dict[str, str]], dry_run: bool = False) -> bool
+```
+
+**Parameters:**
+- `path` (str): The path of the file to edit.
+- `edits` (List[Dict[str, str]]): List of edit operations, each containing oldText and newText.
+- `dry_run` (bool, optional): If true, preview changes without applying them. Default is False.
+
+**Returns:**
+- `bool`: True if the file was edited successfully.
+
+**Raises:**
+- `FileError`: If the file editing fails.
+
 ### get_file_info / getFileInfo / GetFileInfo
 
 Gets information about a file or directory.
@@ -79,14 +111,14 @@ Gets information about a file or directory.
 #### TypeScript
 
 ```typescript
-getFileInfo(path: string): Promise<Record<string, any>>
+getFileInfo(path: string): Promise<string>
 ```
 
 **Parameters:**
 - `path` (string): The path of the file or directory to inspect.
 
 **Returns:**
-- `Promise<Record<string, any>>`: A promise that resolves to information about the file or directory.
+- `Promise<string>`: A promise that resolves to textual information about the file or directory.
 
 **Throws:**
 - `APIError`: If getting the file information fails.
@@ -94,15 +126,30 @@ getFileInfo(path: string): Promise<Record<string, any>>
 #### Golang
 
 ```go
-GetFileInfo(path string) (map[string]interface{}, error)
+GetFileInfo(path string) (string, error)
 ```
 
 **Parameters:**
 - `path` (string): The path of the file or directory to inspect.
 
 **Returns:**
-- `map[string]interface{}`: Information about the file or directory.
+- `string`: Textual information about the file or directory.
 - `error`: An error if getting the file information fails.
+
+#### Python
+
+```python
+get_file_info(path: str) -> Dict[str, Union[str, float, bool]]
+```
+
+**Parameters:**
+- `path` (str): The path of the file or directory to inspect.
+
+**Returns:**
+- `Dict[str, Union[str, float, bool]]`: A dictionary containing file information.
+
+**Raises:**
+- `FileError`: If getting the file information fails.
 
 ### list_directory / listDirectory / ListDirectory
 
@@ -111,14 +158,14 @@ Lists the contents of a directory.
 #### TypeScript
 
 ```typescript
-listDirectory(path: string): Promise<Array<Record<string, any>>>
+listDirectory(path: string): Promise<any>
 ```
 
 **Parameters:**
 - `path` (string): The path of the directory to list.
 
 **Returns:**
-- `Promise<Array<Record<string, any>>>`: A promise that resolves to an array of directory entries.
+- `Promise<any>`: A promise that resolves to an array of directory entries if parsing is successful, or raw text content.
 
 **Throws:**
 - `APIError`: If listing the directory fails.
@@ -126,15 +173,30 @@ listDirectory(path: string): Promise<Array<Record<string, any>>>
 #### Golang
 
 ```go
-ListDirectory(path string) ([]map[string]interface{}, error)
+ListDirectory(path string) (string, error)
 ```
 
 **Parameters:**
 - `path` (string): The path of the directory to list.
 
 **Returns:**
-- `[]map[string]interface{}`: An array of directory entries.
+- `string`: Text representation of directory entries.
 - `error`: An error if listing the directory fails.
+
+#### Python
+
+```python
+list_directory(path: str) -> List[Dict[str, Union[str, bool]]]
+```
+
+**Parameters:**
+- `path` (str): The path of the directory to list.
+
+**Returns:**
+- `List[Dict[str, Union[str, bool]]]`: A list of dictionaries representing directory entries.
+
+**Raises:**
+- `FileError`: If listing the directory fails.
 
 ### move_file / moveFile / MoveFile
 
@@ -143,7 +205,7 @@ Moves a file or directory from source to destination.
 #### TypeScript
 
 ```typescript
-moveFile(source: string, destination: string): Promise<boolean>
+moveFile(source: string, destination: string): Promise<string>
 ```
 
 **Parameters:**
@@ -151,7 +213,7 @@ moveFile(source: string, destination: string): Promise<boolean>
 - `destination` (string): The path of the destination file or directory.
 
 **Returns:**
-- `Promise<boolean>`: A promise that resolves to true if the file was moved successfully.
+- `Promise<string>`: A promise that resolves to the response text content if the file was moved successfully.
 
 **Throws:**
 - `APIError`: If moving the file fails.
@@ -170,6 +232,22 @@ MoveFile(source, destination string) (bool, error)
 - `bool`: True if the file was moved successfully.
 - `error`: An error if moving the file fails.
 
+#### Python
+
+```python
+move_file(source: str, destination: str) -> bool
+```
+
+**Parameters:**
+- `source` (str): The path of the source file or directory.
+- `destination` (str): The path of the destination file or directory.
+
+**Returns:**
+- `bool`: True if the file was moved successfully.
+
+**Raises:**
+- `FileError`: If moving the file fails.
+
 ### read_file / readFile / ReadFile
 
 Reads the contents of a file in the cloud environment.
@@ -177,17 +255,19 @@ Reads the contents of a file in the cloud environment.
 #### Python
 
 ```python
-read_file(path: str) -> str
+read_file(path: str, offset: int = 0, length: int = 0) -> str
 ```
 
 **Parameters:**
 - `path` (str): The path of the file to read.
+- `offset` (int, optional): Start reading from this byte offset. Default is 0.
+- `length` (int, optional): Number of bytes to read. If 0, read to end of file. Default is 0.
 
 **Returns:**
 - `str`: The contents of the file.
 
 **Raises:**
-- `AgentBayError`: If the file reading fails.
+- `FileError`: If the file reading fails.
 
 #### TypeScript
 
@@ -227,14 +307,14 @@ Reads the contents of multiple files.
 #### TypeScript
 
 ```typescript
-readMultipleFiles(paths: string[]): Promise<Record<string, string>>
+readMultipleFiles(paths: string[]): Promise<string>
 ```
 
 **Parameters:**
 - `paths` (string[]): Array of paths to the files to read.
 
 **Returns:**
-- `Promise<Record<string, string>>`: A promise that resolves to an object mapping file paths to their contents.
+- `Promise<string>`: A promise that resolves to the textual content mapping file paths to their contents.
 
 **Throws:**
 - `APIError`: If reading the files fails.
@@ -242,15 +322,30 @@ readMultipleFiles(paths: string[]): Promise<Record<string, string>>
 #### Golang
 
 ```go
-ReadMultipleFiles(paths []string) (map[string]string, error)
+ReadMultipleFiles(paths []string) (string, error)
 ```
 
 **Parameters:**
 - `paths` ([]string): Array of paths to the files to read.
 
 **Returns:**
-- `map[string]string`: An object mapping file paths to their contents.
+- `string`: Textual content mapping file paths to their contents.
 - `error`: An error if reading the files fails.
+
+#### Python
+
+```python
+read_multiple_files(paths: List[str]) -> Dict[str, str]
+```
+
+**Parameters:**
+- `paths` (List[str]): List of file paths to read.
+
+**Returns:**
+- `Dict[str, str]`: A dictionary mapping file paths to their contents.
+
+**Raises:**
+- `FileError`: If reading the files fails.
 
 ### search_files / searchFiles / SearchFiles
 
@@ -259,7 +354,7 @@ Searches for files matching a pattern in a directory.
 #### TypeScript
 
 ```typescript
-searchFiles(path: string, pattern: string, excludePatterns?: string[]): Promise<Array<Record<string, any>>>
+searchFiles(path: string, pattern: string, excludePatterns?: string[]): Promise<any[]>
 ```
 
 **Parameters:**
@@ -268,7 +363,7 @@ searchFiles(path: string, pattern: string, excludePatterns?: string[]): Promise<
 - `excludePatterns` (string[], optional): Patterns to exclude. Default is an empty array.
 
 **Returns:**
-- `Promise<Array<Record<string, any>>>`: A promise that resolves to an array of search results.
+- `Promise<any[]>`: A promise that resolves to an array of search results.
 
 **Throws:**
 - `APIError`: If the search fails.
@@ -276,7 +371,7 @@ searchFiles(path: string, pattern: string, excludePatterns?: string[]): Promise<
 #### Golang
 
 ```go
-SearchFiles(path, pattern string, excludePatterns []string) ([]map[string]interface{}, error)
+SearchFiles(path, pattern string, excludePatterns []string) (string, error)
 ```
 
 **Parameters:**
@@ -285,8 +380,25 @@ SearchFiles(path, pattern string, excludePatterns []string) ([]map[string]interf
 - `excludePatterns` ([]string): Patterns to exclude.
 
 **Returns:**
-- `[]map[string]interface{}`: An array of search results.
+- `string`: Text representation of search results.
 - `error`: An error if the search fails.
+
+#### Python
+
+```python
+search_files(path: str, pattern: str, exclude_patterns: Optional[List[str]] = None) -> List[str]
+```
+
+**Parameters:**
+- `path` (str): The directory path to search.
+- `pattern` (str): The pattern to match.
+- `exclude_patterns` (Optional[List[str]]): Optional list of patterns to exclude.
+
+**Returns:**
+- `List[str]`: A list of strings representing search results.
+
+**Raises:**
+- `FileError`: If the search fails.
 
 ### write_file / writeFile / WriteFile
 
@@ -295,16 +407,16 @@ Writes content to a file.
 #### TypeScript
 
 ```typescript
-writeFile(path: string, content: string, mode?: string): Promise<boolean>
+writeFile(path: string, content: string, mode?: string): Promise<string>
 ```
 
 **Parameters:**
 - `path` (string): The path of the file to write.
 - `content` (string): Content to write to the file.
-- `mode` (string, optional): "overwrite" (default) or "append".
+- `mode` (string, optional): "overwrite" (default), "append", or "create_new".
 
 **Returns:**
-- `Promise<boolean>`: A promise that resolves to true if the file was written successfully.
+- `Promise<string>`: A promise that resolves to the response text content if the file was written successfully.
 
 **Throws:**
 - `APIError`: If writing the file fails.
@@ -318,7 +430,94 @@ WriteFile(path, content string, mode string) (bool, error)
 **Parameters:**
 - `path` (string): The path of the file to write.
 - `content` (string): Content to write to the file.
-- `mode` (string): "overwrite" (default) or "append".
+- `mode` (string): "overwrite" (default), "append", or "create_new".
+
+**Returns:**
+- `bool`: True if the file was written successfully.
+- `error`: An error if writing the file fails.
+
+#### Python
+
+```python
+write_file(path: str, content: str, mode: str = "overwrite") -> bool
+```
+
+**Parameters:**
+- `path` (str): The path of the file to write.
+- `content` (str): Content to write to the file.
+- `mode` (str, optional): "overwrite" (default) or "append".
+
+**Returns:**
+- `bool`: True if the file was written successfully.
+
+**Raises:**
+- `FileError`: If writing the file fails.
+
+### read_large_file / readLargeFile / ReadLargeFile
+
+Reads a large file in chunks to handle size limitations of the underlying API.
+
+#### TypeScript
+
+```typescript
+readLargeFile(path: string, chunkSize?: number): Promise<string>
+```
+
+**Parameters:**
+- `path` (string): The path of the file to read.
+- `chunkSize` (number, optional): Size of each chunk in bytes. Default is 60KB.
+
+**Returns:**
+- `Promise<string>`: A promise that resolves to the complete file content.
+
+**Throws:**
+- `APIError`: If reading the file fails.
+
+#### Golang
+
+```go
+ReadLargeFile(path string, chunkSize int) (string, error)
+```
+
+**Parameters:**
+- `path` (string): The path of the file to read.
+- `chunkSize` (int): Size of each chunk in bytes.
+
+**Returns:**
+- `string`: The complete file content.
+- `error`: An error if reading the file fails.
+
+### write_large_file / writeLargeFile / WriteLargeFile
+
+Writes a large file in chunks to handle size limitations of the underlying API.
+
+#### TypeScript
+
+```typescript
+writeLargeFile(path: string, content: string, chunkSize?: number): Promise<boolean>
+```
+
+**Parameters:**
+- `path` (string): The path of the file to write.
+- `content` (string): Content to write to the file.
+- `chunkSize` (number, optional): Size of each chunk in bytes. Default is 60KB.
+
+**Returns:**
+- `Promise<boolean>`: A promise that resolves to true if the file was written successfully.
+
+**Throws:**
+- `APIError`: If writing the file fails.
+
+#### Golang
+
+```go
+WriteLargeFile(path, content string, chunkSize int) (bool, error)
+```
+
+**Parameters:**
+- `path` (string): The path of the file to write.
+- `content` (string): Content to write to the file.
+- `chunkSize` (int): Size of each chunk in bytes.
 
 **Returns:**
 - `bool`: True if the file was written successfully.
@@ -335,6 +534,27 @@ session = agent_bay.create()
 # Read a file
 content = session.filesystem.read_file("/etc/hosts")
 print(f"File content: {content}")
+
+# Create a directory
+session.filesystem.create_directory('/tmp/test')
+
+# Write a file
+session.filesystem.write_file('/tmp/test/example.txt', 'Hello, world!')
+
+# Edit a file
+session.filesystem.edit_file('/tmp/test/example.txt', [
+    {'oldText': 'Hello', 'newText': 'Hi'}
+])
+
+# Get file info
+file_info = session.filesystem.get_file_info('/tmp/test/example.txt')
+print(f"File size: {file_info['size']}")
+
+# List directory
+entries = session.filesystem.list_directory('/tmp/test')
+for entry in entries:
+    entry_type = "Directory" if entry["isDirectory"] else "File"
+    print(f"{entry_type}: {entry['name']}")
 ```
 
 ### TypeScript
@@ -360,13 +580,11 @@ await session.filesystem.editFile('/tmp/test/example.txt', [
 
 // Get file info
 const fileInfo = await session.filesystem.getFileInfo('/tmp/test/example.txt');
-log(`File size: ${fileInfo.size}`);
+log(`File info: ${fileInfo}`);
 
 // List directory
 const entries = await session.filesystem.listDirectory('/tmp/test');
-for (const entry of entries) {
-  log(`${entry.isDirectory ? 'Directory' : 'File'}: ${entry.name}`);
-}
+log(`Directory entries: ${JSON.stringify(entries)}`);
 
 // Move a file
 await session.filesystem.moveFile('/tmp/test/example.txt', '/tmp/test/moved.txt');
@@ -376,15 +594,20 @@ const files = await session.filesystem.readMultipleFiles([
   '/tmp/test/moved.txt',
   '/etc/hosts'
 ]);
-for (const [path, content] of Object.entries(files)) {
-  log(`${path}: ${content}`);
-}
+log(`Multiple files content: ${files}`);
 
 // Search files
 const results = await session.filesystem.searchFiles('/tmp', 'world', ['node_modules']);
 for (const result of results) {
-  log(`Found in ${result.path}`);
+  log(`Found in ${result}`);
 }
+
+// Read a large file
+const largeContent = await session.filesystem.readLargeFile('/path/to/large/file.log');
+log(`Large file content length: ${largeContent.length}`);
+
+// Write a large file
+await session.filesystem.writeLargeFile('/path/to/large/output.log', largeContent);
 ```
 
 ### Golang
@@ -432,48 +655,19 @@ fileInfo, err := session.FileSystem.GetFileInfo("/tmp/test/example.txt")
 if err != nil {
     // Handle error
 }
-fmt.Printf("File size: %f\n", fileInfo["size"])
+fmt.Printf("File info: %s\n", fileInfo)
 
-// List directory
-entries, err := session.FileSystem.ListDirectory("/tmp/test")
+// Read a large file
+largeContent, err := session.FileSystem.ReadLargeFile("/path/to/large/file.log", 1024*60)
 if err != nil {
     // Handle error
 }
-for _, entry := range entries {
-    entryType := "File"
-    if entry["isDirectory"].(bool) {
-        entryType = "Directory"
-    }
-    fmt.Printf("%s: %s\n", entryType, entry["name"])
-}
+fmt.Printf("Large file content length: %d\n", len(largeContent))
 
-// Move a file
-success, err = session.FileSystem.MoveFile("/tmp/test/example.txt", "/tmp/test/moved.txt")
+// Write a large file
+success, err = session.FileSystem.WriteLargeFile("/path/to/large/output.log", largeContent, 1024*60)
 if err != nil {
     // Handle error
-}
-
-// Read multiple files
-paths := []string{
-    "/tmp/test/moved.txt",
-    "/etc/hosts",
-}
-files, err := session.FileSystem.ReadMultipleFiles(paths)
-if err != nil {
-    // Handle error
-}
-for path, content := range files {
-    fmt.Printf("%s: %s\n", path, content)
-}
-
-// Search files
-excludePatterns := []string{"node_modules"}
-results, err := session.FileSystem.SearchFiles("/tmp", "world", excludePatterns)
-if err != nil {
-    // Handle error
-}
-for _, result := range results {
-    fmt.Printf("Found in %s\n", result["path"])
 }
 ```
 

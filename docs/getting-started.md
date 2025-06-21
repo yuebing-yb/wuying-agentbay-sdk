@@ -54,8 +54,12 @@ print(f"Command result: {result}")
 content = session.filesystem.read_file("/etc/hosts")
 print(f"File content: {content}")
 
+# Execute code
+code_result = session.command.run_code('print("Hello, World!")', "python")
+print(f"Code execution result: {code_result}")
+
 # Delete the session
-agent_bay.delete(session.session_id)
+agent_bay.delete(session)
 print("Session deleted successfully")
 ```
 
@@ -75,12 +79,16 @@ async function main() {
     log(`Session created with ID: ${session.sessionId}`);
 
     // Execute a command
-    const result = await session.command.execute_command('ls -la');
+    const result = await session.command.executeCommand('ls -la');
     log('Command result:', result);
 
     // Read a file
-    const content = await session.filesystem.read_file('/etc/hosts');
+    const content = await session.filesystem.readFile('/etc/hosts');
     log(`File content: ${content}`);
+
+    // Execute code
+    const codeResult = await session.command.runCode('console.log("Hello, World!");', 'javascript');
+    log(`Code execution result: ${codeResult}`);
 
     // Delete the session
     await agentBay.delete(session);
@@ -115,7 +123,7 @@ func main() {
 	}
 
 	// Create a new session
-	session, err := client.Create()
+	session, err := client.Create(nil)
 	if err != nil {
 		fmt.Printf("Error creating session: %v\n", err)
 		os.Exit(1)
@@ -137,6 +145,14 @@ func main() {
         os.Exit(1)
     }
     fmt.Printf("File content: %s\n", content)
+
+    // Execute code
+    codeResult, err := session.Command.RunCode(`print("Hello, World!")`, "python")
+    if err != nil {
+        fmt.Printf("Error executing code: %v\n", err)
+        os.Exit(1)
+    }
+    fmt.Printf("Code execution result: %s\n", codeResult)
 
 	// Delete the session
 	err = client.Delete(session)

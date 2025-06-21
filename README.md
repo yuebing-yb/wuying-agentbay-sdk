@@ -5,17 +5,14 @@ Wuying AgentBay SDK provides APIs for Python, TypeScript, and Golang to interact
 ## Features
 
 - **Session Management**: Create, retrieve, list, and delete sessions
-- **File Management**: Read files in the cloud environment
-- **Command Execution**: Run commands
-- **ADB Operations**: Execute ADB shell commands in mobile environments (Android)
+- **File Management**: Read and write files in the cloud environment
+- **Command Execution**: Run commands and execute code
 - **Application Management**: List, start, and stop applications
 - **Window Management**: List, activate, and manipulate windows
 - **Label Management**: Categorize and filter sessions using labels
 - **Context Management**: Work with persistent storage contexts
 
 ## Installation
-
-(Note: The following installation methods will be available in the future. Please first use the source code to integrate with the SDK.)
 
 ### Python
 
@@ -57,9 +54,12 @@ print(f"Command result: {result}")
 content = session.filesystem.read_file("/path/to/file.txt")
 print(f"File content: {content}")
 
-# Execute an ADB shell command (for mobile environments)
-adb_result = session.adb.shell("ls /sdcard")
-print(f"ADB shell result: {adb_result}")
+# Execute code
+code_result = session.command.run_code('print("Hello, World!")', "python")
+print(f"Code execution result: {code_result}")
+
+# Delete the session when done
+agent_bay.delete(session)
 ```
 
 ### TypeScript
@@ -81,10 +81,13 @@ async function main() {
   // Read a file
   const content = await session.filesystem.readFile('/path/to/file.txt');
   log(content);
-
-  // Execute an ADB shell command (for mobile environments)
-  const adbResult = await session.adb.shell('ls /sdcard');
-  log(adbResult);
+  
+  // Execute code
+  const codeResult = await session.command.runCode('console.log("Hello, World!");', 'javascript');
+  log(`Code execution result: ${codeResult}`);
+  
+  // Delete the session when done
+  await agentBay.delete(session);
 }
 
 main().catch(logError);
@@ -111,7 +114,7 @@ func main() {
   }
   
   // Create a session
-  session, err := client.Create()
+  session, err := client.Create(nil)
   if err != nil {
     fmt.Printf("Error creating session: %v\n", err)
     os.Exit(1)
@@ -132,14 +135,21 @@ func main() {
     os.Exit(1)
   }
   fmt.Printf("File content: %s\n", content)
-
-  // Execute an ADB shell command (for mobile environments)
-  adbResult, err := session.Adb.Shell("ls /sdcard")
+  
+  // Execute code
+  codeResult, err := session.Command.RunCode(`print("Hello, World!")`, "python")
   if err != nil {
-    fmt.Printf("Error executing ADB shell command: %v\n", err)
+    fmt.Printf("Error executing code: %v\n", err)
     os.Exit(1)
   }
-  fmt.Printf("ADB shell result: %s\n", adbResult)
+  fmt.Printf("Code execution result: %s\n", codeResult)
+  
+  // Delete the session when done
+  err = client.Delete(session)
+  if err != nil {
+    fmt.Printf("Error deleting session: %v\n", err)
+    os.Exit(1)
+  }
 }
 ```
 

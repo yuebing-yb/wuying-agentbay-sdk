@@ -72,6 +72,18 @@ func main() {
 	}
 	fmt.Printf("Command result: %s\n", result)
 	
+	// Run code
+	pythonCode := `
+print("Hello, World!")
+print(1 + 1)
+`
+	codeResult, err := session.Command.RunCode(pythonCode, "python")
+	if err != nil {
+		fmt.Printf("Error running code: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Code execution result: %s\n", codeResult)
+	
 	// Read a file
 	content, err := session.FileSystem.ReadFile("/path/to/file.txt")
 	if err != nil {

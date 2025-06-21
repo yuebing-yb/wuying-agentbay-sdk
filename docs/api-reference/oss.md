@@ -109,26 +109,27 @@ Downloads a file from a URL anonymously to a local file.
 
 ## Python
 
-### Creating an OSS Client
+### Initializing OSS Environment
 
 ```python
-def env_init(self, access_key_id: str, access_key_secret: str,
+def env_init(self, access_key_id: str, access_key_secret: str, securityToken: Optional[str] = None,
                  endpoint: Optional[str] = None, region: Optional[str] = None) -> str
 ```
 
-Creates an OSS client with the provided credentials.
+Creates and initializes OSS environment variables with the specified credentials.
 
 **Parameters:**
 - `access_key_id`: The Access Key ID for OSS authentication.
 - `access_key_secret`: The Access Key Secret for OSS authentication.
+- `securityToken`: The security token for OSS authentication. Optional.
 - `endpoint`: The OSS service endpoint. If not specified, the default is used.
 - `region`: The OSS region. If not specified, the default is used.
 
 **Returns:**
-- `str`: The result of the client creation operation.
+- `str`: The result of the environment initialization operation.
 
 **Raises:**
-- `OssError`: If the client creation fails.
+- `OssError`: If the environment initialization fails.
 
 ### Uploading Files
 

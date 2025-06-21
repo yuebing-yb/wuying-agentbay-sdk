@@ -9,6 +9,9 @@ This directory contains examples demonstrating how to use the Wuying AgentBay SD
 - **session_params/**: Demonstrates how to use session parameters and labels.
 - **context_management/**: Shows how to create, list, update, and delete contexts, and how to use them with sessions.
 - **application_window/**: Demonstrates application and window management features.
+- **mobile_system/**: Demonstrates mobile device management features.
+- **oss_management/**: Shows how to use the Object Storage Service features.
+- **label_management/**: Demonstrates how to manage session labels.
 
 ## Running Examples
 
@@ -84,3 +87,11 @@ The application and window management example demonstrates how to interact with 
 - Getting the active window
 - Window operations (activate, maximize, minimize, restore, resize)
 - Focus mode
+
+### Code Execution
+
+The basic usage and other examples also demonstrate how to execute code in different programming languages:
+- Running Python code with the run_code method
+- Running JavaScript code with custom timeouts
+- Processing code execution results
+- Error handling for code execution
