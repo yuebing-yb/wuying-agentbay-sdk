@@ -1,7 +1,6 @@
 package agentbay_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -87,16 +86,14 @@ func TestUI_GetClickableUIElements(t *testing.T) {
 	// Test UI get clickable elements functionality
 	if session.UI != nil {
 		fmt.Println("Getting clickable UI elements...")
-		elementsJson, err := session.UI.GetClickableUIElements(2000)
+		elements, err := session.UI.GetClickableUIElements(2000)
 		if err != nil {
 			t.Logf("Note: GetClickableUIElements failed: %v", err)
 		} else {
-			// Parse the JSON string to get the actual elements
-			var elements []map[string]interface{}
-			if err := json.Unmarshal([]byte(elementsJson), &elements); err != nil {
-				t.Errorf("Failed to parse clickable UI elements JSON: %v", err)
-			} else {
-				t.Logf("Found %d clickable UI elements", len(elements))
+			t.Logf("Found %d clickable UI elements", len(elements))
+			// Print the first element if available
+			if len(elements) > 0 {
+				t.Logf("First element: Type=%s, Text=%s", elements[0].Type, elements[0].Text)
 			}
 		}
 	} else {
@@ -135,20 +132,15 @@ func TestUI_GetAllUIElements(t *testing.T) {
 	// Test UI get all elements functionality
 	if session.UI != nil {
 		fmt.Println("Getting all UI elements...")
-		elementsJson, err := session.UI.GetAllUIElements(2000)
+		elements, err := session.UI.GetAllUIElements(2000)
 		if err != nil {
 			t.Logf("Note: GetAllUIElements failed: %v", err)
 		} else {
-			// Parse the JSON string to get the actual elements
-			var elements []map[string]interface{}
-			if err := json.Unmarshal([]byte(elementsJson), &elements); err != nil {
-				t.Errorf("Failed to parse all UI elements JSON: %v", err)
-			} else {
-				t.Logf("Found %d UI elements", len(elements))
-				// Print the first element if available
-				if len(elements) > 0 {
-					t.Logf("First element: %v", elements[0])
-				}
+			t.Logf("Found %d UI elements", len(elements))
+			// Print the first element if available
+			if len(elements) > 0 {
+				t.Logf("First element: Type=%s, Text=%s, ResourceId=%s",
+					elements[0].Type, elements[0].Text, elements[0].ResourceId)
 			}
 		}
 	} else {

@@ -4,6 +4,20 @@ import { CallMcpToolRequest } from '../api/models/model';
 import { log, logError } from '../utils/logger';
 
 /**
+ * Interface representing a UI element in the UI hierarchy
+ */
+export interface UIElement {
+  bounds: string;
+  className: string;
+  text: string;
+  type: string;
+  resourceId: string;
+  index: number;
+  isParent: boolean;
+  children?: UIElement[];
+}
+
+/**
  * Result object for a CallMcpTool operation
  */
 interface CallMcpToolResult {
@@ -133,36 +147,54 @@ export class UI {
    * Retrieves all clickable UI elements within the specified timeout.
    * 
    * @param timeoutMs - The timeout in milliseconds. Default is 2000ms.
-   * @returns The extracted text content from the API response
+   * @returns An array of UIElement objects
    * @throws Error if the operation fails.
    */
-  async getClickableUIElements(timeoutMs: number = 2000): Promise<string> {
+  async getClickableUIElements(timeoutMs: number = 2000): Promise<UIElement[]> {
     const args = {
       timeout_ms: timeoutMs
     };
     
     const result = await this.callMcpTool('get_clickable_ui_elements', args, 'Failed to get clickable UI elements');
     
-    // Return the extracted text content
-    return result.textContent || '';
+    if (!result.textContent) {
+      return [];
+    }
+    
+    try {
+      // Parse the JSON string into an array of UIElement objects
+      return JSON.parse(result.textContent) as UIElement[];
+    } catch (error) {
+      logError('Failed to parse clickable UI elements:', error);
+      throw new APIError(`Failed to parse clickable UI elements: ${error}`);
+    }
   }
 
   /**
    * Retrieves all UI elements within the specified timeout.
    * 
    * @param timeoutMs - The timeout in milliseconds. Default is 2000ms.
-   * @returns The extracted text content from the API response
+   * @returns An array of UIElement objects
    * @throws Error if the operation fails.
    */
-  async getAllUIElements(timeoutMs: number = 2000): Promise<string> {
+  async getAllUIElements(timeoutMs: number = 2000): Promise<UIElement[]> {
     const args = {
       timeout_ms: timeoutMs
     };
     
     const result = await this.callMcpTool('get_all_ui_elements', args, 'Failed to get all UI elements');
     
-    // Return the extracted text content
-    return result.textContent || '';
+    if (!result.textContent) {
+      return [];
+    }
+    
+    try {
+      // Parse the JSON string into an array of UIElement objects
+      return JSON.parse(result.textContent) as UIElement[];
+    } catch (error) {
+      logError('Failed to parse all UI elements:', error);
+      throw new APIError(`Failed to parse all UI elements: ${error}`);
+    }
   }
 
   /**

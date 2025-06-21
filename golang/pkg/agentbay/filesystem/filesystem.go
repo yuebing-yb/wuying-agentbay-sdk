@@ -3,6 +3,7 @@ package filesystem
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
@@ -16,6 +17,24 @@ type FileSystem struct {
 		GetClient() *mcp.Client
 		GetSessionId() string
 	}
+}
+
+// FileInfo represents information about a file or directory
+type FileInfo struct {
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	Size        int64  `json:"size"`
+	IsDirectory bool   `json:"isDirectory"`
+	ModTime     string `json:"modTime"`
+	Mode        string `json:"mode"`
+	Owner       string `json:"owner,omitempty"`
+	Group       string `json:"group,omitempty"`
+}
+
+// DirectoryEntry represents an entry in a directory listing
+type DirectoryEntry struct {
+	Name        string `json:"name"`
+	IsDirectory bool   `json:"isDirectory"`
 }
 
 // callMcpToolResult represents the result of a CallMcpTool operation
@@ -188,6 +207,75 @@ func truncateContentForLogging(jsonArgs string) string {
 	return string(modifiedJSON)
 }
 
+// parseFileInfo parses a file info string into a FileInfo struct
+func parseFileInfo(fileInfoStr string) (*FileInfo, error) {
+	result := &FileInfo{}
+	lines := strings.Split(fileInfoStr, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, ":") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) != 2 {
+				continue
+			}
+
+			key := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
+
+			switch key {
+			case "name":
+				result.Name = value
+			case "path":
+				result.Path = value
+			case "size":
+				size, err := strconv.ParseInt(value, 10, 64)
+				if err == nil {
+					result.Size = size
+				}
+			case "isDirectory":
+				result.IsDirectory = value == "true"
+			case "modified": // Server returns "modified" instead of "modTime"
+				result.ModTime = value
+			case "permissions": // Server returns "permissions" instead of "mode"
+				result.Mode = value
+			case "owner":
+				result.Owner = value
+			case "group":
+				result.Group = value
+			}
+		}
+	}
+	return result, nil
+}
+
+// parseDirectoryListing parses a directory listing string into a slice of DirectoryEntry structs
+func parseDirectoryListing(text string) ([]*DirectoryEntry, error) {
+	result := []*DirectoryEntry{}
+	lines := strings.Split(text, "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		entry := &DirectoryEntry{}
+		if strings.HasPrefix(line, "[DIR]") {
+			entry.IsDirectory = true
+			entry.Name = strings.TrimSpace(strings.TrimPrefix(line, "[DIR]"))
+		} else if strings.HasPrefix(line, "[FILE]") {
+			entry.IsDirectory = false
+			entry.Name = strings.TrimSpace(strings.TrimPrefix(line, "[FILE]"))
+		} else {
+			// Skip lines that don't match the expected format
+			continue
+		}
+
+		result = append(result, entry)
+	}
+
+	return result, nil
+}
+
 // NewFileSystem creates a new FileSystem object.
 func NewFileSystem(session interface {
 	GetAPIKey() string
@@ -258,7 +346,7 @@ func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bo
 //	{
 //	  "path": "file/or/directory/path/to/inspect"
 //	}
-func (fs *FileSystem) GetFileInfo(path string) (string, error) {
+func (fs *FileSystem) GetFileInfo(path string) (*FileInfo, error) {
 	args := map[string]string{
 		"path": path,
 	}
@@ -268,12 +356,17 @@ func (fs *FileSystem) GetFileInfo(path string) (string, error) {
 	if err != nil {
 		// Check if it's a "file not found" error
 		if strings.Contains(err.Error(), "No such file or directory") {
-			return "", fmt.Errorf("file not found: %s", path)
+			return nil, fmt.Errorf("file not found: %s", path)
 		}
-		return "", err
+		return nil, err
 	}
 
-	return mcpResult.TextContent, nil
+	fileInfo, err := parseFileInfo(mcpResult.TextContent)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing file info: %w", err)
+	}
+
+	return fileInfo, nil
 }
 
 // ListDirectory lists the contents of a directory.
@@ -282,7 +375,7 @@ func (fs *FileSystem) GetFileInfo(path string) (string, error) {
 //	{
 //	  "path": "directory/path/to/list"
 //	}
-func (fs *FileSystem) ListDirectory(path string) (string, error) {
+func (fs *FileSystem) ListDirectory(path string) ([]*DirectoryEntry, error) {
 	args := map[string]string{
 		"path": path,
 	}
@@ -290,10 +383,15 @@ func (fs *FileSystem) ListDirectory(path string) (string, error) {
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := fs.callMcpTool("list_directory", args, "error listing directory")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return mcpResult.TextContent, nil
+	entries, err := parseDirectoryListing(mcpResult.TextContent)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing directory listing: %w", err)
+	}
+
+	return entries, nil
 }
 
 // MoveFile moves a file or directory from source to destination.
@@ -364,7 +462,7 @@ func (fs *FileSystem) ReadFile(path string, optionalParams ...int) (string, erro
 //	{
 //	  "paths": ["file1/path", "file2/path", "file3/path"]
 //	}
-func (fs *FileSystem) ReadMultipleFiles(paths []string) (string, error) {
+func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, error) {
 	args := map[string]interface{}{
 		"paths": paths,
 	}
@@ -372,10 +470,51 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (string, error) {
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := fs.callMcpTool("read_multiple_files", args, "error reading multiple files")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return mcpResult.TextContent, nil
+	// Parse the response into a map of file paths to contents
+	result := make(map[string]string)
+	lines := strings.Split(mcpResult.TextContent, "\n")
+	currentPath := ""
+	currentContent := []string{}
+
+	for _, line := range lines {
+		// Check if this line contains a file path (ends with a colon)
+		colonIndex := strings.Index(line, ":")
+		if colonIndex > 0 && currentPath == "" && !strings.Contains(line[:colonIndex], " ") {
+			// Extract path (everything before the first colon)
+			path := strings.TrimSpace(line[:colonIndex])
+
+			// Start collecting content (everything after the colon)
+			currentPath = path
+
+			// If there's content on the same line after the colon, add it
+			if len(line) > colonIndex+1 {
+				contentStart := strings.TrimSpace(line[colonIndex+1:])
+				if contentStart != "" {
+					currentContent = append(currentContent, contentStart)
+				}
+			}
+		} else if line == "---" {
+			// Save the current file content
+			if currentPath != "" {
+				result[currentPath] = strings.Join(currentContent, "\n")
+				currentPath = ""
+				currentContent = []string{}
+			}
+		} else if currentPath != "" {
+			// If we're collecting content for a path, add this line
+			currentContent = append(currentContent, line)
+		}
+	}
+
+	// Save the last file content if exists
+	if currentPath != "" {
+		result[currentPath] = strings.Join(currentContent, "\n")
+	}
+
+	return result, nil
 }
 
 // SearchFiles searches for files matching a pattern in a directory.
@@ -386,7 +525,7 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (string, error) {
 //	  "pattern": "pattern to match",
 //	  "excludePatterns": ["pattern1", "pattern2"]  // Optional: Patterns to exclude
 //	}
-func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (string, error) {
+func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) ([]string, error) {
 	args := map[string]interface{}{
 		"path":    path,
 		"pattern": pattern,
@@ -400,10 +539,19 @@ func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := fs.callMcpTool("search_files", args, "error searching files")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return mcpResult.TextContent, nil
+	// Parse the response into a list of strings
+	var results []string
+	for _, line := range strings.Split(mcpResult.TextContent, "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			results = append(results, line)
+		}
+	}
+
+	return results, nil
 }
 
 // WriteFile writes content to a file.
@@ -446,22 +594,13 @@ func (fs *FileSystem) ReadLargeFile(path string, chunkSize int) (string, error) 
 	}
 
 	// First get the file size
-	fileInfoText, err := fs.GetFileInfo(path)
+	fileInfo, err := fs.GetFileInfo(path)
 	if err != nil {
 		return "", fmt.Errorf("failed to get file info: %w", err)
 	}
 
-	// Parse the size from the text
-	var size float64
-	for _, line := range strings.Split(fileInfoText, "\n") {
-		if strings.HasPrefix(line, "size:") {
-			sizeStr := strings.TrimSpace(strings.TrimPrefix(line, "size:"))
-			if _, err := fmt.Sscanf(sizeStr, "%f", &size); err != nil {
-				return "", fmt.Errorf("couldn't parse file size: %w", err)
-			}
-			break
-		}
-	}
+	// Get size from the fileInfo struct
+	size := float64(fileInfo.Size)
 
 	if size == 0 {
 		return "", fmt.Errorf("couldn't determine file size")

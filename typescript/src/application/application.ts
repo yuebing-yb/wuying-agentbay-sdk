@@ -149,18 +149,29 @@ export class Application {
   }
 
   /**
+   * Helper method to parse JSON string into objects
+   */
+  private parseJSON<T>(jsonString: string): T {
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      throw new Error(`Failed to parse JSON: ${error}`);
+    }
+  }
+
+  /**
    * Retrieves a list of installed applications.
    * @param startMenu Whether to include applications from the start menu. Defaults to true.
    * @param desktop Whether to include applications from the desktop. Defaults to true.
    * @param ignoreSystemApps Whether to ignore system applications. Defaults to true.
-   * @returns The extracted text content from the API response
+   * @returns Array of InstalledApp objects
    * @throws Error if the operation fails.
    */
   async getInstalledApps(
     startMenu: boolean = true,
     desktop: boolean = true,
     ignoreSystemApps: boolean = true
-  ): Promise<string> {
+  ): Promise<InstalledApp[]> {
     const args = {
       start_menu: startMenu,
       desktop,
@@ -169,18 +180,21 @@ export class Application {
 
     const result = await this.callMcpTool('get_installed_apps', args, 'Failed to get installed apps');
     
-    // Return the extracted text content
-    return result.textContent || '';
+    if (!result.textContent) {
+      return [];
+    }
+    
+    return this.parseJSON<InstalledApp[]>(result.textContent);
   }
 
   /**
    * Starts an application with the given command and optional working directory.
    * @param startCmd The command to start the application.
    * @param workDirectory The working directory for the application. Defaults to an empty string.
-   * @returns The extracted text content from the API response
+   * @returns Array of Process objects representing the started processes
    * @throws Error if the operation fails.
    */
-  async startApp(startCmd: string, workDirectory: string = ''): Promise<string> {
+  async startApp(startCmd: string, workDirectory: string = ''): Promise<Process[]> {
     const args: any = {
       start_cmd: startCmd
     };
@@ -191,72 +205,66 @@ export class Application {
 
     const result = await this.callMcpTool('start_app', args, 'Failed to start app');
     
-    // Return the extracted text content
-    return result.textContent || '';
+    if (!result.textContent) {
+      return [];
+    }
+    
+    return this.parseJSON<Process[]>(result.textContent);
   }
 
   /**
    * Stops an application by process name.
    * @param pname The name of the process to stop.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async stopAppByPName(pname: string): Promise<string> {
+  async stopAppByPName(pname: string): Promise<void> {
     const args = {
       pname
     };
 
-    const result = await this.callMcpTool('stop_app_by_pname', args, 'Failed to stop app by pname');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('stop_app_by_pname', args, 'Failed to stop app by pname');
   }
 
   /**
    * Stops an application by process ID.
    * @param pid The ID of the process to stop.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async stopAppByPID(pid: number): Promise<string> {
+  async stopAppByPID(pid: number): Promise<void> {
     const args = {
       pid
     };
 
-    const result = await this.callMcpTool('stop_app_by_pid', args, 'Failed to stop app by pid');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('stop_app_by_pid', args, 'Failed to stop app by pid');
   }
 
   /**
    * Stops an application by stop command.
    * @param stopCmd The command to stop the application.
-   * @returns The extracted text content from the API response
    * @throws Error if the operation fails.
    */
-  async stopAppByCmd(stopCmd: string): Promise<string> {
+  async stopAppByCmd(stopCmd: string): Promise<void> {
     const args = {
       stop_cmd: stopCmd
     };
 
-    const result = await this.callMcpTool('stop_app_by_cmd', args, 'Failed to stop app by command');
-    
-    // Return the extracted text content
-    return result.textContent || '';
+    await this.callMcpTool('stop_app_by_cmd', args, 'Failed to stop app by command');
   }
 
   /**
    * Lists all currently visible applications.
-   * @returns The extracted text content from the API response
+   * @returns Array of Process objects representing the visible processes
    * @throws Error if the operation fails.
    */
-  async listVisibleApps(): Promise<string> {
+  async listVisibleApps(): Promise<Process[]> {
     const args = {};
 
     const result = await this.callMcpTool('list_visible_apps', args, 'Failed to list visible apps');
     
-    // Return the extracted text content
-    return result.textContent || '';
+    if (!result.textContent) {
+      return [];
+    }
+    
+    return this.parseJSON<Process[]>(result.textContent);
   }
 }

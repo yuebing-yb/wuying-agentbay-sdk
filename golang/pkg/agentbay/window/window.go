@@ -158,31 +158,43 @@ func NewWindowManager(session interface {
 }
 
 // ListRootWindows lists all root windows in the system.
-func (wm *WindowManager) ListRootWindows() (string, error) {
+func (wm *WindowManager) ListRootWindows() ([]Window, error) {
 	args := map[string]interface{}{}
 
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := wm.callMcpTool("list_root_windows", args, "error listing root windows")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// Return the extracted text content
-	return mcpResult.TextContent, nil
+	// Parse the JSON data into Window objects
+	var windows []Window
+	err = json.Unmarshal([]byte(mcpResult.TextContent), &windows)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse window data: %w", err)
+	}
+
+	return windows, nil
 }
 
 // GetActiveWindow gets the currently active window.
-func (wm *WindowManager) GetActiveWindow() (string, error) {
+func (wm *WindowManager) GetActiveWindow() (*Window, error) {
 	args := map[string]interface{}{}
 
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := wm.callMcpTool("get_active_window", args, "error getting active window")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// Return the extracted text content
-	return mcpResult.TextContent, nil
+	// Parse the JSON data into Window object
+	var window Window
+	err = json.Unmarshal([]byte(mcpResult.TextContent), &window)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse window data: %w", err)
+	}
+
+	return &window, nil
 }
 
 // ActivateWindow activates a window by ID.

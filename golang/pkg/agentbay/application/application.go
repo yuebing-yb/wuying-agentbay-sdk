@@ -148,6 +148,26 @@ func (am *ApplicationManager) callMcpTool(toolName string, args interface{}, def
 	return result, nil
 }
 
+// parseInstalledAppsFromJSON parses JSON string into array of InstalledApp objects
+func parseInstalledAppsFromJSON(jsonStr string) ([]InstalledApp, error) {
+	var apps []InstalledApp
+	err := json.Unmarshal([]byte(jsonStr), &apps)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse applications JSON: %w", err)
+	}
+	return apps, nil
+}
+
+// parseProcessesFromJSON parses JSON string into array of Process objects
+func parseProcessesFromJSON(jsonStr string) ([]Process, error) {
+	var processes []Process
+	err := json.Unmarshal([]byte(jsonStr), &processes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse processes JSON: %w", err)
+	}
+	return processes, nil
+}
+
 // NewApplicationManager creates a new ApplicationManager object.
 func NewApplicationManager(session interface {
 	GetAPIKey() string
@@ -160,7 +180,7 @@ func NewApplicationManager(session interface {
 }
 
 // GetInstalledApps retrieves a list of installed applications.
-func (am *ApplicationManager) GetInstalledApps(startMenu bool, desktop bool, ignoreSystemApps bool) (string, error) {
+func (am *ApplicationManager) GetInstalledApps(startMenu bool, desktop bool, ignoreSystemApps bool) ([]InstalledApp, error) {
 	args := map[string]interface{}{
 		"start_menu":         startMenu,
 		"desktop":            desktop,
@@ -170,15 +190,20 @@ func (am *ApplicationManager) GetInstalledApps(startMenu bool, desktop bool, ign
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := am.callMcpTool("get_installed_apps", args, "error getting installed apps")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// Return the extracted text content
-	return mcpResult.TextContent, nil
+	// Parse the JSON data into InstalledApp objects
+	apps, err := parseInstalledAppsFromJSON(mcpResult.TextContent)
+	if err != nil {
+		return nil, err
+	}
+
+	return apps, nil
 }
 
 // StartApp starts an application with the given command and optional working directory.
-func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) (string, error) {
+func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) ([]Process, error) {
 	args := map[string]string{
 		"start_cmd": startCmd,
 	}
@@ -189,71 +214,78 @@ func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) (s
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := am.callMcpTool("start_app", args, "error starting app")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// Return the extracted text content
-	return mcpResult.TextContent, nil
+	// Parse the JSON data into Process objects
+	processes, err := parseProcessesFromJSON(mcpResult.TextContent)
+	if err != nil {
+		return nil, err
+	}
+
+	return processes, nil
 }
 
 // StopAppByPName stops an application by process name.
-func (am *ApplicationManager) StopAppByPName(pname string) (string, error) {
+func (am *ApplicationManager) StopAppByPName(pname string) error {
 	args := map[string]string{
 		"pname": pname,
 	}
 
 	// Use the helper method to call MCP tool and check for errors
-	mcpResult, err := am.callMcpTool("stop_app_by_pname", args, "error stopping app by process name")
+	_, err := am.callMcpTool("stop_app_by_pname", args, "error stopping app by process name")
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	// Return the extracted text content
-	return mcpResult.TextContent, nil
+	return nil
 }
 
 // StopAppByPID stops an application by process ID.
-func (am *ApplicationManager) StopAppByPID(pid int) (string, error) {
+func (am *ApplicationManager) StopAppByPID(pid int) error {
 	args := map[string]int{
 		"pid": pid,
 	}
 
 	// Use the helper method to call MCP tool and check for errors
-	mcpResult, err := am.callMcpTool("stop_app_by_pid", args, "error stopping app by PID")
+	_, err := am.callMcpTool("stop_app_by_pid", args, "error stopping app by PID")
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	// Return the extracted text content
-	return mcpResult.TextContent, nil
+	return nil
 }
 
 // StopAppByCmd stops an application using a specific command.
-func (am *ApplicationManager) StopAppByCmd(stopCmd string) (string, error) {
+func (am *ApplicationManager) StopAppByCmd(stopCmd string) error {
 	args := map[string]string{
 		"stop_cmd": stopCmd,
 	}
 
 	// Use the helper method to call MCP tool and check for errors
-	mcpResult, err := am.callMcpTool("stop_app_by_cmd", args, "error stopping app by command")
+	_, err := am.callMcpTool("stop_app_by_cmd", args, "error stopping app by command")
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	// Return the extracted text content
-	return mcpResult.TextContent, nil
+	return nil
 }
 
 // ListVisibleApps lists currently visible applications.
-func (am *ApplicationManager) ListVisibleApps() (string, error) {
+func (am *ApplicationManager) ListVisibleApps() ([]Process, error) {
 	args := map[string]interface{}{}
 
 	// Use the helper method to call MCP tool and check for errors
 	mcpResult, err := am.callMcpTool("list_visible_apps", args, "error listing visible apps")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// Return the extracted text content
-	return mcpResult.TextContent, nil
+	// Parse the JSON data into Process objects
+	processes, err := parseProcessesFromJSON(mcpResult.TextContent)
+	if err != nil {
+		return nil, err
+	}
+
+	return processes, nil
 }
