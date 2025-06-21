@@ -42,10 +42,19 @@ npm install wuying-agentbay-sdk
   npm run lint
   ```
 
-- **Format the code**:
-  ```bash
-  npm run format
-  ```
+## Examples
+
+The SDK includes several examples demonstrating various features:
+
+- **basic-usage.ts**: Basic SDK usage
+- **session-creation/**: Session creation and management
+- **session-params/**: Using session parameters and labels
+- **context-management/**: Context creation and management
+- **application-window/**: Application and window management
+- **command-example/**: Command execution and code running
+- **filesystem-example/**: File system operations
+- **ui-example/**: UI interactions
+- **label-management/**: Session label management
 
 ## Running Examples
 
@@ -81,6 +90,17 @@ async function main() {
     // Read a file
     const content = await session.filesystem.readFile('/path/to/file.txt');
     log(`File content: ${content}`);
+    
+    // Run code
+    const pythonCode = `
+import os
+import platform
+
+print(f"Current working directory: {os.getcwd()}")
+print(f"Python version: {platform.python_version()}")
+`;
+    const codeResult = await session.command.runCode(pythonCode, 'python');
+    log(`Code execution result: ${codeResult}`);
     
     // Get installed applications
     const apps = await session.application.getInstalledApps(true, false, true);

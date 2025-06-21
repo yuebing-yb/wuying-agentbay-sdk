@@ -62,7 +62,7 @@ delete(): Promise<boolean>
 - `Promise<boolean>`: A promise that resolves to true if the session was deleted successfully, false otherwise.
 
 **Throws:**
-- `Error`: If the session deletion fails.
+- `APIError`: If the session deletion fails.
 
 #### Golang
 
@@ -99,16 +99,16 @@ setLabels(labels: Record<string, string>): Promise<void>
 - `labels` (Record<string, string>): An object of labels to set for the session.
 
 **Throws:**
-- `Error`: If setting the labels fails.
+- `APIError`: If setting the labels fails.
 
 #### Golang
 
 ```go
-SetLabels(labelsJSON string) error
+SetLabels(labels map[string]string) error
 ```
 
 **Parameters:**
-- `labelsJSON` (string): A JSON string of labels to set for the session.
+- `labels` (map[string]string): A map of labels to set for the session.
 
 **Returns:**
 - `error`: An error if setting the labels fails.
@@ -139,21 +139,21 @@ getLabels(): Promise<Record<string, string>>
 - `Promise<Record<string, string>>`: A promise that resolves to an object of labels for the session.
 
 **Throws:**
-- `Error`: If getting the labels fails.
+- `APIError`: If getting the labels fails.
 
 #### Golang
 
 ```go
-GetLabels() (string, error)
+GetLabels() (map[string]string, error)
 ```
 
 **Returns:**
-- `string`: A JSON string of labels for the session.
+- `map[string]string`: A map of labels for the session.
 - `error`: An error if getting the labels fails.
 
 ### get_link / getLink / GetLink
 
-Gets the link for the session.
+Gets the public link for the session which can be used to access the session from a browser.
 
 #### Python
 
@@ -189,44 +189,45 @@ GetLink() (string, error)
 - `string`: The link for the session.
 - `error`: An error if getting the link fails.
 
-### info
+### info / Info
 
-Gets information about the session, including the session ID, resource URL, and desktop information. This method also updates the session's ResourceUrl field with the latest value from the server.
+Gets information about the session, including the session ID, resource URL, and desktop information.
 
 #### Python
 
 ```python
-info() -> SessionInfo
+info() -> Dict[str, Any]
 ```
 
 **Returns:**
-- `SessionInfo`: An object containing information about the session, with the following properties:
+- `Dict[str, Any]`: A dictionary containing information about the session, with the following keys:
   - `session_id` (str): The ID of the session.
   - `resource_url` (str): The resource URL associated with the session.
-  - `app_id` (str): The application ID associated with the desktop.
-  - `auth_code` (str): The authentication code for the desktop.
-  - `connection_properties` (str): Connection properties for the desktop.
-  - `resource_id` (str): The resource ID of the desktop.
-  - `resource_type` (str): The type of the desktop resource.
+  - `app_id` (str, optional): The application ID associated with the desktop.
+  - `auth_code` (str, optional): The authentication code for the desktop.
+  - `connection_properties` (str, optional): Connection properties for the desktop.
+  - `resource_id` (str, optional): The resource ID of the desktop.
+  - `resource_type` (str, optional): The type of the desktop resource.
 
 **Raises:**
-- `SessionError`: If getting the session information fails.
+- `AgentBayError`: If getting the session information fails.
 
 #### TypeScript
 
 ```typescript
-info(): Promise<SessionInfo>
+info(): Promise<{
+  sessionId: string;
+  resourceUrl: string;
+  appId?: string;
+  authCode?: string;
+  connectionProperties?: string;
+  resourceId?: string;
+  resourceType?: string;
+}>
 ```
 
 **Returns:**
-- `Promise<SessionInfo>`: A promise that resolves to an object containing information about the session, with the following properties:
-  - `sessionId` (string): The ID of the session.
-  - `resourceUrl` (string): The resource URL associated with the session.
-  - `appId` (string, optional): The application ID associated with the desktop.
-  - `authCode` (string, optional): The authentication code for the desktop.
-  - `connectionProperties` (string, optional): Connection properties for the desktop.
-  - `resourceId` (string, optional): The resource ID of the desktop.
-  - `resourceType` (string, optional): The type of the desktop resource.
+- `Promise<SessionInfo>`: A promise that resolves to an object containing information about the session.
 
 **Throws:**
 - `APIError`: If getting the session information fails.
@@ -238,21 +239,14 @@ Info() (*SessionInfo, error)
 ```
 
 **Returns:**
-- `*SessionInfo`: An object containing information about the session, with the following properties:
-  - `SessionId` (string): The ID of the session.
-  - `ResourceUrl` (string): The resource URL associated with the session.
-  - `AppId` (string): The application ID associated with the desktop.
-  - `AuthCode` (string): The authentication code for the desktop.
-  - `ConnectionProperties` (string): Connection properties for the desktop.
-  - `ResourceId` (string): The resource ID of the desktop.
-  - `ResourceType` (string): The type of the desktop resource.
+- `*SessionInfo`: An object containing information about the session.
 - `error`: An error if getting the session information fails.
 
 ## Related Classes
 
 The Session class provides access to several other classes that provide specific functionality:
 
-- [FileSystem](filesystem.md): Provides methods for reading files within a session.
+- [FileSystem](filesystem.md): Provides methods for file operations within a session.
 - [Command](command.md): Provides methods for executing commands within a session.
 - [UI](ui.md): Provides methods for interacting with the UI elements in the cloud environment.
 - [Application](../concepts/applications.md): Provides methods for managing applications in the cloud environment.
@@ -296,13 +290,13 @@ labels = session.get_labels()
 
 # Get session info
 session_info = session.info()
-print(f"Session ID: {session_info.session_id}")
-print(f"Resource URL: {session_info.resource_url}")
-print(f"App ID: {session_info.app_id}")
-print(f"Auth Code: {session_info.auth_code}")
-print(f"Connection Properties: {session_info.connection_properties}")
-print(f"Resource ID: {session_info.resource_id}")
-print(f"Resource Type: {session_info.resource_type}")
+print(f"Session ID: {session_info['session_id']}")
+print(f"Resource URL: {session_info['resource_url']}")
+print(f"App ID: {session_info.get('app_id')}")
+print(f"Auth Code: {session_info.get('auth_code')}")
+print(f"Connection Properties: {session_info.get('connection_properties')}")
+print(f"Resource ID: {session_info.get('resource_id')}")
+print(f"Resource Type: {session_info.get('resource_type')}")
 
 # Delete the session
 session.delete()
@@ -424,7 +418,7 @@ fmt.Printf("Resource ID: %s\n", sessionInfo.ResourceId)
 fmt.Printf("Resource Type: %s\n", sessionInfo.ResourceType)
 
 // Delete the session
-err = client.Delete(session)
+err = session.Delete()
 if err != nil {
     // Handle error
 }

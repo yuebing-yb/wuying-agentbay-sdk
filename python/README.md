@@ -68,6 +68,17 @@ def main():
         content = session.filesystem.read_file("/path/to/file.txt")
         print(f"File content: {content}")
         
+        # Run code
+        python_code = """
+import os
+import platform
+
+print(f"Current working directory: {os.getcwd()}")
+print(f"Python version: {platform.python_version()}")
+"""
+        code_result = session.command.run_code(python_code, "python")
+        print(f"Code execution result: {code_result}")
+        
         # Get installed applications
         apps = session.application.get_installed_apps(include_system_apps=True, 
                                                      include_store_apps=False, 
