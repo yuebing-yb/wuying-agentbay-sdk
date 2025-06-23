@@ -11,8 +11,8 @@ class FileSystem:
     Handles file operations in the AgentBay cloud environment.
     """
 
-    # Default chunk size is 60KB
-    DEFAULT_CHUNK_SIZE = 60 * 1024
+    # Default chunk size is 50KB
+    DEFAULT_CHUNK_SIZE = 50 * 1024
 
     def __init__(self, session):
         """
@@ -319,10 +319,10 @@ class FileSystem:
         """
         args = {"path": path}
 
-        if offset > 0:
-            args["offset"] = str(offset)
-        if length > 0:
-            args["length"] = str(length)
+        if offset >= 0:
+            args["offset"] = offset
+        if length >= 0:
+            args["length"] = length
 
         try:
             response = self._call_mcp_tool("read_file", args)
