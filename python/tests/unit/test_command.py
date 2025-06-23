@@ -31,7 +31,7 @@ class TestCommand(unittest.TestCase):
     def test_execute_command_success(self, MockCallMcpToolRequest):
         mock_response = MagicMock()
         mock_response.to_map.return_value = {
-            "body": {"Data": {"content": [{"text": "line1"}, {"text": "line2"}]}}
+            "body": {"Data": {"content": [{"text": "line1\nline2\n"}]}}
         }
         self.session.client.call_mcp_tool.return_value = mock_response
 
@@ -47,7 +47,7 @@ class TestCommand(unittest.TestCase):
     def test_execute_command_with_custom_timeout(self, MockCallMcpToolRequest):
         mock_response = MagicMock()
         mock_response.to_map.return_value = {
-            "body": {"Data": {"content": [{"text": "line1"}, {"text": "line2"}]}}
+            "body": {"Data": {"content": [{"text": "line1\nline2\n"}]}}
         }
         self.session.client.call_mcp_tool.return_value = mock_response
 
@@ -66,7 +66,7 @@ class TestCommand(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "Data": {
-                    # No content field
+                    "no_content": "no_content"
                 }
             }
         }
@@ -74,7 +74,7 @@ class TestCommand(unittest.TestCase):
 
         with self.assertRaises(CommandError) as context:
             self.command.execute_command("ls -la")
-        self.assertIn("content field not found", str(context.exception))
+        self.assertIn("No content found in response", str(context.exception))
 
     @patch("agentbay.command.command.CallMcpToolRequest")
     def test_execute_command_exception(self, MockCallMcpToolRequest):
@@ -87,7 +87,7 @@ class TestCommand(unittest.TestCase):
     def test_run_code_success_python(self, MockCallMcpToolRequest):
         mock_response = MagicMock()
         mock_response.to_map.return_value = {
-            "body": {"Data": {"output": "Hello, world!\n2\n"}}
+            "body": {"Data": {"content": [{"text": "Hello, world!\n2\n"}]}}
         }
         self.session.client.call_mcp_tool.return_value = mock_response
 
@@ -108,7 +108,7 @@ print(x)
     def test_run_code_success_javascript(self, MockCallMcpToolRequest):
         mock_response = MagicMock()
         mock_response.to_map.return_value = {
-            "body": {"Data": {"output": "Hello, world!\n2\n"}}
+            "body": {"Data": {"content": [{"text": "Hello, world!\n2\n"}]}}
         }
         self.session.client.call_mcp_tool.return_value = mock_response
 
@@ -139,21 +139,22 @@ console.log(x);
         mock_response = MagicMock()
         mock_response.to_map.return_value = {
             "body": {"Data": {
-                # No output field
+                # No content field
+                "no_content": "no_content"
             }}
         }
         self.session.client.call_mcp_tool.return_value = mock_response
 
         with self.assertRaises(CommandError) as context:
             self.command.run_code("print('test')", "python")
-        self.assertIn("output field not found", str(context.exception))
+        self.assertIn("No content found in response", str(context.exception))
 
     @patch("agentbay.command.command.CallMcpToolRequest")
     def test_run_code_exception(self, MockCallMcpToolRequest):
         self.session.client.call_mcp_tool.side_effect = Exception("mock error")
         with self.assertRaises(CommandError) as context:
             self.command.run_code("print('test')", "python")
-        self.assertIn("Failed to execute code: mock error", str(context.exception))
+        self.assertIn("Failed to run code: mock error", str(context.exception))
 
 
 if __name__ == "__main__":

@@ -7,7 +7,8 @@ from agentbay.session_params import CreateSessionParams
 from agentbay.exceptions import CommandError
 
 class TestCommandIntegration(unittest.TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         """
         Set up the test environment by creating a session and initializing Command.
         """
@@ -16,20 +17,21 @@ class TestCommandIntegration(unittest.TestCase):
         if not api_key:
             api_key = "akm-xxx"  # Replace with your actual API key for testing
             print("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use.")
-        self.agent_bay = AgentBay(api_key=api_key)
+        cls.agent_bay = AgentBay(api_key=api_key)
         params = CreateSessionParams(
             image_id="code_latest",
         )
-        self.session = self.agent_bay.create(params)
-        self.command = Command(self.session)
+        cls.session = cls.agent_bay.create(params)
+        cls.command = Command(cls.session)
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         """
         Clean up resources after each test.
         """
         print("Cleaning up: Deleting the session...")
         try:
-            self.agent_bay.delete(self.session)
+            cls.agent_bay.delete(cls.session)
         except Exception as e:
             print(f"Warning: Error deleting session: {e}")
 

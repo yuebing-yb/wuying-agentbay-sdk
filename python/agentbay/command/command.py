@@ -6,36 +6,6 @@ from agentbay.api.models import CallMcpToolRequest
 from agentbay.exceptions import CommandError
 
 
-@dataclass
-class CommandResult:
-    """
-    Represents the result of a command execution.
-
-    Attributes:
-        output (str): The output of the command execution.
-        exit_code (Optional[int]): The exit code of the command. None if not available.
-        duration_ms (Optional[int]): The duration of the command execution in milliseconds. None if not available.
-    """
-    output: str
-    exit_code: Optional[int] = None
-    duration_ms: Optional[int] = None
-
-
-@dataclass
-class CodeExecutionResult:
-    """
-    Represents the result of code execution.
-
-    Attributes:
-        output (str): The output of the code execution.
-        duration_ms (Optional[int]): The duration of the code execution in milliseconds. None if not available.
-        memory_kb (Optional[int]): The memory usage of the code execution in kilobytes. None if not available.
-    """
-    output: str
-    duration_ms: Optional[int] = None
-    memory_kb: Optional[int] = None
-
-
 class Command:
     """
     Handles command execution operations in the AgentBay cloud environment.
@@ -81,10 +51,8 @@ class Command:
             if not body:
                 raise CommandError("Invalid response body")
             return self._parse_response_body(body)
-        except (KeyError, TypeError, ValueError) as e:
-            raise CommandError(f"Failed to parse MCP tool response: {e}")
         except Exception as e:
-            raise CommandError(f"Failed to call MCP tool {name}: {e}")
+            raise CommandError(f"{e}")
 
     def _parse_response_body(self, body: Dict[str, Any]) -> Any:
         """
@@ -125,49 +93,8 @@ class Command:
         except Exception as e:
             raise CommandError(f"{e}")
 
-    def _parse_command_result(self, text: str) -> CommandResult:
-        """
-        Parse a JSON string into a CommandResult object.
 
-        Args:
-            text (str): The JSON string to parse.
-
-        Returns:
-            CommandResult: The parsed command result.
-        """
-        try:
-            data = json.loads(text)
-            return CommandResult(
-                output=data.get("output", text),
-                exit_code=data.get("exit_code"),
-                duration_ms=data.get("duration_ms"),
-            )
-        except json.JSONDecodeError:
-            # If parsing fails, just use the text as output
-            return CommandResult(output=text)
-
-    def _parse_code_execution_result(self, text: str) -> CodeExecutionResult:
-        """
-        Parse a JSON string into a CodeExecutionResult object.
-
-        Args:
-            text (str): The JSON string to parse.
-
-        Returns:
-            CodeExecutionResult: The parsed code execution result.
-        """
-        try:
-            data = json.loads(text)
-            return CodeExecutionResult(
-                output=data.get("output", text),
-                duration_ms=data.get("duration_ms"),
-                memory_kb=data.get("memory_kb"),
-            )
-        except json.JSONDecodeError:
-            # If parsing fails, just use the text as output
-            return CodeExecutionResult(output=text)
-
-    def execute_command(self, command: str, timeout_ms: int = 1000) -> CommandResult:
+    def execute_command(self, command: str, timeout_ms: int = 1000) -> str:
         """
         Execute a command in the cloud environment with a specified timeout.
 
@@ -176,18 +103,18 @@ class Command:
             timeout_ms: The timeout for the command execution in milliseconds. Default is 1000ms.
 
         Returns:
-            CommandResult: The result of the command execution.
+            str: The result of the command execution.
         """
         try:
             args = {"command": command, "timeout_ms": timeout_ms}
 
             response = self._call_mcp_tool("shell", args)
             print(f"Command executed response: {response}")
-            return self._parse_command_result(response)
+            return response
         except Exception as e:
             raise CommandError(f"Failed to execute command: {e}")
 
-    def run_code(self, code: str, language: str, timeout_s: int = 300) -> CodeExecutionResult:
+    def run_code(self, code: str, language: str, timeout_s: int = 300) -> str:
         """
         Execute code in the specified language with a timeout.
 
@@ -197,7 +124,7 @@ class Command:
             timeout_s: The timeout for the code execution in seconds. Default is 300s.
 
         Returns:
-            CodeExecutionResult: The result of the code execution.
+            str: The result of the code execution.
 
         Raises:
             CommandError: If the code execution fails or if an unsupported language is specified.
@@ -210,6 +137,6 @@ class Command:
             args = {"code": code, "language": language, "timeout_s": timeout_s}
             response = self._call_mcp_tool("run_code", args)
             print(f"Run code response: {response}")
-            return self._parse_code_execution_result(response)
+            return response
         except Exception as e:
-            raise CommandError(f"Failed to execute code: {e}")
+            raise CommandError(f"Failed to run code: {e}")
