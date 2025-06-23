@@ -269,7 +269,7 @@ class TestFileSystemIntegration(unittest.TestCase):
         self.assertTrue(success)
 
         # Read and verify content
-        content = self.fs.read_file(test_file_path)
+        content = self.fs.read_large_file(test_file_path)
         self.assertEqual(content, small_content)
 
 
