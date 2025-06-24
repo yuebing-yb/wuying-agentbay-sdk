@@ -11,7 +11,7 @@ install:
 # Run tests and formatting
 test:
 	@echo "Running tests..."
-	poetry run pytest
+	poetry run python -m pytest tests/unit -v
 
 # Format code
 format:
