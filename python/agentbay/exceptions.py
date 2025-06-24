@@ -43,6 +43,7 @@ class SessionError(AgentBayError):
     def __init__(self, message="Session error", *args, **kwargs):
         super().__init__(message, *args, **kwargs)
 
+
 class OssError(AgentBayError):
     """Raised when there is an error with OSS operations."""
 

@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 
-
 from ._create_mcp_session_response_body_data import CreateMcpSessionResponseBodyData
 from ._get_context_response_body_data import GetContextResponseBodyData
 from ._get_label_response_body_data import GetLabelResponseBodyData
-from ._get_mcp_resource_response_body_data_desktop_info import GetMcpResourceResponseBodyDataDesktopInfo
+from ._get_mcp_resource_response_body_data_desktop_info import (
+    GetMcpResourceResponseBodyDataDesktopInfo,
+)
 from ._get_mcp_resource_response_body_data import GetMcpResourceResponseBodyData
 from ._list_contexts_response_body_data import ListContextsResponseBodyData
 from ._list_session_response_body_data import ListSessionResponseBodyData
@@ -91,5 +92,5 @@ __all__ = [
     ReleaseMcpSessionResponse,
     SetLabelRequest,
     SetLabelResponseBody,
-    SetLabelResponse
+    SetLabelResponse,
 ]

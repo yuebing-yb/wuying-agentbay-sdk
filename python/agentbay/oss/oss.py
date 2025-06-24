@@ -90,8 +90,14 @@ class Oss:
         except Exception as e:
             raise OssError(f"{e}")
 
-    def env_init(self, access_key_id: str, access_key_secret: str, securityToken: Optional[str] =
-                        None, endpoint: Optional[str] = None, region: Optional[str] = None) -> str:
+    def env_init(
+        self,
+        access_key_id: str,
+        access_key_secret: str,
+        securityToken: Optional[str] = None,
+        endpoint: Optional[str] = None,
+        region: Optional[str] = None,
+    ) -> str:
         """
         Create an OSS client with the provided credentials.
 
@@ -111,7 +117,7 @@ class Oss:
             args = {
                 "access_key_id": access_key_id,
                 "access_key_secret": access_key_secret,
-                "security_token":    securityToken,
+                "security_token": securityToken,
             }
 
             # Add optional parameters if provided
@@ -148,11 +154,7 @@ class Oss:
             OssError: If the upload fails.
         """
         try:
-            args = {
-                "bucket": bucket,
-                "object": object,
-                "path": path
-            }
+            args = {"bucket": bucket, "object": object, "path": path}
 
             response = self._call_mcp_tool("oss_upload", args)
             print("response =", response)
@@ -181,10 +183,7 @@ class Oss:
             OssError: If the upload fails.
         """
         try:
-            args = {
-                "url": url,
-                "path": path
-            }
+            args = {"url": url, "path": path}
 
             response = self._call_mcp_tool("oss_upload_annon", args)
             print("response =", response)
@@ -214,11 +213,7 @@ class Oss:
             OssError: If the download fails.
         """
         try:
-            args = {
-                "bucket": bucket,
-                "object": object,
-                "path": path
-            }
+            args = {"bucket": bucket, "object": object, "path": path}
 
             response = self._call_mcp_tool("oss_download", args)
             print("response =", response)
@@ -247,10 +242,7 @@ class Oss:
             OssError: If the download fails.
         """
         try:
-            args = {
-                "url": url,
-                "path": path
-            }
+            args = {"url": url, "path": path}
 
             response = self._call_mcp_tool("oss_download_annon", args)
             print("response =", response)

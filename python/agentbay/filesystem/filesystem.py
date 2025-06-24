@@ -97,6 +97,7 @@ class FileSystem:
             return json_text
         except Exception as e:
             raise FileError(f"{e}")
+
     def create_directory(self, path: str) -> bool:
         """
         Create a new directory at the specified path.
@@ -121,7 +122,9 @@ class FileSystem:
         except Exception as e:
             raise FileError(f"Failed to create directory: {e}")
 
-    def edit_file(self, path: str, edits: List[Dict[str, str]], dry_run: bool = False) -> bool:
+    def edit_file(
+        self, path: str, edits: List[Dict[str, str]], dry_run: bool = False
+    ) -> bool:
         """
         Edit a file by replacing occurrences of oldText with newText.
 
@@ -160,6 +163,7 @@ class FileSystem:
         Raises:
             FileError: If the operation fails.
         """
+
         def parse_file_info(file_info_str: str) -> dict:
             """
             Parse a file info string into a dictionary.
@@ -219,7 +223,7 @@ class FileSystem:
         """
 
         def parse_directory_listing(text) -> List[Dict[str, Union[str, bool]]]:
-            '''Parse directory listing text into a list of dictionaries containing file/directory information.
+            """Parse directory listing text into a list of dictionaries containing file/directory information.
 
             Args:
                 text (str): Directory listing text in format:
@@ -242,9 +246,9 @@ class FileSystem:
                         {"name": "folder1", "isDirectory": True},
                         {"name": "test.txt", "isDirectory": False}
                     ]
-                '''
+            """
             result = []
-            lines = text.split('\n')
+            lines = text.split("\n")
 
             for line in lines:
                 line = line.strip()
@@ -265,7 +269,6 @@ class FileSystem:
                 result.append(entry_map)
 
             return result
-
 
         args = {"path": path}
         try:
@@ -345,6 +348,7 @@ class FileSystem:
         Raises:
             FileError: If the operation fails.
         """
+
         def parse_multiple_files_response(text: str) -> Dict[str, str]:
             """
             Parse the response from reading multiple files into a dictionary.
@@ -357,15 +361,15 @@ class FileSystem:
                 Dict[str, str]: A dictionary mapping file paths to their contents.
             """
             result = {}
-            lines = text.split('\n')
+            lines = text.split("\n")
             current_path = None
             current_content = []
 
             for i, line in enumerate(lines):
                 # Check if this line contains a file path (ends with a colon)
-                if ':' in line and not current_path:
+                if ":" in line and not current_path:
                     # Extract path (everything before the first colon)
-                    path_end = line.find(':')
+                    path_end = line.find(":")
                     path = line[:path_end].strip()
 
                     # Start collecting content (everything after the colon)
@@ -373,15 +377,15 @@ class FileSystem:
 
                     # If there's content on the same line after the colon, add it
                     if len(line) > path_end + 1:
-                        content_start = line[path_end + 1:].strip()
+                        content_start = line[path_end + 1 :].strip()
                         if content_start:
                             current_content.append(content_start)
 
                 # Check if this is a separator line
-                elif line.strip() == '---':
+                elif line.strip() == "---":
                     # Save the current file content
                     if current_path:
-                        result[current_path] = '\n'.join(current_content).strip()
+                        result[current_path] = "\n".join(current_content).strip()
                         current_path = None
                         current_content = []
 
@@ -391,7 +395,7 @@ class FileSystem:
 
             # Save the last file content if exists
             if current_path:
-                result[current_path] = '\n'.join(current_content).strip()
+                result[current_path] = "\n".join(current_content).strip()
 
             return result
 
@@ -404,7 +408,9 @@ class FileSystem:
         except Exception as e:
             raise FileError(f"Failed to read multiple files: {e}")
 
-    def search_files(self, path: str, pattern: str, exclude_patterns: Optional[List[str]] = None) -> List[str]:
+    def search_files(
+        self, path: str, pattern: str, exclude_patterns: Optional[List[str]] = None
+    ) -> List[str]:
         """
         Search for files matching a pattern in a directory.
 
@@ -489,7 +495,9 @@ class FileSystem:
             if file_size == 0:
                 raise FileError("Could not determine file size")
 
-            print(f"ReadLargeFile: Starting chunked read of {path} (total size: {file_size} bytes, chunk size: {chunk_size} bytes)")
+            print(
+                f"ReadLargeFile: Starting chunked read of {path} (total size: {file_size} bytes, chunk size: {chunk_size} bytes)"
+            )
 
             # Prepare to read the file in chunks
             result = []
@@ -502,7 +510,9 @@ class FileSystem:
                 if offset + length > file_size:
                     length = file_size - offset
 
-                print(f"ReadLargeFile: Reading chunk {chunk_count+1} ({length} bytes at offset {offset}/{file_size})")
+                print(
+                    f"ReadLargeFile: Reading chunk {chunk_count+1} ({length} bytes at offset {offset}/{file_size})"
+                )
 
                 # Read the chunk
                 chunk = self.read_file(path, offset, length)
@@ -512,7 +522,9 @@ class FileSystem:
                 offset += length
                 chunk_count += 1
 
-            print(f"ReadLargeFile: Successfully read {path} in {chunk_count} chunks (total: {file_size} bytes)")
+            print(
+                f"ReadLargeFile: Successfully read {path} in {chunk_count} chunks (total: {file_size} bytes)"
+            )
 
             return "".join(result)
 
@@ -541,28 +553,38 @@ class FileSystem:
 
         content_len = len(content)
 
-        print(f"WriteLargeFile: Starting chunked write to {path} (total size: {content_len} bytes, chunk size: {chunk_size} bytes)")
+        print(
+            f"WriteLargeFile: Starting chunked write to {path} (total size: {content_len} bytes, chunk size: {chunk_size} bytes)"
+        )
 
         # If content is small enough, use the regular write_file method
         if content_len <= chunk_size:
-            print(f"WriteLargeFile: Content size ({content_len} bytes) is smaller than chunk size, using normal WriteFile")
+            print(
+                f"WriteLargeFile: Content size ({content_len} bytes) is smaller than chunk size, using normal WriteFile"
+            )
             return self.write_file(path, content, "overwrite")
 
         try:
             # Write the first chunk with "overwrite" mode to create/clear the file
             first_chunk_end = min(chunk_size, content_len)
-            print(f"WriteLargeFile: Writing first chunk (0-{first_chunk_end} bytes) with overwrite mode")
+            print(
+                f"WriteLargeFile: Writing first chunk (0-{first_chunk_end} bytes) with overwrite mode"
+            )
             self.write_file(path, content[:first_chunk_end], "overwrite")
 
             # Write the remaining chunks with "append" mode
             chunk_count = 1  # Already wrote first chunk
             for offset in range(first_chunk_end, content_len, chunk_size):
                 end = min(offset + chunk_size, content_len)
-                print(f"WriteLargeFile: Writing chunk {chunk_count+1} ({offset}-{end} bytes) with append mode")
+                print(
+                    f"WriteLargeFile: Writing chunk {chunk_count+1} ({offset}-{end} bytes) with append mode"
+                )
                 self.write_file(path, content[offset:end], "append")
                 chunk_count += 1
 
-            print(f"WriteLargeFile: Successfully wrote {path} in {chunk_count} chunks (total: {content_len} bytes)")
+            print(
+                f"WriteLargeFile: Successfully wrote {path} in {chunk_count} chunks (total: {content_len} bytes)"
+            )
             return True
 
         except FileError as e:

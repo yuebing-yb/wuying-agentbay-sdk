@@ -9,10 +9,12 @@ def get_oss_credentials():
     """Helper function to get OSS credentials from environment variables or use defaults."""
     credentials = {
         "access_key_id": os.getenv("OSS_ACCESS_KEY_ID", "test-access-key-id"),
-        "access_key_secret": os.getenv("OSS_ACCESS_KEY_SECRET", "test-access-key-secret"),
+        "access_key_secret": os.getenv(
+            "OSS_ACCESS_KEY_SECRET", "test-access-key-secret"
+        ),
         "security_token": os.getenv("OSS_SECURITY_TOKEN", "test-security-token"),
         "endpoint": os.getenv("OSS_ENDPOINT", "https://oss-cn-hangzhou.aliyuncs.com"),
-        "region": os.getenv("OSS_REGION", "cn-hangzhou")
+        "region": os.getenv("OSS_REGION", "cn-hangzhou"),
     }
     return credentials
 
@@ -33,7 +35,7 @@ class TestOssIntegration(unittest.TestCase):
         print("Creating a new session for OSS testing...")
         params = CreateSessionParams(
             image_id="code_latest",
-            )
+        )
         cls.session = cls.agent_bay.create(params)
         print(f"Session created with ID: {cls.session.get_session_id()}")
 
@@ -41,7 +43,7 @@ class TestOssIntegration(unittest.TestCase):
     def tearDownClass(cls):
         """Clean up test environment after all tests."""
         print("Cleaning up: Deleting the session...")
-        if hasattr(cls, 'session'):
+        if hasattr(cls, "session"):
             cls.agent_bay.delete(cls.session)
             print("Session successfully deleted")
 
@@ -57,7 +59,7 @@ class TestOssIntegration(unittest.TestCase):
             credentials["access_key_secret"],
             credentials["security_token"],
             credentials["endpoint"],
-            credentials["region"]
+            credentials["region"],
         )
         print(f"EnvInit result: {result}")
         self.assertNotIn("tool not found", result.lower())
@@ -74,7 +76,7 @@ class TestOssIntegration(unittest.TestCase):
             credentials["access_key_secret"],
             credentials["security_token"],
             credentials["endpoint"],
-            credentials["region"]
+            credentials["region"],
         )
 
         # Create a test file to upload
@@ -102,7 +104,9 @@ class TestOssIntegration(unittest.TestCase):
 
         # Upload the file anonymously
         print("Uploading file anonymously...")
-        upload_url = os.getenv("OSS_TEST_UPLOAD_URL", "https://example.com/upload/test-file.txt")
+        upload_url = os.getenv(
+            "OSS_TEST_UPLOAD_URL", "https://example.com/upload/test-file.txt"
+        )
         result = self.session.oss.upload_anonymous(upload_url, test_file_path)
         print(f"UploadAnonymous result: {result}")
         self.assertIn("Upload success", result)
@@ -119,7 +123,7 @@ class TestOssIntegration(unittest.TestCase):
             credentials["access_key_secret"],
             credentials["security_token"],
             credentials["endpoint"],
-            credentials["region"]
+            credentials["region"],
         )
 
         # Download the file
@@ -142,7 +146,9 @@ class TestOssIntegration(unittest.TestCase):
 
         # Download the file anonymously
         print("Downloading file anonymously...")
-        download_url = os.getenv("OSS_TEST_DOWNLOAD_URL", "https://example.com/download/test-file.txt")
+        download_url = os.getenv(
+            "OSS_TEST_DOWNLOAD_URL", "https://example.com/download/test-file.txt"
+        )
         download_path = "/tmp/test_oss_download_anon.txt"
         result = self.session.oss.download_anonymous(download_url, download_path)
         print(f"DownloadAnonymous result: {result}")

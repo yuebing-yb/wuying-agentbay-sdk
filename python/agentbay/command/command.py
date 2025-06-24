@@ -93,7 +93,6 @@ class Command:
         except Exception as e:
             raise CommandError(f"{e}")
 
-
     def execute_command(self, command: str, timeout_ms: int = 1000) -> str:
         """
         Execute a command in the cloud environment with a specified timeout.
@@ -132,7 +131,9 @@ class Command:
         try:
             # Validate language
             if language not in ["python", "javascript"]:
-                raise CommandError(f"Unsupported language: {language}. Supported languages are 'python' and 'javascript'")
+                raise CommandError(
+                    f"Unsupported language: {language}. Supported languages are 'python' and 'javascript'"
+                )
 
             args = {"code": code, "language": language, "timeout_s": timeout_s}
             response = self._call_mcp_tool("run_code", args)
