@@ -44,10 +44,10 @@ describe('Command', () => {
         // Test with Python code
         log('Executing Python code...');
         const pythonCode = `
-print("Hello, world!")
-x = 1 + 1
-print(x)
-`;
+          print("Hello, world!")
+          x = 1 + 1
+          print(x)
+          `;
         
         try {
           // Test with default timeout
@@ -76,10 +76,10 @@ print(x)
         // Test with JavaScript code
         log('Executing JavaScript code with custom timeout...');
         const jsCode = `
-console.log("Hello, world!");
-const x = 1 + 1;
-console.log(x);
-`;
+          console.log("Hello, world!");
+          const x = 1 + 1;
+          console.log(x);
+          `;
         
         try {
           // Test with custom timeout (10 minutes)
