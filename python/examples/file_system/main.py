@@ -19,6 +19,7 @@ from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
 from agentbay.filesystem.filesystem import FileSystem
 
+
 def main():
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
@@ -70,7 +71,9 @@ def main():
         updated_content = fs.read_file(test_file_path)
         print(f"Updated file content ({len(updated_content)} bytes):")
         print(updated_content)
-        print(f"Content matches expected: {updated_content == test_content + append_content}")
+        print(
+            f"Content matches expected: {updated_content == test_content + append_content}"
+        )
 
         # ===== DIRECTORY OPERATIONS =====
         print("\n===== DIRECTORY OPERATIONS =====")
@@ -105,7 +108,10 @@ def main():
         # Example 7: Edit a file
         print("\nExample 7: Editing a file...")
         edits = [
-            {"oldText": "This is the third line.", "newText": "This line has been edited."}
+            {
+                "oldText": "This is the third line.",
+                "newText": "This line has been edited.",
+            }
         ]
         success = fs.edit_file(test_file_path, edits)
         print(f"File edit successful: {success}")
@@ -134,9 +140,21 @@ def main():
         print("\n===== FILE SEARCHING =====")
 
         # Create some files for searching
-        fs.write_file("/tmp/test_directory/file1.txt", "This file contains the word SEARCHABLE", "overwrite")
-        fs.write_file("/tmp/test_directory/file2.txt", "This file does not contain the keyword", "overwrite")
-        fs.write_file("/tmp/test_directory/file3.txt", "This file also contains SEARCHABLE term", "overwrite")
+        fs.write_file(
+            "/tmp/test_directory/file1.txt",
+            "This file contains the word SEARCHABLE",
+            "overwrite",
+        )
+        fs.write_file(
+            "/tmp/test_directory/file2.txt",
+            "This file does not contain the keyword",
+            "overwrite",
+        )
+        fs.write_file(
+            "/tmp/test_directory/file3.txt",
+            "This file also contains SEARCHABLE term",
+            "overwrite",
+        )
 
         # Example 9: Search for files
         print("\nExample 9: Searching for files...")
@@ -153,7 +171,7 @@ def main():
         file_paths = [
             "/tmp/test_directory/file1.txt",
             "/tmp/test_directory/file2.txt",
-            "/tmp/test_directory/file3.txt"
+            "/tmp/test_directory/file3.txt",
         ]
         multi_file_contents = fs.read_multiple_files(file_paths)
         print(f"Read {len(multi_file_contents)} files:")
@@ -203,7 +221,9 @@ def main():
         success = fs.write_large_file(test_file_path2, large_content, custom_chunk_size)
         write_time = time.time() - start_time
 
-        print(f"Write operation with custom chunk size completed in {write_time:.2f} seconds")
+        print(
+            f"Write operation with custom chunk size completed in {write_time:.2f} seconds"
+        )
         print(f"Success: {success}")
 
         # Example 14: Read the large file with custom chunk size
@@ -214,7 +234,9 @@ def main():
         read_content2 = fs.read_large_file(test_file_path2, read_chunk_size)
         read_time = time.time() - start_time
 
-        print(f"Read operation with custom chunk size completed in {read_time:.2f} seconds")
+        print(
+            f"Read operation with custom chunk size completed in {read_time:.2f} seconds"
+        )
         print(f"Content length: {len(read_content2)} bytes")
         print(f"Content matches original: {read_content2 == large_content}")
 
@@ -223,6 +245,7 @@ def main():
         print("\nCleaning up: Deleting the session...")
         agent_bay.delete(session)
         print("Session deleted successfully")
+
 
 if __name__ == "__main__":
     main()

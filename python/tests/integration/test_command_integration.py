@@ -6,6 +6,7 @@ from agentbay.command import Command
 from agentbay.session_params import CreateSessionParams
 from agentbay.exceptions import CommandError
 
+
 class TestCommandIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -16,7 +17,9 @@ class TestCommandIntegration(unittest.TestCase):
         api_key = os.getenv("AGENTBAY_API_KEY")
         if not api_key:
             api_key = "akm-xxx"  # Replace with your actual API key for testing
-            print("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use.")
+            print(
+                "Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use."
+            )
         cls.agent_bay = AgentBay(api_key=api_key)
         params = CreateSessionParams(
             image_id="code_latest",

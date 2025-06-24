@@ -4,10 +4,12 @@ from typing import Any, Dict, List
 from agentbay.api.models import CallMcpToolRequest
 from agentbay.exceptions import AgentBayError
 
+
 class KeyCode:
     """
     Key codes for mobile device input.
     """
+
     HOME = 3
     BACK = 4
     VOLUME_UP = 24
@@ -20,6 +22,7 @@ class UI:
     """
     Handles UI operations in the AgentBay cloud environment.
     """
+
     def __init__(self, session):
         """
         Initialize a UI object.
@@ -135,6 +138,7 @@ class UI:
             AgentBayError: If the operation fails.
         """
         args = {"timeout_ms": timeout_ms}
+
         def parse_element(element: Dict[str, Any]) -> Dict[str, Any]:
             """
             Recursively parses a UI element and its children.
@@ -160,6 +164,7 @@ class UI:
             else:
                 parsed["children"] = []
             return parsed
+
         try:
             result = self._call_mcp_tool("get_all_ui_elements", args)
             elements = json.loads(result)
@@ -215,7 +220,9 @@ class UI:
         except Exception as e:
             raise AgentBayError(f"Failed to input text: {e}")
 
-    def swipe(self, start_x: int, start_y: int, end_x: int, end_y: int, duration_ms: int = 300) -> None:
+    def swipe(
+        self, start_x: int, start_y: int, end_x: int, end_y: int, duration_ms: int = 300
+    ) -> None:
         """
         Performs a swipe gesture on the screen.
 

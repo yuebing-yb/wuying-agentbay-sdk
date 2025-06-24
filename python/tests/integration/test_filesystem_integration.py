@@ -6,6 +6,7 @@ from agentbay.filesystem.filesystem import FileSystem
 from agentbay.session_params import CreateSessionParams
 from agentbay.exceptions import FileError
 
+
 class TestFileSystemIntegration(unittest.TestCase):
 
     @classmethod
@@ -23,7 +24,7 @@ class TestFileSystemIntegration(unittest.TestCase):
         print("Creating a new session for OSS testing...")
         params = CreateSessionParams(
             image_id="linux_latest",
-            )
+        )
         cls.session = cls.agent_bay.create(params)
         cls.fs = FileSystem(cls.session)
         print(f"Session created with ID: {cls.session.get_session_id()}")
@@ -32,7 +33,7 @@ class TestFileSystemIntegration(unittest.TestCase):
     def tearDownClass(cls):
         """Clean up test environment after all tests."""
         print("Cleaning up: Deleting the session...")
-        if hasattr(cls, 'session'):
+        if hasattr(cls, "session"):
             try:
                 cls.agent_bay.delete(cls.session)
                 print("Session successfully deleted")
@@ -94,7 +95,9 @@ class TestFileSystemIntegration(unittest.TestCase):
         self.fs.write_file(test_file_path, initial_content, "overwrite")
 
         # Edit the file
-        edits = [{"oldText": "Line to be replaced.", "newText": "This line has been edited."}]
+        edits = [
+            {"oldText": "Line to be replaced.", "newText": "This line has been edited."}
+        ]
         result = self.fs.edit_file(test_file_path, edits, False)
         self.assertTrue(result)
 
@@ -192,7 +195,9 @@ class TestFileSystemIntegration(unittest.TestCase):
         # Search for files
         search_pattern = "SEARCHABLE_PATTERN"
         exclude_patterns = ["ignored_pattern"]
-        results = self.fs.search_files(test_subdir_path, search_pattern, exclude_patterns)
+        results = self.fs.search_files(
+            test_subdir_path, search_pattern, exclude_patterns
+        )
         self.assertEqual(len(results), 2)
         self.assertTrue(any(search_file1_path in result for result in results))
         self.assertTrue(any(search_file3_path in result for result in results))
@@ -219,7 +224,9 @@ class TestFileSystemIntegration(unittest.TestCase):
         read_content = self.fs.read_large_file(test_file_path)
 
         # Verify content
-        print(f"Test 2: File read successful, content length: {len(read_content)} bytes")
+        print(
+            f"Test 2: File read successful, content length: {len(read_content)} bytes"
+        )
         self.assertEqual(len(read_content), len(large_content))
         self.assertEqual(read_content, large_content)
         print("Test 2: File content verification successful")
@@ -227,28 +234,40 @@ class TestFileSystemIntegration(unittest.TestCase):
         # Test 3: Write large file with custom chunk size
         custom_chunk_size = 30 * 1024  # 30KB
         test_file_path2 = "/tmp/test_large_custom.txt"
-        print(f"Test 3: Writing large file with custom chunk size ({custom_chunk_size} bytes)...")
+        print(
+            f"Test 3: Writing large file with custom chunk size ({custom_chunk_size} bytes)..."
+        )
 
-        success = self.fs.write_large_file(test_file_path2, large_content, custom_chunk_size)
+        success = self.fs.write_large_file(
+            test_file_path2, large_content, custom_chunk_size
+        )
         self.assertTrue(success)
         print("Test 3: Large file write with custom chunk size successful")
 
         # Test 4: Read large file with custom chunk size
-        print(f"Test 4: Reading large file with custom chunk size ({custom_chunk_size} bytes)...")
+        print(
+            f"Test 4: Reading large file with custom chunk size ({custom_chunk_size} bytes)..."
+        )
         read_content2 = self.fs.read_large_file(test_file_path2, custom_chunk_size)
 
         # Verify content
-        print(f"Test 4: File read successful, content length: {len(read_content2)} bytes")
+        print(
+            f"Test 4: File read successful, content length: {len(read_content2)} bytes"
+        )
         self.assertEqual(len(read_content2), len(large_content))
         self.assertEqual(read_content2, large_content)
         print("Test 4: File content verification with custom chunk size successful")
 
         # Test 5: Cross-test - Read with custom chunk size a file written with default chunk size
-        print("Test 5: Cross-test - Reading with custom chunk size a file written with default chunk size...")
+        print(
+            "Test 5: Cross-test - Reading with custom chunk size a file written with default chunk size..."
+        )
         cross_test_content = self.fs.read_large_file(test_file_path, custom_chunk_size)
 
         # Verify content
-        print(f"Test 5: Cross-test read successful, content length: {len(cross_test_content)} bytes")
+        print(
+            f"Test 5: Cross-test read successful, content length: {len(cross_test_content)} bytes"
+        )
         self.assertEqual(len(cross_test_content), len(large_content))
         self.assertEqual(cross_test_content, large_content)
         print("Test 5: Cross-test content verification successful")

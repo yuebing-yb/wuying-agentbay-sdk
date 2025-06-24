@@ -1,7 +1,13 @@
 import json
 from typing import Dict, Optional
-from agentbay.api.models import (GetLabelRequest, GetMcpResourceRequest, ReleaseMcpSessionRequest,
-                                 SetLabelRequest, GetLinkRequest, GetLinkResponse)
+from agentbay.api.models import (
+    GetLabelRequest,
+    GetMcpResourceRequest,
+    ReleaseMcpSessionRequest,
+    SetLabelRequest,
+    GetLinkRequest,
+    GetLinkResponse,
+)
 from agentbay.application import ApplicationManager
 from agentbay.command import Command
 from agentbay.exceptions import SessionError
@@ -16,9 +22,16 @@ class SessionInfo:
     SessionInfo contains information about a session.
     """
 
-    def __init__(self, session_id: str = "", resource_url: str = "", app_id: str = "",
-                 auth_code: str = "", connection_properties: str = "",
-                 resource_id: str = "", resource_type: str = ""):
+    def __init__(
+        self,
+        session_id: str = "",
+        resource_url: str = "",
+        app_id: str = "",
+        auth_code: str = "",
+        connection_properties: str = "",
+        resource_id: str = "",
+        resource_type: str = "",
+    ):
         self.session_id = session_id
         self.resource_url = resource_url
         self.app_id = app_id
@@ -175,7 +188,9 @@ class Session:
                 if "AuthCode" in desktop_info:
                     session_info.auth_code = desktop_info["AuthCode"]
                 if "ConnectionProperties" in desktop_info:
-                    session_info.connection_properties = desktop_info["ConnectionProperties"]
+                    session_info.connection_properties = desktop_info[
+                        "ConnectionProperties"
+                    ]
                 if "ResourceId" in desktop_info:
                     session_info.resource_id = desktop_info["ResourceId"]
                 if "ResourceType" in desktop_info:
@@ -244,7 +259,9 @@ class Session:
                 authorization=f"Bearer {self.get_api_key()}",
                 session_id=self.get_session_id(),
             )
-            response: GetLinkResponse = await self.agent_bay.client.get_link_async(request)
+            response: GetLinkResponse = await self.agent_bay.client.get_link_async(
+                request
+            )
             response_map = response.to_map()
 
             if not isinstance(response_map, dict):
