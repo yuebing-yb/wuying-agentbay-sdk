@@ -40,7 +40,7 @@ class TestCommand(unittest.TestCase):
         MockCallMcpToolRequest.assert_called_once()
 
         # Verify default timeout was used
-        args_dict = json.loads(MockCallMcpToolRequest.call_args.kwargs['args'])
+        args_dict = json.loads(MockCallMcpToolRequest.call_args.kwargs["args"])
         self.assertEqual(args_dict["timeout_ms"], 1000)
 
     @patch("agentbay.command.command.CallMcpToolRequest")
@@ -57,18 +57,14 @@ class TestCommand(unittest.TestCase):
         MockCallMcpToolRequest.assert_called_once()
 
         # Verify custom timeout was used
-        args_dict = json.loads(MockCallMcpToolRequest.call_args.kwargs['args'])
+        args_dict = json.loads(MockCallMcpToolRequest.call_args.kwargs["args"])
         self.assertEqual(args_dict["timeout_ms"], custom_timeout)
 
     @patch("agentbay.command.command.CallMcpToolRequest")
     def test_execute_command_no_content(self, MockCallMcpToolRequest):
         mock_response = MagicMock()
         mock_response.to_map.return_value = {
-            "body": {
-                "Data": {
-                    "no_content": "no_content"
-                }
-            }
+            "body": {"Data": {"no_content": "no_content"}}
         }
         self.session.client.call_mcp_tool.return_value = mock_response
 
@@ -100,7 +96,7 @@ print(x)
         self.assertEqual(result, "Hello, world!\n2\n")
         MockCallMcpToolRequest.assert_called_once()
 
-        args_dict = json.loads(MockCallMcpToolRequest.call_args.kwargs['args'])
+        args_dict = json.loads(MockCallMcpToolRequest.call_args.kwargs["args"])
         self.assertEqual(args_dict["timeout_s"], 300)
         self.assertEqual(args_dict["language"], "python")
 
@@ -123,7 +119,7 @@ console.log(x);
         MockCallMcpToolRequest.assert_called_once()
 
         # Verify custom timeout was used
-        args_dict = json.loads(MockCallMcpToolRequest.call_args.kwargs['args'])
+        args_dict = json.loads(MockCallMcpToolRequest.call_args.kwargs["args"])
         self.assertEqual(args_dict["timeout_s"], custom_timeout)
         self.assertEqual(args_dict["language"], "javascript")
 
@@ -138,10 +134,12 @@ console.log(x);
     def test_run_code_no_output(self, MockCallMcpToolRequest):
         mock_response = MagicMock()
         mock_response.to_map.return_value = {
-            "body": {"Data": {
-                # No content field
-                "no_content": "no_content"
-            }}
+            "body": {
+                "Data": {
+                    # No content field
+                    "no_content": "no_content"
+                }
+            }
         }
         self.session.client.call_mcp_tool.return_value = mock_response
 

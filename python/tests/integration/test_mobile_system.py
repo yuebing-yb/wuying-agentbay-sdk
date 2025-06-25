@@ -12,7 +12,9 @@ class TestMobileSystemIntegration(unittest.TestCase):
         """
         Set up the test environment by creating a session and initializing ui model.
         """
-        api_key = os.getenv("AGENTBAY_API_KEY", "your_api_key")  # Replace with your actual API key
+        api_key = os.getenv(
+            "AGENTBAY_API_KEY", "your_api_key"
+        )  # Replace with your actual API key
         self.agent_bay = AgentBay(api_key=api_key)
         params = CreateSessionParams(
             image_id="mobile_latest",
@@ -30,15 +32,14 @@ class TestMobileSystemIntegration(unittest.TestCase):
             self.agent_bay.delete(self.session)
         except AgentBayError as e:
             print(f"Failed to delete session: {e}")
+
     def test_get_installed_apps(self):
         """
         Test retrieving installed applications.
         """
         try:
             installed_apps = self.application.get_installed_apps(
-                start_menu=True,
-                desktop=False,
-                ignore_system_apps=True
+                start_menu=True, desktop=False, ignore_system_apps=True
             )
             self.assertIsInstance(installed_apps, list)
             print("\nInstalled Applications:")
@@ -53,7 +54,9 @@ class TestMobileSystemIntegration(unittest.TestCase):
         """
         try:
             # Start an application
-            start_cmd = "monkey -p com.autonavi.minimap -c android.intent.category.LAUNCHER 1"
+            start_cmd = (
+                "monkey -p com.autonavi.minimap -c android.intent.category.LAUNCHER 1"
+            )
             start_result = self.application.start_app(start_cmd)
             self.assertIsInstance(start_result, list)
             print("\nStart App Result:", start_result)
@@ -106,7 +109,9 @@ class TestMobileSystemIntegration(unittest.TestCase):
         try:
             start_x, start_y, end_x, end_y, duration_ms = 100, 200, 300, 400, 500
             self.ui.swipe(start_x, start_y, end_x, end_y, duration_ms)
-            print(f"\nSwipe performed successfully from ({start_x}, {start_y}) to ({end_x}, {end_y}) in {duration_ms}ms.")
+            print(
+                f"\nSwipe performed successfully from ({start_x}, {start_y}) to ({end_x}, {end_y}) in {duration_ms}ms."
+            )
         except AgentBayError as e:
             self.fail(f"swipe failed with error: {e}")
 
@@ -134,7 +139,6 @@ class TestMobileSystemIntegration(unittest.TestCase):
         except AgentBayError as e:
             self.fail(f"get_all_ui_elements failed with error: {e}")
 
-
     def test_screenshot(self):
         """
         Test taking a screenshot.
@@ -145,5 +149,7 @@ class TestMobileSystemIntegration(unittest.TestCase):
             print(f"\nScreenshot saved to: {screenshot}")
         except AgentBayError as e:
             self.fail(f"screenshot failed with error: {e}")
+
+
 if __name__ == "__main__":
     unittest.main()

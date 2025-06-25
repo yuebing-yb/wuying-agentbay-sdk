@@ -6,6 +6,7 @@ from agentbay.exceptions import AgentBayError
 from agentbay.ui.ui import UI, KeyCode
 from agentbay.session_params import CreateSessionParams
 
+
 class TestUISystemIntegration(unittest.TestCase):
     def setUp(self):
         api_key = os.getenv("AGENTBAY_API_KEY", "your_api_key")
@@ -46,7 +47,9 @@ class TestUISystemIntegration(unittest.TestCase):
         try:
             start_x, start_y, end_x, end_y, duration_ms = 100, 200, 300, 400, 500
             self.ui.swipe(start_x, start_y, end_x, end_y, duration_ms)
-            print(f"\nSwipe performed successfully from ({start_x}, {start_y}) to ({end_x}, {end_y}) in {duration_ms}ms.")
+            print(
+                f"\nSwipe performed successfully from ({start_x}, {start_y}) to ({end_x}, {end_y}) in {duration_ms}ms."
+            )
         except AgentBayError as e:
             self.fail(f"swipe failed with error: {e}")
 
@@ -75,6 +78,7 @@ class TestUISystemIntegration(unittest.TestCase):
             print(f"\nScreenshot saved to: {screenshot}")
         except AgentBayError as e:
             self.fail(f"screenshot failed with error: {e}")
+
 
 if __name__ == "__main__":
     unittest.main()

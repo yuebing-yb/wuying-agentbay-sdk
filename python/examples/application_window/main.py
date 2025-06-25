@@ -17,7 +17,9 @@ def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         api_key = "akm-xxx"  # Replace with your actual API key for testing
-        print("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use.")
+        print(
+            "Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use."
+        )
 
     try:
         # Initialize the AgentBay client
@@ -35,9 +37,7 @@ def main():
         print("\nGetting installed applications...")
         try:
             apps = session.application.get_installed_apps(
-                start_menu=True,
-                desktop=False,
-                ignore_system_apps=True
+                start_menu=True, desktop=False, ignore_system_apps=True
             )
             print(f"Found {len(apps)} installed applications")
             # Print the first 3 apps or fewer if less than 3 are available
@@ -55,7 +55,9 @@ def main():
             # Print the first 3 apps or fewer if less than 3 are available
             count = min(len(visible_apps), 3)
             for i in range(count):
-                print(f"Process {i+1}: {visible_apps[i].pname} (PID: {visible_apps[i].pid})")
+                print(
+                    f"Process {i+1}: {visible_apps[i].pname} (PID: {visible_apps[i].pid})"
+                )
         except AgentBayError as e:
             print(f"Error listing visible apps: {e}")
 
@@ -71,7 +73,9 @@ def main():
             # Print the first 3 windows or fewer if less than 3 are available
             count = min(len(root_windows), 3)
             for i in range(count):
-                print(f"Window {i+1}: {root_windows[i].title} (ID: {root_windows[i].window_id})")
+                print(
+                    f"Window {i+1}: {root_windows[i].title} (ID: {root_windows[i].window_id})"
+                )
         except AgentBayError as e:
             print(f"Error listing root windows: {e}")
 
@@ -79,8 +83,10 @@ def main():
         print("\nGetting active window...")
         try:
             active_window = session.window.get_active_window()
-            print(f"Active window: {active_window.title} (ID: {active_window.window_id}, "
-                  f"Process: {active_window.pname}, PID: {active_window.pid})")
+            print(
+                f"Active window: {active_window.title} (ID: {active_window.window_id}, "
+                f"Process: {active_window.pname}, PID: {active_window.pid})"
+            )
         except AgentBayError as e:
             print(f"Error getting active window: {e}")
 

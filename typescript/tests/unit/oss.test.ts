@@ -253,31 +253,4 @@ describe('OSS', () => {
       }
     });
   });
-  
-  describe('createClient', () => {
-    it.only('should create an OSS client', async () => {
-      if (session.oss) {
-        // Get OSS credentials from environment variables
-        const { accessKeyId, accessKeySecret, endpoint, region } = getOssCredentials();
-        
-        log('Creating OSS client...');
-        try {
-          const content = await session.oss.createClient(accessKeyId, accessKeySecret, endpoint, region);
-          log(`CreateClient content:`, content);
-          
-          // Check if content has errors
-          expect(content).toBeDefined();
-          expect(typeof content).toBe('string');
-          expect(hasErrorInContent(content)).toBe(false);
-          
-          log('OSS client creation successful');
-        } catch (error) {
-          log(`OSS client creation failed: ${error}`);
-          throw error;
-        }
-      } else {
-        log('Note: OSS interface is nil, skipping OSS test');
-      }
-    });
-  });
 });

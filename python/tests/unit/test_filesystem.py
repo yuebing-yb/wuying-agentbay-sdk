@@ -2,8 +2,9 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from agentbay.exceptions import FileError
-from agentbay.filesystem.filesystem import \
-    FileSystem  # Adjust based on actual module path
+from agentbay.filesystem.filesystem import (
+    FileSystem,
+)  # Adjust based on actual module path
 
 
 class DummySession:
@@ -109,7 +110,9 @@ class TestFileSystem(unittest.TestCase):
 
         with self.assertRaises(FileError) as context:
             self.fs.create_directory("/path/to/directory")
-        self.assertIn("Error in response: Directory creation failed", str(context.exception))
+        self.assertIn(
+            "Error in response: Directory creation failed", str(context.exception)
+        )
 
     @patch("agentbay.filesystem.filesystem.CallMcpToolRequest")
     def test_edit_file_success(self, MockCallMcpToolRequest):
@@ -127,7 +130,9 @@ class TestFileSystem(unittest.TestCase):
         }
         self.session.get_client().call_mcp_tool.return_value = mock_response
 
-        result = self.fs.edit_file("/path/to/file.txt", [{"oldText": "foo", "newText": "bar"}])
+        result = self.fs.edit_file(
+            "/path/to/file.txt", [{"oldText": "foo", "newText": "bar"}]
+        )
         print(f"type(result)= {type(result)}")
         self.assertTrue(result)
 
@@ -148,7 +153,9 @@ class TestFileSystem(unittest.TestCase):
         self.session.get_client().call_mcp_tool.return_value = mock_response
 
         with self.assertRaises(FileError) as context:
-            self.fs.edit_file("/path/to/file.txt", [{"oldText": "foo", "newText": "bar"}])
+            self.fs.edit_file(
+                "/path/to/file.txt", [{"oldText": "foo", "newText": "bar"}]
+            )
         self.assertIn("Error in response: Edit failed", str(context.exception))
 
     @patch("agentbay.filesystem.filesystem.CallMcpToolRequest")
@@ -167,7 +174,9 @@ class TestFileSystem(unittest.TestCase):
         }
         self.session.get_client().call_mcp_tool.return_value = mock_response
 
-        result = self.fs.write_file("/path/to/file.txt", "content to write", "overwrite")
+        result = self.fs.write_file(
+            "/path/to/file.txt", "content to write", "overwrite"
+        )
         self.assertTrue(result)
 
     @patch("agentbay.filesystem.filesystem.CallMcpToolRequest")
@@ -199,7 +208,11 @@ class TestFileSystem(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "Data": {
-                    "content": [{"text": "size: 36\nisDirectory: false\nisFile: true\npermissions: rw-r--r--"}],
+                    "content": [
+                        {
+                            "text": "size: 36\nisDirectory: false\nisFile: true\npermissions: rw-r--r--"
+                        }
+                    ],
                     "isError": False,
                 }
             }
@@ -241,11 +254,7 @@ class TestFileSystem(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "Data": {
-                    "content": [
-                        {"text":
-                             "[DIR] subdir\n [FILE] file1.txt"
-                        }
-                    ],
+                    "content": [{"text": "[DIR] subdir\n [FILE] file1.txt"}],
                     "isError": False,
                 }
             }
@@ -327,16 +336,20 @@ class TestFileSystem(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "Data": {
-                    "content": [{
-                        "text": "/path/to/file1.txt: Content of file1\n\n---\n/path/to/file2.txt: \nContent of file2\n"
-                    }],
+                    "content": [
+                        {
+                            "text": "/path/to/file1.txt: Content of file1\n\n---\n/path/to/file2.txt: \nContent of file2\n"
+                        }
+                    ],
                     "isError": False,
                 }
             }
         }
         self.session.get_client().call_mcp_tool.return_value = mock_response
 
-        result = self.fs.read_multiple_files(["/path/to/file1.txt", "/path/to/file2.txt"])
+        result = self.fs.read_multiple_files(
+            ["/path/to/file1.txt", "/path/to/file2.txt"]
+        )
         self.assertEqual(result["/path/to/file1.txt"], "Content of file1")
         self.assertEqual(result["/path/to/file2.txt"], "Content of file2")
 
@@ -356,7 +369,9 @@ class TestFileSystem(unittest.TestCase):
         }
         self.session.get_client().call_mcp_tool.return_value = mock_response
 
-        result = self.fs.search_files("/path/to/directory", "pattern", ["ignored_pattern"])
+        result = self.fs.search_files(
+            "/path/to/directory", "pattern", ["ignored_pattern"]
+        )
         print("Result:", result)
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0], "/path/to/file1.txt")
@@ -375,7 +390,7 @@ class TestFileSystem(unittest.TestCase):
         mock_read_file.side_effect = [
             "chunk1_content",
             "chunk2_content",
-            "chunk3_content"
+            "chunk3_content",
         ]
 
         # Set a smaller chunk size for testing (50KB)
@@ -392,8 +407,12 @@ class TestFileSystem(unittest.TestCase):
         # Verify read_file was called three times with correct offsets and lengths
         self.assertEqual(mock_read_file.call_count, 3)
         mock_read_file.assert_any_call("/path/to/large_file.txt", 0, test_chunk_size)
-        mock_read_file.assert_any_call("/path/to/large_file.txt", test_chunk_size, test_chunk_size)
-        mock_read_file.assert_any_call("/path/to/large_file.txt", test_chunk_size * 2, test_chunk_size)
+        mock_read_file.assert_any_call(
+            "/path/to/large_file.txt", test_chunk_size, test_chunk_size
+        )
+        mock_read_file.assert_any_call(
+            "/path/to/large_file.txt", test_chunk_size * 2, test_chunk_size
+        )
 
     @patch("agentbay.filesystem.filesystem.FileSystem.get_file_info")
     def test_read_large_file_error(self, mock_get_file_info):
@@ -423,16 +442,26 @@ class TestFileSystem(unittest.TestCase):
         # Set a smaller chunk size for testing (50KB)
         test_chunk_size = 50 * 1024
 
-        result = self.fs.write_large_file("/path/to/large_file.txt", large_content, test_chunk_size)
+        result = self.fs.write_large_file(
+            "/path/to/large_file.txt", large_content, test_chunk_size
+        )
 
         # Verify the result is True
         self.assertTrue(result)
 
         # Verify write_file was called three times with correct chunks
         self.assertEqual(mock_write_file.call_count, 3)
-        mock_write_file.assert_any_call("/path/to/large_file.txt", large_content[:test_chunk_size], "overwrite")
-        mock_write_file.assert_any_call("/path/to/large_file.txt", large_content[test_chunk_size:test_chunk_size*2], "append")
-        mock_write_file.assert_any_call("/path/to/large_file.txt", large_content[test_chunk_size*2:], "append")
+        mock_write_file.assert_any_call(
+            "/path/to/large_file.txt", large_content[:test_chunk_size], "overwrite"
+        )
+        mock_write_file.assert_any_call(
+            "/path/to/large_file.txt",
+            large_content[test_chunk_size : test_chunk_size * 2],
+            "append",
+        )
+        mock_write_file.assert_any_call(
+            "/path/to/large_file.txt", large_content[test_chunk_size * 2 :], "append"
+        )
 
     @patch("agentbay.filesystem.filesystem.FileSystem.write_file")
     def test_write_large_file_small_content(self, mock_write_file):
@@ -448,13 +477,17 @@ class TestFileSystem(unittest.TestCase):
         # Set a larger chunk size for testing (50KB)
         test_chunk_size = 50 * 1024
 
-        result = self.fs.write_large_file("/path/to/small_file.txt", small_content, test_chunk_size)
+        result = self.fs.write_large_file(
+            "/path/to/small_file.txt", small_content, test_chunk_size
+        )
 
         # Verify the result is True
         self.assertTrue(result)
 
         # Verify write_file was called once with the entire content
-        mock_write_file.assert_called_once_with("/path/to/small_file.txt", small_content, "overwrite")
+        mock_write_file.assert_called_once_with(
+            "/path/to/small_file.txt", small_content, "overwrite"
+        )
 
     @patch("agentbay.filesystem.filesystem.FileSystem.write_file")
     def test_write_large_file_error(self, mock_write_file):
@@ -472,6 +505,7 @@ class TestFileSystem(unittest.TestCase):
 
         self.assertIn("Failed to write large file", str(context.exception))
         mock_write_file.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()
