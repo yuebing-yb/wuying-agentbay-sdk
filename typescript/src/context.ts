@@ -1,6 +1,7 @@
 import { AgentBay } from './agent-bay';
 import { APIError } from './exceptions';
 import * as $_client from './api';
+import { log, logError } from './utils/logger';
 
 /**
  * Represents a persistent storage context in the AgentBay cloud environment.
@@ -88,7 +89,15 @@ export class ContextService {
       const request = new $_client.ListContextsRequest({
         authorization: `Bearer ${this.agentBay.getAPIKey()}`
       });
+      
+      // Log API request
+      log("API Call: ListContexts");
+      log("Request: No parameters");
+      
       const response = await this.agentBay.getClient().listContexts(request);
+      
+      // Log API response
+      log(`Response from ListContexts:`, response.body);
       
       const contexts: Context[] = [];
       if (response.body?.data) {
@@ -106,6 +115,7 @@ export class ContextService {
       
       return contexts;
     } catch (error) {
+      logError("Error calling ListContexts:", error);
       throw new APIError(`Failed to list contexts: ${error}`);
     }
   }
@@ -125,7 +135,14 @@ export class ContextService {
         authorization: `Bearer ${this.agentBay.getAPIKey()}`
       });
       
+      // Log API request
+      log("API Call: GetContext");
+      log(`Request: Name=${name}, AllowCreate=${create}`);
+      
       const response = await this.agentBay.getClient().getContext(request);
+      
+      // Log API response
+      log(`Response from GetContext:`, response.body);
       
       const contextId = response.body?.data?.id;
       if (!contextId) {
@@ -143,6 +160,7 @@ export class ContextService {
       // If we couldn't find the context in the list, create a basic one
       return new Context(contextId, name);
     } catch (error) {
+      logError("Error calling GetContext:", error);
       throw new APIError(`Failed to get context ${name}: ${error}`);
     }
   }
@@ -175,11 +193,19 @@ export class ContextService {
         authorization: `Bearer ${this.agentBay.getAPIKey()}`
       });
       
-      await this.agentBay.getClient().modifyContext(request);
+      // Log API request
+      log("API Call: ModifyContext");
+      log(`Request: Id=${context.id}, Name=${context.name}`);
+      
+      const response = await this.agentBay.getClient().modifyContext(request);
+      
+      // Log API response
+      log(`Response from ModifyContext:`, response.body);
       
       // Return the updated context
       return context;
     } catch (error) {
+      logError("Error calling ModifyContext:", error);
       throw new APIError(`Failed to update context ${context.id}: ${error}`);
     }
   }
@@ -196,8 +222,16 @@ export class ContextService {
         authorization: `Bearer ${this.agentBay.getAPIKey()}`
       });
       
-      await this.agentBay.getClient().deleteContext(request);
+      // Log API request
+      log("API Call: DeleteContext");
+      log(`Request: Id=${context.id}`);
+      
+      const response = await this.agentBay.getClient().deleteContext(request);
+      
+      // Log API response
+      log(`Response from DeleteContext:`, response.body);
     } catch (error) {
+      logError("Error calling DeleteContext:", error);
       throw new APIError(`Failed to delete context ${context.id}: ${error}`);
     }
   }

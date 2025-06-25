@@ -6,7 +6,6 @@ This example demonstrates the basic usage of the Wuying AgentBay SDK, including:
 - Creating a session
 - Executing commands
 - Reading files
-- Using ADB shell commands (for mobile environments)
 - Listing sessions
 - Deleting sessions
 

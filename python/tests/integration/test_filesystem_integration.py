@@ -1,0 +1,296 @@
+import unittest
+import os
+import time
+from agentbay import AgentBay
+from agentbay.filesystem.filesystem import FileSystem
+from agentbay.session_params import CreateSessionParams
+from agentbay.exceptions import FileError
+
+
+class TestFileSystemIntegration(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up test environment before all tests."""
+        # Get API key from environment
+        cls.api_key = os.getenv("AGENTBAY_API_KEY")
+        if not cls.api_key:
+            raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
+
+        # Initialize AgentBay client
+        cls.agent_bay = AgentBay(cls.api_key)
+
+        # Create a session
+        print("Creating a new session for OSS testing...")
+        params = CreateSessionParams(
+            image_id="linux_latest",
+        )
+        cls.session = cls.agent_bay.create(params)
+        cls.fs = FileSystem(cls.session)
+        print(f"Session created with ID: {cls.session.get_session_id()}")
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up test environment after all tests."""
+        print("Cleaning up: Deleting the session...")
+        if hasattr(cls, "session"):
+            try:
+                cls.agent_bay.delete(cls.session)
+                print("Session successfully deleted")
+            except Exception as e:
+                print(f"Warning: Error deleting session: {e}")
+
+    def test_read_file(self):
+        """
+        Test reading a file.
+        """
+        test_content = "This is a test file content for ReadFile test."
+        test_file_path = "/tmp/test_read.txt"
+
+        # Write the test file
+        self.fs.write_file(test_file_path, test_content, "overwrite")
+
+        # Read the file
+        content = self.fs.read_file(test_file_path)
+        self.assertEqual(content, test_content)
+
+    def test_write_file(self):
+        """
+        Test writing to a file.
+        """
+        test_content = "This is a test file content for WriteFile test."
+        test_file_path = "/tmp/test_write.txt"
+
+        # Write the file
+        success = self.fs.write_file(test_file_path, test_content, "overwrite")
+        self.assertTrue(success)
+
+        # Verify the file content
+        content = self.fs.read_file(test_file_path)
+        self.assertEqual(content, test_content)
+
+    def test_create_directory(self):
+        """
+        Test creating a directory.
+        """
+        test_dir_path = "/tmp/test_directory"
+
+        # Create the directory
+        success = self.fs.create_directory(test_dir_path)
+        self.assertTrue(success)
+
+        # Verify the directory exists
+        entries = self.fs.list_directory("/tmp/")
+        directory_names = [entry["name"] for entry in entries]
+        self.assertIn("test_directory", directory_names)
+
+    def test_edit_file(self):
+        """
+        Test editing a file.
+        """
+        initial_content = "This is the original content.\nLine to be replaced.\nThis is the final line."
+        test_file_path = "/tmp/test_edit.txt"
+
+        # Write the initial file
+        self.fs.write_file(test_file_path, initial_content, "overwrite")
+
+        # Edit the file
+        edits = [
+            {"oldText": "Line to be replaced.", "newText": "This line has been edited."}
+        ]
+        result = self.fs.edit_file(test_file_path, edits, False)
+        self.assertTrue(result)
+
+        # Verify the file content
+        expected_content = "This is the original content.\nThis line has been edited.\nThis is the final line."
+        content = self.fs.read_file(test_file_path)
+        self.assertEqual(content, expected_content)
+
+    def test_get_file_info(self):
+        """
+        Test getting file information.
+        """
+        test_content = "This is a test file for GetFileInfo."
+        test_file_path = "/tmp/test_info.txt"
+
+        # Write the test file
+        self.fs.write_file(test_file_path, test_content, "overwrite")
+
+        # Get file info
+        file_info = self.fs.get_file_info(test_file_path)
+        self.assertEqual(file_info["isDirectory"], False)
+        size = int(file_info["size"])
+        self.assertTrue(size > 0, f"File size should be positive, got {size}")
+        self.assertFalse(file_info["isDirectory"])
+
+    def test_list_directory(self):
+        """
+        Test listing a directory.
+        """
+        entries = self.fs.list_directory("/tmp/")
+        self.assertGreater(len(entries), 0)
+        self.assertIn("name", entries[0])
+        self.assertIn("isDirectory", entries[0])
+
+    def test_move_file(self):
+        """
+        Test moving a file.
+        """
+        test_content = "This is a test file for MoveFile."
+        source_file_path = "/tmp/test_source.txt"
+        dest_file_path = "/tmp/test_destination.txt"
+
+        # Write the source file
+        self.fs.write_file(source_file_path, test_content, "overwrite")
+
+        # Move the file
+        success = self.fs.move_file(source_file_path, dest_file_path)
+        self.assertTrue(success)
+
+        # Verify the destination file content
+        content = self.fs.read_file(dest_file_path)
+        self.assertEqual(content, test_content)
+
+        # Verify the source file no longer exists
+        with self.assertRaises(FileError):
+            self.fs.get_file_info(source_file_path)
+
+    def test_read_multiple_files(self):
+        """
+        Test reading multiple files.
+        """
+        file1_content = "This is test file 1 content."
+        file2_content = "This is test file 2 content."
+        test_file1_path = "/tmp/test_file1.txt"
+        test_file2_path = "/tmp/test_file2.txt"
+
+        # Write the test files
+        self.fs.write_file(test_file1_path, file1_content, "overwrite")
+        self.fs.write_file(test_file2_path, file2_content, "overwrite")
+
+        # Read multiple files
+        contents = self.fs.read_multiple_files([test_file1_path, test_file2_path])
+        self.assertEqual(contents[test_file1_path], file1_content)
+        self.assertEqual(contents[test_file2_path], file2_content)
+
+    def test_search_files(self):
+        """
+        Test searching for files.
+        """
+        test_subdir_path = "/tmp/search_test_dir"
+        self.fs.create_directory(test_subdir_path)
+
+        file1_content = "This is test file 1 content."
+        file2_content = "This is test file 2 content."
+        file3_content = "This is test file 3 content."
+        search_file1_path = f"{test_subdir_path}/SEARCHABLE_PATTERN_file1.txt"
+        search_file2_path = f"{test_subdir_path}/regular_file2.txt"
+        search_file3_path = f"{test_subdir_path}/SEARCHABLE_PATTERN_file3.txt"
+
+        # Write the test files
+        self.fs.write_file(search_file1_path, file1_content, "overwrite")
+        self.fs.write_file(search_file2_path, file2_content, "overwrite")
+        self.fs.write_file(search_file3_path, file3_content, "overwrite")
+
+        # Search for files
+        search_pattern = "SEARCHABLE_PATTERN"
+        exclude_patterns = ["ignored_pattern"]
+        results = self.fs.search_files(
+            test_subdir_path, search_pattern, exclude_patterns
+        )
+        self.assertEqual(len(results), 2)
+        self.assertTrue(any(search_file1_path in result for result in results))
+        self.assertTrue(any(search_file3_path in result for result in results))
+
+    def test_write_large_file_and_read_large_file(self):
+        """
+        Test writing and reading a large file using chunking.
+        """
+        # Generate approximately 150KB of test content
+        line_content = "This is a line of test content for large file testing. It contains enough characters to test the chunking functionality.\n"
+        large_content = line_content * 3000  # About 150KB
+        test_file_path = "/tmp/test_large_file.txt"
+
+        print(f"Generated test content size: {len(large_content)} bytes")
+
+        # Test 1: Write large file with default chunk size
+        print("Test 1: Writing large file with default chunk size...")
+        success = self.fs.write_large_file(test_file_path, large_content)
+        self.assertTrue(success)
+        print("Test 1: Large file write successful")
+
+        # Test 2: Read large file with default chunk size
+        print("Test 2: Reading large file with default chunk size...")
+        read_content = self.fs.read_large_file(test_file_path)
+
+        # Verify content
+        print(
+            f"Test 2: File read successful, content length: {len(read_content)} bytes"
+        )
+        self.assertEqual(len(read_content), len(large_content))
+        self.assertEqual(read_content, large_content)
+        print("Test 2: File content verification successful")
+
+        # Test 3: Write large file with custom chunk size
+        custom_chunk_size = 30 * 1024  # 30KB
+        test_file_path2 = "/tmp/test_large_custom.txt"
+        print(
+            f"Test 3: Writing large file with custom chunk size ({custom_chunk_size} bytes)..."
+        )
+
+        success = self.fs.write_large_file(
+            test_file_path2, large_content, custom_chunk_size
+        )
+        self.assertTrue(success)
+        print("Test 3: Large file write with custom chunk size successful")
+
+        # Test 4: Read large file with custom chunk size
+        print(
+            f"Test 4: Reading large file with custom chunk size ({custom_chunk_size} bytes)..."
+        )
+        read_content2 = self.fs.read_large_file(test_file_path2, custom_chunk_size)
+
+        # Verify content
+        print(
+            f"Test 4: File read successful, content length: {len(read_content2)} bytes"
+        )
+        self.assertEqual(len(read_content2), len(large_content))
+        self.assertEqual(read_content2, large_content)
+        print("Test 4: File content verification with custom chunk size successful")
+
+        # Test 5: Cross-test - Read with custom chunk size a file written with default chunk size
+        print(
+            "Test 5: Cross-test - Reading with custom chunk size a file written with default chunk size..."
+        )
+        cross_test_content = self.fs.read_large_file(test_file_path, custom_chunk_size)
+
+        # Verify content
+        print(
+            f"Test 5: Cross-test read successful, content length: {len(cross_test_content)} bytes"
+        )
+        self.assertEqual(len(cross_test_content), len(large_content))
+        self.assertEqual(cross_test_content, large_content)
+        print("Test 5: Cross-test content verification successful")
+
+    def test_write_small_file_with_large_file_method(self):
+        """
+        Test writing a small file using the large file method.
+        """
+        # Generate a small file content (10KB)
+        small_content = "x" * (10 * 1024)
+        test_file_path = "/tmp/test_small_with_large_method.txt"
+
+        # Use a larger chunk size (50KB)
+        chunk_size = 50 * 1024
+
+        # Use write_large_file method to write small file
+        success = self.fs.write_large_file(test_file_path, small_content, chunk_size)
+        self.assertTrue(success)
+
+        # Read and verify content
+        content = self.fs.read_large_file(test_file_path)
+        self.assertEqual(content, small_content)
+
+
+if __name__ == "__main__":
+    unittest.main()

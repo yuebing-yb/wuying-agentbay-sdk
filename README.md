@@ -5,17 +5,22 @@ Wuying AgentBay SDK provides APIs for Python, TypeScript, and Golang to interact
 ## Features
 
 - **Session Management**: Create, retrieve, list, and delete sessions
-- **File Management**: Read files in the cloud environment
-- **Command Execution**: Run commands
-- **ADB Operations**: Execute ADB shell commands in mobile environments (Android)
+- **File Management**:
+  - Basic file operations (read, write, edit)
+  - Large file support with automatic chunking
+  - Multi-file operations
+- **Command Execution**: Run commands and execute code
 - **Application Management**: List, start, and stop applications
 - **Window Management**: List, activate, and manipulate windows
 - **Label Management**: Categorize and filter sessions using labels
 - **Context Management**: Work with persistent storage contexts
+- **Port Forwarding**: Forward ports between local and remote environments
+- **Process Management**: Monitor and control processes
+- **OSS Integration**: Work with Object Storage Service for cloud storage
+- **Mobile Tools Support**: Use mobile-specific APIs and tools
+- **CodeSpace Compatibility**: Work seamlessly with CodeSpace environments
 
 ## Installation
-
-(Note: The following installation methods will be available in the future. Please first use the source code to integrate with the SDK.)
 
 ### Python
 
@@ -57,9 +62,17 @@ print(f"Command result: {result}")
 content = session.filesystem.read_file("/path/to/file.txt")
 print(f"File content: {content}")
 
-# Execute an ADB shell command (for mobile environments)
-adb_result = session.adb.shell("ls /sdcard")
-print(f"ADB shell result: {adb_result}")
+# Read/write large files
+large_content = "x" * (100 * 1024)  # 100KB content
+session.filesystem.write_large_file("/path/to/large_file.txt", large_content)
+retrieved_content = session.filesystem.read_large_file("/path/to/large_file.txt")
+
+# Work with OSS
+session.oss.upload_file("/local/path/file.txt", "bucket-name", "remote/path/file.txt")
+session.oss.download_file("bucket-name", "remote/path/file.txt", "/local/path/downloaded.txt")
+
+# Delete the session when done
+agent_bay.delete(session)
 ```
 
 ### TypeScript
@@ -72,22 +85,29 @@ const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 
 // Create a session
 async function main() {
-  const session = await agentBay.create();
-  
+  const session = await agentBay.create({ imageId: 'linux_latest' });
+
   // Execute a command
   const result = await session.command.executeCommand('ls -la');
-  console.log(result);
+  log(result);
 
   // Read a file
   const content = await session.filesystem.readFile('/path/to/file.txt');
-  console.log(content);
+  log(content);
 
-  // Execute an ADB shell command (for mobile environments)
-  const adbResult = await session.adb.shell('ls /sdcard');
-  console.log(adbResult);
+  // Execute code
+  const codeResult = await session.command.runCode('console.log("Hello, World!");', 'javascript');
+  log(`Code execution result: ${codeResult}`);
+
+  // Work with large files
+  const largeContent = 'x'.repeat(100 * 1024); // 100KB
+  await session.filesystem.writeLargeFile('/path/to/large_file.txt', largeContent);
+
+  // Delete the session when done
+  await agentBay.delete(session);
 }
 
-main().catch(console.error);
+main().catch(logError);
 ```
 
 ### Golang
@@ -98,7 +118,7 @@ package main
 import (
 	"fmt"
 	"os"
-	
+
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 
@@ -109,37 +129,44 @@ func main() {
     fmt.Printf("Error initializing AgentBay client: %v\n", err)
     os.Exit(1)
   }
-  
-  // Create a session
-  session, err := client.Create()
+
+  // Create a session with default parameters
+  result, err := client.Create(nil)
   if err != nil {
     fmt.Printf("Error creating session: %v\n", err)
     os.Exit(1)
   }
-  
+
+  // Access the session and RequestID
+  session := result.Session
+  fmt.Printf("Session created with ID: %s (RequestID: %s)\n", 
+    session.SessionID, result.RequestID)
+
   // Execute a command
-  result, err := session.Command.ExecuteCommand("ls -la")
+  cmdResult, err := session.Command.ExecuteCommand("ls -la")
   if err != nil {
     fmt.Printf("Error executing command: %v\n", err)
     os.Exit(1)
   }
-  fmt.Printf("Command result: %v\n", result)
+  fmt.Printf("Command result: %s (RequestID: %s)\n", 
+    cmdResult.Output, cmdResult.RequestID)
 
   // Read a file
-  content, err := session.FileSystem.ReadFile("/path/to/file.txt")
+  fileResult, err := session.FileSystem.ReadFile("/path/to/file.txt")
   if err != nil {
     fmt.Printf("Error reading file: %v\n", err)
     os.Exit(1)
   }
-  fmt.Printf("File content: %s\n", content)
+  fmt.Printf("File content: %s (RequestID: %s)\n", 
+    fileResult.Content, fileResult.RequestID)
 
-  // Execute an ADB shell command (for mobile environments)
-  adbResult, err := session.Adb.Shell("ls /sdcard")
+  // Delete the session when done
+  deleteResult, err := client.Delete(session)
   if err != nil {
-    fmt.Printf("Error executing ADB shell command: %v\n", err)
+    fmt.Printf("Error deleting session: %v\n", err)
     os.Exit(1)
   }
-  fmt.Printf("ADB shell result: %s\n", adbResult)
+  fmt.Printf("Session deleted successfully (RequestID: %s)\n", deleteResult.RequestID)
 }
 ```
 
@@ -150,6 +177,32 @@ Authentication is done using an API key, which can be provided in several ways:
 1. As a parameter when initializing the SDK
 2. Through environment variables (`AGENTBAY_API_KEY`)
 
+## RequestID Standardization
+
+The SDK provides standardized RequestID in all API responses, which can be used for:
+
+- Debugging API calls
+- Correlating client requests with server-side logs
+- Tracking request history
+- Providing better support through detailed logging
+
+### Golang
+
+All API responses include a RequestID field embedded from the base `ApiResponse` type. This makes it easy to trace and debug operations throughout the SDK.
+
+```go
+// Example showing RequestID usage
+result, err := client.Create(nil)
+if err != nil {
+  // Handle error
+}
+fmt.Printf("Operation completed with RequestID: %s\n", result.RequestID)
+```
+
+## What's New
+
+For details on the latest features and improvements, please see the [Changelog](CHANGELOG.md).
+
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
@@ -157,3 +210,9 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## Documentation
 
 For more detailed documentation, examples, and advanced usage, please refer to the [docs](docs/) directory.
+
+## Development
+
+### CI/CD Workflows
+
+This project uses GitHub Actions for continuous integration and testing. For information about the available workflows and how to configure them, see [GitHub Workflows](.github/WORKFLOWS.md).

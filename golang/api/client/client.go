@@ -58,68 +58,6 @@ func (client *Client) GetEndpoint(productId *string, regionId *string, endpointR
 
 // Summary:
 //
-// 获取STS Token
-//
-// @param request - ApplyMqttTokenRequest
-//
-// @param runtime - runtime options for this request RuntimeOptions
-//
-// @return ApplyMqttTokenResponse
-func (client *Client) ApplyMqttTokenWithOptions(request *ApplyMqttTokenRequest, runtime *dara.RuntimeOptions) (_result *ApplyMqttTokenResponse, _err error) {
-	_err = request.Validate()
-	if _err != nil {
-		return _result, _err
-	}
-	query := map[string]interface{}{}
-	if !dara.IsNil(request.DesktopId) {
-		query["DesktopId"] = request.DesktopId
-	}
-
-	if !dara.IsNil(request.SessionToken) {
-		query["SessionToken"] = request.SessionToken
-	}
-
-	req := &openapiutil.OpenApiRequest{
-		Query: openapiutil.Query(query),
-	}
-	params := &openapiutil.Params{
-		Action:      dara.String("ApplyMqttToken"),
-		Version:     dara.String("2025-05-06"),
-		Protocol:    dara.String("HTTPS"),
-		Pathname:    dara.String("/"),
-		Method:      dara.String("POST"),
-		AuthType:    dara.String("Anonymous"),
-		Style:       dara.String("RPC"),
-		ReqBodyType: dara.String("formData"),
-		BodyType:    dara.String("json"),
-	}
-	_body, _err := client.CallApi(params, req, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_err = dara.Convert(_body, &_result)
-	return _result, _err
-}
-
-// Summary:
-//
-// 获取STS Token
-//
-// @param request - ApplyMqttTokenRequest
-//
-// @return ApplyMqttTokenResponse
-func (client *Client) ApplyMqttToken(request *ApplyMqttTokenRequest) (_result *ApplyMqttTokenResponse, _err error) {
-	runtime := &dara.RuntimeOptions{}
-	_body, _err := client.ApplyMqttTokenWithOptions(request, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_result = _body
-	return _result, _err
-}
-
-// Summary:
-//
 // 调用mcp工具
 //
 // @param request - CallMcpToolRequest
@@ -143,6 +81,10 @@ func (client *Client) CallMcpToolWithOptions(request *CallMcpToolRequest, runtim
 
 	if !dara.IsNil(request.ExternalUserId) {
 		body["ExternalUserId"] = request.ExternalUserId
+	}
+
+	if !dara.IsNil(request.ImageId) {
+		body["ImageId"] = request.ImageId
 	}
 
 	if !dara.IsNil(request.Name) {
@@ -175,6 +117,7 @@ func (client *Client) CallMcpToolWithOptions(request *CallMcpToolRequest, runtim
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &CallMcpToolResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -192,6 +135,7 @@ func (client *Client) CallMcpToolWithOptions(request *CallMcpToolRequest, runtim
 // @return CallMcpToolResponse
 func (client *Client) CallMcpTool(request *CallMcpToolRequest) (_result *CallMcpToolResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &CallMcpToolResponse{}
 	_body, _err := client.CallMcpToolWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
@@ -227,6 +171,10 @@ func (client *Client) CreateMcpSessionWithOptions(request *CreateMcpSessionReque
 		body["ExternalUserId"] = request.ExternalUserId
 	}
 
+	if !dara.IsNil(request.ImageId) {
+		body["ImageId"] = request.ImageId
+	}
+
 	if !dara.IsNil(request.Labels) {
 		body["Labels"] = request.Labels
 	}
@@ -249,6 +197,7 @@ func (client *Client) CreateMcpSessionWithOptions(request *CreateMcpSessionReque
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &CreateMcpSessionResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -266,6 +215,7 @@ func (client *Client) CreateMcpSessionWithOptions(request *CreateMcpSessionReque
 // @return CreateMcpSessionResponse
 func (client *Client) CreateMcpSession(request *CreateMcpSessionRequest) (_result *CreateMcpSessionResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &CreateMcpSessionResponse{}
 	_body, _err := client.CreateMcpSessionWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
@@ -311,6 +261,7 @@ func (client *Client) DeleteContextWithOptions(request *DeleteContextRequest, ru
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &DeleteContextResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -328,6 +279,7 @@ func (client *Client) DeleteContextWithOptions(request *DeleteContextRequest, ru
 // @return DeleteContextResponse
 func (client *Client) DeleteContext(request *DeleteContextRequest) (_result *DeleteContextResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &DeleteContextResponse{}
 	_body, _err := client.DeleteContextWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
@@ -377,6 +329,7 @@ func (client *Client) GetContextWithOptions(request *GetContextRequest, runtime 
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &GetContextResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -394,6 +347,7 @@ func (client *Client) GetContextWithOptions(request *GetContextRequest, runtime 
 // @return GetContextResponse
 func (client *Client) GetContext(request *GetContextRequest) (_result *GetContextResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &GetContextResponse{}
 	_body, _err := client.GetContextWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
@@ -447,6 +401,7 @@ func (client *Client) GetLabelWithOptions(request *GetLabelRequest, runtime *dar
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &GetLabelResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -464,7 +419,72 @@ func (client *Client) GetLabelWithOptions(request *GetLabelRequest, runtime *dar
 // @return GetLabelResponse
 func (client *Client) GetLabel(request *GetLabelRequest) (_result *GetLabelResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &GetLabelResponse{}
 	_body, _err := client.GetLabelWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// 获取特定端口的转发链接
+//
+// @param request - GetLinkRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return GetLinkResponse
+func (client *Client) GetLinkWithOptions(request *GetLinkRequest, runtime *dara.RuntimeOptions) (_result *GetLinkResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+
+	if !dara.IsNil(request.SessionId) {
+		body["SessionId"] = request.SessionId
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("GetLink"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &GetLinkResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// 获取特定端口的转发链接
+//
+// @param request - GetLinkRequest
+//
+// @return GetLinkResponse
+func (client *Client) GetLink(request *GetLinkRequest) (_result *GetLinkResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &GetLinkResponse{}
+	_body, _err := client.GetLinkWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
 	}
@@ -509,6 +529,7 @@ func (client *Client) GetMcpResourceWithOptions(request *GetMcpResourceRequest, 
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &GetMcpResourceResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -526,75 +547,8 @@ func (client *Client) GetMcpResourceWithOptions(request *GetMcpResourceRequest, 
 // @return GetMcpResourceResponse
 func (client *Client) GetMcpResource(request *GetMcpResourceRequest) (_result *GetMcpResourceResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &GetMcpResourceResponse{}
 	_body, _err := client.GetMcpResourceWithOptions(request, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_result = _body
-	return _result, _err
-}
-
-// Summary:
-//
-// 处理来自AI Engine的消息
-//
-// @param request - HandleAIEngineMessageRequest
-//
-// @param runtime - runtime options for this request RuntimeOptions
-//
-// @return HandleAIEngineMessageResponse
-func (client *Client) HandleAIEngineMessageWithOptions(request *HandleAIEngineMessageRequest, runtime *dara.RuntimeOptions) (_result *HandleAIEngineMessageResponse, _err error) {
-	_err = request.Validate()
-	if _err != nil {
-		return _result, _err
-	}
-	query := map[string]interface{}{}
-	if !dara.IsNil(request.SessionToken) {
-		query["SessionToken"] = request.SessionToken
-	}
-
-	body := map[string]interface{}{}
-	if !dara.IsNil(request.Data) {
-		body["Data"] = request.Data
-	}
-
-	if !dara.IsNil(request.MsgType) {
-		body["MsgType"] = request.MsgType
-	}
-
-	req := &openapiutil.OpenApiRequest{
-		Query: openapiutil.Query(query),
-		Body:  openapiutil.ParseToMap(body),
-	}
-	params := &openapiutil.Params{
-		Action:      dara.String("HandleAIEngineMessage"),
-		Version:     dara.String("2025-05-06"),
-		Protocol:    dara.String("HTTPS"),
-		Pathname:    dara.String("/"),
-		Method:      dara.String("POST"),
-		AuthType:    dara.String("Anonymous"),
-		Style:       dara.String("RPC"),
-		ReqBodyType: dara.String("formData"),
-		BodyType:    dara.String("json"),
-	}
-	_body, _err := client.CallApi(params, req, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_err = dara.Convert(_body, &_result)
-	return _result, _err
-}
-
-// Summary:
-//
-// 处理来自AI Engine的消息
-//
-// @param request - HandleAIEngineMessageRequest
-//
-// @return HandleAIEngineMessageResponse
-func (client *Client) HandleAIEngineMessage(request *HandleAIEngineMessageRequest) (_result *HandleAIEngineMessageResponse, _err error) {
-	runtime := &dara.RuntimeOptions{}
-	_body, _err := client.HandleAIEngineMessageWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
 	}
@@ -643,6 +597,7 @@ func (client *Client) ListContextsWithOptions(request *ListContextsRequest, runt
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &ListContextsResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -660,65 +615,8 @@ func (client *Client) ListContextsWithOptions(request *ListContextsRequest, runt
 // @return ListContextsResponse
 func (client *Client) ListContexts(request *ListContextsRequest) (_result *ListContextsResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &ListContextsResponse{}
 	_body, _err := client.ListContextsWithOptions(request, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_result = _body
-	return _result, _err
-}
-
-// Summary:
-//
-// # ListMcpTools
-//
-// @param request - ListMcpToolsRequest
-//
-// @param runtime - runtime options for this request RuntimeOptions
-//
-// @return ListMcpToolsResponse
-func (client *Client) ListMcpToolsWithOptions(request *ListMcpToolsRequest, runtime *dara.RuntimeOptions) (_result *ListMcpToolsResponse, _err error) {
-	_err = request.Validate()
-	if _err != nil {
-		return _result, _err
-	}
-	body := map[string]interface{}{}
-	if !dara.IsNil(request.Authorization) {
-		body["Authorization"] = request.Authorization
-	}
-
-	req := &openapiutil.OpenApiRequest{
-		Body: openapiutil.ParseToMap(body),
-	}
-	params := &openapiutil.Params{
-		Action:      dara.String("ListMcpTools"),
-		Version:     dara.String("2025-05-06"),
-		Protocol:    dara.String("HTTPS"),
-		Pathname:    dara.String("/"),
-		Method:      dara.String("POST"),
-		AuthType:    dara.String("Anonymous"),
-		Style:       dara.String("RPC"),
-		ReqBodyType: dara.String("formData"),
-		BodyType:    dara.String("json"),
-	}
-	_body, _err := client.CallApi(params, req, runtime)
-	if _err != nil {
-		return _result, _err
-	}
-	_err = dara.Convert(_body, &_result)
-	return _result, _err
-}
-
-// Summary:
-//
-// # ListMcpTools
-//
-// @param request - ListMcpToolsRequest
-//
-// @return ListMcpToolsResponse
-func (client *Client) ListMcpTools(request *ListMcpToolsRequest) (_result *ListMcpToolsResponse, _err error) {
-	runtime := &dara.RuntimeOptions{}
-	_body, _err := client.ListMcpToolsWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
 	}
@@ -771,6 +669,7 @@ func (client *Client) ListSessionWithOptions(request *ListSessionRequest, runtim
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &ListSessionResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -788,6 +687,7 @@ func (client *Client) ListSessionWithOptions(request *ListSessionRequest, runtim
 // @return ListSessionResponse
 func (client *Client) ListSession(request *ListSessionRequest) (_result *ListSessionResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &ListSessionResponse{}
 	_body, _err := client.ListSessionWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
@@ -837,6 +737,7 @@ func (client *Client) ModifyContextWithOptions(request *ModifyContextRequest, ru
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &ModifyContextResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -854,6 +755,7 @@ func (client *Client) ModifyContextWithOptions(request *ModifyContextRequest, ru
 // @return ModifyContextResponse
 func (client *Client) ModifyContext(request *ModifyContextRequest) (_result *ModifyContextResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &ModifyContextResponse{}
 	_body, _err := client.ModifyContextWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
@@ -899,6 +801,7 @@ func (client *Client) ReleaseMcpSessionWithOptions(request *ReleaseMcpSessionReq
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &ReleaseMcpSessionResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -916,6 +819,7 @@ func (client *Client) ReleaseMcpSessionWithOptions(request *ReleaseMcpSessionReq
 // @return ReleaseMcpSessionResponse
 func (client *Client) ReleaseMcpSession(request *ReleaseMcpSessionRequest) (_result *ReleaseMcpSessionResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &ReleaseMcpSessionResponse{}
 	_body, _err := client.ReleaseMcpSessionWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
@@ -965,6 +869,7 @@ func (client *Client) SetLabelWithOptions(request *SetLabelRequest, runtime *dar
 		ReqBodyType: dara.String("formData"),
 		BodyType:    dara.String("json"),
 	}
+	_result = &SetLabelResponse{}
 	_body, _err := client.CallApi(params, req, runtime)
 	if _err != nil {
 		return _result, _err
@@ -982,6 +887,7 @@ func (client *Client) SetLabelWithOptions(request *SetLabelRequest, runtime *dar
 // @return SetLabelResponse
 func (client *Client) SetLabel(request *SetLabelRequest) (_result *SetLabelResponse, _err error) {
 	runtime := &dara.RuntimeOptions{}
+	_result = &SetLabelResponse{}
 	_body, _err := client.SetLabelWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err

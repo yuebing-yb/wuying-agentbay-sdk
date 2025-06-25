@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-
 from darabonba.model import DaraModel
 
 
@@ -11,6 +10,7 @@ class CallMcpToolRequest(DaraModel):
         args: str = None,
         authorization: str = None,
         external_user_id: str = None,
+        image_id: str = None,
         name: str = None,
         server: str = None,
         session_id: str = None,
@@ -19,6 +19,7 @@ class CallMcpToolRequest(DaraModel):
         self.args = args
         self.authorization = authorization
         self.external_user_id = external_user_id
+        self.image_id = image_id
         self.name = name
         self.server = server
         self.session_id = session_id
@@ -40,6 +41,9 @@ class CallMcpToolRequest(DaraModel):
 
         if self.external_user_id is not None:
             result["ExternalUserId"] = self.external_user_id
+
+        if self.image_id is not None:
+            result["ImageId"] = self.image_id
 
         if self.name is not None:
             result["Name"] = self.name
@@ -65,6 +69,9 @@ class CallMcpToolRequest(DaraModel):
 
         if m.get("ExternalUserId") is not None:
             self.external_user_id = m.get("ExternalUserId")
+
+        if m.get("ImageId") is not None:
+            self.image_id = m.get("ImageId")
 
         if m.get("Name") is not None:
             self.name = m.get("Name")

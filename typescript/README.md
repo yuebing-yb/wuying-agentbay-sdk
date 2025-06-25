@@ -42,10 +42,19 @@ npm install wuying-agentbay-sdk
   npm run lint
   ```
 
-- **Format the code**:
-  ```bash
-  npm run format
-  ```
+## Examples
+
+The SDK includes several examples demonstrating various features:
+
+- **basic-usage.ts**: Basic SDK usage
+- **session-creation/**: Session creation and management
+- **session-params/**: Using session parameters and labels
+- **context-management/**: Context creation and management
+- **application-window/**: Application and window management
+- **command-example/**: Command execution and code running
+- **filesystem-example/**: File system operations
+- **ui-example/**: UI interactions
+- **label-management/**: Session label management
 
 ## Running Examples
 
@@ -72,47 +81,58 @@ async function main() {
         environment: 'development'
       }
     });
-    console.log(`Session created with ID: ${session.sessionId}`);
+    log(`Session created with ID: ${session.sessionId}`);
     
     // Execute a command
     const result = await session.command.executeCommand('ls -la');
-    console.log(`Command result: ${result}`);
+    log(`Command result: ${result}`);
     
     // Read a file
     const content = await session.filesystem.readFile('/path/to/file.txt');
-    console.log(`File content: ${content}`);
+    log(`File content: ${content}`);
+    
+    // Run code
+    const pythonCode = `
+import os
+import platform
+
+print(f"Current working directory: {os.getcwd()}")
+print(f"Python version: {platform.python_version()}")
+`;
+    const codeResult = await session.command.runCode(pythonCode, 'python');
+    log(`Code execution result: ${codeResult}`);
     
     // Get installed applications
     const apps = await session.application.getInstalledApps(true, false, true);
-    console.log(`Found ${apps.length} installed applications`);
+    log(`Found ${apps.length} installed applications`);
     
     // List visible applications
     const processes = await session.application.listVisibleApps();
-    console.log(`Found ${processes.length} visible applications`);
+    log(`Found ${processes.length} visible applications`);
     
     // List root windows
     const windows = await session.window.listRootWindows();
-    console.log(`Found ${windows.length} root windows`);
+    log(`Found ${windows.length} root windows`);
     
     // Get active window
     const activeWindow = await session.window.getActiveWindow();
-    console.log(`Active window: ${activeWindow.title}`);
+    log(`Active window: ${activeWindow.title}`);
     
     // Get session labels
     const labels = await session.getLabels();
-    console.log(`Session labels: ${JSON.stringify(labels)}`);
+    log(`Session labels: ${JSON.stringify(labels)}`);
     
     // List sessions by labels
     const filteredSessions = await agentBay.listByLabels({
       purpose: 'demo'
     });
-    console.log(`Found ${filteredSessions.length} matching sessions`);
+    log(`Found ${filteredSessions.length} matching sessions`);
     
     // Clean up
-    await agentBay.delete(session.sessionId);
-    console.log('Session deleted successfully');
+    await agentBay.delete(session);
+    log('Session deleted successfully');
   } catch (error) {
-    console.error('Error:', error);
+    logError('Error:', error);
   }
 }
 

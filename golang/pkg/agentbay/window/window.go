@@ -3,10 +3,40 @@ package window
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
+
+// ApiResponse is the base class for all API responses, containing RequestID
+type ApiResponse struct {
+	RequestID string
+}
+
+// GetRequestID returns the RequestID of the API call
+func (r *ApiResponse) GetRequestID() string {
+	return r.RequestID
+}
+
+// WindowResult wraps window operation result and RequestID
+type WindowResult struct {
+	models.ApiResponse
+	Success bool
+}
+
+// WindowListResult wraps window list and RequestID
+type WindowListResult struct {
+	models.ApiResponse
+	Windows []Window
+}
+
+// WindowDetailResult wraps single window information and RequestID
+type WindowDetailResult struct {
+	models.ApiResponse
+	Window *Window
+}
 
 // Window represents a window in the system
 type Window struct {
@@ -30,6 +60,114 @@ type WindowManager struct {
 	}
 }
 
+// callMcpToolResult represents the result of a CallMcpTool operation
+type callMcpToolResult struct {
+	TextContent string
+	Data        map[string]interface{}
+	IsError     bool
+	ErrorMsg    string
+	StatusCode  int32
+	RequestID   string
+}
+
+// callMcpTool calls the MCP tool and checks for errors in the response
+func (wm *WindowManager) callMcpTool(toolName string, args interface{}, defaultErrorMsg string) (*callMcpToolResult, error) {
+	// Marshal arguments to JSON
+	argsJSON, err := json.Marshal(args)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal args: %w", err)
+	}
+
+	// Create the request
+	callToolRequest := &mcp.CallMcpToolRequest{
+		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
+		SessionId:     tea.String(wm.Session.GetSessionId()),
+		Name:          tea.String(toolName),
+		Args:          tea.String(string(argsJSON)),
+	}
+
+	// Log API request
+	fmt.Println("API Call: CallMcpTool -", toolName)
+	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
+
+	// Call the MCP tool
+	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
+	if err != nil {
+		fmt.Println("Error calling CallMcpTool -", toolName, ":", err)
+		return nil, fmt.Errorf("failed to call %s: %w", toolName, err)
+	}
+	if response != nil && response.Body != nil {
+		fmt.Println("Response from CallMcpTool -", toolName, ":", response.Body)
+	}
+
+	// Extract data from response
+	data, ok := response.Body.Data.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid response data format")
+	}
+
+	// Extract RequestID
+	var requestID string
+	if response != nil && response.Body != nil && response.Body.RequestId != nil {
+		requestID = *response.Body.RequestId
+	}
+
+	// Create result object
+	result := &callMcpToolResult{
+		Data:       data,
+		StatusCode: *response.StatusCode,
+		RequestID:  requestID,
+	}
+
+	// Check if there's an error in the response
+	isError, ok := data["isError"].(bool)
+	if ok && isError {
+		result.IsError = true
+
+		// Try to extract the error message from the content field
+		contentArray, ok := data["content"].([]interface{})
+		if ok && len(contentArray) > 0 {
+			// Extract error message from the first content item
+			if len(contentArray) > 0 {
+				contentItem, ok := contentArray[0].(map[string]interface{})
+				if ok {
+					text, ok := contentItem["text"].(string)
+					if ok {
+						result.ErrorMsg = text
+						return result, fmt.Errorf("%s", text)
+					}
+				}
+			}
+		}
+		return result, fmt.Errorf("%s", defaultErrorMsg)
+	}
+
+	// Extract text from content array if it exists
+	contentArray, ok := data["content"].([]interface{})
+	if ok && len(contentArray) > 0 {
+		var textBuilder strings.Builder
+		for i, item := range contentArray {
+			contentItem, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			text, ok := contentItem["text"].(string)
+			if !ok {
+				continue
+			}
+
+			if i > 0 {
+				textBuilder.WriteString("\n")
+			}
+			textBuilder.WriteString(text)
+		}
+		result.TextContent = textBuilder.String()
+	}
+
+	return result, nil
+}
+
 // NewWindowManager creates a new WindowManager object.
 func NewWindowManager(session interface {
 	GetAPIKey() string
@@ -41,572 +179,215 @@ func NewWindowManager(session interface {
 	}
 }
 
-// GetWindowInfoByPName gets detailed window information for a process by name.
-func (wm *WindowManager) GetWindowInfoByPName(pname string) ([]Window, error) {
-	args := map[string]string{
-		"pname": pname,
-	}
-	argsJSON, err := json.Marshal(args)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal args: %w", err)
-	}
-
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("get_window_info_by_pname"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - get_window_info_by_pname")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - get_window_info_by_pname:", err)
-		return nil, fmt.Errorf("failed to get window info by pname: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - get_window_info_by_pname:", response.Body)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to get window info by pname: %w", err)
-	}
-
-	// Parse the response
-	data, ok := response.Body.Data.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid response data format")
-	}
-
-	// Extract content array
-	content, ok := data["content"].([]interface{})
-	if !ok || len(content) == 0 {
-		return nil, fmt.Errorf("invalid or empty content array in response")
-	}
-
-	// Extract text field from the first content item
-	contentItem, ok := content[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid content item format")
-	}
-
-	jsonText, ok := contentItem["text"].(string)
-	if !ok {
-		return nil, fmt.Errorf("text field not found or not a string")
-	}
-
-	// Parse the JSON text to get the windows array
-	var windows []Window
-	if err := json.Unmarshal([]byte(jsonText), &windows); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal windows JSON: %w", err)
-	}
-
-	return windows, nil
-}
-
-// GetWindowInfoByPID gets detailed window information for a process by ID.
-func (wm *WindowManager) GetWindowInfoByPID(pid int) ([]Window, error) {
-	args := map[string]int{
-		"pid": pid,
-	}
-	argsJSON, err := json.Marshal(args)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal args: %w", err)
-	}
-
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("get_window_info_by_pid"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - get_window_info_by_pid")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - get_window_info_by_pid:", err)
-		return nil, fmt.Errorf("failed to get window info by pid: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - get_window_info_by_pid:", response.Body)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to get window info by pid: %w", err)
-	}
-
-	// Parse the response
-	data, ok := response.Body.Data.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid response data format")
-	}
-
-	// Extract content array
-	content, ok := data["content"].([]interface{})
-	if !ok || len(content) == 0 {
-		return nil, fmt.Errorf("invalid or empty content array in response")
-	}
-
-	// Extract text field from the first content item
-	contentItem, ok := content[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid content item format")
-	}
-
-	jsonText, ok := contentItem["text"].(string)
-	if !ok {
-		return nil, fmt.Errorf("text field not found or not a string")
-	}
-
-	// Parse the JSON text to get the windows array
-	var windows []Window
-	if err := json.Unmarshal([]byte(jsonText), &windows); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal windows JSON: %w", err)
-	}
-
-	return windows, nil
-}
-
 // ListRootWindows lists all root windows in the system.
-func (wm *WindowManager) ListRootWindows() ([]Window, error) {
+func (wm *WindowManager) ListRootWindows() (*WindowListResult, error) {
 	args := map[string]interface{}{}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("list_root_windows", args, "error listing root windows")
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("list_root_windows"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - list_root_windows")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - list_root_windows:", err)
-		return nil, fmt.Errorf("failed to list root windows: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - list_root_windows:", response.Body)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to list root windows: %w", err)
-	}
-
-	// Parse the response
-	data, ok := response.Body.Data.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid response data format")
-	}
-
-	// Extract content array
-	content, ok := data["content"].([]interface{})
-	if !ok || len(content) == 0 {
-		return nil, fmt.Errorf("invalid or empty content array in response")
-	}
-
-	// Extract text field from the first content item
-	contentItem, ok := content[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid content item format")
-	}
-
-	jsonText, ok := contentItem["text"].(string)
-	if !ok {
-		return nil, fmt.Errorf("text field not found or not a string")
-	}
-
-	// Parse the JSON text to get the windows array
+	// Parse the JSON data into Window objects
 	var windows []Window
-	if err := json.Unmarshal([]byte(jsonText), &windows); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal windows JSON: %w", err)
+	err = json.Unmarshal([]byte(mcpResult.TextContent), &windows)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse window data: %w", err)
 	}
 
-	return windows, nil
+	return &WindowListResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Windows: windows,
+	}, nil
 }
 
 // GetActiveWindow gets the currently active window.
-func (wm *WindowManager) GetActiveWindow() (*Window, error) {
+func (wm *WindowManager) GetActiveWindow() (*WindowDetailResult, error) {
 	args := map[string]interface{}{}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("get_active_window", args, "error getting active window")
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("get_active_window"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - get_active_window")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - get_active_window:", err)
-		return nil, fmt.Errorf("failed to get active window: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - get_active_window:", response.Body)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to get active window: %w", err)
-	}
-
-	// Parse the response
-	data, ok := response.Body.Data.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid response data format")
-	}
-
-	// Extract content array
-	content, ok := data["content"].([]interface{})
-	if !ok || len(content) == 0 {
-		return nil, fmt.Errorf("invalid or empty content array in response")
-	}
-
-	// Extract text field from the first content item
-	contentItem, ok := content[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid content item format")
-	}
-
-	jsonText, ok := contentItem["text"].(string)
-	if !ok {
-		return nil, fmt.Errorf("text field not found or not a string")
-	}
-
-	// Parse the JSON text to get the window
+	// Parse the JSON data into a Window object
 	var window Window
-	if err := json.Unmarshal([]byte(jsonText), &window); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal window JSON: %w", err)
+	err = json.Unmarshal([]byte(mcpResult.TextContent), &window)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse window data: %w", err)
 	}
 
-	return &window, nil
+	return &WindowDetailResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Window: &window,
+	}, nil
 }
 
-// ActivateWindow activates a window by ID.
-func (wm *WindowManager) ActivateWindow(windowID int) error {
-	args := map[string]int{
+// ActivateWindow activates a window with the specified window ID.
+func (wm *WindowManager) ActivateWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
 		"window_id": windowID,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("activate_window", args, "error activating window")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("activate_window"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - activate_window")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - activate_window:", err)
-		return fmt.Errorf("failed to activate window: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - activate_window:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to activate window: %w", err)
-	}
-
-	return nil
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Success: true,
+	}, nil
 }
 
-// MaximizeWindow maximizes a window by ID.
-func (wm *WindowManager) MaximizeWindow(windowID int) error {
-	args := map[string]int{
+// MaximizeWindow maximizes a window with the specified window ID.
+func (wm *WindowManager) MaximizeWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
 		"window_id": windowID,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("maximize_window", args, "error maximizing window")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("maximize_window"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - maximize_window")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - maximize_window:", err)
-		return fmt.Errorf("failed to maximize window: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - maximize_window:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to maximize window: %w", err)
-	}
-
-	return nil
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Success: true,
+	}, nil
 }
 
-// MinimizeWindow minimizes a window by ID.
-func (wm *WindowManager) MinimizeWindow(windowID int) error {
-	args := map[string]int{
+// MinimizeWindow minimizes a window with the specified window ID.
+func (wm *WindowManager) MinimizeWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
 		"window_id": windowID,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("minimize_window", args, "error minimizing window")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("minimize_window"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - minimize_window")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - minimize_window:", err)
-		return fmt.Errorf("failed to minimize window: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - minimize_window:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to minimize window: %w", err)
-	}
-
-	return nil
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Success: true,
+	}, nil
 }
 
-// RestoreWindow restores a window by ID.
-func (wm *WindowManager) RestoreWindow(windowID int) error {
-	args := map[string]int{
+// RestoreWindow restores a window with the specified window ID.
+func (wm *WindowManager) RestoreWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
 		"window_id": windowID,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("restore_window", args, "error restoring window")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("restore_window"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - restore_window")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - restore_window:", err)
-		return fmt.Errorf("failed to restore window: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - restore_window:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to restore window: %w", err)
-	}
-
-	return nil
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Success: true,
+	}, nil
 }
 
-// CloseWindow closes a window by ID.
-func (wm *WindowManager) CloseWindow(windowID int) error {
-	args := map[string]int{
+// CloseWindow closes a window with the specified window ID.
+func (wm *WindowManager) CloseWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
 		"window_id": windowID,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("close_window", args, "error closing window")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("close_window"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - close_window")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - close_window:", err)
-		return fmt.Errorf("failed to close window: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - close_window:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to close window: %w", err)
-	}
-
-	return nil
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Success: true,
+	}, nil
 }
 
-// FullscreenWindow toggles fullscreen mode for a window by ID.
-func (wm *WindowManager) FullscreenWindow(windowID int) error {
-	args := map[string]int{
+// FullscreenWindow toggles fullscreen mode for a window with the specified window ID.
+func (wm *WindowManager) FullscreenWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
 		"window_id": windowID,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("fullscreen_window", args, "error toggling fullscreen mode")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("fullscreen_window"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - fullscreen_window")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - fullscreen_window:", err)
-		return fmt.Errorf("failed to fullscreen window: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - fullscreen_window:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to fullscreen window: %w", err)
-	}
-
-	return nil
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Success: true,
+	}, nil
 }
 
 // ResizeWindow resizes a window by ID.
-func (wm *WindowManager) ResizeWindow(windowID, width, height int) error {
-	args := map[string]int{
+func (wm *WindowManager) ResizeWindow(windowID int, width int, height int) (*WindowResult, error) {
+	args := map[string]interface{}{
 		"window_id": windowID,
 		"width":     width,
 		"height":    height,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("resize_window", args, "error resizing window")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("resize_window"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - resize_window")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - resize_window:", err)
-		return fmt.Errorf("failed to resize window: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - resize_window:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to resize window: %w", err)
-	}
-
-	return nil
+	// Return result with RequestID
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Success: true,
+	}, nil
 }
 
 // FocusMode enables or disables focus mode.
-func (wm *WindowManager) FocusMode(on bool) error {
-	args := map[string]bool{
+func (wm *WindowManager) FocusMode(on bool) (*WindowResult, error) {
+	args := map[string]interface{}{
 		"on": on,
 	}
-	argsJSON, err := json.Marshal(args)
+
+	// Use the helper method to call MCP tool and check for errors
+	mcpResult, err := wm.callMcpTool("focus_mode", args, "error setting focus mode")
 	if err != nil {
-		return fmt.Errorf("failed to marshal args: %w", err)
+		return nil, err
 	}
 
-	callToolRequest := &mcp.CallMcpToolRequest{
-		Authorization: tea.String("Bearer " + wm.Session.GetAPIKey()),
-		SessionId:     tea.String(wm.Session.GetSessionId()),
-		Name:          tea.String("focus_mode"),
-		Args:          tea.String(string(argsJSON)),
-	}
-
-	// Log API request
-	fmt.Println("API Call: CallMcpTool - focus_mode")
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
-
-	response, err := wm.Session.GetClient().CallMcpTool(callToolRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CallMcpTool - focus_mode:", err)
-		return fmt.Errorf("failed to set focus mode: %w", err)
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - focus_mode:", response.Body)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to set focus mode: %w", err)
-	}
-
-	return nil
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Success: true,
+	}, nil
 }

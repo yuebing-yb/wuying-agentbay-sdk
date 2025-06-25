@@ -44,8 +44,8 @@ class SessionError(AgentBayError):
         super().__init__(message, *args, **kwargs)
 
 
-class AdbError(AgentBayError):
-    """Raised when there is an error with ADB operations."""
+class OssError(AgentBayError):
+    """Raised when there is an error with OSS operations."""
 
-    def __init__(self, message="ADB operation error", *args, **kwargs):
+    def __init__(self, message="OSS operation error", *args, **kwargs):
         super().__init__(message, *args, **kwargs)

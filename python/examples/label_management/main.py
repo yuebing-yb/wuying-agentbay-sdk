@@ -18,7 +18,9 @@ def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         api_key = "akm-xxx"  # Replace with your actual API key for testing
-        print("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use.")
+        print(
+            "Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use."
+        )
 
     session1 = None
     session2 = None
@@ -33,7 +35,7 @@ def main():
         params.labels = {
             "purpose": "demo",
             "feature": "label-management",
-            "version": "1.0"
+            "version": "1.0",
         }
         session1 = agent_bay.create(params)
         print(f"Session created with ID: {session1.session_id}")
@@ -49,19 +51,21 @@ def main():
         params.labels = {
             "purpose": "demo",
             "feature": "other-feature",
-            "version": "2.0"
+            "version": "2.0",
         }
         session2 = agent_bay.create(params)
         print(f"Session created with ID: {session2.session_id}")
 
         # Update labels for the second session
         print("\nUpdating labels for the second session...")
-        session2.set_labels({
-            "purpose": "demo",
-            "feature": "label-management",
-            "version": "2.0",
-            "status": "active"
-        })
+        session2.set_labels(
+            {
+                "purpose": "demo",
+                "feature": "label-management",
+                "version": "2.0",
+                "status": "active",
+            }
+        )
 
         # Get updated labels for the second session
         print("\nGetting updated labels for the second session...")
@@ -77,10 +81,9 @@ def main():
 
         # List sessions by label
         print("\nListing sessions with purpose=demo and feature=label-management...")
-        filtered_sessions = agent_bay.list_by_labels({
-            "purpose": "demo",
-            "feature": "label-management"
-        })
+        filtered_sessions = agent_bay.list_by_labels(
+            {"purpose": "demo", "feature": "label-management"}
+        )
         print(f"Found {len(filtered_sessions)} matching sessions")
         for i, session in enumerate(filtered_sessions):
             print(f"Matching session {i+1} ID: {session.session_id}")

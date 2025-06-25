@@ -31,7 +31,9 @@ def main():
         )
 
         session2 = agent_bay.create(params2)
-        print(f"Session created with ID: {session2.session_id} and labels: {json.dumps(params2.labels)}")
+        print(
+            f"Session created with ID: {session2.session_id} and labels: {json.dumps(params2.labels)}"
+        )
 
         # Example 3: Create a session with a context
         print("\nExample 3: Creating a session with a context...")
@@ -46,7 +48,9 @@ def main():
         params3 = CreateSessionParams(context_id=context.id)
 
         session3 = agent_bay.create(params3)
-        print(f"Session created with ID: {session3.session_id} and context ID: {params3.context_id}")
+        print(
+            f"Session created with ID: {session3.session_id} and context ID: {params3.context_id}"
+        )
 
         # Example 4: Create a session with both labels and context
         print("\nExample 4: Creating a session with both labels and context...")
@@ -55,11 +59,13 @@ def main():
         print(f"Context created with ID: {context2.id}")
         params4 = CreateSessionParams(
             labels={"username": "bob", "project": "another-project"},
-            context_id=context2.id
+            context_id=context2.id,
         )
 
         session4 = agent_bay.create(params4)
-        print(f"Session created with ID: {session4.session_id}, labels: {json.dumps(params4.labels)}, and context ID: {params4.context_id}")
+        print(
+            f"Session created with ID: {session4.session_id}, labels: {json.dumps(params4.labels)}, and context ID: {params4.context_id}"
+        )
 
         # Clean up
         print("\nCleaning up sessions...")

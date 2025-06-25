@@ -5,12 +5,50 @@ import (
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/adb"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/ui"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/window"
 )
+
+// SessionResult wraps Session object and RequestID
+type SessionResult struct {
+	models.ApiResponse
+	Session *Session
+}
+
+// SessionListResult wraps Session list and RequestID
+type SessionListResult struct {
+	models.ApiResponse
+	Sessions []Session
+}
+
+// InfoResult wraps SessionInfo and RequestID
+type InfoResult struct {
+	models.ApiResponse
+	Info *SessionInfo
+}
+
+// LabelResult wraps label operation result and RequestID
+type LabelResult struct {
+	models.ApiResponse
+	Labels string
+}
+
+// LinkResult wraps link result and RequestID
+type LinkResult struct {
+	models.ApiResponse
+	Link string
+}
+
+// DeleteResult wraps deletion operation result and RequestID
+type DeleteResult struct {
+	models.ApiResponse
+	Success bool
+}
 
 // SessionInfo contains information about a session.
 type SessionInfo struct {
@@ -29,12 +67,13 @@ type Session struct {
 	SessionID   string
 	ResourceUrl string
 
-	// File, command, and adb handlers
+	// File and command handlers
 	FileSystem *filesystem.FileSystem
 	Command    *command.Command
-	Adb        *adb.Adb
+	Oss        *oss.OSSManager
 
-	// Application and window management
+	// UI, application and window management
+	UI          *ui.UIManager
 	Application *application.ApplicationManager
 	Window      *window.WindowManager
 }
@@ -46,10 +85,13 @@ func NewSession(agentBay *AgentBay, sessionID string) *Session {
 		SessionID: sessionID,
 	}
 
-	// Initialize filesystem, command, and adb handlers
+	// Initialize filesystem and command handlers
 	session.FileSystem = filesystem.NewFileSystem(session)
 	session.Command = command.NewCommand(session)
-	session.Adb = adb.NewAdb(session)
+	session.Oss = oss.NewOss(session)
+
+	// Initialize UI
+	session.UI = ui.NewUI(session)
 
 	// Initialize application and window managers
 	session.Application = application.NewApplicationManager(session)
@@ -73,7 +115,7 @@ func (s *Session) GetSessionId() string {
 }
 
 // Delete deletes this session.
-func (s *Session) Delete() error {
+func (s *Session) Delete() (*DeleteResult, error) {
 	releaseSessionRequest := &mcp.ReleaseMcpSessionRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
 		SessionId:     tea.String(s.SessionID),
@@ -88,18 +130,28 @@ func (s *Session) Delete() error {
 	// Log API response
 	if err != nil {
 		fmt.Println("Error calling ReleaseMcpSession:", err)
-		return err
+		return nil, err
 	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from ReleaseMcpSession:", response.Body)
 	}
 
 	s.AgentBay.Sessions.Delete(s.SessionID)
-	return nil
+
+	return &DeleteResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Success: true,
+	}, nil
 }
 
 // SetLabels sets the labels for this session.
-func (s *Session) SetLabels(labels string) error {
+func (s *Session) SetLabels(labels string) (*LabelResult, error) {
 	setLabelRequest := &mcp.SetLabelRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
 		Labels:        tea.String(labels),
@@ -115,17 +167,26 @@ func (s *Session) SetLabels(labels string) error {
 	// Log API response
 	if err != nil {
 		fmt.Println("Error calling SetLabel:", err)
-		return err
+		return nil, err
 	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from SetLabel:", response.Body)
 	}
 
-	return nil
+	return &LabelResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Labels: labels,
+	}, nil
 }
 
 // GetLabels gets the labels for this session.
-func (s *Session) GetLabels() (string, error) {
+func (s *Session) GetLabels() (*LabelResult, error) {
 	getLabelRequest := &mcp.GetLabelRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
 		SessionId:     tea.String(s.SessionID),
@@ -140,21 +201,70 @@ func (s *Session) GetLabels() (string, error) {
 	// Log API response
 	if err != nil {
 		fmt.Println("Error calling GetLabel:", err)
-		return "", err
+		return nil, err
 	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from GetLabel:", response.Body)
 	}
 
+	var labels string
 	if response != nil && response.Body != nil && response.Body.Data != nil && response.Body.Data.Labels != nil {
-		return *response.Body.Data.Labels, nil
+		labels = *response.Body.Data.Labels
 	}
 
-	return "", nil
+	return &LabelResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Labels: labels,
+	}, nil
+}
+
+// GetLink gets the link for this session.
+func (s *Session) GetLink() (*LinkResult, error) {
+	getLinkRequest := &mcp.GetLinkRequest{
+		Authorization: tea.String("Bearer " + s.GetAPIKey()),
+		SessionId:     tea.String(s.SessionID),
+	}
+
+	// Log API request
+	fmt.Println("API Call: GetLink")
+	fmt.Printf("Request: SessionId=%s\n", *getLinkRequest.SessionId)
+
+	response, err := s.GetClient().GetLink(getLinkRequest)
+
+	// Log API response
+	if err != nil {
+		fmt.Println("Error calling GetLink:", err)
+		return nil, err
+	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
+	if response != nil && response.Body != nil {
+		fmt.Println("Response from GetLink:", response.Body)
+	}
+
+	var link string
+	if response != nil && response.Body != nil && response.Body.Data != nil {
+		link = *response.Body.Data
+	}
+
+	return &LinkResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Link: link,
+	}, nil
 }
 
 // Info gets information about this session.
-func (s *Session) Info() (*SessionInfo, error) {
+func (s *Session) Info() (*InfoResult, error) {
 	getMcpResourceRequest := &mcp.GetMcpResourceRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
 		SessionId:     tea.String(s.SessionID),
@@ -171,6 +281,10 @@ func (s *Session) Info() (*SessionInfo, error) {
 		fmt.Println("Error calling GetMcpResource:", err)
 		return nil, err
 	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from GetMcpResource:", response.Body)
 	}
@@ -215,7 +329,12 @@ func (s *Session) Info() (*SessionInfo, error) {
 			}
 		}
 
-		return sessionInfo, nil
+		return &InfoResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Info: sessionInfo,
+		}, nil
 	}
 
 	return nil, fmt.Errorf("failed to get session info: empty response data")

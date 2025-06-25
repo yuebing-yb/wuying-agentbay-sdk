@@ -181,38 +181,38 @@ except Exception as e:
 try {
   const apps = await session.application.getInstalledApps(true, false, true);
   for (const app of apps) {
-    console.log(`Application: ${app.name}`);
+    log(`Application: ${app.name}`);
   }
 } catch (error) {
-  console.error(`Error getting installed applications: ${error}`);
+  logError(`Error getting installed applications: ${error}`);
 }
 
 // Start an application
 try {
   const processes = await session.application.startApp('/usr/bin/google-chrome-stable');
   for (const process of processes) {
-    console.log(`Started process: ${process.pname} (PID: ${process.pid})`);
+    log(`Started process: ${process.pname} (PID: ${process.pid})`);
   }
 } catch (error) {
-  console.error(`Error starting application: ${error}`);
+  logError(`Error starting application: ${error}`);
 }
 
 // List root windows
 try {
   const rootWindows = await session.window.listRootWindows();
   for (const window of rootWindows) {
-    console.log(`Window: ${window.title} (ID: ${window.window_id}, Process: ${window.pname}, PID: ${window.pid})`);
+    log(`Window: ${window.title} (ID: ${window.window_id}, Process: ${window.pname}, PID: ${window.pid})`);
   }
 } catch (error) {
-  console.error(`Error listing root windows: ${error}`);
+  logError(`Error listing root windows: ${error}`);
 }
 
 // Get active window
 try {
   const activeWindow = await session.window.getActiveWindow();
-  console.log(`Active window: ${activeWindow.title} (ID: ${activeWindow.window_id})`);
+  log(`Active window: ${activeWindow.title} (ID: ${activeWindow.window_id})`);
 } catch (error) {
-  console.error(`Error getting active window: ${error}`);
+  logError(`Error getting active window: ${error}`);
 }
 
 // Manipulate windows
@@ -220,14 +220,14 @@ try {
   const windowId = rootWindows[0].window_id;
   await session.window.maximizeWindow(windowId);
 } catch (error) {
-  console.error(`Error maximizing window: ${error}`);
+  logError(`Error maximizing window: ${error}`);
 }
 
 // Stop an application by PID
 try {
   await session.application.stopAppByPid(processes[0].pid);
 } catch (error) {
-  console.error(`Error stopping application: ${error}`);
+  logError(`Error stopping application: ${error}`);
 }
 ```
 

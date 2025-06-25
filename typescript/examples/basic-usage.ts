@@ -1,45 +1,62 @@
 import { AgentBay } from '../src';
+import { log, logError } from '../src/utils/logger';
+import { getTestApiKey } from '../tests/utils/test-helpers';
 async function main() {
   try {
-    // In a real environment, you would get this from process.env.AGENTBAY_API_KEY
-    const apiKey = 'your_api_key_here';
-    console.log('Note: In a production environment, use an environment variable for the API key.');
+    // Use the test API key function from test-helpers
+    const apiKey = getTestApiKey();
+    log('Using test API key for demonstration purposes.');
 
     // Initialize the AgentBay client
     const agentBay = new AgentBay({ apiKey });
 
     // Create a new session
-    console.log('Creating a new session...');
+    log('Creating a new session...');
     const session = await agentBay.create();
-    console.log(`Session created with ID: ${session.sessionId}`);
+    log(`Session created with ID: ${session.sessionId}`);
 
     // Execute a command
-    console.log('\nExecuting a command...');
+    log('\nExecuting a command...');
     const result = await session.command.executeCommand('ls -la');
-    console.log('Command result:', result);
+    log('Command result:', result);
 
     // Read a file
-    console.log('\nReading a file...');
+    log('\nReading a file...');
     const content = await session.filesystem.readFile('/etc/hosts');
-    console.log(`File content: ${content}`);
+    log(`File content: ${content}`);
 
-    // Execute an ADB shell command (for mobile environments)
-    console.log('\nExecuting an ADB shell command...');
-    const adbResult = await session.adb.shell('ls /sdcard');
-    console.log(`ADB shell result: ${adbResult}`);
 
+    // Get the session link
+    log('\nGetting session link...');
+    try {
+      const link = await session.getLink();
+      log(`Session link: ${link}`);
+    } catch (error) {
+      log(`Note: Failed to get session link: ${error}`);
+    }
+    
+    // Use the UI module to take a screenshot
+    log('\nTaking a screenshot...');
+    try {
+      const screenshot = await session.ui.screenshot();
+      log(`Screenshot data length: ${screenshot.length} characters`);
+    } catch (error) {
+      log(`Note: Failed to take screenshot: ${error}`);
+    }
+    
     // List all sessions
-    console.log('\nListing all sessions...');
+    log('\nListing all sessions...');
     const sessions = await agentBay.list();
-    console.log('Available sessions:', sessions);
+    log('Available sessions count:', sessions.length);
+    log('Session IDs:', sessions.map(s => s.sessionId));
 
     // Delete the session
-    console.log('\nDeleting the session...');
-    await agentBay.delete(session.sessionId);
-    console.log('Session deleted successfully');
+    log('\nDeleting the session...');
+    await agentBay.delete(session);
+    log('Session deleted successfully');
 
   } catch (error) {
-    console.error('Error:', error);
+    logError('Error:', error);
     // In a Node.js environment, you would use process.exit(1) here
     throw error;
   }
