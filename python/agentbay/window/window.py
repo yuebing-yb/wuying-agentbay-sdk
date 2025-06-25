@@ -162,48 +162,6 @@ class WindowManager:
         except Exception as e:
             raise AgentBayError(f"Failed to call MCP tool {name}: {e}")
 
-    def get_window_info_by_pname(self, pname: str) -> List[Window]:
-        """
-        Gets detailed window information for a process by name.
-
-        Args:
-            pname (str): The name of the process.
-
-        Returns:
-            List[Window]: A list of windows for the process.
-
-        Raises:
-            AgentBayError: If the operation fails.
-        """
-        args = {"pname": pname}
-
-        try:
-            result = self._call_mcp_tool("get_window_info_by_pname", args)
-            return [Window.from_dict(window) for window in result]
-        except Exception as e:
-            raise AgentBayError(f"Failed to get window info by pname: {e}")
-
-    def get_window_info_by_pid(self, pid: int) -> List[Window]:
-        """
-        Gets detailed window information for a process by ID.
-
-        Args:
-            pid (int): The ID of the process.
-
-        Returns:
-            List[Window]: A list of windows for the process.
-
-        Raises:
-            AgentBayError: If the operation fails.
-        """
-        args = {"pid": pid}
-
-        try:
-            result = self._call_mcp_tool("get_window_info_by_pid", args)
-            return [Window.from_dict(window) for window in result]
-        except Exception as e:
-            raise AgentBayError(f"Failed to get window info by pid: {e}")
-
     def list_root_windows(self) -> List[Window]:
         """
         Lists all root windows in the system.

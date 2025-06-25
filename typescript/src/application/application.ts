@@ -1,4 +1,19 @@
 import { CallMcpToolRequest } from '../api/models/CallMcpToolRequest';
+import Client from '../api/client';
+import { log, logError } from '../utils/logger';
+import { APIError } from '../exceptions';
+
+/**
+ * Result object for a CallMcpTool operation
+ */
+interface CallMcpToolResult {
+  data: Record<string, any>;
+  content?: any[];
+  textContent?: string;
+  isError: boolean;
+  errorMsg?: string;
+  statusCode: number;
+}
 
 /**
  * Represents an installed application.
@@ -17,81 +32,130 @@ export interface Process {
   pname: string;
   pid: number;
   cmdline?: string;
+  path?: string;
 }
 
 /**
  * Handles application management operations in the AgentBay cloud environment.
  */
-export class ApplicationManager {
+export class Application {
   private session: {
     getAPIKey(): string;
-    getClient(): any;
+    getClient(): Client;
     getSessionId(): string;
   };
 
   /**
-   * Creates a new ApplicationManager instance.
+   * Creates a new Application instance.
    * @param session The session object that provides access to the AgentBay API.
    */
   constructor(session: {
     getAPIKey(): string;
-    getClient(): any;
+    getClient(): Client;
     getSessionId(): string;
   }) {
     this.session = session;
+    
   }
 
   /**
-   * Call an MCP tool with the given name and arguments.
-   * @param name The name of the tool to call.
-   * @param args The arguments to pass to the tool.
-   * @returns The response from the tool.
-   * @throws Error if the tool call fails.
+   * Helper method to call MCP tools and handle common response processing
+   * 
+   * @param toolName - Name of the MCP tool to call
+   * @param args - Arguments to pass to the tool
+   * @param defaultErrorMsg - Default error message if specific error details are not available
+   * @returns A CallMcpToolResult with the response data
+   * @throws APIError if the call fails
    */
-  private async callMcpTool(name: string, args: any): Promise<any> {
+  private async callMcpTool(
+    toolName: string, 
+    args: Record<string, any>,
+    defaultErrorMsg: string
+  ): Promise<CallMcpToolResult> {
     try {
       const argsJSON = JSON.stringify(args);
       const request = new CallMcpToolRequest({
         authorization: `Bearer ${this.session.getAPIKey()}`,
         sessionId: this.session.getSessionId(),
-        name,
+        name: toolName,
         args: argsJSON
       });
-
+      
       // Log API request
-      console.log(`API Call: CallMcpTool - ${name}`);
-      console.log(`Request: SessionId=${request.sessionId}, Args=${request.args}`);
-
-      const response = await this.session.getClient().callMcpTool(request);
-
+      log(`API Call: CallMcpTool - ${toolName}`);
+      log(`Request: SessionId=${request.sessionId}, Args=${request.args}`);
+      
+      const client = this.session.getClient();
+      const response = await client.callMcpTool(request);
+      
       // Log API response
       if (response && response.body) {
-        console.log(`Response from CallMcpTool - ${name}:`, response.body);
+        log(`Response from CallMcpTool - ${toolName}:`, response.body);
       }
-
-      // Parse the response
-      const data = response.body?.data;
-      if (!data) {
+      
+      // Extract data from response
+      if (!response.body?.data) {
         throw new Error('Invalid response data format');
       }
-
-      // Extract content array
-      const content = data.content;
-      if (!content || content.length === 0) {
-        throw new Error('Invalid or empty content array in response');
+      
+      const data = response.body.data as Record<string, any>;
+      
+      // Create result object
+      const result: CallMcpToolResult = {
+        data,
+        statusCode: response.statusCode || 0,
+        isError: false
+      };
+      
+      // Check if there's an error in the response
+      if (data.isError === true) {
+        result.isError = true;
+        
+        // Try to extract the error message from the content field
+        const contentArray = data.content as any[] | undefined;
+        if (contentArray && contentArray.length > 0) {
+          result.content = contentArray;
+          
+          // Extract error message from the first content item
+          if (contentArray[0]?.text) {
+            result.errorMsg = contentArray[0].text;
+            throw new Error(contentArray[0].text);
+          }
+        }
+        throw new Error(defaultErrorMsg);
       }
-
-      // Extract text field from the first content item
-      const contentItem = content[0];
-      const jsonText = contentItem.text;
-      if (!jsonText) {
-        throw new Error('Text field not found or not a string');
+      
+      // Extract content array if it exists
+      if (Array.isArray(data.content)) {
+        result.content = data.content;
+        
+        // Extract textContent from content items
+        if (result.content.length > 0) {
+          const textParts: string[] = [];
+          for (const item of result.content) {
+            if (item && typeof item === 'object' && item.text && typeof item.text === 'string') {
+              textParts.push(item.text);
+            }
+          }
+          result.textContent = textParts.join('\n');
+        }
       }
-
-      // Parse the JSON text
-      return JSON.parse(jsonText);
+      
+      return result;
     } catch (error) {
-      throw new Error(`Failed to call MCP tool ${name}: ${error}`);
+      logError(`Error calling CallMcpTool - ${toolName}:`, error);
+      throw new APIError(`Failed to call ${toolName}: ${error}`);
+    }
+  }
+
+  /**
+   * Helper method to parse JSON string into objects
+   */
+  private parseJSON<T>(jsonString: string): T {
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      throw new Error(`Failed to parse JSON: ${error}`);
     }
   }
 
@@ -100,7 +164,7 @@ export class ApplicationManager {
    * @param startMenu Whether to include applications from the start menu. Defaults to true.
    * @param desktop Whether to include applications from the desktop. Defaults to true.
    * @param ignoreSystemApps Whether to ignore system applications. Defaults to true.
-   * @returns A list of installed applications.
+   * @returns Array of InstalledApp objects
    * @throws Error if the operation fails.
    */
   async getInstalledApps(
@@ -114,19 +178,20 @@ export class ApplicationManager {
       ignore_system_apps: ignoreSystemApps
     };
 
-    try {
-      const result = await this.callMcpTool('get_installed_apps', args);
-      return result as InstalledApp[];
-    } catch (error) {
-      throw new Error(`Failed to get installed apps: ${error}`);
+    const result = await this.callMcpTool('get_installed_apps', args, 'Failed to get installed apps');
+    
+    if (!result.textContent) {
+      return [];
     }
+    
+    return this.parseJSON<InstalledApp[]>(result.textContent);
   }
 
   /**
    * Starts an application with the given command and optional working directory.
    * @param startCmd The command to start the application.
    * @param workDirectory The working directory for the application. Defaults to an empty string.
-   * @returns A list of processes started.
+   * @returns Array of Process objects representing the started processes
    * @throws Error if the operation fails.
    */
   async startApp(startCmd: string, workDirectory: string = ''): Promise<Process[]> {
@@ -138,12 +203,13 @@ export class ApplicationManager {
       args.work_directory = workDirectory;
     }
 
-    try {
-      const result = await this.callMcpTool('start_app', args);
-      return result as Process[];
-    } catch (error) {
-      throw new Error(`Failed to start app: ${error}`);
+    const result = await this.callMcpTool('start_app', args, 'Failed to start app');
+    
+    if (!result.textContent) {
+      return [];
     }
+    
+    return this.parseJSON<Process[]>(result.textContent);
   }
 
   /**
@@ -156,11 +222,7 @@ export class ApplicationManager {
       pname
     };
 
-    try {
-      await this.callMcpTool('stop_app_by_pname', args);
-    } catch (error) {
-      throw new Error(`Failed to stop app by pname: ${error}`);
-    }
+    await this.callMcpTool('stop_app_by_pname', args, 'Failed to stop app by pname');
   }
 
   /**
@@ -173,11 +235,7 @@ export class ApplicationManager {
       pid
     };
 
-    try {
-      await this.callMcpTool('stop_app_by_pid', args);
-    } catch (error) {
-      throw new Error(`Failed to stop app by pid: ${error}`);
-    }
+    await this.callMcpTool('stop_app_by_pid', args, 'Failed to stop app by pid');
   }
 
   /**
@@ -190,26 +248,23 @@ export class ApplicationManager {
       stop_cmd: stopCmd
     };
 
-    try {
-      await this.callMcpTool('stop_app_by_cmd', args);
-    } catch (error) {
-      throw new Error(`Failed to stop app by command: ${error}`);
-    }
+    await this.callMcpTool('stop_app_by_cmd', args, 'Failed to stop app by command');
   }
 
   /**
    * Lists all currently visible applications.
-   * @returns A list of visible processes.
+   * @returns Array of Process objects representing the visible processes
    * @throws Error if the operation fails.
    */
   async listVisibleApps(): Promise<Process[]> {
     const args = {};
 
-    try {
-      const result = await this.callMcpTool('list_visible_apps', args);
-      return result as Process[];
-    } catch (error) {
-      throw new Error(`Failed to list visible apps: ${error}`);
+    const result = await this.callMcpTool('list_visible_apps', args, 'Failed to list visible apps');
+    
+    if (!result.textContent) {
+      return [];
     }
+    
+    return this.parseJSON<Process[]>(result.textContent);
   }
 }

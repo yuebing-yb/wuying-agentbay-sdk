@@ -1,31 +1,32 @@
-# Application and Window Management Example
+# Application Window Management Example
 
-This example demonstrates how to use the application and window management features of the Wuying AgentBay SDK. It covers:
+This example demonstrates how to use the AgentBay SDK to interact with applications and windows on the system.
 
-- Initializing the AgentBay client
-- Creating a session
-- Getting installed applications
-- Listing visible applications
-- Listing root windows
-- Getting the active window
-- Window operations (activate, maximize, minimize, restore, resize)
-- Focus mode
-- Deleting a session
+## Features Demonstrated
 
-This example is useful for understanding how to interact with applications and windows in the operating system.
+- Application Management:
+  - Getting a list of installed applications
+  - Listing visible (running) applications
+
+- Window Management:
+  - Listing root windows in the system
+  - Getting the currently active window
+  - Getting window information by ID
 
 ## Running the Example
 
+Make sure you have set your AgentBay API key as an environment variable:
+
 ```bash
-cd application-window
-ts-node application-window.ts
+export AGENTBAY_API_KEY="your-api-key-here"
 ```
 
-Make sure you have set the `AGENTBAY_API_KEY` environment variable or replace the placeholder in the code with your actual API key.
+Then run the example:
 
-## Prerequisites
+```bash
+npx ts-node application-window.ts
+```
 
-- Node.js installed
-- TypeScript installed
-- ts-node installed (`npm install -g ts-node`)
-- Required dependencies installed (`npm install`)
+## Note
+
+Some of the demonstrated functionality may be platform-specific and might not work on all operating systems or session types. The example includes error handling to deal with cases where certain operations are not supported. 

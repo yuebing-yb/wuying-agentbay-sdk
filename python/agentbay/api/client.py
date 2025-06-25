@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
+from alibabacloud_tea_openapi.client import Client as OpenApiClient
+from alibabacloud_tea_openapi import utils_models as open_api_util_models
+from darabonba.core import DaraCore as DaraCore
+from alibabacloud_tea_openapi.utils import Utils
+from agentbay.api import models as main_models
+from darabonba.runtime import RuntimeOptions
 from typing import Dict
 
-from alibabacloud_tea_openapi import utils_models as open_api_util_models
-from alibabacloud_tea_openapi.client import Client as OpenApiClient
-from alibabacloud_tea_openapi.utils import Utils
-from darabonba.core import DaraCore as DaraCore
-from darabonba.runtime import RuntimeOptions
-
-from agentbay.api import models as main_models
 
 """
 """
@@ -55,75 +54,6 @@ class Client(OpenApiClient):
             product_id, region_id, endpoint_rule, network, suffix
         )
 
-    def apply_mqtt_token_with_options(
-        self,
-        request: main_models.ApplyMqttTokenRequest,
-        runtime: RuntimeOptions,
-    ) -> main_models.ApplyMqttTokenResponse:
-        request.validate()
-        query = {}
-        if not DaraCore.is_null(request.desktop_id):
-            query["DesktopId"] = request.desktop_id
-        if not DaraCore.is_null(request.session_token):
-            query["SessionToken"] = request.session_token
-        req = open_api_util_models.OpenApiRequest(query=Utils.query(query))
-        params = open_api_util_models.Params(
-            action="ApplyMqttToken",
-            version="2025-05-06",
-            protocol="HTTPS",
-            pathname="/",
-            method="POST",
-            auth_type="Anonymous",
-            style="RPC",
-            req_body_type="formData",
-            body_type="json",
-        )
-        return DaraCore.from_map(
-            main_models.ApplyMqttTokenResponse(), self.call_api(params, req, runtime)
-        )
-
-    async def apply_mqtt_token_with_options_async(
-        self,
-        request: main_models.ApplyMqttTokenRequest,
-        runtime: RuntimeOptions,
-    ) -> main_models.ApplyMqttTokenResponse:
-        request.validate()
-        query = {}
-        if not DaraCore.is_null(request.desktop_id):
-            query["DesktopId"] = request.desktop_id
-        if not DaraCore.is_null(request.session_token):
-            query["SessionToken"] = request.session_token
-        req = open_api_util_models.OpenApiRequest(query=Utils.query(query))
-        params = open_api_util_models.Params(
-            action="ApplyMqttToken",
-            version="2025-05-06",
-            protocol="HTTPS",
-            pathname="/",
-            method="POST",
-            auth_type="Anonymous",
-            style="RPC",
-            req_body_type="formData",
-            body_type="json",
-        )
-        return DaraCore.from_map(
-            main_models.ApplyMqttTokenResponse(),
-            await self.call_api_async(params, req, runtime),
-        )
-
-    def apply_mqtt_token(
-        self,
-        request: main_models.ApplyMqttTokenRequest,
-    ) -> main_models.ApplyMqttTokenResponse:
-        runtime = RuntimeOptions()
-        return self.apply_mqtt_token_with_options(request, runtime)
-
-    async def apply_mqtt_token_async(
-        self,
-        request: main_models.ApplyMqttTokenRequest,
-    ) -> main_models.ApplyMqttTokenResponse:
-        runtime = RuntimeOptions()
-        return await self.apply_mqtt_token_with_options_async(request, runtime)
-
     def call_mcp_tool_with_options(
         self,
         request: main_models.CallMcpToolRequest,
@@ -137,6 +67,8 @@ class Client(OpenApiClient):
             body["Authorization"] = request.authorization
         if not DaraCore.is_null(request.external_user_id):
             body["ExternalUserId"] = request.external_user_id
+        if not DaraCore.is_null(request.image_id):
+            body["ImageId"] = request.image_id
         if not DaraCore.is_null(request.name):
             body["Name"] = request.name
         if not DaraCore.is_null(request.server):
@@ -174,6 +106,8 @@ class Client(OpenApiClient):
             body["Authorization"] = request.authorization
         if not DaraCore.is_null(request.external_user_id):
             body["ExternalUserId"] = request.external_user_id
+        if not DaraCore.is_null(request.image_id):
+            body["ImageId"] = request.image_id
         if not DaraCore.is_null(request.name):
             body["Name"] = request.name
         if not DaraCore.is_null(request.server):
@@ -226,6 +160,8 @@ class Client(OpenApiClient):
             body["ContextId"] = request.context_id
         if not DaraCore.is_null(request.external_user_id):
             body["ExternalUserId"] = request.external_user_id
+        if not DaraCore.is_null(request.image_id):
+            body["ImageId"] = request.image_id
         if not DaraCore.is_null(request.labels):
             body["Labels"] = request.labels
         if not DaraCore.is_null(request.session_id):
@@ -259,6 +195,8 @@ class Client(OpenApiClient):
             body["ContextId"] = request.context_id
         if not DaraCore.is_null(request.external_user_id):
             body["ExternalUserId"] = request.external_user_id
+        if not DaraCore.is_null(request.image_id):
+            body["ImageId"] = request.image_id
         if not DaraCore.is_null(request.labels):
             body["Labels"] = request.labels
         if not DaraCore.is_null(request.session_id):
@@ -513,6 +451,75 @@ class Client(OpenApiClient):
         runtime = RuntimeOptions()
         return await self.get_label_with_options_async(request, runtime)
 
+    def get_link_with_options(
+        self,
+        request: main_models.GetLinkRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.GetLinkResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="GetLink",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.GetLinkResponse(), self.call_api(params, req, runtime)
+        )
+
+    async def get_link_with_options_async(
+        self,
+        request: main_models.GetLinkRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.GetLinkResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="GetLink",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.GetLinkResponse(),
+            await self.call_api_async(params, req, runtime),
+        )
+
+    def get_link(
+        self,
+        request: main_models.GetLinkRequest,
+    ) -> main_models.GetLinkResponse:
+        runtime = RuntimeOptions()
+        return self.get_link_with_options(request, runtime)
+
+    async def get_link_async(
+        self,
+        request: main_models.GetLinkRequest,
+    ) -> main_models.GetLinkResponse:
+        runtime = RuntimeOptions()
+        return await self.get_link_with_options_async(request, runtime)
+
     def get_mcp_resource_with_options(
         self,
         request: main_models.GetMcpResourceRequest,
@@ -581,86 +588,6 @@ class Client(OpenApiClient):
     ) -> main_models.GetMcpResourceResponse:
         runtime = RuntimeOptions()
         return await self.get_mcp_resource_with_options_async(request, runtime)
-
-    def handle_aiengine_message_with_options(
-        self,
-        request: main_models.HandleAIEngineMessageRequest,
-        runtime: RuntimeOptions,
-    ) -> main_models.HandleAIEngineMessageResponse:
-        request.validate()
-        query = {}
-        if not DaraCore.is_null(request.session_token):
-            query["SessionToken"] = request.session_token
-        body = {}
-        if not DaraCore.is_null(request.data):
-            body["Data"] = request.data
-        if not DaraCore.is_null(request.msg_type):
-            body["MsgType"] = request.msg_type
-        req = open_api_util_models.OpenApiRequest(
-            query=Utils.query(query), body=Utils.parse_to_map(body)
-        )
-        params = open_api_util_models.Params(
-            action="HandleAIEngineMessage",
-            version="2025-05-06",
-            protocol="HTTPS",
-            pathname="/",
-            method="POST",
-            auth_type="Anonymous",
-            style="RPC",
-            req_body_type="formData",
-            body_type="json",
-        )
-        return DaraCore.from_map(
-            main_models.HandleAIEngineMessageResponse(),
-            self.call_api(params, req, runtime),
-        )
-
-    async def handle_aiengine_message_with_options_async(
-        self,
-        request: main_models.HandleAIEngineMessageRequest,
-        runtime: RuntimeOptions,
-    ) -> main_models.HandleAIEngineMessageResponse:
-        request.validate()
-        query = {}
-        if not DaraCore.is_null(request.session_token):
-            query["SessionToken"] = request.session_token
-        body = {}
-        if not DaraCore.is_null(request.data):
-            body["Data"] = request.data
-        if not DaraCore.is_null(request.msg_type):
-            body["MsgType"] = request.msg_type
-        req = open_api_util_models.OpenApiRequest(
-            query=Utils.query(query), body=Utils.parse_to_map(body)
-        )
-        params = open_api_util_models.Params(
-            action="HandleAIEngineMessage",
-            version="2025-05-06",
-            protocol="HTTPS",
-            pathname="/",
-            method="POST",
-            auth_type="Anonymous",
-            style="RPC",
-            req_body_type="formData",
-            body_type="json",
-        )
-        return DaraCore.from_map(
-            main_models.HandleAIEngineMessageResponse(),
-            await self.call_api_async(params, req, runtime),
-        )
-
-    def handle_aiengine_message(
-        self,
-        request: main_models.HandleAIEngineMessageRequest,
-    ) -> main_models.HandleAIEngineMessageResponse:
-        runtime = RuntimeOptions()
-        return self.handle_aiengine_message_with_options(request, runtime)
-
-    async def handle_aiengine_message_async(
-        self,
-        request: main_models.HandleAIEngineMessageRequest,
-    ) -> main_models.HandleAIEngineMessageResponse:
-        runtime = RuntimeOptions()
-        return await self.handle_aiengine_message_with_options_async(request, runtime)
 
     def list_contexts_with_options(
         self,
@@ -734,71 +661,6 @@ class Client(OpenApiClient):
     ) -> main_models.ListContextsResponse:
         runtime = RuntimeOptions()
         return await self.list_contexts_with_options_async(request, runtime)
-
-    def list_mcp_tools_with_options(
-        self,
-        request: main_models.ListMcpToolsRequest,
-        runtime: RuntimeOptions,
-    ) -> main_models.ListMcpToolsResponse:
-        request.validate()
-        body = {}
-        if not DaraCore.is_null(request.authorization):
-            body["Authorization"] = request.authorization
-        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
-        params = open_api_util_models.Params(
-            action="ListMcpTools",
-            version="2025-05-06",
-            protocol="HTTPS",
-            pathname="/",
-            method="POST",
-            auth_type="Anonymous",
-            style="RPC",
-            req_body_type="formData",
-            body_type="json",
-        )
-        return DaraCore.from_map(
-            main_models.ListMcpToolsResponse(), self.call_api(params, req, runtime)
-        )
-
-    async def list_mcp_tools_with_options_async(
-        self,
-        request: main_models.ListMcpToolsRequest,
-        runtime: RuntimeOptions,
-    ) -> main_models.ListMcpToolsResponse:
-        request.validate()
-        body = {}
-        if not DaraCore.is_null(request.authorization):
-            body["Authorization"] = request.authorization
-        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
-        params = open_api_util_models.Params(
-            action="ListMcpTools",
-            version="2025-05-06",
-            protocol="HTTPS",
-            pathname="/",
-            method="POST",
-            auth_type="Anonymous",
-            style="RPC",
-            req_body_type="formData",
-            body_type="json",
-        )
-        return DaraCore.from_map(
-            main_models.ListMcpToolsResponse(),
-            await self.call_api_async(params, req, runtime),
-        )
-
-    def list_mcp_tools(
-        self,
-        request: main_models.ListMcpToolsRequest,
-    ) -> main_models.ListMcpToolsResponse:
-        runtime = RuntimeOptions()
-        return self.list_mcp_tools_with_options(request, runtime)
-
-    async def list_mcp_tools_async(
-        self,
-        request: main_models.ListMcpToolsRequest,
-    ) -> main_models.ListMcpToolsResponse:
-        runtime = RuntimeOptions()
-        return await self.list_mcp_tools_with_options_async(request, runtime)
 
     def list_session_with_options(
         self,

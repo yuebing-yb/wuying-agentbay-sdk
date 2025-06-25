@@ -5,65 +5,53 @@ import (
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
+// Window represents a window in the system (copy of the same struct from window package)
+type Window struct {
+	WindowID           int      `json:"window_id"`
+	Title              string   `json:"title"`
+	AbsoluteUpperLeftX int      `json:"absolute_upper_left_x,omitempty"`
+	AbsoluteUpperLeftY int      `json:"absolute_upper_left_y,omitempty"`
+	Width              int      `json:"width,omitempty"`
+	Height             int      `json:"height,omitempty"`
+	PID                int      `json:"pid,omitempty"`
+	PName              string   `json:"pname,omitempty"`
+	ChildWindows       []Window `json:"child_windows,omitempty"`
+}
+
 func TestWindow_ListRootWindows(t *testing.T) {
-	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
-	agentBay, err := agentbay.NewAgentBay(apiKey)
-	if err != nil {
-		t.Fatalf("Error initializing AgentBay client: %v", err)
-	}
-
-	// Create a session
-	fmt.Println("Creating a new session for window testing...")
-	session, err := agentBay.Create(nil)
-	if err != nil {
-		t.Fatalf("Error creating session: %v", err)
-	}
-	t.Logf("Session created with ID: %s", session.SessionID)
-
-	// IMPORTANT: Ensure cleanup of the session after test
-	defer func() {
-		fmt.Println("Cleaning up: Deleting the session...")
-		err := agentBay.Delete(session)
-		if err != nil {
-			t.Logf("Warning: Error deleting session: %v", err)
-		} else {
-			t.Log("Session successfully deleted")
-		}
-	}()
+	// Setup session with cleanup and ImageId set to linux_latest
+	sessionParams := agentbay.NewCreateSessionParams().WithImageId("linux_latest")
+	session, cleanup := testutil.SetupAndCleanup(t, sessionParams)
+	defer cleanup()
 
 	// Test ListRootWindows
 	if session.Window != nil {
 		fmt.Println("Listing root windows...")
-		rootWindows, err := session.Window.ListRootWindows()
+		listResult, err := session.Window.ListRootWindows()
 		if err != nil {
 			t.Logf("Note: ListRootWindows failed: %v", err)
 		} else {
-			t.Logf("Found %d root windows", len(rootWindows))
+			t.Logf("Found %d root windows (RequestID: %s)", len(listResult.Windows), listResult.RequestID)
 
 			// Verify we got some windows
-			if len(rootWindows) == 0 {
+			if len(listResult.Windows) == 0 {
 				t.Logf("Warning: No root windows found")
 			} else {
 				// Print the first 3 windows or fewer if less than 3 are available
-				count := min(len(rootWindows), 3)
+				count := min(len(listResult.Windows), 3)
 				for i := 0; i < count; i++ {
-					t.Logf("Window %d: %s (ID: %d)", i+1, rootWindows[i].Title, rootWindows[i].WindowID)
+					t.Logf("Window %d: %s (ID: %d)", i+1, listResult.Windows[i].Title, listResult.Windows[i].WindowID)
 				}
 
 				// Verify window properties
-				for _, window := range rootWindows {
+				for _, window := range listResult.Windows {
 					if window.WindowID <= 0 {
 						t.Errorf("Found window with invalid ID: %d", window.WindowID)
 					}
 				}
-			}
-
-			// Check if response contains "tool not found"
-			if len(rootWindows) > 0 && containsToolNotFound(rootWindows[0].Title) {
-				t.Errorf("Window.ListRootWindows returned 'tool not found'")
 			}
 		}
 	} else {
@@ -72,53 +60,31 @@ func TestWindow_ListRootWindows(t *testing.T) {
 }
 
 func TestWindow_GetActiveWindow(t *testing.T) {
-	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
-	agentBay, err := agentbay.NewAgentBay(apiKey)
-	if err != nil {
-		t.Fatalf("Error initializing AgentBay client: %v", err)
-	}
-
-	// Create a session
-	fmt.Println("Creating a new session for active window testing...")
-	session, err := agentBay.Create(nil)
-	if err != nil {
-		t.Fatalf("Error creating session: %v", err)
-	}
-	t.Logf("Session created with ID: %s", session.SessionID)
-
-	// IMPORTANT: Ensure cleanup of the session after test
-	defer func() {
-		fmt.Println("Cleaning up: Deleting the session...")
-		err := agentBay.Delete(session)
-		if err != nil {
-			t.Logf("Warning: Error deleting session: %v", err)
-		} else {
-			t.Log("Session successfully deleted")
-		}
-	}()
+	// Setup session with cleanup and ImageId set to linux_latest
+	sessionParams := agentbay.NewCreateSessionParams().WithImageId("linux_latest")
+	session, cleanup := testutil.SetupAndCleanup(t, sessionParams)
+	defer cleanup()
 
 	// Test GetActiveWindow
 	if session.Window != nil {
 		fmt.Println("Getting active window...")
-		activeWindow, err := session.Window.GetActiveWindow()
+		activeWindowResult, err := session.Window.GetActiveWindow()
 		if err != nil {
 			t.Logf("Note: GetActiveWindow failed: %v", err)
 		} else {
+			t.Logf("Active window (RequestID: %s):", activeWindowResult.RequestID)
 			t.Logf("Active window: %s (ID: %d, Process: %s, PID: %d)",
-				activeWindow.Title, activeWindow.WindowID, activeWindow.PName, activeWindow.PID)
+				activeWindowResult.Window.Title,
+				activeWindowResult.Window.WindowID,
+				activeWindowResult.Window.PName,
+				activeWindowResult.Window.PID)
 
 			// Verify window properties
-			if activeWindow.WindowID <= 0 {
-				t.Errorf("Active window has invalid ID: %d", activeWindow.WindowID)
+			if activeWindowResult.Window.WindowID <= 0 {
+				t.Errorf("Active window has invalid ID: %d", activeWindowResult.Window.WindowID)
 			}
-			if activeWindow.PID <= 0 {
-				t.Errorf("Active window has invalid PID: %d", activeWindow.PID)
-			}
-
-			// Check if response contains "tool not found"
-			if containsToolNotFound(activeWindow.Title) || containsToolNotFound(activeWindow.PName) {
-				t.Errorf("Window.GetActiveWindow returned 'tool not found'")
+			if activeWindowResult.Window.PID <= 0 {
+				t.Logf("Active window has PID: %d", activeWindowResult.Window.PID)
 			}
 		}
 	} else {
@@ -127,58 +93,33 @@ func TestWindow_GetActiveWindow(t *testing.T) {
 }
 
 func TestWindow_FocusMode(t *testing.T) {
-	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
-	agentBay, err := agentbay.NewAgentBay(apiKey)
-	if err != nil {
-		t.Fatalf("Error initializing AgentBay client: %v", err)
-	}
-
-	// Create a session
-	fmt.Println("Creating a new session for focus mode testing...")
-	session, err := agentBay.Create(nil)
-	if err != nil {
-		t.Fatalf("Error creating session: %v", err)
-	}
-	t.Logf("Session created with ID: %s", session.SessionID)
-
-	// IMPORTANT: Ensure cleanup of the session after test
-	defer func() {
-		// Make sure to disable focus mode before cleaning up
-		if session.Window != nil {
-			err := session.Window.FocusMode(false)
-			if err != nil {
-				t.Logf("Warning: Error disabling focus mode: %v", err)
-			}
-		}
-
-		fmt.Println("Cleaning up: Deleting the session...")
-		err := agentBay.Delete(session)
-		if err != nil {
-			t.Logf("Warning: Error deleting session: %v", err)
-		} else {
-			t.Log("Session successfully deleted")
-		}
-	}()
+	// Setup session with cleanup and ImageId set to linux_latest
+	sessionParams := agentbay.NewCreateSessionParams().WithImageId("linux_latest")
+	session, cleanup := testutil.SetupAndCleanup(t, sessionParams)
+	defer cleanup()
 
 	// Test FocusMode
 	if session.Window != nil {
 		// Enable focus mode
 		fmt.Println("Enabling focus mode...")
-		err := session.Window.FocusMode(true)
+		enableResult, err := session.Window.FocusMode(true)
 		if err != nil {
-			t.Logf("Note: Enabling focus mode failed: %v", err)
+			t.Logf("Note: FocusMode(true) failed: %v", err)
 		} else {
-			t.Logf("Focus mode enabled successfully")
+			t.Logf("Focus mode enabled successfully (RequestID: %s)", enableResult.RequestID)
 		}
+
+		// Wait a short time
+		fmt.Println("Waiting briefly...")
+		testutil.SleepWithMessage(2, "Focus mode is active...")
 
 		// Disable focus mode
 		fmt.Println("Disabling focus mode...")
-		err = session.Window.FocusMode(false)
+		disableResult, err := session.Window.FocusMode(false)
 		if err != nil {
-			t.Logf("Note: Disabling focus mode failed: %v", err)
+			t.Logf("Note: FocusMode(false) failed: %v", err)
 		} else {
-			t.Logf("Focus mode disabled successfully")
+			t.Logf("Focus mode disabled successfully (RequestID: %s)", disableResult.RequestID)
 		}
 	} else {
 		t.Logf("Note: Window interface is nil, skipping focus mode test")

@@ -22,7 +22,9 @@ def main():
             contexts = agent_bay.context.list()
             print(f"Found {len(contexts)} contexts:")
             for context in contexts:
-                print(f"- {context.name} ({context.id}): state={context.state}, os={context.os_type}")
+                print(
+                    f"- {context.name} ({context.id}): state={context.state}, os={context.os_type}"
+                )
         except AgentBayError as e:
             print(f"Error listing contexts: {e}")
 
@@ -46,10 +48,7 @@ def main():
         try:
             params = CreateSessionParams(
                 context_id=context.id,
-                labels={
-                    "username": "alice",
-                    "project": "my-project"
-                }
+                labels={"username": "alice", "project": "my-project"},
             )
             session = agent_bay.create(params)
             print(f"Session created with ID: {session.session_id}")
@@ -76,6 +75,7 @@ def main():
         try:
             if session:
                 agent_bay.delete(session)
+                session = None
             print("Session deleted successfully")
         except AgentBayError as e:
             print(f"Error deleting session: {e}")
@@ -90,6 +90,13 @@ def main():
 
     except Exception as e:
         print(f"Error initializing AgentBay: {e}")
+        if session:
+            try:
+                agent_bay.delete(session)
+                print("Session deleted successfully")
+            except AgentBayError as delete_error:
+                print(f"Error deleting session during cleanup: {delete_error}")
+
 
 if __name__ == "__main__":
     main()

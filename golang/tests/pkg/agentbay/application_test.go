@@ -7,28 +7,32 @@ import (
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 func TestApplication_GetInstalledApps(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	// Create a session
+	// Create a session with ImageId set to linux_latest
 	fmt.Println("Creating a new session for application testing...")
-	session, err := agentBay.Create(nil)
+	sessionParams := agentbay.NewCreateSessionParams().WithImageId("linux_latest")
+	result, err := agentBay.Create(sessionParams)
 	if err != nil {
 		t.Fatalf("Error creating session: %v", err)
 	}
+
+	session := result.Session
 	t.Logf("Session created with ID: %s", session.SessionID)
 
 	// IMPORTANT: Ensure cleanup of the session after test
 	defer func() {
 		fmt.Println("Cleaning up: Deleting the session...")
-		err := agentBay.Delete(session)
+		_, err := agentBay.Delete(session)
 		if err != nil {
 			t.Logf("Warning: Error deleting session: %v", err)
 		} else {
@@ -39,10 +43,13 @@ func TestApplication_GetInstalledApps(t *testing.T) {
 	// Test GetInstalledApps
 	if session.Application != nil {
 		fmt.Println("Getting installed applications...")
-		apps, err := session.Application.GetInstalledApps(true, false, true)
+		appsResult, err := session.Application.GetInstalledApps(true, false, true)
 		if err != nil {
 			t.Logf("Note: GetInstalledApps failed: %v", err)
 		} else {
+			t.Logf("Got response content with RequestID: %s", appsResult.RequestID)
+
+			apps := appsResult.Applications
 			t.Logf("Found %d installed applications", len(apps))
 
 			// Verify we got some apps
@@ -64,8 +71,12 @@ func TestApplication_GetInstalledApps(t *testing.T) {
 			}
 
 			// Check if response contains "tool not found"
-			if len(apps) > 0 && containsToolNotFound(apps[0].Name) {
+			if len(apps) > 0 && testutil.ContainsToolNotFound(apps[0].Name) {
 				t.Errorf("Application.GetInstalledApps returned 'tool not found'")
+			}
+
+			if appsResult.RequestID == "" {
+				t.Errorf("GetInstalledApps method did not return RequestID")
 			}
 		}
 	} else {
@@ -75,24 +86,27 @@ func TestApplication_GetInstalledApps(t *testing.T) {
 
 func TestApplication_ListVisibleApps(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	// Create a session
+	// Create a session with ImageId set to linux_latest
 	fmt.Println("Creating a new session for visible apps testing...")
-	session, err := agentBay.Create(nil)
+	sessionParams := agentbay.NewCreateSessionParams().WithImageId("linux_latest")
+	result, err := agentBay.Create(sessionParams)
 	if err != nil {
 		t.Fatalf("Error creating session: %v", err)
 	}
+
+	session := result.Session
 	t.Logf("Session created with ID: %s", session.SessionID)
 
 	// IMPORTANT: Ensure cleanup of the session after test
 	defer func() {
 		fmt.Println("Cleaning up: Deleting the session...")
-		err := agentBay.Delete(session)
+		_, err := agentBay.Delete(session)
 		if err != nil {
 			t.Logf("Warning: Error deleting session: %v", err)
 		} else {
@@ -103,10 +117,13 @@ func TestApplication_ListVisibleApps(t *testing.T) {
 	// Test ListVisibleApps
 	if session.Application != nil {
 		fmt.Println("Listing visible applications...")
-		visibleApps, err := session.Application.ListVisibleApps()
+		visibleResult, err := session.Application.ListVisibleApps()
 		if err != nil {
 			t.Logf("Note: ListVisibleApps failed: %v", err)
 		} else {
+			t.Logf("Got response content with RequestID: %s", visibleResult.RequestID)
+
+			visibleApps := visibleResult.Processes
 			t.Logf("Found %d visible applications", len(visibleApps))
 
 			// Verify we got some apps
@@ -131,8 +148,12 @@ func TestApplication_ListVisibleApps(t *testing.T) {
 			}
 
 			// Check if response contains "tool not found"
-			if len(visibleApps) > 0 && containsToolNotFound(visibleApps[0].PName) {
+			if len(visibleApps) > 0 && testutil.ContainsToolNotFound(visibleApps[0].PName) {
 				t.Errorf("Application.ListVisibleApps returned 'tool not found'")
+			}
+
+			if visibleResult.RequestID == "" {
+				t.Errorf("ListVisibleApps method did not return RequestID")
 			}
 		}
 	} else {
@@ -150,24 +171,27 @@ func min(x, y int) int {
 
 func TestApplication_StartApp(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	// Create a session
+	// Create a session with ImageId set to linux_latest
 	fmt.Println("Creating a new session for StartApp testing...")
-	session, err := agentBay.Create(nil)
+	sessionParams := agentbay.NewCreateSessionParams().WithImageId("linux_latest")
+	result, err := agentBay.Create(sessionParams)
 	if err != nil {
 		t.Fatalf("Error creating session: %v", err)
 	}
+
+	session := result.Session
 	t.Logf("Session created with ID: %s", session.SessionID)
 
 	// IMPORTANT: Ensure cleanup of the session after test
 	defer func() {
 		fmt.Println("Cleaning up: Deleting the session...")
-		err := agentBay.Delete(session)
+		_, err := agentBay.Delete(session)
 		if err != nil {
 			t.Logf("Warning: Error deleting session: %v", err)
 		} else {
@@ -183,13 +207,13 @@ func TestApplication_StartApp(t *testing.T) {
 		startCmd := "/usr/bin/google-chrome-stable"
 
 		// Call StartApp function
-		processes, err := session.Application.StartApp(startCmd, "")
+		processResult, err := session.Application.StartApp(startCmd, "")
 
 		if err != nil {
 			t.Logf("Note: StartApp failed: %v", err)
 
 			// Check if the error is due to the tool not being found
-			if err.Error() != "" && containsToolNotFound(err.Error()) {
+			if err.Error() != "" && testutil.ContainsToolNotFound(err.Error()) {
 				t.Logf("StartApp tool not found, skipping test")
 				return
 			}
@@ -201,6 +225,9 @@ func TestApplication_StartApp(t *testing.T) {
 				return
 			}
 		} else {
+			t.Logf("Got response content with RequestID: %s", processResult.RequestID)
+
+			processes := processResult.Processes
 			t.Logf("Application started successfully, returned %d processes", len(processes))
 
 			// Verify we got some processes back
@@ -222,19 +249,24 @@ func TestApplication_StartApp(t *testing.T) {
 					// Try to stop the process to clean up
 					if process.PID > 0 {
 						fmt.Printf("Attempting to stop process %s (PID: %d)...\n", process.PName, process.PID)
-						stopErr := session.Application.StopAppByPID(process.PID)
+						stopResult, stopErr := session.Application.StopAppByPID(process.PID)
 						if stopErr != nil {
 							t.Logf("Warning: Failed to stop process: %v", stopErr)
 						} else {
-							t.Logf("Successfully stopped process %s (PID: %d)", process.PName, process.PID)
+							t.Logf("Successfully stopped process %s (PID: %d) with RequestID: %s",
+								process.PName, process.PID, stopResult.RequestID)
 						}
 					}
 				}
 			}
 
 			// Check if response contains "tool not found"
-			if len(processes) > 0 && containsToolNotFound(processes[0].PName) {
+			if len(processes) > 0 && testutil.ContainsToolNotFound(processes[0].PName) {
 				t.Errorf("Application.StartApp returned 'tool not found'")
+			}
+
+			if processResult.RequestID == "" {
+				t.Errorf("StartApp method did not return RequestID")
 			}
 		}
 	} else {
@@ -244,24 +276,27 @@ func TestApplication_StartApp(t *testing.T) {
 
 func TestApplication_StopAppByPName(t *testing.T) {
 	// Initialize AgentBay client
-	apiKey := getTestAPIKey(t)
+	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	// Create a session
+	// Create a session with ImageId set to linux_latest
 	fmt.Println("Creating a new session for StopAppByPName testing...")
-	session, err := agentBay.Create(nil)
+	sessionParams := agentbay.NewCreateSessionParams().WithImageId("linux_latest")
+	result, err := agentBay.Create(sessionParams)
 	if err != nil {
 		t.Fatalf("Error creating session: %v", err)
 	}
+
+	session := result.Session
 	t.Logf("Session created with ID: %s", session.SessionID)
 
 	// IMPORTANT: Ensure cleanup of the session after test
 	defer func() {
 		fmt.Println("Cleaning up: Deleting the session...")
-		err := agentBay.Delete(session)
+		_, err := agentBay.Delete(session)
 		if err != nil {
 			t.Logf("Warning: Error deleting session: %v", err)
 		} else {
@@ -274,13 +309,13 @@ func TestApplication_StopAppByPName(t *testing.T) {
 		// First, start an application to get a process to stop
 		fmt.Println("Starting Google Chrome application...")
 		startCmd := "/usr/bin/google-chrome-stable"
-		processes, err := session.Application.StartApp(startCmd, "")
+		startResult, err := session.Application.StartApp(startCmd, "")
 
 		if err != nil {
 			t.Logf("Note: StartApp failed: %v", err)
 
 			// Check if the error is due to the tool not being found
-			if err.Error() != "" && containsToolNotFound(err.Error()) {
+			if err.Error() != "" && testutil.ContainsToolNotFound(err.Error()) {
 				t.Logf("StartApp tool not found, skipping test")
 				return
 			}
@@ -292,6 +327,7 @@ func TestApplication_StopAppByPName(t *testing.T) {
 				return
 			}
 		} else {
+			processes := startResult.Processes
 			t.Logf("Application started successfully, returned %d processes", len(processes))
 
 			// Verify we got some processes back
@@ -305,24 +341,27 @@ func TestApplication_StopAppByPName(t *testing.T) {
 			t.Logf("Attempting to stop process by name: %s", processToStop)
 
 			// Call StopAppByPName function
-			err := session.Application.StopAppByPName(processToStop)
+			stopResult, err := session.Application.StopAppByPName(processToStop)
 			if err != nil {
 				t.Errorf("StopAppByPName failed: %v", err)
 
 				// Check if the error is due to the tool not being found
-				if err.Error() != "" && containsToolNotFound(err.Error()) {
+				if err.Error() != "" && testutil.ContainsToolNotFound(err.Error()) {
 					t.Logf("StopAppByPName tool not found, skipping test")
 					return
 				}
 			} else {
+				t.Logf("Got response content with RequestID: %s", stopResult.RequestID)
 				t.Logf("Successfully stopped process by name: %s", processToStop)
 
 				// Verify the process was stopped by listing visible apps
 				time.Sleep(1 * time.Second) // Give some time for the process to be terminated
-				visibleApps, err := session.Application.ListVisibleApps()
+				visibleResult, err := session.Application.ListVisibleApps()
 				if err != nil {
 					t.Logf("Warning: Failed to list visible apps after stopping: %v", err)
 				} else {
+					visibleApps := visibleResult.Processes
+
 					// Check if the process is still in the list
 					processStillRunning := false
 					for _, app := range visibleApps {
@@ -337,6 +376,10 @@ func TestApplication_StopAppByPName(t *testing.T) {
 					} else {
 						t.Logf("Confirmed process %s is no longer running", processToStop)
 					}
+				}
+
+				if stopResult.RequestID == "" {
+					t.Errorf("StopAppByPName method did not return RequestID")
 				}
 			}
 		}

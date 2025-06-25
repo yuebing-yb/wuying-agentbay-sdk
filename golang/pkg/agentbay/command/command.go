@@ -3,10 +3,18 @@ package command
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
+
+// CommandResult represents the result of a command execution
+type CommandResult struct {
+	models.ApiResponse // Embedded ApiResponse
+	Output             string
+}
 
 // Command handles command execution operations in the AgentBay cloud environment.
 type Command struct {
@@ -17,7 +25,7 @@ type Command struct {
 	}
 }
 
-// NewCommand creates a new Command object.
+// NewCommand creates a new Command instance
 func NewCommand(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
@@ -28,65 +36,178 @@ func NewCommand(session interface {
 	}
 }
 
-// ExecuteCommand executes a command in the cloud environment.
-func (c *Command) ExecuteCommand(command string) (string, error) {
-	args := map[string]string{
-		"command": command,
-	}
+// callMcpToolResult represents the result of a CallMcpTool operation
+type callMcpToolResult struct {
+	TextContent string // Extracted text field content
+	Data        map[string]interface{}
+	IsError     bool
+	ErrorMsg    string
+	StatusCode  int32
+	RequestID   string // Added field to store request ID
+}
+
+// callMcpTool calls the MCP tool and checks for errors in the response
+func (c *Command) callMcpTool(toolName string, args interface{}, defaultErrorMsg string) (*callMcpToolResult, error) {
+	// Marshal arguments to JSON
 	argsJSON, err := json.Marshal(args)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal args: %w", err)
+		return nil, fmt.Errorf("failed to marshal args: %w", err)
 	}
 
+	// Create the request
 	callToolRequest := &mcp.CallMcpToolRequest{
 		Authorization: tea.String("Bearer " + c.Session.GetAPIKey()),
 		SessionId:     tea.String(c.Session.GetSessionId()),
-		Name:          tea.String("execute_command"),
+		Name:          tea.String(toolName),
 		Args:          tea.String(string(argsJSON)),
 	}
 
 	// Log API request
-	fmt.Println("API Call: CallMcpTool - execute_command")
+	fmt.Println("API Call: CallMcpTool -", toolName)
 	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
 
+	// Call the MCP tool
 	response, err := c.Session.GetClient().CallMcpTool(callToolRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling CallMcpTool - execute_command:", err)
-		return "", fmt.Errorf("failed to execute command: %w", err)
+		fmt.Println("Error calling CallMcpTool -", toolName, ":", err)
+		return nil, fmt.Errorf("failed to call %s: %w", toolName, err)
 	}
 	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool - execute_command:", response.Body)
+		fmt.Println("Response from CallMcpTool -", toolName, ":", response.Body)
 	}
 
-	// 将 interface{} 转换为 map
+	// Extract data from response
 	data, ok := response.Body.Data.(map[string]interface{})
 	if !ok {
-		return "", fmt.Errorf("invalid response data format")
+		return nil, fmt.Errorf("invalid response data format")
 	}
 
-	// 获取 content 字段并解析为数组
+	// Extract RequestID
+	var requestID string
+	if response != nil && response.Body != nil && response.Body.RequestId != nil {
+		requestID = *response.Body.RequestId
+	}
+
+	// Create result object
+	result := &callMcpToolResult{
+		Data:       data,
+		StatusCode: *response.StatusCode,
+		RequestID:  requestID, // Add RequestID
+	}
+
+	// Check if there's an error in the response
+	isError, ok := data["isError"].(bool)
+	if ok && isError {
+		result.IsError = true
+
+		// Try to extract the error message from the content field
+		contentArray, ok := data["content"].([]interface{})
+		if ok && len(contentArray) > 0 {
+			// Extract error message from the first content item
+			if len(contentArray) > 0 {
+				contentItem, ok := contentArray[0].(map[string]interface{})
+				if ok {
+					text, ok := contentItem["text"].(string)
+					if ok {
+						result.ErrorMsg = text
+						return result, fmt.Errorf("%s", text)
+					}
+				}
+			}
+		}
+		return result, fmt.Errorf("%s", defaultErrorMsg)
+	}
+
+	// Extract text from content array if it exists
 	contentArray, ok := data["content"].([]interface{})
-	if !ok {
-		return "", fmt.Errorf("content field not found or not an array")
+	if ok && len(contentArray) > 0 {
+		var textBuilder strings.Builder
+		for i, item := range contentArray {
+			contentItem, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			text, ok := contentItem["text"].(string)
+			if !ok {
+				continue
+			}
+
+			if i > 0 {
+				textBuilder.WriteString("\n")
+			}
+			textBuilder.WriteString(text)
+		}
+		result.TextContent = textBuilder.String()
 	}
 
-	var fullText string
-	for _, item := range contentArray {
-		// 断言每个元素是 map[string]interface{}
-		contentItem, ok := item.(map[string]interface{})
-		if !ok {
-			continue
-		}
+	return result, nil
+}
 
-		// 提取 text 字段
-		text, ok := contentItem["text"].(string)
-		if !ok {
-			continue
-		}
-
-		fullText += text + "\n" // 拼接文本内容
+// ExecuteCommand executes a command in the cloud environment with a specified timeout.
+// If timeoutMs is not provided or is 0, the default timeout of 1000ms will be used.
+func (c *Command) ExecuteCommand(command string, timeoutMs ...int) (*CommandResult, error) {
+	// Set default timeout if not provided
+	timeout := 1000
+	if len(timeoutMs) > 0 && timeoutMs[0] > 0 {
+		timeout = timeoutMs[0]
 	}
-	return fullText, nil
+
+	// Prepare arguments for the shell tool
+	args := map[string]interface{}{
+		"command":    command,
+		"timeout_ms": timeout,
+	}
+
+	// Use the enhanced helper method to call MCP tool and check for errors
+	mcpResult, err := c.callMcpTool("shell", args, "error executing command")
+	if err != nil {
+		return nil, err
+	}
+
+	// Return result with RequestID
+	return &CommandResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Output: mcpResult.TextContent,
+	}, nil
+}
+
+// RunCode executes code in the specified language with a timeout.
+// If timeoutS is not provided or is 0, the default timeout of 300 seconds will be used.
+func (c *Command) RunCode(code string, language string, timeoutS ...int) (*CommandResult, error) {
+	// Set default timeout if not provided
+	timeout := 300
+	if len(timeoutS) > 0 && timeoutS[0] > 0 {
+		timeout = timeoutS[0]
+	}
+
+	// Validate language
+	if language != "python" && language != "javascript" {
+		return nil, fmt.Errorf("unsupported language: %s. Supported languages are 'python' and 'javascript'", language)
+	}
+
+	// Prepare arguments for the run_code tool
+	args := map[string]interface{}{
+		"code":      code,
+		"language":  language,
+		"timeout_s": timeout,
+	}
+
+	// Use the enhanced helper method to call MCP tool and check for errors
+	mcpResult, err := c.callMcpTool("run_code", args, "error executing code")
+	if err != nil {
+		return nil, err
+	}
+
+	// Return result with RequestID
+	return &CommandResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: mcpResult.RequestID,
+		},
+		Output: mcpResult.TextContent,
+	}, nil
 }

@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-
-from typing import Dict
-
 from darabonba.model import DaraModel
-
 from agentbay.api import models as main_models
+from typing import Dict
 
 
 class CallMcpToolResponse(DaraModel):
@@ -23,12 +20,12 @@ class CallMcpToolResponse(DaraModel):
     def validate(self):
         if self.body:
             self.body.validate()
-    def to_map(self) -> Dict:
+
+    def to_map(self):
         result = dict()
         _map = super().to_map()
         if _map is not None:
             result = _map
-
         if self.headers is not None:
             result["headers"] = self.headers
 
@@ -40,7 +37,7 @@ class CallMcpToolResponse(DaraModel):
 
         return result
 
-    def from_map(self, m: dict = None) -> "CallMcpToolResponse":
+    def from_map(self, m: dict = None):
         m = m or dict()
         if m.get("headers") is not None:
             self.headers = m.get("headers")

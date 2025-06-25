@@ -7,12 +7,15 @@ from agentbay.exceptions import AgentBayError
 # This example demonstrates how to create, list, and delete sessions
 # using the Wuying AgentBay SDK.
 
+
 def main():
     # Get API key from environment variable or use a default value for testing
     api_key = os.environ.get("AGENTBAY_API_KEY")
     if not api_key:
         api_key = "akm-xxx"  # Replace with your actual API key for testing
-        print("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use.")
+        print(
+            "Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use."
+        )
 
     try:
         # Initialize the AgentBay client
@@ -38,7 +41,9 @@ def main():
         for i in range(2):
             try:
                 additional_session = agent_bay.create()
-                print(f"Additional session created with ID: {additional_session.session_id}")
+                print(
+                    f"Additional session created with ID: {additional_session.session_id}"
+                )
 
                 # Store the session for later cleanup
                 additional_sessions.append(additional_session)
@@ -86,8 +91,67 @@ def main():
         except AgentBayError as e:
             print(f"\nError listing sessions: {e}")
 
+        # test get_link with special imageid
+        try:
+            from agentbay.session_params import CreateSessionParams
+
+            # Define session creation parameters
+            params = CreateSessionParams(
+                image_id="imgc-07if81c4ktj9shiru",
+            )
+
+            # Create session with parameters
+            session_with_params = agent_bay.create(params)
+            print(
+                f"\nSession created successfully with ID: {session_with_params.session_id}"
+            )
+        except AgentBayError as e:
+            print(f"Error creating session with parameters: {e}")
+
+        # Test get_link method
+        print("\nTesting get_link method...")
+        try:
+            link = session_with_params.get_link()
+            print(f"Link retrieved successfully: {link}")
+        except AgentBayError as e:
+            print(f"Error retrieving link: {e}")
+
+        # Test get_link_async method
+        print("\nTesting get_link_async method...")
+        try:
+            import asyncio
+
+            link_async = asyncio.run(session_with_params.get_link_async())
+            print(f"Link retrieved successfully (async): {link_async}")
+        except AgentBayError as e:
+            print(f"Error retrieving link asynchronously: {e}")
+
+        # Test creating a session with specific parameters
+        print("\nTesting session creation with parameters...")
+
+        # delete session
+        try:
+            session_with_params.delete()
+            print(f"Session(session_with_params) deleted successfully")
+            ssession_with_params = None
+        except AgentBayError as e:
+            print(f"Error deleting session session_with_params: {e}")
+
     except Exception as e:
         print(f"Error initializing AgentBay client: {e}")
+        if session:
+            try:
+                session.delete()
+                print("Session deleted successfully after error")
+            except AgentBayError as delete_error:
+                print(f"Error deleting session after error: {delete_error}")
+        for s in additional_sessions:
+            try:
+                agent_bay.delete(s)
+                print(f"Session {s.session_id} deleted successfully")
+            except AgentBayError as e:
+                print(f"Error deleting session {s.session_id}: {e}")
+
 
 if __name__ == "__main__":
     main()

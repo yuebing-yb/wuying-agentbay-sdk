@@ -10,7 +10,7 @@ The `Session` class represents a session in the AgentBay cloud environment. A se
 - `resource_url`: The resource URL associated with the session.
 - `filesystem`: The FileSystem instance for this session.
 - `command`: The Command instance for this session.
-- `adb`: The Adb instance for this session.
+- `ui`: The UI instance for this session.
 - `application`: The Application instance for this session.
 - `window`: The Window instance for this session.
 
@@ -20,7 +20,7 @@ The `Session` class represents a session in the AgentBay cloud environment. A se
 - `resourceUrl`: The resource URL associated with the session.
 - `filesystem`: The FileSystem instance for this session.
 - `command`: The Command instance for this session.
-- `adb`: The Adb instance for this session.
+- `ui`: The UI instance for this session.
 - `application`: The Application instance for this session.
 - `window`: The Window instance for this session.
 
@@ -30,7 +30,7 @@ The `Session` class represents a session in the AgentBay cloud environment. A se
 - `ResourceUrl`: The resource URL associated with the session.
 - `FileSystem`: The FileSystem instance for this session.
 - `Command`: The Command instance for this session.
-- `Adb`: The Adb instance for this session.
+- `UI`: The UI instance for this session.
 - `Application`: The Application instance for this session.
 - `Window`: The Window instance for this session.
 
@@ -62,16 +62,25 @@ delete(): Promise<boolean>
 - `Promise<boolean>`: A promise that resolves to true if the session was deleted successfully, false otherwise.
 
 **Throws:**
-- `Error`: If the session deletion fails.
+- `APIError`: If the session deletion fails.
 
 #### Golang
 
 ```go
-Delete() error
+Delete() (*DeleteResult, error)
 ```
 
 **Returns:**
+- `*DeleteResult`: A result object containing success status and RequestID.
 - `error`: An error if the session deletion fails.
+
+**DeleteResult Structure:**
+```go
+type DeleteResult struct {
+    RequestID string // Unique request identifier for debugging
+    Success   bool   // Whether the deletion was successful
+}
+```
 
 ### set_labels / setLabels / SetLabels
 
@@ -99,16 +108,16 @@ setLabels(labels: Record<string, string>): Promise<void>
 - `labels` (Record<string, string>): An object of labels to set for the session.
 
 **Throws:**
-- `Error`: If setting the labels fails.
+- `APIError`: If setting the labels fails.
 
 #### Golang
 
 ```go
-SetLabels(labelsJSON string) error
+SetLabels(labels map[string]string) error
 ```
 
 **Parameters:**
-- `labelsJSON` (string): A JSON string of labels to set for the session.
+- `labels` (map[string]string): A map of labels to set for the session.
 
 **Returns:**
 - `error`: An error if setting the labels fails.
@@ -139,56 +148,95 @@ getLabels(): Promise<Record<string, string>>
 - `Promise<Record<string, string>>`: A promise that resolves to an object of labels for the session.
 
 **Throws:**
-- `Error`: If getting the labels fails.
+- `APIError`: If getting the labels fails.
 
 #### Golang
 
 ```go
-GetLabels() (string, error)
+GetLabels() (map[string]string, error)
 ```
 
 **Returns:**
-- `string`: A JSON string of labels for the session.
+- `map[string]string`: A map of labels for the session.
 - `error`: An error if getting the labels fails.
 
-### info
+### get_link / getLink / GetLink
 
-Gets information about the session, including the session ID, resource URL, and desktop information. This method also updates the session's ResourceUrl field with the latest value from the server.
+Gets the public link for the session which can be used to access the session from a browser.
 
 #### Python
 
 ```python
-info() -> SessionInfo
+get_link() -> str
 ```
 
 **Returns:**
-- `SessionInfo`: An object containing information about the session, with the following properties:
-  - `session_id` (str): The ID of the session.
-  - `resource_url` (str): The resource URL associated with the session.
-  - `app_id` (str): The application ID associated with the desktop.
-  - `auth_code` (str): The authentication code for the desktop.
-  - `connection_properties` (str): Connection properties for the desktop.
-  - `resource_id` (str): The resource ID of the desktop.
-  - `resource_type` (str): The type of the desktop resource.
+- `str`: The link for the session.
 
 **Raises:**
-- `SessionError`: If getting the session information fails.
+- `AgentBayError`: If getting the link fails.
 
 #### TypeScript
 
 ```typescript
-info(): Promise<SessionInfo>
+getLink(): Promise<string>
 ```
 
 **Returns:**
-- `Promise<SessionInfo>`: A promise that resolves to an object containing information about the session, with the following properties:
-  - `sessionId` (string): The ID of the session.
-  - `resourceUrl` (string): The resource URL associated with the session.
-  - `appId` (string, optional): The application ID associated with the desktop.
-  - `authCode` (string, optional): The authentication code for the desktop.
-  - `connectionProperties` (string, optional): Connection properties for the desktop.
-  - `resourceId` (string, optional): The resource ID of the desktop.
-  - `resourceType` (string, optional): The type of the desktop resource.
+- `Promise<string>`: A promise that resolves to the link for the session.
+
+**Throws:**
+- `APIError`: If getting the link fails.
+
+#### Golang
+
+```go
+GetLink() (string, error)
+```
+
+**Returns:**
+- `string`: The link for the session.
+- `error`: An error if getting the link fails.
+
+### info / Info
+
+Gets information about the session, including the session ID, resource URL, and desktop information.
+
+#### Python
+
+```python
+info() -> Dict[str, Any]
+```
+
+**Returns:**
+- `Dict[str, Any]`: A dictionary containing information about the session, with the following keys:
+  - `session_id` (str): The ID of the session.
+  - `resource_url` (str): The resource URL associated with the session.
+  - `app_id` (str, optional): The application ID associated with the desktop.
+  - `auth_code` (str, optional): The authentication code for the desktop.
+  - `connection_properties` (str, optional): Connection properties for the desktop.
+  - `resource_id` (str, optional): The resource ID of the desktop.
+  - `resource_type` (str, optional): The type of the desktop resource.
+
+**Raises:**
+- `AgentBayError`: If getting the session information fails.
+
+#### TypeScript
+
+```typescript
+info(): Promise<{
+  sessionId: string;
+  resourceUrl: string;
+  appId?: string;
+  authCode?: string;
+  connectionProperties?: string;
+  resourceId?: string;
+  resourceType?: string;
+}>
+```
+
+**Returns:**
+- `Promise<SessionInfo>`: A promise that resolves to an object containing information about the session.
 
 **Throws:**
 - `APIError`: If getting the session information fails.
@@ -200,23 +248,16 @@ Info() (*SessionInfo, error)
 ```
 
 **Returns:**
-- `*SessionInfo`: An object containing information about the session, with the following properties:
-  - `SessionId` (string): The ID of the session.
-  - `ResourceUrl` (string): The resource URL associated with the session.
-  - `AppId` (string): The application ID associated with the desktop.
-  - `AuthCode` (string): The authentication code for the desktop.
-  - `ConnectionProperties` (string): Connection properties for the desktop.
-  - `ResourceId` (string): The resource ID of the desktop.
-  - `ResourceType` (string): The type of the desktop resource.
+- `*SessionInfo`: An object containing information about the session.
 - `error`: An error if getting the session information fails.
 
 ## Related Classes
 
 The Session class provides access to several other classes that provide specific functionality:
 
-- [FileSystem](filesystem.md): Provides methods for reading files within a session.
+- [FileSystem](filesystem.md): Provides methods for file operations within a session.
 - [Command](command.md): Provides methods for executing commands within a session.
-- [Adb](adb.md): Provides methods for executing ADB shell commands within a mobile environment (Android).
+- [UI](ui.md): Provides methods for interacting with the UI elements in the cloud environment.
 - [Application](../concepts/applications.md): Provides methods for managing applications in the cloud environment.
 - [Window](../concepts/applications.md): Provides methods for managing windows in the cloud environment.
 
@@ -258,13 +299,13 @@ labels = session.get_labels()
 
 # Get session info
 session_info = session.info()
-print(f"Session ID: {session_info.session_id}")
-print(f"Resource URL: {session_info.resource_url}")
-print(f"App ID: {session_info.app_id}")
-print(f"Auth Code: {session_info.auth_code}")
-print(f"Connection Properties: {session_info.connection_properties}")
-print(f"Resource ID: {session_info.resource_id}")
-print(f"Resource Type: {session_info.resource_type}")
+print(f"Session ID: {session_info['session_id']}")
+print(f"Resource URL: {session_info['resource_url']}")
+print(f"App ID: {session_info.get('app_id')}")
+print(f"Auth Code: {session_info.get('auth_code')}")
+print(f"Connection Properties: {session_info.get('connection_properties')}")
+print(f"Resource ID: {session_info.get('resource_id')}")
+print(f"Resource Type: {session_info.get('resource_type')}")
 
 # Delete the session
 session.delete()
@@ -304,13 +345,13 @@ const labels = await session.getLabels();
 
 // Get session info
 const sessionInfo = await session.info();
-console.log(`Session ID: ${sessionInfo.sessionId}`);
-console.log(`Resource URL: ${sessionInfo.resourceUrl}`);
-console.log(`App ID: ${sessionInfo.appId}`);
-console.log(`Auth Code: ${sessionInfo.authCode}`);
-console.log(`Connection Properties: ${sessionInfo.connectionProperties}`);
-console.log(`Resource ID: ${sessionInfo.resourceId}`);
-console.log(`Resource Type: ${sessionInfo.resourceType}`);
+log(`Session ID: ${sessionInfo.sessionId}`);
+log(`Resource URL: ${sessionInfo.resourceUrl}`);
+log(`App ID: ${sessionInfo.appId}`);
+log(`Auth Code: ${sessionInfo.authCode}`);
+log(`Connection Properties: ${sessionInfo.connectionProperties}`);
+log(`Resource ID: ${sessionInfo.resourceId}`);
+log(`Resource Type: ${sessionInfo.resourceType}`);
 
 // Delete the session
 await session.delete();
@@ -325,59 +366,73 @@ params := agentbay.NewCreateSessionParams().
         "purpose":     "demo",
         "environment": "development",
     })
-session, err := client.Create(params)
+sessionResult, err := client.Create(params)
 if err != nil {
     // Handle error
 }
+session := sessionResult.Session
+fmt.Printf("Session created with ID: %s (RequestID: %s)\n", session.SessionID, sessionResult.RequestID)
 
 // Use the session to execute a command
-result, err := session.Command.ExecuteCommand("ls -la")
+commandResult, err := session.Command.ExecuteCommand("ls -la")
 if err != nil {
     // Handle error
 }
+fmt.Printf("Command output: %s (RequestID: %s)\n", commandResult.Output, commandResult.RequestID)
 
 // Use the session to read a file
-content, err := session.FileSystem.ReadFile("/etc/hosts")
+readResult, err := session.FileSystem.ReadFile("/etc/hosts")
 if err != nil {
     // Handle error
 }
+fmt.Printf("File content: %s (RequestID: %s)\n", readResult.Content, readResult.RequestID)
 
 // Get installed applications
-apps, err := session.Application.GetInstalledApps(true, false, true)
+appsResult, err := session.Application.GetInstalledApps(true, false, true)
 if err != nil {
     // Handle error
 }
+fmt.Printf("Found %d installed apps (RequestID: %s)\n", len(appsResult.Apps), appsResult.RequestID)
 
 // List visible applications
-processes, err := session.Application.ListVisibleApps()
+processesResult, err := session.Application.ListVisibleApps()
 if err != nil {
     // Handle error
 }
+fmt.Printf("Found %d visible processes (RequestID: %s)\n", len(processesResult.Processes), processesResult.RequestID)
 
 // List root windows
-windows, err := session.Window.ListRootWindows()
+windowsResult, err := session.Window.ListRootWindows()
 if err != nil {
     // Handle error
 }
+fmt.Printf("Found %d root windows (RequestID: %s)\n", len(windowsResult.Windows), windowsResult.RequestID)
 
 // Get active window
-activeWindow, err := session.Window.GetActiveWindow()
+activeWindowResult, err := session.Window.GetActiveWindow()
 if err != nil {
     // Handle error
+}
+if activeWindowResult.Window != nil {
+    fmt.Printf("Active window: %s (ID: %d, PID: %d) (RequestID: %s)\n", 
+        activeWindowResult.Window.Title, activeWindowResult.Window.WindowID, 
+        activeWindowResult.Window.PID, activeWindowResult.RequestID)
 }
 
 // Get session labels
-labels, err := session.GetLabels()
+labelsResult, err := session.GetLabels()
 if err != nil {
     // Handle error
 }
+fmt.Printf("Session labels: %v (RequestID: %s)\n", labelsResult.Labels, labelsResult.RequestID)
 
 // Get session info
-sessionInfo, err := session.Info()
+infoResult, err := session.Info()
 if err != nil {
     // Handle error
 }
-fmt.Printf("Session ID: %s\n", sessionInfo.SessionId)
+sessionInfo := infoResult.Info
+fmt.Printf("Session ID: %s (RequestID: %s)\n", sessionInfo.SessionId, infoResult.RequestID)
 fmt.Printf("Resource URL: %s\n", sessionInfo.ResourceUrl)
 fmt.Printf("App ID: %s\n", sessionInfo.AppId)
 fmt.Printf("Auth Code: %s\n", sessionInfo.AuthCode)
@@ -386,10 +441,11 @@ fmt.Printf("Resource ID: %s\n", sessionInfo.ResourceId)
 fmt.Printf("Resource Type: %s\n", sessionInfo.ResourceType)
 
 // Delete the session
-err = client.Delete(session)
+deleteResult, err := session.Delete()
 if err != nil {
     // Handle error
 }
+fmt.Printf("Session deleted successfully (RequestID: %s)\n", deleteResult.RequestID)
 ```
 
 ## Related Resources

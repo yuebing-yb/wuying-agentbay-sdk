@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-
 from darabonba.model import DaraModel
 
 
@@ -11,12 +10,14 @@ class CreateMcpSessionRequest(DaraModel):
         authorization: str = None,
         context_id: str = None,
         external_user_id: str = None,
+        image_id: str = None,
         labels: str = None,
         session_id: str = None,
     ):
         self.authorization = authorization
         self.context_id = context_id
         self.external_user_id = external_user_id
+        self.image_id = image_id
         self.labels = labels
         self.session_id = session_id
 
@@ -37,6 +38,9 @@ class CreateMcpSessionRequest(DaraModel):
         if self.external_user_id is not None:
             result["ExternalUserId"] = self.external_user_id
 
+        if self.image_id is not None:
+            result["ImageId"] = self.image_id
+
         if self.labels is not None:
             result["Labels"] = self.labels
 
@@ -55,6 +59,9 @@ class CreateMcpSessionRequest(DaraModel):
 
         if m.get("ExternalUserId") is not None:
             self.external_user_id = m.get("ExternalUserId")
+
+        if m.get("ImageId") is not None:
+            self.image_id = m.get("ImageId")
 
         if m.get("Labels") is not None:
             self.labels = m.get("Labels")

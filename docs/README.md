@@ -17,6 +17,7 @@ Core concepts and components of the Wuying AgentBay SDK:
 - [Sessions](concepts/sessions.md): Understanding sessions in the AgentBay cloud environment.
 - [Contexts](concepts/contexts.md): Working with persistent storage contexts.
 - [Applications](concepts/applications.md): Managing applications and windows in the cloud environment.
+- [Code Execution](concepts/code-execution.md): Executing code snippets in various programming languages.
 
 ### Guides
 
@@ -30,11 +31,12 @@ Detailed API reference documentation:
 
 - [AgentBay Class](api-reference/agentbay.md): The main entry point for interacting with the AgentBay cloud environment.
 - [Session Class](api-reference/session.md): Represents a session in the AgentBay cloud environment.
-- [FileSystem Class](api-reference/filesystem.md): Provides methods for reading files within a session.
+- [FileSystem Class](api-reference/filesystem.md): Provides methods for file operations within a session.
 - [Command Class](api-reference/command.md): Provides methods for executing commands within a session.
-- [Adb Class](api-reference/adb.md): Provides methods for executing ADB shell commands within a mobile environment.
-- [Application Class](concepts/applications.md): Provides methods for managing applications in the cloud environment.
-- [Window Class](concepts/applications.md): Provides methods for managing windows in the cloud environment.
+- [UI Class](api-reference/ui.md): Provides methods for interacting with UI elements in the cloud environment.
+- [OSS Class](api-reference/oss.md): Provides methods for object storage operations.
+- [Application Class](api-reference/application.md): Provides methods for managing applications in the cloud environment.
+- [Window Class](api-reference/window.md): Provides methods for managing windows in the cloud environment.
 
 ## Supported Languages
 
@@ -55,6 +57,8 @@ Example code demonstrating how to use the SDK:
 - [Session Parameters](../golang/examples/session_params/README.md)
 - [Context Management](../golang/examples/context_management/README.md)
 - [Application Window](../golang/examples/application_window/README.md)
+- [Command Example](../golang/examples/command_example/README.md)
+- [Filesystem Example](../golang/examples/filesystem_example/README.md)
 
 ### Python Examples
 
@@ -64,6 +68,7 @@ Example code demonstrating how to use the SDK:
 - [Label Management](../python/examples/label_management/README.md)
 - [Context Management](../python/examples/context_management/README.md)
 - [Session Creation](../python/examples/session_creation/README.md)
+- [OSS Management](../python/examples/oss_management/README.md)
 
 ### TypeScript Examples
 
@@ -73,6 +78,9 @@ Example code demonstrating how to use the SDK:
 - [Context Management](../typescript/examples/context-management/README.md)
 - [Session Creation](../typescript/examples/session-creation/README.md)
 - [Label Management](../typescript/examples/label-management/README.md)
+- [Command Example](../typescript/examples/command-example/README.md)
+- [Filesystem Example](../typescript/examples/filesystem-example/README.md)
+- [UI Example](../typescript/examples/ui-example/README.md)
 
 ## Getting Started
 
