@@ -191,3 +191,9 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## Documentation
 
 For more detailed documentation, examples, and advanced usage, please refer to the [docs](docs/) directory.
+
+## Development
+
+### CI/CD Workflows
+
+This project uses GitHub Actions for continuous integration and testing. For information about the available workflows and how to configure them, see [GitHub Workflows](.github/WORKFLOWS.md).

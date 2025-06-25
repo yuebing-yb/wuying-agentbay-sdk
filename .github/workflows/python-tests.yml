@@ -28,11 +28,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry
         poetry install
+        poetry add --dev pytest-cov
 
-    - name: Run unit tests
+    - name: Run unit tests with coverage
       working-directory: ./python
       run: |
-        poetry run python -m pytest tests/unit -v
+        poetry run python -m pytest tests/unit -v --cov=agentbay --cov-report=xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./python/coverage.xml
+        flags: python
+        name: python-${{ matrix.python-version }}
+        fail_ci_if_error: false
 
     # - name: Run integration tests (if API key is provided)
     #   working-directory: ./python
