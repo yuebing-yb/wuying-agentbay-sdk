@@ -160,7 +160,7 @@ List() (*SessionListResult, error)
 
 ### list_by_labels / listByLabels / ListByLabels
 
-Lists sessions filtered by the provided labels. It returns sessions that match all the specified labels.
+Lists sessions filtered by the provided labels. It returns sessions that match all the specified labels. This method supports pagination to handle large result sets efficiently.
 
 #### Python
 
@@ -180,14 +180,27 @@ list_by_labels(labels: Dict[str, str]) -> SessionListResult
 #### TypeScript
 
 ```typescript
-listByLabels(labels: Record<string, string>): Promise<Session[]>
+listByLabels(params: {
+  labels: Record<string, string>;
+  maxResults?: number;
+  nextToken?: string;
+}): Promise<{
+  sessions: Session[];
+  nextToken?: string;
+  totalCount: number;
+}>
 ```
 
 **Parameters:**
-- `labels` (Record<string, string>): An object of labels to filter sessions by.
+- `params.labels` (Record<string, string>): An object of labels to filter sessions by.
+- `params.maxResults` (number, optional): Maximum number of results to return per page. Default is 10.
+- `params.nextToken` (string, optional): Token for pagination to get the next page of results.
 
 **Returns:**
-- `Promise<Session[]>`: A promise that resolves to an array of Session instances that match the specified labels.
+- `Promise<Object>`: A promise that resolves to an object containing:
+  - `sessions` (Session[]): An array of Session instances that match the specified labels.
+  - `nextToken` (string, optional): Token to get the next page of results, if more results are available.
+  - `totalCount` (number): Total number of sessions matching the criteria.
 
 **Throws:**
 - `Error`: If the session listing fails.
@@ -195,15 +208,41 @@ listByLabels(labels: Record<string, string>): Promise<Session[]>
 #### Golang
 
 ```go
-ListByLabels(labels map[string]string) (*SessionListResult, error)
+ListByLabels(params *ListSessionParams) (*SessionListResult, error)
 ```
 
 **Parameters:**
-- `labels` (map[string]string): A map of labels to filter sessions by.
+- `params` (*ListSessionParams): Parameters for listing sessions, including:
+  - `Labels` (map[string]string): A map of labels to filter sessions by.
+  - `MaxResults` (int32): Maximum number of results to return per page. Default is 10.
+  - `NextToken` (string): Token for pagination to get the next page of results.
 
 **Returns:**
-- `*SessionListResult`: A result object containing an array of Session instances and RequestID.
+- `*SessionListResult`: A result object containing:
+  - `Sessions` ([]Session): An array of Session instances that match the specified labels.
+  - `NextToken` (string): Token to get the next page of results, if more results are available.
+  - `MaxResults` (int32): The maximum number of results requested per page.
+  - `TotalCount` (int32): Total number of sessions matching the criteria.
+  - `RequestID` (string): Unique request identifier for debugging.
 - `error`: An error if the session listing fails.
+
+**ListSessionParams Structure:**
+```go
+type ListSessionParams struct {
+    MaxResults int32             // Number of results per page
+    NextToken  string            // Token for the next page
+    Labels     map[string]string // Labels to filter by
+}
+
+// NewListSessionParams creates a new ListSessionParams with default values
+func NewListSessionParams() *ListSessionParams {
+    return &ListSessionParams{
+        MaxResults: 10, // Default page size
+        NextToken:  "",
+        Labels:     make(map[string]string),
+    }
+}
+```
 
 ### delete / Delete
 
@@ -427,17 +466,36 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("Found %d sessions, RequestID: %s\n", len(sessions), sessions.RequestID)
-
-	// List sessions by labels
-	filteredSessions, err := client.ListByLabels(map[string]string{
+	
+	// List sessions by labels with pagination
+	listParams := agentbay.NewListSessionParams()
+	listParams.Labels = map[string]string{
 		"purpose": "demo",
-	})
+	}
+	listParams.MaxResults = 5 // Limit to 5 results per page
+	
+	// Get first page
+	firstPage, err := client.ListByLabels(listParams)
 	if err != nil {
 		fmt.Printf("Error listing sessions by labels: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Found %d matching sessions, RequestID: %s\n", len(filteredSessions), filteredSessions.RequestID)
 
+	fmt.Printf("First page: Found %d matching sessions (total: %d), RequestID: %s\n", 
+		len(firstPage.Sessions), firstPage.TotalCount, firstPage.RequestID)
+	
+	// If there are more pages, get the next page
+	if firstPage.NextToken != "" {
+		listParams.NextToken = firstPage.NextToken
+		secondPage, err := client.ListByLabels(listParams)
+		if err != nil {
+			fmt.Printf("Error listing second page: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Second page: Found %d more sessions, RequestID: %s\n", 
+			len(secondPage.Sessions), secondPage.RequestID)
+	}
+	
 	// Delete the session
 	result, err := client.Delete(session)
 	if err != nil {
