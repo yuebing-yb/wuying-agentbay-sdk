@@ -1,8 +1,12 @@
 import json
 from typing import Any, Dict, List, Optional
 
-from agentbay.api.models import CallMcpToolRequest
-from agentbay.exceptions import AgentBayError
+from agentbay.exceptions import ApplicationError, AgentBayError
+from agentbay.model import (
+    ApiResponse,
+    BoolResult,
+)
+from agentbay.api.base_service import BaseService
 
 
 class InstalledApp:
@@ -112,140 +116,180 @@ class Process:
         )
 
 
-class ApplicationManager:
-    """
-    Handles application management operations in the AgentBay cloud environment.
-    """
+class ProcessListResult(ApiResponse):
+    """Result of operations returning a list of Processes."""
 
-    def __init__(self, session):
+    def __init__(self, request_id: str = "", success: bool = False,
+                 data: Optional[List[Process]] = None, error_message: str = ""):
         """
-        Initialize an ApplicationManager object.
+        Initialize a ProcessListResult.
 
         Args:
-            session: The session object that provides access to the AgentBay API.
+            request_id (str, optional): Unique identifier for the API request. Defaults to "".
+            success (bool, optional): Whether the operation was successful. Defaults to False.
+            data (Optional[List[Process]], optional): The list of process objects. Defaults to None.
+            error_message (str, optional): Error message if the operation failed. Defaults to "".
         """
-        self.session = session
+        super().__init__(request_id)
+        self.success = success
+        self.data = data if data is not None else []
+        self.error_message = error_message
 
-    def _call_mcp_tool(self, name: str, args: Dict[str, Any]) -> Any:
+
+class InstalledAppListResult(ApiResponse):
+    """Result of operations returning a list of InstalledApps."""
+
+    def __init__(self, request_id: str = "", success: bool = False,
+                 data: Optional[List[InstalledApp]] = None, error_message: str = ""):
         """
-        Call an MCP tool with the given name and arguments.
+        Initialize an InstalledAppListResult.
 
         Args:
-            name (str): The name of the tool to call.
-            args (Dict[str, Any]): The arguments to pass to the tool.
+            request_id (str, optional): Unique identifier for the API request. Defaults to "".
+            success (bool, optional): Whether the operation was successful. Defaults to False.
+            data (Optional[List[InstalledApp]], optional): The list of installed app objects. Defaults to None.
+            error_message (str, optional): Error message if the operation failed. Defaults to "".
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.data = data if data is not None else []
+        self.error_message = error_message
+
+
+class AppInfoResult(ApiResponse):
+    """Result of application info operations."""
+
+    def __init__(self, request_id: str = "", success: bool = False,
+                 app_info: Optional[Dict[str, Any]] = None, error_message: str = ""):
+        """
+        Initialize an AppInfoResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request. Defaults to "".
+            success (bool, optional): Whether the operation was successful. Defaults to False.
+            app_info (Dict[str, Any], optional): Application information. Defaults to None.
+            error_message (str, optional): Error message if the operation failed. Defaults to "".
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.app_info = app_info or {}
+        self.error_message = error_message
+
+
+class AppListResult(ApiResponse):
+    """Result of application listing operations."""
+
+    def __init__(self, request_id: str = "", success: bool = False,
+                 apps: Optional[List[Dict[str, Any]]] = None, error_message: str = ""):
+        """
+        Initialize an AppListResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request. Defaults to "".
+            success (bool, optional): Whether the operation was successful. Defaults to False.
+            apps (List[Dict[str, Any]], optional): List of applications. Defaults to None.
+            error_message (str, optional): Error message if the operation failed. Defaults to "".
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.apps = apps or []
+        self.error_message = error_message
+
+
+class AppOperationResult(ApiResponse):
+    """Result of application operations like start/stop."""
+
+    def __init__(self, request_id: str = "", success: bool = False, error_message: str = ""):
+        """
+        Initialize an AppOperationResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request. Defaults to "".
+            success (bool, optional): Whether the operation was successful. Defaults to False.
+            error_message (str, optional): Error message if the operation failed. Defaults to "".
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message
+
+
+class ApplicationManager(BaseService):
+    """
+    Handles application operations in the AgentBay cloud environment.
+    """
+
+    def _handle_error(self, e):
+        """
+        Convert AgentBayError to ApplicationError for compatibility.
+
+        Args:
+            e (Exception): The exception to convert.
 
         Returns:
-            Dict[str, Any]: The response from the tool.
-
-        Raises:
-            AgentBayError: If the tool call fails.
+            ApplicationError: The converted exception.
         """
-        try:
-            args_json = json.dumps(args)
-            request = CallMcpToolRequest(
-                authorization=f"Bearer {self.session.get_api_key()}",
-                session_id=self.session.get_session_id(),
-                name=name,
-                args=args_json,
-            )
+        if isinstance(e, ApplicationError):
+            return e
+        if isinstance(e, AgentBayError):
+            return ApplicationError(str(e))
+        return e
 
-            response = self.session.get_client().call_mcp_tool(request)
-
-            # Parse the response
-            response_map = response.to_map()
-            if not response_map:
-                raise AgentBayError(f"Invalid response format")
-
-            body = response_map.get("body", {})
-            if not body:
-                raise AgentBayError(f"Invalid response body")
-
-            return self._parse_response_body(body)
-        except (KeyError, TypeError, ValueError) as e:
-            raise AgentBayError(f"Failed to parse MCP tool response: {e}")
-        except Exception as e:
-            raise AgentBayError(f"Failed to call MCP tool {name}: {e}")
-
-    def _parse_response_body(self, body: Dict[str, Any]) -> Any:
-        """
-        Parses the response body from the MCP tool.
-
-        Args:
-            body (Dict[str, Any]): The response body.
-
-        Returns:
-            Any: The parsed content.
-
-        Raises:
-            AgentBayError: If the response contains errors or is invalid.
-        """
-        try:
-            if body.get("Data", {}).get("isError", False):
-                error_content = body.get("Data", {}).get("content", [])
-                error_message = "; ".join(
-                    item.get("text", "Unknown error")
-                    for item in error_content
-                    if isinstance(item, dict)
-                )
-                raise AgentBayError(f"Error in response: {error_message}")
-
-            response_data = body.get("Data", {})
-            if not response_data:
-                raise AgentBayError("No data field in response")
-
-            content = response_data.get("content", [])
-            if not content or not isinstance(content, list):
-                raise AgentBayError("No content found in response")
-
-            # Extract text field from the first content item
-            content_item = content[0]
-            json_text = content_item.get("text")
-
-            # Return the JSON text
-            return json_text
-        except Exception as e:
-            raise AgentBayError(f"{e}")
-
-    def get_installed_apps(
-        self,
-        start_menu: bool = True,
-        desktop: bool = True,
-        ignore_system_apps: bool = True,
-    ) -> List[InstalledApp]:
+    def get_installed_apps(self, start_menu: bool, desktop: bool,
+                          ignore_system_apps: bool) -> InstalledAppListResult:
         """
         Retrieves a list of installed applications.
 
         Args:
-            start_menu (bool, optional): Whether to include applications from the start menu. Defaults to True.
-            desktop (bool, optional): Whether to include applications from the desktop. Defaults to True.
-            ignore_system_apps (bool, optional): Whether to ignore system applications. Defaults to True.
+            start_menu (bool): Whether to include start menu applications.
+            desktop (bool): Whether to include desktop applications.
+            ignore_system_apps (bool): Whether to ignore system applications.
 
         Returns:
-            List[InstalledApp]: A list of installed applications.
-
-        Raises:
-            AgentBayError: If the operation fails.
+            InstalledAppListResult: The result containing the list of installed applications.
         """
-        args = {
-            "start_menu": start_menu,
-            "desktop": desktop,
-            "ignore_system_apps": ignore_system_apps,
-        }
-
         try:
+            args = {
+                "start_menu": start_menu,
+                "desktop": desktop,
+                "ignore_system_apps": ignore_system_apps
+            }
+
             result = self._call_mcp_tool("get_installed_apps", args)
-            apps_data = json.loads(result)
-            if not isinstance(apps_data, list):
-                raise AgentBayError("Invalid apps data format")
 
-            # return installed_apps
-            return [InstalledApp.from_dict(app) for app in apps_data]
-        except AgentBayError:
-            raise
+            if not result.success:
+                return InstalledAppListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message
+                )
+
+            try:
+                apps_json = json.loads(result.data)
+                installed_apps = []
+
+                for app_data in apps_json:
+                    app = InstalledApp.from_dict(app_data)
+                    installed_apps.append(app)
+
+                return InstalledAppListResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=installed_apps
+                )
+            except json.JSONDecodeError as e:
+                return InstalledAppListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=f"Failed to parse applications JSON: {e}"
+                )
         except Exception as e:
-            raise AgentBayError(f"Failed to get installed apps: {e}")
+            handled_error = self._handle_error(e)
+            return InstalledAppListResult(
+                success=False,
+                error_message=str(handled_error)
+            )
 
-    def start_app(self, start_cmd: str, work_directory: str = "") -> List[Process]:
+    def start_app(self, start_cmd: str, work_directory: str = "") -> ProcessListResult:
         """
         Starts an application with the given command and optional working directory.
 
@@ -254,109 +298,166 @@ class ApplicationManager:
             work_directory (str, optional): The working directory for the application. Defaults to "".
 
         Returns:
-            List[Process]: A list of processes started.
-
-        Raises:
-            AgentBayError: If the operation fails.
+            ProcessListResult: The result containing the list of processes started.
         """
-        args = {"start_cmd": start_cmd}
-
-        if work_directory:
-            args["work_directory"] = work_directory
-
         try:
+            args = {"start_cmd": start_cmd}
+            if work_directory:
+                args["work_directory"] = work_directory
+
             result = self._call_mcp_tool("start_app", args)
-            process_list = json.loads(result)
 
-            if not isinstance(process_list, list):
-                raise AgentBayError("Invalid response format from start_app")
+            if not result.success:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message
+                )
 
-            return [Process.from_dict(process) for process in process_list]
-        except AgentBayError:
-            raise
+            try:
+                processes_json = json.loads(result.data)
+                processes = []
+
+                for process_data in processes_json:
+                    process = Process.from_dict(process_data)
+                    processes.append(process)
+
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=processes
+                )
+            except json.JSONDecodeError as e:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=f"Failed to parse processes JSON: {e}"
+                )
         except Exception as e:
-            raise AgentBayError(f"Failed to start app: {e}")
+            handled_error = self._handle_error(e)
+            return ProcessListResult(
+                success=False,
+                error_message=str(handled_error)
+            )
 
-    def stop_app_by_pname(self, pname: str) -> None:
+    def stop_app_by_pname(self, pname: str) -> AppOperationResult:
         """
         Stops an application by process name.
 
         Args:
             pname (str): The name of the process to stop.
 
-        Raises:
-            AgentBayError: If the operation fails.
+        Returns:
+            AppOperationResult: The result of the operation.
         """
-        args = {"pname": pname}
-
         try:
-            self._call_mcp_tool("stop_app_by_pname", args)
+            args = {"pname": pname}
+            result = self._call_mcp_tool("stop_app_by_pname", args)
 
-        except AgentBayError:
-            raise
+            return AppOperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                error_message=result.error_message
+            )
         except Exception as e:
-            raise AgentBayError(f"Failed to stop app by pname: {e}")
+            handled_error = self._handle_error(e)
+            return AppOperationResult(
+                success=False,
+                error_message=str(handled_error)
+            )
 
-    def stop_app_by_pid(self, pid: int) -> None:
+    def stop_app_by_pid(self, pid: int) -> AppOperationResult:
         """
         Stops an application by process ID.
 
         Args:
-            pid (int): The ID of the process to stop.
+            pid (int): The process ID to stop.
 
-        Raises:
-            AgentBayError: If the operation fails.
+        Returns:
+            AppOperationResult: The result of the operation.
         """
-        args = {"pid": pid}
-
         try:
-            self._call_mcp_tool("stop_app_by_pid", args)
-        except AgentBayError:
-            raise
-        except Exception as e:
-            raise AgentBayError(f"Failed to stop app by pid: {e}")
+            args = {"pid": pid}
+            result = self._call_mcp_tool("stop_app_by_pid", args)
 
-    def stop_app_by_cmd(self, stop_cmd: str) -> None:
+            return AppOperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                error_message=result.error_message
+            )
+        except Exception as e:
+            handled_error = self._handle_error(e)
+            return AppOperationResult(
+                success=False,
+                error_message=str(handled_error)
+            )
+
+    def stop_app_by_cmd(self, stop_cmd: str) -> AppOperationResult:
         """
         Stops an application by stop command.
 
         Args:
             stop_cmd (str): The command to stop the application.
 
-        Raises:
-            AgentBayError: If the operation fails.
+        Returns:
+            AppOperationResult: The result of the operation.
         """
-        args = {"stop_cmd": stop_cmd}
-
         try:
-            self._call_mcp_tool("stop_app_by_cmd", args)
+            args = {"stop_cmd": stop_cmd}
+            result = self._call_mcp_tool("stop_app_by_cmd", args)
 
-        except AgentBayError:
-            raise
+            return AppOperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                error_message=result.error_message
+            )
         except Exception as e:
-            raise AgentBayError(f"Failed to stop app by command: {e}")
+            handled_error = self._handle_error(e)
+            return AppOperationResult(
+                success=False,
+                error_message=str(handled_error)
+            )
 
-    def list_visible_apps(self) -> List[Process]:
+    def list_visible_apps(self) -> ProcessListResult:
         """
-        Lists all currently visible applications.
+        Returns a list of currently visible applications.
 
         Returns:
-            List[Process]: A list of visible processes.
-
-        Raises:
-            AgentBayError: If the operation fails.
+            ProcessListResult: The result containing the list of visible applications/processes.
         """
-        args = {}
-
         try:
-            result = self._call_mcp_tool("list_visible_apps", args)
-            process_list = json.loads(result)
-            if not isinstance(process_list, list):
-                raise AgentBayError("Invalid apps data format")
+            result = self._call_mcp_tool("list_visible_apps", {})
 
-            # return installed_apps
-            return [Process.from_dict(process) for process in process_list]
-        except AgentBayError:
-            raise
+            if not result.success:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message
+                )
+
+            try:
+                processes_json = json.loads(result.data)
+                processes = []
+
+                for process_data in processes_json:
+                    process = Process.from_dict(process_data)
+                    processes.append(process)
+
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=processes
+                )
+            except json.JSONDecodeError as e:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=f"Failed to parse processes JSON: {e}"
+                )
         except Exception as e:
-            raise AgentBayError(f"Failed to list visible apps: {e}")
+            handled_error = self._handle_error(e)
+            return ProcessListResult(
+                success=False,
+                error_message=str(handled_error)
+            )
+
