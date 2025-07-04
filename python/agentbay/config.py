@@ -23,7 +23,8 @@ def load_config() -> Dict[str, Any]:
             found = False
 
             # Start from current directory and traverse up to find .config.json
-            # This will check current dir, parent, grandparent, etc. up to filesystem root
+            # This will check current dir, parent, grandparent, etc. up to filesystem
+            # root
             for _ in range(10):  # Limit search depth to prevent infinite loop
                 possible_config_path = os.path.join(dir_path, ".config.json")
                 if os.path.exists(possible_config_path):
@@ -41,11 +42,12 @@ def load_config() -> Dict[str, Any]:
 
             if not found:
                 # Config file not found, return default config
-                print("Warning: Configuration file not found, using default values")
+                print("Warning: Configuration file not found, using default " "values")
                 return default_config()
         except Exception as e:
             print(
-                f"Warning: Failed to search for configuration file: {e}, using default values"
+                f"Warning: Failed to search for configuration file: {e}, using default "
+                "values"
             )
             return default_config()
 
