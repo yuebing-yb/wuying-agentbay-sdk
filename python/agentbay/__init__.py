@@ -1,4 +1,4 @@
-from .agentbay import AgentBay
+from .agentbay import AgentBay, Config
 from .application import ApplicationManager, InstalledApp, Process
 from .command import Command
 from .exceptions import AgentBayError, APIError, AuthenticationError
@@ -10,6 +10,7 @@ from .ui import UI
 from .window import Window
 
 __all__ = [
+    "Config",
     "AgentBay",
     "Session",
     "AgentBayError",
