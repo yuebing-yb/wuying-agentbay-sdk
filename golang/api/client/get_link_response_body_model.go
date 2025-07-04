@@ -11,8 +11,8 @@ type iGetLinkResponseBody interface {
 	GoString() string
 	SetCode(v string) *GetLinkResponseBody
 	GetCode() *string
-	SetData(v string) *GetLinkResponseBody
-	GetData() *string
+	SetData(v *GetLinkResponseBodyData) *GetLinkResponseBody
+	GetData() *GetLinkResponseBodyData
 	SetHttpStatusCode(v int32) *GetLinkResponseBody
 	GetHttpStatusCode() *int32
 	SetMessage(v string) *GetLinkResponseBody
@@ -24,12 +24,12 @@ type iGetLinkResponseBody interface {
 }
 
 type GetLinkResponseBody struct {
-	Code           *string `json:"Code,omitempty" xml:"Code,omitempty"`
-	Data           *string `json:"Data,omitempty" xml:"Data,omitempty"`
-	HttpStatusCode *int32  `json:"HttpStatusCode,omitempty" xml:"HttpStatusCode,omitempty"`
-	Message        *string `json:"Message,omitempty" xml:"Message,omitempty"`
-	RequestId      *string `json:"RequestId,omitempty" xml:"RequestId,omitempty"`
-	Success        *bool   `json:"Success,omitempty" xml:"Success,omitempty"`
+	Code           *string                  `json:"Code,omitempty" xml:"Code,omitempty"`
+	Data           *GetLinkResponseBodyData `json:"Data,omitempty" xml:"Data,omitempty" type:"Struct"`
+	HttpStatusCode *int32                   `json:"HttpStatusCode,omitempty" xml:"HttpStatusCode,omitempty"`
+	Message        *string                  `json:"Message,omitempty" xml:"Message,omitempty"`
+	RequestId      *string                  `json:"RequestId,omitempty" xml:"RequestId,omitempty"`
+	Success        *bool                    `json:"Success,omitempty" xml:"Success,omitempty"`
 }
 
 func (s GetLinkResponseBody) String() string {
@@ -44,7 +44,7 @@ func (s *GetLinkResponseBody) GetCode() *string {
 	return s.Code
 }
 
-func (s *GetLinkResponseBody) GetData() *string {
+func (s *GetLinkResponseBody) GetData() *GetLinkResponseBodyData {
 	return s.Data
 }
 
@@ -69,8 +69,8 @@ func (s *GetLinkResponseBody) SetCode(v string) *GetLinkResponseBody {
 	return s
 }
 
-func (s *GetLinkResponseBody) SetData(v string) *GetLinkResponseBody {
-	s.Data = &v
+func (s *GetLinkResponseBody) SetData(v *GetLinkResponseBodyData) *GetLinkResponseBody {
+	s.Data = v
 	return s
 }
 
@@ -95,5 +95,30 @@ func (s *GetLinkResponseBody) SetSuccess(v bool) *GetLinkResponseBody {
 }
 
 func (s *GetLinkResponseBody) Validate() error {
+	return dara.Validate(s)
+}
+
+type GetLinkResponseBodyData struct {
+	Url *string `json:"Url,omitempty" xml:"Url,omitempty"`
+}
+
+func (s GetLinkResponseBodyData) String() string {
+	return dara.Prettify(s)
+}
+
+func (s GetLinkResponseBodyData) GoString() string {
+	return s.String()
+}
+
+func (s *GetLinkResponseBodyData) GetUrl() *string {
+	return s.Url
+}
+
+func (s *GetLinkResponseBodyData) SetUrl(v string) *GetLinkResponseBodyData {
+	s.Url = &v
+	return s
+}
+
+func (s *GetLinkResponseBodyData) Validate() error {
 	return dara.Validate(s)
 }
