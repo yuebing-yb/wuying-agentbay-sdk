@@ -1,28 +1,29 @@
 import json
 import os
 from threading import Lock
-from typing import List, Optional, Union, Dict
+from typing import Dict, List, Optional, Union
 
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_tea_openapi.exceptions._client import ClientException
 
 from agentbay.api.client import Client as mcp_client
 from agentbay.api.models import CreateMcpSessionRequest, ListSessionRequest
-from agentbay.model import (
-    SessionResult,
-    SessionListResult,
-    DeleteResult,
-    extract_request_id
-)
 from agentbay.config import load_config
 from agentbay.context import ContextService
+from agentbay.model import (
+    DeleteResult,
+    SessionListResult,
+    SessionResult,
+    extract_request_id,
+)
 from agentbay.session import Session
 from agentbay.session_params import CreateSessionParams, ListSessionParams
 
 
 class AgentBay:
     """
-    AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
+    AgentBay represents the main client for interacting with the AgentBay cloud runtime
+    environment.
     """
 
     def __init__(self, api_key: str = ""):
@@ -30,7 +31,8 @@ class AgentBay:
             api_key = os.getenv("AGENTBAY_API_KEY")
             if not api_key:
                 raise ValueError(
-                    "API key is required. Provide it as a parameter or set the AGENTBAY_API_KEY environment variable"
+                    "API key is required. Provide it as a parameter or set the "
+                    "AGENTBAY_API_KEY environment variable"
                 )
 
         # Load configuration
@@ -56,7 +58,8 @@ class AgentBay:
         Create a new session in the AgentBay cloud environment.
 
         Args:
-            params (Optional[CreateSessionParams], optional): Parameters for creating the session. Defaults to None.
+            params (Optional[CreateSessionParams], optional): Parameters for
+              creating the session.Defaults to None.
 
         Returns:
             SessionResult: Result containing the created session and request ID.
@@ -90,7 +93,7 @@ class AgentBay:
                 return SessionResult(
                     request_id=request_id,
                     success=False,
-                    error_message="Invalid response format: expected a dictionary"
+                    error_message="Invalid response format: expected a dictionary",
                 )
 
             body = session_data.get("body", {})
@@ -98,7 +101,8 @@ class AgentBay:
                 return SessionResult(
                     request_id=request_id,
                     success=False,
-                    error_message="Invalid response format: 'body' field is not a dictionary"
+                    error_message="Invalid response format: "
+                    "'body' field is not a dictionary",
                 )
 
             data = body.get("Data", {})
@@ -106,7 +110,8 @@ class AgentBay:
                 return SessionResult(
                     request_id=request_id,
                     success=False,
-                    error_message="Invalid response format: 'Data' field is not a dictionary"
+                    error_message="Invalid response format: "
+                    "'Data' field is not a dictionary",
                 )
 
             session_id = data.get("SessionId")
@@ -114,7 +119,7 @@ class AgentBay:
                 return SessionResult(
                     request_id=request_id,
                     success=False,
-                    error_message="SessionId not found in response"
+                    error_message="SessionId not found in response",
                 )
 
             # ResourceUrl is optional in CreateMcpSession response
@@ -138,14 +143,14 @@ class AgentBay:
             return SessionResult(
                 request_id="",
                 success=False,
-                error_message=f"Failed to create session: {e}"
+                error_message=f"Failed to create session: {e}",
             )
         except Exception as e:
             print("Error calling create_mcp_session:", e)
             return SessionResult(
                 request_id="",
                 success=False,
-                error_message=f"Unexpected error creating session: {e}"
+                error_message=f"Unexpected error creating session: {e}",
             )
 
     def list(self) -> List[Session]:
@@ -158,16 +163,21 @@ class AgentBay:
         with self._lock:
             return list(self._sessions.values())
 
-    def list_by_labels(self, params: Optional[Union[ListSessionParams, Dict[str, str]]] = None) -> SessionListResult:
+    def list_by_labels(
+        self, params: Optional[Union[ListSessionParams, Dict[str, str]]] = None
+    ) -> SessionListResult:
         """
         Lists sessions filtered by the provided labels with pagination support.
         It returns sessions that match all the specified labels.
 
         Args:
-            params (Optional[Union[ListSessionParams, Dict[str, str]]], optional): Parameters for listing sessions or a dictionary of labels. Defaults to None.
+            params (Optional[Union[ListSessionParams, Dict[str, str]]], optional):
+                Parameters for listing sessions or a dictionary of labels.
+                Defaults to None.
 
         Returns:
-            SessionListResult: Result containing a list of sessions and pagination information.
+            SessionListResult: Result containing a list of sessions and pagination
+            information.
         """
         try:
             # Use default params if none provided
@@ -184,7 +194,9 @@ class AgentBay:
             request = ListSessionRequest(
                 authorization=f"Bearer {self.api_key}",
                 labels=labels_json,
-                max_results=str(params.max_results)  # Convert to string as expected by the API
+                max_results=str(
+                    params.max_results
+                ),  # Convert to string as expected by the API
             )
 
             # Add next_token if provided
@@ -194,8 +206,9 @@ class AgentBay:
             print("API Call: list_session")
             print(f"Request: Labels={labels_json}, MaxResults={params.max_results}")
             if request.next_token:
-                print(f", NextToken={params.next_token}")
+                print(f"NextToken={request.next_token}")
 
+            # Make the API call
             response = self.client.list_session(request)
 
             # Extract request ID
@@ -205,7 +218,11 @@ class AgentBay:
             body = response_map.get("body", {})
 
             # Check for errors in the response
-            if isinstance(body, dict) and isinstance(body.get("Data"), dict) and body.get("Data", {}).get("IsError", False):
+            if (
+                isinstance(body, dict)
+                and isinstance(body.get("Data"), dict)
+                and body.get("Data", {}).get("IsError", False)
+            ):
                 return SessionListResult(
                     request_id=request_id,
                     success=False,
@@ -213,7 +230,7 @@ class AgentBay:
                     sessions=[],
                     next_token="",
                     max_results=request.max_results,
-                    total_count=0
+                    total_count=0,
                 )
 
             sessions = []
@@ -250,7 +267,6 @@ class AgentBay:
 
                                 sessions.append(session)
 
-
             # Return SessionListResult with request ID and pagination info
             return SessionListResult(
                 request_id=request_id,
@@ -258,7 +274,7 @@ class AgentBay:
                 sessions=sessions,
                 next_token=next_token,
                 max_results=max_results,
-                total_count=total_count
+                total_count=total_count,
             )
 
         except Exception as e:
@@ -267,7 +283,7 @@ class AgentBay:
                 request_id="",
                 success=False,
                 sessions=[],
-                error_message=f"Failed to list sessions by labels: {e}"
+                error_message=f"Failed to list sessions by labels: {e}",
             )
 
     def delete(self, session: Session) -> DeleteResult:
@@ -295,5 +311,5 @@ class AgentBay:
             return DeleteResult(
                 request_id="",
                 success=False,
-                error_message=f"Failed to delete session {session.session_id}: {e}"
+                error_message=f"Failed to delete session {session.session_id}: {e}",
             )
