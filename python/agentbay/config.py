@@ -12,7 +12,13 @@ def default_config() -> Dict[str, Any]:
         "timeout_ms": 60000,
     }
 
-
+"""
+The SDK uses the following precedence order for configuration (highest to lowest):
+1. Explicitly passed configuration in code.
+2. Environment variables.
+3. .env file.
+4. Default configuration.
+"""
 def load_config(cfg) -> Dict[str, Any]:
     if cfg is not None:
         config = {
@@ -31,5 +37,5 @@ def load_config(cfg) -> Dict[str, Any]:
         if endpoint := os.getenv("AGENTBAY_ENDPOINT"):
             config["endpoint"] = endpoint
         if timeout_ms := os.getenv("AGENTBAY_TIMEOUT_MS"):
-            config["timeout_ms"] = timeout_ms
+            config["timeout_ms"] = int(timeout_ms)
     return config
