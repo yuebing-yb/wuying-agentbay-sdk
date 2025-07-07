@@ -27,6 +27,7 @@ alibabacloud-tea-openapi = "0.4.0rc3"
 httpx = "^0.28.1"
 cryptography = "^45.0.2"
 alibabacloud-tea-util = "^0.3.13"
+python-dotenv = "^1.1.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
