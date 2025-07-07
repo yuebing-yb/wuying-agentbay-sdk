@@ -4,10 +4,14 @@ import * as $dara from "@darabonba/typescript";
 export class GetLinkRequest extends $dara.Model {
   authorization?: string;
   sessionId?: string;
+  protocolType?: string;
+  port?: number;
   static names(): { [key: string]: string } {
     return {
       authorization: "Authorization",
       sessionId: "SessionId",
+      protocolType: "ProtocolType",
+      port: "Port",
     };
   }
 
@@ -15,6 +19,8 @@ export class GetLinkRequest extends $dara.Model {
     return {
       authorization: "string",
       sessionId: "string",
+      protocolType: "string",
+      port: "number",
     };
   }
 

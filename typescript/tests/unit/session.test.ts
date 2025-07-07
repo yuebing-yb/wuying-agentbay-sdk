@@ -183,6 +183,32 @@ describe("TestSession", () => {
       const callArgs = mockClient.getLink.getCall(0).args[0];
       expect(callArgs.authorization).toBe("Bearer test_api_key");
       expect(callArgs.sessionId).toBe("test_session_id");
+      expect(callArgs.protocolType).toBeUndefined();
+      expect(callArgs.port).toBeUndefined();
+    });
+
+    it("should get link successfully with protocol type and port", async () => {
+      const mockResponse = {
+        body: {
+          data: "https://example.com/session-link",
+          requestId: "get-link-request-id",
+        },
+        statusCode: 200,
+      };
+
+      mockClient.getLink.resolves(mockResponse);
+
+      const result = await mockSession.getLink("https", 8080);
+
+      expect(result.data).toBe("https://example.com/session-link");
+      expect(result.requestId).toBe("get-link-request-id");
+      expect(mockClient.getLink.calledOnce).toBe(true);
+
+      const callArgs = mockClient.getLink.getCall(0).args[0];
+      expect(callArgs.authorization).toBe("Bearer test_api_key");
+      expect(callArgs.sessionId).toBe("test_session_id");
+      expect(callArgs.protocolType).toBe("https");
+      expect(callArgs.port).toBe(8080);
     });
   });
 

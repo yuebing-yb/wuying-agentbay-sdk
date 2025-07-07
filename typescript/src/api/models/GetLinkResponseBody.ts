@@ -3,7 +3,7 @@ import * as $dara from "@darabonba/typescript";
 
 export class GetLinkResponseBody extends $dara.Model {
   code?: string;
-  data?: string;
+  data?: { url: string };
   httpStatusCode?: number;
   message?: string;
   requestId?: string;
@@ -22,7 +22,7 @@ export class GetLinkResponseBody extends $dara.Model {
   static types(): { [key: string]: any } {
     return {
       code: "string",
-      data: "string",
+      data: "object",
       httpStatusCode: "number",
       message: "string",
       requestId: "string",

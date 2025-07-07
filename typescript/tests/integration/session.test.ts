@@ -65,7 +65,7 @@ describe("Session", () => {
 
       // Create a session
       log("Creating a new session for session testing...");
-      const createResponse = await agentBay.create();
+      const createResponse = await agentBay.create({ imageId: "code_latest" });
       session = createResponse.data;
       log(`Session created with ID: ${session.sessionId}`);
       log(
@@ -102,53 +102,6 @@ describe("Session", () => {
     it.only("should return the client", () => {
       const client = session.getClient();
       expect(client).toBeDefined();
-    });
-
-    it.only("should get link if implemented", async () => {
-      // Check if the getLink method exists
-      if (typeof session.getLink === "function") {
-        log("Testing session.getLink method...");
-        try {
-          // First, create a new session with imageId for getLink testing
-          // This is consistent with the Go implementation in TestSession_GetLinkMethod
-          const createLinkResponse = await agentBay.create({
-            imageId: "imgc-07if81c4ktj9shiru",
-          });
-          const linkTestSession = createLinkResponse.data;
-          log(
-            `Session created with ID: ${linkTestSession.sessionId} for getLink testing`
-          );
-          log(
-            `Create Link Session RequestId: ${
-              createLinkResponse.requestId || "undefined"
-            }`
-          );
-
-          const linkResponse = await linkTestSession.getLink();
-          log("Session link:", linkResponse.data);
-          log(`Get Link RequestId: ${linkResponse.requestId || "undefined"}`);
-
-          // Verify that the response contains requestId
-          expect(linkResponse.requestId).toBeDefined();
-          expect(typeof linkResponse.requestId).toBe("string");
-
-          // Verify the link
-          expect(linkResponse.data).toBeDefined();
-
-          // Clean up the session after test
-          const deleteLinkResponse = await agentBay.delete(linkTestSession);
-          log(
-            `Delete Link Session RequestId: ${
-              deleteLinkResponse.requestId || "undefined"
-            }`
-          );
-        } catch (error) {
-          log(`Note: Session link retrieval failed: ${error}`);
-          // Don't fail the test if getLink method is not fully implemented
-        }
-      } else {
-        log("Note: Session getLink method is not available, skipping test");
-      }
     });
   });
 

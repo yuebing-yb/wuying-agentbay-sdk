@@ -89,36 +89,76 @@ delete_result = agent_bay.delete(session)
 ### TypeScript
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
+import { AgentBay, ListSessionParams } from 'wuying-agentbay-sdk';
 
 // Initialize with API key
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 
 // Create a session
 async function main() {
-  const session = await agentBay.create({ imageId: 'linux_latest' });
+  try {
+    const createResponse = await agentBay.create({
+      imageId: 'linux_latest',
+      labels: { project: 'demo', environment: 'testing' }
+    });
+    const session = createResponse.data;
+    console.log(`Session created with ID: ${session.sessionId}`);
+    console.log(`RequestID: ${createResponse.requestId}`);
 
-  // Execute a command
-  const result = await session.command.executeCommand('ls -la');
-  log(result);
+    // Execute a command
+    const commandResponse = await session.command.executeCommand('ls -la');
+    if (commandResponse.data) {
+      console.log(`Command output: ${commandResponse.data}`);
+      console.log(`RequestID: ${commandResponse.requestId}`);
+    }
 
-  // Read a file
-  const content = await session.filesystem.readFile('/path/to/file.txt');
-  log(content);
+    // Read a file
+    const fileResponse = await session.filesystem.readFile('/path/to/file.txt');
+    if (fileResponse.data) {
+      console.log(`File content: ${fileResponse.data}`);
+      console.log(`RequestID: ${fileResponse.requestId}`);
+    }
 
-  // Execute code
-  const codeResult = await session.command.runCode('console.log("Hello, World!");', 'javascript');
-  log(`Code execution result: ${codeResult}`);
+    // Work with large files
+    const largeContent = 'x'.repeat(100 * 1024); // 100KB
+    const largeCWriteResponse = await session.filesystem.writeLargeFile('/path/to/large_file.txt', largeContent);
+    const largeReadResponse = await session.filesystem.readLargeFile('/path/to/large_file.txt');
+    console.log(`Large file content length: ${largeReadResponse.data?.length || 0}`);
 
-  // Work with large files
-  const largeContent = 'x'.repeat(100 * 1024); // 100KB
-  await session.filesystem.writeLargeFile('/path/to/large_file.txt', largeContent);
+    // Execute code
+    const codeResponse = await session.command.runCode('console.log("Hello, World!");', 'javascript');
+    console.log(`Code execution result: ${codeResponse.data}`);
 
-  // Delete the session when done
-  await agentBay.delete(session);
+
+    // List sessions by labels with pagination
+    const listParams: ListSessionParams = {
+      labels: { project: 'demo' },
+      maxResults: 10
+    };
+    const listResponse = await agentBay.listByLabels(listParams);
+    console.log(`Found ${listResponse.data.length} sessions`);
+    console.log(`Total count: ${listResponse.totalCount}`);
+
+    // Handle pagination if needed
+    if (listResponse.nextToken) {
+      const nextPageParams: ListSessionParams = {
+        ...listParams,
+        nextToken: listResponse.nextToken
+      };
+      const nextPageResponse = await agentBay.listByLabels(nextPageParams);
+      console.log(`Next page has ${nextPageResponse.data.length} sessions`);
+    }
+
+    // Delete the session when done
+    const deleteResponse = await agentBay.delete(session);
+    console.log(`Session deleted, RequestID: ${deleteResponse.requestId}`);
+
+  } catch (error) {
+    console.error('Error:', error);
+  }
 }
 
-main().catch(logError);
+main();
 ```
 
 ### Golang
