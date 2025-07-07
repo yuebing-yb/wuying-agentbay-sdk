@@ -53,7 +53,7 @@ class LoadConfigTestCase(unittest.TestCase):
 
         self.assertEqual(result["region_id"], "env-region")
         self.assertEqual(result["endpoint"], "env-endpoint")
-        self.assertEqual(result["timeout_ms"], "10000")
+        self.assertEqual(result["timeout_ms"], 10000)
 
     @patch("pathlib.Path.is_file", return_value=False)
     def test_load_from_system_env_vars(self, mock_is_file):
@@ -66,7 +66,7 @@ class LoadConfigTestCase(unittest.TestCase):
 
         self.assertEqual(result["region_id"], "sys-region")
         self.assertEqual(result["endpoint"], "sys-endpoint")
-        self.assertEqual(result["timeout_ms"], "15000")
+        self.assertEqual(result["timeout_ms"], 15000)
 
     @patch("pathlib.Path.is_file", return_value=False)
     def test_use_default_config_when_no_source_provided(self, mock_is_file):
@@ -82,6 +82,51 @@ class LoadConfigTestCase(unittest.TestCase):
         self.assertEqual(result["region_id"], default["region_id"])
         self.assertEqual(result["endpoint"], default["endpoint"])
         self.assertEqual(result["timeout_ms"], default["timeout_ms"])
+
+    def test_config_precedence_order(self):
+        """测试配置的优先级顺序"""
+        # 创建 .env 文件
+        with open(self.env_file, "w") as f:
+            f.write(
+                "AGENTBAY_REGION_ID=env-region\n"
+                "AGENTBAY_ENDPOINT=env-endpoint\n"
+                "AGENTBAY_TIMEOUT_MS=10000\n"
+            )
+
+        os.chdir(self.test_dir.name)
+        # 设置环境变量
+        os.environ["AGENTBAY_REGION_ID"] = "sys-region"
+        os.environ["AGENTBAY_ENDPOINT"] = "sys-endpoint"
+        os.environ["AGENTBAY_TIMEOUT_MS"] = "15000"
+
+        # 默认配置
+        default = default_config()
+
+        # 1. 测试显式传入的配置优先级最高
+        custom_cfg = Config(
+            region_id="explicit-region",
+            endpoint="explicit-endpoint",
+            timeout_ms=2000,
+        )
+        result = load_config(custom_cfg)
+        self.assertEqual(result["region_id"], "explicit-region")
+        self.assertEqual(result["endpoint"], "explicit-endpoint")
+        self.assertEqual(result["timeout_ms"], 2000)
+
+        # 2. 当显式配置为 None 时，应使用环境变量
+        result = load_config(None)
+        self.assertEqual(result["region_id"], "sys-region")
+        self.assertEqual(result["endpoint"], "sys-endpoint")
+        self.assertEqual(result["timeout_ms"], 15000)
+
+        # 3. 清除环境变量后，应使用 .env 文件
+        os.environ.pop("AGENTBAY_REGION_ID")
+        os.environ.pop("AGENTBAY_ENDPOINT")
+        os.environ.pop("AGENTBAY_TIMEOUT_MS")
+        result = load_config(None)
+        self.assertEqual(result["region_id"], "env-region")
+        self.assertEqual(result["endpoint"], "env-endpoint")
+        self.assertEqual(result["timeout_ms"], 10000)
 
 if __name__ == '__main__':
     unittest.main()
