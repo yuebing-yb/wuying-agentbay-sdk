@@ -13,11 +13,17 @@ type iGetLinkRequest interface {
 	GetAuthorization() *string
 	SetSessionId(v string) *GetLinkRequest
 	GetSessionId() *string
+	SetProtocolType(v string) *GetLinkRequest
+	GetProtocolType() *string
+	SetPort(v int32) *GetLinkRequest
+	GetPort() *int32
 }
 
 type GetLinkRequest struct {
 	Authorization *string `json:"Authorization,omitempty" xml:"Authorization,omitempty"`
 	SessionId     *string `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
+	ProtocolType  *string `json:"ProtocolType,omitempty" xml:"ProtocolType,omitempty"`
+	Port          *int32  `json:"Port,omitempty" xml:"Port,omitempty"`
 }
 
 func (s GetLinkRequest) String() string {
@@ -36,6 +42,14 @@ func (s *GetLinkRequest) GetSessionId() *string {
 	return s.SessionId
 }
 
+func (s *GetLinkRequest) GetProtocolType() *string {
+	return s.ProtocolType
+}
+
+func (s *GetLinkRequest) GetPort() *int32 {
+	return s.Port
+}
+
 func (s *GetLinkRequest) SetAuthorization(v string) *GetLinkRequest {
 	s.Authorization = &v
 	return s
@@ -43,6 +57,16 @@ func (s *GetLinkRequest) SetAuthorization(v string) *GetLinkRequest {
 
 func (s *GetLinkRequest) SetSessionId(v string) *GetLinkRequest {
 	s.SessionId = &v
+	return s
+}
+
+func (s *GetLinkRequest) SetProtocolType(v string) *GetLinkRequest {
+	s.ProtocolType = &v
+	return s
+}
+
+func (s *GetLinkRequest) SetPort(v int32) *GetLinkRequest {
+	s.Port = &v
 	return s
 }
 

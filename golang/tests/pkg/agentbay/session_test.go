@@ -155,7 +155,7 @@ func TestSession_GetLinkMethod(t *testing.T) {
 
 	// Create a session
 	fmt.Println("Creating a new session for GetLink testing...")
-	sessionParams := agentbay.NewCreateSessionParams().WithImageId("browser-use-debian-12")
+	sessionParams := agentbay.NewCreateSessionParams().WithImageId("browser_latest")
 	sessionResult, err := agentBay.Create(sessionParams)
 	if err != nil {
 		t.Fatalf("Error creating session: %v", err)
@@ -187,9 +187,9 @@ func TestSession_GetLinkMethod(t *testing.T) {
 		}
 	}()
 
-	// Test GetLink method
-	fmt.Println("Testing session.GetLink method...")
-	linkResult, err := session.GetLink()
+	// Test GetLink method with default parameters (no parameters)
+	fmt.Println("Testing session.GetLink method with default parameters...")
+	linkResult, err := session.GetLink(nil, nil)
 	if err != nil {
 		t.Fatalf("Error getting session link: %v", err)
 	}
@@ -206,6 +206,64 @@ func TestSession_GetLinkMethod(t *testing.T) {
 		t.Errorf("Expected non-empty link from GetLink")
 	} else {
 		t.Logf("Session link: %s", linkResult.Link)
+	}
+
+	// Test GetLink method with protocol_type parameter
+	fmt.Println("Testing session.GetLink method with protocol_type parameter...")
+	protocolType := "https"
+	linkWithProtocolResult, err := session.GetLink(&protocolType, nil)
+	if err != nil {
+		t.Errorf("Error getting session link with protocol type: %v", err)
+	} else {
+		if linkWithProtocolResult.RequestID == "" {
+			t.Errorf("GetLink with protocol type did not return RequestID")
+		} else {
+			t.Logf("Session link with protocol https retrieved (RequestID: %s)", linkWithProtocolResult.RequestID)
+		}
+		if linkWithProtocolResult.Link == "" {
+			t.Errorf("Expected non-empty link from GetLink with protocol type")
+		} else {
+			t.Logf("Session link with protocol https: %s", linkWithProtocolResult.Link)
+		}
+	}
+
+	// Test GetLink method with port parameter
+	fmt.Println("Testing session.GetLink method with port parameter...")
+	port := int32(8080)
+	linkWithPortResult, err := session.GetLink(nil, &port)
+	if err != nil {
+		t.Errorf("Error getting session link with port: %v", err)
+	} else {
+		if linkWithPortResult.RequestID == "" {
+			t.Errorf("GetLink with port did not return RequestID")
+		} else {
+			t.Logf("Session link with port 8080 retrieved (RequestID: %s)", linkWithPortResult.RequestID)
+		}
+		if linkWithPortResult.Link == "" {
+			t.Errorf("Expected non-empty link from GetLink with port")
+		} else {
+			t.Logf("Session link with port 8080: %s", linkWithPortResult.Link)
+		}
+	}
+
+	// Test GetLink method with both protocol_type and port parameters
+	fmt.Println("Testing session.GetLink method with both protocol_type and port parameters...")
+	protocolTypeHttps := "https"
+	portHttps := int32(443)
+	linkWithBothResult, err := session.GetLink(&protocolTypeHttps, &portHttps)
+	if err != nil {
+		t.Errorf("Error getting session link with protocol and port: %v", err)
+	} else {
+		if linkWithBothResult.RequestID == "" {
+			t.Errorf("GetLink with protocol and port did not return RequestID")
+		} else {
+			t.Logf("Session link with protocol https and port 443 retrieved (RequestID: %s)", linkWithBothResult.RequestID)
+		}
+		if linkWithBothResult.Link == "" {
+			t.Errorf("Expected non-empty link from GetLink with protocol and port")
+		} else {
+			t.Logf("Session link with protocol https and port 443: %s", linkWithBothResult.Link)
+		}
 	}
 }
 
