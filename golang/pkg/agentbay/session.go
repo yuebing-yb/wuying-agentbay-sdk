@@ -1,6 +1,7 @@
 package agentbay
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/alibabacloud-go/tea/tea"
@@ -228,15 +229,24 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 }
 
 // GetLink gets the link for this session.
-func (s *Session) GetLink() (*LinkResult, error) {
+func (s *Session) GetLink(protocolType *string, port *int32) (*LinkResult, error) {
 	getLinkRequest := &mcp.GetLinkRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
 		SessionId:     tea.String(s.SessionID),
+		ProtocolType:  protocolType,
+		Port:          port,
 	}
 
 	// Log API request
 	fmt.Println("API Call: GetLink")
-	fmt.Printf("Request: SessionId=%s\n", *getLinkRequest.SessionId)
+	fmt.Printf("Request: SessionId=%s", *getLinkRequest.SessionId)
+	if getLinkRequest.ProtocolType != nil {
+		fmt.Printf(", ProtocolType=%s", *getLinkRequest.ProtocolType)
+	}
+	if getLinkRequest.Port != nil {
+		fmt.Printf(", Port=%d", *getLinkRequest.Port)
+	}
+	fmt.Println()
 
 	response, err := s.GetClient().GetLink(getLinkRequest)
 
@@ -255,7 +265,42 @@ func (s *Session) GetLink() (*LinkResult, error) {
 
 	var link string
 	if response != nil && response.Body != nil && response.Body.Data != nil {
-		link = *response.Body.Data
+		data := response.Body.Data
+		fmt.Printf("Data: %v\n", data)
+
+		// Try to parse data similar to Python version
+		// Handle different data types
+		switch v := data.(type) {
+		case string:
+			// If data is a string, try to parse as JSON first
+			if v != "" {
+				var jsonData map[string]interface{}
+				err := json.Unmarshal([]byte(v), &jsonData)
+				if err == nil {
+					// Successfully parsed as JSON, extract Url field
+					if url, exists := jsonData["Url"]; exists {
+						if urlStr, ok := url.(string); ok {
+							link = urlStr
+						}
+					}
+				} else {
+					// Not valid JSON, use data directly
+					link = v
+				}
+			}
+		case map[string]interface{}:
+			// If data is already a map, extract Url field directly
+			if url, exists := v["Url"]; exists {
+				if urlStr, ok := url.(string); ok {
+					link = urlStr
+				}
+			}
+		default:
+			// For other types, try to convert to string
+			if dataStr := fmt.Sprintf("%v", data); dataStr != "" {
+				link = dataStr
+			}
+		}
 	}
 
 	return &LinkResult{

@@ -451,6 +451,14 @@ func (client *Client) GetLinkWithOptions(request *GetLinkRequest, runtime *dara.
 		body["SessionId"] = request.SessionId
 	}
 
+	if !dara.IsNil(request.ProtocolType) {
+		body["ProtocolType"] = request.ProtocolType
+	}
+
+	if !dara.IsNil(request.Port) {
+		body["Port"] = request.Port
+	}
+
 	req := &openapiutil.OpenApiRequest{
 		Body: openapiutil.ParseToMap(body),
 	}

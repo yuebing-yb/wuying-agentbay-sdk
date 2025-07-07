@@ -166,7 +166,7 @@ describe("TestSession", () => {
     it("should get link successfully", async () => {
       const mockResponse = {
         body: {
-          data: "https://example.com/session-link",
+          data: { Url: "https://example.com/session-link" },
           requestId: "get-link-request-id",
         },
         statusCode: 200,
@@ -190,7 +190,7 @@ describe("TestSession", () => {
     it("should get link successfully with protocol type and port", async () => {
       const mockResponse = {
         body: {
-          data: "https://example.com/session-link",
+          data: { Url: "https://example.com/session-link" },
           requestId: "get-link-request-id",
         },
         statusCode: 200,
