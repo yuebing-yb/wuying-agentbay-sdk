@@ -282,27 +282,64 @@ export class Session {
   /**
    * Gets the link for this session.
    *
+   * @param protocolType - Optional protocol type to use for the link
+   * @param port - Optional port to use for the link
    * @returns API response with link data and requestId
    * @throws APIError if the operation fails.
    */
-  async getLink(): Promise<ApiResponseWithData<string>> {
+  async getLink(
+    protocolType?: string,
+    port?: number
+  ): Promise<ApiResponseWithData<string>> {
     try {
-      const request = new GetLinkRequest({
+      const requestParams: any = {
         authorization: `Bearer ${this.getAPIKey()}`,
         sessionId: this.sessionId,
-      });
+      };
+
+      // Only include protocolType if it has a value
+      if (
+        protocolType !== undefined &&
+        protocolType !== null &&
+        protocolType !== ""
+      ) {
+        requestParams.protocolType = protocolType;
+      }
+
+      // Only include port if it has a value
+      if (port !== undefined && port !== null) {
+        requestParams.port = port;
+      }
+
+      const request = new GetLinkRequest(requestParams);
 
       log("API Call: GetLink");
-      log(`Request: SessionId=${this.sessionId}`);
+      log(
+        `Request: SessionId=${this.sessionId}, ProtocolType=${protocolType}, Port=${port}`
+      );
 
       const response = await this.client.getLink(request);
-      log(`Response from GetLink:`, response.body);
+      log(`Response from GetLink:`, response.data);
 
-      const linkData = response.body?.data || "";
+      // Extract data from response, similar to Python version
+      let data = response.body?.data || {};
+      log(`Data: ${JSON.stringify(data)}`);
+
+      // If data is not an object, try to parse it as JSON (similar to Python version)
+      if (typeof data !== "object" || data === null) {
+        try {
+          data = typeof data === "string" ? JSON.parse(data) : {};
+        } catch (error) {
+          data = {};
+        }
+      }
+
+      // Extract URL from data (similar to Python version)
+      const url = (data as any).Url || "";
 
       return {
         requestId: extractRequestId(response),
-        data: linkData,
+        data: url,
       };
     } catch (error) {
       logError("Error calling GetLink:", error);

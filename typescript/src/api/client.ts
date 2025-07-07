@@ -398,6 +398,14 @@ export class Client extends OpenApi {
       body["SessionId"] = request.sessionId;
     }
 
+    if (!$dara.isNull(request.protocolType)) {
+      body["ProtocolType"] = request.protocolType;
+    }
+
+    if (!$dara.isNull(request.port)) {
+      body["Port"] = request.port;
+    }
+
     const req = new $OpenApiUtil.OpenApiRequest({
       body: OpenApiUtil.parseToMap(body),
     });
