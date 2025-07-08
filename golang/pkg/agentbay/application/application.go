@@ -251,13 +251,16 @@ func (am *ApplicationManager) GetInstalledApps(startMenu bool, desktop bool, ign
 	}, nil
 }
 
-// StartApp starts an application with the given command and optional working directory.
-func (am *ApplicationManager) StartApp(startCmd string, workDirectory string) (*ProcessListResult, error) {
-	args := map[string]string{
+// StartApp starts an application with the given command, optional working directory, and optional activity.
+func (am *ApplicationManager) StartApp(startCmd string, workDirectory string, activity string) (*ProcessListResult, error) {
+	args := map[string]interface{}{
 		"start_cmd": startCmd,
 	}
 	if workDirectory != "" {
 		args["work_directory"] = workDirectory
+	}
+	if activity != "" {
+		args["activity"] = activity
 	}
 
 	// 使用增强的辅助方法调用MCP工具并检查错误

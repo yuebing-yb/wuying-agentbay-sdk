@@ -207,7 +207,7 @@ func TestApplication_StartApp(t *testing.T) {
 		startCmd := "/usr/bin/google-chrome-stable"
 
 		// Call StartApp function
-		processResult, err := session.Application.StartApp(startCmd, "")
+		processResult, err := session.Application.StartApp(startCmd, "", "")
 
 		if err != nil {
 			t.Logf("Note: StartApp failed: %v", err)
@@ -309,7 +309,7 @@ func TestApplication_StopAppByPName(t *testing.T) {
 		// First, start an application to get a process to stop
 		fmt.Println("Starting Google Chrome application...")
 		startCmd := "/usr/bin/google-chrome-stable"
-		startResult, err := session.Application.StartApp(startCmd, "")
+		startResult, err := session.Application.StartApp(startCmd, "", "")
 
 		if err != nil {
 			t.Logf("Note: StartApp failed: %v", err)

@@ -45,7 +45,7 @@ func TestWindow_WindowOperations(t *testing.T) {
 		// First, start Google Chrome
 		fmt.Println("Starting Google Chrome application...")
 		startCmd := "/usr/bin/google-chrome-stable"
-		chromeResult, err := session.Application.StartApp(startCmd, "")
+		chromeResult, err := session.Application.StartApp(startCmd, "", "")
 		if err != nil {
 			t.Logf("Note: Failed to start Google Chrome: %v", err)
 			t.Logf("Continuing with existing windows...")
@@ -166,7 +166,7 @@ func TestWindow_WindowOperations(t *testing.T) {
 
 		// Start a terminal
 		fmt.Println("Starting gnome-terminal...")
-		terminalResult, err := session.Application.StartApp("/usr/bin/gnome-terminal", "")
+		terminalResult, err := session.Application.StartApp("/usr/bin/gnome-terminal", "", "")
 		if err != nil {
 			t.Logf("Note: Failed to start gnome-terminal: %v", err)
 		} else {
