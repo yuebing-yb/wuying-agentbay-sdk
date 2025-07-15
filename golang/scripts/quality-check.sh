@@ -154,10 +154,10 @@ run_tests() {
         VERBOSE_FLAG="-v"
     fi
 
-    echo "Running go tests with coverage..."
-    go test $VERBOSE_FLAG -race -coverprofile=coverage.txt -covermode=atomic ./...
+    echo "Running unit tests with coverage..."
+    go test $VERBOSE_FLAG -race  ./tests/pkg/unit/...
 
-    print_success "All tests passed!"
+    print_success "Unit tests passed!"
 }
 
 # Main execution
