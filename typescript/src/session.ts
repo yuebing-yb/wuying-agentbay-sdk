@@ -257,7 +257,7 @@ export class Session {
                 allCompleted = false;
                 break;
               }
-              
+
               if (item.status === "Failed") {
                 hasFailure = true;
                 logError(`Upload failed for context ${item.contextId}: ${item.errorMessage}`);
@@ -521,7 +521,7 @@ export class Session {
         }
       }
 
-      const url = (data as any).Url || "";
+      const url = (data as any).Url || (data as any).url;
 
       return {
         requestId,
@@ -584,7 +584,7 @@ export class Session {
         }
       }
 
-      const url = (data as any).Url || "";
+      const url = (data as any).Url || (data as any).url;
 
       return {
         requestId,
@@ -604,7 +604,7 @@ export class Session {
 
   /**
    * List MCP tools available for this session.
-   * 
+   *
    * @param imageId Optional image ID, defaults to session's imageId or "linux_latest"
    * @returns McpToolsResult containing tools list and request ID
    */
