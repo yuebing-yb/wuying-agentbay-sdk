@@ -23,11 +23,11 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.10"
 darabonba-core = ">=1.0.0,<2.0.0"
-alibabacloud-tea-openapi = "0.4.0rc3"
+alibabacloud-tea-openapi = ">= 0.4.0rc3"
+cryptography = ">=44.0.0"
 httpx = "^0.28.1"
-cryptography = "^45.0.2"
 alibabacloud-tea-util = "^0.3.13"
-python-dotenv = "^1.1.1"
+python-dotenv = "^1.0.0"
 pydantic = "^2.0"
 playwright = ">=1.5.0"
 
