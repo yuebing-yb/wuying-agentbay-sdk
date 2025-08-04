@@ -10,11 +10,18 @@ sessionId  // The ID of this session
 resourceUrl  // The URL of the resource associated with this session
 fileSystem  // The FileSystem instance for this session
 command  // The Command instance for this session
+code  // The Code instance for this session
 oss  // The Oss instance for this session
 application  // The Application instance for this session
 window  // The WindowManager instance for this session
 ui  // The UI instance for this session
 context  // The ContextManager instance for this session
+browser  // The Browser instance for this session
+agent  // The Agent instance for this session
+isVpc  // Whether this session uses VPC resources
+networkInterfaceIp  // Network interface IP for VPC sessions
+httpPort  // HTTP port for VPC sessions
+mcpTools  // MCP tools available for this session
 ```
 
 ## Methods
@@ -35,10 +42,10 @@ delete(syncContext?: boolean): Promise<DeleteResult>
 
 **Behavior:**
 - When `syncContext` is true, the API will first call `context.sync` to trigger file upload.
-- It will then check `context.info` to retrieve ContextStatusData and monitor all data items' Status.
-- The API waits until all items show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
-- Any "Failed" status items will have their error messages printed.
-- The session deletion only proceeds after context sync status checking completes.
+- It will then check `context.info` to retrieve ContextStatusData and monitor only upload task items' Status.
+- The API waits until all upload tasks show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
+- Any "Failed" status upload tasks will have their error messages printed.
+- The session deletion only proceeds after context sync status checking for upload tasks completes.
 
 **Example:**
 ```typescript
@@ -113,11 +120,11 @@ async function setSessionLabels(session) {
 Gets the labels for this session.
 
 ```typescript
-getLabels(): Promise<LabelResult>
+getLabels(): Promise<OperationResult>
 ```
 
 **Returns:**
-- `Promise<LabelResult>`: A promise that resolves to a result object containing the session labels, request ID, and success status.
+- `Promise<OperationResult>`: A promise that resolves to a result object containing success status, request ID, error message if any, and the labels data.
 
 **Example:**
 ```typescript
@@ -125,9 +132,14 @@ getLabels(): Promise<LabelResult>
 async function getSessionLabels(session) {
   try {
     const result = await session.getLabels();
-    console.log(`Session labels: ${JSON.stringify(result.labels)}`);
-    console.log(`Request ID: ${result.requestId}`);
-    return result.labels;
+    if (result.success) {
+      console.log(`Session labels: ${JSON.stringify(result.data)}`);
+      console.log(`Request ID: ${result.requestId}`);
+      return result.data;
+    } else {
+      console.log(`Failed to get labels: ${result.errorMessage}`);
+      return null;
+    }
   } catch (error) {
     console.error(`Failed to get labels: ${error}`);
     throw error;

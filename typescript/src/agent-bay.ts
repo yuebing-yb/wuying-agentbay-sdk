@@ -4,11 +4,12 @@ import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList } from "./api/models/model";
 import { Client } from "./api/client";
 
-import { loadConfig, Config } from "./config";
+import { loadConfig, Config, BROWSER_DATA_PATH } from "./config";
 import { ContextService } from "./context";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
+import { BrowserContext } from "./session-params";
 
 import {
   DeleteResult,
@@ -29,6 +30,8 @@ export interface CreateSessionParams {
   labels?: Record<string, string>;
   imageId?: string;
   contextSync?: ContextSync[];
+  browserContext?: BrowserContext;
+  isVpc?: boolean;
 }
 
 /**
@@ -97,12 +100,8 @@ export class AgentBay {
    * @param params - Optional parameters for creating the session
    * @returns SessionResult containing the created session and request ID
    */
-  async create(params?: CreateSessionParams): Promise<SessionResult> {
+  async create(params: CreateSessionParams = {}): Promise<SessionResult> {
     try {
-      if (!params) {
-        params = {};
-      }
-
       const request = new $_client.CreateMcpSessionRequest({
         authorization: "Bearer " + this.apiKey,
       });
@@ -121,6 +120,9 @@ export class AgentBay {
       if (params.imageId) {
         request.imageId = params.imageId;
       }
+
+      // Add VPC resource if specified
+      request.vpcResource = params.isVpc || false;
 
       // Flag to indicate if we need to wait for context synchronization
       let hasPersistenceData = false;
@@ -143,6 +145,31 @@ export class AgentBay {
         }
         request.persistenceDataList = persistenceDataList;
         hasPersistenceData = persistenceDataList.length > 0;
+      }
+
+      // Add BrowserContext as a ContextSync if provided
+      if (params.browserContext) {
+        // Create a simple sync policy for browser context
+        const syncPolicy = {
+          uploadPolicy: { autoUpload: params.browserContext.autoUpload },
+          downloadPolicy: null,
+          deletePolicy: null,
+          bwList: null
+        };
+
+        // Create browser context sync item
+        const browserContextSync = new CreateMcpSessionRequestPersistenceDataList({
+          contextId: params.browserContext.contextId,
+          path: BROWSER_DATA_PATH, // Using a constant path for browser data
+          policy: JSON.stringify(syncPolicy)
+        });
+
+        // Add to persistence data list or create new one if not exists
+        if (!request.persistenceDataList) {
+          request.persistenceDataList = [];
+        }
+        request.persistenceDataList.push(browserContextSync);
+        hasPersistenceData = true;
       }
 
       // Log API request
@@ -173,7 +200,7 @@ export class AgentBay {
       log(requestLog);
 
       const response = await this.client.createMcpSession(request);
-      log("response =", response);
+      log("response data =", response.body?.data);
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
@@ -218,7 +245,31 @@ export class AgentBay {
         session.resourceUrl = resourceUrl;
       }
 
+      // Set VPC-related information from response
+      session.isVpc = params.isVpc || false;
+      if (data.networkInterfaceIp) {
+        session.networkInterfaceIp = data.networkInterfaceIp;
+      }
+      if (data.httpPort) {
+        session.httpPort = data.httpPort;
+      }
+
+      // Store imageId used for this session
+      (session as any).imageId = params.imageId;
+
       this.sessions.set(session.sessionId, session);
+
+      // For VPC sessions, automatically fetch MCP tools information
+      if (params.isVpc) {
+        log("VPC session detected, automatically fetching MCP tools...");
+        try {
+          const toolsResult = await session.listMcpTools();
+          log(`Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`);
+        } catch (error) {
+          logError(`Warning: Failed to fetch MCP tools for VPC session: ${error}`);
+          // Continue with session creation even if tools fetch fails
+        }
+      }
 
       // If we have persistence data, wait for context synchronization
       if (hasPersistenceData) {

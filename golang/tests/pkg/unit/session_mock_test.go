@@ -93,13 +93,14 @@ func TestSession_SetLabels_WithMockClient(t *testing.T) {
 	mockSession := mock.NewMockSessionInterface(ctrl)
 
 	// Set expected behavior
+	labels := map[string]string{"key1": "label1", "key2": "label2"}
 	expectedResult := &agentbay.LabelResult{
 		Labels: "label1,label2",
 	}
-	mockSession.EXPECT().SetLabels("label1,label2").Return(expectedResult, nil)
+	mockSession.EXPECT().SetLabels(labels).Return(expectedResult, nil)
 
 	// Test SetLabels method call
-	result, err := mockSession.SetLabels("label1,label2")
+	result, err := mockSession.SetLabels(labels)
 
 	// Verify call success
 	assert.NoError(t, err)
@@ -195,4 +196,158 @@ func TestSession_Error_WithMockClient(t *testing.T) {
 	// Verify error handling
 	assert.Error(t, err)
 	assert.Nil(t, result)
+}
+
+func TestSession_Delete_APIFailure_WithMockClient(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create mock Session
+	mockSession := mock.NewMockSessionInterface(ctrl)
+
+	// Set expected behavior - return failure response
+	expectedResult := &agentbay.DeleteResult{
+		Success: false,
+	}
+	mockSession.EXPECT().Delete().Return(expectedResult, nil)
+
+	// Test Delete method call
+	result, err := mockSession.Delete()
+
+	// Verify call success but with failure result
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.False(t, result.Success)
+}
+
+func TestSession_SetLabels_APIError_WithMockClient(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create mock Session
+	mockSession := mock.NewMockSessionInterface(ctrl)
+
+	// Set expected behavior - return error
+	labels := map[string]string{"key1": "value1"}
+	mockSession.EXPECT().SetLabels(labels).Return(nil, assert.AnError)
+
+	// Test error case
+	result, err := mockSession.SetLabels(labels)
+
+	// Verify error handling
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestSession_GetLabels_APIError_WithMockClient(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create mock Session
+	mockSession := mock.NewMockSessionInterface(ctrl)
+
+	// Set expected behavior - return error
+	mockSession.EXPECT().GetLabels().Return(nil, assert.AnError)
+
+	// Test error case
+	result, err := mockSession.GetLabels()
+
+	// Verify error handling
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestSession_GetLink_APIError_WithMockClient(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create mock Session
+	mockSession := mock.NewMockSessionInterface(ctrl)
+
+	// Set expected behavior - return error
+	protocolType := "http"
+	port := int32(8080)
+	mockSession.EXPECT().GetLink(&protocolType, &port).Return(nil, assert.AnError)
+
+	// Test error case
+	result, err := mockSession.GetLink(&protocolType, &port)
+
+	// Verify error handling
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestSession_Info_APIError_WithMockClient(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create mock Session
+	mockSession := mock.NewMockSessionInterface(ctrl)
+
+	// Set expected behavior - return error
+	mockSession.EXPECT().Info().Return(nil, assert.AnError)
+
+	// Test error case
+	result, err := mockSession.Info()
+
+	// Verify error handling
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestSession_ListMcpTools_WithMockClient(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create mock Session
+	mockSession := mock.NewMockSessionInterface(ctrl)
+
+	// Set expected behavior based on the actual API response from integration test
+	tools := []agentbay.McpTool{
+		{
+			Name:        "get_resource",
+			Description: "The command to retrieve  a wuying mcp runtime URL when user wants to get access to this runtime. Each retrieved URL will expire after a single use",
+			InputSchema: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+				"required":   []interface{}{},
+			},
+			Server: "mcp-server",
+			Tool:   "get_resource",
+		},
+		{
+			Name:        "system_screenshot",
+			Description: "Captures a full-screen screenshot of the current display and returns a shareable URL. The screenshot is automatically processed and stored securely. The generated URL will expire after 64 minutes for security purposes.",
+			InputSchema: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+				"required":   []interface{}{},
+			},
+			Server: "mcp-server",
+			Tool:   "system_screenshot",
+		},
+	}
+	expectedResult := &agentbay.McpToolsResult{
+		Tools: tools,
+	}
+	expectedResult.RequestID = "test-request-id"
+	
+	mockSession.EXPECT().ListMcpTools().Return(expectedResult, nil)
+
+	// Test ListMcpTools method call
+	result, err := mockSession.ListMcpTools()
+
+	// Verify call success
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "test-request-id", result.RequestID)
+	assert.Len(t, result.Tools, 2)
+	assert.Equal(t, "get_resource", result.Tools[0].Name)
+	assert.Equal(t, "The command to retrieve  a wuying mcp runtime URL when user wants to get access to this runtime. Each retrieved URL will expire after a single use", result.Tools[0].Description)
+	assert.Equal(t, "mcp-server", result.Tools[0].Server)
+	assert.Equal(t, "get_resource", result.Tools[0].Tool)
+	assert.Equal(t, "system_screenshot", result.Tools[1].Name)
+	assert.Equal(t, "Captures a full-screen screenshot of the current display and returns a shareable URL. The screenshot is automatically processed and stored securely. The generated URL will expire after 64 minutes for security purposes.", result.Tools[1].Description)
+	assert.Equal(t, "mcp-server", result.Tools[1].Server)
+	assert.Equal(t, "system_screenshot", result.Tools[1].Tool)
 }

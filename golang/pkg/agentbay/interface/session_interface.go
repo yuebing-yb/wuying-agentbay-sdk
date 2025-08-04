@@ -22,7 +22,7 @@ type SessionInterface interface {
 	Delete(syncContext ...bool) (*agentbay.DeleteResult, error)
 
 	// SetLabels sets the labels for this session
-	SetLabels(labels string) (*agentbay.LabelResult, error)
+	SetLabels(labels map[string]string) (*agentbay.LabelResult, error)
 
 	// GetLabels gets the labels for this session
 	GetLabels() (*agentbay.LabelResult, error)
@@ -32,4 +32,19 @@ type SessionInterface interface {
 
 	// Info gets information about this session
 	Info() (*agentbay.InfoResult, error)
+
+	// ListMcpTools lists MCP tools available for this session
+	ListMcpTools() (*agentbay.McpToolsResult, error)
+
+	// IsVpc returns whether this session uses VPC resources
+	IsVpc() bool
+
+	// NetworkInterfaceIp returns the network interface IP for VPC sessions
+	NetworkInterfaceIp() string
+
+	// HttpPort returns the HTTP port for VPC sessions
+	HttpPort() string
+
+	// FindServerForTool searches for the server that provides the given tool
+	FindServerForTool(toolName string) string
 }

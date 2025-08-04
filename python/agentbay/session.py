@@ -10,18 +10,21 @@ from agentbay.api.models import (
     SetLabelRequest,
 )
 from agentbay.application import ApplicationManager
+from agentbay.code import Code
 from agentbay.command import Command
 from agentbay.exceptions import SessionError
 from agentbay.filesystem import FileSystem
 from agentbay.model import DeleteResult, OperationResult, extract_request_id
 from agentbay.oss import Oss
 from agentbay.ui import UI
+from agentbay.agent import Agent
 from agentbay.window import WindowManager
 from agentbay.context_manager import ContextManager
 
 if TYPE_CHECKING:
     from agentbay.agentbay import AgentBay
 
+from agentbay.browser import Browser
 
 class SessionInfo:
     """
@@ -59,9 +62,18 @@ class Session:
         self.session_id = session_id
         self.resource_url = ""
 
-        # Initialize file system, command handlers
+        # VPC-related information
+        self.is_vpc = False  # Whether this session uses VPC resources
+        self.network_interface_ip = ""  # Network interface IP for VPC sessions
+        self.http_port = ""  # HTTP port for VPC sessions
+
+        # MCP tools available for this session
+        self.mcp_tools = []  # List[McpTool]
+
+        # Initialize file system, command and code handlers
         self.file_system = FileSystem(self)
         self.command = Command(self)
+        self.code = Code(self)
         self.oss = Oss(self)
 
         # Initialize application and window managers
@@ -70,6 +82,9 @@ class Session:
 
         self.ui = UI(self)
         self.context = ContextManager(self)
+        self.browser = Browser(self)
+
+        self.agent = Agent(self)
 
     def get_api_key(self) -> str:
         """Return the API key for this session."""
@@ -83,12 +98,31 @@ class Session:
         """Return the session_id for this session."""
         return self.session_id
 
+    def is_vpc_enabled(self) -> bool:
+        """Return whether this session uses VPC resources."""
+        return self.is_vpc
+
+    def get_network_interface_ip(self) -> str:
+        """Return the network interface IP for VPC sessions."""
+        return self.network_interface_ip
+
+    def get_http_port(self) -> str:
+        """Return the HTTP port for VPC sessions."""
+        return self.http_port
+
+    def find_server_for_tool(self, tool_name: str) -> str:
+        """Find the server that provides the given tool."""
+        for tool in self.mcp_tools:
+            if tool.name == tool_name:
+                return tool.server
+        return ""
+
     def delete(self, sync_context: bool = False) -> DeleteResult:
         """
         Delete this session.
 
         Args:
-            sync_context (bool): Whether to sync context data (trigger file uploads) 
+            sync_context (bool): Whether to sync context data (trigger file uploads)
                 before deleting the session. Defaults to False.
 
         Returns:
@@ -130,15 +164,15 @@ class Session:
 
                             has_uploads = True
                             print(f"Upload context {item.context_id} status: {item.status}, path: {item.path}")
-                            
+
                             if item.status != "Success" and item.status != "Failed":
                                 all_completed = False
                                 break
-                            
+
                             if item.status == "Failed":
                                 has_failure = True
                                 print(f"Upload failed for context {item.context_id}: {item.error_message}")
-                        
+
                         if all_completed or not has_uploads:
                             if has_failure:
                                 print("Context upload completed with failures")
@@ -147,7 +181,7 @@ class Session:
                             else:
                                 print("No upload tasks found")
                             break
-                        
+
                         print(f"Waiting for context upload to complete, attempt {retry+1}/{max_retries}")
                         time.sleep(retry_interval)
                     except Exception as e:
@@ -195,6 +229,68 @@ class Session:
                 error_message=f"Failed to delete session {self.session_id}: {e}",
             )
 
+    def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
+        """
+        Validates labels parameter for label operations.
+
+        Args:
+            labels: The labels to validate
+
+        Returns:
+            None if validation passes, or OperationResult with error if validation fails
+        """
+        # Check if labels is None
+        if labels is None:
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message="Labels cannot be null, undefined, or invalid type. Please provide a valid labels object.",
+            )
+
+        # Check if labels is a list (array equivalent) - check this before dict check
+        if isinstance(labels, list):
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message="Labels cannot be an array. Please provide a valid labels object.",
+            )
+
+        # Check if labels is not a dict (after checking for list)
+        if not isinstance(labels, dict):
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message="Labels cannot be null, undefined, or invalid type. Please provide a valid labels object.",
+            )
+
+        # Check if labels object is empty
+        if len(labels) == 0:
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message="Labels cannot be empty. Please provide at least one label.",
+            )
+
+        for key, value in labels.items():
+            # Check key validity
+            if not key or (isinstance(key, str) and key.strip() == ""):
+                return OperationResult(
+                    request_id="",
+                    success=False,
+                    error_message="Label keys cannot be empty Please provide valid keys.",
+                )
+
+            # Check value is not None or empty
+            if value is None or (isinstance(value, str) and value.strip() == ""):
+                return OperationResult(
+                    request_id="",
+                    success=False,
+                    error_message="Label values cannot be empty Please provide valid values.",
+                )
+
+        # Validation passed
+        return None
+
     def set_labels(self, labels: Dict[str, str]) -> OperationResult:
         """
         Sets the labels for this session.
@@ -209,6 +305,11 @@ class Session:
             SessionError: If the operation fails.
         """
         try:
+            # Validate labels using the extracted validation function
+            validation_result = self._validate_labels(labels)
+            if validation_result is not None:
+                return validation_result
+
             # Convert labels to JSON string
             labels_json = json.dumps(labels)
 
@@ -468,3 +569,60 @@ class Session:
             raise
         except Exception as e:
             raise SessionError(f"Failed to get link asynchronously: {e}")
+
+    def list_mcp_tools(self, image_id: Optional[str] = None) -> "McpToolsResult":
+        """
+        List MCP tools available for this session.
+
+        Args:
+            image_id: Optional image ID, defaults to session's image_id or "linux_latest"
+
+        Returns:
+            McpToolsResult: Result containing tools list and request ID
+        """
+        from agentbay.api.models import ListMcpToolsRequest
+        from agentbay.model.response import McpToolsResult
+        from agentbay.models.mcp_tool import McpTool
+        import json
+
+        # Use provided image_id, session's image_id, or default
+        if image_id is None:
+            image_id = getattr(self, 'image_id', '') or "linux_latest"
+
+        request = ListMcpToolsRequest(
+            authorization=f"Bearer {self.get_api_key()}",
+            image_id=image_id
+        )
+
+        print("API Call: ListMcpTools")
+        print(f"Request: ImageId={image_id}")
+
+        response = self.get_client().list_mcp_tools(request)
+
+        # Extract request ID
+        request_id = extract_request_id(response)
+
+        if response and response.body:
+            print("Response from ListMcpTools:", response.body)
+
+        # Parse the response data
+        tools = []
+        if response and response.body and response.body.data:
+            # The Data field is a JSON string, so we need to unmarshal it
+            try:
+                tools_data = json.loads(response.body.data)
+                for tool_data in tools_data:
+                    tool = McpTool(
+                        name=tool_data.get('name', ''),
+                        description=tool_data.get('description', ''),
+                        input_schema=tool_data.get('inputSchema', {}),
+                        server=tool_data.get('server', ''),
+                        tool=tool_data.get('tool', '')
+                    )
+                    tools.append(tool)
+            except json.JSONDecodeError as e:
+                print(f"Error unmarshaling tools data: {e}")
+
+        self.mcp_tools = tools  # Update the session's mcp_tools field
+
+        return McpToolsResult(request_id=request_id, tools=tools)

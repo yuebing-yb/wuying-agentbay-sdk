@@ -1,6 +1,16 @@
 import { ContextSync, SyncPolicy } from "./context-sync";
 
 /**
+ * Browser context configuration for session.
+ */
+export interface BrowserContext {
+  /** ID of the browser context to bind to the session */
+  contextId: string;
+  /** Whether to automatically upload browser data when the session ends */
+  autoUpload: boolean;
+}
+
+/**
  * Configuration interface for CreateSessionParams
  */
 export interface CreateSessionParamsConfig {
@@ -12,6 +22,10 @@ export interface CreateSessionParamsConfig {
   contextId?: string;
   imageId?: string;
   contextSync: ContextSync[];
+  /** Optional configuration for browser data synchronization */
+  browserContext?: BrowserContext;
+  /** Whether to create a VPC-based session. Defaults to false. */
+  isVpc?: boolean;
 }
 
 /**
@@ -51,9 +65,16 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    */
   public contextSync: ContextSync[];
 
+  /** Optional configuration for browser data synchronization. */
+  public browserContext?: BrowserContext;
+
+  /** Whether to create a VPC-based session. Defaults to false. */
+  public isVpc: boolean;
+
   constructor() {
     this.labels = {};
     this.contextSync = [];
+    this.isVpc = false;
   }
 
   /**
@@ -77,6 +98,22 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    */
   withImageId(imageId: string): CreateSessionParams {
     this.imageId = imageId;
+    return this;
+  }
+
+  /**
+   * WithBrowserContext sets the browser context for the session parameters and returns the updated parameters.
+   */
+  withBrowserContext(browserContext: BrowserContext): CreateSessionParams {
+    this.browserContext = browserContext;
+    return this;
+  }
+
+  /**
+   * WithIsVpc sets the VPC flag for the session parameters and returns the updated parameters.
+   */
+  withIsVpc(isVpc: boolean): CreateSessionParams {
+    this.isVpc = isVpc;
     return this;
   }
 
@@ -138,6 +175,8 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
       contextId: this.contextId,
       imageId: this.imageId,
       contextSync: this.contextSync,
+      browserContext: this.browserContext,
+      isVpc: this.isVpc,
     };
   }
 
@@ -150,6 +189,8 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
     params.contextId = config.contextId;
     params.imageId = config.imageId;
     params.contextSync = config.contextSync || [];
+    params.browserContext = config.browserContext;
+    params.isVpc = config.isVpc || false;
     return params;
   }
 }

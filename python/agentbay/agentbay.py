@@ -21,6 +21,7 @@ from agentbay.session import Session
 from agentbay.session_params import CreateSessionParams, ListSessionParams
 from typing import Optional
 from agentbay.context_sync import ContextSync
+from agentbay.config import BROWSER_DATA_PATH
 
 
 class Config:
@@ -63,6 +64,32 @@ class AgentBay:
         # Initialize context service
         self.context = ContextService(self)
 
+    def _safe_serialize(self, obj):
+        """
+        Helper function to serialize objects to JSON-compatible format.
+        
+        Args:
+            obj: The object to serialize.
+            
+        Returns:
+            JSON-serializable representation of the object.
+        """
+        try:
+            if isinstance(obj, Enum):
+                return obj.value
+            elif hasattr(obj, "__dict__") and callable(obj.__dict__):
+                return obj.__dict__()
+            elif hasattr(obj, "__dict__"):
+                return obj.__dict__
+            elif hasattr(obj, "to_map"):
+                return obj.to_map()
+            elif hasattr(obj, "to_dict"):
+                return obj.to_dict()
+            else:
+                return str(obj)
+        except:
+            return str(obj)
+
     def create(self, params: Optional[CreateSessionParams] = None) -> SessionResult:
         """
         Create a new session in the AgentBay cloud environment.
@@ -84,6 +111,9 @@ class AgentBay:
             if params.context_id:
                 request.context_id = params.context_id
 
+            # Add VPC resource if specified
+            request.vpc_resource = params.is_vpc
+
             # Flag to indicate if we need to wait for context synchronization
             has_persistence_data = False
 
@@ -97,30 +127,11 @@ class AgentBay:
                 for cs in params.context_syncs:
                     policy_json = None
                     if cs.policy is not None:
-                        # policy 需序列化为 JSON 字符串
+                        # Serialize policy to JSON string
                         import json as _json
 
-                        def safe_serialize(obj):
-                            try:
-                                if isinstance(obj, Enum):
-                                    return obj.value
-                                elif hasattr(obj, "__dict__") and callable(
-                                    obj.__dict__
-                                ):
-                                    return obj.__dict__()
-                                elif hasattr(obj, "__dict__"):
-                                    return obj.__dict__
-                                elif hasattr(obj, "to_map"):
-                                    return obj.to_map()
-                                elif hasattr(obj, "to_dict"):
-                                    return obj.to_dict()
-                                else:
-                                    return str(obj)
-                            except:
-                                return str(obj)
-
                         policy_json = _json.dumps(
-                            cs.policy, default=safe_serialize, ensure_ascii=False
+                            cs.policy, default=self._safe_serialize, ensure_ascii=False
                         )
                     persistence_data_list.append(
                         CreateMcpSessionRequestPersistenceDataList(
@@ -129,6 +140,46 @@ class AgentBay:
                     )
                 request.persistence_data_list = persistence_data_list
                 has_persistence_data = len(persistence_data_list) > 0
+
+            # Add BrowserContext as a ContextSync if provided
+            if hasattr(params, "browser_context") and params.browser_context:
+                from agentbay.api.models import (
+                    CreateMcpSessionRequestPersistenceDataList,
+                )
+                from agentbay.context_sync import SyncPolicy, UploadPolicy, WhiteList, BWList
+
+                # Create a new SyncPolicy with default values for browser context
+                upload_policy = UploadPolicy(auto_upload=params.browser_context.auto_upload)
+                
+                # Create BWList with white lists for browser data paths
+                white_lists = [
+                    WhiteList(path="/Local State", exclude_paths=[]),
+                    WhiteList(path="/Default/Cookies", exclude_paths=[]),
+                    WhiteList(path="/Default/Cookies-journal", exclude_paths=[])
+                ]
+                bw_list = BWList(white_lists=white_lists)
+                
+                sync_policy = SyncPolicy(upload_policy=upload_policy, bw_list=bw_list)
+
+                # Serialize policy to JSON string
+                import json as _json
+
+                policy_json = _json.dumps(
+                    sync_policy, default=self._safe_serialize, ensure_ascii=False
+                )
+
+                # Create browser context sync item
+                browser_context_sync = CreateMcpSessionRequestPersistenceDataList(
+                    context_id=params.browser_context.context_id,
+                    path=BROWSER_DATA_PATH,  # Using a constant path for browser data
+                    policy=policy_json
+                )
+
+                # Add to persistence data list or create new one if not exists
+                if not hasattr(request, 'persistence_data_list') or request.persistence_data_list is None:
+                    request.persistence_data_list = []
+                request.persistence_data_list.append(browser_context_sync)
+                has_persistence_data = True
 
             # Add labels if provided
             if params.labels:
@@ -194,6 +245,15 @@ class AgentBay:
                     "'Data' field is not a dictionary",
                 )
 
+            # Check if the session creation was successful
+            if data.get("Success") is False:
+                error_msg = data.get("ErrMsg", "Session creation failed")
+                return SessionResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_msg,
+                )
+
             session_id = data.get("SessionId")
             if not session_id:
                 return SessionResult(
@@ -208,12 +268,35 @@ class AgentBay:
             print("session_id =", session_id)
             print("resource_url =", resource_url)
 
+            # Create Session object
+            from agentbay.session import Session
+
             session = Session(self, session_id)
-            if resource_url:
+            if resource_url is not None:
                 session.resource_url = resource_url
+
+            # Set VPC-related information from response
+            session.is_vpc = params.is_vpc
+            if data.get("NetworkInterfaceIp"):
+                session.network_interface_ip = data["NetworkInterfaceIp"]
+            if data.get("HttpPort"):
+                session.http_port = data["HttpPort"]
+
+            # Store image_id used for this session
+            session.image_id = params.image_id
 
             with self._lock:
                 self._sessions[session_id] = session
+
+            # For VPC sessions, automatically fetch MCP tools information
+            if params.is_vpc:
+                print("VPC session detected, automatically fetching MCP tools...")
+                try:
+                    tools_result = session.list_mcp_tools()
+                    print(f"Successfully fetched {len(tools_result.tools)} MCP tools for VPC session (RequestID: {tools_result.request_id})")
+                except Exception as e:
+                    print(f"Warning: Failed to fetch MCP tools for VPC session: {e}")
+                    # Continue with session creation even if tools fetch fails
 
             # If we have persistence data, wait for context synchronization
             if has_persistence_data:

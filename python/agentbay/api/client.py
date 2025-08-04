@@ -7,11 +7,19 @@ from darabonba.core import DaraCore as DaraCore
 from alibabacloud_tea_openapi.utils import Utils
 from agentbay.api import models as main_models
 from darabonba.runtime import RuntimeOptions
+from alibabacloud_tea_openapi.client import Client as OpenApiClient
+from alibabacloud_tea_openapi import utils_models as open_api_util_models
+from darabonba.core import DaraCore as DaraCore
+from alibabacloud_tea_openapi.utils import Utils
+from agentbay.api import models as main_models
+from darabonba.runtime import RuntimeOptions
 from typing import Dict
 
 
 """
 """
+
+
 
 
 class Client(OpenApiClient):
@@ -23,7 +31,18 @@ class Client(OpenApiClient):
         super().__init__(config)
         self._signature_algorithm = "v2"
         self._endpoint_rule = ""
+        self._signature_algorithm = "v2"
+        self._endpoint_rule = ""
         self.check_config(config)
+        self._endpoint = self.get_endpoint(
+            "wuyingai",
+            self._region_id,
+            self._endpoint_rule,
+            self._network,
+            self._suffix,
+            self._endpoint_map,
+            self._endpoint,
+        )
         self._endpoint = self.get_endpoint(
             "wuyingai",
             self._region_id,
@@ -176,6 +195,8 @@ class Client(OpenApiClient):
             body["PersistenceDataList"] = request.persistence_data_list_shrink
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
+        if not DaraCore.is_null(request.vpc_resource):
+            body["VpcResource"] = request.vpc_resource
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="CreateMcpSession",
@@ -221,6 +242,8 @@ class Client(OpenApiClient):
             body["PersistenceDataList"] = request.persistence_data_list_shrink
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
+        if not DaraCore.is_null(request.vpc_resource):
+            body["VpcResource"] = request.vpc_resource
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="CreateMcpSession",
@@ -697,6 +720,82 @@ class Client(OpenApiClient):
     ) -> main_models.GetMcpResourceResponse:
         runtime = RuntimeOptions()
         return await self.get_mcp_resource_with_options_async(request, runtime)
+
+    def init_browser_with_options(
+        self,
+        request: main_models.InitBrowserRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.InitBrowserResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body['Authorization'] = request.authorization
+        if not DaraCore.is_null(request.persistent_path):
+            body['PersistentPath'] = request.persistent_path
+        if not DaraCore.is_null(request.session_id):
+            body['SessionId'] = request.session_id
+        req = open_api_util_models.OpenApiRequest(
+            body = Utils.parse_to_map(body)
+        )
+        params = open_api_util_models.Params(
+            action = 'InitBrowser',
+            version = '2025-05-06',
+            protocol = 'HTTPS',
+            pathname = '/',
+            method = 'POST',
+            auth_type = 'Anonymous',
+            style = 'RPC',
+            req_body_type = 'formData',
+            body_type = 'json'
+        )
+        return DaraCore.from_map(
+            main_models.InitBrowserResponse(),
+            self.call_api(params, req, runtime)
+        )
+
+    async def init_browser_with_options_async(
+        self,
+        request: main_models.InitBrowserRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.InitBrowserResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body['Authorization'] = request.authorization
+        if not DaraCore.is_null(request.persistent_path):
+            body['PersistentPath'] = request.persistent_path
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action = 'InitBrowser',
+            version = '2025-05-06',
+            protocol = 'HTTPS',
+            pathname = '/',
+            method = 'POST',
+            auth_type = 'Anonymous',
+            style = 'RPC',
+            req_body_type = 'formData',
+            body_type = 'json'
+        )
+        return DaraCore.from_map(
+            main_models.InitBrowserResponse(),
+            await self.call_api_async(params, req, runtime)
+        )
+
+    def init_browser(
+        self,
+        request: main_models.InitBrowserRequest,
+    ) -> main_models.InitBrowserResponse:
+        runtime = RuntimeOptions()
+        return self.init_browser_with_options(request, runtime)
+
+    async def init_browser_async(
+        self,
+        request: main_models.InitBrowserRequest,
+    ) -> main_models.InitBrowserResponse:
+        runtime = RuntimeOptions()
+        return await self.init_browser_with_options_async(request, runtime)
 
     def list_contexts_with_options(
         self,
