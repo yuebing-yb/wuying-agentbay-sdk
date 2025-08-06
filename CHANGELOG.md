@@ -2,7 +2,7 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
-## [0.5.0] - TBD
+## [0.5.0] - 2025-08-06
 
 ### Added
 
