@@ -30,25 +30,21 @@ class CreateSessionParams:
     Attributes:
         labels (Optional[Dict[str, str]]): Custom labels for the Session. These can be
             used for organizing and filtering sessions.
-        context_id (Optional[str]): ID of the context to bind to the session. The
-            context can include various types of persistence like file system (volume)
-            and cookies.
-            Deprecated: This field is deprecated and will be removed in a future version.
-            Please use context_syncs instead for more flexible and powerful data persistence.
         context_syncs (Optional[List[ContextSync]]): List of context synchronization
             configurations that define how contexts should be synchronized and mounted.
         browser_context (Optional[BrowserContext]): Optional configuration for browser data synchronization.
         is_vpc (Optional[bool]): Whether to create a VPC-based session. Defaults to False.
+        mcp_policy_id (Optional[str]): MCP policy id to apply when creating the session.
     """
 
     def __init__(
         self,
         labels: Optional[Dict[str, str]] = None,
-        context_id: Optional[str] = None,  # Deprecated: Use context_syncs instead
         image_id: Optional[str] = None,
         context_syncs: Optional[List[ContextSync]] = None,
         browser_context: Optional[BrowserContext] = None,
         is_vpc: Optional[bool] = None,
+        mcp_policy_id: Optional[str] = None,
     ):
         """
         Initialize CreateSessionParams.
@@ -56,10 +52,6 @@ class CreateSessionParams:
         Args:
             labels (Optional[Dict[str, str]], optional): Custom labels for the Session.
                 Defaults to None.
-            context_id (Optional[str], optional): ID of the context to bind to the
-                session. Defaults to None.
-                Deprecated: This field is deprecated and will be removed in a future version.
-                Please use context_syncs instead.
             image_id (Optional[str], optional): ID of the image to use for the session.
                 Defaults to None.
             context_syncs (Optional[List[ContextSync]], optional): List of context
@@ -68,13 +60,15 @@ class CreateSessionParams:
                 Defaults to None.
             is_vpc (Optional[bool], optional): Whether to create a VPC-based session.
                 Defaults to False.
+            mcp_policy_id (Optional[str], optional): MCP policy id to apply when creating the session.
+                Defaults to None.
         """
         self.labels = labels or {}
-        self.context_id = context_id
         self.image_id = image_id
         self.context_syncs = context_syncs or []
         self.browser_context = browser_context
         self.is_vpc = is_vpc if is_vpc is not None else False
+        self.mcp_policy_id = mcp_policy_id
 
 
 class ListSessionParams:

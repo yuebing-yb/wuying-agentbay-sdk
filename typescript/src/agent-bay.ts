@@ -26,12 +26,12 @@ import { log, logError } from "./utils/logger";
  * Parameters for creating a session.
  */
 export interface CreateSessionParams {
-  contextId?: string;
   labels?: Record<string, string>;
   imageId?: string;
   contextSync?: ContextSync[];
   browserContext?: BrowserContext;
   isVpc?: boolean;
+  mcpPolicyId?: string;
 }
 
 /**
@@ -106,11 +106,6 @@ export class AgentBay {
         authorization: "Bearer " + this.apiKey,
       });
 
-      // Add context_id if provided
-      if (params.contextId) {
-        request.contextId = params.contextId;
-      }
-
       // Add labels if provided
       if (params.labels) {
         request.labels = JSON.stringify(params.labels);
@@ -119,6 +114,11 @@ export class AgentBay {
       // Add image_id if provided
       if (params.imageId) {
         request.imageId = params.imageId;
+      }
+
+      // Add McpPolicyId if provided
+      if (params.mcpPolicyId) {
+        request.mcpPolicyId = params.mcpPolicyId;
       }
 
       // Add VPC resource if specified
@@ -175,9 +175,6 @@ export class AgentBay {
       // Log API request
       log("API Call: CreateMcpSession");
       let requestLog = "Request: ";
-      if (request.contextId) {
-        requestLog += `ContextId=${request.contextId}, `;
-      }
       if (request.imageId) {
         requestLog += `ImageId=${request.imageId}, `;
       }
@@ -200,10 +197,15 @@ export class AgentBay {
       log(requestLog);
 
       const response = await this.client.createMcpSession(request);
-      log("response data =", response.body?.data);
-
+      
       // Extract request ID
       const requestId = extractRequestId(response) || "";
+      
+      // Log response data with requestId
+      log("response data =", response.body?.data);
+      if (requestId) {
+        log(`requestId = ${requestId}`);
+      }
 
       const sessionData = response.body;
 

@@ -3,7 +3,7 @@ import json
 import re
 from typing import List, Dict, Union, Any, Optional, Tuple, TypeVar, Generic, Type
 from pydantic import BaseModel
-from agentbay.api.base_service import BaseService
+from agentbay.api.base_service import BaseService, OperationResult
 from agentbay.exceptions import BrowserError, AgentBayError
 from agentbay.api.models import CallMcpToolRequest
 
@@ -13,11 +13,11 @@ class ActOptions:
     """
     Options for configuring the behavior of the act method.
     """
-    def __init__(self, action: str, timeoutMS: Optional[int] = None, iframes: Optional[bool] = None, domSettleTimeoutMS: Optional[int] = None):
+    def __init__(self, action: str, timeoutMS: Optional[int] = None, iframes: Optional[bool] = None, dom_settle_timeout_ms: Optional[int] = None):
         self.action = action
         self.timeoutMS = timeoutMS
         self.iframes = iframes
-        self.domSettleTimeoutMS = domSettleTimeoutMS
+        self.dom_settle_timeout_ms = dom_settle_timeout_ms
 
 class ActResult:
     """
@@ -32,11 +32,11 @@ class ObserveOptions:
     """
     Options for configuring the behavior of the observe method.
     """
-    def __init__(self, instruction: str, returnActions: Optional[int] = None, iframes: Optional[bool] = None, domSettleTimeoutMS: Optional[int] = None):
+    def __init__(self, instruction: str, returnActions: Optional[int] = None, iframes: Optional[bool] = None, dom_settle_timeout_ms: Optional[int] = None):
         self.instruction = instruction
         self.returnActions = returnActions
         self.iframes = iframes
-        self.domSettleTimeoutMS = domSettleTimeoutMS
+        self.dom_settle_timeout_ms = dom_settle_timeout_ms
 
 class ObserveResult:
     """
@@ -55,14 +55,16 @@ class ExtractOptions(Generic[T]):
     def __init__(self,
                  instruction: str,
                  schema: Type[T],
+                 use_text_extract: Optional[bool] = None,
                  selector: Optional[str] = None,
                  iframe: Optional[bool] = None,
-                 domSettleTimeoutsMS: Optional[int] = None):
+                 dom_settle_timeout_ms: Optional[int] = None):
         self.instruction = instruction
         self.schema = schema
+        self.use_text_extract = use_text_extract
         self.selector = selector
         self.iframe = iframe
-        self.domSettleTimeoutsMS = domSettleTimeoutsMS
+        self.dom_settle_timeout_ms = dom_settle_timeout_ms
 
 class BrowserAgent(BaseService):
     """
@@ -72,7 +74,7 @@ class BrowserAgent(BaseService):
         self.session = session
         self.browser = browser
 
-    def act(self, page, options: ActOptions) -> 'ActResult':
+    def act(self, page, action_input: Union[ObserveResult, ActOptions]) -> 'ActResult':
         """
         Perform an action on the given Playwright Page object, using ActOptions to configure behavior.
         Also gets the page index and corresponding context index.
@@ -87,15 +89,22 @@ class BrowserAgent(BaseService):
             args = {
                 "context_id": context_index,
                 "page_id": page_index,
-                "action": options.action,
             }
-            if options.timeoutMS is not None:
-                args["timeout_ms"] = options.timeoutMS
-            if options.iframes is not None:
-                args["iframes"] = options.iframes
-            if options.domSettleTimeoutMS is not None:
-                args["dom_settle_timeout_ms"] = options.domSettleTimeoutMS
-            response = self._call_mcp_tool("page_use_act", args)
+            if isinstance(action_input, ActOptions):
+                if action_input.timeoutMS is not None:
+                    args["timeout_ms"] = action_input.timeoutMS
+                if action_input.iframes is not None:
+                    args["iframes"] = action_input.iframes
+                if action_input.dom_settle_timeout_ms is not None:
+                    args["dom_settle_timeout_ms"] = action_input.dom_settle_timeout_ms
+                args["action"] = action_input.action
+            elif isinstance(action_input, ObserveResult):
+                action_dict = {
+                    "method": action_input.method,
+                    "arguments": json.loads(action_input.arguments) if isinstance(action_input.arguments, str) else action_input.arguments
+                }
+                args["action"] = json.dumps(action_dict)
+            response = self._call_mcp_tool_timeout("page_use_act", args)
             if response.success:
                 print(f"Response from CallMcpTool - page_use_act:", response.data)
                 import json as _json
@@ -111,9 +120,9 @@ class BrowserAgent(BaseService):
             else:
                 return ActResult(success=False, message=response.error_message, action="")
         except Exception as e:
-            raise BrowserError(f"Failed to get page/context index: {e}")
+            raise BrowserError(f"Failed to act: {e}")
 
-    async def act_async(self, page, options: ActOptions) -> 'ActResult':
+    async def act_async(self, page, action_input: Union[ObserveResult, ActOptions]) -> 'ActResult':
         """
         Async version of act method for performing actions on the given Playwright Page object.
         Gets the page index and corresponding context index asynchronously.
@@ -128,15 +137,22 @@ class BrowserAgent(BaseService):
             args = {
                 "context_id": context_index,
                 "page_id": page_index,
-                "action": options.action,
             }
-            if options.timeoutMS is not None:
-                args["timeout_ms"] = options.timeoutMS
-            if options.iframes is not None:
-                args["iframes"] = options.iframes
-            if options.domSettleTimeoutMS is not None:
-                args["dom_settle_timeout_ms"] = options.domSettleTimeoutMS
-            response = self._call_mcp_tool("page_use_act", args)
+            if isinstance(action_input, ActOptions):
+                args["action"] = action_input.action
+                if action_input.timeoutMS is not None:
+                    args["timeout_ms"] = action_input.timeoutMS
+                if action_input.iframes is not None:
+                    args["iframes"] = action_input.iframes
+                if action_input.dom_settle_timeout_ms is not None:
+                    args["dom_settle_timeout_ms"] = action_input.dom_settle_timeout_ms
+            elif isinstance(action_input, ObserveResult):
+                action_dict = {
+                    "method": action_input.method,
+                    "arguments": json.loads(action_input.arguments) if isinstance(action_input.arguments, str) else action_input.arguments
+                }
+                args["action"] = json.dumps(action_dict)
+            response = self._call_mcp_tool_timeout("page_use_act", args)
             if response.success:
                 print(f"Response from CallMcpTool - page_use_act:", response.data)
                 import json as _json
@@ -152,7 +168,7 @@ class BrowserAgent(BaseService):
             else:
                 return ActResult(success=False, message=response.error_message, action="")
         except Exception as e:
-            raise BrowserError(f"Failed to get page/context index: {e}")
+            raise BrowserError(f"Failed to act: {e}")
 
     def observe(self, page, options: ObserveOptions) -> Tuple[bool, List[ObserveResult]]:
         """
@@ -176,9 +192,9 @@ class BrowserAgent(BaseService):
                 args["return_actions"] = options.returnActions
             if options.iframes is not None:
                 args["iframes"] = options.iframes
-            if options.domSettleTimeoutMS is not None:
-                args["dom_settle_timeout_ms"] = options.domSettleTimeoutMS
-            response = self._call_mcp_tool("page_use_observe", args)
+            if options.dom_settle_timeout_ms is not None:
+                args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
+            response = self._call_mcp_tool_timeout("page_use_observe", args)
             print("Response from CallMcpTool - page_use_observe:", response)
 
             if response.success:
@@ -211,7 +227,7 @@ class BrowserAgent(BaseService):
                 return False, []
 
         except Exception as e:
-            raise BrowserError(f"Failed to get page/context index: {e}")
+            raise BrowserError(f"Failed to observe: {e}")
 
     async def observe_async(self, page, options: ObserveOptions) -> Tuple[bool, List[ObserveResult]]:
         """
@@ -235,9 +251,9 @@ class BrowserAgent(BaseService):
                 args["return_actions"] = options.returnActions
             if options.iframes is not None:
                 args["iframes"] = options.iframes
-            if options.domSettleTimeoutMS is not None:
-                args["dom_settle_timeout_ms"] = options.domSettleTimeoutMS
-            response = self._call_mcp_tool("page_use_observe", args)
+            if options.dom_settle_timeout_ms is not None:
+                args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
+            response = self._call_mcp_tool_timeout("page_use_observe", args)
             print("Response from CallMcpTool - page_use_observe:", response)
 
             if response.success:
@@ -261,8 +277,13 @@ class BrowserAgent(BaseService):
                     selector = item.get("selector", "")
                     description = item.get("description", "")
                     method = item.get("method", "")
-                    arguments = item.get("arguments", {})
-                    results.append(ObserveResult(selector, description, method, arguments))
+                    arguments_str = item.get("arguments", "{}")
+                    try:
+                        arguments_dict = _json.loads(arguments_str)
+                    except _json.JSONDecodeError:
+                        print(f"Warning: Could not parse arguments as JSON: {arguments_str}")
+                        arguments_dict = arguments_str
+                    results.append(ObserveResult(selector, description, method, arguments_dict))
                 
                 return success, results
             else:
@@ -270,9 +291,9 @@ class BrowserAgent(BaseService):
                 return False, []
                 
         except Exception as e:
-            raise BrowserError(f"Failed to get page/context index: {e}")
+            raise BrowserError(f"Failed to observe: {e}")
 
-    def extract(self, page, options: ExtractOptions) -> Tuple[bool, List[T]]:
+    def extract(self, page, options: ExtractOptions) -> Tuple[bool, T]:
         """
         Extract information from the given Playwright Page object.
         Gets the page and context index and calls the MCP tool 'page_use_extract'.
@@ -288,14 +309,16 @@ class BrowserAgent(BaseService):
                 "schema": 'schema: ' + json.dumps(options.schema.model_json_schema())
             }
             print(f"Extracting from page: {page}, page_index: {page_index}, context_index: {context_index}, args: {args}")
+            if options.use_text_extract is not None:
+                args["use_text_extract"] = options.use_text_extract
             if options.selector is not None:
                 args["selector"] = options.selector
             if options.iframe is not None:
                 args["iframe"] = options.iframe
-            if options.domSettleTimeoutsMS is not None:
-                args["dom_settle_timeouts_ms"] = options.domSettleTimeoutsMS
+            if options.dom_settle_timeout_ms is not None:
+                args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
 
-            response = self._call_mcp_tool("page_use_extract", args)
+            response = self._call_mcp_tool_timeout("page_use_extract", args)
             print("Response from CallMcpTool - page_use_extract:", response)
 
             if response.success:
@@ -307,29 +330,27 @@ class BrowserAgent(BaseService):
                     data = response.data
                 print("extract data =", data)
                 success = data.get("success", False)
-                extract_objs = []
+                extract_result = data.get("extract_result", "")
+                print("extract_result =", extract_result)
+                extract_obj = None
                 if success:
-                    extract_results = json.loads(data.get("extract_result", ""))
-                    for extract_result in extract_results:
-                        print("extract_result =", extract_result)
-                        extract_objs.append(options.schema.model_validate(extract_result))
+                    extract_obj = options.schema.model_validate_json(extract_result)
                 else:
-                    extract_results = data.get("extract_result", "")
-                    print("Extract failed due to: ", extract_results)
-                return success, extract_objs
+                    print(f"Extract failed due to: {extract_result}")
+                return success, extract_obj
             else:
                 print(f"Response from CallMcpTool - page_use_extract:", response.error_message)
-                return False, []
+                return False, None
         except Exception as e:
-            raise BrowserError(f"Failed to get page/context index: {e}")
+            raise BrowserError(f"Failed to extract: {e}")
 
-    async def extract_async(self, page, options: ExtractOptions) -> Tuple[bool, List[T]]:
+    async def extract_async(self, page, options: ExtractOptions) -> Tuple[bool, T]:
         """
         Async version of extract method for extracting information from the given Playwright Page object.
         Gets the page and context index and calls the MCP tool 'page_use_extract' asynchronously.
         """
         if not self.browser.is_initialized():
-            raise BrowserError("Browser must be initialized before calling extract_async.")
+            raise BrowserError("Browser must be initialized before calling extract  _async.")
         try:
             page_index, context_index = await self._get_page_and_context_index_async(page)
             args = {
@@ -339,14 +360,16 @@ class BrowserAgent(BaseService):
                 "schema": 'schema: ' + json.dumps(options.schema.model_json_schema())
             }
             print(f"Extracting from page: {page}, page_index: {page_index}, context_index: {context_index}, args: {args}")
+            if options.use_text_extract is not None:
+                args["use_text_extract"] = options.use_text_extract
             if options.selector is not None:
                 args["selector"] = options.selector
             if options.iframe is not None:
                 args["iframe"] = options.iframe
-            if options.domSettleTimeoutsMS is not None:
-                args["dom_settle_timeouts_ms"] = options.domSettleTimeoutsMS
+            if options.dom_settle_timeout_ms is not None:
+                args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
 
-            response = self._call_mcp_tool("page_use_extract", args)
+            response = self._call_mcp_tool_timeout("page_use_extract", args)
             print("Response from CallMcpTool - page_use_extract:", response)
 
             if response.success:
@@ -358,21 +381,19 @@ class BrowserAgent(BaseService):
                     data = response.data
                 print("extract data =", data)
                 success = data.get("success", False)
-                extract_objs = []
+                extract_result = data.get("extract_result", "")
+                print("extract_result =", extract_result)
+                extract_obj = None
                 if success:
-                    extract_results = json.loads(data.get("extract_result", ""))
-                    for extract_result in extract_results:
-                        print("extract_result =", extract_result)
-                        extract_objs.append(options.schema.model_validate(extract_result))
+                    extract_obj = options.schema.model_validate_json(extract_result)
                 else:
-                    extract_results = data.get("extract_result", "")
-                    print("Extract failed due to: ", extract_results)
-                return success, extract_objs
+                    print(f"Extract failed due to: {extract_result}")
+                return success, extract_obj
             else:
                 print(f"Response from CallMcpTool - page_use_extract:", response.error_message)
-                return False, []
+                return False, None
         except Exception as e:
-            raise BrowserError(f"Failed to get page/context index: {e}")  
+            raise BrowserError(f"Failed to extract: {e}")  
 
     def _get_page_and_context_index(self, page):
         """
@@ -439,3 +460,9 @@ class BrowserAgent(BaseService):
         if isinstance(e, AgentBayError):
             return BrowserError(str(e))
         return e
+
+    def _call_mcp_tool_timeout(self, name: str, args: Dict[str, Any]) -> OperationResult:
+        """
+        Call MCP tool with timeout.
+        """
+        return self._call_mcp_tool(name, args, read_timeout=60000, connect_timeout=60000)

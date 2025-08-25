@@ -1,217 +1,128 @@
-# Golang SDK for Wuying AgentBay
+# AgentBay SDK for Golang
 
-This directory contains the Golang implementation of the Wuying AgentBay SDK.
+> Execute commands, manipulate files, and run code in cloud environments
 
-## Prerequisites
-
-- Go 1.18 or later
-
-## Installation
-
-### For Development
-
-Clone the repository and navigate to the Golang directory:
-
-```bash
-git clone https://github.com/aliyun/wuying-agentbay-sdk.git
-cd wuying-agentbay-sdk/golang
-```
-
-### For Usage in Your Project
+## 📦 Installation
 
 ```bash
 go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay
 ```
 
-## Running Examples
+## 🚀 Prerequisites
 
-You can find examples in the `docs/examples/golang` directory, including:
+Before using the SDK, you need to:
 
-- Basic SDK usage
-- Application window management
-- Command execution
-- Context management
-- Context synchronization
-- File system operations
-- Session parameter configuration
-- UI interaction
+1. Register an Alibaba Cloud account: [https://aliyun.com](https://aliyun.com)
+2. Get API credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
+3. Set environment variable: `export AGENTBAY_API_KEY=your_api_key`
 
-To run the examples:
-
-```bash
-go run docs/examples/golang/basic_usage/main.go
-```
-
-## Golang-Specific Usage
-
+## 🚀 Quick Start
 ```go
 package main
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+    "fmt"
+    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 
 func main() {
-	// Initialize with API key
-	apiKey := os.Getenv("AGENTBAY_API_KEY")
-	if apiKey == "" {
-		apiKey = "your_api_key" // Replace with your actual API key
-	}
-
-	// Create client with configuration options
-	client, err := agentbay.NewAgentBay(apiKey)
-	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Create a session with parameters
-	params := agentbay.NewCreateSessionParams()
-	params.ImageId = "linux_latest"
-	params.Labels = map[string]string{
-		"purpose": "demo",
-		"environment": "development",
-	}
-	
-	session, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error creating session: %v\n", err)
-		os.Exit(1)
-	}
-	
-	// Execute a command
-	commandResult, err := session.Session.Command.ExecuteCommand("ls -la")
-	if err != nil {
-		fmt.Printf("Error executing command: %v\n", err)
-		os.Exit(1)
-	}
-	
-	// File system operations
-	fileContent, err := session.Session.FileSystem.ReadFile("/etc/hosts")
-	if err != nil {
-		fmt.Printf("Error reading file: %v\n", err)
-	}
-	
-	// Run code
-	codeResult, err := session.Session.Code.RunCode("print('Hello, World!')", "python")
-	if err != nil {
-		fmt.Printf("Error running code: %v\n", err)
-	}
-	
-	// Application management
-	appsResult, err := session.Session.Application.GetInstalledApps(true, false, true)
-	if err != nil {
-		fmt.Printf("Error getting installed apps: %v\n", err)
-	}
-	
-	// Window management
-	windowsResult, err := session.Session.Window.ListRootWindows()
-	if err != nil {
-		fmt.Printf("Error listing windows: %v\n", err)
-	}
-	
-	// UI operations
-	screenshotResult, err := session.Session.UI.Screenshot()
-	if err != nil {
-		fmt.Printf("Error taking screenshot: %v\n", err)
-	}
-	
-	// Context management
-	contextsResult, err := client.Context.List()
-	if err != nil {
-		fmt.Printf("Error listing contexts: %v\n", err)
-	}
-	
-	// Clean up
-	err = client.Delete(session.Session)
-	if err != nil {
-		fmt.Printf("Error deleting session: %v\n", err)
-	}
+    // Create session
+    client, err := agentbay.NewAgentBay("", nil)
+    if err != nil {
+        fmt.Printf("Initialization failed: %v\n", err)
+        return
+    }
+    
+    result, err := client.Create(nil)
+    if err != nil {
+        fmt.Printf("Session creation failed: %v\n", err)
+        return
+    }
+    
+    session := result.Session
+    
+    // Execute command
+    cmdResult, err := session.Command.ExecuteCommand("ls -la")
+    if err == nil {
+        fmt.Printf("Command output: %s\n", cmdResult.Output)
+    }
+    
+    // File operations
+    session.FileSystem.WriteFile("/tmp/test.txt", []byte("Hello World"))
+    fileResult, err := session.FileSystem.ReadFile("/tmp/test.txt")
+    if err == nil {
+        fmt.Printf("File content: %s\n", string(fileResult.Data))
+    }
 }
 ```
 
-## Key Features
+## 📖 Complete Documentation
+
+### 🆕 New Users
+- [📚 Quick Start Tutorial](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart) - Get started in 5 minutes
+- [🎯 Core Concepts](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/basic-concepts.md) - Understanding cloud environments and sessions
+- [💡 Best Practices](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/best-practices.md) - Common patterns and techniques
+
+### 🚀 Experienced Users
+- [📖 Feature Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides) - Complete feature introduction
+- [🔧 Golang API Reference](docs/api/) - Detailed API documentation
+- [💻 Golang Examples](docs/examples/) - Complete example code
+
+### 🆘 Need Help
+- [❓ FAQ](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/faq.md) - Quick answers
+- [🔧 Troubleshooting](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/troubleshooting.md) - Problem diagnosis
+
+## 🔧 Core Features Quick Reference
 
 ### Session Management
+```go
+// Create session
+result, _ := client.Create(nil)
+session := result.Session
 
-- Create sessions with optional parameters (ImageId, ContextID, Labels)
-- List sessions with pagination and filtering by labels
-- Delete sessions and clean up resources
-- Manage session labels
-- Get session information and links
+// List sessions
+sessions, _ := client.List()
+
+// Connect to existing session
+session, _ := client.Connect("session_id")
+```
+
+### File Operations
+```go
+// Read and write files
+session.FileSystem.WriteFile("/path/file.txt", []byte("content"))
+result, _ := session.FileSystem.ReadFile("/path/file.txt")
+content := string(result.Data)
+
+// List directory
+files, _ := session.FileSystem.ListDirectory("/path")
+```
 
 ### Command Execution
-
-- Execute shell commands
-- Run code in various languages
-- Get command output and execution status
-
-### File System Operations
-
-- Read and write files
-- List directory contents
-- Create and delete files and directories
-- Get file information
-
-### UI Interaction
-
-- Take screenshots
-- Find UI elements by criteria
-- Click on UI elements
-- Send text input
-- Perform swipe gestures
-- Send key events (HOME, BACK, MENU, etc.)
-
-### Application Management
-
-- Get installed applications
-- List running applications
-- Start and stop applications
-- Get application information
-
-### Window Management
-
-- List windows
-- Get active window
-- Focus, resize, and move windows
-- Get window properties
-
-### Context Management
-
-- Create, list, and delete contexts
-- Bind sessions to contexts
-- Synchronize context data using policies
-- Get context information
-
-### OSS Integration
-
-- Upload files to OSS
-- Download files from OSS
-- Initialize OSS environment
-
-## Response Format
-
-All API methods return responses that include:
-
-- RequestID: A unique identifier for the request
-- ApiResponse embedded structure that tracks success/failure
-- Operation-specific data (varies by method)
-
-## Development
-
-### Building the SDK
-
-```bash
-go build ./...
+```go
+// Execute command
+result, _ := session.Command.ExecuteCommand("go run script.go")
+fmt.Println(result.Output)
 ```
 
-### Running Tests
+### Data Persistence
+```go
+// Create context
+contextResult, _ := client.Context.Get("my-project", true)
+context := contextResult.Context
 
-```bash
-go test ./...
+// Create session with context
+policy := agentbay.NewSyncPolicy()
+contextSync := agentbay.NewContextSync(context.ID, "/mnt/data", policy)
+params := agentbay.NewCreateSessionParams().AddContextSyncConfig(contextSync)
+sessionResult, _ := client.Create(params)
 ```
 
-For more detailed documentation, refer to the [SDK Documentation](../docs/README.md).
+## 🆘 Get Help
+
+- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [Complete Documentation](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs)
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](../LICENSE) file for details.

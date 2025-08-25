@@ -1,185 +1,116 @@
-# TypeScript SDK for Wuying AgentBay
+# AgentBay SDK for TypeScript
 
-This directory contains the TypeScript implementation of the Wuying AgentBay SDK.
+> Execute commands, manipulate files, and run code in cloud environments
 
-## Prerequisites
-
-- Node.js (v14 or later)
-- npm (v6 or later)
-
-## Installation
-
-### For Development
-
-Clone the repository and install dependencies:
-
-```bash
-git clone https://github.com/aliyun/wuying-agentbay-sdk.git
-cd wuying-agentbay-sdk/typescript
-npm install
-```
-
-### For Usage in Your Project
+## 📦 Installation
 
 ```bash
 npm install wuying-agentbay-sdk
 ```
 
-## Development Scripts
+## 🚀 Prerequisites
 
-- **Build the project**:
-  ```bash
-  npm run build
-  ```
+Before using the SDK, you need to:
 
-- **Run tests**:
-  ```bash
-  npm test
-  ```
+1. Register an Alibaba Cloud account: [https://aliyun.com](https://aliyun.com)
+2. Get API credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
+3. Set environment variable: `export AGENTBAY_API_KEY=your_api_key`
 
-- **Lint the code**:
-  ```bash
-  npm run lint
-  ```
-
-## Examples
-
-You can find examples in the `docs/examples/typescript` directory, including:
-
-- Basic SDK usage
-- Context management
-- Command execution
-- File system operations
-- UI interaction
-- Application management
-- Window management
-- Session management
-
-To run the examples:
-
-```bash
-npx ts-node docs/examples/typescript/basic-usage.ts
-```
-
-## TypeScript-Specific Usage
-
+## 🚀 Quick Start
 ```typescript
-import { AgentBay, ListSessionParams } from 'wuying-agentbay-sdk';
+import { AgentBay } from 'wuying-agentbay-sdk';
 
 async function main() {
-  // Initialize with API key
-  const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-  // Create a session with optional parameters
-  const createResponse = await agentBay.create({
-    imageId: 'linux_latest',  // Optional: specify the image to use
-    contextId: 'your_context_id',  // Optional: bind to an existing context
-    labels: {
-      purpose: 'demo',
-      environment: 'development'
+    // Create session
+    const agentBay = new AgentBay();
+    const result = await agentBay.create();
+    
+    if (result.success) {
+        const session = result.session;
+        
+        // Execute command
+        const cmdResult = await session.command.executeCommand("ls -la");
+        console.log(cmdResult.output);
+        
+        // File operations
+        await session.fileSystem.writeFile("/tmp/test.txt", "Hello World");
+        const content = await session.fileSystem.readFile("/tmp/test.txt");
+        console.log(content.data);
     }
-  });
-  const session = createResponse.session;
-  
-  // Execute a command
-  const commandResponse = await session.command.executeCommand('ls -la');
-  
-  // Run code
-  const codeResponse = await session.code.runCode('print("Hello World")', 'python');
-  
-  // File operations
-  const fileContent = await session.fileSystem.readFile('/etc/hosts');
-  await session.fileSystem.writeFile('/tmp/test.txt', 'Hello World');
-  
-  // UI operations
-  const screenshot = await session.ui.screenshot();
-  
-  // Application management
-  const installedApps = await session.application.getInstalledApps(true, false, true);
-  const visibleApps = await session.application.listVisibleApps();
-  
-  // Window management
-  const windows = await session.window.listRootWindows();
-  const activeWindow = await session.window.getActiveWindow();
-  
-  // Session management
-  await session.setLabels({ environment: 'production' });
-  const labels = await session.getLabels();
-  const info = await session.info();
-  
-  // Context management
-  const contexts = await agentBay.context.list();
-  
-  // Clean up
-  await agentBay.delete(session);
 }
+
+main().catch(console.error);
 ```
 
-## Key Features
+## 📖 Complete Documentation
+
+### 🆕 New Users
+- [📚 Quick Start Tutorial](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart) - Get started in 5 minutes
+- [🎯 Core Concepts](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/basic-concepts.md) - Understanding cloud environments and sessions
+- [💡 Best Practices](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/best-practices.md) - Common patterns and techniques
+
+### 🚀 Experienced Users
+- [📖 Feature Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides) - Complete feature introduction
+- [🔧 TypeScript API Reference](docs/api/) - Detailed API documentation
+- [💻 TypeScript Examples](docs/examples/) - Complete example code
+
+### 🆘 Need Help
+- [❓ FAQ](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/faq.md) - Quick answers
+- [🔧 Troubleshooting](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/troubleshooting.md) - Problem diagnosis
+- [🔧 TypeScript API Reference](docs/api/README.md) - Local API documentation
+- [💡 TypeScript Examples](docs/examples/README.md) - Local example code
+
+## 🔧 Core Features Quick Reference
 
 ### Session Management
+```typescript
+// Create session
+const session = (await agentBay.create()).session;
 
-- Create sessions with optional parameters (imageId, contextId, labels)
-- List sessions with pagination and filtering by labels
-- Delete sessions and clean up resources
-- Manage session labels
-- Get session information and links
+// List sessions
+const sessions = await agentBay.list();
+
+// Connect to existing session
+const session = await agentBay.connect("session_id");
+```
+
+### File Operations
+```typescript
+// Read and write files
+await session.fileSystem.writeFile("/path/file.txt", "content");
+const content = await session.fileSystem.readFile("/path/file.txt");
+
+// List directory
+const files = await session.fileSystem.listDirectory("/path");
+```
 
 ### Command Execution
+```typescript
+// Execute command
+const result = await session.command.executeCommand("node script.js");
+console.log(result.output);
+```
 
-- Execute shell commands
-- Run code in various languages
-- Get command output and execution status
+### Data Persistence
+```typescript
+// Create context
+const context = (await agentBay.context.get("my-project", true)).context;
 
-### File System Operations
+// Create session with context
+import { ContextSync, SyncPolicy } from 'wuying-agentbay-sdk';
+const contextSync = new ContextSync({
+    contextId: context.id,
+    path: "/mnt/data",
+    policy: SyncPolicy.default()
+});
+const session = (await agentBay.create({ contextSync: [contextSync] })).session;
+```
 
-- Read and write files
-- List directory contents
-- Create and delete files and directories
-- Get file information
+## 🆘 Get Help
 
-### UI Interaction
+- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [Complete Documentation](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs)
 
-- Take screenshots
-- Find UI elements by criteria
-- Click on UI elements
-- Send text input
-- Perform swipe gestures
-- Send key events
+## 📄 License
 
-### Application Management
-
-- Get installed applications
-- List running applications
-- Start and stop applications
-- Get application information
-
-### Window Management
-
-- List windows
-- Get active window
-- Focus, resize, and move windows
-- Get window properties
-
-### Context Management
-
-- Create, list, and delete contexts
-- Bind sessions to contexts
-- Synchronize context data
-- Get context information
-
-### OSS Integration
-
-- Upload files to OSS
-- Download files from OSS
-- Initialize OSS environment
-
-## Response Format
-
-All API methods return responses that include:
-
-- `requestId`: A unique identifier for the request
-- `success`: A boolean indicating whether the operation was successful
-- Operation-specific data (varies by method)
-
-For more detailed documentation, refer to the [SDK Documentation](../docs/README.md).
+This project is licensed under the Apache License 2.0 - see the [LICENSE](../LICENSE) file for details.

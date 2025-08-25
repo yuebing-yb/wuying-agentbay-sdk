@@ -300,18 +300,14 @@ Now that you know the basics of using the AgentBay SDK, you can explore more fea
 - [OSS Integration](tutorials/oss-integration.md)
 - [Application Management](tutorials/application-management.md)
 
-### API Reference
+### Feature Guides
 
-- [AgentBay](api-reference/agentbay.md)
-- [Session](api-reference/session.md)
-- [Command](api-reference/command.md)
-- [FileSystem](api-reference/filesystem.md)
-- [UI](api-reference/ui.md)
-- [Window](api-reference/window.md)
-- [OSS](api-reference/oss.md)
-- [Application](api-reference/application.md)
-- [Context](api-reference/context.md)
-- [ContextManager](api-reference/context-manager.md)
+- [Session Management](guides/session-management.md)
+- [Code Execution](guides/code-execution.md)
+- [Context Management](guides/context-management.md)
+- [Browser Automation](guides/browser-automation.md)
+- [VPC Sessions](guides/vpc-sessions.md)
+- [Agent Module](guides/agent-module.md)
 
 ### Examples
 
