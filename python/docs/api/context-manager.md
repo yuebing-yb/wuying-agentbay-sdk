@@ -10,6 +10,19 @@ The `ContextManager` class provides functionality for managing contexts within a
 session  # The Session instance that this ContextManager belongs to
 ```
 
+## Data Types
+
+```python
+class ContextStatusData:
+    context_id: str     # The ID of the context
+    path: str           # The path where the context is mounted
+    error_message: str  # Error message if the operation failed
+    status: str         # Status of the synchronization task
+    start_time: int     # Start time of the task (Unix timestamp)
+    finish_time: int    # Finish time of the task (Unix timestamp)
+    task_type: str      # Type of the task (e.g., "upload", "download")
+```
+
 ## Methods
 
 ### info
@@ -27,6 +40,7 @@ info(context_id: Optional[str] = None, path: Optional[str] = None, task_type: Op
 
 **Returns:**
 - `ContextInfoResult`: A result object containing the context status data, success status, and request ID. This class inherits from `ApiResponse`.
+  - `context_status_data` (List[ContextStatusData]): A list of context status data objects.
 
 **Example:**
 ```python
@@ -64,6 +78,7 @@ sync(context_id: Optional[str] = None, path: Optional[str] = None, mode: Optiona
 
 **Returns:**
 - `ContextSyncResult`: A result object containing success status and request ID.
+  - `success` (bool): Indicates whether the synchronization was successful.
 
 **Example:**
 ```python
