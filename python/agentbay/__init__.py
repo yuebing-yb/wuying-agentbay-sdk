@@ -22,6 +22,7 @@ from .context_sync import (
     WhiteList,
 )
 from .context_manager import ContextManager, ContextInfoResult, ContextSyncResult
+from .logger import AgentBayLogger, get_logger, log
 
 __all__ = [
     "Config",
@@ -54,4 +55,7 @@ __all__ = [
     "ContextManager",
     "ContextInfoResult",
     "ContextSyncResult",
+    "AgentBayLogger",
+    "get_logger",
+    "log",
 ]
