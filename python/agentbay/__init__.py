@@ -23,6 +23,7 @@ from .context_sync import (
 )
 from .context_manager import ContextManager, ContextInfoResult, ContextSyncResult
 from .extension import ExtensionsService, ExtensionOption, Extension
+from .logger import AgentBayLogger, get_logger, log
 
 __all__ = [
     "Config",
@@ -58,4 +59,7 @@ __all__ = [
     "ExtensionsService",
     "ExtensionOption",
     "Extension",
+    "AgentBayLogger",
+    "get_logger",
+    "log",
 ]

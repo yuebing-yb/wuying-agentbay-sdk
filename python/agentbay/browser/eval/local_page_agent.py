@@ -10,8 +10,10 @@ from agentbay.browser import Browser, BrowserOption
 from agentbay.session import Session
 from agentbay.api.base_service import OperationResult
 from agentbay.browser.browser_agent import BrowserAgent
+from agentbay.logger import get_logger
 
-logger = logging.getLogger(__name__)
+# Use the AgentBay logger instead of the standard logger
+logger = get_logger("local_page_agent")
 
 class LocalMCPClient:
     def __init__(self, server: str, command: str, args: list[str]):
@@ -31,7 +33,7 @@ class LocalMCPClient:
                     success = False
                     logger.info("Start connect to mcp server")
                     try:
-                        print(f"command = {self.command}, args = {self.args}")
+                        logger.debug(f"command = {self.command}, args = {self.args}")
                         server_params = StdioServerParameters(command=self.command, args=self.args)
                         async with stdio_client(server_params) as (read_stream, write_stream):
                             async with ClientSession(read_stream, write_stream) as session:

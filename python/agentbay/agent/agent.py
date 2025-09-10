@@ -1,7 +1,11 @@
 from agentbay.exceptions import AgentError, AgentBayError
 from agentbay.api.base_service import BaseService
 from agentbay.model import ApiResponse
+from agentbay.logger import get_logger
 import time, json
+
+# Initialize logger for this module
+logger = get_logger("agent")
 
 
 class QueryResult(ApiResponse):
@@ -131,13 +135,13 @@ class Agent(BaseService):
                             task_status=task_status,
                             task_result=task_result,
                         )
-                    print(f"Task {task_id} is still running, please wait for a while.")
+                    logger.info(f"Task {task_id} is still running, please wait for a while.")
                     # keep waiting unit timeout if the status is running
                     # task_status {running, finished, failed, unsupported}
                     time.sleep(3)
                     tried_time += 1
             else:
-                print("task execute failed")
+                logger.error("task execute failed")
                 return ExecutionResult(
                     request_id=result.request_id,
                     success=False,
@@ -183,10 +187,10 @@ class Agent(BaseService):
         except AgentError as e:
             return QueryResult(request_id="", success=False, error_message=str(e))
         except Exception as e:
-            return ExecutionResult(
+            return QueryResult(
                 request_id="",
                 success=False,
-                error_message=f"Failed to terminate: {e}",
+                error_message=f"Failed to get task status: {e}",
             )
 
     def terminate_task(self, task_id: str) -> ExecutionResult:
@@ -200,7 +204,7 @@ class Agent(BaseService):
             ExecutionResult: Result object containing success status, task output,
             and error message if any.
         """
-        print("Terminating task")
+        logger.info("Terminating task")
         try:
             args = {"task_id": task_id}
 

@@ -93,10 +93,11 @@ def create_session_with_context() -> None:
         # Create a session with context synchronization
         context_sync = ContextSync.new(
             context_id=context.id,
-            path="/mnt/data",
+            path="/tmp/data",
             policy=SyncPolicy.default()
         )
-        session_params = CreateSessionParams(context_syncs=[context_sync])
+        session_params = CreateSessionParams()
+        session_params.context_syncs = [context_sync]
         session_result = agent_bay.create(session_params)
 
         if session_result.success and session_result.session:
@@ -137,7 +138,8 @@ def create_session_with_context_sync() -> None:
         )
 
         # Create a session with context synchronization
-        session_params = CreateSessionParams(context_syncs=[context_sync])
+        session_params = CreateSessionParams()
+        session_params.context_syncs = [context_sync]
         session_result = agent_bay.create(session_params)
 
         if session_result.success and session_result.session:
@@ -187,7 +189,7 @@ def create_session_with_browser_context() -> None:
 
         # Create session parameters with Browser Context
         session_params = CreateSessionParams(
-            image_id="imgc-wucyOiPmeV2Z753lq",  # Browser image ID required
+            image_id="browser_latest",  # Browser image ID required
             browser_context=browser_context
         )
         session_result = agent_bay.create(session_params)

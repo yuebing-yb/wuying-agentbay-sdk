@@ -22,6 +22,7 @@ create_directory(path: str) -> BoolResult
 **Note:**
 The return type has been updated from boolean to a structured `BoolResult` object, which provides more detailed information about the operation result.
 
+### edit_file
 
 Edits a file by replacing occurrences of oldText with newText.
 
@@ -38,33 +39,33 @@ edit_file(path: str, edits: List[Dict[str, str]], dry_run: bool = False) -> Bool
 **Returns:**
 - `BoolResult`: A result object containing success status, boolean data (True if successful), request ID, and error message if any.
 
+### get_file_info
 
 Gets information about a file or directory.
 
-
 ```python
-get_file_info(path: str) -> OperationResult
+get_file_info(path: str) -> FileInfoResult
 ```
 
 **Parameters:**
 - `path` (str): The path of the file or directory to inspect.
 
 **Returns:**
-- `OperationResult`: A result object containing file information as data, success status, request ID, and error message if any.
+- `FileInfoResult`: A result object containing file information, success status, request ID, and error message if any.
 
+### list_directory
 
 Lists the contents of a directory.
 
-
 ```python
-list_directory(path: str) -> OperationResult
+list_directory(path: str) -> DirectoryListResult
 ```
 
 **Parameters:**
 - `path` (str): The path of the directory to list.
 
 **Returns:**
-- `OperationResult`: A result object containing a list of directory entries as data, success status, request ID, and error message if any.
+- `DirectoryListResult`: A result object containing a list of directory entries, success status, request ID, and error message if any.
 
 
 Moves a file or directory from source to destination.
@@ -100,14 +101,14 @@ This method automatically handles both small and large files. For large files, i
 
 
 ```python
-read_multiple_files(paths: List[str]) -> OperationResult
+read_multiple_files(paths: List[str]) -> MultipleFileContentResult
 ```
 
 **Parameters:**
 - `paths` (List[str]): List of file paths to read.
 
 **Returns:**
-- `OperationResult`: A result object containing a dictionary mapping file paths to their contents as data, success status, request ID, and error message if any.
+- `MultipleFileContentResult`: A result object containing a dictionary mapping file paths to their contents, success status, request ID, and error message if any.
 
 
 Searches for files matching a pattern in a directory.
@@ -123,7 +124,7 @@ search_files(path: str, pattern: str, exclude_patterns: Optional[List[str]] = No
 - `exclude_patterns` (List[str], optional): Patterns to exclude. Default is None.
 
 **Returns:**
-- `OperationResult`: A result object containing search results as data, success status, request ID, and error message if any.
+- `FileSearchResult`: A result object containing search results, success status, request ID, and error message if any.
 
 
 Writes content to a file. Automatically handles large files by chunking.

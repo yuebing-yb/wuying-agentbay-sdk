@@ -512,7 +512,7 @@ class TestFileSystem(unittest.TestCase):
             success=False,
             error_message="Invalid write mode: invalid_mode. Must be 'overwrite' or 'append'."
         )
-        
+
         result = self.fs.write_file("/path/to/file.txt", "content", "invalid_mode")
         self.assertIsInstance(result, BoolResult)
         self.assertFalse(result.success)

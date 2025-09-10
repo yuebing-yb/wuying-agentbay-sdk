@@ -3,6 +3,11 @@ from typing import List, Dict, Union, Any, Optional, Tuple, TypeVar, Generic, Ty
 from pydantic import BaseModel
 from agentbay.api.base_service import BaseService, OperationResult
 from agentbay.exceptions import BrowserError, AgentBayError
+from agentbay.api.models import CallMcpToolRequest
+from agentbay.logger import get_logger
+
+# Initialize logger for this module
+logger = get_logger("browser_agent")
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -282,7 +287,7 @@ class BrowserAgent(BaseService):
                 args["action"] = json.dumps(action_dict)
             response = self._call_mcp_tool_timeout("page_use_act", args)
             if response.success:
-                print(f"Response from CallMcpTool - page_use_act:", response.data)
+                logger.debug(f"Response from CallMcpTool - page_use_act: {response.data}")
                 import json as _json
 
                 if isinstance(response.data, str):
@@ -351,7 +356,7 @@ class BrowserAgent(BaseService):
                 args["action"] = json.dumps(action_dict)
             response = self._call_mcp_tool_timeout("page_use_act", args)
             if response.success:
-                print(f"Response from CallMcpTool - page_use_act:", response.data)
+                logger.debug(f"Response from CallMcpTool - page_use_act: {response.data}")
                 import json as _json
 
                 if isinstance(response.data, str):
@@ -403,10 +408,10 @@ class BrowserAgent(BaseService):
             if options.dom_settle_timeout_ms is not None:
                 args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
             response = self._call_mcp_tool_timeout("page_use_observe", args)
-            print("Response from CallMcpTool - page_use_observe:", response)
+            logger.debug(f"Response from CallMcpTool - page_use_observe: {response}")
 
             if response.success:
-                print(f"Response from CallMcpTool - page_use_observe:", response.data)
+                logger.debug(f"Response from CallMcpTool - page_use_observe: {response.data}")
                 import json as _json
 
                 if isinstance(response.data, str):
@@ -476,10 +481,10 @@ class BrowserAgent(BaseService):
             if options.dom_settle_timeout_ms is not None:
                 args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
             response = self._call_mcp_tool_timeout("page_use_observe", args)
-            print("Response from CallMcpTool - page_use_observe:", response)
+            logger.debug(f"Response from CallMcpTool - page_use_observe: {response}")
 
             if response.success:
-                print(f"Response from CallMcpTool - page_use_observe:", response.data)
+                logger.debug(f"Response from CallMcpTool - page_use_observe: {response.data}")
                 import json as _json
 
                 if isinstance(response.data, str):
@@ -556,10 +561,10 @@ class BrowserAgent(BaseService):
                 args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
 
             response = self._call_mcp_tool_timeout("page_use_extract", args)
-            print("Response from CallMcpTool - page_use_extract:", response)
+            logger.debug(f"Response from CallMcpTool - page_use_extract: {response}")
 
             if response.success:
-                print(f"Response from CallMcpTool - page_use_extract:", response.data)
+                logger.debug(f"Response from CallMcpTool - page_use_extract: {response.data}")
                 import json as _json
 
                 if isinstance(response.data, str):
@@ -626,10 +631,10 @@ class BrowserAgent(BaseService):
                 args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
 
             response = self._call_mcp_tool_timeout("page_use_extract", args)
-            print("Response from CallMcpTool - page_use_extract:", response)
+            logger.debug(f"Response from CallMcpTool - page_use_extract: {response}")
 
             if response.success:
-                print(f"Response from CallMcpTool - page_use_extract:", response.data)
+                logger.debug(f"Response from CallMcpTool - page_use_extract: {response.data}")
                 import json as _json
 
                 if isinstance(response.data, str):

@@ -1,5 +1,6 @@
 import json
 from typing import TYPE_CHECKING, Dict, Optional
+from .logger import get_logger, log_api_call, log_api_response, log_operation_start, log_operation_success, log_operation_error, log_warning
 
 from agentbay.api.models import (
     GetLabelRequest,
@@ -25,6 +26,9 @@ if TYPE_CHECKING:
     from agentbay.agentbay import AgentBay
 
 from agentbay.browser import Browser
+
+# Initialize logger for this module
+logger = get_logger("session")
 
 class SessionInfo:
     """
@@ -60,7 +64,6 @@ class Session:
     def __init__(self, agent_bay: "AgentBay", session_id: str):
         self.agent_bay = agent_bay
         self.session_id = session_id
-        self.resource_url = ""
 
         # VPC-related information
         self.is_vpc = False  # Whether this session uses VPC resources
@@ -131,15 +134,15 @@ class Session:
         try:
             # If sync_context is True, trigger file uploads first
             if sync_context:
-                print("Triggering context synchronization before session deletion...")
+                log_operation_start("Context synchronization", "Before session deletion")
 
                 # Trigger file upload
                 try:
                     sync_result = self.context.sync()
                     if not sync_result.success:
-                        print("Warning: Context sync operation returned failure status")
+                        log_warning("Context sync operation returned failure status")
                 except Exception as e:
-                    print(f"Warning: Failed to trigger context sync: {e}")
+                    log_warning(f"Failed to trigger context sync: {e}")
                     # Continue with deletion even if sync fails
 
                 # Wait for uploads to complete
@@ -163,7 +166,7 @@ class Session:
                                 continue
 
                             has_uploads = True
-                            print(f"Upload context {item.context_id} status: {item.status}, path: {item.path}")
+                            logger.info(f"📤 Upload context {item.context_id} status: {item.status}, path: {item.path}")
 
                             if item.status != "Success" and item.status != "Failed":
                                 all_completed = False
@@ -171,21 +174,21 @@ class Session:
 
                             if item.status == "Failed":
                                 has_failure = True
-                                print(f"Upload failed for context {item.context_id}: {item.error_message}")
+                                logger.error(f"❌ Upload failed for context {item.context_id}: {item.error_message}")
 
                         if all_completed or not has_uploads:
                             if has_failure:
-                                print("Context upload completed with failures")
+                                log_warning("Context upload completed with failures")
                             elif has_uploads:
-                                print("Context upload completed successfully")
+                                log_operation_success("Context upload")
                             else:
-                                print("No upload tasks found")
+                                logger.info("ℹ️  No upload tasks found")
                             break
 
-                        print(f"Waiting for context upload to complete, attempt {retry+1}/{max_retries}")
+                        logger.info(f"⏳ Waiting for context upload to complete, attempt {retry+1}/{max_retries}")
                         time.sleep(retry_interval)
                     except Exception as e:
-                        print(f"Error checking context status on attempt {retry+1}: {e}")
+                        logger.error(f"❌ Error checking context status on attempt {retry+1}: {e}")
                         time.sleep(retry_interval)
 
             # Proceed with session deletion
@@ -195,14 +198,12 @@ class Session:
             )
             response = self.get_client().release_mcp_session(request)
             try:
-                print("Response body:")
-                print(
-                    json.dumps(
-                        response.to_map().get("body", {}), ensure_ascii=False, indent=2
-                    )
+                response_body = json.dumps(
+                    response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
+                log_api_response(response_body)
             except Exception:
-                print(f"Response: {response}")
+                logger.debug(f"📥 Response: {response}")
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -222,7 +223,7 @@ class Session:
             return DeleteResult(request_id=request_id, success=True)
 
         except Exception as e:
-            print("Error calling release_mcp_session:", e)
+            log_operation_error("release_mcp_session", str(e))
             # In case of error, return failure result with error message
             return DeleteResult(
                 success=False,
@@ -327,7 +328,7 @@ class Session:
             return OperationResult(request_id=request_id, success=True)
 
         except Exception as e:
-            print("Error calling set_label:", e)
+            log_operation_error("set_label", str(e))
             raise SessionError(
                 f"Failed to set labels for session {self.session_id}: {e}"
             )
@@ -365,7 +366,7 @@ class Session:
             return OperationResult(request_id=request_id, success=True, data=labels)
 
         except Exception as e:
-            print("Error calling get_label:", e)
+            log_operation_error("get_label", str(e))
             raise SessionError(
                 f"Failed to get labels for session {self.session_id}: {e}"
             )
@@ -387,19 +388,16 @@ class Session:
                 session_id=self.session_id,
             )
 
-            print("API Call: GetMcpResource")
-            print(f"Request: SessionId={self.session_id}")
+            log_api_call("GetMcpResource", f"SessionId={self.session_id}")
 
             response = self.get_client().get_mcp_resource(request)
             try:
-                print("Response body:")
-                print(
-                    json.dumps(
-                        response.to_map().get("body", {}), ensure_ascii=False, indent=2
-                    )
+                response_body = json.dumps(
+                    response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
+                log_api_response(response_body)
             except Exception:
-                print(f"Response: {response}")
+                logger.debug(f"📥 Response: {response}")
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -415,8 +413,6 @@ class Session:
 
             if "ResourceUrl" in data:
                 session_info.resource_url = data["ResourceUrl"]
-                # Update the session's resource_url with the latest value
-                self.resource_url = data["ResourceUrl"]
             # Transfer DesktopInfo fields to SessionInfo
             if "DesktopInfo" in data:
                 desktop_info = data["DesktopInfo"]
@@ -440,7 +436,7 @@ class Session:
             )
 
         except Exception as e:
-            print("Error calling GetMcpResource:", e)
+            log_operation_error("GetMcpResource", str(e))
             raise SessionError(
                 f"Failed to get session info for session {self.session_id}: {e}"
             )
@@ -489,7 +485,7 @@ class Session:
                 )
 
             data = body.get("Data", {})
-            print(f"Data: {data}")
+            logger.debug(f"📊 Data: {data}")
 
             if not isinstance(data, dict):
                 try:
@@ -553,7 +549,7 @@ class Session:
                 )
 
             data = body.get("Data", {})
-            print(f"Data: {data}")
+            logger.debug(f"📊 Data: {data}")
 
             if not isinstance(data, dict):
                 try:
@@ -594,8 +590,7 @@ class Session:
             image_id=image_id
         )
 
-        print("API Call: ListMcpTools")
-        print(f"Request: ImageId={image_id}")
+        log_api_call("ListMcpTools", f"ImageId={image_id}")
 
         response = self.get_client().list_mcp_tools(request)
 
@@ -603,7 +598,7 @@ class Session:
         request_id = extract_request_id(response)
 
         if response and response.body:
-            print("Response from ListMcpTools:", response.body)
+            logger.debug(f"📥 Response from ListMcpTools: {response.body}")
 
         # Parse the response data
         tools = []
@@ -621,7 +616,7 @@ class Session:
                     )
                     tools.append(tool)
             except json.JSONDecodeError as e:
-                print(f"Error unmarshaling tools data: {e}")
+                logger.error(f"❌ Error unmarshaling tools data: {e}")
 
         self.mcp_tools = tools  # Update the session's mcp_tools field
 

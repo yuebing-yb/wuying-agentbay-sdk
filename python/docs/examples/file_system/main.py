@@ -38,7 +38,7 @@ def main():
     )
     session_result = agent_bay.create(params)
     session = session_result.session
-    print(f"Session created with ID: {session.get_session_id()}")
+    print(f"Session created with ID: {session.session_id}")
     print(f"Request ID: {session_result.request_id}")
 
     try:
@@ -230,7 +230,7 @@ def main():
         ]
         result = fs.read_multiple_files(file_paths)
         if result.success:
-            multi_file_contents = result.contents
+            multi_file_contents = result.content
             print(f"Read {len(multi_file_contents)} files:")
             for path, content in multi_file_contents.items():
                 print(f"  - {path}: {len(content)} bytes")
