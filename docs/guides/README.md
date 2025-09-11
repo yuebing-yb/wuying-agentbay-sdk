@@ -281,8 +281,9 @@ Explore advanced capabilities:
 
 - [API Reference](../api-reference.md) - Complete API documentation
 - [Best Practices](../quickstart/best-practices.md) - Recommended patterns
-- [FAQ](../quickstart/faq.md) - Frequently asked questions
-- [Examples](../../examples/) - Working code examples
+- [Python Examples](../../python/docs/examples/) - Python code examples
+- [TypeScript Examples](../../typescript/docs/examples/) - TypeScript code examples
+- [Golang Examples](../../golang/docs/examples/) - Golang code examples
 
 ## 🆘 Getting Help
 

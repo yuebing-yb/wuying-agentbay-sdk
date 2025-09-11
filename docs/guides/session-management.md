@@ -677,9 +677,9 @@ else:
 ## API Reference
 
 For detailed API documentation, see:
-- [Python Session API](../api-reference/python/session.md)
-- [TypeScript Session API](../api-reference/typescript/session.md)
-- [Golang Session API](../api-reference/golang/session.md)
-- [Python AgentBay API](../api-reference/python/agentbay.md)
-- [TypeScript AgentBay API](../api-reference/typescript/agentbay.md)
-- [Golang AgentBay API](../api-reference/golang/agentbay.md)
+- [Python Session API](../../python/docs/api/session.md)
+- [TypeScript Session API](../../typescript/docs/api/session.md)
+- [Golang Session API](../../golang/docs/api/session.md)
+- [Python AgentBay API](../../python/docs/api/agentbay.md)
+- [TypeScript AgentBay API](../../typescript/docs/api/agentbay.md)
+- [Golang AgentBay API](../../golang/docs/api/agentbay.md)

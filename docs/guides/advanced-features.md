@@ -538,7 +538,7 @@ async def browser_automation_example():
 asyncio.run(browser_automation_example())
 ```
 
-For a complete working example, see `examples/browser/visit_aliyun.py` in the SDK repository.
+For a complete working example, see `python/docs/examples/browser/visit_aliyun.py` in the SDK repository.
 
 ### Browser Automation Best Practices
 

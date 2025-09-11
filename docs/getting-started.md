@@ -62,7 +62,7 @@ func main() {
 }
 ```
 
-For more details about authentication, see the [Authentication Guide](guides/authentication.md).
+For more details about authentication, see the [SDK Configuration Guide](guides/sdk-configuration.md).
 
 ## Basic Usage
 
@@ -290,26 +290,27 @@ func main() {
 
 Now that you know the basics of using the AgentBay SDK, you can explore more features:
 
-### Tutorials
+### Quick Start Guide
 
-- [Session Management](tutorials/session-management.md)
-- [Command Execution](tutorials/command-execution.md)
-- [Code Execution](tutorials/code-execution.md)
-- [File Operations](tutorials/file-operations.md)
-- [UI Interaction](tutorials/ui-interaction.md)
-- [Window Management](tutorials/window-management.md)
-- [OSS Integration](tutorials/oss-integration.md)
-- [Application Management](tutorials/application-management.md)
+- [Installation and Setup](quickstart/installation.md)
+- [Basic Concepts](quickstart/basic-concepts.md)
+- [Your First Session](quickstart/first-session.md)
+- [Best Practices](quickstart/best-practices.md)
 
 ### Feature Guides
 
 - [Session Management](guides/session-management.md)
-- [Code Execution](guides/code-execution.md)
-- [Context Management](guides/context-management.md)
-- [Browser Automation](guides/browser-automation.md)
-- [VPC Sessions](guides/vpc-sessions.md)
-- [Agent Module](guides/agent-module.md)
+- [File Operations](guides/file-operations.md)
+- [Data Persistence](guides/data-persistence.md)
+- [Automation](guides/automation.md)
+- [Application & Window Operations](guides/application-window-operations.md)
+- [Advanced Features](guides/advanced-features.md)
+- [Browser Extensions](guides/browser-extensions.md)
+- [SDK Configuration](guides/sdk-configuration.md)
 
 ### Examples
 
-Check out the [examples directory](examples/README.md) for more code examples in Python, TypeScript, and Golang.
+Check out the example directories for more code examples:
+- [Python Examples](../python/docs/examples/) 
+- [TypeScript Examples](../typescript/docs/examples/)
+- [Golang Examples](../golang/docs/examples/)

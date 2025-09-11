@@ -36,7 +36,10 @@ After completing this quick start guide, you will be able to:
 ## 🚀 Next Steps After Completion
 
 - Check out the [Feature Guides](../guides/README.md) to learn about complete functionality
-- Browse [Example Code](../examples/) for inspiration
+- Browse example code for inspiration:
+  - [Python Examples](../../python/docs/examples/)
+  - [TypeScript Examples](../../typescript/docs/examples/)
+  - [Golang Examples](../../golang/docs/examples/)
 - Join community discussions
 
 ## ❓ Having Issues?

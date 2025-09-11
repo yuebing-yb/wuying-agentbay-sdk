@@ -210,45 +210,36 @@ if check_file_access(session, "/tmp/test.txt"):
 **Cause**: File size limits or network issues
 
 **Solution**:
-Instead of manually handling file chunking, use the SDK's built-in large file operations:
+The SDK's standard `read_file()` and `write_file()` methods automatically handle large files through chunked transfer:
 
 ```python
-# For reading large files, use read_large_file
-def read_large_file_example(session, path):
+# The standard methods automatically handle large files
+def handle_large_file_example(session, path, content):
     try:
-        # read_large_file automatically handles chunking for large files
-        result = session.file_system.read_large_file(path)
-        if result.success:
-            print(f"Successfully read large file: {len(result.content)} characters")
-            return result.content
-        else:
-            print(f"Failed to read large file: {result.error_message}")
-            return None
-    except Exception as e:
-        print(f"Error reading large file: {e}")
-        return None
-
-# For writing large files, use write_large_file
-def write_large_file_example(session, path, content):
-    try:
-        # write_large_file automatically handles chunking for large files
-        result = session.file_system.write_large_file(path, content)
-        if result.success:
-            print("Successfully wrote large file")
-            return True
-        else:
-            print(f"Failed to write large file: {result.error_message}")
+        # write_file automatically handles chunking for large content
+        write_result = session.file_system.write_file(path, content)
+        if not write_result.success:
+            print(f"Failed to write large file: {write_result.error_message}")
             return False
+        
+        print("Successfully wrote large file")
+        
+        # read_file automatically handles chunking for large files
+        read_result = session.file_system.read_file(path)
+        if not read_result.success:
+            print(f"Failed to read large file: {read_result.error_message}")
+            return False
+            
+        print(f"Successfully read large file: {len(read_result.content)} characters")
+        return True
+        
     except Exception as e:
-        print(f"Error writing large file: {e}")
+        print(f"Error handling large file: {e}")
         return False
 
 # Usage
 large_content = "A" * (1024 * 1024 * 5)  # 5MB of data
-if write_large_file_example(session, "/tmp/large_file.txt", large_content):
-    content = read_large_file_example(session, "/tmp/large_file.txt")
-    if content:
-        print(f"Verified content length: {len(content)}")
+handle_large_file_example(session, "/tmp/large_file.txt", large_content)
 ```
 
 ### 5. Command Execution Issues
