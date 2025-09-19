@@ -2,6 +2,64 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.8.0] - 2025-09-19
+
+### Added
+
+- **Context Sync with Callback Support**: Enhanced context synchronization capabilities
+  - **Asynchronous Context Sync**: Added callback-based asynchronous context sync functionality
+  - **Synchronous Context Sync**: Support for blocking synchronous context sync operations
+  - **Flexible Sync Options**: Two calling modes - with callback for async, without for sync
+  - **Context Sync Examples**: Comprehensive examples demonstrating both sync modes
+- **Enhanced Logging System**: Upgraded to loguru-based logging infrastructure
+  - **File Logging**: Support for logging to files for better debugging and analysis
+  - **Environment-based Log Levels**: Configurable log levels via environment variables
+  - **Process & Thread Information**: Enhanced log output with process and thread details for async operations
+  - **DEBUG Level Support**: More detailed logging information at DEBUG level (default: INFO)
+- **Data Persistence Examples**: Comprehensive data persistence examples across all SDKs
+  - **Cross-language Examples**: Updated examples for Python, TypeScript, and Golang
+  - **Context Management**: Enhanced examples showing context binding and persistence
+  - **Session Recovery**: Documentation and examples for session recovery scenarios
+- **Browser-Use Documentation**: Complete browser automation documentation suite
+  - **Core Features Guide**: Comprehensive documentation for browser context, proxies, stealth mode, extensions, and captcha handling
+  - **Advanced Features Guide**: In-depth coverage of PageUse Agent and AI-powered browser interactions
+  - **Code Examples**: Practical examples demonstrating browser automation workflows
+  - **Integration Guide**: Documentation for seamless integration with community tools and frameworks
+
+### Changed
+
+- **Session Management**: Simplified session interface
+  - **Removed resourceUrl**: Eliminated resourceUrl parameter from session creation for cleaner API
+  - **Streamlined Session Creation**: Simplified session parameters and initialization
+- **Build System**: Modernized Python package management
+  - **Removed setup.py**: Transitioned from setup.py to setup.cfg for cleaner package configuration
+  - **Poetry Integration**: Enhanced CI/CD with Poetry-based publishing workflows
+- **Example Improvements**: Enhanced code quality and consistency across examples
+  - **Better Error Handling**: Improved error handling patterns in SDK examples
+  - **Parameter Standardization**: Consistent parameter setup across all examples
+  - **Code Cleanup**: Improved readability and maintainability of browser examples
+
+### Fixed
+
+- **Browser Cookie Persistence**: Resolved browser cookie persistence issues in examples
+  - **CDP Session Management**: Fixed CDP session variable handling in cookie persistence examples
+  - **Browser Connection**: Improved browser connection stability for persistent sessions
+- **Unit Test Reliability**: Enhanced test stability and coverage
+  - **Test Case Updates**: Updated filesystem test cases for better failure scenario handling
+  - **Test Consistency**: Fixed unit test failures and improved test reliability
+- **Session Parameter Handling**: Fixed session creation parameter issues in automation examples
+
+### Documentation
+
+- **Comprehensive Documentation Updates**: Major improvements across all documentation areas
+  - **API Key Usage**: Updated best practices for API key usage and security
+  - **Parallel Workflows**: Added examples and documentation for parallel workflow execution
+  - **Automation Guides**: Enhanced automation documentation with English translations
+  - **Application & Window Management**: Added comprehensive documentation for application and window operations
+  - **Session Recovery**: New documentation covering session recovery patterns and best practices
+  - **File Operations**: Updated file operations guides with session usage examples
+  - **Best Practices**: Enhanced best practices documentation for API key usage and file search results handling
+
 ## [0.7.0] - 2025-09-02
 
 ### Added
