@@ -170,26 +170,22 @@ class TestSession(unittest.TestCase):
         # Set up context mock object
         self.session.context = MagicMock()
 
-        # Mock context.sync return value
+        # Mock context.sync return value (now returns a coroutine)
         sync_result = MagicMock()
         sync_result.success = True
-        self.session.context.sync.return_value = sync_result
-
-        # Mock context.info return value
-        info_result = MagicMock()
-        info_result.context_status_data = [
-            MagicMock(status="Success", task_type="upload", context_id="ctx1")
-        ]
-        self.session.context.info.return_value = info_result
+        # Since context.sync is now async, we need to mock it as a coroutine
+        import asyncio
+        async def mock_sync():
+            return sync_result
+        self.session.context.sync.return_value = mock_sync()
 
         # Call delete method with sync_context=True
         result = self.session.delete(sync_context=True)
         self.assertIsInstance(result, DeleteResult)
         self.assertTrue(result.success)
 
-        # Verify sync and info were called
+        # Verify sync was called (but not info since we're not using callback mode)
         self.session.context.sync.assert_called_once()
-        self.session.context.info.assert_called_once()
 
         # Verify API call is correct
         MockReleaseMcpSessionRequest.assert_called_once_with(
@@ -252,7 +248,7 @@ class TestSession(unittest.TestCase):
         self, MockSetLabelRequest, mock_extract_request_id
     ):
         from agentbay.model.response import OperationResult
-        
+
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockSetLabelRequest.return_value = mock_request
@@ -306,7 +302,7 @@ class TestSession(unittest.TestCase):
         self, MockGetLabelRequest, mock_extract_request_id
     ):
         from agentbay.model.response import OperationResult
-        
+
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockGetLabelRequest.return_value = mock_request
@@ -357,7 +353,7 @@ class TestSession(unittest.TestCase):
         self, MockGetLinkRequest, mock_extract_request_id
     ):
         from agentbay.model.response import OperationResult
-        
+
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockGetLinkRequest.return_value = mock_request
@@ -386,6 +382,106 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.get_link.assert_called_once_with(mock_request)
 
+    @patch("agentbay.session.extract_request_id")
+    @patch("agentbay.session.GetLinkRequest")
+    def test_get_link_with_valid_port(
+        self, MockGetLinkRequest, mock_extract_request_id
+    ):
+        """Test get_link with valid port values in range [30100, 30199]"""
+        from agentbay.model.response import OperationResult
+
+        mock_request = MagicMock()
+        mock_response = MagicMock()
+        MockGetLinkRequest.return_value = mock_request
+        mock_extract_request_id.return_value = "request-104"
+        self.agent_bay.client.get_link.return_value = mock_response
+
+        # Mock the response.to_map() method
+        mock_response.to_map.return_value = {
+            "body": {
+                "Data": {"Url": "http://example.com:30150"},
+                "Success": True
+            }
+        }
+
+        # Test with valid ports in range [30100, 30199]
+        valid_ports = [30100, 30150, 30199]
+
+        for port in valid_ports:
+            with self.subTest(port=port):
+                MockGetLinkRequest.reset_mock()
+                self.agent_bay.client.get_link.reset_mock()
+
+                result = self.session.get_link(port=port)
+                self.assertIsInstance(result, OperationResult)
+                self.assertEqual(result.request_id, "request-104")
+                self.assertTrue(result.success)
+                self.assertEqual(result.data, "http://example.com:30150")
+
+                MockGetLinkRequest.assert_called_once_with(
+                    authorization="Bearer test_api_key",
+                    session_id="test_session_id",
+                    protocol_type=None,
+                    port=port,
+                )
+                self.agent_bay.client.get_link.assert_called_once_with(mock_request)
+
+    def test_get_link_with_invalid_port_below_range(self):
+        """Test get_link with port below valid range raises SessionError"""
+        from agentbay.exceptions import SessionError
+
+        invalid_port = 30099
+
+        with self.assertRaises(SessionError) as context:
+            self.session.get_link(port=invalid_port)
+
+        error_message = str(context.exception)
+        expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
+        self.assertEqual(error_message, expected_message)
+
+    def test_get_link_with_invalid_port_above_range(self):
+        """Test get_link with port above valid range raises SessionError"""
+        from agentbay.exceptions import SessionError
+
+        invalid_port = 30200
+
+        with self.assertRaises(SessionError) as context:
+            self.session.get_link(port=invalid_port)
+
+        error_message = str(context.exception)
+        expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
+        self.assertEqual(error_message, expected_message)
+
+    def test_get_link_with_invalid_port_non_integer(self):
+        """Test get_link with non-integer port raises SessionError"""
+        from agentbay.exceptions import SessionError
+
+        invalid_ports = [30150.5, "30150"]
+
+        for invalid_port in invalid_ports:
+            with self.subTest(port=invalid_port):
+                with self.assertRaises(SessionError) as context:
+                    self.session.get_link(port=invalid_port)
+
+                error_message = str(context.exception)
+                expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
+                self.assertEqual(error_message, expected_message)
+
+    def test_get_link_with_invalid_port_boundary_values(self):
+        """Test get_link with boundary values outside valid range"""
+        from agentbay.exceptions import SessionError
+
+        # Test boundary values just outside the valid range
+        invalid_ports = [30099, 30200, 0, -1, 65536]
+
+        for invalid_port in invalid_ports:
+            with self.subTest(port=invalid_port):
+                with self.assertRaises(SessionError) as context:
+                    self.session.get_link(port=invalid_port)
+
+                error_message = str(context.exception)
+                expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
+                self.assertEqual(error_message, expected_message)
 
 class TestAgentBayDelete(unittest.TestCase):
     def setUp(self):
@@ -401,6 +497,9 @@ class TestAgentBayDelete(unittest.TestCase):
         # Mock session.delete return value
         delete_result = DeleteResult(request_id="request-123", success=True)
         self.session.delete.return_value = delete_result
+        
+        # Ensure session doesn't have enableBrowserReplay or it's False
+        self.session.enableBrowserReplay = False
 
         # Import AgentBay class
         from agentbay import AgentBay

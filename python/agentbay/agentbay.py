@@ -1,8 +1,10 @@
 import json
 import os
+import random
+import string
 from enum import Enum
 from threading import Lock
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_tea_openapi.exceptions._client import ClientException
@@ -28,6 +30,33 @@ from agentbay.context_sync import ContextSync
 from agentbay.config import BROWSER_DATA_PATH
 
 
+def generate_random_context_name(length: int = 8, include_timestamp: bool = True) -> str:
+    """
+    Generate a random context name string using alphanumeric characters with optional timestamp.
+
+    Args:
+        length (int): Length of the random part. Defaults to 16.
+        include_timestamp (bool): Whether to include timestamp. Defaults to True.
+
+    Returns:
+        str: Random alphanumeric string with optional timestamp prefix
+
+    Examples:
+        generate_random_context_name()  # Returns: "20250912143025_kG8hN2pQ7mX9vZ1L"
+        generate_random_context_name(8, False)  # Returns: "kG8hN2pQ"
+    """
+    import time
+
+    random_part = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+    if include_timestamp:
+        # Format: YYYYMMDDHHMMSS
+        timestamp = time.strftime("%Y%m%d%H%M%S", time.localtime())
+        return f"{timestamp}_{random_part}"
+    else:
+        return random_part
+
+
 class Config:
     def __init__(self, region_id: str, endpoint: str, timeout_ms: int):
         self.region_id = region_id
@@ -41,7 +70,15 @@ class AgentBay:
     environment.
     """
 
-    def __init__(self, api_key: str = "", cfg: Optional[Config] = None):
+    def __init__(self, api_key: str = "", cfg: Optional[Config] = None, env_file: Optional[str] = None):
+        """
+        Initialize AgentBay client.
+        
+        Args:
+            api_key: API key for authentication. If not provided, will read from AGENTBAY_API_KEY environment variable.
+            cfg: Configuration object. If not provided, will load from environment variables and .env file.
+            env_file: Custom path to .env file. If not provided, will search upward from current directory.
+        """
         if not api_key:
             api_key = os.getenv("AGENTBAY_API_KEY")
             if not api_key:
@@ -50,8 +87,8 @@ class AgentBay:
                     "AGENTBAY_API_KEY environment variable"
                 )
 
-        # Load configuration
-        config_data = load_config(cfg)
+        # Load configuration with optional custom env file path
+        config_data = load_config(cfg, env_file)
 
         self.api_key = api_key
         self.region_id = config_data["region_id"]
@@ -67,14 +104,15 @@ class AgentBay:
 
         # Initialize context service
         self.context = ContextService(self)
+        self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):
         """
         Helper function to serialize objects to JSON-compatible format.
-        
+
         Args:
             obj: The object to serialize.
-            
+
         Returns:
             JSON-serializable representation of the object.
         """
@@ -109,6 +147,24 @@ class AgentBay:
             if params is None:
                 params = CreateSessionParams()
 
+            # Create a default context for file transfer operations if none provided
+            # and no context_syncs are specified
+            import time
+            context_name = f"file-transfer-context-{int(time.time())}"
+            context_result = self.context.get(context_name, create=True)
+            if context_result.success and context_result.context:
+                self._file_transfer_context = context_result.context
+                # Add the context to the session params for file transfer operations
+                from agentbay.context_sync import ContextSync
+                file_transfer_context_sync = ContextSync(
+                    context_id=context_result.context.id,
+                    path="/temp/file-transfer",
+                )
+                if not hasattr(params, "context_syncs") or params.context_syncs is None:
+                    params.context_syncs = []
+                logger.info(f"Adding context sync for file transfer operations: {file_transfer_context_sync}")
+                params.context_syncs.append(file_transfer_context_sync)
+
             request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")
 
             # Add McpPolicyId if specified
@@ -119,7 +175,7 @@ class AgentBay:
             request.vpc_resource = params.is_vpc
 
             # Flag to indicate if we need to wait for context synchronization
-            has_persistence_data = False
+            needs_context_sync = False
 
             # Add context_syncs if provided
             if hasattr(params, "context_syncs") and params.context_syncs:
@@ -143,7 +199,7 @@ class AgentBay:
                         )
                     )
                 request.persistence_data_list = persistence_data_list
-                has_persistence_data = len(persistence_data_list) > 0
+                needs_context_sync = len(persistence_data_list) > 0
 
             # Add BrowserContext as a ContextSync if provided
             if hasattr(params, "browser_context") and params.browser_context:
@@ -154,7 +210,7 @@ class AgentBay:
 
                 # Create a new SyncPolicy with default values for browser context
                 upload_policy = UploadPolicy(auto_upload=params.browser_context.auto_upload)
-                
+
                 # Create BWList with white lists for browser data paths
                 white_lists = [
                     WhiteList(path="/Local State", exclude_paths=[]),
@@ -162,7 +218,7 @@ class AgentBay:
                     WhiteList(path="/Default/Cookies-journal", exclude_paths=[])
                 ]
                 bw_list = BWList(white_lists=white_lists)
-                
+
                 sync_policy = SyncPolicy(upload_policy=upload_policy, bw_list=bw_list)
 
                 # Serialize policy to JSON string
@@ -183,7 +239,7 @@ class AgentBay:
                 if not hasattr(request, 'persistence_data_list') or request.persistence_data_list is None:
                     request.persistence_data_list = []
                 request.persistence_data_list.append(browser_context_sync)
-                has_persistence_data = True
+                needs_context_sync = True
 
             # Add labels if provided
             if params.labels:
@@ -192,6 +248,32 @@ class AgentBay:
 
             if params.image_id:
                 request.image_id = params.image_id
+
+            # Add browser recording persistence if enabled
+            if hasattr(params, "enable_browser_replay") and params.enable_browser_replay:
+                from agentbay.api.models import (
+                    CreateMcpSessionRequestPersistenceDataList,
+                )
+
+                # Create browser recording persistence configuration
+                record_path = "/home/guest/record"
+                record_context_name = generate_random_context_name()
+                result = self.context.get(record_context_name, True)
+                record_context_id = result.context_id if result.success else ""
+                record_persistence = CreateMcpSessionRequestPersistenceDataList(
+                    context_id=record_context_id,
+                    path=record_path
+                )
+
+                # Add to persistence data list or create new one if not exists
+                if not hasattr(request, 'persistence_data_list') or request.persistence_data_list is None:
+                    request.persistence_data_list = []
+                request.persistence_data_list.append(record_persistence)
+
+            # Add extra_configs if provided
+            if hasattr(params, "extra_configs") and params.extra_configs:
+                request.extra_configs = params.extra_configs
+            
             try:
                 req_map = request.to_map()
                 if "Authorization" in req_map and isinstance(
@@ -284,8 +366,17 @@ class AgentBay:
             if data.get("Token"):
                 session.token = data["Token"]
 
+            # Set browser recording state
+            session.enableBrowserReplay = params.enable_browser_replay
+            # Store the file transfer context ID if we created one
+            session.file_transfer_context_id = self._file_transfer_context.id if self._file_transfer_context else None
+
             # Store image_id used for this session
             session.image_id = params.image_id
+
+            # Process mobile configuration if provided
+            if hasattr(params, "extra_configs") and params.extra_configs and params.extra_configs.mobile:
+                session.mobile.configure(params.extra_configs.mobile)
 
             with self._lock:
                 self._sessions[session_id] = session
@@ -301,40 +392,40 @@ class AgentBay:
                     # Continue with session creation even if tools fetch fails
 
             # If we have persistence data, wait for context synchronization
-            if has_persistence_data:
+            if needs_context_sync:
                 log_operation_start("Context synchronization", "Waiting for completion")
-                
+
                 # Wait for context synchronization to complete
                 max_retries = 150  # Maximum number of retries
                 retry_interval = 2  # Seconds to wait between retries
-                
+
                 import time
                 for retry in range(max_retries):
                     # Get context status data
                     info_result = session.context.info()
-                    
+
                     # Check if all context items have status "Success" or "Failed"
                     all_completed = True
                     has_failure = False
-                    
+
                     for item in info_result.context_status_data:
                         logger.info(f"📁 Context {item.context_id} status: {item.status}, path: {item.path}")
-                        
+
                         if item.status != "Success" and item.status != "Failed":
                             all_completed = False
                             break
-                        
+
                         if item.status == "Failed":
                             has_failure = True
                             logger.error(f"❌ Context synchronization failed for {item.context_id}: {item.error_message}")
-                    
+
                     if all_completed or not info_result.context_status_data:
                         if has_failure:
                             log_warning("Context synchronization completed with failures")
                         else:
                             log_operation_success("Context synchronization")
                         break
-                    
+
                     logger.info(f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}")
                     time.sleep(retry_interval)
 
@@ -356,15 +447,6 @@ class AgentBay:
                 error_message=f"Unexpected error creating session: {e}",
             )
 
-    def list(self) -> List[Session]:
-        """
-        List all available sessions.
-
-        Returns:
-            List[Session]: A list of all available sessions.
-        """
-        with self._lock:
-            return list(self._sessions.values())
 
     def list_by_labels(
         self, params: Optional[Union[ListSessionParams, Dict[str, str]]] = None
@@ -497,7 +579,7 @@ class AgentBay:
 
         Args:
             session (Session): The session to delete.
-            sync_context (bool): Whether to sync context data (trigger file uploads) 
+            sync_context (bool): Whether to sync context data (trigger file uploads)
                 before deleting the session. Defaults to False.
 
         Returns:
@@ -505,6 +587,8 @@ class AgentBay:
         """
         try:
             # Delete the session and get the result
+            if hasattr(session, 'enableBrowserReplay') and session.enableBrowserReplay:
+                sync_context = True
             delete_result = session.delete(sync_context=sync_context)
 
             with self._lock:

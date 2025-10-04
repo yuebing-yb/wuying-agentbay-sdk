@@ -16,7 +16,9 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/code"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/mobile"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/ui"
@@ -123,6 +125,10 @@ type Session struct {
 	Application *application.ApplicationManager
 	Window      *window.WindowManager
 
+	// Platform-specific automation modules
+	Computer *computer.Computer
+	Mobile   *mobile.Mobile
+
 	// Agent for task execution
 	Agent *agent.Agent
 
@@ -152,6 +158,10 @@ func NewSession(agentBay *AgentBay, sessionID string) *Session {
 	// Initialize application and window managers
 	session.Application = application.NewApplicationManager(session)
 	session.Window = window.NewWindowManager(session)
+
+	// Initialize platform-specific automation modules
+	session.Computer = computer.NewComputer(session)
+	session.Mobile = mobile.NewMobile(session)
 
 	// Initialize Agent
 	session.Agent = agent.NewAgent(session)
@@ -183,68 +193,21 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 	// If syncContext is true, trigger file uploads first
 	if shouldSync {
 		fmt.Println("Triggering context synchronization before session deletion...")
+		syncStartTime := time.Now()
 
-		// Trigger file upload
-		syncResult, err := s.Context.Sync()
+		// Use the new sync method without callback (sync mode)
+		syncResult, err := s.Context.SyncWithCallback("", "", "", nil, 150, 1500)
 		if err != nil {
-			fmt.Printf("Warning: Failed to trigger context sync: %v\n", err)
+			syncDuration := time.Since(syncStartTime)
+			fmt.Printf("Warning: Failed to trigger context sync after %v: %v\n", syncDuration, err)
 			// Continue with deletion even if sync fails
-		} else if !syncResult.Success {
-			fmt.Println("Warning: Context sync operation returned failure status")
-			// Continue with deletion even if sync fails
-		}
-
-		// Wait for uploads to complete
-		const maxRetries = 150  // Maximum number of retries
-		const retryInterval = 2 // Seconds to wait between retries
-
-		for retry := 0; retry < maxRetries; retry++ {
-			// Get context status data
-			infoResult, err := s.Context.Info()
-			if err != nil {
-				fmt.Printf("Error getting context info on attempt %d: %v\n", retry+1, err)
-				time.Sleep(time.Duration(retryInterval) * time.Second)
-				continue
+		} else {
+			syncDuration := time.Since(syncStartTime)
+			if syncResult.Success {
+				fmt.Printf("Context sync completed successfully in %v\n", syncDuration)
+			} else {
+				fmt.Printf("Context sync completed with failures after %v\n", syncDuration)
 			}
-
-			// Check if all upload context items have status "Success" or "Failed"
-			allCompleted := true
-			hasFailure := false
-			hasUploads := false
-
-			for _, item := range infoResult.ContextStatusData {
-				// We only care about upload tasks
-				if item.TaskType != "upload" {
-					continue
-				}
-
-				hasUploads = true
-				fmt.Printf("Upload context %s status: %s, path: %s\n", item.ContextId, item.Status, item.Path)
-
-				if item.Status != "Success" && item.Status != "Failed" {
-					allCompleted = false
-					break
-				}
-
-				if item.Status == "Failed" {
-					hasFailure = true
-					fmt.Printf("Upload failed for context %s: %s\n", item.ContextId, item.ErrorMessage)
-				}
-			}
-
-			if allCompleted || !hasUploads {
-				if hasFailure {
-					fmt.Println("Context upload completed with failures")
-				} else if hasUploads {
-					fmt.Println("Context upload completed successfully")
-				} else {
-					fmt.Println("No upload tasks found")
-				}
-				break
-			}
-
-			fmt.Printf("Waiting for context upload to complete, attempt %d/%d\n", retry+1, maxRetries)
-			time.Sleep(time.Duration(retryInterval) * time.Second)
 		}
 	}
 
@@ -426,6 +389,13 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 
 // GetLink gets the link for this session.
 func (s *Session) GetLink(protocolType *string, port *int32) (*LinkResult, error) {
+	// Validate port range if port is provided
+	if port != nil {
+		if *port < 30100 || *port > 30199 {
+			return nil, fmt.Errorf("invalid port value: %d. Port must be an integer in the range [30100, 30199]", *port)
+		}
+	}
+
 	getLinkRequest := &mcp.GetLinkRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
 		SessionId:     tea.String(s.SessionID),

@@ -1,5 +1,5 @@
-import { Agent } from "./agent/agent";
 import { AgentBay } from "./agent-bay";
+import { Agent } from "./agent/agent";
 import { Client } from "./api/client";
 import {
   CallMcpToolRequest,
@@ -11,11 +11,13 @@ import {
   SetLabelRequest,
 } from "./api/models/model";
 import { Application } from "./application";
+import { Browser } from "./browser";
 import { Code } from "./code";
 import { Command } from "./command";
+import { Computer } from "./computer";
 import { ContextManager, newContextManager } from "./context-manager";
-import { APIError } from "./exceptions";
 import { FileSystem } from "./filesystem";
+import { Mobile } from "./mobile";
 import { Oss } from "./oss";
 import {
   DeleteResult,
@@ -25,7 +27,6 @@ import {
 import { UI } from "./ui";
 import { log, logError } from "./utils/logger";
 import { WindowManager } from "./window";
-import { Browser } from "./browser";
 
 /**
  * Represents an MCP tool with complete information.
@@ -43,6 +44,28 @@ export interface McpTool {
  */
 export interface McpToolsResult extends OperationResult {
   tools: McpTool[];
+}
+
+/**
+ * Result containing MCP resource information and request ID.
+ */
+export interface McpResourceResult extends OperationResult {
+  uri: string;
+  name: string;
+  description: string;
+  mimeType: string;
+}
+
+/**
+ * Result containing MCP resource content and request ID.
+ */
+export interface McpResourceContentResult extends OperationResult {
+  contents: Array<{
+    uri: string;
+    mimeType: string;
+    text?: string;
+    blob?: string;
+  }>;
 }
 
 /**
@@ -100,12 +123,17 @@ export class Session {
   private agentBay: AgentBay;
   public sessionId: string;
 
+  // File transfer context ID
+  public fileTransferContextId: string | null = null;
 
   // VPC-related information
   public isVpc = false; // Whether this session uses VPC resources
   public networkInterfaceIp = ""; // Network interface IP for VPC sessions
   public httpPort = ""; // HTTP port for VPC sessions
   public token = ""; // Token for VPC sessions
+
+  // Recording functionality
+  public enableBrowserReplay = false; // Whether browser recording is enabled for this session
 
   // File, command, code, and oss handlers (matching Python naming)
   public fileSystem: FileSystem; // file_system in Python
@@ -117,6 +145,10 @@ export class Session {
   public application: Application; // application in Python (ApplicationManager)
   public window: WindowManager;
   public ui: UI;
+
+  // Computer and Mobile automation (new modules)
+  public computer: Computer;
+  public mobile: Mobile;
 
   // Agent for task execution
   public agent: Agent;
@@ -151,6 +183,10 @@ export class Session {
     this.window = new WindowManager(this);
     this.ui = new UI(this);
 
+    // Initialize Computer and Mobile modules
+    this.computer = new Computer(this);
+    this.mobile = new Mobile(this);
+
     // Initialize Agent
     this.agent = new Agent(this);
 
@@ -159,6 +195,13 @@ export class Session {
 
     // Initialize context manager (matching Go version)
     this.context = newContextManager(this);
+  }
+
+  /**
+   * Return the AgentBay instance that created this session.
+   */
+  getAgentBay(): AgentBay {
+    return this.agentBay;
   }
 
   /**
@@ -234,68 +277,23 @@ export class Session {
       if (syncContext) {
         log("Triggering context synchronization before session deletion...");
 
-        // Trigger file upload
+        // Use the new sync method without callback (sync mode)
+        const syncStartTime = Date.now();
+
         try {
           const syncResult = await this.context.sync();
-          if (!syncResult.success) {
-            log("Warning: Context sync operation returned failure status");
+
+          const syncDuration = Date.now() - syncStartTime;
+
+          if (syncResult.success) {
+            log(`Context sync completed in ${syncDuration}ms`);
+          } else {
+            log(`Context sync completed with failures after ${syncDuration}ms`);
           }
         } catch (error) {
-          logError("Warning: Failed to trigger context sync:", error);
+          const syncDuration = Date.now() - syncStartTime;
+          logError(`Failed to trigger context sync after ${syncDuration}ms:`, error);
           // Continue with deletion even if sync fails
-        }
-
-        // Wait for uploads to complete
-        const maxRetries = 150; // Maximum number of retries
-        const retryInterval = 2000; // Milliseconds to wait between retries
-
-        for (let retry = 0; retry < maxRetries; retry++) {
-          try {
-            // Get context status data
-            const infoResult = await this.context.info();
-
-            // Check if all upload context items have status "Success" or "Failed"
-            let allCompleted = true;
-            let hasFailure = false;
-            let hasUploads = false;
-
-            for (const item of infoResult.contextStatusData) {
-              // We only care about upload tasks
-              if (item.taskType !== "upload") {
-                continue;
-              }
-
-              hasUploads = true;
-              log(`Upload context ${item.contextId} status: ${item.status}, path: ${item.path}`);
-
-              if (item.status !== "Success" && item.status !== "Failed") {
-                allCompleted = false;
-                break;
-              }
-
-              if (item.status === "Failed") {
-                hasFailure = true;
-                logError(`Upload failed for context ${item.contextId}: ${item.errorMessage}`);
-              }
-            }
-
-            if (allCompleted || !hasUploads) {
-              if (hasFailure) {
-                log("Context upload completed with failures");
-              } else if (hasUploads) {
-                log("Context upload completed successfully");
-              } else {
-                log("No upload tasks found");
-              }
-              break;
-            }
-
-            log(`Waiting for context upload to complete, attempt ${retry+1}/${maxRetries}`);
-            await new Promise(resolve => setTimeout(resolve, retryInterval));
-          } catch (error) {
-            logError(`Error checking context status on attempt ${retry+1}:`, error);
-            await new Promise(resolve => setTimeout(resolve, retryInterval));
-          }
         }
       }
 
@@ -569,7 +567,7 @@ export class Session {
    * Get a link associated with the current session.
    *
    * @param protocolType - Optional protocol type to use for the link
-   * @param port - Optional port to use for the link
+   * @param port - Optional port to use for the link (must be in range [30100, 30199])
    * @returns OperationResult containing the link as data and request ID
    * @throws Error if the operation fails (matching Python SessionError)
    */
@@ -578,6 +576,15 @@ export class Session {
     port?: number
   ): Promise<OperationResult> {
     try {
+      // Validate port range if port is provided
+      if (port) {
+        if (!Number.isInteger(port) || port < 30100 || port > 30199) {
+          throw new Error(
+            `Invalid port value: ${port}. Port must be an integer in the range [30100, 30199].`
+          );
+        }
+      }
+
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
         sessionId: this.getSessionId(),
@@ -631,7 +638,7 @@ export class Session {
    * Asynchronously get a link associated with the current session.
    *
    * @param protocolType - Optional protocol type to use for the link
-   * @param port - Optional port to use for the link
+   * @param port - Optional port to use for the link (must be in range [30100, 30199])
    * @returns OperationResult containing the link as data and request ID
    * @throws Error if the operation fails (matching Python SessionError)
    */
@@ -640,6 +647,15 @@ export class Session {
     port?: number
   ): Promise<OperationResult> {
     try {
+      // Validate port range if port is provided
+      if (port !== undefined) {
+        if (!Number.isInteger(port) || port < 30100 || port > 30199) {
+          throw new Error(
+            `Invalid port value: ${port}. Port must be an integer in the range [30100, 30199].`
+          );
+        }
+      }
+
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
         sessionId: this.getSessionId(),
@@ -758,7 +774,7 @@ export class Session {
   async callMcpTool(toolName: string, args: any): Promise<import("./agent/agent").McpToolResult> {
     try {
       const argsJSON = JSON.stringify(args);
-      
+
       // Check if this is a VPC session
       if (this.isVpcEnabled()) {
         // VPC mode: Use HTTP request to the VPC endpoint
@@ -780,7 +796,7 @@ export class Session {
             requestId: "",
           };
         }
-        
+
         const baseURL = `http://${this.networkInterfaceIp}:${this.httpPort}/callTool`;
         const url = new URL(baseURL);
         url.searchParams.append("server", server);
@@ -808,7 +824,7 @@ export class Session {
         }
 
                  const responseData = await response.json() as any;
-         
+
          // Extract the actual result from the nested VPC response structure
          let actualResult: any = responseData;
          if (typeof responseData.data === "string") {
@@ -867,7 +883,7 @@ export class Session {
           const errorMessage = errorContent
             .map((item: any) => item.text || "Unknown error")
             .join("; ");
-          
+
           return {
             success: false,
             data: "",

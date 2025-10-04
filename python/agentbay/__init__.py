@@ -1,8 +1,10 @@
 from .agentbay import AgentBay, Config
 from .application import ApplicationManager, InstalledApp, Process
 from .command import Command
+from .computer import Computer
 from .exceptions import AgentBayError, APIError, AuthenticationError
 from .filesystem import FileSystem
+from .mobile import Mobile
 from .oss import Oss
 from .session import Session
 from .session_params import CreateSessionParams, ListSessionParams
@@ -24,7 +26,6 @@ from .context_sync import (
 from .context_manager import ContextManager, ContextInfoResult, ContextSyncResult
 from .extension import ExtensionsService, ExtensionOption, Extension
 from .logger import AgentBayLogger, get_logger, log
-
 __all__ = [
     "Config",
     "AgentBay",
@@ -32,12 +33,15 @@ __all__ = [
     "AgentBayError",
     "AuthenticationError",
     "APIError",
+    "Computer",
+    "Mobile",
     "UI",
     "Oss",
     "FileSystem",
     "Window",
     "Agent",
     "Command",
+    "Mobile",
     "ApplicationManager",
     "InstalledApp",
     "Process",

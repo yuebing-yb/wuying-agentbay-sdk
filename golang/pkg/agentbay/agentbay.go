@@ -19,13 +19,21 @@ type Option func(*AgentBayConfig)
 
 // AgentBayConfig holds optional configuration for the AgentBay client.
 type AgentBayConfig struct {
-	cfg *Config
+	cfg     *Config
+	envFile string
 }
 
 // WithConfig returns an Option that sets the configuration for the AgentBay client.
 func WithConfig(cfg *Config) Option {
 	return func(c *AgentBayConfig) {
 		c.cfg = cfg
+	}
+}
+
+// WithEnvFile returns an Option that sets a custom .env file path for the AgentBay client.
+func WithEnvFile(envFile string) Option {
+	return func(c *AgentBayConfig) {
+		c.envFile = envFile
 	}
 }
 
@@ -59,8 +67,8 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 	}
 
 	// Load configuration using LoadConfig function
-	// This will load from environment variables, .env file, or use defaults
-	config := LoadConfig(config_option.cfg)
+	// This will load from environment variables, .env file (searched upward), or use defaults
+	config := LoadConfig(config_option.cfg, config_option.envFile)
 
 	// Create API client
 	apiConfig := &openapiutil.Config{
@@ -128,8 +136,19 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		createSessionRequest.Labels = tea.String(labelsJSON)
 	}
 
+	// Add extra configs if provided
+	if params.ExtraConfigs != nil {
+		extraConfigsJSON, err := params.GetExtraConfigsJSON()
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal extra configs to JSON: %v", err)
+		}
+		if extraConfigsJSON != "" {
+			createSessionRequest.ExtraConfigs = tea.String(extraConfigsJSON)
+		}
+	}
+
 	// Flag to indicate if we need to wait for context synchronization
-	hasPersistenceData := false
+	needsContextSync := false
 
 	// Add context sync configurations if provided
 	var persistenceDataList []*mcp.CreateMcpSessionRequestPersistenceDataList
@@ -156,7 +175,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 	if len(persistenceDataList) > 0 {
 		createSessionRequest.PersistenceDataList = persistenceDataList
-		hasPersistenceData = true
+		needsContextSync = true
 	}
 
 	// Log API request
@@ -249,6 +268,17 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 	a.Sessions.Store(session.SessionID, *session)
 
+	// Apply mobile configuration if provided
+	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil {
+		fmt.Println("Applying mobile configuration...")
+		if err := session.Mobile.Configure(params.ExtraConfigs.Mobile); err != nil {
+			fmt.Printf("Warning: Failed to apply mobile configuration: %v\n", err)
+			// Continue with session creation even if mobile config fails
+		} else {
+			fmt.Println("Mobile configuration applied successfully")
+		}
+	}
+
 	// For VPC sessions, automatically fetch MCP tools information
 	if params.IsVpc {
 		fmt.Println("VPC session detected, automatically fetching MCP tools...")
@@ -263,7 +293,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// If we have persistence data, wait for context synchronization
-	if hasPersistenceData {
+	if needsContextSync {
 		fmt.Println("Waiting for context synchronization to complete...")
 
 		// Wait for context synchronization to complete
@@ -320,24 +350,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}, nil
 }
 
-// List lists all available sessions.
-func (a *AgentBay) List() (*SessionListResult, error) {
-	var sessions []Session
-	a.Sessions.Range(func(key, value interface{}) bool {
-		if session, ok := value.(Session); ok {
-			sessions = append(sessions, session)
-		}
-		return true
-	})
-
-	// No actual API call here, so RequestID is empty
-	return &SessionListResult{
-		ApiResponse: models.ApiResponse{
-			RequestID: "",
-		},
-		Sessions: sessions,
-	}, nil
-}
 
 // ListSessionParams contains parameters for listing sessions
 type ListSessionParams struct {

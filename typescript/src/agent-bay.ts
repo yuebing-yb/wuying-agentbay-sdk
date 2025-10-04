@@ -4,12 +4,13 @@ import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList } from "./api/models/model";
 import { Client } from "./api/client";
 
-import { loadConfig, loadDotEnv, Config, BROWSER_DATA_PATH } from "./config";
+import { loadConfig, loadDotEnvWithFallback, Config, BROWSER_DATA_PATH } from "./config";
 import { ContextService } from "./context";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
 import { BrowserContext } from "./session-params";
+import { Context } from "./context";
 
 import {
   DeleteResult,
@@ -23,6 +24,22 @@ import {
 import { log, logError } from "./utils/logger";
 
 /**
+ * Generate a random context name using alphanumeric characters with timestamp.
+ * This function is similar to the Python version's generate_random_context_name.
+ */
+function generateRandomContextName(length = 8, includeTimestamp = true): string {
+  const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0, 14);
+
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let randomPart = '';
+  for (let i = 0; i < length; i++) {
+    randomPart += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+
+  return includeTimestamp ? `${timestamp}_${randomPart}` : randomPart;
+}
+
+/**
  * Parameters for creating a session.
  */
 export interface CreateSessionParams {
@@ -32,6 +49,7 @@ export interface CreateSessionParams {
   browserContext?: BrowserContext;
   isVpc?: boolean;
   mcpPolicyId?: string;
+  enableBrowserReplay?: boolean;
 }
 
 /**
@@ -43,6 +61,7 @@ export class AgentBay {
   private regionId: string;
   private endpoint: string;
   private sessions: Map<string, Session> = new Map();
+  private fileTransferContext: Context | null = null;
 
   /**
    * Context service for managing persistent contexts.
@@ -55,16 +74,18 @@ export class AgentBay {
    * @param options - Configuration options
    * @param options.apiKey - API key for authentication. If not provided, will look for AGENTBAY_API_KEY environment variable.
    * @param options.config - Custom configuration object. If not provided, will use environment-based configuration.
+   * @param options.envFile - Custom path to .env file. If not provided, will search upward from current directory.
    */
   constructor(
     options: {
       apiKey?: string;
       config?: Config;
+      envFile?: string;
     } = {}
   ) {
     // Load .env file first to ensure AGENTBAY_API_KEY is available
-    loadDotEnv();
-    
+    loadDotEnvWithFallback(options.envFile);
+
     this.apiKey = options.apiKey || process.env.AGENTBAY_API_KEY || "";
 
     if (!this.apiKey) {
@@ -74,7 +95,7 @@ export class AgentBay {
     }
 
     // Load configuration using the enhanced loadConfig function
-    const configData = loadConfig(options.config);
+    const configData = loadConfig(options.config, options.envFile);
     this.regionId = configData.region_id;
     this.endpoint = configData.endpoint;
 
@@ -105,6 +126,24 @@ export class AgentBay {
    */
   async create(params: CreateSessionParams = {}): Promise<SessionResult> {
     try {
+      // Create a default context for file transfer operations if none provided
+      // and no context_syncs are specified
+      const contextName = `file-transfer-context-${Date.now()}`;
+      const contextResult = await this.context.get(contextName, true);
+      if (contextResult.success && contextResult.context) {
+        this.fileTransferContext = contextResult.context;
+        // Add the context to the session params for file transfer operations
+        const fileTransferContextSync = new ContextSync(
+          contextResult.context.id,
+          "/temp/file-transfer"
+        );
+        if (!params.contextSync) {
+          params.contextSync = [];
+        }
+        log(`Adding context sync for file transfer operations: ${fileTransferContextSync}`);
+        params.contextSync.push(fileTransferContextSync);
+      }
+
       const request = new $_client.CreateMcpSessionRequest({
         authorization: "Bearer " + this.apiKey,
       });
@@ -128,7 +167,7 @@ export class AgentBay {
       request.vpcResource = params.isVpc || false;
 
       // Flag to indicate if we need to wait for context synchronization
-      let hasPersistenceData = false;
+      let needsContextSync = false;
 
       // Add context sync configurations if provided
       if (params.contextSync && params.contextSync.length > 0) {
@@ -147,7 +186,7 @@ export class AgentBay {
           persistenceDataList.push(persistenceItem);
         }
         request.persistenceDataList = persistenceDataList;
-        hasPersistenceData = persistenceDataList.length > 0;
+        needsContextSync = persistenceDataList.length > 0;
       }
 
       // Add BrowserContext as a ContextSync if provided
@@ -172,7 +211,26 @@ export class AgentBay {
           request.persistenceDataList = [];
         }
         request.persistenceDataList.push(browserContextSync);
-        hasPersistenceData = true;
+        needsContextSync = true;
+      }
+
+      // Add browser recording persistence if enabled
+      if (params.enableBrowserReplay) {
+        // Create browser recording persistence configuration
+        const recordPath = "/home/guest/record";
+        const recordContextName = generateRandomContextName();
+        const result = await this.context.get(recordContextName, true);
+        const recordContextId = result.success ? result.contextId : "";
+        const recordPersistence = new CreateMcpSessionRequestPersistenceDataList({
+          contextId: recordContextId,
+          path: recordPath,
+        });
+
+        // Add to persistence data list or create new one if not exists
+        if (!request.persistenceDataList) {
+          request.persistenceDataList = [];
+        }
+        request.persistenceDataList.push(recordPersistence);
       }
 
       // Log API request
@@ -200,10 +258,10 @@ export class AgentBay {
       log(requestLog);
 
       const response = await this.client.createMcpSession(request);
-      
+
       // Extract request ID
       const requestId = extractRequestId(response) || "";
-      
+
       // Log response data with requestId
       log("response data =", response.body?.data);
       if (requestId) {
@@ -259,6 +317,11 @@ export class AgentBay {
         session.token = data.token;
       }
 
+      // Set browser recording state
+      session.enableBrowserReplay = params.enableBrowserReplay || false;
+
+      // Store the file transfer context ID if we created one
+      session.fileTransferContextId = this.fileTransferContext ? this.fileTransferContext.id : null;
       // Store imageId used for this session
       (session as any).imageId = params.imageId;
 
@@ -277,7 +340,7 @@ export class AgentBay {
       }
 
       // If we have persistence data, wait for context synchronization
-      if (hasPersistenceData) {
+      if (needsContextSync) {
         log("Waiting for context synchronization to complete...");
 
         // Wait for context synchronization to complete
@@ -300,7 +363,7 @@ export class AgentBay {
                 allCompleted = false;
                 break;
               }
-              
+
               if (item.status === "Failed") {
                 hasFailure = true;
                 logError(`Context synchronization failed for ${item.contextId}: ${item.errorMessage}`);
@@ -341,14 +404,6 @@ export class AgentBay {
     }
   }
 
-  /**
-   * List all available sessions.
-   *
-   * @returns A list of session objects.
-   */
-  list(): Session[] {
-    return Array.from(this.sessions.values());
-  }
 
   /**
    * List sessions filtered by the provided labels with pagination support.
@@ -475,6 +530,9 @@ export class AgentBay {
   async delete(session: Session, syncContext = false): Promise<DeleteResult> {
     try {
       // Delete the session and get the result
+      if (session.enableBrowserReplay) {
+        syncContext = true;
+      }
       const deleteResult = await session.delete(syncContext);
 
       this.sessions.delete(session.sessionId);

@@ -2,6 +2,10 @@
 
 The `Session` struct represents a session in the AgentBay cloud environment. It provides methods for managing file systems, executing commands, and more.
 
+## 📖 Related Tutorial
+
+- [Session Management Guide](../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
+
 ## Properties
 
 ```go
@@ -67,7 +71,7 @@ import (
 
 func main() {
 	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
+	client, err := agentbay.NewAgentBay("your_api_key")
 	if err != nil {
 		fmt.Printf("Error initializing AgentBay client: %v\n", err)
 		os.Exit(1)
@@ -79,21 +83,24 @@ func main() {
 		fmt.Printf("Error creating session: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	session := createResult.Session
 	fmt.Printf("Session created with ID: %s\n", session.SessionID)
-	
+	// Output: Session created with ID: session-04bdwfj7u20b0o113
+
 	// Use the session...
-	
+
 	// Delete the session with context synchronization
 	deleteResult, err := session.Delete(true)
 	if err != nil {
 		fmt.Printf("Error deleting session: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	fmt.Println("Session deleted successfully with synchronized context")
+	// Output: Session deleted successfully with synchronized context
 	fmt.Printf("Request ID: %s\n", deleteResult.RequestID)
+	// Output: Request ID: 863E5FCC-BBD2-12C2-BE98-8519BB5AF1F7
 }
 ```
 
@@ -128,7 +135,9 @@ if err != nil {
 }
 
 fmt.Println("Labels set successfully")
+// Output: Labels set successfully
 fmt.Printf("Request ID: %s\n", response.RequestID)
+// Output: Request ID: 010A3CC9-F3FB-1EC3-A540-19E8BBEAEF42
 ```
 
 ### GetLabels
@@ -152,18 +161,18 @@ if err != nil {
 	os.Exit(1)
 }
 
-if result.Success {
-	fmt.Println("Session labels:")
-	// Parse the labels JSON string
-	var labels map[string]string
-	if err := json.Unmarshal([]byte(result.Labels), &labels); err == nil {
-		for key, value := range labels {
-			fmt.Printf("%s: %s\n", key, value)
-		}
+fmt.Println("Session labels:")
+// Parse the labels JSON string
+var labels map[string]string
+if err := json.Unmarshal([]byte(result.Labels), &labels); err == nil {
+	for key, value := range labels {
+		fmt.Printf("%s: %s\n", key, value)
 	}
-} else {
-	fmt.Printf("Failed to get labels: %s\n", result.ErrorMessage)
 }
+// Output: Session labels:
+// environment: testing
+// project: demo
+// version: 1.0.0
 ```
 
 ### Info
@@ -181,15 +190,18 @@ Info() (*SessionInfo, error)
 **Example:**
 ```go
 // Get session information
-info, err := session.Info()
+infoResult, err := session.Info()
 if err != nil {
 	fmt.Printf("Error getting session info: %v\n", err)
 	os.Exit(1)
 }
 
-fmt.Printf("Session ID: %s\n", info.SessionID)
-fmt.Printf("Resource URL: %s\n", info.ResourceURL)
-fmt.Printf("App ID: %s\n", info.AppID)
+fmt.Printf("Session ID: %s\n", infoResult.Info.SessionId)
+// Output: Session ID: session-04bdwfj7u20b0o115
+fmt.Printf("Resource URL: %s\n", infoResult.Info.ResourceUrl)
+// Output: Resource URL: https://pre-myspace-wuying.aliyun.com/app/InnoArchClub/mcp_container/mcp.html?authcode=...
+fmt.Printf("App ID: %s\n", infoResult.Info.AppId)
+// Output: App ID: mcp-server-ubuntu
 ```
 
 ### GetLink
@@ -197,36 +209,44 @@ fmt.Printf("App ID: %s\n", info.AppID)
 Gets a link for this session.
 
 ```go
-GetLink(protocolType string, port int) (string, error)
+GetLink(protocolType *string, port *int32) (*LinkResult, error)
 ```
 
 **Parameters:**
-- `protocolType` (string): The protocol type for the link. If empty, the default protocol will be used.
-- `port` (int): The port for the link. If 0, the default port will be used.
+- `protocolType` (*string): The protocol type for the link. If nil, the default protocol will be used.
+- `port` (*int32): The port for the link. If nil, the default port will be used. **Port must be an integer in the range [30100, 30199]**.
 
 **Returns:**
-- `string`: The link for the session.
-- `error`: An error if getting the link fails.
+- `*LinkResult`: A result object containing the link and request ID.
+- `error`: An error if getting the link fails or if the port is outside the valid range.
+
+**Port Range Validation:**
+- Valid port range: **[30100, 30199]**
+- If a port outside this range is provided, the method will return an error with the message: `"invalid port value: {port}. Port must be an integer in the range [30100, 30199]"`
+- Common ports like 80, 443, 8080, etc. are **not allowed** and will result in validation errors
 
 **Example:**
 ```go
-// Get session link with default protocol and port
-link, err := session.GetLink("", 0)
+// Get link with specific protocol and valid port
+// Note: For ComputerUse images, port must be explicitly specified
+protocolType := "https"
+var validPort int32 = 30150  // Valid port in range [30100, 30199]
+linkResult, err := session.GetLink(&protocolType, &validPort)
 if err != nil {
 	fmt.Printf("Error getting link: %v\n", err)
 	os.Exit(1)
 }
 
-fmt.Printf("Session link: %s\n", link)
+fmt.Printf("Session link: %s (RequestID: %s)\n", linkResult.Link, linkResult.RequestID)
+// Output: Session link: https://gw-cn-hangzhou-ai-linux.wuyinggw.com:8008/... (RequestID: 57D0226F-EF89-1C95-929F-577EC40A1F20)
 
-// Get link with specific protocol and port
-customLink, err := session.GetLink("https", 8443)
+// Example of invalid port usage (will fail)
+var invalidPort int32 = 8080  // Invalid port - outside [30100, 30199] range
+_, err = session.GetLink(nil, &invalidPort)
 if err != nil {
-	fmt.Printf("Error getting custom link: %v\n", err)
-	os.Exit(1)
+	fmt.Printf("Expected error with invalid port: %v\n", err)
+	// Output: invalid port value: 8080. Port must be an integer in the range [30100, 30199]
 }
-
-fmt.Printf("Custom link: %s\n", customLink)
 ```
 
 ### ListMcpTools
@@ -251,10 +271,169 @@ if err != nil {
 }
 
 fmt.Printf("Found %d MCP tools\n", len(toolsResult.Tools))
-for _, tool := range toolsResult.Tools {
-	fmt.Printf("Tool: %s - %s\n", tool.Name, tool.Description)
+// Output: Found 27 MCP tools
+for i, tool := range toolsResult.Tools {
+	if i < 3 {
+		fmt.Printf("Tool: %s - %s\n", tool.Name, tool.Description)
+	}
+}
+// Output: Tool: execute_command - Execute a command on the system
+// Tool: read_file - Read contents of a file
+// Tool: write_file - Write content to a file
+```
+
+## Session Creation with Extra Configurations
+
+Sessions can be created with additional configurations for specific environments using the `ExtraConfigs` parameter in `CreateSessionParams`. This is particularly useful for mobile sessions that require app management rules and resolution settings.
+
+### Mobile Session Configuration
+
+For mobile sessions, you can configure app management rules and display settings using `MobileExtraConfig`:
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
+)
+
+func main() {
+	// Initialize the SDK
+	client, err := agentbay.NewAgentBay("your_api_key", nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Create mobile configuration with whitelist
+	appRule := &models.AppManagerRule{
+		RuleType: "White",
+		AppPackageNameList: []string{
+			"com.android.settings",
+			"com.example.test.app",
+			"com.trusted.service",
+		},
+	}
+	mobileConfig := &models.MobileExtraConfig{
+		LockResolution: true,
+		AppManagerRule: appRule,
+	}
+	extraConfigs := &models.ExtraConfigs{
+		Mobile: mobileConfig,
+	}
+
+	// Create session parameters with mobile configuration
+	params := agentbay.NewCreateSessionParams().
+		WithImageId("mobile_latest").
+		WithLabels(map[string]string{
+			"project":     "mobile-testing",
+			"config_type": "whitelist",
+		}).
+		WithExtraConfigs(extraConfigs)
+
+	// Create the session
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error creating mobile session: %v\n", err)
+		os.Exit(1)
+	}
+
+	session := result.Session
+	fmt.Printf("Mobile session created with ID: %s\n", session.SessionID)
+
+	// Use the session...
+
+	// Clean up
+	deleteResult, err := session.Delete()
+	if err != nil {
+		fmt.Printf("Error deleting session: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Session deleted (RequestID: %s)\n", deleteResult.RequestID)
 }
 ```
+
+### App Manager Rules
+
+The `AppManagerRule` struct allows you to control which applications are allowed or blocked in mobile sessions:
+
+#### Whitelist Configuration
+```go
+// Create whitelist rule - only specified apps are allowed
+appRule := &models.AppManagerRule{
+	RuleType: "White",
+	AppPackageNameList: []string{
+		"com.android.settings",
+		"com.google.android.gms",
+		"com.trusted.app",
+	},
+}
+```
+
+#### Blacklist Configuration
+```go
+// Create blacklist rule - specified apps are blocked
+appRule := &models.AppManagerRule{
+	RuleType: "Black",
+	AppPackageNameList: []string{
+		"com.malware.suspicious",
+		"com.unwanted.adware",
+		"com.blocked.app",
+	},
+}
+```
+
+### Mobile Extra Config Options
+
+The `MobileExtraConfig` struct provides the following options:
+
+- **`LockResolution`** (bool): When set to `true`, locks the display resolution to prevent changes during the session. When `false`, allows flexible resolution adjustments.
+- **`AppManagerRule`** (*AppManagerRule): Defines the application access control rules for the mobile session.
+
+### JSON Serialization
+
+Extra configurations are automatically serialized to JSON when creating sessions. You can also manually serialize them for inspection:
+
+```go
+// Serialize extra configs to JSON
+jsonStr, err := extraConfigs.ToJSON()
+if err != nil {
+	fmt.Printf("Error serializing extra configs: %v\n", err)
+	return
+}
+fmt.Printf("Extra configs JSON: %s\n", jsonStr)
+
+// Get JSON from session parameters
+params := agentbay.NewCreateSessionParams().WithExtraConfigs(extraConfigs)
+paramsJSON, err := params.GetExtraConfigsJSON()
+if err != nil {
+	fmt.Printf("Error getting extra configs JSON: %v\n", err)
+	return
+}
+fmt.Printf("Session params JSON: %s\n", paramsJSON)
+```
+
+### Best Practices
+
+1. **Use Appropriate Image IDs**: For mobile sessions with extra configs, use `mobile_latest` or specific mobile image IDs.
+
+2. **Set Descriptive Labels**: Use labels to identify the configuration type and purpose:
+   ```go
+   WithLabels(map[string]string{
+       "config_type": "whitelist",
+       "security":    "enabled",
+       "project":     "mobile-testing",
+   })
+   ```
+
+3. **Test Configurations**: Validate your app package names and configuration settings in a test environment before production use.
+
+4. **Handle Errors Gracefully**: Always check for errors when creating sessions with extra configurations, as invalid configurations may cause session creation to fail.
 
 ## Related Resources
 
@@ -264,4 +443,4 @@ for _, tool := range toolsResult.Tools {
 - [Window API Reference](window.md)
 - [OSS API Reference](oss.md)
 - [Application API Reference](application.md)
-- [Context API Reference](context-manager.md) 
+- [Context API Reference](context-manager.md)

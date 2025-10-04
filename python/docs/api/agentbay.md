@@ -2,6 +2,12 @@
 
 The `AgentBay` class is the main entry point for interacting with the AgentBay cloud environment. It provides methods for creating, retrieving, listing, and deleting sessions.
 
+## 📖 Related Tutorials
+
+- [SDK Configuration Guide](../../../docs/guides/common-features/configuration/sdk-configuration.md) - Detailed tutorial on configuring the SDK
+- [VPC Sessions Guide](../../../docs/guides/common-features/advanced/vpc-sessions.md) - Tutorial on creating sessions in VPC environments
+- [Session Link Access Guide](../../../docs/guides/common-features/advanced/session-link-access.md) - Tutorial on accessing sessions via links
+
 ## Constructor
 
 ### AgentBay
@@ -77,7 +83,8 @@ if default_result.success:
 # Create a session with custom parameters
 params = CreateSessionParams(
     image_id="linux_latest",
-    labels={"project": "demo", "environment": "testing"}
+    labels={"project": "demo", "environment": "testing"},
+    enable_browser_replay=True  # Enable browser replay for browser sessions
 )
 custom_result = agent_bay.create(params)
 if custom_result.success:
@@ -98,32 +105,71 @@ sync_result = agent_bay.create(sync_params)
 if sync_result.success:
     sync_session = sync_result.session
     print(f"Created session with context sync: {sync_session.session_id}")
+
+# Create a browser session with browser replay enabled
+browser_params = CreateSessionParams(
+    image_id="browser_latest",
+    enable_browser_replay=True,  # Enable browser replay
+)
+browser_result = agent_bay.create(browser_params)
+if browser_result.success:
+    browser_session = browser_result.session
+    print(f"Created browser session with replay: {browser_session.session_id}")
+    # Browser replay files are automatically generated for internal processing
+
+# Create a mobile session with whitelist configuration
+from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+
+app_whitelist_rule = AppManagerRule(
+    rule_type="White",
+    app_package_name_list=[
+        "com.android.settings",
+        "com.example.trusted.app",
+        "com.system.essential.service"
+    ]
+)
+mobile_config = MobileExtraConfig(
+    lock_resolution=True,  # Lock screen resolution for consistent testing
+    app_manager_rule=app_whitelist_rule
+)
+extra_configs = ExtraConfigs(mobile=mobile_config)
+
+mobile_params = CreateSessionParams(
+    image_id="mobile_latest",
+    labels={"project": "mobile-testing", "config_type": "whitelist"},
+    extra_configs=extra_configs
+)
+mobile_result = agent_bay.create(mobile_params)
+if mobile_result.success:
+    mobile_session = mobile_result.session
+    print(f"Created mobile session with whitelist: {mobile_session.session_id}")
+
+# Create a mobile session with blacklist configuration
+app_blacklist_rule = AppManagerRule(
+    rule_type="Black",
+    app_package_name_list=[
+        "com.malware.suspicious",
+        "com.unwanted.adware",
+        "com.social.distraction"
+    ]
+)
+mobile_security_config = MobileExtraConfig(
+    lock_resolution=False,  # Allow adaptive resolution
+    app_manager_rule=app_blacklist_rule
+)
+security_extra_configs = ExtraConfigs(mobile=mobile_security_config)
+
+mobile_security_params = CreateSessionParams(
+    image_id="mobile_latest",
+    labels={"project": "mobile-security", "config_type": "blacklist", "security": "enabled"},
+    extra_configs=security_extra_configs
+)
+security_result = agent_bay.create(mobile_security_params)
+if security_result.success:
+    security_session = security_result.session
+    print(f"Created secure mobile session with blacklist: {security_session.session_id}")
 ```
 
-
-```python
-list() -> List[Session]
-```
-
-**Returns:**
-- `List[Session]`: A list of Session instances currently cached in the client.
-
-**Raises:**
-- `AgentBayError`: If the session listing fails.
-
-**Example:**
-```python
-from agentbay import AgentBay
-
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
-
-# List all sessions
-sessions = agent_bay.list()
-print(f"Found {len(sessions)} sessions:")
-for session in sessions:
-    print(f"Session ID: {session.session_id}")
-```
 
 
 ```python
@@ -209,9 +255,9 @@ result = agent_bay.create()
 if result.success:
     session = result.session
     print(f"Created session with ID: {session.session_id}")
-    
+
     # Use the session for operations...
-    
+
     # Delete the session when done
     delete_result = agent_bay.delete(session)
     if delete_result.success:

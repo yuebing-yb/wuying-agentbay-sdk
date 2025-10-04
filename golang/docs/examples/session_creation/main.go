@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
 
 // This example demonstrates how to create, list, and delete sessions
@@ -27,30 +27,108 @@ func main() {
 	}
 
 	// Create a new session with default parameters
-	fmt.Println("\nCreating a new session...")
+	fmt.Println("\n1. Creating a new session with default parameters...")
 	sessionResult, err := agentBay.Create(nil)
 	if err != nil {
 		fmt.Printf("\nError creating session: %v\n", err)
 		os.Exit(1)
 	}
 	session := sessionResult.Session
-	fmt.Printf("\nSession created with ID: %s (RequestID: %s)\n", session.SessionID, sessionResult.RequestID)
+	fmt.Printf("Session created with ID: %s (RequestID: %s)\n", session.SessionID, sessionResult.RequestID)
 
-	// List all sessions
-	fmt.Println("\nListing all sessions...")
-	sessionsResult, err := agentBay.List()
+	// Create a mobile session with whitelist configuration
+	fmt.Println("\n2. Creating mobile session with whitelist configuration...")
+	// Create mobile configuration with whitelist
+	appRule := &models.AppManagerRule{
+		RuleType: "White",
+		AppPackageNameList: []string{
+			"com.android.settings",
+			"com.example.test.app",
+			"com.trusted.service",
+		},
+	}
+	mobileConfig := &models.MobileExtraConfig{
+		LockResolution: true,
+		AppManagerRule: appRule,
+	}
+	extraConfigs := &models.ExtraConfigs{
+		Mobile: mobileConfig,
+	}
+
+	mobileWhitelistParams := agentbay.NewCreateSessionParams().
+		WithImageId("mobile_latest").
+		WithLabels(map[string]string{
+			"project":     "mobile-testing",
+			"config_type": "whitelist",
+			"environment": "development",
+		}).
+		WithExtraConfigs(extraConfigs)
+
+	mobileWhitelistResult, err := agentBay.Create(mobileWhitelistParams)
 	if err != nil {
-		fmt.Printf("\nError listing sessions: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("Error creating mobile whitelist session: %v\n", err)
+	} else {
+		mobileWhitelistSession := mobileWhitelistResult.Session
+		fmt.Printf("Mobile whitelist session created with ID: %s (RequestID: %s)\n",
+			mobileWhitelistSession.SessionID, mobileWhitelistResult.RequestID)
+
+		// Clean up mobile whitelist session
+		defer func() {
+			if deleteResult, err := mobileWhitelistSession.Delete(); err != nil {
+				fmt.Printf("Error deleting mobile whitelist session: %v\n", err)
+			} else {
+				fmt.Printf("Mobile whitelist session deleted (RequestID: %s)\n", deleteResult.RequestID)
+			}
+		}()
 	}
 
-	// Extract SessionID list and join as string
-	var sessionIDs []string
-	for _, s := range sessionsResult.Sessions {
-		sessionIDs = append(sessionIDs, s.SessionID)
+	// Create a mobile session with blacklist configuration
+	fmt.Println("\n3. Creating mobile session with blacklist configuration...")
+	// Create mobile configuration with blacklist
+	blacklistAppRule := &models.AppManagerRule{
+		RuleType: "Black",
+		AppPackageNameList: []string{
+			"com.malware.suspicious",
+			"com.unwanted.adware",
+			"com.blocked.app",
+		},
 	}
-	sessionIDsStr := strings.Join(sessionIDs, ", ")
-	fmt.Printf("\nAvailable sessions: %s (RequestID: %s)\n", sessionIDsStr, sessionsResult.RequestID)
+	blacklistMobileConfig := &models.MobileExtraConfig{
+		LockResolution: false,
+		AppManagerRule: blacklistAppRule,
+	}
+	blacklistExtraConfigs := &models.ExtraConfigs{
+		Mobile: blacklistMobileConfig,
+	}
+
+	mobileBlacklistParams := agentbay.NewCreateSessionParams().
+		WithImageId("mobile_latest").
+		WithLabels(map[string]string{
+			"project":     "mobile-security",
+			"config_type": "blacklist",
+			"environment": "production",
+			"security":    "enabled",
+		}).
+		WithExtraConfigs(blacklistExtraConfigs)
+
+	mobileBlacklistResult, err := agentBay.Create(mobileBlacklistParams)
+	if err != nil {
+		fmt.Printf("Error creating mobile blacklist session: %v\n", err)
+	} else {
+		mobileBlacklistSession := mobileBlacklistResult.Session
+		fmt.Printf("Mobile blacklist session created with ID: %s (RequestID: %s)\n",
+			mobileBlacklistSession.SessionID, mobileBlacklistResult.RequestID)
+
+		// Clean up mobile blacklist session
+		defer func() {
+			if deleteResult, err := mobileBlacklistSession.Delete(); err != nil {
+				fmt.Printf("Error deleting mobile blacklist session: %v\n", err)
+			} else {
+				fmt.Printf("Mobile blacklist session deleted (RequestID: %s)\n", deleteResult.RequestID)
+			}
+		}()
+	}
+
 
 	// Create multiple sessions to demonstrate listing
 	fmt.Println("\nCreating additional sessions...")
@@ -68,19 +146,6 @@ func main() {
 		additionalSessions = append(additionalSessions, additionalSession)
 	}
 
-	// List sessions again to show the new sessions
-	fmt.Println("\nListing all sessions after creating additional ones...")
-	updatedSessionsResult, err := agentBay.List()
-	if err != nil {
-		fmt.Printf("\nError listing sessions: %v\n", err)
-	} else {
-		var updatedSessionIDs []string
-		for _, s := range updatedSessionsResult.Sessions {
-			updatedSessionIDs = append(updatedSessionIDs, s.SessionID)
-		}
-		updatedSessionIDsStr := strings.Join(updatedSessionIDs, ", ")
-		fmt.Printf("\nUpdated list of sessions: %s (RequestID: %s)\n", updatedSessionIDsStr, updatedSessionsResult.RequestID)
-	}
 
 	// Clean up all sessions
 	fmt.Println("\nCleaning up sessions...")
@@ -102,21 +167,5 @@ func main() {
 		}
 	}
 
-	// List sessions one more time to confirm deletion
-	fmt.Println("\nListing sessions after cleanup...")
-	finalSessionsResult, err := agentBay.List()
-	if err != nil {
-		fmt.Printf("\nError listing sessions: %v\n", err)
-	} else {
-		if len(finalSessionsResult.Sessions) == 0 {
-			fmt.Printf("All sessions have been deleted successfully. (RequestID: %s)\n", finalSessionsResult.RequestID)
-		} else {
-			var finalSessionIDs []string
-			for _, s := range finalSessionsResult.Sessions {
-				finalSessionIDs = append(finalSessionIDs, s.SessionID)
-			}
-			finalSessionIDsStr := strings.Join(finalSessionIDs, ", ")
-			fmt.Printf("\nRemaining sessions: %s (RequestID: %s)\n", finalSessionIDsStr, finalSessionsResult.RequestID)
-		}
-	}
+	fmt.Println("All sessions cleanup completed.")
 }
