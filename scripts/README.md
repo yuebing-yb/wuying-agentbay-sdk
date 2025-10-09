@@ -1,7 +1,33 @@
 
-# Code Quality Check Scripts
+# Scripts
 
-This directory contains scripts for checking and ensuring code quality in the Wuying AgentBay SDK project, including formatting, linting, security scanning, and unit testing.
+This directory contains scripts for code quality checks and repository management.
+
+## Repository Sync
+
+### Handling Squash Merge Conflicts
+
+When using GitHub's "Squash and Merge", the commit history diverges between internal (origin) and external (upstream) repositories. This causes conflicts when syncing back.
+
+**Solution:** After a PR is squash-merged on GitHub, sync from upstream to origin:
+
+```bash
+./scripts/sync-from-github.sh
+```
+
+This script will:
+- Fetch from both remotes
+- Reset local main to match upstream/main
+- Force push to origin with `--force-with-lease`
+
+**Daily Workflow:**
+1. Before starting work: `./scripts/sync-from-github.sh`
+2. Develop on feature branches, not main
+3. Push feature branch to both remotes
+4. Create PR on GitHub, use "Squash and Merge"
+5. After PR merges: `./scripts/sync-from-github.sh`
+
+## Code Quality Check
 
 ## Usage
 
