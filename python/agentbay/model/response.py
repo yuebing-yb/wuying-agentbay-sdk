@@ -114,6 +114,65 @@ class DeleteResult(ApiResponse):
         self.error_message = error_message
 
 
+class GetSessionData:
+    """Data returned by GetSession API."""
+
+    def __init__(
+        self,
+        app_instance_id: str = "",
+        resource_id: str = "",
+        session_id: str = "",
+        success: bool = False,
+    ):
+        """
+        Initialize GetSessionData.
+
+        Args:
+            app_instance_id (str): Application instance ID.
+            resource_id (str): Resource ID.
+            session_id (str): Session ID.
+            success (bool): Success status.
+        """
+        self.app_instance_id = app_instance_id
+        self.resource_id = resource_id
+        self.session_id = session_id
+        self.success = success
+
+
+class GetSessionResult(ApiResponse):
+    """Result of GetSession operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        http_status_code: int = 0,
+        code: str = "",
+        success: bool = False,
+        data: Optional[GetSessionData] = None,
+        error_message: str = "",
+    ):
+        """
+        Initialize a GetSessionResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            http_status_code (int, optional): HTTP status code. Defaults to 0.
+            code (str, optional): Response code. Defaults to "".
+            success (bool, optional): Whether the operation was successful.
+                Defaults to False.
+            data (Optional[GetSessionData], optional): Session data. Defaults to None.
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+        """
+        super().__init__(request_id)
+        self.http_status_code = http_status_code
+        self.code = code
+        self.success = success
+        self.data = data
+        self.error_message = error_message
+
+
 class OperationResult(ApiResponse):
     """Result of general operations."""
 

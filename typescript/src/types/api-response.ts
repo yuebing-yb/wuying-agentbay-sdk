@@ -31,6 +31,38 @@ export interface DeleteResult extends ApiResponse {
 }
 
 /**
+ * Interface for GetSession data
+ */
+export interface GetSessionData {
+  /** Application instance ID */
+  appInstanceId: string;
+  /** Resource ID */
+  resourceId: string;
+  /** Session ID */
+  sessionId: string;
+  /** Success status */
+  success: boolean;
+}
+
+/**
+ * Interface for GetSession operation responses
+ */
+export interface GetSessionResult extends ApiResponse {
+  /** Request identifier for tracking API calls */
+  requestId: string;
+  /** HTTP status code */
+  httpStatusCode: number;
+  /** Response code */
+  code: string;
+  /** Whether the operation was successful */
+  success: boolean;
+  /** Session data */
+  data?: GetSessionData;
+  /** Optional error message if the operation failed */
+  errorMessage?: string;
+}
+
+/**
  * Interface for session creation operation responses
  * Corresponds to Python's SessionResult type
  */

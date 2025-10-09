@@ -233,45 +233,95 @@ else:
 
 ## Session Recovery
 
-In certain scenarios, you may need to recover a Session object after it has been destroyed. This can be accomplished through the following methods:
+In certain scenarios, you may need to recover a Session object using its session ID. The SDK provides the `get` method to retrieve an existing session.
 
-> **Note**: Session recovery methods will be upgraded in upcoming versions to provide enhanced functionality and improved user experience.
+### Using the get Method
 
-### Session Recovery
+The `get` method is the recommended way to recover a session. It retrieves session information from the cloud and returns a ready-to-use Session object.
 
-To recover a session, you need:
-1. An AgentBay object (create a new one if it doesn't exist)
-2. Create a new Session object with the AgentBay object and the session ID you want to recover
+<Tabs groupId="sdk-language">
+<TabItem value="python" label="Python">
 
 ```python
 from agentbay import AgentBay
-from agentbay.session import Session
 
-# Initialize the SDK (or use existing instance)
-agent_bay = AgentBay(api_key=api_key)
+# Initialize the SDK
+agent_bay = AgentBay(api_key="your_api_key")
 
-# Recover session using session ID
+# Retrieve session using its ID
 session_id = "your_existing_session_id"
-recovered_session = Session(agent_bay, session_id)
+session = agent_bay.get(session_id)
 
-# For VPC scenarios, manually restore VPC-specific fields (these values must be saved by the developer)
-# recovered_session.is_vpc = True
-# recovered_session.network_interface_ip = "192.168.1.100"  # Your saved IP
-# recovered_session.http_port = 8080  # Your saved port
+# The session is now ready to use
+print(f"Retrieved session: {session.session_id}")
 
-# The recovered session can perform most session operations
-print(f"Recovered session with ID: {recovered_session.session_id}")
-
-# Test if the session is still active
-info_result = recovered_session.info()
-if info_result.success:
-    print("Session is active and ready to use")
-    print(f"Resource URL: {info_result.data.resource_url}")
-else:
-    print(f"Session recovery failed: {info_result.error_message}")
+# You can now perform any session operations
+result = session.command.execute_command("echo 'Hello, World!'")
+print(result.output)
 ```
 
-**VPC Session Recovery**: While a recovered Session object contains the session ID and can perform most operations, VPC scenarios require additional fields to be restored. For VPC scenarios, you need to restore three specific fields: `is_vpc`, `network_interface_ip`, and `http_port`. Since these fields are not currently stored in the cloud, developers must save and restore them manually as shown in the commented lines above.
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+// Initialize the SDK
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+// Retrieve session using its ID
+const sessionId = 'your_existing_session_id';
+const session = await agentBay.get(sessionId);
+
+// The session is now ready to use
+console.log(`Retrieved session: ${session.sessionId}`);
+
+// You can now perform any session operations
+const result = await session.command.executeCommand("echo 'Hello, World!'");
+console.log(result.output);
+```
+
+</TabItem>
+<TabItem value="go" label="Go">
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    
+    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+    // Initialize the SDK
+    client, err := agentbay.NewAgentBay("your_api_key", nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // Retrieve session using its ID
+    sessionID := "your_existing_session_id"
+    session, err := client.Get(sessionID)
+    if err != nil {
+        log.Fatalf("Failed to get session: %v", err)
+    }
+    
+    // The session is now ready to use
+    fmt.Printf("Retrieved session: %s\n", session.SessionID)
+    
+    // You can now perform any session operations
+    result, err := session.Command.ExecuteCommand("echo 'Hello, World!'")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(result.Output)
+}
+```
+
+</TabItem>
+</Tabs>
 
 
 ### Important Considerations
@@ -285,10 +335,6 @@ else:
 2. **Session Status Validation**: Use the `Session.info()` method to determine if a session has been released. Only active (non-released) sessions can return information through the info interface.
 
 3. **Automatic Release Timeout**: Session automatic release timeout can be configured in the [console page](https://agentbay.console.aliyun.com/).
-
-4. **Field Persistence**: Additional session fields (like VPC-specific fields) are not stored in the cloud and must be saved and restored manually by the developer.
-
-
 
 ## Advanced Session Patterns
 

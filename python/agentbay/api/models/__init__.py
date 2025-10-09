@@ -23,6 +23,9 @@ from ._get_context_info_response import GetContextInfoResponse
 from ._get_label_request import GetLabelRequest
 from ._get_label_response_body import GetLabelResponseBody
 from ._get_label_response import GetLabelResponse
+from ._get_session_request import GetSessionRequest
+from ._get_session_response_body import GetSessionResponseBody
+from ._get_session_response import GetSessionResponse
 from ._get_link_request import GetLinkRequest
 from ._get_link_response_body import GetLinkResponseBody
 from ._get_link_response import GetLinkResponse
@@ -59,6 +62,7 @@ from ._create_mcp_session_response_body import CreateMcpSessionResponseBodyData
 from ._get_context_response_body import GetContextResponseBodyData
 from ._get_context_info_response_body import GetContextInfoResponseBodyData
 from ._get_label_response_body import GetLabelResponseBodyData
+from ._get_session_response_body import GetSessionResponseBodyData
 from ._get_link_response_body import GetLinkResponseBodyData
 from ._get_mcp_resource_response_body import GetMcpResourceResponseBodyDataDesktopInfo
 from ._get_mcp_resource_response_body import GetMcpResourceResponseBodyData
@@ -107,6 +111,9 @@ __all__ = [
     GetLabelRequest,
     GetLabelResponseBody,
     GetLabelResponse,
+    GetSessionRequest,
+    GetSessionResponseBody,
+    GetSessionResponse,
     GetLinkRequest,
     GetLinkResponseBody,
     GetLinkResponse,
@@ -143,6 +150,7 @@ __all__ = [
     GetContextResponseBodyData,
     GetContextInfoResponseBodyData,
     GetLabelResponseBodyData,
+    GetSessionResponseBodyData,
     GetLinkResponseBodyData,
     GetMcpResourceResponseBodyDataDesktopInfo,
     GetMcpResourceResponseBodyData,

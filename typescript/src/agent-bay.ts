@@ -1,7 +1,7 @@
 import { $OpenApiUtil } from "@alicloud/openapi-core";
 import "dotenv/config";
 import * as $_client from "./api";
-import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList } from "./api/models/model";
+import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
 import { Client } from "./api/client";
 
 import { loadConfig, loadDotEnvWithFallback, Config, BROWSER_DATA_PATH } from "./config";
@@ -15,6 +15,7 @@ import { Context } from "./context";
 import {
   DeleteResult,
   extractRequestId,
+  GetSessionResult as $GetSessionResult,
   SessionResult,
 } from "./types/api-response";
 import {
@@ -555,6 +556,99 @@ export class AgentBay {
    */
   public removeSession(sessionId: string): void {
     this.sessions.delete(sessionId);
+  }
+
+  /**
+   * Get session information by session ID.
+   *
+   * @param sessionId - The ID of the session to retrieve.
+   * @returns GetSessionResult containing session information
+   */
+  async getSession(sessionId: string): Promise<$GetSessionResult> {
+    try {
+      log("API Call: GetSession");
+      log(`Request: SessionId=${sessionId}`);
+
+      const request = new $GetSessionRequest({
+        authorization: `Bearer ${this.apiKey}`,
+        sessionId: sessionId,
+      });
+
+      const response = await this.client.getSession(request);
+
+      log("Response from GetSession:", response.body);
+
+      const requestId = extractRequestId(response) || "";
+      const body = response.body;
+
+      const result: $GetSessionResult = {
+        requestId,
+        httpStatusCode: body?.httpStatusCode || 0,
+        code: body?.code || "",
+        success: body?.success || false,
+      };
+
+      if (body?.data) {
+        result.data = {
+          appInstanceId: body.data.appInstanceId || "",
+          resourceId: body.data.resourceId || "",
+          sessionId: body.data.sessionId || "",
+          success: body.data.success || false,
+        };
+      }
+
+      return result;
+    } catch (error) {
+      logError("Error calling GetSession:", error);
+      return {
+        requestId: "",
+        httpStatusCode: 0,
+        code: "",
+        success: false,
+        errorMessage: `Failed to get session ${sessionId}: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * Get a session by its ID.
+   *
+   * This method retrieves a session by calling the GetSession API
+   * and returns a Session object that can be used for further operations.
+   *
+   * @param sessionId - The ID of the session to retrieve
+   * @returns Promise resolving to the Session instance
+   * @throws Error if sessionId is not provided or is empty
+   * @throws Error if the API call fails or session is not found
+   *
+   * @example
+   * ```typescript
+   * const session = await agentBay.get("my-session-id");
+   * console.log(session.sessionId);
+   * ```
+   */
+  async get(sessionId: string): Promise<Session> {
+    // Validate input
+    if (
+      !sessionId ||
+      (typeof sessionId === "string" && !sessionId.trim())
+    ) {
+      throw new Error("session_id is required");
+    }
+
+    // Call GetSession API
+    const result = await this.getSession(sessionId);
+
+    // Check if the API call was successful
+    if (!result.success) {
+      const errorMsg = result.errorMessage || "Unknown error";
+      throw new Error(`Failed to get session ${sessionId}: ${errorMsg}`);
+    }
+
+    // Create and return the Session object
+    const session = new Session(this, sessionId);
+
+    return session;
   }
 
   // For internal use by the Session class

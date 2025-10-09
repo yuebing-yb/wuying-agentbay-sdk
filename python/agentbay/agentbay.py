@@ -10,11 +10,13 @@ from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_tea_openapi.exceptions._client import ClientException
 
 from agentbay.api.client import Client as mcp_client
-from agentbay.api.models import CreateMcpSessionRequest, ListSessionRequest
+from agentbay.api.models import CreateMcpSessionRequest, GetSessionRequest, ListSessionRequest
 from agentbay.config import load_config
 from agentbay.context import ContextService
 from agentbay.model import (
     DeleteResult,
+    GetSessionData,
+    GetSessionResult,
     SessionListResult,
     SessionResult,
     extract_request_id,
@@ -604,3 +606,110 @@ class AgentBay:
                 success=False,
                 error_message=f"Failed to delete session {session.session_id}: {e}",
             )
+
+    def get_session(self, session_id: str) -> GetSessionResult:
+        """
+        Get session information by session ID.
+
+        Args:
+            session_id (str): The ID of the session to retrieve.
+
+        Returns:
+            GetSessionResult: Result containing session information.
+        """
+        try:
+            log_api_call("GetSession", f"SessionId={session_id}")
+            request = GetSessionRequest(
+                authorization=f"Bearer {self.api_key}",
+                session_id=session_id
+            )
+            response = self.client.get_session(request)
+
+            try:
+                response_body = json.dumps(
+                    response.to_map().get("body", {}), ensure_ascii=False, indent=2
+                )
+                log_api_response(response_body)
+            except Exception:
+                logger.debug(f"Response: {response}")
+
+            request_id = extract_request_id(response)
+
+            try:
+                response_map = response.to_map()
+                body = response_map.get("body", {})
+                http_status_code = body.get("HttpStatusCode", 0)
+                code = body.get("Code", "")
+                success = body.get("Success", False)
+
+                data = None
+                if body.get("Data"):
+                    data_dict = body.get("Data", {})
+                    data = GetSessionData(
+                        app_instance_id=data_dict.get("AppInstanceId", ""),
+                        resource_id=data_dict.get("ResourceId", ""),
+                        session_id=data_dict.get("SessionId", ""),
+                        success=data_dict.get("Success", False),
+                    )
+
+                return GetSessionResult(
+                    request_id=request_id,
+                    http_status_code=http_status_code,
+                    code=code,
+                    success=success,
+                    data=data,
+                )
+
+            except Exception as e:
+                logger.warning(f"Failed to parse response: {str(e)}")
+                return GetSessionResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=f"Failed to parse response: {str(e)}",
+                )
+        except Exception as e:
+            logger.error(f"Error calling GetSession: {e}")
+            return GetSessionResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get session {session_id}: {e}",
+            )
+
+    def get(self, session_id: str) -> Session:
+        """
+        Get a session by its ID.
+
+        This method retrieves a session by calling the GetSession API
+        and returns a Session object that can be used for further operations.
+
+        Args:
+            session_id (str): The ID of the session to retrieve.
+
+        Returns:
+            Session: The Session instance.
+
+        Raises:
+            ValueError: If session_id is not provided or is empty.
+            RuntimeError: If the API call fails or session is not found.
+
+        Example:
+            >>> session = agentbay.get("my-session-id")
+            >>> print(session.session_id)
+            my-session-id
+        """
+        # Validate input
+        if not session_id or (isinstance(session_id, str) and not session_id.strip()):
+            raise ValueError("session_id is required")
+
+        # Call GetSession API
+        result = self.get_session(session_id)
+
+        # Check if the API call was successful
+        if not result.success:
+            error_msg = result.error_message or "Unknown error"
+            raise RuntimeError(f"Failed to get session {session_id}: {error_msg}")
+
+        # Create and return the Session object
+        session = Session(self, session_id)
+
+        return session

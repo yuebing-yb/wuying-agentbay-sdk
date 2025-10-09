@@ -170,6 +170,52 @@ if security_result.success:
     print(f"Created secure mobile session with blacklist: {security_session.session_id}")
 ```
 
+### get
+
+Retrieves a session by its ID.
+
+```python
+get(session_id: str) -> Session
+```
+
+**Parameters:**
+- `session_id` (str): The ID of the session to retrieve.
+
+**Returns:**
+- `Session`: The Session instance.
+
+**Raises:**
+- `ValueError`: If `session_id` is not provided or is empty.
+- `RuntimeError`: If the API call fails or session is not found.
+
+**Example:**
+```python
+from agentbay import AgentBay
+
+# Initialize AgentBay client
+agentbay = AgentBay(api_key="your_api_key")
+
+# First create a session
+create_result = agentbay.create()
+if not create_result.success:
+    raise RuntimeError(f"Failed to create session: {create_result.error_message}")
+
+session_id = create_result.session.session_id
+print(f"Created session with ID: {session_id}")
+
+# Retrieve the session by ID using get API
+session = agentbay.get(session_id)
+print(f"Successfully retrieved session: {session.session_id}")
+
+# The session object can be used for further operations
+# ...
+
+# Clean up
+delete_result = session.delete()
+if delete_result.success:
+    print(f"Session {session_id} deleted successfully")
+```
+
 
 
 ```python

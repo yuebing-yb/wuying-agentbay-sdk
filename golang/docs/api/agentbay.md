@@ -150,6 +150,76 @@ func main() {
 }
 ```
 
+### Get
+
+Retrieves a session by its ID.
+
+```go
+Get(sessionID string) (*Session, error)
+```
+
+**Parameters:**
+- `sessionID` (string): The ID of the session to retrieve.
+
+**Returns:**
+- `*Session`: The Session instance.
+- `error`: An error if the operation fails.
+
+**Raises:**
+- `error`: If `sessionID` is empty.
+- `error`: If the session is not found.
+- `error`: If the API call fails.
+
+**Example:**
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+	// Initialize AgentBay client
+	client, err := agentbay.NewAgentBay("")
+	if err != nil {
+		log.Fatalf("Failed to initialize AgentBay client: %v", err)
+	}
+
+	// First create a session
+	createResult, err := client.Create(nil)
+	if err != nil {
+		log.Fatalf("Failed to create session: %v", err)
+	}
+	sessionId := createResult.Session.SessionID
+	fmt.Printf("Created session with ID: %s\n", sessionId)
+
+	// Retrieve the session by ID using Get API
+	session, err := client.Get(sessionId)
+	if err != nil {
+		log.Fatalf("Failed to get session: %v", err)
+	}
+
+	fmt.Printf("Successfully retrieved session: %s\n", session.SessionID)
+	// Result: Successfully retrieved session: session-xxxxxxxxxxxxxxx
+
+	// The session object can be used for further operations
+	// ...
+
+	// Clean up
+	deleteResult, err := session.Delete()
+	if err != nil {
+		log.Fatalf("Failed to delete session: %v", err)
+	}
+	if deleteResult.Success {
+		fmt.Printf("Session %s deleted successfully\n", sessionId)
+	}
+}
+```
+
 
 Lists all available sessions cached in the current client instance.
 

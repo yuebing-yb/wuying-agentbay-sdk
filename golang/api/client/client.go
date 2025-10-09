@@ -146,7 +146,7 @@ func (client *Client) CallMcpTool(request *CallMcpToolRequest) (_result *CallMcp
 
 // Summary:
 //
-// Create MCP session
+// # Create MCP session
 //
 // @param tmpReq - CreateMcpSessionRequest
 //
@@ -226,7 +226,7 @@ func (client *Client) CreateMcpSessionWithOptions(tmpReq *CreateMcpSessionReques
 
 // Summary:
 //
-// Create MCP session
+// # Create MCP session
 //
 // @param request - CreateMcpSessionRequest
 //
@@ -244,7 +244,7 @@ func (client *Client) CreateMcpSession(request *CreateMcpSessionRequest) (_resul
 
 // Summary:
 //
-// Delete persistent context
+// # Delete persistent context
 //
 // @param request - DeleteContextRequest
 //
@@ -290,7 +290,7 @@ func (client *Client) DeleteContextWithOptions(request *DeleteContextRequest, ru
 
 // Summary:
 //
-// Delete persistent context
+// # Delete persistent context
 //
 // @param request - DeleteContextRequest
 //
@@ -308,7 +308,7 @@ func (client *Client) DeleteContext(request *DeleteContextRequest) (_result *Del
 
 // Summary:
 //
-// Get context file upload URL
+// # Get context file upload URL
 //
 // @param request - DeleteContextFileRequest
 //
@@ -358,7 +358,7 @@ func (client *Client) DeleteContextFileWithOptions(request *DeleteContextFileReq
 
 // Summary:
 //
-// Get context file upload URL
+// # Get context file upload URL
 //
 // @param request - DeleteContextFileRequest
 //
@@ -376,7 +376,7 @@ func (client *Client) DeleteContextFile(request *DeleteContextFileRequest) (_res
 
 // Summary:
 //
-// Query context specific directory files
+// # Query context specific directory files
 //
 // @param request - DescribeContextFilesRequest
 //
@@ -434,7 +434,7 @@ func (client *Client) DescribeContextFilesWithOptions(request *DescribeContextFi
 
 // Summary:
 //
-// Query context specific directory files
+// # Query context specific directory files
 //
 // @param request - DescribeContextFilesRequest
 //
@@ -452,7 +452,7 @@ func (client *Client) DescribeContextFiles(request *DescribeContextFilesRequest)
 
 // Summary:
 //
-// Get context
+// # Get context
 //
 // @param request - GetContextRequest
 //
@@ -502,7 +502,7 @@ func (client *Client) GetContextWithOptions(request *GetContextRequest, runtime 
 
 // Summary:
 //
-// Get context
+// # Get context
 //
 // @param request - GetContextRequest
 //
@@ -520,7 +520,7 @@ func (client *Client) GetContext(request *GetContextRequest) (_result *GetContex
 
 // Summary:
 //
-// Get context information
+// # Get context information
 //
 // @param request - GetContextInfoRequest
 //
@@ -578,7 +578,7 @@ func (client *Client) GetContextInfoWithOptions(request *GetContextInfoRequest, 
 
 // Summary:
 //
-// Get context information
+// # Get context information
 //
 // @param request - GetContextInfoRequest
 //
@@ -596,7 +596,7 @@ func (client *Client) GetContextInfo(request *GetContextInfoRequest) (_result *G
 
 // Summary:
 //
-// Get labels
+// # Get labels
 //
 // @param request - GetLabelRequest
 //
@@ -650,7 +650,7 @@ func (client *Client) GetLabelWithOptions(request *GetLabelRequest, runtime *dar
 
 // Summary:
 //
-// Get labels
+// # Get labels
 //
 // @param request - GetLabelRequest
 //
@@ -668,7 +668,71 @@ func (client *Client) GetLabel(request *GetLabelRequest) (_result *GetLabelRespo
 
 // Summary:
 //
-// Get forwarding link for specific port
+// # Get session information
+//
+// @param request - GetSessionRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return GetSessionResponse
+func (client *Client) GetSessionWithOptions(request *GetSessionRequest, runtime *dara.RuntimeOptions) (_result *GetSessionResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+
+	if !dara.IsNil(request.SessionId) {
+		body["SessionId"] = request.SessionId
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("GetSession"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &GetSessionResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Get session information
+//
+// @param request - GetSessionRequest
+//
+// @return GetSessionResponse
+func (client *Client) GetSession(request *GetSessionRequest) (_result *GetSessionResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &GetSessionResponse{}
+	_body, _err := client.GetSessionWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// # Get forwarding link for specific port
 //
 // @param request - GetLinkRequest
 //
@@ -722,7 +786,7 @@ func (client *Client) GetLinkWithOptions(request *GetLinkRequest, runtime *dara.
 
 // Summary:
 //
-// Get forwarding link for specific port
+// # Get forwarding link for specific port
 //
 // @param request - GetLinkRequest
 //
@@ -740,7 +804,7 @@ func (client *Client) GetLink(request *GetLinkRequest) (_result *GetLinkResponse
 
 // Summary:
 //
-// Get MCP resource information
+// # Get MCP resource information
 //
 // @param request - GetMcpResourceRequest
 //
@@ -786,7 +850,7 @@ func (client *Client) GetMcpResourceWithOptions(request *GetMcpResourceRequest, 
 
 // Summary:
 //
-// Get MCP resource information
+// # Get MCP resource information
 //
 // @param request - GetMcpResourceRequest
 //
@@ -804,7 +868,7 @@ func (client *Client) GetMcpResource(request *GetMcpResourceRequest) (_result *G
 
 // Summary:
 //
-// Get context file upload URL
+// # Get context file upload URL
 //
 // @param request - GetContextFileDownloadUrlRequest
 //
@@ -854,7 +918,7 @@ func (client *Client) GetContextFileDownloadUrlWithOptions(request *GetContextFi
 
 // Summary:
 //
-// Get context file upload URL
+// # Get context file upload URL
 //
 // @param request - GetContextFileDownloadUrlRequest
 //
@@ -872,7 +936,7 @@ func (client *Client) GetContextFileDownloadUrl(request *GetContextFileDownloadU
 
 // Summary:
 //
-// Get context file upload URL
+// # Get context file upload URL
 //
 // @param request - GetContextFileUploadUrlRequest
 //
@@ -922,7 +986,7 @@ func (client *Client) GetContextFileUploadUrlWithOptions(request *GetContextFile
 
 // Summary:
 //
-// Get context file upload URL
+// # Get context file upload URL
 //
 // @param request - GetContextFileUploadUrlRequest
 //
@@ -940,7 +1004,7 @@ func (client *Client) GetContextFileUploadUrl(request *GetContextFileUploadUrlRe
 
 // Summary:
 //
-// Get context list
+// # Get context list
 //
 // @param request - ListContextsRequest
 //
@@ -990,7 +1054,7 @@ func (client *Client) ListContextsWithOptions(request *ListContextsRequest, runt
 
 // Summary:
 //
-// Get context list
+// # Get context list
 //
 // @param request - ListContextsRequest
 //
@@ -1072,7 +1136,7 @@ func (client *Client) ListMcpTools(request *ListMcpToolsRequest) (_result *ListM
 
 // Summary:
 //
-// Query session list by label
+// # Query session list by label
 //
 // @param request - ListSessionRequest
 //
@@ -1126,7 +1190,7 @@ func (client *Client) ListSessionWithOptions(request *ListSessionRequest, runtim
 
 // Summary:
 //
-// Query session list by label
+// # Query session list by label
 //
 // @param request - ListSessionRequest
 //
@@ -1144,7 +1208,7 @@ func (client *Client) ListSession(request *ListSessionRequest) (_result *ListSes
 
 // Summary:
 //
-// Modify context
+// # Modify context
 //
 // @param request - ModifyContextRequest
 //
@@ -1194,7 +1258,7 @@ func (client *Client) ModifyContextWithOptions(request *ModifyContextRequest, ru
 
 // Summary:
 //
-// Modify context
+// # Modify context
 //
 // @param request - ModifyContextRequest
 //
@@ -1212,7 +1276,7 @@ func (client *Client) ModifyContext(request *ModifyContextRequest) (_result *Mod
 
 // Summary:
 //
-// Release MCP session
+// # Release MCP session
 //
 // @param request - ReleaseMcpSessionRequest
 //
@@ -1258,7 +1322,7 @@ func (client *Client) ReleaseMcpSessionWithOptions(request *ReleaseMcpSessionReq
 
 // Summary:
 //
-// Release MCP session
+// # Release MCP session
 //
 // @param request - ReleaseMcpSessionRequest
 //
@@ -1276,7 +1340,7 @@ func (client *Client) ReleaseMcpSession(request *ReleaseMcpSessionRequest) (_res
 
 // Summary:
 //
-// Set labels
+// # Set labels
 //
 // @param request - SetLabelRequest
 //
@@ -1326,7 +1390,7 @@ func (client *Client) SetLabelWithOptions(request *SetLabelRequest, runtime *dar
 
 // Summary:
 //
-// Set labels
+// # Set labels
 //
 // @param request - SetLabelRequest
 //
@@ -1344,7 +1408,7 @@ func (client *Client) SetLabel(request *SetLabelRequest) (_result *SetLabelRespo
 
 // Summary:
 //
-// Sync context
+// # Sync context
 //
 // @param request - SyncContextRequest
 //
@@ -1404,7 +1468,7 @@ func (client *Client) SyncContextWithOptions(request *SyncContextRequest, runtim
 
 // Summary:
 //
-// Sync context
+// # Sync context
 //
 // @param request - SyncContextRequest
 //

@@ -350,7 +350,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}, nil
 }
 
-
 // ListSessionParams contains parameters for listing sessions
 type ListSessionParams struct {
 	MaxResults int32             // Number of results per page
@@ -464,4 +463,131 @@ func (a *AgentBay) Delete(session *Session, syncContext ...bool) (*DeleteResult,
 		a.Sessions.Delete(session.SessionID)
 	}
 	return result, err
+}
+
+// GetSessionResult represents the result of GetSession operation
+type GetSessionResult struct {
+	models.ApiResponse
+	HttpStatusCode int32
+	Code           string
+	Success        bool
+	Data           *GetSessionData
+}
+
+// GetSessionData represents the data returned by GetSession API
+type GetSessionData struct {
+	AppInstanceID string
+	ResourceID    string
+	SessionID     string
+	Success       bool
+}
+
+// GetSession retrieves session information by session ID
+func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
+	getSessionRequest := &mcp.GetSessionRequest{
+		Authorization: tea.String("Bearer " + a.APIKey),
+		SessionId:     tea.String(sessionID),
+	}
+
+	// Log API request
+	fmt.Println("API Call: GetSession")
+	fmt.Printf("Request: SessionId=%s\n", *getSessionRequest.SessionId)
+
+	response, err := a.Client.GetSession(getSessionRequest)
+
+	// Log API response
+	if err != nil {
+		fmt.Println("Error calling GetSession:", err)
+		return nil, err
+	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
+	if response != nil && response.Body != nil {
+		fmt.Println("Response from GetSession:", response.Body)
+	}
+
+	result := &GetSessionResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+	}
+
+	if response != nil && response.Body != nil {
+		if response.Body.HttpStatusCode != nil {
+			result.HttpStatusCode = *response.Body.HttpStatusCode
+		}
+		if response.Body.Code != nil {
+			result.Code = *response.Body.Code
+		}
+		if response.Body.Success != nil {
+			result.Success = *response.Body.Success
+		}
+
+		if response.Body.Data != nil {
+			data := &GetSessionData{}
+			if response.Body.Data.AppInstanceId != nil {
+				data.AppInstanceID = *response.Body.Data.AppInstanceId
+			}
+			if response.Body.Data.ResourceId != nil {
+				data.ResourceID = *response.Body.Data.ResourceId
+			}
+			if response.Body.Data.SessionId != nil {
+				data.SessionID = *response.Body.Data.SessionId
+			}
+			if response.Body.Data.Success != nil {
+				data.Success = *response.Body.Data.Success
+			}
+			result.Data = data
+		}
+	}
+
+	return result, nil
+}
+
+// Get retrieves a session by its ID.
+// This method calls the GetSession API and returns a Session object.
+//
+// Parameters:
+//   - sessionID: The ID of the session to retrieve
+//
+// Returns:
+//   - *Session: The Session instance
+//   - error: An error if the operation fails
+//
+// Example:
+//
+//	session, err := agentBay.Get("my-session-id")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Printf("Session ID: %s\n", session.SessionID)
+func (a *AgentBay) Get(sessionID string) (*Session, error) {
+	if sessionID == "" {
+		return nil, fmt.Errorf("session_id is required")
+	}
+
+	// Call GetSession API
+	result, err := a.GetSession(sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session %s: %v", sessionID, err)
+	}
+
+	// Check if the API call was successful
+	if !result.Success {
+		errorMsg := "unknown error"
+		if result.Data != nil && !result.Data.Success {
+			errorMsg = fmt.Sprintf("Session not found")
+		}
+		return nil, fmt.Errorf("failed to get session %s: %s", sessionID, errorMsg)
+	}
+
+	// Create and return the Session object
+	session := NewSession(a, sessionID)
+
+	// Store the session in the local cache
+	a.Sessions.Store(sessionID, *session)
+
+	return session, nil
 }

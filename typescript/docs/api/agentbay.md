@@ -120,6 +120,58 @@ async function createSessionWithSync() {
 }
 ```
 
+### get
+
+Retrieves a session by its ID.
+
+```typescript
+get(sessionId: string): Promise<Session>
+```
+
+**Parameters:**
+- `sessionId` (string): The ID of the session to retrieve.
+
+**Returns:**
+- `Promise<Session>`: A promise that resolves to the Session instance.
+
+**Throws:**
+- `Error`: If `sessionId` is not provided or is empty.
+- `Error`: If the API call fails or session is not found.
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+async function getSessionExample() {
+  // Initialize AgentBay client
+  const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+  // First create a session
+  const createResult = await agentBay.create();
+  if (!createResult.success) {
+    throw new Error(`Failed to create session: ${createResult.errorMessage}`);
+  }
+
+  const sessionId = createResult.session.sessionId;
+  console.log(`Created session with ID: ${sessionId}`);
+
+  // Retrieve the session by ID using get API
+  const session = await agentBay.get(sessionId);
+  console.log(`Successfully retrieved session: ${session.sessionId}`);
+
+  // The session object can be used for further operations
+  // ...
+
+  // Clean up
+  const deleteResult = await session.delete();
+  if (deleteResult.success) {
+    console.log(`Session ${sessionId} deleted successfully`);
+  }
+}
+
+getSessionExample();
+```
+
 
 ```typescript
 listByLabels(params?: ListSessionParams): Promise<SessionListResult>

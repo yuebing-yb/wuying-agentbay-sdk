@@ -4,6 +4,7 @@ export { CreateMcpSessionResponseBodyData } from './CreateMcpSessionResponseBody
 export { GetContextResponseBodyData } from './GetContextResponseBodyData';
 export { GetContextInfoResponseBodyData } from './GetContextInfoResponseBodyData';
 export { GetLabelResponseBodyData } from './GetLabelResponseBodyData';
+export { GetSessionResponseBodyData } from './GetSessionResponseBodyData';
 export { GetLinkResponseBodyData } from './GetLinkResponseBodyData';
 export { GetMcpResourceResponseBodyDataDesktopInfo } from './GetMcpResourceResponseBodyDataDesktopInfo';
 export { GetMcpResourceResponseBodyData } from './GetMcpResourceResponseBodyData';
@@ -31,6 +32,9 @@ export { GetContextInfoResponse } from './GetContextInfoResponse';
 export { GetLabelRequest } from './GetLabelRequest';
 export { GetLabelResponseBody } from './GetLabelResponseBody';
 export { GetLabelResponse } from './GetLabelResponse';
+export { GetSessionRequest } from './GetSessionRequest';
+export { GetSessionResponseBody } from './GetSessionResponseBody';
+export { GetSessionResponse } from './GetSessionResponse';
 export { GetLinkRequest } from './GetLinkRequest';
 export { GetLinkResponseBody } from './GetLinkResponseBody';
 export { GetLinkResponse } from './GetLinkResponse';
