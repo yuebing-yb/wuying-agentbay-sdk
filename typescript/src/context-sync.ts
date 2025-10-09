@@ -8,6 +8,20 @@ export enum DownloadStrategy {
   DownloadAsync = "DownloadAsync",
 }
 
+// Lifecycle defines the lifecycle options for recycle policy
+export enum Lifecycle {
+  Lifecycle_1Day = "Lifecycle_1Day",
+  Lifecycle_3Days = "Lifecycle_3Days", 
+  Lifecycle_5Days = "Lifecycle_5Days",
+  Lifecycle_10Days = "Lifecycle_10Days",
+  Lifecycle_15Days = "Lifecycle_15Days",
+  Lifecycle_30Days = "Lifecycle_30Days",
+  Lifecycle_90Days = "Lifecycle_90Days",
+  Lifecycle_180Days = "Lifecycle_180Days",
+  Lifecycle_360Days = "Lifecycle_360Days",
+  Lifecycle_Forever = "Lifecycle_Forever",
+}
+
 // UploadPolicy defines the upload policy for context synchronization
 export interface UploadPolicy {
   autoUpload: boolean;
@@ -30,6 +44,12 @@ export interface ExtractPolicy {
   extract: boolean;
   deleteSrcFile: boolean;
   extractToCurrentFolder: boolean;
+}
+
+// RecyclePolicy defines the recycle policy for context synchronization
+export interface RecyclePolicy {
+  lifecycle: Lifecycle;
+  paths: string[];
 }
 
 // ExtractPolicyClass provides a class-based implementation with default values
@@ -106,6 +126,7 @@ export interface SyncPolicy {
   downloadPolicy?: DownloadPolicy;
   deletePolicy?: DeletePolicy;
   extractPolicy?: ExtractPolicy;
+  recyclePolicy?: RecyclePolicy;
   bwList?: BWList;
 }
 
@@ -115,6 +136,7 @@ export class SyncPolicyImpl implements SyncPolicy {
   downloadPolicy?: DownloadPolicy;
   deletePolicy?: DeletePolicy;
   extractPolicy?: ExtractPolicy;
+  recyclePolicy?: RecyclePolicy;
   bwList?: BWList;
 
   constructor(policy?: Partial<SyncPolicy>) {
@@ -123,6 +145,7 @@ export class SyncPolicyImpl implements SyncPolicy {
       this.downloadPolicy = policy.downloadPolicy;
       this.deletePolicy = policy.deletePolicy;
       this.extractPolicy = policy.extractPolicy;
+      this.recyclePolicy = policy.recyclePolicy;
       this.bwList = policy.bwList;
     }
     this.ensureDefaults();
@@ -140,6 +163,9 @@ export class SyncPolicyImpl implements SyncPolicy {
     }
     if (!this.extractPolicy) {
       this.extractPolicy = newExtractPolicy();
+    }
+    if (!this.recyclePolicy) {
+      this.recyclePolicy = newRecyclePolicy();
     }
     if (!this.bwList) {
       this.bwList = {
@@ -160,6 +186,7 @@ export class SyncPolicyImpl implements SyncPolicy {
       downloadPolicy: this.downloadPolicy,
       deletePolicy: this.deletePolicy,
       extractPolicy: this.extractPolicy,
+      recyclePolicy: this.recyclePolicy,
       bwList: this.bwList,
     };
   }
@@ -220,6 +247,14 @@ export function newExtractPolicy(): ExtractPolicy {
   };
 }
 
+// NewRecyclePolicy creates a new recycle policy with default values
+export function newRecyclePolicy(): RecyclePolicy {
+  return {
+    lifecycle: Lifecycle.Lifecycle_Forever,
+    paths: [""],
+  };
+}
+
 // NewSyncPolicy creates a new sync policy with default values
 export function newSyncPolicy(): SyncPolicy {
   return {
@@ -227,6 +262,7 @@ export function newSyncPolicy(): SyncPolicy {
     downloadPolicy: newDownloadPolicy(),
     deletePolicy: newDeletePolicy(),
     extractPolicy: newExtractPolicy(),
+    recyclePolicy: newRecyclePolicy(),
     bwList: {
       whiteLists: [
         {
@@ -239,12 +275,20 @@ export function newSyncPolicy(): SyncPolicy {
 }
 
 export function validateSyncPolicy(policy?: SyncPolicy): void {
-  if (!policy?.bwList?.whiteLists) {
-    return;
+  if (policy?.bwList?.whiteLists) {
+    for (const whitelist of policy.bwList.whiteLists) {
+      WhiteListValidator.validate(whitelist);
+    }
   }
 
-  for (const whitelist of policy.bwList.whiteLists) {
-    WhiteListValidator.validate(whitelist);
+  if (policy?.recyclePolicy?.paths) {
+    for (const path of policy.recyclePolicy.paths) {
+      if (path && path.trim() !== "") {
+        // Create a temporary WhiteList object for validation
+        const tempWhiteList: WhiteList = { path: path };
+        WhiteListValidator.validate(tempWhiteList);
+      }
+    }
   }
 }
 
