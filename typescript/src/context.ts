@@ -27,7 +27,7 @@ export class Context {
   name: string;
 
   /**
-   * The current state of the context (e.g., "available", "in-use").
+   * @deprecated This field is no longer used and will be removed in a future version.
    */
   state: string;
 
@@ -42,7 +42,7 @@ export class Context {
   lastUsedAt?: string;
 
   /**
-   * The operating system type this context is bound to.
+   * @deprecated This field is no longer used and will be removed in a future version.
    */
   osType?: string;
 
@@ -51,10 +51,10 @@ export class Context {
    *
    * @param id - The unique identifier of the context.
    * @param name - The name of the context.
-   * @param state - The current state of the context.
+   * @param state - **Deprecated.** This parameter is no longer used.
    * @param createdAt - Date and time when the Context was created.
    * @param lastUsedAt - Date and time when the Context was last used.
-   * @param osType - The operating system type this context is bound to.
+   * @param osType - **Deprecated.** This parameter is no longer used.
    */
   constructor(
     id: string,

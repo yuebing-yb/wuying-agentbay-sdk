@@ -23,11 +23,7 @@
         "format": "prettier --write \"src/**/*.ts\"",
         "prepare": "npm run build"
     },
-    "author": {
-        "name": "Wuying AI Team",
-        "email": "wuying-ai-team@alibabacloud.com",
-        "url": "https://github.com/aliyun/wuying-agentbay-sdk"
-    },
+    "author": "Wuying AI Team <wuying-ai-team@alibabacloud.com> (https://github.com/aliyun/wuying-agentbay-sdk)",
     "contributors": [
         {
             "name": "yuebing.yb",
@@ -82,9 +78,14 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/aliyun/wuying-agentbay-sdk.git"
+        "url": "git+https://github.com/aliyun/wuying-agentbay-sdk.git"
     },
     "engines": {
         "node": ">=14.0.0"
-    }
+    },
+    "directories": {
+        "doc": "docs",
+        "test": "tests"
+    },
+    "type": "commonjs"
 }

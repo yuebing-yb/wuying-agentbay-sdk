@@ -16,7 +16,8 @@ type Context struct {
 	// Name is the name of the context.
 	Name string
 
-	// State is the current state of the context (e.g., "available", "in-use").
+	// State is deprecated and will be removed in a future version.
+	// Deprecated: This field is no longer used.
 	State string
 
 	// CreatedAt is the date and time when the Context was created.
@@ -25,7 +26,8 @@ type Context struct {
 	// LastUsedAt is the date and time when the Context was last used.
 	LastUsedAt string
 
-	// OSType is the operating system type this context is bound to.
+	// OSType is deprecated and will be removed in a future version.
+	// Deprecated: This field is no longer used.
 	OSType string
 }
 
