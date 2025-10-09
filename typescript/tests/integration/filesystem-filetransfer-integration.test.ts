@@ -72,7 +72,8 @@ describe("File Transfer Integration", () => {
     
     // Clean up session
     try {
-      const session = agentBay.list().find(s => s.getSessionId() === sessionId);
+      const listResult = await agentBay.list();
+      const session = listResult.data.find(s => s.sessionId === sessionId);
       if (session) {
         await agentBay.delete(session, true);
         log("Session successfully deleted with context sync");
@@ -98,7 +99,8 @@ describe("File Transfer Integration", () => {
       return;
     }
 
-    const session = agentBay.list().find(s => s.getSessionId() === sessionId);
+    const listResult = await agentBay.list();
+    const session = listResult.data.find(s => s.sessionId === sessionId);
     if (!session) {
       throw new Error("Session not found");
     }
@@ -133,12 +135,12 @@ describe("File Transfer Integration", () => {
     log(`Request ID (sync): ${uploadResult.requestIdSync}`);
 
     // Verify file exists in remote location by listing directory
-    const listResult = await session.fileSystem.listDirectory("/tmp/file_transfer_test/");
-    expect(listResult.success).toBe(true);
-    expect(listResult.entries).toBeDefined();
+    const dirListResult = await session.fileSystem.listDirectory("/tmp/file_transfer_test/");
+    expect(dirListResult.success).toBe(true);
+    expect(dirListResult.entries).toBeDefined();
     
     // Check if our uploaded file is in the directory listing
-    const fileFound = listResult.entries.some(entry => entry.name === 'upload_test.txt');
+    const fileFound = dirListResult.entries.some(entry => entry.name === 'upload_test.txt');
     expect(fileFound).toBe(true);
 
     log("File found in remote directory!");
@@ -158,7 +160,8 @@ describe("File Transfer Integration", () => {
       return;
     }
 
-    const session = agentBay.list().find(s => s.getSessionId() === sessionId);
+    const listResult = await agentBay.list();
+    const session = listResult.data.find(s => s.sessionId === sessionId);
     if (!session) {
       throw new Error("Session not found");
     }

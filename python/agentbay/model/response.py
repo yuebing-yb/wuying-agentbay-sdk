@@ -64,6 +64,7 @@ class SessionListResult(ApiResponse):
         success: bool = False,
         error_message: str = "",
         sessions: List["Session"] = None,
+        session_ids: List[str] = None,
         next_token: str = "",
         max_results: int = 0,
         total_count: int = 0,
@@ -75,7 +76,8 @@ class SessionListResult(ApiResponse):
             request_id (str): The request ID.
             success (bool): Whether the operation was successful.
             error_message (str): Error message if the operation failed.
-            sessions (List["Session"]): List of sessions.
+            sessions (List["Session"]): List of sessions (deprecated, use session_ids).
+            session_ids (List[str]): List of session IDs.
             next_token (str): Token for the next page of results.
             max_results (int): Number of results per page.
             total_count (int): Total number of results available.
@@ -84,6 +86,7 @@ class SessionListResult(ApiResponse):
         self.success = success
         self.error_message = error_message
         self.sessions = sessions if sessions is not None else []
+        self.session_ids = session_ids if session_ids is not None else []
         self.next_token = next_token
         self.max_results = max_results
         self.total_count = total_count

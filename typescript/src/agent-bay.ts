@@ -413,6 +413,8 @@ export class AgentBay {
    * List sessions filtered by the provided labels with pagination support.
    * It returns sessions that match all the specified labels.
    *
+   * @deprecated This method is deprecated and will be removed in a future version. Use list() instead.
+   *
    * **Breaking Change**: This method currently only accepts ListSessionParams parameters，
    *
    * @param params - Parameters including labels and pagination options (required)
@@ -461,6 +463,7 @@ export class AgentBay {
           success: false,
           errorMessage: "Failed to list sessions by labels",
           data: [],
+          sessionIds: [],
           nextToken: "",
           maxResults: params.maxResults || 10,
           totalCount: 0,
@@ -468,6 +471,7 @@ export class AgentBay {
       }
 
       const sessions: Session[] = [];
+      const sessionIds: string[] = [];
       let nextToken = "";
       let maxResults = params.maxResults || 10;
       let totalCount = 0;
@@ -491,6 +495,7 @@ export class AgentBay {
           if (sessionData && typeof sessionData === "object") {
             const sessionId = (sessionData as any).sessionId; // Capital S and I to match Python
             if (sessionId) {
+              sessionIds.push(sessionId);
               // Check if we already have this session in our cache
               let session = this.sessions.get(sessionId);
               if (!session) {
@@ -509,6 +514,7 @@ export class AgentBay {
         requestId,
         success: true,
         data: sessions,
+        sessionIds,
         nextToken,
         maxResults,
         totalCount,
@@ -519,7 +525,181 @@ export class AgentBay {
         requestId: "",
         success: false,
         data: [],
+        sessionIds: [],
         errorMessage: `Failed to list sessions by labels: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * Returns paginated list of session IDs filtered by labels.
+   *
+   * @param labels - Optional labels to filter sessions (defaults to empty object)
+   * @param page - Optional page number for pagination (starting from 1, defaults to 1)
+   * @param limit - Optional maximum number of items per page (defaults to 10)
+   * @returns SessionListResult - Paginated list of session IDs that match the labels
+   *
+   * @example
+   * ```typescript
+   * const agentBay = new AgentBay({ apiKey: "your_api_key" });
+   *
+   * // List all sessions
+   * const result = await agentBay.list();
+   *
+   * // List sessions with specific labels
+   * const result = await agentBay.list({ project: "demo" });
+   *
+   * // List sessions with pagination
+   * const result = await agentBay.list({ "my-label": "my-value" }, 2, 10);
+   *
+   * if (result.success) {
+   *   for (const sessionId of result.sessionIds) {
+   *     console.log(`Session ID: ${sessionId}`);
+   *   }
+   *   console.log(`Total count: ${result.totalCount}`);
+   *   console.log(`Request ID: ${result.requestId}`);
+   * }
+   * ```
+   */
+  async list(
+    labels: Record<string, string> = {},
+    page?: number,
+    limit: number = 10
+  ): Promise<SessionListResult> {
+    try {
+      // Validate page number
+      if (page !== undefined && page < 1) {
+        return {
+          requestId: "",
+          success: false,
+          errorMessage: `Cannot reach page ${page}: Page number must be >= 1`,
+          data: [],
+          sessionIds: [],
+          nextToken: "",
+          maxResults: limit,
+          totalCount: 0,
+        };
+      }
+
+      // Calculate next_token based on page number
+      // Page 1 or undefined means no next_token (first page)
+      // For page > 1, we need to make multiple requests to get to that page
+      let nextToken = "";
+      if (page !== undefined && page > 1) {
+        // We need to fetch pages 1 through page-1 to get the next_token
+        let currentPage = 1;
+        while (currentPage < page) {
+          // Make API call to get next_token
+          const request = new ListSessionRequest({
+            authorization: `Bearer ${this.apiKey}`,
+            labels: JSON.stringify(labels),
+            maxResults: limit,
+          });
+          if (nextToken) {
+            request.nextToken = nextToken;
+          }
+
+          const response = await this.client.listSession(request);
+          const requestId = extractRequestId(response) || "";
+
+          if (!response.body?.success) {
+            const errorMessage = response.body?.message || response.body?.code || "Unknown error";
+            return {
+              requestId,
+              success: false,
+              errorMessage: `Cannot reach page ${page}: ${errorMessage}`,
+              data: [],
+              sessionIds: [],
+              nextToken: "",
+              maxResults: limit,
+              totalCount: 0,
+            };
+          }
+
+          nextToken = response.body.nextToken || "";
+          if (!nextToken) {
+            // No more pages available
+            return {
+              requestId,
+              success: false,
+              errorMessage: `Cannot reach page ${page}: No more pages available`,
+              data: [],
+              sessionIds: [],
+              nextToken: "",
+              maxResults: limit,
+              totalCount: response.body.totalCount || 0,
+            };
+          }
+          currentPage += 1;
+        }
+      }
+
+      // Make the actual request for the desired page
+      const request = new ListSessionRequest({
+        authorization: `Bearer ${this.apiKey}`,
+        labels: JSON.stringify(labels),
+        maxResults: limit,
+      });
+      if (nextToken) {
+        request.nextToken = nextToken;
+      }
+
+      // Log API request
+      log("API Call: ListSession");
+      log(`Request: Labels=${JSON.stringify(labels)}, MaxResults=${limit}${nextToken ? `, NextToken=${nextToken}` : ""}`);
+
+      const response = await this.client.listSession(request);
+
+      // Log API response
+      log("body =", response.body);
+
+      // Extract request ID
+      const requestId = extractRequestId(response) || "";
+
+      // Check for errors in the response
+      if (!response.body?.success) {
+        const errorMessage = response.body?.message || response.body?.code || "Unknown error";
+        return {
+          requestId,
+          success: false,
+          errorMessage: `Failed to list sessions: ${errorMessage}`,
+          data: [],
+          sessionIds: [],
+          nextToken: "",
+          maxResults: limit,
+          totalCount: 0,
+        };
+      }
+
+      const sessionIds: string[] = [];
+
+      // Extract session data
+      if (response.body.data) {
+        for (const sessionData of response.body.data) {
+          if (sessionData.sessionId) {
+            sessionIds.push(sessionData.sessionId);
+          }
+        }
+      }
+
+      // Return SessionListResult with request ID and pagination info
+      return {
+        requestId,
+        success: true,
+        data: [], // Keep empty for backward compatibility
+        sessionIds,
+        nextToken: response.body.nextToken || "",
+        maxResults: response.body.maxResults || limit,
+        totalCount: response.body.totalCount || 0,
+      };
+    } catch (error) {
+      logError("Error calling list_session:", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Failed to list sessions: ${error}`,
+        data: [],
+        sessionIds: [],
       };
     }
   }

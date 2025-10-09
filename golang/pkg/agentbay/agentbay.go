@@ -373,6 +373,8 @@ func NewListSessionParams() *ListSessionParams {
 
 // ListByLabels lists sessions filtered by the provided labels with pagination support.
 // It returns sessions that match all the specified labels.
+//
+// Deprecated: This method is deprecated and will be removed in a future version. Use List() instead.
 func (a *AgentBay) ListByLabels(params *ListSessionParams) (*SessionListResult, error) {
 	if params == nil {
 		params = NewListSessionParams()
@@ -419,8 +421,9 @@ func (a *AgentBay) ListByLabels(params *ListSessionParams) (*SessionListResult, 
 	}
 
 	var sessions []Session
+	var sessionIds []string
 	var nextToken string
-	var maxResults int32
+	var maxResults int32 = params.MaxResults // Use the requested MaxResults
 	var totalCount int32
 
 	if response.Body != nil {
@@ -428,6 +431,7 @@ func (a *AgentBay) ListByLabels(params *ListSessionParams) (*SessionListResult, 
 		if response.Body.NextToken != nil {
 			nextToken = *response.Body.NextToken
 		}
+		// Use API response MaxResults if present, otherwise use requested value
 		if response.Body.MaxResults != nil {
 			maxResults = *response.Body.MaxResults
 		}
@@ -439,6 +443,7 @@ func (a *AgentBay) ListByLabels(params *ListSessionParams) (*SessionListResult, 
 		if response.Body.Data != nil {
 			for _, sessionData := range response.Body.Data {
 				if sessionData.SessionId != nil {
+					sessionIds = append(sessionIds, *sessionData.SessionId)
 					session := NewSession(a, *sessionData.SessionId)
 					// Use default ImageId for sessions retrieved from API
 					session.ImageId = "linux_latest"
@@ -455,7 +460,234 @@ func (a *AgentBay) ListByLabels(params *ListSessionParams) (*SessionListResult, 
 			RequestID: requestID,
 		},
 		Sessions:   sessions,
+		SessionIds: sessionIds,
 		NextToken:  nextToken,
+		MaxResults: maxResults,
+		TotalCount: totalCount,
+	}, nil
+}
+
+// List returns paginated list of session IDs filtered by labels.
+//
+// Parameters:
+//   - labels: Optional labels to filter sessions (can be nil for no filtering)
+//   - page: Optional page number for pagination (starting from 1, nil or 0 for first page)
+//   - limit: Optional maximum number of items per page (nil or 0 uses default of 10)
+//
+// Returns:
+//   - *SessionListResult: Paginated list of session IDs that match the labels
+//   - error: An error if the operation fails
+//
+// Example:
+//
+//	agentBay, _ := agentbay.NewAgentBay("your_api_key")
+//
+//	// List all sessions
+//	result, err := agentBay.List(nil, nil, nil)
+//
+//	// List sessions with specific labels
+//	result, err := agentBay.List(map[string]string{"project": "demo"}, nil, nil)
+//
+//	// List sessions with pagination
+//	page := 2
+//	limit := int32(10)
+//	result, err := agentBay.List(map[string]string{"my-label": "my-value"}, &page, &limit)
+//
+//	if err == nil {
+//	    for _, sessionId := range result.SessionIds {
+//	        fmt.Printf("Session ID: %s\n", sessionId)
+//	    }
+//	    fmt.Printf("Total count: %d\n", result.TotalCount)
+//	    fmt.Printf("Request ID: %s\n", result.RequestID)
+//	}
+func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error) {
+	// Set default values
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	actualLimit := int32(10)
+	if limit != nil && *limit > 0 {
+		actualLimit = *limit
+	}
+
+	// Validate page number
+	if page != nil && *page < 1 {
+		return &SessionListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Sessions:   []Session{},
+			SessionIds: []string{},
+			NextToken:  "",
+			MaxResults: actualLimit,
+			TotalCount: 0,
+		}, fmt.Errorf("cannot reach page %d: Page number must be >= 1", *page)
+	}
+
+	// Convert labels to JSON
+	labelsJSON, err := json.Marshal(labels)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal labels to JSON: %v", err)
+	}
+
+	// Calculate next_token based on page number
+	nextToken := ""
+	if page != nil && *page > 1 {
+		// We need to fetch pages 1 through page-1 to get the next_token
+		currentPage := 1
+		for currentPage < *page {
+			// Make API call to get next_token
+			listSessionRequest := &mcp.ListSessionRequest{
+				Authorization: tea.String("Bearer " + a.APIKey),
+				Labels:        tea.String(string(labelsJSON)),
+				MaxResults:    tea.Int32(actualLimit),
+			}
+			if nextToken != "" {
+				listSessionRequest.NextToken = tea.String(nextToken)
+			}
+
+			response, err := a.Client.ListSession(listSessionRequest)
+			if err != nil {
+				return &SessionListResult{
+					ApiResponse: models.ApiResponse{
+						RequestID: models.ExtractRequestID(response),
+					},
+					Sessions:   []Session{},
+					SessionIds: []string{},
+					NextToken:  "",
+					MaxResults: actualLimit,
+					TotalCount: 0,
+				}, fmt.Errorf("cannot reach page %d: %v", *page, err)
+			}
+
+			if response.Body == nil || response.Body.Success == nil || !*response.Body.Success {
+				errorMsg := "Unknown error"
+				if response.Body != nil && response.Body.Message != nil {
+					errorMsg = *response.Body.Message
+				} else if response.Body != nil && response.Body.Code != nil {
+					errorMsg = *response.Body.Code
+				}
+				return &SessionListResult{
+					ApiResponse: models.ApiResponse{
+						RequestID: models.ExtractRequestID(response),
+					},
+					Sessions:   []Session{},
+					SessionIds: []string{},
+					NextToken:  "",
+					MaxResults: actualLimit,
+					TotalCount: 0,
+				}, fmt.Errorf("cannot reach page %d: %s", *page, errorMsg)
+			}
+
+			if response.Body.NextToken == nil || *response.Body.NextToken == "" {
+				// No more pages available
+				totalCount := int32(0)
+				if response.Body.TotalCount != nil {
+					totalCount = *response.Body.TotalCount
+				}
+				return &SessionListResult{
+					ApiResponse: models.ApiResponse{
+						RequestID: models.ExtractRequestID(response),
+					},
+					Sessions:   []Session{},
+					SessionIds: []string{},
+					NextToken:  "",
+					MaxResults: actualLimit,
+					TotalCount: totalCount,
+				}, fmt.Errorf("cannot reach page %d: No more pages available", *page)
+			}
+			nextToken = *response.Body.NextToken
+			currentPage++
+		}
+	}
+
+	// Make the actual request for the desired page
+	listSessionRequest := &mcp.ListSessionRequest{
+		Authorization: tea.String("Bearer " + a.APIKey),
+		Labels:        tea.String(string(labelsJSON)),
+		MaxResults:    tea.Int32(actualLimit),
+	}
+	if nextToken != "" {
+		listSessionRequest.NextToken = tea.String(nextToken)
+	}
+
+	// Log API request
+	fmt.Println("API Call: ListSession")
+	fmt.Printf("Request: Labels=%s, MaxResults=%d", *listSessionRequest.Labels, *listSessionRequest.MaxResults)
+	if listSessionRequest.NextToken != nil {
+		fmt.Printf(", NextToken=%s", *listSessionRequest.NextToken)
+	}
+	fmt.Println()
+
+	response, err := a.Client.ListSession(listSessionRequest)
+
+	// Log API response
+	if err != nil {
+		fmt.Println("Error calling ListSession:", err)
+		return nil, err
+	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
+	if response != nil && response.Body != nil {
+		fmt.Println("Response from ListSession:", response.Body)
+	}
+
+	// Check for errors in the response
+	if response.Body == nil || response.Body.Success == nil || !*response.Body.Success {
+		errorMsg := "Unknown error"
+		if response.Body != nil && response.Body.Message != nil {
+			errorMsg = *response.Body.Message
+		} else if response.Body != nil && response.Body.Code != nil {
+			errorMsg = *response.Body.Code
+		}
+		return &SessionListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Sessions:   []Session{},
+			SessionIds: []string{},
+			NextToken:  "",
+			MaxResults: actualLimit,
+			TotalCount: 0,
+		}, fmt.Errorf("failed to list sessions: %s", errorMsg)
+	}
+
+	var sessionIds []string
+	var nextTokenResult string
+	var maxResults int32 = actualLimit
+	var totalCount int32
+
+	if response.Body != nil {
+		// Extract pagination information
+		if response.Body.NextToken != nil {
+			nextTokenResult = *response.Body.NextToken
+		}
+		if response.Body.MaxResults != nil {
+			maxResults = *response.Body.MaxResults
+		}
+		if response.Body.TotalCount != nil {
+			totalCount = *response.Body.TotalCount
+		}
+
+		// Extract session data
+		if response.Body.Data != nil {
+			for _, sessionData := range response.Body.Data {
+				if sessionData.SessionId != nil {
+					sessionIds = append(sessionIds, *sessionData.SessionId)
+				}
+			}
+		}
+	}
+
+	return &SessionListResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Sessions:   []Session{}, // Keep empty for backward compatibility
+		SessionIds: sessionIds,
+		NextToken:  nextTokenResult,
 		MaxResults: maxResults,
 		TotalCount: totalCount,
 	}, nil

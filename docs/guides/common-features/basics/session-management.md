@@ -128,27 +128,100 @@ else:
     print(f"Failed to get labels: {result.error_message}")
 ```
 
-### Filtering Sessions by Labels
+## Listing Sessions
 
-You can list sessions based on their labels to organize and manage your sessions:
+The `list()` method allows you to query and retrieve session IDs from your AgentBay account. This is useful for managing multiple sessions, monitoring active environments, and organizing your cloud resources.
+
+### Basic Usage
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import ListSessionParams
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key=api_key)
 
-# List sessions by labels
-params = ListSessionParams(labels={"project": "demo"})
-result = agent_bay.list_by_labels(params)
+# List all active sessions
+result = agent_bay.list()
 
-print(f"Found {len(result.sessions)} sessions")
-for session in result.sessions:
-    print(f"Session ID: {session.session_id}")
-    # Clean up sessions when done
-    agent_bay.delete(session)
+if result.success:
+    print(f"Found {result.total_count} total sessions")
+    print(f"Showing {len(result.session_ids)} session IDs on this page")
+    print(f"Request ID: {result.request_id}")
+
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+else:
+    print(f"Failed to list sessions: {result.error_message}")
+
+# Output:
+# Found 0 total sessions
+# Showing 0 session IDs on this page
+# Request ID: 6620****-****-****-****-********C2C1
 ```
+
+### Filtering by Labels
+
+You can filter sessions by labels to find specific environments:
+
+```python
+from agentbay import AgentBay
+
+# Initialize the SDK
+agent_bay = AgentBay(api_key=api_key)
+
+# List sessions with specific labels
+result = agent_bay.list(labels={"project": "demo", "environment": "testing"})
+
+if result.success:
+    print(f"Found {len(result.session_ids)} sessions matching the labels")
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+
+# Output (after creating a session with matching labels):
+# Found 1 sessions matching the labels
+# Session ID: session-**********************sic
+```
+
+### Pagination
+
+For accounts with many sessions, use pagination to retrieve results in manageable chunks:
+
+```python
+from agentbay import AgentBay
+
+# Initialize the SDK
+agent_bay = AgentBay(api_key=api_key)
+
+# Get page 2 with 10 items per page
+result = agent_bay.list(labels={"project": "demo"}, page=2, limit=10)
+
+if result.success:
+    print(f"Page 2 of results (showing {len(result.session_ids)} sessions)")
+    print(f"Total sessions: {result.total_count}")
+    print(f"Next page token: {result.next_token}")
+
+# Output (when there are no sessions on page 2):
+# Page 2 of results (showing 0 sessions)
+# Total sessions: 0
+# Next page token: None
+```
+
+### Important Notes
+
+**Active Sessions Only:**
+- The `list()` method **only returns currently active sessions**
+- Sessions that have been deleted or released (either manually via `delete()` or automatically due to timeout) will **not** be included in the results
+- To check if a specific session is still active, use the `get()` method or `session.info()` method
+
+**Return Value:**
+- The method returns session IDs (strings) rather than full Session objects
+- Use `agent_bay.get(session_id)` to retrieve a full Session object if needed
+
+**Key Features:**
+- **Flexible Filtering**: List all sessions or filter by any combination of labels
+- **Pagination Support**: Use `page` and `limit` parameters for easy pagination
+- **Request ID**: All responses include a `request_id` for tracking and debugging
+- **Efficient**: Returns only session IDs for better performance
 
 ## Getting Session Information
 
@@ -259,6 +332,14 @@ if get_result.success:
     print(result.output)
 else:
     print(f"Failed to get session: {get_result.error_message}")
+
+# Output (when session exists):
+# Retrieved session: session-**********************uhi
+# Request ID: B27C****-****-****-****-********0366
+# Command output: Hello, World!
+
+# Output (when session is deleted or not found):
+# Failed to get session: Failed to get session session-**********************uhi: Failed to get session session-**********************uhi: Error: InvalidMcpSession.NotFound code: 400,   Resource [McpSession] is not found. request id: 1C3C****-****-****-****-********AD3F ...
 ```
 
 

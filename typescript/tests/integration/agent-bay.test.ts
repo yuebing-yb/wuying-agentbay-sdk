@@ -97,13 +97,13 @@ describe("AgentBay", () => {
 
       // List sessions
       log("Listing sessions...");
-      const sessions = agentBay.list();
+      const listResult = await agentBay.list();
 
       // Ensure at least one session (the one we just created)
-      expect(sessions.length).toBeGreaterThanOrEqual(1);
+      expect(listResult.sessionIds.length).toBeGreaterThanOrEqual(1);
 
       // Check if our created session is in the list
-      const found = sessions.some((s) => s.sessionId === session.sessionId);
+      const found = listResult.sessionIds.some((sid) => sid === session.sessionId);
       expect(found).toBe(true);
 
       // Delete the session
@@ -121,11 +121,11 @@ describe("AgentBay", () => {
       expect(deleteResponse.errorMessage).toBeUndefined();
 
       // List sessions again to ensure it's deleted
-      const sessionsAfterDelete = agentBay.list();
+      const listResultAfterDelete = await agentBay.list();
 
       // Check if the deleted session is not in the list
-      const stillExists = sessionsAfterDelete.some(
-        (s) => s.sessionId === session.sessionId
+      const stillExists = listResultAfterDelete.sessionIds.some(
+        (sid) => sid === session.sessionId
       );
       expect(stillExists).toBe(false);
     });
@@ -219,8 +219,8 @@ describe("AgentBay", () => {
 
     it("should list sessions by labels with requestId", async () => {
       // Test 1: List all sessions
-      const allSessions = agentBay.list();
-      log(`Found ${allSessions.length} sessions in total`);
+      const allSessionsResult = await agentBay.list();
+      log(`Found ${allSessionsResult.sessionIds.length} sessions in total`);
 
       // Test 2: List sessions by environment=development label using new API
       try {
