@@ -239,9 +239,6 @@ In certain scenarios, you may need to recover a Session object using its session
 
 The `get` method is the recommended way to recover a session. It retrieves session information from the cloud and returns a ready-to-use Session object.
 
-<Tabs groupId="sdk-language">
-<TabItem value="python" label="Python">
-
 ```python
 from agentbay import AgentBay
 
@@ -259,69 +256,6 @@ print(f"Retrieved session: {session.session_id}")
 result = session.command.execute_command("echo 'Hello, World!'")
 print(result.output)
 ```
-
-</TabItem>
-<TabItem value="typescript" label="TypeScript">
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-// Initialize the SDK
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-// Retrieve session using its ID
-const sessionId = 'your_existing_session_id';
-const session = await agentBay.get(sessionId);
-
-// The session is now ready to use
-console.log(`Retrieved session: ${session.sessionId}`);
-
-// You can now perform any session operations
-const result = await session.command.executeCommand("echo 'Hello, World!'");
-console.log(result.output);
-```
-
-</TabItem>
-<TabItem value="go" label="Go">
-
-```go
-package main
-
-import (
-    "fmt"
-    "log"
-    
-    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-
-func main() {
-    // Initialize the SDK
-    client, err := agentbay.NewAgentBay("your_api_key", nil)
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    // Retrieve session using its ID
-    sessionID := "your_existing_session_id"
-    session, err := client.Get(sessionID)
-    if err != nil {
-        log.Fatalf("Failed to get session: %v", err)
-    }
-    
-    // The session is now ready to use
-    fmt.Printf("Retrieved session: %s\n", session.SessionID)
-    
-    // You can now perform any session operations
-    result, err := session.Command.ExecuteCommand("echo 'Hello, World!'")
-    if err != nil {
-        log.Fatal(err)
-    }
-    fmt.Println(result.Output)
-}
-```
-
-</TabItem>
-</Tabs>
 
 
 ### Important Considerations
