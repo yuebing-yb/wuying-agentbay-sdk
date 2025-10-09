@@ -1,6 +1,7 @@
 import pytest
 from agentbay import AgentBay
 from agentbay.session import Session
+from agentbay.model.response import SessionResult
 
 
 class TestAgentBayGet:
@@ -10,28 +11,31 @@ class TestAgentBayGet:
         """Test get with empty session ID."""
         agentbay = AgentBay(api_key="test-api-key")
 
-        with pytest.raises(ValueError) as exc_info:
-            agentbay.get("")
+        result = agentbay.get("")
 
-        assert "session_id is required" in str(exc_info.value)
+        assert isinstance(result, SessionResult)
+        assert not result.success
+        assert "session_id is required" in result.error_message
 
     def test_get_none_session_id(self):
         """Test get with None session ID."""
         agentbay = AgentBay(api_key="test-api-key")
 
-        with pytest.raises(ValueError) as exc_info:
-            agentbay.get(None)
+        result = agentbay.get(None)
 
-        assert "session_id is required" in str(exc_info.value)
+        assert isinstance(result, SessionResult)
+        assert not result.success
+        assert "session_id is required" in result.error_message
 
     def test_get_whitespace_session_id(self):
         """Test get with whitespace-only session ID."""
         agentbay = AgentBay(api_key="test-api-key")
 
-        with pytest.raises(ValueError) as exc_info:
-            agentbay.get("   ")
+        result = agentbay.get("   ")
 
-        assert "session_id is required" in str(exc_info.value)
+        assert isinstance(result, SessionResult)
+        assert not result.success
+        assert "session_id is required" in result.error_message
 
     def test_get_method_exists(self):
         """Test that get method exists and has correct signature."""
@@ -41,14 +45,18 @@ class TestAgentBayGet:
         assert hasattr(agentbay, "get")
         assert callable(getattr(agentbay, "get"))
 
-    def test_get_returns_session_type(self):
-        """Test that get method signature indicates it returns Session."""
+    def test_get_returns_session_result_type(self):
+        """Test that get method returns SessionResult."""
         agentbay = AgentBay(api_key="test-api-key")
 
         # Check the method exists and is callable
         get_method = getattr(agentbay, "get", None)
         assert get_method is not None
         assert callable(get_method)
+
+        # Test with invalid input to verify it returns SessionResult
+        result = agentbay.get("")
+        assert isinstance(result, SessionResult)
 
     def test_get_error_message_format(self):
         """Test error message formatting for various invalid inputs."""
@@ -61,9 +69,10 @@ class TestAgentBayGet:
         ]
 
         for session_id, expected_error in test_cases:
-            with pytest.raises(ValueError) as exc_info:
-                agentbay.get(session_id)
-            assert expected_error in str(exc_info.value)
+            result = agentbay.get(session_id)
+            assert isinstance(result, SessionResult)
+            assert not result.success
+            assert expected_error in result.error_message
 
 
 class TestAgentBayGetValidation:

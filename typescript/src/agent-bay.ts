@@ -299,7 +299,7 @@ export class AgentBay {
       }
 
       // ResourceUrl is optional in CreateMcpSession response
-      const resourceUrl = data.resourceUrl;
+      const resourceUrl = data.resourceUrl || "";
 
       log("session_id =", sessionId);
       log("resource_url =", resourceUrl);
@@ -317,6 +317,9 @@ export class AgentBay {
       if (data.token) {
         session.token = data.token;
       }
+
+      // Set ResourceUrl
+      session.resourceUrl = resourceUrl;
 
       // Set browser recording state
       session.enableBrowserReplay = params.enableBrowserReplay || false;
@@ -594,6 +597,11 @@ export class AgentBay {
           resourceId: body.data.resourceId || "",
           sessionId: body.data.sessionId || "",
           success: body.data.success || false,
+          httpPort: body.data.httpPort || "",
+          networkInterfaceIp: body.data.networkInterfaceIp || "",
+          token: body.data.token || "",
+          vpcResource: body.data.vpcResource || false,
+          resourceUrl: body.data.resourceUrl || "",
         };
       }
 
@@ -614,41 +622,63 @@ export class AgentBay {
    * Get a session by its ID.
    *
    * This method retrieves a session by calling the GetSession API
-   * and returns a Session object that can be used for further operations.
+   * and returns a SessionResult containing the Session object and request ID.
    *
    * @param sessionId - The ID of the session to retrieve
-   * @returns Promise resolving to the Session instance
-   * @throws Error if sessionId is not provided or is empty
-   * @throws Error if the API call fails or session is not found
+   * @returns Promise resolving to SessionResult with the Session instance, request ID, and success status
    *
    * @example
    * ```typescript
-   * const session = await agentBay.get("my-session-id");
-   * console.log(session.sessionId);
+   * const result = await agentBay.get("my-session-id");
+   * if (result.success) {
+   *   console.log(result.session.sessionId);
+   *   console.log(result.requestId);
+   * }
    * ```
    */
-  async get(sessionId: string): Promise<Session> {
+  async get(sessionId: string): Promise<SessionResult> {
     // Validate input
     if (
       !sessionId ||
       (typeof sessionId === "string" && !sessionId.trim())
     ) {
-      throw new Error("session_id is required");
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: "session_id is required",
+      };
     }
 
     // Call GetSession API
-    const result = await this.getSession(sessionId);
+    const getResult = await this.getSession(sessionId);
 
     // Check if the API call was successful
-    if (!result.success) {
-      const errorMsg = result.errorMessage || "Unknown error";
-      throw new Error(`Failed to get session ${sessionId}: ${errorMsg}`);
+    if (!getResult.success) {
+      const errorMsg = getResult.errorMessage || "Unknown error";
+      return {
+        requestId: getResult.requestId,
+        success: false,
+        errorMessage: `Failed to get session ${sessionId}: ${errorMsg}`,
+      };
     }
 
-    // Create and return the Session object
+    // Create the Session object
     const session = new Session(this, sessionId);
 
-    return session;
+    // Set VPC-related information and ResourceUrl from GetSession response
+    if (getResult.data) {
+      session.isVpc = getResult.data.vpcResource;
+      session.networkInterfaceIp = getResult.data.networkInterfaceIp;
+      session.httpPort = getResult.data.httpPort;
+      session.token = getResult.data.token;
+      session.resourceUrl = getResult.data.resourceUrl;
+    }
+
+    return {
+      requestId: getResult.requestId,
+      success: true,
+      session,
+    };
   }
 
   // For internal use by the Session class

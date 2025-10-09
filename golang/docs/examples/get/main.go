@@ -32,14 +32,21 @@ func main() {
 
 	// Retrieve the session by ID using Get API
 	fmt.Println("\nRetrieving session using Get API...")
-	session, err := client.Get(sessionId)
+	getResult, err := client.Get(sessionId)
 	if err != nil {
 		log.Fatalf("Failed to get session: %v", err)
 	}
 
+	if !getResult.Success || getResult.Session == nil {
+		log.Fatalf("Failed to get session: %s", getResult.ErrorMessage)
+	}
+
+	session := getResult.Session
+
 	// Display session information
 	fmt.Printf("Successfully retrieved session:\n")
 	fmt.Printf("  Session ID: %s\n", session.SessionID)
+	fmt.Printf("  Request ID: %s\n", getResult.RequestID)
 
 	// The session object can be used for further operations
 	// For example, you can execute commands, work with files, etc.

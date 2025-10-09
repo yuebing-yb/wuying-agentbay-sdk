@@ -237,7 +237,7 @@ In certain scenarios, you may need to recover a Session object using its session
 
 ### Using the get Method
 
-The `get` method is the recommended way to recover a session. It retrieves session information from the cloud and returns a ready-to-use Session object.
+The `get` method is the recommended way to recover a session. It retrieves session information from the cloud and returns a ready-to-use Session object with the API request ID.
 
 ```python
 from agentbay import AgentBay
@@ -247,14 +247,18 @@ agent_bay = AgentBay(api_key="your_api_key")
 
 # Retrieve session using its ID
 session_id = "your_existing_session_id"
-session = agent_bay.get(session_id)
+get_result = agent_bay.get(session_id)
 
-# The session is now ready to use
-print(f"Retrieved session: {session.session_id}")
-
-# You can now perform any session operations
-result = session.command.execute_command("echo 'Hello, World!'")
-print(result.output)
+if get_result.success:
+    session = get_result.session
+    print(f"Retrieved session: {session.session_id}")
+    print(f"Request ID: {get_result.request_id}")
+    
+    # You can now perform any session operations
+    result = session.command.execute_command("echo 'Hello, World!'")
+    print(result.output)
+else:
+    print(f"Failed to get session: {get_result.error_message}")
 ```
 
 

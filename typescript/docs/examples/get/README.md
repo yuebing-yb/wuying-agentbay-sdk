@@ -43,12 +43,16 @@ async function main() {
 
   // Retrieve a session by ID
   const sessionId = "your-session-id";
-  const session = await agentBay.get(sessionId);
+  const result = await agentBay.get(sessionId);
 
-  console.log(`Retrieved session: ${session.sessionId}`);
-
-  // Use the session for further operations
-  // ...
+  if (result.success && result.session) {
+    console.log(`Retrieved session: ${result.session.sessionId}`);
+    console.log(`Request ID: ${result.requestId}`);
+    // Use the session for further operations
+    // ...
+  } else {
+    console.error(`Failed to get session: ${result.errorMessage}`);
+  }
 }
 
 main();
@@ -59,7 +63,7 @@ main();
 ### get
 
 ```typescript
-async get(sessionId: string): Promise<Session>
+async get(sessionId: string): Promise<SessionResult>
 ```
 
 Get a session by its ID.
@@ -68,11 +72,11 @@ Get a session by its ID.
 - `sessionId` (string): The ID of the session to retrieve
 
 **Returns:**
-- `Promise<Session>`: Promise resolving to the Session instance
-
-**Throws:**
-- `Error`: If `sessionId` is not provided or is empty
-- `Error`: If the API call fails or session is not found
+- `Promise<SessionResult>`: Promise resolving to result object containing:
+  - `success` (boolean): Whether the operation succeeded
+  - `session` (Session): The Session instance if successful
+  - `requestId` (string): The API request ID
+  - `errorMessage` (string): Error message if failed
 
 ## Expected Output
 
@@ -83,6 +87,7 @@ Created session with ID: session-xxxxxxxxxxxxx
 Retrieving session using Get API...
 Successfully retrieved session:
   Session ID: session-xxxxxxxxxxxxx
+  Request ID: DAD825FE-2CD8-19C8-BB30-CC3BA26B9398
 
 Session is ready for use
 
@@ -99,29 +104,27 @@ Session session-xxxxxxxxxxxxx deleted successfully
 
 ## Error Handling
 
-The `get` method will throw errors in the following cases:
+The `get` method returns a `SessionResult` object with error information:
 
-1. **Error**: When session_id is empty or undefined
+1. **Empty session_id**: Result will have `success: false`
    ```typescript
-   try {
-     await agentBay.get("");
-   } catch (error) {
-     console.error("Invalid input:", error);
+   const result = await agentBay.get("");
+   if (!result.success) {
+     console.error(`Error: ${result.errorMessage}`);  // "session_id is required"
    }
    ```
 
-2. **Error**: When the API call fails or session is not found
+2. **Non-existent session**: Result will have `success: false`
    ```typescript
-   try {
-     await agentBay.get("non-existent-session-id");
-   } catch (error) {
-     console.error("API error:", error);
+   const result = await agentBay.get("non-existent-session-id");
+   if (!result.success) {
+     console.error(`Error: ${result.errorMessage}`);  // "Failed to get session..."
    }
    ```
 
 ## TypeScript Support
 
-This example is fully typed with TypeScript. The `get` method returns a typed `Session` object with full IDE autocomplete support.
+This example is fully typed with TypeScript. The `get` method returns a typed `SessionResult` object with full IDE autocomplete support.
 
 ```typescript
 import { AgentBay, Session } from "wuying-agentbay-sdk";

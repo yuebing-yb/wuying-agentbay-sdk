@@ -7,12 +7,22 @@ export class GetSessionResponseBodyData extends $dara.Model {
   resourceId?: string;
   sessionId?: string;
   success?: boolean;
+  httpPort?: string;
+  networkInterfaceIp?: string;
+  token?: string;
+  vpcResource?: boolean;
+  resourceUrl?: string;
   static names(): { [key: string]: string } {
     return {
       appInstanceId: 'AppInstanceId',
       resourceId: 'ResourceId',
       sessionId: 'SessionId',
       success: 'Success',
+      httpPort: 'HttpPort',
+      networkInterfaceIp: 'NetworkInterfaceIp',
+      token: 'Token',
+      vpcResource: 'VpcResource',
+      resourceUrl: 'ResourceUrl',
     };
   }
 
@@ -22,6 +32,11 @@ export class GetSessionResponseBodyData extends $dara.Model {
       resourceId: 'string',
       sessionId: 'string',
       success: 'boolean',
+      httpPort: 'string',
+      networkInterfaceIp: 'string',
+      token: 'string',
+      vpcResource: 'boolean',
+      resourceUrl: 'string',
     };
   }
 

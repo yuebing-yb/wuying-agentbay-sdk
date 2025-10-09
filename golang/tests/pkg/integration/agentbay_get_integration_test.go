@@ -29,29 +29,42 @@ func TestAgentBayGetAPI(t *testing.T) {
 	t.Logf("Session created with ID: %s", sessionId)
 
 	fmt.Println("Testing Get API...")
-	session, err := client.Get(sessionId)
+	result, err := client.Get(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 
-	if session == nil {
-		t.Fatal("Get returned nil session")
+	if result == nil {
+		t.Fatal("Get returned nil result")
 	}
 
-	if session.SessionID != sessionId {
-		t.Errorf("Expected SessionID %s, got %s", sessionId, session.SessionID)
+	if !result.Success {
+		t.Fatalf("Get failed: %s", result.ErrorMessage)
 	}
 
-	if session.AgentBay == nil {
+	if result.Session == nil {
+		t.Fatal("Result.Session is nil")
+	}
+
+	if result.Session.SessionID != sessionId {
+		t.Errorf("Expected SessionID %s, got %s", sessionId, result.Session.SessionID)
+	}
+
+	if result.Session.AgentBay == nil {
 		t.Error("Session AgentBay reference is nil")
 	}
 
-	t.Logf("Successfully retrieved session with ID: %s", session.SessionID)
+	if result.RequestID == "" {
+		t.Error("RequestID should not be empty")
+	}
+
+	t.Logf("Successfully retrieved session with ID: %s", result.Session.SessionID)
+	t.Logf("Request ID: %s", result.RequestID)
 
 	fmt.Println("Get API test passed successfully")
 
 	fmt.Println("Cleaning up: Deleting the session...")
-	deleteResult, err := session.Delete()
+	deleteResult, err := result.Session.Delete()
 	if err != nil {
 		t.Fatalf("Failed to delete session: %v", err)
 	}
@@ -74,13 +87,22 @@ func TestAgentBayGetNonExistentSession(t *testing.T) {
 
 	fmt.Println("Testing Get API with non-existent session ID...")
 	nonExistentSessionId := "session-nonexistent-12345"
-	_, err = client.Get(nonExistentSessionId)
+	result, err := client.Get(nonExistentSessionId)
 
-	if err == nil {
-		t.Fatal("Expected error for non-existent session, got nil")
+	// Get should not return error, but result.Success should be false
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	t.Logf("Correctly received error for non-existent session: %v", err)
+	if result.Success {
+		t.Fatal("Expected failure for non-existent session, got success")
+	}
+
+	if result.ErrorMessage == "" {
+		t.Error("ErrorMessage should not be empty for failed result")
+	}
+
+	t.Logf("Correctly received error for non-existent session: %s", result.ErrorMessage)
 	fmt.Println("Get API non-existent session test passed successfully")
 }
 
@@ -96,17 +118,22 @@ func TestAgentBayGetEmptySessionId(t *testing.T) {
 	}
 
 	fmt.Println("Testing Get API with empty session ID...")
-	_, err = client.Get("")
+	result, err := client.Get("")
 
-	if err == nil {
-		t.Fatal("Expected error for empty session ID, got nil")
+	// Get should not return error, but result.Success should be false
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if result.Success {
+		t.Fatal("Expected failure for empty session ID, got success")
 	}
 
 	expectedErrMsg := "session_id is required"
-	if err.Error() != expectedErrMsg {
-		t.Errorf("Expected error message '%s', got '%s'", expectedErrMsg, err.Error())
+	if result.ErrorMessage != expectedErrMsg {
+		t.Errorf("Expected error message '%s', got '%s'", expectedErrMsg, result.ErrorMessage)
 	}
 
-	t.Logf("Correctly received error for empty session ID: %v", err)
+	t.Logf("Correctly received error for empty session ID: %s", result.ErrorMessage)
 	fmt.Println("Get API empty session ID test passed successfully")
 }

@@ -32,11 +32,17 @@ def main():
 
     # Retrieve the session by ID using Get API
     print("\nRetrieving session using Get API...")
-    session = agentbay.get(session_id)
+    get_result = agentbay.get(session_id)
+    
+    if not get_result.success:
+        raise RuntimeError(f"Failed to get session: {get_result.error_message}")
+    
+    session = get_result.session
 
     # Display session information
     print("Successfully retrieved session:")
     print(f"  Session ID: {session.session_id}")
+    print(f"  Request ID: {get_result.request_id}")
 
     # The session object can be used for further operations
     # For example, you can execute commands, work with files, etc.

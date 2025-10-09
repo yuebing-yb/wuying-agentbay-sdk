@@ -14,16 +14,20 @@ func TestAgentBayGetEmptySessionId(t *testing.T) {
 	}
 
 	// Test Get method with empty session ID
-	_, err := ab.Get("")
+	result, err := ab.Get("")
 
 	// Assertions
-	if err == nil {
-		t.Fatal("Expected error for empty session ID, got nil")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if result.Success {
+		t.Fatal("Expected failure for empty session ID")
 	}
 
 	expectedErrMsg := "session_id is required"
-	if err.Error() != expectedErrMsg {
-		t.Errorf("Expected error message '%s', got '%s'", expectedErrMsg, err.Error())
+	if result.ErrorMessage != expectedErrMsg {
+		t.Errorf("Expected error message '%s', got '%s'", expectedErrMsg, result.ErrorMessage)
 	}
 }
 
@@ -49,14 +53,18 @@ func TestAgentBayGetBasicValidation(t *testing.T) {
 				APIKey: "test-api-key",
 			}
 
-			_, err := ab.Get(tt.sessionID)
+			result, err := ab.Get(tt.sessionID)
+
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
 
 			if tt.expectError {
-				if err == nil {
-					t.Fatalf("Expected error, got nil")
+				if result.Success {
+					t.Fatalf("Expected failure, got success")
 				}
-				if err.Error() != tt.errorMsg {
-					t.Errorf("Expected error message '%s', got '%s'", tt.errorMsg, err.Error())
+				if result.ErrorMessage != tt.errorMsg {
+					t.Errorf("Expected error message '%s', got '%s'", tt.errorMsg, result.ErrorMessage)
 				}
 			}
 		})
@@ -66,7 +74,7 @@ func TestAgentBayGetBasicValidation(t *testing.T) {
 // TestAgentBayGetInterfaceCompliance tests that Get method signature is correct
 func TestAgentBayGetInterfaceCompliance(t *testing.T) {
 	// This test ensures the Get method exists with the correct signature
-	var _ func(string) (*agentbay.Session, error) = (&agentbay.AgentBay{}).Get
+	var _ func(string) (*agentbay.SessionResult, error) = (&agentbay.AgentBay{}).Get
 
 	// If this compiles, the method signature is correct
 	t.Log("Get method has correct signature")
@@ -92,12 +100,15 @@ func TestAgentBayGetErrorMessages(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ab.Get(tt.sessionID)
-			if err == nil {
-				t.Fatal("Expected error, got nil")
+			result, err := ab.Get(tt.sessionID)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
 			}
-			if err.Error() != tt.wantErr {
-				t.Errorf("Expected error '%s', got '%s'", tt.wantErr, err.Error())
+			if result.Success {
+				t.Fatal("Expected failure, got success")
+			}
+			if result.ErrorMessage != tt.wantErr {
+				t.Errorf("Expected error '%s', got '%s'", tt.wantErr, result.ErrorMessage)
 			}
 		})
 	}
@@ -116,16 +127,20 @@ func TestGetMethodDocumentation(t *testing.T) {
 		APIKey: "test-key",
 	}
 
-	// This should return an error (empty session ID) but shouldn't panic
-	_, err := ab.Get("")
-	if err == nil {
-		t.Error("Expected error for empty session ID")
+	// This should return a failure result (empty session ID) but shouldn't panic
+	result, err := ab.Get("")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	if result.Success {
+		t.Error("Expected failure for empty session ID")
 	}
 
 	// Verify error message format
 	expectedPrefix := "session_id is required"
-	if err.Error() != expectedPrefix {
-		t.Errorf("Expected error message to be '%s', got '%s'", expectedPrefix, err.Error())
+	if result.ErrorMessage != expectedPrefix {
+		t.Errorf("Expected error message to be '%s', got '%s'", expectedPrefix, result.ErrorMessage)
 	}
 }
 
@@ -135,11 +150,16 @@ func ExampleAgentBay_Get() {
 		APIKey: "your-api-key",
 	}
 
-	session, err := ab.Get("session-id-123")
+	result, err := ab.Get("session-id-123")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
 
-	fmt.Printf("Retrieved session: %s\n", session.SessionID)
+	if !result.Success {
+		fmt.Printf("Failed: %s\n", result.ErrorMessage)
+		return
+	}
+
+	fmt.Printf("Retrieved session: %s\n", result.Session.SessionID)
 }

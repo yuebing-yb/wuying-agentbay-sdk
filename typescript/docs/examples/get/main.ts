@@ -32,11 +32,18 @@ async function main() {
 
   // Retrieve the session by ID using Get API
   console.log("\nRetrieving session using Get API...");
-  const session = await agentBay.get(sessionId);
+  const getResult = await agentBay.get(sessionId);
+  
+  if (!getResult.success || !getResult.session) {
+    throw new Error(`Failed to get session: ${getResult.errorMessage}`);
+  }
+  
+  const session = getResult.session;
 
   // Display session information
   console.log("Successfully retrieved session:");
   console.log(`  Session ID: ${session.sessionId}`);
+  console.log(`  Request ID: ${getResult.requestId}`);
 
   // The session object can be used for further operations
   // For example, you can execute commands, work with files, etc.

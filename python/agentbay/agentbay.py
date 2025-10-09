@@ -349,7 +349,7 @@ class AgentBay:
                 )
 
             # ResourceUrl is optional in CreateMcpSession response
-            resource_url = data.get("ResourceUrl")
+            resource_url = data.get("ResourceUrl", "")
 
             logger.info(f"🆔 Session created: {session_id}")
             logger.debug(f"🔗 Resource URL: {resource_url}")
@@ -367,6 +367,9 @@ class AgentBay:
                 session.http_port = data["HttpPort"]
             if data.get("Token"):
                 session.token = data["Token"]
+
+            # Set ResourceUrl
+            session.resource_url = resource_url
 
             # Set browser recording state
             session.enableBrowserReplay = params.enable_browser_replay
@@ -650,6 +653,11 @@ class AgentBay:
                         resource_id=data_dict.get("ResourceId", ""),
                         session_id=data_dict.get("SessionId", ""),
                         success=data_dict.get("Success", False),
+                        http_port=data_dict.get("HttpPort", ""),
+                        network_interface_ip=data_dict.get("NetworkInterfaceIp", ""),
+                        token=data_dict.get("Token", ""),
+                        vpc_resource=data_dict.get("VpcResource", False),
+                        resource_url=data_dict.get("ResourceUrl", ""),
                     )
 
                 return GetSessionResult(
@@ -675,41 +683,58 @@ class AgentBay:
                 error_message=f"Failed to get session {session_id}: {e}",
             )
 
-    def get(self, session_id: str) -> Session:
+    def get(self, session_id: str) -> SessionResult:
         """
         Get a session by its ID.
 
         This method retrieves a session by calling the GetSession API
-        and returns a Session object that can be used for further operations.
+        and returns a SessionResult containing the Session object and request ID.
 
         Args:
             session_id (str): The ID of the session to retrieve.
 
         Returns:
-            Session: The Session instance.
-
-        Raises:
-            ValueError: If session_id is not provided or is empty.
-            RuntimeError: If the API call fails or session is not found.
+            SessionResult: Result containing the Session instance, request ID, and success status.
 
         Example:
-            >>> session = agentbay.get("my-session-id")
-            >>> print(session.session_id)
-            my-session-id
+            >>> result = agentbay.get("my-session-id")
+            >>> if result.success:
+            >>>     print(result.session.session_id)
+            >>>     print(result.request_id)
         """
         # Validate input
         if not session_id or (isinstance(session_id, str) and not session_id.strip()):
-            raise ValueError("session_id is required")
+            return SessionResult(
+                request_id="",
+                success=False,
+                error_message="session_id is required",
+            )
 
         # Call GetSession API
-        result = self.get_session(session_id)
+        get_result = self.get_session(session_id)
 
         # Check if the API call was successful
-        if not result.success:
-            error_msg = result.error_message or "Unknown error"
-            raise RuntimeError(f"Failed to get session {session_id}: {error_msg}")
+        if not get_result.success:
+            error_msg = get_result.error_message or "Unknown error"
+            return SessionResult(
+                request_id=get_result.request_id,
+                success=False,
+                error_message=f"Failed to get session {session_id}: {error_msg}",
+            )
 
-        # Create and return the Session object
+        # Create the Session object
         session = Session(self, session_id)
 
-        return session
+        # Set VPC-related information and ResourceUrl from GetSession response
+        if get_result.data:
+            session.is_vpc = get_result.data.vpc_resource
+            session.network_interface_ip = get_result.data.network_interface_ip
+            session.http_port = get_result.data.http_port
+            session.token = get_result.data.token
+            session.resource_url = get_result.data.resource_url
+
+        return SessionResult(
+            request_id=get_result.request_id,
+            success=True,
+            session=session,
+        )

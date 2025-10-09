@@ -42,6 +42,16 @@ export interface GetSessionData {
   sessionId: string;
   /** Success status */
   success: boolean;
+  /** HTTP port for VPC sessions */
+  httpPort: string;
+  /** Network interface IP for VPC sessions */
+  networkInterfaceIp: string;
+  /** Token for VPC sessions */
+  token: string;
+  /** Whether this session uses VPC resources */
+  vpcResource: boolean;
+  /** Resource URL for accessing the session */
+  resourceUrl: string;
 }
 
 /**

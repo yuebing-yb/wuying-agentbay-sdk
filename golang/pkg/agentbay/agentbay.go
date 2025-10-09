@@ -266,6 +266,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		session.Token = *response.Body.Data.Token
 	}
 
+	// Set ResourceUrl
+	if response.Body.Data.ResourceUrl != nil {
+		session.ResourceUrl = *response.Body.Data.ResourceUrl
+	}
+
 	a.Sessions.Store(session.SessionID, *session)
 
 	// Apply mobile configuration if provided
@@ -476,10 +481,15 @@ type GetSessionResult struct {
 
 // GetSessionData represents the data returned by GetSession API
 type GetSessionData struct {
-	AppInstanceID string
-	ResourceID    string
-	SessionID     string
-	Success       bool
+	AppInstanceID      string
+	ResourceID         string
+	SessionID          string
+	Success            bool
+	HttpPort           string
+	NetworkInterfaceIP string
+	Token              string
+	VpcResource        bool
+	ResourceUrl        string
 }
 
 // GetSession retrieves session information by session ID
@@ -539,6 +549,21 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 			if response.Body.Data.Success != nil {
 				data.Success = *response.Body.Data.Success
 			}
+			if response.Body.Data.HttpPort != nil {
+				data.HttpPort = *response.Body.Data.HttpPort
+			}
+			if response.Body.Data.NetworkInterfaceIp != nil {
+				data.NetworkInterfaceIP = *response.Body.Data.NetworkInterfaceIp
+			}
+			if response.Body.Data.Token != nil {
+				data.Token = *response.Body.Data.Token
+			}
+			if response.Body.Data.VpcResource != nil {
+				data.VpcResource = *response.Body.Data.VpcResource
+			}
+			if response.Body.Data.ResourceUrl != nil {
+				data.ResourceUrl = *response.Body.Data.ResourceUrl
+			}
 			result.Data = data
 		}
 	}
@@ -547,47 +572,83 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 }
 
 // Get retrieves a session by its ID.
-// This method calls the GetSession API and returns a Session object.
+// This method calls the GetSession API and returns a SessionResult containing the Session object and request ID.
 //
 // Parameters:
 //   - sessionID: The ID of the session to retrieve
 //
 // Returns:
-//   - *Session: The Session instance
+//   - *SessionResult: Result containing the Session instance, request ID, and success status
 //   - error: An error if the operation fails
 //
 // Example:
 //
-//	session, err := agentBay.Get("my-session-id")
+//	result, err := agentBay.Get("my-session-id")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	fmt.Printf("Session ID: %s\n", session.SessionID)
-func (a *AgentBay) Get(sessionID string) (*Session, error) {
+//	if result.Success {
+//	    fmt.Printf("Session ID: %s\n", result.Session.SessionID)
+//	    fmt.Printf("Request ID: %s\n", result.RequestID)
+//	}
+func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	if sessionID == "" {
-		return nil, fmt.Errorf("session_id is required")
+		return &SessionResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Success:      false,
+			ErrorMessage: "session_id is required",
+		}, nil
 	}
 
 	// Call GetSession API
-	result, err := a.GetSession(sessionID)
+	getResult, err := a.GetSession(sessionID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get session %s: %v", sessionID, err)
+		return &SessionResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("failed to get session %s: %v", sessionID, err),
+		}, nil
 	}
 
 	// Check if the API call was successful
-	if !result.Success {
+	if !getResult.Success {
 		errorMsg := "unknown error"
-		if result.Data != nil && !result.Data.Success {
-			errorMsg = fmt.Sprintf("Session not found")
+		if getResult.Data != nil && !getResult.Data.Success {
+			errorMsg = "Session not found"
 		}
-		return nil, fmt.Errorf("failed to get session %s: %s", sessionID, errorMsg)
+		return &SessionResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: getResult.RequestID,
+			},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("failed to get session %s: %s", sessionID, errorMsg),
+		}, nil
 	}
 
-	// Create and return the Session object
+	// Create the Session object
 	session := NewSession(a, sessionID)
+
+	// Set VPC-related information and ResourceUrl from GetSession response
+	if getResult.Data != nil {
+		session.IsVpcEnabled = getResult.Data.VpcResource
+		session.NetworkInterfaceIP = getResult.Data.NetworkInterfaceIP
+		session.HttpPortNumber = getResult.Data.HttpPort
+		session.Token = getResult.Data.Token
+		session.ResourceUrl = getResult.Data.ResourceUrl
+	}
 
 	// Store the session in the local cache
 	a.Sessions.Store(sessionID, *session)
 
-	return session, nil
+	return &SessionResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: getResult.RequestID,
+		},
+		Success: true,
+		Session: session,
+	}, nil
 }

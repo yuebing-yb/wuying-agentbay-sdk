@@ -29,7 +29,9 @@ import (
 // SessionResult wraps Session object and RequestID
 type SessionResult struct {
 	models.ApiResponse
-	Session *Session
+	Session      *Session
+	Success      bool
+	ErrorMessage string
 }
 
 // SessionListResult wraps Session list and RequestID
@@ -113,6 +115,9 @@ type Session struct {
 	NetworkInterfaceIP string // Network interface IP for VPC sessions
 	HttpPortNumber     string // HTTP port for VPC sessions
 	Token              string // Token for VPC sessions
+
+	// Resource URL for accessing the session
+	ResourceUrl string
 
 	// File, command and code handlers
 	FileSystem *filesystem.FileSystem

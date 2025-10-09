@@ -123,6 +123,11 @@ class GetSessionData:
         resource_id: str = "",
         session_id: str = "",
         success: bool = False,
+        http_port: str = "",
+        network_interface_ip: str = "",
+        token: str = "",
+        vpc_resource: bool = False,
+        resource_url: str = "",
     ):
         """
         Initialize GetSessionData.
@@ -132,11 +137,21 @@ class GetSessionData:
             resource_id (str): Resource ID.
             session_id (str): Session ID.
             success (bool): Success status.
+            http_port (str): HTTP port for VPC sessions.
+            network_interface_ip (str): Network interface IP for VPC sessions.
+            token (str): Token for VPC sessions.
+            vpc_resource (bool): Whether this session uses VPC resources.
+            resource_url (str): Resource URL for accessing the session.
         """
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
         self.session_id = session_id
         self.success = success
+        self.http_port = http_port
+        self.network_interface_ip = network_interface_ip
+        self.token = token
+        self.vpc_resource = vpc_resource
+        self.resource_url = resource_url
 
 
 class GetSessionResult(ApiResponse):

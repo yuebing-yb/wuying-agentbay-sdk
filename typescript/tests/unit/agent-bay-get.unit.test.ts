@@ -9,26 +9,28 @@ describe("AgentBay.get unit tests", () => {
       agentBay = new AgentBay({ apiKey: "test-api-key" });
     });
 
-    test("should throw error for empty session ID", async () => {
-      await expect(agentBay.get("")).rejects.toThrow("session_id is required");
+    test("should return error for empty session ID", async () => {
+      const result = await agentBay.get("");
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain("session_id is required");
     });
 
-    test("should throw error for whitespace-only session ID", async () => {
-      await expect(agentBay.get("   ")).rejects.toThrow(
-        "session_id is required"
-      );
+    test("should return error for whitespace-only session ID", async () => {
+      const result = await agentBay.get("   ");
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain("session_id is required");
     });
 
-    test("should throw error for undefined session ID", async () => {
-      await expect(agentBay.get(undefined as any)).rejects.toThrow(
-        "session_id is required"
-      );
+    test("should return error for undefined session ID", async () => {
+      const result = await agentBay.get(undefined as any);
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain("session_id is required");
     });
 
-    test("should throw error for null session ID", async () => {
-      await expect(agentBay.get(null as any)).rejects.toThrow(
-        "session_id is required"
-      );
+    test("should return error for null session ID", async () => {
+      const result = await agentBay.get(null as any);
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain("session_id is required");
     });
   });
 
@@ -56,15 +58,15 @@ describe("AgentBay.get unit tests", () => {
       ];
 
       for (const testCase of testCases) {
-        await expect(agentBay.get(testCase.input)).rejects.toThrow(
-          testCase.expected
-        );
+        const result = await agentBay.get(testCase.input);
+        expect(result.success).toBe(false);
+        expect(result.errorMessage).toContain(testCase.expected);
       }
     });
   });
 
   describe("Interface compliance", () => {
-    test("get method should return Promise<Session>", () => {
+    test("get method should return Promise<SessionResult>", () => {
       const agentBay = new AgentBay({ apiKey: "test-api-key" });
       const result = agentBay.get("test-session-id");
       expect(result).toBeInstanceOf(Promise);

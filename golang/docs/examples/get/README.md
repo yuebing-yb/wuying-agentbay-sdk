@@ -44,12 +44,17 @@ func main() {
 
     // Retrieve a session by ID
     sessionID := "your-session-id"
-    session, err := client.Get(sessionID)
+    result, err := client.Get(sessionID)
     if err != nil {
         log.Fatalf("Failed to get session: %v", err)
     }
 
-    fmt.Printf("Retrieved session: %s\n", session.SessionID)
+    if !result.Success || result.Session == nil {
+        log.Fatalf("Failed to get session: %s", result.ErrorMessage)
+    }
+
+    fmt.Printf("Retrieved session: %s\n", result.Session.SessionID)
+    fmt.Printf("Request ID: %s\n", result.RequestID)
 
     // Use the session for further operations
     // ...
@@ -61,7 +66,7 @@ func main() {
 ### Get
 
 ```go
-func (a *AgentBay) Get(sessionID string) (*Session, error)
+func (a *AgentBay) Get(sessionID string) (*SessionResult, error)
 ```
 
 Retrieves a session by its ID.
@@ -70,13 +75,12 @@ Retrieves a session by its ID.
 - `sessionID` (string): The ID of the session to retrieve
 
 **Returns:**
-- `*Session`: The Session instance
-- `error`: An error if the operation fails
-
-**Errors:**
-- Returns error if `sessionID` is empty
-- Returns error if session is not found
-- Returns error if API call fails
+- `*SessionResult`: Result object containing:
+  - `Success` (bool): Whether the operation succeeded
+  - `Session` (*Session): The Session instance if successful
+  - `RequestID` (string): The API request ID
+  - `ErrorMessage` (string): Error message if failed
+- `error`: An error if a critical operation fails
 
 ## Expected Output
 
@@ -87,6 +91,7 @@ Created session with ID: session-xxxxxxxxxxxxx
 Retrieving session using Get API...
 Successfully retrieved session:
   Session ID: session-xxxxxxxxxxxxx
+  Request ID: DAD825FE-2CD8-19C8-BB30-CC3BA26B9398
 
 Session is ready for use
 

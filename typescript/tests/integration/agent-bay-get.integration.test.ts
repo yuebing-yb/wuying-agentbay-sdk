@@ -37,41 +37,55 @@ describe("AgentBay.get integration tests", () => {
     }
 
     console.log("Testing Get API...");
-    const session = await agentBay.get(sessionId);
+    const result = await agentBay.get(sessionId);
 
-    expect(session).toBeDefined();
-    expect(session).toBeInstanceOf(Session);
-    expect(session.sessionId).toBe(sessionId);
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.requestId).toBeDefined();
+    expect(result.session).toBeDefined();
+    expect(result.session).toBeInstanceOf(Session);
+    expect(result.session!.sessionId).toBe(sessionId);
 
-    console.log(`Successfully retrieved session with ID: ${session.sessionId}`);
+    console.log(`Successfully retrieved session with ID: ${result.session!.sessionId}`);
+    console.log(`Request ID: ${result.requestId}`);
     console.log("Get API test passed successfully");
   }, 30000); // 30 second timeout
 
-  test("should throw error for non-existent session", async () => {
+  test("should return error for non-existent session", async () => {
     console.log("Testing Get API with non-existent session ID...");
     const nonExistentSessionId = "session-nonexistent-12345";
 
-    await expect(agentBay.get(nonExistentSessionId)).rejects.toThrow(
-      "Failed to get session"
-    );
+    const result = await agentBay.get(nonExistentSessionId);
+    
+    expect(result).toBeDefined();
+    expect(result.success).toBe(false);
+    expect(result.errorMessage).toContain("Failed to get session");
 
     console.log("Correctly received error for non-existent session");
     console.log("Get API non-existent session test passed successfully");
   }, 30000); // 30 second timeout
 
-  test("should throw error for empty session ID", async () => {
+  test("should return error for empty session ID", async () => {
     console.log("Testing Get API with empty session ID...");
 
-    await expect(agentBay.get("")).rejects.toThrow("session_id is required");
+    const result = await agentBay.get("");
+    
+    expect(result).toBeDefined();
+    expect(result.success).toBe(false);
+    expect(result.errorMessage).toContain("session_id is required");
 
     console.log("Correctly received error for empty session ID");
     console.log("Get API empty session ID test passed successfully");
   });
 
-  test("should throw error for whitespace session ID", async () => {
+  test("should return error for whitespace session ID", async () => {
     console.log("Testing Get API with whitespace session ID...");
 
-    await expect(agentBay.get("   ")).rejects.toThrow("session_id is required");
+    const result = await agentBay.get("   ");
+    
+    expect(result).toBeDefined();
+    expect(result.success).toBe(false);
+    expect(result.errorMessage).toContain("session_id is required");
 
     console.log("Correctly received error for whitespace session ID");
     console.log("Get API whitespace session ID test passed successfully");
@@ -85,9 +99,9 @@ describe("AgentBay.get integration tests", () => {
 
     console.log("Cleaning up: Deleting the session...");
     try {
-      const session = await agentBay.get(sessionId); // Retrieve session object
-      if (session) {
-        const deleteResult = await session.delete();
+      const result = await agentBay.get(sessionId); // Retrieve session object
+      if (result.success && result.session) {
+        const deleteResult = await result.session.delete();
         if (deleteResult.success) {
           console.log(`Session ${sessionId} deleted successfully`);
         } else {
