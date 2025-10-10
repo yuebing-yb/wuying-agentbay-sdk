@@ -84,8 +84,9 @@ jobs:
         run: |
           cd python
           python -m pip install --upgrade pip
-          
-          pip install pytest && python -m pytest tests/unit -v
+          pip install poetry
+          poetry install --with dev
+          poetry run pytest tests/unit -v
 
 
   # TypeScript testing job
@@ -207,11 +208,71 @@ jobs:
     steps:
       - run: |
           echo "=========================================="
-          echo "    agentbay SDK Multi-Language Quality Check Completed"
+          echo "    agentbay SDK Multi-Language Quality Check Summary"
           echo "=========================================="
-          echo "✅ Python Testing: Completed"
-          echo "✅ TypeScript Testing: Completed"
-          echo "✅ Golang Testing: Completed"
+
+          PYTHON_LINT_STATUS="${{steps.python-lint-test.python-lint.status}}"
+          PYTHON_TEST_STATUS="${{steps.python-lint-test.python-test.status}}"
+          TS_LINT_STATUS="${{steps.typescript-lint-test.typescript-lint.status}}"
+          TS_TEST_STATUS="${{steps.typescript-lint-test.typescript-test-unit.status}}"
+          GO_LINT_STATUS="${{steps.golang-lint-test.golang-lint.status}}"
+          GO_TEST_STATUS="${{steps.golang-lint-test.golang-unit-test.status}}"
+
+          FAILED=0
+
+          # Check Python results
+          if [ "$PYTHON_LINT_STATUS" != "success" ]; then
+            echo "❌ Python Lint: FAILED"
+            FAILED=1
+          else
+            echo "✅ Python Lint: PASSED"
+          fi
+
+          if [ "$PYTHON_TEST_STATUS" != "success" ]; then
+            echo "❌ Python Unit Tests: FAILED"
+            FAILED=1
+          else
+            echo "✅ Python Unit Tests: PASSED"
+          fi
+
+          # Check TypeScript results
+          if [ "$TS_LINT_STATUS" != "success" ]; then
+            echo "❌ TypeScript Lint: FAILED"
+            FAILED=1
+          else
+            echo "✅ TypeScript Lint: PASSED"
+          fi
+
+          if [ "$TS_TEST_STATUS" != "success" ]; then
+            echo "❌ TypeScript Unit Tests: FAILED"
+            FAILED=1
+          else
+            echo "✅ TypeScript Unit Tests: PASSED"
+          fi
+
+          # Check Golang results
+          if [ "$GO_LINT_STATUS" != "success" ]; then
+            echo "❌ Golang Lint: FAILED"
+            FAILED=1
+          else
+            echo "✅ Golang Lint: PASSED"
+          fi
+
+          if [ "$GO_TEST_STATUS" != "success" ]; then
+            echo "❌ Golang Unit Tests: FAILED"
+            FAILED=1
+          else
+            echo "✅ Golang Unit Tests: PASSED"
+          fi
+
           echo "=========================================="
-          echo "Please check detailed reports of each task for more information"
+
+          if [ $FAILED -eq 1 ]; then
+            echo "❌ Quality Check: FAILED"
+            echo "Please check the detailed reports above for more information."
+            exit 1
+          else
+            echo "✅ All Quality Checks: PASSED"
+          fi
+
           echo "=========================================="
