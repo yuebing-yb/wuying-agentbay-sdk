@@ -108,14 +108,113 @@ const context = (await agentBay.context.get("my-project", true)).context;
 
 // Create session with context
 import { ContextSync, SyncPolicy } from 'wuying-agentbay-sdk';
+const customRecyclePolicy: RecyclePolicy = {
+        lifecycle: Lifecycle.Lifecycle_1Day,
+        paths: ["/custom/path"]
+      };
+
+      // Create a sync policy with the custom recycle policy
+const syncPolicy: SyncPolicy = {
+uploadPolicy: newUploadPolicy(),
+downloadPolicy: newDownloadPolicy(),
+deletePolicy: newDeletePolicy(),
+extractPolicy: newExtractPolicy(),
+recyclePolicy: customRecyclePolicy,
+bwList: {
+    whiteLists: [
+    {
+        path: "",
+        excludePaths: [],
+    },
+    ],
+},
+};
 const contextSync = new ContextSync({
     contextId: context.id,
     path: "/tmp/data",
-    policy: SyncPolicy.default()
+    policy: syncPolicy
 });
 const session = (await agentBay.create({ contextSync: [contextSync] })).session;
 // Verified: ✓ Session created with context synchronization
 // Data in /tmp/data will be synchronized to the context
+```
+
+### RecyclePolicy Configuration
+
+The `RecyclePolicy` defines how long context data should be retained and which paths are subject to the policy.
+
+#### Lifecycle Options
+
+The `lifecycle` field determines the data retention period:
+
+| Option | Retention Period | Description |
+|--------|------------------|-------------|
+| `Lifecycle_1Day` | 1 day | Data deleted after 1 day |
+| `Lifecycle_3Days` | 3 days | Data deleted after 3 days |
+| `Lifecycle_5Days` | 5 days | Data deleted after 5 days |
+| `Lifecycle_10Days` | 10 days | Data deleted after 10 days |
+| `Lifecycle_15Days` | 15 days | Data deleted after 15 days |
+| `Lifecycle_30Days` | 30 days | Data deleted after 30 days |
+| `Lifecycle_90Days` | 90 days | Data deleted after 90 days |
+| `Lifecycle_180Days` | 180 days | Data deleted after 180 days |
+| `Lifecycle_360Days` | 360 days | Data deleted after 360 days |
+| `Lifecycle_Forever` | Permanent | Data never deleted (default) |
+
+**Default Value:** `Lifecycle_Forever`
+
+#### Paths Configuration
+
+The `paths` field specifies which directories or files should be subject to the recycle policy:
+
+**Rules:**
+- Must use exact directory/file paths
+- **Wildcard patterns (`* ? [ ]`) are NOT supported**
+- Empty string `""` means apply to all paths in the context
+- Multiple paths can be specified as an array
+
+**Default Value:** `[""]` (applies to all paths)
+
+#### Usage Examples
+
+```typescript
+import { RecyclePolicy, Lifecycle } from 'wuying-agentbay-sdk';
+
+// Example 1: Apply to all paths with 30-day retention
+const recyclePolicy1: RecyclePolicy = {
+    lifecycle: Lifecycle.Lifecycle_30Days,
+    paths: [""]  // Apply to all paths
+};
+
+// Example 2: Apply to specific directories with 7-day retention
+const recyclePolicy2: RecyclePolicy = {
+    lifecycle: Lifecycle.Lifecycle_7Days,
+    paths: ["/tmp/logs", "/cache"]  // Apply only to these directories
+};
+
+// Example 3: Permanent retention for important data
+const recyclePolicy3: RecyclePolicy = {
+    lifecycle: Lifecycle.Lifecycle_Forever,
+    paths: ["/important/data"]
+};
+
+// Example 4: Different retention for different paths
+const shortTermPolicy: RecyclePolicy = {
+    lifecycle: Lifecycle.Lifecycle_1Day,
+    paths: ["/tmp", "/cache/temp"]
+};
+
+const longTermPolicy: RecyclePolicy = {
+    lifecycle: Lifecycle.Lifecycle_90Days,
+    paths: ["/data/backups"]
+};
+```
+
+#### Best Practices
+
+1. **Use appropriate retention periods**: Choose lifecycle options based on your data importance and storage costs
+2. **Specify exact paths**: Use precise directory paths instead of wildcards for better control
+3. **Separate policies for different data types**: Use different recycle policies for temporary vs. persistent data
+4. **Monitor storage usage**: Regularly review and adjust lifecycle settings to optimize storage costs
 ```
 
 ## 🆘 Get Help
