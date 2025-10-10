@@ -48,11 +48,13 @@ jobs:
         - runner_system_failure
         - stuck_or_timeout_failure
     steps:
-      
+
       - uses: checkout
       - uses: setup-env
         inputs:
           python-version: '3.10'
+          python-cache: 'poetry'
+          python-cache-dependency-path: 'python/poetry.lock'
       - id: python-lint
         continue-on-error: true
         name: "Python Code Format Check & Security Check"
@@ -61,21 +63,26 @@ jobs:
           cd python
           python -m pip config set global.timeout 300
           python -m pip config set global.retries 3
-          python -m pip install --upgrade pip 
-          pip install black && black agentbay tests --check --diff
-          pip install isort && isort --check-only --diff --verbose agentbay tests
+          python -m pip install --upgrade pip
+          # Install poetry once and reuse it
+          pip install poetry
+          # Install project dependencies (will be cached)
+          poetry install --with dev
+          # Run all lint checks using poetry-installed dependencies
+          poetry run black agentbay tests --check --diff
           echo "Format check completed"
-          pip install flake8 && flake8 agentbay tests --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=agentbay/modules/browser/eval
+          poetry run isort --check-only --diff --verbose agentbay tests
           echo "Quality check completed"
-          pip install mypy
+          poetry run flake8 agentbay tests --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=agentbay/modules/browser/eval
+          echo "Flake8 check completed"
           pip install types-requests types-aiohttp types-Pillow types-setuptools types-pydantic || true
-          mypy agentbay --install-types --no-error-summary --install-types --non-interactive
+          poetry run mypy agentbay --install-types --no-error-summary --install-types --non-interactive
           echo "Type check completed"
-          pip install bandit
+          pip install bandit pip-audit
           python -m bandit -r agentbay/ -v --skip B105,B106,B107
           echo "Bandit scan completed"
-           echo "Executing pip-audit dependency vulnerability scan..."
-          pip install pip-audit && pip-audit --desc
+          echo "Executing pip-audit dependency vulnerability scan..."
+          pip-audit --desc
           echo "Dependency vulnerability scan completed"
       - id: python-test
         continue-on-error: true
@@ -83,9 +90,7 @@ jobs:
         name: "Python Unit Tests"
         run: |
           cd python
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install --with dev
+          # Dependencies already installed in previous step, just run tests
           poetry run pytest tests/unit -v
 
 
@@ -161,14 +166,12 @@ jobs:
           go env -w GOSUMDB=sum.golang.org
           go env -w GONOSUMDB=""
           cd golang
-          # Clean module cache
-          go clean -modcache
-          # Upgrade dependencies
+          # Download dependencies (will be cached by go-mod-cache: true)
           go get github.com/alibabacloud-go/darabonba-openapi/v2@latest
           go mod tidy
           go mod download
           go mod verify
-          # Install linting tools
+          # Install linting tools (consider caching these in the future)
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin latest
           curl -sfL https://raw.githubusercontent.com/securecodewarrior/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.18.2
           go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -188,16 +191,8 @@ jobs:
         when: "${{params.golang_enabled}}"
         name: "Golang Unit Tests"
         run: |
-          go env -w GOPROXY=https://proxy.golang.org,direct
-          go env -w GOSUMDB=sum.golang.org
-          go env -w GONOSUMDB=""
           cd golang
-          go clean -modcache
-          go get github.com/alibabacloud-go/darabonba-openapi/v2@latest
-          go mod tidy
-          go mod download
-          go mod verify
-          go build -v ./...
+          # Dependencies already downloaded in previous step, just run tests
           go test -race -v ./tests/pkg/unit/...
 
   summary:
