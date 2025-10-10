@@ -29,10 +29,10 @@ class Context:
     Attributes:
         id (str): The unique identifier of the context.
         name (str): The name of the context.
-        state (str): The current state of the context (e.g., "available", "in-use").
+        state (str): **Deprecated.** This field is no longer used and will be removed in a future version.
         created_at (str): Date and time when the Context was created.
         last_used_at (str): Date and time when the Context was last used.
-        os_type (str): The operating system type this context is bound to.
+        os_type (str): **Deprecated.** This field is no longer used and will be removed in a future version.
     """
 
     def __init__(
@@ -50,13 +50,12 @@ class Context:
         Args:
             id (str): The unique identifier of the context.
             name (str): The name of the context.
-            state (str, optional): The current state of the context.
+            state (str, optional): **Deprecated.** This parameter is no longer used.
             created_at (Optional[str], optional): Date and time when the Context was
                 created. Defaults to None.
             last_used_at (Optional[str], optional): Date and time when the Context was
                 last used. Defaults to None.
-            os_type (Optional[str], optional): The operating system type this context is
-                bound to. Defaults to None.
+            os_type (Optional[str], optional): **Deprecated.** This parameter is no longer used.
         """
         self.id = id
         self.name = name

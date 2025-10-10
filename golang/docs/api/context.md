@@ -11,10 +11,8 @@ The `Context` struct represents a persistent storage context in the AgentBay clo
 ```go
 ID  // The unique identifier of the context
 Name  // The name of the context
-State  // The current state of the context (e.g., "available", "in-use")
 CreatedAt  // Date and time when the Context was created
 LastUsedAt  // Date and time when the Context was last used
-OSType  // The operating system type this context is bound to
 ```
 
 ## ContextService Struct
@@ -68,9 +66,8 @@ func main() {
 	// Expected: A valid UUID-format request ID
 	for i, context := range result.Contexts {
 		if i < 3 { // Show first 3 contexts
-			fmt.Printf("Context ID: %s, Name: %s, State: %s, OSType: %s\n", 
-				context.ID, context.Name, context.State, context.OSType)
-			// Expected output: Context ID: SdkCtx-xxx, Name: xxx, State: available, OSType: linux
+			fmt.Printf("Context ID: %s, Name: %s\n", context.ID, context.Name)
+			// Expected output: Context ID: SdkCtx-xxx, Name: xxx
 		}
 	}
 }
@@ -119,8 +116,8 @@ func main() {
 	}
 
 	context := result.Context
-	fmt.Printf("Context ID: %s, Name: %s, State: %s\n", context.ID, context.Name, context.State)
-	// Expected output: Context ID: SdkCtx-xxx, Name: my-persistent-context, State: available
+	fmt.Printf("Context ID: %s, Name: %s\n", context.ID, context.Name)
+	// Expected output: Context ID: SdkCtx-xxx, Name: my-persistent-context
 	fmt.Printf("Request ID: %s\n", result.RequestID)
 	// Expected: A valid UUID-format request ID
 }

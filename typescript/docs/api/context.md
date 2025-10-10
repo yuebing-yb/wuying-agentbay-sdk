@@ -11,10 +11,8 @@ The `Context` class represents a persistent storage context in the AgentBay clou
 ```typescript
 id  // The unique identifier of the context
 name  // The name of the context
-state  // The current state of the context (e.g., "available", "in-use")
 createdAt  // Date and time when the Context was created
 lastUsedAt  // Date and time when the Context was last used
-osType  // The operating system type this context is bound to
 ```
 
 ## ContextService Class
@@ -52,8 +50,8 @@ async function listContexts() {
       console.log(`Request ID: ${result.requestId}`);
       // Expected: A valid UUID-format request ID
       result.contexts.slice(0, 3).forEach(context => {
-        console.log(`Context ID: ${context.id}, Name: ${context.name}, State: ${context.state}, OS Type: ${context.osType}`);
-        // Expected output: Context ID: SdkCtx-xxx, Name: xxx, State: available, OS Type: linux
+        console.log(`Context ID: ${context.id}, Name: ${context.name}`);
+        // Expected output: Context ID: SdkCtx-xxx, Name: xxx
       });
     } else {
       console.log('Failed to list contexts');
@@ -94,8 +92,8 @@ async function getOrCreateContext() {
     const result = await agentBay.context.get('my-persistent-context', true);
     if (result.success) {
       const context = result.context;
-      console.log(`Context ID: ${context.id}, Name: ${context.name}, State: ${context.state}`);
-      // Expected output: Context ID: SdkCtx-xxx, Name: my-persistent-context, State: available
+      console.log(`Context ID: ${context.id}, Name: ${context.name}`);
+      // Expected output: Context ID: SdkCtx-xxx, Name: my-persistent-context
       console.log(`Request ID: ${result.requestId}`);
       // Expected: A valid UUID-format request ID
     } else {

@@ -202,6 +202,117 @@ class TestAgentBay(unittest.TestCase):
         self.assertIn("session-1", agent_bay._sessions)
         self.assertIn("session-2", agent_bay._sessions)
 
+    @patch("agentbay.agentbay.extract_request_id")
+    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay.mcp_client")
+    def test_list(
+        self, mock_mcp_client, mock_load_config, mock_extract_request_id
+    ):
+        """Test listing sessions using the new list API"""
+        # Mock configuration and request ID
+        mock_load_config.return_value = {
+            "region_id": "cn-shanghai",
+            "endpoint": "test.endpoint.com",
+            "timeout_ms": 30000,
+        }
+        mock_extract_request_id.return_value = "list-request-id"
+
+        # Mock client and response
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "Success": True,
+                "Data": [
+                    {"SessionId": "session-1"},
+                    {"SessionId": "session-2"},
+                    {"SessionId": "session-3"},
+                ],
+                "TotalCount": 3,
+                "MaxResults": 10,
+            }
+        }
+        mock_client.list_session.return_value = mock_response
+        mock_mcp_client.return_value = mock_client
+
+        # Create AgentBay instance
+        agent_bay = AgentBay(api_key="test-key")
+
+        # Test listing all sessions (no labels)
+        result = agent_bay.list()
+        self.assertEqual(result.request_id, "list-request-id")
+        self.assertEqual(len(result.session_ids), 3)
+        self.assertEqual(result.total_count, 3)
+        self.assertTrue(result.success)
+
+        # Test listing sessions with labels
+        result = agent_bay.list(labels={"env": "prod"})
+        self.assertEqual(result.request_id, "list-request-id")
+        self.assertEqual(len(result.session_ids), 3)
+
+        # Test listing sessions with pagination
+        result = agent_bay.list(labels={"env": "prod"}, page=1, limit=2)
+        self.assertEqual(result.request_id, "list-request-id")
+        self.assertEqual(len(result.session_ids), 3)
+
+    @patch("agentbay.agentbay.extract_request_id")
+    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay.mcp_client")
+    def test_list_pagination(
+        self, mock_mcp_client, mock_load_config, mock_extract_request_id
+    ):
+        """Test list API pagination logic"""
+        # Mock configuration and request ID
+        mock_load_config.return_value = {
+            "region_id": "cn-shanghai",
+            "endpoint": "test.endpoint.com",
+            "timeout_ms": 30000,
+        }
+        mock_extract_request_id.return_value = "list-request-id"
+
+        # Mock client and responses for pagination
+        mock_client = MagicMock()
+
+        # First page response
+        mock_response_page1 = MagicMock()
+        mock_response_page1.to_map.return_value = {
+            "body": {
+                "Success": True,
+                "Data": [{"SessionId": "session-1"}, {"SessionId": "session-2"}],
+                "TotalCount": 4,
+                "MaxResults": 2,
+                "NextToken": "token-page2",
+            }
+        }
+
+        # Second page response
+        mock_response_page2 = MagicMock()
+        mock_response_page2.to_map.return_value = {
+            "body": {
+                "Success": True,
+                "Data": [{"SessionId": "session-3"}, {"SessionId": "session-4"}],
+                "TotalCount": 4,
+                "MaxResults": 2,
+                "NextToken": "",
+            }
+        }
+
+        # Set up mock to return different responses
+        mock_client.list_session.side_effect = [
+            mock_response_page1,
+            mock_response_page2,
+        ]
+        mock_mcp_client.return_value = mock_client
+
+        # Create AgentBay instance
+        agent_bay = AgentBay(api_key="test-key")
+
+        # Test getting page 2
+        result = agent_bay.list(labels={"env": "prod"}, page=2, limit=2)
+        self.assertEqual(result.request_id, "list-request-id")
+        self.assertEqual(len(result.session_ids), 2)
+        self.assertEqual(result.session_ids[0], "session-3")
+        self.assertEqual(result.session_ids[1], "session-4")
 
     @patch("agentbay.agentbay.extract_request_id")
     @patch("agentbay.agentbay.load_config")

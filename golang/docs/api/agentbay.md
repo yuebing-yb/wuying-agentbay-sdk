@@ -150,6 +150,71 @@ func main() {
 }
 ```
 
+### Get
+
+Retrieves a session by its ID.
+
+```go
+Get(sessionID string) (*SessionResult, error)
+```
+
+**Parameters:**
+- `sessionID` (string): The ID of the session to retrieve.
+
+**Returns:**
+- `*SessionResult`: A result object containing the Session instance, request ID, success status, and error message if any.
+- `error`: Always returns nil. Errors are indicated via SessionResult.Success and SessionResult.ErrorMessage fields.
+
+**Example:**
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+	client, err := agentbay.NewAgentBay("")
+	if err != nil {
+		log.Fatalf("Failed to initialize AgentBay client: %v", err)
+	}
+
+	createResult, err := client.Create(nil)
+	if err != nil {
+		log.Fatalf("Failed to create session: %v", err)
+	}
+	sessionID := createResult.Session.SessionID
+	fmt.Printf("Created session with ID: %s\n", sessionID)
+	// Output: Created session with ID: session-xxxxxxxxxxxxxx
+
+	result, err := client.Get(sessionID)
+	if err != nil {
+		log.Fatalf("Failed to get session: %v", err)
+	}
+	
+	if result.Success {
+		fmt.Printf("Successfully retrieved session: %s\n", result.Session.SessionID)
+		// Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
+		fmt.Printf("Request ID: %s\n", result.RequestID)
+		// Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+		
+		deleteResult, err := result.Session.Delete()
+		if err != nil {
+			log.Fatalf("Failed to delete session: %v", err)
+		}
+		if deleteResult.Success {
+			fmt.Printf("Session %s deleted successfully\n", sessionID)
+			// Output: Session session-xxxxxxxxxxxxxx deleted successfully
+		}
+	} else {
+		fmt.Printf("Failed to get session: %s\n", result.ErrorMessage)
+	}
+}
+```
+
 
 Lists all available sessions cached in the current client instance.
 
@@ -235,9 +300,65 @@ func main() {
 }
 ```
 
+### List
+
+Returns paginated list of Sessions filtered by labels.
+
+```go
+List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error)
+```
+
+**Parameters:**
+- `labels` (map[string]string, optional): Labels to filter Sessions. Can be nil for no filtering (returns all sessions).
+- `page` (*int, optional): Page number for pagination (starting from 1). nil or 0 returns the first page.
+- `limit` (*int32, optional): Maximum number of items per page. nil or 0 uses default of 10.
+
+**Returns:**
+- `*SessionListResult`: Paginated list of session IDs that match the labels, including RequestID and pagination information.
+- `error`: An error if the operation fails.
+
+**Key Features:**
+- **Simple Interface**: Pass labels directly as a map parameter
+- **Pagination Support**: Use `page` and `limit` parameters for easy pagination
+- **Request ID**: All responses include a RequestID for tracking and debugging
+- **Flexible Filtering**: Filter by any combination of labels or list all sessions
+
+**Example:**
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+	client, _ := agentbay.NewAgentBay("your_api_key", nil)
+
+	// List all sessions
+	result, err := client.List(nil, nil, nil)
+
+	// List sessions with specific labels
+	result, err = client.List(map[string]string{"project": "demo"}, nil, nil)
+
+	// List sessions with pagination (page 2, 10 items per page)
+	page := 2
+	limit := int32(10)
+	result, err = client.List(map[string]string{"my-label": "my-value"}, &page, &limit)
+
+	if err == nil {
+		for _, sessionId := range result.SessionIds {
+			fmt.Printf("Session ID: %s\n", sessionId)
+		}
+		fmt.Printf("Total count: %d\n", result.TotalCount)
+		fmt.Printf("Request ID: %s\n", result.RequestID)
+	}
+}
+```
+
+### Delete
 
 Deletes a session from the AgentBay cloud environment.
-
 
 ```go
 Delete(session *Session, syncContext ...bool) (*DeleteResult, error)

@@ -73,6 +73,9 @@ class Session:
         self.http_port = ""  # HTTP port for VPC sessions
         self.token = ""
 
+        # Resource URL for accessing the session
+        self.resource_url = ""
+
         # Recording functionality
         self.enableBrowserReplay = False  # Whether browser recording is enabled for this session
 

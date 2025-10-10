@@ -10,17 +10,20 @@ from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_tea_openapi.exceptions._client import ClientException
 
 from agentbay.api.client import Client as mcp_client
-from agentbay.api.models import CreateMcpSessionRequest, ListSessionRequest
+from agentbay.api.models import CreateMcpSessionRequest, GetSessionRequest, ListSessionRequest
 from agentbay.config import load_config
 from agentbay.context import ContextService
 from agentbay.model import (
     DeleteResult,
+    GetSessionData,
+    GetSessionResult,
     SessionListResult,
     SessionResult,
     extract_request_id,
 )
 from agentbay.session import Session
 from agentbay.session_params import CreateSessionParams, ListSessionParams
+from agentbay.deprecation import deprecated
 from .logger import get_logger, log_api_call, log_api_response, log_operation_start, log_operation_success, log_operation_error, log_warning
 
 # Initialize logger for this module
@@ -347,7 +350,7 @@ class AgentBay:
                 )
 
             # ResourceUrl is optional in CreateMcpSession response
-            resource_url = data.get("ResourceUrl")
+            resource_url = data.get("ResourceUrl", "")
 
             logger.info(f"🆔 Session created: {session_id}")
             logger.debug(f"🔗 Resource URL: {resource_url}")
@@ -365,6 +368,9 @@ class AgentBay:
                 session.http_port = data["HttpPort"]
             if data.get("Token"):
                 session.token = data["Token"]
+
+            # Set ResourceUrl
+            session.resource_url = resource_url
 
             # Set browser recording state
             session.enableBrowserReplay = params.enable_browser_replay
@@ -447,7 +453,10 @@ class AgentBay:
                 error_message=f"Unexpected error creating session: {e}",
             )
 
-
+    @deprecated(
+        reason="This method is deprecated and will be removed in a future version.",
+        replacement="list()"
+    )
     def list_by_labels(
         self, params: Optional[Union[ListSessionParams, Dict[str, str]]] = None
     ) -> SessionListResult:
@@ -518,7 +527,7 @@ class AgentBay:
 
             sessions = []
             next_token = ""
-            max_results = request.max_results
+            max_results = params.max_results  # Use the requested max_results
             total_count = 0
 
             try:
@@ -530,7 +539,8 @@ class AgentBay:
             # Extract pagination information
             if isinstance(body, dict):
                 next_token = body.get("NextToken", "")
-                max_results = int(body.get("MaxResults", 0))
+                # Use API response MaxResults if present, otherwise use requested value
+                max_results = int(body.get("MaxResults", params.max_results))
                 total_count = int(body.get("TotalCount", 0))
 
             # Extract session data
@@ -573,6 +583,203 @@ class AgentBay:
                 error_message=f"Failed to list sessions by labels: {e}",
             )
 
+    def list(
+        self,
+        labels: Optional[Dict[str, str]] = None,
+        page: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> SessionListResult:
+        """
+        Returns paginated list of session IDs filtered by labels.
+
+        Args:
+            labels (Optional[Dict[str, str]], optional): Labels to filter sessions.
+                Defaults to None (empty dict).
+            page (Optional[int], optional): Page number for pagination (starting from 1).
+                Defaults to None (returns first page).
+            limit (Optional[int], optional): Maximum number of items per page.
+                Defaults to None (uses default of 10).
+
+        Returns:
+            SessionListResult: Paginated list of session IDs that match the labels,
+                including request_id, success status, and pagination information.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            # List all sessions
+            result = agent_bay.list()
+
+            # List sessions with specific labels
+            result = agent_bay.list(labels={"project": "demo"})
+
+            # List sessions with pagination
+            result = agent_bay.list(labels={"my-label": "my-value"}, page=2, limit=10)
+
+            if result.success:
+                for session_id in result.session_ids:
+                    print(f"Session ID: {session_id}")
+                print(f"Total count: {result.total_count}")
+                print(f"Request ID: {result.request_id}")
+            ```
+        """
+        try:
+            # Set default values
+            if labels is None:
+                labels = {}
+            if limit is None:
+                limit = 10
+
+            # Validate page number
+            if page is not None and page < 1:
+                return SessionListResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Cannot reach page {page}: Page number must be >= 1",
+                    session_ids=[],
+                    next_token="",
+                    max_results=limit,
+                    total_count=0,
+                )
+
+            # Calculate next_token based on page number
+            # Page 1 or None means no next_token (first page)
+            # For page > 1, we need to make multiple requests to get to that page
+            next_token = ""
+            if page is not None and page > 1:
+                # We need to fetch pages 1 through page-1 to get the next_token
+                current_page = 1
+                while current_page < page:
+                    # Make API call to get next_token
+                    labels_json = json.dumps(labels)
+                    request = ListSessionRequest(
+                        authorization=f"Bearer {self.api_key}",
+                        labels=labels_json,
+                        max_results=str(limit),
+                    )
+                    if next_token:
+                        request.next_token = next_token
+
+                    response = self.client.list_session(request)
+                    request_id = extract_request_id(response)
+                    response_map = response.to_map()
+                    body = response_map.get("body", {})
+
+                    if not body.get("Success", False):
+                        error_message = body.get("Message", body.get("Code", "Unknown error"))
+                        return SessionListResult(
+                            request_id=request_id,
+                            success=False,
+                            error_message=f"Cannot reach page {page}: {error_message}",
+                            session_ids=[],
+                            next_token="",
+                            max_results=limit,
+                            total_count=0,
+                        )
+
+                    next_token = body.get("NextToken", "")
+                    if not next_token:
+                        # No more pages available
+                        return SessionListResult(
+                            request_id=request_id,
+                            success=False,
+                            error_message=f"Cannot reach page {page}: No more pages available",
+                            session_ids=[],
+                            next_token="",
+                            max_results=limit,
+                            total_count=body.get("TotalCount", 0),
+                        )
+                    current_page += 1
+
+            # Make the actual request for the desired page
+            labels_json = json.dumps(labels)
+            request = ListSessionRequest(
+                authorization=f"Bearer {self.api_key}",
+                labels=labels_json,
+                max_results=str(limit),
+            )
+            if next_token:
+                request.next_token = next_token
+
+            request_details = f"Labels={labels_json}, MaxResults={limit}"
+            if request.next_token:
+                request_details += f", NextToken={request.next_token}"
+            log_api_call("list_session", request_details)
+
+            # Make the API call
+            response = self.client.list_session(request)
+
+            # Extract request ID
+            request_id = extract_request_id(response)
+
+            response_map = response.to_map()
+            body = response_map.get("body", {})
+
+            # Check for errors in the response
+            if isinstance(body, dict) and body.get("Success") is False:
+                error_message = body.get("Message", body.get("Code", "Unknown error"))
+                return SessionListResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=f"Failed to list sessions: {error_message}",
+                    session_ids=[],
+                    next_token="",
+                    max_results=limit,
+                    total_count=0,
+                )
+
+            session_ids = []
+            next_token = ""
+            max_results = limit  # Use the requested max_results
+            total_count = 0
+
+            try:
+                response_body = json.dumps(body, ensure_ascii=False, indent=2)
+                log_api_response(response_body)
+            except Exception:
+                logger.debug(f"📥 Response: {body}")
+
+            # Extract pagination information
+            if isinstance(body, dict):
+                next_token = body.get("NextToken", "")
+                # Use API response MaxResults if present, otherwise use requested value
+                max_results = int(body.get("MaxResults", limit))
+                total_count = int(body.get("TotalCount", 0))
+
+            # Extract session data
+            response_data = body.get("Data")
+
+            # Handle both list and dict responses
+            if isinstance(response_data, list):
+                # Data is a list of session objects
+                for session_data in response_data:
+                    if isinstance(session_data, dict):
+                        session_id = session_data.get("SessionId")
+                        if session_id:
+                            session_ids.append(session_id)
+
+            # Return SessionListResult with request ID and pagination info
+            return SessionListResult(
+                request_id=request_id,
+                success=True,
+                session_ids=session_ids,
+                next_token=next_token,
+                max_results=max_results,
+                total_count=total_count,
+            )
+
+        except Exception as e:
+            log_operation_error("list_session", str(e))
+            return SessionListResult(
+                request_id="",
+                success=False,
+                session_ids=[],
+                error_message=f"Failed to list sessions: {e}",
+            )
+
     def delete(self, session: Session, sync_context: bool = False) -> DeleteResult:
         """
         Delete a session by session object.
@@ -604,3 +811,132 @@ class AgentBay:
                 success=False,
                 error_message=f"Failed to delete session {session.session_id}: {e}",
             )
+
+    def get_session(self, session_id: str) -> GetSessionResult:
+        """
+        Get session information by session ID.
+
+        Args:
+            session_id (str): The ID of the session to retrieve.
+
+        Returns:
+            GetSessionResult: Result containing session information.
+        """
+        try:
+            log_api_call("GetSession", f"SessionId={session_id}")
+            request = GetSessionRequest(
+                authorization=f"Bearer {self.api_key}",
+                session_id=session_id
+            )
+            response = self.client.get_session(request)
+
+            try:
+                response_body = json.dumps(
+                    response.to_map().get("body", {}), ensure_ascii=False, indent=2
+                )
+                log_api_response(response_body)
+            except Exception:
+                logger.debug(f"Response: {response}")
+
+            request_id = extract_request_id(response)
+
+            try:
+                response_map = response.to_map()
+                body = response_map.get("body", {})
+                http_status_code = body.get("HttpStatusCode", 0)
+                code = body.get("Code", "")
+                success = body.get("Success", False)
+
+                data = None
+                if body.get("Data"):
+                    data_dict = body.get("Data", {})
+                    data = GetSessionData(
+                        app_instance_id=data_dict.get("AppInstanceId", ""),
+                        resource_id=data_dict.get("ResourceId", ""),
+                        session_id=data_dict.get("SessionId", ""),
+                        success=data_dict.get("Success", False),
+                        http_port=data_dict.get("HttpPort", ""),
+                        network_interface_ip=data_dict.get("NetworkInterfaceIp", ""),
+                        token=data_dict.get("Token", ""),
+                        vpc_resource=data_dict.get("VpcResource", False),
+                        resource_url=data_dict.get("ResourceUrl", ""),
+                    )
+
+                return GetSessionResult(
+                    request_id=request_id,
+                    http_status_code=http_status_code,
+                    code=code,
+                    success=success,
+                    data=data,
+                )
+
+            except Exception as e:
+                logger.warning(f"Failed to parse response: {str(e)}")
+                return GetSessionResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=f"Failed to parse response: {str(e)}",
+                )
+        except Exception as e:
+            logger.error(f"Error calling GetSession: {e}")
+            return GetSessionResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get session {session_id}: {e}",
+            )
+
+    def get(self, session_id: str) -> SessionResult:
+        """
+        Get a session by its ID.
+
+        This method retrieves a session by calling the GetSession API
+        and returns a SessionResult containing the Session object and request ID.
+
+        Args:
+            session_id (str): The ID of the session to retrieve.
+
+        Returns:
+            SessionResult: Result containing the Session instance, request ID, and success status.
+
+        Example:
+            >>> result = agentbay.get("my-session-id")
+            >>> if result.success:
+            >>>     print(result.session.session_id)
+            >>>     print(result.request_id)
+        """
+        # Validate input
+        if not session_id or (isinstance(session_id, str) and not session_id.strip()):
+            return SessionResult(
+                request_id="",
+                success=False,
+                error_message="session_id is required",
+            )
+
+        # Call GetSession API
+        get_result = self.get_session(session_id)
+
+        # Check if the API call was successful
+        if not get_result.success:
+            error_msg = get_result.error_message or "Unknown error"
+            return SessionResult(
+                request_id=get_result.request_id,
+                success=False,
+                error_message=f"Failed to get session {session_id}: {error_msg}",
+            )
+
+        # Create the Session object
+        session = Session(self, session_id)
+
+        # Set VPC-related information and ResourceUrl from GetSession response
+        if get_result.data:
+            session.is_vpc = get_result.data.vpc_resource
+            session.network_interface_ip = get_result.data.network_interface_ip
+            session.http_port = get_result.data.http_port
+            session.token = get_result.data.token
+            session.resource_url = get_result.data.resource_url
+
+        return SessionResult(
+            request_id=get_result.request_id,
+            success=True,
+            session=session,
+        )

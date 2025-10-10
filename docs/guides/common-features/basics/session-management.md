@@ -128,27 +128,100 @@ else:
     print(f"Failed to get labels: {result.error_message}")
 ```
 
-### Filtering Sessions by Labels
+## Listing Sessions
 
-You can list sessions based on their labels to organize and manage your sessions:
+The `list()` method allows you to query and retrieve session IDs from your AgentBay account. This is useful for managing multiple sessions, monitoring active environments, and organizing your cloud resources.
+
+### Basic Usage
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import ListSessionParams
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key=api_key)
 
-# List sessions by labels
-params = ListSessionParams(labels={"project": "demo"})
-result = agent_bay.list_by_labels(params)
+# List all active sessions
+result = agent_bay.list()
 
-print(f"Found {len(result.sessions)} sessions")
-for session in result.sessions:
-    print(f"Session ID: {session.session_id}")
-    # Clean up sessions when done
-    agent_bay.delete(session)
+if result.success:
+    print(f"Found {result.total_count} total sessions")
+    print(f"Showing {len(result.session_ids)} session IDs on this page")
+    print(f"Request ID: {result.request_id}")
+
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+else:
+    print(f"Failed to list sessions: {result.error_message}")
+
+# Output:
+# Found 0 total sessions
+# Showing 0 session IDs on this page
+# Request ID: 6620****-****-****-****-********C2C1
 ```
+
+### Filtering by Labels
+
+You can filter sessions by labels to find specific environments:
+
+```python
+from agentbay import AgentBay
+
+# Initialize the SDK
+agent_bay = AgentBay(api_key=api_key)
+
+# List sessions with specific labels
+result = agent_bay.list(labels={"project": "demo", "environment": "testing"})
+
+if result.success:
+    print(f"Found {len(result.session_ids)} sessions matching the labels")
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+
+# Output (after creating a session with matching labels):
+# Found 1 sessions matching the labels
+# Session ID: session-**********************sic
+```
+
+### Pagination
+
+For accounts with many sessions, use pagination to retrieve results in manageable chunks:
+
+```python
+from agentbay import AgentBay
+
+# Initialize the SDK
+agent_bay = AgentBay(api_key=api_key)
+
+# Get page 2 with 10 items per page
+result = agent_bay.list(labels={"project": "demo"}, page=2, limit=10)
+
+if result.success:
+    print(f"Page 2 of results (showing {len(result.session_ids)} sessions)")
+    print(f"Total sessions: {result.total_count}")
+    print(f"Next page token: {result.next_token}")
+
+# Output (when there are no sessions on page 2):
+# Page 2 of results (showing 0 sessions)
+# Total sessions: 0
+# Next page token: None
+```
+
+### Important Notes
+
+**Active Sessions Only:**
+- The `list()` method **only returns currently active sessions**
+- Sessions that have been deleted or released (either manually via `delete()` or automatically due to timeout) will **not** be included in the results
+- To check if a specific session is still active, use the `get()` method or `session.info()` method
+
+**Return Value:**
+- The method returns session IDs (strings) rather than full Session objects
+- Use `agent_bay.get(session_id)` to retrieve a full Session object if needed
+
+**Key Features:**
+- **Flexible Filtering**: List all sessions or filter by any combination of labels
+- **Pagination Support**: Use `page` and `limit` parameters for easy pagination
+- **Request ID**: All responses include a `request_id` for tracking and debugging
+- **Efficient**: Returns only session IDs for better performance
 
 ## Getting Session Information
 
@@ -233,45 +306,41 @@ else:
 
 ## Session Recovery
 
-In certain scenarios, you may need to recover a Session object after it has been destroyed. This can be accomplished through the following methods:
+In certain scenarios, you may need to recover a Session object using its session ID. The SDK provides the `get` method to retrieve an existing session.
 
-> **Note**: Session recovery methods will be upgraded in upcoming versions to provide enhanced functionality and improved user experience.
+### Using the get Method
 
-### Session Recovery
-
-To recover a session, you need:
-1. An AgentBay object (create a new one if it doesn't exist)
-2. Create a new Session object with the AgentBay object and the session ID you want to recover
+The `get` method is the recommended way to recover a session. It retrieves session information from the cloud and returns a ready-to-use Session object with the API request ID.
 
 ```python
 from agentbay import AgentBay
-from agentbay.session import Session
 
-# Initialize the SDK (or use existing instance)
-agent_bay = AgentBay(api_key=api_key)
+# Initialize the SDK
+agent_bay = AgentBay(api_key="your_api_key")
 
-# Recover session using session ID
+# Retrieve session using its ID
 session_id = "your_existing_session_id"
-recovered_session = Session(agent_bay, session_id)
+get_result = agent_bay.get(session_id)
 
-# For VPC scenarios, manually restore VPC-specific fields (these values must be saved by the developer)
-# recovered_session.is_vpc = True
-# recovered_session.network_interface_ip = "192.168.1.100"  # Your saved IP
-# recovered_session.http_port = 8080  # Your saved port
-
-# The recovered session can perform most session operations
-print(f"Recovered session with ID: {recovered_session.session_id}")
-
-# Test if the session is still active
-info_result = recovered_session.info()
-if info_result.success:
-    print("Session is active and ready to use")
-    print(f"Resource URL: {info_result.data.resource_url}")
+if get_result.success:
+    session = get_result.session
+    print(f"Retrieved session: {session.session_id}")
+    print(f"Request ID: {get_result.request_id}")
+    
+    # You can now perform any session operations
+    result = session.command.execute_command("echo 'Hello, World!'")
+    print(result.output)
 else:
-    print(f"Session recovery failed: {info_result.error_message}")
-```
+    print(f"Failed to get session: {get_result.error_message}")
 
-**VPC Session Recovery**: While a recovered Session object contains the session ID and can perform most operations, VPC scenarios require additional fields to be restored. For VPC scenarios, you need to restore three specific fields: `is_vpc`, `network_interface_ip`, and `http_port`. Since these fields are not currently stored in the cloud, developers must save and restore them manually as shown in the commented lines above.
+# Output (when session exists):
+# Retrieved session: session-**********************uhi
+# Request ID: B27C****-****-****-****-********0366
+# Command output: Hello, World!
+
+# Output (when session is deleted or not found):
+# Failed to get session: Failed to get session session-**********************uhi: Failed to get session session-**********************uhi: Error: InvalidMcpSession.NotFound code: 400,   Resource [McpSession] is not found. request id: 1C3C****-****-****-****-********AD3F ...
+```
 
 
 ### Important Considerations
@@ -285,10 +354,6 @@ else:
 2. **Session Status Validation**: Use the `Session.info()` method to determine if a session has been released. Only active (non-released) sessions can return information through the info interface.
 
 3. **Automatic Release Timeout**: Session automatic release timeout can be configured in the [console page](https://agentbay.console.aliyun.com/).
-
-4. **Field Persistence**: Additional session fields (like VPC-specific fields) are not stored in the cloud and must be saved and restored manually by the developer.
-
-
 
 ## Advanced Session Patterns
 

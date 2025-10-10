@@ -599,6 +599,116 @@ describe("AgentBay", () => {
     });
   });
 
+  describe("list", () => {
+    let agentBay: AgentBay;
+
+    beforeEach(() => {
+      const apiKey = "test-api-key";
+      agentBay = new AgentBay({ apiKey });
+    });
+
+    it("should list all sessions without labels", async () => {
+      const mockResponse = {
+        statusCode: 200,
+        body: {
+          data: [mockSessionAData, mockSessionBData, mockSessionData],
+          maxResults: 10,
+          totalCount: 3,
+          requestId: "mock-request-id-list-all",
+        },
+      };
+
+      listSessionStub.resolves(mockResponse);
+
+      const result = await agentBay.list();
+
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe("mock-request-id-list-all");
+      expect(result.data.length).toBe(3);
+      expect(result.totalCount).toBe(3);
+    });
+
+    it("should list sessions with specific labels", async () => {
+      const mockResponse = {
+        statusCode: 200,
+        body: {
+          data: [mockSessionAData],
+          maxResults: 10,
+          totalCount: 1,
+          requestId: "mock-request-id-list-labeled",
+        },
+      };
+
+      listSessionStub.resolves(mockResponse);
+
+      const result = await agentBay.list({ env: "prod" });
+
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe("mock-request-id-list-labeled");
+      expect(result.data.length).toBe(1);
+      expect(listSessionStub.calledOnce).toBe(true);
+      const callArgs = listSessionStub.getCall(0).args[0];
+      expect(JSON.parse(callArgs.labels)).toEqual({ env: "prod" });
+    });
+
+    it("should list sessions with pagination", async () => {
+      // First page response
+      const mockResponsePage1 = {
+        statusCode: 200,
+        body: {
+          data: [mockSessionAData, mockSessionBData],
+          maxResults: 2,
+          totalCount: 4,
+          nextToken: "token-page2",
+          requestId: "mock-request-id-page1",
+        },
+      };
+
+      // Second page response
+      const mockResponsePage2 = {
+        statusCode: 200,
+        body: {
+          data: [mockSessionData],
+          maxResults: 2,
+          totalCount: 4,
+          nextToken: "",
+          requestId: "mock-request-id-page2",
+        },
+      };
+
+      listSessionStub.onFirstCall().resolves(mockResponsePage1);
+      listSessionStub.onSecondCall().resolves(mockResponsePage2);
+
+      // Request page 2
+      const result = await agentBay.list({ env: "prod" }, 2, 2);
+
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe("mock-request-id-page2");
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].sessionId).toBe(mockSessionData.sessionId);
+      expect(listSessionStub.calledTwice).toBe(true);
+    });
+
+    it("should use default limit of 10 when not specified", async () => {
+      const mockResponse = {
+        statusCode: 200,
+        body: {
+          data: [mockSessionAData],
+          maxResults: 10,
+          totalCount: 1,
+          requestId: "mock-request-id",
+        },
+      };
+
+      listSessionStub.resolves(mockResponse);
+
+      await agentBay.list();
+
+      const callArgs = listSessionStub.getCall(0).args[0];
+      expect(callArgs.maxResults).toBe(10);
+    });
+  });
+
   describe("mcpPolicyId passthrough", () => {
     it("should pass mcpPolicyId to CreateMcpSession request body", async () => {
       const apiKey = "test-api-key";

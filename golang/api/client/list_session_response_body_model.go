@@ -135,7 +135,8 @@ func (s *ListSessionResponseBody) Validate() error {
 }
 
 type ListSessionResponseBodyData struct {
-	SessionId *string `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
+	SessionId     *string `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
+	SessionStatus *string `json:"SessionStatus,omitempty" xml:"SessionStatus,omitempty"`
 }
 
 func (s ListSessionResponseBodyData) String() string {
@@ -152,6 +153,15 @@ func (s *ListSessionResponseBodyData) GetSessionId() *string {
 
 func (s *ListSessionResponseBodyData) SetSessionId(v string) *ListSessionResponseBodyData {
 	s.SessionId = &v
+	return s
+}
+
+func (s *ListSessionResponseBodyData) GetSessionStatus() *string {
+	return s.SessionStatus
+}
+
+func (s *ListSessionResponseBodyData) SetSessionStatus(v string) *ListSessionResponseBodyData {
+	s.SessionStatus = &v
 	return s
 }
 

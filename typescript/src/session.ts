@@ -132,6 +132,9 @@ export class Session {
   public httpPort = ""; // HTTP port for VPC sessions
   public token = ""; // Token for VPC sessions
 
+  // Resource URL for accessing the session
+  public resourceUrl = "";
+
   // Recording functionality
   public enableBrowserReplay = false; // Whether browser recording is enabled for this session
 

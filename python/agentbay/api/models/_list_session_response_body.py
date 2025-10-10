@@ -109,8 +109,10 @@ class ListSessionResponseBodyData(DaraModel):
     def __init__(
         self,
         session_id: str = None,
+        session_status: str = None,
     ):
         self.session_id = session_id
+        self.session_status = session_status
 
     def validate(self):
         pass
@@ -122,6 +124,8 @@ class ListSessionResponseBodyData(DaraModel):
             result = _map
         if self.session_id is not None:
             result['SessionId'] = self.session_id
+        if self.session_status is not None:
+            result['SessionStatus'] = self.session_status
 
         return result
 
@@ -129,6 +133,8 @@ class ListSessionResponseBodyData(DaraModel):
         m = m or dict()
         if m.get('SessionId') is not None:
             self.session_id = m.get('SessionId')
+        if m.get('SessionStatus') is not None:
+            self.session_status = m.get('SessionStatus')
 
         return self
 

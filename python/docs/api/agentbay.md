@@ -170,6 +170,50 @@ if security_result.success:
     print(f"Created secure mobile session with blacklist: {security_session.session_id}")
 ```
 
+### get
+
+Retrieves a session by its ID.
+
+```python
+get(session_id: str) -> SessionResult
+```
+
+**Parameters:**
+- `session_id` (str): The ID of the session to retrieve.
+
+**Returns:**
+- `SessionResult`: A result object containing the Session instance, request ID, success status, and error message if any.
+
+**Example:**
+```python
+from agentbay import AgentBay
+
+agentbay = AgentBay(api_key="your_api_key")
+
+create_result = agentbay.create()
+if not create_result.success:
+    print(f"Failed to create session: {create_result.error_message}")
+    exit(1)
+
+session_id = create_result.session.session_id
+print(f"Created session with ID: {session_id}")
+# Output: Created session with ID: session-xxxxxxxxxxxxxx
+
+result = agentbay.get(session_id)
+if result.success:
+    print(f"Successfully retrieved session: {result.session.session_id}")
+    # Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
+    print(f"Request ID: {result.request_id}")
+    # Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    
+    delete_result = result.session.delete()
+    if delete_result.success:
+        print(f"Session {session_id} deleted successfully")
+        # Output: Session session-xxxxxxxxxxxxxx deleted successfully
+else:
+    print(f"Failed to get session: {result.error_message}")
+```
+
 
 
 ```python
@@ -221,6 +265,53 @@ if result.success:
         # Process the next page...
 ```
 
+### list
+
+Returns paginated list of Sessions filtered by labels.
+
+```python
+list(labels: Optional[Dict[str, str]] = None, page: Optional[int] = None, limit: Optional[int] = None) -> SessionListResult
+```
+
+**Parameters:**
+- `labels` (Optional[Dict[str, str]], optional): Labels to filter Sessions. Defaults to None (empty dict, returns all sessions).
+- `page` (Optional[int], optional): Page number for pagination (starting from 1). Defaults to None (returns first page).
+- `limit` (Optional[int], optional): Maximum number of items per page. Defaults to None (uses default of 10).
+
+**Returns:**
+- `SessionListResult`: Paginated list of session IDs that match the labels, including request_id, success status, and pagination information.
+
+**Key Features:**
+- **Simple Interface**: Pass labels directly as a dictionary parameter
+- **Pagination Support**: Use `page` and `limit` parameters for easy pagination
+- **Request ID**: All responses include a `request_id` for tracking and debugging
+- **Flexible Filtering**: Filter by any combination of labels or list all sessions
+
+**Example:**
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+# List all sessions
+result = agent_bay.list()
+
+# List sessions with specific labels
+result = agent_bay.list(labels={"project": "demo"})
+
+# List sessions with pagination (page 2, 10 items per page)
+result = agent_bay.list(labels={"my-label": "my-value"}, page=2, limit=10)
+
+if result.success:
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+    print(f"Total count: {result.total_count}")
+    print(f"Request ID: {result.request_id}")
+else:
+    print(f"Error: {result.error_message}")
+```
+
+### delete
 
 ```python
 delete(session: Session, sync_context: bool = False) -> DeleteResult

@@ -461,6 +461,60 @@ export class Client extends OpenApi {
   }
 
   /**
+   * Get session information
+   *
+   * @param request - GetSessionRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns GetSessionResponse
+   */
+  async getSessionWithOptions(
+    request: $_model.GetSessionRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.GetSessionResponse> {
+    request.validate();
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+
+    if (!$dara.isNull(request.sessionId)) {
+      body["SessionId"] = request.sessionId;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "GetSession",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.GetSessionResponse>(
+      await this.callApi(params, req, runtime),
+      new $_model.GetSessionResponse({})
+    );
+  }
+
+  /**
+   * Get session information
+   *
+   * @param request - GetSessionRequest
+   * @returns GetSessionResponse
+   */
+  async getSession(
+    request: $_model.GetSessionRequest
+  ): Promise<$_model.GetSessionResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.getSessionWithOptions(request, runtime);
+  }
+
+  /**
    * Get forwarding link for specific port
    *
    * @param request - GetLinkRequest

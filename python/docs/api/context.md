@@ -11,10 +11,8 @@ The `Context` class represents a persistent storage context in the AgentBay clou
 ```python
 id  # The unique identifier of the context
 name  # The name of the context
-state  # The current state of the context (e.g., "available", "in-use")
 created_at  # Date and time when the Context was created
 last_used_at  # Date and time when the Context was last used
-os_type  # The operating system type this context is bound to
 ```
 
 ## ContextService Class
@@ -51,8 +49,8 @@ if result.success:
     # Expected: A valid UUID-format request ID
     for i, context in enumerate(result.contexts):
         if i < 3:  # Show first 3 contexts
-            print(f"Context ID: {context.id}, Name: {context.name}, State: {context.state}, OS Type: {context.os_type}")
-            # Expected output: Context ID: SdkCtx-xxx, Name: xxx, State: available, OS Type: linux
+            print(f"Context ID: {context.id}, Name: {context.name}")
+            # Expected output: Context ID: SdkCtx-xxx, Name: xxx
 else:
     print("Failed to list contexts")
 ```
@@ -83,8 +81,8 @@ agent_bay = AgentBay(api_key="your_api_key")
 result = agent_bay.context.get("my-persistent-context", create=True)
 if result.success:
     context = result.context
-    print(f"Context ID: {context.id}, Name: {context.name}, State: {context.state}")
-    # Expected output: Context ID: SdkCtx-xxx, Name: my-persistent-context, State: available
+    print(f"Context ID: {context.id}, Name: {context.name}")
+    # Expected output: Context ID: SdkCtx-xxx, Name: my-persistent-context
     print(f"Request ID: {result.request_id}")
     # Expected: A valid UUID-format request ID
 else:

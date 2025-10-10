@@ -120,6 +120,57 @@ async function createSessionWithSync() {
 }
 ```
 
+### get
+
+Retrieves a session by its ID.
+
+```typescript
+get(sessionId: string): Promise<SessionResult>
+```
+
+**Parameters:**
+- `sessionId` (string): The ID of the session to retrieve.
+
+**Returns:**
+- `Promise<SessionResult>`: A promise that resolves to a result object containing the Session instance, request ID, success status, and error message if any.
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+async function getSessionExample() {
+  const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+  const createResult = await agentBay.create();
+  if (!createResult.success) {
+    console.error(`Failed to create session: ${createResult.errorMessage}`);
+    return;
+  }
+
+  const sessionId = createResult.session.sessionId;
+  console.log(`Created session with ID: ${sessionId}`);
+  // Output: Created session with ID: session-xxxxxxxxxxxxxx
+
+  const result = await agentBay.get(sessionId);
+  if (result.success) {
+    console.log(`Successfully retrieved session: ${result.session.sessionId}`);
+    // Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
+    console.log(`Request ID: ${result.requestId}`);
+    // Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    
+    const deleteResult = await result.session.delete();
+    if (deleteResult.success) {
+      console.log(`Session ${sessionId} deleted successfully`);
+      // Output: Session session-xxxxxxxxxxxxxx deleted successfully
+    }
+  } else {
+    console.error(`Failed to get session: ${result.errorMessage}`);
+  }
+}
+
+getSessionExample();
+```
+
 
 ```typescript
 listByLabels(params?: ListSessionParams): Promise<SessionListResult>
@@ -181,6 +232,59 @@ async function listSessionsByLabels() {
 listSessionsByLabels();
 ```
 
+### list
+
+Returns paginated list of Sessions filtered by labels.
+
+```typescript
+list(labels?: Record<string, string>, page?: number, limit?: number): Promise<SessionListResult>
+```
+
+**Parameters:**
+- `labels` (Record<string, string>, optional): Labels to filter Sessions. Defaults to empty object (returns all sessions).
+- `page` (number, optional): Page number for pagination (starting from 1). Defaults to undefined (returns first page).
+- `limit` (number, optional): Maximum number of items per page. Defaults to 10.
+
+**Returns:**
+- `Promise<SessionListResult>`: A promise that resolves to a paginated list of session IDs that match the labels, including requestId, success status, and pagination information.
+
+**Key Features:**
+- **Simple Interface**: Pass labels directly as an object parameter
+- **Pagination Support**: Use `page` and `limit` parameters for easy pagination
+- **Request ID**: All responses include a `requestId` for tracking and debugging
+- **Flexible Filtering**: Filter by any combination of labels or list all sessions
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay('your_api_key');
+
+async function listSessions() {
+  // List all sessions
+  let result = await agentBay.list();
+
+  // List sessions with specific labels
+  result = await agentBay.list({ project: 'demo' });
+
+  // List sessions with pagination (page 2, 10 items per page)
+  result = await agentBay.list({ 'my-label': 'my-value' }, 2, 10);
+
+  if (result.success) {
+    for (const sessionId of result.sessionIds) {
+      console.log(`Session ID: ${sessionId}`);
+    }
+    console.log(`Total count: ${result.totalCount}`);
+    console.log(`Request ID: ${result.requestId}`);
+  } else {
+    console.error(`Error: ${result.errorMessage}`);
+  }
+}
+
+listSessions();
+```
+
+### delete
 
 ```typescript
 delete(session: Session, syncContext?: boolean): Promise<DeleteResult>

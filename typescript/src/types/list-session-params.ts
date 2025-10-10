@@ -20,8 +20,11 @@ export interface ListSessionParams {
  * Maintain consistency with the existing TypeScript SDK return structure and use the data field
  */
 export interface SessionListResult extends ApiResponse {
-  /** Array of sessions */
+  /** Array of sessions (deprecated, use sessionIds) */
   data: Session[];
+
+  /** Array of session IDs */
+  sessionIds: string[];
 
   /** Token for the next page (if available) */
   nextToken?: string;
