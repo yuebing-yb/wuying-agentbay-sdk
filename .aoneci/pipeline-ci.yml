@@ -87,14 +87,24 @@ jobs:
         name: "Python Unit Tests"
         run: |
           cd python
-          python -m pip config set global.timeout 300
-          python -m pip config set global.retries 3
+          python -m pip config set global.timeout 600
+          python -m pip config set global.retries 5
           python -m pip install --upgrade pip
-          # Install poetry and project dependencies
-          pip install poetry
-          poetry config virtualenvs.create false
-          poetry install --with dev
-          # Run tests using pytest directly
+          # Install all dependencies directly (avoid poetry timeout issues)
+          pip install "darabonba-core>=1.0.0,<2.0.0" \
+                      "alibabacloud-tea-openapi>=0.4.0rc3" \
+                      "cryptography>=44.0.0" \
+                      "httpx>=0.28.1" \
+                      "alibabacloud-tea-util>=0.3.13" \
+                      "python-dotenv>=1.0.0" \
+                      "pydantic>=2.0" \
+                      "playwright>=1.5.0" \
+                      "loguru>=0.7.0"
+          # Install test dependencies
+          pip install pytest pytest-cov pytest-asyncio
+          # Add current directory to PYTHONPATH so tests can import agentbay
+          export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+          # Run tests
           pytest tests/unit -v
 
 
