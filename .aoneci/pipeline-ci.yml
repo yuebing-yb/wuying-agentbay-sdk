@@ -224,69 +224,13 @@ jobs:
           echo "=========================================="
           echo "    agentbay SDK Multi-Language Quality Check Summary"
           echo "=========================================="
-
-          PYTHON_LINT_STATUS="${{jobs.python-lint-test.steps.python-lint.status}}"
-          PYTHON_TEST_STATUS="${{jobs.python-lint-test.steps.python-test.status}}"
-          TS_LINT_STATUS="${{jobs.typescript-lint-test.steps.typescript-lint.status}}"
-          TS_TEST_STATUS="${{jobs.typescript-lint-test.steps.typescript-test-unit.status}}"
-          GO_LINT_STATUS="${{jobs.golang-lint-test.steps.golang-lint.status}}"
-          GO_TEST_STATUS="${{jobs.golang-lint-test.steps.golang-unit-test.status}}"
-
-          FAILED=0
-
-          # Check Python results
-          if [ "$PYTHON_LINT_STATUS" != "success" ]; then
-            echo "❌ Python Lint: FAILED"
-            FAILED=1
-          else
-            echo "✅ Python Lint: PASSED"
-          fi
-
-          if [ "$PYTHON_TEST_STATUS" != "success" ]; then
-            echo "❌ Python Unit Tests: FAILED"
-            FAILED=1
-          else
-            echo "✅ Python Unit Tests: PASSED"
-          fi
-
-          # Check TypeScript results
-          if [ "$TS_LINT_STATUS" != "success" ]; then
-            echo "❌ TypeScript Lint: FAILED"
-            FAILED=1
-          else
-            echo "✅ TypeScript Lint: PASSED"
-          fi
-
-          if [ "$TS_TEST_STATUS" != "success" ]; then
-            echo "❌ TypeScript Unit Tests: FAILED"
-            FAILED=1
-          else
-            echo "✅ TypeScript Unit Tests: PASSED"
-          fi
-
-          # Check Golang results
-          if [ "$GO_LINT_STATUS" != "success" ]; then
-            echo "❌ Golang Lint: FAILED"
-            FAILED=1
-          else
-            echo "✅ Golang Lint: PASSED"
-          fi
-
-          if [ "$GO_TEST_STATUS" != "success" ]; then
-            echo "❌ Golang Unit Tests: FAILED"
-            FAILED=1
-          else
-            echo "✅ Golang Unit Tests: PASSED"
-          fi
-
+          echo ""
+          echo "All prerequisite jobs have completed successfully!"
+          echo ""
+          echo "✅ Python Lint & Unit Tests: PASSED"
+          echo "✅ TypeScript Lint & Unit Tests: PASSED"
+          echo "✅ Golang Lint & Unit Tests: PASSED"
+          echo ""
           echo "=========================================="
-
-          if [ $FAILED -eq 1 ]; then
-            echo "❌ Quality Check: FAILED"
-            echo "Please check the detailed reports above for more information."
-            exit 1
-          else
-            echo "✅ All Quality Checks: PASSED"
-          fi
-
+          echo "✅ All Quality Checks: PASSED"
           echo "=========================================="
