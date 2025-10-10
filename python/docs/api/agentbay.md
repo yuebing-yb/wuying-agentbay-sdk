@@ -34,9 +34,7 @@ A `ContextService` instance for managing persistent contexts. See the [Context A
 
 ## Methods
 
-
 Creates a new session in the AgentBay cloud environment.
-
 
 ```python
 create(params: Optional[CreateSessionParams] = None) -> SessionResult
@@ -356,3 +354,156 @@ if result.success:
     else:
         print(f"Failed to delete session: {delete_result.error_message}")
 ```
+
+## RecyclePolicy Configuration
+
+The `RecyclePolicy` defines how long context data should be retained and which paths are subject to the policy. It is used within the `SyncPolicy` when creating sessions with context synchronization.
+
+### Lifecycle Options
+
+The `lifecycle` field determines the data retention period:
+
+| Option | Retention Period | Description |
+|--------|------------------|-------------|
+| `Lifecycle.LIFECYCLE_1DAY` | 1 day | Data deleted after 1 day |
+| `Lifecycle.LIFECYCLE_3DAYS` | 3 days | Data deleted after 3 days |
+| `Lifecycle.LIFECYCLE_5DAYS` | 5 days | Data deleted after 5 days |
+| `Lifecycle.LIFECYCLE_10DAYS` | 10 days | Data deleted after 10 days |
+| `Lifecycle.LIFECYCLE_15DAYS` | 15 days | Data deleted after 15 days |
+| `Lifecycle.LIFECYCLE_30DAYS` | 30 days | Data deleted after 30 days |
+| `Lifecycle.LIFECYCLE_90DAYS` | 90 days | Data deleted after 90 days |
+| `Lifecycle.LIFECYCLE_180DAYS` | 180 days | Data deleted after 180 days |
+| `Lifecycle.LIFECYCLE_360DAYS` | 360 days | Data deleted after 360 days |
+| `Lifecycle.LIFECYCLE_FOREVER` | Permanent | Data never deleted (default) |
+
+**Default Value:** `Lifecycle.LIFECYCLE_FOREVER`
+
+### Paths Configuration
+
+The `paths` field specifies which directories or files should be subject to the recycle policy:
+
+**Rules:**
+- Must use exact directory/file paths
+- **Wildcard patterns (`* ? [ ]`) are NOT supported**
+- Empty string `""` means apply to all paths in the context
+- Multiple paths can be specified as a list
+
+**Default Value:** `[""]` (applies to all paths)
+
+### Usage Examples
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+from agentbay.context_sync import ContextSync, SyncPolicy, RecyclePolicy, Lifecycle, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, BWList, WhiteList
+
+# Example 1: Apply to all paths with 30-day retention
+recycle_policy_1 = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_30DAYS,
+    paths=[""]  # Apply to all paths
+)
+
+# Example 2: Apply to specific directories with 1-day retention
+recycle_policy_2 = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_1DAY,
+    paths=["/tmp/logs", "/cache"]  # Apply only to these directories
+)
+
+# Example 3: Permanent retention for important data
+recycle_policy_3 = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_FOREVER,
+    paths=["/important/data"]
+)
+
+# Example 4: Create session with custom recycle policy
+custom_sync_policy = SyncPolicy(
+    upload_policy=UploadPolicy.default(),
+    download_policy=DownloadPolicy.default(),
+    delete_policy=DeletePolicy.default(),
+    extract_policy=ExtractPolicy.default(),
+    recycle_policy=recycle_policy_1,  # Use the 30-day retention policy
+    bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])])
+)
+
+context_sync = ContextSync(
+    context_id="my-project-context",
+    path="/tmp/data",
+    policy=custom_sync_policy
+)
+
+params = CreateSessionParams(
+    image_id="linux_latest",
+    labels={"project": "data-processing", "lifecycle": "30days"},
+    context_syncs=[context_sync]
+)
+
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create(params)
+if result.success:
+    session = result.session
+    print(f"Created session with custom recycle policy: {session.session_id}")
+
+# Example 5: Different retention policies for different data types
+# Short-term policy for temporary files
+short_term_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_1DAY,
+    paths=["/tmp", "/cache/temp"]
+)
+
+# Long-term policy for backup data
+long_term_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_90DAYS,
+    paths=["/data/backups"]
+)
+
+# Create separate context syncs for different data types
+temp_sync_policy = SyncPolicy(
+    upload_policy=UploadPolicy.default(),
+    download_policy=DownloadPolicy.default(),
+    delete_policy=DeletePolicy.default(),
+    extract_policy=ExtractPolicy.default(),
+    recycle_policy=short_term_policy,
+    bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])])
+)
+
+backup_sync_policy = SyncPolicy(
+    upload_policy=UploadPolicy.default(),
+    download_policy=DownloadPolicy.default(),
+    delete_policy=DeletePolicy.default(),
+    extract_policy=ExtractPolicy.default(),
+    recycle_policy=long_term_policy,
+    bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])])
+)
+
+temp_context_sync = ContextSync(
+    context_id="temp-context",
+    path="/tmp/workspace",
+    policy=temp_sync_policy
+)
+
+backup_context_sync = ContextSync(
+    context_id="backup-context",
+    path="/data/workspace",
+    policy=backup_sync_policy
+)
+
+multi_context_params = CreateSessionParams(
+    image_id="linux_latest",
+    labels={"project": "multi-tier-storage"},
+    context_syncs=[temp_context_sync, backup_context_sync]
+)
+
+multi_result = agent_bay.create(multi_context_params)
+if multi_result.success:
+    multi_session = multi_result.session
+    print(f"Created session with multiple recycle policies: {multi_session.session_id}")
+```
+
+### Best Practices
+
+1. **Use appropriate retention periods**: Choose lifecycle options based on your data importance and storage costs
+2. **Specify exact paths**: Use precise directory paths instead of wildcards for better control
+3. **Separate policies for different data types**: Use different recycle policies for temporary vs. persistent data
+4. **Monitor storage usage**: Regularly review and adjust lifecycle settings to optimize storage costs
+5. **Test path validation**: Ensure your paths don't contain wildcard characters (`* ? [ ]`) as they are not supported
+6. **Consider data dependencies**: When setting short retention periods, ensure dependent processes can complete within the timeframe

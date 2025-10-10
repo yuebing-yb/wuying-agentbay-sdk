@@ -355,6 +355,9 @@ class AgentBay:
             logger.info(f"🆔 Session created: {session_id}")
             logger.debug(f"🔗 Resource URL: {resource_url}")
 
+            app_instance_id = data.get("AppInstanceId")
+            logger.info(f"🆔 AppInstanceId: {app_instance_id}")
+
             # Create Session object
             from agentbay.session import Session
 

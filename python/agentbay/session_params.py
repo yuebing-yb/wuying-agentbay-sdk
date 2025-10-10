@@ -1,5 +1,5 @@
 from typing import Dict, Optional, List, TYPE_CHECKING
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, ExtractPolicy, BWList, WhiteList
+from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList
 from agentbay.logger import get_logger
 from agentbay.api.models._create_mcp_session_request import ExtraConfigs
 
@@ -153,6 +153,7 @@ class BrowserContext:
         sync_policy = SyncPolicy(
             upload_policy=UploadPolicy(auto_upload=False),
             extract_policy=ExtractPolicy(extract=True, delete_src_file=True),
+            recycle_policy=RecyclePolicy.default(),
             bw_list=BWList(white_lists=white_lists)
         )
 
