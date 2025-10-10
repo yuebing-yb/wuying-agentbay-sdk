@@ -53,44 +53,49 @@ jobs:
       - uses: setup-env
         inputs:
           python-version: '3.10'
-          python-cache: 'poetry'
-          python-cache-dependency-path: 'python/poetry.lock'
+      
+      # Install all dependencies once in a single step
+      - id: python-install-deps
+        name: "Install Python Dependencies"
+        run: |
+          cd python
+          python -m pip config set global.timeout 300
+          python -m pip config set global.retries 3
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install --with dev
+          # Install additional tools for scanning
+          pip install bandit pip-audit types-requests types-aiohttp types-Pillow types-setuptools types-pydantic || true
+          echo "All dependencies installed successfully"
+      
       - id: python-lint
         continue-on-error: true
         name: "Python Code Format Check & Security Check"
         when: "${{params.python_enabled}}"
         run: |
           cd python
-          python -m pip config set global.timeout 300
-          python -m pip config set global.retries 3
-          python -m pip install --upgrade pip
-          # Install poetry once and reuse it
-          pip install poetry
-          # Install project dependencies (will be cached)
-          poetry install --with dev
-          # Run all lint checks using poetry-installed dependencies
+          # Dependencies already installed, just run checks
           poetry run black agentbay tests --check --diff
           echo "Format check completed"
           poetry run isort --check-only --diff --verbose agentbay tests
           echo "Quality check completed"
           poetry run flake8 agentbay tests --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=agentbay/modules/browser/eval
           echo "Flake8 check completed"
-          pip install types-requests types-aiohttp types-Pillow types-setuptools types-pydantic || true
           poetry run mypy agentbay --install-types --no-error-summary --install-types --non-interactive
           echo "Type check completed"
-          pip install bandit pip-audit
           python -m bandit -r agentbay/ -v --skip B105,B106,B107
           echo "Bandit scan completed"
           echo "Executing pip-audit dependency vulnerability scan..."
           pip-audit --desc
           echo "Dependency vulnerability scan completed"
+      
       - id: python-test
         continue-on-error: true
         when: "${{params.python_enabled}}"
         name: "Python Unit Tests"
         run: |
           cd python
-          # Dependencies already installed in previous step, just run tests
+          # Dependencies already installed in first step, just run tests
           poetry run pytest tests/unit -v
 
 
@@ -156,43 +161,48 @@ jobs:
           go-version: "1.23.2"
           go-mod-cache: true
           go-cache: false
-      - id: golang-lint
-        continue-on-error: true
-        name: "Golang Code Format Check"
-        when: "${{params.golang_enabled}}"
+      
+      # Download dependencies and install tools once
+      - id: golang-install-deps
+        name: "Install Golang Dependencies and Tools"
         run: |
           # Configure Go environment
           go env -w GOPROXY=https://proxy.golang.org,direct
           go env -w GOSUMDB=sum.golang.org
           go env -w GONOSUMDB=""
           cd golang
-          # Download dependencies (will be cached by go-mod-cache: true)
+          # Download dependencies (DO NOT use go clean -modcache!)
           go get github.com/alibabacloud-go/darabonba-openapi/v2@latest
           go mod tidy
           go mod download
           go mod verify
-          # Install linting tools (consider caching these in the future)
+          # Install linting tools
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin latest
           curl -sfL https://raw.githubusercontent.com/securecodewarrior/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.18.2
           go install golang.org/x/vuln/cmd/govulncheck@latest
+          echo "All dependencies and tools installed successfully"
+      
+      - id: golang-lint
+        continue-on-error: true
+        name: "Golang Code Format Check"
+        when: "${{params.golang_enabled}}"
+        run: |
+          cd golang
           export PATH="$(go env GOPATH)/bin:$PATH"
-          # Verify dependencies
+          # Dependencies already downloaded, just run checks
           go build -v ./api/client/...
-          # Code check
           go vet ./...
-          # Linting
           golangci-lint run --timeout=5m --config=.golangci.yml || echo "Linting completed with issues found."
-          # Security scan
           gosec -fmt json -out gosec-results.json ./... || true
-          # Vulnerability check
           govulncheck ./... || true
+      
       - id: golang-unit-test
         continue-on-error: true
         when: "${{params.golang_enabled}}"
         name: "Golang Unit Tests"
         run: |
           cd golang
-          # Dependencies already downloaded in previous step, just run tests
+          # Dependencies already downloaded in first step, just run tests
           go test -race -v ./tests/pkg/unit/...
 
   summary:
