@@ -3,7 +3,7 @@ import sys
 import unittest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay.session_params import CreateSessionParams, BrowserContext
 from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
 from agentbay.context_sync import ContextSync, SyncPolicy, RecyclePolicy, Lifecycle, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, BWList, WhiteList
 
@@ -290,6 +290,111 @@ class TestRecyclePolicy(unittest.TestCase):
             )
 
         print("RecyclePolicy correctly threw error for multiple invalid paths")
+
+
+    def test_recycle_policy_invalid_lifecycle(self):
+        """Test invalid Lifecycle values."""
+        print("Testing invalid Lifecycle values...")
+
+        # Test with invalid lifecycle value (string instead of Lifecycle enum)
+        with self.assertRaises(ValueError) as context:
+            RecyclePolicy(
+                lifecycle="invalid_lifecycle",  # Invalid: should be Lifecycle enum
+                paths=[""]
+            )
+
+        # Verify error message contains expected information
+        error_message = str(context.exception)
+        expected_substrings = [
+            "Invalid lifecycle value",
+            "invalid_lifecycle",
+            "Valid values are:"
+        ]
+
+        for substring in expected_substrings:
+            self.assertIn(substring, error_message)
+
+        print(f"Invalid lifecycle 'invalid_lifecycle' correctly failed validation: {error_message}")
+        print("Invalid Lifecycle values test completed successfully")
+
+    def test_recycle_policy_combined_invalid(self):
+        """Test combination of invalid Lifecycle and invalid paths."""
+        print("Testing combination of invalid Lifecycle and invalid paths...")
+
+        # Test with both invalid lifecycle and invalid path
+        with self.assertRaises(ValueError) as context:
+            RecyclePolicy(
+                lifecycle="invalid_lifecycle",  # Invalid lifecycle
+                paths=["/invalid/path/*"]       # Invalid path with wildcard
+            )
+
+        # Should fail on lifecycle validation first (since it's checked first in __post_init__)
+        error_message = str(context.exception)
+        self.assertIn("Invalid lifecycle value", error_message)
+
+        print(f"Policy with both invalid lifecycle and invalid path correctly failed validation: {error_message}")
+        print("Combined invalid configuration test completed successfully")
+
+
+class TestBrowserContext(unittest.TestCase):
+    """Test cases for BrowserContext functionality."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        api_key = get_test_api_key()
+        self.agent_bay = AgentBay(api_key=api_key)
+        self.session = None
+
+    def tearDown(self):
+        """Tear down test fixtures."""
+        # Clean up session
+        if self.session:
+            try:
+                print("Cleaning up session with BrowserContext...")
+                delete_result = self.agent_bay.delete(self.session)
+                print(f"Delete Session RequestId: {delete_result.request_id or 'undefined'}")
+            except Exception as e:
+                print(f"Warning: Error deleting session: {e}")
+
+    def test_create_session_with_browser_context_default_recycle_policy(self):
+        """Test creating session with BrowserContext using default RecyclePolicy."""
+        print("Testing session creation with BrowserContext (default RecyclePolicy)...")
+
+        # Create BrowserContext with default RecyclePolicy
+        browser_context = BrowserContext(
+            context_id="test-browser-context-default",
+            auto_upload=True
+        )
+
+        print(f"BrowserContext context_id: {browser_context.context_id}")
+        print(f"BrowserContext auto_upload: {browser_context.auto_upload}")
+
+        # Create session parameters with BrowserContext
+        params = CreateSessionParams(
+            labels={"test": "browserContext", "recycle_policy": "default"},
+            browser_context=browser_context
+        )
+
+        # Create session with BrowserContext
+        create_result = self.agent_bay.create(params)
+
+        # Verify SessionResult structure
+        self.assertTrue(create_result.success)
+        self.assertIsNotNone(create_result.request_id)
+        self.assertIsInstance(create_result.request_id, str)
+        self.assertGreater(len(create_result.request_id), 0)
+        self.assertIsNotNone(create_result.session)
+        self.assertFalse(create_result.error_message)
+
+        self.session = create_result.session
+        print(f"Session created successfully with ID: {self.session.session_id}")
+        print(f"Create Session RequestId: {create_result.request_id or 'undefined'}")
+
+        # Verify session properties
+        self.assertIsNotNone(self.session.session_id)
+        self.assertGreater(len(self.session.session_id), 0)
+
+        print("Session with BrowserContext (default RecyclePolicy) created and verified successfully")
 
 
 if __name__ == "__main__":

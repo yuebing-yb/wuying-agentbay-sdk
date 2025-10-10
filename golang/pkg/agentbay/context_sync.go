@@ -22,6 +22,32 @@ const (
 	DownloadAsync DownloadStrategy = "DownloadAsync"
 )
 
+// Lifecycle defines the lifecycle options for recycle policy
+type Lifecycle string
+
+const (
+	// Lifecycle1Day keeps data for 1 day
+	Lifecycle1Day Lifecycle = "Lifecycle_1Day"
+	// Lifecycle3Days keeps data for 3 days
+	Lifecycle3Days Lifecycle = "Lifecycle_3Days"
+	// Lifecycle5Days keeps data for 5 days
+	Lifecycle5Days Lifecycle = "Lifecycle_5Days"
+	// Lifecycle10Days keeps data for 10 days
+	Lifecycle10Days Lifecycle = "Lifecycle_10Days"
+	// Lifecycle15Days keeps data for 15 days
+	Lifecycle15Days Lifecycle = "Lifecycle_15Days"
+	// Lifecycle30Days keeps data for 30 days
+	Lifecycle30Days Lifecycle = "Lifecycle_30Days"
+	// Lifecycle90Days keeps data for 90 days
+	Lifecycle90Days Lifecycle = "Lifecycle_90Days"
+	// Lifecycle180Days keeps data for 180 days
+	Lifecycle180Days Lifecycle = "Lifecycle_180Days"
+	// Lifecycle360Days keeps data for 360 days
+	Lifecycle360Days Lifecycle = "Lifecycle_360Days"
+	// LifecycleForever keeps data permanently (default)
+	LifecycleForever Lifecycle = "Lifecycle_Forever"
+)
+
 // UploadPolicy defines the upload policy for context synchronization
 type UploadPolicy struct {
 	// AutoUpload enables automatic upload
@@ -65,6 +91,98 @@ func NewDeletePolicy() *DeletePolicy {
 	return &DeletePolicy{
 		SyncLocalFile: true,
 	}
+}
+
+// ExtractPolicy defines the extract policy for context synchronization
+type ExtractPolicy struct {
+	// Extract enables file extraction
+	Extract bool `json:"extract"`
+	// DeleteSrcFile enables deletion of source file after extraction
+	DeleteSrcFile bool `json:"deleteSrcFile"`
+	// ExtractToCurrentFolder enables extraction to current folder
+	ExtractToCurrentFolder bool `json:"extractToCurrentFolder"`
+}
+
+// NewExtractPolicy creates a new extract policy with default values
+func NewExtractPolicy() *ExtractPolicy {
+	return &ExtractPolicy{
+		Extract:                true,
+		DeleteSrcFile:          true,
+		ExtractToCurrentFolder: false,
+	}
+}
+
+// RecyclePolicy defines the recycle policy for context synchronization
+//
+// The RecyclePolicy determines how long context data should be retained and which paths
+// are subject to the policy.
+//
+// Lifecycle field determines the data retention period:
+//   - Lifecycle1Day: Keep data for 1 day
+//   - Lifecycle3Days: Keep data for 3 days
+//   - Lifecycle5Days: Keep data for 5 days
+//   - Lifecycle10Days: Keep data for 10 days
+//   - Lifecycle15Days: Keep data for 15 days
+//   - Lifecycle30Days: Keep data for 30 days
+//   - Lifecycle90Days: Keep data for 90 days
+//   - Lifecycle180Days: Keep data for 180 days
+//   - Lifecycle360Days: Keep data for 360 days
+//   - LifecycleForever: Keep data permanently (default)
+//
+// Paths field specifies which directories or files should be subject to the recycle policy:
+//   - Must use exact directory/file paths
+//   - Wildcard patterns (* ? [ ]) are NOT supported
+//   - Empty string "" means apply to all paths in the context
+//   - Multiple paths can be specified as a slice
+//   - Default: []string{""} (applies to all paths)
+type RecyclePolicy struct {
+	// Lifecycle defines how long the context data should be retained
+	Lifecycle Lifecycle `json:"lifecycle"`
+	// Paths specifies which directories or files should be subject to the recycle policy
+	Paths []string `json:"paths"`
+}
+
+// NewRecyclePolicy creates a new recycle policy with default values
+func NewRecyclePolicy() *RecyclePolicy {
+	return &RecyclePolicy{
+		Lifecycle: LifecycleForever,
+		Paths:     []string{""},
+	}
+}
+
+// isValidLifecycle checks if the given lifecycle value is valid
+func isValidLifecycle(lifecycle Lifecycle) bool {
+	switch lifecycle {
+	case Lifecycle1Day, Lifecycle3Days, Lifecycle5Days, Lifecycle10Days, Lifecycle15Days,
+		Lifecycle30Days, Lifecycle90Days, Lifecycle180Days, Lifecycle360Days, LifecycleForever:
+		return true
+	default:
+		return false
+	}
+}
+
+// Validate validates the RecyclePolicy configuration
+func (rp *RecyclePolicy) Validate() error {
+	// Validate Lifecycle value
+	if !isValidLifecycle(rp.Lifecycle) {
+		return fmt.Errorf(
+			"invalid lifecycle value: %s. Valid values are: %s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
+			rp.Lifecycle,
+			Lifecycle1Day, Lifecycle3Days, Lifecycle5Days, Lifecycle10Days, Lifecycle15Days,
+			Lifecycle30Days, Lifecycle90Days, Lifecycle180Days, Lifecycle360Days, LifecycleForever,
+		)
+	}
+
+	// Validate paths don't contain wildcard patterns
+	for _, path := range rp.Paths {
+		if path != "" && containsWildcard(path) {
+			return fmt.Errorf(
+				"wildcard patterns are not supported in recycle policy paths. Got: %s. Please use exact directory paths instead",
+				path,
+			)
+		}
+	}
+	return nil
 }
 
 // WhiteList defines the white list configuration
@@ -115,6 +233,10 @@ type SyncPolicy struct {
 	DownloadPolicy *DownloadPolicy `json:"downloadPolicy,omitempty"`
 	// DeletePolicy defines the delete policy
 	DeletePolicy *DeletePolicy `json:"deletePolicy,omitempty"`
+	// ExtractPolicy defines the extract policy
+	ExtractPolicy *ExtractPolicy `json:"extractPolicy,omitempty"`
+	// RecyclePolicy defines the recycle policy
+	RecyclePolicy *RecyclePolicy `json:"recyclePolicy,omitempty"`
 	// BWList defines the black and white list
 	BWList *BWList `json:"bwList,omitempty"`
 }
@@ -125,6 +247,8 @@ func NewSyncPolicy() *SyncPolicy {
 		UploadPolicy:   NewUploadPolicy(),
 		DownloadPolicy: NewDownloadPolicy(),
 		DeletePolicy:   NewDeletePolicy(),
+		ExtractPolicy:  NewExtractPolicy(),
+		RecyclePolicy:  NewRecyclePolicy(),
 		BWList: &BWList{
 			WhiteLists: []*WhiteList{
 				{
@@ -146,6 +270,12 @@ func (sp *SyncPolicy) ensureDefaults() {
 	}
 	if sp.DeletePolicy == nil {
 		sp.DeletePolicy = NewDeletePolicy()
+	}
+	if sp.ExtractPolicy == nil {
+		sp.ExtractPolicy = NewExtractPolicy()
+	}
+	if sp.RecyclePolicy == nil {
+		sp.RecyclePolicy = NewRecyclePolicy()
 	}
 	if sp.BWList == nil {
 		sp.BWList = &BWList{
@@ -179,13 +309,23 @@ type ContextSync struct {
 }
 
 func validateSyncPolicy(policy *SyncPolicy) error {
-	if policy == nil || policy.BWList == nil || policy.BWList.WhiteLists == nil {
+	if policy == nil {
 		return nil
 	}
 
-	for _, whitelist := range policy.BWList.WhiteLists {
-		if err := whitelist.Validate(); err != nil {
+	// Validate RecyclePolicy paths
+	if policy.RecyclePolicy != nil {
+		if err := policy.RecyclePolicy.Validate(); err != nil {
 			return err
+		}
+	}
+
+	// Validate BWList whitelist paths
+	if policy.BWList != nil && policy.BWList.WhiteLists != nil {
+		for _, whitelist := range policy.BWList.WhiteLists {
+			if err := whitelist.Validate(); err != nil {
+				return err
+			}
 		}
 	}
 

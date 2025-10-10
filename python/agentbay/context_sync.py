@@ -159,7 +159,16 @@ class RecyclePolicy:
     paths: List[str] = field(default_factory=lambda: [""])
 
     def __post_init__(self):
-        """Validate that paths don't contain wildcard patterns"""
+        """Validate lifecycle and paths configuration"""
+        # Validate lifecycle value
+        if not isinstance(self.lifecycle, Lifecycle):
+            valid_values = [e.value for e in Lifecycle]
+            raise ValueError(
+                f"Invalid lifecycle value: {self.lifecycle}. "
+                f"Valid values are: {', '.join(valid_values)}"
+            )
+        
+        # Validate that paths don't contain wildcard patterns
         for path in self.paths:
             if path and path.strip() != "" and self._contains_wildcard(path):
                 raise ValueError(

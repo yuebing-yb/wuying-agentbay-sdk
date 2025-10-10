@@ -274,6 +274,11 @@ export function newSyncPolicy(): SyncPolicy {
   };
 }
 
+// isValidLifecycle checks if the given lifecycle value is valid
+function isValidLifecycle(lifecycle: Lifecycle): boolean {
+  return Object.values(Lifecycle).includes(lifecycle);
+}
+
 export function validateSyncPolicy(policy?: SyncPolicy): void {
   if (policy?.bwList?.whiteLists) {
     for (const whitelist of policy.bwList.whiteLists) {
@@ -281,12 +286,24 @@ export function validateSyncPolicy(policy?: SyncPolicy): void {
     }
   }
 
-  if (policy?.recyclePolicy?.paths) {
-    for (const path of policy.recyclePolicy.paths) {
-      if (path && path.trim() !== "") {
-        // Create a temporary WhiteList object for validation
-        const tempWhiteList: WhiteList = { path: path };
-        WhiteListValidator.validate(tempWhiteList);
+  if (policy?.recyclePolicy) {
+    // Validate lifecycle value
+    if (!isValidLifecycle(policy.recyclePolicy.lifecycle)) {
+      const validValues = Object.values(Lifecycle).join(', ');
+      throw new Error(
+        `Invalid lifecycle value: ${policy.recyclePolicy.lifecycle}. ` +
+        `Valid values are: ${validValues}`
+      );
+    }
+
+    // Validate paths don't contain wildcard patterns
+    if (policy.recyclePolicy.paths) {
+      for (const path of policy.recyclePolicy.paths) {
+        if (path && path.trim() !== "") {
+          // Create a temporary WhiteList object for validation
+          const tempWhiteList: WhiteList = { path: path };
+          WhiteListValidator.validate(tempWhiteList);
+        }
       }
     }
   }

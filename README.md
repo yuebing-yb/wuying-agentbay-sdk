@@ -133,6 +133,123 @@ if err != nil {
 - **CodeSpace** - Code execution and development environment
 - **Mobile Use** - Mobile device simulation and control
 
+### ♻️ RecyclePolicy Configuration
+
+The `RecyclePolicy` defines how long context data should be retained and which paths are subject to the policy. It is used within the `SyncPolicy` when creating sessions with context synchronization.
+
+#### Lifecycle Options
+
+The `lifecycle` field determines the data retention period:
+
+| Option | Retention Period | Description |
+|--------|------------------|-------------|
+| `LIFECYCLE_1DAY` | 1 day | Data deleted after 1 day |
+| `LIFECYCLE_3DAYS` | 3 days | Data deleted after 3 days |
+| `LIFECYCLE_5DAYS` | 5 days | Data deleted after 5 days |
+| `LIFECYCLE_10DAYS` | 10 days | Data deleted after 10 days |
+| `LIFECYCLE_15DAYS` | 15 days | Data deleted after 15 days |
+| `LIFECYCLE_30DAYS` | 30 days | Data deleted after 30 days |
+| `LIFECYCLE_90DAYS` | 90 days | Data deleted after 90 days |
+| `LIFECYCLE_180DAYS` | 180 days | Data deleted after 180 days |
+| `LIFECYCLE_360DAYS` | 360 days | Data deleted after 360 days |
+| `LIFECYCLE_FOREVER` | Permanent | Data never deleted (default) |
+
+**Default Value:** `LIFECYCLE_FOREVER`
+
+#### Paths Configuration
+
+The `paths` field specifies which directories or files should be subject to the recycle policy:
+
+**Rules:**
+- Must use exact directory/file paths
+- **Wildcard patterns (`* ? [ ]`) are NOT supported**
+- Empty string `""` means apply to all paths in the context
+- Multiple paths can be specified as a list
+
+**Default Value:** `[""]` (applies to all paths)
+
+#### Usage Examples
+
+##### Python
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+from agentbay.context_sync import ContextSync, SyncPolicy, RecyclePolicy, Lifecycle
+
+# Create recycle policy with 30-day retention
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_30DAYS,
+    paths=[""]  # Apply to all paths
+)
+
+# Create session with custom recycle policy
+sync_policy = SyncPolicy(
+    recycle_policy=recycle_policy
+)
+context_sync = ContextSync(
+    context_id="my-project-context",
+    path="/tmp/data",
+    policy=sync_policy
+)
+params = CreateSessionParams(context_syncs=[context_sync])
+
+agent_bay = AgentBay()
+result = agent_bay.create(params)
+```
+
+##### TypeScript
+```typescript
+import { AgentBay, CreateSessionParams, ContextSync, SyncPolicy, RecyclePolicy, Lifecycle } from 'wuying-agentbay-sdk';
+
+// Create recycle policy with 30-day retention
+const recyclePolicy = new RecyclePolicy({
+    lifecycle: Lifecycle.LIFECYCLE_30DAYS,
+    paths: [""]  // Apply to all paths
+});
+
+// Create session with custom recycle policy
+const syncPolicy = new SyncPolicy({
+    recyclePolicy: recyclePolicy
+});
+const contextSync = new ContextSync({
+    contextId: "my-project-context",
+    path: "/tmp/data",
+    policy: syncPolicy
+});
+const params = new CreateSessionParams({
+    contextSyncs: [contextSync]
+});
+
+const agentBay = new AgentBay();
+const result = await agentBay.create(params);
+```
+
+##### Golang
+```go
+import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+// Create recycle policy with 30-day retention
+recyclePolicy := agentbay.NewRecyclePolicy().
+    SetLifecycle(agentbay.LIFECYCLE_30DAYS).
+    SetPaths([]string{""})  // Apply to all paths
+
+// Create session with custom recycle policy
+syncPolicy := agentbay.NewSyncPolicy().SetRecyclePolicy(recyclePolicy)
+contextSync := agentbay.NewContextSync("my-project-context", "/tmp/data", syncPolicy)
+params := agentbay.NewCreateSessionParams().AddContextSyncConfig(contextSync)
+
+client, _ := agentbay.NewAgentBay("", nil)
+result, _ := client.Create(params)
+```
+
+##### Best Practices
+
+1. **Use appropriate retention periods**: Choose lifecycle options based on your data importance and storage costs
+2. **Specify exact paths**: Use precise directory paths instead of wildcards for better control
+3. **Separate policies for different data types**: Use different recycle policies for temporary vs. persistent data
+4. **Monitor storage usage**: Regularly review and adjust lifecycle settings to optimize storage costs
+5. **Test path validation**: Ensure your paths don't contain wildcard characters (`* ? [ ]`) as they are not supported
+
 ## 🆘 Get Help
 
 - [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)

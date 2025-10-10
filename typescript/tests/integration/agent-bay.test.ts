@@ -481,5 +481,58 @@ describe("AgentBay", () => {
 
       log("ContextSync correctly threw error for invalid recyclePolicy path");
     });
+
+    it("should throw error when creating ContextSync with invalid lifecycle", () => {
+      log("Testing ContextSync creation with invalid lifecycle...");
+
+      // Create custom recyclePolicy with invalid lifecycle value
+      const invalidSyncPolicy: SyncPolicy = {
+        ...newSyncPolicy(),
+        recyclePolicy: {
+          lifecycle: "invalid_lifecycle" as any, // Invalid lifecycle
+          paths: [""]
+        }
+      };
+
+      log(`Invalid lifecycle: ${invalidSyncPolicy.recyclePolicy?.lifecycle}`);
+
+      // Test that ContextSync constructor throws an error for invalid lifecycle
+      expect(() => {
+        new ContextSync(
+          "invalid-lifecycle-context",
+          "/test/path",
+          invalidSyncPolicy
+        );
+      }).toThrow(/Invalid lifecycle value: invalid_lifecycle\. Valid values are:/);
+
+      log("ContextSync correctly threw error for invalid lifecycle");
+    });
+
+    it("should throw error when creating ContextSync with combined invalid configuration", () => {
+      log("Testing ContextSync creation with combined invalid lifecycle and invalid paths...");
+
+      // Create custom recyclePolicy with both invalid lifecycle and invalid path
+      const combinedInvalidSyncPolicy: SyncPolicy = {
+        ...newSyncPolicy(),
+        recyclePolicy: {
+          lifecycle: "invalid_lifecycle" as any, // Invalid lifecycle
+          paths: ["/invalid/path/*"] // Invalid path with wildcard
+        }
+      };
+
+      log(`Invalid lifecycle: ${combinedInvalidSyncPolicy.recyclePolicy?.lifecycle}`);
+      log(`Invalid path: ${combinedInvalidSyncPolicy.recyclePolicy?.paths[0]}`);
+
+      // Test that ContextSync constructor throws an error (should fail on lifecycle validation first)
+      expect(() => {
+        new ContextSync(
+          "combined-invalid-context",
+          "/test/path",
+          combinedInvalidSyncPolicy
+        );
+      }).toThrow(/Invalid lifecycle value: invalid_lifecycle\. Valid values are:/);
+
+      log("ContextSync correctly threw error for combined invalid configuration");
+    });
   });
 });

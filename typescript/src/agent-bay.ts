@@ -197,7 +197,8 @@ export class AgentBay {
           uploadPolicy: { autoUpload: params.browserContext.autoUpload },
           downloadPolicy: null,
           deletePolicy: null,
-          bwList: null
+          bwList: null,
+          recyclePolicy: null,
         };
 
         // Create browser context sync item

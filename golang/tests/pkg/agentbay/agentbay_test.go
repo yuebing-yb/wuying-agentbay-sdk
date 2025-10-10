@@ -301,3 +301,231 @@ func TestAgentBay_ListByLabels(t *testing.T) {
 
 	t.Log("Test completed successfully")
 }
+
+// TestAgentBay_CreateSessionWithRecyclePolicy tests creating a session with custom RecyclePolicy
+func TestAgentBay_CreateSessionWithRecyclePolicy(t *testing.T) {
+	// Initialize AgentBay client
+	apiKey := testutil.GetTestAPIKey(t)
+	agentBay, err := agentbay.NewAgentBay(apiKey)
+	if err != nil {
+		t.Fatalf("Error initializing AgentBay client: %v", err)
+	}
+
+	fmt.Println("Testing session creation with custom RecyclePolicy...")
+
+	// Create custom RecyclePolicy with Lifecycle1Day and default paths
+	recyclePolicy := &agentbay.RecyclePolicy{
+		Lifecycle: agentbay.Lifecycle1Day,
+		Paths:     []string{""}, // Default path (applies to all paths)
+	}
+
+	// Validate the RecyclePolicy
+	if err := recyclePolicy.Validate(); err != nil {
+		t.Fatalf("RecyclePolicy validation failed: %v", err)
+	}
+
+	// Create custom SyncPolicy with the RecyclePolicy
+	syncPolicy := &agentbay.SyncPolicy{
+		UploadPolicy:   agentbay.NewUploadPolicy(),
+		DownloadPolicy: agentbay.NewDownloadPolicy(),
+		DeletePolicy:   agentbay.NewDeletePolicy(),
+		ExtractPolicy:  agentbay.NewExtractPolicy(),
+		RecyclePolicy:  recyclePolicy,
+		BWList: &agentbay.BWList{
+			WhiteLists: []*agentbay.WhiteList{
+				{
+					Path:         "",
+					ExcludePaths: []string{},
+				},
+			},
+		},
+	}
+
+	// Create ContextSync with the custom policy
+	contextSync, err := agentbay.NewContextSync("test-recycle-context", "/tmp/recycle/path", syncPolicy)
+	if err != nil {
+		t.Fatalf("Error creating ContextSync: %v", err)
+	}
+
+	fmt.Printf("Created ContextSync with RecyclePolicy lifecycle: %s\n", recyclePolicy.Lifecycle)
+	fmt.Printf("RecyclePolicy paths: %v\n", recyclePolicy.Paths)
+
+	// Create session parameters with custom RecyclePolicy
+	params := agentbay.NewCreateSessionParams().
+		WithLabels(map[string]string{
+			"test":      "recyclePolicy",
+			"lifecycle": "1day",
+		}).
+		AddContextSyncConfig(contextSync)
+
+	// Create session with custom RecyclePolicy
+	fmt.Println("Creating session with custom RecyclePolicy...")
+	result, err := agentBay.Create(params)
+	if err != nil {
+		t.Fatalf("Error creating session with RecyclePolicy: %v", err)
+	}
+
+	// Verify SessionResult structure
+	if result.RequestID == "" {
+		fmt.Println("Warning: Expected non-empty RequestID")
+	} else {
+		fmt.Printf("Create Session RequestID: %s\n", result.RequestID)
+	}
+
+	if result.Session == nil {
+		t.Fatalf("Expected session to be created, got nil")
+	}
+
+	session := result.Session
+	fmt.Printf("Session created successfully with ID: %s\n", session.SessionID)
+
+	// Verify session properties
+	if session.SessionID == "" {
+		t.Errorf("Expected non-empty session ID")
+	}
+
+	// Verify that the session was created with the correct labels
+	expectedLabels := map[string]string{
+		"test":      "recyclePolicy",
+		"lifecycle": "1day",
+	}
+
+	// List sessions with the labels to verify they were applied
+	listParams := agentbay.NewListSessionParams()
+	listParams.Labels = expectedLabels
+	listResult, err := agentBay.ListByLabels(listParams)
+	if err != nil {
+		fmt.Printf("Warning: Error listing sessions by labels: %v\n", err)
+	} else {
+		found := false
+		for _, s := range listResult.Sessions {
+			if s.SessionID == session.SessionID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			fmt.Println("Warning: Created session not found in filtered list")
+		} else {
+			fmt.Println("Session successfully found in filtered list with correct labels")
+		}
+	}
+
+	// Ensure cleanup
+	defer func() {
+		fmt.Println("Cleaning up session with custom RecyclePolicy...")
+		deleteResult, err := agentBay.Delete(session)
+		if err != nil {
+			fmt.Printf("Warning: Error deleting session: %v\n", err)
+		} else {
+			fmt.Printf("Delete Session RequestID: %s\n", deleteResult.RequestID)
+		}
+	}()
+
+	fmt.Println("Session with custom RecyclePolicy created and verified successfully")
+}
+// TestRecyclePolicy_InvalidPaths tests invalid paths with wildcards via NewContextSync
+func TestRecyclePolicy_InvalidPaths(t *testing.T) {
+	fmt.Println("Testing invalid paths with wildcards...")
+
+	// Use only one invalid path instead of for loop
+	invalidPath := "/invalid/path/*"
+
+	invalidRecyclePolicy := &agentbay.RecyclePolicy{
+		Lifecycle: agentbay.Lifecycle1Day,
+		Paths:     []string{invalidPath},
+	}
+
+	invalidSyncPolicy := &agentbay.SyncPolicy{
+		UploadPolicy:   agentbay.NewUploadPolicy(),
+		DownloadPolicy: agentbay.NewDownloadPolicy(),
+		DeletePolicy:   agentbay.NewDeletePolicy(),
+		ExtractPolicy:  agentbay.NewExtractPolicy(),
+		RecyclePolicy:  invalidRecyclePolicy,
+		BWList: &agentbay.BWList{
+			WhiteLists: []*agentbay.WhiteList{
+				{
+					Path:         "",
+					ExcludePaths: []string{},
+				},
+			},
+		},
+	}
+
+	// This should fail at NewContextSync due to validation
+	_, err := agentbay.NewContextSync("invalid-path-context", "/tmp/path", invalidSyncPolicy)
+	if err == nil {
+		t.Errorf("Expected invalid path '%s' to fail NewContextSync validation, but it passed", invalidPath)
+	} else {
+		fmt.Printf("Invalid path '%s' correctly failed NewContextSync validation: %v\n", invalidPath, err)
+		
+		// Verify error message contains expected information
+		expectedSubstrings := []string{
+			"wildcard patterns are not supported",
+			invalidPath,
+			"Please use exact directory paths instead",
+		}
+		
+		for _, substring := range expectedSubstrings {
+			if !contains(err.Error(), substring) {
+				t.Errorf("Error message for invalid path '%s' should contain '%s', but got: %v", invalidPath, substring, err)
+			}
+		}
+	}
+
+	fmt.Println("Invalid paths with wildcards test completed successfully")
+}
+
+// TestRecyclePolicy_CombinedInvalid tests combination of invalid Lifecycle and invalid paths via NewContextSync
+func TestRecyclePolicy_CombinedInvalid(t *testing.T) {
+	fmt.Println("Testing combination of invalid Lifecycle and invalid paths...")
+
+	combinedInvalidRecyclePolicy := &agentbay.RecyclePolicy{
+		Lifecycle: "invalid_lifecycle",
+		Paths:     []string{"/invalid/path/*"},
+	}
+
+	combinedInvalidSyncPolicy := &agentbay.SyncPolicy{
+		UploadPolicy:   agentbay.NewUploadPolicy(),
+		DownloadPolicy: agentbay.NewDownloadPolicy(),
+		DeletePolicy:   agentbay.NewDeletePolicy(),
+		ExtractPolicy:  agentbay.NewExtractPolicy(),
+		RecyclePolicy:  combinedInvalidRecyclePolicy,
+		BWList: &agentbay.BWList{
+			WhiteLists: []*agentbay.WhiteList{
+				{
+					Path:         "",
+					ExcludePaths: []string{},
+				},
+			},
+		},
+	}
+
+	// This should fail at NewContextSync due to validation
+	_, err := agentbay.NewContextSync("combined-invalid-context", "/tmp/path", combinedInvalidSyncPolicy)
+	if err == nil {
+		t.Errorf("Expected policy with both invalid lifecycle and invalid path to fail NewContextSync validation, but it passed")
+	} else {
+		fmt.Printf("Policy with both invalid lifecycle and invalid path correctly failed NewContextSync validation: %v\n", err)
+		// Should fail on lifecycle validation first
+		if !contains(err.Error(), "invalid lifecycle value") {
+			t.Errorf("Expected error to mention invalid lifecycle value, but got: %v", err)
+		}
+	}
+
+	fmt.Println("Combined invalid configuration test completed successfully")
+}
+
+// Helper function to check if a string contains a substring
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || 
+		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || 
+		func() bool {
+			for i := 0; i <= len(s)-len(substr); i++ {
+				if s[i:i+len(substr)] == substr {
+					return true
+				}
+			}
+			return false
+		}())))
+}
