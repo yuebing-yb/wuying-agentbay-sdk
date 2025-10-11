@@ -22,7 +22,6 @@ from agentbay.browser.browser_agent import ActOptions, ExtractOptions
 from agentbay.model import SessionResult
 from playwright.async_api import async_playwright
 
-
 class ProductInfo(BaseModel):
     name: str = Field(..., description="商品名")
     price: Optional[str] = Field(None, description="价格文本；可为空")
@@ -150,7 +149,7 @@ async def ensure_listing_page(
     await asyncio.sleep(0.6)
     for i in range(max_steps):
         print(f"Extraction attempt {i+1}/{max_steps} for {base_url}...")
-        products_found = await extract_products(agent, page, base_url, out_dir)
+        products_found = await extract_products(agent, page, base_url)
         if products_found is not None:
             valid_count = len([p for p in products_found if is_valid_product(p)])
             print(
@@ -212,9 +211,7 @@ async def process_site(session, browser, url: str, out_dir: str = "/tmp") -> Non
 
 
 SITES = [
-    "https://www.example.com/",
-    "https://www.shop.com/",
-    "https://www.tao.com/",
+    "https://waydoo.com/",
 ]
 
 CAPTURE_DETECT_URL = [
