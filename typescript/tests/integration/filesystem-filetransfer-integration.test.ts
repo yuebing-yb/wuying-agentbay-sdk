@@ -79,10 +79,6 @@ describe("File Transfer Integration", () => {
           await agentBay.delete(sessionResult.session, true);
           log("Session successfully deleted with context sync");
         }
-      const session = listResult.data.find(s => s.sessionId === sessionId);
-      if (session) {
-        await agentBay.delete(session, true);
-        log("Session successfully deleted with context sync");
       }
     } catch (error) {
       log(`Warning: Error deleting session: ${error}`);
@@ -105,12 +101,6 @@ describe("File Transfer Integration", () => {
       return;
     }
 
-    const listResult = await agentBay.list();
-    if (!listResult.sessionIds.includes(sessionId)) {
-    const session = listResult.data.find(s => s.sessionId === sessionId);
-    if (!session) {
-      throw new Error("Session not found");
-    }
     const sessionResult = await agentBay.get(sessionId);
     if (!sessionResult.success || !sessionResult.session) {
       throw new Error("Failed to get session");
@@ -152,7 +142,6 @@ describe("File Transfer Integration", () => {
     expect(dirListResult.entries).toBeDefined();
     
     // Check if our uploaded file is in the directory listing
-    const fileFound = dirListResult.entries.some((entry: any) => entry.name === 'upload_test.txt');
     const fileFound = dirListResult.entries.some(entry => entry.name === 'upload_test.txt');
     expect(fileFound).toBe(true);
 
@@ -173,12 +162,6 @@ describe("File Transfer Integration", () => {
       return;
     }
 
-    const listResult = await agentBay.list();
-    if (!listResult.sessionIds.includes(sessionId)) {
-    const session = listResult.data.find(s => s.sessionId === sessionId);
-    if (!session) {
-      throw new Error("Session not found");
-    }
     const sessionResult = await agentBay.get(sessionId);
     if (!sessionResult.success || !sessionResult.session) {
       throw new Error("Failed to get session");

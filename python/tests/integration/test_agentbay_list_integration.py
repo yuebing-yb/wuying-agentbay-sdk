@@ -213,8 +213,6 @@ class TestAgentBayList(unittest.TestCase):
         )
 
         print(f"Page 1 - Found {len(result_page1.session_ids)} sessions")
-        )
-
         print(f"Request ID: {result_page1.request_id}")
 
         # If there are more results, test page 2
