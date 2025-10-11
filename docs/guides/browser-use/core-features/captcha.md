@@ -52,7 +52,7 @@ await session.browser.initialize_async(browser_option)
 
 ## 📚 Related Guides
 
-- [Stealth Mode](stealth-mode.md) - Anti-detection techniques for web automation
+- [Browser Fingerprint](browser-fingerprint.md) - Simulate browser fingerprint for web automation
 - [Call For User](call-for-user.md) - Human intervention for unsolvable challenges
 - [Browser Use Overview](../README.md) - Complete browser automation features
 - [Session Management](../../common-features/basics/session-management.md) - Session lifecycle and configuration

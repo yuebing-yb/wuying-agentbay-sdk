@@ -834,8 +834,7 @@ await browser.disconnect();
 
 ### Resource Usage
 
-- **Stealth Mode**: Adds overhead for anti-detection measures
-- **Fingerprinting**: Randomization has minimal performance impact
+- **Fingerprinting**: Minimal performance impact
 - **Proxies**: May add latency depending on proxy location
 - **Extensions**: Each extension increases memory usage
 

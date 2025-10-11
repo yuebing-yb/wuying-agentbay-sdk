@@ -19,6 +19,8 @@ def default_config() -> Dict[str, Any]:
 
 # Browser data path constant
 BROWSER_DATA_PATH = "/tmp/agentbay_browser"
+# Browser fingerprint persistent path constant
+BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint"
 
 
 def find_dotenv_file(start_path: Optional[Path] = None) -> Optional[Path]:

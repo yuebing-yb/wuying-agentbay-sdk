@@ -266,6 +266,7 @@ export class AgentBay {
    */
   async create(params: CreateSessionParams = {}): Promise<SessionResult> {
     try {
+      logDebug(`default context syncs length: ${params.contextSync?.length}`);
       // Create a default context for file transfer operations if none provided
       // and no context_syncs are specified
       const contextName = `file-transfer-context-${Date.now()}`;

@@ -1,21 +1,23 @@
 /**
- * Example demonstrating Browser Stealth mode with AgentBay SDK.
+ * Example demonstrating Browser Fingerprint local sync feature with AgentBay SDK.
  *
- * This example shows how to use stealth mode with fingerprint to avoid detection
- * by anti-bot services. It will generate a random, realistic browser fingerprint
- * and make the browser behave more like a real user:
- * - Create AIBrowser session with stealth mode and simulate a Windows desktop browser.
- * - Use playwright to connect to AIBrowser instance through CDP protocol
- * - Verify user agent and navigator properties
+ * This example shows how to sync local browser fingerprint to remote browser fingerprint.
+ * BrowserFingerprintGenerator has ability to dump local installed chrome browser fingerprint,
+ * and then you can sync it to remote browser fingerprint by using BrowserOption.fingerprintFormat.
+ *
+ * This example will:
+ * 1. Generate local chrome browser fingerprint by BrowserFingerprintGenerator
+ * 2. Sync local browser fingerprint to remote browser fingerprint
+ * 3. Verify remote browser fingerprint
+ * 4. Clean up session
  */
 
 // @ts-nocheck
 import { AgentBay, CreateSessionParams } from 'wuying-agentbay-sdk';
-import { BrowserOption, BrowserFingerprint } from 'wuying-agentbay-sdk';
+import { BrowserOption, BrowserFingerprintGenerator } from 'wuying-agentbay-sdk';
 import { chromium } from 'playwright';
 
 async function main(): Promise<void> {
-  // Get API key from environment variable
   const apiKey = process.env.AGENTBAY_API_KEY;
   if (!apiKey) {
     console.log("Error: AGENTBAY_API_KEY environment variable not set");
@@ -42,28 +44,17 @@ async function main(): Promise<void> {
     const session = sessionResult.session;
     console.log(`Session created with ID: ${session.sessionId}`);
 
-    /**
-     * Create browser fingerprint option
-     * - devices: desktop or mobile
-     * - operatingSystems: windows, macos, linux, android, ios
-     *
-     * You can specify one or multiple values for each parameter.
-     * But if you specify devices as desktop and operatingSystems as android/ios,
-     * the fingerprint feature will not work.
-     */
-    const browserFingerprint: BrowserFingerprint = {
-      devices: ["desktop"],
-      operatingSystems: ["windows"],
-      locales: ["zh-CN", "zh"]
-    };
+    // Generate fingerprint from local chrome browser
+    const fingerprintGenerator = new BrowserFingerprintGenerator();
+    const fingerprintFormat = await fingerprintGenerator.generateFingerprint();
+    console.log(`Fingerprint format: ${JSON.stringify(fingerprintFormat)}`);
 
-    // Create browser option with stealth mode and fingerprint option limit.
-    // Stealth mode helps to avoid detection by anti-bot services. It will
-    // generate a random, realistic browser fingerprint and make the browser
-    // behave more like a real user.
+    // Create browser option with fingerprint format.
+    // Fingerprint format is dumped from local chrome browser by BrowserFingerprintGenerator
+    // automatically, you can use it to sync to remote browser fingerprint.
     const browserOption: BrowserOption = {
       useStealth: true,
-      fingerprint: browserFingerprint
+      fingerprintFormat: fingerprintFormat
     };
 
     const initialized = await session.browser.initializeAsync(browserOption);
@@ -88,19 +79,7 @@ async function main(): Promise<void> {
     const userAgent = response["user-agent"] || "";
     console.log(`User Agent: ${userAgent}`);
 
-    // Check navigator properties
-    console.log("\n--- Check Navigator Properties ---");
-    const navInfo = await page.evaluate(() => ({
-      platform: navigator.platform,
-      language: navigator.language,
-      languages: navigator.languages,
-      webdriver: navigator.webdriver
-    }));
-
-    console.log(`Platform: ${navInfo.platform}`);
-    console.log(`Language: ${navInfo.language}`);
-    console.log(`Languages: ${navInfo.languages}`);
-    console.log(`WebDriver: ${navInfo.webdriver}`);
+    console.log("Please check if User Agent is synced correctly by visiting https://httpbin.org/user-agent in local chrome browser.");
 
     await page.waitForTimeout(3000);
     await browser.close();

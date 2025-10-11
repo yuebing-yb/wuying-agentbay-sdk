@@ -1,8 +1,9 @@
 import { Session } from '../session';
 import { BrowserAgent } from './browser_agent';
 import { BrowserError } from '../exceptions';
-import { BROWSER_DATA_PATH } from '../config';
+import { BROWSER_DATA_PATH, BROWSER_FINGERPRINT_PERSIST_PATH } from '../config';
 import { InitBrowserRequest } from '../api/models/InitBrowserRequest';
+import { FingerprintFormat } from './fingerprint';
 import {
   log,
   logError,
@@ -27,6 +28,29 @@ export interface BrowserFingerprint {
   devices?: Array<'desktop' | 'mobile'>;
   operatingSystems?: Array<'windows' | 'macos' | 'linux' | 'android' | 'ios'>;
   locales?: string[];
+}
+
+/**
+ * Browser fingerprint context configuration.
+ */
+export class BrowserFingerprintContext {
+  /** ID of the fingerprint context for browser fingerprint */
+  fingerprintContextId: string;
+
+  /**
+   * Initialize BrowserFingerprintContext with context id.
+   * 
+   * @param fingerprintContextId - ID of the fingerprint context for browser fingerprint.
+   * 
+   * @throws {Error} If fingerprintContextId is empty.
+   */
+  constructor(fingerprintContextId: string) {
+    if (!fingerprintContextId || !fingerprintContextId.trim()) {
+      throw new Error("fingerprintContextId cannot be empty");
+    }
+
+    this.fingerprintContextId = fingerprintContextId;
+  }
 }
 
 export interface BrowserProxy {
@@ -146,6 +170,10 @@ export interface BrowserOption {
   viewport?: BrowserViewport;
   screen?: BrowserScreen;
   fingerprint?: BrowserFingerprint;
+  /** Browser fingerprint format data for detailed fingerprint configuration */
+  fingerprintFormat?: FingerprintFormat;
+  /** Whether to enable fingerprint persistence across sessions */
+  fingerprintPersistent?: boolean;
   solveCaptchas?: boolean;
   proxies?: BrowserProxy[];
   /** Path to the extensions directory. Defaults to "/tmp/extensions/" */
@@ -165,6 +193,9 @@ export class BrowserOptionClass implements BrowserOption {
   viewport?: BrowserViewport;
   screen?: BrowserScreen;
   fingerprint?: BrowserFingerprint;
+  fingerprintFormat?: FingerprintFormat;
+  fingerprintPersistent?: boolean;
+  fingerprintPersistPath?: string;
   solveCaptchas?: boolean;
   proxies?: BrowserProxy[];
   extensionPath?: string;
@@ -178,6 +209,8 @@ export class BrowserOptionClass implements BrowserOption {
     viewport?: BrowserViewport,
     screen?: BrowserScreen,
     fingerprint?: BrowserFingerprint,
+    fingerprintFormat?: FingerprintFormat,
+    fingerprintPersistent = false,
     solveCaptchas = false,
     proxies?: BrowserProxy[],
     cmdArgs?: string[],
@@ -189,11 +222,21 @@ export class BrowserOptionClass implements BrowserOption {
     this.viewport = viewport;
     this.screen = screen;
     this.fingerprint = fingerprint;
+    this.fingerprintFormat = fingerprintFormat;
+    this.fingerprintPersistent = fingerprintPersistent;
     this.solveCaptchas = solveCaptchas;
     this.extensionPath = "/tmp/extensions/";
     this.cmdArgs = cmdArgs;
     this.defaultNavigateUrl = defaultNavigateUrl;
     this.browserType = browserType;
+
+    // Check fingerprint persistent if provided
+    if (fingerprintPersistent) {
+      // Currently only support persistent fingerprint in docker env
+      this.fingerprintPersistPath = `${BROWSER_FINGERPRINT_PERSIST_PATH}/fingerprint.json`;
+    } else {
+      this.fingerprintPersistPath = undefined;
+    }
 
     // Validate proxies list items
     if (proxies !== undefined) {
@@ -243,6 +286,15 @@ export class BrowserOptionClass implements BrowserOption {
       if (this.fingerprint.locales) fp['locales'] = this.fingerprint.locales;
       optionMap['fingerprint'] = fp;
     }
+    if (this.fingerprintFormat !== undefined) {
+      // Encode fingerprint format to base64 string
+      const jsonStr = this.fingerprintFormat.toJson();
+      optionMap['fingerprintRawData'] = Buffer.from(jsonStr, 'utf-8').toString('base64');
+    }
+    if (this.fingerprintPersistent) {
+      this.fingerprintPersistPath = `${BROWSER_FINGERPRINT_PERSIST_PATH}/fingerprint.json`;
+      optionMap['fingerprintPersistPath'] = this.fingerprintPersistPath;
+    }
     if (this.solveCaptchas !== undefined) {
       optionMap['solveCaptchas'] = this.solveCaptchas;
     }
@@ -286,6 +338,37 @@ export class BrowserOptionClass implements BrowserOption {
       if (map.fingerprint.operatingSystems) fp.operatingSystems = map.fingerprint.operatingSystems;
       if (map.fingerprint.locales) fp.locales = map.fingerprint.locales;
       this.fingerprint = fp;
+    }
+    if (map.fingerprintFormat !== undefined) {
+      // Handle direct FingerprintFormat object
+      if (map.fingerprintFormat instanceof FingerprintFormat) {
+        this.fingerprintFormat = map.fingerprintFormat;
+      } else {
+        // Convert from plain object to FingerprintFormat
+        try {
+          this.fingerprintFormat = FingerprintFormat.fromDict(map.fingerprintFormat);
+        } catch (error) {
+          logError('Failed to convert fingerprintFormat from object:', error);
+          this.fingerprintFormat = undefined;
+        }
+      }
+    } else if (map.fingerprintRawData !== undefined) {
+      // Decode base64 string to fingerprint format
+      try {
+        const jsonStr = Buffer.from(map.fingerprintRawData, 'base64').toString('utf-8');
+        this.fingerprintFormat = FingerprintFormat.fromJson(jsonStr);
+      } catch (error) {
+        logError('Failed to decode fingerprint raw data:', error);
+        this.fingerprintFormat = undefined;
+      }
+    }
+    if (map.fingerprintPersistent !== undefined) {
+      this.fingerprintPersistent = map.fingerprintPersistent;
+    } else if (map.fingerprintPersistPath !== undefined) {
+      this.fingerprintPersistPath = map.fingerprintPersistPath;
+      this.fingerprintPersistent = true;
+    } else {
+      this.fingerprintPersistent = false;
     }
     if (map.solveCaptchas !== undefined) {
       this.solveCaptchas = map.solveCaptchas;
@@ -342,6 +425,7 @@ export class Browser {
     }
 
     try {
+      logDebug(`Initializing browser with option: ${JSON.stringify(option)}`);
       // Use direct API call to initialize browser
       const request = new InitBrowserRequest();
       request.authorization = `Bearer ${this.session.getAPIKey()}`;
@@ -400,6 +484,7 @@ export class Browser {
     }
 
     try {
+      logDebug(`Initializing browser asynchronously with option: ${JSON.stringify(option)}`);
       // Use direct API call to initialize browser
       const request = new InitBrowserRequest();
       request.authorization = `Bearer ${this.session.getAPIKey()}`;

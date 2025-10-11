@@ -62,22 +62,16 @@ ts-node browser-viewport.ts
 - Screen dimensions
 - Configuration verification
 
-### 3. browser-stealth.ts
+### 3. browser-fingerprint-xxx.ts
 
-Shows how to use stealth mode for anti-detection:
-- Enabling stealth mode
-- Bypassing bot detection
-- Accessing protected content
+Shows how to configure browser fingerprinting:
+- Three construction methods: random generation, custom configuration, and local fingerprint sync
+- Fingerprint persistence capabilities across sessions
 
 **Run:**
 ```bash
-ts-node browser-stealth.ts
+ts-node browser-fingerprint-xxx.ts
 ```
-
-**Key Features:**
-- Stealth mode configuration
-- Anti-detection measures
-- Protected content access
 
 ### 4. browser-proxies.ts
 
@@ -349,15 +343,6 @@ Connecting to browser...
 Page title: Example Domain
 Browser automation completed
 Session deleted
-```
-
-### With Stealth Mode
-
-```
-Creating session with stealth mode...
-Browser initialized with stealth enabled
-Bypassing bot detection...
-Successfully accessed protected content
 ```
 
 ### With Custom Configuration

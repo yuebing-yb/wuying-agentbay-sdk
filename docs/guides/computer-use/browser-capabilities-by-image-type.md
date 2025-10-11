@@ -10,10 +10,14 @@ Different image types provide different levels of browser automation capabilitie
 | **Browser Initialization** | ✅ Full Support | ✅ Full Support | ❌ Not Available |
 | **CDP Endpoint Access** | ✅ Available | ✅ Available | ❌ Not Available |
 | **Playwright/Puppeteer Integration** | ✅ Supported | ✅ Supported | ❌ Not Supported |
-| **Browser Options** (viewport, user agent, stealth) | ✅ All Options | ✅ All Options | ❌ Not Available |
+| **Browser Options** (viewport, user agent, fingerprint) | ✅ All Options | ✅ All Options | ❌ Not Available |
 | **Browser Type Selection** (Chrome/Chromium) | ❌ Chromium Only | ✅ Chrome or Chromium | ❌ Not Available |
 | **Browser Proxies** | ✅ Supported | ✅ Supported | ❌ Not Supported |
 | **Browser Context** | ✅ Supported | ✅ Supported | ❌ Not Supported |
+| **Browser Random Fingerprint** | ✅ Supported | ✅ Supported | ✅ Supported |
+| **Browser Fingerprint Local Sync** | ✅ Supported | ❌ Not Supported | ❌ Not Supported |
+| **Browser Fingerprint Construct** | ✅ Supported | ❌ Not Supported | ❌ Not Supported |
+| **Browser Fingerprint Persistence** | ✅ Supported | ❌ Not Supported | ❌ Not Supported |
 | **Browser Command-line Args** | ✅ Supported | ✅ Supported | ❌ Not Supported |
 | **Browser Default Navigate** | ✅ Supported | ✅ Supported | ❌ Not Supported |
 | **CAPTCHA Solving** | ✅ Supported | ✅ Supported | ❌ Not Supported |

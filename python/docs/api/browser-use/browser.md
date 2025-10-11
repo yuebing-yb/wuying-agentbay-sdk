@@ -9,6 +9,7 @@ The Browser API is accessed through a session instance and provides methods for 
 ```python
 from agentbay import AgentBay
 from agentbay.browser.browser import BrowserOption
+from agentbay.browser.fingerprint import FingerprintFormat, BrowserFingerprintGenerator
 
 # Access browser through session
 session = result.session
@@ -30,6 +31,8 @@ class BrowserOption:
         viewport: BrowserViewport = None,
         screen: BrowserScreen = None,
         fingerprint: BrowserFingerprint = None,
+        fingerprint_format: Optional[FingerprintFormat] = None,
+        fingerprint_persistent: bool = False,
         solve_captchas: bool = False,
         proxies: Optional[list[BrowserProxy]] = None,
         extension_path: Optional[str] = "/tmp/extensions/",
@@ -45,7 +48,9 @@ class BrowserOption:
 - `user_agent` (str | None): Custom user agent string for the browser. Default: `None`
 - `viewport` (BrowserViewport | None): Browser viewport dimensions. Default: `None`
 - `screen` (BrowserScreen | None): Screen dimensions. Default: `None`
-- `fingerprint` (BrowserFingerprint | None): Browser fingerprint configuration. Default: `None`
+- `fingerprint` (BrowserFingerprint | None): Browser fingerprint configuration for random generation. Default: `None`
+- `fingerprint_format` (FingerprintFormat | None): Complete fingerprint data to apply directly to the browser. Takes precedence over `fingerprint` parameter. Default: `None`
+- `fingerprint_persistent` (bool): Enable fingerprint persistence across sessions using the same fingerprint context. Default: `False`
 - `solve_captchas` (bool): Automatically solve captchas during browsing. Default: `False`
 - `proxies` (list[BrowserProxy] | None): List of proxy configurations (max 1). Default: `None`
 - `extension_path` (str | None): Path to directory containing browser extensions. Default: `"/tmp/extensions/"`
@@ -169,6 +174,133 @@ fingerprint = BrowserFingerprint(
     locales=["en-US", "en-GB"]
 )
 ```
+
+### FingerprintFormat
+
+Complete fingerprint data structure containing detailed browser characteristics and HTTP headers.
+
+```python
+class FingerprintFormat:
+    def __init__(self, fingerprint: Fingerprint, headers: Dict[str, str]):
+        self.fingerprint = fingerprint
+        self.headers = headers
+```
+
+**Parameters:**
+- `fingerprint` (Fingerprint): Detailed browser fingerprint data including navigator, screen, and other properties
+- `headers` (Dict[str, str]): HTTP headers to be sent with requests
+
+**Methods:**
+
+#### to_json()
+Converts the fingerprint format to JSON string.
+
+```python
+def to_json(self, indent: int = 2, ensure_ascii: bool = False) -> str
+```
+
+#### from_json()
+Creates FingerprintFormat from JSON string.
+
+```python
+@classmethod
+def from_json(cls, json_str: str) -> FingerprintFormat
+```
+
+#### to_dict()
+Converts to dictionary format.
+
+```python
+def to_dict(self) -> Dict[str, Any]
+```
+
+**Usage Examples:**
+
+1. **Loading from file:**
+```python
+from agentbay.browser.fingerprint import FingerprintFormat
+
+# Load fingerprint from JSON file
+with open("fingerprint.json", "r") as f:
+    fingerprint_format = FingerprintFormat.from_json(f.read())
+
+option = BrowserOption(fingerprint_format=fingerprint_format)
+```
+
+2. **Generating from local browser:**
+```python
+from agentbay.browser.fingerprint import BrowserFingerprintGenerator
+
+# Generate fingerprint from local Chrome installation
+generator = BrowserFingerprintGenerator(headless=False)
+fingerprint_format = await generator.generate_fingerprint()
+
+option = BrowserOption(fingerprint_format=fingerprint_format)
+```
+
+3. **Saving generated fingerprint:**
+```python
+# Generate and save fingerprint for reuse
+generator = BrowserFingerprintGenerator()
+fingerprint_format = await generator.generate_fingerprint()
+
+# Save to file
+with open("my_fingerprint.json", "w") as f:
+    f.write(fingerprint_format.to_json())
+```
+
+**Note:** When both `fingerprint` and `fingerprint_format` are provided, `fingerprint_format` takes precedence.
+
+### BrowserFingerprintGenerator
+
+Utility class for generating browser fingerprints from local Chrome installations.
+
+```python
+class BrowserFingerprintGenerator:
+    def __init__(self, headless: bool = True, use_chrome_channel: bool = True):
+        self.headless = headless
+        self.use_chrome_channel = use_chrome_channel
+```
+
+**Parameters:**
+- `headless` (bool): Whether to run the local browser in headless mode during fingerprint extraction. Default: `True`
+- `use_chrome_channel` (bool): Whether to use Chrome channel for browser detection. Default: `True`
+
+**Methods:**
+
+#### generate_fingerprint()
+Extracts comprehensive browser fingerprint from local Chrome installation.
+
+```python
+async def generate_fingerprint(self) -> Optional[FingerprintFormat]
+```
+
+**Returns:**
+- `Optional[FingerprintFormat]`: Complete fingerprint data including navigator properties, screen dimensions, and HTTP headers, or `None` if generation failed
+
+**Example:**
+```python
+import asyncio
+from agentbay.browser.fingerprint import BrowserFingerprintGenerator
+
+async def main():
+    # Generate fingerprint from local Chrome (visible mode)
+    generator = BrowserFingerprintGenerator(headless=False)
+    fingerprint_format = await generator.generate_fingerprint()
+    
+    if fingerprint_format:
+        print(f"User Agent: {fingerprint_format.fingerprint.navigator.userAgent}")
+        print(f"Screen Size: {fingerprint_format.fingerprint.screen.width}x{fingerprint_format.fingerprint.screen.height}")
+    else:
+        print("Failed to generate fingerprint")
+
+asyncio.run(main())
+```
+
+**Use Cases:**
+- **Local-to-Remote Sync**: Capture your local browser's fingerprint and apply it to remote sessions
+- **Fingerprint Collection**: Generate multiple fingerprints for testing purposes
+- **Custom Fingerprint Creation**: Extract specific characteristics from different browser configurations
 
 ### BrowserProxy
 
@@ -537,12 +669,18 @@ option = BrowserOption(
     # Default navigation URL (recommended: Chrome internal pages)
     default_navigate_url="chrome://version/",
     
-    # Fingerprint randomization
+    # Fingerprint randomization (generates random fingerprint)
     fingerprint=BrowserFingerprint(
         devices=["desktop"],
         operating_systems=["windows", "macos"],
         locales=["en-US"]
     ),
+    
+    # OR use specific fingerprint format (takes precedence over fingerprint)
+    # fingerprint_format=my_fingerprint_format,
+    
+    # Enable fingerprint persistence across sessions
+    fingerprint_persistent=True,
     
     # Proxy configuration
     proxies=[BrowserProxy(
@@ -558,6 +696,130 @@ success = await session.browser.initialize_async(option)
 if not success:
     raise RuntimeError("Failed to initialize browser")
 ```
+
+### Fingerprint Usage Examples
+
+#### 1. Random Fingerprint Generation
+
+```python
+from agentbay.browser.browser import BrowserOption, BrowserFingerprint
+
+# Generate random fingerprint based on criteria
+option = BrowserOption(
+    use_stealth=True,
+    fingerprint=BrowserFingerprint(
+        devices=["desktop"],
+        operating_systems=["windows"],
+        locales=["en-US", "en-GB"]
+    )
+)
+
+success = await session.browser.initialize_async(option)
+```
+
+#### 2. Local Browser Fingerprint Sync
+
+```python
+import asyncio
+from agentbay.browser.fingerprint import BrowserFingerprintGenerator
+from agentbay.browser.browser import BrowserOption
+
+async def sync_local_fingerprint():
+    # Generate fingerprint from local Chrome
+    generator = BrowserFingerprintGenerator(headless=False)
+    fingerprint_format = await generator.generate_fingerprint()
+    
+    if not fingerprint_format:
+        raise RuntimeError("Failed to generate local fingerprint")
+    
+    # Apply local fingerprint to remote browser
+    option = BrowserOption(
+        use_stealth=True,
+        fingerprint_format=fingerprint_format
+    )
+    
+    success = await session.browser.initialize_async(option)
+    if success:
+        print("Local fingerprint synced to remote browser")
+
+asyncio.run(sync_local_fingerprint())
+```
+
+#### 3. Self-Customized Fingerprint Generation
+
+```python
+import os
+from agentbay.browser.fingerprint import FingerprintFormat
+from agentbay.browser.browser import BrowserOption
+
+# Load fingerprint from local JSON file
+fingerprint_file = "path/to/fingerprint.json"
+with open(fingerprint_file, "r") as f:
+    fingerprint_format = FingerprintFormat.from_json(f.read())
+
+# Use loaded fingerprint
+option = BrowserOption(
+    use_stealth=True,
+    fingerprint_format=fingerprint_format
+)
+
+success = await session.browser.initialize_async(option)
+```
+
+#### 4. Fingerprint Persistence Across Sessions
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay.browser.browser import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
+
+# Create contexts for persistence
+agent_bay = AgentBay(api_key="your_api_key")
+
+# Create browser context
+browser_context_result = agent_bay.context.get("my-browser-context", create_if_not_exists=True)
+browser_context = BrowserContext(browser_context_result.context.id)
+
+# Create fingerprint context
+fp_context_result = agent_bay.context.get("my-fingerprint-context", create_if_not_exists=True)
+fp_context = BrowserFingerprintContext(fp_context_result.context.id)
+browser_context.fingerprint_context = fp_context
+
+# First session - generate and persist fingerprint
+params1 = CreateSessionParams(
+    image_id="browser_latest",
+    browser_context=browser_context
+)
+session1 = agent_bay.create(params1).session
+
+option1 = BrowserOption(
+    use_stealth=True,
+    fingerprint_persistent=True,
+    fingerprint=BrowserFingerprint(
+        devices=["desktop"],
+        operating_systems=["windows"],
+        locales=["en-US"]
+    )
+)
+await session1.browser.initialize_async(option1)
+# ... use browser ...
+agent_bay.delete(session1, sync_context=True)  # Save fingerprint to context
+
+# Second session - reuse persisted fingerprint
+params2 = CreateSessionParams(
+    image_id="browser_latest",
+    browser_context=browser_context
+)
+session2 = agent_bay.create(params2).session
+
+option2 = BrowserOption(
+    use_stealth=True,
+    fingerprint_persistent=True  # Will load previously saved fingerprint
+)
+await session2.browser.initialize_async(option2)
+# Browser will have the same fingerprint as session1
+```
+
 
 ## Error Handling
 
@@ -732,8 +994,7 @@ See the [PageUseAgent documentation](../../../../docs/guides/browser-use/advance
 
 ### Resource Usage
 
-- **Stealth Mode**: Adds overhead for anti-detection measures
-- **Fingerprinting**: Randomization has minimal performance impact
+- **Fingerprinting**: Minimal performance impact
 - **Proxies**: May add latency depending on proxy location
 - **Extensions**: Each extension increases memory usage
 
@@ -792,7 +1053,8 @@ except ValueError as e:
 
 - [Browser Use Guide](../../../../docs/guides/browser-use/README.md) - Complete guide with examples
 - [Core Features](../../../../docs/guides/browser-use/core-features.md) - Essential browser features
-- [Advanced Features](../../../../docs/guides/browser-use/advance-features.md) - Advanced configuration
+- [Advanced Features](../../../../docs/guides/browser-use/advance-features.md) - Advanced configuration including fingerprinting
+- [Browser Fingerprint Examples](../../examples/browser-use/browser/) - Fingerprint usage examples
 - [Browser Examples](../../examples/browser-use/browser/README.md) - Runnable example code
 - [PageUseAgent API](../../../../docs/guides/browser-use/advance-features/page-use-agent.md) - AI-powered browser automation
 - [Session Management](../common-features/basics/session.md) - Session lifecycle and management

@@ -171,8 +171,12 @@ describe("Browser Type - Integration Tests", () => {
         undefined,  // viewport
         undefined,  // screen
         undefined,  // fingerprint
+        undefined,  // fingerprintFormat
+        false,  // fingerprintPersistent
         false,  // solveCaptchas
         undefined,  // proxies
+        [],         // cmdArgs
+        undefined,  // defaultNavigateUrl
         "chrome"  // browserType
       );
       
@@ -216,7 +220,7 @@ describe("Browser Type - Integration Tests", () => {
       // For this integration test, we verify the option structure
       expect(chromeOption.browserType).toBe("chrome");
       expect(chromiumOption.browserType).toBe("chromium");
-      expect(defaultOption.browserType).toBeUndefined();
+      expect((defaultOption as any).browserType).toBeUndefined();
       log("Browser type options structured correctly");
     });
 

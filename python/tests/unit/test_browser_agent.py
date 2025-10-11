@@ -1,5 +1,7 @@
 import unittest
 import asyncio
+import os
+import json
 from unittest.mock import MagicMock, patch, AsyncMock
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -21,6 +23,7 @@ from agentbay.browser.browser_agent import (
     ExtractOptions, 
     BrowserError
 )
+from agentbay.browser.fingerprint import FingerprintFormat
 
 
 class TestSchema(BaseModel):
@@ -67,7 +70,8 @@ class TestBrowser(unittest.TestCase):
             strategy="polling",
             pollsize=15
         )
-        
+
+        fingerprint_format = FingerprintFormat.from_json(open(os.path.join(os.path.dirname(__file__), "../../../resource/fingerprint.example.json"), "r").read())
         browser_option = BrowserOption(
             use_stealth=True,
             user_agent="User-Agent(By Mock)",
@@ -78,6 +82,8 @@ class TestBrowser(unittest.TestCase):
                 operating_systems=["windows", "macos"],
                 locales=["zh-CN"],
             ),
+            fingerprint_format=fingerprint_format,
+            fingerprint_persistent=True,
             solve_captchas=True,
             proxies=[test_proxy]
         )
@@ -93,6 +99,8 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(option.fingerprint.devices, ["desktop"])
         self.assertEqual(option.fingerprint.operating_systems, ["windows", "macos"])
         self.assertEqual(option.fingerprint.locales, ["zh-CN"])
+        self.assertIsNotNone(option.fingerprint_persist_path)
+        self.assertIsNotNone(option.fingerprint_format)
         self.assertEqual(option.solve_captchas, True)
         
         # Test proxy options
@@ -197,6 +205,53 @@ class TestBrowser(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             BrowserProxy(proxy_type="wuying", strategy="polling", pollsize=-1)
         self.assertIn("pollsize must be greater than 0 for polling strategy", str(context.exception))
+
+    def test_fingerprint_format(self):
+        """Test fingerprint format."""
+        # Test fingerprint format from JSON
+        fingerprint_format = FingerprintFormat.from_json(open(os.path.join(os.path.dirname(__file__), "../../../resource/fingerprint.example.json"), "r").read())
+        self.assertIsNotNone(fingerprint_format)
+        self.assertIsNotNone(fingerprint_format.fingerprint)
+        self.assertIsNotNone(fingerprint_format.headers)
+        self.assertEqual(fingerprint_format.fingerprint.screen.width, 2560)
+        self.assertEqual(fingerprint_format.fingerprint.screen.height, 1440)
+        self.assertEqual(fingerprint_format.fingerprint.screen.availWidth, 2560)
+        self.assertEqual(fingerprint_format.fingerprint.screen.availHeight, 1345)
+        self.assertEqual(fingerprint_format.fingerprint.screen.clientWidth, 2560)
+        self.assertEqual(fingerprint_format.fingerprint.screen.clientHeight, 1258)
+        self.assertEqual(fingerprint_format.fingerprint.screen.innerWidth, 2560)
+        self.assertEqual(fingerprint_format.fingerprint.screen.innerHeight, 1258)
+        self.assertEqual(fingerprint_format.fingerprint.screen.outerWidth, 2560)
+        self.assertEqual(fingerprint_format.fingerprint.screen.outerHeight, 1345)
+        self.assertEqual(fingerprint_format.fingerprint.screen.colorDepth, 24)
+        self.assertEqual(fingerprint_format.fingerprint.screen.pixelDepth, 24)
+        self.assertEqual(fingerprint_format.fingerprint.screen.devicePixelRatio, 2)
+        self.assertEqual(fingerprint_format.fingerprint.navigator.userAgent, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.language, "zh-CN")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.languages, ["zh-CN"])
+        self.assertEqual(fingerprint_format.fingerprint.navigator.platform, "MacIntel")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.deviceMemory, 8)
+        self.assertEqual(fingerprint_format.fingerprint.navigator.hardwareConcurrency, 8)
+        self.assertEqual(fingerprint_format.fingerprint.navigator.maxTouchPoints, 0)
+        self.assertEqual(fingerprint_format.fingerprint.navigator.product, "Gecko")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.productSub, "20030107")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.vendor, "Google Inc.")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.vendorSub, "")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.doNotTrack, None)
+        self.assertEqual(fingerprint_format.fingerprint.navigator.appCodeName, "Mozilla")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.appName, "Netscape")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.appVersion, "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36")
+        self.assertEqual(fingerprint_format.fingerprint.navigator.oscpu, None)
+        self.assertEqual(fingerprint_format.fingerprint.navigator.webdriver, False)
+
+        # Test fingerprint format to JSON
+        json_str = fingerprint_format.to_json()
+        self.assertIsNotNone(json_str)
+        self.assertIsInstance(json_str, str)
+        json_dict = json.loads(json_str)
+        self.assertIsNotNone(json_dict)
+        self.assertIsNotNone(json_dict["fingerprint"])
+        self.assertIsNotNone(json_dict["headers"])
 
     def test_act(self):
         """Test act method."""

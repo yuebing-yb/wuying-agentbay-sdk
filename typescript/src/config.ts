@@ -13,6 +13,11 @@ interface Config {
 export const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 
 /**
+ * Browser fingerprint persistent path constant
+ */
+export const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
+
+/**
  * Returns the default configuration
  */
 export function defaultConfig(): Config {

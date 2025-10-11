@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { Browser, BrowserAgent } = require('../../dist/index.cjs');
+const { FingerprintFormat } = require('../../dist/index.cjs');
+const fs = require('fs');
+const path = require('path');
 
 class TestSchema {
   constructor() {
@@ -177,6 +180,8 @@ describe('Browser Unit Tests', () => {
 
   describe('Browser Options', () => {
     test('should handle browser options with all parameters', async () => {
+      const fingerprintJson = fs.readFileSync(path.join(__dirname, '../../../resource/fingerprint.example.json'), "utf8");
+      const fingerprintFormat = FingerprintFormat.fromJson(fingerprintJson);
       const option = {
         useStealth: true,
         userAgent: 'Test User Agent',
@@ -187,6 +192,10 @@ describe('Browser Unit Tests', () => {
           operatingSystems: ['windows', 'macos'],
           locales: ['zh-CN']
         },
+        fingerprintPersistent: true,
+        fingerprintFormat: fingerprintFormat,
+        cmdArgs: ['--disable-features=PrivacySandboxSettings4'],
+        defaultNavigateUrl: "https://www.google.com",
         proxies: [{
           type: 'wuying',
           strategy: 'polling',
@@ -207,6 +216,10 @@ describe('Browser Unit Tests', () => {
       expect(savedOption.fingerprint.devices).toEqual(['desktop']);
       expect(savedOption.fingerprint.operatingSystems).toEqual(['windows', 'macos']);
       expect(savedOption.fingerprint.locales).toEqual(['zh-CN']);
+      expect(savedOption.fingerprintPersistent).toBe(true);
+      expect(savedOption.fingerprintFormat).toBeDefined();
+      expect(savedOption.cmdArgs).toEqual(['--disable-features=PrivacySandboxSettings4']);
+      expect(savedOption.defaultNavigateUrl).toBe("https://www.google.com");
       expect(savedOption.proxies).toBeDefined();
       expect(savedOption.proxies.length).toBe(1);
       expect(savedOption.proxies[0].type).toBe('wuying');

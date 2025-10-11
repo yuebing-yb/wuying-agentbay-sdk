@@ -55,7 +55,7 @@ Complete browser automation for web scraping, testing, and form filling.
 - [Browser Proxies](guides/browser-use/core-features/browser-proxies.md) - Network proxy configuration
 - [CAPTCHA Handling](guides/browser-use/core-features/captcha.md) - Automated CAPTCHA solving
 - [Extension Support](guides/browser-use/core-features/extension.md) - Browser extension management
-- [Stealth Mode](guides/browser-use/core-features/stealth-mode.md) - Anti-detection techniques
+- [Browser Fingerprint](guides/browser-use/core-features/browser-fingerprint.md) - Simulate browser fingerprint
 - [Call for User](guides/browser-use/core-features/call-for-user.md) - User interaction requests
 - [Page Agent](guides/browser-use/advance-features/page-use-agent.md) - AI-driven page operations
 

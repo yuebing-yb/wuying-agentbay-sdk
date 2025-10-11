@@ -1,46 +1,58 @@
-import { expect } from "chai";
-import { BrowserOptionClass, BrowserProxyClass } from "../../src/browser/browser";
+import { BrowserOption, BrowserOptionClass, BrowserProxyClass } from "../../src/browser/browser";
 
 describe("Browser Type - Unit Tests", () => {
   describe("BrowserOptionClass - Browser Type", () => {
-    it("should default to undefined browser type", () => {
+    test("should default to undefined browser type", () => {
+      const browserOption: BrowserOption = {
+        useStealth: false,
+        userAgent: 'Default Test Agent',
+        viewport: { width: 1024, height: 768 },
+        screen: { width: 1024, height: 768 },
+        fingerprint: { devices: ['desktop'], operatingSystems: ['windows'], locales: ['en-US'] }
+      };
       const option = new BrowserOptionClass();
-      expect(option.browserType).to.be.undefined;
+      option.fromMap(browserOption as Record<string, any>);
+      
+      expect(option.browserType).toBeUndefined();
+      expect(option.useStealth).toBe(false);
+      expect(option.userAgent).toBe('Default Test Agent');
     });
 
-    it("should accept chrome browser type", () => {
-      const option = new BrowserOptionClass(
-        false,  // useStealth
-        undefined,  // userAgent
-        undefined,  // viewport
-        undefined,  // screen
-        undefined,  // fingerprint
-        false,  // solveCaptchas
-        undefined,  // proxies
-        [],         // cmdArgs
-        undefined,  // defaultNavigateUrl
-        "chrome"  // browserType
-      );
-      expect(option.browserType).to.equal("chrome");
+    test("should accept chrome browser type", () => {
+      const browserOption: BrowserOption = {
+        useStealth: true,
+        userAgent: 'Chrome Test Agent',
+        viewport: { width: 1920, height: 1080 },
+        screen: { width: 1920, height: 1080 },
+        fingerprint: { devices: ['desktop'], operatingSystems: ['macos'], locales: ['en-US'] },
+        browserType: 'chrome'
+      };
+      const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
+      
+      expect(option.browserType).toBe("chrome");
+      expect(option.useStealth).toBe(true);
+      expect(option.userAgent).toBe('Chrome Test Agent');
     });
 
-    it("should accept chromium browser type", () => {
-      const option = new BrowserOptionClass(
-        false,  // useStealth
-        undefined,  // userAgent
-        undefined,  // viewport
-        undefined,  // screen
-        undefined,  // fingerprint
-        false,  // solveCaptchas
-        undefined,  // proxies
-        [],         // cmdArgs
-        undefined,  // defaultNavigateUrl
-        "chromium"  // browserType
-      );
-      expect(option.browserType).to.equal("chromium");
+    test("should accept chromium browser type", () => {
+      const browserOption: BrowserOption = {
+        useStealth: false,
+        userAgent: 'Chromium Test Agent',
+        viewport: { width: 1366, height: 768 },
+        screen: { width: 1366, height: 768 },
+        fingerprint: { devices: ['mobile'], operatingSystems: ['linux'], locales: ['zh-CN'] },
+        browserType: 'chromium'
+      };
+      const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
+      
+      expect(option.browserType).toBe("chromium");
+      expect(option.useStealth).toBe(false);
+      expect(option.userAgent).toBe('Chromium Test Agent');
     });
 
-    it("should validate browser type in constructor", () => {
+    test("should validate browser type in constructor", () => {
       // Test invalid browser type - this should be caught by validation
       expect(() => {
         new BrowserOptionClass(
@@ -49,16 +61,18 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // viewport
           undefined,  // screen
           undefined,  // fingerprint
+          undefined,  // fingerprintFormat
+          false,  // fingerprintPersistent
           false,  // solveCaptchas
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
           "firefox" as any  // invalid browserType
         );
-      }).to.throw("browserType must be 'chrome' or 'chromium'");
+      }).toThrow("browserType must be 'chrome' or 'chromium'");
     });
 
-    it("should validate browser type in constructor with edge", () => {
+    test("should validate browser type in constructor with edge", () => {
       expect(() => {
         new BrowserOptionClass(
           false,  // useStealth
@@ -66,16 +80,18 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // viewport
           undefined,  // screen
           undefined,  // fingerprint
+          undefined,  // fingerprintFormat
+          false,  // fingerprintPersistent
           false,  // solveCaptchas
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
           "edge" as any  // invalid browserType
         );
-      }).to.throw("browserType must be 'chrome' or 'chromium'");
+      }).toThrow("browserType must be 'chrome' or 'chromium'");
     });
 
-    it("should validate browser type in constructor with safari", () => {
+    test("should validate browser type in constructor with safari", () => {
       expect(() => {
         new BrowserOptionClass(
           false,  // useStealth
@@ -83,16 +99,18 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // viewport
           undefined,  // screen
           undefined,  // fingerprint
+          undefined,  // fingerprintFormat
+          false,  // fingerprintPersistent
           false,  // solveCaptchas
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
           "safari" as any  // invalid browserType
         );
-      }).to.throw("browserType must be 'chrome' or 'chromium'");
+      }).toThrow("browserType must be 'chrome' or 'chromium'");
     });
 
-    it("should validate browser type in constructor with empty string", () => {
+    test("should validate browser type in constructor with empty string", () => {
       expect(() => {
         new BrowserOptionClass(
           false,  // useStealth
@@ -100,16 +118,18 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // viewport
           undefined,  // screen
           undefined,  // fingerprint
+          undefined,  // fingerprintFormat
+          false,  // fingerprintPersistent
           false,  // solveCaptchas
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
           "" as any  // invalid browserType
         );
-      }).to.throw("browserType must be 'chrome' or 'chromium'");
+      }).toThrow("browserType must be 'chrome' or 'chromium'");
     });
 
-    it("should validate browser type case sensitivity", () => {
+    test("should validate browser type case sensitivity", () => {
       expect(() => {
         new BrowserOptionClass(
           false,  // useStealth
@@ -117,240 +137,258 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // viewport
           undefined,  // screen
           undefined,  // fingerprint
+          undefined,  // fingerprintFormat
+          false,  // fingerprintPersistent
           false,  // solveCaptchas
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
           "Chrome" as any  // invalid case
         );
-      }).to.throw("browserType must be 'chrome' or 'chromium'");
+      }).toThrow("browserType must be 'chrome' or 'chromium'");
     });
   });
 
   describe("BrowserOptionClass - toMap with Browser Type", () => {
-    it("should include browserType in toMap for chrome", () => {
-      const option = new BrowserOptionClass(
-        false,  // useStealth
-        undefined,  // userAgent
-        undefined,  // viewport
-        undefined,  // screen
-        undefined,  // fingerprint
-        false,  // solveCaptchas
-        undefined,  // proxies
-        [],         // cmdArgs
-        undefined,  // defaultNavigateUrl
-        "chrome"  // browserType
-      );
-      
-      const optionMap = option.toMap();
-      expect(optionMap).to.have.property("browserType");
-      expect(optionMap.browserType).to.equal("chrome");
-    });
-
-    it("should include browserType in toMap for chromium", () => {
-      const option = new BrowserOptionClass(
-        false,  // useStealth
-        undefined,  // userAgent
-        undefined,  // viewport
-        undefined,  // screen
-        undefined,  // fingerprint
-        false,  // solveCaptchas
-        undefined,  // proxies
-        [],         // cmdArgs
-        undefined,  // defaultNavigateUrl
-        "chromium"  // browserType
-      );
-      
-      const optionMap = option.toMap();
-      expect(optionMap).to.have.property("browserType");
-      expect(optionMap.browserType).to.equal("chromium");
-    });
-
-    it("should not include browserType in toMap when undefined", () => {
+    test("should include browserType in toMap for chrome", () => {
+      const browserOption: BrowserOption = {
+        useStealth: true,
+        userAgent: 'Chrome toMap Test Agent',
+        viewport: { width: 1600, height: 900 },
+        screen: { width: 1600, height: 900 },
+        fingerprint: { devices: ['desktop'], operatingSystems: ['windows'], locales: ['en-US'] },
+        browserType: 'chrome'
+      };
       const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
       
       const optionMap = option.toMap();
-      expect(optionMap).to.not.have.property("browserType");
+      expect(optionMap).toHaveProperty("browserType");
+      expect(optionMap.browserType).toBe("chrome");
+      expect(optionMap.useStealth).toBe(true);
+      expect(optionMap.userAgent).toBe('Chrome toMap Test Agent');
     });
 
-    it("should include browserType in toMap with other options", () => {
-      const option = new BrowserOptionClass(
-        true,  // useStealth
-        "Mozilla/5.0 (Test) AppleWebKit/537.36",  // userAgent
-        undefined,  // viewport
-        undefined,  // screen
-        undefined,  // fingerprint
-        true,  // solveCaptchas
-        undefined,  // proxies
-        [],         // cmdArgs
-        undefined,  // defaultNavigateUrl
-        "chrome"  // browserType
-      );
+    test("should include browserType in toMap for chromium", () => {
+      const browserOption: BrowserOption = {
+        useStealth: false,
+        userAgent: 'Chromium toMap Test Agent',
+        viewport: { width: 1280, height: 720 },
+        screen: { width: 1280, height: 720 },
+        fingerprint: { devices: ['mobile'], operatingSystems: ['linux'], locales: ['zh-CN'] },
+        browserType: 'chromium'
+      };
+      const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
       
       const optionMap = option.toMap();
-      expect(optionMap).to.have.property("browserType");
-      expect(optionMap.browserType).to.equal("chrome");
-      expect(optionMap).to.have.property("useStealth");
-      expect(optionMap.useStealth).to.be.true;
-      expect(optionMap).to.have.property("userAgent");
-      expect(optionMap.userAgent).to.equal("Mozilla/5.0 (Test) AppleWebKit/537.36");
-      expect(optionMap).to.have.property("solveCaptchas");
-      expect(optionMap.solveCaptchas).to.be.true;
+      expect(optionMap).toHaveProperty("browserType");
+      expect(optionMap.browserType).toBe("chromium");
+      expect(optionMap.useStealth).toBe(false);
+      expect(optionMap.userAgent).toBe('Chromium toMap Test Agent');
+    });
+
+    test("should not include browserType in toMap when undefined", () => {
+      const browserOption: BrowserOption = {
+        useStealth: true,
+        userAgent: 'Undefined browserType Test Agent',
+        viewport: { width: 800, height: 600 },
+        screen: { width: 800, height: 600 },
+        fingerprint: { devices: ['desktop'], operatingSystems: ['macos'], locales: ['fr-FR'] }
+      };
+      const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
+      
+      const optionMap = option.toMap();
+      expect(optionMap).not.toHaveProperty("browserType");
+      expect(optionMap.useStealth).toBe(true);
+    });
+
+    test("should include browserType in toMap with other options", () => {
+      const browserOption: BrowserOption = {
+        useStealth: true,
+        userAgent: "Mozilla/5.0 (Test) AppleWebKit/537.36",
+        viewport: { width: 1920, height: 1080 },
+        screen: { width: 1920, height: 1080 },
+        fingerprint: { devices: ['desktop'], operatingSystems: ['windows'], locales: ['en-US'] },
+        solveCaptchas: true,
+        browserType: 'chrome'
+      };
+      const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
+      
+      const optionMap = option.toMap();
+      expect(optionMap).toHaveProperty("browserType");
+      expect(optionMap.browserType).toBe("chrome");
+      expect(optionMap).toHaveProperty("useStealth");
+      expect(optionMap.useStealth).toBe(true);
+      expect(optionMap).toHaveProperty("userAgent");
+      expect(optionMap.userAgent).toBe("Mozilla/5.0 (Test) AppleWebKit/537.36");
+      expect(optionMap).toHaveProperty("solveCaptchas");
+      expect(optionMap.solveCaptchas).toBe(true);
     });
   });
 
   describe("BrowserOptionClass - fromMap with Browser Type", () => {
-    it("should parse browserType from map for chrome", () => {
-      const optionMap = {
+    test("should parse browserType from map for chrome", () => {
+      const browserOption: BrowserOption = {
         browserType: "chrome",
         useStealth: true,
-        userAgent: "Mozilla/5.0 (Test) AppleWebKit/537.36"
+        userAgent: "Mozilla/5.0 (Test) AppleWebKit/537.36",
+        viewport: { width: 1440, height: 900 },
+        screen: { width: 1440, height: 900 },
+        fingerprint: { devices: ['desktop'], operatingSystems: ['macos'], locales: ['en-US'] }
       };
       
       const option = new BrowserOptionClass();
-      option.fromMap(optionMap);
+      option.fromMap(browserOption as Record<string, any>);
       
-      expect(option.browserType).to.equal("chrome");
-      expect(option.useStealth).to.be.true;
-      expect(option.userAgent).to.equal("Mozilla/5.0 (Test) AppleWebKit/537.36");
+      expect(option.browserType).toBe("chrome");
+      expect(option.useStealth).toBe(true);
+      expect(option.userAgent).toBe("Mozilla/5.0 (Test) AppleWebKit/537.36");
+      expect(option.viewport?.width).toBe(1440);
     });
 
-    it("should parse browserType from map for chromium", () => {
-      const optionMap = {
+    test("should parse browserType from map for chromium", () => {
+      const browserOption: BrowserOption = {
         browserType: "chromium",
         useStealth: false,
-        solveCaptchas: true
+        solveCaptchas: true,
+        viewport: { width: 1024, height: 768 },
+        screen: { width: 1024, height: 768 },
+        fingerprint: { devices: ['mobile'], operatingSystems: ['android'], locales: ['ja-JP'] }
       };
       
       const option = new BrowserOptionClass();
-      option.fromMap(optionMap);
+      option.fromMap(browserOption as Record<string, any>);
       
-      expect(option.browserType).to.equal("chromium");
-      expect(option.useStealth).to.be.false;
-      expect(option.solveCaptchas).to.be.true;
+      expect(option.browserType).toBe("chromium");
+      expect(option.useStealth).toBe(false);
+      expect(option.solveCaptchas).toBe(true);
+      expect(option.viewport?.width).toBe(1024);
     });
 
-    it("should remain undefined when browserType not in map", () => {
-      const optionMap = {
+    test("should remain undefined when browserType not in map", () => {
+      const browserOption: BrowserOption = {
         useStealth: true,
-        userAgent: "Mozilla/5.0 (Test) AppleWebKit/537.36"
+        userAgent: "Mozilla/5.0 (Test) AppleWebKit/537.36",
+        viewport: { width: 1366, height: 768 },
+        screen: { width: 1366, height: 768 },
+        fingerprint: { devices: ['desktop'], operatingSystems: ['linux'], locales: ['de-DE'] }
       };
       
       const option = new BrowserOptionClass();
-      option.fromMap(optionMap);
+      option.fromMap(browserOption as Record<string, any>);
       
       // Should remain undefined when not specified
-      expect(option.browserType).to.be.undefined;
-      expect(option.useStealth).to.be.true;
-      expect(option.userAgent).to.equal("Mozilla/5.0 (Test) AppleWebKit/537.36");
+      expect(option.browserType).toBeUndefined();
+      expect(option.useStealth).toBe(true);
+      expect(option.userAgent).toBe("Mozilla/5.0 (Test) AppleWebKit/537.36");
     });
 
-    it("should parse invalid browserType from map without validation", () => {
+    test("should parse invalid browserType from map without validation", () => {
       // Note: fromMap doesn't validate, it just sets values
       // Validation happens in the constructor
-      const optionMap = {
-        browserType: "firefox",
-        useStealth: true
+      const browserOption: BrowserOption = {
+        browserType: "firefox" as any,
+        useStealth: true,
+        viewport: { width: 800, height: 600 },
+        screen: { width: 800, height: 600 },
+        fingerprint: { devices: ['mobile'], operatingSystems: ['ios'], locales: ['es-ES'] }
       };
       
       const option = new BrowserOptionClass();
-      option.fromMap(optionMap);
+      option.fromMap(browserOption as Record<string, any>);
       
       // fromMap sets the value even if it's invalid
-      expect(option.browserType).to.equal("firefox");
-      expect(option.useStealth).to.be.true;
+      expect(option.browserType).toBe("firefox");
+      expect(option.useStealth).toBe(true);
     });
   });
 
   describe("BrowserOptionClass - Browser Type with Complex Options", () => {
-    it("should handle browserType with viewport and screen", () => {
+    test("should handle browserType with viewport and screen", () => {
       const viewport = { width: 1920, height: 1080 };
       const screen = { width: 1920, height: 1080 };
+      const browserOption: BrowserOption = {
+        useStealth: false,
+        userAgent: 'Complex Options Test Agent',
+        viewport: viewport,
+        screen: screen,
+        fingerprint: { devices: ['desktop'], operatingSystems: ['windows'], locales: ['en-US'] },
+        browserType: 'chrome'
+      };
+      const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
       
-      const option = new BrowserOptionClass(
-        false,  // useStealth
-        undefined,  // userAgent
-        viewport,  // viewport
-        screen,  // screen
-        undefined,  // fingerprint
-        false,  // solveCaptchas
-        undefined,  // proxies
-        [],         // cmdArgs
-        undefined,  // defaultNavigateUrl
-        "chrome"  // browserType
-      );
-      
-      expect(option.browserType).to.equal("chrome");
-      expect(option.viewport).to.deep.equal(viewport);
-      expect(option.screen).to.deep.equal(screen);
+      expect(option.browserType).toBe("chrome");
+      expect(option.viewport).toEqual(viewport);
+      expect(option.screen).toEqual(screen);
+      expect(option.userAgent).toBe('Complex Options Test Agent');
       
       const optionMap = option.toMap();
-      expect(optionMap.browserType).to.equal("chrome");
-      expect(optionMap.viewport).to.deep.equal(viewport);
-      expect(optionMap.screen).to.deep.equal(screen);
+      expect(optionMap.browserType).toBe("chrome");
+      expect(optionMap.viewport).toEqual(viewport);
+      expect(optionMap.screen).toEqual(screen);
     });
 
-    it("should handle browserType with fingerprint", () => {
+    test("should handle browserType with fingerprint", () => {
       const fingerprint = {
         devices: ["desktop", "mobile"] as ("desktop" | "mobile")[],
         operatingSystems: ["windows", "macos"] as ("windows" | "macos" | "linux" | "android" | "ios")[],
         locales: ["en-US", "zh-CN"]
       };
+      const browserOption: BrowserOption = {
+        useStealth: true,
+        userAgent: 'Fingerprint Test Agent',
+        viewport: { width: 1280, height: 720 },
+        screen: { width: 1280, height: 720 },
+        fingerprint: fingerprint,
+        browserType: 'chrome'
+      };
+      const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
       
-      const option = new BrowserOptionClass(
-        false,  // useStealth
-        undefined,  // userAgent
-        undefined,  // viewport
-        undefined,  // screen
-        fingerprint,  // fingerprint
-        false,  // solveCaptchas
-        undefined,  // proxies
-        [],         // cmdArgs
-        undefined,  // defaultNavigateUrl
-        "chrome"  // browserType
-      );
-      
-      expect(option.browserType).to.equal("chrome");
-      expect(option.fingerprint).to.deep.equal(fingerprint);
+      expect(option.browserType).toBe("chrome");
+      expect(option.fingerprint).toEqual(fingerprint);
+      expect(option.useStealth).toBe(true);
       
       const optionMap = option.toMap();
-      expect(optionMap.browserType).to.equal("chrome");
-      expect(optionMap.fingerprint).to.deep.equal(fingerprint);
+      expect(optionMap.browserType).toBe("chrome");
+      expect(optionMap.fingerprint).toEqual(fingerprint);
     });
 
-    it("should handle browserType with proxies", () => {
+    test("should handle browserType with proxies", () => {
       const proxy = new BrowserProxyClass(
         "custom",
         "127.0.0.1:8080",
         "user",
         "pass"
       );
-      const proxies = [proxy];
+      const browserOption: BrowserOption = {
+        useStealth: false,
+        userAgent: 'Proxy Test Agent',
+        viewport: { width: 1600, height: 900 },
+        screen: { width: 1600, height: 900 },
+        fingerprint: { devices: ['desktop'], operatingSystems: ['linux'], locales: ['fr-FR'] },
+        proxies: [proxy],
+        browserType: 'chrome'
+      };
+      const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
       
-      const option = new BrowserOptionClass(
-        false,  // useStealth
-        undefined,  // userAgent
-        undefined,  // viewport
-        undefined,  // screen
-        undefined,  // fingerprint
-        false,  // solveCaptchas
-        proxies,  // proxies
-        [],  // cmdArgs
-        undefined,  // defaultNavigateUrl
-        "chrome"  // browserType
-      );
-      
-      expect(option.browserType).to.equal("chrome");
-      expect(option.proxies).to.deep.equal(proxies);
+      expect(option.browserType).toBe("chrome");
+      expect(option.proxies).toEqual([proxy]);
+      expect(option.userAgent).toBe('Proxy Test Agent');
       
       const optionMap = option.toMap();
-      expect(optionMap.browserType).to.equal("chrome");
-      expect(optionMap.proxies).to.exist;
+      expect(optionMap.browserType).toBe("chrome");
+      expect(optionMap.proxies).toBeDefined();
     });
   });
 
   describe("BrowserOptionClass - Validation Order", () => {
-    it("should validate browserType in constructor before other checks", () => {
+    test("should validate browserType in constructor before other checks", () => {
       // In the constructor, browserType validation happens first
       expect(() => {
         new BrowserOptionClass(
@@ -359,46 +397,56 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // viewport
           undefined,  // screen
           undefined,  // fingerprint
+          undefined,  // fingerprintFormat
+          false,  // fingerprintPersistent
           false,  // solveCaptchas
           undefined,  // proxies - use valid proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
           "invalid" as any  // invalid browserType
         );
-      }).to.throw("browserType must be 'chrome' or 'chromium'");
+      }).toThrow("browserType must be 'chrome' or 'chromium'");
     });
 
-    it("should validate proxies length in fromMap", () => {
+    test("should validate proxies length in fromMap", () => {
       // In fromMap, proxies validation happens during processing
+      const browserOption: BrowserOption = {
+        useStealth: false,
+        userAgent: 'Validation Test Agent',
+        viewport: { width: 1024, height: 768 },
+        screen: { width: 1024, height: 768 },
+        fingerprint: { devices: ['desktop'], operatingSystems: ['windows'], locales: ['en-US'] },
+        proxies: [
+          new BrowserProxyClass('custom', 'http://proxy1.com'),
+          new BrowserProxyClass('custom', 'http://proxy2.com')
+        ],  // Multiple proxies
+        browserType: "chrome"
+      };
       const option = new BrowserOptionClass();
       expect(() => {
-        option.fromMap({
-          proxies: [{type: "custom"}, {type: "custom"}],  // Multiple proxies
-          browserType: "chrome"
-        });
-      }).to.throw("proxies list length must be limited to 1");
+        option.fromMap(browserOption as Record<string, any>);
+      }).toThrow("proxies list length must be limited to 1");
     });
   });
 
   describe("BrowserOptionClass - Edge Cases", () => {
-    it("should handle undefined browserType in constructor", () => {
-      const option = new BrowserOptionClass(
-        false,  // useStealth
-        undefined,  // userAgent
-        undefined,  // viewport
-        undefined,  // screen
-        undefined,  // fingerprint
-        false,  // solveCaptchas
-        undefined,  // proxies
-        [],         // cmdArgs
-        undefined,  // defaultNavigateUrl
-        undefined  // browserType - should remain undefined
-      );
+    test("should handle undefined browserType in constructor", () => {
+      const browserOption: BrowserOption = {
+        useStealth: false,
+        userAgent: 'Edge Case Test Agent',
+        viewport: { width: 800, height: 600 },
+        screen: { width: 800, height: 600 },
+        fingerprint: { devices: ['mobile'], operatingSystems: ['android'], locales: ['ko-KR'] }
+        // browserType intentionally omitted
+      };
+      const option = new BrowserOptionClass();
+      option.fromMap(browserOption as Record<string, any>);
       
-      expect(option.browserType).to.be.undefined;
+      expect(option.browserType).toBeUndefined();
+      expect(option.useStealth).toBe(false);
     });
 
-    it("should handle null browserType in constructor", () => {
+    test("should handle null browserType in constructor", () => {
       expect(() => {
         new BrowserOptionClass(
           false,  // useStealth
@@ -406,16 +454,18 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // viewport
           undefined,  // screen
           undefined,  // fingerprint
+          undefined,  // fingerprintFormat
+          false,  // fingerprintPersistent
           false,  // solveCaptchas
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
           null as any  // browserType - should be invalid
         );
-      }).to.throw("browserType must be 'chrome' or 'chromium'");
+      }).toThrow("browserType must be 'chrome' or 'chromium'");
     });
 
-    it("should handle browserType with special characters", () => {
+    test("should handle browserType with special characters", () => {
       expect(() => {
         new BrowserOptionClass(
           false,  // useStealth
@@ -423,13 +473,15 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // viewport
           undefined,  // screen
           undefined,  // fingerprint
+          undefined,  // fingerprintFormat
+          false,  // fingerprintPersistent
           false,  // solveCaptchas
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
           "chrome-v2" as any  // browserType with special characters
         );
-      }).to.throw("browserType must be 'chrome' or 'chromium'");
+      }).toThrow("browserType must be 'chrome' or 'chromium'");
     });
   });
 });

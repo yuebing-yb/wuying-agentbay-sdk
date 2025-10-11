@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { BrowserProxyClass, BrowserOptionClass } = require('../../dist/index.cjs');
+import { BrowserOption, BrowserOptionClass, BrowserProxyClass } from '../../src/browser/browser';
 
 describe('BrowserProxy Unit Tests', () => {
   describe('BrowserProxyClass', () => {
@@ -47,7 +45,7 @@ describe('BrowserProxy Unit Tests', () => {
 
     test('should throw error for invalid proxy type', () => {
       expect(() => {
-        new BrowserProxyClass('invalid');
+        new BrowserProxyClass('invalid' as any);
       }).toThrow('proxy_type must be custom or wuying');
     });
 
@@ -65,7 +63,7 @@ describe('BrowserProxy Unit Tests', () => {
 
     test('should throw error for wuying proxy with invalid strategy', () => {
       expect(() => {
-        new BrowserProxyClass('wuying', undefined, undefined, undefined, 'invalid');
+        new BrowserProxyClass('wuying', undefined, undefined, undefined, 'invalid' as any);
       }).toThrow('strategy must be restricted or polling for wuying proxy type');
     });
 
@@ -215,7 +213,7 @@ describe('BrowserProxy Unit Tests', () => {
   });
 });
 
-describe('BrowserOptionClass with Proxies', () => {
+describe('BrowserOption with Proxies', () => {
   test('should create BrowserOption with custom proxy', () => {
     const customProxy = new BrowserProxyClass(
       'custom',
@@ -223,16 +221,16 @@ describe('BrowserOptionClass with Proxies', () => {
       'testuser',
       'testpass'
     );
-
-    const option = new BrowserOptionClass(
-      true,
-      'Custom User Agent',
-      { width: 1920, height: 1080 },
-      { width: 1920, height: 1080 },
-      { devices: ['desktop'], operatingSystems: ['windows'], locales: ['en-US'] },
-      false,
-      [customProxy]
-    );
+    const browserOption: BrowserOption = {
+      useStealth: true,
+      userAgent: 'Custom User Agent',
+      viewport: { width: 1920, height: 1080 },
+      screen: { width: 1920, height: 1080 },
+      fingerprint: { devices: ['desktop'], operatingSystems: ['windows'], locales: ['en-US'] },
+      proxies: [customProxy]
+    };
+    const option = new BrowserOptionClass();
+    option.fromMap(browserOption as Record<string, any>);
 
     expect(option.useStealth).toBe(true);
     expect(option.userAgent).toBe('Custom User Agent');
@@ -243,17 +241,19 @@ describe('BrowserOptionClass with Proxies', () => {
 
   test('should create BrowserOption with wuying proxy', () => {
     const wuyingProxy = new BrowserProxyClass('wuying', undefined, undefined, undefined, 'polling', 15);
+    const browserOption: BrowserOption = {
+      useStealth: false,
+      userAgent: 'Wuying User Agent',
+      viewport: { width: 1366, height: 768 },
+      screen: { width: 1366, height: 768 },
+      fingerprint: { devices: ['mobile'], operatingSystems: ['linux'], locales: ['zh-CN'] },
+      proxies: [wuyingProxy]
+    };
+    const option = new BrowserOptionClass();
+    option.fromMap(browserOption as Record<string, any>);
 
-    const option = new BrowserOptionClass(
-      false,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      false,
-      [wuyingProxy]
-    );
-
+    expect(option.useStealth).toBe(false);
+    expect(option.userAgent).toBe('Wuying User Agent');
     expect(option.proxies).toHaveLength(1);
     expect(option.proxies?.[0].type).toBe('wuying');
     expect(option.proxies?.[0].strategy).toBe('polling');
@@ -265,7 +265,7 @@ describe('BrowserOptionClass with Proxies', () => {
     const proxy2 = new BrowserProxyClass('custom', 'http://proxy2.com');
 
     expect(() => {
-      new BrowserOptionClass(false, undefined, undefined, undefined, undefined, false, [proxy1, proxy2]);
+      new BrowserOptionClass(false, undefined, undefined, undefined, undefined, undefined, false, false, [proxy1, proxy2]);
     }).toThrow('proxies list length must be limited to 1');
   });
 
@@ -273,17 +273,27 @@ describe('BrowserOptionClass with Proxies', () => {
     const proxy = new BrowserProxyClass('custom', 'http://proxy.com');
 
     expect(() => {
-      new BrowserOptionClass(false, undefined, undefined, undefined, undefined, false, proxy);
+      new BrowserOptionClass(false, undefined, undefined, undefined, undefined, undefined, false, false, proxy as any);
     }).toThrow('proxies must be a list');
   });
 
   test('should serialize BrowserOption with proxies correctly', () => {
     const customProxy = new BrowserProxyClass('custom', 'http://proxy.example.com:8080');
-    const option = new BrowserOptionClass(true, undefined, undefined, undefined, undefined, false, [customProxy]);
+    const browserOption: BrowserOption = {
+      useStealth: true,
+      userAgent: 'Serialization Test Agent',
+      viewport: { width: 1280, height: 720 },
+      screen: { width: 1280, height: 720 },
+      fingerprint: { devices: ['desktop'], operatingSystems: ['macos'], locales: ['fr-FR'] },
+      proxies: [customProxy]
+    };
+    const option = new BrowserOptionClass();
+    option.fromMap(browserOption as Record<string, any>);
 
     const optionMap = option.toMap();
 
     expect(optionMap.useStealth).toBe(true);
+    expect(optionMap.userAgent).toBe('Serialization Test Agent');
     expect(optionMap.proxies).toBeDefined();
     expect(optionMap.proxies).toHaveLength(1);
     expect(optionMap.proxies[0].type).toBe('custom');
@@ -291,38 +301,45 @@ describe('BrowserOptionClass with Proxies', () => {
   });
 
   test('should deserialize BrowserOption with proxies correctly', () => {
-    const optionMap = {
+    const browserOption: BrowserOption = {
       useStealth: true,
-      userAgent: 'Test User Agent',
+      userAgent: 'Deserialization Test Agent',
+      viewport: { width: 1600, height: 900 },
+      screen: { width: 1600, height: 900 },
+      fingerprint: { devices: ['desktop'], operatingSystems: ['windows'], locales: ['de-DE'] },
       proxies: [
-        {
-          type: 'wuying',
-          strategy: 'restricted'
-        }
+        new BrowserProxyClass('wuying', undefined, undefined, undefined, 'restricted')
       ]
     };
 
     const option = new BrowserOptionClass();
-    option.fromMap(optionMap);
+    option.fromMap(browserOption as Record<string, any>);
 
     expect(option.useStealth).toBe(true);
-    expect(option.userAgent).toBe('Test User Agent');
+    expect(option.userAgent).toBe('Deserialization Test Agent');
+    expect(option.viewport?.width).toBe(1600);
+    expect(option.viewport?.height).toBe(900);
     expect(option.proxies).toHaveLength(1);
     expect(option.proxies?.[0].type).toBe('wuying');
     expect(option.proxies?.[0].strategy).toBe('restricted');
   });
 
   test('should throw error for multiple proxies during deserialization', () => {
-    const optionMap = {
+    const browserOption: BrowserOption = {
+      useStealth: false,
+      userAgent: 'Multiple Proxies Test Agent',
+      viewport: { width: 800, height: 600 },
+      screen: { width: 800, height: 600 },
+      fingerprint: { devices: ['mobile'], operatingSystems: ['android'], locales: ['ja-JP'] },
       proxies: [
-        { type: 'custom', server: 'http://proxy1.com' },
-        { type: 'custom', server: 'http://proxy2.com' }
+        new BrowserProxyClass('custom', 'http://proxy1.com'),
+        new BrowserProxyClass('custom', 'http://proxy2.com')
       ]
     };
 
     const option = new BrowserOptionClass();
     expect(() => {
-      option.fromMap(optionMap);
+      option.fromMap(browserOption as Record<string, any>);
     }).toThrow('proxies list length must be limited to 1');
   });
 }); 

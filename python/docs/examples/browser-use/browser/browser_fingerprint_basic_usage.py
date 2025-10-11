@@ -1,12 +1,13 @@
 """
-Example demonstrating Browser Stealth mode with AgentBay SDK.
+Example demonstrating Browser Fingerprint basic usage with AgentBay SDK.
 
-This example shows how to use stealth mode with fingerprint to avoid detection
-by anti-bot services. It will generate a random, realistic browser fingerprint
-and make the browser behave more like a real user:
-- Create AIBrowser session with stealth mode and simulate a Windows desktop browser.
-- Use playwright to connect to AIBrowser instance through CDP protocol
-- Verify user agent and navigator properties
+This example shows how to use browser fingerprint to avoid detection by anti-bot services.
+It will generate a random, realistic browser fingerprint and make the browser behave more like a real user.
+
+This example will:
+1. Create AIBrowser session with random fingerprint and simulate a Windows desktop browser.
+2. Use playwright to connect to AIBrowser instance through CDP protocol
+3. Verify user agent and navigator properties
 """
 
 import os
@@ -20,7 +21,7 @@ from playwright.async_api import async_playwright
 
 
 async def main():
-    """Main function demonstrating stealth mode."""
+    """Main function demonstrating browser fingerprint basic usage."""
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
@@ -57,7 +58,7 @@ async def main():
         )
 
         # Create browser option with stealth mode and fingerprint option limit.
-        # Stealth mode helps to avoid detection by anti-bot services. It will
+        # This will help to avoid detection by anti-bot services. It will
         # generate a random, realistic browser fingerprint and make the browser
         # behave more like a real user.
         browser_option = BrowserOption(
