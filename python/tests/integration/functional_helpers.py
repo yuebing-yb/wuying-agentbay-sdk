@@ -12,7 +12,7 @@ import math
 @dataclass
 class FunctionalTestConfig:
     """Configuration for functional tests."""
-    wait_time_after_action: float = 2.0  # Wait time after each action (seconds)
+    wait_time_after_action: float = 1.0  # Wait time after each action (seconds)
     max_retries: int = 3  # Maximum retry attempts
     screenshot_comparison: bool = True  # Enable screenshot comparison
     ui_element_tolerance: float = 0.3  # UI element change tolerance (0.0-1.0)
