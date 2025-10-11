@@ -120,6 +120,47 @@ export class AgentBay {
   }
 
   /**
+   * Update browser replay context with AppInstanceId from response data.
+   *
+   * @param responseData - Response data containing AppInstanceId
+   * @param recordContextId - The record context ID to update
+   */
+  private async _updateBrowserReplayContext(responseData: any, recordContextId: string): Promise<void> {
+    // Check if record_context_id is provided
+    if (!recordContextId) {
+      return;
+    }
+
+    try {
+      // Extract AppInstanceId from response data
+      const appInstanceId = responseData?.appInstanceId;
+      if (!appInstanceId) {
+        logError("AppInstanceId not found in response data, skipping browser replay context update");
+        return;
+      }
+
+      // Create context name with prefix
+      const contextName = `browserreplay-${appInstanceId}`;
+
+      // Create Context object for update
+      const contextObj = new Context(recordContextId, contextName);
+
+      // Call context.update interface
+      log(`Updating browser replay context: ${contextName} -> ${recordContextId}`);
+      const updateResult = await this.context.update(contextObj);
+
+      if (updateResult.success) {
+        log(`✅ Successfully updated browser replay context: ${contextName}`);
+      } else {
+        logError(`⚠️ Failed to update browser replay context: ${updateResult.errorMessage}`);
+      }
+    } catch (error) {
+      logError(`❌ Error updating browser replay context: ${error}`);
+      // Continue execution even if context update fails
+    }
+  }
+
+  /**
    * Create a new session in the AgentBay cloud environment.
    *
    * @param params - Optional parameters for creating the session
@@ -217,12 +258,13 @@ export class AgentBay {
       }
 
       // Add browser recording persistence if enabled
+      let recordContextId = ""; // Initialize record_context_id
       if (params.enableBrowserReplay) {
         // Create browser recording persistence configuration
         const recordPath = "/home/guest/record";
         const recordContextName = generateRandomContextName();
         const result = await this.context.get(recordContextName, true);
-        const recordContextId = result.success ? result.contextId : "";
+        recordContextId = result.success ? result.contextId : "";
         const recordPersistence = new CreateMcpSessionRequestPersistenceDataList({
           contextId: recordContextId,
           path: recordPath,
@@ -331,6 +373,11 @@ export class AgentBay {
       (session as any).imageId = params.imageId;
 
       this.sessions.set(session.sessionId, session);
+
+      // Update browser replay context if enabled
+      if (params.enableBrowserReplay) {
+        await this._updateBrowserReplayContext(data, recordContextId);
+      }
 
       // For VPC sessions, automatically fetch MCP tools information
       if (params.isVpc) {
