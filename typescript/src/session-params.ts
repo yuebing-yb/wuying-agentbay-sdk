@@ -1,4 +1,4 @@
-import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, WhiteList, BWList } from "./context-sync";
+import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecyclePolicy, WhiteList, BWList } from "./context-sync";
 import { ExtensionOption } from "./extension";
 
 /**
@@ -131,6 +131,7 @@ export class BrowserContext {
         extract: true,
         deleteSrcFile: true
       },
+      recyclePolicy: newRecyclePolicy(),
       bwList: {
         whiteLists: whiteLists
       }
@@ -376,5 +377,3 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
 export function newCreateSessionParams(): CreateSessionParams {
   return new CreateSessionParams();
 }
-
-

@@ -112,7 +112,9 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		}
 
 		t.Logf("Total sessions found: %d", result.TotalCount)
-		t.Logf("Sessions in current page: %d", len(result.SessionIds))
+		}
+
+		t.Logf("Total sessions found: %d", result.TotalCount)
 		t.Logf("Request ID: %s", result.RequestID)
 	})
 
@@ -146,6 +148,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		foundCount := 0
 		for _, sessionID := range result.SessionIds {
 			if sessionIDs[sessionID] {
+			if sessionIDs[session.SessionID] {
 				foundCount++
 			}
 		}
@@ -188,6 +191,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		found := false
 		for _, sessionID := range result.SessionIds {
 			if sessionID == devSessionID {
+			if session.SessionID == devSessionID {
 				found = true
 				break
 			}
@@ -227,6 +231,8 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		}
 
 		t.Logf("Page 1 - Found %d sessions", len(resultPage1.SessionIds))
+		}
+
 		t.Logf("Request ID: %s", resultPage1.RequestID)
 
 		// If there are more results, test page 2
@@ -280,6 +286,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		foundCount := 0
 		for _, sessionID := range result.SessionIds {
 			if sessionIDs[sessionID] {
+			if sessionIDs[session.SessionID] {
 				foundCount++
 			}
 		}

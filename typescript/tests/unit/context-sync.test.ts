@@ -5,8 +5,12 @@ import {
   newUploadPolicy,
   newDownloadPolicy,
   newDeletePolicy,
+  newRecyclePolicy,
+  newExtractPolicy,
+  RecyclePolicy,
   UploadStrategy,
-  DownloadStrategy
+  DownloadStrategy,
+  Lifecycle
 } from "../../src/context-sync";
 import { log } from "../../src/utils/logger";
 
@@ -14,6 +18,7 @@ describe("ContextSync Unit Tests", () => {
   describe("SyncPolicy Default Construction", () => {
     it("should create default SyncPolicy with correct values", () => {
       const policy = newSyncPolicy();
+
 
       // Verify the policy is not null
       expect(policy).toBeDefined();
@@ -38,6 +43,15 @@ describe("ContextSync Unit Tests", () => {
         expect(policy.deletePolicy.syncLocalFile).toBe(true);
       }
 
+      // Verify recyclePolicy
+      expect(policy.recyclePolicy).toBeDefined();
+      if (policy.recyclePolicy) {
+        expect(policy.recyclePolicy.lifecycle).toBe(Lifecycle.Lifecycle_Forever);
+        expect(policy.recyclePolicy.paths).toBeDefined();
+        expect(policy.recyclePolicy.paths).toHaveLength(1);
+        expect(policy.recyclePolicy.paths[0]).toBe("");
+      }
+
       // Verify bwList
       expect(policy.bwList).toBeDefined();
       if (policy.bwList && policy.bwList.whiteLists) {
@@ -51,6 +65,7 @@ describe("ContextSync Unit Tests", () => {
           expect(firstWhiteList.excludePaths).toHaveLength(0);
         }
       }
+      
     });
 
     it("should create default SyncPolicy that matches JSON requirements", () => {
@@ -73,6 +88,13 @@ describe("ContextSync Unit Tests", () => {
       // Verify deletePolicy in JSON
       expect(jsonObject.deletePolicy).toBeDefined();
       expect(jsonObject.deletePolicy.syncLocalFile).toBe(true);
+
+      // Verify recyclePolicy in JSON
+      expect(jsonObject.recyclePolicy).toBeDefined();
+      expect(jsonObject.recyclePolicy.lifecycle).toBe("Lifecycle_Forever");
+      expect(jsonObject.recyclePolicy.paths).toBeDefined();
+      expect(jsonObject.recyclePolicy.paths).toHaveLength(1);
+      expect(jsonObject.recyclePolicy.paths[0]).toBe("");
 
       // Verify bwList in JSON
       expect(jsonObject.bwList).toBeDefined();
@@ -126,6 +148,79 @@ describe("ContextSync Unit Tests", () => {
 
       expect(result).toBe(contextSync);
       expect(contextSync.policy).toBe(policy);
+    });
+
+    it("should create RecyclePolicy with Lifecycle_1Day", () => {
+      // Create a custom recycle policy with Lifecycle_1Day
+      const customRecyclePolicy: RecyclePolicy = {
+        lifecycle: Lifecycle.Lifecycle_1Day,
+        paths: ["/custom/path"]
+      };
+
+      // Create a sync policy with the custom recycle policy
+      const syncPolicy: SyncPolicy = {
+        uploadPolicy: newUploadPolicy(),
+        downloadPolicy: newDownloadPolicy(),
+        deletePolicy: newDeletePolicy(),
+        extractPolicy: newExtractPolicy(),
+        recyclePolicy: customRecyclePolicy,
+        bwList: {
+          whiteLists: [
+            {
+              path: "",
+              excludePaths: [],
+            },
+          ],
+        },
+      };
+
+      // Verify the recycle policy
+      expect(syncPolicy.recyclePolicy).toBeDefined();
+      if (syncPolicy.recyclePolicy) {
+        expect(syncPolicy.recyclePolicy.lifecycle).toBe(Lifecycle.Lifecycle_1Day);
+        expect(syncPolicy.recyclePolicy.paths).toBeDefined();
+        expect(syncPolicy.recyclePolicy.paths).toHaveLength(1);
+        expect(syncPolicy.recyclePolicy.paths[0]).toBe("/custom/path");
+      }
+
+      // Test JSON serialization
+      const jsonString = JSON.stringify(syncPolicy);
+      const jsonObject = JSON.parse(jsonString);
+      
+      expect(jsonObject.recyclePolicy).toBeDefined();
+      expect(jsonObject.recyclePolicy.lifecycle).toBe("Lifecycle_1Day");
+      expect(jsonObject.recyclePolicy.paths).toHaveLength(1);
+      expect(jsonObject.recyclePolicy.paths[0]).toBe("/custom/path");
+      
+    });
+
+    it("should throw error when recyclePolicy path contains wildcard patterns", () => {
+      // Create a recycle policy with invalid wildcard path
+      const invalidRecyclePolicy: RecyclePolicy = {
+        lifecycle: Lifecycle.Lifecycle_1Day,
+        paths: ["/path/with/*"]
+      };
+
+      const syncPolicyWithInvalidPath: SyncPolicy = {
+        uploadPolicy: newUploadPolicy(),
+        downloadPolicy: newDownloadPolicy(),
+        deletePolicy: newDeletePolicy(),
+        extractPolicy: newExtractPolicy(),
+        recyclePolicy: invalidRecyclePolicy,
+        bwList: {
+          whiteLists: [
+            {
+              path: "",
+              excludePaths: [],
+            },
+          ],
+        },
+      };
+
+      // Test that ContextSync constructor throws an error for invalid path
+      expect(() => {
+        new ContextSync("test-context", "/test/path", syncPolicyWithInvalidPath);
+      }).toThrow("Wildcard patterns are not supported in path. Got: /path/with/*. Please use exact directory paths instead.");
     });
   });
 });

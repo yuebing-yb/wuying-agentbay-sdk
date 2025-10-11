@@ -34,9 +34,7 @@ A `ContextService` instance for managing persistent contexts. See the [Context A
 
 ## Methods
 
-
 Creates a new session in the AgentBay cloud environment.
-
 
 ```python
 create(params: Optional[CreateSessionParams] = None) -> SessionResult
@@ -356,3 +354,4 @@ if result.success:
     else:
         print(f"Failed to delete session: {delete_result.error_message}")
 ```
+

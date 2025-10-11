@@ -209,7 +209,7 @@ class AgentBay:
                 from agentbay.api.models import (
                     CreateMcpSessionRequestPersistenceDataList,
                 )
-                from agentbay.context_sync import SyncPolicy, UploadPolicy, WhiteList, BWList
+                from agentbay.context_sync import SyncPolicy, UploadPolicy, WhiteList, BWList, RecyclePolicy
 
                 # Create a new SyncPolicy with default values for browser context
                 upload_policy = UploadPolicy(auto_upload=params.browser_context.auto_upload)
@@ -222,7 +222,11 @@ class AgentBay:
                 ]
                 bw_list = BWList(white_lists=white_lists)
 
-                sync_policy = SyncPolicy(upload_policy=upload_policy, bw_list=bw_list)
+                # Use custom recycle_policy if provided, otherwise use default
+                recycle_policy = RecyclePolicy.default()
+
+                sync_policy = SyncPolicy(upload_policy=upload_policy, bw_list=bw_list, recycle_policy=recycle_policy)
+                
 
                 # Serialize policy to JSON string
                 import json as _json
@@ -242,6 +246,11 @@ class AgentBay:
                 if not hasattr(request, 'persistence_data_list') or request.persistence_data_list is None:
                     request.persistence_data_list = []
                 request.persistence_data_list.append(browser_context_sync)
+                logger.info(f"📋 Added browser context to persistence_data_list. Total items: {len(request.persistence_data_list)}")
+                for i, item in enumerate(request.persistence_data_list):
+                    logger.info(f"📋 persistence_data_list[{i}]: context_id={item.context_id}, path={item.path}, policy_length={len(item.policy) if item.policy else 0}")
+                    logger.info(f"📋 persistence_data_list[{i}] policy content: {item.policy}")
+                
                 needs_context_sync = True
 
             # Add labels if provided
@@ -354,6 +363,9 @@ class AgentBay:
 
             logger.info(f"🆔 Session created: {session_id}")
             logger.debug(f"🔗 Resource URL: {resource_url}")
+
+            app_instance_id = data.get("AppInstanceId")
+            logger.info(f"🆔 AppInstanceId: {app_instance_id}")
 
             # Create Session object
             from agentbay.session import Session

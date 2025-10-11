@@ -13,7 +13,7 @@ from unittest.mock import patch
 from agentbay import AgentBay
 from agentbay.context_manager import ContextStatusData
 from agentbay.session_params import CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy
+from agentbay.context_sync import ContextSync, SyncPolicy, RecyclePolicy, Lifecycle, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, BWList, WhiteList
 
 
 class TestContextSyncIntegration(unittest.TestCase):
@@ -443,6 +443,206 @@ class TestContextSyncIntegration(unittest.TestCase):
                     print(f"First session deleted: {session1.session_id}")
                 except Exception:
                     pass  # Already deleted
+
+        finally:
+            # Clean up context
+            try:
+                self.agent_bay.context.delete(context)
+                print(f"Context deleted: {context.id}")
+            except Exception as e:
+                print(f"Warning: Failed to delete context: {e}")
+
+    def test_recycle_policy_with_lifecycle_1day(self):
+        """Test creating ContextSync with custom RecyclePolicy using Lifecycle_1Day."""
+        # Create a custom recycle policy with Lifecycle_1Day
+        custom_recycle_policy = RecyclePolicy(
+            lifecycle=Lifecycle.LIFECYCLE_1DAY,
+            paths=["/custom/path"]
+        )
+
+        # Create a sync policy with the custom recycle policy
+        sync_policy = SyncPolicy(
+            upload_policy=UploadPolicy.default(),
+            download_policy=DownloadPolicy.default(),
+            delete_policy=DeletePolicy.default(),
+            extract_policy=ExtractPolicy.default(),
+            recycle_policy=custom_recycle_policy,
+            bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])])
+        )
+
+        # Verify the recycle policy
+        self.assertIsNotNone(sync_policy.recycle_policy)
+        self.assertEqual(sync_policy.recycle_policy.lifecycle, Lifecycle.LIFECYCLE_1DAY)
+        self.assertIsNotNone(sync_policy.recycle_policy.paths)
+        self.assertEqual(len(sync_policy.recycle_policy.paths), 1)
+        self.assertEqual(sync_policy.recycle_policy.paths[0], "/custom/path")
+
+        # Test JSON serialization
+        policy_dict = sync_policy.__dict__()
+        self.assertIn("recyclePolicy", policy_dict)
+        
+        recycle_policy_dict = policy_dict["recyclePolicy"]
+        self.assertEqual(recycle_policy_dict["lifecycle"], "Lifecycle_1Day")
+        self.assertEqual(len(recycle_policy_dict["paths"]), 1)
+        self.assertEqual(recycle_policy_dict["paths"][0], "/custom/path")
+
+        # Create ContextSync with the custom policy
+        context_sync = ContextSync(
+            context_id="test-recycle-context",
+            path="/test/recycle/path",
+            policy=sync_policy
+        )
+
+        # Verify ContextSync properties
+        self.assertEqual(context_sync.context_id, "test-recycle-context")
+        self.assertEqual(context_sync.path, "/test/recycle/path")
+        self.assertEqual(context_sync.policy, sync_policy)
+
+        print("RecyclePolicy with Lifecycle_1Day created and verified successfully")
+
+    def test_recycle_policy_with_invalid_wildcard_path(self):
+        """Test that RecyclePolicy throws error when created with invalid wildcard path."""
+        print("Testing RecyclePolicy creation with invalid wildcard path...")
+
+        # Test that RecyclePolicy constructor throws an error for invalid path with wildcard
+        with self.assertRaises(ValueError) as context:
+            RecyclePolicy(
+                lifecycle=Lifecycle.LIFECYCLE_1DAY,
+                paths=["/path/with/*"]
+            )
+
+        # Verify the error message
+        error_message = str(context.exception)
+        self.assertIn("Wildcard patterns are not supported in recycle policy paths", error_message)
+        self.assertIn("/path/with/*", error_message)
+        self.assertIn("Please use exact directory paths instead", error_message)
+
+        print("RecyclePolicy correctly threw error for invalid wildcard path")
+
+        # Test with multiple invalid paths
+        with self.assertRaises(ValueError):
+            RecyclePolicy(
+                lifecycle=Lifecycle.LIFECYCLE_1DAY,
+                paths=["/valid/path", "/invalid/path?", "/another/invalid/*"]
+            )
+
+        print("RecyclePolicy correctly threw error for multiple invalid paths")
+
+        # Test with different wildcard patterns
+        invalid_patterns = [
+            "/path/with/*",
+            "/path/with/?",
+            "/path/with/[abc]",
+            "/path/with/file*.txt"
+        ]
+
+        for pattern in invalid_patterns:
+            with self.assertRaises(ValueError) as context:
+                RecyclePolicy(
+                    lifecycle=Lifecycle.LIFECYCLE_1DAY,
+                    paths=[pattern]
+                )
+            
+            error_message = str(context.exception)
+            self.assertIn("Wildcard patterns are not supported", error_message)
+            self.assertIn(pattern, error_message)
+
+        print("All wildcard patterns correctly rejected")
+
+    def test_recycle_policy_default_values(self):
+        """Test RecyclePolicy default values and behavior."""
+        # Test default RecyclePolicy
+        default_policy = RecyclePolicy.default()
+        
+        self.assertEqual(default_policy.lifecycle, Lifecycle.LIFECYCLE_FOREVER)
+        self.assertEqual(default_policy.paths, [""])
+
+        # Test RecyclePolicy with no arguments
+        no_args_policy = RecyclePolicy()
+        
+        self.assertEqual(no_args_policy.lifecycle, Lifecycle.LIFECYCLE_FOREVER)
+        self.assertEqual(no_args_policy.paths, [""])
+
+        # Test JSON serialization of default policy
+        policy_dict = default_policy.__dict__()
+        self.assertEqual(policy_dict["lifecycle"], "Lifecycle_Forever")
+        self.assertEqual(policy_dict["paths"], [""])
+
+        print("RecyclePolicy default values verified successfully")
+
+    def test_context_sync_with_recycle_policy_integration(self):
+        """Test creating a session with ContextSync that has custom RecyclePolicy."""
+        # Skip if no API key is available or in CI environment
+        api_key = os.environ.get("AGENTBAY_API_KEY")
+        if not api_key or os.environ.get("CI"):
+            self.skipTest("Skipping integration test: No API key available or running in CI")
+
+        # Create a unique context name for this test
+        context_name = f"test-recycle-policy-{int(time.time())}"
+
+        # Create a context
+        context_result = self.agent_bay.context.get(context_name, True)
+        if not context_result.success or not context_result.context:
+            self.skipTest("Failed to create context")
+
+        context = context_result.context
+        print(f"Created context for RecyclePolicy test: {context.name} (ID: {context.id})")
+
+        try:
+            # Create custom RecyclePolicy with Lifecycle_3Days
+            custom_recycle_policy = RecyclePolicy(
+                lifecycle=Lifecycle.LIFECYCLE_3DAYS,
+                paths=["/test/recycle/data"]
+            )
+
+            # Create SyncPolicy with custom RecyclePolicy
+            sync_policy = SyncPolicy(
+                upload_policy=UploadPolicy.default(),
+                download_policy=DownloadPolicy.default(),
+                delete_policy=DeletePolicy.default(),
+                extract_policy=ExtractPolicy.default(),
+                recycle_policy=custom_recycle_policy,
+                bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])])
+            )
+
+            # Create ContextSync with custom policy
+            context_sync = ContextSync.new(context.id, "/home/wuying/recycle-test", sync_policy)
+
+            # Create session parameters
+            session_params = CreateSessionParams()
+            session_params.context_syncs = [context_sync]
+            session_params.labels = {"test": "recycle-policy-integration"}
+            session_params.image_id = "linux_latest"
+
+            print("Creating session with custom RecyclePolicy...")
+            print(f"RecyclePolicy lifecycle: {custom_recycle_policy.lifecycle.value}")
+            print(f"RecyclePolicy paths: {custom_recycle_policy.paths}")
+
+            # Create session
+            session_result = self.agent_bay.create(session_params)
+            if not session_result.success or not session_result.session:
+                self.skipTest("Failed to create session for RecyclePolicy integration test")
+
+            session = session_result.session
+            print(f"Session created successfully with ID: {session.session_id}")
+
+            try:
+                # Wait for session to be ready
+                time.sleep(5)
+
+                # Get context info to verify the session was created with the policy
+                context_info = session.context.info()
+                self.assertIsNotNone(context_info.request_id)
+
+                print("RecyclePolicy integration test completed successfully")
+
+            finally:
+                # Clean up session
+                try:
+                    self.agent_bay.delete(session)
+                    print(f"Session deleted: {session.session_id}")
+                except Exception as e:
+                    print(f"Warning: Failed to delete session: {e}")
 
         finally:
             # Clean up context

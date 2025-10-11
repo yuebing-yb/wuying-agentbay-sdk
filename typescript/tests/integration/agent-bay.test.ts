@@ -5,6 +5,7 @@ import {
   APIError,
   ListSessionParams,
 } from "../../src";
+import { ContextSync, SyncPolicy, newSyncPolicy, Lifecycle } from "../../src/context-sync";
 import { getTestApiKey } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
 
@@ -381,6 +382,157 @@ describe("AgentBay", () => {
       }
 
       log("Test completed successfully");
+    });
+  });
+
+  describe("create session with custom recyclePolicy", () => {
+    let agentBay: AgentBay;
+    let session: Session;
+
+    beforeEach(() => {
+      const apiKey = getTestApiKey();
+      agentBay = new AgentBay({ apiKey });
+    });
+
+    afterEach(async () => {
+      // Clean up session
+      if (session) {
+        try {
+          log("Cleaning up session with custom recyclePolicy...");
+          const deleteResponse = await agentBay.delete(session);
+          log(
+            `Delete Session RequestId: ${
+              deleteResponse.requestId || "undefined"
+            }`
+          );
+        } catch (error) {
+          log(`Warning: Error deleting session: ${error}`);
+        }
+      }
+    });
+
+    it("should create session with custom recyclePolicy using Lifecycle_1Day", async () => {
+      // Create custom recyclePolicy with Lifecycle_1Day and default paths
+      const customSyncPolicy: SyncPolicy = {
+        ...newSyncPolicy(),
+        recyclePolicy: {
+          lifecycle: Lifecycle.Lifecycle_1Day,
+          paths: [""] // Using default path value
+        }
+      };
+
+      // Create ContextSync with custom policy
+      const contextSync = new ContextSync(
+        "test-recycle-context",
+        "/test/recycle/path",
+        customSyncPolicy
+      );
+
+      log("Creating session with custom recyclePolicy...");
+      log(`RecyclePolicy lifecycle: ${customSyncPolicy.recyclePolicy?.lifecycle}`);
+      log(`RecyclePolicy paths: ${JSON.stringify(customSyncPolicy.recyclePolicy?.paths)}`);
+
+      // Create session with custom recyclePolicy
+      const createResponse = await agentBay.create({
+        labels: { test: "recyclePolicy", lifecycle: "1day" },
+        contextSync: [contextSync]
+      });
+
+      // Verify SessionResult structure
+      expect(createResponse.success).toBe(true);
+      expect(createResponse.requestId).toBeDefined();
+      expect(typeof createResponse.requestId).toBe("string");
+      expect(createResponse.requestId!.length).toBeGreaterThan(0);
+      expect(createResponse.session).toBeDefined();
+      expect(createResponse.errorMessage).toBeUndefined();
+
+      session = createResponse.session!;
+      log(`Session created successfully with ID: ${session.sessionId}`);
+      log(`Create Session RequestId: ${createResponse.requestId || "undefined"}`);
+
+      // Verify session properties
+      expect(session.sessionId).toBeDefined();
+      expect(session.sessionId.length).toBeGreaterThan(0);
+
+      log("Session with custom recyclePolicy created and verified successfully");
+    });
+
+    it("should throw error when creating ContextSync with invalid recyclePolicy path", () => {
+      // Create custom recyclePolicy with invalid wildcard path
+      const invalidSyncPolicy: SyncPolicy = {
+        ...newSyncPolicy(),
+        recyclePolicy: {
+          lifecycle: Lifecycle.Lifecycle_1Day,
+          paths: ["/invalid/path/*"] // Invalid path with wildcard
+        }
+      };
+
+      log("Testing ContextSync creation with invalid recyclePolicy path...");
+      log(`Invalid path: ${invalidSyncPolicy.recyclePolicy?.paths[0]}`);
+
+      // Test that ContextSync constructor throws an error for invalid recyclePolicy path
+      expect(() => {
+        new ContextSync(
+          "test-invalid-context",
+          "/test/path",
+          invalidSyncPolicy
+        );
+      }).toThrow("Wildcard patterns are not supported in path. Got: /invalid/path/*. Please use exact directory paths instead.");
+
+      log("ContextSync correctly threw error for invalid recyclePolicy path");
+    });
+
+    it("should throw error when creating ContextSync with invalid lifecycle", () => {
+      log("Testing ContextSync creation with invalid lifecycle...");
+
+      // Create custom recyclePolicy with invalid lifecycle value
+      const invalidSyncPolicy: SyncPolicy = {
+        ...newSyncPolicy(),
+        recyclePolicy: {
+          lifecycle: "invalid_lifecycle" as any, // Invalid lifecycle
+          paths: [""]
+        }
+      };
+
+      log(`Invalid lifecycle: ${invalidSyncPolicy.recyclePolicy?.lifecycle}`);
+
+      // Test that ContextSync constructor throws an error for invalid lifecycle
+      expect(() => {
+        new ContextSync(
+          "invalid-lifecycle-context",
+          "/test/path",
+          invalidSyncPolicy
+        );
+      }).toThrow(/Invalid lifecycle value: invalid_lifecycle\. Valid values are:/);
+
+      log("ContextSync correctly threw error for invalid lifecycle");
+    });
+
+    it("should throw error when creating ContextSync with combined invalid configuration", () => {
+      log("Testing ContextSync creation with combined invalid lifecycle and invalid paths...");
+
+      // Create custom recyclePolicy with both invalid lifecycle and invalid path
+      const combinedInvalidSyncPolicy: SyncPolicy = {
+        ...newSyncPolicy(),
+        recyclePolicy: {
+          lifecycle: "invalid_lifecycle" as any, // Invalid lifecycle
+          paths: ["/invalid/path/*"] // Invalid path with wildcard
+        }
+      };
+
+      log(`Invalid lifecycle: ${combinedInvalidSyncPolicy.recyclePolicy?.lifecycle}`);
+      log(`Invalid path: ${combinedInvalidSyncPolicy.recyclePolicy?.paths[0]}`);
+
+      // Test that ContextSync constructor throws an error (should fail on lifecycle validation first)
+      expect(() => {
+        new ContextSync(
+          "combined-invalid-context",
+          "/test/path",
+          combinedInvalidSyncPolicy
+        );
+      }).toThrow(/Invalid lifecycle value: invalid_lifecycle\. Valid values are:/);
+
+      log("ContextSync correctly threw error for combined invalid configuration");
     });
   });
 });
