@@ -103,21 +103,47 @@ def validate_cursor_position(cursor_result, screen_result, expected_x: int, expe
 
 def validate_screenshot_changed(url1: str, url2: str) -> bool:
     """
-    Check if screenshot URLs indicate content change.
+    Check if screenshot content actually changed by comparing image hashes.
     
     Args:
         url1: First screenshot URL
         url2: Second screenshot URL
         
     Returns:
-        bool: True if URLs are different (indicating content change)
+        bool: True if image content is different
     """
     if not url1 or not url2:
         return False
     
-    # Different URLs typically indicate different content
-    # AgentBay generates new URLs for new screenshots
-    return url1 != url2
+    try:
+        import requests
+        from PIL import Image
+        import imagehash
+        from io import BytesIO
+        
+        # Download images
+        response1 = requests.get(url1, timeout=10)
+        response1.raise_for_status()
+        img1 = Image.open(BytesIO(response1.content))
+        
+        response2 = requests.get(url2, timeout=10)
+        response2.raise_for_status()
+        img2 = Image.open(BytesIO(response2.content))
+        
+        # Calculate perceptual hashes (resistant to minor variations)
+        hash1 = imagehash.average_hash(img1)
+        hash2 = imagehash.average_hash(img2)
+        
+        # Compare hashes (0 = identical, >0 = different)
+        hash_diff = hash1 - hash2
+        
+        # Consider images different if hash difference > 0
+        return hash_diff > 0
+        
+    except Exception as e:
+        # If image comparison fails, log error and return False
+        print(f"Warning: Failed to compare screenshots: {e}")
+        return False
 
 
 def validate_screen_size(screen_result) -> bool:
