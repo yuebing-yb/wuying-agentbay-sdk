@@ -13,7 +13,7 @@ Demonstrates the fundamental data persistence features:
 - Context synchronization and file sharing
 - Multi-session data verification
 
-### 2. `context_sync_callback_example.py` - Advanced Sync with Callbacks
+### 2. `context_sync_demo.py` - Advanced Sync with Callbacks
 
 Demonstrates the new callback-based context synchronization:
 
@@ -22,6 +22,16 @@ Demonstrates the new callback-based context synchronization:
 - Status verification using `context.info()`
 - Multiple sync operations and error handling
 - Backward compatibility with traditional sync
+
+### 3. `recycle_policy_example.py` - Data Lifecycle Management
+
+Demonstrates RecyclePolicy for controlling context data lifecycle:
+
+- Using default RecyclePolicy (keeps data forever)
+- Setting custom lifecycle durations (1 day, 3 days, etc.)
+- Applying RecyclePolicy to specific paths
+- Available lifecycle options
+- Error handling (wildcard patterns validation)
 
 ## Key Features
 
@@ -40,6 +50,14 @@ Demonstrates the new callback-based context synchronization:
 - **Error Handling**: Graceful handling of failures and timeouts
 - **Status Monitoring**: Track sync progress and completion
 
+### Data Lifecycle Management
+
+- **RecyclePolicy**: Control how long context data is retained in the cloud
+- **Lifecycle Options**: 1 day to forever (11 options available)
+- **Path-Specific Policies**: Apply different lifecycles to different directories
+- **Automatic Cleanup**: Data is automatically deleted after specified duration
+- **Wildcard Validation**: Ensures path safety by rejecting wildcard patterns
+
 ## Usage
 
 ### Basic Data Persistence
@@ -54,6 +72,13 @@ python main.py
 ```bash
 cd python/docs/examples/data_persistence
 python context_sync_demo.py
+```
+
+### RecyclePolicy Example
+
+```bash
+cd python/docs/examples/data_persistence
+python recycle_policy_example.py
 ```
 
 ## Prerequisites
