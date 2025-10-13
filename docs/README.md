@@ -133,7 +133,7 @@ Already familiar with browser automation, computer use, or mobile testing? Start
 - [Agent Modules](guides/common-features/advanced/agent-modules.md) - AI-powered automation capabilities
 - [VPC Sessions](guides/common-features/advanced/vpc-sessions.md) - Secure isolated network environments
 
-**Need more details?** See [Advanced Features](guides/common-features/advanced/README.md) or [API Reference](#-api-reference)
+**Need more details?** See [Advanced Features](guides/common-features/advanced/README.md) or language-specific API docs: [Python](../python/README.md) | [TypeScript](../typescript/README.md) | [Golang](../golang/README.md)
 
 ## 📞 Getting Help
 

@@ -101,7 +101,7 @@ if err != nil {
 - [Quick Start Tutorial](docs/quickstart/README.md) - Get started in 5 minutes
 - [Core Concepts](docs/quickstart/basic-concepts.md) - Understand cloud environments and sessions
 
-**🚀 Experienced Users** - Already familiar with browser automation, computer use, or mobile testing:
+**🚀 Experienced Users** - Already familiar with browser automation, computer use, mobile testing, or cloud development environments:
 - Choose your environment:
   - 🌐 [Browser Automation](docs/guides/browser-use/README.md) - Web scraping, testing, form filling with stealth capabilities
   - 🖥️ [Computer/Windows Automation](docs/guides/computer-use/README.md) - Desktop UI automation and window management
