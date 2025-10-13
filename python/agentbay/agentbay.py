@@ -399,9 +399,9 @@ class AgentBay:
 
             request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")
 
-            # Add McpPolicyId if specified
-            if hasattr(params, "mcp_policy_id") and params.mcp_policy_id:
-                request.mcp_policy_id = params.mcp_policy_id
+            # Add PolicyId if specified
+            if hasattr(params, "policy_id") and params.policy_id:
+                request.mcp_policy_id = params.policy_id
 
             # Add VPC resource if specified
             request.vpc_resource = params.is_vpc

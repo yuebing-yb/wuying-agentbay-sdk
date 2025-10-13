@@ -1,7 +1,7 @@
 import { AgentBay } from "../../src";
 import * as sinon from "sinon";
 
-describe("CreateMcpSession mcpPolicyId", () => {
+describe("CreateMcpSession policyId", () => {
   let mockClient: any;
   let createMcpSessionStub: sinon.SinonStub;
   let loadConfigStub: sinon.SinonStub;
@@ -39,7 +39,7 @@ describe("CreateMcpSession mcpPolicyId", () => {
     sinon.restore();
   });
 
-  it("should pass mcpPolicyId in CreateMcpSession request", async () => {
+  it("should pass policyId in CreateMcpSession request", async () => {
     const apiKey = "test-api-key";
     const agentBay = new AgentBay({ apiKey });
 
@@ -55,12 +55,12 @@ describe("CreateMcpSession mcpPolicyId", () => {
     };
     createMcpSessionStub.resolves(createMockResponse);
 
-    const mcpPolicyId = "policy-xyz";
-    const result = await agentBay.create({ mcpPolicyId });
+    const policyId = "policy-xyz";
+    const result = await agentBay.create({ policyId });
     expect(result.success).toBe(true);
 
     expect(createMcpSessionStub.calledOnce).toBe(true);
     const arg0 = createMcpSessionStub.getCall(0).args[0];
-    expect(arg0.mcpPolicyId).toBe(mcpPolicyId);
+    expect(arg0.mcpPolicyId).toBe(policyId);
   });
 }); 

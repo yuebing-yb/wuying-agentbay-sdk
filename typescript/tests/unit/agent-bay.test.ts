@@ -713,8 +713,8 @@ describe("AgentBay", () => {
     });
   });
 
-  describe("mcpPolicyId passthrough", () => {
-    it("should pass mcpPolicyId to CreateMcpSession request body", async () => {
+  describe("policyId passthrough", () => {
+    it("should pass policyId to CreateMcpSession request body", async () => {
       const apiKey = "test-api-key";
       const agentBay = new AgentBay({ apiKey });
 
@@ -727,12 +727,12 @@ describe("AgentBay", () => {
       };
       createMcpSessionStub.resolves(createMockResponse);
 
-      const mcpPolicyId = "policy-xyz";
-      await agentBay.create({ mcpPolicyId });
+      const policyId = "policy-xyz";
+      await agentBay.create({ policyId });
 
       expect(createMcpSessionStub.calledOnce).toBe(true);
       const createCallArgs = createMcpSessionStub.getCall(0).args[0];
-      expect(createCallArgs.mcpPolicyId).toBe(mcpPolicyId);
+      expect(createCallArgs.mcpPolicyId).toBe(policyId);
     });
   });
 });

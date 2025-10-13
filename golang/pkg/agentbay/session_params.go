@@ -22,8 +22,8 @@ type CreateSessionParams struct {
 	// IsVpc specifies whether to create a VPC-based session. Defaults to false.
 	IsVpc bool
 
-	// McpPolicyId specifies the MCP policy ID to apply when creating the session.
-	McpPolicyId string
+	// PolicyId specifies the policy ID to apply when creating the session.
+	PolicyId string
 
 	// ExtraConfigs contains extra configuration settings for different session types
 	ExtraConfigs *models.ExtraConfigs
@@ -55,9 +55,9 @@ func (p *CreateSessionParams) WithIsVpc(isVpc bool) *CreateSessionParams {
 	return p
 }
 
-// WithMcpPolicyId sets the MCP policy ID for the session parameters and returns the updated parameters.
-func (p *CreateSessionParams) WithMcpPolicyId(mcpPolicyId string) *CreateSessionParams {
-	p.McpPolicyId = mcpPolicyId
+// WithPolicyId sets the policy ID for the session parameters and returns the updated parameters.
+func (p *CreateSessionParams) WithPolicyId(policyId string) *CreateSessionParams {
+	p.PolicyId = policyId
 	return p
 }
 

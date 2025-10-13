@@ -136,7 +136,7 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
     - `delete_file()` / `DeleteFile()` for context file deletion
     - Enhanced error handling and response parsing for all file operations
 - **Session Management Enhancements**: Improved session creation and management
-  - **MCP Policy Support**: Optional `mcp_policy_id` parameter in session creation
+  - **Policy Support**: Optional `policy_id` parameter in session creation
   - **Session List Response Models**: Enhanced session listing with proper response models
 - **Browser Agent Improvements**: Enhanced AI-powered browser interactions
   - **Direct ObserveResult Support**: PageUse act API can now accept ObserveResult directly

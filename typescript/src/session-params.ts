@@ -168,8 +168,8 @@ export interface CreateSessionParamsConfig {
   browserContext?: BrowserContext;
   /** Whether to create a VPC-based session. Defaults to false. */
   isVpc?: boolean;
-  /** MCP policy id to apply when creating the session. */
-  mcpPolicyId?: string;
+  /** Policy id to apply when creating the session. */
+  policyId?: string;
   /** Whether to enable browser recording for the session. Defaults to false. */
   enableBrowserReplay?: boolean;
 }
@@ -197,8 +197,8 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
   /** Whether to create a VPC-based session. Defaults to false. */
   public isVpc: boolean;
 
-  /** MCP policy id to apply when creating the session. */
-  public mcpPolicyId?: string;
+  /** Policy id to apply when creating the session. */
+  public policyId?: string;
 
   /** Whether to enable browser recording for the session. Defaults to false. */
   public enableBrowserReplay: boolean;
@@ -244,10 +244,10 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
   }
 
   /**
-   * WithMcpPolicyId sets the MCP policy id for the session parameters and returns the updated parameters.
+   * WithPolicyId sets the policy id for the session parameters and returns the updated parameters.
    */
-  withMcpPolicyId(mcpPolicyId: string): CreateSessionParams {
-    this.mcpPolicyId = mcpPolicyId;
+  withPolicyId(policyId: string): CreateSessionParams {
+    this.policyId = policyId;
     return this;
   }
 
@@ -334,7 +334,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
       contextSync: allContextSyncs,
       browserContext: this.browserContext,
       isVpc: this.isVpc,
-      mcpPolicyId: this.mcpPolicyId,
+      policyId: this.policyId,
       enableBrowserReplay: this.enableBrowserReplay,
     };
   }
@@ -365,7 +365,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
     }
 
     params.isVpc = config.isVpc || false;
-    params.mcpPolicyId = config.mcpPolicyId;
+    params.policyId = config.policyId;
     params.enableBrowserReplay = config.enableBrowserReplay || false;
     return params;
   }
