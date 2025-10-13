@@ -9,7 +9,6 @@ describe("CreateMcpSession mcpPolicyId", () => {
   let contextServiceConstructorStub: sinon.SinonStub;
 
   const mockConfigData = {
-    region_id: "mock-region",
     endpoint: "mock-endpoint",
     timeout_ms: 30000,
   };

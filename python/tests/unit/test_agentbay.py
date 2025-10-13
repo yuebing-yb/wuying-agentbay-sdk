@@ -17,7 +17,6 @@ class TestAgentBay(unittest.TestCase):
         """Test initializing AgentBay with an API key from environment variable"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -31,7 +30,6 @@ class TestAgentBay(unittest.TestCase):
 
         # Verify results
         self.assertEqual(agent_bay.api_key, "test-api-key")
-        self.assertEqual(agent_bay.region_id, "cn-shanghai")
         self.assertEqual(agent_bay.client, mock_client)
         self.assertDictEqual(agent_bay._sessions, {})
         self.assertIsNotNone(agent_bay._lock)
@@ -43,7 +41,6 @@ class TestAgentBay(unittest.TestCase):
         """Test initializing AgentBay with a provided API key"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-beijing",
             "endpoint": "another.endpoint.com",
             "timeout_ms": 60000,
         }
@@ -57,7 +54,6 @@ class TestAgentBay(unittest.TestCase):
 
         # Verify results
         self.assertEqual(agent_bay.api_key, "provided-api-key")
-        self.assertEqual(agent_bay.region_id, "cn-beijing")
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("agentbay.agentbay.load_config")
@@ -65,7 +61,6 @@ class TestAgentBay(unittest.TestCase):
         """Test initialization failure when no API key is available"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -128,7 +123,6 @@ class TestAgentBay(unittest.TestCase):
         """Test handling invalid response when creating a session"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -357,7 +351,6 @@ class TestAgentBay(unittest.TestCase):
         """Test creating a session with mobile extra configurations"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -417,7 +410,6 @@ class TestAgentBay(unittest.TestCase):
         """Test creating a session with mobile blacklist configuration"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }

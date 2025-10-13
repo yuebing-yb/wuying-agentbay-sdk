@@ -13,7 +13,7 @@ import (
 func TestEnhancedDotEnvLoading(t *testing.T) {
 	// Save original environment
 	originalEnv := make(map[string]string)
-	envVars := []string{"AGENTBAY_REGION_ID", "AGENTBAY_ENDPOINT", "AGENTBAY_TIMEOUT_MS"}
+	envVars := []string{"AGENTBAY_ENDPOINT", "AGENTBAY_TIMEOUT_MS"}
 	for _, key := range envVars {
 		if val, exists := os.LookupEnv(key); exists {
 			originalEnv[key] = val
@@ -145,8 +145,7 @@ func TestEnhancedDotEnvLoading(t *testing.T) {
 
 		// Create custom .env file
 		customEnv := filepath.Join(tmpDir, "test.env")
-		envContent := `AGENTBAY_REGION_ID=ap-southeast-1
-AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
+		envContent := `AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
 AGENTBAY_TIMEOUT_MS=30000`
 		err = ioutil.WriteFile(customEnv, []byte(envContent), 0644)
 		assert.NoError(t, err)
@@ -155,18 +154,17 @@ AGENTBAY_TIMEOUT_MS=30000`
 		config := agentbay.LoadConfig(nil, customEnv)
 
 		// Check if config was loaded from custom .env file
-		assert.Equal(t, "ap-southeast-1", config.RegionID)
 		assert.Equal(t, "wuyingai.ap-southeast-1.aliyuncs.com", config.Endpoint)
 		assert.Equal(t, 30000, config.TimeoutMs)
 	})
 
 	t.Run("LoadConfig_UpwardSearch", func(t *testing.T) {
 		// Save and clear environment variables to ensure .env file is used
-		originalRegion := os.Getenv("AGENTBAY_REGION_ID")
-		os.Unsetenv("AGENTBAY_REGION_ID")
+		originalEndpoint := os.Getenv("AGENTBAY_ENDPOINT")
+		os.Unsetenv("AGENTBAY_ENDPOINT")
 		defer func() {
-			if originalRegion != "" {
-				os.Setenv("AGENTBAY_REGION_ID", originalRegion)
+			if originalEndpoint != "" {
+				os.Setenv("AGENTBAY_ENDPOINT", originalEndpoint)
 			}
 		}()
 
@@ -177,7 +175,7 @@ AGENTBAY_TIMEOUT_MS=30000`
 
 		// Create .env in parent
 		parentEnv := filepath.Join(tmpDir, ".env")
-		err = ioutil.WriteFile(parentEnv, []byte("AGENTBAY_REGION_ID=cn-shanghai"), 0644)
+		err = ioutil.WriteFile(parentEnv, []byte("AGENTBAY_ENDPOINT=wuyingai.cn-shanghai.aliyuncs.com"), 0644)
 		assert.NoError(t, err)
 
 		// Create subdirectory
@@ -202,7 +200,7 @@ AGENTBAY_TIMEOUT_MS=30000`
 		config := agentbay.LoadConfig(nil, "")
 
 		// Should find .env from parent directory
-		assert.Equal(t, "cn-shanghai", config.RegionID)
+		assert.Equal(t, "wuyingai.cn-shanghai.aliyuncs.com", config.Endpoint)
 	})
 
 	t.Run("EnvironmentVariablePrecedence", func(t *testing.T) {
@@ -213,20 +211,20 @@ AGENTBAY_TIMEOUT_MS=30000`
 
 		// Create .env file
 		envFile := filepath.Join(tmpDir, ".env")
-		err = ioutil.WriteFile(envFile, []byte("AGENTBAY_REGION_ID=from_env_file"), 0644)
+		err = ioutil.WriteFile(envFile, []byte("AGENTBAY_ENDPOINT=wuyingai.from-env-file.aliyuncs.com"), 0644)
 		assert.NoError(t, err)
 
 		// Set environment variable (higher precedence)
-		os.Setenv("AGENTBAY_REGION_ID", "from_environment")
+		os.Setenv("AGENTBAY_ENDPOINT", "wuyingai.from-environment.aliyuncs.com")
 
 		// Load config
 		config := agentbay.LoadConfig(nil, envFile)
 
 		// Environment variable should take precedence
-		assert.Equal(t, "from_environment", config.RegionID)
+		assert.Equal(t, "wuyingai.from-environment.aliyuncs.com", config.Endpoint)
 
 		// Cleanup
-		os.Unsetenv("AGENTBAY_REGION_ID")
+		os.Unsetenv("AGENTBAY_ENDPOINT")
 	})
 
 	t.Run("InvalidTimeoutHandling", func(t *testing.T) {
@@ -265,41 +263,38 @@ AGENTBAY_TIMEOUT_MS=30000`
 
 		// 1. Custom config (highest priority)
 		customConfig := &agentbay.Config{
-			RegionID:  "custom",
 			Endpoint:  "custom.com",
 			TimeoutMs: 1000,
 		}
 
 		// 2. Environment variable
-		os.Setenv("AGENTBAY_REGION_ID", "from_env")
+		os.Setenv("AGENTBAY_ENDPOINT", "wuyingai.from-env.aliyuncs.com")
 
 		// 3. .env file (lowest priority)
 		envFile := filepath.Join(tmpDir, ".env")
-		err = ioutil.WriteFile(envFile, []byte("AGENTBAY_REGION_ID=from_file"), 0644)
+		err = ioutil.WriteFile(envFile, []byte("AGENTBAY_ENDPOINT=wuyingai.from-file.aliyuncs.com"), 0644)
 		assert.NoError(t, err)
 
 		// Test custom config precedence
 		configWithCustom := agentbay.LoadConfig(customConfig, envFile)
-		assert.Equal(t, "custom", configWithCustom.RegionID)
+		assert.Equal(t, "custom.com", configWithCustom.Endpoint)
 
 		// Test environment variable precedence over .env file
 		configWithEnv := agentbay.LoadConfig(nil, envFile)
-		assert.Equal(t, "from_env", configWithEnv.RegionID)
+		assert.Equal(t, "wuyingai.from-env.aliyuncs.com", configWithEnv.Endpoint)
 
 		// Cleanup
-		os.Unsetenv("AGENTBAY_REGION_ID")
+		os.Unsetenv("AGENTBAY_ENDPOINT")
 	})
 
 	t.Run("BackwardCompatibility", func(t *testing.T) {
 		// Test that LoadConfigCompat still works
 		customConfig := &agentbay.Config{
-			RegionID:  "compat",
 			Endpoint:  "compat.com",
 			TimeoutMs: 2000,
 		}
 
 		config := agentbay.LoadConfigCompat(customConfig)
-		assert.Equal(t, "compat", config.RegionID)
 		assert.Equal(t, "compat.com", config.Endpoint)
 		assert.Equal(t, 2000, config.TimeoutMs)
 	})
@@ -310,17 +305,15 @@ AGENTBAY_TIMEOUT_MS=30000`
 
 		// Test DefaultConfig method
 		defaultConfig := manager.DefaultConfig()
-		assert.Equal(t, "cn-shanghai", defaultConfig.RegionID)
+		assert.Equal(t, "wuyingai.cn-shanghai.aliyuncs.com", defaultConfig.Endpoint)
 
 		// Test LoadConfig method
 		customConfig := &agentbay.Config{
-			RegionID:  "interface",
 			Endpoint:  "interface.com",
 			TimeoutMs: 3000,
 		}
 
 		config := manager.LoadConfig(customConfig)
-		assert.Equal(t, "interface", config.RegionID)
 		assert.Equal(t, "interface.com", config.Endpoint)
 		assert.Equal(t, 3000, config.TimeoutMs)
 	})

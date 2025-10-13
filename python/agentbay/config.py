@@ -12,7 +12,6 @@ logger = get_logger("config")
 def default_config() -> Dict[str, Any]:
     """Return the default configuration"""
     return {
-        "region_id": "cn-shanghai",
         "endpoint": "wuyingai.cn-shanghai.aliyuncs.com",
         "timeout_ms": 60000,
     }
@@ -116,7 +115,6 @@ def load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
     """
     if cfg is not None:
         config = {
-            "region_id": cfg.region_id,
             "endpoint": cfg.endpoint,
             "timeout_ms": cfg.timeout_ms,
         }
@@ -130,8 +128,6 @@ def load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
             logger.warning(f"Failed to load .env file: {e}")
         
         # Apply environment variables (highest priority)
-        if region_id := os.getenv("AGENTBAY_REGION_ID"):
-            config["region_id"] = region_id
         if endpoint := os.getenv("AGENTBAY_ENDPOINT"):
             config["endpoint"] = endpoint
         if timeout_ms := os.getenv("AGENTBAY_TIMEOUT_MS"):

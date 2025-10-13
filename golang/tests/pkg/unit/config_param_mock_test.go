@@ -18,12 +18,10 @@ func TestConfig_LoadConfig_WithMockClient(t *testing.T) {
 
 	// Set expected behavior
 	inputConfig := &agentbay.Config{
-		RegionID:  "cn-beijing",
 		Endpoint:  "example.com",
 		TimeoutMs: 5000,
 	}
 	expectedResult := agentbay.Config{
-		RegionID:  "cn-beijing",
 		Endpoint:  "example.com",
 		TimeoutMs: 5000,
 	}
@@ -33,7 +31,6 @@ func TestConfig_LoadConfig_WithMockClient(t *testing.T) {
 	result := mockConfig.LoadConfig(inputConfig)
 
 	// Verify call success
-	assert.Equal(t, "cn-beijing", result.RegionID)
 	assert.Equal(t, "example.com", result.Endpoint)
 	assert.Equal(t, 5000, result.TimeoutMs)
 }
@@ -47,7 +44,6 @@ func TestConfig_DefaultConfig_WithMockClient(t *testing.T) {
 
 	// Set expected behavior
 	expectedResult := agentbay.Config{
-		RegionID:  "cn-shanghai",
 		Endpoint:  "wuying.aliyuncs.com",
 		TimeoutMs: 30000,
 	}
@@ -57,7 +53,6 @@ func TestConfig_DefaultConfig_WithMockClient(t *testing.T) {
 	result := mockConfig.DefaultConfig()
 
 	// Verify call success
-	assert.Equal(t, "cn-shanghai", result.RegionID)
 	assert.Equal(t, "wuying.aliyuncs.com", result.Endpoint)
 	assert.Equal(t, 30000, result.TimeoutMs)
 }

@@ -11,7 +11,6 @@ import (
 
 // Config stores SDK configuration
 type Config struct {
-	RegionID  string `json:"region_id"`
 	Endpoint  string `json:"endpoint"`
 	TimeoutMs int    `json:"timeout_ms"`
 }
@@ -19,7 +18,6 @@ type Config struct {
 // DefaultConfig returns the default configuration
 func DefaultConfig() Config {
 	return Config{
-		RegionID:  "cn-shanghai",
 		Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
 		TimeoutMs: 60000,
 	}
@@ -32,10 +30,12 @@ func DefaultConfig() Config {
 // 3. Git repository root (if found)
 //
 // Args:
-//   startPath: Starting directory for search (empty string means current directory)
+//
+//	startPath: Starting directory for search (empty string means current directory)
 //
 // Returns:
-//   Path to .env file if found, empty string otherwise
+//
+//	Path to .env file if found, empty string otherwise
 func FindDotEnvFile(startPath string) string {
 	if startPath == "" {
 		workingDir, err := os.Getwd()
@@ -80,7 +80,8 @@ func FindDotEnvFile(startPath string) string {
 // LoadDotEnvWithFallback loads .env file with improved search strategy.
 //
 // Args:
-//   customEnvPath: Custom path to .env file (empty string means search upward)
+//
+//	customEnvPath: Custom path to .env file (empty string means search upward)
 func LoadDotEnvWithFallback(customEnvPath string) {
 	if customEnvPath != "" {
 		// Use custom path if provided
@@ -119,13 +120,13 @@ func LoadDotEnvWithFallback(customEnvPath string) {
 // 4. Default configuration.
 //
 // Args:
-//   cfg: Configuration object (if provided, skips env loading)
-//   customEnvPath: Custom path to .env file (empty string means search upward)
+//
+//	cfg: Configuration object (if provided, skips env loading)
+//	customEnvPath: Custom path to .env file (empty string means search upward)
 func LoadConfig(cfg *Config, customEnvPath string) Config {
 	if cfg != nil {
 		// If config is explicitly provided, use it directly
 		return Config{
-			RegionID:  cfg.RegionID,
 			Endpoint:  cfg.Endpoint,
 			TimeoutMs: cfg.TimeoutMs,
 		}
@@ -137,9 +138,6 @@ func LoadConfig(cfg *Config, customEnvPath string) Config {
 	// Use environment variables if set (highest priority)
 	config := DefaultConfig()
 
-	if regionID := os.Getenv("AGENTBAY_REGION_ID"); regionID != "" {
-		config.RegionID = regionID
-	}
 	if endpoint := os.Getenv("AGENTBAY_ENDPOINT"); endpoint != "" {
 		config.Endpoint = endpoint
 	}

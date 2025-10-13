@@ -30,7 +30,6 @@ class TestAgentBay(unittest.TestCase):
         api_key = get_test_api_key()
         agent_bay = AgentBay(api_key=api_key)
         self.assertEqual(agent_bay.api_key, api_key)
-        self.assertIsNotNone(agent_bay.region_id)
         self.assertIsNotNone(agent_bay.client)
 
     def test_init_without_api_key(self):

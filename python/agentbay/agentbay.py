@@ -61,8 +61,7 @@ def generate_random_context_name(length: int = 8, include_timestamp: bool = True
 
 
 class Config:
-    def __init__(self, region_id: str, endpoint: str, timeout_ms: int):
-        self.region_id = region_id
+    def __init__(self, endpoint: str, timeout_ms: int):
         self.endpoint = endpoint
         self.timeout_ms = timeout_ms
 
@@ -94,7 +93,6 @@ class AgentBay:
         config_data = load_config(cfg, env_file)
 
         self.api_key = api_key
-        self.region_id = config_data["region_id"]
 
         config = open_api_models.Config()
         config.endpoint = config_data["endpoint"]

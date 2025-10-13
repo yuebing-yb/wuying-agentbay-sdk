@@ -40,7 +40,6 @@ func WithEnvFile(envFile string) Option {
 // AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
 type AgentBay struct {
 	APIKey   string
-	RegionId string
 	Client   *mcp.Client
 	Sessions sync.Map
 	Context  *ContextService
@@ -72,7 +71,7 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Create API client
 	apiConfig := &openapiutil.Config{
-		RegionId:       tea.String(config.RegionID),
+		RegionId:       tea.String(""),
 		Endpoint:       tea.String(config.Endpoint),
 		ReadTimeout:    tea.Int(config.TimeoutMs),
 		ConnectTimeout: tea.Int(config.TimeoutMs),
@@ -85,10 +84,9 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Create AgentBay instance
 	agentBay := &AgentBay{
-		APIKey:   apiKey,
-		RegionId: config.RegionID,
-		Client:   client,
-		Context:  nil, // Will be initialized after creation
+		APIKey:  apiKey,
+		Client:  client,
+		Context: nil, // Will be initialized after creation
 	}
 
 	// Initialize context service

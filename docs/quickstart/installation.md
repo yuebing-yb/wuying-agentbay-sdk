@@ -208,26 +208,26 @@ func main() {
 
 ## 🔧 Advanced Configuration (Optional)
 
-> **Note:** The SDK uses the Shanghai region (`cn-shanghai`) by default. You only need to configure a different region if you want to use services in other regions, such as Singapore.
+> **Note:** The SDK uses the Shanghai API gateway by default. You only need to configure a different gateway if you want to connect through other regions, such as Singapore, for better network performance.
 
-### Supported Regions
+### Supported API Gateway Regions
 
-| Region Name | Region ID | Endpoint |
-|-------------|-----------|----------|
-| Shanghai (Default) | `cn-shanghai` | `wuyingai.cn-shanghai.aliyuncs.com` |
-| Singapore | `ap-southeast-1` | `wuyingai.ap-southeast-1.aliyuncs.com` |
+The SDK configuration specifies which **API Gateway** to connect to. Choose the gateway closest to your users for optimal network performance:
 
-### Switching to Singapore Region
+| Gateway Location | Endpoint |
+|-----------------|----------|
+| Shanghai (Default) | `wuyingai.cn-shanghai.aliyuncs.com` |
+| Singapore | `wuyingai.ap-southeast-1.aliyuncs.com` |
+
+### Switching to Singapore Gateway
 
 **Linux/macOS:**
 ```bash
-export AGENTBAY_REGION_ID=ap-southeast-1
 export AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
 ```
 
 **Windows:**
 ```cmd
-set AGENTBAY_REGION_ID=ap-southeast-1
 set AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
 ```
 
@@ -305,8 +305,8 @@ go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay
 
 **Connection timeouts:**
 - Check your network connection
-- Verify the endpoint region matches your location
-- Try different region endpoints if available
+- Verify the API gateway endpoint is appropriate for your location
+- Try different gateway endpoints if available for better connectivity
 
 **API key errors:**
 - Verify API key is correct and active

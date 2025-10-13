@@ -21,7 +21,7 @@ Before running the example programs in this guide, please ensure you have comple
 
 **Required Setup (2 minutes):**
 1. **SDK Installation & API Key Configuration**: Follow the [Installation and API Key Setup Guide](../../../quickstart/installation.md) to install the AgentBay SDK and configure your API key
-2. **SDK Configuration**: Review the [SDK Configuration Guide](../configuration/sdk-configuration.md) for detailed configuration options including environment variables and region settings
+2. **SDK Configuration**: Review the [SDK Configuration Guide](../configuration/sdk-configuration.md) for detailed configuration options including environment variables and API gateway selection
 3. **Core Concepts**: Review [Core Concepts Guide](../../../quickstart/basic-concepts.md) to understand AgentBay fundamentals including sessions, images, and data persistence
 
 **Quick Verification:**
@@ -281,9 +281,15 @@ For detailed practical examples and use cases of session information, including 
 
 
 
-## Deleting Sessions
+## Session Release
 
-When you're done with a session, delete it to free up resources:
+Sessions consume cloud resources while active. Understanding how sessions are released is crucial for resource management.
+
+### Two Ways to Release Sessions
+
+**1. Manual Release (Recommended)**
+
+Explicitly delete sessions when you're done:
 
 ```python
 from agentbay import AgentBay
@@ -293,15 +299,29 @@ agent_bay = AgentBay(api_key=api_key)
 session_result = agent_bay.create()
 session = session_result.session
 
-# Perform operations on the session...
+# Perform your tasks...
 
-# Delete the session
+# Release resources immediately
 delete_result = agent_bay.delete(session)
 if delete_result.success:
     print("Session deleted successfully")
 else:
     print(f"Failed to delete session: {delete_result.error_message}")
 ```
+
+**2. Automatic Timeout Release**
+
+If you don't manually delete a session, it will be automatically released after a configured timeout period:
+
+- **Configuration**: Timeout duration is set in the [AgentBay Console](https://agentbay.console.aliyun.com/)
+- **Behavior**: Once the timeout is reached, the session is automatically released
+- **Recovery**: After release (manual or automatic), the session cannot be recovered - the session ID becomes invalid
+
+### Important Notes
+
+- Released sessions (either manually or by timeout) will **not** appear in `agent_bay.list()` results
+- Once released, all non-persistent data in the session is permanently lost
+- Use [Data Persistence](data-persistence.md) to preserve important data across sessions
 
 
 ## Session Recovery

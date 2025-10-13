@@ -37,7 +37,7 @@ class Client(OpenApiClient):
         self.check_config(config)
         self._endpoint = self.get_endpoint(
             "wuyingai",
-            self._region_id,
+            "",
             self._endpoint_rule,
             self._network,
             self._suffix,

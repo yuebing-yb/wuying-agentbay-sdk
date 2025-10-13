@@ -59,7 +59,6 @@ export interface CreateSessionParams {
 export class AgentBay {
   private apiKey: string;
   private client: Client;
-  private regionId: string;
   private endpoint: string;
   private sessions: Map<string, Session> = new Map();
   private fileTransferContext: Context | null = null;
@@ -97,11 +96,10 @@ export class AgentBay {
 
     // Load configuration using the enhanced loadConfig function
     const configData = loadConfig(options.config, options.envFile);
-    this.regionId = configData.region_id;
     this.endpoint = configData.endpoint;
 
     const config = new $OpenApiUtil.Config({
-      regionId: this.regionId,
+      regionId: "",
       endpoint: this.endpoint,
     });
 

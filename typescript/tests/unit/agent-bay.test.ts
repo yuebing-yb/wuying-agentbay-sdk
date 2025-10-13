@@ -39,7 +39,6 @@ const mockSessionBData = {
 
 // Mock config data
 const mockConfigData = {
-  region_id: "mock-region",
   endpoint: "mock-endpoint",
   timeout_ms: 30000,
 };
@@ -116,7 +115,7 @@ describe("AgentBay", () => {
       // Verify that Client was constructed with correct config
       expect(clientConstructorStub.calledOnce).toBe(true);
       const clientConfig = clientConstructorStub.getCall(0).args[0];
-      expect(clientConfig.regionId).toBe(mockConfigData.region_id);
+      expect(clientConfig.regionId).toBe("");
       expect(clientConfig.endpoint).toBe(mockConfigData.endpoint);
       expect(clientConfig.readTimeout).toBe(mockConfigData.timeout_ms);
       expect(clientConfig.connectTimeout).toBe(mockConfigData.timeout_ms);

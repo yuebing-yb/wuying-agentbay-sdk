@@ -18,7 +18,7 @@ AgentBay(api_key=None, cfg=None)
 
 **Parameters:**
 - `api_key` (str, optional): The API key for authentication. If not provided, the SDK will look for the `AGENTBAY_API_KEY` environment variable.
-- `cfg` (Config, optional): Configuration object containing region_id, endpoint, and timeout_ms. If not provided, default configuration is used.
+- `cfg` (Config, optional): Configuration object containing endpoint and timeout_ms. If not provided, default configuration is used.
 
 **Raises:**
 - `ValueError`: If no API key is provided and `AGENTBAY_API_KEY` environment variable is not set.
@@ -66,7 +66,6 @@ agent_bay = AgentBay(api_key="your_api_key")
 
 # Or initialize with custom configuration
 config = Config(
-    region_id="us-west-1",
     endpoint="https://agentbay.example.com",
     timeout_ms=30000
 )

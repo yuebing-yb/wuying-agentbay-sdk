@@ -19,7 +19,7 @@ constructor(options: { apiKey?: string; config?: Config } = {})
 **Parameters:**
 - `options` (object): Configuration options object
   - `apiKey` (string, optional): The API key for authentication. If not provided, the SDK will look for the `AGENTBAY_API_KEY` environment variable.
-  - `config` (Config, optional): Custom configuration object containing region_id, endpoint, and timeout_ms. If not provided, default configuration is used.
+  - `config` (Config, optional): Custom configuration object containing endpoint and timeout_ms. If not provided, default configuration is used.
 
 **Throws:**
 - `Error`: If no API key is provided and `AGENTBAY_API_KEY` environment variable is not set.
@@ -67,7 +67,6 @@ const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const agentBayWithConfig = new AgentBay({
   apiKey: 'your_api_key',
   config: {
-    region_id: 'us-west-1',
     endpoint: 'https://agentbay.example.com',
     timeout_ms: 30000
   }
