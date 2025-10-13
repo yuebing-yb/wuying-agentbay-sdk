@@ -2,6 +2,67 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [Unreleased]
+
+### Changed (Breaking Changes)
+
+- **Error Handling Consistency**: Unified error handling across all APIs
+  - `context.get()` and `context.create()` now return `ContextResult` instead of raising `AgentBayError` on failure
+  - `agentbay.create_session()` enhanced with API-level error checking (already returned `SessionResult`)
+  - **Migration Required**: Replace `try-except AgentBayError` with `if not result.success` pattern
+  - See migration guide below
+
+#### Migration Guide
+
+**Before (Old Code):**
+```python
+from agentbay import AgentBay
+from agentbay.exceptions import AgentBayError
+
+agentbay = AgentBay(api_key="your-api-key")
+
+# Old error handling with exceptions
+try:
+    result = agentbay.context.get("my-context")
+    context = result.context
+except AgentBayError as e:
+    print(f"Error: {e}")
+```
+
+**After (New Code):**
+```python
+from agentbay import AgentBay
+
+agentbay = AgentBay(api_key="your-api-key")
+
+# New error handling with Result objects
+result = agentbay.context.get("my-context")
+if not result.success:
+    print(f"Error: {result.error_message}")
+else:
+    context = result.context
+```
+
+**Key Changes:**
+1. `context.get()` and `context.create()` no longer raise `AgentBayError` on API-level failures
+2. Check `result.success` to determine if the operation succeeded
+3. Access error details via `result.error_message` (format: `[ErrorCode] Error Message`)
+4. All Result objects now include `error_message` field for consistent error reporting
+
+### Added
+
+- **Enhanced Error Messages**: All error messages now include error code in format `[Code] Message`
+  - Improves debugging and error handling across all API calls
+  - Enables programmatic error detection based on error codes
+- **ContextResult.error_message**: Added error_message field for consistent error reporting
+- **ContextListResult.error_message**: Added error_message field for list operation errors
+
+### Enhanced
+
+- **API-level Error Handling**: Enhanced error parsing for `context.get()`, `context.list()`, and `agentbay.create_session()`
+  - Better error messages with detailed information from cloud API
+  - Consistent `[Code] Message` format across all APIs
+
 ## [0.8.0] - 2025-09-19
 
 ### Added

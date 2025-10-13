@@ -124,12 +124,12 @@ func NewMobile(session interface {
 	mobile := &Mobile{
 		Session: session,
 	}
-	
+
 	// Try to get command from session if it implements SessionWithCommand interface
 	if sessionWithCmd, ok := session.(SessionWithCommand); ok {
 		mobile.command = sessionWithCmd.GetCommand()
 	}
-	
+
 	return mobile
 }
 

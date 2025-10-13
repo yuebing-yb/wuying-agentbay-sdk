@@ -34,17 +34,21 @@ type Context struct {
 // ContextResult wraps context operation result and RequestID
 type ContextResult struct {
 	models.ApiResponse
-	ContextID string
-	Context   *Context
+	Success      bool
+	ContextID    string
+	Context      *Context
+	ErrorMessage string
 }
 
 // ContextListResult wraps context list and RequestID
 type ContextListResult struct {
 	models.ApiResponse
-	Contexts   []*Context
-	NextToken  string
-	MaxResults int32
-	TotalCount int32
+	Success      bool
+	Contexts     []*Context
+	NextToken    string
+	MaxResults   int32
+	TotalCount   int32
+	ErrorMessage string
 }
 
 // ContextCreateResult wraps context creation result and RequestID
@@ -56,13 +60,15 @@ type ContextCreateResult struct {
 // ContextModifyResult wraps context modification result and RequestID
 type ContextModifyResult struct {
 	models.ApiResponse
-	Success bool
+	Success      bool
+	ErrorMessage string
 }
 
 // ContextDeleteResult wraps context deletion result and RequestID
 type ContextDeleteResult struct {
 	models.ApiResponse
-	Success bool
+	Success      bool
+	ErrorMessage string
 }
 
 // ContextService provides methods to manage persistent contexts in the AgentBay cloud environment.
@@ -111,17 +117,44 @@ func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, e
 
 	response, err := cs.AgentBay.Client.ListContexts(request)
 
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling ListContexts:", err)
-		return nil, fmt.Errorf("failed to list contexts: %v", err)
-	}
-
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
 
+	// Log API response
+	if err != nil {
+		fmt.Println("Error calling ListContexts:", err)
+		return &ContextListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Success:      false,
+			Contexts:     []*Context{},
+			ErrorMessage: fmt.Sprintf("Failed to list contexts: %v", err),
+		}, nil
+	}
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from ListContexts:", response.Body)
+	}
+
+	// Check for API-level errors
+	if response.Body != nil {
+		if response.Body.Success != nil && !*response.Body.Success && response.Body.Code != nil {
+			errorMsg := "Unknown error"
+			if response.Body.Message != nil {
+				errorMsg = fmt.Sprintf("[%s] %s", *response.Body.Code, *response.Body.Message)
+			} else {
+				errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
+			}
+			return &ContextListResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: requestID,
+				},
+				Success:      false,
+				Contexts:     []*Context{},
+				ErrorMessage: errorMsg,
+			}, nil
+		}
 	}
 
 	var contexts []*Context
@@ -160,10 +193,12 @@ func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, e
 		ApiResponse: models.ApiResponse{
 			RequestID: requestID,
 		},
-		Contexts:   contexts,
-		NextToken:  nextToken,
-		MaxResults: maxResults,
-		TotalCount: totalCount,
+		Success:      true,
+		Contexts:     contexts,
+		NextToken:    nextToken,
+		MaxResults:   maxResults,
+		TotalCount:   totalCount,
+		ErrorMessage: "",
 	}, nil
 }
 
@@ -181,17 +216,46 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 
 	response, err := cs.AgentBay.Client.GetContext(request)
 
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling GetContext:", err)
-		return nil, fmt.Errorf("failed to get context %s: %v", name, err)
-	}
-
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
 
+	// Log API response
+	if err != nil {
+		fmt.Println("Error calling GetContext:", err)
+		return &ContextResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Success:      false,
+			ContextID:    "",
+			Context:      nil,
+			ErrorMessage: fmt.Sprintf("Failed to get context %s: %v", name, err),
+		}, nil
+	}
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from GetContext:", response.Body)
+	}
+
+	// Check for API-level errors
+	if response.Body != nil {
+		if response.Body.Success != nil && !*response.Body.Success && response.Body.Code != nil {
+			errorMsg := "Unknown error"
+			if response.Body.Message != nil {
+				errorMsg = fmt.Sprintf("[%s] %s", *response.Body.Code, *response.Body.Message)
+			} else {
+				errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
+			}
+			return &ContextResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: requestID,
+				},
+				Success:      false,
+				ContextID:    "",
+				Context:      nil,
+				ErrorMessage: errorMsg,
+			}, nil
+		}
 	}
 
 	if response.Body == nil || response.Body.Data == nil || response.Body.Data.Id == nil {
@@ -199,8 +263,10 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 			ApiResponse: models.ApiResponse{
 				RequestID: requestID,
 			},
-			ContextID: "",
-			Context:   nil,
+			Success:      false,
+			ContextID:    "",
+			Context:      nil,
+			ErrorMessage: "Context ID not found in response",
 		}, nil
 	}
 
@@ -218,8 +284,10 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 		ApiResponse: models.ApiResponse{
 			RequestID: requestID,
 		},
-		ContextID: tea.StringValue(response.Body.Data.Id),
-		Context:   context,
+		Success:      true,
+		ContextID:    tea.StringValue(response.Body.Data.Id),
+		Context:      context,
+		ErrorMessage: "",
 	}, nil
 }
 
@@ -230,8 +298,12 @@ func (cs *ContextService) Create(name string) (*ContextCreateResult, error) {
 		return nil, err
 	}
 
-	if result == nil || result.ContextID == "" {
-		return nil, fmt.Errorf("failed to create context: empty response")
+	if result == nil || !result.Success || result.ContextID == "" {
+		errorMsg := "failed to create context"
+		if result != nil && result.ErrorMessage != "" {
+			errorMsg = result.ErrorMessage
+		}
+		return nil, fmt.Errorf("%s", errorMsg)
 	}
 
 	return &ContextCreateResult{
@@ -270,17 +342,30 @@ func (cs *ContextService) Update(context *Context) (*ContextModifyResult, error)
 		fmt.Println("Response from ModifyContext:", response.Body)
 	}
 
-	// Check if update was successful
-	success := true
-	if response != nil && response.Body != nil && response.Body.Success != nil {
-		success = *response.Body.Success
+	// Check for API-level errors
+	if response.Body != nil {
+		if response.Body.Success != nil && !*response.Body.Success {
+			errorMsg := "Unknown error"
+			if response.Body.Code != nil && response.Body.Message != nil {
+				errorMsg = fmt.Sprintf("[%s] %s", *response.Body.Code, *response.Body.Message)
+			} else if response.Body.Code != nil {
+				errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
+			}
+			return &ContextModifyResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: requestID,
+				},
+				Success:      false,
+				ErrorMessage: errorMsg,
+			}, nil
+		}
 	}
 
 	return &ContextModifyResult{
 		ApiResponse: models.ApiResponse{
 			RequestID: requestID,
 		},
-		Success: success,
+		Success: true,
 	}, nil
 }
 
@@ -310,6 +395,25 @@ func (cs *ContextService) Delete(context *Context) (*ContextDeleteResult, error)
 		fmt.Println("Response from DeleteContext:", response.Body)
 	}
 
+	// Check for API-level errors
+	if response.Body != nil {
+		if response.Body.Success != nil && !*response.Body.Success {
+			errorMsg := "Unknown error"
+			if response.Body.Code != nil && response.Body.Message != nil {
+				errorMsg = fmt.Sprintf("[%s] %s", *response.Body.Code, *response.Body.Message)
+			} else if response.Body.Code != nil {
+				errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
+			}
+			return &ContextDeleteResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: requestID,
+				},
+				Success:      false,
+				ErrorMessage: errorMsg,
+			}, nil
+		}
+	}
+
 	return &ContextDeleteResult{
 		ApiResponse: models.ApiResponse{
 			RequestID: requestID,
@@ -321,9 +425,10 @@ func (cs *ContextService) Delete(context *Context) (*ContextDeleteResult, error)
 // ContextFileUrlResult represents a presigned URL operation result.
 type ContextFileUrlResult struct {
 	models.ApiResponse
-	Success    bool
-	Url        string
-	ExpireTime *int64
+	Success      bool
+	Url          string
+	ExpireTime   *int64
+	ErrorMessage string
 }
 
 // ContextFileEntry represents a file item in a context.
@@ -341,15 +446,17 @@ type ContextFileEntry struct {
 // ContextFileListResult represents the result of listing files under a context path.
 type ContextFileListResult struct {
 	models.ApiResponse
-	Success bool
-	Entries []*ContextFileEntry
-	Count   *int32
+	Success      bool
+	Entries      []*ContextFileEntry
+	Count        *int32
+	ErrorMessage string
 }
 
 // ContextFileDeleteResult represents the result of deleting a file in a context.
 type ContextFileDeleteResult struct {
 	models.ApiResponse
-	Success bool
+	Success      bool
+	ErrorMessage string
 }
 
 // GetFileDownloadUrl gets a presigned download URL for a file in a context.
@@ -374,10 +481,30 @@ func (cs *ContextService) GetFileDownloadUrl(contextID string, filePath string) 
 	success := false
 	var url string
 	var expire *int64
+	var errorMessage string
+
 	if resp != nil && resp.Body != nil {
 		if resp.Body.Success != nil {
 			success = *resp.Body.Success
 		}
+
+		// Check for API-level errors
+		if !success && resp.Body.Code != nil {
+			code := tea.StringValue(resp.Body.Code)
+			message := tea.StringValue(resp.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+			return &ContextFileUrlResult{
+				ApiResponse:  models.WithRequestID(requestID),
+				Success:      false,
+				Url:          "",
+				ExpireTime:   nil,
+				ErrorMessage: errorMessage,
+			}, nil
+		}
+
 		if resp.Body.Data != nil {
 			if resp.Body.Data.Url != nil {
 				url = *resp.Body.Data.Url
@@ -390,10 +517,11 @@ func (cs *ContextService) GetFileDownloadUrl(contextID string, filePath string) 
 	}
 
 	return &ContextFileUrlResult{
-		ApiResponse: models.WithRequestID(requestID),
-		Success:     success,
-		Url:         url,
-		ExpireTime:  expire,
+		ApiResponse:  models.WithRequestID(requestID),
+		Success:      success,
+		Url:          url,
+		ExpireTime:   expire,
+		ErrorMessage: "",
 	}, nil
 }
 
@@ -419,10 +547,30 @@ func (cs *ContextService) GetFileUploadUrl(contextID string, filePath string) (*
 	success := false
 	var url string
 	var expire *int64
+	var errorMessage string
+
 	if resp != nil && resp.Body != nil {
 		if resp.Body.Success != nil {
 			success = *resp.Body.Success
 		}
+
+		// Check for API-level errors
+		if !success && resp.Body.Code != nil {
+			code := tea.StringValue(resp.Body.Code)
+			message := tea.StringValue(resp.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+			return &ContextFileUrlResult{
+				ApiResponse:  models.WithRequestID(requestID),
+				Success:      false,
+				Url:          "",
+				ExpireTime:   nil,
+				ErrorMessage: errorMessage,
+			}, nil
+		}
+
 		if resp.Body.Data != nil {
 			if resp.Body.Data.Url != nil {
 				url = *resp.Body.Data.Url
@@ -435,10 +583,11 @@ func (cs *ContextService) GetFileUploadUrl(contextID string, filePath string) (*
 	}
 
 	return &ContextFileUrlResult{
-		ApiResponse: models.WithRequestID(requestID),
-		Success:     success,
-		Url:         url,
-		ExpireTime:  expire,
+		ApiResponse:  models.WithRequestID(requestID),
+		Success:      success,
+		Url:          url,
+		ExpireTime:   expire,
+		ErrorMessage: "",
 	}, nil
 }
 
@@ -466,10 +615,30 @@ func (cs *ContextService) ListFiles(contextID string, parentFolderPath string, p
 	entries := []*ContextFileEntry{}
 	success := false
 	var count *int32
+	var errorMessage string
+
 	if resp != nil && resp.Body != nil {
 		if resp.Body.Success != nil {
 			success = *resp.Body.Success
 		}
+
+		// Check for API-level errors
+		if !success && resp.Body.Code != nil {
+			code := tea.StringValue(resp.Body.Code)
+			message := tea.StringValue(resp.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+			return &ContextFileListResult{
+				ApiResponse:  models.WithRequestID(requestID),
+				Success:      false,
+				Entries:      []*ContextFileEntry{},
+				Count:        nil,
+				ErrorMessage: errorMessage,
+			}, nil
+		}
+
 		if resp.Body.Count != nil {
 			count = resp.Body.Count
 		}
@@ -508,10 +677,11 @@ func (cs *ContextService) ListFiles(contextID string, parentFolderPath string, p
 	}
 
 	return &ContextFileListResult{
-		ApiResponse: models.WithRequestID(requestID),
-		Success:     success,
-		Entries:     entries,
-		Count:       count,
+		ApiResponse:  models.WithRequestID(requestID),
+		Success:      success,
+		Entries:      entries,
+		Count:        count,
+		ErrorMessage: "",
 	}, nil
 }
 
@@ -534,13 +704,29 @@ func (cs *ContextService) DeleteFile(contextID string, filePath string) (*Contex
 
 	requestID := models.ExtractRequestID(resp)
 	success := false
-	if resp != nil && resp.Body != nil && resp.Body.Success != nil {
-		success = *resp.Body.Success
+	var errorMessage string
+
+	if resp != nil && resp.Body != nil {
+		if resp.Body.Success != nil {
+			success = *resp.Body.Success
+		}
+
+		// Check for API-level errors
+		if !success && resp.Body.Code != nil {
+			code := tea.StringValue(resp.Body.Code)
+			message := tea.StringValue(resp.Body.Message)
+			if message == "" {
+				message = "Failed to delete file"
+			}
+			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+		}
+
 		fmt.Println("Response from DeleteContextFile:", resp.Body)
 	}
 
 	return &ContextFileDeleteResult{
-		ApiResponse: models.WithRequestID(requestID),
-		Success:     success,
+		ApiResponse:  models.WithRequestID(requestID),
+		Success:      success,
+		ErrorMessage: errorMessage,
 	}, nil
 }

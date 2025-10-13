@@ -320,6 +320,16 @@ export class AgentBay {
         };
       }
 
+      // Check for API-level errors
+      if (sessionData.success === false && sessionData.code) {
+        const errorMessage = `[${sessionData.code}] ${sessionData.message || 'Unknown error'}`;
+        return {
+          requestId,
+          success: false,
+          errorMessage,
+        };
+      }
+
       const data = sessionData.data;
       if (!data || typeof data !== "object") {
         return {
@@ -636,11 +646,12 @@ export class AgentBay {
           const requestId = extractRequestId(response) || "";
 
           if (!response.body?.success) {
-            const errorMessage = response.body?.message || response.body?.code || "Unknown error";
+            const code = response.body?.code || "Unknown";
+            const message = response.body?.message || "Unknown error";
             return {
               requestId,
               success: false,
-              errorMessage: `Cannot reach page ${page}: ${errorMessage}`,
+              errorMessage: `[${code}] ${message}`,
               sessionIds: [],
               nextToken: "",
               maxResults: limit,
@@ -689,11 +700,12 @@ export class AgentBay {
 
       // Check for errors in the response
       if (!response.body?.success) {
-        const errorMessage = response.body?.message || response.body?.code || "Unknown error";
+        const code = response.body?.code || "Unknown";
+        const message = response.body?.message || "Unknown error";
         return {
           requestId,
           success: false,
-          errorMessage: `Failed to list sessions: ${errorMessage}`,
+          errorMessage: `[${code}] ${message}`,
           sessionIds: [],
           nextToken: "",
           maxResults: limit,
@@ -792,11 +804,23 @@ export class AgentBay {
       const requestId = extractRequestId(response) || "";
       const body = response.body;
 
+      // Check for API-level errors
+      if (body?.success === false && body.code) {
+        return {
+          requestId,
+          httpStatusCode: body.httpStatusCode || 0,
+          code: body.code,
+          success: false,
+          errorMessage: `[${body.code}] ${body.message || 'Unknown error'}`,
+        };
+      }
+
       const result: $GetSessionResult = {
         requestId,
         httpStatusCode: body?.httpStatusCode || 0,
         code: body?.code || "",
         success: body?.success || false,
+        errorMessage: "",
       };
 
       if (body?.data) {

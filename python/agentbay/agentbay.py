@@ -10,7 +10,11 @@ from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_tea_openapi.exceptions._client import ClientException
 
 from agentbay.api.client import Client as mcp_client
-from agentbay.api.models import CreateMcpSessionRequest, GetSessionRequest, ListSessionRequest
+from agentbay.api.models import (
+    CreateMcpSessionRequest,
+    GetSessionRequest,
+    ListSessionRequest,
+)
 from agentbay.config import load_config
 from agentbay.context import ContextService
 from agentbay.model import (
@@ -24,7 +28,15 @@ from agentbay.model import (
 from agentbay.session import Session
 from agentbay.session_params import CreateSessionParams, ListSessionParams
 from agentbay.deprecation import deprecated
-from .logger import get_logger, log_api_call, log_api_response, log_operation_start, log_operation_success, log_operation_error, log_warning
+from .logger import (
+    get_logger,
+    log_api_call,
+    log_api_response,
+    log_operation_start,
+    log_operation_success,
+    log_operation_error,
+    log_warning,
+)
 
 # Initialize logger for this module
 logger = get_logger("agentbay")
@@ -33,7 +45,9 @@ from agentbay.context_sync import ContextSync
 from agentbay.config import BROWSER_DATA_PATH
 
 
-def generate_random_context_name(length: int = 8, include_timestamp: bool = True) -> str:
+def generate_random_context_name(
+    length: int = 8, include_timestamp: bool = True
+) -> str:
     """
     Generate a random context name string using alphanumeric characters with optional timestamp.
 
@@ -50,7 +64,9 @@ def generate_random_context_name(length: int = 8, include_timestamp: bool = True
     """
     import time
 
-    random_part = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    random_part = "".join(
+        random.choices(string.ascii_letters + string.digits, k=length)
+    )
 
     if include_timestamp:
         # Format: YYYYMMDDHHMMSS
@@ -72,7 +88,12 @@ class AgentBay:
     environment.
     """
 
-    def __init__(self, api_key: str = "", cfg: Optional[Config] = None, env_file: Optional[str] = None):
+    def __init__(
+        self,
+        api_key: str = "",
+        cfg: Optional[Config] = None,
+        env_file: Optional[str] = None,
+    ):
         """
         Initialize AgentBay client.
 
@@ -133,7 +154,9 @@ class AgentBay:
         except:
             return str(obj)
 
-    def _build_session_from_response(self, response_data: dict, params: CreateSessionParams) -> Session:
+    def _build_session_from_response(
+        self, response_data: dict, params: CreateSessionParams
+    ) -> Session:
         """
         Build Session object from API response data.
 
@@ -156,6 +179,7 @@ class AgentBay:
 
         # Create Session object
         from agentbay.session import Session
+
         session = Session(self, session_id)
 
         # Set VPC-related information from response
@@ -174,14 +198,20 @@ class AgentBay:
         session.enableBrowserReplay = params.enable_browser_replay
 
         # Store the file transfer context ID if we created one
-        session.file_transfer_context_id = self._file_transfer_context.id if self._file_transfer_context else None
+        session.file_transfer_context_id = (
+            self._file_transfer_context.id if self._file_transfer_context else None
+        )
 
         # Store image_id used for this session
-        if hasattr(session, 'image_id'):
-            setattr(session, 'image_id', params.image_id)
+        if hasattr(session, "image_id"):
+            setattr(session, "image_id", params.image_id)
 
         # Process mobile configuration if provided
-        if hasattr(params, "extra_configs") and params.extra_configs and params.extra_configs.mobile:
+        if (
+            hasattr(params, "extra_configs")
+            and params.extra_configs
+            and params.extra_configs.mobile
+        ):
             session.mobile.configure(params.extra_configs.mobile)
 
         # Store session in cache
@@ -200,7 +230,10 @@ class AgentBay:
         log_operation_start("Fetching MCP tools", "VPC session detected")
         try:
             tools_result = session.list_mcp_tools()
-            log_operation_success(f"Fetched {len(tools_result.tools)} MCP tools", f"RequestID: {tools_result.request_id}")
+            log_operation_success(
+                f"Fetched {len(tools_result.tools)} MCP tools",
+                f"RequestID: {tools_result.request_id}",
+            )
         except Exception as e:
             log_warning(f"Failed to fetch MCP tools for VPC session: {e}")
             # Continue with session creation even if tools fetch fails
@@ -219,6 +252,7 @@ class AgentBay:
         retry_interval = 2  # Seconds to wait between retries
 
         import time
+
         for retry in range(max_retries):
             # Get context status data
             info_result = session.context.info()
@@ -228,7 +262,9 @@ class AgentBay:
             has_failure = False
 
             for item in info_result.context_status_data:
-                logger.info(f"📁 Context {item.context_id} status: {item.status}, path: {item.path}")
+                logger.info(
+                    f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
+                )
 
                 if item.status != "Success" and item.status != "Failed":
                     all_completed = False
@@ -236,7 +272,9 @@ class AgentBay:
 
                 if item.status == "Failed":
                     has_failure = True
-                    logger.error(f"❌ Context synchronization failed for {item.context_id}: {item.error_message}")
+                    logger.error(
+                        f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
+                    )
 
             if all_completed or not info_result.context_status_data:
                 if has_failure:
@@ -245,7 +283,9 @@ class AgentBay:
                     log_operation_success("Context synchronization")
                 break
 
-            logger.info(f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}")
+            logger.info(
+                f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}"
+            )
             time.sleep(retry_interval)
 
     def _log_request_debug_info(self, request: CreateMcpSessionRequest) -> None:
@@ -257,9 +297,7 @@ class AgentBay:
         """
         try:
             req_map = request.to_map()
-            if "Authorization" in req_map and isinstance(
-                req_map["Authorization"], str
-            ):
+            if "Authorization" in req_map and isinstance(req_map["Authorization"], str):
                 auth = req_map["Authorization"]
                 if len(auth) > 12:
                     req_map["Authorization"] = (
@@ -272,7 +310,9 @@ class AgentBay:
         except Exception:
             logger.debug(f"📤 CreateMcpSessionRequest: {request}")
 
-    def _update_browser_replay_context(self, response_data: dict, record_context_id: str) -> None:
+    def _update_browser_replay_context(
+        self, response_data: dict, record_context_id: str
+    ) -> None:
         """
         Update browser replay context with AppInstanceId from response data.
 
@@ -288,7 +328,9 @@ class AgentBay:
             # Extract AppInstanceId from response data
             app_instance_id = response_data.get("AppInstanceId")
             if not app_instance_id:
-                logger.warning("AppInstanceId not found in response data, skipping browser replay context update")
+                logger.warning(
+                    "AppInstanceId not found in response data, skipping browser replay context update"
+                )
                 return
 
             # Create context name with prefix
@@ -296,16 +338,23 @@ class AgentBay:
 
             # Create Context object for update
             from agentbay.context import Context
+
             context_obj = Context(id=record_context_id, name=context_name)
 
             # Call context.update interface
-            logger.info(f"Updating browser replay context: {context_name} -> {record_context_id}")
+            logger.info(
+                f"Updating browser replay context: {context_name} -> {record_context_id}"
+            )
             update_result = self.context.update(context_obj)
 
             if update_result.success:
-                logger.info(f"✅ Successfully updated browser replay context: {context_name}")
+                logger.info(
+                    f"✅ Successfully updated browser replay context: {context_name}"
+                )
             else:
-                logger.warning(f"⚠️ Failed to update browser replay context: {update_result.error_message}")
+                logger.warning(
+                    f"⚠️ Failed to update browser replay context: {update_result.error_message}"
+                )
 
         except Exception as e:
             logger.error(f"❌ Error updating browser replay context: {e}")
@@ -329,19 +378,23 @@ class AgentBay:
             # Create a default context for file transfer operations if none provided
             # and no context_syncs are specified
             import time
+
             context_name = f"file-transfer-context-{int(time.time())}"
             context_result = self.context.get(context_name, create=True)
             if context_result.success and context_result.context:
                 self._file_transfer_context = context_result.context
                 # Add the context to the session params for file transfer operations
                 from agentbay.context_sync import ContextSync
+
                 file_transfer_context_sync = ContextSync(
                     context_id=context_result.context.id,
                     path="/temp/file-transfer",
                 )
                 if not hasattr(params, "context_syncs") or params.context_syncs is None:
                     params.context_syncs = []
-                logger.info(f"Adding context sync for file transfer operations: {file_transfer_context_sync}")
+                logger.info(
+                    f"Adding context sync for file transfer operations: {file_transfer_context_sync}"
+                )
                 params.context_syncs.append(file_transfer_context_sync)
 
             request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")
@@ -385,24 +438,35 @@ class AgentBay:
                 from agentbay.api.models import (
                     CreateMcpSessionRequestPersistenceDataList,
                 )
-                from agentbay.context_sync import SyncPolicy, UploadPolicy, WhiteList, BWList, RecyclePolicy
+                from agentbay.context_sync import (
+                    SyncPolicy,
+                    UploadPolicy,
+                    WhiteList,
+                    BWList,
+                    RecyclePolicy,
+                )
 
                 # Create a new SyncPolicy with default values for browser context
-                upload_policy = UploadPolicy(auto_upload=params.browser_context.auto_upload)
+                upload_policy = UploadPolicy(
+                    auto_upload=params.browser_context.auto_upload
+                )
 
                 # Create BWList with white lists for browser data paths
                 white_lists = [
                     WhiteList(path="/Local State", exclude_paths=[]),
                     WhiteList(path="/Default/Cookies", exclude_paths=[]),
-                    WhiteList(path="/Default/Cookies-journal", exclude_paths=[])
+                    WhiteList(path="/Default/Cookies-journal", exclude_paths=[]),
                 ]
                 bw_list = BWList(white_lists=white_lists)
 
                 # Use custom recycle_policy if provided, otherwise use default
                 recycle_policy = RecyclePolicy.default()
 
-                sync_policy = SyncPolicy(upload_policy=upload_policy, bw_list=bw_list, recycle_policy=recycle_policy)
-                
+                sync_policy = SyncPolicy(
+                    upload_policy=upload_policy,
+                    bw_list=bw_list,
+                    recycle_policy=recycle_policy,
+                )
 
                 # Serialize policy to JSON string
                 import json as _json
@@ -415,18 +479,27 @@ class AgentBay:
                 browser_context_sync = CreateMcpSessionRequestPersistenceDataList(
                     context_id=params.browser_context.context_id,
                     path=BROWSER_DATA_PATH,  # Using a constant path for browser data
-                    policy=policy_json
+                    policy=policy_json,
                 )
 
                 # Add to persistence data list or create new one if not exists
-                if not hasattr(request, 'persistence_data_list') or request.persistence_data_list is None:
+                if (
+                    not hasattr(request, "persistence_data_list")
+                    or request.persistence_data_list is None
+                ):
                     request.persistence_data_list = []
                 request.persistence_data_list.append(browser_context_sync)
-                logger.info(f"📋 Added browser context to persistence_data_list. Total items: {len(request.persistence_data_list)}")
+                logger.info(
+                    f"📋 Added browser context to persistence_data_list. Total items: {len(request.persistence_data_list)}"
+                )
                 for i, item in enumerate(request.persistence_data_list):
-                    logger.info(f"📋 persistence_data_list[{i}]: context_id={item.context_id}, path={item.path}, policy_length={len(item.policy) if item.policy else 0}")
-                    logger.info(f"📋 persistence_data_list[{i}] policy content: {item.policy}")
-                
+                    logger.info(
+                        f"📋 persistence_data_list[{i}]: context_id={item.context_id}, path={item.path}, policy_length={len(item.policy) if item.policy else 0}"
+                    )
+                    logger.info(
+                        f"📋 persistence_data_list[{i}] policy content: {item.policy}"
+                    )
+
                 needs_context_sync = True
 
             # Add labels if provided
@@ -439,7 +512,10 @@ class AgentBay:
 
             # Add browser recording persistence if enabled
             record_context_id = ""  # Initialize record_context_id
-            if hasattr(params, "enable_browser_replay") and params.enable_browser_replay:
+            if (
+                hasattr(params, "enable_browser_replay")
+                and params.enable_browser_replay
+            ):
                 from agentbay.api.models import (
                     CreateMcpSessionRequestPersistenceDataList,
                 )
@@ -450,12 +526,14 @@ class AgentBay:
                 result = self.context.get(record_context_name, True)
                 record_context_id = result.context_id if result.success else ""
                 record_persistence = CreateMcpSessionRequestPersistenceDataList(
-                    context_id=record_context_id,
-                    path=record_path
+                    context_id=record_context_id, path=record_path
                 )
 
                 # Add to persistence data list or create new one if not exists
-                if not hasattr(request, 'persistence_data_list') or request.persistence_data_list is None:
+                if (
+                    not hasattr(request, "persistence_data_list")
+                    or request.persistence_data_list is None
+                ):
                     request.persistence_data_list = []
                 request.persistence_data_list.append(record_persistence)
 
@@ -496,6 +574,16 @@ class AgentBay:
                     "'body' field is not a dictionary",
                 )
 
+            # Check for API-level errors
+            if not body.get("Success", True) and body.get("Code"):
+                code = body.get("Code", "Unknown")
+                message = body.get("Message", "Unknown error")
+                return SessionResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=f"[{code}] {message}",
+                )
+
             data = body.get("Data", {})
             if not isinstance(data, dict):
                 return SessionResult(
@@ -526,7 +614,10 @@ class AgentBay:
             session = self._build_session_from_response(data, params)
 
             # Update browser replay context if enabled
-            if hasattr(params, "enable_browser_replay") and params.enable_browser_replay:
+            if (
+                hasattr(params, "enable_browser_replay")
+                and params.enable_browser_replay
+            ):
                 self._update_browser_replay_context(data, record_context_id)
 
             # For VPC sessions, automatically fetch MCP tools information
@@ -557,7 +648,7 @@ class AgentBay:
 
     @deprecated(
         reason="This method is deprecated and will be removed in a future version.",
-        replacement="list()"
+        replacement="list()",
     )
     def list_by_labels(
         self, params: Optional[Union[ListSessionParams, Dict[str, str]]] = None
@@ -613,12 +704,13 @@ class AgentBay:
 
             # Check for errors in the response
             if isinstance(body, dict) and body.get("Success") is False:
-                # Extract error message from Message field if present, otherwise use Code
-                error_message = body.get("Message", body.get("Code", "Unknown error"))
+                # Extract error code and message
+                code = body.get("Code", "Unknown")
+                message = body.get("Message", "Unknown error")
                 return SessionListResult(
                     request_id=request_id,
                     success=False,
-                    error_message=f"Failed to list sessions by labels: {error_message}",
+                    error_message=f"[{code}] {message}",
                     session_ids=[],
                     next_token="",
                     max_results=params.max_results,
@@ -685,7 +777,7 @@ class AgentBay:
         self,
         labels: Optional[Dict[str, str]] = None,
         page: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> SessionListResult:
         """
         Returns paginated list of session IDs filtered by labels.
@@ -767,7 +859,9 @@ class AgentBay:
                     body = response_map.get("body", {})
 
                     if not body.get("Success", False):
-                        error_message = body.get("Message", body.get("Code", "Unknown error"))
+                        error_message = body.get(
+                            "Message", body.get("Code", "Unknown error")
+                        )
                         return SessionListResult(
                             request_id=request_id,
                             success=False,
@@ -892,7 +986,7 @@ class AgentBay:
         """
         try:
             # Delete the session and get the result
-            if hasattr(session, 'enableBrowserReplay') and session.enableBrowserReplay:
+            if hasattr(session, "enableBrowserReplay") and session.enableBrowserReplay:
                 sync_context = True
             delete_result = session.delete(sync_context=sync_context)
 
@@ -923,8 +1017,7 @@ class AgentBay:
         try:
             log_api_call("GetSession", f"SessionId={session_id}")
             request = GetSessionRequest(
-                authorization=f"Bearer {self.api_key}",
-                session_id=session_id
+                authorization=f"Bearer {self.api_key}", session_id=session_id
             )
             response = self.client.get_session(request)
 
@@ -944,6 +1037,18 @@ class AgentBay:
                 http_status_code = body.get("HttpStatusCode", 0)
                 code = body.get("Code", "")
                 success = body.get("Success", False)
+                message = body.get("Message", "")
+
+                # Check for API-level errors
+                if not success and code:
+                    return GetSessionResult(
+                        request_id=request_id,
+                        http_status_code=http_status_code,
+                        code=code,
+                        success=False,
+                        data=None,
+                        error_message=f"[{code}] {message or 'Unknown error'}",
+                    )
 
                 data = None
                 if body.get("Data"):
@@ -966,6 +1071,7 @@ class AgentBay:
                     code=code,
                     success=success,
                     data=data,
+                    error_message="",
                 )
 
             except Exception as e:

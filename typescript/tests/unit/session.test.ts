@@ -233,7 +233,7 @@ describe("TestSession", () => {
 
       expect(result.success).to.equal(false);
       expect(result.requestId).to.equal("test-request-id");
-      expect(result.errorMessage).to.equal("Failed to delete session");
+      expect(result.errorMessage).to.equal("[Unknown] Failed to delete session");
 
       expect(mockClient.releaseMcpSession.calledOnce).to.be.true;
     });

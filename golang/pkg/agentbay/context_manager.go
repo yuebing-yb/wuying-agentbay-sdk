@@ -30,13 +30,16 @@ type ContextStatusItem struct {
 // ContextInfoResult wraps context info result and RequestID
 type ContextInfoResult struct {
 	models.ApiResponse
+	Success           bool
 	ContextStatusData []ContextStatusData // Parsed context status data
+	ErrorMessage      string
 }
 
 // ContextSyncResult wraps context sync result and RequestID
 type ContextSyncResult struct {
 	models.ApiResponse
-	Success bool
+	Success      bool
+	ErrorMessage string
 }
 
 // SyncCallback defines the callback function type for async sync operations
@@ -114,6 +117,25 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 		fmt.Println("Response from GetContextInfo:", response.Body)
 	}
 
+	// Check for API-level errors
+	if response != nil && response.Body != nil {
+		if response.Body.Success != nil && !*response.Body.Success && response.Body.Code != nil {
+			code := tea.StringValue(response.Body.Code)
+			message := tea.StringValue(response.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			return &ContextInfoResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: requestID,
+				},
+				Success:           false,
+				ContextStatusData: []ContextStatusData{},
+				ErrorMessage:      fmt.Sprintf("[%s] %s", code, message),
+			}, nil
+		}
+	}
+
 	// Parse the context status data
 	var contextStatusData []ContextStatusData
 	if response.Body != nil && response.Body.Data != nil {
@@ -144,7 +166,9 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 		ApiResponse: models.ApiResponse{
 			RequestID: requestID,
 		},
+		Success:           true,
 		ContextStatusData: contextStatusData,
+		ErrorMessage:      "",
 	}, nil
 }
 
@@ -234,6 +258,24 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 		fmt.Println("Response from SyncContext:", response.Body)
 	}
 
+	// Check for API-level errors
+	if response != nil && response.Body != nil {
+		if response.Body.Success != nil && !*response.Body.Success && response.Body.Code != nil {
+			code := tea.StringValue(response.Body.Code)
+			message := tea.StringValue(response.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			return &ContextSyncResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: requestID,
+				},
+				Success:      false,
+				ErrorMessage: fmt.Sprintf("[%s] %s", code, message),
+			}, nil
+		}
+	}
+
 	var success bool
 	if response.Body != nil {
 		success = tea.BoolValue(response.Body.Success)
@@ -243,7 +285,8 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 		ApiResponse: models.ApiResponse{
 			RequestID: requestID,
 		},
-		Success: success,
+		Success:      success,
+		ErrorMessage: "",
 	}, nil
 }
 

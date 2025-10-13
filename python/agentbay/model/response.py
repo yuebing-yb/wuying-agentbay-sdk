@@ -97,6 +97,9 @@ class DeleteResult(ApiResponse):
         request_id: str = "",
         success: bool = False,
         error_message: str = "",
+        code: str = "",
+        message: str = "",
+        http_status_code: int = 0,
     ):
         """
         Initialize a DeleteResult.
@@ -108,10 +111,16 @@ class DeleteResult(ApiResponse):
                 Defaults to False.
             error_message (str, optional): Error message if the operation failed.
                 Defaults to "".
+            code (str, optional): API error code. Defaults to "".
+            message (str, optional): Detailed error message from API. Defaults to "".
+            http_status_code (int, optional): HTTP status code. Defaults to 0.
         """
         super().__init__(request_id)
         self.success = success
         self.error_message = error_message
+        self.code = code
+        self.message = message
+        self.http_status_code = http_status_code
 
 
 class GetSessionData:
@@ -197,6 +206,9 @@ class OperationResult(ApiResponse):
         success: bool = False,
         data: Any = None,
         error_message: str = "",
+        code: str = "",
+        message: str = "",
+        http_status_code: int = 0,
     ):
         """
         Initialize an OperationResult.
@@ -209,11 +221,17 @@ class OperationResult(ApiResponse):
             data (Any, optional): Data returned by the operation. Defaults to None.
             error_message (str, optional): Error message if the operation failed.
                 Defaults to "".
+            code (str, optional): API error code. Defaults to "".
+            message (str, optional): Detailed error message from API. Defaults to "".
+            http_status_code (int, optional): HTTP status code. Defaults to 0.
         """
         super().__init__(request_id)
         self.success = success
         self.data = data
         self.error_message = error_message
+        self.code = code
+        self.message = message
+        self.http_status_code = http_status_code
 
 
 class BoolResult(ApiResponse):

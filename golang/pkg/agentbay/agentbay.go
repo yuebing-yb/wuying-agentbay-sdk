@@ -700,6 +700,7 @@ type GetSessionResult struct {
 	Code           string
 	Success        bool
 	Data           *GetSessionData
+	ErrorMessage   string
 }
 
 // GetSessionData represents the data returned by GetSession API
@@ -758,6 +759,17 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 			result.Success = *response.Body.Success
 		}
 
+		// Check for API-level errors
+		if !result.Success && response.Body.Code != nil {
+			code := tea.StringValue(response.Body.Code)
+			message := tea.StringValue(response.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			result.ErrorMessage = fmt.Sprintf("[%s] %s", code, message)
+			return result, nil
+		}
+
 		if response.Body.Data != nil {
 			data := &GetSessionData{}
 			if response.Body.Data.AppInstanceId != nil {
@@ -789,6 +801,8 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 			}
 			result.Data = data
 		}
+
+		result.ErrorMessage = ""
 	}
 
 	return result, nil

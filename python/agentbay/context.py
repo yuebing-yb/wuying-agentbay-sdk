@@ -74,6 +74,7 @@ class ContextResult(ApiResponse):
         success: bool = False,
         context_id: str = "",
         context: Optional[Context] = None,
+        error_message: str = "",
     ):
         """
         Initialize a ContextResult.
@@ -83,11 +84,13 @@ class ContextResult(ApiResponse):
             success (bool, optional): Whether the operation was successful.
             context_id (str, optional): The unique identifier of the context.
             context (Optional[Context], optional): The Context object.
+            error_message (str, optional): Error message if operation failed.
         """
         super().__init__(request_id)
         self.success = success
         self.context_id = context_id
         self.context = context
+        self.error_message = error_message
 
 
 class ContextListResult(ApiResponse):
@@ -101,6 +104,7 @@ class ContextListResult(ApiResponse):
         next_token: Optional[str] = None,
         max_results: Optional[int] = None,
         total_count: Optional[int] = None,
+        error_message: str = "",
     ):
         """
         Initialize a ContextListResult.
@@ -112,6 +116,7 @@ class ContextListResult(ApiResponse):
             next_token (Optional[str], optional): Token for the next page of results.
             max_results (Optional[int], optional): Maximum number of results per page.
             total_count (Optional[int], optional): Total number of contexts available.
+            error_message (str, optional): Error message if operation failed.
         """
         super().__init__(request_id)
         self.success = success
@@ -119,6 +124,7 @@ class ContextListResult(ApiResponse):
         self.next_token = next_token
         self.max_results = max_results
         self.total_count = total_count
+        self.error_message = error_message
 
 
 class ContextFileEntry:
@@ -154,11 +160,13 @@ class FileUrlResult(ApiResponse):
         success: bool = False,
         url: str = "",
         expire_time: Optional[int] = None,
+        error_message: str = "",
     ):
         super().__init__(request_id)
         self.success = success
         self.url = url
         self.expire_time = expire_time
+        self.error_message = error_message
 
 
 class ContextFileListResult(ApiResponse):
@@ -249,13 +257,31 @@ class ContextService:
                 response_map = response.to_map()
                 if not isinstance(response_map, dict):
                     return ContextListResult(
-                        request_id=request_id, success=False, contexts=[]
+                        request_id=request_id,
+                        success=False,
+                        contexts=[],
+                        error_message="Invalid response format",
                     )
                 body = response_map.get("body", {})
                 if not isinstance(body, dict):
                     return ContextListResult(
-                        request_id=request_id, success=False, contexts=[]
+                        request_id=request_id,
+                        success=False,
+                        contexts=[],
+                        error_message="Invalid response body",
                     )
+
+                # Check for API-level errors
+                if not body.get("Success", True) and body.get("Code"):
+                    code = body.get("Code", "Unknown")
+                    message = body.get("Message", "Unknown error")
+                    return ContextListResult(
+                        request_id=request_id,
+                        success=False,
+                        contexts=[],
+                        error_message=f"[{code}] {message}",
+                    )
+
                 contexts = []
                 response_data = body.get("Data", [])
                 if response_data and isinstance(response_data, list):
@@ -280,11 +306,15 @@ class ContextService:
                     next_token=next_token,
                     max_results=max_results,
                     total_count=total_count,
+                    error_message="",
                 )
             except Exception as e:
                 log_operation_error("parse ListContexts response", str(e))
                 return ContextListResult(
-                    request_id=request_id, success=False, contexts=[]
+                    request_id=request_id,
+                    success=False,
+                    contexts=[],
+                    error_message=f"Failed to parse response: {e}",
                 )
         except Exception as e:
             log_operation_error("ListContexts", str(e))
@@ -295,6 +325,7 @@ class ContextService:
                 next_token=None,
                 max_results=None,
                 total_count=None,
+                error_message=f"Failed to list contexts: {e}",
             )
 
     def get(self, name: str, create: bool = False) -> ContextResult:
@@ -327,20 +358,46 @@ class ContextService:
             request_id = extract_request_id(response)
             try:
                 response_map = response.to_map()
-                if (
-                    not isinstance(response_map, dict)
-                    or not isinstance(response_map.get("body", {}), dict)
-                    or not isinstance(
-                        response_map.get("body", {}).get("Data", {}), dict
-                    )
-                ):
+                if not isinstance(response_map, dict):
                     return ContextResult(
                         request_id=request_id,
                         success=False,
                         context_id="",
                         context=None,
+                        error_message="Invalid response format",
                     )
-                data = response_map.get("body", {}).get("Data", {})
+
+                body = response_map.get("body", {})
+                if not isinstance(body, dict):
+                    return ContextResult(
+                        request_id=request_id,
+                        success=False,
+                        context_id="",
+                        context=None,
+                        error_message="Invalid response body",
+                    )
+
+                # Check for API-level errors
+                if not body.get("Success", True) and body.get("Code"):
+                    code = body.get("Code", "Unknown")
+                    message = body.get("Message", "Unknown error")
+                    return ContextResult(
+                        request_id=request_id,
+                        success=False,
+                        context_id="",
+                        context=None,
+                        error_message=f"[{code}] {message}",
+                    )
+
+                data = body.get("Data", {})
+                if not isinstance(data, dict):
+                    return ContextResult(
+                        request_id=request_id,
+                        success=False,
+                        context_id="",
+                        context=None,
+                        error_message="Invalid data format",
+                    )
                 context_id = data.get("Id", "")
                 context = Context(
                     id=context_id,
@@ -355,6 +412,7 @@ class ContextService:
                     success=True,
                     context_id=context_id,
                     context=context,
+                    error_message="",
                 )
             except Exception as e:
                 log_operation_error("parse GetContext response", str(e))
@@ -363,10 +421,17 @@ class ContextService:
                     success=False,
                     context_id="",
                     context=None,
+                    error_message=f"Failed to parse response: {e}",
                 )
         except Exception as e:
             log_operation_error("GetContext", str(e))
-            raise AgentBayError(f"Failed to get context {name}: {e}")
+            return ContextResult(
+                request_id="",
+                success=False,
+                context_id="",
+                context=None,
+                error_message=f"Failed to get context {name}: {e}",
+            )
 
     def create(self, name: str) -> ContextResult:
         """
@@ -418,7 +483,11 @@ class ContextService:
                     )
                 body = response_map.get("body", {})
                 success = body.get("Success", False)
-                error_message = "" if success else f"Update failed: {body.get('Code')}"
+                error_message = (
+                    ""
+                    if success
+                    else f"[{body.get('Code', 'Unknown')}] {body.get('Message', 'Unknown error')}"
+                )
                 return OperationResult(
                     request_id=request_id,
                     success=success,
@@ -472,7 +541,11 @@ class ContextService:
                     )
                 body = response_map.get("body", {})
                 success = body.get("Success", False)
-                error_message = "" if success else f"Delete failed: {body.get('Code')}"
+                error_message = (
+                    ""
+                    if success
+                    else f"[{body.get('Code', 'Unknown')}] {body.get('Message', 'Unknown error')}"
+                )
                 return OperationResult(
                     request_id=request_id,
                     success=success,
@@ -492,7 +565,9 @@ class ContextService:
 
     def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
         """Get a presigned download URL for a file in a context."""
-        log_api_call("GetContextFileDownloadUrl", f"ContextId={context_id}, FilePath={file_path}")
+        log_api_call(
+            "GetContextFileDownloadUrl", f"ContextId={context_id}, FilePath={file_path}"
+        )
         req = GetContextFileDownloadUrlRequest(
             authorization=f"Bearer {self.agent_bay.api_key}",
             context_id=context_id,
@@ -508,17 +583,35 @@ class ContextService:
             logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
+
+        # Check for API-level errors
+        if body:
+            success = getattr(body, "success", False)
+            if not success:
+                code = getattr(body, "code", "Unknown")
+                message = getattr(body, "message", "Unknown error")
+                return FileUrlResult(
+                    request_id=request_id,
+                    success=False,
+                    url="",
+                    expire_time=None,
+                    error_message=f"[{code}] {message}",
+                )
+
         data = getattr(body, "data", None)
         return FileUrlResult(
             request_id=request_id,
             success=bool(body and getattr(body, "success", False)),
             url=(data.url if data else ""),
             expire_time=(data.expire_time if data else None),
+            error_message="",
         )
 
     def get_file_upload_url(self, context_id: str, file_path: str) -> FileUrlResult:
         """Get a presigned upload URL for a file in a context."""
-        log_api_call("GetContextFileUploadUrl", f"ContextId={context_id}, FilePath={file_path}")
+        log_api_call(
+            "GetContextFileUploadUrl", f"ContextId={context_id}, FilePath={file_path}"
+        )
         req = GetContextFileUploadUrlRequest(
             authorization=f"Bearer {self.agent_bay.api_key}",
             context_id=context_id,
@@ -534,17 +627,35 @@ class ContextService:
             logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
+
+        # Check for API-level errors
+        if body:
+            success = getattr(body, "success", False)
+            if not success:
+                code = getattr(body, "code", "Unknown")
+                message = getattr(body, "message", "Unknown error")
+                return FileUrlResult(
+                    request_id=request_id,
+                    success=False,
+                    url="",
+                    expire_time=None,
+                    error_message=f"[{code}] {message}",
+                )
+
         data = getattr(body, "data", None)
         return FileUrlResult(
             request_id=request_id,
             success=bool(body and getattr(body, "success", False)),
             url=(data.url if data else ""),
             expire_time=(data.expire_time if data else None),
+            error_message="",
         )
 
     def delete_file(self, context_id: str, file_path: str) -> OperationResult:
         """Delete a file in a context."""
-        log_api_call("DeleteContextFile", f"ContextId={context_id}, FilePath={file_path}")
+        log_api_call(
+            "DeleteContextFile", f"ContextId={context_id}, FilePath={file_path}"
+        )
         req = DeleteContextFileRequest(
             authorization=f"Bearer {self.agent_bay.api_key}",
             context_id=context_id,
@@ -561,12 +672,19 @@ class ContextService:
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
         success = bool(body and getattr(body, "success", False))
-        code = getattr(body, "code", "") if body else ""
+
+        # Check for API-level errors
+        error_message = ""
+        if not success and body:
+            code = getattr(body, "code", "Unknown")
+            message = getattr(body, "message", "Failed to delete file")
+            error_message = f"[{code}] {message}"
+
         return OperationResult(
             request_id=request_id,
             success=success,
             data=True if success else False,
-            error_message="" if success else f"Delete failed: {code}",
+            error_message=error_message,
         )
 
     def list_files(
@@ -577,9 +695,11 @@ class ContextService:
         page_size: int = 50,
     ) -> ContextFileListResult:
         """List files under a specific folder path in a context."""
-        log_api_call("DescribeContextFiles", 
+        log_api_call(
+            "DescribeContextFiles",
             f"ContextId={context_id}, ParentFolderPath={parent_folder_path}, "
-            f"PageNumber={page_number}, PageSize={page_size}")
+            f"PageNumber={page_number}, PageSize={page_size}",
+        )
         req = DescribeContextFilesRequest(
             authorization=f"Bearer {self.agent_bay.api_key}",
             page_number=page_number,

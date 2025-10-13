@@ -19,11 +19,14 @@ export interface ContextStatusItem {
 }
 
 export interface ContextInfoResult extends ApiResponse {
+  success?: boolean;
   contextStatusData: ContextStatusData[];
+  errorMessage?: string;
 }
 
 export interface ContextSyncResult extends ApiResponse {
   success: boolean;
+  errorMessage?: string;
 }
 
 export type SyncCallback = (success: boolean) => void;
@@ -90,6 +93,16 @@ export class ContextManager {
         log("Response from GetContextInfo:", response.body);
       }
 
+      // Check for API-level errors
+      if (response?.body?.success === false && response.body.code) {
+        return {
+          requestId,
+          success: false,
+          contextStatusData: [],
+          errorMessage: `[${response.body.code}] ${response.body.message || 'Unknown error'}`,
+        };
+      }
+
       // Parse the context status data
       const contextStatusData: ContextStatusData[] = [];
       if (response?.body?.data?.contextStatus) {
@@ -113,7 +126,9 @@ export class ContextManager {
 
       return {
         requestId,
+        success: true,
         contextStatusData,
+        errorMessage: undefined,
       };
     } catch (error) {
       logError("Error calling GetContextInfo:", error);
@@ -167,6 +182,15 @@ export class ContextManager {
 
       if (response?.body) {
         log("Response from SyncContext:", response.body);
+      }
+
+      // Check for API-level errors
+      if (response?.body?.success === false && response.body.code) {
+        return {
+          requestId,
+          success: false,
+          errorMessage: `[${response.body.code}] ${response.body.message || 'Unknown error'}`,
+        };
       }
 
       let success = false;
