@@ -78,6 +78,9 @@ export class BrowserAgent {
       dom_settle_timeout_ms: options.domSettleTimeoutMS,
       use_vision: options.use_vision
     };
+    const task_name = options.action;
+    log(`${task_name}`);
+  
     const response = await this._callMcpTool("page_use_act", args);
 
     if (response.success && response.data) {
@@ -101,6 +104,8 @@ export class BrowserAgent {
       dom_settle_timeout_ms: options.domSettleTimeoutMS,
       use_vision: options.use_vision
     };
+    const task_name = options.action;
+    log(`${task_name}`);
 
     const startResp = await this._callMcpTool("page_use_act_async", args);
     if (!startResp.success) throw new BrowserError("Failed to start act task");
@@ -119,13 +124,13 @@ export class BrowserAgent {
         const success = !!data.success;
         if (is_done) {
           const msg = steps.length ? JSON.stringify(steps) : "No actions have been executed.";
-          log(`Task ${task_id} is done. Success=${success}. ${msg}`);
+          log(`Task ${task_id}:${task_name} is done. Success=${success}. ${msg}`);
           return new ActResult(success, msg, options.action);
         } else {
           if (steps.length) {
-            log(`Task ${task_id} progress: ${steps.length} steps done. Details: ${JSON.stringify(steps)}`);
+            log(`Task ${task_id}:${task_name} progress: ${steps.length} steps done. Details: ${JSON.stringify(steps)}`);
           } else {
-            log(`Task ${task_id}: No actions have been executed yet.`);
+            log(`Task ${task_id}:${task_name} No actions have been executed yet.`);
           }
         }
       }
@@ -180,7 +185,7 @@ export class BrowserAgent {
       context_id: contextId,
       page_id: pageId,
       instruction: options.instruction,
-      schema: `schema: ${JSON.stringify({ name: options.schema.name })}`, // 模拟 Python 的 model_json_schema
+      field_schema: `schema: ${JSON.stringify({ name: options.schema.name })}`,
       use_text_extract: options.use_text_extract,
       use_vision: options.use_vision,
       selector: options.selector,
@@ -204,7 +209,7 @@ export class BrowserAgent {
       context_id: contextId,
       page_id: pageId,
       instruction: options.instruction,
-      schema: `schema: ${JSON.stringify({ name: options.schema.name })}`,
+      field_schema: `schema: ${JSON.stringify({ name: options.schema.name })}`,
       use_text_extract: options.use_text_extract,
       use_vision: options.use_vision,
       selector: options.selector,
