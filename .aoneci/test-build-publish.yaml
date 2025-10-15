@@ -60,13 +60,13 @@ jobs:
           BASE_VERSION=$(grep "version = " pyproject.toml | head -n 1 | cut -d '"' -f 2)
           echo "BASE_VERSION=${BASE_VERSION}" > $AONE_CI_WORKSPACE/BASE_VERSION
           TIMESTAMP=$(TZ='Asia/Shanghai' date "+%Y%m%d%H%M%S")
-          FINAL_VERSION="0.0.0.${TIMESTAMP}"
+          FINAL_VERSION="${BASE_VERSION}.${TIMESTAMP}"
           echo "FINAL_VERSION=${FINAL_VERSION}" > $AONE_CI_WORKSPACE/FINAL_VERSION
           echo "${FINAL_VERSION}" > ${{outputs.env.path}}
           cat $AONE_CI_WORKSPACE/BASE_VERSION
           cat $AONE_CI_WORKSPACE/FINAL_VERSION
           sed -i "s/version = .*/version = \"${FINAL_VERSION}\"/" pyproject.toml
-          sed -i 's/wuying-agentbay-sdk/wuying-agentbay-sdk-test/g' pyproject.toml
+          sed -i 's/^name = "wuying-agentbay-sdk"/name = "wuying-agentbay-sdk-test"/' pyproject.toml
           cat pyproject.toml | grep name
           grep "version" pyproject.toml
       
