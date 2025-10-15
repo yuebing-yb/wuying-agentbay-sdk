@@ -5,7 +5,6 @@ from agentbay.api.base_service import BaseService, OperationResult
 from agentbay.exceptions import BrowserError, AgentBayError
 from agentbay.logger import get_logger
 
-# Initialize logger for this module
 logger = get_logger("browser_agent")
 
 T = TypeVar("T", bound=BaseModel)
@@ -117,7 +116,9 @@ class BrowserAgent(BaseService):
             A string indicating the result of the navigation.
         """
         if not self.browser.is_initialized():
-            raise BrowserError("Browser must be initialized before calling navigate_async.")
+            raise BrowserError(
+                "Browser must be initialized before calling navigate_async."
+            )
         try:
             args = {"url": url}
             response = self._call_mcp_tool_timeout("page_use_navigate", args)
@@ -310,6 +311,7 @@ class BrowserAgent(BaseService):
                     "use_vision": action_input.use_vision,
                 }
             )
+            task_name = action_input.action
         elif isinstance(action_input, ObserveResult):
             action_dict = {
                 "method": action_input.method,
@@ -320,7 +322,9 @@ class BrowserAgent(BaseService):
                 ),
             }
             args["action"] = json.dumps(action_dict)
+            task_name = action_input.method
         args = {k: v for k, v in args.items() if v is not None}
+        logger.info(f"{task_name}")
 
         response = self._call_mcp_tool_timeout("page_use_act", args)
         if response.success and response.data:
@@ -329,7 +333,7 @@ class BrowserAgent(BaseService):
                 if isinstance(response.data, str)
                 else json.dumps(response.data, ensure_ascii=False)
             )
-            logger.info(f"MCP tool response (data): {data}")
+            logger.info(f"{task_name} response data: {data}")
             return ActResult(success=True, message=data)
         else:
             return ActResult(success=False, message=response.error_message)
@@ -356,6 +360,7 @@ class BrowserAgent(BaseService):
                     "use_vision": action_input.use_vision,
                 }
             )
+            task_name = action_input.action
         elif isinstance(action_input, ObserveResult):
             action_dict = {
                 "method": action_input.method,
@@ -366,7 +371,9 @@ class BrowserAgent(BaseService):
                 ),
             }
             args["action"] = json.dumps(action_dict)
+            task_name = action_input.method
         args = {k: v for k, v in args.items() if v is not None}
+        logger.info(f"{task_name}")
 
         response = self._call_mcp_tool_timeout("page_use_act_async", args)
         if not response.success:
@@ -405,7 +412,7 @@ class BrowserAgent(BaseService):
                     else:
                         task_status = no_action_msg
                     logger.info(
-                        f"Task {task_id} is done. Success: {success}. {task_status}"
+                        f"Task {task_id}:{task_name} is done. Success: {success}. {task_status}"
                     )
                     return ActResult(success=success, message=task_status)
                 task_status = (
@@ -413,9 +420,9 @@ class BrowserAgent(BaseService):
                     if steps
                     else no_action_msg
                 )
-                logger.info(f"Task {task_id} progress: {task_status}")
+                logger.info(f"Task {task_id}:{task_name} in progress. {task_status}")
             max_retries -= 1
-        raise BrowserError(f"Task {task_id}: Act timed out")
+        raise BrowserError(f"Task {task_id}:{task_name} Act timed out")
 
     def observe(
         self,
@@ -577,7 +584,7 @@ class BrowserAgent(BaseService):
             "context_id": context_id,
             "page_id": page_id,
             "instruction": options.instruction,
-            "schema": "schema: " + json.dumps(options.schema.model_json_schema()),
+            "field_schema": "schema: " + json.dumps(options.schema.model_json_schema()),
             "use_text_extract": options.use_text_extract,
             "use_vision": options.use_vision,
             "selector": options.selector,
@@ -613,7 +620,7 @@ class BrowserAgent(BaseService):
             "context_id": context_id,
             "page_id": page_id,
             "instruction": options.instruction,
-            "schema": "schema: " + json.dumps(options.schema.model_json_schema()),
+            "field_schema": "schema: " + json.dumps(options.schema.model_json_schema()),
             "use_text_extract": options.use_text_extract,
             "use_vision": options.use_vision,
             "selector": options.selector,

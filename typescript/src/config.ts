@@ -3,7 +3,6 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 import { log } from "./utils/logger";
 interface Config {
-  region_id: string;
   endpoint: string;
   timeout_ms: number;
 }
@@ -18,7 +17,6 @@ export const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
  */
 export function defaultConfig(): Config {
   return {
-    region_id: "cn-shanghai",
     endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
     timeout_ms: 60000,
   };
@@ -161,10 +159,6 @@ export function loadConfig(customConfig?: Config, customEnvPath?: string): Confi
   }
 
   // Override with environment variables if they exist (highest priority)
-  if (process.env.AGENTBAY_REGION_ID) {
-    config.region_id = process.env.AGENTBAY_REGION_ID;
-  }
-
   if (process.env.AGENTBAY_ENDPOINT) {
     config.endpoint = process.env.AGENTBAY_ENDPOINT;
   }

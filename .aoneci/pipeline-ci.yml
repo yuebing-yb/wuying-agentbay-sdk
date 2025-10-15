@@ -2,9 +2,12 @@
 name: "agentbay SDK Multi-Language Quality Assurance"
 
 triggers:
-  push:
-    branches:
-    - "**"
+  merge_request:
+    types:
+      - opened
+      - reopened
+    target-branches:
+      - "**"
 
 # Strategy configuration to prevent jobs from being accidentally cancelled
 strategy:

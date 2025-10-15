@@ -1,11 +1,26 @@
-# AgentBay SDK - Data Persistence Example
+# AgentBay SDK - Data Persistence Examples
 
-This example demonstrates real data persistence functionality using the AgentBay SDK for Golang:
+This directory contains examples demonstrating data persistence functionality using the AgentBay SDK for Golang:
+
+## Examples
+
+### 1. `main.go` - Basic Data Persistence
+
+Demonstrates fundamental data persistence features:
 
 - Context creation for persistent storage
-- File persistence across multiple sessions  
+- File persistence across multiple sessions
 - Context synchronization and file sharing
 - Cross-session data verification
+
+### 2. `recycle_policy_example.go` - Data Lifecycle Management
+
+Demonstrates RecyclePolicy for controlling context data lifecycle:
+
+- Using default RecyclePolicy (keeps data forever)
+- Setting custom lifecycle durations (1 day, 3 days, etc.)
+- Applying RecyclePolicy to specific paths
+- Available lifecycle options
 
 ## Features Demonstrated
 

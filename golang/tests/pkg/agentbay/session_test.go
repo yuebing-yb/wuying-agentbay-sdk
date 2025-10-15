@@ -615,13 +615,13 @@ func TestSession_InfoMethod(t *testing.T) {
 	}
 }
 
-func TestCreate_WithMcpPolicyId_Smoke(t *testing.T) {
+func TestCreate_WithPolicyId_Smoke(t *testing.T) {
 	apiKey := testutil.GetTestAPIKey(t)
 	client, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	params := agentbay.NewCreateSessionParams().WithMcpPolicyId("policy-abc")
+	params := agentbay.NewCreateSessionParams().WithPolicyId("policy-abc")
 	_, _ = client.Create(params) // Do not enforce external dependencies; smoke that call path works
 }

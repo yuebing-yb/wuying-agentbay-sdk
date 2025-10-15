@@ -317,10 +317,11 @@ export class Session {
       const success = responseBody?.success !== false; // Note: capital S to match Python
 
       if (!success) {
+        const errorMessage = `[${responseBody?.code || 'Unknown'}] ${responseBody?.message || 'Failed to delete session'}`;
         return {
           requestId,
           success: false,
-          errorMessage: "Failed to delete session",
+          errorMessage,
         };
       }
 
@@ -874,6 +875,17 @@ export class Session {
             success: false,
             data: "",
             errorMessage: "Invalid response data format",
+            requestId: extractRequestId(response) || "",
+          };
+        }
+
+        // Check for API-level errors before parsing Data
+        if (response.body.success === false && response.body.code) {
+          const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+          return {
+            success: false,
+            data: "",
+            errorMessage,
             requestId: extractRequestId(response) || "",
           };
         }

@@ -112,7 +112,6 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		}
 
 		t.Logf("Total sessions found: %d", result.TotalCount)
-		t.Logf("Sessions in current page: %d", len(result.SessionIds))
 		t.Logf("Request ID: %s", result.RequestID)
 	})
 

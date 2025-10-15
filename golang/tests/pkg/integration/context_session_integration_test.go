@@ -27,7 +27,7 @@ func TestContextSessionManagement(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
-	t.Logf("AgentBay client initialized successfully with region: %s", agentBay.RegionId)
+	t.Logf("AgentBay client initialized successfully with region: %s", agentBay.APIKey)
 
 	// Step 1: Create a new context
 	contextName := fmt.Sprintf("test-context-%d", time.Now().Unix())
@@ -211,7 +211,7 @@ func TestContextLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
-	t.Logf("AgentBay client initialized successfully with region: %s", agentBay.RegionId)
+	t.Logf("AgentBay client initialized successfully with region: %s", agentBay.APIKey)
 
 	// Step 1: List initial contexts
 	t.Log("Step 1: Listing initial contexts...")

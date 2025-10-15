@@ -2,6 +2,8 @@
 
 The `Agent` class provides AI-powered capabilities for executing tasks, checking task status, and terminating tasks within a session. It enables natural language task execution and monitoring.
 
+**⚠️ Important Note**: The Agent functionality is verified on the `windows_latest` system image.
+
 ## 📖 Related Tutorial
 
 - [Agent Modules Guide](../../../docs/guides/common-features/advanced/agent-modules.md) - Detailed tutorial on AI-powered automation with Agent modules
@@ -41,8 +43,10 @@ from agentbay import AgentBay
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
 
-# Create a session
-session_result = agent_bay.create()
+# Create a session with windows_latest image
+from agentbay.session_params import CreateSessionParams
+params = CreateSessionParams(image_id="windows_latest")
+session_result = agent_bay.create(params)
 if session_result.success:
     session = session_result.session
     

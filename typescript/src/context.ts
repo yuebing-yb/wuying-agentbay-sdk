@@ -131,6 +131,17 @@ export class ContextService {
       // Log API response
       log(`Response from ListContexts:`, response.body);
 
+      // Check for API-level errors
+      if (response.body?.success === false && response.body?.code) {
+        const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+        return {
+          requestId: extractRequestId(response) || "",
+          success: false,
+          contexts: [],
+          errorMessage,
+        };
+      }
+
       const contexts: Context[] = [];
       if (response.body?.data) {
         for (const contextData of response.body.data) {
@@ -161,6 +172,7 @@ export class ContextService {
         requestId: "",
         success: false,
         contexts: [],
+        errorMessage: `Failed to list contexts: ${error}`,
       };
     }
   }
@@ -190,6 +202,18 @@ export class ContextService {
       // Log API response
       log(`Response from GetContext:`, response.body);
 
+      // Check for API-level errors
+      if (response.body?.success === false && response.body?.code) {
+        const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+        return {
+          requestId: extractRequestId(response) || "",
+          success: false,
+          contextId: "",
+          context: undefined,
+          errorMessage,
+        };
+      }
+
       const contextId = response.body?.data?.id || "";
       if (!contextId) {
         return {
@@ -197,6 +221,7 @@ export class ContextService {
           success: false,
           contextId: "",
           context: undefined,
+          errorMessage: "Context ID not found in response",
         };
       }
 
@@ -228,6 +253,7 @@ export class ContextService {
         success: false,
         contextId: "",
         context: undefined,
+        errorMessage: `Failed to get context ${name}: ${error}`,
       };
     }
   }
@@ -271,7 +297,7 @@ export class ContextService {
       const success = response.body?.success !== false;
       const errorMessage = success
         ? ""
-        : `Update failed: ${response.body?.code}`;
+        : `[${response.body?.code || 'Unknown'}] ${response.body?.message || 'Unknown error'}`;
 
       return {
         requestId: extractRequestId(response) || "",
@@ -316,7 +342,7 @@ export class ContextService {
       const success = response.body?.success !== false;
       const errorMessage = success
         ? ""
-        : `Delete failed: ${response.body?.code}`;
+        : `[${response.body?.code || 'Unknown'}] ${response.body?.message || 'Unknown error'}`;
 
       return {
         requestId: extractRequestId(response) || "",
@@ -349,12 +375,25 @@ export class ContextService {
     log("Response from GetContextFileUploadUrl:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
+
+    // Check for API-level errors
+    if (body?.success === false && body.code) {
+      return {
+        requestId,
+        success: false,
+        url: "",
+        expireTime: undefined,
+        errorMessage: `[${body.code}] ${body.message || 'Unknown error'}`,
+      };
+    }
+
     const data = body?.data;
     return {
       requestId,
       success: !!(body && body.success),
       url: data?.url || "",
       expireTime: data?.expireTime,
+      errorMessage: undefined,
     };
   }
 
@@ -373,12 +412,25 @@ export class ContextService {
     log("Response from GetContextFileDownloadUrl:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
+
+    // Check for API-level errors
+    if (body?.success === false && body.code) {
+      return {
+        requestId,
+        success: false,
+        url: "",
+        expireTime: undefined,
+        errorMessage: `[${body.code}] ${body.message || 'Unknown error'}`,
+      };
+    }
+
     const data = body?.data;
     return {
       requestId,
       success: !!(body && body.success),
       url: data?.url || "",
       expireTime: data?.expireTime,
+      errorMessage: undefined,
     };
   }
 
@@ -398,11 +450,17 @@ export class ContextService {
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
     const success = !!(body && body.success);
+
+    // Check for API-level errors
+    const errorMessage = success
+      ? ""
+      : `[${body?.code || 'Unknown'}] ${body?.message || 'Failed to delete file'}`;
+
     return {
       requestId,
       success,
       data: success,
-      errorMessage: success ? "" : `Delete failed: ${body?.code || ""}`,
+      errorMessage,
     };
   }
 
@@ -430,6 +488,18 @@ export class ContextService {
     log("Response from DescribeContextFiles:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
+
+    // Check for API-level errors
+    if (body?.success === false && body.code) {
+      return {
+        requestId,
+        success: false,
+        entries: [],
+        count: undefined,
+        errorMessage: `[${body.code}] ${body.message || 'Unknown error'}`,
+      };
+    }
+
     const rawList = body?.data || [];
     const entries: ContextFileEntry[] = rawList.map((it: any) => ({
       fileId: it.fileId,
@@ -446,6 +516,7 @@ export class ContextService {
       success: !!(body && body.success),
       entries,
       count: body?.count,
+      errorMessage: undefined,
     };
   }
 }

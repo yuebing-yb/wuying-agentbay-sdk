@@ -64,7 +64,8 @@ type LinkResult struct {
 // DeleteResult wraps deletion operation result and RequestID
 type DeleteResult struct {
 	models.ApiResponse
-	Success bool
+	Success      bool
+	ErrorMessage string
 }
 
 // McpTool represents an MCP tool with complete information
@@ -245,22 +246,23 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 		fmt.Println("Response from ReleaseMcpSession:", response.Body)
 	}
 
-	// Check if the response is success
-	success := true
-	if response != nil && response.Body != nil {
-		// Default to true if Success field doesn't exist
-		if response.Body.Success != nil {
-			success = *response.Body.Success
+	// Check for API-level errors
+	if response.Body != nil {
+		if response.Body.Success != nil && !*response.Body.Success {
+			errorMsg := "Failed to delete session"
+			if response.Body.Code != nil && response.Body.Message != nil {
+				errorMsg = fmt.Sprintf("[%s] %s", *response.Body.Code, *response.Body.Message)
+			} else if response.Body.Code != nil {
+				errorMsg = fmt.Sprintf("[%s] Failed to delete session", *response.Body.Code)
+			}
+			return &DeleteResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: requestID,
+				},
+				Success:      false,
+				ErrorMessage: errorMsg,
+			}, nil
 		}
-	}
-
-	if !success {
-		return &DeleteResult{
-			ApiResponse: models.ApiResponse{
-				RequestID: requestID,
-			},
-			Success: false,
-		}, nil
 	}
 
 	s.AgentBay.Sessions.Delete(s.SessionID)

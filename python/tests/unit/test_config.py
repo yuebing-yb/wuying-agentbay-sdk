@@ -11,7 +11,6 @@ class TestConfig(unittest.TestCase):
         """Test the default configuration values"""
         config = default_config()
         self.assertIsInstance(config, dict)
-        self.assertEqual(config["region_id"], "cn-shanghai")
         self.assertEqual(config["endpoint"], "wuyingai.cn-shanghai.aliyuncs.com")
         self.assertEqual(config["timeout_ms"], 60000)
 
@@ -22,7 +21,6 @@ class TestConfig(unittest.TestCase):
         config = load_config(None)
 
         default = default_config()
-        self.assertEqual(config["region_id"], default["region_id"])
         self.assertEqual(config["endpoint"], default["endpoint"])
         self.assertEqual(config["timeout_ms"], default["timeout_ms"])
 

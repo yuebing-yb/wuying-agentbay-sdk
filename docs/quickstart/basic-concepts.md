@@ -71,6 +71,23 @@ Create Session → Use Session → Delete Session
   Resources     Operations      Resources
 ```
 
+### Session Release
+
+Sessions must be released when you're done to free cloud resources. There are **two ways** to release a session:
+
+**1. Manual Release (Recommended)**
+```python
+# Explicitly delete when done
+agent_bay.delete(session)
+```
+
+**2. Automatic Timeout Release**
+- If not manually deleted, sessions are automatically released after a timeout period
+- Timeout duration is configured in the [AgentBay Console](https://agentbay.console.aliyun.com/)
+- After timeout, the session is released and cannot be recovered
+
+**Important**: Always manually delete sessions when finished. This is a best practice for resource management.
+
 **Learn more**: [Session Management Guide](../guides/common-features/basics/session-management.md)
 
 ## 🖥️ Image Types

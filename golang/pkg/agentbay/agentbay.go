@@ -40,7 +40,6 @@ func WithEnvFile(envFile string) Option {
 // AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
 type AgentBay struct {
 	APIKey   string
-	RegionId string
 	Client   *mcp.Client
 	Sessions sync.Map
 	Context  *ContextService
@@ -72,7 +71,7 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Create API client
 	apiConfig := &openapiutil.Config{
-		RegionId:       tea.String(config.RegionID),
+		RegionId:       tea.String(""),
 		Endpoint:       tea.String(config.Endpoint),
 		ReadTimeout:    tea.Int(config.TimeoutMs),
 		ConnectTimeout: tea.Int(config.TimeoutMs),
@@ -85,10 +84,9 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Create AgentBay instance
 	agentBay := &AgentBay{
-		APIKey:   apiKey,
-		RegionId: config.RegionID,
-		Client:   client,
-		Context:  nil, // Will be initialized after creation
+		APIKey:  apiKey,
+		Client:  client,
+		Context: nil, // Will be initialized after creation
 	}
 
 	// Initialize context service
@@ -122,9 +120,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	// Add VPC resource if specified
 	createSessionRequest.VpcResource = tea.Bool(params.IsVpc)
 
-	// Add McpPolicyId if provided
-	if params.McpPolicyId != "" {
-		createSessionRequest.McpPolicyId = tea.String(params.McpPolicyId)
+	// Add PolicyId if provided
+	if params.PolicyId != "" {
+		createSessionRequest.McpPolicyId = tea.String(params.PolicyId)
 	}
 
 	// Add labels if provided
@@ -188,7 +186,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		fmt.Printf("ImageId=%s, ", *createSessionRequest.ImageId)
 	}
 	if createSessionRequest.McpPolicyId != nil {
-		fmt.Printf("McpPolicyId=%s, ", *createSessionRequest.McpPolicyId)
+		fmt.Printf("PolicyId=%s, ", *createSessionRequest.McpPolicyId)
 	}
 	if createSessionRequest.VpcResource != nil {
 		fmt.Printf("VpcResource=%t, ", *createSessionRequest.VpcResource)
@@ -702,6 +700,7 @@ type GetSessionResult struct {
 	Code           string
 	Success        bool
 	Data           *GetSessionData
+	ErrorMessage   string
 }
 
 // GetSessionData represents the data returned by GetSession API
@@ -760,6 +759,17 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 			result.Success = *response.Body.Success
 		}
 
+		// Check for API-level errors
+		if !result.Success && response.Body.Code != nil {
+			code := tea.StringValue(response.Body.Code)
+			message := tea.StringValue(response.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			result.ErrorMessage = fmt.Sprintf("[%s] %s", code, message)
+			return result, nil
+		}
+
 		if response.Body.Data != nil {
 			data := &GetSessionData{}
 			if response.Body.Data.AppInstanceId != nil {
@@ -791,6 +801,8 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 			}
 			result.Data = data
 		}
+
+		result.ErrorMessage = ""
 	}
 
 	return result, nil

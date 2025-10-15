@@ -49,7 +49,7 @@ export interface CreateSessionParams {
   contextSync?: ContextSync[];
   browserContext?: BrowserContext;
   isVpc?: boolean;
-  mcpPolicyId?: string;
+  policyId?: string;
   enableBrowserReplay?: boolean;
 }
 
@@ -59,7 +59,6 @@ export interface CreateSessionParams {
 export class AgentBay {
   private apiKey: string;
   private client: Client;
-  private regionId: string;
   private endpoint: string;
   private sessions: Map<string, Session> = new Map();
   private fileTransferContext: Context | null = null;
@@ -97,11 +96,10 @@ export class AgentBay {
 
     // Load configuration using the enhanced loadConfig function
     const configData = loadConfig(options.config, options.envFile);
-    this.regionId = configData.region_id;
     this.endpoint = configData.endpoint;
 
     const config = new $OpenApiUtil.Config({
-      regionId: this.regionId,
+      regionId: "",
       endpoint: this.endpoint,
     });
 
@@ -116,6 +114,47 @@ export class AgentBay {
     } catch (error) {
       logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);
+    }
+  }
+
+  /**
+   * Update browser replay context with AppInstanceId from response data.
+   *
+   * @param responseData - Response data containing AppInstanceId
+   * @param recordContextId - The record context ID to update
+   */
+  private async _updateBrowserReplayContext(responseData: any, recordContextId: string): Promise<void> {
+    // Check if record_context_id is provided
+    if (!recordContextId) {
+      return;
+    }
+
+    try {
+      // Extract AppInstanceId from response data
+      const appInstanceId = responseData?.appInstanceId;
+      if (!appInstanceId) {
+        logError("AppInstanceId not found in response data, skipping browser replay context update");
+        return;
+      }
+
+      // Create context name with prefix
+      const contextName = `browserreplay-${appInstanceId}`;
+
+      // Create Context object for update
+      const contextObj = new Context(recordContextId, contextName);
+
+      // Call context.update interface
+      log(`Updating browser replay context: ${contextName} -> ${recordContextId}`);
+      const updateResult = await this.context.update(contextObj);
+
+      if (updateResult.success) {
+        log(`✅ Successfully updated browser replay context: ${contextName}`);
+      } else {
+        logError(`⚠️ Failed to update browser replay context: ${updateResult.errorMessage}`);
+      }
+    } catch (error) {
+      logError(`❌ Error updating browser replay context: ${error}`);
+      // Continue execution even if context update fails
     }
   }
 
@@ -159,9 +198,9 @@ export class AgentBay {
         request.imageId = params.imageId;
       }
 
-      // Add McpPolicyId if provided
-      if (params.mcpPolicyId) {
-        request.mcpPolicyId = params.mcpPolicyId;
+      // Add PolicyId if provided
+      if (params.policyId) {
+        request.mcpPolicyId = params.policyId;
       }
 
       // Add VPC resource if specified
@@ -197,7 +236,8 @@ export class AgentBay {
           uploadPolicy: { autoUpload: params.browserContext.autoUpload },
           downloadPolicy: null,
           deletePolicy: null,
-          bwList: null
+          bwList: null,
+          recyclePolicy: null,
         };
 
         // Create browser context sync item
@@ -216,12 +256,13 @@ export class AgentBay {
       }
 
       // Add browser recording persistence if enabled
+      let recordContextId = ""; // Initialize record_context_id
       if (params.enableBrowserReplay) {
         // Create browser recording persistence configuration
         const recordPath = "/home/guest/record";
         const recordContextName = generateRandomContextName();
         const result = await this.context.get(recordContextName, true);
-        const recordContextId = result.success ? result.contextId : "";
+        recordContextId = result.success ? result.contextId : "";
         const recordPersistence = new CreateMcpSessionRequestPersistenceDataList({
           contextId: recordContextId,
           path: recordPath,
@@ -279,6 +320,16 @@ export class AgentBay {
         };
       }
 
+      // Check for API-level errors
+      if (sessionData.success === false && sessionData.code) {
+        const errorMessage = `[${sessionData.code}] ${sessionData.message || 'Unknown error'}`;
+        return {
+          requestId,
+          success: false,
+          errorMessage,
+        };
+      }
+
       const data = sessionData.data;
       if (!data || typeof data !== "object") {
         return {
@@ -330,6 +381,11 @@ export class AgentBay {
       (session as any).imageId = params.imageId;
 
       this.sessions.set(session.sessionId, session);
+
+      // Update browser replay context if enabled
+      if (params.enableBrowserReplay) {
+        await this._updateBrowserReplayContext(data, recordContextId);
+      }
 
       // For VPC sessions, automatically fetch MCP tools information
       if (params.isVpc) {
@@ -590,11 +646,12 @@ export class AgentBay {
           const requestId = extractRequestId(response) || "";
 
           if (!response.body?.success) {
-            const errorMessage = response.body?.message || response.body?.code || "Unknown error";
+            const code = response.body?.code || "Unknown";
+            const message = response.body?.message || "Unknown error";
             return {
               requestId,
               success: false,
-              errorMessage: `Cannot reach page ${page}: ${errorMessage}`,
+              errorMessage: `[${code}] ${message}`,
               sessionIds: [],
               nextToken: "",
               maxResults: limit,
@@ -643,11 +700,12 @@ export class AgentBay {
 
       // Check for errors in the response
       if (!response.body?.success) {
-        const errorMessage = response.body?.message || response.body?.code || "Unknown error";
+        const code = response.body?.code || "Unknown";
+        const message = response.body?.message || "Unknown error";
         return {
           requestId,
           success: false,
-          errorMessage: `Failed to list sessions: ${errorMessage}`,
+          errorMessage: `[${code}] ${message}`,
           sessionIds: [],
           nextToken: "",
           maxResults: limit,
@@ -746,11 +804,23 @@ export class AgentBay {
       const requestId = extractRequestId(response) || "";
       const body = response.body;
 
+      // Check for API-level errors
+      if (body?.success === false && body.code) {
+        return {
+          requestId,
+          httpStatusCode: body.httpStatusCode || 0,
+          code: body.code,
+          success: false,
+          errorMessage: `[${body.code}] ${body.message || 'Unknown error'}`,
+        };
+      }
+
       const result: $GetSessionResult = {
         requestId,
         httpStatusCode: body?.httpStatusCode || 0,
         code: body?.code || "",
         success: body?.success || false,
+        errorMessage: "",
       };
 
       if (body?.data) {

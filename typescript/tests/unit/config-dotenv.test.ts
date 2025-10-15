@@ -24,7 +24,7 @@ describe('Enhanced .env file loading', () => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agentbay-test-'));
     
     // Clean up environment variables
-    const envVars = ['AGENTBAY_REGION_ID', 'AGENTBAY_ENDPOINT', 'AGENTBAY_TIMEOUT_MS'];
+    const envVars = ['AGENTBAY_ENDPOINT', 'AGENTBAY_TIMEOUT_MS'];
     envVars.forEach(key => {
       delete process.env[key];
     });
@@ -154,7 +154,6 @@ describe('Enhanced .env file loading', () => {
   describe('loadConfig', () => {
     test('should use custom config when provided', () => {
       const customConfig = {
-        region_id: 'custom-region',
         endpoint: 'custom.endpoint.com',
         timeout_ms: 12345
       };
@@ -167,7 +166,6 @@ describe('Enhanced .env file loading', () => {
       // Create custom .env file
       const customEnv = path.join(tempDir, 'test.env');
       fs.writeFileSync(customEnv, [
-        'AGENTBAY_REGION_ID=ap-southeast-1',
         'AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com',
         'AGENTBAY_TIMEOUT_MS=30000'
       ].join('\n'));
@@ -176,7 +174,6 @@ describe('Enhanced .env file loading', () => {
       const config = loadConfig(undefined, customEnv);
       
       // Check if config was loaded from custom .env file
-      expect(config.region_id).toBe('ap-southeast-1');
       expect(config.endpoint).toBe('wuyingai.ap-southeast-1.aliyuncs.com');
       expect(config.timeout_ms).toBe(30000);
     });
@@ -184,7 +181,7 @@ describe('Enhanced .env file loading', () => {
     test('should load config with upward .env file search', () => {
       // Create .env in parent
       const parentEnv = path.join(tempDir, '.env');
-      fs.writeFileSync(parentEnv, 'AGENTBAY_REGION_ID=cn-shanghai');
+      fs.writeFileSync(parentEnv, 'AGENTBAY_ENDPOINT=wuyingai.cn-shanghai.aliyuncs.com');
       
       // Create subdirectory
       const subDir = path.join(tempDir, 'project', 'src');
@@ -197,7 +194,7 @@ describe('Enhanced .env file loading', () => {
       const config = loadConfig();
       
       // Should find .env from parent directory
-      expect(config.region_id).toBe('cn-shanghai');
+      expect(config.endpoint).toBe('wuyingai.cn-shanghai.aliyuncs.com');
     });
 
     test('should handle invalid timeout values gracefully', () => {
@@ -214,25 +211,24 @@ describe('Enhanced .env file loading', () => {
 
     test('should prioritize environment variables over .env file', () => {
       // Set environment variable
-      process.env.AGENTBAY_REGION_ID = 'from_environment';
+      process.env.AGENTBAY_ENDPOINT = 'wuyingai.from-environment.aliyuncs.com';
       
       // Create .env file with different value
       const envFile = path.join(tempDir, '.env');
-      fs.writeFileSync(envFile, 'AGENTBAY_REGION_ID=from_env_file');
+      fs.writeFileSync(envFile, 'AGENTBAY_ENDPOINT=wuyingai.from-env-file.aliyuncs.com');
       
       // Load config
       const config = loadConfig(undefined, envFile);
       
       // Environment variable should take precedence
-      expect(config.region_id).toBe('from_environment');
+      expect(config.endpoint).toBe('wuyingai.from-environment.aliyuncs.com');
     });
 
     test('should use default values when no config is provided', () => {
       // No .env file, no environment variables
       const config = loadConfig();
       const defaults = defaultConfig();
-      
-      expect(config.region_id).toBe(defaults.region_id);
+
       expect(config.endpoint).toBe(defaults.endpoint);
       expect(config.timeout_ms).toBe(defaults.timeout_ms);
     });
@@ -241,22 +237,22 @@ describe('Enhanced .env file loading', () => {
   describe('environment variable precedence', () => {
     test('should follow correct precedence order', () => {
       // 1. Custom config (highest priority)
-      const customConfig = { region_id: 'custom', endpoint: 'custom.com', timeout_ms: 1000 };
+      const customConfig = { endpoint: 'custom.com', timeout_ms: 1000 };
       
       // 2. Environment variable
-      process.env.AGENTBAY_REGION_ID = 'from_env';
+      process.env.AGENTBAY_ENDPOINT = 'wuyingai.from-env.aliyuncs.com';
       
       // 3. .env file (lowest priority)
       const envFile = path.join(tempDir, '.env');
-      fs.writeFileSync(envFile, 'AGENTBAY_REGION_ID=from_file');
+      fs.writeFileSync(envFile, 'AGENTBAY_ENDPOINT=wuyingai.from-file.aliyuncs.com');
       
       // Test custom config precedence
       const configWithCustom = loadConfig(customConfig, envFile);
-      expect(configWithCustom.region_id).toBe('custom');
-      
+      expect(configWithCustom.endpoint).toBe('custom.com');
+
       // Test environment variable precedence over .env file
       const configWithEnv = loadConfig(undefined, envFile);
-      expect(configWithEnv.region_id).toBe('from_env');
+      expect(configWithEnv.endpoint).toBe('wuyingai.from-env.aliyuncs.com');
     });
   });
 });

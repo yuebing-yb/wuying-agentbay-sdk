@@ -23,7 +23,7 @@ func TestContextPersistence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
-	t.Logf("AgentBay client initialized successfully with region: %s", agentBay.RegionId)
+	t.Logf("AgentBay client initialized successfully with region: %s", agentBay.APIKey)
 
 	// Step 1: Create a new context
 	contextName := fmt.Sprintf("test-context-%d", time.Now().Unix())
@@ -92,7 +92,7 @@ func TestContextPersistence(t *testing.T) {
 	}
 	session1 := sessionResult.Session
 	t.Logf("Session created with ID: %s, AgentBay client region: %s (RequestID: %s)",
-		session1.SessionID, session1.AgentBay.RegionId, sessionResult.RequestID)
+		session1.SessionID, session1.AgentBay.APIKey, sessionResult.RequestID)
 
 	// Step 3: Use Execute command to create a file
 	t.Logf("Creating test file at %s...", testFilePath)
@@ -211,7 +211,7 @@ func TestContextPersistence(t *testing.T) {
 	}
 	session2 := session2Result.Session
 	t.Logf("Second session created with ID: %s, AgentBay client region: %s (RequestID: %s)",
-		session2.SessionID, session2.AgentBay.RegionId, session2Result.RequestID)
+		session2.SessionID, session2.AgentBay.APIKey, session2Result.RequestID)
 
 	// Step 6: Check if the file still exists (expected: yes)
 	t.Logf("Checking if file %s still exists in the second session...", testFilePath)

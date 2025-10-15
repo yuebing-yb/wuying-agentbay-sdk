@@ -153,28 +153,26 @@ class TestDotEnvLoading:
             tmpdir_path = Path(tmpdir)
             custom_env = tmpdir_path / "test.env"
             custom_env.write_text("""
-AGENTBAY_REGION_ID=ap-southeast-1
 AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
 AGENTBAY_TIMEOUT_MS=30000
 """.strip())
-            
+
             # Clear existing env vars
-            for var in ["AGENTBAY_REGION_ID", "AGENTBAY_ENDPOINT", "AGENTBAY_TIMEOUT_MS"]:
+            for var in ["AGENTBAY_ENDPOINT", "AGENTBAY_TIMEOUT_MS"]:
                 if var in os.environ:
                     del os.environ[var]
-            
+
             try:
                 # Load config with custom .env file
                 config = load_config(None, str(custom_env))
-                
+
                 # Check if config was loaded from custom .env file
-                assert config["region_id"] == "ap-southeast-1"
                 assert config["endpoint"] == "wuyingai.ap-southeast-1.aliyuncs.com"
                 assert config["timeout_ms"] == 30000
-                
+
             finally:
                 # Cleanup
-                for var in ["AGENTBAY_REGION_ID", "AGENTBAY_ENDPOINT", "AGENTBAY_TIMEOUT_MS"]:
+                for var in ["AGENTBAY_ENDPOINT", "AGENTBAY_TIMEOUT_MS"]:
                     if var in os.environ:
                         del os.environ[var]
 
@@ -182,31 +180,31 @@ AGENTBAY_TIMEOUT_MS=30000
         """Test load_config with upward .env file search."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
-            
+
             # Create .env in parent
             parent_env = tmpdir_path / ".env"
-            parent_env.write_text("AGENTBAY_REGION_ID=cn-shanghai")
-            
+            parent_env.write_text("AGENTBAY_ENDPOINT=wuyingai.cn-shanghai.aliyuncs.com")
+
             # Create subdirectory
             subdir = tmpdir_path / "project" / "src"
             subdir.mkdir(parents=True)
-            
+
             # Clear existing env vars
-            if "AGENTBAY_REGION_ID" in os.environ:
-                del os.environ["AGENTBAY_REGION_ID"]
-            
+            if "AGENTBAY_ENDPOINT" in os.environ:
+                del os.environ["AGENTBAY_ENDPOINT"]
+
             try:
                 # Simulate running from subdirectory
                 with patch('os.getcwd', return_value=str(subdir)):
                     config = load_config(None)
-                
+
                 # Should find .env from parent directory
-                assert config["region_id"] == "cn-shanghai"
-                
+                assert config["endpoint"] == "wuyingai.cn-shanghai.aliyuncs.com"
+
             finally:
                 # Cleanup
-                if "AGENTBAY_REGION_ID" in os.environ:
-                    del os.environ["AGENTBAY_REGION_ID"]
+                if "AGENTBAY_ENDPOINT" in os.environ:
+                    del os.environ["AGENTBAY_ENDPOINT"]
 
     def test_invalid_timeout_handling(self):
         """Test handling of invalid AGENTBAY_TIMEOUT_MS values."""

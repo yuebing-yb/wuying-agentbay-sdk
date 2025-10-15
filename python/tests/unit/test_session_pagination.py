@@ -49,7 +49,7 @@ class TestSessionPagination(unittest.TestCase):
         # Check the call to list_session
         call_args = mock_client_instance.list_session.call_args[0][0]
         self.assertEqual(call_args.authorization, "Bearer test-api-key")
-        self.assertEqual(call_args.max_results, "5")
+        self.assertEqual(call_args.max_results, 5)  # int type, not string
         self.assertEqual(
             json.loads(call_args.labels), {"env": "test", "project": "demo"}
         )
@@ -135,7 +135,7 @@ class TestSessionPagination(unittest.TestCase):
 
         # Check the call to list_session uses default values
         call_args = mock_client_instance.list_session.call_args[0][0]
-        self.assertEqual(call_args.max_results, "10")  # Default max_results
+        self.assertEqual(call_args.max_results, 10)  # Default max_results (int type)
         self.assertEqual(json.loads(call_args.labels), {})  # Default empty labels
 
         # Check result

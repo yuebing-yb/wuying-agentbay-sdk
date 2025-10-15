@@ -1,5 +1,5 @@
 from typing import Dict, Optional, List, TYPE_CHECKING
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, ExtractPolicy, BWList, WhiteList
+from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList
 from agentbay.logger import get_logger
 from agentbay.api.models._create_mcp_session_request import ExtraConfigs
 
@@ -153,6 +153,7 @@ class BrowserContext:
         sync_policy = SyncPolicy(
             upload_policy=UploadPolicy(auto_upload=False),
             extract_policy=ExtractPolicy(extract=True, delete_src_file=True),
+            recycle_policy=RecyclePolicy.default(),
             bw_list=BWList(white_lists=white_lists)
         )
 
@@ -186,7 +187,7 @@ class CreateSessionParams:
             configurations that define how contexts should be synchronized and mounted.
         browser_context (Optional[BrowserContext]): Optional configuration for browser data synchronization.
         is_vpc (Optional[bool]): Whether to create a VPC-based session. Defaults to False.
-        mcp_policy_id (Optional[str]): MCP policy id to apply when creating the session.
+        policy_id (Optional[str]): Policy id to apply when creating the session.
         enable_browser_replay (Optional[bool]): Whether to enable browser recording for the session. Defaults to False.
         extra_configs (Optional[ExtraConfigs]): Advanced configuration parameters for mobile environments.
     """
@@ -198,7 +199,7 @@ class CreateSessionParams:
         context_syncs: Optional[List[ContextSync]] = None,
         browser_context: Optional[BrowserContext] = None,
         is_vpc: Optional[bool] = None,
-        mcp_policy_id: Optional[str] = None,
+        policy_id: Optional[str] = None,
         enable_browser_replay: Optional[bool] = None,
         extra_configs: Optional[ExtraConfigs] = None,
     ):
@@ -217,7 +218,7 @@ class CreateSessionParams:
                 automatically added. Defaults to None.
             is_vpc (Optional[bool], optional): Whether to create a VPC-based session.
                 Defaults to False.
-            mcp_policy_id (Optional[str], optional): MCP policy id to apply when creating the session.
+            policy_id (Optional[str], optional): Policy id to apply when creating the session.
                 Defaults to None.
             enable_browser_replay (Optional[bool], optional): Whether to enable browser recording for the session.
                 Defaults to False.
@@ -238,7 +239,7 @@ class CreateSessionParams:
         self.context_syncs = all_context_syncs
         self.browser_context = browser_context
         self.is_vpc = is_vpc if is_vpc is not None else False
-        self.mcp_policy_id = mcp_policy_id
+        self.policy_id = policy_id
         self.enable_browser_replay = enable_browser_replay if enable_browser_replay is not None else False
         self.extra_configs = extra_configs
 

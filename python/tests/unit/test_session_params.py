@@ -29,10 +29,10 @@ class TestCreateSessionParams(unittest.TestCase):
         parsed_labels = json.loads(labels_json)
         self.assertEqual(parsed_labels, labels)
 
-    def test_mcp_policy_id(self):
-        """Test that mcp_policy_id can be carried by CreateSessionParams."""
-        params = CreateSessionParams(mcp_policy_id="policy-xyz")
-        self.assertEqual(params.mcp_policy_id, "policy-xyz")
+    def test_policy_id(self):
+        """Test that policy_id can be carried by CreateSessionParams."""
+        params = CreateSessionParams(policy_id="policy-xyz")
+        self.assertEqual(params.policy_id, "policy-xyz")
 
     def test_extra_configs_initialization(self):
         """Test that CreateSessionParams accepts extra_configs parameter."""

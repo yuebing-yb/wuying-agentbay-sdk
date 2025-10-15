@@ -1,6 +1,8 @@
 import { BROWSER_DATA_PATH } from "../../src/config";
 import { BrowserContext, CreateSessionParams } from "../../src/session-params";
 import { AgentBay } from "../../src/agent-bay";
+import { ExtensionOption } from "../../src/extension";
+import { Lifecycle } from "../../src/context-sync";
 
 describe("BrowserContextConfig", () => {
   describe("BROWSER_DATA_PATH constant", () => {
@@ -159,6 +161,75 @@ describe("BrowserContextConfig", () => {
 
       expect(parsedFalse.autoUpload).toBe(false);
       expect(parsedTrue.autoUpload).toBe(true);
+    });
+  });
+
+  describe("BrowserContext extensionContextSyncs recyclePolicy validation", () => {
+    it("should create extensionContextSyncs with correct recyclePolicy when extensionOption is provided", () => {
+      const contextId = "test-browser-context";
+      const extensionContextId = "test-extension-context";
+      const extensionIds = ["extension1", "extension2"];
+
+      // Create ExtensionOption
+      const extensionOption = new ExtensionOption(extensionContextId, extensionIds);
+
+      // Create BrowserContext with extensionOption
+      const browserContext = new BrowserContext(contextId, true, extensionOption);
+
+      // Verify extensionContextSyncs is created
+      expect(browserContext.extensionContextSyncs).toBeDefined();
+      expect(browserContext.extensionContextSyncs).toHaveLength(1);
+
+      const extensionSync = browserContext.extensionContextSyncs![0];
+
+      // Verify the context sync has correct properties
+      expect(extensionSync.contextId).toBe(extensionContextId);
+      expect(extensionSync.path).toBe("/tmp/extensions/");
+      expect(extensionSync.policy).toBeDefined();
+
+      // Verify recyclePolicy exists and has correct default values
+      expect(extensionSync.policy!.recyclePolicy).toBeDefined();
+      expect(extensionSync.policy!.recyclePolicy!.lifecycle).toBe(Lifecycle.Lifecycle_Forever);
+      expect(extensionSync.policy!.recyclePolicy!.paths).toBeDefined();
+      expect(extensionSync.policy!.recyclePolicy!.paths).toHaveLength(1);
+      expect(extensionSync.policy!.recyclePolicy!.paths[0]).toBe("");
+    });
+
+    it("should not create extensionContextSyncs when no extensionOption is provided", () => {
+      const contextId = "test-browser-context-no-ext";
+
+      // Create BrowserContext without extensionOption
+      const browserContext = new BrowserContext(contextId, true);
+
+      // Verify extensionContextSyncs is undefined
+      expect(browserContext.extensionContextSyncs).toBeUndefined();
+      expect(browserContext.extensionContextId).toBeUndefined();
+      expect(browserContext.extensionIds).toEqual([]);
+    });
+
+    it("should verify recyclePolicy structure in extensionContextSyncs", () => {
+      const contextId = "test-browser-context-policy";
+      const extensionContextId = "test-extension-context-policy";
+      const extensionIds = ["ext1", "ext2", "ext3"];
+
+      // Create ExtensionOption
+      const extensionOption = new ExtensionOption(extensionContextId, extensionIds);
+
+      // Create BrowserContext with extensionOption
+      const browserContext = new BrowserContext(contextId, true, extensionOption);
+
+      const extensionSync = browserContext.extensionContextSyncs![0];
+      const recyclePolicy = extensionSync.policy!.recyclePolicy!;
+
+      // Verify recyclePolicy structure
+      expect(recyclePolicy).toHaveProperty('lifecycle');
+      expect(recyclePolicy).toHaveProperty('paths');
+      expect(typeof recyclePolicy.lifecycle).toBe('string');
+      expect(Array.isArray(recyclePolicy.paths)).toBe(true);
+
+      // Verify default values
+      expect(recyclePolicy.lifecycle).toBe(Lifecycle.Lifecycle_Forever);
+      expect(recyclePolicy.paths).toEqual([""]);
     });
   });
 });

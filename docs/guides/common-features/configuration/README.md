@@ -4,7 +4,7 @@ SDK configuration options and settings.
 
 ## Documentation
 
-- [SDK Configuration](sdk-configuration.md) - API keys, regions, and endpoints
+- [SDK Configuration](sdk-configuration.md) - API keys, gateway regions, and endpoints
 
 ## Getting Help
 

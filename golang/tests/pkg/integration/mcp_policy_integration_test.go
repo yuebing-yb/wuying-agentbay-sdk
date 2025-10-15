@@ -15,16 +15,16 @@ func TestMcpPolicy_CreateSession_WithPolicyId(t *testing.T) {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	// Create a session with McpPolicyId
+	// Create a session with PolicyId
 	policyID := "mpg-04bdvx0p76nbwhdt5"
 	params := agentbay.NewCreateSessionParams().
 		WithImageId("linux_latest").
-		WithMcpPolicyId(policyID)
+		WithPolicyId(policyID)
 
-	t.Logf("Creating session with McpPolicyId: %s", policyID)
+	t.Logf("Creating session with PolicyId: %s", policyID)
 	result, err := client.Create(params)
 	if err != nil {
-		t.Fatalf("Error creating session with McpPolicyId: %v", err)
+		t.Fatalf("Error creating session with PolicyId: %v", err)
 	}
 
 	session := result.Session

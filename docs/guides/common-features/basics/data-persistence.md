@@ -382,6 +382,126 @@ download_only_policy = SyncPolicy(
 )
 ```
 
+####  Data Lifecycle Management (RecyclePolicy)
+
+`RecyclePolicy` controls how long your context data is retained in the cloud before automatic cleanup. This is useful for managing storage costs and automatically removing temporary data.
+
+**Key Concepts:**
+- **Default Behavior**: Data is kept **FOREVER** (permanently) if no RecyclePolicy is specified
+- **Automatic Cleanup**: Data is automatically deleted after the specified duration
+- **Path-Specific**: Apply different lifecycles to different directories
+- **No Wildcards**: Paths must be exact - wildcard patterns are not supported for safety
+
+**Available Lifecycle Options:**
+
+| Lifecycle | Duration | Use Case |
+|-----------|----------|----------|
+| `LIFECYCLE_1DAY` | 1 day | Temporary cache, test data |
+| `LIFECYCLE_3DAYS` | 3 days | Short-term work files |
+| `LIFECYCLE_5DAYS` | 5 days | Weekly data |
+| `LIFECYCLE_10DAYS` | 10 days | Sprint data |
+| `LIFECYCLE_15DAYS` | 15 days | Bi-weekly data |
+| `LIFECYCLE_30DAYS` | 30 days | Monthly archives |
+| `LIFECYCLE_90DAYS` | 90 days | Quarterly data |
+| `LIFECYCLE_180DAYS` | 180 days | Semi-annual data |
+| `LIFECYCLE_360DAYS` | 360 days | Annual archives |
+| `LIFECYCLE_FOREVER` | Permanent | Important data (default) |
+
+**Basic Usage:**
+
+```python
+from agentbay.context_sync import RecyclePolicy, Lifecycle, SyncPolicy, ContextSync
+
+# Example 1: Keep data for 1 day
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_1DAY,
+    paths=[""]  # "" means apply to all paths
+)
+
+sync_policy = SyncPolicy(recycle_policy=recycle_policy)
+context_sync = ContextSync.new(context.id, "/tmp/cache", sync_policy)
+
+# This creates a RecyclePolicy with:
+# - lifecycle: Lifecycle_1Day
+# - paths: ['']
+```
+
+**Path-Specific Cleanup:**
+
+```python
+# Example 2: Different lifespans for different directories
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_3DAYS,
+    paths=["/tmp/cache", "/tmp/logs"]  # Only these paths
+)
+
+# Important: Use exact paths, NOT wildcards like "/tmp/*"
+sync_policy = SyncPolicy(recycle_policy=recycle_policy)
+
+# This applies the 3-day lifecycle only to /tmp/cache and /tmp/logs
+```
+
+**Important Restrictions:**
+
+```python
+# ❌ WRONG: Wildcard patterns are NOT supported
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_1DAY,
+    paths=["/tmp/*", "/var/*.log"]  # Will raise ValueError
+)
+# Raises: ValueError: Wildcard patterns are not supported in recycle policy paths.
+#         Got: /tmp/*. Please use exact directory paths instead.
+
+# ✅ CORRECT: Use exact directory paths
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_1DAY,
+    paths=["/tmp/cache", "/var/logs"]  # Exact paths only
+)
+# Successfully creates RecyclePolicy with exact paths
+```
+
+**When to Use RecyclePolicy:**
+
+1. **Temporary Data**: Set short lifecycles (1-3 days) for cache, temp files, or test data
+2. **Project Data**: Use medium lifecycles (30-90 days) for project files
+3. **Archives**: Use long lifecycles (180-360 days) for important archives
+4. **Permanent Data**: Use `LIFECYCLE_FOREVER` (default) for critical data
+
+**Complete Example:**
+
+```python
+from agentbay import AgentBay, CreateSessionParams
+from agentbay.context_sync import (
+    ContextSync, SyncPolicy, RecyclePolicy, Lifecycle,
+    UploadPolicy, DownloadPolicy, BWList, WhiteList
+)
+
+# Create context
+context = agent_bay.context.get("my-project", create=True).context
+
+# Create RecyclePolicy with 5 days lifecycle
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_5DAYS,  # Note: No LIFECYCLE_7DAYS, use 5 or 10
+    paths=[""]  # Apply to all paths
+)
+
+# Create comprehensive SyncPolicy
+sync_policy = SyncPolicy(
+    upload_policy=UploadPolicy.default(),
+    download_policy=DownloadPolicy.default(),
+    recycle_policy=recycle_policy  # Add lifecycle management
+)
+
+# Create session with lifecycle-managed context
+context_sync = ContextSync.new(context.id, "/tmp/data", sync_policy)
+session = agent_bay.create(CreateSessionParams(context_syncs=[context_sync])).session
+
+# The session is now configured with RecyclePolicy
+# Data uploaded to this context will be automatically deleted after 5 days
+```
+
+> **Note**: RecyclePolicy applies from the time data is uploaded to the cloud. The timer starts after the session ends and data is synchronized, not when files are created in the session.
+
 #### Selective Directory Sync
 
 Use `bw_list` (blacklist/whitelist) to control which subdirectories within the context mount point are synced:
@@ -594,6 +714,52 @@ agent_bay.delete(session)
 session.file_system.write_file("/home/wuying/data.txt", "content")
 agent_bay.delete(session, sync_context=True)
 ```
+
+### Issue 5: Understanding RecyclePolicy and Data Retention
+
+**Question:** When will my context data be deleted?
+
+**Answer:**
+- **Default**: Data is kept **FOREVER** unless you specify a RecyclePolicy
+- **With RecyclePolicy**: Data is automatically deleted after the specified period from upload time
+- **Timer Start**: The lifecycle countdown begins when data is uploaded to the cloud (after session ends and sync completes)
+
+**Example:**
+```python
+# Scenario: Set 1 day lifecycle
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_1DAY,
+    paths=[""]
+)
+
+# Timeline:
+# Day 0, 10:00 AM - Session created, files written
+# Day 0, 11:00 AM - Session deleted, sync uploads data to cloud
+# Day 0, 11:00 AM - Lifecycle timer starts
+# Day 1, 11:00 AM - Data automatically deleted (24 hours after upload)
+```
+
+**Common Mistakes:**
+
+```python
+# ❌ Wrong: Using wildcards in paths
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_1DAY,
+    paths=["/tmp/*", "/var/*.log"]  # ValueError: wildcards not supported
+)
+
+# ✅ Correct: Use exact directory paths
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_1DAY,
+    paths=["/tmp/cache", "/var/logs"]  # Exact paths only
+)
+```
+
+**Choosing the Right Lifecycle:**
+- **Temporary cache/test data**: `LIFECYCLE_1DAY` or `LIFECYCLE_3DAYS`
+- **Development work**: `LIFECYCLE_5DAYS` to `LIFECYCLE_15DAYS`
+- **Project archives**: `LIFECYCLE_30DAYS` to `LIFECYCLE_90DAYS`
+- **Important data**: `LIFECYCLE_FOREVER` (default)
 
 ### Verifying Sync Status
 

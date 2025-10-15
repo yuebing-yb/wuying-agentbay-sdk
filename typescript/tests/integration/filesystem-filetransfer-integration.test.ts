@@ -101,10 +101,6 @@ describe("File Transfer Integration", () => {
       return;
     }
 
-    const listResult = await agentBay.list();
-    if (!listResult.sessionIds.includes(sessionId)) {
-      throw new Error("Session not found");
-    }
     const sessionResult = await agentBay.get(sessionId);
     if (!sessionResult.success || !sessionResult.session) {
       throw new Error("Failed to get session");
@@ -166,10 +162,6 @@ describe("File Transfer Integration", () => {
       return;
     }
 
-    const listResult = await agentBay.list();
-    if (!listResult.sessionIds.includes(sessionId)) {
-      throw new Error("Session not found");
-    }
     const sessionResult = await agentBay.get(sessionId);
     if (!sessionResult.success || !sessionResult.session) {
       throw new Error("Failed to get session");

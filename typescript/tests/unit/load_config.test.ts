@@ -25,14 +25,12 @@ describe("Config", () => {
   describe("test_load_from_passed_config", () => {
     it("should load configuration from passed Config object", () => {
       const customCfg: Config = {
-        region_id: "custom-region",
         endpoint: "custom-endpoint",
         timeout_ms: 5000,
       };
 
       const result = loadConfig(customCfg);
 
-      expect(result.region_id).toBe("custom-region");
       expect(result.endpoint).toBe("custom-endpoint");
       expect(result.timeout_ms).toBe(5000);
     });
@@ -44,8 +42,7 @@ describe("Config", () => {
       const envFilePath = path.resolve(process.cwd(), ".env");
       fs.writeFileSync(
         envFilePath,
-        "AGENTBAY_REGION_ID=env-region\n" +
-          "AGENTBAY_ENDPOINT=env-endpoint\n" +
+        "AGENTBAY_ENDPOINT=env-endpoint\n" +
           "AGENTBAY_TIMEOUT_MS=10000\n"
       );
 
@@ -59,7 +56,6 @@ describe("Config", () => {
       const result = loadConfig(undefined);
 
       // verify results
-      expect(result.region_id).toBe("env-region");
       expect(result.endpoint).toBe("env-endpoint");
       expect(result.timeout_ms).toBe(10000);
     });
@@ -68,7 +64,6 @@ describe("Config", () => {
   describe("test_load_from_system_env_vars", () => {
     it("should load configuration from system environment variables", () => {
       // set environment variables
-      process.env.AGENTBAY_REGION_ID = "sys-region";
       process.env.AGENTBAY_ENDPOINT = "sys-endpoint";
       process.env.AGENTBAY_TIMEOUT_MS = "15000";
 
@@ -82,7 +77,6 @@ describe("Config", () => {
       const result = loadConfig(undefined);
 
       // verify results
-      expect(result.region_id).toBe("sys-region");
       expect(result.endpoint).toBe("sys-endpoint");
       expect(result.timeout_ms).toBe(15000);
     });
@@ -104,13 +98,11 @@ describe("Config", () => {
 
       // get default configuration
       const defaultCfg = {
-        region_id: "cn-shanghai",
         endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
         timeout_ms: 60000,
       };
 
       // verify results
-      expect(result.region_id).toBe(defaultCfg.region_id);
       expect(result.endpoint).toBe(defaultCfg.endpoint);
       expect(result.timeout_ms).toBe(defaultCfg.timeout_ms);
     });
@@ -122,8 +114,7 @@ describe("Config", () => {
       const envFilePath = path.resolve(process.cwd(), ".env");
       fs.writeFileSync(
         envFilePath,
-        "AGENTBAY_REGION_ID=env-region\n" +
-          "AGENTBAY_ENDPOINT=env-endpoint\n" +
+        "AGENTBAY_ENDPOINT=env-endpoint\n" +
           "AGENTBAY_TIMEOUT_MS=10000\n"
       );
 
@@ -131,51 +122,42 @@ describe("Config", () => {
       expect(fs.existsSync(envFilePath)).toBe(true);
 
       // set environment variables
-      process.env.AGENTBAY_REGION_ID = "sys-region";
       process.env.AGENTBAY_ENDPOINT = "sys-endpoint";
       process.env.AGENTBAY_TIMEOUT_MS = "15000";
 
       // get default configuration
       const defaultCfg = {
-        region_id: "cn-shanghai",
         endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
         timeout_ms: 60000,
       };
 
       // 1. explicit configuration should take precedence over all other sources
       const customCfg: Config = {
-        region_id: "explicit-region",
         endpoint: "explicit-endpoint",
         timeout_ms: 2000,
       };
       let result = loadConfig(customCfg);
-      expect(result.region_id).toBe("explicit-region");
       expect(result.endpoint).toBe("explicit-endpoint");
       expect(result.timeout_ms).toBe(2000);
 
       // 2. when no explicit configuration is provided, system environment variables should take precedence over .env file
       result = loadConfig(undefined);
-      expect(result.region_id).toBe("sys-region");
       expect(result.endpoint).toBe("sys-endpoint");
       expect(result.timeout_ms).toBe(15000);
 
       // 3. after clearing environment variables, .env file should take precedence over default configuration
-      delete process.env.AGENTBAY_REGION_ID;
       delete process.env.AGENTBAY_ENDPOINT;
       delete process.env.AGENTBAY_TIMEOUT_MS;
       result = loadConfig(undefined);
-      expect(result.region_id).toBe("env-region");
       expect(result.endpoint).toBe("env-endpoint");
       expect(result.timeout_ms).toBe(10000);
 
       // 4. when no .env file exists, default configuration should be used
       fs.unlinkSync(envFilePath);
       // Clear any values that might have been loaded from .env file
-      delete process.env.AGENTBAY_REGION_ID;
       delete process.env.AGENTBAY_ENDPOINT;
       delete process.env.AGENTBAY_TIMEOUT_MS;
       result = loadConfig(undefined);
-      expect(result.region_id).toBe(defaultCfg.region_id);
       expect(result.endpoint).toBe(defaultCfg.endpoint);
       expect(result.timeout_ms).toBe(defaultCfg.timeout_ms);
     });

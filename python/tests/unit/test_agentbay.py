@@ -17,7 +17,6 @@ class TestAgentBay(unittest.TestCase):
         """Test initializing AgentBay with an API key from environment variable"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -31,7 +30,6 @@ class TestAgentBay(unittest.TestCase):
 
         # Verify results
         self.assertEqual(agent_bay.api_key, "test-api-key")
-        self.assertEqual(agent_bay.region_id, "cn-shanghai")
         self.assertEqual(agent_bay.client, mock_client)
         self.assertDictEqual(agent_bay._sessions, {})
         self.assertIsNotNone(agent_bay._lock)
@@ -43,7 +41,6 @@ class TestAgentBay(unittest.TestCase):
         """Test initializing AgentBay with a provided API key"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-beijing",
             "endpoint": "another.endpoint.com",
             "timeout_ms": 60000,
         }
@@ -57,7 +54,6 @@ class TestAgentBay(unittest.TestCase):
 
         # Verify results
         self.assertEqual(agent_bay.api_key, "provided-api-key")
-        self.assertEqual(agent_bay.region_id, "cn-beijing")
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("agentbay.agentbay.load_config")
@@ -65,7 +61,6 @@ class TestAgentBay(unittest.TestCase):
         """Test initialization failure when no API key is available"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -128,7 +123,6 @@ class TestAgentBay(unittest.TestCase):
         """Test handling invalid response when creating a session"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -317,8 +311,8 @@ class TestAgentBay(unittest.TestCase):
     @patch("agentbay.agentbay.extract_request_id")
     @patch("agentbay.agentbay.load_config")
     @patch("agentbay.agentbay.mcp_client")
-    def test_create_session_with_mcp_policy_id(self, mock_mcp_client, mock_load_config, mock_extract_request_id):
-        """Ensure mcp_policy_id is passed to create_mcp_session body"""
+    def test_create_session_with_policy_id(self, mock_mcp_client, mock_load_config, mock_extract_request_id):
+        """Ensure policy_id is passed to create_mcp_session body"""
         mock_load_config.return_value = {
             "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
@@ -341,13 +335,13 @@ class TestAgentBay(unittest.TestCase):
         mock_mcp_client.return_value = mock_client
 
         agent_bay = AgentBay(api_key="test-key")
-        params = CreateSessionParams(mcp_policy_id="policy-xyz")
+        params = CreateSessionParams(policy_id="policy-xyz")
 
         result = agent_bay.create(params)
         self.assertTrue(result.success)
         mock_client.create_mcp_session.assert_called_once()
         call_arg = mock_client.create_mcp_session.call_args[0][0]
-        # Ensure mcp_policy_id is carried on the request object; client will include it in request body
+        # Ensure policy_id is carried on the request object; client will include it in request body
         self.assertEqual(getattr(call_arg, "mcp_policy_id", None) or getattr(call_arg, "McpPolicyId", None), "policy-xyz")
         # Basic success assertion remains; deep body behavior is validated in client integration tests
 
@@ -357,7 +351,6 @@ class TestAgentBay(unittest.TestCase):
         """Test creating a session with mobile extra configurations"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -417,7 +410,6 @@ class TestAgentBay(unittest.TestCase):
         """Test creating a session with mobile blacklist configuration"""
         # Mock configuration
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }

@@ -1,6 +1,14 @@
 import json
 from typing import TYPE_CHECKING, Dict, Optional
-from .logger import get_logger, log_api_call, log_api_response, log_operation_start, log_operation_success, log_operation_error, log_warning
+from .logger import (
+    get_logger,
+    log_api_call,
+    log_api_response,
+    log_operation_start,
+    log_operation_success,
+    log_operation_error,
+    log_warning,
+)
 
 from agentbay.api.models import (
     GetLabelRequest,
@@ -31,6 +39,7 @@ from agentbay.browser import Browser
 
 # Initialize logger for this module
 logger = get_logger("session")
+
 
 class SessionInfo:
     """
@@ -77,7 +86,9 @@ class Session:
         self.resource_url = ""
 
         # Recording functionality
-        self.enableBrowserReplay = False  # Whether browser recording is enabled for this session
+        self.enableBrowserReplay = (
+            False  # Whether browser recording is enabled for this session
+        )
 
         # MCP tools available for this session
         self.mcp_tools = []  # List[McpTool]
@@ -154,28 +165,38 @@ class Session:
         try:
             # If sync_context is True, trigger file uploads first
             if sync_context:
-                log_operation_start("Context synchronization", "Before session deletion")
+                log_operation_start(
+                    "Context synchronization", "Before session deletion"
+                )
                 import time
+
                 sync_start_time = time.time()
 
                 try:
                     # Use asyncio.run to call the async context.sync synchronously (no callback)
                     import asyncio
+
                     sync_result = asyncio.run(self.context.sync())
 
                     sync_duration = time.time() - sync_start_time
 
                     if sync_result.success:
                         log_operation_success("Context sync")
-                        logger.info(f"⏱️  Context sync completed in {sync_duration:.2f} seconds")
+                        logger.info(
+                            f"⏱️  Context sync completed in {sync_duration:.2f} seconds"
+                        )
                     else:
                         log_warning("Context sync completed with failures")
-                        logger.warning(f"⏱️  Context sync failed after {sync_duration:.2f} seconds")
+                        logger.warning(
+                            f"⏱️  Context sync failed after {sync_duration:.2f} seconds"
+                        )
 
                 except Exception as e:
                     sync_duration = time.time() - sync_start_time
                     log_warning(f"Failed to trigger context sync: {e}")
-                    logger.warning(f"⏱️  Context sync failed after {sync_duration:.2f} seconds")
+                    logger.warning(
+                        f"⏱️  Context sync failed after {sync_duration:.2f} seconds"
+                    )
                     # Continue with deletion even if sync fails
 
             # Proceed with session deletion
@@ -197,13 +218,15 @@ class Session:
 
             # Check if the response is success
             response_map = response.to_map()
-            success = response_map.get("body", {}).get("Success", True)
+            body = response_map.get("body", {})
+            success = body.get("Success", True)
 
             if not success:
+                error_message = f"[{body.get('Code', 'Unknown')}] {body.get('Message', 'Failed to delete session')}"
                 return DeleteResult(
                     request_id=request_id,
                     success=False,
-                    error_message="Failed to delete session",
+                    error_message=error_message,
                 )
 
             # Return success result with request ID
@@ -585,11 +608,10 @@ class Session:
 
         # Use provided image_id, session's image_id, or default
         if image_id is None:
-            image_id = getattr(self, 'image_id', '') or "linux_latest"
+            image_id = getattr(self, "image_id", "") or "linux_latest"
 
         request = ListMcpToolsRequest(
-            authorization=f"Bearer {self.get_api_key()}",
-            image_id=image_id
+            authorization=f"Bearer {self.get_api_key()}", image_id=image_id
         )
 
         log_api_call("ListMcpTools", f"ImageId={image_id}")
@@ -610,11 +632,11 @@ class Session:
                 tools_data = json.loads(response.body.data)
                 for tool_data in tools_data:
                     tool = McpTool(
-                        name=tool_data.get('name', ''),
-                        description=tool_data.get('description', ''),
-                        input_schema=tool_data.get('inputSchema', {}),
-                        server=tool_data.get('server', ''),
-                        tool=tool_data.get('tool', '')
+                        name=tool_data.get("name", ""),
+                        description=tool_data.get("description", ""),
+                        input_schema=tool_data.get("inputSchema", {}),
+                        server=tool_data.get("server", ""),
+                        tool=tool_data.get("tool", ""),
                     )
                     tools.append(tool)
             except json.JSONDecodeError as e:

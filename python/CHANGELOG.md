@@ -2,6 +2,140 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.9.0] - 2025-10-15
+
+### Added
+
+#### 🎯 Platform-Specific Automation Modules
+- **Computer Module**: New dedicated module for desktop/Windows automation across all SDKs
+  - Desktop UI interaction APIs: `click_mouse()`, `move_mouse()`, `drag_mouse()`, `press_keys()`, `scroll()`
+  - Screen information: `get_screen_size()`, `screenshot()`
+  - Integration with MCP tools for advanced automation
+  - Python: `session.computer.*`, TypeScript: `session.computer.*`, Golang: `session.Computer.*`
+- **Mobile Module**: New dedicated module for Android device automation across all SDKs
+  - Touch interaction: `tap()`, `swipe()`, `long_press()`
+  - Input methods: `input_text()`, `send_key()` with KeyCode support
+  - UI element detection: `get_clickable_ui_elements()`
+  - Device configuration: `configure()` for setting device properties
+  - Android-only support (mobile_latest image)
+  - Python: `session.mobile.*`, TypeScript: `session.mobile.*`, Golang: `session.Mobile.*`
+
+#### 📊 Session Management Enhancement
+- **Get Session API**: Retrieve existing session information by session ID
+  - Python: `agentbay.get(session_id)` returns `SessionResult`
+  - TypeScript: `agentBay.get(sessionId)` returns `SessionResult`
+  - Golang: `agentBay.Get(sessionID)` returns `*SessionResult`
+  - Returns session object with VPC configuration, network info, and resource URL
+  - Non-throwing error handling: check `result.success` and `result.error_message`
+- **List Sessions API**: Retrieve paginated list of sessions with label filtering
+  - Python: `agentbay.list(labels, page, limit)` returns `SessionListResult`
+  - TypeScript: `agentBay.list(labels, page, limit)` returns `SessionListResult`
+  - Golang: `agentBay.List(labels, page, limit)` returns `*SessionListResult`
+  - Support for page-based pagination (page numbers start from 1)
+  - Label filtering with key-value pairs
+  - Returns session IDs, total count, and pagination metadata
+
+#### 🗄️ Data Lifecycle Management
+- **RecyclePolicy**: Control context data retention lifecycle
+  - Lifecycle options: `1day`, `3days`, `5days`, `10days`, `15days`, `30days`, `90days`, `180days`, `360days`, `forever`
+  - Path-specific policies: apply different lifecycles to different directories
+  - Path validation: wildcard patterns not supported, use exact directory paths
+  - Integration with ContextSync for automatic data cleanup
+  - Python: `RecyclePolicy(lifecycle=Lifecycle.LIFECYCLE_30DAYS, paths=["/data"])`
+  - TypeScript: `new RecyclePolicy(Lifecycle.LIFECYCLE_30DAYS, ["/data"])`
+  - Golang: `&RecyclePolicy{Lifecycle: Lifecycle_30Days, Paths: []string{"/data"}}`
+
+#### 🔒 VPC Session Authentication Enhancement
+- **Token-based Authentication**: VPC sessions now support token authentication
+  - Automatic token management for secure VPC session access
+  - Token included in session creation response
+  - Used for MCP tool calls and resource access in VPC environments
+
+#### 🔧 API Schema Validation
+- **MCP Field Validation**: Enhanced MCP tool parameter validation
+  - Renamed `schema` to `field_schema` to align with MCP standard
+  - Better error messages for invalid tool parameters
+  - Improved type checking for tool inputs
+
+### Changed (Breaking Changes)
+
+#### ⚠️ API Response Structure Changes
+- **SessionListResult.Sessions Removed**: Breaking change in session list response
+  - **Removed**: `SessionListResult.Sessions` field (contained full Session objects)
+  - **Use instead**: `SessionListResult.SessionIds` (list of session ID strings)
+  - **Rationale**: Reduce response payload size and improve performance
+  - **Migration**: Use `agentbay.get(session_id)` to retrieve full Session objects for specific sessions
+  - **Before**: `result.Sessions[0].command.execute_command(...)`
+  - **After**:
+    ```python
+    session_id = result.SessionIds[0]
+    session_result = agentbay.get(session_id)
+    session_result.session.command.execute_command(...)
+    ```
+
+#### 🔄 Error Handling Consistency
+- **Unified Error Handling**: All APIs now use Result objects instead of raising exceptions
+  - `context.get()` returns `ContextResult` (no longer raises `AgentBayError`)
+  - `context.create()` returns `ContextResult` (no longer raises `AgentBayError`)
+  - **Migration Required**: Replace `try-except AgentBayError` with `if not result.success` pattern
+  - All error messages now follow `[ErrorCode] Message` format
+  - **Before**:
+    ```python
+    try:
+        result = agentbay.context.get("my-context")
+        context = result.context
+    except AgentBayError as e:
+        print(f"Error: {e}")
+    ```
+  - **After**:
+    ```python
+    result = agentbay.context.get("my-context")
+    if not result.success:
+        print(f"Error: {result.error_message}")
+    else:
+        context = result.context
+    ```
+
+### Deprecated
+
+- **UI Module**: All methods marked for removal in v2.0.0
+  - `session.ui.click()` → Use `session.computer.click_mouse()` or `session.mobile.tap()`
+  - `session.ui.type()` → Use `session.computer.press_keys()` or `session.mobile.input_text()`
+  - `session.ui.mouse_move()` → Use `session.computer.move_mouse()`
+  - `session.ui.screenshot()` → Use `session.computer.screenshot()` or `session.mobile.screenshot()`
+  - Migration guide: Use platform-specific `computer` or `mobile` modules
+- **Window Module**: Some methods deprecated
+  - Deprecated methods will be replaced by Computer module equivalents in v2.0.0
+- **Context Fields**:
+  - `ContextResult.state` marked for removal in v2.0.0
+  - `ContextResult.os_type` marked for removal in v2.0.0
+
+### Enhanced
+
+- **Error Messages**: Improved error reporting with structured `[Code] Message` format across all APIs
+- **API-level Error Handling**: Enhanced error parsing for `context.get()`, `context.list()`, and `agentbay.create_session()`
+- **ContextResult.error_message**: Added for consistent error reporting in context operations
+- **ContextListResult.error_message**: Added for consistent error reporting in list operations
+
+### Documentation
+
+- **Documentation Restructure**: Major documentation organization improvements
+  - **New Cookbook**: Real-world examples and recipes for common scenarios
+  - **Restructured Guides**:
+    - Common Features split into Basics, Advanced, and Configuration sections
+    - Computer Use guide updated with new Computer module APIs
+    - Mobile Use guide updated with new Mobile module APIs and Android-only clarification
+    - CodeSpace guide enhanced with code execution examples
+  - **API Reference Updates**: Aligned with actual SDK implementation across all three languages
+  - **Migration Guides**: Added for breaking changes and deprecated APIs
+  - Net documentation changes: +993 lines across 28 new files, 16 modified files, 14 deleted files
+
+### Fixed
+
+- **Documentation Accuracy**: Fixed incorrect iOS support claim in Mobile Use guide (Android only)
+- **API Documentation**: Corrected method signatures and return types across all language SDKs
+- **Example Code**: All code examples verified against actual SDK implementation
+
 ## [0.8.0] - 2025-09-19
 
 ### Added
@@ -136,7 +270,7 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
     - `delete_file()` / `DeleteFile()` for context file deletion
     - Enhanced error handling and response parsing for all file operations
 - **Session Management Enhancements**: Improved session creation and management
-  - **MCP Policy Support**: Optional `mcp_policy_id` parameter in session creation
+  - **Policy Support**: Optional `policy_id` parameter in session creation
   - **Session List Response Models**: Enhanced session listing with proper response models
 - **Browser Agent Improvements**: Enhanced AI-powered browser interactions
   - **Direct ObserveResult Support**: PageUse act API can now accept ObserveResult directly
