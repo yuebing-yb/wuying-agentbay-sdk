@@ -398,8 +398,8 @@ func TestAgentBay_CreateSessionWithRecyclePolicy(t *testing.T) {
 		fmt.Printf("Warning: Error listing sessions by labels: %v\n", err)
 	} else {
 		found := false
-		for _, s := range listResult.Sessions {
-			if s.SessionID == session.SessionID {
+		for _, sessionId := range listResult.SessionIds {
+			if sessionId == session.SessionID {
 				found = true
 				break
 			}

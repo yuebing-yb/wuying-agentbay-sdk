@@ -19,7 +19,7 @@ func TestContextPagination(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
-	t.Logf("AgentBay client initialized successfully with region: %s", agentBay.RegionId)
+	t.Logf("AgentBay client initialized successfully")
 
 	// Create multiple contexts for testing pagination
 	contextNames := make([]string, 0)

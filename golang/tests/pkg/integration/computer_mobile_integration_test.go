@@ -10,8 +10,7 @@ import (
 func TestSession_ComputerMobileIntegration(t *testing.T) {
 	// Create a mock AgentBay instance
 	mockAgentBay := &agentbay.AgentBay{
-		APIKey:   "test-api-key",
-		RegionId: "us-west-1",
+		APIKey: "test-api-key",
 	}
 
 	// Create a new session
@@ -56,8 +55,7 @@ func TestSession_ComputerModuleUsage(t *testing.T) {
 	// Note: This is a structural test, not a functional test since we don't have a real session
 
 	mockAgentBay := &agentbay.AgentBay{
-		APIKey:   "test-api-key",
-		RegionId: "us-west-1",
+		APIKey: "test-api-key",
 	}
 
 	session := agentbay.NewSession(mockAgentBay, "test-session-456")
@@ -83,8 +81,7 @@ func TestSession_MobileModuleUsage(t *testing.T) {
 	// This test demonstrates how the Mobile module would be used
 
 	mockAgentBay := &agentbay.AgentBay{
-		APIKey:   "test-api-key",
-		RegionId: "us-west-1",
+		APIKey: "test-api-key",
 	}
 
 	session := agentbay.NewSession(mockAgentBay, "test-session-789")
