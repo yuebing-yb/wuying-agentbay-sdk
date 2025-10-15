@@ -1,6 +1,6 @@
 # Mobile Use Guide
 
-Mobile Use is AgentBay's mobile device automation environment for Android/iOS devices.
+Mobile Use is AgentBay's mobile device automation environment for Android devices.
 
 ## Documentation
 
