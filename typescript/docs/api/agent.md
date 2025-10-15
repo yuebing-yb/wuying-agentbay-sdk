@@ -2,6 +2,8 @@
 
 The `Agent` class provides AI-powered capabilities for executing tasks, checking task status, and terminating tasks within a session. It enables natural language task execution and monitoring.
 
+**⚠️ Important Note**: The Agent functionality is verified on the `windows_latest` system image.
+
 ## 📖 Related Tutorial
 
 - [Agent Modules Guide](../../../docs/guides/common-features/advanced/agent-modules.md) - Detailed tutorial on AI-powered automation with Agent modules
@@ -41,23 +43,34 @@ import { AgentBay } from 'wuying-agentbay-sdk';
 // Initialize the SDK
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 
-// Create a session
+// Create a session with Windows image (required for Agent functionality)
 async function executeAgentTask() {
   try {
-    const createResult = await agentBay.create();
+    const params = { imageId: "windows_latest" };
+    const createResult = await agentBay.create(params);
     if (createResult.success) {
       const session = createResult.session;
-      
+      console.log(`Session created successfully with ID: ${session.getSessionId()}`);
+
       // Execute a task using the Agent
       const taskDescription = "Find the current weather in New York City";
       const executionResult = await session.agent.executeTask(taskDescription, 10);
-      
+
       if (executionResult.success) {
         console.log(`Task completed successfully with status: ${executionResult.taskStatus}`);
         console.log(`Task ID: ${executionResult.taskId}`);
       } else {
         console.log(`Task failed: ${executionResult.errorMessage}`);
+        // If we have a task ID, we can try to get more detailed status
+        if (executionResult.taskId) {
+          const statusResult = await session.agent.getTaskStatus(executionResult.taskId);
+          if (statusResult.success) {
+            console.log(`Task status details: ${statusResult.output}`);
+          }
+        }
       }
+    } else {
+      console.log(`Failed to create session: ${createResult.errorMessage}`);
     }
   } catch (error) {
     console.error('Error:', error);

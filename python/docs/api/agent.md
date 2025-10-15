@@ -41,8 +41,10 @@ from agentbay import AgentBay
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
 
-# Create a session
-session_result = agent_bay.create()
+# Create a session with windows_latest image
+from agentbay.session_params import CreateSessionParams
+params = CreateSessionParams(image_id="windows_latest")
+session_result = agent_bay.create(params)
 if session_result.success:
     session = session_result.session
     
