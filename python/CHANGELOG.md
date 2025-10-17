@@ -98,17 +98,17 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
 ### Deprecated
 
-- **UI Module**: All methods marked for removal in v2.0.0
+- **UI Module**: All methods marked for removal in a future version
   - `session.ui.click()` → Use `session.computer.click_mouse()` or `session.mobile.tap()`
   - `session.ui.type()` → Use `session.computer.press_keys()` or `session.mobile.input_text()`
   - `session.ui.mouse_move()` → Use `session.computer.move_mouse()`
   - `session.ui.screenshot()` → Use `session.computer.screenshot()` or `session.mobile.screenshot()`
   - Migration guide: Use platform-specific `computer` or `mobile` modules
 - **Window Module**: Some methods deprecated
-  - Deprecated methods will be replaced by Computer module equivalents in v2.0.0
+  - Deprecated methods will be replaced by Computer module equivalents in a future version
 - **Context Fields**:
-  - `ContextResult.state` marked for removal in v2.0.0
-  - `ContextResult.os_type` marked for removal in v2.0.0
+  - `ContextResult.state` marked for removal in a future version
+  - `ContextResult.os_type` marked for removal in a future version
 
 ### Enhanced
 

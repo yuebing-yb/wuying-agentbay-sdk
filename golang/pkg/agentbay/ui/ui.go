@@ -233,7 +233,7 @@ func NewUI(session interface {
 // GetClickableUIElements retrieves all clickable UI elements
 // Deprecated: UI operations have been moved to platform-specific modules. Use session.Mobile.GetClickableUIElements() instead.
 func (u *UIManager) GetClickableUIElements(timeoutMs int) (*UIElementsResult, error) {
-	defer deprecation.DeprecatedMethod("UIManager.GetClickableUIElements", "UI operations have been moved to platform-specific modules", "session.Mobile.GetClickableUIElements()", "2.0.0")()
+	defer deprecation.DeprecatedMethod("UIManager.GetClickableUIElements", "UI operations have been moved to platform-specific modules", "session.Mobile.GetClickableUIElements()", "")()
 	if timeoutMs <= 0 {
 		timeoutMs = 2000 // Default timeout
 	}
@@ -268,7 +268,7 @@ func (u *UIManager) GetClickableUIElements(timeoutMs int) (*UIElementsResult, er
 // GetAllUIElements retrieves all UI elements regardless of their clickable status
 // Deprecated: UI operations have been moved to platform-specific modules. Use session.Mobile.GetAllUIElements() instead.
 func (u *UIManager) GetAllUIElements(timeoutMs int) (*UIElementsResult, error) {
-	defer deprecation.DeprecatedMethod("UIManager.GetAllUIElements", "UI operations have been moved to platform-specific modules", "session.Mobile.GetAllUIElements()", "2.0.0")()
+	defer deprecation.DeprecatedMethod("UIManager.GetAllUIElements", "UI operations have been moved to platform-specific modules", "session.Mobile.GetAllUIElements()", "")()
 	if timeoutMs <= 0 {
 		timeoutMs = 5000 // Default timeout
 	}
@@ -303,7 +303,7 @@ func (u *UIManager) GetAllUIElements(timeoutMs int) (*UIElementsResult, error) {
 // SendKey sends a key event to the UI (original interface)
 // Deprecated: UI operations have been moved to platform-specific modules. Use session.Mobile.SendKey() instead.
 func (u *UIManager) SendKey(key int) (*KeyActionResult, error) {
-	defer deprecation.DeprecatedMethod("UIManager.SendKey", "UI operations have been moved to platform-specific modules", "session.Mobile.SendKey()", "2.0.0")()
+	defer deprecation.DeprecatedMethod("UIManager.SendKey", "UI operations have been moved to platform-specific modules", "session.Mobile.SendKey()", "")()
 	args := map[string]interface{}{
 		"key": key,
 	}
@@ -324,7 +324,7 @@ func (u *UIManager) SendKey(key int) (*KeyActionResult, error) {
 // InputText inputs text into the currently focused UI element (original interface)
 // Deprecated: UI operations have been moved to platform-specific modules. Use session.Computer.InputText() or session.Mobile.InputText() instead.
 func (u *UIManager) InputText(text string) (*TextInputResult, error) {
-	defer deprecation.DeprecatedMethod("UIManager.InputText", "UI operations have been moved to platform-specific modules", "session.Computer.InputText() or session.Mobile.InputText()", "2.0.0")()
+	defer deprecation.DeprecatedMethod("UIManager.InputText", "UI operations have been moved to platform-specific modules", "session.Computer.InputText() or session.Mobile.InputText()", "")()
 	args := map[string]interface{}{
 		"text": text,
 	}
@@ -345,7 +345,7 @@ func (u *UIManager) InputText(text string) (*TextInputResult, error) {
 // Swipe performs a swipe gesture on the screen (original interface)
 // Deprecated: UI operations have been moved to platform-specific modules. Use session.Mobile.Swipe() instead.
 func (u *UIManager) Swipe(startX, startY, endX, endY, durationMs int) (*SwipeResult, error) {
-	defer deprecation.DeprecatedMethod("UIManager.Swipe", "UI operations have been moved to platform-specific modules", "session.Mobile.Swipe()", "2.0.0")()
+	defer deprecation.DeprecatedMethod("UIManager.Swipe", "UI operations have been moved to platform-specific modules", "session.Mobile.Swipe()", "")()
 	if durationMs <= 0 {
 		durationMs = 300 // Default duration in milliseconds
 	}
@@ -374,7 +374,7 @@ func (u *UIManager) Swipe(startX, startY, endX, endY, durationMs int) (*SwipeRes
 // Click performs a click action on the screen (original interface)
 // Deprecated: UI operations have been moved to platform-specific modules. Use session.Computer.ClickMouse() or session.Mobile.Tap() instead.
 func (u *UIManager) Click(x, y int, button string) (*UIResult, error) {
-	defer deprecation.DeprecatedMethod("UIManager.Click", "UI operations have been moved to platform-specific modules", "session.Computer.ClickMouse() or session.Mobile.Tap()", "2.0.0")()
+	defer deprecation.DeprecatedMethod("UIManager.Click", "UI operations have been moved to platform-specific modules", "session.Computer.ClickMouse() or session.Mobile.Tap()", "")()
 	if button == "" {
 		button = "left" // Default button
 	}
@@ -402,7 +402,7 @@ func (u *UIManager) Click(x, y int, button string) (*UIResult, error) {
 // Screenshot captures a screenshot of the current screen (original interface)
 // Deprecated: UI operations have been moved to platform-specific modules. Use session.Computer.Screenshot() or session.Mobile.Screenshot() instead.
 func (u *UIManager) Screenshot() (*UIResult, error) {
-	defer deprecation.DeprecatedMethod("UIManager.Screenshot", "UI operations have been moved to platform-specific modules", "session.Computer.Screenshot() or session.Mobile.Screenshot()", "2.0.0")()
+	defer deprecation.DeprecatedMethod("UIManager.Screenshot", "UI operations have been moved to platform-specific modules", "session.Computer.Screenshot() or session.Mobile.Screenshot()", "")()
 	result, err := u.Session.CallMcpTool("system_screenshot", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to take screenshot: %w", err)
