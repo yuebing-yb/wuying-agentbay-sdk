@@ -249,13 +249,22 @@ class Mobile(BaseService):
                     error_message=result.error_message,
                 )
 
-            elements = result.data if result.data else []
-            return UIElementListResult(
-                request_id=request_id,
-                success=True,
-                elements=elements,
-                error_message="",
-            )
+            try:
+                import json
+                elements = json.loads(result.data)
+                return UIElementListResult(
+                    request_id=request_id,
+                    success=True,
+                    elements=elements,
+                    error_message="",
+                )
+            except json.JSONDecodeError as e:
+                return UIElementListResult(
+                    request_id=request_id,
+                    success=False,
+                    elements=[],
+                    error_message=f"Failed to parse clickable UI elements data: {e}",
+                )
         except Exception as e:
             return UIElementListResult(
                 request_id="",
