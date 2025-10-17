@@ -106,7 +106,7 @@ func (suite *DeprecationTestSuite) TestStackTraceFeature() {
 	deprecation.SetDeprecationConfig(config)
 
 	// Call deprecated method
-	deprecation.Deprecated("This is deprecated", "Use new method", "2.0.0")
+	deprecation.Deprecated("This is deprecated", "Use new method", "")
 
 	// Check log output contains stack trace
 	output := suite.logBuffer.String()
@@ -119,7 +119,7 @@ func (suite *DeprecationTestSuite) TestDeprecationWithoutReplacement() {
 	t := suite.T()
 
 	// Call deprecated method without replacement
-	deprecation.DeprecatedMethod("OldMethod", "No longer supported", "", "2.0.0")()
+	deprecation.DeprecatedMethod("OldMethod", "No longer supported", "", "")()
 
 	// Check log output
 	output := suite.logBuffer.String()

@@ -159,7 +159,7 @@ class WindowManager(BaseService):
     @deprecated(
         reason="Window management has been moved to Computer module",
         replacement="session.computer.list_root_windows()",
-        version="2.0.0"
+        version=None
     )
     def list_root_windows(self, timeout_ms: int = 3000) -> WindowListResult:
         """
@@ -195,7 +195,7 @@ class WindowManager(BaseService):
     @deprecated(
         reason="Window management has been moved to Computer module",
         replacement="session.computer.get_active_window()",
-        version="2.0.0"
+        version=None
     )
     def get_active_window(self, timeout_ms: int = 3000) -> WindowInfoResult:
         """
@@ -231,7 +231,7 @@ class WindowManager(BaseService):
     @deprecated(
         reason="Window management has been moved to Computer module",
         replacement="session.computer.activate_window()",
-        version="2.0.0"
+        version=None
     )
     def activate_window(self, window_id: int) -> BoolResult:
         """
@@ -272,7 +272,7 @@ class WindowManager(BaseService):
         replacement="session.computer.maximize_window()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -317,7 +317,7 @@ class WindowManager(BaseService):
         replacement="session.computer.minimize_window()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -362,7 +362,7 @@ class WindowManager(BaseService):
         replacement="session.computer.restore_window()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -407,7 +407,7 @@ class WindowManager(BaseService):
         replacement="session.computer.close_window()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -452,7 +452,7 @@ class WindowManager(BaseService):
         replacement="session.computer.fullscreen_window()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -497,7 +497,7 @@ class WindowManager(BaseService):
         replacement="session.computer.resize_window()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -544,7 +544,7 @@ class WindowManager(BaseService):
         replacement="session.computer.focus_mode()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )

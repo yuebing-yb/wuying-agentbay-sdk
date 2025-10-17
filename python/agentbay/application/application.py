@@ -291,7 +291,7 @@ class ApplicationManager(BaseService):
         replacement="session.computer.get_installed_apps() or session.mobile.get_installed_apps()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -362,7 +362,7 @@ class ApplicationManager(BaseService):
         replacement="session.computer.start_app() or session.mobile.start_app()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -430,7 +430,7 @@ class ApplicationManager(BaseService):
         replacement="session.computer.stop_app_by_pname() or session.mobile.stop_app_by_pname()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -468,7 +468,7 @@ class ApplicationManager(BaseService):
         replacement="session.computer.stop_app_by_pid()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -506,7 +506,7 @@ class ApplicationManager(BaseService):
         replacement="session.computer.stop_app_by_cmd()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -538,7 +538,7 @@ class ApplicationManager(BaseService):
     @deprecated(
         reason="Application management has been moved to platform-specific modules",
         replacement="session.computer.list_visible_apps()",
-        version="2.0.0"
+        version=None
     )
     def list_visible_apps(self) -> ProcessListResult:
         """

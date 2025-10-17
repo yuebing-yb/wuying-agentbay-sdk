@@ -88,7 +88,7 @@ class UI(BaseService):
         replacement="session.mobile.get_clickable_ui_elements()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -150,7 +150,7 @@ class UI(BaseService):
         replacement="session.mobile.get_all_ui_elements()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -240,7 +240,7 @@ class UI(BaseService):
         replacement="session.mobile.send_key()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -298,7 +298,7 @@ class UI(BaseService):
         replacement="session.computer.input_text() or session.mobile.input_text()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -350,7 +350,7 @@ class UI(BaseService):
         replacement="session.mobile.swipe()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -420,7 +420,7 @@ class UI(BaseService):
         replacement="session.computer.click_mouse() or session.mobile.tap()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
@@ -475,7 +475,7 @@ class UI(BaseService):
         replacement="session.computer.screenshot() or session.mobile.screenshot()",
 
 
-        version="2.0.0"
+        version=None
 
 
     )
