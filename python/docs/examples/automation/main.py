@@ -208,12 +208,45 @@ def linux_ui_automation_example(agent_bay):
         print("🔄 Taking Linux desktop screenshot...")
         screenshot = session.ui.screenshot()
         if screenshot.success:
-            # Save screenshot
-            write_result = session.file_system.write_file("/tmp/linux_desktop_screenshot.png", screenshot.data)
-            if write_result.success:
-                print("✅ Linux desktop screenshot saved successfully: /tmp/linux_desktop_screenshot.png")
+            # Debug the screenshot data
+            print(f"🔍 Screenshot data type: {type(screenshot.data)}")
+            print(f"🔍 Screenshot data (first 100 chars): {str(screenshot.data)[:100]}")
+
+            # Save screenshot locally using the same approach as screenshot_download.py
+            import os
+            import base64
+            download_dir = "downloads"
+            os.makedirs(download_dir, exist_ok=True)
+            local_file_path = os.path.join(download_dir, f"linux_desktop_screenshot_{session.session_id}.png")
+
+            # Handle different data formats
+            if isinstance(screenshot.data, str):
+                # If it's a base64 string, decode it first
+                if screenshot.data.startswith("data:image/"):
+                    # Handle data URL format
+                    try:
+                        header, encoded = screenshot.data.split(",", 1)
+                        image_data = base64.b64decode(encoded)
+                    except Exception as e:
+                        print(f"⚠️ Failed to decode data URL: {e}")
+                        image_data = screenshot.data.encode('utf-8')
+                else:
+                    # Try to decode as base64
+                    try:
+                        image_data = base64.b64decode(screenshot.data)
+                    except Exception as e:
+                        print(f"⚠️ Failed to decode base64: {e}")
+                        image_data = screenshot.data.encode('utf-8')
             else:
-                print(f"❌ Screenshot save failed: {write_result.error_message}")
+                # If it's already bytes
+                image_data = screenshot.data
+
+            # Write screenshot data to local file
+            with open(local_file_path, "wb") as f:
+                f.write(image_data)
+
+            print(f"✅ Linux desktop screenshot saved successfully: {os.path.abspath(local_file_path)}")
+            print(f"📁 File size: {len(image_data)} bytes")
         else:
             print(f"❌ Screenshot failed: {screenshot.error_message}")
         
@@ -278,12 +311,45 @@ def mobile_ui_automation_example(agent_bay):
         print("🔄 Taking mobile screen screenshot...")
         screenshot = session.ui.screenshot()
         if screenshot.success:
-            # Save screenshot with mobile-specific name
-            write_result = session.file_system.write_file("/tmp/mobile_screen_screenshot.png", screenshot.data)
-            if write_result.success:
-                print("✅ Mobile screen screenshot saved successfully: /tmp/mobile_screen_screenshot.png")
+            # Debug the screenshot data
+            print(f"🔍 Screenshot data type: {type(screenshot.data)}")
+            print(f"🔍 Screenshot data (first 100 chars): {str(screenshot.data)[:100]}")
+
+            # Save screenshot locally using the same approach as screenshot_download.py
+            import os
+            import base64
+            download_dir = "downloads"
+            os.makedirs(download_dir, exist_ok=True)
+            local_file_path = os.path.join(download_dir, f"mobile_screen_screenshot_{session.session_id}.png")
+
+            # Handle different data formats
+            if isinstance(screenshot.data, str):
+                # If it's a base64 string, decode it first
+                if screenshot.data.startswith("data:image/"):
+                    # Handle data URL format
+                    try:
+                        header, encoded = screenshot.data.split(",", 1)
+                        image_data = base64.b64decode(encoded)
+                    except Exception as e:
+                        print(f"⚠️ Failed to decode data URL: {e}")
+                        image_data = screenshot.data.encode('utf-8')
+                else:
+                    # Try to decode as base64
+                    try:
+                        image_data = base64.b64decode(screenshot.data)
+                    except Exception as e:
+                        print(f"⚠️ Failed to decode base64: {e}")
+                        image_data = screenshot.data.encode('utf-8')
             else:
-                print(f"❌ Screenshot save failed: {write_result.error_message}")
+                # If it's already bytes
+                image_data = screenshot.data
+
+            # Write screenshot data to local file
+            with open(local_file_path, "wb") as f:
+                f.write(image_data)
+
+            print(f"✅ Mobile screen screenshot saved successfully: {os.path.abspath(local_file_path)}")
+            print(f"📁 File size: {len(image_data)} bytes")
         else:
             print(f"❌ Screenshot failed: {screenshot.error_message}")
         
