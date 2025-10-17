@@ -245,7 +245,7 @@ class Mobile(BaseService):
                 return UIElementListResult(
                     request_id=request_id,
                     success=False,
-                    elements=[],
+                    elements=None,
                     error_message=result.error_message,
                 )
 
@@ -258,18 +258,18 @@ class Mobile(BaseService):
                     elements=elements,
                     error_message="",
                 )
-            except json.JSONDecodeError as e:
+            except Exception as e:
                 return UIElementListResult(
                     request_id=request_id,
                     success=False,
-                    elements=[],
+                    elements=None,
                     error_message=f"Failed to parse clickable UI elements data: {e}",
                 )
         except Exception as e:
             return UIElementListResult(
                 request_id="",
                 success=False,
-                elements=[],
+                elements=None,
                 error_message=f"Failed to get clickable UI elements: {str(e)}",
             )
 
@@ -281,10 +281,37 @@ class Mobile(BaseService):
             timeout_ms (int, optional): Timeout in milliseconds. Defaults to 2000.
 
         Returns:
-            UIElementListResult: Result object containing all UI elements and
-                error message if any.
+            UIElementListResult: Result object containing UI elements and error
+                message if any.
         """
         args = {"timeout_ms": timeout_ms}
+
+        def parse_element(element: Dict[str, Any]) -> Dict[str, Any]:
+            """
+            Recursively parses a UI element and its children.
+
+            Args:
+                element (Dict[str, Any]): The UI element to parse.
+
+            Returns:
+                Dict[str, Any]: The parsed UI element.
+            """
+            parsed = {
+                "bounds": element.get("bounds", ""),
+                "className": element.get("className", ""),
+                "text": element.get("text", ""),
+                "type": element.get("type", ""),
+                "resourceId": element.get("resourceId", ""),
+                "index": element.get("index", -1),
+                "isParent": element.get("isParent", False),
+            }
+            children = element.get("children", [])
+            if children:
+                parsed["children"] = [parse_element(child) for child in children]
+            else:
+                parsed["children"] = []
+            return parsed
+
         try:
             result = self._call_mcp_tool("get_all_ui_elements", args)
             request_id = result.request_id
@@ -293,22 +320,32 @@ class Mobile(BaseService):
                 return UIElementListResult(
                     request_id=request_id,
                     success=False,
-                    elements=[],
+                    elements=None,
                     error_message=result.error_message,
                 )
 
-            elements = result.data if result.data else []
-            return UIElementListResult(
-                request_id=request_id,
-                success=True,
-                elements=elements,
-                error_message="",
-            )
+            try:
+                import json
+                elements = json.loads(result.data)
+                parsed_elements = [parse_element(element) for element in elements]
+                return UIElementListResult(
+                    request_id=request_id,
+                    success=True,
+                    elements=parsed_elements,
+                    error_message="",
+                )
+            except Exception as e:
+                return UIElementListResult(
+                    request_id=request_id,
+                    success=False,
+                    elements=None,
+                    error_message=f"Failed to parse UI elements data: {e}",
+                )
         except Exception as e:
             return UIElementListResult(
                 request_id="",
                 success=False,
-                elements=[],
+                elements=None,
                 error_message=f"Failed to get all UI elements: {str(e)}",
             )
 
