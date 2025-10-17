@@ -126,4 +126,4 @@ class TestDeprecationWarnings:
             assert "activate_window" in warning_message
             assert "deprecated" in warning_message.lower()
             assert "session.computer.activate_window()" in warning_message
-            assert "2.0.0" in warning_message 
+            # Note: Version numbers have been removed from deprecation warnings 

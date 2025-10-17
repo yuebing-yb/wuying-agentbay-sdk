@@ -135,13 +135,13 @@ class TestMobile:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        mock_result.data = [{"id": "button1", "text": "Click me"}]
-        
+        mock_result.data = '[{"id": "button1", "text": "Click me"}]'  # JSON string
+
         self.mobile._call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.get_clickable_ui_elements()
-        
+
         # Assert
         assert result.success is True
         assert len(result.elements) == 1
@@ -156,13 +156,13 @@ class TestMobile:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        mock_result.data = []
-        
+        mock_result.data = '[]'  # JSON string
+
         self.mobile._call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.get_clickable_ui_elements(timeout_ms=5000)
-        
+
         # Assert
         self.mobile._call_mcp_tool.assert_called_once_with(
             "get_clickable_ui_elements", {"timeout_ms": 5000}
@@ -174,19 +174,28 @@ class TestMobile:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        mock_result.data = [
-            {"id": "button1", "text": "Click me"},
-            {"id": "text1", "text": "Hello"}
-        ]
-        
+        # Mock data with proper UI element structure including children
+        mock_result.data = '[{"bounds": "[0,0][100,100]", "className": "Button", "text": "Click me", "type": "button", "resourceId": "btn1", "index": 0, "isParent": true, "children": [{"bounds": "[10,10][90,90]", "className": "Text", "text": "Label", "type": "text", "resourceId": "txt1", "index": 0, "isParent": false}]}, {"bounds": "[0,100][100,200]", "className": "TextView", "text": "Hello", "type": "text", "resourceId": "txt2", "index": 1, "isParent": false}]'
+
         self.mobile._call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.get_all_ui_elements()
-        
+
         # Assert
         assert result.success is True
         assert len(result.elements) == 2
+        # Verify first element structure and fields
+        assert result.elements[0]["bounds"] == "[0,0][100,100]"
+        assert result.elements[0]["className"] == "Button"
+        assert result.elements[0]["text"] == "Click me"
+        assert result.elements[0]["resourceId"] == "btn1"
+        # Verify children are parsed
+        assert len(result.elements[0]["children"]) == 1
+        assert result.elements[0]["children"][0]["text"] == "Label"
+        # Verify second element
+        assert result.elements[1]["text"] == "Hello"
+        assert result.elements[1]["children"] == []
         self.mobile._call_mcp_tool.assert_called_once_with(
             "get_all_ui_elements", {"timeout_ms": 2000}
         )
