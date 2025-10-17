@@ -50,7 +50,7 @@ def main():
         print("Step 2: Creating first session with Browser Context...")
         browser_context = BrowserContext(context.id, auto_upload=True)
         params = CreateSessionParams(
-            image_id="imgc-wucyOiPmeV2Z753lq",  # Browser image ID
+            image_id="browser_latest",  # Browser image ID
             browser_context=browser_context
         )
 
