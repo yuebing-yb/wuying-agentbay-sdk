@@ -12,7 +12,7 @@ from agentbay.api.models import (
 )
 from agentbay.exceptions import AgentBayError
 from agentbay.model.response import ApiResponse, OperationResult, extract_request_id
-from .logger import get_logger, log_api_call, log_api_response, log_operation_error
+from .logger import get_logger, log_api_call, log_api_response, log_api_response_with_details, log_operation_error
 import json
 
 # Initialize logger for this module
@@ -245,14 +245,13 @@ class ContextService:
                 next_token=params.next_token,
             )
             response = self.agent_bay.client.list_contexts(request)
+            request_id = extract_request_id(response)
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {response}")
-            request_id = extract_request_id(response)
+                response_body = str(response)
             try:
                 response_map = response.to_map()
                 if not isinstance(response_map, dict):
@@ -299,6 +298,20 @@ class ContextService:
                 next_token = body.get("NextToken")
                 max_results = body.get("MaxResults", max_results)
                 total_count = body.get("TotalCount")
+
+                # Log API response with key details
+                log_api_response_with_details(
+                    api_name="ListContexts",
+                    request_id=request_id,
+                    success=True,
+                    key_fields={
+                        "total_count": total_count,
+                        "returned_count": len(contexts),
+                        "has_more": "yes" if next_token else "no"
+                    },
+                    full_response=response_body
+                )
+
                 return ContextListResult(
                     request_id=request_id,
                     success=True,
@@ -309,7 +322,7 @@ class ContextService:
                     error_message="",
                 )
             except Exception as e:
-                log_operation_error("parse ListContexts response", str(e))
+                log_operation_error("parse ListContexts response", str(e), exc_info=True)
                 return ContextListResult(
                     request_id=request_id,
                     success=False,
@@ -317,7 +330,7 @@ class ContextService:
                     error_message=f"Failed to parse response: {e}",
                 )
         except Exception as e:
-            log_operation_error("ListContexts", str(e))
+            log_operation_error("ListContexts", str(e), exc_info=True)
             return ContextListResult(
                 request_id="",
                 success=False,
@@ -463,14 +476,13 @@ class ContextService:
                 authorization=f"Bearer {self.agent_bay.api_key}",
             )
             response = self.agent_bay.client.modify_context(request)
+            request_id = extract_request_id(response)
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {response}")
-            request_id = extract_request_id(response)
+                response_body = str(response)
             try:
                 response_map = response.to_map() if hasattr(response, "to_map") else {}
                 if not isinstance(response_map, dict) or not isinstance(
@@ -488,6 +500,16 @@ class ContextService:
                     if success
                     else f"[{body.get('Code', 'Unknown')}] {body.get('Message', 'Unknown error')}"
                 )
+
+                # Log API response with key details
+                log_api_response_with_details(
+                    api_name="ModifyContext",
+                    request_id=request_id,
+                    success=success,
+                    key_fields={"context_id": context.id, "context_name": context.name},
+                    full_response=response_body
+                )
+
                 return OperationResult(
                     request_id=request_id,
                     success=success,
@@ -495,14 +517,14 @@ class ContextService:
                     error_message=error_message,
                 )
             except Exception as e:
-                logger.error(f"Error parsing ModifyContext response: {e}")
+                logger.exception(f"Error parsing ModifyContext response: {e}")
                 return OperationResult(
                     request_id=request_id,
                     success=False,
                     error_message=f"Failed to parse response: {str(e)}",
                 )
         except Exception as e:
-            logger.error(f"Error calling ModifyContext: {e}")
+            logger.exception(f"Error calling ModifyContext: {e}")
             raise AgentBayError(f"Failed to update context {context.id}: {e}")
 
     def delete(self, context: Context) -> OperationResult:
@@ -521,14 +543,13 @@ class ContextService:
                 id=context.id, authorization=f"Bearer {self.agent_bay.api_key}"
             )
             response = self.agent_bay.client.delete_context(request)
+            request_id = extract_request_id(response)
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {response}")
-            request_id = extract_request_id(response)
+                response_body = str(response)
             try:
                 response_map = response.to_map() if hasattr(response, "to_map") else {}
                 if not isinstance(response_map, dict) or not isinstance(
@@ -546,6 +567,16 @@ class ContextService:
                     if success
                     else f"[{body.get('Code', 'Unknown')}] {body.get('Message', 'Unknown error')}"
                 )
+
+                # Log API response with key details
+                log_api_response_with_details(
+                    api_name="DeleteContext",
+                    request_id=request_id,
+                    success=success,
+                    key_fields={"context_id": context.id},
+                    full_response=response_body
+                )
+
                 return OperationResult(
                     request_id=request_id,
                     success=success,
@@ -553,14 +584,14 @@ class ContextService:
                     error_message=error_message,
                 )
             except Exception as e:
-                logger.error(f"Error parsing DeleteContext response: {e}")
+                logger.exception(f"Error parsing DeleteContext response: {e}")
                 return OperationResult(
                     request_id=request_id,
                     success=False,
                     error_message=f"Failed to parse response: {str(e)}",
                 )
         except Exception as e:
-            logger.error(f"Error calling DeleteContext: {e}")
+            logger.exception(f"Error calling DeleteContext: {e}")
             raise AgentBayError(f"Failed to delete context {context.id}: {e}")
 
     def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:

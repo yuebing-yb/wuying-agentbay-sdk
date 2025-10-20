@@ -40,6 +40,13 @@ class TestSessionLabels(unittest.TestCase):
         # Create a session
         print("Creating a new session for labels testing...")
         result = cls.agent_bay.create()
+        
+        # Check if session creation was successful
+        if not result.success:
+            raise Exception(f"Session creation failed in setUpClass: {result.error_message}")
+        if result.session is None:
+            raise Exception("Session object is None in setUpClass")
+            
         cls.session = result.session
         print(f"Session created with ID: {cls.session.session_id}")
         print(f"Request ID: {result.request_id}")

@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import os
 import time
 import importlib
@@ -9,17 +8,9 @@ from typing import Dict, Any
 from dotenv import load_dotenv
 
 from agentbay.browser.eval.page_agent import PageAgent
+from agentbay.logger import get_logger
 
-
-# Configure logging to output to console
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger("run_page_evals")
+logger = get_logger("run_page_evals")
 
 
 async def run_single_task(
