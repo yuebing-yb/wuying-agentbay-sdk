@@ -383,7 +383,8 @@ endpoint_url = session.browser.get_endpoint_url()
 # Connect with Playwright
 with sync_playwright() as p:
     browser = p.chromium.connect_over_cdp(endpoint_url)
-    page = browser.new_page()
+    context = browser.contexts[0]
+    page = await context.new_page()
 
     # Extensions are already loaded and available
     page.goto("https://example.com")

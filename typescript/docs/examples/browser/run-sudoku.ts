@@ -52,7 +52,8 @@ async function main() {
 
       const browser = await chromium.connectOverCDP(endpointUrl);
       try {
-        const page = await browser.newPage();
+        const context = browser.contexts()[0]
+        const page = await context.newPage();
         console.log("🌐 Navigating to Sudoku site...");
         const url = "https://widget.websudoku.com/";
         await page.goto(url);

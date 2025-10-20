@@ -71,7 +71,8 @@ async function main() {
       let page = null;
 
       try {
-        page = await browser.newPage();
+        const context = browser.contexts()[0]
+        page = await context.newPage();
         console.log("🌐 Navigating to 2048...");
         await page.goto("https://ovolve.github.io/2048-AI/", {
           waitUntil: "domcontentloaded",
