@@ -66,7 +66,8 @@ async def main():
     # Connect Playwright over CDP and automate
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(endpoint_url)
-        page = await browser.new_page()
+        context = browser.contexts[0]
+        page = await context.new_page()
         await page.goto("https://www.aliyun.com")
         print("Title:", await page.title())
         await browser.close()
@@ -132,7 +133,8 @@ async def main():
 
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(endpoint_url)  # step through and take control
-        page = await browser.new_page()
+        context = browser.contexts[0]
+        page = await context.new_page()
 
         await page.goto("https://www.whatismybrowser.com/detect/what-is-my-user-agent")
         # verify our new voice and our new stage
@@ -188,7 +190,8 @@ async def main():
 
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(endpoint_url)
-        page = await browser.new_page()
+        context = browser.contexts[0]
+        page = await context.new_page()
 
         # step onto the stage
         await page.goto("https://www.google.com")

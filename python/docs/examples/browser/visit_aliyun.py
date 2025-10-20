@@ -45,7 +45,8 @@ async def main():
 
             async with async_playwright() as p:
                 browser = await p.chromium.connect_over_cdp(endpoint_url)
-                page = await browser.new_page()
+                context = browser.contexts[0]
+                page = await context.new_page()
                 await page.goto("https://www.aliyun.com")
                 print("page.title() =", await page.title())
 

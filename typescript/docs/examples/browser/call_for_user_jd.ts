@@ -82,7 +82,8 @@ async function main(): Promise<void> {
 
         // Connect to browser using Playwright
         const browser = await chromium.connectOverCDP(endpointUrl);
-        const page = await browser.newPage();
+        const context = browser.contexts()[0]
+        const page = await context.newPage();
         console.log('🌐 Navigating to jd site...');
         const url = 'https://www.jd.com/';
         await page.goto(url);
