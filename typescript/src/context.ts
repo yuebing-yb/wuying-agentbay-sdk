@@ -1,7 +1,15 @@
 import { AgentBay } from "./agent-bay";
 import { APIError } from "./exceptions";
 import * as $_client from "./api";
-import { log, logError } from "./utils/logger";
+import {
+  log,
+  logError,
+  logInfo,
+  logAPICall,
+  logAPIResponseWithDetails,
+  setRequestId,
+  getRequestId,
+} from "./utils/logger";
 import {
   extractRequestId,
   ContextResult,

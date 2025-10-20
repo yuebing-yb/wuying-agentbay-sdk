@@ -1,7 +1,14 @@
 import { Session } from '../session';
 import { Browser } from './browser';
 import { BrowserError } from '../exceptions';
-import { log } from '../utils/logger';
+import {
+  log,
+  logError,
+  logInfo,
+  logAPICall,
+  logAPIResponseWithDetails,
+  setRequestId,
+} from '../utils/logger';
 
 // Options interfaces
 export interface ActOptions {

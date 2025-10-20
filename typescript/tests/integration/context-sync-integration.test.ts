@@ -3,6 +3,7 @@ import { ContextStatusData } from "../../src/context-manager";
 import { ContextSync, newSyncPolicy, newContextSync } from "../../src/context-sync";
 import { wait, randomString } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
+import { Session } from "../../src/session";
 
 describe("ContextSyncIntegration", () => {
   let agentBay: AgentBay;
@@ -65,11 +66,15 @@ describe("ContextSyncIntegration", () => {
     try {
       if (sessionId) {
         // Find the session in the sessions map
-        const sessions = agentBay.list();
-        const session = sessions.find(s => s.sessionId === sessionId);
-        if (session) {
-          await agentBay.delete(session);
-          log(`Session deleted: ${sessionId}`);
+        const sessionListResult = await agentBay.list();
+        const sessionIdFound = sessionListResult.sessionIds.find(id => id === sessionId);
+        if (sessionIdFound) {
+          const session = await agentBay.getSession(sessionId);
+          if (session.success && session.data) {
+            const sessionObj = new Session(agentBay, sessionId);
+            await agentBay.delete(sessionObj);
+            log(`Session deleted: ${sessionId}`);
+          }
         }
       }
     } catch (e) {
@@ -98,11 +103,19 @@ describe("ContextSyncIntegration", () => {
     }
     
     // Get the session
-    const sessions = agentBay.list();
-    const session = sessions.find(s => s.sessionId === sessionId);
-    if (!session) {
+    const sessionListResult = await agentBay.list();
+    const sessionIdFound = sessionListResult.sessionIds.find(id => id === sessionId);
+    if (!sessionIdFound) {
       throw new Error(`Session ${sessionId} not found`);
     }
+    
+    // Get session and context info
+    const getSessionResult = await agentBay.getSession(sessionId);
+    if (!getSessionResult.success || !getSessionResult.data) {
+      throw new Error(`Failed to get session ${sessionId}`);
+    }
+    
+    const session = new Session(agentBay, sessionId);
     
     // Get context info
     const contextInfo = await session.context.info();
@@ -145,11 +158,19 @@ describe("ContextSyncIntegration", () => {
     }
     
     // Get the session
-    const sessions = agentBay.list();
-    const session = sessions.find(s => s.sessionId === sessionId);
-    if (!session) {
+    const sessionListResult = await agentBay.list();
+    const sessionIdFound = sessionListResult.sessionIds.find(id => id === sessionId);
+    if (!sessionIdFound) {
       throw new Error(`Session ${sessionId} not found`);
     }
+    
+    // Get session and context info
+    const getSessionResult = await agentBay.getSession(sessionId);
+    if (!getSessionResult.success || !getSessionResult.data) {
+      throw new Error(`Failed to get session ${sessionId}`);
+    }
+    
+    const session = new Session(agentBay, sessionId);
     
     // Sync context
     const syncResult = await session.context.sync();
@@ -206,11 +227,19 @@ describe("ContextSyncIntegration", () => {
     }
     
     // Get the session
-    const sessions = agentBay.list();
-    const session = sessions.find(s => s.sessionId === sessionId);
-    if (!session) {
+    const sessionListResult = await agentBay.list();
+    const sessionIdFound = sessionListResult.sessionIds.find(id => id === sessionId);
+    if (!sessionIdFound) {
       throw new Error(`Session ${sessionId} not found`);
     }
+    
+    // Get session and context info
+    const getSessionResult = await agentBay.getSession(sessionId);
+    if (!getSessionResult.success || !getSessionResult.data) {
+      throw new Error(`Failed to get session ${sessionId}`);
+    }
+    
+    const session = new Session(agentBay, sessionId);
     
     // Get context info with parameters
     const contextInfo = await session.context.infoWithParams(

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -177,54 +176,23 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// Log API request
-	fmt.Println("API Call: CreateMcpSession")
-	fmt.Printf("Request: ")
-	if createSessionRequest.ContextId != nil {
-		fmt.Printf("ContextId=%s, ", *createSessionRequest.ContextId)
-	}
-	if createSessionRequest.ImageId != nil {
-		fmt.Printf("ImageId=%s, ", *createSessionRequest.ImageId)
-	}
-	if createSessionRequest.McpPolicyId != nil {
-		fmt.Printf("PolicyId=%s, ", *createSessionRequest.McpPolicyId)
-	}
-	if createSessionRequest.VpcResource != nil {
-		fmt.Printf("VpcResource=%t, ", *createSessionRequest.VpcResource)
-	}
-	if createSessionRequest.Labels != nil {
-		fmt.Printf("Labels=%s, ", *createSessionRequest.Labels)
-	}
+	requestParams := fmt.Sprintf("ImageId=%s, IsVpc=%t",
+		tea.StringValue(createSessionRequest.ImageId),
+		tea.BoolValue(createSessionRequest.VpcResource))
 	if len(createSessionRequest.PersistenceDataList) > 0 {
-		fmt.Printf("PersistenceDataList=%d items, ", len(createSessionRequest.PersistenceDataList))
-		for i, pd := range createSessionRequest.PersistenceDataList {
-			fmt.Printf("Item%d[ContextId=%s, Path=%s", i, tea.StringValue(pd.ContextId), tea.StringValue(pd.Path))
-			if pd.Policy != nil {
-				fmt.Printf(", Policy=%s", tea.StringValue(pd.Policy))
-			}
-			fmt.Printf("], ")
-		}
+		requestParams += fmt.Sprintf(", PersistenceDataList=%d items", len(createSessionRequest.PersistenceDataList))
 	}
-	fmt.Println()
+	LogAPICall("CreateMcpSession", requestParams)
 
 	response, err := a.Client.CreateMcpSession(createSessionRequest)
-
-	// Log API response
-	if err != nil {
-		fmt.Println("Error calling CreateMcpSession:", err)
-		return nil, err
-	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
 
-	// Log only the response body
-	if response != nil && response.Body != nil {
-		// Convert response body to JSON for proper printing without escaped characters
-		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		// Replace \u0026 with & for better readability
-		jsonStr := strings.ReplaceAll(string(responseJSON), "\\u0026", "&")
-		fmt.Println("Response from CreateMcpSession:")
-		fmt.Println(jsonStr)
+	// Log API response
+	if err != nil {
+		LogOperationError("CreateMcpSession", err.Error(), true)
+		return nil, err
 	}
 
 	// Check if the session creation was successful
@@ -238,6 +206,8 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		if response.Body.Data.ErrMsg != nil {
 			errMsg = *response.Body.Data.ErrMsg
 		}
+		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+		LogAPIResponseWithDetails("CreateMcpSession", requestID, false, nil, string(responseJSON))
 		return nil, fmt.Errorf("%s", errMsg)
 	}
 
@@ -246,11 +216,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		return nil, fmt.Errorf("no session ID returned from CreateMcpSession")
 	}
 
-	// ResourceUrl is optional in CreateMcpSession response
-
 	// Create a new session object
 	session := NewSession(a, *response.Body.Data.SessionId)
-	session.ImageId = params.ImageId // Store the ImageId used for this session
+	session.ImageId = params.ImageId
 
 	// Set VPC-related information from response
 	session.IsVpcEnabled = params.IsVpc
@@ -271,26 +239,29 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 	a.Sessions.Store(session.SessionID, *session)
 
+	// Log successful session creation
+	keyFields := map[string]interface{}{
+		"session_id":   session.SessionID,
+		"resource_url": session.ResourceUrl,
+		"is_vpc":       params.IsVpc,
+	}
+	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("CreateMcpSession", requestID, true, keyFields, string(responseJSON))
+
 	// Apply mobile configuration if provided
 	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil {
-		fmt.Println("Applying mobile configuration...")
 		if err := session.Mobile.Configure(params.ExtraConfigs.Mobile); err != nil {
-			fmt.Printf("Warning: Failed to apply mobile configuration: %v\n", err)
-			// Continue with session creation even if mobile config fails
-		} else {
-			fmt.Println("Mobile configuration applied successfully")
+			LogOperationError("ApplyMobileConfiguration", err.Error(), false)
 		}
 	}
 
 	// For VPC sessions, automatically fetch MCP tools information
 	if params.IsVpc {
-		fmt.Println("VPC session detected, automatically fetching MCP tools...")
 		toolsResult, err := session.ListMcpTools()
 		if err != nil {
-			fmt.Printf("Warning: Failed to fetch MCP tools for VPC session: %v\n", err)
-			// Continue with session creation even if tools fetch fails
-		} else {
-			fmt.Printf("Successfully fetched %d MCP tools for VPC session (RequestID: %s)\n",
+			LogOperationError("FetchMCPTools", err.Error(), false)
+		} else if len(toolsResult.Tools) > 0 {
+			fmt.Printf("✅ Successfully fetched %d MCP tools for VPC session (RequestID: %s)\n",
 				len(toolsResult.Tools), toolsResult.RequestID)
 		}
 	}
@@ -396,27 +367,22 @@ func (a *AgentBay) ListByLabels(params *ListSessionParams) (*SessionListResult, 
 	}
 
 	// Log API request
-	fmt.Println("API Call: ListSession")
-	fmt.Printf("Request: Labels=%s, MaxResults=%d", *listSessionRequest.Labels, *listSessionRequest.MaxResults)
+	requestParams := fmt.Sprintf("Labels=%s, MaxResults=%d", *listSessionRequest.Labels, *listSessionRequest.MaxResults)
 	if listSessionRequest.NextToken != nil {
-		fmt.Printf(", NextToken=%s", *listSessionRequest.NextToken)
+		requestParams += fmt.Sprintf(", NextToken=%s", *listSessionRequest.NextToken)
 	}
-	fmt.Println()
+	LogAPICall("ListSession", requestParams)
 
 	response, err := a.Client.ListSession(listSessionRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling ListSession:", err)
+		LogOperationError("ListSession", err.Error(), true)
 		return nil, err
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
-
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from ListSession:", response.Body)
-	}
 
 	var sessions []Session
 	var sessionIds []string
@@ -452,6 +418,19 @@ func (a *AgentBay) ListByLabels(params *ListSessionParams) (*SessionListResult, 
 			}
 		}
 	}
+
+	// Log successful response
+	keyFields := map[string]interface{}{
+		"session_count": len(sessionIds),
+		"total_count":   totalCount,
+		"max_results":   maxResults,
+		"has_next_page": nextToken != "",
+	}
+	if nextToken != "" {
+		keyFields["next_token"] = nextToken
+	}
+	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("ListSession", requestID, true, keyFields, string(responseJSON))
 
 	return &SessionListResult{
 		ApiResponse: models.ApiResponse{
@@ -605,18 +584,17 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 	}
 
 	// Log API request
-	fmt.Println("API Call: ListSession")
-	fmt.Printf("Request: Labels=%s, MaxResults=%d", *listSessionRequest.Labels, *listSessionRequest.MaxResults)
+	requestParams := fmt.Sprintf("Labels=%s, MaxResults=%d", *listSessionRequest.Labels, *listSessionRequest.MaxResults)
 	if listSessionRequest.NextToken != nil {
-		fmt.Printf(", NextToken=%s", *listSessionRequest.NextToken)
+		requestParams += fmt.Sprintf(", NextToken=%s", *listSessionRequest.NextToken)
 	}
-	fmt.Println()
+	LogAPICall("ListSession", requestParams)
 
 	response, err := a.Client.ListSession(listSessionRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling ListSession:", err)
+		LogOperationError("ListSession", err.Error(), true)
 		return nil, err
 	}
 
@@ -635,6 +613,7 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 		} else if response.Body != nil && response.Body.Code != nil {
 			errorMsg = *response.Body.Code
 		}
+		LogOperationError("ListSession", fmt.Sprintf("failed to list sessions: %s", errorMsg), false)
 		return &SessionListResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: requestID,
@@ -672,6 +651,19 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 			}
 		}
 	}
+
+	// Log successful response
+	keyFields := map[string]interface{}{
+		"session_count": len(sessionIds),
+		"total_count":   totalCount,
+		"max_results":   maxResults,
+		"has_next_page": nextTokenResult != "",
+	}
+	if nextTokenResult != "" {
+		keyFields["next_token"] = nextTokenResult
+	}
+	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("ListSession", requestID, true, keyFields, string(responseJSON))
 
 	return &SessionListResult{
 		ApiResponse: models.ApiResponse{
@@ -724,23 +716,19 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 	}
 
 	// Log API request
-	fmt.Println("API Call: GetSession")
-	fmt.Printf("Request: SessionId=%s\n", *getSessionRequest.SessionId)
+	requestParams := fmt.Sprintf("SessionId=%s", *getSessionRequest.SessionId)
+	LogAPICall("GetSession", requestParams)
 
 	response, err := a.Client.GetSession(getSessionRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling GetSession:", err)
+		LogOperationError("GetSession", err.Error(), true)
 		return nil, err
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
-
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from GetSession:", response.Body)
-	}
 
 	result := &GetSessionResult{
 		ApiResponse: models.ApiResponse{
@@ -767,6 +755,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 				message = "Unknown error"
 			}
 			result.ErrorMessage = fmt.Sprintf("[%s] %s", code, message)
+			LogOperationError("GetSession", result.ErrorMessage, false)
 			return result, nil
 		}
 
@@ -800,6 +789,23 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 				data.ResourceUrl = *response.Body.Data.ResourceUrl
 			}
 			result.Data = data
+
+			// Log successful response
+			keyFields := map[string]interface{}{
+				"session_id":   data.SessionID,
+				"resource_url": data.ResourceUrl,
+				"resource_id":  data.ResourceID,
+				"app_instance": data.AppInstanceID,
+				"vpc_resource": data.VpcResource,
+			}
+			if data.HttpPort != "" {
+				keyFields["http_port"] = data.HttpPort
+			}
+			if data.NetworkInterfaceIP != "" {
+				keyFields["network_interface_ip"] = data.NetworkInterfaceIP
+			}
+			responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+			LogAPIResponseWithDetails("GetSession", requestID, true, keyFields, string(responseJSON))
 		}
 
 		result.ErrorMessage = ""
@@ -830,6 +836,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 //	}
 func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	if sessionID == "" {
+		LogOperationError("Get", "session_id is required", false)
 		return &SessionResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
@@ -842,12 +849,14 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	// Call GetSession API
 	getResult, err := a.GetSession(sessionID)
 	if err != nil {
+		errorMsg := fmt.Sprintf("failed to get session %s: %v", sessionID, err)
+		LogOperationError("Get", errorMsg, true)
 		return &SessionResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
 			},
 			Success:      false,
-			ErrorMessage: fmt.Sprintf("failed to get session %s: %v", sessionID, err),
+			ErrorMessage: errorMsg,
 		}, nil
 	}
 
@@ -857,12 +866,14 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 		if getResult.Data != nil && !getResult.Data.Success {
 			errorMsg = "Session not found"
 		}
+		fullErrorMsg := fmt.Sprintf("failed to get session %s: %s", sessionID, errorMsg)
+		LogOperationError("Get", fullErrorMsg, false)
 		return &SessionResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: getResult.RequestID,
 			},
 			Success:      false,
-			ErrorMessage: fmt.Sprintf("failed to get session %s: %s", sessionID, errorMsg),
+			ErrorMessage: fullErrorMsg,
 		}, nil
 	}
 
@@ -880,6 +891,19 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 
 	// Store the session in the local cache
 	a.Sessions.Store(sessionID, *session)
+
+	// Log successful retrieval
+	keyFields := map[string]interface{}{
+		"session_id":   sessionID,
+		"resource_url": session.ResourceUrl,
+	}
+	if getResult.Data != nil {
+		keyFields["vpc_enabled"] = getResult.Data.VpcResource
+		if getResult.Data.ResourceID != "" {
+			keyFields["resource_id"] = getResult.Data.ResourceID
+		}
+	}
+	LogAPIResponseWithDetails("Get", getResult.RequestID, true, keyFields, "")
 
 	return &SessionResult{
 		ApiResponse: models.ApiResponse{

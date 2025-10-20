@@ -22,7 +22,6 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/ui"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/utils"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/window"
 )
 
@@ -203,21 +202,22 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 
 	// If syncContext is true, trigger file uploads first
 	if shouldSync {
-		fmt.Println("Triggering context synchronization before session deletion...")
 		syncStartTime := time.Now()
 
 		// Use the new sync method without callback (sync mode)
 		syncResult, err := s.Context.SyncWithCallback("", "", "", nil, 150, 1500)
 		if err != nil {
 			syncDuration := time.Since(syncStartTime)
-			fmt.Printf("Warning: Failed to trigger context sync after %v: %v\n", syncDuration, err)
+			LogOperationError("Delete", fmt.Sprintf("Failed to trigger context sync after %v: %v", syncDuration, err), false)
 			// Continue with deletion even if sync fails
 		} else {
 			syncDuration := time.Since(syncStartTime)
 			if syncResult.Success {
-				fmt.Printf("Context sync completed successfully in %v\n", syncDuration)
+				// Context sync successful, continue silently (logged in SyncWithCallback)
+				_ = syncDuration
 			} else {
-				fmt.Printf("Context sync completed with failures after %v\n", syncDuration)
+				// Context sync failed, continue with deletion
+				_ = syncDuration
 			}
 		}
 	}
@@ -228,23 +228,19 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 	}
 
 	// Log API request
-	fmt.Println("API Call: ReleaseMcpSession")
-	fmt.Printf("Request: SessionId=%s\n", *releaseSessionRequest.SessionId)
+	requestParams := fmt.Sprintf("SessionId=%s", *releaseSessionRequest.SessionId)
+	LogAPICall("ReleaseMcpSession", requestParams)
 
 	response, err := s.GetClient().ReleaseMcpSession(releaseSessionRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling ReleaseMcpSession:", err)
+		LogOperationError("ReleaseMcpSession", err.Error(), true)
 		return nil, err
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
-
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from ReleaseMcpSession:", response.Body)
-	}
 
 	// Check for API-level errors
 	if response.Body != nil {
@@ -255,6 +251,7 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 			} else if response.Body.Code != nil {
 				errorMsg = fmt.Sprintf("[%s] Failed to delete session", *response.Body.Code)
 			}
+			LogOperationError("ReleaseMcpSession", errorMsg, false)
 			return &DeleteResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -266,6 +263,13 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 	}
 
 	s.AgentBay.Sessions.Delete(s.SessionID)
+
+	// Log successful deletion
+	keyFields := map[string]interface{}{
+		"session_id": s.SessionID,
+	}
+	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("ReleaseMcpSession", requestID, true, keyFields, string(responseJSON))
 
 	return &DeleteResult{
 		ApiResponse: models.ApiResponse{
@@ -334,23 +338,27 @@ func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error) {
 	}
 
 	// Log API request
-	fmt.Println("API Call: SetLabel")
-	fmt.Printf("Request: SessionId=%s, Labels=%s\n", *setLabelRequest.SessionId, *setLabelRequest.Labels)
+	requestParams := fmt.Sprintf("SessionId=%s, Labels=%s", *setLabelRequest.SessionId, *setLabelRequest.Labels)
+	LogAPICall("SetLabel", requestParams)
 
 	response, err := s.GetClient().SetLabel(setLabelRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling SetLabel:", err)
+		LogOperationError("SetLabel", err.Error(), true)
 		return nil, err
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
 
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from SetLabel:", response.Body)
+	// Log successful response
+	keyFields := map[string]interface{}{
+		"session_id":   s.SessionID,
+		"labels_count": len(labels),
 	}
+	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("SetLabel", requestID, true, keyFields, string(responseJSON))
 
 	return &LabelResult{
 		ApiResponse: models.ApiResponse{
@@ -368,28 +376,38 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 	}
 
 	// Log API request
-	fmt.Println("API Call: GetLabel")
-	fmt.Printf("Request: SessionId=%s\n", *getLabelRequest.SessionId)
+	requestParams := fmt.Sprintf("SessionId=%s", *getLabelRequest.SessionId)
+	LogAPICall("GetLabel", requestParams)
 
 	response, err := s.GetClient().GetLabel(getLabelRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling GetLabel:", err)
+		LogOperationError("GetLabel", err.Error(), true)
 		return nil, err
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
 
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from GetLabel:", response.Body)
-	}
-
 	var labels string
+	var labelsCount int = 0
 	if response != nil && response.Body != nil && response.Body.Data != nil && response.Body.Data.Labels != nil {
 		labels = *response.Body.Data.Labels
+		// Parse labels to count them
+		var labelsMap map[string]interface{}
+		if err := json.Unmarshal([]byte(labels), &labelsMap); err == nil {
+			labelsCount = len(labelsMap)
+		}
 	}
+
+	// Log successful response
+	keyFields := map[string]interface{}{
+		"session_id":   s.SessionID,
+		"labels_count": labelsCount,
+	}
+	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("GetLabel", requestID, true, keyFields, string(responseJSON))
 
 	return &LabelResult{
 		ApiResponse: models.ApiResponse{
@@ -416,39 +434,47 @@ func (s *Session) GetLink(protocolType *string, port *int32) (*LinkResult, error
 	}
 
 	// Log API request
-	fmt.Println("API Call: GetLink")
-	fmt.Printf("Request: SessionId=%s", *getLinkRequest.SessionId)
+	requestParams := fmt.Sprintf("SessionId=%s", *getLinkRequest.SessionId)
 	if getLinkRequest.ProtocolType != nil {
-		fmt.Printf(", ProtocolType=%s", *getLinkRequest.ProtocolType)
+		requestParams += fmt.Sprintf(", ProtocolType=%s", *getLinkRequest.ProtocolType)
 	}
 	if getLinkRequest.Port != nil {
-		fmt.Printf(", Port=%d", *getLinkRequest.Port)
+		requestParams += fmt.Sprintf(", Port=%d", *getLinkRequest.Port)
 	}
-	fmt.Println()
+	LogAPICall("GetLink", requestParams)
 
 	response, err := s.GetClient().GetLink(getLinkRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling GetLink:", err)
+		LogOperationError("GetLink", err.Error(), true)
 		return nil, err
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
 
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from GetLink:", response.Body)
-	}
-
 	var link string
 	if response != nil && response.Body != nil && response.Body.Data != nil {
 		data := response.Body.Data
-		fmt.Printf("Data: %v\n", data)
 		if data.Url != nil {
 			link = *data.Url
 		}
 	}
+
+	// Log successful response
+	keyFields := map[string]interface{}{
+		"session_id": s.SessionID,
+		"url":        link,
+	}
+	if getLinkRequest.ProtocolType != nil {
+		keyFields["protocol_type"] = *getLinkRequest.ProtocolType
+	}
+	if getLinkRequest.Port != nil {
+		keyFields["port"] = *getLinkRequest.Port
+	}
+	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("GetLink", requestID, true, keyFields, string(responseJSON))
 
 	return &LinkResult{
 		ApiResponse: models.ApiResponse{
@@ -466,23 +492,19 @@ func (s *Session) Info() (*InfoResult, error) {
 	}
 
 	// Log API request
-	fmt.Println("API Call: GetMcpResource")
-	fmt.Printf("Request: SessionId=%s\n", *getMcpResourceRequest.SessionId)
+	requestParams := fmt.Sprintf("SessionId=%s", *getMcpResourceRequest.SessionId)
+	LogAPICall("GetMcpResource", requestParams)
 
 	response, err := s.GetClient().GetMcpResource(getMcpResourceRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling GetMcpResource:", err)
+		LogOperationError("GetMcpResource", err.Error(), true)
 		return nil, err
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
-
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from GetMcpResource:", response.Body)
-	}
 
 	if response != nil && response.Body != nil && response.Body.Data != nil {
 		sessionInfo := &SessionInfo{
@@ -526,6 +548,21 @@ func (s *Session) Info() (*InfoResult, error) {
 			}
 		}
 
+		// Log successful response
+		keyFields := map[string]interface{}{
+			"session_id":    sessionInfo.SessionId,
+			"resource_url":  sessionInfo.ResourceUrl,
+			"resource_type": sessionInfo.ResourceType,
+		}
+		if sessionInfo.AppId != "" {
+			keyFields["app_id"] = sessionInfo.AppId
+		}
+		if sessionInfo.ResourceId != "" {
+			keyFields["resource_id"] = sessionInfo.ResourceId
+		}
+		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+		LogAPIResponseWithDetails("GetMcpResource", requestID, true, keyFields, string(responseJSON))
+
 		return &InfoResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: requestID,
@@ -552,23 +589,19 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 	}
 
 	// Log API request
-	fmt.Println("API Call: ListMcpTools")
-	fmt.Printf("Request: ImageId=%s\n", *listMcpToolsRequest.ImageId)
+	requestParams := fmt.Sprintf("ImageId=%s", *listMcpToolsRequest.ImageId)
+	LogAPICall("ListMcpTools", requestParams)
 
 	response, err := s.GetClient().ListMcpTools(listMcpToolsRequest)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling ListMcpTools:", err)
+		LogOperationError("ListMcpTools", err.Error(), true)
 		return nil, err
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
-
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from ListMcpTools:", response.Body)
-	}
 
 	// Parse the response data
 	var tools []McpTool
@@ -576,7 +609,7 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 		// The Data field is a JSON string, so we need to unmarshal it
 		var toolsData []map[string]interface{}
 		if err := json.Unmarshal([]byte(*response.Body.Data), &toolsData); err != nil {
-			fmt.Printf("Error unmarshaling tools data: %v\n", err)
+			LogOperationError("ListMcpTools", fmt.Sprintf("Error unmarshaling tools data: %v", err), false)
 			return &McpToolsResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -608,6 +641,14 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 	}
 
 	s.McpTools = tools // Update the session's McpTools field
+
+	// Log successful response
+	keyFields := map[string]interface{}{
+		"image_id":    imageId,
+		"tools_count": len(tools),
+	}
+	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("ListMcpTools", requestID, true, keyFields, string(responseJSON))
 
 	return &McpToolsResult{
 		ApiResponse: models.ApiResponse{
@@ -681,30 +722,28 @@ func (s *Session) CallMcpTool(toolName string, args interface{}) (*models.McpToo
 // callMcpToolVPC handles VPC-based MCP tool calls
 func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResult, error) {
 	// VPC mode: Use HTTP request to the VPC endpoint
-	fmt.Println("API Call: CallMcpTool (VPC) -", toolName)
-	fmt.Printf("Request: Args=%s\n", argsJSON)
+	requestParams := fmt.Sprintf("Tool=%s, ArgsLength=%d", toolName, len(argsJSON))
+	LogAPICall("CallMcpTool(VPC)", requestParams)
 
 	// Find server for this tool
 	server := s.FindServerForTool(toolName)
 	if server == "" {
-		sanitizedErr := fmt.Sprintf("server not found for tool: %s", toolName)
-		fmt.Println("Error calling VPC CallMcpTool -", toolName, ":", sanitizedErr)
+		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("server not found for tool: %s", toolName), false)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
-			ErrorMessage: sanitizedErr,
+			ErrorMessage: fmt.Sprintf("server not found for tool: %s", toolName),
 			RequestID:    "",
 		}, nil
 	}
 
 	// Check VPC network configuration
 	if s.NetworkInterfaceIp() == "" || s.HttpPort() == "" {
-		sanitizedErr := fmt.Sprintf("VPC network configuration incomplete: networkInterfaceIp=%s, httpPort=%s", s.NetworkInterfaceIp(), s.HttpPort())
-		fmt.Println("Error calling VPC CallMcpTool -", toolName, ":", sanitizedErr)
+		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC network configuration incomplete: networkInterfaceIp=%s, httpPort=%s", s.NetworkInterfaceIp(), s.HttpPort()), false)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
-			ErrorMessage: sanitizedErr,
+			ErrorMessage: fmt.Sprintf("VPC network configuration incomplete: networkInterfaceIp=%s, httpPort=%s", s.NetworkInterfaceIp(), s.HttpPort()),
 			RequestID:    "",
 		}, nil
 	}
@@ -725,8 +764,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	// Send HTTP request
 	response, err := http.Get(fullURL)
 	if err != nil {
-		sanitizedErr := utils.SanitizeError(err)
-		fmt.Println("Error calling VPC CallMcpTool -", toolName, ":", sanitizedErr)
+		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -737,12 +775,11 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		sanitizedErr := fmt.Sprintf("VPC request failed with status: %d", response.StatusCode)
-		fmt.Println("Error calling VPC CallMcpTool -", toolName, ":", sanitizedErr)
+		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed with status: %d", response.StatusCode), false)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
-			ErrorMessage: sanitizedErr,
+			ErrorMessage: fmt.Sprintf("VPC request failed with status: %d", response.StatusCode),
 			RequestID:    "",
 		}, nil
 	}
@@ -750,8 +787,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	// Parse response
 	var responseData interface{}
 	if err := json.NewDecoder(response.Body).Decode(&responseData); err != nil {
-		sanitizedErr := utils.SanitizeError(err)
-		fmt.Println("Error calling VPC CallMcpTool -", toolName, ":", sanitizedErr)
+		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("Failed to parse VPC response: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -760,16 +796,25 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 		}, nil
 	}
 
-	fmt.Println("Response from VPC CallMcpTool -", toolName, ":", responseData)
-
 	// Extract text content from the response
 	textContent := s.extractTextContentFromResponse(responseData)
+
+	// Log successful VPC call
+	keyFields := map[string]interface{}{
+		"tool_name":       toolName,
+		"server":          server,
+		"network_ip":      s.NetworkInterfaceIp(),
+		"port":            s.HttpPort(),
+		"response_length": len(textContent),
+	}
+	responseJSON, _ := json.Marshal(responseData)
+	LogAPIResponseWithDetails("CallMcpTool(VPC)", requestID, true, keyFields, string(responseJSON))
 
 	return &models.McpToolResult{
 		Success:      true,
 		Data:         textContent,
 		ErrorMessage: "",
-		RequestID:    "", // VPC requests don't have traditional request IDs
+		RequestID:    requestID, // Include the generated request ID
 	}, nil
 }
 
@@ -788,24 +833,20 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string) (*models.McpToolResu
 	}
 
 	// Log API request
-	fmt.Println("API Call: CallMcpTool -", toolName)
-	fmt.Printf("Request: SessionId=%s, Args=%s\n", *callToolRequest.SessionId, *callToolRequest.Args)
+	requestParams := fmt.Sprintf("Tool=%s, SessionId=%s, ArgsLength=%d", toolName, s.SessionID, len(argsJSON))
+	LogAPICall("CallMcpTool", requestParams)
 
 	response, err := s.GetClient().CallMcpTool(callToolRequest)
 
 	// Log API response
 	if err != nil {
-		sanitizedErr := utils.SanitizeError(err)
-		fmt.Println("Error calling CallMcpTool -", toolName, ":", sanitizedErr)
+		LogOperationError("CallMcpTool", fmt.Sprintf("API request failed: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
 			ErrorMessage: fmt.Sprintf("API request failed: %v", err),
 			RequestID:    "",
 		}, nil
-	}
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from CallMcpTool -", toolName, ":", response.Body)
 	}
 
 	// Extract request ID
@@ -815,51 +856,47 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string) (*models.McpToolResu
 	}
 
 	// Check for API-level errors
-	if response.Body == nil || response.Body.GetData() == nil {
+	if response.Body != nil && response.Body.Data != nil {
+		// Log successful response
+		var responseLength int = 0
+		if dataStr, ok := response.Body.Data.(string); ok {
+			responseLength = len(dataStr)
+		}
+
+		keyFields := map[string]interface{}{
+			"tool_name":       toolName,
+			"session_id":      s.SessionID,
+			"response_length": responseLength,
+		}
+		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+		LogAPIResponseWithDetails("CallMcpTool", requestID, true, keyFields, string(responseJSON))
+
+		// Convert Data to string if it's not already
+		dataStr := ""
+		if str, ok := response.Body.Data.(string); ok {
+			dataStr = str
+		} else {
+			// Try to marshal as JSON if it's not a string
+			if dataBytes, err := json.Marshal(response.Body.Data); err == nil {
+				dataStr = string(dataBytes)
+			}
+		}
+
 		return &models.McpToolResult{
-			Success:      false,
-			Data:         "",
-			ErrorMessage: "Invalid response data format",
+			Success:      true,
+			Data:         dataStr,
+			ErrorMessage: "",
 			RequestID:    requestID,
 		}, nil
 	}
 
-	// Parse response data
-	data := response.Body.GetData()
-
-	// Check if there's an error in the response
-	if dataMap, ok := data.(map[string]interface{}); ok {
-		if isError, exists := dataMap["isError"]; exists && isError == true {
-			// Extract error message from content
-			errorMessage := "Unknown error"
-			if content, contentExists := dataMap["content"]; contentExists {
-				if contentArray, isArray := content.([]interface{}); isArray && len(contentArray) > 0 {
-					if contentItem, isMap := contentArray[0].(map[string]interface{}); isMap {
-						if text, textExists := contentItem["text"]; textExists {
-							if textStr, isString := text.(string); isString {
-								errorMessage = textStr
-							}
-						}
-					}
-				}
-			}
-
-			return &models.McpToolResult{
-				Success:      false,
-				Data:         "",
-				ErrorMessage: errorMessage,
-				RequestID:    requestID,
-			}, nil
-		}
-	}
-
-	// Extract text content from response
-	textContent := s.extractTextContentFromResponse(data)
-
+	// Handle empty or error response
+	errorMsg := "Empty response from CallMcpTool"
+	LogOperationError("CallMcpTool", errorMsg, false)
 	return &models.McpToolResult{
-		Success:      true,
-		Data:         textContent,
-		ErrorMessage: "",
+		Success:      false,
+		Data:         "",
+		ErrorMessage: errorMsg,
 		RequestID:    requestID,
 	}, nil
 }

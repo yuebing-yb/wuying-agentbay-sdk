@@ -25,7 +25,15 @@ import {
   OperationResult,
 } from "./types/api-response";
 import { UI } from "./ui";
-import { log, logError } from "./utils/logger";
+import {
+  log,
+  logError,
+  logInfo,
+  logAPICall,
+  logAPIResponseWithDetails,
+  setRequestId,
+  getRequestId,
+} from "./utils/logger";
 import { WindowManager } from "./window";
 
 /**

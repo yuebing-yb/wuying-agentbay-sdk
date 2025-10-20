@@ -38,9 +38,9 @@ describe("SessionDeleteIntegration", () => {
     expect(listResult.success).toBe(true);
     
     // Check that our session is not in the list
-    const sessions = listResult.data || [];
-    for (const s of sessions) {
-      expect(s.sessionId).not.toBe(session.sessionId);
+    const sessions = listResult.sessionIds || [];
+    for (const sessionId of sessions) {
+      expect(sessionId).not.toBe(session.sessionId);
     }
   });
 
@@ -97,9 +97,9 @@ describe("SessionDeleteIntegration", () => {
       expect(listResult.success).toBe(true);
       
       // Check that our session is not in the list
-      const sessions = listResult.data || [];
-      for (const s of sessions) {
-        expect(s.sessionId).not.toBe(session.sessionId);
+      const sessions = listResult.sessionIds || [];
+      for (const sessionId of sessions) {
+        expect(sessionId).not.toBe(session.sessionId);
       }
 
       // Clean up context
@@ -170,9 +170,9 @@ describe("SessionDeleteIntegration", () => {
       expect(listResult.success).toBe(true);
       
       // Check that our session is not in the list
-      const sessions = listResult.data || [];
-      for (const s of sessions) {
-        expect(s.sessionId).not.toBe(session.sessionId);
+      const sessions = listResult.sessionIds || [];
+      for (const sessionId of sessions) {
+        expect(sessionId).not.toBe(session.sessionId);
       }
 
       // Clean up context

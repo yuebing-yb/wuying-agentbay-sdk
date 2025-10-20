@@ -250,7 +250,7 @@ describe("Session Labels", () => {
         };
         const listByLabelsResponse = await agentBay.listByLabels(listParams);
         log(
-          `Found ${listByLabelsResponse.data.length} sessions with matching labels`
+          `Found ${listByLabelsResponse.sessionIds.length} sessions with matching labels`
         );
         log(
           `Total count: ${listByLabelsResponse.totalCount}, Max results: ${listByLabelsResponse.maxResults}`
@@ -266,17 +266,16 @@ describe("Session Labels", () => {
         expect(typeof listByLabelsResponse.requestId).toBe("string");
 
         // We should find at least our session
-        expect(listByLabelsResponse.data.length).toBeGreaterThan(0);
+        expect(listByLabelsResponse.sessionIds.length).toBeGreaterThan(0);
 
         // Check if our session is in the results
-        const foundSession = listByLabelsResponse.data.some(
-          (s) => s.sessionId === session.sessionId
+        const foundSession = listByLabelsResponse.sessionIds.some(
+          (sessionId: string) => sessionId === session.sessionId
         );
         expect(foundSession).toBe(true);
 
-        listByLabelsResponse.data.forEach((sessionItem) => {
-          expect(sessionItem).toHaveProperty("sessionId");
-          expect(sessionItem.sessionId).toBeTruthy();
+        listByLabelsResponse.sessionIds.forEach((sessionId: string) => {
+          expect(sessionId).toBeTruthy();
         });
 
         // Demonstrate pagination if there's a next token
@@ -287,7 +286,7 @@ describe("Session Labels", () => {
             nextToken: listByLabelsResponse.nextToken,
           };
           const nextPageResponse = await agentBay.listByLabels(nextPageParams);
-          log(`Next page sessions count: ${nextPageResponse.data.length}`);
+          log(`Next page sessions count: ${nextPageResponse.sessionIds.length}`);
           log(`Next page RequestId: ${nextPageResponse.requestId}`);
         }
       } catch (error: any) {
@@ -311,7 +310,7 @@ describe("Session Labels", () => {
         };
         const listByLabelsResponse = await agentBay.listByLabels(listParams);
         log(
-          `Found ${listByLabelsResponse.data.length} sessions with non-matching labels`
+          `Found ${listByLabelsResponse.sessionIds.length} sessions with non-matching labels`
         );
         log(
           `Total count: ${listByLabelsResponse.totalCount}, Max results: ${listByLabelsResponse.maxResults}`
@@ -327,9 +326,9 @@ describe("Session Labels", () => {
         expect(typeof listByLabelsResponse.requestId).toBe("string");
 
         // There might be some sessions with these labels, but our session shouldn't be among them
-        if (listByLabelsResponse.data.length > 0) {
-          const foundOurSession = listByLabelsResponse.data.some(
-            (s) => s.sessionId === session.sessionId
+        if (listByLabelsResponse.sessionIds.length > 0) {
+          const foundOurSession = listByLabelsResponse.sessionIds.some(
+            (sessionId: string) => sessionId === session.sessionId
           );
           expect(foundOurSession).toBe(false);
         }
