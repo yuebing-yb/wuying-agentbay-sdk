@@ -4,6 +4,7 @@ from .logger import (
     get_logger,
     log_api_call,
     log_api_response,
+    log_api_response_with_details,
     log_operation_start,
     log_operation_success,
     log_operation_error,
@@ -205,13 +206,6 @@ class Session:
                 session_id=self.session_id,
             )
             response = self.get_client().release_mcp_session(request)
-            try:
-                response_body = json.dumps(
-                    response.to_map().get("body", {}), ensure_ascii=False, indent=2
-                )
-                log_api_response(response_body)
-            except Exception:
-                logger.debug(f"📥 Response: {response}")
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -223,17 +217,31 @@ class Session:
 
             if not success:
                 error_message = f"[{body.get('Code', 'Unknown')}] {body.get('Message', 'Failed to delete session')}"
+                log_api_response_with_details(
+                    api_name="ReleaseMcpSession",
+                    request_id=request_id,
+                    success=False,
+                    full_response=json.dumps(body, ensure_ascii=False, indent=2)
+                )
                 return DeleteResult(
                     request_id=request_id,
                     success=False,
                     error_message=error_message,
                 )
 
+            # Log successful deletion
+            log_api_response_with_details(
+                api_name="ReleaseMcpSession",
+                request_id=request_id,
+                success=True,
+                key_fields={"session_id": self.session_id}
+            )
+
             # Return success result with request ID
             return DeleteResult(request_id=request_id, success=True)
 
         except Exception as e:
-            log_operation_error("release_mcp_session", str(e))
+            log_operation_error("release_mcp_session", str(e), exc_info=True)
             # In case of error, return failure result with error message
             return DeleteResult(
                 success=False,
@@ -335,10 +343,21 @@ class Session:
             # Extract request ID
             request_id = extract_request_id(response)
 
+            # Log successful label setting
+            log_api_response_with_details(
+                api_name="SetLabel",
+                request_id=request_id,
+                success=True,
+                key_fields={
+                    "session_id": self.session_id,
+                    "labels_count": len(labels)
+                }
+            )
+
             return OperationResult(request_id=request_id, success=True)
 
         except Exception as e:
-            log_operation_error("set_label", str(e))
+            logger.exception(f"❌ Failed to set labels for session {self.session_id}")
             raise SessionError(
                 f"Failed to set labels for session {self.session_id}: {e}"
             )
@@ -373,10 +392,21 @@ class Session:
             if labels_json:
                 labels = json.loads(labels_json)
 
+            # Log successful label retrieval
+            log_api_response_with_details(
+                api_name="GetLabel",
+                request_id=request_id,
+                success=True,
+                key_fields={
+                    "session_id": self.session_id,
+                    "labels_count": len(labels)
+                }
+            )
+
             return OperationResult(request_id=request_id, success=True, data=labels)
 
         except Exception as e:
-            log_operation_error("get_label", str(e))
+            logger.exception(f"❌ Failed to get labels for session {self.session_id}")
             raise SessionError(
                 f"Failed to get labels for session {self.session_id}: {e}"
             )
@@ -401,13 +431,6 @@ class Session:
             log_api_call("GetMcpResource", f"SessionId={self.session_id}")
 
             response = self.get_client().get_mcp_resource(request)
-            try:
-                response_body = json.dumps(
-                    response.to_map().get("body", {}), ensure_ascii=False, indent=2
-                )
-                log_api_response(response_body)
-            except Exception:
-                logger.debug(f"📥 Response: {response}")
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -441,12 +464,24 @@ class Session:
                 if "Ticket" in desktop_info:
                     session_info.ticket = desktop_info["Ticket"]
 
+            # Log successful session info retrieval
+            log_api_response_with_details(
+                api_name="GetMcpResource",
+                request_id=request_id,
+                success=True,
+                key_fields={
+                    "session_id": session_info.session_id,
+                    "resource_url": session_info.resource_url,
+                    "resource_type": session_info.resource_type
+                }
+            )
+
             return OperationResult(
                 request_id=request_id, success=True, data=session_info
             )
 
         except Exception as e:
-            log_operation_error("GetMcpResource", str(e))
+            logger.exception(f"❌ Failed to get session info for session {self.session_id}")
             raise SessionError(
                 f"Failed to get session info for session {self.session_id}: {e}"
             )
@@ -513,11 +548,25 @@ class Session:
 
             url = data.get("Url", "")
 
+            # Log successful link retrieval
+            log_api_response_with_details(
+                api_name="GetLink",
+                request_id=request_id,
+                success=True,
+                key_fields={
+                    "session_id": self.session_id,
+                    "url": url,
+                    "protocol_type": protocol_type or "default",
+                    "port": port or "default"
+                }
+            )
+
             return OperationResult(request_id=request_id, success=True, data=url)
 
         except SessionError:
             raise
         except Exception as e:
+            logger.exception(f"❌ Failed to get link for session {self.session_id}")
             raise SessionError(f"Failed to get link: {e}")
 
     async def get_link_async(
@@ -584,11 +633,25 @@ class Session:
 
             url = data.get("Url", "")
 
+            # Log successful link retrieval
+            log_api_response_with_details(
+                api_name="GetLink (async)",
+                request_id=request_id,
+                success=True,
+                key_fields={
+                    "session_id": self.session_id,
+                    "url": url,
+                    "protocol_type": protocol_type or "default",
+                    "port": port or "default"
+                }
+            )
+
             return OperationResult(request_id=request_id, success=True, data=url)
 
         except SessionError:
             raise
         except Exception as e:
+            logger.exception(f"❌ Failed to get link asynchronously for session {self.session_id}")
             raise SessionError(f"Failed to get link asynchronously: {e}")
 
     def list_mcp_tools(self, image_id: Optional[str] = None):
@@ -643,5 +706,16 @@ class Session:
                 logger.error(f"❌ Error unmarshaling tools data: {e}")
 
         self.mcp_tools = tools  # Update the session's mcp_tools field
+
+        # Log successful tools retrieval
+        log_api_response_with_details(
+            api_name="ListMcpTools",
+            request_id=request_id,
+            success=True,
+            key_fields={
+                "image_id": image_id,
+                "tools_count": len(tools)
+            }
+        )
 
         return McpToolsResult(request_id=request_id, tools=tools)

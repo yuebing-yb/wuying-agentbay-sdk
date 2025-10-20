@@ -237,6 +237,7 @@ class BaseService:
         except AgentBayError as e:
             handled_error = self._handle_error(e)
             request_id = "" if "request_id" not in locals() else request_id
+            logger.exception(f"❌ Failed to call MCP tool {name}")
             return OperationResult(
                 request_id=request_id,
                 success=False,
@@ -245,6 +246,7 @@ class BaseService:
         except Exception as e:
             handled_error = self._handle_error(e)
             request_id = "" if "request_id" not in locals() else request_id
+            logger.exception(f"❌ Failed to call MCP tool {name}")
             return OperationResult(
                 request_id=request_id,
                 success=False,

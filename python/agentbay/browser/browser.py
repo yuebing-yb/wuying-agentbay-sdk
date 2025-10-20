@@ -7,7 +7,7 @@ from agentbay.browser.browser_agent import BrowserAgent
 from agentbay.api.base_service import BaseService
 from agentbay.exceptions import BrowserError
 from agentbay.config import BROWSER_DATA_PATH
-from agentbay.logger import get_logger
+from agentbay.logger import get_logger, log_api_response_with_details
 
 # Initialize logger for this module
 logger = get_logger("browser")
@@ -350,11 +350,19 @@ class Browser(BaseService):
             if success:
                 self._initialized = True
                 self._option = option
+                log_api_response_with_details(
+                    api_name="InitBrowser",
+                    success=True,
+                    key_fields={
+                        "port": data.get("Port"),
+                        "status": "successfully initialized"
+                    }
+                )
                 logger.info("Browser instance was successfully initialized.")
 
             return success
         except Exception as e:
-            logger.error(f"Failed to initialize browser instance: {e}")
+            logger.exception(f"❌ Failed to initialize browser instance")
             self._initialized = False
             self._endpoint_url = None
             self._option = None
@@ -390,10 +398,18 @@ class Browser(BaseService):
                 self.endpoint_router_port = data.get("Port")
                 self._initialized = True
                 self._option = option
+                log_api_response_with_details(
+                    api_name="InitBrowser (async)",
+                    success=True,
+                    key_fields={
+                        "port": data.get("Port"),
+                        "status": "successfully initialized"
+                    }
+                )
                 logger.info("Browser instance successfully initialized")
             return success
         except Exception as e:
-            logger.error(f"Failed to initialize browser instance: {e}")
+            logger.exception(f"❌ Failed to initialize browser instance asynchronously")
             self._initialized = False
             self._endpoint_url = None
             self._option = None
