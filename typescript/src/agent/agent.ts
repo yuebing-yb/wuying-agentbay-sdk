@@ -3,6 +3,7 @@ import {
   log,
   logError,
   logInfo,
+  logDebug,
   logAPICall,
   logAPIResponseWithDetails,
   setRequestId,
@@ -173,7 +174,7 @@ export class Agent {
             };
         }
 
-        log(`Task ${taskId} is still running, please wait for a while.`);
+        logDebug(`Task ${taskId} is still running, please wait for a while.`);
         await new Promise(resolve => setTimeout(resolve, 3000));
         triedTime++;
       }
@@ -239,7 +240,7 @@ export class Agent {
    * @returns ExecutionResult containing success status, task output, and error message if any.
    */
   async terminateTask(taskId: string): Promise<ExecutionResult> {
-            log("Terminating task");
+            logDebug("Terminating task");
     
     try {
       const args = { task_id: taskId };

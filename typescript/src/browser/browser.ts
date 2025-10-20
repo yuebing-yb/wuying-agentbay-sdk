@@ -7,6 +7,7 @@ import {
   log,
   logError,
   logInfo,
+  logDebug,
   logAPICall,
   logAPIResponseWithDetails,
   setRequestId,
@@ -327,13 +328,13 @@ export class Browser {
       }
 
       const response = this.session.getClient().initBrowserSync(request);
-      log(`Response from init_browser data:`, response.body?.data);
+      logDebug(`Response from init_browser data:`, response.body?.data);
 
       const success = response.body?.data?.port !== null && response.body?.data?.port !== undefined;
       if (success) {
         this._initialized = true;
         this._option = browserOption;
-        log("Browser instance was successfully initialized.");
+        logInfo("Browser instance was successfully initialized.");
       }
 
       return success;

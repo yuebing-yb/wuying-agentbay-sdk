@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
-import { log } from "./utils/logger";
+import { logDebug } from "./utils/logger";
 interface Config {
   endpoint: string;
   timeout_ms: number;
@@ -41,14 +41,14 @@ export function findDotEnvFile(startPath?: string): string | null {
   while (searchPath !== path.dirname(searchPath)) {
     const envFile = path.join(searchPath, ".env");
     if (fs.existsSync(envFile)) {
-      log(`Found .env file at: ${envFile}`);
+      logDebug(`Found .env file at: ${envFile}`);
       return envFile;
     }
 
     // Check if this is a git repository root
     const gitDir = path.join(searchPath, ".git");
     if (fs.existsSync(gitDir)) {
-      log(`Found git repository root at: ${searchPath}`);
+      logDebug(`Found git repository root at: ${searchPath}`);
     }
 
     searchPath = path.dirname(searchPath);
@@ -57,7 +57,7 @@ export function findDotEnvFile(startPath?: string): string | null {
   // Check root directory as well
   const rootEnv = path.join(searchPath, ".env");
   if (fs.existsSync(rootEnv)) {
-    log(`Found .env file at root: ${rootEnv}`);
+    logDebug(`Found .env file at root: ${rootEnv}`);
     return rootEnv;
   }
 
@@ -81,13 +81,13 @@ export function loadDotEnvWithFallback(customEnvPath?: string): void {
             process.env[k] = envConfig[k];
           }
         }
-        log(`Loaded custom .env file from: ${customEnvPath}`);
+        logDebug(`Loaded custom .env file from: ${customEnvPath}`);
         return;
       } catch (error) {
-        log(`Warning: Failed to load custom .env file ${customEnvPath}: ${error}`);
+        logDebug(`Warning: Failed to load custom .env file ${customEnvPath}: ${error}`);
       }
     } else {
-      log(`Warning: Custom .env file not found: ${customEnvPath}`);
+      logDebug(`Warning: Custom .env file not found: ${customEnvPath}`);
     }
   }
 
@@ -102,12 +102,12 @@ export function loadDotEnvWithFallback(customEnvPath?: string): void {
           process.env[k] = envConfig[k];
         }
       }
-      log(`Loaded .env file from: ${envFile}`);
+      logDebug(`Loaded .env file from: ${envFile}`);
     } catch (error) {
-      log(`Warning: Failed to load .env file ${envFile}: ${error}`);
+      logDebug(`Warning: Failed to load .env file ${envFile}: ${error}`);
     }
   } else {
-    log("No .env file found in current directory or parent directories");
+    logDebug("No .env file found in current directory or parent directories");
   }
 }
 
@@ -155,7 +155,7 @@ export function loadConfig(customConfig?: Config, customEnvPath?: string): Confi
   try {
     loadDotEnvWithFallback(customEnvPath);
   } catch (error) {
-    log(`Warning: Failed to load .env file: ${error}`);
+    logDebug(`Warning: Failed to load .env file: ${error}`);
   }
 
   // Override with environment variables if they exist (highest priority)
@@ -168,7 +168,7 @@ export function loadConfig(customConfig?: Config, customEnvPath?: string): Confi
     if (!isNaN(timeout) && timeout > 0) {
       config.timeout_ms = timeout;
     } else {
-      log(`Warning: Invalid AGENTBAY_TIMEOUT_MS value: ${process.env.AGENTBAY_TIMEOUT_MS}, using default`);
+      logDebug(`Warning: Invalid AGENTBAY_TIMEOUT_MS value: ${process.env.AGENTBAY_TIMEOUT_MS}, using default`);
     }
   }
 
