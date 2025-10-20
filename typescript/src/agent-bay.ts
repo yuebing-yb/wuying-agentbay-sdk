@@ -22,7 +22,16 @@ import {
   ListSessionParams,
   SessionListResult,
 } from "./types/list-session-params";
-import { log, logError } from "./utils/logger";
+import {
+  log,
+  logError,
+  logInfo,
+  logAPICall,
+  logAPIResponseWithDetails,
+  maskSensitiveData,
+  setRequestId,
+  getRequestId,
+} from "./utils/logger";
 
 /**
  * Generate a random context name using alphanumeric characters with timestamp.
@@ -276,43 +285,31 @@ export class AgentBay {
       }
 
       // Log API request
-      log("API Call: CreateMcpSession");
-      let requestLog = "Request: ";
-      if (request.imageId) {
-        requestLog += `ImageId=${request.imageId}, `;
-      }
-      if (request.labels) {
-        requestLog += `Labels=${request.labels}, `;
-      }
-      if (
-        request.persistenceDataList &&
-        request.persistenceDataList.length > 0
-      ) {
-        requestLog += `PersistenceDataList=${request.persistenceDataList.length} items, `;
-        request.persistenceDataList.forEach((pd: CreateMcpSessionRequestPersistenceDataList, i: number) => {
-          requestLog += `Item${i}[ContextId=${pd.contextId}, Path=${pd.path}`;
-          if (pd.policy) {
-            requestLog += `, Policy=${pd.policy}`;
-          }
-          requestLog += `], `;
-        });
-      }
-      log(requestLog);
+      logAPICall("CreateMcpSession", {
+        labels: params.labels,
+        imageId: params.imageId,
+        policyId: params.policyId,
+        isVpc: params.isVpc,
+        persistenceDataCount: params.contextSync ? params.contextSync.length : 0,
+      });
 
       const response = await this.client.createMcpSession(request);
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
-
-      // Log response data with requestId
-      log("response data =", response.body?.data);
-      if (requestId) {
-        log(`requestId = ${requestId}`);
-      }
+      setRequestId(requestId);
 
       const sessionData = response.body;
 
       if (!sessionData || typeof sessionData !== "object") {
+        logAPIResponseWithDetails(
+          "CreateMcpSession",
+          requestId,
+          false,
+          {},
+          "Invalid response format: expected a dictionary"
+        );
+        log("Full response:", JSON.stringify(sessionData, null, 2));
         return {
           requestId,
           success: false,
@@ -323,6 +320,14 @@ export class AgentBay {
       // Check for API-level errors
       if (sessionData.success === false && sessionData.code) {
         const errorMessage = `[${sessionData.code}] ${sessionData.message || 'Unknown error'}`;
+        logAPIResponseWithDetails(
+          "CreateMcpSession",
+          requestId,
+          false,
+          {},
+          errorMessage
+        );
+        log("Full response:", JSON.stringify(sessionData, null, 2));
         return {
           requestId,
           success: false,
@@ -332,6 +337,14 @@ export class AgentBay {
 
       const data = sessionData.data;
       if (!data || typeof data !== "object") {
+        logAPIResponseWithDetails(
+          "CreateMcpSession",
+          requestId,
+          false,
+          {},
+          "Invalid response format: 'data' field is not a dictionary"
+        );
+        log("Full response:", JSON.stringify(sessionData, null, 2));
         return {
           requestId,
           success: false,
@@ -342,6 +355,14 @@ export class AgentBay {
 
       const sessionId = data.sessionId;
       if (!sessionId) {
+        logAPIResponseWithDetails(
+          "CreateMcpSession",
+          requestId,
+          false,
+          {},
+          "SessionId not found in response"
+        );
+        log("Full response:", JSON.stringify(sessionData, null, 2));
         return {
           requestId,
           success: false,
@@ -352,8 +373,15 @@ export class AgentBay {
       // ResourceUrl is optional in CreateMcpSession response
       const resourceUrl = data.resourceUrl || "";
 
-      log("session_id =", sessionId);
-      log("resource_url =", resourceUrl);
+      logAPIResponseWithDetails(
+        "CreateMcpSession",
+        requestId,
+        true,
+        {
+          sessionId,
+          resourceUrl,
+        }
+      );
 
       const session = new Session(this, sessionId);
 
@@ -687,21 +715,30 @@ export class AgentBay {
       }
 
       // Log API request
-      log("API Call: ListSession");
-      log(`Request: Labels=${JSON.stringify(labels)}, MaxResults=${limit}${nextToken ? `, NextToken=${nextToken}` : ""}`);
+      logAPICall("ListSession", {
+        labels,
+        maxResults: limit,
+        nextToken: nextToken || undefined,
+      });
 
       const response = await this.client.listSession(request);
 
-      // Log API response
-      log("body =", response.body);
-
       // Extract request ID
       const requestId = extractRequestId(response) || "";
+      setRequestId(requestId);
 
       // Check for errors in the response
       if (!response.body?.success) {
         const code = response.body?.code || "Unknown";
         const message = response.body?.message || "Unknown error";
+        logAPIResponseWithDetails(
+          "ListSession",
+          requestId,
+          false,
+          {},
+          `[${code}] ${message}`
+        );
+        log("Full ListSession response:", JSON.stringify(response.body, null, 2));
         return {
           requestId,
           success: false,
@@ -723,6 +760,17 @@ export class AgentBay {
           }
         }
       }
+
+      logAPIResponseWithDetails(
+        "ListSession",
+        requestId,
+        true,
+        {
+          sessionCount: sessionIds.length,
+          totalCount: response.body.totalCount || 0,
+          maxResults: response.body.maxResults || limit,
+        }
+      );
 
       // Return SessionListResult with request ID and pagination info
       return {
@@ -757,7 +805,15 @@ export class AgentBay {
       if (session.enableBrowserReplay) {
         syncContext = true;
       }
+      logAPICall("DeleteSession", { sessionId: session.sessionId });
       const deleteResult = await session.delete(syncContext);
+
+      logAPIResponseWithDetails(
+        "DeleteSession",
+        deleteResult.requestId,
+        deleteResult.success,
+        { sessionId: session.sessionId }
+      );
 
       this.sessions.delete(session.sessionId);
 
@@ -789,8 +845,7 @@ export class AgentBay {
    */
   async getSession(sessionId: string): Promise<$GetSessionResult> {
     try {
-      log("API Call: GetSession");
-      log(`Request: SessionId=${sessionId}`);
+      logAPICall("GetSession", { sessionId });
 
       const request = new $GetSessionRequest({
         authorization: `Bearer ${this.apiKey}`,
@@ -798,14 +853,21 @@ export class AgentBay {
       });
 
       const response = await this.client.getSession(request);
-
-      log("Response from GetSession:", response.body);
-
       const requestId = extractRequestId(response) || "";
       const body = response.body;
 
+      setRequestId(requestId);
+
       // Check for API-level errors
       if (body?.success === false && body.code) {
+        logAPIResponseWithDetails(
+          "GetSession",
+          requestId,
+          false,
+          {},
+          `[${body.code}] ${body.message || 'Unknown error'}`
+        );
+        log("Full GetSession response:", JSON.stringify(body, null, 2));
         return {
           requestId,
           httpStatusCode: body.httpStatusCode || 0,
@@ -835,6 +897,17 @@ export class AgentBay {
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
         };
+
+        logAPIResponseWithDetails(
+          "GetSession",
+          requestId,
+          true,
+          {
+            sessionId: result.data.sessionId,
+            resourceId: result.data.resourceId,
+            httpPort: result.data.httpPort,
+          }
+        );
       }
 
       return result;

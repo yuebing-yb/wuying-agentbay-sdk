@@ -241,17 +241,17 @@ describe("AgentBay", () => {
           `Total count: ${devSessionsResponse.totalCount}, Max results: ${devSessionsResponse.maxResults}`
         );
 
-        // Verify SessionListResult structure
+        // Verify response structure
         expect(devSessionsResponse.success).toBe(true);
         expect(devSessionsResponse.requestId).toBeDefined();
         expect(typeof devSessionsResponse.requestId).toBe("string");
         expect(devSessionsResponse.requestId!.length).toBeGreaterThan(0);
-        expect(devSessionsResponse.data).toBeDefined();
-        expect(Array.isArray(devSessionsResponse.data)).toBe(true);
+        expect(devSessionsResponse.sessionIds).toBeDefined();
+        expect(Array.isArray(devSessionsResponse.sessionIds)).toBe(true);
 
         // Verify that session A is in the results
-        const foundSessionA = devSessionsResponse.data.some(
-          (s) => s.sessionId === sessionA.sessionId
+        const foundSessionA = devSessionsResponse.sessionIds.some(
+          (sessionId) => sessionId === sessionA.sessionId
         );
         expect(foundSessionA).toBe(true);
       } catch (error) {
@@ -281,8 +281,8 @@ describe("AgentBay", () => {
         expect(teamBSessionsResponse.requestId).toBeDefined();
 
         // Verify that session B is in the results
-        const foundSessionB = teamBSessionsResponse.data.some(
-          (s) => s.sessionId === sessionB.sessionId
+        const foundSessionB = teamBSessionsResponse.sessionIds.some(
+          (sessionId) => sessionId === sessionB.sessionId
         );
         expect(foundSessionB).toBe(true);
       } catch (error) {
@@ -302,7 +302,7 @@ describe("AgentBay", () => {
           multiLabelSessionsParams
         );
         log(
-          `Found ${multiLabelSessionsResponse.data.length} sessions with environment=testing AND project=project-y`
+          `Found ${multiLabelSessionsResponse.sessionIds.length} sessions with environment=testing AND project=project-y`
         );
         log(
           `Total count: ${multiLabelSessionsResponse.totalCount}, Max results: ${multiLabelSessionsResponse.maxResults}`
@@ -318,11 +318,11 @@ describe("AgentBay", () => {
         expect(multiLabelSessionsResponse.requestId).toBeDefined();
 
         // Verify that session B is in the results and session A is not
-        const foundSessionA = multiLabelSessionsResponse.data.some(
-          (s) => s.sessionId === sessionA.sessionId
+        const foundSessionA = multiLabelSessionsResponse.sessionIds.some(
+          (s) => s === sessionA.sessionId
         );
-        const foundSessionB = multiLabelSessionsResponse.data.some(
-          (s) => s.sessionId === sessionB.sessionId
+        const foundSessionB = multiLabelSessionsResponse.sessionIds.some(
+          (s) => s === sessionB.sessionId
         );
 
         expect(foundSessionA).toBe(false);
@@ -336,7 +336,7 @@ describe("AgentBay", () => {
             nextToken: multiLabelSessionsResponse.nextToken,
           };
           const nextPageResponse = await agentBay.listByLabels(nextPageParams);
-          log(`Next page sessions count: ${nextPageResponse.data.length}`);
+          log(`Next page sessions count: ${nextPageResponse.sessionIds.length}`);
           log(`Next page RequestId: ${nextPageResponse.requestId}`);
 
           // Verify next page result structure
@@ -357,7 +357,7 @@ describe("AgentBay", () => {
           nonExistentSessionsParams
         );
         log(
-          `Found ${nonExistentSessionsResponse.data.length} sessions with non-existent label`
+          `Found ${nonExistentSessionsResponse.sessionIds.length} sessions with non-existent label`
         );
         log(
           `Total count: ${nonExistentSessionsResponse.totalCount}, Max results: ${nonExistentSessionsResponse.maxResults}`
@@ -372,7 +372,7 @@ describe("AgentBay", () => {
         expect(nonExistentSessionsResponse.success).toBe(true);
         expect(nonExistentSessionsResponse.requestId).toBeDefined();
 
-        if (nonExistentSessionsResponse.data.length > 0) {
+        if (nonExistentSessionsResponse.sessionIds.length > 0) {
           log(
             "Warning: Found sessions with non-existent label, this might indicate an issue"
           );

@@ -186,9 +186,9 @@ describe("AgentBay.list() Integration Tests", () => {
     expect(resultPage1.success).toBe(true);
     expect(resultPage1.requestId).toBeDefined();
     expect(resultPage1.requestId).not.toBe("");
-    expect(resultPage1.data.length).toBeLessThanOrEqual(2);
+    expect(resultPage1.sessionIds.length).toBeLessThanOrEqual(2);
 
-    console.log(`Page 1 - Found ${resultPage1.data.length} sessions`);
+    console.log(`Page 1 - Found ${resultPage1.sessionIds.length} sessions`);
     console.log(`Request ID: ${resultPage1.requestId}`);
 
     // If there are more results, test page 2
@@ -203,7 +203,7 @@ describe("AgentBay.list() Integration Tests", () => {
       expect(resultPage2.requestId).toBeDefined();
       expect(resultPage2.requestId).not.toBe("");
 
-      console.log(`Page 2 - Found ${resultPage2.data.length} sessions`);
+      console.log(`Page 2 - Found ${resultPage2.sessionIds.length} sessions`);
       console.log(`Request ID: ${resultPage2.requestId}`);
     }
   });

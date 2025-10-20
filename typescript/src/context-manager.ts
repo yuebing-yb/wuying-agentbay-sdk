@@ -1,7 +1,15 @@
 import { Client } from "./api/client";
 import { GetContextInfoRequest, SyncContextRequest } from "./api/models/model";
 import { ApiResponse, extractRequestId } from "./types/api-response";
-import { log, logError } from "./utils/logger";
+import {
+  log,
+  logError,
+  logInfo,
+  logAPICall,
+  logAPIResponseWithDetails,
+  setRequestId,
+  getRequestId,
+} from "./utils/logger";
 
 export interface ContextStatusData {
   contextId: string;

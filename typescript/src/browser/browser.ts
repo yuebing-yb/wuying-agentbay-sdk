@@ -3,7 +3,14 @@ import { BrowserAgent } from './browser_agent';
 import { BrowserError } from '../exceptions';
 import { BROWSER_DATA_PATH } from '../config';
 import { InitBrowserRequest } from '../api/models/InitBrowserRequest';
-import { log } from '../utils/logger';
+import {
+  log,
+  logError,
+  logInfo,
+  logAPICall,
+  logAPIResponseWithDetails,
+  setRequestId,
+} from '../utils/logger';
 
 export interface BrowserViewport {
   width: number;
@@ -378,18 +385,35 @@ export class Browser {
       }
 
       const response = await this.session.getClient().initBrowser(request);
-      log(`Response from init_browser data:`, response.body?.data);
+      const requestId = response.body?.requestId || "";
+      setRequestId(requestId);
 
       const success = response.body?.data?.port !== null && response.body?.data?.port !== undefined;
       if (success) {
+        logAPIResponseWithDetails(
+          "InitBrowser",
+          requestId,
+          true,
+          {
+            port: response.body?.data?.port,
+            endpoint: response.body?.data?.endpoint,
+          }
+        );
         this._initialized = true;
         this._option = browserOption;
-        log("Browser instance successfully initialized");
+      } else {
+        logAPIResponseWithDetails(
+          "InitBrowser",
+          requestId,
+          false,
+          {},
+          "Port not found in response"
+        );
       }
 
       return success;
     } catch (error) {
-      console.error("Failed to initialize browser instance:", error);
+      logError("Failed to initialize browser instance:", error);
       this._initialized = false;
       this._endpointUrl = null;
       this._option = null;

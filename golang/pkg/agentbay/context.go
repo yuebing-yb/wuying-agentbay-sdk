@@ -1,6 +1,7 @@
 package agentbay
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/alibabacloud-go/tea/tea"
@@ -108,12 +109,11 @@ func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, e
 	}
 
 	// Log API request
-	fmt.Println("API Call: ListContexts")
-	fmt.Printf("Request: MaxResults=%d", *request.MaxResults)
+	requestInfo := fmt.Sprintf("MaxResults=%d", *request.MaxResults)
 	if request.NextToken != nil {
-		fmt.Printf(", NextToken=%s", *request.NextToken)
+		requestInfo += fmt.Sprintf(", NextToken=%s", *request.NextToken)
 	}
-	fmt.Println()
+	LogAPICall("ListContexts", requestInfo)
 
 	response, err := cs.AgentBay.Client.ListContexts(request)
 
@@ -122,7 +122,7 @@ func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, e
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling ListContexts:", err)
+		LogOperationError("ListContexts", err.Error(), true)
 		return &ContextListResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: requestID,
@@ -131,10 +131,6 @@ func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, e
 			Contexts:     []*Context{},
 			ErrorMessage: fmt.Sprintf("Failed to list contexts: %v", err),
 		}, nil
-	}
-
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from ListContexts:", response.Body)
 	}
 
 	// Check for API-level errors
@@ -146,6 +142,8 @@ func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, e
 			} else {
 				errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
 			}
+			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+			LogAPIResponseWithDetails("ListContexts", requestID, false, nil, string(respJSON))
 			return &ContextListResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -187,6 +185,20 @@ func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, e
 				contexts = append(contexts, context)
 			}
 		}
+
+		keyFields := map[string]interface{}{
+			"max_results":   maxResults,
+			"context_count": len(contexts),
+			"total_count":   totalCount,
+		}
+		if nextToken != "" {
+			keyFields["has_next_page"] = true
+			keyFields["next_token_length"] = len(nextToken)
+		} else {
+			keyFields["has_next_page"] = false
+		}
+		respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+		LogAPIResponseWithDetails("ListContexts", requestID, true, keyFields, string(respJSON))
 	}
 
 	return &ContextListResult{
@@ -211,8 +223,7 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 	}
 
 	// Log API request
-	fmt.Println("API Call: GetContext")
-	fmt.Printf("Request: Name=%s, AllowCreate=%t\n", *request.Name, *request.AllowCreate)
+	LogAPICall("GetContext", fmt.Sprintf("Name=%s, AllowCreate=%t", name, create))
 
 	response, err := cs.AgentBay.Client.GetContext(request)
 
@@ -221,7 +232,7 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling GetContext:", err)
+		LogOperationError("GetContext", err.Error(), true)
 		return &ContextResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: requestID,
@@ -234,11 +245,7 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 	}
 
 	if response != nil && response.Body != nil {
-		fmt.Println("Response from GetContext:", response.Body)
-	}
-
-	// Check for API-level errors
-	if response.Body != nil {
+		// Check for API-level errors
 		if response.Body.Success != nil && !*response.Body.Success && response.Body.Code != nil {
 			errorMsg := "Unknown error"
 			if response.Body.Message != nil {
@@ -246,6 +253,8 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 			} else {
 				errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
 			}
+			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+			LogAPIResponseWithDetails("GetContext", requestID, false, nil, string(respJSON))
 			return &ContextResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -259,6 +268,7 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 	}
 
 	if response.Body == nil || response.Body.Data == nil || response.Body.Data.Id == nil {
+		LogOperationError("GetContext", "Context ID not found in response", false)
 		return &ContextResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: requestID,
@@ -279,6 +289,18 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 		LastUsedAt: tea.StringValue(response.Body.Data.LastUsedTime),
 		OSType:     tea.StringValue(response.Body.Data.OsType),
 	}
+
+	keyFields := map[string]interface{}{
+		"context_id": context.ID,
+		"name":       context.Name,
+		"state":      context.State,
+		"os_type":    context.OSType,
+	}
+	if context.CreatedAt != "" {
+		keyFields["created_at"] = context.CreatedAt
+	}
+	respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("GetContext", requestID, true, keyFields, string(respJSON))
 
 	return &ContextResult{
 		ApiResponse: models.ApiResponse{
@@ -324,23 +346,18 @@ func (cs *ContextService) Update(context *Context) (*ContextModifyResult, error)
 	}
 
 	// Log API request
-	fmt.Println("API Call: ModifyContext")
-	fmt.Printf("Request: Id=%s, Name=%s\n", *request.Id, *request.Name)
+	LogAPICall("ModifyContext", fmt.Sprintf("Id=%s, Name=%s", context.ID, context.Name))
 
 	response, err := cs.AgentBay.Client.ModifyContext(request)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling ModifyContext:", err)
+		LogOperationError("ModifyContext", err.Error(), true)
 		return nil, fmt.Errorf("failed to update context %s: %v", context.ID, err)
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
-
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from ModifyContext:", response.Body)
-	}
 
 	// Check for API-level errors
 	if response.Body != nil {
@@ -351,6 +368,8 @@ func (cs *ContextService) Update(context *Context) (*ContextModifyResult, error)
 			} else if response.Body.Code != nil {
 				errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
 			}
+			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+			LogAPIResponseWithDetails("ModifyContext", requestID, false, nil, string(respJSON))
 			return &ContextModifyResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -360,6 +379,13 @@ func (cs *ContextService) Update(context *Context) (*ContextModifyResult, error)
 			}, nil
 		}
 	}
+
+	keyFields := map[string]interface{}{
+		"context_id": context.ID,
+		"name":       context.Name,
+	}
+	respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("ModifyContext", requestID, true, keyFields, string(respJSON))
 
 	return &ContextModifyResult{
 		ApiResponse: models.ApiResponse{
@@ -377,23 +403,18 @@ func (cs *ContextService) Delete(context *Context) (*ContextDeleteResult, error)
 	}
 
 	// Log API request
-	fmt.Println("API Call: DeleteContext")
-	fmt.Printf("Request: Id=%s\n", *request.Id)
+	LogAPICall("DeleteContext", fmt.Sprintf("Id=%s", context.ID))
 
 	response, err := cs.AgentBay.Client.DeleteContext(request)
 
 	// Log API response
 	if err != nil {
-		fmt.Println("Error calling DeleteContext:", err)
+		LogOperationError("DeleteContext", err.Error(), true)
 		return nil, fmt.Errorf("failed to delete context %s: %v", context.ID, err)
 	}
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
-
-	if response != nil && response.Body != nil {
-		fmt.Println("Response from DeleteContext:", response.Body)
-	}
 
 	// Check for API-level errors
 	if response.Body != nil {
@@ -404,6 +425,8 @@ func (cs *ContextService) Delete(context *Context) (*ContextDeleteResult, error)
 			} else if response.Body.Code != nil {
 				errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
 			}
+			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+			LogAPIResponseWithDetails("DeleteContext", requestID, false, nil, string(respJSON))
 			return &ContextDeleteResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -413,6 +436,12 @@ func (cs *ContextService) Delete(context *Context) (*ContextDeleteResult, error)
 			}, nil
 		}
 	}
+
+	keyFields := map[string]interface{}{
+		"context_id": context.ID,
+	}
+	respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("DeleteContext", requestID, true, keyFields, string(respJSON))
 
 	return &ContextDeleteResult{
 		ApiResponse: models.ApiResponse{
@@ -467,12 +496,11 @@ func (cs *ContextService) GetFileDownloadUrl(contextID string, filePath string) 
 		FilePath:      tea.String(filePath),
 	}
 
-	fmt.Println("API Call: GetContextFileDownloadUrl")
-	fmt.Printf("Request: ContextId=%s, FilePath=%s\n", contextID, filePath)
+	LogAPICall("GetContextFileDownloadUrl", fmt.Sprintf("ContextId=%s, FilePath=%s", contextID, filePath))
 
 	resp, err := cs.AgentBay.Client.GetContextFileDownloadUrl(req)
 	if err != nil {
-		fmt.Println("Error calling GetContextFileDownloadUrl:", err)
+		LogOperationError("GetContextFileDownloadUrl", err.Error(), true)
 		return nil, err
 	}
 
@@ -496,6 +524,8 @@ func (cs *ContextService) GetFileDownloadUrl(contextID string, filePath string) 
 				message = "Unknown error"
 			}
 			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+			respJSON, _ := json.MarshalIndent(resp.Body, "", "  ")
+			LogAPIResponseWithDetails("GetContextFileDownloadUrl", requestID, false, nil, string(respJSON))
 			return &ContextFileUrlResult{
 				ApiResponse:  models.WithRequestID(requestID),
 				Success:      false,
@@ -513,7 +543,19 @@ func (cs *ContextService) GetFileDownloadUrl(contextID string, filePath string) 
 				expire = resp.Body.Data.ExpireTime
 			}
 		}
-		fmt.Println("Response from GetContextFileDownloadUrl:", resp.Body)
+
+		keyFields := map[string]interface{}{
+			"context_id": contextID,
+			"file_path":  filePath,
+		}
+		if url != "" {
+			keyFields["url_length"] = len(url)
+		}
+		if expire != nil {
+			keyFields["expire_time"] = *expire
+		}
+		respJSON, _ := json.MarshalIndent(resp.Body, "", "  ")
+		LogAPIResponseWithDetails("GetContextFileDownloadUrl", requestID, true, keyFields, string(respJSON))
 	}
 
 	return &ContextFileUrlResult{
@@ -533,12 +575,11 @@ func (cs *ContextService) GetFileUploadUrl(contextID string, filePath string) (*
 		FilePath:      tea.String(filePath),
 	}
 
-	fmt.Println("API Call: GetContextFileUploadUrl")
-	fmt.Printf("Request: ContextId=%s, FilePath=%s\n", contextID, filePath)
+	LogAPICall("GetContextFileUploadUrl", fmt.Sprintf("ContextId=%s, FilePath=%s", contextID, filePath))
 
 	resp, err := cs.AgentBay.Client.GetContextFileUploadUrl(req)
 	if err != nil {
-		fmt.Println("Error calling GetContextFileUploadUrl:", err)
+		LogOperationError("GetContextFileUploadUrl", err.Error(), true)
 		return nil, err
 	}
 
@@ -562,6 +603,8 @@ func (cs *ContextService) GetFileUploadUrl(contextID string, filePath string) (*
 				message = "Unknown error"
 			}
 			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+			respJSON, _ := json.MarshalIndent(resp.Body, "", "  ")
+			LogAPIResponseWithDetails("GetContextFileUploadUrl", requestID, false, nil, string(respJSON))
 			return &ContextFileUrlResult{
 				ApiResponse:  models.WithRequestID(requestID),
 				Success:      false,
@@ -579,7 +622,19 @@ func (cs *ContextService) GetFileUploadUrl(contextID string, filePath string) (*
 				expire = resp.Body.Data.ExpireTime
 			}
 		}
-		fmt.Println("Response from GetContextFileUploadUrl:", resp.Body)
+
+		keyFields := map[string]interface{}{
+			"context_id": contextID,
+			"file_path":  filePath,
+		}
+		if url != "" {
+			keyFields["url_length"] = len(url)
+		}
+		if expire != nil {
+			keyFields["expire_time"] = *expire
+		}
+		respJSON, _ := json.MarshalIndent(resp.Body, "", "  ")
+		LogAPIResponseWithDetails("GetContextFileUploadUrl", requestID, true, keyFields, string(respJSON))
 	}
 
 	return &ContextFileUrlResult{
@@ -601,12 +656,11 @@ func (cs *ContextService) ListFiles(contextID string, parentFolderPath string, p
 		ContextId:        tea.String(contextID),
 	}
 
-	fmt.Println("API Call: DescribeContextFiles")
-	fmt.Printf("Request: ContextId=%s, ParentFolderPath=%s, PageNumber=%d, PageSize=%d\n", contextID, parentFolderPath, pageNumber, pageSize)
+	LogAPICall("DescribeContextFiles", fmt.Sprintf("ContextId=%s, ParentFolderPath=%s, PageNumber=%d, PageSize=%d", contextID, parentFolderPath, pageNumber, pageSize))
 
 	resp, err := cs.AgentBay.Client.DescribeContextFiles(req)
 	if err != nil {
-		fmt.Println("Error calling DescribeContextFiles:", err)
+		LogOperationError("DescribeContextFiles", err.Error(), true)
 		return nil, err
 	}
 
@@ -630,6 +684,8 @@ func (cs *ContextService) ListFiles(contextID string, parentFolderPath string, p
 				message = "Unknown error"
 			}
 			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+			respJSON, _ := json.MarshalIndent(resp.Body, "", "  ")
+			LogAPIResponseWithDetails("DescribeContextFiles", requestID, false, nil, string(respJSON))
 			return &ContextFileListResult{
 				ApiResponse:  models.WithRequestID(requestID),
 				Success:      false,
@@ -673,7 +729,19 @@ func (cs *ContextService) ListFiles(contextID string, parentFolderPath string, p
 			}
 			entries = append(entries, entry)
 		}
-		fmt.Println("Response from DescribeContextFiles:", resp.Body)
+
+		keyFields := map[string]interface{}{
+			"context_id":         contextID,
+			"parent_folder_path": parentFolderPath,
+			"page_number":        pageNumber,
+			"page_size":          pageSize,
+			"entry_count":        len(entries),
+		}
+		if count != nil {
+			keyFields["total_count"] = *count
+		}
+		respJSON, _ := json.MarshalIndent(resp.Body, "", "  ")
+		LogAPIResponseWithDetails("DescribeContextFiles", requestID, true, keyFields, string(respJSON))
 	}
 
 	return &ContextFileListResult{
@@ -693,12 +761,11 @@ func (cs *ContextService) DeleteFile(contextID string, filePath string) (*Contex
 		FilePath:      tea.String(filePath),
 	}
 
-	fmt.Println("API Call: DeleteContextFile")
-	fmt.Printf("Request: ContextId=%s, FilePath=%s\n", contextID, filePath)
+	LogAPICall("DeleteContextFile", fmt.Sprintf("ContextId=%s, FilePath=%s", contextID, filePath))
 
 	resp, err := cs.AgentBay.Client.DeleteContextFile(req)
 	if err != nil {
-		fmt.Println("Error calling DeleteContextFile:", err)
+		LogOperationError("DeleteContextFile", err.Error(), true)
 		return nil, err
 	}
 
@@ -719,9 +786,16 @@ func (cs *ContextService) DeleteFile(contextID string, filePath string) (*Contex
 				message = "Failed to delete file"
 			}
 			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+			respJSON, _ := json.MarshalIndent(resp.Body, "", "  ")
+			LogAPIResponseWithDetails("DeleteContextFile", requestID, false, nil, string(respJSON))
+		} else {
+			keyFields := map[string]interface{}{
+				"context_id": contextID,
+				"file_path":  filePath,
+			}
+			respJSON, _ := json.MarshalIndent(resp.Body, "", "  ")
+			LogAPIResponseWithDetails("DeleteContextFile", requestID, true, keyFields, string(respJSON))
 		}
-
-		fmt.Println("Response from DeleteContextFile:", resp.Body)
 	}
 
 	return &ContextFileDeleteResult{
