@@ -21,7 +21,7 @@ python main.py
 
 1. Initializes the AgentBay client with your API key
 2. Creates a new session
-3. Executes a simple task using the Agent module ("Calculate the square root of 144")
+3. Executes a simple task using the Agent module ("Create a word document, input some words and save the document.")
 4. Displays the task results
 5. Cleans up by deleting the session
 
@@ -35,6 +35,6 @@ python main.py
 ## Next Steps
 
 Try modifying the task description to perform different operations, such as:
-- "Find the current weather in New York City"
-- "Calculate the factorial of 10"
-- "List the prime numbers between 1 and 100"
+- "Find out the current weather in New York City by Google/Baidu"
+- "Copy all the text files from folder A to folder B"
+- "Navigate to bilibili.com and search for 'Wuying AgentBay ' and play the first video."
