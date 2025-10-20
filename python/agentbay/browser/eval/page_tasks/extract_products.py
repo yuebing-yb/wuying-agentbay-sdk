@@ -6,13 +6,13 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from urllib.parse import urlparse, urljoin
 import base64
-import logging
 
 
 from agentbay.browser.browser_agent import ActOptions
 from agentbay.browser.eval.page_agent import PageAgent
+from agentbay.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ProductInfo(BaseModel):

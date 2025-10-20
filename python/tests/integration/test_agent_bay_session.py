@@ -32,6 +32,11 @@ class TestAgentBaySession(unittest.TestCase):
         # Create a session
         print("Creating a new session...")
         result = agent_bay.create()
+        
+        # Check if session creation was successful
+        self.assertTrue(result.success, f"Session creation failed: {result.error_message}")
+        self.assertIsNotNone(result.session, "Session object is None")
+        
         session = result.session
         print(f"Session created with ID: {session.session_id}")
 
@@ -57,6 +62,13 @@ class TestSession(unittest.TestCase):
         # Create a session with default windows image
         print("Creating a new session for testing...")
         self.result = self.agent_bay.create()
+        
+        # Check if session creation was successful
+        if not self.result.success:
+            self.fail(f"Session creation failed in setUp: {self.result.error_message}")
+        if self.result.session is None:
+            self.fail("Session object is None in setUp")
+            
         self.session = self.result.session
         print(f"Session created with ID: {self.session.session_id}")
 

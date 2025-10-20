@@ -7,7 +7,7 @@ and structured output for different log levels.
 
 import sys
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any, List
 from loguru import logger
 import os
 
@@ -148,14 +148,58 @@ log = AgentBayLogger.get_logger("agentbay")
 def get_logger(name: str):
     """
     Convenience function to get a named logger.
-    
+
     Args:
         name: Logger name
-        
+
     Returns:
         Named logger instance
     """
     return AgentBayLogger.get_logger(name)
+
+
+# Sensitive field names for data masking
+SENSITIVE_FIELDS = [
+    'api_key', 'apikey', 'api-key',
+    'password', 'passwd', 'pwd',
+    'token', 'access_token', 'auth_token',
+    'secret', 'private_key',
+    'authorization',
+]
+
+
+def mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
+    """
+    Mask sensitive information in data structures.
+
+    Args:
+        data: Data to mask (dict, str, list, etc.)
+        fields: Additional sensitive field names
+
+    Returns:
+        Masked data (deep copy)
+    """
+    if fields is None:
+        fields = SENSITIVE_FIELDS
+
+    if isinstance(data, dict):
+        masked = {}
+        for key, value in data.items():
+            if any(field in key.lower() for field in fields):
+                if isinstance(value, str) and len(value) > 4:
+                    masked[key] = value[:2] + '****' + value[-2:]
+                else:
+                    masked[key] = '****'
+            else:
+                masked[key] = mask_sensitive_data(value, fields)
+        return masked
+    elif isinstance(data, list):
+        return [mask_sensitive_data(item, fields) for item in data]
+    elif isinstance(data, str):
+        # Don't mask plain strings, only dict keys
+        return data
+    else:
+        return data
 
 
 # Compatibility functions for common logging patterns
@@ -176,6 +220,43 @@ def log_api_response(response_data: str, success: bool = True) -> None:
         log.opt(depth=1).error(f"📥 Response: {response_data}")
 
 
+def log_api_response_with_details(
+    api_name: str,
+    request_id: str = "",
+    success: bool = True,
+    key_fields: Dict[str, Any] = None,
+    full_response: str = ""
+) -> None:
+    """
+    Log API response with key details at INFO level.
+
+    Args:
+        api_name: Name of the API being called
+        request_id: Request ID from the response
+        success: Whether the API call was successful
+        key_fields: Dictionary of key business fields to log
+        full_response: Full response body (logged at DEBUG level)
+    """
+    if success:
+        # Main response line with API name and requestId
+        main_info = f"✅ API Response: {api_name}"
+        if request_id:
+            main_info += f", RequestId={request_id}"
+        log.opt(depth=1).info(main_info)
+
+        # Log key fields on separate lines for better readability
+        if key_fields:
+            for key, value in key_fields.items():
+                log.opt(depth=1).info(f"  └─ {key}={value}")
+
+        if full_response:
+            log.opt(depth=1).debug(f"📥 Full Response: {full_response}")
+    else:
+        log.opt(depth=1).error(f"❌ API Response Failed: {api_name}, RequestId={request_id}")
+        if full_response:
+            log.opt(depth=1).error(f"📥 Response: {full_response}")
+
+
 def log_operation_start(operation: str, details: str = "") -> None:
     """Log the start of an operation."""
     log.opt(depth=1).info(f"🚀 Starting: {operation}")
@@ -190,10 +271,20 @@ def log_operation_success(operation: str, result: str = "") -> None:
         log.opt(depth=1).debug(f"📊 Result: {result}")
 
 
-def log_operation_error(operation: str, error: str) -> None:
-    """Log operation error."""
-    log.opt(depth=1).error(f"❌ Failed: {operation}")
-    log.opt(depth=1).error(f"💥 Error: {error}")
+def log_operation_error(operation: str, error: str, exc_info: bool = False) -> None:
+    """
+    Log operation error with optional exception info.
+
+    Args:
+        operation: Name of the operation that failed
+        error: Error message
+        exc_info: Whether to include exception traceback
+    """
+    if exc_info:
+        log.opt(depth=1).exception(f"❌ Failed: {operation}")
+    else:
+        log.opt(depth=1).error(f"❌ Failed: {operation}")
+        log.opt(depth=1).error(f"💥 Error: {error}")
 
 
 def log_warning(message: str, details: str = "") -> None:

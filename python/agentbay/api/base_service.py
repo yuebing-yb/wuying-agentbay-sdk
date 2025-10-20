@@ -12,6 +12,7 @@ from agentbay.logger import (
     get_logger,
     log_api_call,
     log_api_response,
+    log_api_response_with_details,
     log_operation_error,
 )
 
@@ -99,7 +100,16 @@ class BaseService:
 
             # Parse response
             response_data = response.json()
-            log_api_response(json.dumps(response_data, ensure_ascii=False))
+            response_str = json.dumps(response_data, ensure_ascii=False)
+
+            # Log API response with key details
+            log_api_response_with_details(
+                api_name=f"CallMcpTool (VPC) - {tool_name}",
+                request_id=request_id,
+                success=True,
+                key_fields={"tool": tool_name},
+                full_response=response_str
+            )
 
             # Extract the actual result from the nested VPC response structure
             actual_result = None
@@ -134,7 +144,7 @@ class BaseService:
 
         except requests.RequestException as e:
             sanitized_error = self._sanitize_error(str(e))
-            log_operation_error(f"CallMcpTool (VPC) - {tool_name}", sanitized_error)
+            log_operation_error(f"CallMcpTool (VPC) - {tool_name}", sanitized_error, exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -192,9 +202,8 @@ class BaseService:
             body = response_map.get("body", {})
             try:
                 response_body = json.dumps(body, ensure_ascii=False, indent=2)
-                log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {body}")
+                response_body = str(body)
             if not body:
                 return OperationResult(
                     request_id=request_id,
@@ -213,6 +222,16 @@ class BaseService:
                 )
 
             result = self._parse_response_body(body)
+
+            # Log API response with key details
+            log_api_response_with_details(
+                api_name=f"CallMcpTool - {name}",
+                request_id=request_id,
+                success=True,
+                key_fields={"tool": name},
+                full_response=response_body
+            )
+
             return OperationResult(request_id=request_id, success=True, data=result)
 
         except AgentBayError as e:
