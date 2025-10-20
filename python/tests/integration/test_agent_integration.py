@@ -25,7 +25,7 @@ class TestAgentIntegration(unittest.TestCase):
             )
         cls.agent_bay = AgentBay(api_key=api_key)
         params = CreateSessionParams(
-            image_id="waic-playground-demo-windows",
+            image_id="windows_latest",
         )
         session_result = cls.agent_bay.create(params)
         if not session_result.success or not session_result.session:

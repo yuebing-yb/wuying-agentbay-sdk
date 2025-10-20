@@ -100,6 +100,17 @@ Development environment for code execution and scripting.
 - Development Tools Integration
 - Package Management (pip, npm, etc.)
 
+#### Agent Module
+An AI-powered Agent to complete tasks descibed in natural language
+
+- [Agent Guide](guides/agent/README.md) - Agent task execution guide
+
+**Key Capabilities:**
+- Office Automation: Word/Excel/PowerPoint automation
+- File Operations: Create/Delete/Move/Copy files and folders
+- Infomation Gathering: Gather information from the Internet
+- Text Edition: Using notepad to edit text file
+
 ## 📚 API Reference
 
 - [Python SDK](../python/README.md) - Python version documentation
