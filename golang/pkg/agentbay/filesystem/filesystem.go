@@ -663,18 +663,65 @@ func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteRe
 // parseFileChangeData parses raw JSON data into FileChangeEvent slice
 func parseFileChangeData(rawData string) ([]*FileChangeEvent, error) {
 	var events []*FileChangeEvent
-	var changeData []map[string]interface{}
 
-	if err := json.Unmarshal([]byte(rawData), &changeData); err != nil {
-		return events, fmt.Errorf("failed to parse JSON: %w", err)
+	// Handle empty data
+	if rawData == "" || rawData == "{}" || rawData == "[]" {
+		return events, nil
 	}
 
-	for _, eventDict := range changeData {
-		event := FileChangeEventFromDict(eventDict)
-		events = append(events, event)
+	// Check if this is an MCP tool response wrapper (has "content" field)
+	var wrapper map[string]interface{}
+	if err := json.Unmarshal([]byte(rawData), &wrapper); err == nil {
+		if content, ok := wrapper["content"]; ok {
+			if contentArray, ok := content.([]interface{}); ok && len(contentArray) > 0 {
+				if firstItem, ok := contentArray[0].(map[string]interface{}); ok {
+					if text, ok := firstItem["text"].(string); ok {
+						// Recursively parse the text content
+						return parseFileChangeData(text)
+					}
+				}
+			}
+		}
 	}
 
-	return events, nil
+	// Handle empty data
+	if rawData == "[]" {
+		return events, nil
+	}
+
+	// Try to parse as array first
+	var changeDataArray []map[string]interface{}
+	if err := json.Unmarshal([]byte(rawData), &changeDataArray); err == nil {
+		for _, eventDict := range changeDataArray {
+			// Skip empty dictionaries
+			if len(eventDict) == 0 {
+				continue
+			}
+			event := FileChangeEventFromDict(eventDict)
+			// Only add valid events (with non-empty eventType or path)
+			if event.EventType != "" || event.Path != "" {
+				events = append(events, event)
+			}
+		}
+		return events, nil
+	}
+
+	// Try to parse as object (single event)
+	var changeDataObj map[string]interface{}
+	if err := json.Unmarshal([]byte(rawData), &changeDataObj); err == nil {
+		// Check if it's a non-empty object with valid data
+		if len(changeDataObj) > 0 {
+			event := FileChangeEventFromDict(changeDataObj)
+			// Only add if it has meaningful data
+			if event.EventType != "" || event.Path != "" {
+				events = append(events, event)
+			}
+		}
+		return events, nil
+	}
+
+	// If both fail, return error
+	return events, fmt.Errorf("failed to parse JSON: expected array or object, got %s", rawData)
 }
 
 // GetFileChange gets file change information for the specified directory path
