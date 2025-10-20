@@ -6,12 +6,17 @@ import {
   logDebug,
   logWarn,
   logInfo,
+  logTrace,
+  logFatal,
   logAPICall,
   logAPIResponseWithDetails,
   maskSensitiveData,
   getRequestId,
   setRequestId,
   clearRequestId,
+  setLogLevel,
+  getLogLevel,
+  setApiLogging,
 } from "../../src/utils/logger";
 
 describe("Logger", () => {
@@ -21,11 +26,15 @@ describe("Logger", () => {
   beforeEach(() => {
     stdoutWriteStub = sinon.stub(process.stdout, "write");
     stderrWriteStub = sinon.stub(process.stderr, "write");
+    setLogLevel('DEBUG');
+    setApiLogging(true);
   });
 
   afterEach(() => {
     sinon.restore();
     clearRequestId();
+    setLogLevel('INFO');
+    setApiLogging(true);
   });
 
   describe("Basic Logging Functions", () => {
@@ -51,10 +60,10 @@ describe("Logger", () => {
       expect(output).to.include("debug message");
     });
 
-    it("should log warning message with WARN prefix", () => {
+    it("should log warning message with WARN prefix to stderr", () => {
       logWarn("warning message");
-      expect(stdoutWriteStub.called).to.be.true;
-      const output = stdoutWriteStub.firstCall.args[0];
+      expect(stderrWriteStub.called).to.be.true;
+      const output = stderrWriteStub.firstCall.args[0];
       expect(output).to.include("⚠️  WARN");
       expect(output).to.include("warning message");
     });
@@ -236,6 +245,129 @@ describe("Logger", () => {
     it("should handle very long strings", () => {
       const longString = "a".repeat(10000);
       expect(() => log(longString)).to.not.throw();
+    });
+  });
+
+  describe("Log Level Control", () => {
+    it("should filter DEBUG logs when log level is INFO", () => {
+      setLogLevel('INFO');
+      logDebug("debug message");
+      expect(stdoutWriteStub.called).to.be.false;
+    });
+
+    it("should show DEBUG logs when log level is DEBUG", () => {
+      setLogLevel('DEBUG');
+      logDebug("debug message");
+      expect(stdoutWriteStub.called).to.be.true;
+    });
+
+    it("should show all logs when log level is TRACE", () => {
+      setLogLevel('TRACE');
+      logTrace("trace message");
+      expect(stdoutWriteStub.called).to.be.true;
+      const output = stdoutWriteStub.firstCall.args[0];
+      expect(output).to.include("🔍 TRACE");
+    });
+
+    it("should filter lower level logs when log level is ERROR", () => {
+      setLogLevel('ERROR');
+      logInfo("info message");
+      expect(stdoutWriteStub.called).to.be.false;
+      logDebug("debug message");
+      expect(stdoutWriteStub.called).to.be.false;
+    });
+
+    it("should show error logs regardless of level", () => {
+      setLogLevel('ERROR');
+      logError("error message");
+      expect(stderrWriteStub.called).to.be.true;
+    });
+
+    it("should support FATAL log level", () => {
+      setLogLevel('TRACE');
+      logFatal("fatal error");
+      expect(stderrWriteStub.called).to.be.true;
+      const output = stderrWriteStub.firstCall.args[0];
+      expect(output).to.include("💀 FATAL");
+    });
+
+    it("should get current log level", () => {
+      setLogLevel('DEBUG');
+      expect(getLogLevel()).to.equal('DEBUG');
+      setLogLevel('INFO');
+      expect(getLogLevel()).to.equal('INFO');
+    });
+
+    it("should filter INFO logs when log level is WARN", () => {
+      setLogLevel('WARN');
+      logInfo("info message");
+      expect(stdoutWriteStub.called).to.be.false;
+    });
+
+    it("should show WARN logs when log level is WARN", () => {
+      setLogLevel('WARN');
+      logWarn("warning message");
+      expect(stderrWriteStub.called).to.be.true;
+    });
+  });
+
+  describe("Output Stream Correctness", () => {
+    it("INFO should write to stdout", () => {
+      logInfo("info");
+      expect(stdoutWriteStub.called).to.be.true;
+      expect(stderrWriteStub.called).to.be.false;
+    });
+
+    it("WARN should write to stderr", () => {
+      logWarn("warning");
+      expect(stderrWriteStub.called).to.be.true;
+      expect(stdoutWriteStub.called).to.be.false;
+    });
+
+    it("ERROR should write to stderr", () => {
+      logError("error");
+      expect(stderrWriteStub.called).to.be.true;
+      expect(stdoutWriteStub.called).to.be.false;
+    });
+
+    it("DEBUG should write to stdout", () => {
+      logDebug("debug");
+      expect(stdoutWriteStub.called).to.be.true;
+      expect(stderrWriteStub.called).to.be.false;
+    });
+
+    it("TRACE should write to stdout", () => {
+      setLogLevel('TRACE');
+      logTrace("trace");
+      expect(stdoutWriteStub.called).to.be.true;
+      expect(stderrWriteStub.called).to.be.false;
+    });
+
+    it("FATAL should write to stderr", () => {
+      logFatal("fatal");
+      expect(stderrWriteStub.called).to.be.true;
+      expect(stdoutWriteStub.called).to.be.false;
+    });
+  });
+
+  describe("API Logging Control", () => {
+    it("should disable API logging when setApiLogging(false)", () => {
+      setApiLogging(false);
+      logAPICall("TestAPI");
+      expect(stdoutWriteStub.called).to.be.false;
+    });
+
+    it("should enable API logging when setApiLogging(true)", () => {
+      setApiLogging(true);
+      logAPICall("TestAPI");
+      expect(stdoutWriteStub.called).to.be.true;
+    });
+
+    it("should respect log level even when API logging is enabled", () => {
+      setApiLogging(true);
+      setLogLevel('ERROR');
+      logAPICall("TestAPI");
+      expect(stdoutWriteStub.called).to.be.false;
     });
   });
 });

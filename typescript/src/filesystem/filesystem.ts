@@ -10,7 +10,7 @@ import {
 import { UploadResult, DownloadResult } from "./file-transfer";
 import { FileTransfer } from "./file-transfer";
 import { Session } from "../session";
-import { log } from "../utils/logger";
+import { log, logWarn } from "../utils/logger";
 
 // Default chunk size for large file operations (60KB)
 const DEFAULT_CHUNK_SIZE = 60 * 1024;
@@ -1040,10 +1040,10 @@ export class FileSystem {
             // Delete the uploaded file from OSS
             const deleteResult = await (this.session as any).agentBay.context.deleteFile(contextId, remotePath);
             if (!deleteResult.success) {
-              log(`Warning: Failed to delete uploaded file from OSS: ${deleteResult}`);
+              logWarn(`Warning: Failed to delete uploaded file from OSS: ${deleteResult}`);
             }
           } catch (deleteError: any) {
-            log(`Warning: Error deleting uploaded file from OSS: ${deleteError}`);
+            logWarn(`Warning: Error deleting uploaded file from OSS: ${deleteError}`);
           }
         }
       }
@@ -1094,10 +1094,10 @@ export class FileSystem {
             // Delete the downloaded file from OSS
             const deleteResult = await (this.session as any).agentBay.context.deleteFile(contextId, remotePath);
             if (!deleteResult.success) {
-              log(`Warning: Failed to delete downloaded file from OSS: ${deleteResult}`);
+              logWarn(`Warning: Failed to delete downloaded file from OSS: ${deleteResult}`);
             }
           } catch (deleteError: any) {
-            log(`Warning: Error deleting downloaded file from OSS: ${deleteError}`);
+            logWarn(`Warning: Error deleting downloaded file from OSS: ${deleteError}`);
           }
         }
       }

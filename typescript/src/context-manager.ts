@@ -5,6 +5,7 @@ import {
   log,
   logError,
   logInfo,
+  logDebug,
   logAPICall,
   logAPIResponseWithDetails,
   setRequestId,
@@ -78,7 +79,7 @@ export class ContextManager {
     }
 
     // Log API request (matching Go version format)
-    log("API Call: GetContextInfo");
+    logAPICall("GetContextInfo");
     let requestLog = `Request: SessionId=${request.sessionId}`;
     if (request.contextId) {
       requestLog += `, ContextId=${request.contextId}`;
@@ -89,7 +90,7 @@ export class ContextManager {
     if (request.taskType) {
       requestLog += `, TaskType=${request.taskType}`;
     }
-    log(requestLog);
+    logDebug(requestLog);
 
     try {
       const response = await this.session.getClient().getContextInfo(request);
@@ -98,7 +99,7 @@ export class ContextManager {
       const requestId = extractRequestId(response) || "";
 
       if (response?.body) {
-        log("Response from GetContextInfo:", response.body);
+        logDebug("Response from GetContextInfo:", response.body);
       }
 
       // Check for API-level errors
@@ -169,7 +170,7 @@ export class ContextManager {
     }
 
     // Log API request (matching Go version format)
-    log("API Call: SyncContext");
+    logAPICall("SyncContext");
     let requestLog = `Request: SessionId=${request.sessionId}`;
     if (request.contextId) {
       requestLog += `, ContextId=${request.contextId}`;
@@ -180,7 +181,7 @@ export class ContextManager {
     if (request.mode) {
       requestLog += `, Mode=${request.mode}`;
     }
-    log(requestLog);
+    logDebug(requestLog);
 
     try {
       const response = await this.session.getClient().syncContext(request);
@@ -189,7 +190,7 @@ export class ContextManager {
       const requestId = extractRequestId(response) || "";
 
       if (response?.body) {
-        log("Response from SyncContext:", response.body);
+        logDebug("Response from SyncContext:", response.body);
       }
 
       // Check for API-level errors
@@ -271,7 +272,7 @@ export class ContextManager {
           }
 
           hasSyncTasks = true;
-          log(`Sync task ${item.contextId} status: ${item.status}, path: ${item.path}`);
+          logDebug(`Sync task ${item.contextId} status: ${item.status}, path: ${item.path}`);
 
           if (item.status !== "Success" && item.status !== "Failed") {
             allCompleted = false;
@@ -287,19 +288,19 @@ export class ContextManager {
         if (allCompleted || !hasSyncTasks) {
           // All tasks completed or no sync tasks found
           if (hasFailure) {
-            log("Context sync completed with failures");
+            logInfo("Context sync completed with failures");
             callback(false);
           } else if (hasSyncTasks) {
-            log("Context sync completed successfully");
+            logInfo("Context sync completed successfully");
             callback(true);
           } else {
-            log("No sync tasks found");
+            logDebug("No sync tasks found");
             callback(true);
           }
           return; // Exit the function immediately after calling callback
         }
 
-        log(`Waiting for context sync to complete, attempt ${retry + 1}/${maxRetries}`);
+        logDebug(`Waiting for context sync to complete, attempt ${retry + 1}/${maxRetries}`);
         await this.sleep(retryInterval);
       } catch (error) {
         logError(`Error checking context status on attempt ${retry + 1}:`, error);
@@ -338,7 +339,7 @@ export class ContextManager {
           }
 
           hasSyncTasks = true;
-          log(`Sync task ${item.contextId} status: ${item.status}, path: ${item.path}`);
+          logDebug(`Sync task ${item.contextId} status: ${item.status}, path: ${item.path}`);
 
           if (item.status !== "Success" && item.status !== "Failed") {
             allCompleted = false;
@@ -354,18 +355,18 @@ export class ContextManager {
         if (allCompleted || !hasSyncTasks) {
           // All tasks completed or no sync tasks found
           if (hasFailure) {
-            log("Context sync completed with failures");
+            logInfo("Context sync completed with failures");
             return false;
           } else if (hasSyncTasks) {
-            log("Context sync completed successfully");
+            logInfo("Context sync completed successfully");
             return true;
           } else {
-            log("No sync tasks found");
+            logDebug("No sync tasks found");
             return true;
           }
         }
 
-        log(`Waiting for context sync to complete, attempt ${retry + 1}/${maxRetries}`);
+        logDebug(`Waiting for context sync to complete, attempt ${retry + 1}/${maxRetries}`);
         await this.sleep(retryInterval);
       } catch (error) {
         logError(`Error checking context status on attempt ${retry + 1}:`, error);

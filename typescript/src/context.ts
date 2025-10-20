@@ -5,6 +5,7 @@ import {
   log,
   logError,
   logInfo,
+  logDebug,
   logAPICall,
   logAPIResponseWithDetails,
   setRequestId,
@@ -131,13 +132,13 @@ export class ContextService {
       });
 
       // Log API request
-      log("API Call: ListContexts");
-      log(`Request: MaxResults=${maxResults}`, params?.nextToken ? `, NextToken=${params.nextToken}` : "");
+      logAPICall("ListContexts");
+      logDebug(`Request: MaxResults=${maxResults}`, params?.nextToken ? `, NextToken=${params.nextToken}` : "");
 
       const response = await this.agentBay.getClient().listContexts(request);
 
       // Log API response
-      log(`Response from ListContexts:`, response.body);
+      logDebug(`Response from ListContexts:`, response.body);
 
       // Check for API-level errors
       if (response.body?.success === false && response.body?.code) {
@@ -202,13 +203,13 @@ export class ContextService {
       });
 
       // Log API request
-      log("API Call: GetContext");
-      log(`Request: Name=${name}, AllowCreate=${create}`);
+      logAPICall("GetContext");
+      logDebug(`Request: Name=${name}, AllowCreate=${create}`);
 
       const response = await this.agentBay.getClient().getContext(request);
 
       // Log API response
-      log(`Response from GetContext:`, response.body);
+      logDebug(`Response from GetContext:`, response.body);
 
       // Check for API-level errors
       if (response.body?.success === false && response.body?.code) {
@@ -293,13 +294,13 @@ export class ContextService {
       });
 
       // Log API request
-      log("API Call: ModifyContext");
-      log(`Request: Id=${context.id}, Name=${context.name}`);
+      logAPICall("ModifyContext");
+      logDebug(`Request: Id=${context.id}, Name=${context.name}`);
 
       const response = await this.agentBay.getClient().modifyContext(request);
 
       // Log API response
-      log(`Response from ModifyContext:`, response.body);
+      logDebug(`Response from ModifyContext:`, response.body);
 
       // Check for success (matching Python logic)
       const success = response.body?.success !== false;
@@ -338,13 +339,13 @@ export class ContextService {
       });
 
       // Log API request
-      log("API Call: DeleteContext");
-      log(`Request: Id=${context.id}`);
+      logAPICall("DeleteContext");
+      logDebug(`Request: Id=${context.id}`);
 
       const response = await this.agentBay.getClient().deleteContext(request);
 
       // Log API response
-      log(`Response from DeleteContext:`, response.body);
+      logDebug(`Response from DeleteContext:`, response.body);
 
       // Check for success (matching Python logic)
       const success = response.body?.success !== false;
@@ -372,15 +373,15 @@ export class ContextService {
    * Get a presigned upload URL for a file in a context.
    */
   async getFileUploadUrl(contextId: string, filePath: string): Promise<FileUrlResult> {
-    log("API Call: GetContextFileUploadUrl");
-    log(`Request: ContextId=${contextId}, FilePath=${filePath}`);
+    logAPICall("GetContextFileUploadUrl");
+    logDebug(`Request: ContextId=${contextId}, FilePath=${filePath}`);
     const req = new $_client.GetContextFileUploadUrlRequest({
       authorization: `Bearer ${this.agentBay.getAPIKey()}`,
       contextId,
       filePath,
     });
     const resp = await this.agentBay.getClient().getContextFileUploadUrl(req);
-    log("Response from GetContextFileUploadUrl:", resp.body);
+    logDebug("Response from GetContextFileUploadUrl:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
 
@@ -409,15 +410,15 @@ export class ContextService {
    * Get a presigned download URL for a file in a context.
    */
   async getFileDownloadUrl(contextId: string, filePath: string): Promise<FileUrlResult> {
-    log("API Call: GetContextFileDownloadUrl");
-    log(`Request: ContextId=${contextId}, FilePath=${filePath}`);
+    logAPICall("GetContextFileDownloadUrl");
+    logDebug(`Request: ContextId=${contextId}, FilePath=${filePath}`);
     const req = new $_client.GetContextFileDownloadUrlRequest({
       authorization: `Bearer ${this.agentBay.getAPIKey()}`,
       contextId,
       filePath,
     });
     const resp = await this.agentBay.getClient().getContextFileDownloadUrl(req);
-    log("Response from GetContextFileDownloadUrl:", resp.body);
+    logDebug("Response from GetContextFileDownloadUrl:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
 
@@ -446,15 +447,15 @@ export class ContextService {
    * Delete a file in a context.
    */
   async deleteFile(contextId: string, filePath: string): Promise<OperationResult> {
-    log("API Call: DeleteContextFile");
-    log(`Request: ContextId=${contextId}, FilePath=${filePath}`);
+    logAPICall("DeleteContextFile");
+    logDebug(`Request: ContextId=${contextId}, FilePath=${filePath}`);
     const req = new $_client.DeleteContextFileRequest({
       authorization: `Bearer ${this.agentBay.getAPIKey()}`,
       contextId,
       filePath,
     });
     const resp = await this.agentBay.getClient().deleteContextFile(req);
-    log("Response from DeleteContextFile:", resp.body);
+    logDebug("Response from DeleteContextFile:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
     const success = !!(body && body.success);
@@ -481,8 +482,8 @@ export class ContextService {
     pageNumber = 1,
     pageSize = 50
   ): Promise<ContextFileListResult> {
-    log("API Call: DescribeContextFiles");
-    log(
+    logAPICall("DescribeContextFiles");
+    logDebug(
       `Request: ContextId=${contextId}, ParentFolderPath=${parentFolderPath}, PageNumber=${pageNumber}, PageSize=${pageSize}`
     );
     const req = new $_client.DescribeContextFilesRequest({
@@ -493,7 +494,7 @@ export class ContextService {
       contextId,
     });
     const resp = await this.agentBay.getClient().describeContextFiles(req);
-    log("Response from DescribeContextFiles:", resp.body);
+    logDebug("Response from DescribeContextFiles:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
 

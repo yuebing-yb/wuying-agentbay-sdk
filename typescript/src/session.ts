@@ -29,6 +29,7 @@ import {
   log,
   logError,
   logInfo,
+  logDebug,
   logAPICall,
   logAPIResponseWithDetails,
   setRequestId,
@@ -286,7 +287,7 @@ export class Session {
     try {
       // If syncContext is true, trigger file uploads first
       if (syncContext) {
-        log("Triggering context synchronization before session deletion...");
+        logDebug("Triggering context synchronization before session deletion...");
 
         // Use the new sync method without callback (sync mode)
         const syncStartTime = Date.now();
@@ -297,9 +298,9 @@ export class Session {
           const syncDuration = Date.now() - syncStartTime;
 
           if (syncResult.success) {
-            log(`Context sync completed in ${syncDuration}ms`);
+            logInfo(`Context sync completed in ${syncDuration}ms`);
           } else {
-            log(`Context sync completed with failures after ${syncDuration}ms`);
+            logInfo(`Context sync completed with failures after ${syncDuration}ms`);
           }
         } catch (error) {
           const syncDuration = Date.now() - syncStartTime;
@@ -315,7 +316,7 @@ export class Session {
       });
 
       const response = await this.getClient().releaseMcpSession(request);
-      log(`Response from release_mcp_session: ${JSON.stringify(response)}`);
+      logDebug(`Response from release_mcp_session: ${JSON.stringify(response)}`);
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
@@ -513,11 +514,11 @@ export class Session {
         sessionId: this.sessionId,
       });
 
-      log("API Call: GetMcpResource");
-      log(`Request: SessionId=${this.sessionId}`);
+      logAPICall("GetMcpResource");
+      logDebug(`Request: SessionId=${this.sessionId}`);
 
       const response = await this.getClient().getMcpResource(request);
-      log(`Response from GetMcpResource: ${JSON.stringify(response)}`);
+      logDebug(`Response from GetMcpResource: ${JSON.stringify(response)}`);
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
@@ -618,7 +619,7 @@ export class Session {
       }
 
       let data = responseBody.data || {}; // Capital D to match Python
-      log(`Data: ${JSON.stringify(data)}`);
+      logDebug(`Data: ${JSON.stringify(data)}`);;
 
       if (typeof data !== "object") {
         try {
@@ -690,7 +691,7 @@ export class Session {
       }
 
       let data = responseBody?.data || {}; // Capital D to match Python
-      log(`Data: ${JSON.stringify(data)}`);
+      logDebug(`Data: ${JSON.stringify(data)}`);;
 
       if (typeof data !== "object") {
         try {
@@ -735,8 +736,8 @@ export class Session {
       imageId: imageId,
     });
 
-    log("API Call: ListMcpTools");
-    log(`Request: ImageId=${imageId}`);
+    logAPICall("ListMcpTools");
+    logDebug(`Request: ImageId=${imageId}`);
 
     const response = await this.getClient().listMcpTools(request);
 
@@ -744,7 +745,7 @@ export class Session {
     const requestId = extractRequestId(response) || "";
 
     if (response && response.body) {
-      log("Response from ListMcpTools:", response.body);
+      logDebug("Response from ListMcpTools:", response.body);
     }
 
     // Parse the response data

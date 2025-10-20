@@ -26,6 +26,7 @@ import {
   log,
   logError,
   logInfo,
+  logDebug,
   logAPICall,
   logAPIResponseWithDetails,
   maskSensitiveData,
@@ -153,11 +154,11 @@ export class AgentBay {
       const contextObj = new Context(recordContextId, contextName);
 
       // Call context.update interface
-      log(`Updating browser replay context: ${contextName} -> ${recordContextId}`);
+      logDebug(`Updating browser replay context: ${contextName} -> ${recordContextId}`);
       const updateResult = await this.context.update(contextObj);
 
       if (updateResult.success) {
-        log(`✅ Successfully updated browser replay context: ${contextName}`);
+        logInfo(`✅ Successfully updated browser replay context: ${contextName}`);
       } else {
         logError(`⚠️ Failed to update browser replay context: ${updateResult.errorMessage}`);
       }
@@ -189,7 +190,7 @@ export class AgentBay {
         if (!params.contextSync) {
           params.contextSync = [];
         }
-        log(`Adding context sync for file transfer operations: ${fileTransferContextSync}`);
+        logDebug(`Adding context sync for file transfer operations: ${fileTransferContextSync}`);
         params.contextSync.push(fileTransferContextSync);
       }
 
@@ -309,7 +310,7 @@ export class AgentBay {
           {},
           "Invalid response format: expected a dictionary"
         );
-        log("Full response:", JSON.stringify(sessionData, null, 2));
+        logDebug("Full response:", JSON.stringify(sessionData, null, 2));
         return {
           requestId,
           success: false,
@@ -327,7 +328,7 @@ export class AgentBay {
           {},
           errorMessage
         );
-        log("Full response:", JSON.stringify(sessionData, null, 2));
+        logDebug("Full response:", JSON.stringify(sessionData, null, 2));
         return {
           requestId,
           success: false,
@@ -344,7 +345,7 @@ export class AgentBay {
           {},
           "Invalid response format: 'data' field is not a dictionary"
         );
-        log("Full response:", JSON.stringify(sessionData, null, 2));
+        logDebug("Full response:", JSON.stringify(sessionData, null, 2));
         return {
           requestId,
           success: false,
@@ -362,7 +363,7 @@ export class AgentBay {
           {},
           "SessionId not found in response"
         );
-        log("Full response:", JSON.stringify(sessionData, null, 2));
+        logDebug("Full response:", JSON.stringify(sessionData, null, 2));
         return {
           requestId,
           success: false,
@@ -417,10 +418,10 @@ export class AgentBay {
 
       // For VPC sessions, automatically fetch MCP tools information
       if (params.isVpc) {
-        log("VPC session detected, automatically fetching MCP tools...");
+        logDebug("VPC session detected, automatically fetching MCP tools...");
         try {
           const toolsResult = await session.listMcpTools();
-          log(`Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`);
+          logDebug(`Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`);
         } catch (error) {
           logError(`Warning: Failed to fetch MCP tools for VPC session: ${error}`);
           // Continue with session creation even if tools fetch fails
@@ -429,7 +430,7 @@ export class AgentBay {
 
       // If we have persistence data, wait for context synchronization
       if (needsContextSync) {
-        log("Waiting for context synchronization to complete...");
+        logDebug("Waiting for context synchronization to complete...");
 
         // Wait for context synchronization to complete
         const maxRetries = 150; // Maximum number of retries
@@ -445,7 +446,7 @@ export class AgentBay {
             let hasFailure = false;
 
             for (const item of infoResult.contextStatusData) {
-              log(`Context ${item.contextId} status: ${item.status}, path: ${item.path}`);
+              logDebug(`Context ${item.contextId} status: ${item.status}, path: ${item.path}`);
 
               if (item.status !== "Success" && item.status !== "Failed") {
                 allCompleted = false;
@@ -460,14 +461,14 @@ export class AgentBay {
 
             if (allCompleted || infoResult.contextStatusData.length === 0) {
               if (hasFailure) {
-                log("Context synchronization completed with failures");
+                logDebug("Context synchronization completed with failures");
               } else {
-                log("Context synchronization completed successfully");
+                logDebug("Context synchronization completed successfully");
               }
               break;
             }
 
-            log(`Waiting for context synchronization, attempt ${retry+1}/${maxRetries}`);
+            logDebug(`Waiting for context synchronization, attempt ${retry+1}/${maxRetries}`);
             await new Promise(resolve => setTimeout(resolve, retryInterval));
           } catch (error) {
             logError(`Error checking context status on attempt ${retry+1}: ${error}`);
@@ -524,9 +525,9 @@ export class AgentBay {
         ...(params.nextToken && { nextToken: params.nextToken }),
       });
 
-      log("API Call: ListSession");
-      log(
-        `Request: Labels=${labelsJSON}, MaxResults=${params.maxResults || 10}${
+      logAPICall("ListSession");
+      logDebug(
+          `Request: Labels=${labelsJSON}, MaxResults=${params.maxResults || 10}${
           params.nextToken ? `, NextToken=${params.nextToken}` : ""
         }`
       );
@@ -558,7 +559,7 @@ export class AgentBay {
       let maxResults = params.maxResults || 10;
       let totalCount = 0;
 
-      log("body =", body);
+      logDebug("body =", body);
 
       // Extract pagination information
       if (body && typeof body === "object") {
@@ -738,7 +739,7 @@ export class AgentBay {
           {},
           `[${code}] ${message}`
         );
-        log("Full ListSession response:", JSON.stringify(response.body, null, 2));
+        logDebug("Full ListSession response:", JSON.stringify(response.body, null, 2));
         return {
           requestId,
           success: false,
@@ -867,7 +868,7 @@ export class AgentBay {
           {},
           `[${body.code}] ${body.message || 'Unknown error'}`
         );
-        log("Full GetSession response:", JSON.stringify(body, null, 2));
+        logDebug("Full GetSession response:", JSON.stringify(body, null, 2));
         return {
           requestId,
           httpStatusCode: body.httpStatusCode || 0,

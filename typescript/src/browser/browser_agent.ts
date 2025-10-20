@@ -5,6 +5,8 @@ import {
   log,
   logError,
   logInfo,
+  logDebug,
+  logWarn,
   logAPICall,
   logAPIResponseWithDetails,
   setRequestId,
@@ -86,7 +88,7 @@ export class BrowserAgent {
       use_vision: options.use_vision
     };
     const task_name = options.action;
-    log(`${task_name}`);
+    logDebug(`${task_name}`);
   
     const response = await this._callMcpTool("page_use_act", args);
 
@@ -112,7 +114,7 @@ export class BrowserAgent {
       use_vision: options.use_vision
     };
     const task_name = options.action;
-    log(`${task_name}`);
+    logDebug(`${task_name}`);
 
     const startResp = await this._callMcpTool("page_use_act_async", args);
     if (!startResp.success) throw new BrowserError("Failed to start act task");
@@ -131,13 +133,13 @@ export class BrowserAgent {
         const success = !!data.success;
         if (is_done) {
           const msg = steps.length ? JSON.stringify(steps) : "No actions have been executed.";
-          log(`Task ${task_id}:${task_name} is done. Success=${success}. ${msg}`);
+          logInfo(`Task ${task_id}:${task_name} is done. Success=${success}. ${msg}`);
           return new ActResult(success, msg, options.action);
         } else {
           if (steps.length) {
-            log(`Task ${task_id}:${task_name} progress: ${steps.length} steps done. Details: ${JSON.stringify(steps)}`);
+            logDebug(`Task ${task_id}:${task_name} progress: ${steps.length} steps done. Details: ${JSON.stringify(steps)}`);
           } else {
-            log(`Task ${task_id}:${task_name} No actions have been executed yet.`);
+            logDebug(`Task ${task_id}:${task_name} No actions have been executed yet.`);
           }
         }
       }
@@ -169,7 +171,7 @@ export class BrowserAgent {
         try {
           argsParsed = typeof item.arguments === 'string' ? JSON.parse(item.arguments) : item.arguments;
         } catch {
-          log(`Warning: Could not parse arguments JSON: ${item.arguments}`);
+          logWarn(`Warning: Could not parse arguments JSON: ${item.arguments}`);
           argsParsed = item.arguments;
         }
         results.push(new ObserveResult(item.selector || "", item.description || "", item.method || "", argsParsed));
@@ -238,7 +240,7 @@ export class BrowserAgent {
         const data = typeof pollResp.data === 'string' ? JSON.parse(pollResp.data) : pollResp.data;
         return [true, data as T];
       }
-      log(`Task ${task_id}: No extract result yet (attempt ${20 - retries}/20)`);
+      logDebug(`Task ${task_id}: No extract result yet (attempt ${20 - retries}/20)`);
     }
     throw new BrowserError(`Task ${task_id}: Extract timed out`);
   }
@@ -275,7 +277,7 @@ export class BrowserAgent {
         }
       }
     } catch (error) {
-      log(`CDP targetId retrieval failed, fallback to defaults: ${error}`);
+      logWarn(`CDP targetId retrieval failed, fallback to defaults: ${error}`);
     }
 
     // Fallback to defaults if CDP is not available

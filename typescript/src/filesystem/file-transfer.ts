@@ -5,7 +5,7 @@ import { FileUrlResult, OperationResult } from "../types/api-response";
 import * as fs from "fs";
 import * as path from "path";
 import fetch from "node-fetch";
-import { log } from "../utils/logger";
+import { log, logDebug, logInfo } from "../utils/logger";
 
 /**
  * Result structure for file upload operations.
@@ -157,7 +157,7 @@ export class FileTransfer {
       const uploadUrl = urlRes.url;
       const reqIdUpload = urlRes.requestId;
 
-      log(`Uploading ${localPath} to ${uploadUrl}`);
+      logDebug(`Uploading ${localPath} to ${uploadUrl}`);
 
       // 2. PUT upload to pre-signed URL
       try {
@@ -168,7 +168,7 @@ export class FileTransfer {
           progressCb
         );
         
-        log(`Upload completed with HTTP ${httpStatus}`);
+        logInfo(`Upload completed with HTTP ${httpStatus}`);
         if (httpStatus && ![200, 201, 204].includes(httpStatus)) {
           return {
             success: false,
@@ -193,7 +193,7 @@ export class FileTransfer {
       // 3. Trigger sync to cloud disk (download mode), download from oss to cloud disk
       let reqIdSync: string | undefined;
       try {
-        log("Triggering sync to cloud disk");
+        logDebug("Triggering sync to cloud disk");
         reqIdSync = await this.awaitSync("download", remotePath, this.contextId);
       } catch (e: any) {
         return {
@@ -208,7 +208,7 @@ export class FileTransfer {
         };
       }
 
-      log(`Sync request ID: ${reqIdSync}`);
+      logInfo(`Sync request ID: ${reqIdSync}`);
       
       // 4. Optionally wait for task completion
       if (wait) {
@@ -434,29 +434,29 @@ export class FileTransfer {
     }
 
     const syncFn = this.session.context.sync.bind(this.session.context);
-    log(`session.context.sync(mode=${mode}, path=${remotePath}, contextId=${contextId})`);
+    logDebug(`session.context.sync(mode=${mode}, path=${remotePath}, contextId=${contextId})`);
     
     // Try calling with all parameters
     try {
       const result = await syncFn(contextId || undefined, remotePath || undefined, mode);
-      log(`   Result: ${result.success}`);
+      logDebug(`   Result: ${result.success}`);
       return result.requestId;
     } catch (e1) {
       // Backend may not support all parameters, try with mode and path only
       try {
         const result = await syncFn(undefined, remotePath || undefined, mode);
-        log(`   Result: ${result.success}`);
+        logDebug(`   Result: ${result.success}`);
         return result.requestId;
       } catch (e2) {
         // Backend may not support mode or path parameter
         try {
           const result = await syncFn(undefined, undefined, mode);
-          log(`   Result: ${result.success}`);
+          logDebug(`   Result: ${result.success}`);
           return result.requestId;
         } catch (e3) {
           // Backend may not support mode parameter
           const result = await syncFn();
-          log(`   Result: ${result.success}`);
+          logDebug(`   Result: ${result.success}`);
           return result.requestId;
         }
       }
