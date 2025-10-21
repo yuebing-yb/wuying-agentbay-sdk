@@ -64,6 +64,7 @@ main().catch(console.error);
 - [📖 Feature Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/README.md) - Complete feature introduction
 - [🔧 TypeScript API Reference](docs/api/README.md) - Detailed API documentation
 - [💻 TypeScript Examples](docs/examples/README.md) - Complete example code
+- [📋 Logging Configuration](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
 
 ### 🆘 Need Help
 - [🔧 TypeScript API Reference](docs/api/README.md) - Local API documentation

@@ -16,6 +16,7 @@ Essential features for working with AgentBay SDK:
 SDK configuration and settings:
 
 - [SDK Configuration](configuration/sdk-configuration.md) - API keys, gateway regions, endpoints, and timeouts
+- [Logging](configuration/logging.md) - Configure log levels, output, and sensitive data protection
 
 ## Advanced
 
