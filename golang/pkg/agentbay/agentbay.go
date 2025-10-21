@@ -175,13 +175,41 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		needsContextSync = true
 	}
 
-	// Log API request
+	// Log API request with all set parameters
 	requestParams := fmt.Sprintf("ImageId=%s, IsVpc=%t",
 		tea.StringValue(createSessionRequest.ImageId),
 		tea.BoolValue(createSessionRequest.VpcResource))
+
+	// Add PolicyId if set
+	if createSessionRequest.McpPolicyId != nil && *createSessionRequest.McpPolicyId != "" {
+		requestParams += fmt.Sprintf(", PolicyId=%s", *createSessionRequest.McpPolicyId)
+	}
+
+	// Add Labels if set
+	if createSessionRequest.Labels != nil && *createSessionRequest.Labels != "" {
+		labelsStr := *createSessionRequest.Labels
+		// Truncate long labels for readability
+		if len(labelsStr) > 100 {
+			labelsStr = labelsStr[:97] + "..."
+		}
+		requestParams += fmt.Sprintf(", Labels=%s", labelsStr)
+	}
+
+	// Add PersistenceDataList count if set
 	if len(createSessionRequest.PersistenceDataList) > 0 {
 		requestParams += fmt.Sprintf(", PersistenceDataList=%d items", len(createSessionRequest.PersistenceDataList))
 	}
+
+	// Add ExtraConfigs if set
+	if createSessionRequest.ExtraConfigs != nil && *createSessionRequest.ExtraConfigs != "" {
+		extraConfigsStr := *createSessionRequest.ExtraConfigs
+		// Truncate long extra configs for readability
+		if len(extraConfigsStr) > 100 {
+			extraConfigsStr = extraConfigsStr[:97] + "..."
+		}
+		requestParams += fmt.Sprintf(", ExtraConfigs=%s", extraConfigsStr)
+	}
+
 	LogAPICall("CreateMcpSession", requestParams)
 
 	response, err := a.Client.CreateMcpSession(createSessionRequest)
