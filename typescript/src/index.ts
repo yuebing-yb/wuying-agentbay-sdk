@@ -17,5 +17,21 @@ export * from './context-sync'
 export * from './context-manager'
 export * from './session-params'
 // Export utility functions
-export { log, logError } from "./utils/logger";
+export {
+  log,
+  logTrace,
+  logDebug,
+  logInfo,
+  logWarn,
+  logError,
+  logFatal,
+  setLogLevel,
+  getLogLevel,
+  setRequestId,
+  getRequestId,
+  clearRequestId,
+  setApiLogging,
+  maskSensitiveData,
+  type LogLevel
+} from "./utils/logger";
 export { loadConfig, loadDotEnv, type Config } from "./config";
