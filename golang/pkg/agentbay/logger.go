@@ -39,6 +39,30 @@ var SENSITIVE_FIELDS = []string{
 	"authorization",
 }
 
+// Initialize log level from environment variable
+func init() {
+	if levelStr := os.Getenv("AGENTBAY_LOG_LEVEL"); levelStr != "" {
+		level := parseLogLevel(levelStr)
+		SetLogLevel(level)
+	}
+}
+
+// parseLogLevel converts string to log level constant
+func parseLogLevel(levelStr string) int {
+	switch strings.ToUpper(levelStr) {
+	case "DEBUG":
+		return LOG_DEBUG
+	case "INFO":
+		return LOG_INFO
+	case "WARNING", "WARN":
+		return LOG_WARN
+	case "ERROR":
+		return LOG_ERROR
+	default:
+		return LOG_INFO // Default to INFO
+	}
+}
+
 // SetLogLevel sets the global log level
 func SetLogLevel(level int) {
 	if level >= LOG_DEBUG && level <= LOG_ERROR {

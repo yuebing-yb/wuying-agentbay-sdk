@@ -191,7 +191,17 @@ class AgentBayLogger:
             Configured logger instance
         """
         if not cls._initialized:
-            cls.setup()
+            # Lazy initialization on first call
+            # Priority: code-level (cls._log_level) > environment variable > default
+            level = cls._log_level if cls._log_level != "INFO" else os.getenv("AGENTBAY_LOG_LEVEL", "INFO")
+            log_file = os.getenv("AGENTBAY_LOG_FILE")
+            
+            cls.setup(
+                level=level,
+                enable_console=True,
+                enable_file=True,
+                log_file=log_file
+            )
         
         if name:
             return logger.bind(name=name)
@@ -212,29 +222,27 @@ class AgentBayLogger:
             cls.setup(level=cls._log_level)
 
 
-# Initialize logger on import
-AgentBayLogger.setup(
-    level=os.getenv("AGENTBAY_LOG_LEVEL", "INFO"),
-    enable_console=True,
-    enable_file=True,  # Always enable file logging by default
-    log_file=os.getenv("AGENTBAY_LOG_FILE")  # Use custom path if specified, otherwise use default
-)
-
-# Export the logger instance for easy import
-log = AgentBayLogger.get_logger("agentbay")
+# Remove automatic module-level initialization
+# Initialize lazily on first get_logger() call instead
+# This allows code-level setup to take priority over environment variables
 
 
-def get_logger(name: str):
+# Export convenience functions for the logger
+def get_logger(name: str = "agentbay"):
     """
     Convenience function to get a named logger.
 
     Args:
-        name: Logger name
+        name: Logger name (defaults to "agentbay")
 
     Returns:
         Named logger instance
     """
     return AgentBayLogger.get_logger(name)
+
+
+# Create a module-level logger that initializes lazily
+log = get_logger("agentbay")
 
 
 # Sensitive field names for data masking
