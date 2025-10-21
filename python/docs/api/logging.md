@@ -8,25 +8,23 @@ The Python SDK uses `loguru` for comprehensive logging with support for console 
 
 ### Priority System (Highest to Lowest)
 
-1. **Code-level setup** - Set `AgentBayLogger._log_level` before first `get_logger()` call
+1. **setup() method** - Most reliable way to set log level
 2. **Environment variables** - `AGENTBAY_LOG_LEVEL`
 3. **Default values** - INFO level
 
-### Method 1: Code-Level Setup (Recommended)
+### Method 1: Using setup() (Recommended)
 
-Set immediately after importing, before using logger:
+Use the `setup()` method to configure logging:
 
 ```python
 from agentbay.logger import AgentBayLogger, get_logger
 
-# This has highest priority - overrides environment variables
-AgentBayLogger._log_level = "DEBUG"
+# Configure logging level
+AgentBayLogger.setup(level="DEBUG")
 
 logger = get_logger("my_app")
 logger.debug("Now in debug mode")  # This will appear
 ```
-
-**Important**: Set `_log_level` BEFORE calling `get_logger()` for the first time.
 
 ### Method 2: Environment Variable
 
@@ -47,6 +45,8 @@ from agentbay.logger import AgentBayLogger
 # Change level at runtime
 AgentBayLogger.set_level("WARNING")
 ```
+
+**Note**: `set_level()` automatically reinitializes the logger with the new level.
 
 ## Log Levels
 
@@ -72,19 +72,15 @@ python/agentbay.log
 ### Custom Log File Location
 
 ```python
-from agentbay.logger import AgentBayLogger
+from agentbay.logger import AgentBayLogger, get_logger
 
-AgentBayLogger._log_level = "DEBUG"
-# Get logger to initialize with default file location
-# Then use custom location for subsequent calls
-get_logger("app")
-
-# To change file location, you need to reinitialize
-AgentBayLogger._initialized = False
+# Configure custom log file location
 AgentBayLogger.setup(
     level="DEBUG",
     log_file="/custom/path/app.log"
 )
+
+logger = get_logger("app")
 ```
 
 ### File Rotation and Retention
@@ -94,7 +90,6 @@ Configure automatic log file rotation:
 ```python
 from agentbay.logger import AgentBayLogger
 
-AgentBayLogger._initialized = False
 AgentBayLogger.setup(
     level="DEBUG",
     log_file="/var/log/myapp.log",
@@ -153,7 +148,6 @@ python app.py
 ```python
 from agentbay.logger import AgentBayLogger, get_logger
 
-AgentBayLogger._initialized = False
 AgentBayLogger.setup(
     level="DEBUG",
     log_file="/var/log/debug.log",

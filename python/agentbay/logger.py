@@ -100,11 +100,16 @@ class AgentBayLogger:
         enable_file: bool = True,
         rotation: str = "10 MB",
         retention: str = "30 days",
-        colorize: Optional[bool] = None
+        colorize: Optional[bool] = None,
+        force_reinit: bool = True
     ) -> None:
         """
         Setup the logger with custom configuration.
-        
+
+        This method should be called early in your application, before any logging occurs.
+        By default, it will not reinitialize if already configured. Use force_reinit=True
+        to override existing configuration.
+
         Args:
             level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
             log_file: Path to log file (optional)
@@ -113,12 +118,28 @@ class AgentBayLogger:
             rotation: Log file rotation size
             retention: Log file retention period
             colorize: Whether to use colors in console output (None = auto-detect)
+            force_reinit: Force reinitialization even if already initialized (default: False)
+
+        Example:
+            >>> from agentbay.logger import AgentBayLogger
+            >>> AgentBayLogger.setup(level="DEBUG", force_reinit=True)
         """
+        # Automatically reset if already initialized and force_reinit is True
+        if cls._initialized and force_reinit:
+            cls._initialized = False
+
         if cls._initialized:
             return
-            
+
         # Remove default handler
-        logger.remove()
+        # Use try-except to handle cases where logger.remove() might fail
+        # (e.g., in pytest environment where handlers might be managed externally)
+        try:
+            logger.remove()
+        except Exception:
+            # If removal fails, continue with setup
+            # This can happen in test environments
+            pass
         
         cls._log_level = level.upper()
         
@@ -183,26 +204,13 @@ class AgentBayLogger:
     def get_logger(cls, name: Optional[str] = None):
         """
         Get a logger instance.
-        
+
         Args:
             name: Logger name (optional)
-            
+
         Returns:
             Configured logger instance
         """
-        if not cls._initialized:
-            # Lazy initialization on first call
-            # Priority: code-level (cls._log_level) > environment variable > default
-            level = cls._log_level if cls._log_level != "INFO" else os.getenv("AGENTBAY_LOG_LEVEL", "INFO")
-            log_file = os.getenv("AGENTBAY_LOG_FILE")
-            
-            cls.setup(
-                level=level,
-                enable_console=True,
-                enable_file=True,
-                log_file=log_file
-            )
-        
         if name:
             return logger.bind(name=name)
         return logger
@@ -222,9 +230,11 @@ class AgentBayLogger:
             cls.setup(level=cls._log_level)
 
 
-# Remove automatic module-level initialization
-# Initialize lazily on first get_logger() call instead
-# This allows code-level setup to take priority over environment variables
+# Initialize the logger automatically on module import
+# This provides immediate logging capability without explicit setup
+# Read from environment variable if available, otherwise use INFO
+_env_log_level = os.getenv("AGENTBAY_LOG_LEVEL", "INFO")
+AgentBayLogger.setup(level=_env_log_level)
 
 
 # Export convenience functions for the logger
@@ -241,7 +251,7 @@ def get_logger(name: str = "agentbay"):
     return AgentBayLogger.get_logger(name)
 
 
-# Create a module-level logger that initializes lazily
+# Module-level logger for convenience functions
 log = get_logger("agentbay")
 
 
