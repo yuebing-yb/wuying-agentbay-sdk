@@ -23,9 +23,9 @@ All AgentBay SDKs provide:
 
 Log levels are applied in this order (highest to lowest):
 
-1. **Code-level setup** (set in your code)
-2. **Environment variables** (AGENTBAY_LOG_LEVEL)
-3. **Default values** (INFO level)
+1. **setup() method** - Explicitly calling setup() always takes effect
+2. **Environment variables** - AGENTBAY_LOG_LEVEL or LOG_LEVEL
+3. **Default values** - INFO level if nothing else is configured
 
 ---
 
@@ -43,8 +43,8 @@ python your_script.py
 ```python
 from agentbay.logger import AgentBayLogger, get_logger
 
-# Set before first get_logger() call
-AgentBayLogger._log_level = "DEBUG"
+# Configure logging level with setup()
+AgentBayLogger.setup(level="DEBUG")
 
 logger = get_logger("my_app")
 logger.debug("Debug message")
@@ -67,8 +67,7 @@ Python SDK writes logs to `python/agentbay.log` by default.
 ```python
 from agentbay.logger import AgentBayLogger
 
-# Configure file logging
-AgentBayLogger._initialized = False
+# Configure file logging with rotation
 AgentBayLogger.setup(
     level="DEBUG",
     log_file="/var/log/myapp.log",
