@@ -9,7 +9,7 @@ import * as path from 'path';
 /**
  * Log level type
  */
-export type LogLevel = 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 
 /**
  * Logger configuration options
@@ -25,12 +25,10 @@ export interface LoggerConfig {
  * Log level numeric values for comparison
  */
 const LOG_LEVEL_VALUES: Record<LogLevel, number> = {
-  TRACE: 0,
-  DEBUG: 1,
-  INFO: 2,
-  WARN: 3,
-  ERROR: 4,
-  FATAL: 5,
+  DEBUG: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3,
 };
 
 /**
@@ -119,8 +117,6 @@ const SENSITIVE_FIELDS = [
  */
 function getLogLevelEmoji(level: LogLevel): string {
   switch (level) {
-    case 'TRACE':
-      return '🔍 TRACE';
     case 'DEBUG':
       return '🐛 DEBUG';
     case 'INFO':
@@ -129,8 +125,6 @@ function getLogLevelEmoji(level: LogLevel): string {
       return '⚠️  WARN';
     case 'ERROR':
       return '❌ ERROR';
-    case 'FATAL':
-      return '💀 FATAL';
     default:
       return level;
   }
@@ -166,7 +160,6 @@ function formatLogMessage(level: LogLevel, message: string, forFile = false): st
  */
 function getColorForLevel(level: LogLevel): string {
   switch (level) {
-    case 'TRACE':
     case 'DEBUG':
       return ANSI_CYAN;
     case 'INFO':
@@ -174,7 +167,6 @@ function getColorForLevel(level: LogLevel): string {
     case 'WARN':
       return ANSI_YELLOW;
     case 'ERROR':
-    case 'FATAL':
       return ANSI_RED;
     default:
       return '';
@@ -400,36 +392,6 @@ export function log(message: string, ...args: any[]): void {
 }
 
 /**
- * Log a trace level message (most detailed)
- * @param message The message to log
- * @param args Optional arguments to log
- */
-export function logTrace(message: string, ...args: any[]): void {
-  if (!shouldLog('TRACE')) return;
-
-  const formattedMessage = formatLogMessage('TRACE', message);
-  const fileMessage = formatLogMessage('TRACE', message, true);
-
-  if (consoleLoggingEnabled) {
-    process.stdout.write(formattedMessage + "\n");
-  }
-  writeToFile(fileMessage);
-
-  if (args.length > 0) {
-    for (const arg of args) {
-      const argStr = typeof arg === "object" && arg !== null
-        ? JSON.stringify(arg, null, 2)
-        : String(arg);
-
-      if (consoleLoggingEnabled) {
-        process.stdout.write(argStr + "\n");
-      }
-      writeToFile(argStr);
-    }
-  }
-}
-
-/**
  * Log a debug level message
  * @param message The message to log
  * @param args Optional arguments to log
@@ -529,42 +491,6 @@ export function logError(message: string, error?: any): void {
 
   const formattedMessage = formatLogMessage('ERROR', message);
   const fileMessage = formatLogMessage('ERROR', message, true);
-
-  if (consoleLoggingEnabled) {
-    process.stderr.write(formattedMessage + "\n");
-  }
-  writeToFile(fileMessage);
-
-  if (error) {
-    let errorStr = '';
-    if (error instanceof Error) {
-      errorStr = error.message;
-      if (error.stack) {
-        errorStr += `\nStack Trace:\n${error.stack}`;
-      }
-    } else if (typeof error === "object") {
-      errorStr = JSON.stringify(error, null, 2);
-    } else {
-      errorStr = String(error);
-    }
-
-    if (consoleLoggingEnabled) {
-      process.stderr.write(errorStr + "\n");
-    }
-    writeToFile(errorStr);
-  }
-}
-
-/**
- * Log a fatal level message (outputs to stderr, highest severity)
- * @param message The fatal error message to log
- * @param error Optional error object
- */
-export function logFatal(message: string, error?: any): void {
-  if (!shouldLog('FATAL')) return;
-
-  const formattedMessage = formatLogMessage('FATAL', message);
-  const fileMessage = formatLogMessage('FATAL', message, true);
 
   if (consoleLoggingEnabled) {
     process.stderr.write(formattedMessage + "\n");

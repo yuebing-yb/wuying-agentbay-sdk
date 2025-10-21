@@ -83,6 +83,80 @@ level := agentbay.GetLogLevel() // Returns int
 
 Get the current log level.
 
+## File Logging
+
+The Go SDK supports logging to files with automatic rotation.
+
+### Basic File Logging
+
+```go
+import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+// Configure file logging
+agentbay.SetupLogger(agentbay.LoggerConfig{
+    Level:   "DEBUG",
+    LogFile: "/path/to/app.log",
+})
+```
+
+### File Rotation
+
+Configure automatic log file rotation when the file reaches a certain size:
+
+```go
+import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+agentbay.SetupLogger(agentbay.LoggerConfig{
+    Level:       "DEBUG",
+    LogFile:     "/var/log/myapp.log",
+    MaxFileSize: "100 MB",  // Rotate when file reaches 100 MB
+})
+```
+
+Supported size units:
+- `KB` - Kilobytes
+- `MB` - Megabytes (default)
+- `GB` - Gigabytes
+
+Default max file size is 10 MB if not specified. When rotation occurs, the current log file is renamed to `<filename>.1`.
+
+### Console and File Logging
+
+You can control whether logs are written to console and/or file:
+
+```go
+import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+func boolPtr(b bool) *bool {
+    return &b
+}
+
+// Log to file only (disable console output)
+agentbay.SetupLogger(agentbay.LoggerConfig{
+    Level:         "DEBUG",
+    LogFile:       "/var/log/app.log",
+    EnableConsole: boolPtr(false),
+})
+
+// Log to both console and file (default)
+agentbay.SetupLogger(agentbay.LoggerConfig{
+    Level:         "DEBUG",
+    LogFile:       "/var/log/app.log",
+    EnableConsole: boolPtr(true),
+})
+```
+
+### LoggerConfig Options
+
+```go
+type LoggerConfig struct {
+    Level         string  // Log level: "DEBUG", "INFO", "WARN", "ERROR"
+    LogFile       string  // Path to log file (empty = no file logging)
+    MaxFileSize   string  // Max file size before rotation (e.g., "10 MB", "100 MB", "1 GB")
+    EnableConsole *bool   // Enable/disable console output (nil = use default true)
+}
+```
+
 ## Sensitive Data Masking
 
 The SDK automatically masks sensitive information:
