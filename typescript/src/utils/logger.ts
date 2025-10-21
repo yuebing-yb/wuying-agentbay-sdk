@@ -3,10 +3,23 @@
  * sensitive data masking, and RequestID management.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 /**
  * Log level type
  */
 export type LogLevel = 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
+
+/**
+ * Logger configuration options
+ */
+export interface LoggerConfig {
+  level?: LogLevel;
+  logFile?: string;
+  maxFileSize?: string;
+  enableConsole?: boolean;
+}
 
 /**
  * Log level numeric values for comparison
@@ -27,13 +40,21 @@ let currentRequestId = '';
 
 /**
  * Current log level configuration
+ * Supports both LOG_LEVEL and AGENTBAY_LOG_LEVEL environment variables
  */
-let currentLogLevel: LogLevel = (process.env.LOG_LEVEL as LogLevel) || 'INFO';
+let currentLogLevel: LogLevel = (
+  (process.env.LOG_LEVEL as LogLevel) ||
+  (process.env.AGENTBAY_LOG_LEVEL as LogLevel) ||
+  'INFO'
+);
 
 /**
- * Whether to enable API logging
+ * File logging configuration
  */
-let enableApiLogging = process.env.ENABLE_API_LOGGING !== 'false';
+let fileLoggingEnabled = false;
+let logFilePath: string | null = null;
+let logFileMaxSize = 10 * 1024 * 1024; // 10MB default
+let consoleLoggingEnabled = true;
 
 /**
  * Determine whether to use colors in output
@@ -125,13 +146,13 @@ function shouldLog(level: LogLevel): boolean {
 /**
  * Format log message with level and RequestID
  */
-function formatLogMessage(level: LogLevel, message: string): string {
+function formatLogMessage(level: LogLevel, message: string, forFile = false): string {
   let formattedMessage = `${getLogLevelEmoji(level)}: ${message}`;
   if (currentRequestId) {
     formattedMessage += ` [RequestId=${currentRequestId}]`;
   }
 
-  if (!useColors) {
+  if (forFile || !useColors) {
     return formattedMessage;
   }
 
@@ -232,14 +253,6 @@ export function getLogLevel(): LogLevel {
 }
 
 /**
- * Enable or disable API logging
- * @param enable Whether to enable API logging
- */
-export function setApiLogging(enable: boolean): void {
-  enableApiLogging = enable;
-}
-
-/**
  * Set the RequestID for tracking
  * @param requestId The RequestID to set
  */
@@ -263,6 +276,100 @@ export function clearRequestId(): void {
 }
 
 /**
+ * Parse file size string to bytes (e.g., "10 MB" -> 10485760)
+ * @param sizeStr Size string like "10 MB", "100 MB", "1 GB"
+ * @returns Size in bytes
+ */
+function parseFileSize(sizeStr: string): number {
+  const match = sizeStr.match(/^(\d+)\s*(MB|GB|KB)?$/i);
+  if (!match) {
+    return 10 * 1024 * 1024; // Default 10MB
+  }
+
+  const value = parseInt(match[1], 10);
+  const unit = (match[2] || 'MB').toUpperCase();
+
+  switch (unit) {
+    case 'KB':
+      return value * 1024;
+    case 'MB':
+      return value * 1024 * 1024;
+    case 'GB':
+      return value * 1024 * 1024 * 1024;
+    default:
+      return value * 1024 * 1024;
+  }
+}
+
+/**
+ * Write log message to file
+ * @param message The formatted log message
+ */
+function writeToFile(message: string): void {
+  if (!fileLoggingEnabled || !logFilePath) {
+    return;
+  }
+
+  try {
+    // Check file size and rotate if necessary
+    if (fs.existsSync(logFilePath)) {
+      const stats = fs.statSync(logFilePath);
+      if (stats.size >= logFileMaxSize) {
+        // Rotate: rename current file to .log.1
+        const rotatedPath = `${logFilePath}.1`;
+        if (fs.existsSync(rotatedPath)) {
+          fs.unlinkSync(rotatedPath);
+        }
+        fs.renameSync(logFilePath, rotatedPath);
+      }
+    }
+
+    // Append to file (create if doesn't exist)
+    fs.appendFileSync(logFilePath, message + '\n', 'utf8');
+  } catch (error) {
+    // Silently fail to avoid infinite loop
+    if (consoleLoggingEnabled) {
+      process.stderr.write(`Failed to write to log file: ${error}\n`);
+    }
+  }
+}
+
+/**
+ * Setup logger configuration
+ * @param config Logger configuration options
+ */
+export function setupLogger(config: LoggerConfig): void {
+  if (config.level) {
+    setLogLevel(config.level);
+  }
+
+  if (config.logFile !== undefined) {
+    if (config.logFile) {
+      logFilePath = config.logFile;
+      fileLoggingEnabled = true;
+
+      // Ensure directory exists
+      const dir = path.dirname(logFilePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      // Parse max file size
+      if (config.maxFileSize) {
+        logFileMaxSize = parseFileSize(config.maxFileSize);
+      }
+    } else {
+      fileLoggingEnabled = false;
+      logFilePath = null;
+    }
+  }
+
+  if (config.enableConsole !== undefined) {
+    consoleLoggingEnabled = config.enableConsole;
+  }
+}
+
+/**
  * Log a message without the log prefix and file location
  * Treated as INFO level - will be filtered if log level is WARN or higher
  * @param message The message to log
@@ -270,15 +377,24 @@ export function clearRequestId(): void {
  */
 export function log(message: string, ...args: any[]): void {
   if (!shouldLog('INFO')) return;
-  process.stdout.write(message + "\n");
+
+  if (consoleLoggingEnabled) {
+    process.stdout.write(message + "\n");
+  }
+
+  // Write to file without colors
+  writeToFile(message);
 
   if (args.length > 0) {
     for (const arg of args) {
-      if (typeof arg === "object" && arg !== null) {
-        process.stdout.write(JSON.stringify(arg, null, 2) + "\n");
-      } else if (arg !== null && arg !== undefined) {
-        process.stdout.write(String(arg) + "\n");
+      const argStr = typeof arg === "object" && arg !== null
+        ? JSON.stringify(arg, null, 2)
+        : String(arg);
+
+      if (consoleLoggingEnabled) {
+        process.stdout.write(argStr + "\n");
       }
+      writeToFile(argStr);
     }
   }
 }
@@ -290,16 +406,25 @@ export function log(message: string, ...args: any[]): void {
  */
 export function logTrace(message: string, ...args: any[]): void {
   if (!shouldLog('TRACE')) return;
+
   const formattedMessage = formatLogMessage('TRACE', message);
-  process.stdout.write(formattedMessage + "\n");
+  const fileMessage = formatLogMessage('TRACE', message, true);
+
+  if (consoleLoggingEnabled) {
+    process.stdout.write(formattedMessage + "\n");
+  }
+  writeToFile(fileMessage);
 
   if (args.length > 0) {
     for (const arg of args) {
-      if (typeof arg === "object" && arg !== null) {
-        process.stdout.write(JSON.stringify(arg, null, 2) + "\n");
-      } else if (arg !== null && arg !== undefined) {
-        process.stdout.write(String(arg) + "\n");
+      const argStr = typeof arg === "object" && arg !== null
+        ? JSON.stringify(arg, null, 2)
+        : String(arg);
+
+      if (consoleLoggingEnabled) {
+        process.stdout.write(argStr + "\n");
       }
+      writeToFile(argStr);
     }
   }
 }
@@ -311,16 +436,25 @@ export function logTrace(message: string, ...args: any[]): void {
  */
 export function logDebug(message: string, ...args: any[]): void {
   if (!shouldLog('DEBUG')) return;
+
   const formattedMessage = formatLogMessage('DEBUG', message);
-  process.stdout.write(formattedMessage + "\n");
+  const fileMessage = formatLogMessage('DEBUG', message, true);
+
+  if (consoleLoggingEnabled) {
+    process.stdout.write(formattedMessage + "\n");
+  }
+  writeToFile(fileMessage);
 
   if (args.length > 0) {
     for (const arg of args) {
-      if (typeof arg === "object" && arg !== null) {
-        process.stdout.write(JSON.stringify(arg, null, 2) + "\n");
-      } else if (arg !== null && arg !== undefined) {
-        process.stdout.write(String(arg) + "\n");
+      const argStr = typeof arg === "object" && arg !== null
+        ? JSON.stringify(arg, null, 2)
+        : String(arg);
+
+      if (consoleLoggingEnabled) {
+        process.stdout.write(argStr + "\n");
       }
+      writeToFile(argStr);
     }
   }
 }
@@ -332,16 +466,25 @@ export function logDebug(message: string, ...args: any[]): void {
  */
 export function logInfo(message: string, ...args: any[]): void {
   if (!shouldLog('INFO')) return;
+
   const formattedMessage = formatLogMessage('INFO', message);
-  process.stdout.write(formattedMessage + "\n");
+  const fileMessage = formatLogMessage('INFO', message, true);
+
+  if (consoleLoggingEnabled) {
+    process.stdout.write(formattedMessage + "\n");
+  }
+  writeToFile(fileMessage);
 
   if (args.length > 0) {
     for (const arg of args) {
-      if (typeof arg === "object" && arg !== null) {
-        process.stdout.write(JSON.stringify(arg, null, 2) + "\n");
-      } else if (arg !== null && arg !== undefined) {
-        process.stdout.write(String(arg) + "\n");
+      const argStr = typeof arg === "object" && arg !== null
+        ? JSON.stringify(arg, null, 2)
+        : String(arg);
+
+      if (consoleLoggingEnabled) {
+        process.stdout.write(argStr + "\n");
       }
+      writeToFile(argStr);
     }
   }
 }
@@ -353,16 +496,25 @@ export function logInfo(message: string, ...args: any[]): void {
  */
 export function logWarn(message: string, ...args: any[]): void {
   if (!shouldLog('WARN')) return;
+
   const formattedMessage = formatLogMessage('WARN', message);
-  process.stderr.write(formattedMessage + "\n");
+  const fileMessage = formatLogMessage('WARN', message, true);
+
+  if (consoleLoggingEnabled) {
+    process.stderr.write(formattedMessage + "\n");
+  }
+  writeToFile(fileMessage);
 
   if (args.length > 0) {
     for (const arg of args) {
-      if (typeof arg === "object" && arg !== null) {
-        process.stderr.write(JSON.stringify(arg, null, 2) + "\n");
-      } else if (arg !== null && arg !== undefined) {
-        process.stderr.write(String(arg) + "\n");
+      const argStr = typeof arg === "object" && arg !== null
+        ? JSON.stringify(arg, null, 2)
+        : String(arg);
+
+      if (consoleLoggingEnabled) {
+        process.stderr.write(argStr + "\n");
       }
+      writeToFile(argStr);
     }
   }
 }
@@ -374,20 +526,32 @@ export function logWarn(message: string, ...args: any[]): void {
  */
 export function logError(message: string, error?: any): void {
   if (!shouldLog('ERROR')) return;
+
   const formattedMessage = formatLogMessage('ERROR', message);
-  process.stderr.write(formattedMessage + "\n");
+  const fileMessage = formatLogMessage('ERROR', message, true);
+
+  if (consoleLoggingEnabled) {
+    process.stderr.write(formattedMessage + "\n");
+  }
+  writeToFile(fileMessage);
 
   if (error) {
+    let errorStr = '';
     if (error instanceof Error) {
-      process.stderr.write(`${error.message}\n`);
+      errorStr = error.message;
       if (error.stack) {
-        process.stderr.write(`Stack Trace:\n${error.stack}\n`);
+        errorStr += `\nStack Trace:\n${error.stack}`;
       }
     } else if (typeof error === "object") {
-      process.stderr.write(JSON.stringify(error, null, 2) + "\n");
+      errorStr = JSON.stringify(error, null, 2);
     } else {
-      process.stderr.write(String(error) + "\n");
+      errorStr = String(error);
     }
+
+    if (consoleLoggingEnabled) {
+      process.stderr.write(errorStr + "\n");
+    }
+    writeToFile(errorStr);
   }
 }
 
@@ -398,20 +562,32 @@ export function logError(message: string, error?: any): void {
  */
 export function logFatal(message: string, error?: any): void {
   if (!shouldLog('FATAL')) return;
+
   const formattedMessage = formatLogMessage('FATAL', message);
-  process.stderr.write(formattedMessage + "\n");
+  const fileMessage = formatLogMessage('FATAL', message, true);
+
+  if (consoleLoggingEnabled) {
+    process.stderr.write(formattedMessage + "\n");
+  }
+  writeToFile(fileMessage);
 
   if (error) {
+    let errorStr = '';
     if (error instanceof Error) {
-      process.stderr.write(`${error.message}\n`);
+      errorStr = error.message;
       if (error.stack) {
-        process.stderr.write(`Stack Trace:\n${error.stack}\n`);
+        errorStr += `\nStack Trace:\n${error.stack}`;
       }
     } else if (typeof error === "object") {
-      process.stderr.write(JSON.stringify(error, null, 2) + "\n");
+      errorStr = JSON.stringify(error, null, 2);
     } else {
-      process.stderr.write(String(error) + "\n");
+      errorStr = String(error);
     }
+
+    if (consoleLoggingEnabled) {
+      process.stderr.write(errorStr + "\n");
+    }
+    writeToFile(errorStr);
   }
 }
 
@@ -421,7 +597,7 @@ export function logFatal(message: string, error?: any): void {
  * @param requestData Optional request data to log at DEBUG level
  */
 export function logAPICall(apiName: string, requestData?: any): void {
-  if (!enableApiLogging || !shouldLog('INFO')) return;
+  if (!shouldLog('INFO')) return;
   const message = `🔗 API Call: ${apiName}`;
 
   // Temporarily clear RequestId since it's not available until API response
@@ -458,7 +634,6 @@ export function logAPIResponseWithDetails(
   keyFields?: Record<string, any>,
   fullResponse?: string
 ): void {
-  if (!enableApiLogging) return;
 
   if (success) {
     if (shouldLog('INFO')) {

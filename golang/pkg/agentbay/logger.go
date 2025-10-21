@@ -7,7 +7,8 @@ import (
 	"regexp"
 	"runtime/debug"
 	"strings"
-	"syscall"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/internal/terminal"
 )
 
 // Log level constants
@@ -29,6 +30,23 @@ const (
 
 // Global log level (default is LOG_INFO)
 var GlobalLogLevel = LOG_INFO
+
+// File logging configuration
+var (
+	fileLoggingEnabled = false
+	logFilePath        string
+	logFileMaxSize     int64 = 10 * 1024 * 1024 // 10MB default
+	consoleLoggingEnabled     = true
+	logFile            *os.File
+)
+
+// LoggerConfig holds configuration for file logging
+type LoggerConfig struct {
+	Level         string
+	LogFile       string
+	MaxFileSize   string
+	EnableConsole bool
+}
 
 // Sensitive field names for data masking
 var SENSITIVE_FIELDS = []string{
@@ -75,18 +93,106 @@ func GetLogLevel() int {
 	return GlobalLogLevel
 }
 
-// isTerminal checks if the output is going to a terminal
-func isTerminal(fd uintptr) bool {
-	// Try to get terminal attributes - succeeds only if fd is a terminal
-	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, syscall.TIOCGETA, 0)
-	return err == 0
+// parseFileSize parses size string like "10 MB" to bytes
+func parseFileSize(sizeStr string) int64 {
+	sizeStr = strings.TrimSpace(sizeStr)
+	var value int64
+	var unit string
+
+	// Parse value and unit
+	n, err := fmt.Sscanf(sizeStr, "%d %s", &value, &unit)
+	if err != nil || n < 1 {
+		return 10 * 1024 * 1024 // Default 10MB
+	}
+
+	unit = strings.ToUpper(unit)
+	switch unit {
+	case "KB":
+		return value * 1024
+	case "MB", "M":
+		return value * 1024 * 1024
+	case "GB", "G":
+		return value * 1024 * 1024 * 1024
+	default:
+		return value * 1024 * 1024 // Default to MB
+	}
+}
+
+// writeToFile writes a message to the log file with rotation
+func writeToFile(message string) {
+	if !fileLoggingEnabled || logFilePath == "" {
+		return
+	}
+
+	// Check file size and rotate if necessary
+	if logFile != nil {
+		info, err := logFile.Stat()
+		if err == nil && info.Size() >= logFileMaxSize {
+			// Close current file
+			logFile.Close()
+
+			// Rotate: rename current to .1
+			rotatedPath := logFilePath + ".1"
+			os.Remove(rotatedPath) // Remove old backup
+			os.Rename(logFilePath, rotatedPath)
+
+			// Open new file
+			logFile, _ = os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		}
+	}
+
+	// Open file if not already open
+	if logFile == nil {
+		var err error
+		logFile, err = os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			return // Silently fail
+		}
+	}
+
+	// Write to file
+	if logFile != nil {
+		logFile.WriteString(message + "\n")
+	}
+}
+
+// SetupLogger configures the logger with file logging support
+func SetupLogger(config LoggerConfig) {
+	if config.Level != "" {
+		level := parseLogLevel(config.Level)
+		SetLogLevel(level)
+	}
+
+	if config.LogFile != "" {
+		logFilePath = config.LogFile
+		fileLoggingEnabled = true
+
+		// Create directory if needed
+		dir := logFilePath[:strings.LastIndex(logFilePath, "/")]
+		if dir != "" {
+			os.MkdirAll(dir, 0755)
+		}
+
+		// Parse max file size
+		if config.MaxFileSize != "" {
+			logFileMaxSize = parseFileSize(config.MaxFileSize)
+		}
+	} else {
+		fileLoggingEnabled = false
+		if logFile != nil {
+			logFile.Close()
+			logFile = nil
+		}
+	}
+
+	consoleLoggingEnabled = config.EnableConsole
 }
 
 // getColorCodes returns ANSI color codes based on environment detection
 func getColorCodes() (reset, green, red, yellow, blue string) {
 	// Priority 1: Check if stdout is a real terminal (TTY)
 	// This is the most reliable indicator of an interactive environment
-	if isTerminal(os.Stdout.Fd()) {
+	if terminal.IsTerminal(os.Stdout.Fd()) {
 		return ColorReset, ColorGreen, ColorRed, ColorYellow, ColorBlue
 	}
 
@@ -141,11 +247,20 @@ func LogAPICall(apiName, requestParams string) {
 	}
 
 	reset, _, _, _, blue := getColorCodes()
-	// Use blue color for the entire message to match Python's consistent coloring
-	fmt.Printf("%s🔗 API Call: %s%s\n", blue, apiName, reset)
+	coloredMsg := fmt.Sprintf("%s🔗 API Call: %s%s", blue, apiName, reset)
+	plainMsg := fmt.Sprintf("🔗 API Call: %s", apiName)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredMsg)
+	}
+	writeToFile(plainMsg)
 
 	if requestParams != "" && GlobalLogLevel <= LOG_DEBUG {
-		fmt.Printf("   Request: %s\n", requestParams)
+		requestMsg := fmt.Sprintf("   Request: %s", requestParams)
+		if consoleLoggingEnabled {
+			fmt.Println(requestMsg)
+		}
+		writeToFile(requestMsg)
 	}
 }
 
@@ -158,31 +273,62 @@ func LogAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 	reset, green, red, _, blue := getColorCodes()
 
 	if success {
-		mainInfo := fmt.Sprintf("%s✅ API Response: %s", green, apiName)
+		coloredMsg := fmt.Sprintf("%s✅ API Response: %s", green, apiName)
+		plainMsg := fmt.Sprintf("✅ API Response: %s", apiName)
+
 		if requestID != "" {
-			mainInfo += fmt.Sprintf(", RequestId=%s", requestID)
+			coloredMsg += fmt.Sprintf(", RequestId=%s", requestID)
+			plainMsg += fmt.Sprintf(", RequestId=%s", requestID)
 		}
-		fmt.Printf("%s%s\n", mainInfo, reset)
+
+		if consoleLoggingEnabled {
+			fmt.Printf("%s%s\n", coloredMsg, reset)
+		}
+		writeToFile(plainMsg)
 
 		if keyFields != nil && len(keyFields) > 0 {
 			for key, value := range keyFields {
-				// Color parameter lines with green to match response color
-				fmt.Printf("%s   └─ %s=%v%s\n", green, key, value, reset)
+				coloredField := fmt.Sprintf("%s   └─ %s=%v%s", green, key, value, reset)
+				plainField := fmt.Sprintf("   └─ %s=%v", key, value)
+
+				if consoleLoggingEnabled {
+					fmt.Println(coloredField)
+				}
+				writeToFile(plainField)
 			}
 		}
 
 		if fullResponse != "" && GlobalLogLevel <= LOG_DEBUG {
-			fmt.Printf("%s📥 Full Response: %s%s\n", blue, fullResponse, reset)
+			coloredResp := fmt.Sprintf("%s📥 Full Response: %s%s", blue, fullResponse, reset)
+			plainResp := fmt.Sprintf("📥 Full Response: %s", fullResponse)
+
+			if consoleLoggingEnabled {
+				fmt.Println(coloredResp)
+			}
+			writeToFile(plainResp)
 		}
 	} else {
-		mainInfo := fmt.Sprintf("%s❌ API Response Failed: %s", red, apiName)
+		coloredMsg := fmt.Sprintf("%s❌ API Response Failed: %s", red, apiName)
+		plainMsg := fmt.Sprintf("❌ API Response Failed: %s", apiName)
+
 		if requestID != "" {
-			mainInfo += fmt.Sprintf(", RequestId=%s", requestID)
+			coloredMsg += fmt.Sprintf(", RequestId=%s", requestID)
+			plainMsg += fmt.Sprintf(", RequestId=%s", requestID)
 		}
-		fmt.Printf("%s%s\n", mainInfo, reset)
+
+		if consoleLoggingEnabled {
+			fmt.Printf("%s%s\n", coloredMsg, reset)
+		}
+		writeToFile(plainMsg)
 
 		if fullResponse != "" && GlobalLogLevel <= LOG_DEBUG {
-			fmt.Printf("%s📥 Response: %s%s\n", red, fullResponse, reset)
+			coloredResp := fmt.Sprintf("%s📥 Response: %s%s", red, fullResponse, reset)
+			plainResp := fmt.Sprintf("📥 Response: %s", fullResponse)
+
+			if consoleLoggingEnabled {
+				fmt.Println(coloredResp)
+			}
+			writeToFile(plainResp)
 		}
 	}
 }
@@ -194,12 +340,32 @@ func LogOperationError(operation, errorMsg string, withStack bool) {
 	}
 
 	reset, _, red, _, _ := getColorCodes()
-	fmt.Printf("%s❌ Failed: %s%s\n", red, operation, reset)
-	fmt.Printf("%s💥 Error: %s%s\n", red, errorMsg, reset)
+
+	coloredFail := fmt.Sprintf("%s❌ Failed: %s%s", red, operation, reset)
+	plainFail := fmt.Sprintf("❌ Failed: %s", operation)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredFail)
+	}
+	writeToFile(plainFail)
+
+	coloredError := fmt.Sprintf("%s💥 Error: %s%s", red, errorMsg, reset)
+	plainError := fmt.Sprintf("💥 Error: %s", errorMsg)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredError)
+	}
+	writeToFile(plainError)
 
 	if withStack {
 		stack := debug.Stack()
-		fmt.Printf("%s[Stack Trace]:\n%s%s\n", red, string(stack), reset)
+		coloredStack := fmt.Sprintf("%s[Stack Trace]:\n%s%s", red, string(stack), reset)
+		plainStack := fmt.Sprintf("[Stack Trace]:\n%s", string(stack))
+
+		if consoleLoggingEnabled {
+			fmt.Println(coloredStack)
+		}
+		writeToFile(plainStack)
 	}
 }
 
