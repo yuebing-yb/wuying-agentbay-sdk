@@ -193,11 +193,13 @@ describe("Logger", () => {
       expect(getRequestId()).to.equal("req-12345");
     });
 
-    it("should include RequestID in API call logs", () => {
+    it("should NOT include RequestID in API call logs (not available yet)", () => {
       setRequestId("req-xyz");
       logAPICall("TestAPI");
       const output = stdoutWriteStub.getCalls().map(c => c.args[0]).join("");
-      expect(output).to.include("req-xyz");
+      // RequestID is cleared before API call logging to prevent including server-side RequestID
+      expect(output).to.include("API Call");
+      expect(output).to.not.include("req-xyz");
     });
 
     it("should clear RequestID", () => {

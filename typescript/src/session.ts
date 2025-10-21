@@ -518,10 +518,21 @@ export class Session {
       logDebug(`Request: SessionId=${this.sessionId}`);
 
       const response = await this.getClient().getMcpResource(request);
-      logDebug(`Response from GetMcpResource: ${JSON.stringify(response)}`);
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
+
+      // Check for API-level errors
+      if (response?.body?.success === false && response.body?.code) {
+        const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+        logAPIResponseWithDetails("GetMcpResource", requestId, false, undefined, fullResponse);
+        return {
+          requestId,
+          success: false,
+          errorMessage,
+        };
+      }
 
       // Extract session info from response (matching Python structure)
       const responseBody = response.body;
@@ -562,6 +573,19 @@ export class Session {
           sessionInfo.ticket = desktopInfo.ticket;
         }
       }
+
+      // Log API response with key fields
+      const keyFields: Record<string, any> = {
+        session_id: this.sessionId,
+      };
+      if (sessionInfo.resourceUrl) {
+        keyFields.resource_url = sessionInfo.resourceUrl;
+      }
+      if (sessionInfo.appId) {
+        keyFields.app_id = sessionInfo.appId;
+      }
+      const fullResponse = responseBody ? JSON.stringify(responseBody, null, 2) : "";
+      logAPIResponseWithDetails("GetMcpResource", requestId, true, keyFields, fullResponse);
 
       return {
         requestId,
@@ -744,8 +768,17 @@ export class Session {
     // Extract request ID
     const requestId = extractRequestId(response) || "";
 
-    if (response && response.body) {
-      logDebug("Response from ListMcpTools:", response.body);
+    // Check for API-level errors
+    if (response?.body?.success === false && response.body?.code) {
+      const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+      logAPIResponseWithDetails("ListMcpTools", requestId, false, undefined, fullResponse);
+      return {
+        requestId,
+        success: false,
+        tools: [],
+        errorMessage,
+      };
     }
 
     // Parse the response data
@@ -769,6 +802,14 @@ export class Session {
     }
 
     this.mcpTools = tools; // Update the session's mcpTools field
+
+    // Log API response with key fields
+    const keyFields: Record<string, any> = {
+      image_id: imageId,
+      tool_count: tools.length,
+    };
+    const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+    logAPIResponseWithDetails("ListMcpTools", requestId, true, keyFields, fullResponse);
 
     return {
       requestId,

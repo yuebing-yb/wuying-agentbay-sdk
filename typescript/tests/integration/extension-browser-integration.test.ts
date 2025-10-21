@@ -45,7 +45,7 @@ async function validateExtensionServiceIntegration(
   contextSyncValidation: boolean;
   serviceIntegration: boolean;
 }> {
-  console.log(`Validating extension service integration for: ${expectedExtensionIds}`);
+  log(`Validating extension service integration for: ${expectedExtensionIds}`);
   
   const results = {
     fileSystemCheck: false,
@@ -60,7 +60,7 @@ async function validateExtensionServiceIntegration(
     results.fileSystemCheck = lsResult.success;
     
     if (results.fileSystemCheck) {
-      console.log(`  ✅ Extensions directory exists`);
+      log(`  ✅ Extensions directory exists`);
     }
     
     // Validate extension service integration
@@ -68,11 +68,11 @@ async function validateExtensionServiceIntegration(
     results.contextSyncValidation = true; // Context sync is handled by the service
     results.serviceIntegration = results.fileSystemCheck && results.extensionServiceValidation;
     
-    console.log(`Validation results: fileSystem=${results.fileSystemCheck}, service=${results.extensionServiceValidation}, integration=${results.serviceIntegration}`);
+    log(`Validation results: fileSystem=${results.fileSystemCheck}, service=${results.extensionServiceValidation}, integration=${results.serviceIntegration}`);
     
     return results;
   } catch (error) {
-    console.error('Extension service validation failed:', error);
+    log('Extension service validation failed:', error);
     return results;
   }
 }
@@ -164,7 +164,7 @@ async function createExtensionZip(name: string, manifest: any, useDirectoryStruc
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ext-'));
   const zipPath = path.join(tempDir, `${name}.zip`);
 
-  console.log(`Creating extension directory: ${zipPath}`);
+  log(`Creating extension directory: ${zipPath}`);
   
   // Create directory structure to avoid conflicts when extracting
   let manifestPath: string, popupHtmlPath: string, popupJsPath: string, backgroundJsPath: string, contentJsPath: string;
@@ -176,7 +176,7 @@ async function createExtensionZip(name: string, manifest: any, useDirectoryStruc
     popupJsPath = `${extensionDir}popup.js`;
     backgroundJsPath = `${extensionDir}background.js`;
     contentJsPath = `${extensionDir}content.js`;
-    console.log(`Using directory structure: ${extensionDir}`);
+    log(`Using directory structure: ${extensionDir}`);
   } else {
     // Legacy flat structure (may cause conflicts)
     manifestPath = "manifest.json";
@@ -184,7 +184,7 @@ async function createExtensionZip(name: string, manifest: any, useDirectoryStruc
     popupJsPath = "popup.js";
     backgroundJsPath = "background.js";
     contentJsPath = "content.js";
-    console.log("Using flat structure (legacy mode)");
+    log("Using flat structure (legacy mode)");
   }
   
   // Create extension directory
@@ -316,11 +316,11 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
   const backgroundJs = `// Background Service Worker for ${manifest.name}
 // Directory structure: ${useDirectoryStructure ? 'Enabled' : 'Disabled'}
 
-console.log('Background service worker started for: ${manifest.name}');
+log('Background service worker started for: ${manifest.name}');
 
 // Extension installation and startup events
 chrome.runtime.onInstalled.addListener((details) => {
-    console.log('Extension installed:', details);
+    log('Extension installed:', details);
     
     // Set up initial configuration
     chrome.storage.local.set({
@@ -334,7 +334,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('Background received message:', request);
+    log('Background received message:', request);
     
     switch (request.action) {
         case 'getExtensionInfo':
@@ -366,7 +366,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-console.log('Background service worker fully initialized for ${manifest.name}');
+log('Background service worker fully initialized for ${manifest.name}');
 `;
   fs.writeFileSync(path.join(tempDir, 'background.js'), backgroundJs);
   
@@ -375,11 +375,11 @@ console.log('Background service worker fully initialized for ${manifest.name}');
 // Directory structure: ${useDirectoryStructure ? 'Enabled' : 'Disabled'}
 // Injected into all pages as specified in manifest
 
-console.log('Content script loaded for: ${manifest.name}');
+log('Content script loaded for: ${manifest.name}');
 
 // Message listener for background communication
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('Content script received message:', request);
+    log('Content script received message:', request);
     
     switch (request.action) {
         case 'showExtensionInfo':
@@ -410,7 +410,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             break;
             
         case 'pageLoaded':
-            console.log('Page loaded notification from background:', request.url);
+            log('Page loaded notification from background:', request.url);
             sendResponse({ success: true, contentScriptActive: true });
             break;
             
@@ -433,7 +433,7 @@ function testContentScriptFunction() {
 // Make function available globally for testing
 window.__EXTENSION_CONTENT_SCRIPT_TEST__ = testContentScriptFunction;
 
-console.log('Content script fully initialized for ${manifest.name} on', window.location.href);
+log('Content script fully initialized for ${manifest.name} on', window.location.href);
 `;
   fs.writeFileSync(path.join(tempDir, 'content.js'), contentJs);
   
@@ -444,7 +444,7 @@ console.log('Content script fully initialized for ${manifest.name} on', window.l
     execSync(`cd "${tempDir}" && zip -r "${name}.zip" *`, { stdio: 'pipe' });
   } catch (error) {
     // Fallback: just return the directory path for basic testing
-    console.warn(`Warning: Could not create ZIP file, using directory: ${tempDir}`);
+    log(`Warning: Could not create ZIP file, using directory: ${tempDir}`);
     return tempDir;
   }
   
@@ -499,7 +499,7 @@ describe("Extension Service Integration Tests", () => {
       // Initialize ExtensionsService with auto-detected context
       contextName = `test-extensions-${Date.now()}`;
       extensionsService = new ExtensionsService(agentBay, contextName);
-      console.log(`Created extension context: ${contextName}`);
+      log(`Created extension context: ${contextName}`);
       
       // Create browser context for data persistence
       browserContextName = `test-browser-${Date.now()}`;
@@ -510,58 +510,58 @@ describe("Extension Service Integration Tests", () => {
       
       browserDataContext = browserContextResult.context;
       browserContextId = browserDataContext.id;
-      console.log(`Created browser context: ${browserContextName} (ID: ${browserContextId})`);
+      log(`Created browser context: ${browserContextName} (ID: ${browserContextId})`);
       
       // Create sample extensions
       sampleExtensions = await createSampleExtensions();
-      console.log(`Created ${sampleExtensions.length} sample extension files`);
+      log(`Created ${sampleExtensions.length} sample extension files`);
       
       // Test extension service initialization before uploading
       try {
         await extensionsService.list();
-        console.log("Extension service initialized successfully");
+        log("Extension service initialized successfully");
       } catch (initError) {
-        console.error("Extension service initialization failed:", initError);
+        log("Extension service initialization failed:", initError);
         throw new Error(`Extension service initialization failed: ${initError instanceof Error ? initError.message : String(initError)}`);
       }
       
       // Pre-upload extensions for reuse in tests - with error handling
-      console.log("Starting extension uploads...");
+      log("Starting extension uploads...");
       for (let i = 0; i < sampleExtensions.length; i++) {
         const extPath = sampleExtensions[i];
         try {
-          console.log(`Uploading extension ${i + 1}/${sampleExtensions.length}: ${path.basename(extPath)}`);
+          log(`Uploading extension ${i + 1}/${sampleExtensions.length}: ${path.basename(extPath)}`);
           const extension = await extensionsService.create(extPath);
-          console.log(`✅ Successfully uploaded extension: ${extension.id}`);
+          log(`✅ Successfully uploaded extension: ${extension.id}`);
           uploadedExtensions.push(extension);
         } catch (uploadError) {
-          console.error(`❌ Failed to upload extension ${path.basename(extPath)}:`, uploadError);
+          log(`❌ Failed to upload extension ${path.basename(extPath)}:`, uploadError);
           
           // If this is a 403 error, provide more specific guidance
           if (uploadError instanceof Error && uploadError.message.includes('403 Forbidden')) {
-            console.error("\n🔑 Authentication Issue Detected:");
-            console.error("   - Check if AGENTBAY_API_KEY is valid and not expired");
-            console.error("   - Verify API key has file upload permissions");
-            console.error("   - Ensure the context creation was successful");
-            console.error(`   - Current API key: ${apiKey.substring(0, 8)}...`);
+            log("\n🔑 Authentication Issue Detected:");
+            log("   - Check if AGENTBAY_API_KEY is valid and not expired");
+            log("   - Verify API key has file upload permissions");
+            log("   - Ensure the context creation was successful");
+            log(`   - Current API key: ${apiKey.substring(0, 8)}...`);
           }
           
           throw new Error(`Extension upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
         }
       }
-      console.log(`✅ Pre-uploaded ${uploadedExtensions.length} extensions for testing`);
+      log(`✅ Pre-uploaded ${uploadedExtensions.length} extensions for testing`);
       
     } catch (setupError) {
-      console.error("Test setup failed:", setupError);
+      log("Test setup failed:", setupError);
       
       // Cleanup any partial state
       if (extensionsService && uploadedExtensions.length > 0) {
-        console.log("Cleaning up partially uploaded extensions...");
+        log("Cleaning up partially uploaded extensions...");
         for (const ext of uploadedExtensions) {
           try {
             await extensionsService.delete(ext.id);
           } catch (cleanupError) {
-            console.warn(`Failed to cleanup extension ${ext.id}:`, cleanupError);
+            log(`Failed to cleanup extension ${ext.id}:`, cleanupError);
           }
         }
       }
@@ -577,10 +577,10 @@ describe("Extension Service Integration Tests", () => {
         try {
           await extensionsService.delete(extension.id);
         } catch (e) {
-          console.log(`Warning: Failed to delete extension ${extension.id}: ${e}`);
+          log(`Warning: Failed to delete extension ${extension.id}: ${e}`);
         }
       }
-      console.log(`Cleaned up ${uploadedExtensions.length} uploaded extensions`);
+      log(`Cleaned up ${uploadedExtensions.length} uploaded extensions`);
     }
     
     // Clean up sample files
@@ -605,16 +605,16 @@ describe("Extension Service Integration Tests", () => {
     if (browserDataContext) {
       try {
         await agentBay.context.delete(browserDataContext);
-        console.log(`Browser context deleted: ${browserContextId}`);
+        log(`Browser context deleted: ${browserContextId}`);
       } catch (e) {
-        console.log(`Warning: Failed to delete browser context: ${e}`);
+        log(`Warning: Failed to delete browser context: ${e}`);
       }
     }
   });
 
   describe("Extension CRUD Operations", () => {
     it("should perform complete CRUD workflow using public API methods", async () => {
-      console.log("\n=== Extension CRUD Operations Test ===");
+      log("\n=== Extension CRUD Operations Test ===");
       
       // If upload failed during setup, create a new test extension here
       let testExtensions: Extension[] = [];
@@ -624,27 +624,27 @@ describe("Extension Service Integration Tests", () => {
         if (uploadedExtensions.length >= 2) {
           // Use pre-uploaded extensions if available
           testExtensions = uploadedExtensions.slice(0, 2);
-          console.log(`Using ${testExtensions.length} pre-uploaded extensions for testing`);
+          log(`Using ${testExtensions.length} pre-uploaded extensions for testing`);
         } else {
           // Upload extensions specifically for this test
-          console.log("Pre-uploaded extensions not available, creating test extensions...");
+          log("Pre-uploaded extensions not available, creating test extensions...");
           shouldCleanup = true;
           
           for (let i = 0; i < Math.min(2, sampleExtensions.length); i++) {
             try {
-              console.log(`Creating test extension ${i + 1}/2...`);
+              log(`Creating test extension ${i + 1}/2...`);
               const extension = await extensionsService.create(sampleExtensions[i]);
               testExtensions.push(extension);
-              console.log(`✅ Created test extension: ${extension.id}`);
+              log(`✅ Created test extension: ${extension.id}`);
             } catch (createError) {
-              console.error(`❌ Failed to create test extension:`, createError);
+              log(`❌ Failed to create test extension:`, createError);
               
               if (createError instanceof Error && createError.message.includes('403 Forbidden')) {
-                console.error("\n🔑 Upload Authentication Failed:");
-                console.error("   This test requires a valid AGENTBAY_API_KEY with file upload permissions.");
-                console.error("   Please check your API key configuration and try again.");
+                log("\n🔑 Upload Authentication Failed:");
+                log("   This test requires a valid AGENTBAY_API_KEY with file upload permissions.");
+                log("   Please check your API key configuration and try again.");
                 const apiKey = getTestApiKey();
-                console.error(`   Current API key: ${apiKey.substring(0, 8)}...`);
+                log(`   Current API key: ${apiKey.substring(0, 8)}...`);
                 throw new Error(`Authentication failed during extension upload: ${createError.message}`);
               }
               
@@ -658,17 +658,17 @@ describe("Extension Service Integration Tests", () => {
         }
         
         // Test List - Retrieve extensions
-        console.log("\nTesting list() method...");
+        log("\nTesting list() method...");
         const extensionList = await extensionsService.list();
         const testIds = new Set(testExtensions.map(ext => ext.id));
         const listedIds = new Set(extensionList.map(ext => ext.id));
         
         expect(extensionList.length).toBeGreaterThanOrEqual(testExtensions.length);
         testIds.forEach(id => expect(listedIds).toContain(id));
-        console.log(`  ✅ Listed ${extensionList.length} extensions`);
+        log(`  ✅ Listed ${extensionList.length} extensions`);
         
         // Test Update - Modify extension
-        console.log("\nTesting update() method...");
+        log("\nTesting update() method...");
         const extensionToUpdate = testExtensions[0];
         const updateSource = sampleExtensions[2] || sampleExtensions[0]; // Fallback to first if not enough
         
@@ -678,23 +678,23 @@ describe("Extension Service Integration Tests", () => {
         );
         
         expect(updatedExtension.id).toBe(extensionToUpdate.id);
-        console.log(`  ✅ Updated extension: ${updatedExtension.id}`);
+        log(`  ✅ Updated extension: ${updatedExtension.id}`);
         
-        console.log("\n🎉 CRUD operations completed successfully!");
+        log("\n🎉 CRUD operations completed successfully!");
         
       } catch (testError) {
-        console.error("CRUD test failed:", testError);
+        log("CRUD test failed:", testError);
         throw testError;
       } finally {
         // Clean up test-specific extensions if we created them
         if (shouldCleanup && testExtensions.length > 0) {
-          console.log("\nCleaning up test extensions...");
+          log("\nCleaning up test extensions...");
           for (const ext of testExtensions) {
             try {
               await extensionsService.delete(ext.id);
-              console.log(`✅ Cleaned up extension: ${ext.id}`);
+              log(`✅ Cleaned up extension: ${ext.id}`);
             } catch (cleanupError) {
-              console.warn(`⚠️ Failed to cleanup extension ${ext.id}:`, cleanupError);
+              log(`⚠️ Failed to cleanup extension ${ext.id}:`, cleanupError);
             }
           }
         }
@@ -704,39 +704,39 @@ describe("Extension Service Integration Tests", () => {
 
   describe("Extension Delete Operation", () => {
     it("should delete extension using public API method", async () => {
-      console.log("\n=== Extension Delete Operation Test ===");
+      log("\n=== Extension Delete Operation Test ===");
       
       // Create a new extension specifically for deletion testing
       const testExtension = await extensionsService.create(sampleExtensions[0]);
       expect(testExtension.id).toBeDefined();
-      console.log(`  ✅ Created test extension: ${testExtension.id}`);
+      log(`  ✅ Created test extension: ${testExtension.id}`);
       
       // Test Delete - Remove extension
-      console.log("\nTesting delete() method...");
+      log("\nTesting delete() method...");
       const deleteSuccess = await extensionsService.delete(testExtension.id);
       expect(deleteSuccess).toBe(true);
-      console.log(`  ✅ Deleted extension: ${testExtension.id}`);
+      log(`  ✅ Deleted extension: ${testExtension.id}`);
       
       // Verify deletion by listing extensions
       const extensionList = await extensionsService.list();
       const deletedIds = extensionList.filter(ext => ext.id === testExtension.id);
       expect(deletedIds.length).toBe(0);
       
-      console.log("\n🎉 Delete operation completed successfully!");
+      log("\n🎉 Delete operation completed successfully!");
     });
   });
 
   describe("Extension Create Operation", () => {
     it("should create extension using public API method", async () => {
-      console.log("\n=== Extension Create Operation Test ===");
+      log("\n=== Extension Create Operation Test ===");
       
       // Test Create - Upload new extension
-      console.log("\nTesting create() method...");
+      log("\nTesting create() method...");
       const newExtension = await extensionsService.create(sampleExtensions[0]);
       
       expect(newExtension.id).toBeDefined();
       expect(newExtension.name).toBeDefined();
-      console.log(`  ✅ Created extension: ${newExtension.id}`);
+      log(`  ✅ Created extension: ${newExtension.id}`);
       
       // Verify creation by listing extensions
       const extensionList = await extensionsService.list();
@@ -747,51 +747,51 @@ describe("Extension Service Integration Tests", () => {
       const deleteSuccess = await extensionsService.delete(newExtension.id);
       expect(deleteSuccess).toBe(true);
       
-      console.log("\n🎉 Create operation completed successfully!");
+      log("\n🎉 Create operation completed successfully!");
     });
   });
 
   describe("Extension Service Integration", () => {
     it("should perform comprehensive extension service integration", async () => {
-      console.log("\n=== Comprehensive Extension Service Integration Test ===");
+      log("\n=== Comprehensive Extension Service Integration Test ===");
       
       // Use first two pre-uploaded extensions for comprehensive testing
       const testExtensions = uploadedExtensions.slice(0, 2);
       const extensionIds = testExtensions.map(ext => ext.id);
-      console.log(`Target extensions for service integration: ${extensionIds}`);
+      log(`Target extensions for service integration: ${extensionIds}`);
       
       // Configure and create session with extensions
       const session = await createSessionWithExtensions(extensionIds);
       
       try {
         // Phase 1: Extension Synchronization
-        console.log("\nPhase 1: Extension Synchronization");
+        log("\nPhase 1: Extension Synchronization");
         await waitForSync(session);
         const lsResult_before = await session.command.executeCommand("ls -la /tmp/extensions/");
         if (!lsResult_before.success) {
-          console.log("    ❌ lsResult_before Extensions directory not found");
+          log("    ❌ lsResult_before Extensions directory not found");
           return;
         }
         
-        console.log(`    ✅  lsResult_before Extensions directory exists: /tmp/extensions/`);
-        console.log(`    Directory content:\n${lsResult_before.output}`);
+        log(`    ✅  lsResult_before Extensions directory exists: /tmp/extensions/`);
+        log(`    Directory content:\n${lsResult_before.output}`);
 
         // Phase 2: Browser Initialization with Extensions
-        console.log("\nPhase 2: Browser Initialization with Extensions");
+        log("\nPhase 2: Browser Initialization with Extensions");
         const browserInitialized = await initializeBrowserWithExtensions(session);
         expect(browserInitialized).toBe(true);
 
         const lsResult = await session.command.executeCommand("ls -la /tmp/extensions/");
         if (!lsResult.success) {
-          console.log("    ❌ Extensions directory not found");
+          log("    ❌ Extensions directory not found");
           return;
         }
         
-        console.log(`    ✅ Extensions directory exists: /tmp/extensions/`);
-        console.log(`    Directory content:\n${lsResult.output}`);
+        log(`    ✅ Extensions directory exists: /tmp/extensions/`);
+        log(`    Directory content:\n${lsResult.output}`);
         
         // Phase 3: Extension Service Validation
-        console.log("\nPhase 3: Extension Service Validation");
+        log("\nPhase 3: Extension Service Validation");
         const validationResults = await validateExtensionServiceIntegration(session, extensionIds);
         
         // Validate service integration results
@@ -800,18 +800,18 @@ describe("Extension Service Integration Tests", () => {
         expect(validationResults.contextSyncValidation).toBe(true);
         expect(validationResults.serviceIntegration).toBe(true);
         
-        console.log(`\n✅ All validation phases passed:`);
-        console.log(`   - File System Check: ${validationResults.fileSystemCheck}`);
-        console.log(`   - Extension Service Validation: ${validationResults.extensionServiceValidation}`);
-        console.log(`   - Context Sync Validation: ${validationResults.contextSyncValidation}`);
-        console.log(`   - Service Integration: ${validationResults.serviceIntegration}`);
+        log(`\n✅ All validation phases passed:`);
+        log(`   - File System Check: ${validationResults.fileSystemCheck}`);
+        log(`   - Extension Service Validation: ${validationResults.extensionServiceValidation}`);
+        log(`   - Context Sync Validation: ${validationResults.contextSyncValidation}`);
+        log(`   - Service Integration: ${validationResults.serviceIntegration}`);
         
         // Phase 4: Extension File Verification
-        console.log("\nPhase 4: Extension File Verification");
+        log("\nPhase 4: Extension File Verification");
         const fileVerificationResult = await verifyExtensionFiles(session, extensionIds);
         expect(fileVerificationResult).toBe(true);
         
-        console.log("\n🎉 Extension service integration completed successfully!");
+        log("\n🎉 Extension service integration completed successfully!");
         
       } finally {
         await cleanupSession(session);
@@ -822,7 +822,7 @@ describe("Extension Service Integration Tests", () => {
   // Helper Methods
 
   async function createSessionWithExtensions(extensionIds: string[]): Promise<Session> {
-    console.log(`  📦 Creating session with extension IDs: ${extensionIds}`);
+    log(`  📦 Creating session with extension IDs: ${extensionIds}`);
     
     const extensionOption = extensionsService.createExtensionOption(extensionIds);
     
@@ -838,10 +838,10 @@ describe("Extension Service Integration Tests", () => {
       .withBrowserContext(browserContext)
       .withIsVpc(false);
 
-      console.log("\nCreating session with browser context...", sessionParams.toJSON());
+      log("\nCreating session with browser context...", sessionParams.toJSON());
     
     const sessionResult: SessionResult = await agentBay.create(sessionParams.toJSON());
-    console.log(`  ✅ Created session: ${sessionResult.session.id}`);
+    log(`  ✅ Created session: ${sessionResult.session.id}`);
     expect(sessionResult.success).toBe(true);
     const session = sessionResult.session;
     expect(session).toBeDefined();
@@ -851,8 +851,8 @@ describe("Extension Service Integration Tests", () => {
     }
 
     const sessionId = session.sessionId;
-    console.log(`  ✅ Session created with extension support: ${sessionId}`);
-    console.log(`  ✅ Extension IDs configured: ${extensionIds}`);
+    log(`  ✅ Session created with extension support: ${sessionId}`);
+    log(`  ✅ Extension IDs configured: ${extensionIds}`);
     return session;
   }
 
@@ -864,7 +864,7 @@ describe("Extension Service Integration Tests", () => {
       for (const item of contextInfo.contextStatusData) {
         if (item.path === "/tmp/extensions/") {
           if (item.status === "Success") {
-            console.log("  ✅ Extension synchronization completed");
+            log("  ✅ Extension synchronization completed");
             return;
           } else if (item.status === "Failed") {
             throw new Error(`Sync failed: ${item.errorMessage}`);
@@ -872,7 +872,7 @@ describe("Extension Service Integration Tests", () => {
         }
       }
       
-      console.log(`  Waiting for sync, attempt ${retry+1}/${maxRetries}`);
+      log(`  Waiting for sync, attempt ${retry+1}/${maxRetries}`);
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
     
@@ -887,22 +887,22 @@ describe("Extension Service Integration Tests", () => {
       const initSuccess = await session.browser.initializeAsync(browserOption);
       
       if (!initSuccess) {
-        console.log("  ❌ Browser initialization failed");
+        log("  ❌ Browser initialization failed");
         return false;
       }
 
       const endpointUrl = await session.browser.getEndpointUrl();
       if (!endpointUrl) {
-        console.log("  ❌ Failed to get browser endpoint URL");
+        log("  ❌ Failed to get browser endpoint URL");
         return false;
       }
         
-      console.log(`  ✅ Browser initialized successfully with extension_path: /tmp/extensions/`);
-      console.log(`  ✅ Browser endpoint: ${endpointUrl}`);
+      log(`  ✅ Browser initialized successfully with extension_path: /tmp/extensions/`);
+      log(`  ✅ Browser endpoint: ${endpointUrl}`);
       return true;
         
     } catch (error) {
-      console.log(`  ❌ Browser initialization error: ${error}`);
+      log(`  ❌ Browser initialization error: ${error}`);
       return false;
     }
   }
@@ -911,36 +911,36 @@ describe("Extension Service Integration Tests", () => {
     try {
       const lsResult = await session.command.executeCommand("ls -la /tmp/extensions/");
       if (!lsResult.success) {
-        console.log("    ❌ Extensions directory not found");
+        log("    ❌ Extensions directory not found");
         return false;
       }
       
-      console.log(`    ✅ Extensions directory exists: /tmp/extensions/`);
+      log(`    ✅ Extensions directory exists: /tmp/extensions/`);
           
       let foundExtensions = 0;
       for (const extId of extensionIds) {
         const baseExtId = extId.includes('.') ? extId.split('.')[0] : extId;
         const folderCheck = await session.command.executeCommand(`test -d /tmp/extensions/${baseExtId}`);
         if (folderCheck.success) {
-          console.log(`    ✅ Found extension folder: ${baseExtId}`);
+          log(`    ✅ Found extension folder: ${baseExtId}`);
           const manifestCheck = await session.command.executeCommand(`test -f /tmp/extensions/${baseExtId}/manifest.json`);
           if (manifestCheck.success) {
-            console.log(`      ✅ Contains manifest.json`);
+            log(`      ✅ Contains manifest.json`);
             foundExtensions++;
           } else {
-            console.log(`      ❌ No manifest.json found in folder`);
+            log(`      ❌ No manifest.json found in folder`);
           }
         } else {
-          console.log(`    ❌ Extension folder not found: ${baseExtId}`);
+          log(`    ❌ Extension folder not found: ${baseExtId}`);
         }
       }
       
       const success = foundExtensions === extensionIds.length;
-      console.log(`    File verification result: ${foundExtensions}/${extensionIds.length} extensions found`);
+      log(`    File verification result: ${foundExtensions}/${extensionIds.length} extensions found`);
       return success;
       
     } catch (error) {
-      console.log(`    ❌ File verification error: ${error}`);
+      log(`    ❌ File verification error: ${error}`);
       return false;
     }
   }
@@ -953,12 +953,12 @@ describe("Extension Service Integration Tests", () => {
     try {
       const deleteResult = await agentBay.delete(session, true);
       if (deleteResult.success) {
-        console.log(`  ✅ Session deleted: ${sessionId}`);
+        log(`  ✅ Session deleted: ${sessionId}`);
       } else {
-        console.log(`  ⚠️ Failed to delete session: ${deleteResult.errorMessage || 'Unknown error'}`);
+        log(`  ⚠️ Failed to delete session: ${deleteResult.errorMessage || 'Unknown error'}`);
       }
     } catch (e) {
-      console.log(`  ⚠️ Error deleting session: ${e}`);
+      log(`  ⚠️ Error deleting session: ${e}`);
     }
   }
 });

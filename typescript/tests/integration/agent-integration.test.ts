@@ -13,7 +13,7 @@ describe("Agent", () => {
 
       // Create a session with Windows image for agent tasks
       log("Creating a new session for agent task testing...");
-      const createResponse = await agentBay.create({ imageId: "waic-playground-demo-windows" });
+      const createResponse = await agentBay.create({ imageId: "windows_latest" });
       session = createResponse.session!;
       log(`Session created with ID: ${session.sessionId}`);
       log(`Create Session RequestId: ${createResponse.requestId || "undefined"}`);

@@ -2,7 +2,9 @@
  * Integration test for GetSession API
  */
 
-import { AgentBay } from '../../src/agent-bay';
+import { AgentBay } from "../../src/agent-bay";
+import { Session } from "../../src/session";
+import { log } from "../../src/utils/logger";
 
 describe('GetSession API Integration Test', () => {
   let agentBay: AgentBay;
@@ -17,23 +19,23 @@ describe('GetSession API Integration Test', () => {
 
   it('should retrieve session information using GetSession API', async () => {
     // Create a session first
-    console.log('Creating a new session for GetSession testing...');
+    log('Creating a new session for GetSession testing...');
     const createResult = await agentBay.create();
     expect(createResult.success).toBe(true);
     expect(createResult.session).toBeDefined();
 
     const session = createResult.session!;
     const sessionId = session.sessionId;
-    console.log(`Session created with ID: ${sessionId}`);
+    log(`Session created with ID: ${sessionId}`);
 
     try {
       // Test GetSession API
-      console.log('Testing GetSession API...');
+      log('Testing GetSession API...');
       const getSessionResult = await agentBay.getSession(sessionId);
 
       // Validate response
       expect(getSessionResult.requestId).toBeTruthy();
-      console.log(`GetSession RequestID: ${getSessionResult.requestId}`);
+      log(`GetSession RequestID: ${getSessionResult.requestId}`);
 
       expect(getSessionResult.httpStatusCode).toBe(200);
       expect(getSessionResult.code).toBe('ok');
@@ -45,19 +47,19 @@ describe('GetSession API Integration Test', () => {
       // Note: data.success may reflect a different status than the overall response
       // We validate the overall response success instead
       expect(getSessionResult.data!.appInstanceId).toBeTruthy();
-      console.log(`AppInstanceID: ${getSessionResult.data!.appInstanceId}`);
+      log(`AppInstanceID: ${getSessionResult.data!.appInstanceId}`);
       expect(getSessionResult.data!.resourceId).toBeTruthy();
-      console.log(`ResourceID: ${getSessionResult.data!.resourceId}`);
+      log(`ResourceID: ${getSessionResult.data!.resourceId}`);
 
-      console.log('GetSession API test passed successfully');
+      log('GetSession API test passed successfully');
     } finally {
       // Clean up: Delete the session
-      console.log('Cleaning up: Deleting the session...');
+      log('Cleaning up: Deleting the session...');
       const deleteResult = await session.delete();
       if (deleteResult.success) {
-        console.log(`Session ${sessionId} deleted successfully`);
+        log(`Session ${sessionId} deleted successfully`);
       } else {
-        console.warn(`Warning: Failed to delete session: ${deleteResult.errorMessage}`);
+        log(`Warning: Failed to delete session: ${deleteResult.errorMessage}`);
       }
     }
   });

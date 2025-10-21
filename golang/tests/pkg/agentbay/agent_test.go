@@ -11,7 +11,7 @@ import (
 
 func TestAgent_ExecuteTask(t *testing.T) {
 	// Create session parameters with Windows image for agent tasks
-	params := agentbay.NewCreateSessionParams().WithImageId("waic-playground-demo-windows")
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
 
 	// Setup session with cleanup
 	session, cleanup := testutil.SetupAndCleanup(t, params)

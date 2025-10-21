@@ -3,9 +3,11 @@ package agentbay
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"runtime/debug"
 	"strings"
+	"syscall"
 )
 
 // Log level constants
@@ -49,13 +51,74 @@ func GetLogLevel() int {
 	return GlobalLogLevel
 }
 
+// isTerminal checks if the output is going to a terminal
+func isTerminal(fd uintptr) bool {
+	// Try to get terminal attributes - succeeds only if fd is a terminal
+	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, syscall.TIOCGETA, 0)
+	return err == 0
+}
+
+// getColorCodes returns ANSI color codes based on environment detection
+func getColorCodes() (reset, green, red, yellow, blue string) {
+	// Priority 1: Check if stdout is a real terminal (TTY)
+	// This is the most reliable indicator of an interactive environment
+	if isTerminal(os.Stdout.Fd()) {
+		return ColorReset, ColorGreen, ColorRed, ColorYellow, ColorBlue
+	}
+
+	// Priority 2: Check FORCE_COLOR environment variable for explicit control
+	// Users can set this to explicitly enable colors in non-TTY environments
+	if os.Getenv("FORCE_COLOR") != "" {
+		return ColorReset, ColorGreen, ColorRed, ColorYellow, ColorBlue
+	}
+
+	// Priority 3: Check if we're in an IDE environment
+	// IDEs can display ANSI colors in their output pane even without TTY
+	if isIDEEnvironment() {
+		return ColorReset, ColorGreen, ColorRed, ColorYellow, ColorBlue
+	}
+
+	// Default: No colors - suitable for file output, CI/CD, and pipes
+	return "", "", "", "", ""
+}
+
+// isIDEEnvironment detects if running in an IDE that supports ANSI colors
+func isIDEEnvironment() bool {
+	// Check for common IDE environment variables
+	// VS Code
+	if os.Getenv("TERM_PROGRAM") == "vscode" {
+		return true
+	}
+	// GoLand / IntelliJ IDEA
+	if os.Getenv("GOLAND") != "" {
+		return true
+	}
+	if os.Getenv("IDEA_INITIAL_DIRECTORY") != "" {
+		return true
+	}
+	// Generic IDE detection - TERM set to common IDE values
+	term := os.Getenv("TERM")
+	if term == "xterm-256color" || term == "xterm" || term == "screen" || term == "screen-256color" {
+		return true
+	}
+	// Check if running via IDE test runner environment variable
+	if os.Getenv("GO_TEST_IDE") != "" {
+		return true
+	}
+
+	// Don't auto-enable colors for TERM=dumb or unknown environments
+	return false
+}
+
 // LogAPICall logs an API call with request parameters
 func LogAPICall(apiName, requestParams string) {
 	if GlobalLogLevel > LOG_INFO {
 		return
 	}
 
-	fmt.Printf("%s📞 API Call: %s%s\n", ColorBlue, apiName, ColorReset)
+	reset, _, _, _, blue := getColorCodes()
+	// Use blue color for the entire message to match Python's consistent coloring
+	fmt.Printf("%s🔗 API Call: %s%s\n", blue, apiName, reset)
 
 	if requestParams != "" && GlobalLogLevel <= LOG_DEBUG {
 		fmt.Printf("   Request: %s\n", requestParams)
@@ -68,31 +131,34 @@ func LogAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 		return
 	}
 
+	reset, green, red, _, blue := getColorCodes()
+
 	if success {
-		mainInfo := fmt.Sprintf("%s✅ API Response: %s", ColorGreen, apiName)
+		mainInfo := fmt.Sprintf("%s✅ API Response: %s", green, apiName)
 		if requestID != "" {
 			mainInfo += fmt.Sprintf(", RequestId=%s", requestID)
 		}
-		fmt.Printf("%s%s\n", mainInfo, ColorReset)
+		fmt.Printf("%s%s\n", mainInfo, reset)
 
 		if keyFields != nil && len(keyFields) > 0 {
 			for key, value := range keyFields {
-				fmt.Printf("   └─ %s=%v\n", key, value)
+				// Color parameter lines with green to match response color
+				fmt.Printf("%s   └─ %s=%v%s\n", green, key, value, reset)
 			}
 		}
 
 		if fullResponse != "" && GlobalLogLevel <= LOG_DEBUG {
-			fmt.Printf("%s📥 Full Response: %s%s\n", ColorBlue, fullResponse, ColorReset)
+			fmt.Printf("%s📥 Full Response: %s%s\n", blue, fullResponse, reset)
 		}
 	} else {
-		mainInfo := fmt.Sprintf("%s❌ API Response Failed: %s", ColorRed, apiName)
+		mainInfo := fmt.Sprintf("%s❌ API Response Failed: %s", red, apiName)
 		if requestID != "" {
 			mainInfo += fmt.Sprintf(", RequestId=%s", requestID)
 		}
-		fmt.Printf("%s%s\n", mainInfo, ColorReset)
+		fmt.Printf("%s%s\n", mainInfo, reset)
 
 		if fullResponse != "" && GlobalLogLevel <= LOG_DEBUG {
-			fmt.Printf("%s📥 Response: %s%s\n", ColorRed, fullResponse, ColorReset)
+			fmt.Printf("%s📥 Response: %s%s\n", red, fullResponse, reset)
 		}
 	}
 }
@@ -103,12 +169,13 @@ func LogOperationError(operation, errorMsg string, withStack bool) {
 		return
 	}
 
-	fmt.Printf("%s❌ Failed: %s%s\n", ColorRed, operation, ColorReset)
-	fmt.Printf("%s💥 Error: %s%s\n", ColorRed, errorMsg, ColorReset)
+	reset, _, red, _, _ := getColorCodes()
+	fmt.Printf("%s❌ Failed: %s%s\n", red, operation, reset)
+	fmt.Printf("%s💥 Error: %s%s\n", red, errorMsg, reset)
 
 	if withStack {
 		stack := debug.Stack()
-		fmt.Printf("%s[Stack Trace]:\n%s%s\n", ColorRed, string(stack), ColorReset)
+		fmt.Printf("%s[Stack Trace]:\n%s%s\n", red, string(stack), reset)
 	}
 }
 

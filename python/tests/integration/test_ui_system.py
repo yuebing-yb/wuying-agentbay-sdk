@@ -29,7 +29,7 @@ class TestUISystemIntegration(unittest.TestCase):
             raise unittest.SkipTest("Failed to create session")
 
         cls.session = result.session
-        cls.ui = cls.session.ui
+        cls.ui = cls.session.mobile
         time.sleep(3)
         print(f"Session created with ID: {cls.session.session_id}")
 

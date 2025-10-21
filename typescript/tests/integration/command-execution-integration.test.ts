@@ -140,7 +140,7 @@ const result = {
   message: "JavaScript execution successful",
   timestamp: Date.now()
 };
-console.log(JSON.stringify(result));
+log(JSON.stringify(result));
 `.trim();
 
       const [pythonResult, jsResult] = await Promise.all([
@@ -204,7 +204,7 @@ const result = {
   content: content,
   file_exists: fs.existsSync('/tmp/js_test.txt')
 };
-console.log(JSON.stringify(result));
+log(JSON.stringify(result));
 `.trim();
 
       const [pythonFileResult, jsFileResult] = await Promise.all([

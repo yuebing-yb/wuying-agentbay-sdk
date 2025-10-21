@@ -24,8 +24,11 @@ def test_get_api(agentbay_client: AgentBay):
     print(f"Session created with ID: {session_id}")
 
     print("Testing Get API...")
-    session = agentbay_client.get(session_id)
+    result = agentbay_client.get(session_id)
 
+    assert result is not None, "Get returned None result"
+    assert result.success, f"Failed to get session: {result.error_message}"
+    session = result.session
     assert session is not None, "Get returned None session"
     assert isinstance(session, Session), f"Expected Session instance, got {type(session)}"
     assert session.session_id == session_id, \

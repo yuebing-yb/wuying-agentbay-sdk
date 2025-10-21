@@ -56,10 +56,11 @@ class TestWindow(unittest.TestCase):
 
     def test_list_root_windows(self):
         """Test listing root windows."""
-        if hasattr(self.session, "window") and self.session.window:
+        if hasattr(self.session, "computer") and self.session.computer:
             print("Listing root windows...")
             try:
-                root_windows = self.session.window.list_root_windows()
+                result = self.session.computer.list_root_windows()
+                root_windows = result.data if hasattr(result, 'data') else result
                 print(f"Found {len(root_windows)} root windows")
 
                 # Verify we got some windows
@@ -86,28 +87,24 @@ class TestWindow(unittest.TestCase):
                 if len(root_windows) > 0:
                     self.assertFalse(
                         contains_tool_not_found(root_windows[0].title),
-                        "Window.list_root_windows returned 'tool not found'",
+                        "Computer.list_root_windows returned 'tool not found'",
                     )
             except Exception as e:
                 print(f"Note: list_root_windows failed: {e}")
                 # Don't fail the test if the operation is not supported
         else:
-            print("Note: Window interface is not available, skipping window test")
+            print("Note: Computer interface is not available, skipping window test")
 
     def test_get_active_window(self):
         """Test getting the active window."""
         if (
-            hasattr(self.session, "window")
-            and self.session.window
-            and hasattr(self.session, "application")
-            and self.session.application
+            hasattr(self.session, "computer")
+            and self.session.computer
         ):
             # Step 1: Get installed applications
             print("Step 1: Getting installed applications...")
             try:
-                result = self.session.application.get_installed_apps(
-                    start_menu=True, desktop=False, ignore_system_apps=True
-                )
+                result = self.session.computer.get_installed_apps()
                 installed_apps = result.data
                 print(f"Found {len(installed_apps)} installed applications")
 
@@ -132,7 +129,7 @@ class TestWindow(unittest.TestCase):
                 print(
                     f"Step 2: Starting application: {app_to_start.name} with command: {app_to_start.start_cmd}"
                 )
-                start_result = self.session.application.start_app(
+                start_result = self.session.computer.start_app(
                     app_to_start.start_cmd
                 )
                 print(f"Application start result: {start_result}")
@@ -143,8 +140,8 @@ class TestWindow(unittest.TestCase):
 
                 # Step 4: List root windows
                 print("Step 4: Listing root windows...")
-                result = self.session.window.list_root_windows()
-                root_windows = result.windows
+                result = self.session.computer.list_root_windows()
+                root_windows = result.data if hasattr(result, 'data') else result
                 print(f"Found {len(root_windows)} root windows")
                 if not root_windows:
                     print("No root windows found after starting application")
@@ -155,12 +152,12 @@ class TestWindow(unittest.TestCase):
                 print(
                     f"Step 5: Activating window: {window_to_activate.title} (ID: {window_to_activate.window_id})"
                 )
-                self.session.window.activate_window(window_to_activate.window_id)
+                self.session.computer.activate_window(window_to_activate.window_id)
 
                 # Step 6: Get active window
                 print("Step 6: Getting active window...")
-                result = self.session.window.get_active_window()
-                active_window = result.window
+                result = self.session.computer.get_active_window()
+                active_window = result.data if hasattr(result, 'data') else result
                 print(
                     f"Active window: {active_window.title}",
                     f"(ID: {active_window.window_id}",
@@ -184,22 +181,23 @@ class TestWindow(unittest.TestCase):
                 self.assertFalse(
                     contains_tool_not_found(active_window.title)
                     or contains_tool_not_found(active_window.pname),
-                    "Window.get_active_window returned 'tool not found'",
+                    "Computer.get_active_window returned 'tool not found'",
                 )
             except Exception as e:
                 print(f"Note: get_active_window workflow failed: {e}")
                 # Don't fail the test if the operation is not supported
         else:
             print(
-                "Note: Window or Application interface is not available, skipping window test"
+                "Note: Computer interface is not available, skipping window test"
             )
 
     def test_window_operations(self):
         """Test window operations (activate, maximize, minimize, restore, resize)."""
-        if hasattr(self.session, "window") and self.session.window:
+        if hasattr(self.session, "computer") and self.session.computer:
             print("Listing root windows to find a window to operate on...")
             try:
-                root_windows = self.session.window.list_root_windows()
+                result = self.session.computer.list_root_windows()
+                root_windows = result.data if hasattr(result, 'data') else result
                 if not root_windows:
                     print("No root windows found, skipping window operations test")
                     return
@@ -209,7 +207,7 @@ class TestWindow(unittest.TestCase):
                 # Activate window
                 print(f"Activating window with ID {window_id}...")
                 try:
-                    self.session.window.activate_window(window_id)
+                    self.session.computer.activate_window(window_id)
                     print("Window activated successfully")
                 except Exception as e:
                     print(f"Note: activate_window failed: {e}")
@@ -217,7 +215,7 @@ class TestWindow(unittest.TestCase):
                 # Maximize window
                 print(f"Maximizing window with ID {window_id}...")
                 try:
-                    self.session.window.maximize_window(window_id)
+                    self.session.computer.maximize_window(window_id)
                     print("Window maximized successfully")
                 except Exception as e:
                     print(f"Note: maximize_window failed: {e}")
@@ -225,7 +223,7 @@ class TestWindow(unittest.TestCase):
                 # Minimize window
                 print(f"Minimizing window with ID {window_id}...")
                 try:
-                    self.session.window.minimize_window(window_id)
+                    self.session.computer.minimize_window(window_id)
                     print("Window minimized successfully")
                 except Exception as e:
                     print(f"Note: minimize_window failed: {e}")
@@ -233,7 +231,7 @@ class TestWindow(unittest.TestCase):
                 # Restore window
                 print(f"Restoring window with ID {window_id}...")
                 try:
-                    self.session.window.restore_window(window_id)
+                    self.session.computer.move_window(window_id, 0, 0)
                     print("Window restored successfully")
                 except Exception as e:
                     print(f"Note: restore_window failed: {e}")
@@ -241,7 +239,7 @@ class TestWindow(unittest.TestCase):
                 # Resize window
                 print(f"Resizing window with ID {window_id} to 800x600...")
                 try:
-                    self.session.window.resize_window(window_id, 800, 600)
+                    self.session.computer.resize_window(window_id, 800, 600)
                     print("Window resized successfully")
                 except Exception as e:
                     print(f"Note: resize_window failed: {e}")
@@ -249,15 +247,15 @@ class TestWindow(unittest.TestCase):
                 print(f"Note: list_root_windows failed: {e}")
                 # Don't fail the test if the operation is not supported
         else:
-            print("Note: Window interface is not available, skipping window test")
+            print("Note: Computer interface is not available, skipping window test")
 
     def test_focus_mode(self):
         """Test focus mode."""
-        if hasattr(self.session, "window") and self.session.window:
+        if hasattr(self.session, "computer") and self.session.computer:
             # Enable focus mode
             print("Enabling focus mode...")
             try:
-                self.session.window.focus_mode(True)
+                self.session.computer.focus_mode(True)
                 print("Focus mode enabled successfully")
             except Exception as e:
                 print(f"Note: Enabling focus mode failed: {e}")
@@ -265,12 +263,12 @@ class TestWindow(unittest.TestCase):
             # Disable focus mode
             print("Disabling focus mode...")
             try:
-                self.session.window.focus_mode(False)
+                self.session.computer.focus_mode(False)
                 print("Focus mode disabled successfully")
             except Exception as e:
                 print(f"Note: Disabling focus mode failed: {e}")
         else:
-            print("Note: Window interface is not available, skipping focus mode test")
+            print("Note: Computer interface is not available, skipping focus mode test")
 
 
 if __name__ == "__main__":

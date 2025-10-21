@@ -46,7 +46,7 @@ describe("Session", () => {
     it.only("should have filesystem, command, and ui properties", () => {
       expect(session.fileSystem).toBeDefined();
       expect(session.command).toBeDefined();
-      expect(session.ui).toBeDefined();
+      expect(session.mobile).toBeDefined();
     });
   });
 

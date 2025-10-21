@@ -36,9 +36,52 @@ let currentLogLevel: LogLevel = (process.env.LOG_LEVEL as LogLevel) || 'INFO';
 let enableApiLogging = process.env.ENABLE_API_LOGGING !== 'false';
 
 /**
- * Whether to disable colored output
+ * Determine whether to use colors in output
+ * Priority: DISABLE_COLORS > FORCE_COLOR > TTY > IDE > default
  */
-let disableColors = process.env.DISABLE_COLORS === 'true';
+function shouldUseColors(): boolean {
+  // Priority 1: Explicit disable via DISABLE_COLORS
+  if (process.env.DISABLE_COLORS === 'true') {
+    return false;
+  }
+
+  // Priority 2: Explicit enable via FORCE_COLOR
+  if (process.env.FORCE_COLOR !== undefined && process.env.FORCE_COLOR !== '0') {
+    return true;
+  }
+
+  // Priority 3: TTY detection (terminal output)
+  const isTTY = process.stdout?.isTTY || process.stderr?.isTTY;
+  if (isTTY) {
+    return true;
+  }
+
+  // Priority 4: IDE environment detection
+  const isVSCode = process.env.TERM_PROGRAM === 'vscode';
+  const isGoLand = process.env.GOLAND !== undefined;
+  const isIntelliJ = process.env.IDEA_INITIAL_DIRECTORY !== undefined;
+  if (isVSCode || isGoLand || isIntelliJ) {
+    return true;
+  }
+
+  // Default: no colors (safe for file output, CI/CD, pipes)
+  return false;
+}
+
+/**
+ * ANSI color codes
+ */
+const ANSI_RESET = '\x1b[0m';
+const ANSI_BLUE = '\x1b[34m';
+const ANSI_CYAN = '\x1b[36m';
+const ANSI_YELLOW = '\x1b[33m';
+const ANSI_RED = '\x1b[31m';
+const ANSI_GREEN = '\x1b[32m';
+
+/**
+ * Determine if colors should be used (evaluated once at startup)
+ */
+const useColors = shouldUseColors();
 
 /**
  * Sensitive field names for data masking
@@ -87,7 +130,34 @@ function formatLogMessage(level: LogLevel, message: string): string {
   if (currentRequestId) {
     formattedMessage += ` [RequestId=${currentRequestId}]`;
   }
-  return formattedMessage;
+
+  if (!useColors) {
+    return formattedMessage;
+  }
+
+  // Apply colors based on log level
+  const color = getColorForLevel(level);
+  return `${color}${formattedMessage}${ANSI_RESET}`;
+}
+
+/**
+ * Get color code for log level
+ */
+function getColorForLevel(level: LogLevel): string {
+  switch (level) {
+    case 'TRACE':
+    case 'DEBUG':
+      return ANSI_CYAN;
+    case 'INFO':
+      return ANSI_BLUE;
+    case 'WARN':
+      return ANSI_YELLOW;
+    case 'ERROR':
+    case 'FATAL':
+      return ANSI_RED;
+    default:
+      return '';
+  }
 }
 
 /**
@@ -353,7 +423,19 @@ export function logFatal(message: string, error?: any): void {
 export function logAPICall(apiName: string, requestData?: any): void {
   if (!enableApiLogging || !shouldLog('INFO')) return;
   const message = `🔗 API Call: ${apiName}`;
-  logInfo(message);
+
+  // Temporarily clear RequestId since it's not available until API response
+  const savedRequestId = currentRequestId;
+  currentRequestId = '';
+
+  if (useColors) {
+    // Use cyan/bright blue for API calls
+    process.stdout.write(`${ANSI_CYAN}ℹ️  INFO: ${message}${ANSI_RESET}\n`);
+  } else {
+    logInfo(message);
+  }
+
+  currentRequestId = savedRequestId;
 
   if (requestData && shouldLog('DEBUG')) {
     const maskedData = maskSensitiveData(requestData);
@@ -384,12 +466,23 @@ export function logAPIResponseWithDetails(
       if (requestId) {
         mainMessage += `, RequestId=${requestId}`;
       }
-      logInfo(mainMessage);
+
+      if (useColors) {
+        // Use green for successful API responses
+        process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${mainMessage}${ANSI_RESET}\n`);
+      } else {
+        logInfo(mainMessage);
+      }
 
       if (keyFields) {
         for (const [key, value] of Object.entries(keyFields)) {
           const maskedValue = maskSensitiveData({ [key]: value });
-          logInfo(`  └─ ${key}=${maskedValue[key]}`);
+          const keyMessage = `  └─ ${key}=${maskedValue[key]}`;
+          if (useColors) {
+            process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${keyMessage}${ANSI_RESET}\n`);
+          } else {
+            logInfo(keyMessage);
+          }
         }
       }
     }
@@ -403,10 +496,20 @@ export function logAPIResponseWithDetails(
       if (requestId) {
         errorMessage += `, RequestId=${requestId}`;
       }
-      logError(errorMessage);
+
+      if (useColors) {
+        // Use red for failed API responses
+        process.stderr.write(`${ANSI_RED}❌ ERROR: ${errorMessage}${ANSI_RESET}\n`);
+      } else {
+        logError(errorMessage);
+      }
 
       if (fullResponse) {
-        logError(`📥 Response: ${fullResponse}`);
+        if (useColors) {
+          process.stderr.write(`${ANSI_RED}ℹ️  INFO: 📥 Response: ${fullResponse}${ANSI_RESET}\n`);
+        } else {
+          logError(`📥 Response: ${fullResponse}`);
+        }
       }
     }
   }

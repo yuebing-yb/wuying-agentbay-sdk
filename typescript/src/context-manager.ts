@@ -98,17 +98,16 @@ export class ContextManager {
       // Extract RequestID
       const requestId = extractRequestId(response) || "";
 
-      if (response?.body) {
-        logDebug("Response from GetContextInfo:", response.body);
-      }
-
       // Check for API-level errors
       if (response?.body?.success === false && response.body.code) {
+        const errorMsg = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+        logAPIResponseWithDetails("GetContextInfo", requestId, false, undefined, fullResponse);
         return {
           requestId,
           success: false,
           contextStatusData: [],
-          errorMessage: `[${response.body.code}] ${response.body.message || 'Unknown error'}`,
+          errorMessage: errorMsg,
         };
       }
 
@@ -119,7 +118,7 @@ export class ContextManager {
           // First, parse the outer array
           const contextStatusStr = response.body.data.contextStatus;
           const statusItems: ContextStatusItem[] = JSON.parse(contextStatusStr);
-          
+
           // Process each item in the array
           for (const item of statusItems) {
             if (item.type === "data") {
@@ -132,6 +131,23 @@ export class ContextManager {
           logError("Error parsing context status:", error);
         }
       }
+
+      // Log API response with key fields
+      const keyFields: Record<string, any> = {
+        session_id: request.sessionId,
+        context_count: contextStatusData.length,
+      };
+      if (request.contextId) {
+        keyFields.context_id = request.contextId;
+      }
+      if (request.path) {
+        keyFields.path = request.path;
+      }
+      if (request.taskType) {
+        keyFields.task_type = request.taskType;
+      }
+      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+      logAPIResponseWithDetails("GetContextInfo", requestId, true, keyFields, fullResponse);
 
       return {
         requestId,
@@ -189,16 +205,15 @@ export class ContextManager {
       // Extract RequestID
       const requestId = extractRequestId(response) || "";
 
-      if (response?.body) {
-        logDebug("Response from SyncContext:", response.body);
-      }
-
       // Check for API-level errors
       if (response?.body?.success === false && response.body.code) {
+        const errorMsg = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+        logAPIResponseWithDetails("SyncContext", requestId, false, undefined, fullResponse);
         return {
           requestId,
           success: false,
-          errorMessage: `[${response.body.code}] ${response.body.message || 'Unknown error'}`,
+          errorMessage: errorMsg,
         };
       }
 
@@ -206,6 +221,23 @@ export class ContextManager {
       if (response?.body?.success !== undefined) {
         success = response.body.success;
       }
+
+      // Log API response with key fields
+      const keyFields: Record<string, any> = {
+        session_id: request.sessionId,
+        success: success,
+      };
+      if (request.contextId) {
+        keyFields.context_id = request.contextId;
+      }
+      if (request.path) {
+        keyFields.path = request.path;
+      }
+      if (request.mode) {
+        keyFields.mode = request.mode;
+      }
+      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+      logAPIResponseWithDetails("SyncContext", requestId, success, keyFields, fullResponse);
 
       // If callback is provided, start polling in background (async mode)
       if (callback && success) {
