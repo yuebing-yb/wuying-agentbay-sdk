@@ -88,16 +88,6 @@ Automatically masked fields:
 - secret, private_key
 - authorization
 
-## Color Detection
-
-The SDK automatically detects terminal capabilities and applies colors when appropriate:
-
-1. Check DISABLE_COLORS environment variable (disable if "1")
-2. Check FORCE_COLOR environment variable (enable if set)
-3. TTY detection
-4. IDE environment detection (VS Code, GoLand, IntelliJ)
-5. Default to no colors (safe for files, CI/CD)
-
 ## Quick Reference
 
 **Development (see everything)**:
