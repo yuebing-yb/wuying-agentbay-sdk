@@ -412,15 +412,18 @@ class TestComputer:
         # Arrange
         with patch('agentbay.application.ApplicationManager') as mock_app_manager:
             mock_instance = Mock()
-            mock_app1 = Mock(name='Notepad', start_cmd='notepad.exe')
-            mock_app2 = Mock(name='Calculator', start_cmd='calc.exe')
+            # Configure mock objects with attributes
+            mock_app1 = Mock()
+            mock_app1.configure_mock(name='Notepad', start_cmd='notepad.exe')
+            mock_app2 = Mock()
+            mock_app2.configure_mock(name='Calculator', start_cmd='calc.exe')
             mock_result = Mock(success=True, data=[mock_app1, mock_app2])
             mock_instance.get_installed_apps.return_value = mock_result
             mock_app_manager.return_value = mock_instance
-            
+
             # Act
             result = self.computer.get_installed_apps()
-            
+
             # Assert
             assert result.success is True
             assert len(result.data) == 2

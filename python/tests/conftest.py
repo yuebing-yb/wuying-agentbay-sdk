@@ -1,11 +1,5 @@
 import os
 import sys
-import io
-
-# Force unbuffered I/O for real-time output in IDE
-# Set stdout and stderr to be unbuffered
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=True)
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', line_buffering=True)
 
 # Set environment variables for IDE testing
 os.environ["FORCE_COLOR"] = "1"
