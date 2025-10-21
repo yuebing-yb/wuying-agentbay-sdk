@@ -132,7 +132,7 @@ describe("AgentBay", () => {
     });
   });
 
-  describe("listByLabels", () => {
+  describe("list", () => {
     let agentBay: AgentBay;
     let sessionA: Session;
     let sessionB: Session;
@@ -225,12 +225,10 @@ describe("AgentBay", () => {
 
       // Test 2: List sessions by environment=development label using new API
       try {
-        const devSessionsParams: ListSessionParams = {
-          labels: { environment: "development" },
-          maxResults: 5,
-        };
-        const devSessionsResponse = await agentBay.listByLabels(
-          devSessionsParams
+        const devSessionsResponse = await agentBay.list(
+          { environment: "development" },
+          1,
+          5
         );
         log(
           `List Sessions by environment=development RequestId: ${
@@ -260,12 +258,10 @@ describe("AgentBay", () => {
 
       // Test 3: List sessions by owner=team-b label using new API
       try {
-        const teamBSessionsParams: ListSessionParams = {
-          labels: { owner: "team-b" },
-          maxResults: 5,
-        };
-        const teamBSessionsResponse = await agentBay.listByLabels(
-          teamBSessionsParams
+        const teamBSessionsResponse = await agentBay.list(
+          { owner: "team-b" },
+          1,
+          5
         );
         log(
           `List Sessions by owner=team-b RequestId: ${
@@ -291,15 +287,13 @@ describe("AgentBay", () => {
 
       // Test 4: List sessions with multiple labels (environment=testing AND project=project-y) using new API
       try {
-        const multiLabelSessionsParams: ListSessionParams = {
-          labels: {
+        const multiLabelSessionsResponse = await agentBay.list(
+          {
             environment: "testing",
             project: "project-y",
           },
-          maxResults: 5,
-        };
-        const multiLabelSessionsResponse = await agentBay.listByLabels(
-          multiLabelSessionsParams
+          1,
+          5
         );
         log(
           `Found ${multiLabelSessionsResponse.sessionIds.length} sessions with environment=testing AND project=project-y`
@@ -331,11 +325,14 @@ describe("AgentBay", () => {
         // Demonstrate pagination if there's a next token
         if (multiLabelSessionsResponse.nextToken) {
           log("\nFetching next page...");
-          const nextPageParams: ListSessionParams = {
-            ...multiLabelSessionsParams,
-            nextToken: multiLabelSessionsResponse.nextToken,
-          };
-          const nextPageResponse = await agentBay.listByLabels(nextPageParams);
+          const nextPageResponse = await agentBay.list(
+            {
+              environment: "testing",
+              project: "project-y",
+            },
+            2,
+            5
+          );
           log(`Next page sessions count: ${nextPageResponse.sessionIds.length}`);
           log(`Next page RequestId: ${nextPageResponse.requestId}`);
 
@@ -349,12 +346,10 @@ describe("AgentBay", () => {
 
       // Test 5: List sessions with non-existent label using new API
       try {
-        const nonExistentSessionsParams: ListSessionParams = {
-          labels: { "non-existent": "value" },
-          maxResults: 5,
-        };
-        const nonExistentSessionsResponse = await agentBay.listByLabels(
-          nonExistentSessionsParams
+        const nonExistentSessionsResponse = await agentBay.list(
+          { "non-existent": "value" },
+          1,
+          5
         );
         log(
           `Found ${nonExistentSessionsResponse.sessionIds.length} sessions with non-existent label`

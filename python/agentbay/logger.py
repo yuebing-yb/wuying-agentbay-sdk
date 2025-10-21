@@ -10,6 +10,39 @@ from pathlib import Path
 from typing import Optional, Union, Dict, Any, List
 from loguru import logger
 import os
+import re
+
+
+# ANSI Color codes
+COLOR_RESET = "\033[0m"
+COLOR_GREEN = "\033[32m"
+COLOR_BLUE = "\033[34m"
+COLOR_CYAN = "\033[36m"
+
+
+def colorize_log_message(record):
+    """
+    Colorize log messages based on content.
+    API Calls are blue, Responses are green, Operations are cyan.
+    This filter modifies the message in the record and returns True to accept it.
+    """
+    message = record["message"]
+
+    # Check for API Call
+    if "🔗 API Call" in message:
+        # Wrap the entire message in blue
+        record["message"] = f"{COLOR_BLUE}{message}{COLOR_RESET}"
+    # Check for API Response (success)
+    elif "✅ API Response" in message or "✅ Completed" in message:
+        # Wrap the entire message in green
+        record["message"] = f"{COLOR_GREEN}{message}{COLOR_RESET}"
+    # Check for operations starting
+    elif "🚀 Starting" in message:
+        # Wrap in cyan
+        record["message"] = f"{COLOR_CYAN}{message}{COLOR_RESET}"
+
+    # Return True to accept the record
+    return True
 
 
 class AgentBayLogger:
@@ -20,6 +53,45 @@ class AgentBayLogger:
     _log_file: Optional[Path] = None
     
     @classmethod
+    def _should_use_colors(cls) -> bool:
+        """
+        Determine whether to use colors in console output.
+
+        Priority:
+        1. DISABLE_COLORS environment variable (explicit disable)
+        2. FORCE_COLOR environment variable (explicit enable)
+        3. TTY detection (terminal output)
+        4. IDE environment detection (VS Code, GoLand, IntelliJ)
+        5. Default: no colors (safe for file output, CI/CD, pipes)
+
+        Returns:
+            bool: True if colors should be used, False otherwise
+        """
+        # Priority 1: Explicit disable
+        if os.getenv('DISABLE_COLORS') == '1':
+            return False
+
+        # Priority 2: Explicit enable via FORCE_COLOR
+        force_color = os.getenv('FORCE_COLOR', '')
+        if force_color and force_color != '0':
+            return True
+
+        # Priority 3: TTY detection
+        if sys.stderr.isatty():
+            return True
+
+        # Priority 4: IDE environment detection
+        if os.getenv('TERM_PROGRAM') == 'vscode':
+            return True
+        if os.getenv('GOLAND'):
+            return True
+        if os.getenv('IDEA_INITIAL_DIRECTORY'):
+            return True
+
+        # Default: no colors
+        return False
+    
+    @classmethod
     def setup(
         cls,
         level: str = "INFO",
@@ -27,7 +99,8 @@ class AgentBayLogger:
         enable_console: bool = True,
         enable_file: bool = True,
         rotation: str = "10 MB",
-        retention: str = "30 days"
+        retention: str = "30 days",
+        colorize: Optional[bool] = None
     ) -> None:
         """
         Setup the logger with custom configuration.
@@ -39,6 +112,7 @@ class AgentBayLogger:
             enable_file: Whether to enable file logging
             rotation: Log file rotation size
             retention: Log file retention period
+            colorize: Whether to use colors in console output (None = auto-detect)
         """
         if cls._initialized:
             return
@@ -47,6 +121,9 @@ class AgentBayLogger:
         logger.remove()
         
         cls._log_level = level.upper()
+        
+        # Determine if colors should be used
+        should_colorize = colorize if colorize is not None else cls._should_use_colors()
         
         # Console handler with beautiful formatting
         if enable_console:
@@ -58,17 +135,18 @@ class AgentBayLogger:
                 "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
                 "<level>{message}</level>"
             )
-            
+
             logger.add(
                 sys.stderr,
                 format=console_format,
                 level=cls._log_level,
-                colorize=True,
+                colorize=should_colorize,
+                filter=colorize_log_message,
                 backtrace=True,
                 diagnose=True
             )
         
-        # File handler with structured formatting
+        # File handler with structured formatting (no colors)
         if enable_file:
             if log_file:
                 cls._log_file = Path(log_file) if isinstance(log_file, str) else log_file
@@ -92,6 +170,7 @@ class AgentBayLogger:
                 str(cls._log_file),
                 format=file_format,
                 level=cls._log_level,
+                colorize=False,
                 rotation=rotation,
                 retention=retention,
                 backtrace=True,
@@ -247,7 +326,9 @@ def log_api_response_with_details(
         # Log key fields on separate lines for better readability
         if key_fields:
             for key, value in key_fields.items():
-                log.opt(depth=1).info(f"  └─ {key}={value}")
+                # Add green color to parameter lines
+                param_line = f"{COLOR_GREEN}  └─ {key}={value}{COLOR_RESET}"
+                log.opt(depth=1).info(param_line)
 
         if full_response:
             log.opt(depth=1).debug(f"📥 Full Response: {full_response}")

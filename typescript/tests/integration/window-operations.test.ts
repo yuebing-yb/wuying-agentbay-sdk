@@ -45,18 +45,18 @@ describe("Window Operations Integration", () => {
       // Set timeout to 2 minutes (120000 ms)
       jest.setTimeout(120000);
       // Test window operations
-      if (session.window && session.application) {
+      if (session.computer) {
         // Start Terminal application (using Linux default)
         log("Starting Terminal application...");
         const startCmd = "gnome-terminal";
 
         let processes: any[] = [];
         try {
-          const startResponse = await session.application.startApp(
+          const startResponse = await session.computer.startApp(
             startCmd,
             ""
           );
-          processes = startResponse.data;
+          processes = startResponse.data || startResponse.processes || [];
           log(
             `Terminal started successfully, returned ${processes.length} processes`
           );
@@ -79,7 +79,7 @@ describe("Window Operations Integration", () => {
                   `Attempting to stop Terminal process (PID: ${process.pid})...`
                 );
                 try {
-                  const stopResponse = await session.application.stopAppByPID(
+                  const stopResponse = await session.computer.stopAppByPID(
                     process.pid
                   );
                   log(
@@ -100,7 +100,7 @@ describe("Window Operations Integration", () => {
           // Make sure to call the cleanup function at the end of the test
           try {
             // Get a list of root windows
-            const rootWindowsResponse = await session.window.listRootWindows();
+            const rootWindowsResponse = await session.computer.listRootWindows();
             const rootWindows = rootWindowsResponse.windows;
             log(
               `List Root Windows RequestId: ${
@@ -148,7 +148,7 @@ describe("Window Operations Integration", () => {
             // Test RestoreWindow
             log(`Restoring window with ID ${windowId}...`);
             try {
-              const restoreResponse = await session.window.restoreWindow(
+              const restoreResponse = await session.computer.restoreWindow(
                 windowId
               );
               log("Window restored successfully");
@@ -166,7 +166,7 @@ describe("Window Operations Integration", () => {
             // Test ResizeWindow
             log(`Resizing window with ID ${windowId} to 800x600...`);
             try {
-              const resizeResponse = await session.window.resizeWindow(
+              const resizeResponse = await session.computer.resizeWindow(
                 windowId,
                 800,
                 600
@@ -186,7 +186,7 @@ describe("Window Operations Integration", () => {
             // Test MinimizeWindow
             log(`Minimizing window with ID ${windowId}...`);
             try {
-              const minimizeResponse = await session.window.minimizeWindow(
+              const minimizeResponse = await session.computer.minimizeWindow(
                 windowId
               );
               log("Window minimized successfully");
@@ -204,7 +204,7 @@ describe("Window Operations Integration", () => {
             // Test MaximizeWindow
             log(`Maximizing window with ID ${windowId}...`);
             try {
-              const maximizeResponse = await session.window.maximizeWindow(
+              const maximizeResponse = await session.computer.maximizeWindow(
                 windowId
               );
               log("Window maximized successfully");
@@ -232,11 +232,11 @@ describe("Window Operations Integration", () => {
 
             let terminalProcesses: any[] = [];
             try {
-              const terminalStartResponse = await session.application.startApp(
+              const terminalStartResponse = await session.computer.startApp(
                 terminalCmd,
                 ""
               );
-              terminalProcesses = terminalStartResponse.data;
+              terminalProcesses = terminalStartResponse.data || terminalStartResponse.processes || [];
               log(
                 `Terminal started successfully, returned ${terminalProcesses.length} processes`
               );
@@ -258,7 +258,7 @@ describe("Window Operations Integration", () => {
                     );
                     try {
                       const stopResponse =
-                        await session.application.stopAppByPID(process.pid);
+                        await session.computer.stopAppByPID(process.pid);
                       log(
                         `Successfully stopped terminal process (PID: ${process.pid})`
                       );
@@ -281,7 +281,7 @@ describe("Window Operations Integration", () => {
                 // Activate the Terminal window again
                 log(`Activating Terminal window with ID ${windowId} again...`);
                 try {
-                  const activateResponse = await session.window.activateWindow(
+                  const activateResponse = await session.computer.activateWindow(
                     windowId
                   );
                   log("Window activated successfully");
@@ -300,7 +300,7 @@ describe("Window Operations Integration", () => {
                 log(`Fullscreening window with ID ${windowId}...`);
                 try {
                   const fullscreenResponse =
-                    await session.window.fullscreenWindow(windowId);
+                    await session.computer.fullscreenWindow(windowId);
                   log("Window fullscreened successfully");
                   log(
                     `Fullscreen Window RequestId: ${
@@ -316,7 +316,7 @@ describe("Window Operations Integration", () => {
                 // Test CloseWindow
                 log(`Closing window with ID ${windowId}...`);
                 try {
-                  const closeResponse = await session.window.closeWindow(
+                  const closeResponse = await session.computer.closeWindow(
                     windowId
                   );
                   log("Window closed successfully");
@@ -344,7 +344,7 @@ describe("Window Operations Integration", () => {
         }
       } else {
         log(
-          "Note: Window or Application interface is nil, skipping window operations test"
+          "Note: Computer interface is nil, skipping window operations test"
         );
       }
     });

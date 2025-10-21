@@ -475,4 +475,60 @@ export class Computer {
     const windowManager = new WindowManager(this.session);
     return windowManager.focusMode(on);
   }
+
+  // Application Management Operations (delegated to existing application module)
+
+  /**
+   * Gets the list of installed applications.
+   */
+  async getInstalledApps(): Promise<any> {
+    const { Application } = await import('../application/application');
+    const app = new Application(this.session as any);
+    return app.getInstalledApps();
+  }
+
+  /**
+   * Starts the specified application.
+   */
+  async startApp(startCmd: string, workDirectory: string = ""): Promise<any> {
+    const { Application } = await import('../application/application');
+    const app = new Application(this.session as any);
+    return app.startApp(startCmd, workDirectory);
+  }
+
+  /**
+   * Stops an application by process name.
+   */
+  async stopAppByPName(pname: string): Promise<any> {
+    const { Application } = await import('../application/application');
+    const app = new Application(this.session as any);
+    return app.stopAppByPName(pname);
+  }
+
+  /**
+   * Stops an application by process ID.
+   */
+  async stopAppByPID(pid: number): Promise<any> {
+    const { Application } = await import('../application/application');
+    const app = new Application(this.session as any);
+    return app.stopAppByPID(pid);
+  }
+
+  /**
+   * Stops an application by stop command.
+   */
+  async stopAppByCmd(cmd: string): Promise<any> {
+    const { Application } = await import('../application/application');
+    const app = new Application(this.session as any);
+    return app.stopAppByCmd(cmd);
+  }
+
+  /**
+   * Lists all visible applications.
+   */
+  async listVisibleApps(): Promise<any> {
+    const { Application } = await import('../application/application');
+    const app = new Application(this.session as any);
+    return app.listVisibleApps();
+  }
 } 

@@ -34,7 +34,7 @@ describe("SessionDeleteIntegration", () => {
     log(`Session deleted (RequestId: ${deleteResult.requestId || "undefined"})`);
 
     // Verify the session was deleted
-    const listResult = await agentBay.listByLabels();
+    const listResult = await agentBay.list();
     expect(listResult.success).toBe(true);
     
     // Check that our session is not in the list
@@ -93,7 +93,7 @@ describe("SessionDeleteIntegration", () => {
       log(`Session deleted with syncContext=true (RequestId: ${deleteResult.requestId || "undefined"})`);
 
       // Verify the session was deleted
-      const listResult = await agentBay.listByLabels();
+      const listResult = await agentBay.list();
       expect(listResult.success).toBe(true);
       
       // Check that our session is not in the list
@@ -166,7 +166,7 @@ describe("SessionDeleteIntegration", () => {
       log(`Session deleted with AgentBay.delete and syncContext=true (RequestId: ${deleteResult.requestId || "undefined"})`);
 
       // Verify the session was deleted
-      const listResult = await agentBay.listByLabels();
+      const listResult = await agentBay.list();
       expect(listResult.success).toBe(true);
       
       // Check that our session is not in the list

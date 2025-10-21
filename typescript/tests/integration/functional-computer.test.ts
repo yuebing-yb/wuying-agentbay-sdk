@@ -6,6 +6,7 @@
 import { AgentBay } from '../../src/agent-bay';
 import { CreateSessionParams } from '../../src/agent-bay';
 import { Session } from '../../src/session';
+import { log } from '../../src/utils/logger';
 import {
   defaultFunctionalTestConfig,
   createFunctionalTestResult,
@@ -43,7 +44,7 @@ describe('Computer Functional Validation', () => {
     session = sessionResult.session!;
     config = defaultFunctionalTestConfig();
 
-    console.log(`Created Computer functional validation session: ${session.sessionId}`);
+    log(`Created Computer functional validation session: ${session.sessionId}`);
 
     // Wait for session to be ready
     await sleep(10000);
@@ -54,10 +55,10 @@ describe('Computer Functional Validation', () => {
       try {
         const deleteResult = await session.delete();
         if (deleteResult && deleteResult.requestId) {
-          console.log(`Session ${session.sessionId} deleted successfully`);
+          log(`Session ${session.sessionId} deleted successfully`);
         }
       } catch (error) {
-        console.error('Error deleting session:', error);
+        log('Error deleting session:', error);
       }
     }
   }, 10000);
@@ -120,20 +121,20 @@ describe('Computer Functional Validation', () => {
       // Validate cursor movement
       if (validateCursorPosition(newCursor, screen, targetX, targetY, config.cursorPositionTolerance)) {
         setTestSuccess(result, 'Mouse movement validated successfully');
-        console.log(
+        log(
           `✅ Mouse moved from (${initialCursor.x},${initialCursor.y}) ` +
           `to (${newCursor.x},${newCursor.y}), target was (${targetX},${targetY})`
         );
       } else {
         setTestFailure(result, 'Cursor position validation failed');
-        console.log(
+        log(
           `❌ Mouse movement failed: expected (${targetX},${targetY}), ` +
           `got (${newCursor.x},${newCursor.y})`
         );
       }
     } finally {
       result.duration = Date.now() - startTime;
-      console.log(`Test Result: ${JSON.stringify(result)}`);
+      log(`Test Result: ${JSON.stringify(result)}`);
     }
 
     expect(result.success).toBe(true);
@@ -182,14 +183,14 @@ describe('Computer Functional Validation', () => {
       // Validate screenshot change
       if (validateScreenshotChanged(screenshot1, screenshot2)) {
         setTestSuccess(result, 'Screenshot content validation successful');
-        console.log(`✅ Screenshots changed: ${screenshot1} → ${screenshot2}`);
+        log(`✅ Screenshots changed: ${screenshot1} → ${screenshot2}`);
       } else {
         setTestFailure(result, 'Screenshots did not change as expected');
-        console.log(`❌ Screenshots unchanged: ${screenshot1} = ${screenshot2}`);
+        log(`❌ Screenshots unchanged: ${screenshot1} = ${screenshot2}`);
       }
     } finally {
       result.duration = Date.now() - startTime;
-      console.log(`Test Result: ${JSON.stringify(result)}`);
+      log(`Test Result: ${JSON.stringify(result)}`);
     }
 
     expect(result.success).toBe(true);
@@ -268,16 +269,16 @@ describe('Computer Functional Validation', () => {
 
       if (inputChanged && deleteChanged) {
         setTestSuccess(result, 'Keyboard input validation successful');
-        console.log('✅ Keyboard operations validated: input changed screen, delete changed screen');
+        log('✅ Keyboard operations validated: input changed screen, delete changed screen');
       } else {
         setTestFailure(result, 'Keyboard operations did not produce expected visual changes');
-        console.log(
+        log(
           `❌ Keyboard validation failed: input_changed=${inputChanged}, delete_changed=${deleteChanged}`
         );
       }
     } finally {
       result.duration = Date.now() - startTime;
-      console.log(`Test Result: ${JSON.stringify(result)}`);
+      log(`Test Result: ${JSON.stringify(result)}`);
     }
 
     expect(result.success).toBe(true);
@@ -317,7 +318,7 @@ describe('Computer Functional Validation', () => {
         // Move to position
         const moveResult = await session.computer.moveMouse(x, y);
         if (!moveResult.success) {
-          console.log(`Failed to move to ${name} (${x},${y}): ${moveResult.errorMessage}`);
+          log(`Failed to move to ${name} (${x},${y}): ${moveResult.errorMessage}`);
           allValid = false;
           positionResults[name] = false;
           continue;
@@ -328,7 +329,7 @@ describe('Computer Functional Validation', () => {
         // Get cursor position
         const cursor = await session.computer.getCursorPosition();
         if (cursor.errorMessage) {
-          console.log(`Failed to get cursor at ${name}: ${cursor.errorMessage}`);
+          log(`Failed to get cursor at ${name}: ${cursor.errorMessage}`);
           allValid = false;
           positionResults[name] = false;
           continue;
@@ -339,9 +340,9 @@ describe('Computer Functional Validation', () => {
         positionResults[name] = valid;
         if (!valid) {
           allValid = false;
-          console.log(`❌ Position ${name}: expected (${x},${y}), got (${cursor.x},${cursor.y})`);
+          log(`❌ Position ${name}: expected (${x},${y}), got (${cursor.x},${cursor.y})`);
         } else {
-          console.log(`✅ Position ${name}: (${cursor.x},${cursor.y}) validated`);
+          log(`✅ Position ${name}: (${cursor.x},${cursor.y}) validated`);
         }
       }
 
@@ -355,7 +356,7 @@ describe('Computer Functional Validation', () => {
       }
     } finally {
       result.duration = Date.now() - startTime;
-      console.log(`Test Result: ${JSON.stringify(result)}`);
+      log(`Test Result: ${JSON.stringify(result)}`);
     }
 
     expect(result.success).toBe(true);
@@ -449,14 +450,14 @@ describe('Computer Functional Validation', () => {
 
       if (workflowSteps.length >= 6 && inputChanged) {
         setTestSuccess(result, 'Complete workflow validation successful');
-        console.log(`✅ Workflow completed: ${workflowSteps.length} steps, visual changes confirmed`);
+        log(`✅ Workflow completed: ${workflowSteps.length} steps, visual changes confirmed`);
       } else {
         setTestFailure(result, 'Workflow validation failed');
-        console.log(`❌ Workflow failed: ${workflowSteps.length} steps, input_changed=${inputChanged}`);
+        log(`❌ Workflow failed: ${workflowSteps.length} steps, input_changed=${inputChanged}`);
       }
     } finally {
       result.duration = Date.now() - startTime;
-      console.log(`Test Result: ${JSON.stringify(result)}`);
+      log(`Test Result: ${JSON.stringify(result)}`);
     }
 
     expect(result.success).toBe(true);

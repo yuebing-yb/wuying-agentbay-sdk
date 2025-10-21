@@ -30,8 +30,8 @@ class TestMobileSystemIntegration(unittest.TestCase):
         )
         result = cls.agent_bay.create(params)
         cls.session = result.session
-        cls.ui = cls.session.ui
-        cls.application = cls.session.application
+        cls.ui = cls.session.mobile
+        cls.application = cls.session.mobile
 
     @classmethod
     def tearDownClass(cls):

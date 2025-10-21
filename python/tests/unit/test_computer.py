@@ -404,4 +404,128 @@ class TestComputer:
             assert result.success is True
             assert len(result.data) == 1
             assert result.data[0].pname == "Calculator"
-            mock_instance.list_visible_apps.assert_called_once_with() 
+            mock_instance.list_visible_apps.assert_called_once_with()
+
+    # Application Management Operations Tests
+    def test_get_installed_apps_success(self):
+        """Test get_installed_apps delegates to ApplicationManager."""
+        # Arrange
+        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
+            mock_instance = Mock()
+            mock_app1 = Mock(name='Notepad', start_cmd='notepad.exe')
+            mock_app2 = Mock(name='Calculator', start_cmd='calc.exe')
+            mock_result = Mock(success=True, data=[mock_app1, mock_app2])
+            mock_instance.get_installed_apps.return_value = mock_result
+            mock_app_manager.return_value = mock_instance
+            
+            # Act
+            result = self.computer.get_installed_apps()
+            
+            # Assert
+            assert result.success is True
+            assert len(result.data) == 2
+            assert result.data[0].name == 'Notepad'
+            assert result.data[1].name == 'Calculator'
+            mock_instance.get_installed_apps.assert_called_once()
+
+    def test_start_app_success(self):
+        """Test start_app delegates to ApplicationManager."""
+        # Arrange
+        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
+            mock_instance = Mock()
+            mock_process = Mock(pname='notepad', pid=1234)
+            mock_result = Mock(success=True, data=[mock_process])
+            mock_instance.start_app.return_value = mock_result
+            mock_app_manager.return_value = mock_instance
+            
+            # Act
+            result = self.computer.start_app('notepad.exe')
+            
+            # Assert
+            assert result.success is True
+            assert len(result.data) == 1
+            assert result.data[0].pname == 'notepad'
+            assert result.data[0].pid == 1234
+            mock_instance.start_app.assert_called_once_with('notepad.exe', '', '')
+
+    def test_start_app_with_working_directory(self):
+        """Test start_app with working directory."""
+        # Arrange
+        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
+            mock_instance = Mock()
+            mock_result = Mock(success=True, data=[])
+            mock_instance.start_app.return_value = mock_result
+            mock_app_manager.return_value = mock_instance
+            
+            # Act
+            result = self.computer.start_app('notepad.exe', '/home/user/documents')
+            
+            # Assert
+            assert result.success is True
+            mock_instance.start_app.assert_called_once_with('notepad.exe', '/home/user/documents', '')
+
+    def test_stop_app_by_pname_success(self):
+        """Test stop_app_by_pname delegates to ApplicationManager."""
+        # Arrange
+        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
+            mock_instance = Mock()
+            mock_result = Mock(success=True)
+            mock_instance.stop_app_by_pname.return_value = mock_result
+            mock_app_manager.return_value = mock_instance
+            
+            # Act
+            result = self.computer.stop_app_by_pname('notepad')
+            
+            # Assert
+            assert result.success is True
+            mock_instance.stop_app_by_pname.assert_called_once_with('notepad')
+
+    def test_stop_app_by_pid_success(self):
+        """Test stop_app_by_pid delegates to ApplicationManager."""
+        # Arrange
+        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
+            mock_instance = Mock()
+            mock_result = Mock(success=True)
+            mock_instance.stop_app_by_pid.return_value = mock_result
+            mock_app_manager.return_value = mock_instance
+            
+            # Act
+            result = self.computer.stop_app_by_pid(1234)
+            
+            # Assert
+            assert result.success is True
+            mock_instance.stop_app_by_pid.assert_called_once_with(1234)
+
+    def test_stop_app_by_cmd_success(self):
+        """Test stop_app_by_cmd delegates to ApplicationManager."""
+        # Arrange
+        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
+            mock_instance = Mock()
+            mock_result = Mock(success=True)
+            mock_instance.stop_app_by_cmd.return_value = mock_result
+            mock_app_manager.return_value = mock_instance
+            
+            # Act
+            result = self.computer.stop_app_by_cmd('pkill notepad')
+            
+            # Assert
+            assert result.success is True
+            mock_instance.stop_app_by_cmd.assert_called_once_with('pkill notepad')
+
+    def test_application_management_methods_exist(self):
+        """Test that all application management methods exist on Computer class."""
+        # Assert
+        assert hasattr(self.computer, 'get_installed_apps')
+        assert hasattr(self.computer, 'start_app')
+        assert hasattr(self.computer, 'stop_app_by_pname')
+        assert hasattr(self.computer, 'stop_app_by_pid')
+        assert hasattr(self.computer, 'stop_app_by_cmd')
+        assert hasattr(self.computer, 'list_visible_apps')
+        
+        # Verify they are callable
+        assert callable(self.computer.get_installed_apps)
+        assert callable(self.computer.start_app)
+        assert callable(self.computer.stop_app_by_pname)
+        assert callable(self.computer.stop_app_by_pid)
+        assert callable(self.computer.stop_app_by_cmd)
+        assert callable(self.computer.list_visible_apps) 

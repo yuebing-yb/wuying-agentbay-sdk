@@ -137,14 +137,16 @@ export class ContextService {
 
       const response = await this.agentBay.getClient().listContexts(request);
 
-      // Log API response
-      logDebug(`Response from ListContexts:`, response.body);
+      // Extract request ID
+      const requestId = extractRequestId(response) || "";
 
       // Check for API-level errors
       if (response.body?.success === false && response.body?.code) {
         const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+        logAPIResponseWithDetails("ListContexts", requestId, false, undefined, fullResponse);
         return {
-          requestId: extractRequestId(response) || "",
+          requestId,
           success: false,
           contexts: [],
           errorMessage,
@@ -167,8 +169,19 @@ export class ContextService {
         }
       }
 
+      // Log API response with key fields
+      const keyFields: Record<string, any> = {
+        context_count: contexts.length,
+        max_results: maxResults,
+      };
+      if (response.body?.totalCount !== undefined) {
+        keyFields.total_count = response.body.totalCount;
+      }
+      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+      logAPIResponseWithDetails("ListContexts", requestId, true, keyFields, fullResponse);
+
       return {
-        requestId: extractRequestId(response) || "",
+        requestId,
         success: true,
         contexts,
         nextToken: response.body?.nextToken,
@@ -208,14 +221,16 @@ export class ContextService {
 
       const response = await this.agentBay.getClient().getContext(request);
 
-      // Log API response
-      logDebug(`Response from GetContext:`, response.body);
+      // Extract request ID
+      const requestId = extractRequestId(response) || "";
 
       // Check for API-level errors
       if (response.body?.success === false && response.body?.code) {
         const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+        logAPIResponseWithDetails("GetContext", requestId, false, undefined, fullResponse);
         return {
-          requestId: extractRequestId(response) || "",
+          requestId,
           success: false,
           contextId: "",
           context: undefined,
@@ -225,8 +240,9 @@ export class ContextService {
 
       const contextId = response.body?.data?.id || "";
       if (!contextId) {
+        logAPIResponseWithDetails("GetContext", requestId, false, undefined, "Context ID not found in response");
         return {
-          requestId: extractRequestId(response) || "",
+          requestId,
           success: false,
           contextId: "",
           context: undefined,
@@ -235,22 +251,39 @@ export class ContextService {
       }
 
       // Get the full context details
-      const contextsResponse = await this.list();
-      for (const context of contextsResponse.contexts) {
-        if (context.id === contextId) {
-          return {
-            requestId: extractRequestId(response) || "",
-            success: true,
-            contextId,
-            context,
-          };
+      try {
+        const contextsResponse = await this.list();
+        for (const context of contextsResponse.contexts) {
+          if (context.id === contextId) {
+            // Log API response with key fields
+            const keyFields: Record<string, any> = {
+              context_id: contextId,
+              context_name: context.name,
+            };
+            const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+            logAPIResponseWithDetails("GetContext", requestId, true, keyFields, fullResponse);
+            return {
+              requestId,
+              success: true,
+              contextId,
+              context,
+            };
+          }
         }
+      } catch (listError) {
+        logDebug(`Warning: Failed to get full context details from list: ${listError}`);
       }
 
       // If we couldn't find the context in the list, create a basic one
       const context = new Context(contextId, name);
+      const keyFields: Record<string, any> = {
+        context_id: contextId,
+        context_name: name,
+      };
+      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+      logAPIResponseWithDetails("GetContext", requestId, true, keyFields, fullResponse);
       return {
-        requestId: extractRequestId(response) || "",
+        requestId,
         success: true,
         contextId,
         context,
@@ -299,8 +332,8 @@ export class ContextService {
 
       const response = await this.agentBay.getClient().modifyContext(request);
 
-      // Log API response
-      logDebug(`Response from ModifyContext:`, response.body);
+      // Extract request ID
+      const requestId = extractRequestId(response) || "";
 
       // Check for success (matching Python logic)
       const success = response.body?.success !== false;
@@ -308,8 +341,16 @@ export class ContextService {
         ? ""
         : `[${response.body?.code || 'Unknown'}] ${response.body?.message || 'Unknown error'}`;
 
+      // Log API response with key fields
+      const keyFields: Record<string, any> = {
+        context_id: context.id,
+        context_name: context.name,
+      };
+      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+      logAPIResponseWithDetails("ModifyContext", requestId, success, keyFields, fullResponse);
+
       return {
-        requestId: extractRequestId(response) || "",
+        requestId,
         success,
         data: success,
         errorMessage,
@@ -344,8 +385,8 @@ export class ContextService {
 
       const response = await this.agentBay.getClient().deleteContext(request);
 
-      // Log API response
-      logDebug(`Response from DeleteContext:`, response.body);
+      // Extract request ID
+      const requestId = extractRequestId(response) || "";
 
       // Check for success (matching Python logic)
       const success = response.body?.success !== false;
@@ -353,8 +394,15 @@ export class ContextService {
         ? ""
         : `[${response.body?.code || 'Unknown'}] ${response.body?.message || 'Unknown error'}`;
 
+      // Log API response with key fields
+      const keyFields: Record<string, any> = {
+        context_id: context.id,
+      };
+      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+      logAPIResponseWithDetails("DeleteContext", requestId, success, keyFields, fullResponse);
+
       return {
-        requestId: extractRequestId(response) || "",
+        requestId,
         success,
         data: success,
         errorMessage,
@@ -381,25 +429,40 @@ export class ContextService {
       filePath,
     });
     const resp = await this.agentBay.getClient().getContextFileUploadUrl(req);
-    logDebug("Response from GetContextFileUploadUrl:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
 
     // Check for API-level errors
     if (body?.success === false && body.code) {
+      const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+      const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+      logAPIResponseWithDetails("GetContextFileUploadUrl", requestId, false, undefined, fullResponse);
       return {
         requestId,
         success: false,
         url: "",
         expireTime: undefined,
-        errorMessage: `[${body.code}] ${body.message || 'Unknown error'}`,
+        errorMessage,
       };
     }
 
     const data = body?.data;
+    const success = !!(body && body.success);
+
+    // Log API response with key fields
+    const keyFields: Record<string, any> = {
+      context_id: contextId,
+      file_path: filePath,
+    };
+    if (data?.expireTime) {
+      keyFields.expire_time = data.expireTime;
+    }
+    const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+    logAPIResponseWithDetails("GetContextFileUploadUrl", requestId, success, keyFields, fullResponse);
+
     return {
       requestId,
-      success: !!(body && body.success),
+      success,
       url: data?.url || "",
       expireTime: data?.expireTime,
       errorMessage: undefined,
@@ -418,25 +481,40 @@ export class ContextService {
       filePath,
     });
     const resp = await this.agentBay.getClient().getContextFileDownloadUrl(req);
-    logDebug("Response from GetContextFileDownloadUrl:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
 
     // Check for API-level errors
     if (body?.success === false && body.code) {
+      const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+      const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+      logAPIResponseWithDetails("GetContextFileDownloadUrl", requestId, false, undefined, fullResponse);
       return {
         requestId,
         success: false,
         url: "",
         expireTime: undefined,
-        errorMessage: `[${body.code}] ${body.message || 'Unknown error'}`,
+        errorMessage,
       };
     }
 
     const data = body?.data;
+    const success = !!(body && body.success);
+
+    // Log API response with key fields
+    const keyFields: Record<string, any> = {
+      context_id: contextId,
+      file_path: filePath,
+    };
+    if (data?.expireTime) {
+      keyFields.expire_time = data.expireTime;
+    }
+    const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+    logAPIResponseWithDetails("GetContextFileDownloadUrl", requestId, success, keyFields, fullResponse);
+
     return {
       requestId,
-      success: !!(body && body.success),
+      success,
       url: data?.url || "",
       expireTime: data?.expireTime,
       errorMessage: undefined,
@@ -455,7 +533,6 @@ export class ContextService {
       filePath,
     });
     const resp = await this.agentBay.getClient().deleteContextFile(req);
-    logDebug("Response from DeleteContextFile:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
     const success = !!(body && body.success);
@@ -464,6 +541,14 @@ export class ContextService {
     const errorMessage = success
       ? ""
       : `[${body?.code || 'Unknown'}] ${body?.message || 'Failed to delete file'}`;
+
+    // Log API response with key fields
+    const keyFields: Record<string, any> = {
+      context_id: contextId,
+      file_path: filePath,
+    };
+    const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+    logAPIResponseWithDetails("DeleteContextFile", requestId, success, keyFields, fullResponse);
 
     return {
       requestId,
@@ -494,18 +579,20 @@ export class ContextService {
       contextId,
     });
     const resp = await this.agentBay.getClient().describeContextFiles(req);
-    logDebug("Response from DescribeContextFiles:", resp.body);
     const requestId = extractRequestId(resp) || "";
     const body = resp.body;
 
     // Check for API-level errors
     if (body?.success === false && body.code) {
+      const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+      const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+      logAPIResponseWithDetails("DescribeContextFiles", requestId, false, undefined, fullResponse);
       return {
         requestId,
         success: false,
         entries: [],
         count: undefined,
-        errorMessage: `[${body.code}] ${body.message || 'Unknown error'}`,
+        errorMessage,
       };
     }
 
@@ -520,9 +607,26 @@ export class ContextService {
       size: it.size,
       status: it.status,
     }));
+
+    const success = !!(body && body.success);
+
+    // Log API response with key fields
+    const keyFields: Record<string, any> = {
+      context_id: contextId,
+      parent_folder_path: parentFolderPath,
+      file_count: entries.length,
+      page_number: pageNumber,
+      page_size: pageSize,
+    };
+    if (body?.count !== undefined) {
+      keyFields.count = body.count;
+    }
+    const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+    logAPIResponseWithDetails("DescribeContextFiles", requestId, success, keyFields, fullResponse);
+
     return {
       requestId,
-      success: !!(body && body.success),
+      success,
       entries,
       count: body?.count,
       errorMessage: undefined,

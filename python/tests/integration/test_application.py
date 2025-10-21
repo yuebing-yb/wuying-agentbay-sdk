@@ -63,14 +63,12 @@ class TestApplication(unittest.TestCase):
     def test_get_installed_apps(self):
         """Test getting installed applications."""
         if (
-            hasattr(self.__class__.session, "application")
-            and self.__class__.session.application
+            hasattr(self.__class__.session, "computer")
+            and self.__class__.session.computer
         ):
             print("Getting installed applications...")
             try:
-                result = self.__class__.session.application.get_installed_apps(
-                    start_menu=True, desktop=False, ignore_system_apps=True
-                )
+                result = self.__class__.session.computer.get_installed_apps()
 
                 # Verify result is of correct type
                 self.assertIsInstance(result, InstalledAppListResult)
@@ -103,26 +101,26 @@ class TestApplication(unittest.TestCase):
                 if len(apps) > 0:
                     self.assertFalse(
                         contains_tool_not_found(apps[0].name),
-                        "Application.get_installed_apps returned 'tool not found'",
+                        "Computer.get_installed_apps returned 'tool not found'",
                     )
             except Exception as e:
                 print(f"Note: get_installed_apps failed: {e}")
                 # Don't fail the test if the operation is not supported
         else:
             print(
-                "Note: Application interface is not available, skipping application "
+                "Note: Computer interface is not available, skipping application "
                 "test"
             )
 
     def test_list_visible_apps(self):
         """Test listing visible applications."""
         if (
-            hasattr(self.__class__.session, "application")
-            and self.__class__.session.application
+            hasattr(self.__class__.session, "computer")
+            and self.__class__.session.computer
         ):
             print("Listing visible applications...")
             try:
-                result = self.__class__.session.application.list_visible_apps()
+                result = self.__class__.session.computer.get_visible_apps()
 
                 # Verify result is of correct type
                 self.assertIsInstance(result, ProcessListResult)
@@ -165,27 +163,27 @@ class TestApplication(unittest.TestCase):
                 if len(visible_apps) > 0:
                     self.assertFalse(
                         contains_tool_not_found(visible_apps[0].pname),
-                        "Application.list_visible_apps returned 'tool not found'",
+                        "Computer.get_visible_apps returned 'tool not found'",
                     )
             except Exception as e:
-                print(f"Note: list_visible_apps failed: {e}")
+                print(f"Note: get_visible_apps failed: {e}")
                 # Don't fail the test if the operation is not supported
         else:
             print(
-                "Note: Application interface is not available, skipping application test"
+                "Note: Computer interface is not available, skipping application test"
             )
 
     def test_start_app(self):
         """Test starting an application."""
         if (
-            hasattr(self.__class__.session, "application")
-            and self.__class__.session.application
+            hasattr(self.__class__.session, "computer")
+            and self.__class__.session.computer
         ):
             start_cmd = "/usr/bin/google-chrome-stable"
 
             print(f"Starting application: {start_cmd}...")
             try:
-                result = self.__class__.session.application.start_app(start_cmd)
+                result = self.__class__.session.computer.start_app(start_cmd)
 
                 # Verify result is of correct type
                 self.assertIsInstance(result, ProcessListResult)
@@ -235,7 +233,7 @@ class TestApplication(unittest.TestCase):
                             )
                             try:
                                 stop_result = (
-                                    self.__class__.session.application.stop_app_by_pid(
+                                    self.__class__.session.computer.stop_app_by_pid(
                                         process.pid
                                     )
                                 )
@@ -261,7 +259,7 @@ class TestApplication(unittest.TestCase):
                 if len(processes) > 0:
                     self.assertFalse(
                         contains_tool_not_found(processes[0].pname),
-                        "Application.start_app returned 'tool not found'",
+                        "Computer.start_app returned 'tool not found'",
                     )
             except Exception as e:
                 print(f"Note: start_app failed: {e}")
@@ -279,19 +277,19 @@ class TestApplication(unittest.TestCase):
                 # Don't fail the test if the operation is not supported
         else:
             print(
-                "Note: Application interface is not available, skipping application test"
+                "Note: Computer interface is not available, skipping application test"
             )
 
     def test_stop_app_by_pname(self):
         """Test stopping an application by process name."""
         if (
-            hasattr(self.__class__.session, "application")
-            and self.__class__.session.application
+            hasattr(self.__class__.session, "computer")
+            and self.__class__.session.computer
         ):
             start_cmd = "/usr/bin/google-chrome-stable"
             print(f"Starting application: {start_cmd}...")
             try:
-                start_result = self.__class__.session.application.start_app(start_cmd)
+                start_result = self.__class__.session.computer.start_app(start_cmd)
 
                 # Verify result is of correct type
                 self.assertIsInstance(start_result, ProcessListResult)
@@ -323,7 +321,7 @@ class TestApplication(unittest.TestCase):
 
                 # Call stop_app_by_pname function
                 try:
-                    stop_result = self.__class__.session.application.stop_app_by_pname(
+                    stop_result = self.__class__.session.computer.stop_app_by_pname(
                         process_to_stop
                     )
 
@@ -343,7 +341,7 @@ class TestApplication(unittest.TestCase):
                     # Verify the process was stopped by listing visible apps
                     # Give some time for the process to be terminated
                     time.sleep(1)
-                    list_result = self.__class__.session.application.list_visible_apps()
+                    list_result = self.__class__.session.computer.get_visible_apps()
 
                     # Verify result is of correct type
                     self.assertIsInstance(list_result, ProcessListResult)
@@ -392,7 +390,7 @@ class TestApplication(unittest.TestCase):
                 # Don't fail the test if the operation is not supported
         else:
             print(
-                "Note: Application interface is not available, skipping application test"
+                "Note: Computer interface is not available, skipping application test"
             )
 
 
