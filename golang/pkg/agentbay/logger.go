@@ -45,7 +45,7 @@ type LoggerConfig struct {
 	Level         string
 	LogFile       string
 	MaxFileSize   string
-	EnableConsole bool
+	EnableConsole *bool
 }
 
 // Sensitive field names for data masking
@@ -164,6 +164,12 @@ func SetupLogger(config LoggerConfig) {
 	}
 
 	if config.LogFile != "" {
+		// Close old log file if switching to a different file
+		if logFile != nil && logFilePath != config.LogFile {
+			logFile.Close()
+			logFile = nil
+		}
+
 		logFilePath = config.LogFile
 		fileLoggingEnabled = true
 
@@ -185,7 +191,10 @@ func SetupLogger(config LoggerConfig) {
 		}
 	}
 
-	consoleLoggingEnabled = config.EnableConsole
+	// Only update consoleLoggingEnabled if explicitly set
+	if config.EnableConsole != nil {
+		consoleLoggingEnabled = *config.EnableConsole
+	}
 }
 
 // getColorCodes returns ANSI color codes based on environment detection

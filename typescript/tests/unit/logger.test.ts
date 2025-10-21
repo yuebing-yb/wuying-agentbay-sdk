@@ -6,14 +6,9 @@ import {
   logDebug,
   logWarn,
   logInfo,
-  logTrace,
-  logFatal,
   logAPICall,
   logAPIResponseWithDetails,
   maskSensitiveData,
-  getRequestId,
-  setRequestId,
-  clearRequestId,
   setLogLevel,
   getLogLevel,
 } from "../../src/utils/logger";
@@ -30,7 +25,6 @@ describe("Logger", () => {
 
   afterEach(() => {
     sinon.restore();
-    clearRequestId();
     setLogLevel('INFO');
   });
 
@@ -93,7 +87,6 @@ describe("Logger", () => {
     });
 
     it("should log API response with success status", () => {
-      setRequestId("req-123");
       logAPIResponseWithDetails("CreateSession", "req-123", true, {
         session_id: "sess-456",
         resource_url: "https://example.com",
@@ -184,33 +177,6 @@ describe("Logger", () => {
     });
   });
 
-  describe("RequestID Management", () => {
-    it("should set and get RequestID", () => {
-      setRequestId("req-12345");
-      expect(getRequestId()).to.equal("req-12345");
-    });
-
-    it("should NOT include RequestID in API call logs (not available yet)", () => {
-      setRequestId("req-xyz");
-      logAPICall("TestAPI");
-      const output = stdoutWriteStub.getCalls().map(c => c.args[0]).join("");
-      // RequestID is cleared before API call logging to prevent including server-side RequestID
-      expect(output).to.include("API Call");
-      expect(output).to.not.include("req-xyz");
-    });
-
-    it("should clear RequestID", () => {
-      setRequestId("req-abc");
-      clearRequestId();
-      expect(getRequestId()).to.equal("");
-    });
-
-    it("should handle empty RequestID gracefully", () => {
-      expect(getRequestId()).to.equal("");
-      logAPICall("TestAPI");
-      expect(stdoutWriteStub.called).to.be.true;
-    });
-  });
 
   describe("Multiple Arguments Logging", () => {
     it("should log message with multiple arguments", () => {
@@ -260,14 +226,6 @@ describe("Logger", () => {
       expect(stdoutWriteStub.called).to.be.true;
     });
 
-    it("should show all logs when log level is TRACE", () => {
-      setLogLevel('TRACE');
-      logTrace("trace message");
-      expect(stdoutWriteStub.called).to.be.true;
-      const output = stdoutWriteStub.firstCall.args[0];
-      expect(output).to.include("🔍 TRACE");
-    });
-
     it("should filter lower level logs when log level is ERROR", () => {
       setLogLevel('ERROR');
       logInfo("info message");
@@ -280,14 +238,6 @@ describe("Logger", () => {
       setLogLevel('ERROR');
       logError("error message");
       expect(stderrWriteStub.called).to.be.true;
-    });
-
-    it("should support FATAL log level", () => {
-      setLogLevel('TRACE');
-      logFatal("fatal error");
-      expect(stderrWriteStub.called).to.be.true;
-      const output = stderrWriteStub.firstCall.args[0];
-      expect(output).to.include("💀 FATAL");
     });
 
     it("should get current log level", () => {
@@ -335,18 +285,6 @@ describe("Logger", () => {
       expect(stderrWriteStub.called).to.be.false;
     });
 
-    it("TRACE should write to stdout", () => {
-      setLogLevel('TRACE');
-      logTrace("trace");
-      expect(stdoutWriteStub.called).to.be.true;
-      expect(stderrWriteStub.called).to.be.false;
-    });
-
-    it("FATAL should write to stderr", () => {
-      logFatal("fatal");
-      expect(stderrWriteStub.called).to.be.true;
-      expect(stdoutWriteStub.called).to.be.false;
-    });
   });
 
   describe("API Logging with Log Level", () => {

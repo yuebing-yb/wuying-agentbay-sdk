@@ -22,17 +22,12 @@ export * from './session-params'
 // Export utility functions
 export {
   log,
-  logTrace,
   logDebug,
   logInfo,
   logWarn,
   logError,
-  logFatal,
   setLogLevel,
   getLogLevel,
-  setRequestId,
-  getRequestId,
-  clearRequestId,
   maskSensitiveData,
   setupLogger,
   type LogLevel,

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The TypeScript SDK provides comprehensive logging with support for multiple log levels, automatic sensitive data masking, and RequestID tracking for correlating log messages.
+The TypeScript SDK provides comprehensive logging with support for multiple log levels and automatic sensitive data masking.
 
 ## Setting Log Level
 
@@ -53,12 +53,10 @@ const level = getLogLevel();
 
 | Level | Use Case |
 |-------|----------|
-| **TRACE** | Very detailed diagnostic information |
-| **DEBUG** | Detailed information for debugging |
+| **DEBUG** | Development - see everything |
 | **INFO** | Default - important events |
 | **WARN** | Issues but not failures |
-| **ERROR** | Failures |
-| **FATAL** | System is unusable |
+| **ERROR** | Only failures |
 
 Filter rule: **Only logs at your level or HIGHER severity are shown**.
 
@@ -68,7 +66,6 @@ Filter rule: **Only logs at your level or HIGHER severity are shown**.
 
 ```typescript
 import {
-    logTrace,
     logDebug,
     logInfo,
     logWarn,
@@ -81,28 +78,74 @@ logWarn('Warning message');
 logError('Error message');
 ```
 
-### RequestID Tracking
+## File Logging
 
-Track related log messages with RequestID:
+The TypeScript SDK supports logging to files with automatic rotation.
+
+### Basic File Logging
 
 ```typescript
-import {
-    setRequestId,
-    getRequestId,
-    clearRequestId,
-    logInfo
-} from '@aliyun/wuying-agentbay-sdk';
+import { setupLogger } from '@aliyun/wuying-agentbay-sdk';
 
-// Set RequestID for correlation
-setRequestId('req-12345-xyz');
-logInfo('Processing request'); // Will include RequestID
+// Configure file logging
+setupLogger({
+    level: 'DEBUG',
+    logFile: '/path/to/app.log'
+});
+```
 
-// Get current RequestID
-const id = getRequestId();
+### File Rotation
 
-// Clear RequestID
-clearRequestId();
-logInfo('After clearing'); // No RequestID
+Configure automatic log file rotation when the file reaches a certain size:
+
+```typescript
+import { setupLogger } from '@aliyun/wuying-agentbay-sdk';
+
+setupLogger({
+    level: 'DEBUG',
+    logFile: '/var/log/myapp.log',
+    maxFileSize: '100 MB'  // Rotate when file reaches 100 MB
+});
+```
+
+Supported size units:
+- `KB` - Kilobytes
+- `MB` - Megabytes (default)
+- `GB` - Gigabytes
+
+Default max file size is 10 MB if not specified. When rotation occurs, the current log file is renamed to `<filename>.1`.
+
+### Console and File Logging
+
+You can control whether logs are written to console and/or file:
+
+```typescript
+import { setupLogger } from '@aliyun/wuying-agentbay-sdk';
+
+// Log to file only (disable console output)
+setupLogger({
+    level: 'DEBUG',
+    logFile: '/var/log/app.log',
+    enableConsole: false
+});
+
+// Log to both console and file (default)
+setupLogger({
+    level: 'DEBUG',
+    logFile: '/var/log/app.log',
+    enableConsole: true
+});
+```
+
+### LoggerConfig Options
+
+```typescript
+interface LoggerConfig {
+  level?: LogLevel;           // Log level: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR'
+  logFile?: string;           // Path to log file (undefined = no file logging)
+  maxFileSize?: string;       // Max file size before rotation (e.g., "10 MB", "100 MB", "1 GB")
+  enableConsole?: boolean;    // Enable/disable console output (default: true)
+}
 ```
 
 ## Sensitive Data Masking
@@ -177,19 +220,6 @@ npx ts-node test.ts
 
 **Production (problems only)**:
 ```bash
-export LOG_LEVEL=WARN
+export LOG_LEVEL=ERROR
 node dist/index.js
-```
-
-**With RequestID tracking**:
-```typescript
-import { setRequestId, logInfo } from '@aliyun/wuying-agentbay-sdk';
-
-setRequestId('req-user-123');
-logInfo('Processing user request');
-
-setRequestId('req-order-456');
-logInfo('Processing order');
-
-// Check logs to see request correlation
 ```
