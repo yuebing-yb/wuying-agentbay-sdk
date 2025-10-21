@@ -77,9 +77,9 @@ func main() {
 
 **Additional Resources:**
 - [📖 Feature Guides](../docs/guides/README.md) - Complete feature introduction
-- [🔧 Golang API Reference](docs/api/README.md) - Detailed API documentation
-- [💻 Golang Examples](docs/examples/README.md) - Complete example code
-
+- [🔧 Go API Reference](docs/api/README.md) - Detailed API documentation
+- [💻 Go Examples](docs/examples/README.md) - Complete example code
+- [📋 Logging Configuration](../docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
 
 ## 🔧 Core Features Quick Reference
 
