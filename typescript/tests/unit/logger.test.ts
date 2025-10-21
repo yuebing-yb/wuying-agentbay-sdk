@@ -16,7 +16,6 @@ import {
   clearRequestId,
   setLogLevel,
   getLogLevel,
-  setApiLogging,
 } from "../../src/utils/logger";
 
 describe("Logger", () => {
@@ -27,14 +26,12 @@ describe("Logger", () => {
     stdoutWriteStub = sinon.stub(process.stdout, "write");
     stderrWriteStub = sinon.stub(process.stderr, "write");
     setLogLevel('DEBUG');
-    setApiLogging(true);
   });
 
   afterEach(() => {
     sinon.restore();
     clearRequestId();
     setLogLevel('INFO');
-    setApiLogging(true);
   });
 
   describe("Basic Logging Functions", () => {
@@ -352,24 +349,17 @@ describe("Logger", () => {
     });
   });
 
-  describe("API Logging Control", () => {
-    it("should disable API logging when setApiLogging(false)", () => {
-      setApiLogging(false);
-      logAPICall("TestAPI");
-      expect(stdoutWriteStub.called).to.be.false;
-    });
-
-    it("should enable API logging when setApiLogging(true)", () => {
-      setApiLogging(true);
-      logAPICall("TestAPI");
-      expect(stdoutWriteStub.called).to.be.true;
-    });
-
-    it("should respect log level even when API logging is enabled", () => {
-      setApiLogging(true);
+  describe("API Logging with Log Level", () => {
+    it("should respect log level for API logging", () => {
       setLogLevel('ERROR');
       logAPICall("TestAPI");
       expect(stdoutWriteStub.called).to.be.false;
+    });
+
+    it("should log API calls at INFO level", () => {
+      setLogLevel('INFO');
+      logAPICall("TestAPI");
+      expect(stdoutWriteStub.called).to.be.true;
     });
   });
 });

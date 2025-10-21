@@ -9,21 +9,35 @@ The TypeScript SDK provides comprehensive logging with support for multiple log 
 ### Priority System (Highest to Lowest)
 
 1. **Code-level setup** - `setLogLevel()` can be called after import
-2. **Environment variables** - `LOG_LEVEL` (MUST be set BEFORE import)
-3. **Default values** - INFO level
+2. **Environment variables** - `LOG_LEVEL` or `AGENTBAY_LOG_LEVEL`
+3. **.env file** - Automatically loaded from current directory or parent directories
+4. **Default values** - INFO level
 
-### Method 1: Environment Variable (Must be BEFORE Import)
+### Method 1: Environment Variable
 
-Set environment variables BEFORE your code runs:
+**Option A: Using .env File (Recommended)**
+
+Create a `.env` file in your project root:
+
+```
+# .env file
+LOG_LEVEL=DEBUG
+# or
+AGENTBAY_LOG_LEVEL=DEBUG
+```
+
+The SDK automatically loads `.env` files from the current directory or parent directories.
+
+**Option B: Command Line Environment Variable**
+
+Set environment variables when running your script:
 
 ```bash
 export LOG_LEVEL=DEBUG
 npx ts-node script.ts
 ```
 
-**Critical**: Environment variables are read at module import time. Setting them after import has NO effect.
-
-### Method 2: Code-Level Setup (After Import)
+### Method 2: Code-Level Setup
 
 ```typescript
 import { setLogLevel, getLogLevel } from '@aliyun/wuying-agentbay-sdk';
@@ -33,17 +47,6 @@ setLogLevel('DEBUG');
 
 // Check current level
 const level = getLogLevel();
-```
-
-### Method 3: Set in Entry Point BEFORE Import
-
-```typescript
-// MUST be before import
-process.env.LOG_LEVEL = 'DEBUG';
-
-import { setLogLevel } from '@aliyun/wuying-agentbay-sdk';
-// Now this works with the environment variable value
-setLogLevel('DEBUG');
 ```
 
 ## Log Levels
@@ -102,29 +105,6 @@ clearRequestId();
 logInfo('After clearing'); // No RequestID
 ```
 
-## API Logging
-
-### Enable/Disable API Logging
-
-```typescript
-import {
-    setApiLogging
-} from '@aliyun/wuying-agentbay-sdk';
-
-// Enable API logging
-setApiLogging(true);
-
-// Disable API logging
-setApiLogging(false);
-```
-
-### Environment Variable
-
-```bash
-export ENABLE_API_LOGGING=true
-npx ts-node script.ts
-```
-
 ## Sensitive Data Masking
 
 The SDK automatically masks sensitive information:
@@ -155,24 +135,31 @@ Custom fields can be masked by passing them as parameters:
 const masked = maskSensitiveData(data, ['custom_secret', 'ssn']);
 ```
 
-## Important: Environment Variable Timing
+## Environment Variable Support
 
-### Why TypeScript Cannot Use AGENTBAY_LOG_LEVEL
+The TypeScript SDK supports both `LOG_LEVEL` and `AGENTBAY_LOG_LEVEL` environment variables for configuration.
 
-TypeScript reads environment variables at **module import time**, not at runtime. This is a JavaScript/Node.js limitation:
+### .env File Auto-Loading
 
-```typescript
-// ❌ This does NOT work:
-process.env.LOG_LEVEL = 'DEBUG';  // Set after import starts
-import { getLogLevel } from '@aliyun/wuying-agentbay-sdk';
-console.log(getLogLevel());  // Still INFO, not DEBUG
+The SDK automatically searches for and loads `.env` files from:
+1. Current working directory
+2. Parent directories (recursive search up to root)
+3. Git repository root (if found)
 
-// ✅ This DOES work:
-// Set environment variable BEFORE Node.js starts:
-// $ LOG_LEVEL=DEBUG npx ts-node script.ts
+**Example `.env` file:**
+
+```
+# Logging configuration
+LOG_LEVEL=DEBUG
+
+# Or use the prefixed version
+AGENTBAY_LOG_LEVEL=DEBUG
+
+# API configuration
+AGENTBAY_API_KEY=your_api_key_here
 ```
 
-The environment variable is read during module initialization. After the module is loaded, changing the environment variable has no effect.
+The SDK loads the `.env` file automatically on import, so you don't need any additional configuration code.
 
 ## Quick Reference
 

@@ -98,8 +98,9 @@ class AgentBayLogger:
         log_file: Optional[Union[str, Path]] = None,
         enable_console: bool = True,
         enable_file: bool = True,
-        rotation: str = "10 MB",
+        rotation: Optional[str] = None,
         retention: str = "30 days",
+        max_file_size: Optional[str] = None,
         colorize: Optional[bool] = None,
         force_reinit: bool = True
     ) -> None:
@@ -115,14 +116,15 @@ class AgentBayLogger:
             log_file: Path to log file (optional)
             enable_console: Whether to enable console logging
             enable_file: Whether to enable file logging
-            rotation: Log file rotation size
+            rotation: Log file rotation size (deprecated, use max_file_size)
             retention: Log file retention period
+            max_file_size: Maximum log file size before rotation (e.g., "10 MB", "100 MB")
             colorize: Whether to use colors in console output (None = auto-detect)
             force_reinit: Force reinitialization even if already initialized (default: False)
 
         Example:
             >>> from agentbay.logger import AgentBayLogger
-            >>> AgentBayLogger.setup(level="DEBUG", force_reinit=True)
+            >>> AgentBayLogger.setup(level="DEBUG", max_file_size="10 MB")
         """
         # Automatically reset if already initialized and force_reinit is True
         if cls._initialized and force_reinit:
@@ -175,9 +177,12 @@ class AgentBayLogger:
                 # Default log file path in python/ directory
                 current_dir = Path(__file__).parent.parent  # Go up from agentbay/ to python/
                 cls._log_file = current_dir / "agentbay.log"
-            
+
             cls._log_file.parent.mkdir(parents=True, exist_ok=True)
-            
+
+            # Priority: max_file_size > rotation > default
+            file_rotation = max_file_size if max_file_size is not None else (rotation if rotation is not None else "10 MB")
+
             file_format = (
                 "{time:YYYY-MM-DD HH:mm:ss.SSS} | "
                 "AgentBay | "
@@ -186,13 +191,13 @@ class AgentBayLogger:
                 "{name}:{function}:{line} | "
                 "{message}"
             )
-            
+
             logger.add(
                 str(cls._log_file),
                 format=file_format,
                 level=cls._log_level,
                 colorize=False,
-                rotation=rotation,
+                rotation=file_rotation,
                 retention=retention,
                 backtrace=True,
                 diagnose=True

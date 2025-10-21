@@ -1,3 +1,6 @@
+// IMPORTANT: Load config first to ensure .env file is loaded before logger initialization
+export { loadConfig, loadDotEnv, type Config } from "./config";
+
 // Export all public classes and interfaces
 export { AgentBay, type CreateSessionParams} from "./agent-bay";
 export * from "./agent";
@@ -30,8 +33,8 @@ export {
   setRequestId,
   getRequestId,
   clearRequestId,
-  setApiLogging,
   maskSensitiveData,
-  type LogLevel
+  setupLogger,
+  type LogLevel,
+  type LoggerConfig
 } from "./utils/logger";
-export { loadConfig, loadDotEnv, type Config } from "./config";

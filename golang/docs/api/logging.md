@@ -10,9 +10,26 @@ The Go SDK provides simple and efficient logging with support for multiple log l
 
 1. **Code-level setup** - `agentbay.SetLogLevel()` can be called at any time
 2. **Environment variables** - `AGENTBAY_LOG_LEVEL`
-3. **Default values** - INFO level
+3. **.env file** - Automatically loaded from current directory or parent directories
+4. **Default values** - INFO level
 
 ### Method 1: Environment Variable
+
+**Option A: Using .env File (Recommended)**
+
+Create a `.env` file in your project root:
+
+```
+# .env file
+AGENTBAY_LOG_LEVEL=DEBUG
+```
+
+The SDK automatically searches for and loads `.env` files from:
+- Current working directory
+- Parent directories (recursive search up to root)
+- Git repository root (if found)
+
+**Option B: Command Line Environment Variable**
 
 Set before running your program:
 
