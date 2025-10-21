@@ -155,16 +155,6 @@ Custom fields can be masked by passing them as parameters:
 const masked = maskSensitiveData(data, ['custom_secret', 'ssn']);
 ```
 
-## Color Detection
-
-The SDK automatically detects terminal capabilities and applies colors when appropriate:
-
-1. Check DISABLE_COLORS environment variable (disable if "1")
-2. Check FORCE_COLOR environment variable (enable if set)
-3. TTY detection
-4. IDE environment detection (VS Code, WebStorm, etc.)
-5. Default to no colors (safe for files, CI/CD)
-
 ## Important: Environment Variable Timing
 
 ### Why TypeScript Cannot Use AGENTBAY_LOG_LEVEL
