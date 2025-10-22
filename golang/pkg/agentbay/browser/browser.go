@@ -1,6 +1,7 @@
 package browser
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -254,11 +255,24 @@ func (o *BrowserOption) ToMap() map[string]interface{} {
 // SessionInterface defines a minimal interface for Browser to interact with Session
 // This interface allows us to avoid circular dependencies while still accessing
 // necessary Session methods
+// LinkResult represents the result of GetLink call
+type LinkResult struct {
+	Link string
+}
+
+// McpToolResult represents the result of CallMcpTool call
+type McpToolResult struct {
+	Success      bool
+	Data         string
+	ErrorMessage string
+}
+
+// SessionInterface defines the interface that Session must implement for Browser
 type SessionInterface interface {
 	GetAPIKey() string
 	GetSessionID() string
-	CallMcpTool(toolName string, args interface{}) (interface{}, error) // Simplified signature
-	GetLink(protocolType *string, port *int32) (interface{}, error)     // Simplified signature
+	CallMcpToolForBrowser(toolName string, args interface{}) (*McpToolResult, error)
+	GetLinkForBrowser(protocolType *string, port *int32, options *string) (*LinkResult, error)
 	IsVPCEnabled() bool
 	GetNetworkInterfaceIP() string
 	GetHttpPortNumber() string
@@ -303,19 +317,14 @@ func (b *Browser) GetEndpointURL() (string, error) {
 	}
 
 	// For non-VPC mode, fetch the CDP URL
-	result, err := b.session.GetLink(nil, nil)
+	result, err := b.session.GetLinkForBrowser(nil, nil, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to get endpoint URL from session: %w", err)
 	}
 	
-	// Type assert the result to extract the Link field
-	// The actual type will be *LinkResult from session
-	if linkResult, ok := result.(interface{ Link string }); ok {
-		b.endpointURL = linkResult.Link
-		return b.endpointURL, nil
-	}
-	
-	return "", errors.New("failed to extract link from session response")
+	// Extract the Link from the result
+	b.endpointURL = result.Link
+	return b.endpointURL, nil
 }
 
 // Initialize initializes the browser instance with the given options.
@@ -342,24 +351,27 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	}
 
 	// Call the MCP tool to initialize browser
-	result, err := b.session.CallMcpTool("initBrowser", requestArgs)
+	result, err := b.session.CallMcpToolForBrowser("initBrowser", requestArgs)
 	if err != nil {
 		return false, fmt.Errorf("failed to initialize browser: %w", err)
 	}
 
-	// Type assert the result to extract success and data
-	// The actual type will be *models.McpToolResult from session
-	if toolResult, ok := result.(interface {
-		Success bool
-		Data    string
-	}); ok {
-		if toolResult.Success {
-			b.initialized = true
-			b.option = option
-			return true, nil
-		}
-		return false, fmt.Errorf("browser initialization failed")
+	// Check if the MCP tool call was successful
+	if !result.Success {
+		return false, fmt.Errorf("browser initialization failed: %s", result.ErrorMessage)
 	}
 
-	return false, errors.New("browser initialization failed: unexpected response type")
+	// Parse the Data field (which is a JSON string) to check for Port
+	if result.Data != "" {
+		var data map[string]interface{}
+		if err := json.Unmarshal([]byte(result.Data), &data); err == nil {
+			if _, hasPort := data["Port"]; hasPort {
+				b.initialized = true
+				b.option = option
+				return true, nil
+			}
+		}
+	}
+
+	return false, errors.New("browser initialization failed: no port in response")
 }

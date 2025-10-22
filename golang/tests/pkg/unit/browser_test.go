@@ -1,11 +1,10 @@
-package unit
+package agentbay_test
 
 import (
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBrowserOption_NewBrowserOption(t *testing.T) {
@@ -323,12 +322,17 @@ func (m *mockSessionForBrowser) GetSessionID() string {
 	return "test-session-id"
 }
 
-func (m *mockSessionForBrowser) CallMcpTool(toolName string, args interface{}) (interface{}, error) {
-	return nil, nil
+func (m *mockSessionForBrowser) CallMcpToolForBrowser(toolName string, args interface{}) (*browser.McpToolResult, error) {
+	return &browser.McpToolResult{
+		Success: true,
+		Data:    "{}",
+	}, nil
 }
 
-func (m *mockSessionForBrowser) GetLink(protocolType *string, port *int32) (interface{}, error) {
-	return nil, nil
+func (m *mockSessionForBrowser) GetLinkForBrowser(protocolType *string, port *int32, options *string) (*browser.LinkResult, error) {
+	return &browser.LinkResult{
+		Link: "ws://localhost:9222",
+	}, nil
 }
 
 func (m *mockSessionForBrowser) IsVPCEnabled() bool {

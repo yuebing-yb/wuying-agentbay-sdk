@@ -3,7 +3,6 @@ package integration
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
@@ -19,9 +18,7 @@ func TestBrowser_Initialize_Integration(t *testing.T) {
 	}
 
 	// Create AgentBay client
-	agentBay, err := agentbay.NewAgentBay(&agentbay.Config{
-		APIKey: apiKey,
-	})
+	agentBay, err := agentbay.NewAgentBay(apiKey)
 	require.NoError(t, err)
 	require.NotNil(t, agentBay)
 
@@ -76,9 +73,7 @@ func TestBrowser_InitializeWithChrome_Integration(t *testing.T) {
 	}
 
 	// Create AgentBay client
-	agentBay, err := agentbay.NewAgentBay(&agentbay.Config{
-		APIKey: apiKey,
-	})
+	agentBay, err := agentbay.NewAgentBay(apiKey)
 	require.NoError(t, err)
 	require.NotNil(t, agentBay)
 
@@ -127,9 +122,7 @@ func TestBrowser_InitializeWithCustomOptions_Integration(t *testing.T) {
 	}
 
 	// Create AgentBay client
-	agentBay, err := agentbay.NewAgentBay(&agentbay.Config{
-		APIKey: apiKey,
-	})
+	agentBay, err := agentbay.NewAgentBay(apiKey)
 	require.NoError(t, err)
 	require.NotNil(t, agentBay)
 
@@ -191,9 +184,7 @@ func TestBrowser_InitializeAlreadyInitialized_Integration(t *testing.T) {
 	}
 
 	// Create AgentBay client
-	agentBay, err := agentbay.NewAgentBay(&agentbay.Config{
-		APIKey: apiKey,
-	})
+	agentBay, err := agentbay.NewAgentBay(apiKey)
 	require.NoError(t, err)
 	require.NotNil(t, agentBay)
 
@@ -246,9 +237,7 @@ func TestBrowser_GetEndpointURLBeforeInitialization_Integration(t *testing.T) {
 	}
 
 	// Create AgentBay client
-	agentBay, err := agentbay.NewAgentBay(&agentbay.Config{
-		APIKey: apiKey,
-	})
+	agentBay, err := agentbay.NewAgentBay(apiKey)
 	require.NoError(t, err)
 	require.NotNil(t, agentBay)
 
@@ -295,9 +284,7 @@ func TestBrowser_VPCMode_Integration(t *testing.T) {
 	}
 
 	// Create AgentBay client
-	agentBay, err := agentbay.NewAgentBay(&agentbay.Config{
-		APIKey: apiKey,
-	})
+	agentBay, err := agentbay.NewAgentBay(apiKey)
 	require.NoError(t, err)
 	require.NotNil(t, agentBay)
 

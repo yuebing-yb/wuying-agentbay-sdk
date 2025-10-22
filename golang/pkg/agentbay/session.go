@@ -223,6 +223,36 @@ func (s *Session) GetHttpPortNumber() string {
 	return s.HttpPortNumber
 }
 
+// Wrapper methods for browser.SessionInterface compatibility
+
+// CallMcpTool is a wrapper that converts the result to browser.McpToolResult
+func (s *Session) CallMcpToolForBrowser(toolName string, args interface{}) (*browser.McpToolResult, error) {
+	result, err := s.CallMcpTool(toolName, args)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Convert models.McpToolResult to browser.McpToolResult
+	return &browser.McpToolResult{
+		Success:      result.Success,
+		Data:         result.Data,
+		ErrorMessage: result.ErrorMessage,
+	}, nil
+}
+
+// GetLinkForBrowser is a wrapper that converts the result to browser.LinkResult
+func (s *Session) GetLinkForBrowser(protocolType *string, port *int32, options *string) (*browser.LinkResult, error) {
+	result, err := s.GetLink(protocolType, port, options)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Convert LinkResult to browser.LinkResult
+	return &browser.LinkResult{
+		Link: result.Link,
+	}, nil
+}
+
 // GetCommand returns the command handler for this session.
 func (s *Session) GetCommand() *command.Command {
 	return s.Command

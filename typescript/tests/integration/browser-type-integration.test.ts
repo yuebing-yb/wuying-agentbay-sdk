@@ -73,7 +73,7 @@ describe("Browser Type - Integration Tests", () => {
       
       // Create browser option with Chrome type
       const browserOption = {
-        browserType: "chrome"
+        browserType: "chrome" as "chrome"
       };
       
       // Verify browser type is set correctly
@@ -101,7 +101,7 @@ describe("Browser Type - Integration Tests", () => {
       
       // Create browser option with explicit Chromium type
       const browserOption = {
-        browserType: "chromium"
+        browserType: "chromium" as "chromium"
       };
       
       // Verify browser type is set correctly
@@ -129,7 +129,7 @@ describe("Browser Type - Integration Tests", () => {
       
       // Create browser option with Chrome type and other options
       const browserOption = {
-        browserType: "chrome",
+        browserType: "chrome" as "chrome",
         useStealth: true,
         userAgent: "Mozilla/5.0 (Test) AppleWebKit/537.36",
         solveCaptchas: true
@@ -236,7 +236,7 @@ describe("Browser Type - Integration Tests", () => {
       try {
         // Test Chrome browser type with standard image (should still work)
         const browserOption = {
-          browserType: "chrome"
+          browserType: "chrome" as "chrome"
         };
         
         log("Initializing browser with Chrome type on standard image...");
@@ -268,7 +268,7 @@ describe("Browser Type - Integration Tests", () => {
       log("=== Testing multiple browser type initializations ===");
       
       // Test that we can initialize with different browser types
-      const browserTypes = ["chrome", "chromium"];
+      const browserTypes: ("chrome" | "chromium")[] = ["chrome", "chromium"];
       
       for (const browserType of browserTypes) {
         log(`Testing browser type: ${browserType}`);
@@ -323,7 +323,7 @@ describe("Browser Type - Integration Tests", () => {
       log("=== Testing browser type with viewport and screen options ===");
       
       const browserOption = {
-        browserType: "chrome",
+        browserType: "chrome" as "chrome",
         viewport: {
           width: 1920,
           height: 1080

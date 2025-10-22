@@ -11,11 +11,9 @@ import (
 
 func TestSession_BrowserIntegration(t *testing.T) {
 	// Create a mock AgentBay instance
-	config := &agentbay.Config{
-		APIKey: "test-api-key",
-	}
+	apiKey := "test-api-key"
 	
-	ab, err := agentbay.NewAgentBay(config)
+	ab, err := agentbay.NewAgentBay(apiKey)
 	require.NoError(t, err)
 	require.NotNil(t, ab)
 

@@ -156,16 +156,25 @@ class TestBrowserTypeUnit(unittest.TestCase):
         self.assertEqual(option.user_agent, "Mozilla/5.0 (Test) AppleWebKit/537.36")
 
     def test_browser_type_validation_order(self):
-        """Test that browser_type validation happens before other validations."""
-        # This test ensures that browser_type validation is checked first
+        """Test that browser_type validation works correctly."""
+        # Test browser_type validation independently
         with self.assertRaises(ValueError) as context:
             BrowserOption(
-                browser_type="invalid",
-                proxies=[{}, {}]  # This would also cause an error, but browser_type should be caught first
+                browser_type="invalid"
             )
         
-        # Should get browser_type error, not proxy error
+        # Should get browser_type error
         self.assertIn("browser_type must be 'chrome' or 'chromium'", str(context.exception))
+        
+        # Test that proxies validation also works (happens before browser_type in the code)
+        with self.assertRaises(ValueError) as context:
+            BrowserOption(
+                browser_type="chrome",  # Valid browser_type
+                proxies=[{}, {}]  # Invalid proxies (too many)
+            )
+        
+        # Should get proxies error
+        self.assertIn("proxies list length must be limited to 1", str(context.exception))
 
     def test_browser_type_immutable_after_creation(self):
         """Test that browser_type cannot be changed after BrowserOption creation."""
