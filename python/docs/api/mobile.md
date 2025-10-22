@@ -393,6 +393,69 @@ if session_result.success:
 
 ```
 
+## Mobile Configuration and Connectivity
+
+### get_adb_url()
+
+Retrieves the ADB connection URL for the mobile environment. This method is only supported in mobile environments using the `mobile_latest` image.
+
+The method requires an ADB public key for authentication and returns the ADB connection URL that can be used with the `adb connect` command.
+
+```python
+get_adb_url(adbkey_pub: str) -> AdbUrlResult
+```
+
+**Parameters:**
+- `adbkey_pub` (str): The ADB public key for connection authentication. This is typically a base64-encoded string obtained from your ADB setup.
+
+**Returns:**
+- `AdbUrlResult`: Result object containing:
+  - `success` (bool): Whether the operation was successful
+  - `data` (str): The ADB connection URL in format "adb connect <IP>:<Port>" on success, None on failure
+  - `request_id` (str): Unique identifier for the API request
+  - `error_message` (str): Error message if the operation failed
+
+**Raises:**
+- `SessionError`: May be raised for unexpected errors during the operation
+
+**Environment Requirements:**
+- This method **only works** with `mobile_latest` image
+- Calling on other environments (e.g., `browser_latest`) will return an error
+
+**Example:**
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+# Create a mobile session
+agent_bay = AgentBay(api_key="your_api_key")
+params = CreateSessionParams(image_id="mobile_latest")
+session_result = agent_bay.create(params)
+session = session_result.session
+
+# Get ADB URL with public key
+adbkey_pub = "QAAAAM0muSn7yQCYRGkiXUXONYu35uaz8f2btkbjh07lNAHTRfTlvzeUXoqvoAgHyKhVGk+4exvjH9ml5kOUxY7LUEQ+a43zBkKtKPpLBMvgPZHYxvcdUnwQK2DOWlwUldZWwjXXGXav0vuioe7HHvkTc/LINIoeqJ//dkOzQehUdW0IOnzEm9v7MQhoSofsVxR3I2hmR012+EBWCzpqCS5h/WzoDJdnBCcxpMZMKDjYAxha8I50lOqpkdlNk0lTJRWt3TW5BopsRhK7tiK3IN4UH7wevhEeLQ7ahGuTZDFn9MXKOlv2nttOQouW2Xpv+3rxAUZcesqQM40TssSWn2mi7FZ28A65iuM3DSm4HxkVi3NiU99r4C0DUyDvrcmBq+hW7OAFeqKNctez/vFd25KNLoyjtRXjR9hkAiT3LgyMg2Wh/SRUJxHEdYjCibm9yi3Hs8sYuP9NVzjD8tXf/ePM31BWmDen/7HTMXRLGHkzWAhtNRmR9cbyt6ImRHvY0f2SPT/7n0uNo3TKHj+muQBOGSReJKKoEXZ0bcZgA5Z2Us/iW5gcLhh0mr5r0B1Kdz9aSNgbCygZXDMtl7lndBwEZ4wwgAKWY9rDfm58fIlQYwSzx4vosVIxI7ZbXuQx2ONKe7P46Aakeu1yzuQeFnuDGvuJmVK6JuV2/bDFHvvj8fotRA8JeQEAAQA="
+
+result = session.mobile.get_adb_url(adbkey_pub)
+# Verified: success=True, returns ADB connection URL
+
+if result.success:
+    print(f"ADB URL: {result.data}")
+    # Example output: "adb connect 47.99.76.99:54848"
+    print(f"Request ID: {result.request_id}")
+else:
+    print(f"Error: {result.error_message}")
+
+# Clean up
+agent_bay.delete(session)
+```
+
+**Notes:**
+1. The `adbkey_pub` parameter should be a valid ADB public key from your setup
+2. The returned URL can be used directly with the `adb connect` command
+3. This method is exclusive to mobile environments; using other images will result in an error
+4. Each call includes a `request_id` for tracking and debugging purposes
+
 ## Usage Notes
 
 1. **Session Image**: Always use `image_id="mobile_latest"` when creating sessions for mobile automation.

@@ -659,6 +659,8 @@ class Client(OpenApiClient):
             body["ProtocolType"] = request.protocol_type
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
+        if not DaraCore.is_null(request.options):
+            body["Option"] = request.options
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="GetLink",
@@ -690,6 +692,8 @@ class Client(OpenApiClient):
             body["ProtocolType"] = request.protocol_type
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
+        if not DaraCore.is_null(request.options):
+            body["Option"] = request.options
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="GetLink",

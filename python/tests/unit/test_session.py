@@ -379,6 +379,7 @@ class TestSession(unittest.TestCase):
             session_id="test_session_id",
             protocol_type=None,
             port=None,
+            options=None,
         )
         self.agent_bay.client.get_link.assert_called_once_with(mock_request)
 
@@ -423,6 +424,7 @@ class TestSession(unittest.TestCase):
                     session_id="test_session_id",
                     protocol_type=None,
                     port=port,
+                    options=None,
                 )
                 self.agent_bay.client.get_link.assert_called_once_with(mock_request)
 
@@ -482,6 +484,79 @@ class TestSession(unittest.TestCase):
                 error_message = str(context.exception)
                 expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
                 self.assertEqual(error_message, expected_message)
+
+    def test_get_link_with_options_parameter(self):
+        """Test get_link accepts options parameter without raising error."""
+        # Mock the client
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "RequestId": "request-123",
+                "Data": {"Url": "adb connect 47.99.76.99:54848"}
+            }
+        }
+
+        self.session.agent_bay.client.get_link.return_value = mock_response
+
+        # Call get_link with options parameter
+        options_json = '{"adbkey_pub": "test_key"}'
+        result = self.session.get_link(protocol_type="adb", options=options_json)
+
+        # Verify the result
+        self.assertTrue(result.success)
+        self.assertEqual(result.data, "adb connect 47.99.76.99:54848")
+
+    def test_get_link_passes_options_to_request(self):
+        """Test that get_link passes options parameter to GetLinkRequest."""
+        # Mock the client
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "RequestId": "request-123",
+                "Data": {"Url": "adb connect 47.99.76.99:54848"}
+            }
+        }
+
+        self.session.agent_bay.client.get_link.return_value = mock_response
+
+        # Call get_link with options
+        options_json = '{"adbkey_pub": "test_key"}'
+        result = self.session.get_link(protocol_type="adb", options=options_json)
+
+        # Verify that get_link was called
+        self.session.agent_bay.client.get_link.assert_called_once()
+
+        # Get the request that was passed to get_link
+        call_args = self.session.agent_bay.client.get_link.call_args
+        request = call_args[0][0]  # First positional argument
+
+        # Verify the request has the options field
+        self.assertEqual(request.options, options_json)
+        self.assertEqual(request.protocol_type, "adb")
+
+    def test_get_link_adb_protocol_with_options(self):
+        """Test get_link with adb protocol type and options."""
+        # Mock the client
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "RequestId": "adb-request-456",
+                "Data": {"Url": "adb connect 47.99.76.99:54848"}
+            }
+        }
+
+        self.session.agent_bay.client.get_link.return_value = mock_response
+
+        # Call get_link with adb protocol and options
+        options_json = '{"adbkey_pub": "QAAAAM0muSn7yQCY..."}'
+        result = self.session.get_link(protocol_type="adb", options=options_json)
+
+        # Verify success
+        self.assertTrue(result.success)
+        self.assertEqual(result.request_id, "adb-request-456")
+        # URL should contain adb connect pattern
+        self.assertIn("adb connect", result.data)
+
 
 class TestAgentBayDelete(unittest.TestCase):
     def setUp(self):

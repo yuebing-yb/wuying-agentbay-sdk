@@ -185,3 +185,40 @@ class TestSessionInfoAndLink(unittest.TestCase):
         # Verify the error message matches the expected format (same as TypeScript version)
         expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
         self.assertIn(expected_message, error_message)
+
+    def test_get_link_adb_protocol_returns_valid_url(self):
+        """Test session.get_link() with adb protocol type returns valid URL."""
+        self.assertIsNotNone(self.session, "Session was not created successfully.")
+        session: Session = typing.cast(Session, self.session)
+        print("Calling session.get_link() with adb protocol...")
+        result = session.get_link(protocol_type="adb")
+        self.assertTrue(result.success, "session.get_link(protocol_type='adb') did not succeed")
+        url = result.data
+        print(f"ADB URL: {url}")
+        self.assertIsInstance(url, str)
+        self.assertTrue(
+            url.startswith("adb connect"),
+            f"Returned ADB URL should start with 'adb connect', got: {url}",
+        )
+
+    def test_get_link_adb_with_options_returns_adb_url(self):
+        """Test session.get_link() with adb protocol and options parameter."""
+        self.assertIsNotNone(self.session, "Session was not created successfully.")
+        session: Session = typing.cast(Session, self.session)
+        
+        # Create options JSON with adbkey_pub
+        options_json = '{"adbkey_pub": "test_adb_key_value"}'
+        
+        print("Calling session.get_link() with adb protocol and options...")
+        result = session.get_link(protocol_type="adb", options=options_json)
+        
+        self.assertTrue(result.success, "session.get_link(protocol_type='adb', options=...) did not succeed")
+        url = result.data
+        print(f"ADB URL with options: {url}")
+        self.assertIsInstance(url, str)
+        self.assertTrue(
+            url.startswith("adb connect"),
+            f"Returned ADB URL should start with 'adb connect', got: {url}",
+        )
+        self.assertIsNotNone(result.request_id, "Request ID should not be None")
+        self.assertTrue(len(result.request_id) > 0, "Request ID should not be empty")

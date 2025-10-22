@@ -487,7 +487,7 @@ class Session:
             )
 
     def get_link(
-        self, protocol_type: Optional[str] = None, port: Optional[int] = None
+        self, protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None
     ) -> OperationResult:
         """
         Get a link associated with the current session.
@@ -496,6 +496,8 @@ class Session:
             protocol_type (Optional[str], optional): The protocol type to use for the
                 link. Defaults to None.
             port (Optional[int], optional): The port to use for the link. Must be an integer in the range [30100, 30199].
+                Defaults to None.
+            options (Optional[str], optional): Additional options as a JSON string (e.g., for adb configuration).
                 Defaults to None.
 
         Returns:
@@ -512,11 +514,19 @@ class Session:
                         f"Invalid port value: {port}. Port must be an integer in the range [30100, 30199]."
                     )
 
+            # Log API call with parameters
+            log_api_call(
+                "GetLink",
+                f"SessionId={self.session_id}, ProtocolType={protocol_type or 'default'}, "
+                f"Port={port or 'default'}, Options={'provided' if options else 'none'}"
+            )
+
             request = GetLinkRequest(
                 authorization=f"Bearer {self.get_api_key()}",
                 session_id=self.get_session_id(),
                 protocol_type=protocol_type,
                 port=port,
+                options=options,
             )
             response: GetLinkResponse = self.agent_bay.client.get_link(request)
 
@@ -566,11 +576,11 @@ class Session:
         except SessionError:
             raise
         except Exception as e:
-            logger.exception(f"❌ Failed to get link for session {self.session_id}")
+            logger.error(f"❌ Failed to get link for session {self.session_id}: {e}")
             raise SessionError(f"Failed to get link: {e}")
 
     async def get_link_async(
-        self, protocol_type: Optional[str] = None, port: Optional[int] = None
+        self, protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None
     ) -> OperationResult:
         """
         Asynchronously get a link associated with the current session.
@@ -579,6 +589,8 @@ class Session:
             protocol_type (Optional[str], optional): The protocol type to use for the
                 link. Defaults to None.
             port (Optional[int], optional): The port to use for the link. Must be an integer in the range [30100, 30199].
+                Defaults to None.
+            options (Optional[str], optional): Additional options as a JSON string (e.g., for adb configuration).
                 Defaults to None.
 
         Returns:
@@ -595,11 +607,19 @@ class Session:
                         f"Invalid port value: {port}. Port must be an integer in the range [30100, 30199]."
                     )
 
+            # Log API call with parameters
+            log_api_call(
+                "GetLink (async)",
+                f"SessionId={self.session_id}, ProtocolType={protocol_type or 'default'}, "
+                f"Port={port or 'default'}, Options={'provided' if options else 'none'}"
+            )
+
             request = GetLinkRequest(
                 authorization=f"Bearer {self.get_api_key()}",
                 session_id=self.get_session_id(),
                 protocol_type=protocol_type,
                 port=port,
+                options=options,
             )
             response: GetLinkResponse = await self.agent_bay.client.get_link_async(
                 request
@@ -651,7 +671,7 @@ class Session:
         except SessionError:
             raise
         except Exception as e:
-            logger.exception(f"❌ Failed to get link asynchronously for session {self.session_id}")
+            logger.error(f"❌ Failed to get link asynchronously for session {self.session_id}: {e}")
             raise SessionError(f"Failed to get link asynchronously: {e}")
 
     def list_mcp_tools(self, image_id: Optional[str] = None):
