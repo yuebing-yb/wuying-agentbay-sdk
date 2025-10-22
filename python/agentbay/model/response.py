@@ -241,8 +241,8 @@ class BoolResult(ApiResponse):
         self,
         request_id: str = "",
         success: bool = False,
-        error_message: str = "",
         data: Optional[bool] = None,
+        error_message: str = "",
     ):
         """
         Initialize a BoolResult.
@@ -252,14 +252,14 @@ class BoolResult(ApiResponse):
                 Defaults to "".
             success (bool, optional): Whether the operation was successful.
                 Defaults to False.
+            data (Optional[bool], optional): The boolean result data. Defaults to None.
             error_message (str, optional): Error message if the operation failed.
                 Defaults to "".
-            data (Optional[bool], optional): The boolean result data. Defaults to None.
         """
         super().__init__(request_id)
         self.success = success
-        self.error_message = error_message
         self.data = data
+        self.error_message = error_message
 
 
 class AdbUrlResult(ApiResponse):

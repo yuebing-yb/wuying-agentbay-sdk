@@ -12,7 +12,7 @@ The Mobile module provides comprehensive mobile UI automation capabilities for A
 The Mobile module is designed for automating Android mobile applications. It provides touch gestures, UI element discovery, application lifecycle management, and input control capabilities that are essential for mobile automation tasks.
 
 **Requirements:**
-- Session must be created with `mobile_latest` image
+- Session must be created with a mobile environment image (e.g., `mobile_latest`)
 - All methods use MCP (Model Context Protocol) tools under the hood
 
 ## Data Types
@@ -471,7 +471,7 @@ if screenshot.ErrorMessage == "" {
 
 Retrieves the ADB (Android Debug Bridge) connection URL for the mobile environment.
 
-**Important:** This method is only supported in mobile environments (`mobile_latest` image). Using other image types will result in an error.
+**Important:** This method is only supported in mobile environments. Using other environment types will result in an error.
 
 ```go
 func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult
@@ -525,7 +525,7 @@ result := session.Mobile.GetAdbUrl(adbkeyPub)
 if !result.Success {
     // Handle errors
     if strings.Contains(result.ErrorMessage, "mobile environment") {
-        fmt.Println("Error: This method requires a mobile_latest session")
+        fmt.Println("Error: This method requires a mobile environment session")
     } else {
         fmt.Printf("Error: %s\n", result.ErrorMessage)
     }
@@ -533,7 +533,7 @@ if !result.Success {
 ```
 
 **Requirements:**
-- Session must be created with `mobile_latest` image
+- Session must be created with a mobile environment image
 - Valid ADB public key is required for authentication
 - The returned URL format is: `adb connect <IP>:<Port>`
 
@@ -711,7 +711,7 @@ session.Mobile.Swipe(500, 500, 500, 500, 1000)
 
 ## Best Practices
 
-1. **Session Image**: Always use `mobile_latest` image for Mobile module operations
+1. **Session Image**: Always use a mobile environment image (e.g., `mobile_latest`) for Mobile module operations
 2. **Error Checking**: Check `ErrorMessage` field for operation results
 3. **Timeout Values**: Use appropriate timeout values for UI element discovery (typically 5000-10000ms)
 4. **Element Bounds**: Always check if `Bounds` is not nil before accessing coordinates

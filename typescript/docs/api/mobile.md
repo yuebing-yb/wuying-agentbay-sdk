@@ -9,7 +9,7 @@ The `Mobile` class provides mobile UI automation capabilities including touch op
 
 ## Overview
 
-The Mobile module is designed for mobile device automation tasks and requires sessions created with the `mobile_latest` image. It provides comprehensive mobile interaction capabilities through MCP tools.
+The Mobile module is designed for mobile device automation tasks and requires sessions created with a mobile environment image (e.g., `mobile_latest`). It provides comprehensive mobile interaction capabilities through MCP tools.
 
 ## Properties
 
@@ -423,7 +423,7 @@ async function mobileAutomationExample() {
 
 ## Important Notes
 
-1. **Image Requirement**: Mobile automation requires sessions created with `imageId: 'mobile_latest'`
+1. **Image Requirement**: Mobile automation requires sessions created with a mobile environment image (e.g., `imageId: 'mobile_latest'`)
 
 2. **Session Warmup**: Mobile sessions may need extra time (10+ seconds) to fully initialize before all APIs work properly.
 
@@ -466,7 +466,7 @@ Common Android key codes for use with `sendKey()`:
 
 Retrieves the ADB (Android Debug Bridge) connection URL for the mobile environment.
 
-**Important:** This method is only supported in mobile environments (`mobile_latest` image). Using other image types will result in an error.
+**Important:** This method is only supported in mobile environments. Using other environment types will result in an error.
 
 ```typescript
 async getAdbUrl(adbkeyPub: string): Promise<AdbUrlResult>
@@ -530,7 +530,7 @@ const result = await session.mobile.getAdbUrl(adbkeyPub);
 if (!result.success) {
     // Handle errors
     if (result.errorMessage.includes('mobile environment')) {
-        console.error('Error: This method requires a mobile_latest session');
+        console.error('Error: This method requires a mobile environment session');
     } else {
         console.error(`Error: ${result.errorMessage}`);
     }
@@ -538,7 +538,7 @@ if (!result.success) {
 ```
 
 **Requirements:**
-- Session must be created with `mobile_latest` image
+- Session must be created with a mobile environment image
 - Valid ADB public key is required for authentication
 - The returned URL format is: `adb connect <IP>:<Port>`
 

@@ -9,7 +9,7 @@ The `Mobile` class provides comprehensive mobile device UI automation operations
 
 ## Overview
 
-The `Mobile` class is available through `session.mobile` and is designed for use with Android mobile environments (use `image_id="mobile_latest"` when creating sessions).
+The `Mobile` class is available through `session.mobile` and is designed for use with Android mobile environments (use a mobile environment image such as `mobile_latest` when creating sessions).
 
 ## Constructor
 
@@ -397,7 +397,7 @@ if session_result.success:
 
 ### get_adb_url()
 
-Retrieves the ADB connection URL for the mobile environment. This method is only supported in mobile environments using the `mobile_latest` image.
+Retrieves the ADB connection URL for the mobile environment. This method is only supported in mobile environments.
 
 The method requires an ADB public key for authentication and returns the ADB connection URL that can be used with the `adb connect` command.
 
@@ -419,8 +419,8 @@ get_adb_url(adbkey_pub: str) -> AdbUrlResult
 - `SessionError`: May be raised for unexpected errors during the operation
 
 **Environment Requirements:**
-- This method **only works** with `mobile_latest` image
-- Calling on other environments (e.g., `browser_latest`) will return an error
+- This method **only works** with mobile environment images
+- Calling on other environments (e.g., browser or Linux environments) will return an error
 
 **Example:**
 ```python
@@ -458,7 +458,7 @@ agent_bay.delete(session)
 
 ## Usage Notes
 
-1. **Session Image**: Always use `image_id="mobile_latest"` when creating sessions for mobile automation.
+1. **Session Image**: Always use a mobile environment image (e.g., `mobile_latest`) when creating sessions for mobile automation.
 
 2. **Coordinates**: Mobile screen coordinates typically range based on the device resolution. Common Android emulator resolutions:
    - 1080x1920 (Full HD)
