@@ -137,6 +137,15 @@ if err != nil {
 
 - [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
 
+## 📞 Contact
+
+Welcome to visit our product website and join our community!
+
+- 🌐 **AgentBay International Website**: [https://www.alibabacloud.com/product/agentbay](https://www.alibabacloud.com/product/agentbay)  
+- 🇨🇳 **AgentBay China Website (Chinese)**: [https://www.aliyun.com/product/agentbay](https://www.aliyun.com/product/agentbay)  
+- 💬 **Discord Community**: [Join on Discord](https://discord.gg/kW55nTcT)  
+- 💼 **DingTalk Group**: [Click to join](https://qr.dingtalk.com/action/joingroup?code=v1,k1,ZlCDtu+p3xq2MqVoIA3nYrvEWA21Gq86N91t9OuythQ=&_dt_no_comment=1&origin=11)
+
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
