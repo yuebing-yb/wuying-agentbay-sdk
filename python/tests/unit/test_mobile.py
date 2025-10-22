@@ -346,7 +346,7 @@ class TestMobile:
         self.mobile.session.get_link = Mock(return_value=mock_result)
 
         # Act
-        adbkey_pub = "QAAAAM0muSn7yQCY..."
+        adbkey_pub = "test_adb_key..."
         result = self.mobile.get_adb_url(adbkey_pub)
 
         # Assert
@@ -370,7 +370,7 @@ class TestMobile:
         )
 
         # Act
-        adbkey_pub = "QAAAAM0muSn7yQCY..."
+        adbkey_pub = "test_adb_key..."
         result = self.mobile.get_adb_url(adbkey_pub)
 
         # Assert - Should return AdbUrlResult with success=False

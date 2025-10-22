@@ -7,12 +7,14 @@ export class GetLinkRequest extends $dara.Model {
   port?: number;
   protocolType?: string;
   sessionId?: string;
+  option?: string;
   static names(): { [key: string]: string } {
     return {
       authorization: 'Authorization',
       port: 'Port',
       protocolType: 'ProtocolType',
       sessionId: 'SessionId',
+      option: 'Option',
     };
   }
 
@@ -22,6 +24,7 @@ export class GetLinkRequest extends $dara.Model {
       port: 'number',
       protocolType: 'string',
       sessionId: 'string',
+      option: 'string',
     };
   }
 

@@ -548,7 +548,7 @@ class TestSession(unittest.TestCase):
         self.session.agent_bay.client.get_link.return_value = mock_response
 
         # Call get_link with adb protocol and options
-        options_json = '{"adbkey_pub": "QAAAAM0muSn7yQCY..."}'
+        options_json = '{"adbkey_pub": "test_adb_key..."}'
         result = self.session.get_link(protocol_type="adb", options=options_json)
 
         # Verify success

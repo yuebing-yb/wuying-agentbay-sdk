@@ -761,6 +761,10 @@ func (client *Client) GetLinkWithOptions(request *GetLinkRequest, runtime *dara.
 		body["SessionId"] = request.SessionId
 	}
 
+	if !dara.IsNil(request.Option) {
+		body["Option"] = request.Option
+	}
+
 	req := &openapiutil.OpenApiRequest{
 		Body: openapiutil.ParseToMap(body),
 	}

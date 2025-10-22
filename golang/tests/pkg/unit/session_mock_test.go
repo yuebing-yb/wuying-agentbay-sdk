@@ -146,10 +146,10 @@ func TestSession_GetLink_WithMockClient(t *testing.T) {
 	expectedResult := &agentbay.LinkResult{
 		Link: "https://example.com:30150",
 	}
-	mockSession.EXPECT().GetLink(&protocolType, &port).Return(expectedResult, nil)
+	mockSession.EXPECT().GetLink(&protocolType, &port, nil).Return(expectedResult, nil)
 
 	// Test GetLink method call
-	result, err := mockSession.GetLink(&protocolType, &port)
+	result, err := mockSession.GetLink(&protocolType, &port, nil)
 
 	// Verify call success
 	assert.NoError(t, err)
@@ -197,10 +197,10 @@ func TestSession_GetLink_ValidPortRange_WithMockClient(t *testing.T) {
 			expectedResult := &agentbay.LinkResult{
 				Link: tc.expectedLink,
 			}
-			mockSession.EXPECT().GetLink(&tc.protocolType, &tc.port).Return(expectedResult, nil)
+			mockSession.EXPECT().GetLink(&tc.protocolType, &tc.port, nil).Return(expectedResult, nil)
 
 			// Test GetLink method call
-			result, err := mockSession.GetLink(&tc.protocolType, &tc.port)
+			result, err := mockSession.GetLink(&tc.protocolType, &tc.port, nil)
 
 			// Verify call success
 			assert.NoError(t, err)
@@ -260,10 +260,10 @@ func TestSession_GetLink_InvalidPortRange_WithMockClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Set expected behavior - return error for invalid port
 			expectedErr := errors.New(tc.expectedErr)
-			mockSession.EXPECT().GetLink(&tc.protocolType, &tc.port).Return(nil, expectedErr)
+			mockSession.EXPECT().GetLink(&tc.protocolType, &tc.port, nil).Return(nil, expectedErr)
 
 			// Test GetLink method call
-			result, err := mockSession.GetLink(&tc.protocolType, &tc.port)
+			result, err := mockSession.GetLink(&tc.protocolType, &tc.port, nil)
 
 			// Verify error handling
 			assert.Error(t, err)
@@ -285,10 +285,10 @@ func TestSession_GetLink_NilPort_WithMockClient(t *testing.T) {
 	expectedResult := &agentbay.LinkResult{
 		Link: "https://example.com",
 	}
-	mockSession.EXPECT().GetLink(&protocolType, nil).Return(expectedResult, nil)
+	mockSession.EXPECT().GetLink(&protocolType, nil, nil).Return(expectedResult, nil)
 
 	// Test GetLink method call
-	result, err := mockSession.GetLink(&protocolType, nil)
+	result, err := mockSession.GetLink(&protocolType, nil, nil)
 
 	// Verify call success
 	assert.NoError(t, err)
@@ -409,10 +409,10 @@ func TestSession_GetLink_APIError_WithMockClient(t *testing.T) {
 	// Set expected behavior - return error
 	protocolType := "http"
 	port := int32(8080)
-	mockSession.EXPECT().GetLink(&protocolType, &port).Return(nil, assert.AnError)
+	mockSession.EXPECT().GetLink(&protocolType, &port, nil).Return(nil, assert.AnError)
 
 	// Test error case
-	result, err := mockSession.GetLink(&protocolType, &port)
+	result, err := mockSession.GetLink(&protocolType, &port, nil)
 
 	// Verify error handling
 	assert.Error(t, err)

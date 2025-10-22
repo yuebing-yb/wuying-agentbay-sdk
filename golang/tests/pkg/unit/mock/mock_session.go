@@ -112,18 +112,18 @@ func (mr *MockSessionInterfaceMockRecorder) GetLabels() *gomock.Call {
 }
 
 // GetLink mocks base method.
-func (m *MockSessionInterface) GetLink(arg0 *string, arg1 *int32) (*agentbay.LinkResult, error) {
+func (m *MockSessionInterface) GetLink(arg0 *string, arg1 *int32, arg2 *string) (*agentbay.LinkResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLink", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetLink", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*agentbay.LinkResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetLink indicates an expected call of GetLink.
-func (mr *MockSessionInterfaceMockRecorder) GetLink(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockSessionInterfaceMockRecorder) GetLink(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLink", reflect.TypeOf((*MockSessionInterface)(nil).GetLink), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLink", reflect.TypeOf((*MockSessionInterface)(nil).GetLink), arg0, arg1, arg2)
 }
 
 // GetSessionId mocks base method.
