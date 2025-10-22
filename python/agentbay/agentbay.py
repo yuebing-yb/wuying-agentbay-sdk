@@ -205,8 +205,7 @@ class AgentBay:
         )
 
         # Store image_id used for this session
-        if hasattr(session, "image_id"):
-            setattr(session, "image_id", params.image_id)
+        setattr(session, "image_id", params.image_id)
 
         # Process mobile configuration if provided
         if (
