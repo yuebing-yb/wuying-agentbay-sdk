@@ -207,7 +207,40 @@ const option = { browserType: 'chrome' };
 await session.browser.initializeAsync(option);
 ```
 
-The `browser_type` (Python) or `browserType` (TypeScript) option accepts two values:
+**Golang:**
+```go
+import (
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+)
+
+// Create session with computer use image
+params := &agentbay.CreateSessionParams{
+	ImageId: "computer_use_latest",
+}
+result, err := agentBay.Create(params)
+if err != nil {
+	// handle error
+}
+session := result.Session
+
+// Use Chrome instead of Chromium
+option := browser.NewBrowserOption()
+option.BrowserType = "chrome"
+
+success, err := session.Browser.Initialize(option)
+if err != nil || !success {
+	// handle error
+}
+
+// Or explicitly use Chromium (default)
+option2 := browser.NewBrowserOption()
+option2.BrowserType = "chromium"
+
+success, err = session.Browser.Initialize(option2)
+```
+
+The `browser_type` (Python), `browserType` (TypeScript), or `BrowserType` (Golang) option accepts two values:
 - `"chromium"` (default): Uses the open-source Chromium browser
 - `"chrome"`: Uses Google Chrome browser (only available in computer use images)
 

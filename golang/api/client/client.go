@@ -1487,3 +1487,75 @@ func (client *Client) SyncContext(request *SyncContextRequest) (_result *SyncCon
 	_result = _body
 	return _result, _err
 }
+
+// Summary:
+//
+// # Initialize Browser
+//
+// @param request - InitBrowserRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return InitBrowserResponse
+func (client *Client) InitBrowserWithOptions(request *InitBrowserRequest, runtime *dara.RuntimeOptions) (_result *InitBrowserResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+
+	if !dara.IsNil(request.SessionId) {
+		body["SessionId"] = request.SessionId
+	}
+
+	if !dara.IsNil(request.PersistentPath) {
+		body["PersistentPath"] = request.PersistentPath
+	}
+
+	if !dara.IsNil(request.BrowserOption) {
+		body["BrowserOption"] = request.BrowserOption
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("InitBrowser"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &InitBrowserResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Initialize Browser
+//
+// @param request - InitBrowserRequest
+//
+// @return InitBrowserResponse
+func (client *Client) InitBrowser(request *InitBrowserRequest) (_result *InitBrowserResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &InitBrowserResponse{}
+	_body, _err := client.InitBrowserWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}

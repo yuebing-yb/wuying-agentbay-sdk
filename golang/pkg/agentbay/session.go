@@ -14,6 +14,7 @@ import (
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/agent"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/code"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
@@ -134,6 +135,9 @@ type Session struct {
 	Computer *computer.Computer
 	Mobile   *mobile.Mobile
 
+	// Browser for web automation
+	Browser *browser.Browser
+
 	// Agent for task execution
 	Agent *agent.Agent
 
@@ -156,6 +160,9 @@ func NewSession(agentBay *AgentBay, sessionID string) *Session {
 	session.Command = command.NewCommand(session)
 	session.Code = code.NewCode(session)
 	session.Oss = oss.NewOss(session)
+
+	// Initialize Browser
+	session.Browser = browser.NewBrowser(session)
 
 	// Initialize UI
 	session.UI = ui.NewUI(session)
@@ -194,6 +201,26 @@ func (s *Session) GetSessionId() string {
 // GetImageID returns the image ID for this session.
 func (s *Session) GetImageID() string {
 	return s.ImageId
+}
+
+// GetSessionID returns the session ID for this session (browser interface method).
+func (s *Session) GetSessionID() string {
+	return s.SessionID
+}
+
+// IsVPCEnabled returns whether this session uses VPC resources.
+func (s *Session) IsVPCEnabled() bool {
+	return s.IsVpcEnabled
+}
+
+// GetNetworkInterfaceIP returns the network interface IP for VPC sessions.
+func (s *Session) GetNetworkInterfaceIP() string {
+	return s.NetworkInterfaceIP
+}
+
+// GetHttpPortNumber returns the HTTP port for VPC sessions.
+func (s *Session) GetHttpPortNumber() string {
+	return s.HttpPortNumber
 }
 
 // GetCommand returns the command handler for this session.
