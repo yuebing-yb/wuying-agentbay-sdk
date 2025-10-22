@@ -120,6 +120,19 @@ type BoolResult struct {
 }
 ```
 
+### AdbUrlResult
+
+Represents the result of ADB URL retrieval operation.
+
+```go
+type AdbUrlResult struct {
+    models.ApiResponse
+    URL          string // ADB connection URL (e.g., "adb connect xx.xx.xx.xx:xxxxx")
+    Success      bool   // Whether the operation succeeded
+    ErrorMessage string // Error message if operation failed
+}
+```
+
 ### ScreenshotResult
 
 Represents the result of a screenshot operation.
@@ -449,6 +462,80 @@ if screenshot.ErrorMessage == "" {
     // screenshot.Data contains a URL to download the image
 }
 ```
+
+---
+
+### ADB Connection
+
+#### GetAdbUrl
+
+Retrieves the ADB (Android Debug Bridge) connection URL for the mobile environment.
+
+**Important:** This method is only supported in mobile environments (`mobile_latest` image). Using other image types will result in an error.
+
+```go
+func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult
+```
+
+**Parameters:**
+- `adbkeyPub` (string): ADB public key for authentication
+
+**Returns:**
+- `*AdbUrlResult`: Result containing the ADB connection URL
+
+**Example:**
+```go
+// Get ADB URL with public key
+// Verified: ✓ Returns valid ADB connection URL
+adbkeyPub := "QAAAAM0muSn7yQCY...your_adb_public_key...EAAQAA="
+
+result := session.Mobile.GetAdbUrl(adbkeyPub)
+if result.Success {
+    fmt.Printf("ADB URL: %s\n", result.URL)
+    // Example output: "adb connect xx.xx.xx.xx:xxxxx"
+    fmt.Printf("Request ID: %s\n", result.RequestID)
+} else {
+    fmt.Printf("Error: %s\n", result.ErrorMessage)
+}
+```
+
+**Using the ADB Connection:**
+
+Once you have the ADB URL, you can use it to connect to the mobile device:
+
+```bash
+# Connect to the mobile device
+adb connect xx.xx.xx.xx:xxxxx
+
+# Verify the connection
+adb devices
+
+# Now you can use standard ADB commands
+adb shell
+adb install app.apk
+adb logcat
+adb pull /sdcard/file.txt
+adb push file.txt /sdcard/
+```
+
+**Error Handling:**
+
+```go
+result := session.Mobile.GetAdbUrl(adbkeyPub)
+if !result.Success {
+    // Handle errors
+    if strings.Contains(result.ErrorMessage, "mobile environment") {
+        fmt.Println("Error: This method requires a mobile_latest session")
+    } else {
+        fmt.Printf("Error: %s\n", result.ErrorMessage)
+    }
+}
+```
+
+**Requirements:**
+- Session must be created with `mobile_latest` image
+- Valid ADB public key is required for authentication
+- The returned URL format is: `adb connect <IP>:<Port>`
 
 ---
 

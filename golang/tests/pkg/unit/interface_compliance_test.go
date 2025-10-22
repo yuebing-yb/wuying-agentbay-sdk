@@ -176,7 +176,7 @@ func (m *MockSessionForCompliance) SetLabels(labels map[string]string) *agentbay
 	}
 }
 func (m *MockSessionForCompliance) GetLabels() (*agentbay.LabelResult, error) { return nil, nil }
-func (m *MockSessionForCompliance) GetLink(protocolType *string, port *int32) (*agentbay.LinkResult, error) {
+func (m *MockSessionForCompliance) GetLink(protocolType *string, port *int32, options *string) (*agentbay.LinkResult, error) {
 	return nil, nil
 }
 func (m *MockSessionForCompliance) Info() (*agentbay.InfoResult, error) { return nil, nil }

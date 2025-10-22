@@ -275,7 +275,7 @@ func TestSession_GetLinkMethod(t *testing.T) {
 
 	// Test GetLink method with default parameters (no parameters)
 	fmt.Println("Testing session.GetLink method with default parameters...")
-	linkResult, err := session.GetLink(nil, nil)
+	linkResult, err := session.GetLink(nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Error getting session link: %v", err)
 	}
@@ -297,7 +297,7 @@ func TestSession_GetLinkMethod(t *testing.T) {
 	// Test GetLink method with protocol_type parameter
 	fmt.Println("Testing session.GetLink method with protocol_type parameter...")
 	protocolType := "https"
-	linkWithProtocolResult, err := session.GetLink(&protocolType, nil)
+	linkWithProtocolResult, err := session.GetLink(&protocolType, nil, nil)
 	if err != nil {
 		// This error is expected behavior from the backend
 		t.Logf("Expected error when using protocol type 'https': %v", err)
@@ -318,7 +318,7 @@ func TestSession_GetLinkMethod(t *testing.T) {
 	// Test GetLink method with valid port parameter (in range [30100, 30199])
 	fmt.Println("Testing session.GetLink method with valid port parameter...")
 	port := int32(30150)
-	linkWithPortResult, err := session.GetLink(nil, &port)
+	linkWithPortResult, err := session.GetLink(nil, &port, nil)
 	if err != nil {
 		t.Errorf("Error getting session link with valid port: %v", err)
 	} else {
@@ -338,7 +338,7 @@ func TestSession_GetLinkMethod(t *testing.T) {
 	fmt.Println("Testing session.GetLink method with both protocol_type and valid port parameters...")
 	protocolTypeHttps := "https"
 	portHttps := int32(30199)
-	linkWithBothResult, err := session.GetLink(&protocolTypeHttps, &portHttps)
+	linkWithBothResult, err := session.GetLink(&protocolTypeHttps, &portHttps, nil)
 	if err != nil {
 		t.Errorf("Error getting session link with protocol and valid port: %v", err)
 	} else {
@@ -411,7 +411,7 @@ func TestSession_GetLink_ValidPortRange(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fmt.Printf("Testing GetLink with valid port %d...\n", tc.port)
-			result, err := session.GetLink(tc.protocolType, &tc.port)
+			result, err := session.GetLink(tc.protocolType, &tc.port, nil)
 
 			// Verify no error for valid ports
 			if err != nil {
@@ -502,7 +502,7 @@ func TestSession_GetLink_InvalidPortRange(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fmt.Printf("Testing GetLink with invalid port %d...\n", tc.port)
-			result, err := session.GetLink(nil, &tc.port)
+			result, err := session.GetLink(nil, &tc.port, nil)
 
 			// Verify error is returned for invalid ports
 			if err == nil {

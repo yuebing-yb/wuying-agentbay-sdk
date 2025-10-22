@@ -47,11 +47,18 @@ export interface ScreenshotResult extends OperationResult {
   data: string; // Screenshot URL
 }
 
+export interface AdbUrlResult extends OperationResult {
+  data?: string; // ADB connection URL (e.g., "adb connect xx.xx.xx.xx:xxxxx")
+  url?: string; // Alternative field name for compatibility
+}
+
 // Session interface for Mobile module
 interface MobileSession {
   callMcpTool(toolName: string, args: Record<string, any>): Promise<any>;
   sessionId: string;
   getAPIKey(): string;
+  imageId?: string;
+  getLink(protocolType?: string, port?: number, options?: string): Promise<any>;
 }
 
 export class Mobile {
@@ -412,6 +419,55 @@ export class Mobile {
         requestId: '',
         errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
         data: ''
+      };
+    }
+  }
+
+  /**
+   * Retrieves the ADB connection URL for the mobile environment.
+   * This method is only supported in mobile environments (mobile_latest image).
+   * It uses the provided ADB public key to establish the connection and returns
+   * the ADB connect URL.
+   * 
+   * @param adbkeyPub - ADB public key for authentication
+   * @returns AdbUrlResult containing the ADB connection URL
+   */
+  async getAdbUrl(adbkeyPub: string): Promise<AdbUrlResult> {
+    try {
+      // Check if this is a mobile environment
+      const imageId = this.session.imageId || '';
+      if (!imageId || !imageId.toLowerCase().includes('mobile')) {
+        const errorMsg = `get_adb_url is only supported in mobile environment. Current environment: ${imageId}`;
+        return {
+          success: false,
+          requestId: '',
+          errorMessage: errorMsg,
+          data: undefined,
+          url: undefined
+        };
+      }
+
+      // Build options JSON with adbkey_pub
+      const optionsJson = JSON.stringify({ adbkey_pub: adbkeyPub });
+
+      // Call getLink with protocol_type="adb" and options
+      const result = await this.session.getLink('adb', undefined, optionsJson);
+
+      return {
+        success: result.success || false,
+        requestId: result.requestId || '',
+        errorMessage: result.errorMessage || '',
+        data: result.data,
+        url: result.data
+      };
+    } catch (error) {
+      const errorMsg = `Failed to get ADB URL: ${error instanceof Error ? error.message : String(error)}`;
+      return {
+        success: false,
+        requestId: '',
+        errorMessage: errorMsg,
+        data: undefined,
+        url: undefined
       };
     }
   }

@@ -28,7 +28,7 @@ type SessionInterface interface {
 	GetLabels() (*agentbay.LabelResult, error)
 
 	// GetLink gets the link for this session
-	GetLink(protocolType *string, port *int32) (*agentbay.LinkResult, error)
+	GetLink(protocolType *string, port *int32, options *string) (*agentbay.LinkResult, error)
 
 	// Info gets information about this session
 	Info() (*agentbay.InfoResult, error)

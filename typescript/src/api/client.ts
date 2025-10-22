@@ -543,6 +543,10 @@ export class Client extends OpenApi {
       body["SessionId"] = request.sessionId;
     }
 
+    if (!$dara.isNull(request.option)) {
+      body["Option"] = request.option;
+    }
+
     const req = new $OpenApiUtil.OpenApiRequest({
       body: OpenApiUtil.parseToMap(body),
     });

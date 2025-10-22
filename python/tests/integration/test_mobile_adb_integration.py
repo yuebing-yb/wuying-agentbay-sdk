@@ -58,7 +58,7 @@ class TestMobileGetAdbUrl(unittest.TestCase):
         session: Session = typing.cast(Session, self.session)
         
         # Create a test ADB key
-        adbkey_pub = "QAAAAM0muSn7yQCYRGkiXUXONYu35uaz8f2btkbjh07lNAHTRfTlvzeUXoqvoAgHyKhVGk+4exvjH9ml5kOUxY7LUEQ+a43zBkKtKPpLBMvgPZHYxvcdUnwQK2DOWlwUldZWwjXXGXav0vuioe7HHvkTc/LINIoeqJ//dkOzQehUdW0IOnzEm9v7MQhoSofsVxR3I2hmR012+EBWCzpqCS5h/WzoDJdnBCcxpMZMKDjYAxha8I50lOqpkdlNk0lTJRWt3TW5BopsRhK7tiK3IN4UH7wevhEeLQ7ahGuTZDFn9MXKOlv2nttOQouW2Xpv+3rxAUZcesqQM40TssSWn2mi7FZ28A65iuM3DSm4HxkVi3NiU99r4C0DUyDvrcmBq+hW7OAFeqKNctez/vFd25KNLoyjtRXjR9hkAiT3LgyMg2Wh/SRUJxHEdYjCibm9yi3Hs8sYuP9NVzjD8tXf/ePM31BWmDen/7HTMXRLGHkzWAhtNRmR9cbyt6ImRHvY0f2SPT/7n0uNo3TKHj+muQBOGSReJKKoEXZ0bcZgA5Z2Us/iW5gcLhh0mr5r0B1Kdz9aSNgbCygZXDMtl7lndBwEZ4wwgAKWY9rDfm58fIlQYwSzx4vosVIxI7ZbXuQx2ONKe7P46Aakeu1yzuQeFnuDGvuJmVK6JuV2/bDFHvvj8fotRA8JeQEAAQA="
+        adbkey_pub = "test_adb_key_123"
         
         print(f"Calling session.mobile.get_adb_url() with adbkey_pub...")
         result = session.mobile.get_adb_url(adbkey_pub)
