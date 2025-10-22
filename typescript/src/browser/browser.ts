@@ -150,6 +150,8 @@ export interface BrowserOption {
   proxies?: BrowserProxy[];
   /** Path to the extensions directory. Defaults to "/tmp/extensions/" */
   extensionPath?: string;
+  /** Browser type: 'chrome' or 'chromium'. Defaults to 'chromium' */
+  browserType?: 'chrome' | 'chromium';
 }
 
 export class BrowserOptionClass implements BrowserOption {
@@ -162,6 +164,7 @@ export class BrowserOptionClass implements BrowserOption {
   solveCaptchas?: boolean;
   proxies?: BrowserProxy[];
   extensionPath?: string;
+  browserType?: 'chrome' | 'chromium';
 
   constructor(
     useStealth = false,
@@ -171,6 +174,7 @@ export class BrowserOptionClass implements BrowserOption {
     fingerprint?: BrowserFingerprint,
     solveCaptchas = false,
     proxies?: BrowserProxy[],
+    browserType: 'chrome' | 'chromium' = 'chromium',
   ) {
     this.useStealth = useStealth;
     this.userAgent = userAgent;
@@ -179,6 +183,7 @@ export class BrowserOptionClass implements BrowserOption {
     this.fingerprint = fingerprint;
     this.solveCaptchas = solveCaptchas;
     this.extensionPath = "/tmp/extensions/";
+    this.browserType = browserType;
 
     // Validate proxies list items
     if (proxies !== undefined) {
@@ -192,6 +197,11 @@ export class BrowserOptionClass implements BrowserOption {
 
     // Set proxies after validation
     this.proxies = proxies;
+
+    // Validate browser_type
+    if (browserType !== 'chrome' && browserType !== 'chromium') {
+      throw new Error("browserType must be 'chrome' or 'chromium'");
+    }
   }
 
   toMap(): Record<string, any> {
@@ -226,6 +236,9 @@ export class BrowserOptionClass implements BrowserOption {
     }
     if (this.extensionPath !== undefined) {
       optionMap['extensionPath'] = this.extensionPath;
+    }
+    if (this.browserType !== undefined) {
+      optionMap['browserType'] = this.browserType;
     }
     return optionMap;
   }
@@ -272,6 +285,11 @@ export class BrowserOptionClass implements BrowserOption {
     }
     if (map.extensionPath !== undefined) {
       this.extensionPath = map.extensionPath;
+    }
+    if (map.browserType !== undefined) {
+      this.browserType = map.browserType;
+    } else {
+      this.browserType = 'chromium';
     }
     return this;
   }

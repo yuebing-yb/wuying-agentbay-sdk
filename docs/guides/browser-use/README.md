@@ -97,7 +97,7 @@ Key Browser APIs:
 
 ## Basic Configurations
 
-Sometimes the web needs a different mask and a different stage. By shaping the browser’s identity and canvas, you can coax sites to reveal the experience meant for a specific device class or audience. Here we’ll set a custom user agent and a precise viewport, then watch the page respond.
+Sometimes the web needs a different mask and a different stage. By shaping the browser's identity and canvas, you can coax sites to reveal the experience meant for a specific device class or audience. Here we'll set a custom user agent and a precise viewport, then watch the page respond.
 
 ```python
 import os
@@ -153,6 +153,63 @@ if __name__ == "__main__":
 ```
 
 First we authenticate and create a session that knows how to host a browser. Then, instead of accepting the default identity, we dress the browser in a chosen user agent and set a viewport that mirrors a familiar laptop screen. After that, we breathe life into the browser with `initialize_async`, request the CDP endpoint, and cross the bridge with Playwright. Now the page loads under our chosen disguise and dimensions; a quick glance at `navigator.userAgent` and the window size confirms the transformation. And when the scene is over, we close the curtain by deleting the session, returning the resources so another performance can begin.
+
+### Browser Type Selection
+
+> **Note:** The `browser_type` / `browserType` option is only available for **computer use images**. For standard browser images, Chromium is used by default.
+
+By default, the browser initializes with Chromium, but when using computer use images, you can choose to use Chrome instead. This is useful when you need specific Chrome features or want to match a particular browser environment. Simply set the `browser_type` parameter in `BrowserOption`:
+
+**Python:**
+```python
+from agentbay.browser.browser import BrowserOption
+from agentbay.session_params import CreateSessionParams
+
+# Create session with computer use image
+params = CreateSessionParams(image_id="computer_use_latest")
+result = agent_bay.create(params)
+session = result.session
+
+# Use Chrome instead of Chromium
+option = BrowserOption(browser_type="chrome")
+await session.browser.initialize_async(option)
+
+# Or explicitly use Chromium (default)
+option = BrowserOption(browser_type="chromium")
+await session.browser.initialize_async(option)
+```
+
+**TypeScript:**
+```typescript
+import { BrowserOptionClass } from '@wuying-org/agentbay-sdk';
+import { CreateSessionParams } from '@wuying-org/agentbay-sdk';
+
+// Create session with computer use image
+const params = new CreateSessionParams({ imageId: 'computer_use_latest' });
+const result = await agentBay.create(params);
+const session = result.session;
+
+// Use Chrome instead of Chromium
+const option = new BrowserOptionClass(
+  false,  // useStealth
+  undefined,  // userAgent
+  undefined,  // viewport
+  undefined,  // screen
+  undefined,  // fingerprint
+  false,  // solveCaptchas
+  undefined,  // proxies
+  'chrome'  // browserType
+);
+await session.browser.initializeAsync(option);
+
+// Or use plain object interface
+const option = { browserType: 'chrome' };
+await session.browser.initializeAsync(option);
+```
+
+The `browser_type` (Python) or `browserType` (TypeScript) option accepts two values:
+- `"chromium"` (default): Uses the open-source Chromium browser
+- `"chrome"`: Uses Google Chrome browser (only available in computer use images)
 
 If you want to explore more configurable capabilities, see Core Features: [core-features.md](core-features.md).
 
