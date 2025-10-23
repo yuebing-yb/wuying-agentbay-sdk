@@ -347,46 +347,6 @@ By default, the upload policy uses `File` mode. To enable compression, you need 
 
 **Basic Archive Mode Configuration:**
 
-**TypeScript:**
-
-```typescript
-import { AgentBay, CreateSessionParams, newContextSync, newSyncPolicy } from "wuying-agentbay-sdk";
-
-// Initialize AgentBay client
-const agentBay = new AgentBay({ apiKey: "your-api-key" });
-
-// Create context
-const contextResult = await agentBay.context.get("my-project", true);
-const context = contextResult.context!;
-
-// Configure sync policy with Archive upload mode
-const syncPolicy = newSyncPolicy();
-syncPolicy.uploadPolicy!.uploadMode = "Archive"; // Enable compression
-
-// Create context sync with compression enabled
-const contextSync = newContextSync(
-  context.id,
-  "/tmp/data",
-  syncPolicy
-);
-
-// Create session with Archive mode
-const sessionParams: CreateSessionParams = {
-  contextSync: [contextSync]
-};
-
-const sessionResult = await agentBay.create(sessionParams);
-const session = sessionResult.session!;
-
-// Files written to /tmp/data will be compressed before upload
-await session.fileSystem.writeFile("/tmp/data/large-file.txt", largeContent);
-
-// Clean up with sync to ensure compressed upload completes
-await agentBay.delete(session, true);
-```
-
-**Python:**
-
 ```python
 from agentbay import AgentBay, CreateSessionParams
 from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy
@@ -428,6 +388,7 @@ session.file_system.write_file("/tmp/data/large-file.txt", large_content, mode="
 # Clean up with sync to ensure compressed upload completes
 agent_bay.delete(session, sync_context=True)
 ```
+
 
 
 ### Sync Policies

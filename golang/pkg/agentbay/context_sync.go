@@ -54,6 +54,8 @@ type UploadPolicy struct {
 	AutoUpload bool `json:"autoUpload"`
 	// UploadStrategy defines the upload strategy
 	UploadStrategy UploadStrategy `json:"uploadStrategy"`
+	// UploadMode defines the upload mode: "File" or "Archive"
+	UploadMode string `json:"uploadMode"`
 }
 
 // NewUploadPolicy creates a new upload policy with default values
@@ -61,6 +63,7 @@ func NewUploadPolicy() *UploadPolicy {
 	return &UploadPolicy{
 		AutoUpload:     true,
 		UploadStrategy: UploadBeforeResourceRelease,
+		UploadMode:     "File",
 	}
 }
 
@@ -308,9 +311,24 @@ type ContextSync struct {
 	Policy *SyncPolicy `json:"policy,omitempty"`
 }
 
+// isValidUploadMode checks if the given uploadMode value is valid
+func isValidUploadMode(uploadMode string) bool {
+	return uploadMode == "File" || uploadMode == "Archive"
+}
+
 func validateSyncPolicy(policy *SyncPolicy) error {
 	if policy == nil {
 		return nil
+	}
+
+	// Validate UploadPolicy uploadMode
+	if policy.UploadPolicy != nil && policy.UploadPolicy.UploadMode != "" {
+		if !isValidUploadMode(policy.UploadPolicy.UploadMode) {
+			return fmt.Errorf(
+				"invalid uploadMode value: %s. Valid values are: \"File\", \"Archive\"",
+				policy.UploadPolicy.UploadMode,
+			)
+		}
 	}
 
 	// Validate RecyclePolicy paths
