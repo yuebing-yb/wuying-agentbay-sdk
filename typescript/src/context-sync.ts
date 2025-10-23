@@ -26,6 +26,7 @@ export enum Lifecycle {
 export interface UploadPolicy {
   autoUpload: boolean;
   uploadStrategy: UploadStrategy;
+  uploadMode: "File" | "Archive";
 }
 
 // DownloadPolicy defines the download policy for context synchronization
@@ -220,6 +221,7 @@ export function newUploadPolicy(): UploadPolicy {
   return {
     autoUpload: true,
     uploadStrategy: UploadStrategy.UploadBeforeResourceRelease,
+    uploadMode: "File",
   };
 }
 
@@ -279,10 +281,25 @@ function isValidLifecycle(lifecycle: Lifecycle): boolean {
   return Object.values(Lifecycle).includes(lifecycle);
 }
 
+// isValidUploadMode checks if the given uploadMode value is valid
+function isValidUploadMode(uploadMode: string): boolean {
+  return uploadMode === "File" || uploadMode === "Archive";
+}
+
 export function validateSyncPolicy(policy?: SyncPolicy): void {
   if (policy?.bwList?.whiteLists) {
     for (const whitelist of policy.bwList.whiteLists) {
       WhiteListValidator.validate(whitelist);
+    }
+  }
+
+  if (policy?.uploadPolicy?.uploadMode) {
+    // Validate uploadMode value
+    if (!isValidUploadMode(policy.uploadPolicy.uploadMode)) {
+      throw new Error(
+        `Invalid uploadMode value: ${policy.uploadPolicy.uploadMode}. ` +
+        `Valid values are: "File", "Archive"`
+      );
     }
   }
 
