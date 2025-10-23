@@ -150,8 +150,8 @@ export interface BrowserOption {
   proxies?: BrowserProxy[];
   /** Path to the extensions directory. Defaults to "/tmp/extensions/" */
   extensionPath?: string;
-  /** Browser type: 'chrome' or 'chromium'. Defaults to 'chromium' */
-  browserType?: 'chrome' | 'chromium';
+  /** Browser type: 'chrome' or 'chromium'. Defaults to undefined */
+  browserType?: 'chrome' | 'chromium' | undefined;
 }
 
 export class BrowserOptionClass implements BrowserOption {
@@ -164,7 +164,7 @@ export class BrowserOptionClass implements BrowserOption {
   solveCaptchas?: boolean;
   proxies?: BrowserProxy[];
   extensionPath?: string;
-  browserType?: 'chrome' | 'chromium';
+  browserType?: 'chrome' | 'chromium' | undefined;
 
   constructor(
     useStealth = false,
@@ -174,7 +174,7 @@ export class BrowserOptionClass implements BrowserOption {
     fingerprint?: BrowserFingerprint,
     solveCaptchas = false,
     proxies?: BrowserProxy[],
-    browserType: 'chrome' | 'chromium' = 'chromium',
+    browserType?: 'chrome' | 'chromium',
   ) {
     this.useStealth = useStealth;
     this.userAgent = userAgent;
@@ -199,7 +199,7 @@ export class BrowserOptionClass implements BrowserOption {
     this.proxies = proxies;
 
     // Validate browser_type
-    if (browserType !== 'chrome' && browserType !== 'chromium') {
+    if (browserType !== undefined && browserType !== 'chrome' && browserType !== 'chromium') {
       throw new Error("browserType must be 'chrome' or 'chromium'");
     }
   }
@@ -288,8 +288,6 @@ export class BrowserOptionClass implements BrowserOption {
     }
     if (map.browserType !== undefined) {
       this.browserType = map.browserType;
-    } else {
-      this.browserType = 'chromium';
     }
     return this;
   }

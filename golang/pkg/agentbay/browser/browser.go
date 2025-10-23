@@ -170,7 +170,7 @@ type BrowserOption struct {
 	SolveCaptchas bool                `json:"solveCaptchas,omitempty"` // Auto-solve captchas
 	Proxies       []*BrowserProxy     `json:"proxies,omitempty"`       // Proxy configurations
 	ExtensionPath *string             `json:"extensionPath,omitempty"` // Path to extensions directory
-	BrowserType   string              `json:"browserType,omitempty"`   // Browser type: "chrome" or "chromium"
+	BrowserType   *string             `json:"browserType,omitempty"`   // Browser type: "chrome" or "chromium"
 }
 
 // NewBrowserOption creates a new BrowserOption with default values and validation
@@ -180,7 +180,7 @@ func NewBrowserOption() *BrowserOption {
 		UseStealth:    false,
 		SolveCaptchas: false,
 		ExtensionPath: &defaultExtPath,
-		BrowserType:   "chromium", // Default to chromium
+		BrowserType:   nil, // Default to nil (no browser type specified)
 	}
 }
 
@@ -197,7 +197,7 @@ func (o *BrowserOption) Validate() error {
 	}
 
 	// Validate browser type
-	if o.BrowserType != "" && o.BrowserType != "chrome" && o.BrowserType != "chromium" {
+	if o.BrowserType != nil && *o.BrowserType != "chrome" && *o.BrowserType != "chromium" {
 		return errors.New("browserType must be 'chrome' or 'chromium'")
 	}
 
@@ -245,8 +245,8 @@ func (o *BrowserOption) ToMap() map[string]interface{} {
 		optionMap["extensionPath"] = *o.ExtensionPath
 	}
 
-	if o.BrowserType != "" {
-		optionMap["browserType"] = o.BrowserType
+	if o.BrowserType != nil {
+		optionMap["browserType"] = *o.BrowserType
 	}
 
 	return optionMap

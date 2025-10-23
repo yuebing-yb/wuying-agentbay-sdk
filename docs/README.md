@@ -60,12 +60,13 @@ Complete browser automation for web scraping, testing, and form filling.
 - [Page Agent](guides/browser-use/advance-features/page-use-agent.md) - AI-driven page operations
 
 #### Computer Use
-Windows desktop automation for application control and window management.
+Desktop automation for application control, window management, and browser automation.
 
-- [Computer Use Guide](guides/computer-use/README.md) - Complete Windows desktop automation guide
+- [Computer Use Guide](guides/computer-use/README.md) - Complete desktop automation guide
 - [Computer Application Management](guides/computer-use/computer-application-management.md) - Application control and management
 - [Computer UI Automation](guides/computer-use/computer-ui-automation.md) - Desktop UI interaction and automation
 - [Window Management](guides/computer-use/window-management.md) - Window operations and focus management
+- [Browser Capabilities by Image Type](guides/computer-use/browser-capabilities-by-image-type.md) - Understanding browser support across different images
 
 **Key Capabilities:**
 - Application Management (start, stop, list applications)

@@ -3,9 +3,9 @@ import { BrowserOptionClass, BrowserProxyClass } from "../../src/browser/browser
 
 describe("Browser Type - Unit Tests", () => {
   describe("BrowserOptionClass - Browser Type", () => {
-    it("should default to chromium browser type", () => {
+    it("should default to undefined browser type", () => {
       const option = new BrowserOptionClass();
-      expect(option.browserType).to.equal("chromium");
+      expect(option.browserType).to.be.undefined;
     });
 
     it("should accept chrome browser type", () => {
@@ -148,6 +148,13 @@ describe("Browser Type - Unit Tests", () => {
       expect(optionMap.browserType).to.equal("chromium");
     });
 
+    it("should not include browserType in toMap when undefined", () => {
+      const option = new BrowserOptionClass();
+      
+      const optionMap = option.toMap();
+      expect(optionMap).to.not.have.property("browserType");
+    });
+
     it("should include browserType in toMap with other options", () => {
       const option = new BrowserOptionClass(
         true,  // useStealth
@@ -203,7 +210,7 @@ describe("Browser Type - Unit Tests", () => {
       expect(option.solveCaptchas).to.be.true;
     });
 
-    it("should default to chromium when browserType not in map", () => {
+    it("should remain undefined when browserType not in map", () => {
       const optionMap = {
         useStealth: true,
         userAgent: "Mozilla/5.0 (Test) AppleWebKit/537.36"
@@ -212,8 +219,8 @@ describe("Browser Type - Unit Tests", () => {
       const option = new BrowserOptionClass();
       option.fromMap(optionMap);
       
-      // Should default to chromium when not specified
-      expect(option.browserType).to.equal("chromium");
+      // Should remain undefined when not specified
+      expect(option.browserType).to.be.undefined;
       expect(option.useStealth).to.be.true;
       expect(option.userAgent).to.equal("Mozilla/5.0 (Test) AppleWebKit/537.36");
     });
@@ -355,10 +362,10 @@ describe("Browser Type - Unit Tests", () => {
         undefined,  // fingerprint
         false,  // solveCaptchas
         undefined,  // proxies
-        undefined  // browserType - should default to chromium
+        undefined  // browserType - should remain undefined
       );
       
-      expect(option.browserType).to.equal("chromium");
+      expect(option.browserType).to.be.undefined;
     });
 
     it("should handle null browserType in constructor", () => {

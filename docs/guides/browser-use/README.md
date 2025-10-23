@@ -78,6 +78,101 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+### Quick Start (Golang)
+
+Below is a minimal, runnable example showing how to initialize the browser via the AgentBay Golang SDK and drive it using Playwright over CDP.
+
+Prerequisites:
+- Set your API key: `export AGENTBAY_API_KEY=your_api_key`
+- Install Golang SDK: `go get github.com/aliyun/wuying-agentbay-sdk/golang`
+- Install Playwright for Go: `go get github.com/playwright-community/playwright-go`
+- Install Playwright browsers: `go run github.com/playwright-community/playwright-go/cmd/playwright@latest install chromium`
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+	"github.com/playwright-community/playwright-go"
+)
+
+func main() {
+	apiKey := os.Getenv("AGENTBAY_API_KEY")
+	if apiKey == "" {
+		log.Fatal("AGENTBAY_API_KEY environment variable not set")
+	}
+
+	// Authenticate with API key
+	agentBay := agentbay.NewAgentBay(apiKey)
+
+	// Create a session (use an image with browser preinstalled)
+	params := &agentbay.CreateSessionParams{
+		ImageId: "browser_latest",
+	}
+	sessionResult, err := agentBay.Create(params)
+	if err != nil {
+		log.Fatalf("Failed to create session: %v", err)
+	}
+	if !sessionResult.Success {
+		log.Fatalf("Failed to create session: %s", sessionResult.ErrorMessage)
+	}
+
+	session := sessionResult.Session
+	defer session.Delete()
+
+	// Initialize browser (supports stealth, proxy, fingerprint, etc. via BrowserOption)
+	ok, err := session.Browser.Initialize(browser.NewBrowserOption())
+	if err != nil || !ok {
+		log.Fatalf("Browser initialization failed: %v", err)
+	}
+
+	endpointURL, err := session.Browser.GetEndpointURL()
+	if err != nil {
+		log.Fatalf("Failed to get endpoint URL: %v", err)
+	}
+
+	// Connect Playwright over CDP and automate
+	pw, err := playwright.Run()
+	if err != nil {
+		log.Fatalf("Failed to start Playwright: %v", err)
+	}
+	defer pw.Stop()
+
+	browser, err := pw.Chromium.ConnectOverCDP(endpointURL)
+	if err != nil {
+		log.Fatalf("Failed to connect over CDP: %v", err)
+	}
+	defer browser.Close()
+
+	contexts := browser.Contexts()
+	if len(contexts) == 0 {
+		log.Fatal("No browser contexts available")
+	}
+	context := contexts[0]
+
+	page, err := context.NewPage()
+	if err != nil {
+		log.Fatalf("Failed to create new page: %v", err)
+	}
+
+	_, err = page.Goto("https://www.aliyun.com")
+	if err != nil {
+		log.Fatalf("Failed to navigate: %v", err)
+	}
+
+	title, err := page.Title()
+	if err != nil {
+		log.Fatalf("Failed to get title: %v", err)
+	}
+	fmt.Println("Title:", title)
+}
+```
+
 First, the script authenticates by building an `AgentBay` client with your API key, establishing a trusted channel to the platform. 
 
 Then it provisions a fresh execution environment by creating a session with a browser-enabled image, ensuring the necessary runtime is available. 
@@ -152,6 +247,100 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+**Golang:**
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+	"github.com/playwright-community/playwright-go"
+)
+
+const CUSTOM_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+
+func main() {
+	// First, authenticate
+	agentBay := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+
+	// Then, provision a browser-ready session
+	params := &agentbay.CreateSessionParams{
+		ImageId: "browser_latest",
+	}
+	result, err := agentBay.Create(params)
+	if err != nil || !result.Success {
+		log.Fatalf("Failed to create session: %v", err)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// After that, define how the browser should look and feel
+	option := browser.NewBrowserOption()
+	option.UserAgent = &CUSTOM_UA                     // present ourselves with a custom identity
+	option.Viewport = &browser.BrowserViewport{       // and stand on a stage sized like a common laptop
+		Width:  1366,
+		Height: 768,
+	}
+
+	ok, err := session.Browser.Initialize(option)
+	if err != nil || !ok {
+		log.Fatalf("Browser initialization failed: %v", err)
+	}
+
+	// Now, discover the CDP doorway
+	endpointURL, err := session.Browser.GetEndpointURL()
+	if err != nil {
+		log.Fatalf("Failed to get endpoint URL: %v", err)
+	}
+
+	// Step through and take control
+	pw, err := playwright.Run()
+	if err != nil {
+		log.Fatalf("Failed to start Playwright: %v", err)
+	}
+	defer pw.Stop()
+
+	browserInstance, err := pw.Chromium.ConnectOverCDP(endpointURL)
+	if err != nil {
+		log.Fatalf("Failed to connect over CDP: %v", err)
+	}
+	defer browserInstance.Close()
+
+	context := browserInstance.Contexts()[0]
+	page, err := context.NewPage()
+	if err != nil {
+		log.Fatalf("Failed to create page: %v", err)
+	}
+
+	_, err = page.Goto("https://www.whatismybrowser.com/detect/what-is-my-user-agent")
+	if err != nil {
+		log.Fatalf("Failed to navigate: %v", err)
+	}
+
+	// Verify our new voice and our new stage
+	ua, err := page.Evaluate("navigator.userAgent")
+	if err != nil {
+		log.Fatalf("Failed to get user agent: %v", err)
+	}
+	w, err := page.Evaluate("window.innerWidth")
+	if err != nil {
+		log.Fatalf("Failed to get window width: %v", err)
+	}
+	h, err := page.Evaluate("window.innerHeight")
+	if err != nil {
+		log.Fatalf("Failed to get window height: %v", err)
+	}
+
+	fmt.Printf("Effective UA: %v\n", ua)
+	fmt.Printf("Viewport: %v x %v\n", w, h)
+}
+```
+
 First we authenticate and create a session that knows how to host a browser. Then, instead of accepting the default identity, we dress the browser in a chosen user agent and set a viewport that mirrors a familiar laptop screen. After that, we breathe life into the browser with `initialize_async`, request the CDP endpoint, and cross the bridge with Playwright. Now the page loads under our chosen disguise and dimensions; a quick glance at `navigator.userAgent` and the window size confirms the transformation. And when the scene is over, we close the curtain by deleting the session, returning the resources so another performance can begin.
 
 ### Browser Type Selection
@@ -166,7 +355,7 @@ from agentbay.browser.browser import BrowserOption
 from agentbay.session_params import CreateSessionParams
 
 # Create session with computer use image
-params = CreateSessionParams(image_id="computer_use_latest")
+params = CreateSessionParams(image_id="browser_latest")
 result = agent_bay.create(params)
 session = result.session
 
@@ -181,30 +370,21 @@ await session.browser.initialize_async(option)
 
 **TypeScript:**
 ```typescript
-import { BrowserOptionClass } from '@wuying-org/agentbay-sdk';
 import { CreateSessionParams } from '@wuying-org/agentbay-sdk';
 
 // Create session with computer use image
-const params = new CreateSessionParams({ imageId: 'computer_use_latest' });
+const params = new CreateSessionParams({ imageId: 'browser_latest' });
 const result = await agentBay.create(params);
 const session = result.session;
 
-// Use Chrome instead of Chromium
-const option = new BrowserOptionClass(
-  false,  // useStealth
-  undefined,  // userAgent
-  undefined,  // viewport
-  undefined,  // screen
-  undefined,  // fingerprint
-  false,  // solveCaptchas
-  undefined,  // proxies
-  'chrome'  // browserType
-);
-await session.browser.initializeAsync(option);
+// Use Chrome instead of Chromium (simple approach)
+await session.browser.initializeAsync({ browserType: 'chrome' });
 
-// Or use plain object interface
-const option = { browserType: 'chrome' };
-await session.browser.initializeAsync(option);
+// Or explicitly use Chromium
+await session.browser.initializeAsync({ browserType: 'chromium' });
+
+// Or use default (undefined - let browser image decide)
+await session.browser.initializeAsync({});
 ```
 
 **Golang:**
@@ -216,7 +396,7 @@ import (
 
 // Create session with computer use image
 params := &agentbay.CreateSessionParams{
-	ImageId: "computer_use_latest",
+	ImageId: "browser_latest",
 }
 result, err := agentBay.Create(params)
 if err != nil {
@@ -226,23 +406,32 @@ session := result.Session
 
 // Use Chrome instead of Chromium
 option := browser.NewBrowserOption()
-option.BrowserType = "chrome"
+chromeType := "chrome"
+option.BrowserType = &chromeType
 
 success, err := session.Browser.Initialize(option)
 if err != nil || !success {
 	// handle error
 }
 
-// Or explicitly use Chromium (default)
+// Or explicitly use Chromium
+chromiumType := "chromium"
 option2 := browser.NewBrowserOption()
-option2.BrowserType = "chromium"
+option2.BrowserType = &chromiumType
 
 success, err = session.Browser.Initialize(option2)
+
+// Or leave as default (nil, browser decides)
+option3 := browser.NewBrowserOption()
+// option3.BrowserType is nil by default
+
+success, err = session.Browser.Initialize(option3)
 ```
 
-The `browser_type` (Python), `browserType` (TypeScript), or `BrowserType` (Golang) option accepts two values:
-- `"chromium"` (default): Uses the open-source Chromium browser
+The `browser_type` (Python), `browserType` (TypeScript), or `BrowserType` (Golang) option accepts:
+- `"chromium"`: Uses the open-source Chromium browser
 - `"chrome"`: Uses Google Chrome browser (only available in computer use images)
+- `None`/`undefined`/`nil` (default): Lets the browser image decide which browser to use
 
 If you want to explore more configurable capabilities, see Core Features: [core-features.md](core-features.md).
 

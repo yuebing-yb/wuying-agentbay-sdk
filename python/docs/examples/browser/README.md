@@ -1,6 +1,24 @@
-# Browser Examples
+# Python Browser Examples
 
 This directory contains Python examples demonstrating browser automation capabilities of the AgentBay SDK.
+
+## Prerequisites
+
+1. **Install Python SDK**:
+   ```bash
+   pip install wuying-agentbay-sdk
+   ```
+
+2. **Install Playwright**:
+   ```bash
+   pip install playwright
+   playwright install chromium
+   ```
+
+3. **Set API Key**:
+   ```bash
+   export AGENTBAY_API_KEY=your_api_key_here
+   ```
 
 ## Examples
 
@@ -36,11 +54,55 @@ Basic browser usage example showing:
 - Simple page navigation
 - Basic browser operations
 
-### 5. run_2048.py & run_sudoku.py
+### 5. browser_type_example.py
+
+Comprehensive example demonstrating browser type selection:
+- Chrome browser initialization
+- Chromium browser initialization
+- Default browser (None) usage
+- Browser configuration verification
+- Side-by-side comparison of browser types
+
+**Run:**
+```bash
+# Run full example (tests all browser types)
+python browser_type_example.py
+
+# Run quick example (Chrome only)
+python browser_type_example.py --quick
+```
+
+**Key features demonstrated:**
+- Browser type selection for Chrome, Chromium, and default
+- Configuration validation
+- Browser detection and verification
+- Command-line options for different test modes
+
+### 6. run_2048.py & run_sudoku.py
 Game automation examples demonstrating:
 - Complex interaction patterns
 - Agent-based automation for games
 - Advanced browser control
+
+## Browser Type Selection
+
+When using computer use images, you can choose between Chrome and Chromium:
+
+```python
+from agentbay.browser.browser import BrowserOption
+
+# Use Chrome (Google Chrome)
+option = BrowserOption(browser_type="chrome")
+await session.browser.initialize_async(option)
+
+# Use Chromium (open-source)
+option = BrowserOption(browser_type="chromium")
+await session.browser.initialize_async(option)
+
+# Use default (None - let browser image decide)
+option = BrowserOption()
+await session.browser.initialize_async(option)
+```
 
 ## Running the Examples
 
@@ -60,6 +122,92 @@ export AGENTBAY_API_KEY=your_api_key_here
 python browser_context_cookie_persistence.py
 python search_agentbay_doc.py
 # ... etc
+```
+
+## Common Patterns
+
+### Basic Browser Initialization
+
+```python
+import asyncio
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+from agentbay.browser.browser import BrowserOption
+
+async def main():
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    agent_bay = AgentBay(api_key=api_key)
+    
+    params = CreateSessionParams(image_id="browser_latest")
+    result = agent_bay.create(params)
+    
+    if not result.success:
+        raise RuntimeError(f"Failed to create session: {result.error_message}")
+    
+    session = result.session
+    option = BrowserOption()
+    success = await session.browser.initialize_async(option)
+    
+    if not success:
+        raise RuntimeError("Browser initialization failed")
+
+asyncio.run(main())
+```
+
+### Connecting Playwright
+
+```python
+from playwright.async_api import async_playwright
+
+endpoint_url = session.browser.get_endpoint_url()
+
+async with async_playwright() as p:
+    browser = await p.chromium.connect_over_cdp(endpoint_url)
+    context = browser.contexts[0]
+    page = await context.new_page()
+    
+    # Use page...
+    
+    await browser.close()
+
+session.delete()
+```
+
+### Error Handling
+
+```python
+try:
+    success = await session.browser.initialize_async(option)
+    if not success:
+        raise RuntimeError("Initialization failed")
+    
+    # Use browser...
+    
+except Exception as e:
+    print(f"Error: {e}")
+finally:
+    session.delete()
+```
+
+### Custom Configuration
+
+```python
+from agentbay.browser.browser import (
+    BrowserOption,
+    BrowserViewport,
+    BrowserFingerprint
+)
+
+option = BrowserOption(
+    browser_type="chrome",
+    use_stealth=True,
+    viewport=BrowserViewport(1920, 1080),
+    fingerprint=BrowserFingerprint(
+        devices=["desktop"],
+        operating_systems=["windows", "macos"],
+        locales=["en-US"]
+    )
+)
 ```
 
 ## Browser Context vs Regular Browser Sessions

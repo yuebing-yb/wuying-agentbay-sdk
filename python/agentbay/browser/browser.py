@@ -237,7 +237,7 @@ class BrowserOption:
         solve_captchas: bool = False,
         proxies: Optional[list[BrowserProxy]] = None,
         extension_path: Optional[str] = "/tmp/extensions/",
-        browser_type: Literal["chrome", "chromium"] = "chromium",
+        browser_type: Optional[Literal["chrome", "chromium"]] = None,
     ):
         self.use_stealth = use_stealth
         self.user_agent = user_agent
@@ -264,7 +264,7 @@ class BrowserOption:
                 raise ValueError("extension_path cannot be empty")
 
         # Validate browser_type
-        if browser_type not in ["chrome", "chromium"]:
+        if browser_type is not None and browser_type not in ["chrome", "chromium"]:
             raise ValueError("browser_type must be 'chrome' or 'chromium'")
 
     def to_map(self):
@@ -316,8 +316,6 @@ class BrowserOption:
             self.proxies = [BrowserProxy.from_map(proxy_data) for proxy_data in proxy_list]
         if m.get('browserType') is not None:
             self.browser_type = m.get('browserType')
-        else:
-            self.browser_type = "chromium"
         return self
 
 class Browser(BaseService):

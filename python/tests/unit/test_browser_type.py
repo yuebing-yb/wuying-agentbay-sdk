@@ -6,9 +6,9 @@ class TestBrowserTypeUnit(unittest.TestCase):
     """Unit tests for browser type functionality."""
 
     def test_browser_type_default(self):
-        """Test that browser_type defaults to 'chromium'."""
+        """Test that browser_type defaults to None."""
         option = BrowserOption()
-        self.assertEqual(option.browser_type, "chromium")
+        self.assertIsNone(option.browser_type)
 
     def test_browser_type_chrome(self):
         """Test setting browser_type to 'chrome'."""
@@ -48,12 +48,10 @@ class TestBrowserTypeUnit(unittest.TestCase):
         
         self.assertIn("browser_type must be 'chrome' or 'chromium'", str(context.exception))
 
-    def test_browser_type_invalid_none(self):
-        """Test that None browser_type raises ValueError."""
-        with self.assertRaises(ValueError) as context:
-            BrowserOption(browser_type=None)
-        
-        self.assertIn("browser_type must be 'chrome' or 'chromium'", str(context.exception))
+    def test_browser_type_valid_none(self):
+        """Test that None browser_type is valid (default)."""
+        option = BrowserOption(browser_type=None)
+        self.assertIsNone(option.browser_type)
 
     def test_browser_type_case_sensitive(self):
         """Test that browser_type is case sensitive."""
@@ -79,12 +77,11 @@ class TestBrowserTypeUnit(unittest.TestCase):
         self.assertEqual(option_map["browserType"], "chromium")
 
     def test_browser_type_to_map_default(self):
-        """Test that default browser_type is included in to_map()."""
+        """Test that browser_type is not included in to_map() when None."""
         option = BrowserOption()
         option_map = option.to_map()
         
-        self.assertIn("browserType", option_map)
-        self.assertEqual(option_map["browserType"], "chromium")
+        self.assertNotIn("browserType", option_map)
 
     def test_browser_type_with_other_options(self):
         """Test browser_type with other browser options."""
@@ -141,7 +138,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
         self.assertTrue(option.solve_captchas)
 
     def test_browser_type_from_map_default(self):
-        """Test creating BrowserOption from map without browserType (should default to chromium)."""
+        """Test creating BrowserOption from map without browserType (should remain None)."""
         option_map = {
             "useStealth": True,
             "userAgent": "Mozilla/5.0 (Test) AppleWebKit/537.36"
@@ -150,8 +147,8 @@ class TestBrowserTypeUnit(unittest.TestCase):
         option = BrowserOption()
         option.from_map(option_map)
         
-        # Should default to chromium when not specified
-        self.assertEqual(option.browser_type, "chromium")
+        # Should remain None when not specified
+        self.assertIsNone(option.browser_type)
         self.assertTrue(option.use_stealth)
         self.assertEqual(option.user_agent, "Mozilla/5.0 (Test) AppleWebKit/537.36")
 

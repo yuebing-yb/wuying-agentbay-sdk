@@ -13,7 +13,7 @@ func TestBrowserOption_NewBrowserOption(t *testing.T) {
 	assert.NotNil(t, option)
 	assert.False(t, option.UseStealth)
 	assert.False(t, option.SolveCaptchas)
-	assert.Equal(t, "chromium", option.BrowserType) // Default should be chromium
+	assert.Nil(t, option.BrowserType) // Default should be nil
 	assert.NotNil(t, option.ExtensionPath)
 	assert.Equal(t, "/tmp/extensions/", *option.ExtensionPath)
 }
@@ -28,21 +28,21 @@ func TestBrowserOption_Validate(t *testing.T) {
 		{
 			name: "valid default option",
 			option: &browser.BrowserOption{
-				BrowserType: "chromium",
+				BrowserType: nil,
 			},
 			expectErr: false,
 		},
 		{
 			name: "valid chrome browser type",
 			option: &browser.BrowserOption{
-				BrowserType: "chrome",
+				BrowserType: func() *string { s := "chrome"; return &s }(),
 			},
 			expectErr: false,
 		},
 		{
 			name: "invalid browser type",
 			option: &browser.BrowserOption{
-				BrowserType: "firefox",
+				BrowserType: func() *string { s := "firefox"; return &s }(),
 			},
 			expectErr: true,
 			errMsg:    "browserType must be 'chrome' or 'chromium'",
@@ -50,7 +50,7 @@ func TestBrowserOption_Validate(t *testing.T) {
 		{
 			name: "multiple proxies",
 			option: &browser.BrowserOption{
-				BrowserType: "chromium",
+				BrowserType: nil,
 				Proxies: []*browser.BrowserProxy{
 					{Type: "custom"},
 					{Type: "custom"},
@@ -62,7 +62,7 @@ func TestBrowserOption_Validate(t *testing.T) {
 		{
 			name: "empty extension path",
 			option: &browser.BrowserOption{
-				BrowserType:   "chromium",
+				BrowserType:   nil,
 				ExtensionPath: func() *string { s := ""; return &s }(),
 			},
 			expectErr: true,
@@ -93,13 +93,14 @@ func TestBrowserOption_ToMap(t *testing.T) {
 		assert.NotNil(t, optionMap)
 		assert.Equal(t, false, optionMap["useStealth"])
 		assert.Equal(t, false, optionMap["solveCaptchas"])
-		assert.Equal(t, "chromium", optionMap["browserType"])
+		assert.NotContains(t, optionMap, "browserType")
 		assert.Equal(t, "/tmp/extensions/", optionMap["extensionPath"])
 	})
 
 	t.Run("custom browser type", func(t *testing.T) {
 		option := browser.NewBrowserOption()
-		option.BrowserType = "chrome"
+		chromeType := "chrome"
+		option.BrowserType = &chromeType
 		optionMap := option.ToMap()
 
 		assert.Equal(t, "chrome", optionMap["browserType"])
@@ -108,17 +109,18 @@ func TestBrowserOption_ToMap(t *testing.T) {
 	t.Run("with user agent", func(t *testing.T) {
 		ua := "Mozilla/5.0 Test"
 		option := &browser.BrowserOption{
-			BrowserType: "chromium",
+			BrowserType: nil,
 			UserAgent:   &ua,
 		}
 		optionMap := option.ToMap()
 
+		assert.NotContains(t, optionMap, "browserType")
 		assert.Equal(t, ua, optionMap["userAgent"])
 	})
 
 	t.Run("with viewport", func(t *testing.T) {
 		option := &browser.BrowserOption{
-			BrowserType: "chromium",
+			BrowserType: nil,
 			Viewport: &browser.BrowserViewport{
 				Width:  1920,
 				Height: 1080,
@@ -134,7 +136,7 @@ func TestBrowserOption_ToMap(t *testing.T) {
 
 	t.Run("with screen", func(t *testing.T) {
 		option := &browser.BrowserOption{
-			BrowserType: "chromium",
+			BrowserType: nil,
 			Screen: &browser.BrowserScreen{
 				Width:  1920,
 				Height: 1080,
