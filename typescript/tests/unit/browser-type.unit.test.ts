@@ -17,6 +17,8 @@ describe("Browser Type - Unit Tests", () => {
         undefined,  // fingerprint
         false,  // solveCaptchas
         undefined,  // proxies
+        [],         // cmdArgs
+        undefined,  // defaultNavigateUrl
         "chrome"  // browserType
       );
       expect(option.browserType).to.equal("chrome");
@@ -31,6 +33,8 @@ describe("Browser Type - Unit Tests", () => {
         undefined,  // fingerprint
         false,  // solveCaptchas
         undefined,  // proxies
+        [],         // cmdArgs
+        undefined,  // defaultNavigateUrl
         "chromium"  // browserType
       );
       expect(option.browserType).to.equal("chromium");
@@ -47,6 +51,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprint
           false,  // solveCaptchas
           undefined,  // proxies
+          [],         // cmdArgs
+          undefined,  // defaultNavigateUrl
           "firefox" as any  // invalid browserType
         );
       }).to.throw("browserType must be 'chrome' or 'chromium'");
@@ -62,6 +68,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprint
           false,  // solveCaptchas
           undefined,  // proxies
+          [],         // cmdArgs
+          undefined,  // defaultNavigateUrl
           "edge" as any  // invalid browserType
         );
       }).to.throw("browserType must be 'chrome' or 'chromium'");
@@ -77,6 +85,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprint
           false,  // solveCaptchas
           undefined,  // proxies
+          [],         // cmdArgs
+          undefined,  // defaultNavigateUrl
           "safari" as any  // invalid browserType
         );
       }).to.throw("browserType must be 'chrome' or 'chromium'");
@@ -92,6 +102,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprint
           false,  // solveCaptchas
           undefined,  // proxies
+          [],         // cmdArgs
+          undefined,  // defaultNavigateUrl
           "" as any  // invalid browserType
         );
       }).to.throw("browserType must be 'chrome' or 'chromium'");
@@ -107,6 +119,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprint
           false,  // solveCaptchas
           undefined,  // proxies
+          [],         // cmdArgs
+          undefined,  // defaultNavigateUrl
           "Chrome" as any  // invalid case
         );
       }).to.throw("browserType must be 'chrome' or 'chromium'");
@@ -123,6 +137,8 @@ describe("Browser Type - Unit Tests", () => {
         undefined,  // fingerprint
         false,  // solveCaptchas
         undefined,  // proxies
+        [],         // cmdArgs
+        undefined,  // defaultNavigateUrl
         "chrome"  // browserType
       );
       
@@ -140,6 +156,8 @@ describe("Browser Type - Unit Tests", () => {
         undefined,  // fingerprint
         false,  // solveCaptchas
         undefined,  // proxies
+        [],         // cmdArgs
+        undefined,  // defaultNavigateUrl
         "chromium"  // browserType
       );
       
@@ -164,6 +182,8 @@ describe("Browser Type - Unit Tests", () => {
         undefined,  // fingerprint
         true,  // solveCaptchas
         undefined,  // proxies
+        [],         // cmdArgs
+        undefined,  // defaultNavigateUrl
         "chrome"  // browserType
       );
       
@@ -255,6 +275,8 @@ describe("Browser Type - Unit Tests", () => {
         undefined,  // fingerprint
         false,  // solveCaptchas
         undefined,  // proxies
+        [],         // cmdArgs
+        undefined,  // defaultNavigateUrl
         "chrome"  // browserType
       );
       
@@ -283,6 +305,8 @@ describe("Browser Type - Unit Tests", () => {
         fingerprint,  // fingerprint
         false,  // solveCaptchas
         undefined,  // proxies
+        [],         // cmdArgs
+        undefined,  // defaultNavigateUrl
         "chrome"  // browserType
       );
       
@@ -311,6 +335,8 @@ describe("Browser Type - Unit Tests", () => {
         undefined,  // fingerprint
         false,  // solveCaptchas
         proxies,  // proxies
+        [],  // cmdArgs
+        undefined,  // defaultNavigateUrl
         "chrome"  // browserType
       );
       
@@ -335,6 +361,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprint
           false,  // solveCaptchas
           undefined,  // proxies - use valid proxies
+          [],         // cmdArgs
+          undefined,  // defaultNavigateUrl
           "invalid" as any  // invalid browserType
         );
       }).to.throw("browserType must be 'chrome' or 'chromium'");
@@ -362,6 +390,8 @@ describe("Browser Type - Unit Tests", () => {
         undefined,  // fingerprint
         false,  // solveCaptchas
         undefined,  // proxies
+        [],         // cmdArgs
+        undefined,  // defaultNavigateUrl
         undefined  // browserType - should remain undefined
       );
       
@@ -378,6 +408,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprint
           false,  // solveCaptchas
           undefined,  // proxies
+          [],         // cmdArgs
+          undefined,  // defaultNavigateUrl
           null as any  // browserType - should be invalid
         );
       }).to.throw("browserType must be 'chrome' or 'chromium'");
@@ -393,6 +425,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprint
           false,  // solveCaptchas
           undefined,  // proxies
+          [],         // cmdArgs
+          undefined,  // defaultNavigateUrl
           "chrome-v2" as any  // browserType with special characters
         );
       }).to.throw("browserType must be 'chrome' or 'chromium'");

@@ -398,7 +398,7 @@ class AgentBay:
                 )
                 params.context_syncs.append(file_transfer_context_sync)
 
-            request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")
+            request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")#, session_id="session-04bdwfj84pts8knif")
 
             # Add PolicyId if specified
             if hasattr(params, "policy_id") and params.policy_id:

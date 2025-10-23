@@ -1,10 +1,11 @@
 package browser
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 )
 
 // BrowserProxy represents browser proxy configuration.
@@ -162,15 +163,17 @@ func (f *BrowserFingerprint) ToMap() map[string]interface{} {
 
 // BrowserOption represents browser initialization options
 type BrowserOption struct {
-	UseStealth    bool                `json:"useStealth,omitempty"`    // Enable stealth mode
-	UserAgent     *string             `json:"userAgent,omitempty"`     // Custom user agent
-	Viewport      *BrowserViewport    `json:"viewport,omitempty"`      // Viewport configuration
-	Screen        *BrowserScreen      `json:"screen,omitempty"`        // Screen configuration
-	Fingerprint   *BrowserFingerprint `json:"fingerprint,omitempty"`   // Fingerprint configuration
-	SolveCaptchas bool                `json:"solveCaptchas,omitempty"` // Auto-solve captchas
-	Proxies       []*BrowserProxy     `json:"proxies,omitempty"`       // Proxy configurations
-	ExtensionPath *string             `json:"extensionPath,omitempty"` // Path to extensions directory
-	BrowserType   *string             `json:"browserType,omitempty"`   // Browser type: "chrome" or "chromium"
+	UseStealth         bool                `json:"useStealth,omitempty"`         // Enable stealth mode
+	UserAgent          *string             `json:"userAgent,omitempty"`          // Custom user agent
+	Viewport           *BrowserViewport    `json:"viewport,omitempty"`           // Viewport configuration
+	Screen             *BrowserScreen      `json:"screen,omitempty"`             // Screen configuration
+	Fingerprint        *BrowserFingerprint `json:"fingerprint,omitempty"`        // Fingerprint configuration
+	SolveCaptchas      bool                `json:"solveCaptchas,omitempty"`      // Auto-solve captchas
+	Proxies            []*BrowserProxy     `json:"proxies,omitempty"`            // Proxy configurations
+	ExtensionPath      *string             `json:"extensionPath,omitempty"`      // Path to extensions directory
+	CmdArgs            []string            `json:"cmdArgs,omitempty"`            // Additional command line arguments
+	DefaultNavigateUrl *string             `json:"defaultNavigateUrl,omitempty"` // Default URL to navigate to when browser starts
+	BrowserType        *string             `json:"browserType,omitempty"`        // Browser type: "chrome" or "chromium"
 }
 
 // NewBrowserOption creates a new BrowserOption with default values and validation
@@ -187,7 +190,7 @@ func NewBrowserOption() *BrowserOption {
 // Validate validates the BrowserOption
 func (o *BrowserOption) Validate() error {
 	// Validate proxies
-	if o.Proxies != nil && len(o.Proxies) > 1 {
+	if len(o.Proxies) > 1 {
 		return errors.New("proxies list length must be limited to 1")
 	}
 
@@ -200,6 +203,12 @@ func (o *BrowserOption) Validate() error {
 	if o.BrowserType != nil && *o.BrowserType != "chrome" && *o.BrowserType != "chromium" {
 		return errors.New("browserType must be 'chrome' or 'chromium'")
 	}
+
+	// Validate cmdArgs (no specific validation needed, just ensure it's not nil when empty)
+	// CmdArgs can be any slice of strings
+
+	// Validate defaultNavigateUrl (no specific validation needed for URL format)
+	// DefaultNavigateUrl can be any string
 
 	return nil
 }
@@ -233,7 +242,7 @@ func (o *BrowserOption) ToMap() map[string]interface{} {
 
 	optionMap["solveCaptchas"] = o.SolveCaptchas
 
-	if o.Proxies != nil && len(o.Proxies) > 0 {
+	if len(o.Proxies) > 0 {
 		proxies := make([]map[string]interface{}, len(o.Proxies))
 		for i, proxy := range o.Proxies {
 			proxies[i] = proxy.ToMap()
@@ -243,6 +252,14 @@ func (o *BrowserOption) ToMap() map[string]interface{} {
 
 	if o.ExtensionPath != nil {
 		optionMap["extensionPath"] = *o.ExtensionPath
+	}
+
+	if len(o.CmdArgs) > 0 {
+		optionMap["cmdArgs"] = o.CmdArgs
+	}
+
+	if o.DefaultNavigateUrl != nil {
+		optionMap["defaultNavigateUrl"] = *o.DefaultNavigateUrl
 	}
 
 	if o.BrowserType != nil {
@@ -271,6 +288,7 @@ type McpToolResult struct {
 type SessionInterface interface {
 	GetAPIKey() string
 	GetSessionID() string
+	GetClient() *client.Client
 	CallMcpToolForBrowser(toolName string, args interface{}) (*McpToolResult, error)
 	GetLinkForBrowser(protocolType *string, port *int32, options *string) (*LinkResult, error)
 	IsVPCEnabled() bool
@@ -321,7 +339,7 @@ func (b *Browser) GetEndpointURL() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get endpoint URL from session: %w", err)
 	}
-	
+
 	// Extract the Link from the result
 	b.endpointURL = result.Link
 	return b.endpointURL, nil
@@ -342,36 +360,71 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	// Convert option to map
 	browserOptionMap := option.ToMap()
 
-	// Build the request args
-	requestArgs := map[string]interface{}{
-		"Authorization":  "Bearer " + b.session.GetAPIKey(),
-		"SessionId":      b.session.GetSessionID(),
-		"PersistentPath": "/tmp/browser_data",
-		"BrowserOption":  browserOptionMap,
+	// TODO: Enable record if session has enableBrowserReplay set to true
+	// This would require adding enableBrowserReplay to the session interface
+	// if hasattr(self.session, 'enableBrowserReplay') and self.session.enableBrowserReplay:
+	//     browser_option_dict['enableRecord'] = True
+
+	// Create InitBrowserRequest
+	authorization := "Bearer " + b.session.GetAPIKey()
+	sessionID := b.session.GetSessionID()
+	persistentPath := "/tmp/agentbay_browser" // Match Python BROWSER_DATA_PATH
+
+	request := &client.InitBrowserRequest{
+		Authorization:  &authorization,
+		SessionId:      &sessionID,
+		PersistentPath: &persistentPath,
+		BrowserOption:  browserOptionMap,
 	}
 
-	// Call the MCP tool to initialize browser
-	result, err := b.session.CallMcpToolForBrowser("initBrowser", requestArgs)
+	// Log API request
+	fmt.Printf("🔗 API Call: InitBrowser\n")
+	fmt.Printf("   Request: SessionId=%s", *request.SessionId)
+	if request.PersistentPath != nil {
+		fmt.Printf(", PersistentPath=%s\n", *request.PersistentPath)
+	}
+	if request.BrowserOption != nil {
+		fmt.Printf("BrowserOption: %+v\n", request.BrowserOption)
+	}
+
+	// Call the client's InitBrowser method
+	response, err := b.session.GetClient().InitBrowser(request)
 	if err != nil {
 		return false, fmt.Errorf("failed to initialize browser: %w", err)
 	}
 
-	// Check if the MCP tool call was successful
-	if !result.Success {
-		return false, fmt.Errorf("browser initialization failed: %s", result.ErrorMessage)
+	// Log API response
+	fmt.Printf("📥 API Response: InitBrowser\n")
+	if response.Body != nil {
+		fmt.Printf("Full Response: %+v\n", response.Body)
 	}
 
-	// Parse the Data field (which is a JSON string) to check for Port
-	if result.Data != "" {
-		var data map[string]interface{}
-		if err := json.Unmarshal([]byte(result.Data), &data); err == nil {
-			if _, hasPort := data["Port"]; hasPort {
-				b.initialized = true
-				b.option = option
-				return true, nil
-			}
-		}
+	// Check the response
+	if response == nil || response.Body == nil || response.Body.Data == nil {
+		return false, errors.New("browser initialization failed: invalid response")
+	}
+
+	// Check if Port is present in the response data
+	if response.Body.Data.Port != nil {
+		b.initialized = true
+		b.option = option
+		return true, nil
 	}
 
 	return false, errors.New("browser initialization failed: no port in response")
+}
+
+// Destroy the browser instance
+func (b *Browser) Destroy() error {
+	if !b.initialized {
+		return errors.New("browser is not initialized. Cannot destroy browser")
+	}
+
+	// Call the MCP tool to stop Chrome
+	_, err := b.session.CallMcpToolForBrowser("stopChrome", map[string]interface{}{})
+	if err != nil {
+		return fmt.Errorf("failed to destroy browser: %w", err)
+	}
+
+	return nil
 }

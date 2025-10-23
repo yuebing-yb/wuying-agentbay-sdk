@@ -34,6 +34,8 @@ class BrowserOption:
         proxies: Optional[list[BrowserProxy]] = None,
         extension_path: Optional[str] = "/tmp/extensions/",
         browser_type: Optional[Literal["chrome", "chromium"]] = None,
+        cmd_args: Optional[list[str]] = None,
+        default_navigate_url: Optional[str] = None,
     )
 ```
 
@@ -48,6 +50,8 @@ class BrowserOption:
 - `proxies` (list[BrowserProxy] | None): List of proxy configurations (max 1). Default: `None`
 - `extension_path` (str | None): Path to directory containing browser extensions. Default: `"/tmp/extensions/"`
 - `browser_type` (Literal["chrome", "chromium"] | None): Browser type selection (computer use images only). Default: `None`
+- `cmd_args` (list[str] | None): List of Chrome/Chromium command-line arguments to customize browser behavior. Default: `None`
+- `default_navigate_url` (str | None): URL that the browser automatically navigates to after initialization. Recommended to use Chrome internal pages (e.g., `chrome://version/`) to avoid timeout issues. Default: `None`
 
 **Methods:**
 
@@ -431,6 +435,15 @@ option = BrowserOption(
     
     # Stealth mode
     use_stealth=True,
+    
+    # Command-line arguments
+    cmd_args=[
+        "--disable-features=PrivacySandboxSettings4",
+        "--disable-background-timer-throttling",
+    ],
+    
+    # Default navigation URL (recommended: Chrome internal pages)
+    default_navigate_url="chrome://version/",
     
     # Fingerprint randomization
     fingerprint=BrowserFingerprint(

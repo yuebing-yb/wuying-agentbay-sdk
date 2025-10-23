@@ -49,7 +49,7 @@ func TestBrowser_Initialize_Integration(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, success)
 		assert.True(t, session.Browser.IsInitialized())
-		
+
 		// Verify option was saved
 		savedOption := session.Browser.GetOption()
 		assert.NotNil(t, savedOption)
@@ -58,7 +58,7 @@ func TestBrowser_Initialize_Integration(t *testing.T) {
 
 	t.Run("Get endpoint URL after initialization", func(t *testing.T) {
 		endpointURL, err := session.Browser.GetEndpointURL()
-		
+
 		assert.NoError(t, err)
 		assert.NotEmpty(t, endpointURL)
 		t.Logf("Browser endpoint URL: %s", endpointURL)
@@ -107,7 +107,7 @@ func TestBrowser_InitializeWithChrome_Integration(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, success)
 		assert.True(t, session.Browser.IsInitialized())
-		
+
 		// Verify Chrome was selected
 		savedOption := session.Browser.GetOption()
 		assert.NotNil(t, savedOption)
@@ -168,7 +168,7 @@ func TestBrowser_InitializeWithCustomOptions_Integration(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, success)
 		assert.True(t, session.Browser.IsInitialized())
-		
+
 		// Verify options were saved
 		savedOption := session.Browser.GetOption()
 		assert.NotNil(t, savedOption)
@@ -225,7 +225,7 @@ func TestBrowser_InitializeAlreadyInitialized_Integration(t *testing.T) {
 	// Should return true without error (already initialized)
 	assert.NoError(t, err2)
 	assert.True(t, success2)
-	
+
 	// Should still have the original option
 	savedOption := session.Browser.GetOption()
 	assert.NotNil(t, savedOption)
@@ -322,9 +322,8 @@ func TestBrowser_VPCMode_Integration(t *testing.T) {
 	endpointURL, err := session.Browser.GetEndpointURL()
 	assert.NoError(t, err)
 	assert.NotEmpty(t, endpointURL)
-	
+
 	// VPC endpoints should start with ws://
 	assert.Contains(t, endpointURL, "ws://")
 	t.Logf("VPC Browser endpoint URL: %s", endpointURL)
 }
-

@@ -231,7 +231,7 @@ func (s *Session) CallMcpToolForBrowser(toolName string, args interface{}) (*bro
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Convert models.McpToolResult to browser.McpToolResult
 	return &browser.McpToolResult{
 		Success:      result.Success,
@@ -246,7 +246,7 @@ func (s *Session) GetLinkForBrowser(protocolType *string, port *int32, options *
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Convert LinkResult to browser.LinkResult
 	return &browser.LinkResult{
 		Link: result.Link,

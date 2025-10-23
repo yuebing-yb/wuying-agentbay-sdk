@@ -31,6 +31,8 @@ export interface BrowserOption {
   proxies?: BrowserProxy[];
   extensionPath?: string;
   browserType?: 'chrome' | 'chromium' | undefined;
+  cmdArgs?: string[];
+  defaultNavigateUrl?: string;
 }
 ```
 
@@ -45,6 +47,8 @@ export interface BrowserOption {
 - `proxies` (BrowserProxy[] | undefined): Proxy configurations (max 1). Default: `undefined`
 - `extensionPath` (string | undefined): Path to extensions directory. Default: `undefined`
 - `browserType` ('chrome' | 'chromium' | undefined): Browser type (computer use images only). Default: `undefined`
+- `cmdArgs` (string[] | undefined): List of Chrome/Chromium command-line arguments to customize browser behavior. Default: `undefined`
+- `defaultNavigateUrl` (string | undefined): URL that the browser automatically navigates to after initialization. Recommended to use Chrome internal pages (e.g., `"chrome://version/"`) to avoid timeout issues. Default: `undefined`
 
 ### BrowserOptionClass
 
@@ -61,6 +65,8 @@ export class BrowserOptionClass implements BrowserOption {
   proxies?: BrowserProxy[];
   extensionPath?: string;
   browserType?: 'chrome' | 'chromium' | undefined;
+  cmdArgs?: string[];
+  defaultNavigateUrl?: string;
 
   constructor(
     useStealth = false,
@@ -70,7 +76,9 @@ export class BrowserOptionClass implements BrowserOption {
     fingerprint?: BrowserFingerprint,
     solveCaptchas = false,
     proxies?: BrowserProxy[],
-    browserType?: 'chrome' | 'chromium'
+    browserType?: 'chrome' | 'chromium',
+    cmdArgs?: string[],
+    defaultNavigateUrl?: string
   )
 }
 ```
@@ -81,6 +89,8 @@ All parameters are optional with defaults:
 - `useStealth`: `false`
 - `solveCaptchas`: `false`
 - `browserType`: `undefined`
+- `cmdArgs`: `undefined`
+- `defaultNavigateUrl`: `undefined`
 - Other parameters: `undefined`
 
 **Methods:**
@@ -483,7 +493,12 @@ const option = new BrowserOptionClass(
     'username',
     'password'
   )],
-  'chrome' as 'chrome'                     // browserType
+  'chrome' as 'chrome',                    // browserType
+  [                                        // cmdArgs
+    '--disable-features=PrivacySandboxSettings4',
+    '--disable-background-timer-throttling',
+  ],
+  'chrome://version/'                      // defaultNavigateUrl
 );
 
 // Or using plain object interface
@@ -493,6 +508,11 @@ const option = {
   viewport: { width: 1920, height: 1080 },
   screen: { width: 1920, height: 1080 },
   browserType: 'chrome' as 'chrome',
+  cmdArgs: [
+    '--disable-features=PrivacySandboxSettings4',
+    '--disable-background-timer-throttling',
+  ],
+  defaultNavigateUrl: 'chrome://version/',
   fingerprint: {
     devices: ["desktop"],
     operatingSystems: ["windows", "macos"],

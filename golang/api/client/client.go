@@ -2,6 +2,8 @@
 package client
 
 import (
+	"encoding/json"
+
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	openapiutil "github.com/alibabacloud-go/darabonba-openapi/v2/utils"
 	"github.com/alibabacloud-go/tea/dara"
@@ -1516,7 +1518,11 @@ func (client *Client) InitBrowserWithOptions(request *InitBrowserRequest, runtim
 	}
 
 	if !dara.IsNil(request.BrowserOption) {
-		body["BrowserOption"] = request.BrowserOption
+		browserOptionJSON, err := json.Marshal(request.BrowserOption)
+		if err != nil {
+			return _result, err
+		}
+		body["BrowserOption"] = string(browserOptionJSON)
 	}
 
 	req := &openapiutil.OpenApiRequest{

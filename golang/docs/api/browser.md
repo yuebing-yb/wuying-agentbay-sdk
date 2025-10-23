@@ -22,15 +22,17 @@ Configuration options for initializing a browser instance.
 
 ```go
 type BrowserOption struct {
-    UseStealth    bool                `json:"useStealth,omitempty"`    // Enable stealth mode
-    UserAgent     *string             `json:"userAgent,omitempty"`     // Custom user agent
-    Viewport      *BrowserViewport    `json:"viewport,omitempty"`      // Viewport configuration
-    Screen        *BrowserScreen      `json:"screen,omitempty"`        // Screen configuration
-    Fingerprint   *BrowserFingerprint `json:"fingerprint,omitempty"`   // Fingerprint configuration
-    SolveCaptchas bool                `json:"solveCaptchas,omitempty"` // Auto-solve captchas
-    Proxies       []*BrowserProxy     `json:"proxies,omitempty"`       // Proxy configurations
-    ExtensionPath *string             `json:"extensionPath,omitempty"` // Path to extensions directory
-    BrowserType   *string             `json:"browserType,omitempty"`   // Browser type: "chrome" or "chromium"
+    UseStealth         bool                `json:"useStealth,omitempty"`         // Enable stealth mode
+    UserAgent          *string             `json:"userAgent,omitempty"`          // Custom user agent
+    Viewport           *BrowserViewport    `json:"viewport,omitempty"`           // Viewport configuration
+    Screen             *BrowserScreen      `json:"screen,omitempty"`             // Screen configuration
+    Fingerprint        *BrowserFingerprint `json:"fingerprint,omitempty"`        // Fingerprint configuration
+    SolveCaptchas      bool                `json:"solveCaptchas,omitempty"`      // Auto-solve captchas
+    Proxies            []*BrowserProxy     `json:"proxies,omitempty"`            // Proxy configurations
+    ExtensionPath      *string             `json:"extensionPath,omitempty"`      // Path to extensions directory
+    BrowserType        *string             `json:"browserType,omitempty"`        // Browser type: "chrome" or "chromium"
+    CmdArgs            []string            `json:"cmdArgs,omitempty"`            // Chrome/Chromium command-line arguments
+    DefaultNavigateUrl *string             `json:"defaultNavigateUrl,omitempty"` // Default navigation URL after initialization
 }
 ```
 
@@ -45,6 +47,8 @@ type BrowserOption struct {
 - `Proxies`: List of proxy configurations (maximum 1 proxy)
 - `ExtensionPath`: Path to directory containing browser extensions
 - `BrowserType`: Browser type selection - `"chrome"` or `"chromium"` (computer use images only), or `nil` for default
+- `CmdArgs`: List of Chrome/Chromium command-line arguments to customize browser behavior
+- `DefaultNavigateUrl`: URL that the browser automatically navigates to after initialization. Recommended to use Chrome internal pages (e.g., `"chrome://version/"`) to avoid timeout issues
 
 ### BrowserViewport
 
@@ -421,6 +425,16 @@ option.BrowserType = &chromeType
 
 // Stealth mode
 option.UseStealth = true
+
+// Command-line arguments
+option.CmdArgs = []string{
+    "--disable-features=PrivacySandboxSettings4",
+    "--disable-background-timer-throttling",
+}
+
+// Default navigation URL (recommended: Chrome internal pages)
+defaultUrl := "chrome://version/"
+option.DefaultNavigateUrl = &defaultUrl
 
 // Fingerprint randomization
 option.Fingerprint = &browser.BrowserFingerprint{

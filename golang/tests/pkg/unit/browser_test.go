@@ -3,6 +3,7 @@ package agentbay_test
 import (
 	"testing"
 
+	"github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
 	"github.com/stretchr/testify/assert"
 )
@@ -148,6 +149,29 @@ func TestBrowserOption_ToMap(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, 1920, screen["width"])
 		assert.Equal(t, 1080, screen["height"])
+	})
+
+	t.Run("with cmd args", func(t *testing.T) {
+		option := &browser.BrowserOption{
+			BrowserType: nil,
+			CmdArgs:     []string{"--disable-features=PrivacySandboxSettings4", "--password-store=basic"},
+		}
+		optionMap := option.ToMap()
+
+		cmdArgs, ok := optionMap["cmdArgs"].([]string)
+		assert.True(t, ok)
+		assert.Equal(t, []string{"--disable-features=PrivacySandboxSettings4", "--password-store=basic"}, cmdArgs)
+	})
+
+	t.Run("with default navigate url", func(t *testing.T) {
+		defaultUrl := "chrome://version/"
+		option := &browser.BrowserOption{
+			BrowserType:        nil,
+			DefaultNavigateUrl: &defaultUrl,
+		}
+		optionMap := option.ToMap()
+
+		assert.Equal(t, defaultUrl, optionMap["defaultNavigateUrl"])
 	})
 }
 
@@ -324,6 +348,11 @@ func (m *mockSessionForBrowser) GetSessionID() string {
 	return "test-session-id"
 }
 
+func (m *mockSessionForBrowser) GetClient() *client.Client {
+	// Return nil for unit tests - we're not testing actual API calls
+	return nil
+}
+
 func (m *mockSessionForBrowser) CallMcpToolForBrowser(toolName string, args interface{}) (*browser.McpToolResult, error) {
 	return &browser.McpToolResult{
 		Success: true,
@@ -348,4 +377,3 @@ func (m *mockSessionForBrowser) GetNetworkInterfaceIP() string {
 func (m *mockSessionForBrowser) GetHttpPortNumber() string {
 	return ""
 }
-
