@@ -7,6 +7,7 @@ This guide covers AgentBay SDK's data persistence features, including context co
 - [Core Concepts](#core-concepts)
 - [Context Management](#context-management)
 - [Data Synchronization Strategies](#data-synchronization-strategies)
+  - [File Compression](#file-compression)
 
 <a id="core-concepts"></a>
 ## 🎯 Core Concepts
@@ -318,6 +319,70 @@ agent_bay.delete(session, sync_context=True)  # Ensures complete sync before del
 
 <a id="data-synchronization-strategies"></a>
 ## 🔄 Data Synchronization Strategies
+
+### File Compression
+
+AgentBay SDK supports automatic file compression during data synchronization to optimize storage space and transfer speed. When synchronizing large quantities of files, the compression strategy significantly reduces sync time.
+
+#### Compression Benefits
+
+**Storage Optimization:**
+- Reduces OSS storage costs by compressing files before upload
+- Saves bandwidth during upload/download operations
+
+**Performance Improvements:**
+- Faster upload/download times for compressible content
+- Reduced network latency for large file transfers
+- Better performance over slow network connections
+
+#### Compression Policy Configuration
+AgentBay SDK provides two upload modes for context synchronization through the `uploadMode` parameter in upload policy:
+
+**Upload Mode Options:**
+- **File Mode** (default): Files are uploaded without compression - faster for small files or already compressed content
+- **Archive Mode**: Files are compressed before upload - more efficient for large files and text-based content
+
+**Default Behavior:**
+By default, the upload policy uses `File` mode. To enable compression, you need to explicitly set the upload mode to `Archive`.
+
+**Basic Archive Mode Configuration:**
+
+```typescript
+import { AgentBay, CreateSessionParams, newContextSync, newSyncPolicy } from "wuying-agentbay-sdk";
+
+// Initialize AgentBay client
+const agentBay = new AgentBay({ apiKey: "your-api-key" });
+
+// Create context
+const contextResult = await agentBay.context.get("my-project", true);
+const context = contextResult.context!;
+
+// Configure sync policy with Archive upload mode
+const syncPolicy = newSyncPolicy();
+syncPolicy.uploadPolicy!.uploadMode = "Archive"; // Enable compression
+
+// Create context sync with compression enabled
+const contextSync = newContextSync(
+  context.id,
+  "/tmp/data",
+  syncPolicy
+);
+
+// Create session with Archive mode
+const sessionParams: CreateSessionParams = {
+  contextSync: [contextSync]
+};
+
+const sessionResult = await agentBay.create(sessionParams);
+const session = sessionResult.session!;
+
+// Files written to /tmp/data will be compressed before upload
+await session.fileSystem.writeFile("/tmp/data/large-file.txt", largeContent);
+
+// Clean up with sync to ensure compressed upload completes
+await agentBay.delete(session, true);
+```
+
 
 ### Sync Policies
 
