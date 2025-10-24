@@ -1,4 +1,4 @@
-import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecyclePolicy, WhiteList, BWList } from "./context-sync";
+import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecyclePolicy, WhiteList, BWList, newDeletePolicy } from "./context-sync";
 import { ExtensionOption } from "./extension";
 
 /**
@@ -130,6 +130,10 @@ export class BrowserContext {
         ...newExtractPolicy(),
         extract: true,
         deleteSrcFile: true
+      },
+      deletePolicy: {
+        ...newDeletePolicy(),
+        syncLocalFile: false
       },
       recyclePolicy: newRecyclePolicy(),
       bwList: {
