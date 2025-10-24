@@ -41,7 +41,7 @@ Extensions are automatically synchronized to browser sessions at:
 
 ```python
 from agentbay import AgentBay
-from agentbay.extention import ExtensionsService
+from agentbay.extension import ExtensionsService
 from agentbay.session_params import CreateSessionParams, BrowserContext
 
 # Initialize AgentBay and Extensions Service
