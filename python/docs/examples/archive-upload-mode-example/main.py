@@ -171,10 +171,10 @@ def archive_upload_mode_example(agent_bay, unique_id):
         
         if file_info_result.file_info:
             print(f"📄 File details:")
-            print(f"   Size: {file_info_result.file_info.size} bytes")
-            print(f"   Is Directory: {file_info_result.file_info.is_directory}")
-            print(f"   Modified Time: {file_info_result.file_info.mod_time}")
-            print(f"   Mode: {file_info_result.file_info.mode}")
+            print(f"   Size: {file_info_result.file_info.get('size', 'Unknown')} bytes")
+            print(f"   Is Directory: {file_info_result.file_info.get('isDirectory', False)}")
+            print(f"   Modified Time: {file_info_result.file_info.get('modTime', 'Unknown')}")
+            print(f"   Mode: {file_info_result.file_info.get('mode', 'Unknown')}")
 
         print("\n🎉 Archive upload mode example completed successfully!")
         print("✅ All operations completed without errors.")

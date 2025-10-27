@@ -165,6 +165,27 @@ security_result = agent_bay.create(mobile_security_params)
 if security_result.success:
     security_session = security_result.session
     print(f"Created secure mobile session with blacklist: {security_session.session_id}")
+
+ # Create sync policy with Archive upload mode
+ from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy,
+upload_policy = UploadPolicy(upload_mode="Archive")
+sync_policy = SyncPolicy(upload_policy=upload_policy)
+
+context_sync = ContextSync.new(
+    context_id='your_context_id',
+    path="/tmp/archive-mode-test",
+    policy=sync_policy
+)
+
+ session_params = CreateSessionParams(
+    context_syncs=[context_sync]
+)
+
+print("Creating session with default File upload mode...")
+session_result = agentbay_client.create(session_params)
+if security_result.success:
+    security_session = security_result.session
+    print(f"Created secure mobile session with blacklist: {security_session.session_id}")
 ```
 
 ### get
@@ -210,8 +231,6 @@ if result.success:
 else:
     print(f"Failed to get session: {result.error_message}")
 ```
-
-
 
 ```python
 list_by_labels(params: Optional[Union[ListSessionParams, Dict[str, str]]] = None) -> SessionListResult
@@ -353,4 +372,3 @@ if result.success:
     else:
         print(f"Failed to delete session: {delete_result.error_message}")
 ```
-
