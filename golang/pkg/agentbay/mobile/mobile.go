@@ -595,18 +595,6 @@ func (m *Mobile) executeTemplateCommand(commandTemplate, description string) err
 // It uses the provided ADB public key to establish the connection and returns
 // the ADB connect URL.
 func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult {
-	// Check if this is a mobile environment
-	imageID := m.Session.GetImageID()
-	if imageID == "" || !strings.Contains(strings.ToLower(imageID), "mobile") {
-		errorMsg := fmt.Sprintf("get_adb_url is only supported in mobile environment. Current environment: %s", imageID)
-		return &AdbUrlResult{
-			ApiResponse:  models.ApiResponse{RequestID: ""},
-			URL:          "",
-			Success:      false,
-			ErrorMessage: errorMsg,
-		}
-	}
-
 	// Build options JSON with adbkey_pub
 	optionsMap := map[string]string{"adbkey_pub": adbkeyPub}
 	optionsJSON, err := json.Marshal(optionsMap)

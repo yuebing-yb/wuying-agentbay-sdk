@@ -99,8 +99,9 @@ func TestBrowser_InitializeWithChrome_Integration(t *testing.T) {
 
 	t.Run("Initialize with Chrome browser type", func(t *testing.T) {
 		option := browser.NewBrowserOption()
-		option.BrowserType = "chrome"
-		
+		browserType := "chrome"
+		option.BrowserType = &browserType
+
 		success, err := session.Browser.Initialize(option)
 
 		assert.NoError(t, err)
@@ -148,8 +149,9 @@ func TestBrowser_InitializeWithCustomOptions_Integration(t *testing.T) {
 
 	t.Run("Initialize with custom viewport and user agent", func(t *testing.T) {
 		userAgent := "Mozilla/5.0 (Test) AppleWebKit/537.36"
+		browserType := "chromium"
 		option := &browser.BrowserOption{
-			BrowserType: "chromium",
+			BrowserType: &browserType,
 			UserAgent:   &userAgent,
 			Viewport: &browser.BrowserViewport{
 				Width:  1366,
@@ -216,7 +218,8 @@ func TestBrowser_InitializeAlreadyInitialized_Integration(t *testing.T) {
 
 	// Try to initialize again
 	option2 := browser.NewBrowserOption()
-	option2.BrowserType = "chrome"
+	browserType2 := "chrome"
+	option2.BrowserType = &browserType2
 	success2, err2 := session.Browser.Initialize(option2)
 
 	// Should return true without error (already initialized)

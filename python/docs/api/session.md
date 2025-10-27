@@ -17,6 +17,8 @@ code  # The Code instance for this session
 oss  # The Oss instance for this session
 application  # The ApplicationManager instance for this session
 window  # The WindowManager instance for this session
+computer  # The Computer instance for this session
+mobile  # The Mobile instance for this session
 ui  # The UI instance for this session
 context  # The ContextManager instance for this session
 browser  # The Browser instance for this session
@@ -24,9 +26,10 @@ agent  # The Agent instance for this session
 is_vpc  # Whether this session uses VPC resources
 network_interface_ip  # Network interface IP for VPC sessions
 http_port  # HTTP port for VPC sessions
+token  # Token for VPC sessions
+resource_url  # Resource URL for accessing the session
 mcp_tools  # MCP tools available for this session
 image_id  # The image ID used for this session
-extra_configs  # ExtraConfigs used when creating this session
 ```
 
 ## Methods
@@ -180,12 +183,13 @@ except AgentBayError as e:
 Gets a link for this session.
 
 ```python
-get_link(protocol_type: Optional[str] = None, port: Optional[int] = None) -> OperationResult
+get_link(protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None) -> OperationResult
 ```
 
 **Parameters:**
 - `protocol_type` (str, optional): The protocol type for the link.
 - `port` (int, optional): The port for the link. Must be an integer in the range [30100, 30199]. If not specified, the default port will be used.
+- `options` (str, optional): Additional options as a JSON string (e.g., for adb configuration). Defaults to None.
 
 **Returns:**
 - `OperationResult`: A result object containing success status, request ID, and the link URL as data.
@@ -225,12 +229,13 @@ except AgentBayError as e:
 Asynchronously gets a link for this session.
 
 ```python
-async get_link_async(protocol_type: Optional[str] = None, port: Optional[int] = None) -> OperationResult
+async get_link_async(protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None) -> OperationResult
 ```
 
 **Parameters:**
 - `protocol_type` (str, optional): The protocol type for the link.
 - `port` (int, optional): The port for the link. Must be an integer in the range [30100, 30199]. If not specified, the default port will be used.
+- `options` (str, optional): Additional options as a JSON string (e.g., for adb configuration). Defaults to None.
 
 **Returns:**
 - `OperationResult`: A result object containing success status, request ID, and the link URL as data.

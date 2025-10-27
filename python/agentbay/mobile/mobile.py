@@ -599,9 +599,6 @@ class Mobile(BaseService):
             SessionError: If the session is not in mobile environment.
         """
         try:
-            # Check if this is a mobile environment
-            image_id = getattr(self.session, "image_id", "")
-
             # Build options JSON with adbkey_pub
             import json
             options_json = json.dumps({"adbkey_pub": adbkey_pub})
