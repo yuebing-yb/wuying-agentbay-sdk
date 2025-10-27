@@ -32,6 +32,7 @@ import {
   logDebug,
   logAPICall,
   logAPIResponseWithDetails,
+  logCodeExecutionOutput,
   setRequestId,
   getRequestId,
 } from "./utils/logger";
@@ -935,6 +936,12 @@ export class Session {
            }
          }
 
+        // For run_code tool, extract and log the actual code execution output
+        if (toolName === "run_code" && actualResult) {
+          const dataStr = typeof actualResult === 'string' ? actualResult : JSON.stringify(actualResult);
+          logCodeExecutionOutput(requestId, dataStr);
+        }
+
         return {
           success: true,
           data: textContent || JSON.stringify(actualResult),
@@ -996,11 +1003,20 @@ export class Session {
           textContent = content[0].text;
         }
 
+        // For run_code tool, extract and log the actual code execution output
+        const reqId = extractRequestId(response) || "";
+        if (toolName === "run_code" && data) {
+          const dataStr = typeof response.body.data === 'string' 
+            ? response.body.data 
+            : JSON.stringify(response.body.data);
+          logCodeExecutionOutput(reqId, dataStr);
+        }
+
         return {
           success: true,
           data: textContent,
           errorMessage: "",
-          requestId: extractRequestId(response) || "",
+          requestId: reqId,
         };
       }
     } catch (error) {

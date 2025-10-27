@@ -361,6 +361,49 @@ def log_api_response_with_details(
             log.opt(depth=1).error(f"📥 Response: {full_response}")
 
 
+def log_code_execution_output(request_id: str, raw_output: str) -> None:
+    """
+    Extract and log the actual code execution output from run_code response.
+    
+    Args:
+        request_id: Request ID from the API response
+        raw_output: Raw JSON output from the MCP tool
+    """
+    import json
+    
+    try:
+        # Parse the JSON response to extract the actual code output
+        response = json.loads(raw_output)
+        
+        # Extract text from all content items
+        texts = []
+        if isinstance(response, dict) and 'content' in response:
+            for item in response.get('content', []):
+                if isinstance(item, dict) and item.get('type') == 'text':
+                    texts.append(item.get('text', ''))
+        
+        if not texts:
+            return
+        
+        actual_output = ''.join(texts)
+        
+        # Format the output with a clear separator
+        header = f"📋 Code Execution Output (RequestID: {request_id}):"
+        colored_header = f"{COLOR_GREEN}{header}{COLOR_RESET}"
+        
+        log.opt(depth=1).info(colored_header)
+        
+        # Print each line with indentation
+        lines = actual_output.rstrip('\n').split('\n')
+        for line in lines:
+            colored_line = f"{COLOR_GREEN}   {line}{COLOR_RESET}"
+            log.opt(depth=1).info(colored_line)
+            
+    except (json.JSONDecodeError, KeyError, TypeError):
+        # If parsing fails, just return without logging
+        pass
+
+
 def log_operation_start(operation: str, details: str = "") -> None:
     """Log the start of an operation."""
     log.opt(depth=1).info(f"🚀 Starting: {operation}")

@@ -14,6 +14,7 @@ from agentbay.logger import (
     log_api_response,
     log_api_response_with_details,
     log_operation_error,
+    log_code_execution_output,
 )
 
 # Initialize logger for this module
@@ -101,6 +102,20 @@ class BaseService:
             # Parse response
             response_data = response.json()
             response_str = json.dumps(response_data, ensure_ascii=False)
+
+            # For run_code tool, extract and log the actual code execution output BEFORE parsing
+            if tool_name == "run_code" and response_data.get("data"):
+                # Try to parse the nested data structure
+                if isinstance(response_data["data"], str):
+                    try:
+                        data_map = json.loads(response_data["data"])
+                        if "result" in data_map:
+                            log_code_execution_output(request_id, json.dumps(data_map["result"]))
+                    except json.JSONDecodeError:
+                        pass
+                elif isinstance(response_data["data"], dict):
+                    if "result" in response_data["data"]:
+                        log_code_execution_output(request_id, json.dumps(response_data["data"]["result"]))
 
             # Log API response with key details
             log_api_response_with_details(
@@ -220,6 +235,12 @@ class BaseService:
                     success=False,
                     error_message=f"[{code}] {message}",
                 )
+
+            # For run_code tool, extract and log the actual code execution output BEFORE parsing
+            # But only if it's not an error response
+            if name == "run_code" and body.get("Data") and not body.get("Data", {}).get("isError", False):
+                data_str = json.dumps(body["Data"], ensure_ascii=False)
+                log_code_execution_output(request_id, data_str)
 
             result = self._parse_response_body(body)
 

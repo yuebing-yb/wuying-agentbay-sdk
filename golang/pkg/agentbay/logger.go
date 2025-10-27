@@ -378,6 +378,63 @@ func LogOperationError(operation, errorMsg string, withStack bool) {
 	}
 }
 
+// LogCodeExecutionOutput extracts and logs the actual code execution output from run_code response
+func LogCodeExecutionOutput(requestID, rawOutput string) {
+	if GlobalLogLevel > LOG_INFO {
+		return
+	}
+
+	// Parse the JSON response to extract the actual code output
+	var response struct {
+		Content []struct {
+			Text string `json:"text"`
+			Type string `json:"type"`
+		} `json:"content"`
+		IsError        bool   `json:"isError"`
+		ParsedToolName string `json:"parsedToolName"`
+	}
+
+	if err := json.Unmarshal([]byte(rawOutput), &response); err != nil {
+		// If parsing fails, just return without logging
+		return
+	}
+
+	// Extract text from all content items
+	var texts []string
+	for _, item := range response.Content {
+		if item.Type == "text" {
+			texts = append(texts, item.Text)
+		}
+	}
+
+	if len(texts) == 0 {
+		return
+	}
+
+	actualOutput := strings.Join(texts, "")
+	reset, green, _, _, _ := getColorCodes()
+
+	// Format the output with a clear separator
+	coloredHeader := fmt.Sprintf("%s📋 Code Execution Output (RequestID: %s):%s", green, requestID, reset)
+	plainHeader := fmt.Sprintf("📋 Code Execution Output (RequestID: %s):", requestID)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredHeader)
+		// Print each line with indentation
+		lines := strings.Split(strings.TrimRight(actualOutput, "\n"), "\n")
+		for _, line := range lines {
+			fmt.Printf("%s   %s%s\n", green, line, reset)
+		}
+	}
+
+	writeToFile(plainHeader)
+	// Write to file with indentation
+	lines := strings.Split(strings.TrimRight(actualOutput, "\n"), "\n")
+	for _, line := range lines {
+		writeToFile(fmt.Sprintf("   %s", line))
+	}
+}
+
 // MaskSensitiveData recursively masks sensitive information in data structures
 func MaskSensitiveData(data interface{}) interface{} {
 	return maskSensitiveDataInternal(data, SENSITIVE_FIELDS)

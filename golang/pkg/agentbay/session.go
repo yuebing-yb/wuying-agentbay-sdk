@@ -819,6 +819,11 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	responseJSON, _ := json.Marshal(responseData)
 	LogAPIResponseWithDetails("CallMcpTool(VPC)", requestID, true, keyFields, string(responseJSON))
 
+	// For run_code tool, extract and log the actual code execution output
+	if toolName == "run_code" && textContent != "" {
+		LogCodeExecutionOutput(requestID, textContent)
+	}
+
 	return &models.McpToolResult{
 		Success:      true,
 		Data:         textContent,
@@ -879,6 +884,19 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string) (*models.McpToolResu
 		}
 		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
 		LogAPIResponseWithDetails("CallMcpTool", requestID, true, keyFields, string(responseJSON))
+
+		// For run_code tool, extract and log the actual code execution output
+		if toolName == "run_code" && response.Body.Data != nil {
+			var dataStr string
+			if str, ok := response.Body.Data.(string); ok {
+				dataStr = str
+			} else if dataBytes, err := json.Marshal(response.Body.Data); err == nil {
+				dataStr = string(dataBytes)
+			}
+			if dataStr != "" {
+				LogCodeExecutionOutput(requestID, dataStr)
+			}
+		}
 
 		// Convert Data to string if it's not already
 		dataStr := ""
