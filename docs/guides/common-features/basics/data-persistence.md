@@ -7,7 +7,6 @@ This guide covers AgentBay SDK's data persistence features, including context co
 - [Core Concepts](#core-concepts)
 - [Context Management](#context-management)
 - [Data Synchronization Strategies](#data-synchronization-strategies)
-  - [File Compression](#file-compression)
 
 <a id="core-concepts"></a>
 ## 🎯 Core Concepts
@@ -321,77 +320,6 @@ agent_bay.delete(session, sync_context=True)  # Ensures complete sync before del
 
 ## 🔄 Data Synchronization Strategies
 
-### File Compression
-
-AgentBay SDK supports automatic file compression during data synchronization to optimize storage space and transfer speed. When synchronizing large quantities of files, the compression strategy significantly reduces sync time.
-
-#### Compression Benefits
-
-**Storage Optimization:**
-- Reduces OSS storage costs by compressing files before upload
-- Saves bandwidth during upload/download operations
-
-**Performance Improvements:**
-- Faster upload/download times for compressible content
-- Reduced network latency for large file transfers
-- Better performance over slow network connections
-
-#### Compression Policy Configuration
-AgentBay SDK provides two upload modes for context synchronization through the `uploadMode` parameter in upload policy:
-
-**Upload Mode Options:**
-- **File Mode** (default): Files are uploaded without compression - faster for small files or already compressed content
-- **Archive Mode**: Files are compressed before upload - more efficient for large files and text-based content
-
-**Default Behavior:**
-By default, the upload policy uses `File` mode. To enable compression, you need to explicitly set the upload mode to `Archive`.
-
-**Basic Archive Mode Configuration:**
-
-```python
-from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy
-
-# Initialize AgentBay client
-agent_bay = AgentBay(api_key="your-api-key")
-
-# Create context
-context_result = agent_bay.context.get("my-project", create=True)
-context = context_result.context
-
-# Configure sync policy with Archive upload mode
-upload_policy = UploadPolicy(upload_mode="Archive")  # Enable compression
-sync_policy = SyncPolicy(upload_policy=upload_policy)
-
-# Create context sync with compression enabled
-context_sync = ContextSync(
-    context_id=context.id,
-    path="/tmp/data",
-    policy=sync_policy
-)
-
-# Create session with Archive mode
-session_params = CreateSessionParams(
-    labels={
-        "example": "archive-mode-demo",
-        "type": "compression-test",
-        "uploadMode": "Archive"
-    },
-    context_syncs=[context_sync]
-)
-
-session_result = agent_bay.create(session_params)
-session = session_result.session
-
-# Files written to /tmp/data will be compressed before upload
-session.file_system.write_file("/tmp/data/large-file.txt", large_content, mode="overwrite")
-
-# Clean up with sync to ensure compressed upload completes
-agent_bay.delete(session, sync_context=True)
-```
-
-
-
 ### Sync Policies
 
 #### Default Synchronization Behavior
@@ -521,8 +449,6 @@ session.file_system.write_file("/tmp/data/config.json", config_data, mode="overw
 agent_bay.delete(session, sync_context=True)
 ```
 
-
-
 ####  Data Lifecycle Management (RecyclePolicy)
 
 `RecyclePolicy` controls how long your context data is retained in the cloud before automatic cleanup. This is useful for managing storage costs and automatically removing temporary data.
@@ -643,38 +569,6 @@ session = agent_bay.create(CreateSessionParams(context_syncs=[context_sync])).se
 
 > **Note**: RecyclePolicy applies from the time data is uploaded to the cloud. The timer starts after the session ends and data is synchronized, not when files are created in the session.
 
-**Advanced Configuration with Multiple Policies:**
-
-```python
-from agentbay.context_sync import RecyclePolicy, Lifecycle, BWList, WhiteList
-
-# Combine compression with lifecycle management and selective sync
-upload_policy = UploadPolicy(upload_mode="Archive")
-recycle_policy = RecyclePolicy(
-    lifecycle=Lifecycle.LIFECYCLE_30DAYS,
-    paths=[""]  # Apply to all paths
-)
-
-# Selective sync with compression
-sync_policy = SyncPolicy(
-    upload_policy=upload_policy,
-    download_policy=DownloadPolicy(auto_download=True),
-    recycle_policy=recycle_policy,
-    bw_list=BWList(
-        white_lists=[
-            WhiteList(path="/src"),      # Compress source code
-            WhiteList(path="/docs"),     # Compress documentation
-            WhiteList(path="/logs")      # Compress log files
-        ]
-    )
-)
-
-context_sync = ContextSync(
-    context_id=context.id,
-    path="/home/wuying",
-    policy=sync_policy
-)
-```
 #### Selective Directory Sync
 
 Use `bw_list` (blacklist/whitelist) to control which subdirectories within the context mount point are synced:
