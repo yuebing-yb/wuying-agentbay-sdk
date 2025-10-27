@@ -685,9 +685,9 @@ except ValueError as e:
 
 ## See Also
 
-- [Browser Use Guide](../../guides/browser-use/README.md) - Complete guide with examples
-- [Core Features](../../guides/browser-use/core-features.md) - Essential browser features
-- [Advanced Features](../../guides/browser-use/advance-features.md) - Advanced configuration
+- [Browser Use Guide](../../../docs/guides/browser-use/README.md) - Complete guide with examples
+- [Core Features](../../../docs/guides/browser-use/core-features.md) - Essential browser features
+- [Advanced Features](../../../docs/guides/browser-use/advance-features.md) - Advanced configuration
 - [Browser Examples](../examples/browser/README.md) - Runnable example code
 - [PageUseAgent API](browser_agent.md) - AI-powered browser automation
 - [Session Management](session.md) - Session lifecycle and management
