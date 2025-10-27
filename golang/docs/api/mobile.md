@@ -12,7 +12,7 @@ The Mobile module provides comprehensive mobile UI automation capabilities for A
 The Mobile module is designed for automating Android mobile applications. It provides touch gestures, UI element discovery, application lifecycle management, and input control capabilities that are essential for mobile automation tasks.
 
 **Requirements:**
-- Session must be created with `mobile_latest` image
+- Session must be created with a mobile environment image (e.g., `mobile_latest`)
 - All methods use MCP (Model Context Protocol) tools under the hood
 
 ## Data Types
@@ -115,6 +115,19 @@ Represents a boolean operation result.
 ```go
 type BoolResult struct {
     models.ApiResponse
+    Success      bool   // Whether the operation succeeded
+    ErrorMessage string // Error message if operation failed
+}
+```
+
+### AdbUrlResult
+
+Represents the result of ADB URL retrieval operation.
+
+```go
+type AdbUrlResult struct {
+    models.ApiResponse
+    URL          string // ADB connection URL (e.g., "adb connect xx.xx.xx.xx:xxxxx")
     Success      bool   // Whether the operation succeeded
     ErrorMessage string // Error message if operation failed
 }
@@ -452,6 +465,80 @@ if screenshot.ErrorMessage == "" {
 
 ---
 
+### ADB Connection
+
+#### GetAdbUrl
+
+Retrieves the ADB (Android Debug Bridge) connection URL for the mobile environment.
+
+**Important:** This method is only supported in mobile environments. Using other environment types will result in an error.
+
+```go
+func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult
+```
+
+**Parameters:**
+- `adbkeyPub` (string): ADB public key for authentication
+
+**Returns:**
+- `*AdbUrlResult`: Result containing the ADB connection URL
+
+**Example:**
+```go
+// Get ADB URL with public key
+// Verified: ✓ Returns valid ADB connection URL
+adbkeyPub := "QAAAAM0muSn7yQCY...your_adb_public_key...EAAQAA="
+
+result := session.Mobile.GetAdbUrl(adbkeyPub)
+if result.Success {
+    fmt.Printf("ADB URL: %s\n", result.URL)
+    // Example output: "adb connect xx.xx.xx.xx:xxxxx"
+    fmt.Printf("Request ID: %s\n", result.RequestID)
+} else {
+    fmt.Printf("Error: %s\n", result.ErrorMessage)
+}
+```
+
+**Using the ADB Connection:**
+
+Once you have the ADB URL, you can use it to connect to the mobile device:
+
+```bash
+# Connect to the mobile device
+adb connect xx.xx.xx.xx:xxxxx
+
+# Verify the connection
+adb devices
+
+# Now you can use standard ADB commands
+adb shell
+adb install app.apk
+adb logcat
+adb pull /sdcard/file.txt
+adb push file.txt /sdcard/
+```
+
+**Error Handling:**
+
+```go
+result := session.Mobile.GetAdbUrl(adbkeyPub)
+if !result.Success {
+    // Handle errors
+    if strings.Contains(result.ErrorMessage, "mobile environment") {
+        fmt.Println("Error: This method requires a mobile environment session")
+    } else {
+        fmt.Printf("Error: %s\n", result.ErrorMessage)
+    }
+}
+```
+
+**Requirements:**
+- Session must be created with a mobile environment image
+- Valid ADB public key is required for authentication
+- The returned URL format is: `adb connect <IP>:<Port>`
+
+---
+
 ## Complete Usage Example
 
 This example demonstrates a complete workflow of mobile automation:
@@ -624,7 +711,7 @@ session.Mobile.Swipe(500, 500, 500, 500, 1000)
 
 ## Best Practices
 
-1. **Session Image**: Always use `mobile_latest` image for Mobile module operations
+1. **Session Image**: Always use a mobile environment image (e.g., `mobile_latest`) for Mobile module operations
 2. **Error Checking**: Check `ErrorMessage` field for operation results
 3. **Timeout Values**: Use appropriate timeout values for UI element discovery (typically 5000-10000ms)
 4. **Element Bounds**: Always check if `Bounds` is not nil before accessing coordinates

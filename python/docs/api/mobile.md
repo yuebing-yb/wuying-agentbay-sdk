@@ -9,7 +9,7 @@ The `Mobile` class provides comprehensive mobile device UI automation operations
 
 ## Overview
 
-The `Mobile` class is available through `session.mobile` and is designed for use with Android mobile environments (use `image_id="mobile_latest"` when creating sessions).
+The `Mobile` class is available through `session.mobile` and is designed for use with Android mobile environments (use a mobile environment image such as `mobile_latest` when creating sessions).
 
 ## Constructor
 
@@ -393,9 +393,72 @@ if session_result.success:
 
 ```
 
+## Mobile Configuration and Connectivity
+
+### get_adb_url()
+
+Retrieves the ADB connection URL for the mobile environment. This method is only supported in mobile environments.
+
+The method requires an ADB public key for authentication and returns the ADB connection URL that can be used with the `adb connect` command.
+
+```python
+get_adb_url(adbkey_pub: str) -> AdbUrlResult
+```
+
+**Parameters:**
+- `adbkey_pub` (str): The ADB public key for connection authentication. This is typically a base64-encoded string obtained from your ADB setup.
+
+**Returns:**
+- `AdbUrlResult`: Result object containing:
+  - `success` (bool): Whether the operation was successful
+  - `data` (str): The ADB connection URL in format "adb connect <IP>:<Port>" on success, None on failure
+  - `request_id` (str): Unique identifier for the API request
+  - `error_message` (str): Error message if the operation failed
+
+**Raises:**
+- `SessionError`: May be raised for unexpected errors during the operation
+
+**Environment Requirements:**
+- This method **only works** with mobile environment images
+- Calling on other environments (e.g., browser or Linux environments) will return an error
+
+**Example:**
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+# Create a mobile session
+agent_bay = AgentBay(api_key="your_api_key")
+params = CreateSessionParams(image_id="mobile_latest")
+session_result = agent_bay.create(params)
+session = session_result.session
+
+# Get ADB URL with public key
+adbkey_pub = "QAAAAM0muSn7yQCY...your_adb_public_key...EAAQAA="
+
+result = session.mobile.get_adb_url(adbkey_pub)
+# Verified: success=True, returns ADB connection URL
+
+if result.success:
+    print(f"ADB URL: {result.data}")
+    # Example output: "adb connect xx.xx.xx.xx:xxxxx"
+    print(f"Request ID: {result.request_id}")
+else:
+    print(f"Error: {result.error_message}")
+
+# Clean up
+agent_bay.delete(session)
+```
+
+**Notes:**
+1. The `adbkey_pub` parameter should be a valid ADB public key from your setup
+2. The returned URL can be used directly with the `adb connect` command
+3. This method is exclusive to mobile environments; using other images will result in an error
+4. Each call includes a `request_id` for tracking and debugging purposes
+
 ## Usage Notes
 
-1. **Session Image**: Always use `image_id="mobile_latest"` when creating sessions for mobile automation.
+1. **Session Image**: Always use a mobile environment image (e.g., `mobile_latest`) when creating sessions for mobile automation.
 
 2. **Coordinates**: Mobile screen coordinates typically range based on the device resolution. Common Android emulator resolutions:
    - 1080x1920 (Full HD)

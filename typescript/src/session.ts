@@ -610,7 +610,8 @@ export class Session {
    */
   async getLink(
     protocolType?: string,
-    port?: number
+    port?: number,
+    options?: string
   ): Promise<OperationResult> {
     try {
       // Validate port range if port is provided
@@ -622,11 +623,19 @@ export class Session {
         }
       }
 
+      // Log API call
+      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${protocolType || 'default'}, Port=${port || 'default'}`;
+      if (options) {
+        requestParams += ', Options=provided';
+      }
+      logAPICall('GetLink', requestParams);
+
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
         sessionId: this.getSessionId(),
         protocolType,
         port,
+        option: options,
       });
 
       const response = await this.agentBay.getClient().getLink(request);
@@ -655,6 +664,13 @@ export class Session {
 
       const url = (data as any).Url || (data as any).url;
 
+      // Log API response
+      const keyFields: Record<string, any> = {};
+      if (url) {
+        keyFields.url = url;
+      }
+      logAPIResponseWithDetails('GetLink', requestId, true, keyFields);
+
       return {
         requestId,
         success: true,
@@ -681,7 +697,8 @@ export class Session {
    */
   async getLinkAsync(
     protocolType?: string,
-    port?: number
+    port?: number,
+    options?: string
   ): Promise<OperationResult> {
     try {
       // Validate port range if port is provided
@@ -693,11 +710,19 @@ export class Session {
         }
       }
 
+      // Log API call
+      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${protocolType || 'default'}, Port=${port || 'default'}`;
+      if (options) {
+        requestParams += ', Options=provided';
+      }
+      logAPICall('GetLink', requestParams);
+
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
         sessionId: this.getSessionId(),
         protocolType,
         port,
+        option: options,
       });
 
       // Note: In TypeScript, async is the default, but keeping this method for API compatibility
@@ -726,6 +751,13 @@ export class Session {
       }
 
       const url = (data as any).Url || (data as any).url;
+
+      // Log API response
+      const keyFields: Record<string, any> = {};
+      if (url) {
+        keyFields.url = url;
+      }
+      logAPIResponseWithDetails('GetLink', requestId, true, keyFields);
 
       return {
         requestId,

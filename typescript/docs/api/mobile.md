@@ -9,7 +9,7 @@ The `Mobile` class provides mobile UI automation capabilities including touch op
 
 ## Overview
 
-The Mobile module is designed for mobile device automation tasks and requires sessions created with the `mobile_latest` image. It provides comprehensive mobile interaction capabilities through MCP tools.
+The Mobile module is designed for mobile device automation tasks and requires sessions created with a mobile environment image (e.g., `mobile_latest`). It provides comprehensive mobile interaction capabilities through MCP tools.
 
 ## Properties
 
@@ -423,7 +423,7 @@ async function mobileAutomationExample() {
 
 ## Important Notes
 
-1. **Image Requirement**: Mobile automation requires sessions created with `imageId: 'mobile_latest'`
+1. **Image Requirement**: Mobile automation requires sessions created with a mobile environment image (e.g., `imageId: 'mobile_latest'`)
 
 2. **Session Warmup**: Mobile sessions may need extra time (10+ seconds) to fully initialize before all APIs work properly.
 
@@ -459,3 +459,88 @@ Common Android key codes for use with `sendKey()`:
 | 66 | KEYCODE_ENTER | Enter key |
 | 82 | KEYCODE_MENU | Menu button |
 | 84 | KEYCODE_SEARCH | Search button |
+
+## ADB Connection
+
+### getAdbUrl()
+
+Retrieves the ADB (Android Debug Bridge) connection URL for the mobile environment.
+
+**Important:** This method is only supported in mobile environments. Using other environment types will result in an error.
+
+```typescript
+async getAdbUrl(adbkeyPub: string): Promise<AdbUrlResult>
+```
+
+**Parameters:**
+- `adbkeyPub` (string): ADB public key for authentication
+
+**Returns:**
+- `Promise<AdbUrlResult>`: Result containing the ADB connection URL
+
+**AdbUrlResult Interface:**
+```typescript
+interface AdbUrlResult {
+  requestId: string;      // Request ID for tracking
+  success: boolean;       // Whether the operation succeeded
+  data?: string;          // ADB connection URL (e.g., "adb connect xx.xx.xx.xx:xxxxx")
+  url?: string;           // Alias for data
+  errorMessage: string;   // Error message if operation failed
+}
+```
+
+**Example:**
+```typescript
+// Verified: ✓ Returns valid ADB connection URL
+const adbkeyPub = "QAAAAM0muSn7yQCY...your_adb_public_key...EAAQAA=";
+
+const result = await session.mobile.getAdbUrl(adbkeyPub);
+if (result.success) {
+    console.log(`ADB URL: ${result.data}`);
+    // Example output: "adb connect xx.xx.xx.xx:xxxxx"
+    console.log(`Request ID: ${result.requestId}`);
+} else {
+    console.error(`Error: ${result.errorMessage}`);
+}
+```
+
+**Using the ADB Connection:**
+
+Once you have the ADB URL, you can use it to connect to the mobile device:
+
+```bash
+# Connect to the mobile device
+adb connect xx.xx.xx.xx:xxxxx
+
+# Verify the connection
+adb devices
+
+# Now you can use standard ADB commands
+adb shell
+adb install app.apk
+adb logcat
+adb pull /sdcard/file.txt
+adb push file.txt /sdcard/
+```
+
+**Error Handling:**
+
+```typescript
+const result = await session.mobile.getAdbUrl(adbkeyPub);
+if (!result.success) {
+    // Handle errors
+    if (result.errorMessage.includes('mobile environment')) {
+        console.error('Error: This method requires a mobile environment session');
+    } else {
+        console.error(`Error: ${result.errorMessage}`);
+    }
+}
+```
+
+**Requirements:**
+- Session must be created with a mobile environment image
+- Valid ADB public key is required for authentication
+- The returned URL format is: `adb connect <IP>:<Port>`
+
+**See Also:**
+- [Mobile GetAdbUrl Example](../examples/mobile-get-adb-url/README.md) - Complete working example

@@ -191,6 +191,11 @@ func (s *Session) GetSessionId() string {
 	return s.SessionID
 }
 
+// GetImageID returns the image ID for this session.
+func (s *Session) GetImageID() string {
+	return s.ImageId
+}
+
 // GetCommand returns the command handler for this session.
 func (s *Session) GetCommand() *command.Command {
 	return s.Command
@@ -418,7 +423,7 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 }
 
 // GetLink gets the link for this session.
-func (s *Session) GetLink(protocolType *string, port *int32) (*LinkResult, error) {
+func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*LinkResult, error) {
 	// Validate port range if port is provided
 	if port != nil {
 		if *port < 30100 || *port > 30199 {
@@ -431,6 +436,7 @@ func (s *Session) GetLink(protocolType *string, port *int32) (*LinkResult, error
 		SessionId:     tea.String(s.SessionID),
 		ProtocolType:  protocolType,
 		Port:          port,
+		Option:        options,
 	}
 
 	// Log API request
@@ -440,6 +446,9 @@ func (s *Session) GetLink(protocolType *string, port *int32) (*LinkResult, error
 	}
 	if getLinkRequest.Port != nil {
 		requestParams += fmt.Sprintf(", Port=%d", *getLinkRequest.Port)
+	}
+	if getLinkRequest.Option != nil {
+		requestParams += ", Options=provided"
 	}
 	LogAPICall("GetLink", requestParams)
 

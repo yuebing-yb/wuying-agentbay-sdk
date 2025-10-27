@@ -309,7 +309,7 @@ def log_api_call(api_name: str, request_data: str = "") -> None:
     """Log API call with consistent formatting."""
     log.opt(depth=1).info(f"🔗 API Call: {api_name}")
     if request_data:
-        log.opt(depth=1).debug(f"📤 Request: {request_data}")
+        log.opt(depth=1).info(f"  └─ {request_data}")
 
 
 def log_api_response(response_data: str, success: bool = True) -> None:

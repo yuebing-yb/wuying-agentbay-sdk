@@ -333,6 +333,101 @@ class TestMobile:
         assert result.data == "/path/to/mobile_screenshot.png"
         self.mobile._call_mcp_tool.assert_called_once_with("system_screenshot", {})
 
+    # ADB URL Tests
+    def test_get_adb_url_success_with_valid_mobile_env(self):
+        """Test get_adb_url returns AdbUrlResult with valid adbkey_pub in mobile environment."""
+        # Arrange
+        self.mock_session.image_id = "mobile_latest"
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "adb-request-123"
+        mock_result.data = "adb connect 47.99.76.99:54848"
+
+        self.mobile.session.get_link = Mock(return_value=mock_result)
+
+        # Act
+        adbkey_pub = "test_adb_key..."
+        result = self.mobile.get_adb_url(adbkey_pub)
+
+        # Assert
+        from agentbay.model.response import AdbUrlResult
+        assert isinstance(result, AdbUrlResult)
+        assert result.success is True
+        assert result.request_id == "adb-request-123"
+        assert result.data == "adb connect 47.99.76.99:54848"
+
+    def test_get_adb_url_fails_on_non_mobile_env(self):
+        """Test get_adb_url fails when session is not mobile environment."""
+        # Arrange
+        self.mock_session.image_id = "browser_latest"
+
+        # Mock get_link to raise SessionError (simulating backend error)
+        from agentbay.exceptions import SessionError
+        from agentbay.model.response import AdbUrlResult
+
+        self.mock_session.get_link.side_effect = SessionError(
+            "Failed to get link: Error: ImageTypeNotMatched code: 400, Expected: MobileUse, Actual: BrowserUse"
+        )
+
+        # Act
+        adbkey_pub = "test_adb_key..."
+        result = self.mobile.get_adb_url(adbkey_pub)
+
+        # Assert - Should return AdbUrlResult with success=False
+        assert isinstance(result, AdbUrlResult)
+        assert result.success is False
+        assert "failed to get adb url" in result.error_message.lower()
+
+    def test_get_adb_url_calls_get_link_with_correct_params(self):
+        """Test get_adb_url calls session.get_link with correct parameters."""
+        # Arrange
+        self.mock_session.image_id = "mobile_latest"
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "adb-request-456"
+        mock_result.data = "adb connect 192.168.1.1:5555"
+
+        self.mobile.session.get_link = Mock(return_value=mock_result)
+
+        # Act
+        adbkey_pub = "test_key_123"
+        result = self.mobile.get_adb_url(adbkey_pub)
+
+        # Assert
+        self.mobile.session.get_link.assert_called_once()
+        call_args = self.mobile.session.get_link.call_args
+        
+        # Verify protocol_type is "adb"
+        assert call_args[1]["protocol_type"] == "adb"
+        
+        # Verify options contains adbkey_pub
+        import json
+        options_str = call_args[1]["options"]
+        options_dict = json.loads(options_str)
+        assert options_dict["adbkey_pub"] == adbkey_pub
+
+    def test_get_adb_url_returns_correct_structure(self):
+        """Test get_adb_url returns AdbUrlResult with all required fields."""
+        # Arrange
+        self.mock_session.image_id = "mobile_latest"
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "adb-req-789"
+        mock_result.data = "adb connect 10.0.0.1:5555"
+
+        self.mobile.session.get_link = Mock(return_value=mock_result)
+
+        # Act
+        result = self.mobile.get_adb_url("key_xyz")
+
+        # Assert - verify result structure
+        from agentbay.model.response import AdbUrlResult
+        assert isinstance(result, AdbUrlResult)
+        assert hasattr(result, "success")
+        assert hasattr(result, "request_id")
+        assert hasattr(result, "data")
+        assert hasattr(result, "error_message")
+
     # Error Handling Tests
     def test_tap_mcp_failure(self):
         """Test tap when MCP tool fails."""

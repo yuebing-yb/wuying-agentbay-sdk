@@ -308,4 +308,74 @@ describe('Mobile', () => {
       expect(result.errorMessage).toContain('Failed to parse');
     });
   });
+
+  describe('ADB Connection', () => {
+    test('getAdbUrl should fail on non-mobile environment', async () => {
+      // Arrange
+      const mockSessionWithImage = {
+        ...mockSession,
+        imageId: 'browser_latest',
+        getLink: jest.fn()
+      };
+      const mobileWithImage = new Mobile(mockSessionWithImage as any);
+      const adbkeyPub = 'test_key_123';
+
+      // Act
+      const result = await mobileWithImage.getAdbUrl(adbkeyPub);
+
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain('only supported in mobile environment');
+      expect(mockSessionWithImage.getLink).not.toHaveBeenCalled();
+    });
+
+    test('getAdbUrl should succeed on mobile environment', async () => {
+      // Arrange
+      const expectedUrl = 'adb connect xx.xx.xx.xx:xxxxx';
+      const mockSessionWithImage = {
+        ...mockSession,
+        imageId: 'mobile_latest',
+        getLink: jest.fn().mockResolvedValue({
+          success: true,
+          requestId: 'test-adb-123',
+          data: expectedUrl,
+          errorMessage: ''
+        })
+      };
+      const mobileWithImage = new Mobile(mockSessionWithImage as any);
+      const adbkeyPub = 'QAAAAM0muSn7yQCY...test_key...EAAQAA=';
+
+      // Act
+      const result = await mobileWithImage.getAdbUrl(adbkeyPub);
+
+      // Assert
+      const callArgs = mockSessionWithImage.getLink.mock.calls[0];
+      expect(callArgs[0]).toBe('adb');
+      expect(callArgs[1]).toBeUndefined();
+      expect(callArgs[2]).toContain('adbkey_pub');
+      expect(result.success).toBe(true);
+      expect(result.data).toBe(expectedUrl);
+      expect(result.url).toBe(expectedUrl);
+      expect(result.requestId).toBe('test-adb-123');
+    });
+
+    test('getAdbUrl should handle getLink errors', async () => {
+      // Arrange
+      const mockSessionWithImage = {
+        ...mockSession,
+        imageId: 'mobile_latest',
+        getLink: jest.fn().mockRejectedValue(new Error('Network error'))
+      };
+      const mobileWithImage = new Mobile(mockSessionWithImage as any);
+      const adbkeyPub = 'test_key_456';
+
+      // Act
+      const result = await mobileWithImage.getAdbUrl(adbkeyPub);
+
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain('Failed to get ADB URL');
+      expect(result.errorMessage).toContain('Network error');
+    });
+  });
 }); 

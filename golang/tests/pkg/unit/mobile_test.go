@@ -465,6 +465,26 @@ func (suite *MobileTestSuite) TestCompleteUserFlow() {
 	assert.Equal(suite.T(), "https://example.com/flow-screenshot.png", screenshotResult.Data)
 }
 
+// Test GetAdbUrl environment validation
+func (suite *MobileTestSuite) TestGetAdbUrl_NonMobileEnvironment() {
+	// Arrange
+	adbkeyPub := "test_adb_key...test_key...EAAQAA="
+
+	suite.mockSession.On("GetImageID").Return("browser_latest")
+
+	// Act
+	result := suite.mobile.GetAdbUrl(adbkeyPub)
+
+	// Assert
+	assert.False(suite.T(), result.Success)
+	assert.Empty(suite.T(), result.URL)
+	assert.Contains(suite.T(), result.ErrorMessage, "only supported in mobile environment")
+}
+
+// Note: Full GetAdbUrl functionality is tested in integration tests
+// (tests/pkg/integration/mobile_adb_integration_test.go) because it requires
+// real API client interaction which is complex to mock properly
+
 // Run the test suite
 func TestMobileTestSuite(t *testing.T) {
 	suite.Run(t, new(MobileTestSuite))

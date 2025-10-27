@@ -11,11 +11,13 @@ class GetLinkRequest(DaraModel):
         port: int = None,
         protocol_type: str = None,
         session_id: str = None,
+        options: str = None,
     ):
         self.authorization = authorization
         self.port = port
         self.protocol_type = protocol_type
         self.session_id = session_id
+        self.options = options
 
     def validate(self):
         pass
@@ -37,6 +39,9 @@ class GetLinkRequest(DaraModel):
         if self.session_id is not None:
             result['SessionId'] = self.session_id
 
+        if self.options is not None:
+            result['option'] = self.options
+
         return result
 
     def from_map(self, m: dict = None):
@@ -52,6 +57,9 @@ class GetLinkRequest(DaraModel):
 
         if m.get('SessionId') is not None:
             self.session_id = m.get('SessionId')
+
+        if m.get('option') is not None:
+            self.options = m.get('option')
 
         return self
 
