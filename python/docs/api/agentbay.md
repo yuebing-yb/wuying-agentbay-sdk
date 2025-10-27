@@ -178,6 +178,7 @@ context_sync = ContextSync.new(
 )
 
  session_params = CreateSessionParams(
+    image_id="your_image_id",
     context_syncs=[context_sync]
 )
 
