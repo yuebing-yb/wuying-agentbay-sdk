@@ -467,18 +467,11 @@ func (suite *MobileTestSuite) TestCompleteUserFlow() {
 
 // Test GetAdbUrl environment validation
 func (suite *MobileTestSuite) TestGetAdbUrl_NonMobileEnvironment() {
-	// Arrange
-	adbkeyPub := "test_adb_key...test_key...EAAQAA="
-
-	suite.mockSession.On("GetImageID").Return("browser_latest")
-
-	// Act
-	result := suite.mobile.GetAdbUrl(adbkeyPub)
-
-	// Assert
-	assert.False(suite.T(), result.Success)
-	assert.Empty(suite.T(), result.URL)
-	assert.Contains(suite.T(), result.ErrorMessage, "only supported in mobile environment")
+	// Note: This test is removed because GetAdbUrl no longer validates image ID
+	// It directly calls the GetLink API which will handle environment validation
+	// Full GetAdbUrl functionality is tested in integration tests
+	// (tests/pkg/integration/mobile_adb_integration_test.go)
+	suite.T().Skip("Test removed - GetAdbUrl validation moved to integration tests")
 }
 
 // Note: Full GetAdbUrl functionality is tested in integration tests
