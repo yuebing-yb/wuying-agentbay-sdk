@@ -434,19 +434,6 @@ export class Mobile {
    */
   async getAdbUrl(adbkeyPub: string): Promise<AdbUrlResult> {
     try {
-      // Check if this is a mobile environment
-      const imageId = this.session.imageId || '';
-      if (!imageId || !imageId.toLowerCase().includes('mobile')) {
-        const errorMsg = `get_adb_url is only supported in mobile environment. Current environment: ${imageId}`;
-        return {
-          success: false,
-          requestId: '',
-          errorMessage: errorMsg,
-          data: undefined,
-          url: undefined
-        };
-      }
-
       // Build options JSON with adbkey_pub
       const optionsJson = JSON.stringify({ adbkey_pub: adbkeyPub });
 

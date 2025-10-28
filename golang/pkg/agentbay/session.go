@@ -14,6 +14,7 @@ import (
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/agent"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/code"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
@@ -134,6 +135,9 @@ type Session struct {
 	Computer *computer.Computer
 	Mobile   *mobile.Mobile
 
+	// Browser for web automation
+	Browser *browser.Browser
+
 	// Agent for task execution
 	Agent *agent.Agent
 
@@ -156,6 +160,9 @@ func NewSession(agentBay *AgentBay, sessionID string) *Session {
 	session.Command = command.NewCommand(session)
 	session.Code = code.NewCode(session)
 	session.Oss = oss.NewOss(session)
+
+	// Initialize Browser
+	session.Browser = browser.NewBrowser(session)
 
 	// Initialize UI
 	session.UI = ui.NewUI(session)
@@ -194,6 +201,56 @@ func (s *Session) GetSessionId() string {
 // GetImageID returns the image ID for this session.
 func (s *Session) GetImageID() string {
 	return s.ImageId
+}
+
+// GetSessionID returns the session ID for this session (browser interface method).
+func (s *Session) GetSessionID() string {
+	return s.SessionID
+}
+
+// IsVPCEnabled returns whether this session uses VPC resources.
+func (s *Session) IsVPCEnabled() bool {
+	return s.IsVpcEnabled
+}
+
+// GetNetworkInterfaceIP returns the network interface IP for VPC sessions.
+func (s *Session) GetNetworkInterfaceIP() string {
+	return s.NetworkInterfaceIP
+}
+
+// GetHttpPortNumber returns the HTTP port for VPC sessions.
+func (s *Session) GetHttpPortNumber() string {
+	return s.HttpPortNumber
+}
+
+// Wrapper methods for browser.SessionInterface compatibility
+
+// CallMcpTool is a wrapper that converts the result to browser.McpToolResult
+func (s *Session) CallMcpToolForBrowser(toolName string, args interface{}) (*browser.McpToolResult, error) {
+	result, err := s.CallMcpTool(toolName, args)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert models.McpToolResult to browser.McpToolResult
+	return &browser.McpToolResult{
+		Success:      result.Success,
+		Data:         result.Data,
+		ErrorMessage: result.ErrorMessage,
+	}, nil
+}
+
+// GetLinkForBrowser is a wrapper that converts the result to browser.LinkResult
+func (s *Session) GetLinkForBrowser(protocolType *string, port *int32, options *string) (*browser.LinkResult, error) {
+	result, err := s.GetLink(protocolType, port, options)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert LinkResult to browser.LinkResult
+	return &browser.LinkResult{
+		Link: result.Link,
+	}, nil
 }
 
 // GetCommand returns the command handler for this session.
@@ -819,6 +876,11 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	responseJSON, _ := json.Marshal(responseData)
 	LogAPIResponseWithDetails("CallMcpTool(VPC)", requestID, true, keyFields, string(responseJSON))
 
+	// For run_code tool, extract and log the actual code execution output
+	if toolName == "run_code" && textContent != "" {
+		LogCodeExecutionOutput(requestID, textContent)
+	}
+
 	return &models.McpToolResult{
 		Success:      true,
 		Data:         textContent,
@@ -879,6 +941,19 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string) (*models.McpToolResu
 		}
 		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
 		LogAPIResponseWithDetails("CallMcpTool", requestID, true, keyFields, string(responseJSON))
+
+		// For run_code tool, extract and log the actual code execution output
+		if toolName == "run_code" && response.Body.Data != nil {
+			var dataStr string
+			if str, ok := response.Body.Data.(string); ok {
+				dataStr = str
+			} else if dataBytes, err := json.Marshal(response.Body.Data); err == nil {
+				dataStr = string(dataBytes)
+			}
+			if dataStr != "" {
+				LogCodeExecutionOutput(requestID, dataStr)
+			}
+		}
 
 		// Convert Data to string if it's not already
 		dataStr := ""

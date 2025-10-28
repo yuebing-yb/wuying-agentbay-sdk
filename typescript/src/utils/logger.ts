@@ -617,6 +617,69 @@ export function logAPIResponseWithDetails(
 }
 
 /**
+ * Extract and log the actual code execution output from run_code response
+ * @param requestId Request ID from the API response
+ * @param rawOutput Raw JSON output from the MCP tool
+ */
+export function logCodeExecutionOutput(requestId: string, rawOutput: string): void {
+  if (!shouldLog('INFO')) return;
+
+  try {
+    // Parse the JSON response to extract the actual code output
+    const response = JSON.parse(rawOutput);
+
+    // Extract text from all content items
+    const texts: string[] = [];
+    if (response && typeof response === 'object' && 'content' in response) {
+      const content = response.content;
+      if (Array.isArray(content)) {
+        for (const item of content) {
+          if (item && typeof item === 'object' && item.type === 'text' && item.text) {
+            texts.push(item.text);
+          }
+        }
+      }
+    }
+
+    if (texts.length === 0) {
+      return;
+    }
+
+    const actualOutput = texts.join('');
+
+    // Format the output with a clear separator
+    const header = `📋 Code Execution Output (RequestID: ${requestId}):`;
+
+    if (useColors) {
+      process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${header}${ANSI_RESET}\n`);
+    } else {
+      logInfo(header);
+    }
+
+    // Print each line with indentation
+    const lines = actualOutput.trimEnd().split('\n');
+    for (const line of lines) {
+      if (useColors) {
+        process.stdout.write(`${ANSI_GREEN}ℹ️  INFO:    ${line}${ANSI_RESET}\n`);
+      } else {
+        logInfo(`   ${line}`);
+      }
+    }
+
+    // Also write to file if enabled
+    if (fileLoggingEnabled && logFilePath) {
+      writeToFile(header);
+      for (const line of lines) {
+        writeToFile(`   ${line}`);
+      }
+    }
+  } catch (error) {
+    // If parsing fails, just return without logging
+    return;
+  }
+}
+
+/**
  * Log operation start
  * @param operation Name of the operation
  * @param details Optional operation details

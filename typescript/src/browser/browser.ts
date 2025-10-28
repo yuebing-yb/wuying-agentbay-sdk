@@ -150,6 +150,12 @@ export interface BrowserOption {
   proxies?: BrowserProxy[];
   /** Path to the extensions directory. Defaults to "/tmp/extensions/" */
   extensionPath?: string;
+  /** Additional command line arguments for the browser */
+  cmdArgs?: string[];
+  /** Default URL to navigate to when browser starts */
+  defaultNavigateUrl?: string;
+  /** Browser type: 'chrome' or 'chromium'. Defaults to undefined */
+  browserType?: 'chrome' | 'chromium' | undefined;
 }
 
 export class BrowserOptionClass implements BrowserOption {
@@ -162,6 +168,9 @@ export class BrowserOptionClass implements BrowserOption {
   solveCaptchas?: boolean;
   proxies?: BrowserProxy[];
   extensionPath?: string;
+  cmdArgs?: string[];
+  defaultNavigateUrl?: string;
+  browserType?: 'chrome' | 'chromium' | undefined;
 
   constructor(
     useStealth = false,
@@ -171,6 +180,9 @@ export class BrowserOptionClass implements BrowserOption {
     fingerprint?: BrowserFingerprint,
     solveCaptchas = false,
     proxies?: BrowserProxy[],
+    cmdArgs?: string[],
+    defaultNavigateUrl?: string,
+    browserType?: 'chrome' | 'chromium',
   ) {
     this.useStealth = useStealth;
     this.userAgent = userAgent;
@@ -179,6 +191,9 @@ export class BrowserOptionClass implements BrowserOption {
     this.fingerprint = fingerprint;
     this.solveCaptchas = solveCaptchas;
     this.extensionPath = "/tmp/extensions/";
+    this.cmdArgs = cmdArgs;
+    this.defaultNavigateUrl = defaultNavigateUrl;
+    this.browserType = browserType;
 
     // Validate proxies list items
     if (proxies !== undefined) {
@@ -192,6 +207,16 @@ export class BrowserOptionClass implements BrowserOption {
 
     // Set proxies after validation
     this.proxies = proxies;
+
+    // Validate cmdArgs
+    if (cmdArgs !== undefined && !Array.isArray(cmdArgs)) {
+      throw new Error('cmdArgs must be a list');
+    }
+
+    // Validate browser_type
+    if (browserType !== undefined && browserType !== 'chrome' && browserType !== 'chromium') {
+      throw new Error("browserType must be 'chrome' or 'chromium'");
+    }
   }
 
   toMap(): Record<string, any> {
@@ -226,6 +251,15 @@ export class BrowserOptionClass implements BrowserOption {
     }
     if (this.extensionPath !== undefined) {
       optionMap['extensionPath'] = this.extensionPath;
+    }
+    if (this.cmdArgs !== undefined) {
+      optionMap['cmdArgs'] = this.cmdArgs;
+    }
+    if (this.defaultNavigateUrl !== undefined) {
+      optionMap['defaultNavigateUrl'] = this.defaultNavigateUrl;
+    }
+    if (this.browserType !== undefined) {
+      optionMap['browserType'] = this.browserType;
     }
     return optionMap;
   }
@@ -272,6 +306,15 @@ export class BrowserOptionClass implements BrowserOption {
     }
     if (map.extensionPath !== undefined) {
       this.extensionPath = map.extensionPath;
+    }
+    if (map.cmdArgs !== undefined) {
+      this.cmdArgs = map.cmdArgs;
+    }
+    if (map.defaultNavigateUrl !== undefined) {
+      this.defaultNavigateUrl = map.defaultNavigateUrl;
+    }
+    if (map.browserType !== undefined) {
+      this.browserType = map.browserType;
     }
     return this;
   }
@@ -419,6 +462,17 @@ export class Browser {
       this._endpointUrl = null;
       this._option = null;
       return false;
+    }
+  }
+
+  /**
+   * Destroy the browser instance.
+   */
+  async destroy(): Promise<void> {
+    if (this.isInitialized()) {
+      await this.session.callMcpTool("stopChrome", {});
+    } else {
+      throw new BrowserError("Browser is not initialized. Cannot destroy browser.");
     }
   }
 

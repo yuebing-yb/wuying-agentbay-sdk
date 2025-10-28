@@ -39,10 +39,9 @@
 
 ### Environment-Specific Features
 
-#### Browser Use
+#### [Browser Use](guides/browser-use/README.md)
 Complete browser automation for web scraping, testing, and form filling.
 
-- [Browser Usage Guide](guides/browser-use/README.md) - Complete browser automation guide
 - [Core Features](guides/browser-use/core-features.md) - Basic browser operations
 - [Advanced Features](guides/browser-use/advance-features.md) - Advanced browser capabilities
 - [Code Examples](guides/browser-use/code-example.md) - Practical code samples
@@ -59,13 +58,13 @@ Complete browser automation for web scraping, testing, and form filling.
 - [Call for User](guides/browser-use/core-features/call-for-user.md) - User interaction requests
 - [Page Agent](guides/browser-use/advance-features/page-use-agent.md) - AI-driven page operations
 
-#### Computer Use
+#### [Computer Use](guides/computer-use/README.md)
 Windows desktop automation for application control and window management.
 
-- [Computer Use Guide](guides/computer-use/README.md) - Complete Windows desktop automation guide
 - [Computer Application Management](guides/computer-use/computer-application-management.md) - Application control and management
 - [Computer UI Automation](guides/computer-use/computer-ui-automation.md) - Desktop UI interaction and automation
 - [Window Management](guides/computer-use/window-management.md) - Window operations and focus management
+- [Browser Capabilities by Image Type](guides/computer-use/browser-capabilities-by-image-type.md) - Understanding browser support across different images
 
 **Key Capabilities:**
 - Application Management (start, stop, list applications)
@@ -73,10 +72,9 @@ Windows desktop automation for application control and window management.
 - Focus Management
 - Desktop Automation Workflows
 
-#### Mobile Use
+#### [Mobile Use](guides/mobile-use/README.md)
 Mobile UI automation for app testing and gesture-based interactions.
 
-- [Mobile Use Guide](guides/mobile-use/README.md) - Complete mobile automation guide
 - [Mobile Application Management](guides/mobile-use/mobile-application-management.md) - Mobile app control and management
 - [Mobile UI Automation](guides/mobile-use/mobile-ui-automation.md) - Mobile UI interaction and automation
 
@@ -87,10 +85,9 @@ Mobile UI automation for app testing and gesture-based interactions.
 - Screenshot Capture
 - Mobile Application Management
 
-#### CodeSpace
+#### [CodeSpace](guides/codespace/README.md)
 Development environment for code execution and scripting.
 
-- [CodeSpace Guide](guides/codespace/README.md) - Complete development environment guide
 - [Code Execution](guides/codespace/code-execution.md) - Python and JavaScript code execution
 
 **Key Capabilities:**
