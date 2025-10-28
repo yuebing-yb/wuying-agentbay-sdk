@@ -39,7 +39,9 @@ export interface ScreenshotResult extends OperationResult {
 }
 
 // Session interface for Computer module
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ComputerSession {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   callMcpTool(toolName: string, args: Record<string, any>): Promise<any>;
   sessionId: string;
   getAPIKey(): string;
@@ -474,5 +476,73 @@ export class Computer {
     const { WindowManager } = await import('../window/window');
     const windowManager = new WindowManager(this.session);
     return windowManager.focusMode(on);
+  }
+
+  // Application Management Operations (delegated to existing application module)
+
+  /**
+   * Gets the list of installed applications.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getInstalledApps(): Promise<any> {
+    const { Application } = await import('../application/application');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const app = new Application(this.session as any);
+    return app.getInstalledApps();
+  }
+
+  /**
+   * Starts the specified application.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async startApp(startCmd: string, workDirectory = ""): Promise<any> {
+    const { Application } = await import('../application/application');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const app = new Application(this.session as any);
+    return app.startApp(startCmd, workDirectory);
+  }
+
+  /**
+   * Stops an application by process name.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async stopAppByPName(pname: string): Promise<any> {
+    const { Application } = await import('../application/application');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const app = new Application(this.session as any);
+    return app.stopAppByPName(pname);
+  }
+
+  /**
+   * Stops an application by process ID.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async stopAppByPID(pid: number): Promise<any> {
+    const { Application } = await import('../application/application');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const app = new Application(this.session as any);
+    return app.stopAppByPID(pid);
+  }
+
+  /**
+   * Stops an application by stop command.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async stopAppByCmd(cmd: string): Promise<any> {
+    const { Application } = await import('../application/application');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const app = new Application(this.session as any);
+    return app.stopAppByCmd(cmd);
+  }
+
+  /**
+   * Lists all visible applications.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async listVisibleApps(): Promise<any> {
+    const { Application } = await import('../application/application');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const app = new Application(this.session as any);
+    return app.listVisibleApps();
   }
 } 

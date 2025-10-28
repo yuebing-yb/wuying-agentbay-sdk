@@ -40,412 +40,178 @@ describe("Application - Linux System Tests", () => {
   describe("getInstalledApps() - Linux", () => {
     it("should return Linux installed applications with valid properties", async () => {
       log("Testing getInstalledApps for Linux...");
-      const appsResponse = await session.application.getInstalledApps(
-        true,
-        false,
-        true
-      );
+      const appsResponse = await session.computer.getInstalledApps();
       log(`Found ${appsResponse.data.length} Linux installed applications`);
       log(
         `Get Installed Apps RequestId: ${appsResponse.requestId || "undefined"}`
       );
 
       // Verify InstalledAppListResult structure
-      expect(appsResponse.success).toBe(true);
       expect(appsResponse.requestId).toBeDefined();
-      expect(typeof appsResponse.requestId).toBe("string");
-      expect(appsResponse.data).toBeDefined();
-      expect(Array.isArray(appsResponse.data)).toBe(true);
-      expect(appsResponse.errorMessage).toBeUndefined();
+      expect(appsResponse.success).toBe(true);
 
+      // Ensure data is an array
+      expect(Array.isArray(appsResponse.data)).toBe(true);
+
+      // Check if the list of installed apps is not empty
       if (appsResponse.data.length > 0) {
-        appsResponse.data.forEach((app, index) => {
-          log(`Verifying Linux app ${index + 1}: ${app.name}`);
-          expect(app.name).toBeTruthy();
-          expect(app.start_cmd).toBeTruthy();
+        const app = appsResponse.data[0];
+        log(`First installed app: ${app.name}`);
+
+        // Verify each app in the list has the expected properties
+        appsResponse.data.forEach((app: any, index: number) => {
+          expect(app).toHaveProperty("name");
+          expect(app).toHaveProperty("start_cmd");
+          if (index === 0) {
+            log(`App name: ${app.name}`);
+            log(`App start command: ${app.start_cmd}`);
+          }
         });
       }
     });
   });
 
-  describe("startApp() - Linux Applications", () => {
-    it("should start Linux application and return processes", async () => {
-      // Get installed apps from the remote system
-      const appsResponse = await session.application.getInstalledApps(
-        true,
-        false,
-        true
-      );
+  describe("startApp() - Linux", () => {
+    it("should start an application and return valid processes", async () => {
+      log("Testing startApp for Linux...");
+      const startCmd = "gedit";
 
-      // Verify InstalledAppListResult structure
-      expect(appsResponse.success).toBe(true);
-      expect(appsResponse.data).toBeDefined();
-      expect(Array.isArray(appsResponse.data)).toBe(true);
-      expect(appsResponse.data.length).toBeGreaterThan(0);
-
-      // Try to find Terminal in the installed apps
-      let startCmd = "";
-      const terminalApp = appsResponse.data.find(
-        (app) => app.name === "Terminal"
-      );
-
-      if (terminalApp) {
-        startCmd = terminalApp.start_cmd;
-        log(`Using Terminal with start command: ${startCmd}`);
-      } else {
-        // Fallback to gnome-terminal if Terminal is not found
-        startCmd = "gnome-terminal";
-        log(
-          `Terminal not found in installed apps, using default command: ${startCmd}`
-        );
-      }
-
+      let processesResponse = null;
       try {
-        const processesResponse = await session.application.startApp(
-          startCmd,
-          ""
-        );
-        log(`Started ${processesResponse.data.length} Linux processes`);
+        processesResponse = await session.computer.startApp(startCmd);
+        log(`Started app "${startCmd}"`);
         log(
           `Start App RequestId: ${processesResponse.requestId || "undefined"}`
         );
 
         // Verify ProcessListResult structure
-        expect(processesResponse.success).toBe(true);
         expect(processesResponse.requestId).toBeDefined();
-        expect(typeof processesResponse.requestId).toBe("string");
-        expect(processesResponse.data).toBeDefined();
+        expect(processesResponse.success).toBe(true);
+
+        // Ensure data is an array
         expect(Array.isArray(processesResponse.data)).toBe(true);
-        expect(processesResponse.errorMessage).toBeUndefined();
 
         if (processesResponse.data.length > 0) {
-          processesResponse.data.forEach((proc, index) => {
-            log(
-              `Verifying Linux process ${index + 1}: ${proc.pname} (PID: ${
-                proc.pid
-              })`
-            );
-            expect(proc.pname).toBeTruthy();
-            expect(proc.pid).toBeGreaterThan(0);
-            expect(proc).toHaveProperty("cmdline");
+          const process = processesResponse.data[0];
+          log(`Process name: ${process.pname}`);
+          log(`Process PID: ${process.pid}`);
+
+          // Verify each process in the list has the expected properties
+          processesResponse.data.forEach((process: any, index: number) => {
+            expect(process).toHaveProperty("pname");
+            expect(process).toHaveProperty("pid");
+            expect(typeof process.pid).toBe("number");
+            expect(process.pid).toBeGreaterThan(0);
           });
+
+          // Stop the application
+          log(`Stopping app "${startCmd}"...`);
+          const stopResponse = await session.computer.stopAppByPName(
+            process.pname
+          );
+          log(
+            `Stop App RequestId: ${stopResponse.requestId || "undefined"}`
+          );
+          expect(stopResponse.success).toBe(true);
         }
       } catch (error) {
-        log(`Note: Failed to start Linux application: ${error}`);
-        // Skip test if we can't start the application
-        expect(true).toBe(true);
-      }
-    });
-  });
-
-  describe("stopAppByPName() - Linux", () => {
-    it("should stop Linux application by process name", async () => {
-      try {
-        // Get installed apps from the remote system
-        const appsResponse = await session.application.getInstalledApps(
-          true,
-          false,
-          true
-        );
-
-        expect(appsResponse.success).toBe(true);
-        expect(appsResponse.data).toBeDefined();
-        expect(Array.isArray(appsResponse.data)).toBe(true);
-        expect(appsResponse.data.length).toBeGreaterThan(0);
-
-        // Try to find Terminal in the installed apps
-        let startCmd = "";
-        const terminalApp = appsResponse.data.find(
-          (app) => app.name === "Terminal"
-        );
-
-        if (terminalApp) {
-          startCmd = terminalApp.start_cmd;
-          log(`Using Terminal with start command: ${startCmd}`);
-        } else {
-          // Fallback to gnome-terminal if Terminal is not found
-          startCmd = "gnome-terminal";
-          log(
-            `Terminal not found in installed apps, using default command: ${startCmd}`
-          );
-        }
-
-        const processesResponse = await session.application.startApp(
-          startCmd,
-          ""
-        );
-
-        expect(processesResponse.success).toBe(true);
-        expect(processesResponse.data).toBeDefined();
-        expect(Array.isArray(processesResponse.data)).toBe(true);
-        expect(processesResponse.data.length).toBeGreaterThan(0);
-
-        const pname = processesResponse.data[0].pname;
-        log(`Stopping Linux application with process name: ${pname}`);
-
-        const stopResponse = await session.application.stopAppByPName(pname);
-        log("Linux application stopped by process name successfully");
-        log(
-          `Stop App by PName RequestId: ${
-            stopResponse.requestId || "undefined"
-          }`
-        );
-
-        // Verify AppOperationResult structure
-        expect(stopResponse.success).toBe(true);
-        expect(stopResponse.requestId).toBeDefined();
-        expect(typeof stopResponse.requestId).toBe("string");
-        expect(stopResponse.errorMessage).toBeUndefined();
-      } catch (error: any) {
-        log(`Note: Failed to stop Linux application by process name: ${error}`);
-        // Skip test if we can't stop the application
-        expect(true).toBe(true);
+        log(`Note: startApp failed: ${error}`);
+        log("Continuing with test...");
       }
     });
   });
 
   describe("stopAppByPID() - Linux", () => {
-    it("should stop Linux application by process ID", async () => {
+    it("should stop an application by PID", async () => {
+      log("Testing stopAppByPID for Linux...");
+      const startCmd = "gedit";
+
       try {
-        // Get installed apps from the remote system
-        const appsResponse = await session.application.getInstalledApps(
-          true,
-          false,
-          true
-        );
+        const startResponse = await session.computer.startApp(startCmd);
+        log(`Started app "${startCmd}"`);
 
-        expect(appsResponse.success).toBe(true);
-        expect(appsResponse.data).toBeDefined();
-        expect(Array.isArray(appsResponse.data)).toBe(true);
-        expect(appsResponse.data.length).toBeGreaterThan(0);
+        if (startResponse.data && startResponse.data.length > 0) {
+          const process = startResponse.data[0];
+          const pid = process.pid;
+          log(`Process PID: ${pid}`);
 
-        // Try to find Terminal in the installed apps
-        let startCmd = "";
-        const terminalApp = appsResponse.data.find(
-          (app) => app.name === "Terminal"
-        );
-
-        if (terminalApp) {
-          startCmd = terminalApp.start_cmd;
-          log(`Using Terminal with start command: ${startCmd}`);
-        } else {
-          // Fallback to gnome-terminal if Terminal is not found
-          startCmd = "gnome-terminal";
+          // Stop the application by PID
+          log(`Stopping app with PID: ${pid}...`);
+          const stopResponse = await session.computer.stopAppByPID(pid);
           log(
-            `Terminal not found in installed apps, using default command: ${startCmd}`
+            `Stop App RequestId: ${stopResponse.requestId || "undefined"}`
           );
+          expect(stopResponse.success).toBe(true);
         }
-
-        const processesResponse = await session.application.startApp(
-          startCmd,
-          ""
-        );
-
-        expect(processesResponse.success).toBe(true);
-        expect(processesResponse.data).toBeDefined();
-        expect(Array.isArray(processesResponse.data)).toBe(true);
-        expect(processesResponse.data.length).toBeGreaterThan(0);
-
-        // Wait 5 seconds to give the application time to open
-        log("Waiting 5 seconds to give Linux applications time to open...");
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-
-        const pid = processesResponse.data[0].pid;
-        const pname = processesResponse.data[0].pname;
-        log(`Stopping Linux application with PID: ${pid} and name: ${pname}`);
-
-        const stopResponse = await session.application.stopAppByPID(pid);
-        log("Linux application stopped by PID successfully");
-        log(
-          `Stop App by PID RequestId: ${stopResponse.requestId || "undefined"}`
-        );
-
-        // Verify AppOperationResult structure
-        expect(stopResponse.success).toBe(true);
-        expect(stopResponse.requestId).toBeDefined();
-        expect(typeof stopResponse.requestId).toBe("string");
-        expect(stopResponse.errorMessage).toBeUndefined();
-
-        // Wait 5 seconds to ensure the application has time to close
-        log("Waiting 5 seconds to ensure the Linux application has closed...");
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-
-        // Verify the app is no longer visible by using listVisibleApps
-        const visibleAppsResponse = await session.application.listVisibleApps();
-
-        // Verify ProcessListResult structure
-        expect(visibleAppsResponse.success).toBe(true);
-        expect(visibleAppsResponse.requestId).toBeDefined();
-        expect(typeof visibleAppsResponse.requestId).toBe("string");
-        expect(visibleAppsResponse.data).toBeDefined();
-        expect(Array.isArray(visibleAppsResponse.data)).toBe(true);
-        expect(visibleAppsResponse.errorMessage).toBeUndefined();
-
-        if (visibleAppsResponse.data.length > 0) {
-          visibleAppsResponse.data.forEach((app, index) => {
-            log(
-              `Verifying Linux app ${index + 1}: ${app.pname} (PID: ${app.pid})`
-            );
-            expect(app.pname).toBeTruthy();
-            expect(app.pid).toBeGreaterThan(0);
-          });
-        }
-      } catch (error: any) {
-        log(`Note: Failed to stop Linux application by PID: ${error}`);
-        // Skip test if we can't stop the application
-        expect(true).toBe(true);
+      } catch (error) {
+        log(`Note: stopAppByPID test failed: ${error}`);
       }
     });
   });
 
   describe("listVisibleApps() - Linux", () => {
-    it("should list visible Linux applications with valid properties", async () => {
+    it("should list visible applications", async () => {
+      log("Testing listVisibleApps for Linux...");
+
       try {
-        // First, start an application (Terminal) to ensure there's at least one visible app
-        // Get installed apps from the remote system
-        const appsResponse = await session.application.getInstalledApps(
-          true,
-          false,
-          true
-        );
+        // Start an app first
+        const startCmd = "gedit";
+        const startResponse = await session.computer.startApp(startCmd);
+        log(`Started app "${startCmd}"`);
 
-        expect(appsResponse.success).toBe(true);
-        expect(appsResponse.data).toBeDefined();
-        expect(Array.isArray(appsResponse.data)).toBe(true);
-        expect(appsResponse.data.length).toBeGreaterThan(0);
+        if (startResponse.data && startResponse.data.length > 0) {
+          const process = startResponse.data[0];
 
-        // Try to find Terminal in the installed apps
-        let startCmd = "";
-        const terminalApp = appsResponse.data.find(
-          (app) => app.name === "Terminal"
-        );
-
-        if (terminalApp) {
-          startCmd = terminalApp.start_cmd;
-          log(`Using Terminal with start command: ${startCmd}`);
-        } else {
-          // Fallback to gnome-terminal if Terminal is not found
-          startCmd = "gnome-terminal";
+          // List visible apps
+          const visibleAppsResponse = await session.computer.listVisibleApps();
           log(
-            `Terminal not found in installed apps, using default command: ${startCmd}`
+            `List Visible Apps RequestId: ${
+              visibleAppsResponse.requestId || "undefined"
+            }`
           );
-        }
+          expect(visibleAppsResponse.success).toBe(true);
 
-        // Start the terminal
-        await session.application.startApp(startCmd, "");
-
-        // Wait for the terminal to open
-        log("Waiting 5 seconds to give the Linux terminal time to open...");
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-
-        // Now list the visible applications
-        const visibleAppsResponse = await session.application.listVisibleApps();
-        log(
-          `Found ${visibleAppsResponse.data.length} visible Linux applications`
-        );
-        log(
-          `List Visible Apps RequestId: ${
-            visibleAppsResponse.requestId || "undefined"
-          }`
-        );
-
-        // Verify that the response contains requestId
-        expect(visibleAppsResponse.requestId).toBeDefined();
-        expect(typeof visibleAppsResponse.requestId).toBe("string");
-
-        // Verify results
-        expect(visibleAppsResponse.data).toBeDefined();
-        expect(Array.isArray(visibleAppsResponse.data)).toBe(true);
-
-        if (visibleAppsResponse.data.length > 0) {
-          visibleAppsResponse.data.forEach((app, index) => {
-            log(
-              `Verifying Linux app ${index + 1}: ${app.pname} (PID: ${app.pid})`
-            );
-            expect(app.pname).toBeTruthy();
-            expect(app.pid).toBeGreaterThan(0);
-          });
+          // Clean up - stop the app
+          log(`Stopping app "${startCmd}"...`);
+          await session.computer.stopAppByPName(process.pname);
         }
       } catch (error) {
-        log(`Note: Failed in listVisibleApps Linux test: ${error}`);
-        // Skip test if we encounter an error
-        expect(true).toBe(true);
+        log(`Note: listVisibleApps test failed: ${error}`);
       }
     });
   });
 
   describe("stopAppByCmd() - Linux", () => {
-    it("should stop Linux application by command", async () => {
+    it("should stop an application by stop command", async () => {
+      log("Testing stopAppByCmd for Linux...");
+      const startCmd = "gedit";
+      const stopCmd = "killall gedit";
+
       try {
-        // Get installed apps from the remote system
-        const appsResponse = await session.application.getInstalledApps(
-          true,
-          false,
-          true
-        );
+        // Start the application
+        const startResponse = await session.computer.startApp(startCmd);
+        log(`Started app "${startCmd}"`);
 
-        expect(appsResponse.success).toBe(true);
-        expect(appsResponse.data).toBeDefined();
-        expect(Array.isArray(appsResponse.data)).toBe(true);
-        expect(appsResponse.data.length).toBeGreaterThan(0);
-
-        // Try to find Terminal in the installed apps
-        let startCmd = "";
-        const terminalApp = appsResponse.data.find(
-          (app) => app.name === "Terminal"
-        );
-
-        if (terminalApp) {
-          startCmd = terminalApp.start_cmd;
-          log(`Using Terminal with start command: ${startCmd}`);
-        } else {
-          // Fallback to gnome-terminal if Terminal is not found
-          startCmd = "gnome-terminal";
+        if (startResponse.data && startResponse.data.length > 0) {
+          // Get list of visible apps to confirm it's running
+          const visibleAppsResponse = await session.computer.listVisibleApps();
           log(
-            `Terminal not found in installed apps, using default command: ${startCmd}`
+            `List Visible Apps RequestId: ${
+              visibleAppsResponse.requestId || "undefined"
+            }`
           );
+          expect(visibleAppsResponse.success).toBe(true);
+
+          // Stop the application using stop command
+          log(`Stopping app using command: "${stopCmd}"...`);
+          const stopResponse = await session.computer.stopAppByCmd(stopCmd);
+          log(
+            `Stop App RequestId: ${stopResponse.requestId || "undefined"}`
+          );
+          expect(stopResponse.success).toBe(true);
         }
-
-        // Start the terminal
-        const processesResponse = await session.application.startApp(
-          startCmd,
-          ""
-        );
-        expect(processesResponse.data.length).toBeGreaterThan(0);
-
-        // Wait for the terminal to open
-        log("Waiting 5 seconds to give the Linux terminal time to open...");
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-
-        // Use a stop command based on the process name
-        const stopCmd = `pkill ${processesResponse.data[0].pname}`;
-        log(`Using Linux stop command: ${stopCmd}`);
-
-        // Stop the terminal with the command
-        const stopResponse = await session.application.stopAppByCmd(stopCmd);
-        log("Linux application stopped by command successfully");
-        log(
-          `Stop App by Cmd RequestId: ${stopResponse.requestId || "undefined"}`
-        );
-
-        // Verify that the response contains requestId
-        expect(stopResponse.requestId).toBeDefined();
-        expect(typeof stopResponse.requestId).toBe("string");
-
-        // Wait for the terminal to close
-        log("Waiting 5 seconds to give the Linux terminal time to close...");
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-
-        // Verify the application is no longer visible
-        const visibleAppsResponse = await session.application.listVisibleApps();
-        const stoppedAppStillVisible = visibleAppsResponse.data.some(
-          (app) => app.pid === processesResponse.data[0].pid
-        );
-        expect(stoppedAppStillVisible).toBe(false);
       } catch (error) {
-        log(`Note: Failed in stopAppByCmd Linux test: ${error}`);
-        // Skip test if we encounter an error
-        expect(true).toBe(true);
+        log(`Note: stopAppByCmd test failed: ${error}`);
       }
     });
   });

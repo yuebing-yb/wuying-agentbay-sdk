@@ -12,7 +12,9 @@ from agentbay.logger import (
     get_logger,
     log_api_call,
     log_api_response,
+    log_api_response_with_details,
     log_operation_error,
+    log_code_execution_output,
 )
 
 # Initialize logger for this module
@@ -99,7 +101,30 @@ class BaseService:
 
             # Parse response
             response_data = response.json()
-            log_api_response(json.dumps(response_data, ensure_ascii=False))
+            response_str = json.dumps(response_data, ensure_ascii=False)
+
+            # For run_code tool, extract and log the actual code execution output BEFORE parsing
+            if tool_name == "run_code" and response_data.get("data"):
+                # Try to parse the nested data structure
+                if isinstance(response_data["data"], str):
+                    try:
+                        data_map = json.loads(response_data["data"])
+                        if "result" in data_map:
+                            log_code_execution_output(request_id, json.dumps(data_map["result"]))
+                    except json.JSONDecodeError:
+                        pass
+                elif isinstance(response_data["data"], dict):
+                    if "result" in response_data["data"]:
+                        log_code_execution_output(request_id, json.dumps(response_data["data"]["result"]))
+
+            # Log API response with key details
+            log_api_response_with_details(
+                api_name=f"CallMcpTool (VPC) - {tool_name}",
+                request_id=request_id,
+                success=True,
+                key_fields={"tool": tool_name},
+                full_response=response_str
+            )
 
             # Extract the actual result from the nested VPC response structure
             actual_result = None
@@ -134,7 +159,7 @@ class BaseService:
 
         except requests.RequestException as e:
             sanitized_error = self._sanitize_error(str(e))
-            log_operation_error(f"CallMcpTool (VPC) - {tool_name}", sanitized_error)
+            log_operation_error(f"CallMcpTool (VPC) - {tool_name}", sanitized_error, exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -192,9 +217,8 @@ class BaseService:
             body = response_map.get("body", {})
             try:
                 response_body = json.dumps(body, ensure_ascii=False, indent=2)
-                log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {body}")
+                response_body = str(body)
             if not body:
                 return OperationResult(
                     request_id=request_id,
@@ -212,12 +236,29 @@ class BaseService:
                     error_message=f"[{code}] {message}",
                 )
 
+            # For run_code tool, extract and log the actual code execution output BEFORE parsing
+            # But only if it's not an error response
+            if name == "run_code" and body.get("Data") and not body.get("Data", {}).get("isError", False):
+                data_str = json.dumps(body["Data"], ensure_ascii=False)
+                log_code_execution_output(request_id, data_str)
+
             result = self._parse_response_body(body)
+
+            # Log API response with key details
+            log_api_response_with_details(
+                api_name=f"CallMcpTool - {name}",
+                request_id=request_id,
+                success=True,
+                key_fields={"tool": name},
+                full_response=response_body
+            )
+
             return OperationResult(request_id=request_id, success=True, data=result)
 
         except AgentBayError as e:
             handled_error = self._handle_error(e)
             request_id = "" if "request_id" not in locals() else request_id
+            logger.exception(f"❌ Failed to call MCP tool {name}")
             return OperationResult(
                 request_id=request_id,
                 success=False,
@@ -226,6 +267,7 @@ class BaseService:
         except Exception as e:
             handled_error = self._handle_error(e)
             request_id = "" if "request_id" not in locals() else request_id
+            logger.exception(f"❌ Failed to call MCP tool {name}")
             return OperationResult(
                 request_id=request_id,
                 success=False,

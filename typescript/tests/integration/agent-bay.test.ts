@@ -132,7 +132,7 @@ describe("AgentBay", () => {
     });
   });
 
-  describe("listByLabels", () => {
+  describe("list", () => {
     let agentBay: AgentBay;
     let sessionA: Session;
     let sessionB: Session;
@@ -225,12 +225,10 @@ describe("AgentBay", () => {
 
       // Test 2: List sessions by environment=development label using new API
       try {
-        const devSessionsParams: ListSessionParams = {
-          labels: { environment: "development" },
-          maxResults: 5,
-        };
-        const devSessionsResponse = await agentBay.listByLabels(
-          devSessionsParams
+        const devSessionsResponse = await agentBay.list(
+          { environment: "development" },
+          1,
+          5
         );
         log(
           `List Sessions by environment=development RequestId: ${
@@ -241,17 +239,17 @@ describe("AgentBay", () => {
           `Total count: ${devSessionsResponse.totalCount}, Max results: ${devSessionsResponse.maxResults}`
         );
 
-        // Verify SessionListResult structure
+        // Verify response structure
         expect(devSessionsResponse.success).toBe(true);
         expect(devSessionsResponse.requestId).toBeDefined();
         expect(typeof devSessionsResponse.requestId).toBe("string");
         expect(devSessionsResponse.requestId!.length).toBeGreaterThan(0);
-        expect(devSessionsResponse.data).toBeDefined();
-        expect(Array.isArray(devSessionsResponse.data)).toBe(true);
+        expect(devSessionsResponse.sessionIds).toBeDefined();
+        expect(Array.isArray(devSessionsResponse.sessionIds)).toBe(true);
 
         // Verify that session A is in the results
-        const foundSessionA = devSessionsResponse.data.some(
-          (s) => s.sessionId === sessionA.sessionId
+        const foundSessionA = devSessionsResponse.sessionIds.some(
+          (sessionId) => sessionId === sessionA.sessionId
         );
         expect(foundSessionA).toBe(true);
       } catch (error) {
@@ -260,12 +258,10 @@ describe("AgentBay", () => {
 
       // Test 3: List sessions by owner=team-b label using new API
       try {
-        const teamBSessionsParams: ListSessionParams = {
-          labels: { owner: "team-b" },
-          maxResults: 5,
-        };
-        const teamBSessionsResponse = await agentBay.listByLabels(
-          teamBSessionsParams
+        const teamBSessionsResponse = await agentBay.list(
+          { owner: "team-b" },
+          1,
+          5
         );
         log(
           `List Sessions by owner=team-b RequestId: ${
@@ -281,8 +277,8 @@ describe("AgentBay", () => {
         expect(teamBSessionsResponse.requestId).toBeDefined();
 
         // Verify that session B is in the results
-        const foundSessionB = teamBSessionsResponse.data.some(
-          (s) => s.sessionId === sessionB.sessionId
+        const foundSessionB = teamBSessionsResponse.sessionIds.some(
+          (sessionId) => sessionId === sessionB.sessionId
         );
         expect(foundSessionB).toBe(true);
       } catch (error) {
@@ -291,18 +287,16 @@ describe("AgentBay", () => {
 
       // Test 4: List sessions with multiple labels (environment=testing AND project=project-y) using new API
       try {
-        const multiLabelSessionsParams: ListSessionParams = {
-          labels: {
+        const multiLabelSessionsResponse = await agentBay.list(
+          {
             environment: "testing",
             project: "project-y",
           },
-          maxResults: 5,
-        };
-        const multiLabelSessionsResponse = await agentBay.listByLabels(
-          multiLabelSessionsParams
+          1,
+          5
         );
         log(
-          `Found ${multiLabelSessionsResponse.data.length} sessions with environment=testing AND project=project-y`
+          `Found ${multiLabelSessionsResponse.sessionIds.length} sessions with environment=testing AND project=project-y`
         );
         log(
           `Total count: ${multiLabelSessionsResponse.totalCount}, Max results: ${multiLabelSessionsResponse.maxResults}`
@@ -318,11 +312,11 @@ describe("AgentBay", () => {
         expect(multiLabelSessionsResponse.requestId).toBeDefined();
 
         // Verify that session B is in the results and session A is not
-        const foundSessionA = multiLabelSessionsResponse.data.some(
-          (s) => s.sessionId === sessionA.sessionId
+        const foundSessionA = multiLabelSessionsResponse.sessionIds.some(
+          (s) => s === sessionA.sessionId
         );
-        const foundSessionB = multiLabelSessionsResponse.data.some(
-          (s) => s.sessionId === sessionB.sessionId
+        const foundSessionB = multiLabelSessionsResponse.sessionIds.some(
+          (s) => s === sessionB.sessionId
         );
 
         expect(foundSessionA).toBe(false);
@@ -331,12 +325,15 @@ describe("AgentBay", () => {
         // Demonstrate pagination if there's a next token
         if (multiLabelSessionsResponse.nextToken) {
           log("\nFetching next page...");
-          const nextPageParams: ListSessionParams = {
-            ...multiLabelSessionsParams,
-            nextToken: multiLabelSessionsResponse.nextToken,
-          };
-          const nextPageResponse = await agentBay.listByLabels(nextPageParams);
-          log(`Next page sessions count: ${nextPageResponse.data.length}`);
+          const nextPageResponse = await agentBay.list(
+            {
+              environment: "testing",
+              project: "project-y",
+            },
+            2,
+            5
+          );
+          log(`Next page sessions count: ${nextPageResponse.sessionIds.length}`);
           log(`Next page RequestId: ${nextPageResponse.requestId}`);
 
           // Verify next page result structure
@@ -349,15 +346,13 @@ describe("AgentBay", () => {
 
       // Test 5: List sessions with non-existent label using new API
       try {
-        const nonExistentSessionsParams: ListSessionParams = {
-          labels: { "non-existent": "value" },
-          maxResults: 5,
-        };
-        const nonExistentSessionsResponse = await agentBay.listByLabels(
-          nonExistentSessionsParams
+        const nonExistentSessionsResponse = await agentBay.list(
+          { "non-existent": "value" },
+          1,
+          5
         );
         log(
-          `Found ${nonExistentSessionsResponse.data.length} sessions with non-existent label`
+          `Found ${nonExistentSessionsResponse.sessionIds.length} sessions with non-existent label`
         );
         log(
           `Total count: ${nonExistentSessionsResponse.totalCount}, Max results: ${nonExistentSessionsResponse.maxResults}`
@@ -372,7 +367,7 @@ describe("AgentBay", () => {
         expect(nonExistentSessionsResponse.success).toBe(true);
         expect(nonExistentSessionsResponse.requestId).toBeDefined();
 
-        if (nonExistentSessionsResponse.data.length > 0) {
+        if (nonExistentSessionsResponse.sessionIds.length > 0) {
           log(
             "Warning: Found sessions with non-existent label, this might indicate an issue"
           );

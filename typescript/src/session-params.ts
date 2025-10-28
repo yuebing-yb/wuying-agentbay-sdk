@@ -1,5 +1,6 @@
-import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecyclePolicy, WhiteList, BWList } from "./context-sync";
+import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecyclePolicy, WhiteList, BWList, newDeletePolicy } from "./context-sync";
 import { ExtensionOption } from "./extension";
+import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
 
 /**
  * Browser context configuration for session with optional extension support.
@@ -131,6 +132,10 @@ export class BrowserContext {
         extract: true,
         deleteSrcFile: true
       },
+      deletePolicy: {
+        ...newDeletePolicy(),
+        syncLocalFile: false
+      },
       recyclePolicy: newRecyclePolicy(),
       bwList: {
         whiteLists: whiteLists
@@ -172,6 +177,8 @@ export interface CreateSessionParamsConfig {
   policyId?: string;
   /** Whether to enable browser recording for the session. Defaults to false. */
   enableBrowserReplay?: boolean;
+  /** Extra configuration settings for different session types (e.g., mobile) */
+  extraConfigs?: ExtraConfigs;
 }
 
 /**
@@ -202,6 +209,9 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
 
   /** Whether to enable browser recording for the session. Defaults to false. */
   public enableBrowserReplay: boolean;
+
+  /** Extra configuration settings for different session types (e.g., mobile) */
+  public extraConfigs?: ExtraConfigs;
 
   constructor() {
     this.labels = {};
@@ -267,6 +277,14 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
   }
 
   /**
+   * WithExtraConfigs sets the extra configurations for the session parameters and returns the updated parameters.
+   */
+  withExtraConfigs(extraConfigs: ExtraConfigs): CreateSessionParams {
+    this.extraConfigs = extraConfigs;
+    return this;
+  }
+
+  /**
    * GetLabelsJSON returns the labels as a JSON string.
    * Returns an object with success status and result/error message to match Go version behavior.
    */
@@ -282,6 +300,26 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
       return {
         result: "",
         error: `Failed to marshal labels to JSON: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * GetExtraConfigsJSON returns the extra configs as a JSON string.
+   * Returns an object with result and optional error message to match Go version behavior.
+   */
+  getExtraConfigsJSON(): { result: string; error?: string } {
+    if (!this.extraConfigs) {
+      return { result: "" };
+    }
+
+    try {
+      const extraConfigsJSON = extraConfigsToJSON(this.extraConfigs);
+      return { result: extraConfigsJSON };
+    } catch (error) {
+      return {
+        result: "",
+        error: `Failed to marshal extra configs to JSON: ${error}`,
       };
     }
   }
@@ -336,6 +374,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
       isVpc: this.isVpc,
       policyId: this.policyId,
       enableBrowserReplay: this.enableBrowserReplay,
+      extraConfigs: this.extraConfigs,
     };
   }
 
@@ -367,6 +406,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
     params.isVpc = config.isVpc || false;
     params.policyId = config.policyId;
     params.enableBrowserReplay = config.enableBrowserReplay || false;
+    params.extraConfigs = config.extraConfigs;
     return params;
   }
 }

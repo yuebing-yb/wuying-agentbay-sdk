@@ -17,6 +17,8 @@ type iGetLinkRequest interface {
 	GetProtocolType() *string
 	SetSessionId(v string) *GetLinkRequest
 	GetSessionId() *string
+	SetOption(v string) *GetLinkRequest
+	GetOption() *string
 }
 
 type GetLinkRequest struct {
@@ -24,6 +26,7 @@ type GetLinkRequest struct {
 	Port          *int32  `json:"Port,omitempty" xml:"Port,omitempty"`
 	ProtocolType  *string `json:"ProtocolType,omitempty" xml:"ProtocolType,omitempty"`
 	SessionId     *string `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
+	Option        *string `json:"option,omitempty" xml:"option,omitempty"`
 }
 
 func (s GetLinkRequest) String() string {
@@ -67,6 +70,15 @@ func (s *GetLinkRequest) SetProtocolType(v string) *GetLinkRequest {
 
 func (s *GetLinkRequest) SetSessionId(v string) *GetLinkRequest {
 	s.SessionId = &v
+	return s
+}
+
+func (s *GetLinkRequest) GetOption() *string {
+	return s.Option
+}
+
+func (s *GetLinkRequest) SetOption(v string) *GetLinkRequest {
+	s.Option = &v
 	return s
 }
 

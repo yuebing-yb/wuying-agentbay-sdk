@@ -1,4 +1,4 @@
-import { AgentBay, Session, ListSessionParams } from "../../src";
+import { AgentBay, Session } from "../../src";
 import { getTestApiKey, generateUniqueId } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
 
@@ -235,7 +235,7 @@ describe("Session Labels", () => {
 
   describe("listByLabels()", () => {
     it.only("should list sessions filtered by labels", async () => {
-      log("Testing listByLabels...");
+      log("Testing list with labels...");
       try {
         // First set some unique labels on our session
         const setLabelsResponse = await session.setLabels(labels);
@@ -244,92 +244,79 @@ describe("Session Labels", () => {
         );
 
         // Then list sessions with those labels using new API
-        const listParams: ListSessionParams = {
-          labels: labels,
-          maxResults: 5,
-        };
-        const listByLabelsResponse = await agentBay.listByLabels(listParams);
+        const listResponse = await agentBay.list(labels, 1, 5);
         log(
-          `Found ${listByLabelsResponse.data.length} sessions with matching labels`
+          `Found ${listResponse.sessionIds.length} sessions with matching labels`
         );
         log(
-          `Total count: ${listByLabelsResponse.totalCount}, Max results: ${listByLabelsResponse.maxResults}`
+          `Total count: ${listResponse.totalCount}, Max results: ${listResponse.maxResults}`
         );
         log(
-          `List By Labels RequestId: ${
-            listByLabelsResponse.requestId || "undefined"
+          `List RequestId: ${
+            listResponse.requestId || "undefined"
           }`
         );
 
         // Verify that the response contains requestId
-        expect(listByLabelsResponse.requestId).toBeDefined();
-        expect(typeof listByLabelsResponse.requestId).toBe("string");
+        expect(listResponse.requestId).toBeDefined();
+        expect(typeof listResponse.requestId).toBe("string");
 
         // We should find at least our session
-        expect(listByLabelsResponse.data.length).toBeGreaterThan(0);
+        expect(listResponse.sessionIds.length).toBeGreaterThan(0);
 
         // Check if our session is in the results
-        const foundSession = listByLabelsResponse.data.some(
-          (s) => s.sessionId === session.sessionId
+        const foundSession = listResponse.sessionIds.some(
+          (sessionId: string) => sessionId === session.sessionId
         );
         expect(foundSession).toBe(true);
 
-        listByLabelsResponse.data.forEach((sessionItem) => {
-          expect(sessionItem).toHaveProperty("sessionId");
-          expect(sessionItem.sessionId).toBeTruthy();
+        listResponse.sessionIds.forEach((sessionId: string) => {
+          expect(sessionId).toBeTruthy();
         });
 
         // Demonstrate pagination if there's a next token
-        if (listByLabelsResponse.nextToken) {
+        if (listResponse.nextToken) {
           log("\nFetching next page...");
-          const nextPageParams: ListSessionParams = {
-            ...listParams,
-            nextToken: listByLabelsResponse.nextToken,
-          };
-          const nextPageResponse = await agentBay.listByLabels(nextPageParams);
-          log(`Next page sessions count: ${nextPageResponse.data.length}`);
+          const nextPageResponse = await agentBay.list(labels, 2, 5);
+          log(`Next page sessions count: ${nextPageResponse.sessionIds.length}`);
           log(`Next page RequestId: ${nextPageResponse.requestId}`);
         }
       } catch (error: any) {
-        log(`Error listing sessions by labels: ${error.message}`);
+        log(`Error listing sessions with labels: ${error.message}`);
         // Skip test if we can't list sessions
         expect(true).toBe(true);
       }
     });
 
     it.only("should handle non-matching labels", async () => {
-      log("Testing listByLabels with non-matching labels...");
+      log("Testing list with non-matching labels...");
       try {
         // Use a label that shouldn't match any sessions
         const nonMatchingLabels = {
           nonexistent: `label-${generateUniqueId()}`,
         };
 
-        const listParams: ListSessionParams = {
-          labels: nonMatchingLabels,
-          maxResults: 5,
-        };
-        const listByLabelsResponse = await agentBay.listByLabels(listParams);
+        const listResponse = await agentBay.list(nonMatchingLabels, 1, 5);
         log(
-          `Found ${listByLabelsResponse.data.length} sessions with non-matching labels`
+          `Found ${listResponse.sessionIds.length} sessions with non-matching labels`
         );
         log(
-          `Total count: ${listByLabelsResponse.totalCount}, Max results: ${listByLabelsResponse.maxResults}`
+          `Total count: ${listResponse.totalCount}, Max results: ${listResponse.maxResults}`
         );
         log(
           `List Non-matching Labels RequestId: ${
-            listByLabelsResponse.requestId || "undefined"
+            listResponse.requestId || "undefined"
           }`
         );
 
         // Verify that the response contains requestId
-        expect(listByLabelsResponse.requestId).toBeDefined();
-        expect(typeof listByLabelsResponse.requestId).toBe("string");
+        expect(listResponse.requestId).toBeDefined();
+        expect(typeof listResponse.requestId).toBe("string");
 
         // There might be some sessions with these labels, but our session shouldn't be among them
-        if (listByLabelsResponse.data.length > 0) {
-          const foundOurSession = listByLabelsResponse.data.some(
-            (s) => s.sessionId === session.sessionId
+        if (listResponse.sessionIds.length > 0) {
+          const foundOurSession = listResponse.sessionIds.some(
+            (sessionId: string) => sessionId === session.sessionId
           );
           expect(foundOurSession).toBe(false);
         }

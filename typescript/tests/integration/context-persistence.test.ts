@@ -195,9 +195,9 @@ describe("Context Persistence Integration", () => {
 
     // List active sessions before creating second session
     try {
-      const activeSessions = agentBay.list();
+      const activeSessions = await agentBay.list();
       log(
-        `Found ${activeSessions.length} active sessions before second session creation`
+        `Found ${activeSessions.sessionIds.length} active sessions before second session creation`
       );
     } catch (error) {
       log(`Warning: Failed to list active sessions: ${error}`);

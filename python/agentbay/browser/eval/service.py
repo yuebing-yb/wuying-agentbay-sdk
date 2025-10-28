@@ -41,17 +41,16 @@
 import asyncio
 import base64
 import io
-import logging
 import re
 import shutil
 
 import anyio
 from PIL import Image
+from agentbay.logger import get_logger
 
 MAX_IMAGE = 5
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def encode_image(image):
@@ -1657,9 +1656,8 @@ if __name__ == '__main__':
 	parser.add_argument('--planner-interval', type=int, default=1, help='Run planner every N steps (default: 1)')
 	args = parser.parse_args()
 
-	# Set up logging - Make sure logger is configured before use in fetch function
-	logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-	logger = logging.getLogger(__name__)  # Define logger for the module
+	# Logger is already configured via agentbay.logger module
+	logger = get_logger(__name__)
 
 	if args.evaluate_only:
 		# Just evaluate existing results

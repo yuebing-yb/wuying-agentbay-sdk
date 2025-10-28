@@ -46,8 +46,8 @@ class TestDeleteIntegration(unittest.TestCase):
         # Wait for a while to ensure deletion operation is completed
         time.sleep(2)
         
-        # Use list_by_labels to get latest session list from server
-        list_result = self.agent_bay.list_by_labels()
+        # Use list to get latest session list from server
+        list_result = self.agent_bay.list()
         self.assertTrue(list_result.success)
         
         # Check if session has been deleted
@@ -107,8 +107,8 @@ class TestDeleteIntegration(unittest.TestCase):
         # Wait for a while to ensure deletion operation is completed
         time.sleep(2)
         
-        # Use list_by_labels to get latest session list from server
-        list_result = self.agent_bay.list_by_labels()
+        # Use list to get latest session list from server
+        list_result = self.agent_bay.list()
         self.assertTrue(list_result.success)
         
         # Check if session has been deleted
@@ -178,8 +178,8 @@ class TestDeleteIntegration(unittest.TestCase):
         # Wait for a while to ensure deletion operation is completed
         time.sleep(2)
         
-        # Use list_by_labels to get latest session list from server
-        list_result = self.agent_bay.list_by_labels()
+        # Use list to get latest session list from server
+        list_result = self.agent_bay.list()
         self.assertTrue(list_result.success)
         
         # Check if session has been deleted
@@ -188,16 +188,6 @@ class TestDeleteIntegration(unittest.TestCase):
             list_result.session_ids,
             f"Session ID {session.session_id} still exists after deletion",
         )
-
-        # Clean up context
-        try:
-            delete_context_result = self.agent_bay.context.delete(context)
-            if delete_context_result.success:
-                print(f"Context {context.id} deleted")
-            else:
-                print(f"Warning: Failed to delete context")
-        except Exception as e:
-            print(f"Warning: Error deleting context: {e}")
 
 
 if __name__ == "__main__":

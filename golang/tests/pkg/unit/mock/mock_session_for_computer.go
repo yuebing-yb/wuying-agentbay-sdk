@@ -2,6 +2,7 @@ package mock
 
 import (
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/stretchr/testify/mock"
 )
@@ -57,4 +58,19 @@ func (m *MockSessionForComputer) FindServerForTool(toolName string) string {
 func (m *MockSessionForComputer) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	mockArgs := m.Called(toolName, args)
 	return mockArgs.Get(0).(*models.McpToolResult), mockArgs.Error(1)
+}
+
+// GetImageID returns the image ID for this session
+func (m *MockSessionForComputer) GetImageID() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+// GetLink gets the link for this session
+func (m *MockSessionForComputer) GetLink(protocolType *string, port *int32, options *string) (*agentbay.LinkResult, error) {
+	args := m.Called(protocolType, port, options)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*agentbay.LinkResult), args.Error(1)
 }

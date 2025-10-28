@@ -48,6 +48,7 @@ Features available across all environments:
 **[Mobile Use](mobile-use/README.md)**
 - [Mobile UI Automation](mobile-use/mobile-ui-automation.md) - Mobile UI interaction
 - [Mobile Application Management](mobile-use/mobile-application-management.md) - App lifecycle management
+- [ADB Connection](mobile-use/adb-connection.md) - Android Debug Bridge connectivity
 
 **[CodeSpace](codespace/README.md)**
 - [Code Execution](codespace/code-execution.md) - Running code in cloud environments

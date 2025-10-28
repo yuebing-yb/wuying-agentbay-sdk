@@ -7,8 +7,9 @@ and mobile environment configuration operations.
 from typing import List, Optional, Dict, Any
 
 from agentbay.api.base_service import BaseService
-from agentbay.exceptions import AgentBayError
+from agentbay.exceptions import AgentBayError, SessionError
 from agentbay.model import BoolResult, OperationResult
+from agentbay.model.response import AdbUrlResult
 from agentbay.ui.ui import UIElementListResult
 from agentbay.application.application import (
     InstalledAppListResult,
@@ -544,6 +545,14 @@ class Mobile(BaseService):
                     self._set_app_blacklist(package_names)
             elif not package_names:
                 logger.warning(f"No package names provided for {app_rule.rule_type} list")
+        
+        # Configure navigation bar visibility
+        if mobile_config.hide_navigation_bar is not None:
+            self._set_navigation_bar_visibility(mobile_config.hide_navigation_bar)
+        
+        # Configure uninstall blacklist
+        if mobile_config.uninstall_blacklist and len(mobile_config.uninstall_blacklist) > 0:
+            self._set_uninstall_blacklist(mobile_config.uninstall_blacklist)
 
     def set_resolution_lock(self, enable: bool):
         """
@@ -577,6 +586,75 @@ class Mobile(BaseService):
             logger.warning("Empty package names list for blacklist")
             return
         self._set_app_blacklist(package_names)
+
+    def set_navigation_bar_visibility(self, hide: bool):
+        """
+        Set navigation bar visibility for mobile devices.
+        
+        Args:
+            hide (bool): True to hide navigation bar, False to show navigation bar.
+        """
+        self._set_navigation_bar_visibility(hide)
+
+    def set_uninstall_blacklist(self, package_names: List[str]):
+        """
+        Set uninstall protection blacklist for mobile devices.
+        
+        Args:
+            package_names (List[str]): List of Android package names to protect from uninstallation.
+        """
+        if not package_names:
+            logger.warning("Empty package names list for uninstall blacklist")
+            return
+        self._set_uninstall_blacklist(package_names)
+
+    def get_adb_url(self, adbkey_pub: str) -> AdbUrlResult:
+        """
+        Retrieves the ADB connection URL for the mobile environment.
+
+        This method is only supported in mobile environments (mobile_latest image).
+        It uses the provided ADB public key to establish the connection and returns
+        the ADB connect URL.
+
+        Args:
+            adbkey_pub (str): The ADB public key for connection authentication.
+
+        Returns:
+            AdbUrlResult: Result object containing the ADB connection URL
+                         (format: "adb connect <IP>:<Port>") and request ID.
+                         Returns error if not in mobile environment.
+
+        Raises:
+            SessionError: If the session is not in mobile environment.
+        """
+        try:
+            # Build options JSON with adbkey_pub
+            import json
+            options_json = json.dumps({"adbkey_pub": adbkey_pub})
+
+            # Call get_link with protocol_type="adb" and options
+            result = self.session.get_link(protocol_type="adb", options=options_json)
+
+            # Log the operation
+            logger.info(f"✅ get_adb_url completed successfully. RequestID: {result.request_id}")
+
+            # Return wrapped in AdbUrlResult
+            return AdbUrlResult(
+                request_id=result.request_id,
+                success=result.success,
+                data=result.data,
+                error_message=result.error_message if not result.success else "",
+            )
+
+        except Exception as e:
+            error_msg = f"Failed to get ADB URL: {str(e)}"
+            logger.error(f"❌ {error_msg}")
+            return AdbUrlResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=error_msg,
+            )
 
     def _execute_template_command(self, template_name: str, params: Dict[str, Any], operation_name: str):
         """Execute a command using template and parameters."""
@@ -618,3 +696,18 @@ class Mobile(BaseService):
         }
         operation_name = f"App blacklist configuration ({len(package_names)} packages)"
         self._execute_template_command("app_blacklist", params, operation_name)
+
+    def _set_navigation_bar_visibility(self, hide: bool):
+        """Execute navigation bar visibility command."""
+        template_name = "hide_navigation_bar" if hide else "show_navigation_bar"
+        operation_name = f"Navigation bar visibility (hide: {hide})"
+        self._execute_template_command(template_name, {}, operation_name)
+
+    def _set_uninstall_blacklist(self, package_names: List[str]):
+        """Execute uninstall blacklist command."""
+        # Use semicolon-separated format for uninstall blacklist property
+        params = {
+            "package_list": ';'.join(package_names)
+        }
+        operation_name = f"Uninstall blacklist configuration ({len(package_names)} packages)"
+        self._execute_template_command("uninstall_blacklist", params, operation_name)

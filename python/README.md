@@ -59,6 +59,7 @@ if result.success:
 - [📖 Feature Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/README.md) - Complete feature introduction
 - [🔧 Python API Reference](docs/api/README.md) - Detailed API documentation
 - [💻 Python Examples](docs/examples/README.md) - Complete example code
+- [📋 Logging Configuration](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
 
 ### 🆘 Need Help
 

@@ -34,13 +34,13 @@ describe("SessionDeleteIntegration", () => {
     log(`Session deleted (RequestId: ${deleteResult.requestId || "undefined"})`);
 
     // Verify the session was deleted
-    const listResult = await agentBay.listByLabels();
+    const listResult = await agentBay.list();
     expect(listResult.success).toBe(true);
     
     // Check that our session is not in the list
-    const sessions = listResult.data || [];
-    for (const s of sessions) {
-      expect(s.sessionId).not.toBe(session.sessionId);
+    const sessions = listResult.sessionIds || [];
+    for (const sessionId of sessions) {
+      expect(sessionId).not.toBe(session.sessionId);
     }
   });
 
@@ -93,13 +93,13 @@ describe("SessionDeleteIntegration", () => {
       log(`Session deleted with syncContext=true (RequestId: ${deleteResult.requestId || "undefined"})`);
 
       // Verify the session was deleted
-      const listResult = await agentBay.listByLabels();
+      const listResult = await agentBay.list();
       expect(listResult.success).toBe(true);
       
       // Check that our session is not in the list
-      const sessions = listResult.data || [];
-      for (const s of sessions) {
-        expect(s.sessionId).not.toBe(session.sessionId);
+      const sessions = listResult.sessionIds || [];
+      for (const sessionId of sessions) {
+        expect(sessionId).not.toBe(session.sessionId);
       }
 
       // Clean up context
@@ -166,13 +166,13 @@ describe("SessionDeleteIntegration", () => {
       log(`Session deleted with AgentBay.delete and syncContext=true (RequestId: ${deleteResult.requestId || "undefined"})`);
 
       // Verify the session was deleted
-      const listResult = await agentBay.listByLabels();
+      const listResult = await agentBay.list();
       expect(listResult.success).toBe(true);
       
       // Check that our session is not in the list
-      const sessions = listResult.data || [];
-      for (const s of sessions) {
-        expect(s.sessionId).not.toBe(session.sessionId);
+      const sessions = listResult.sessionIds || [];
+      for (const sessionId of sessions) {
+        expect(sessionId).not.toBe(session.sessionId);
       }
 
       // Clean up context

@@ -32,10 +32,12 @@ from .logger import (
     get_logger,
     log_api_call,
     log_api_response,
+    log_api_response_with_details,
     log_operation_start,
     log_operation_success,
     log_operation_error,
     log_warning,
+    mask_sensitive_data,
 )
 
 # Initialize logger for this module
@@ -203,8 +205,7 @@ class AgentBay:
         )
 
         # Store image_id used for this session
-        if hasattr(session, "image_id"):
-            setattr(session, "image_id", params.image_id)
+        setattr(session, "image_id", params.image_id)
 
         # Process mobile configuration if provided
         if (
@@ -283,7 +284,7 @@ class AgentBay:
                     log_operation_success("Context synchronization")
                 break
 
-            logger.info(
+            logger.debug(
                 f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}"
             )
             time.sleep(retry_interval)
@@ -397,7 +398,7 @@ class AgentBay:
                 )
                 params.context_syncs.append(file_transfer_context_sync)
 
-            request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")
+            request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")#, session_id="session-04bdwfj84pts8knif")
 
             # Add PolicyId if specified
             if hasattr(params, "policy_id") and params.policy_id:
@@ -545,16 +546,15 @@ class AgentBay:
 
             response = self.client.create_mcp_session(request)
 
+            # Extract request ID
+            request_id = extract_request_id(response)
+
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {response}")
-
-            # Extract request ID
-            request_id = extract_request_id(response)
+                response_body = str(response)
 
             session_data = response.to_map()
 
@@ -610,6 +610,20 @@ class AgentBay:
                     error_message="SessionId not found in response",
                 )
 
+            # Log API response with key details
+            resource_url = data.get("ResourceUrl", "")
+            truncated_url = resource_url[:50] + "..." if len(resource_url) > 50 else resource_url
+            log_api_response_with_details(
+                api_name="CreateSession",
+                request_id=request_id,
+                success=True,
+                key_fields={
+                    "session_id": session_id,
+                    "resource_url": truncated_url
+                },
+                full_response=response_body
+            )
+
             # Build Session object from response data
             session = self._build_session_from_response(data, params)
 
@@ -632,14 +646,14 @@ class AgentBay:
             return SessionResult(request_id=request_id, success=True, session=session)
 
         except ClientException as e:
-            log_operation_error("create_mcp_session - ClientException", str(e))
+            log_operation_error("create_mcp_session - ClientException", str(e), exc_info=True)
             return SessionResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to create session: {e}",
             )
         except Exception as e:
-            log_operation_error("create_mcp_session", str(e))
+            log_operation_error("create_mcp_session", str(e), exc_info=True)
             return SessionResult(
                 request_id="",
                 success=False,
@@ -724,9 +738,8 @@ class AgentBay:
 
             try:
                 response_body = json.dumps(body, ensure_ascii=False, indent=2)
-                log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {body}")
+                response_body = str(body)
 
             # Extract pagination information
             if isinstance(body, dict):
@@ -754,6 +767,19 @@ class AgentBay:
 
                                 session_ids.append(session_id)
 
+            # Log API response with key details
+            log_api_response_with_details(
+                api_name="ListSession",
+                request_id=request_id,
+                success=True,
+                key_fields={
+                    "total_count": total_count,
+                    "returned_count": len(session_ids),
+                    "has_more": "yes" if next_token else "no"
+                },
+                full_response=response_body
+            )
+
             # Return SessionListResult with request ID and pagination info
             return SessionListResult(
                 request_id=request_id,
@@ -765,7 +791,7 @@ class AgentBay:
             )
 
         except Exception as e:
-            log_operation_error("list_session", str(e))
+            log_operation_error("list_session", str(e), exc_info=True)
             return SessionListResult(
                 request_id="",
                 success=False,
@@ -930,9 +956,8 @@ class AgentBay:
 
             try:
                 response_body = json.dumps(body, ensure_ascii=False, indent=2)
-                log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {body}")
+                response_body = str(body)
 
             # Extract pagination information
             if isinstance(body, dict):
@@ -953,6 +978,19 @@ class AgentBay:
                         if session_id:
                             session_ids.append(session_id)
 
+            # Log API response with key details
+            log_api_response_with_details(
+                api_name="ListSession",
+                request_id=request_id,
+                success=True,
+                key_fields={
+                    "total_count": total_count,
+                    "returned_count": len(session_ids),
+                    "has_more": "yes" if next_token else "no"
+                },
+                full_response=response_body
+            )
+
             # Return SessionListResult with request ID and pagination info
             return SessionListResult(
                 request_id=request_id,
@@ -964,7 +1002,7 @@ class AgentBay:
             )
 
         except Exception as e:
-            log_operation_error("list_session", str(e))
+            log_operation_error("list_session", str(e), exc_info=True)
             return SessionListResult(
                 request_id="",
                 success=False,
@@ -997,7 +1035,7 @@ class AgentBay:
             return delete_result
 
         except Exception as e:
-            log_operation_error("delete_session", str(e))
+            log_operation_error("delete_session", str(e), exc_info=True)
             return DeleteResult(
                 request_id="",
                 success=False,
@@ -1021,15 +1059,14 @@ class AgentBay:
             )
             response = self.client.get_session(request)
 
+            request_id = extract_request_id(response)
+
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
-
-            request_id = extract_request_id(response)
+                response_body = str(response)
 
             try:
                 response_map = response.to_map()
@@ -1065,6 +1102,19 @@ class AgentBay:
                         resource_url=data_dict.get("ResourceUrl", ""),
                     )
 
+                # Log API response with key details
+                key_fields = {}
+                if data:
+                    key_fields["session_id"] = data.session_id
+                    key_fields["vpc_resource"] = "yes" if data.vpc_resource else "no"
+                log_api_response_with_details(
+                    api_name="GetSession",
+                    request_id=request_id,
+                    success=success,
+                    key_fields=key_fields,
+                    full_response=response_body
+                )
+
                 return GetSessionResult(
                     request_id=request_id,
                     http_status_code=http_status_code,
@@ -1075,14 +1125,14 @@ class AgentBay:
                 )
 
             except Exception as e:
-                logger.warning(f"Failed to parse response: {str(e)}")
+                logger.exception(f"Failed to parse response: {str(e)}")
                 return GetSessionResult(
                     request_id=request_id,
                     success=False,
                     error_message=f"Failed to parse response: {str(e)}",
                 )
         except Exception as e:
-            logger.error(f"Error calling GetSession: {e}")
+            logger.exception(f"Error calling GetSession: {e}")
             return GetSessionResult(
                 request_id="",
                 success=False,

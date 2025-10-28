@@ -60,7 +60,8 @@ async def main():
     # 4. Connect with Playwright
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(link.data)
-        page = await browser.new_page()
+        context = browser.contexts[0]
+        page = await context.new_page()
         await page.goto("https://example.com")
         # Now you can control the cloud browser!
         await browser.close()
@@ -284,7 +285,8 @@ async def browser_automation_example():
             print("✅ Connected to browser!")
             
             # Create new page
-            page = await browser.new_page()
+            context = browser.contexts[0]
+            page = await context.new_page()
             
             # Visit Alibaba Cloud website
             print("\nVisiting https://www.aliyun.com ...")

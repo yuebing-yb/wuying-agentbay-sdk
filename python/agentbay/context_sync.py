@@ -39,10 +39,20 @@ class UploadPolicy:
     Attributes:
         auto_upload: Enables automatic upload
         upload_strategy: Defines the upload strategy
+        upload_mode: Defines the upload mode ("File" or "Archive")
     """
 
     auto_upload: bool = True
     upload_strategy: UploadStrategy = UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
+    upload_mode: str = "File"
+
+    def __post_init__(self):
+        """Validate upload_mode value"""
+        if self.upload_mode not in ["File", "Archive"]:
+            raise ValueError(
+                f"Invalid upload_mode value: {self.upload_mode}. "
+                f"Valid values are: 'File', 'Archive'"
+            )
 
     @classmethod
     def default(cls):
@@ -55,6 +65,7 @@ class UploadPolicy:
             "uploadStrategy": (
                 self.upload_strategy.value if self.upload_strategy else None
             ),
+            "uploadMode": self.upload_mode,
         }
 
 

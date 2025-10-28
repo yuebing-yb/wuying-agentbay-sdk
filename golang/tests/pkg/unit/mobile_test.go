@@ -465,6 +465,19 @@ func (suite *MobileTestSuite) TestCompleteUserFlow() {
 	assert.Equal(suite.T(), "https://example.com/flow-screenshot.png", screenshotResult.Data)
 }
 
+// Test GetAdbUrl environment validation
+func (suite *MobileTestSuite) TestGetAdbUrl_NonMobileEnvironment() {
+	// Note: This test is removed because GetAdbUrl no longer validates image ID
+	// It directly calls the GetLink API which will handle environment validation
+	// Full GetAdbUrl functionality is tested in integration tests
+	// (tests/pkg/integration/mobile_adb_integration_test.go)
+	suite.T().Skip("Test removed - GetAdbUrl validation moved to integration tests")
+}
+
+// Note: Full GetAdbUrl functionality is tested in integration tests
+// (tests/pkg/integration/mobile_adb_integration_test.go) because it requires
+// real API client interaction which is complex to mock properly
+
 // Run the test suite
 func TestMobileTestSuite(t *testing.T) {
 	suite.Run(t, new(MobileTestSuite))

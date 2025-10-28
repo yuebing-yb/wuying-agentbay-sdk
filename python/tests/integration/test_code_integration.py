@@ -18,6 +18,8 @@ class TestCodeIntegration(unittest.TestCase):
         params = CreateSessionParams(image_id='code_latest')
         # Use code_latest image for code execution tests
         session_result = self.agent_bay.create(params)
+        if not session_result.success or not session_result.session:
+            self.skipTest(f"Failed to create session: {session_result.error_message}")
         self.session = session_result.session
         self.code = self.session.code
 
@@ -72,6 +74,167 @@ console.log(x);
         # Should return failure for unsupported language
         self.assertFalse(result.success)
         self.assertIn("Unsupported language", result.error_message)
+
+    def test_run_code_python_with_timeout(self):
+        """Test Python code execution with custom timeout."""
+        code = '''
+import time
+print("Starting...")
+time.sleep(2)
+print("Completed after 2 seconds")
+'''
+        result = self.code.run_code(code, "python", timeout_s=10)
+
+        print(f"Python code with timeout result: {result}")
+
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.result)
+        self.assertIn("Starting...", result.result)
+        self.assertIn("Completed after 2 seconds", result.result)
+
+    def test_run_code_javascript_with_timeout(self):
+        """Test JavaScript code execution with custom timeout."""
+        code = '''
+console.log("Starting...");
+setTimeout(() => {
+    console.log("This should not appear");
+}, 5000);
+console.log("Immediate output");
+'''
+        result = self.code.run_code(code, "javascript", timeout_s=10)
+
+        print(f"JavaScript code with timeout result: {result}")
+
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.result)
+        self.assertIn("Starting...", result.result)
+        self.assertIn("Immediate output", result.result)
+
+    def test_run_code_python_file_operations(self):
+        """Test Python code with file operations."""
+        code = '''
+import os
+# Create a test file
+with open('/tmp/test_code_integration.txt', 'w') as f:
+    f.write('Test content from Python code execution')
+
+# Read it back
+with open('/tmp/test_code_integration.txt', 'r') as f:
+    content = f.read()
+    print(f"File content: {content}")
+
+# Clean up
+os.remove('/tmp/test_code_integration.txt')
+print("File operations completed successfully")
+'''
+        result = self.code.run_code(code, "python")
+
+        print(f"Python file operations result: {result}")
+
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.result)
+        self.assertIn("Test content from Python code execution", result.result)
+        self.assertIn("File operations completed successfully", result.result)
+
+    def test_run_code_python_error_handling(self):
+        """Test Python code with error handling."""
+        code = '''
+try:
+    result = 10 / 0
+except ZeroDivisionError as e:
+    print(f"Caught error: {e}")
+    print("Error handled successfully")
+'''
+        result = self.code.run_code(code, "python")
+
+        print(f"Python error handling result: {result}")
+
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.result)
+        self.assertIn("Caught error", result.result)
+        self.assertIn("Error handled successfully", result.result)
+
+    def test_run_code_python_with_imports(self):
+        """Test Python code with standard library imports."""
+        code = '''
+import json
+import datetime
+
+data = {
+    "message": "Hello from Python",
+    "timestamp": str(datetime.datetime.now()),
+    "numbers": [1, 2, 3, 4, 5]
+}
+
+json_str = json.dumps(data, indent=2)
+print(json_str)
+
+# Parse it back
+parsed = json.loads(json_str)
+print(f"Message: {parsed['message']}")
+print(f"Numbers sum: {sum(parsed['numbers'])}")
+'''
+        result = self.code.run_code(code, "python")
+
+        print(f"Python with imports result: {result}")
+
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.result)
+        self.assertIn("Hello from Python", result.result)
+        self.assertIn("Numbers sum: 15", result.result)
+
+    def test_run_code_cross_language_interop(self):
+        """Test Python and JavaScript interoperability through file system."""
+        import time
+
+        # Step 1: Create a file with Python
+        python_code = '''
+import json
+data = {"language": "python", "value": 42}
+with open('/tmp/interop_test.json', 'w') as f:
+    json.dump(data, f)
+print("Python wrote data to file")
+'''
+        result = self.code.run_code(python_code, "python")
+        self.assertTrue(result.success)
+        self.assertIn("Python wrote data to file", result.result)
+
+        time.sleep(1)
+
+        # Step 2: Read and modify with JavaScript
+        js_code = '''
+const fs = require('fs');
+const data = JSON.parse(fs.readFileSync('/tmp/interop_test.json', 'utf8'));
+console.log('JavaScript read data:', JSON.stringify(data));
+data.language = 'javascript';
+data.value = data.value * 2;
+fs.writeFileSync('/tmp/interop_test.json', JSON.stringify(data));
+console.log('JavaScript updated data in file');
+'''
+        result = self.code.run_code(js_code, "javascript")
+        self.assertTrue(result.success)
+        self.assertIn("JavaScript read data", result.result)
+        self.assertIn("JavaScript updated data in file", result.result)
+
+        time.sleep(1)
+
+        # Step 3: Verify with Python
+        python_verify_code = '''
+import json
+with open('/tmp/interop_test.json', 'r') as f:
+    data = json.load(f)
+print(f"Final data: {data}")
+print(f"Language: {data['language']}")
+print(f"Value: {data['value']}")
+import os
+os.remove('/tmp/interop_test.json')
+print("Cleanup completed")
+'''
+        result = self.code.run_code(python_verify_code, "python")
+        self.assertTrue(result.success)
+        self.assertIn("javascript", result.result)
+        self.assertIn("84", result.result)
+        self.assertIn("Cleanup completed", result.result)
 
     def test_3_2_complex_code_with_file_operations(self):
         """3.2 Complex Code with File Operations - should execute complex code with file operations"""

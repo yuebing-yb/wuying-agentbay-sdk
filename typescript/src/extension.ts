@@ -6,7 +6,7 @@ import { AgentBay } from "./agent-bay";
 import { ContextService, Context } from "./context";
 import { AgentBayError } from "./exceptions";
 import { OperationResult, ContextFileListResult, FileUrlResult } from "./types/api-response";
-import { log, logError } from "./utils/logger";
+import { log, logError, logInfo, logDebug } from "./utils/logger";
 
 // ==============================================================================
 // Constants
@@ -217,7 +217,7 @@ export class ExtensionsService {
     // Generate default context name if contextId is empty
     if (!contextId || contextId.trim() === "") {
       contextId = `extensions-${Math.floor(Date.now() / 1000)}`;
-      log(`Generated default context name: ${contextId}`);
+      logDebug(`Generated default context name: ${contextId}`);
     }
 
     this.contextName = contextId;
@@ -440,7 +440,7 @@ export class ExtensionsService {
     try {
       const deleteResult = await this.contextService.delete(this.extensionContext);
       if (deleteResult) {
-        log(`Extension context deleted: ${this.contextName} (ID: ${this.contextId})`);
+        logInfo(`Extension context deleted: ${this.contextName} (ID: ${this.contextId})`);
         return true;
       } else {
         logError(`Warning: Failed to delete extension context: ${this.contextName}`, new Error('Delete operation returned false'));

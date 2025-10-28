@@ -77,12 +77,12 @@ describe("UI", () => {
   describe("getClickableUIElements", () => {
     it.only("should retrieve clickable UI elements if implemented", async () => {
       if (
-        session.ui &&
-        typeof session.ui.getClickableUIElements === "function"
+        session.mobile &&
+        typeof session.mobile.getClickableUIElements === "function"
       ) {
-        log("Testing UI.getClickableUIElements method...");
+        log("Testing Mobile.getClickableUIElements method...");
         try {
-          const elementsResponse = await session.ui.getClickableUIElements();
+          const elementsResponse = await session.mobile.getClickableUIElements();
           log(`Retrieved content:`, elementsResponse.elements);
           log(
             `Get Clickable UI Elements RequestId: ${
@@ -103,12 +103,12 @@ describe("UI", () => {
             log("First UI element:", elementsResponse.elements[0]);
           }
         } catch (error) {
-          log(`Note: UI.getClickableUIElements execution failed: ${error}`);
+          log(`Note: Mobile.getClickableUIElements execution failed: ${error}`);
           // Don't fail the test if the method is not fully implemented
         }
       } else {
         log(
-          "Note: UI.getClickableUIElements method is not available, skipping test"
+          "Note: Mobile.getClickableUIElements method is not available, skipping test"
         );
       }
     });
@@ -116,10 +116,10 @@ describe("UI", () => {
 
   describe("getAllUIElements", () => {
     it.only("should retrieve all UI elements if implemented", async () => {
-      if (session.ui && typeof session.ui.getAllUIElements === "function") {
-        log("Testing UI.getAllUIElements method...");
+      if (session.mobile && typeof session.mobile.getAllUIElements === "function") {
+        log("Testing Mobile.getAllUIElements method...");
         try {
-          const elementsResponse = await session.ui.getAllUIElements();
+          const elementsResponse = await session.mobile.getAllUIElements();
           log(`Retrieved content:`, elementsResponse.elements);
           log(
             `Get All UI Elements RequestId: ${
@@ -140,22 +140,22 @@ describe("UI", () => {
             log("First UI element:", elementsResponse.elements[0]);
           }
         } catch (error) {
-          log(`Note: UI.getAllUIElements execution failed: ${error}`);
+          log(`Note: Mobile.getAllUIElements execution failed: ${error}`);
           // Don't fail the test if the method is not fully implemented
         }
       } else {
-        log("Note: UI.getAllUIElements method is not available, skipping test");
+        log("Note: Mobile.getAllUIElements method is not available, skipping test");
       }
     });
   });
 
   describe("sendKey", () => {
     it.only("should send key events if implemented", async () => {
-      if (session.ui && typeof session.ui.sendKey === "function") {
-        log("Testing UI.sendKey method...");
+      if (session.mobile && typeof session.mobile.sendKey === "function") {
+        log("Testing Mobile.sendKey method...");
         try {
           // Try to send HOME key
-          const sendKeyResponse = await session.ui.sendKey(3); // HOME key
+          const sendKeyResponse = await session.mobile.sendKey(3); // HOME key
           log(`Send key content:`, sendKeyResponse.data);
           log(
             `Send Key RequestId: ${sendKeyResponse.requestId || "undefined"}`
@@ -169,21 +169,21 @@ describe("UI", () => {
           expect(sendKeyResponse.data).toBeDefined();
           expect(typeof sendKeyResponse.data).toBe("boolean");
         } catch (error) {
-          log(`Note: UI.sendKey execution failed: ${error}`);
+          log(`Note: Mobile.sendKey execution failed: ${error}`);
           // Don't fail the test if the method is not fully implemented
         }
       } else {
-        log("Note: UI.sendKey method is not available, skipping test");
+        log("Note: Mobile.sendKey method is not available, skipping test");
       }
     });
   });
 
   describe("screenshot", () => {
     it.only("should take screenshots if implemented", async () => {
-      if (session.ui && typeof session.ui.screenshot === "function") {
-        log("Testing UI.screenshot method...");
+      if (session.mobile && typeof session.mobile.screenshot === "function") {
+        log("Testing Mobile.screenshot method...");
         try {
-          const screenshotResponse = await session.ui.screenshot();
+          const screenshotResponse = await session.mobile.screenshot();
           log(`Screenshot content:`, screenshotResponse.data);
           log(
             `Screenshot RequestId: ${
@@ -206,11 +206,11 @@ describe("UI", () => {
             screenshotResponse.data.includes("base64");
           expect(hasImageData).toBe(true);
         } catch (error) {
-          log(`Note: UI.screenshot execution failed: ${error}`);
+          log(`Note: Mobile.screenshot execution failed: ${error}`);
           // Don't fail the test if the method is not fully implemented
         }
       } else {
-        log("Note: UI.screenshot method is not available, skipping test");
+        log("Note: Mobile.screenshot method is not available, skipping test");
       }
     });
   });

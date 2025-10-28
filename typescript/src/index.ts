@@ -1,3 +1,6 @@
+// IMPORTANT: Load config first to ensure .env file is loaded before logger initialization
+export { loadConfig, loadDotEnv, type Config } from "./config";
+
 // Export all public classes and interfaces
 export { AgentBay, type CreateSessionParams} from "./agent-bay";
 export * from "./agent";
@@ -12,10 +15,22 @@ export * from "./filesystem";
 export * from "./oss";
 export { Session } from "./session";
 export { type ListSessionParams } from "./types";
+export * from "./types";
 export * from "./ui";
 export * from './context-sync'
 export * from './context-manager'
 export * from './session-params'
 // Export utility functions
-export { log, logError } from "./utils/logger";
-export { loadConfig, loadDotEnv, type Config } from "./config";
+export {
+  log,
+  logDebug,
+  logInfo,
+  logWarn,
+  logError,
+  setLogLevel,
+  getLogLevel,
+  maskSensitiveData,
+  setupLogger,
+  type LogLevel,
+  type LoggerConfig
+} from "./utils/logger";

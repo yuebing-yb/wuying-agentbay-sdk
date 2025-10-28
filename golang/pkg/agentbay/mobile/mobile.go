@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
@@ -35,6 +36,14 @@ type UIElementsResult struct {
 	models.ApiResponse
 	Elements     []*UIElement `json:"elements"`
 	ErrorMessage string       `json:"error_message"`
+}
+
+// AdbUrlResult represents the result of ADB URL retrieval operation
+type AdbUrlResult struct {
+	models.ApiResponse
+	URL          string `json:"url"`
+	Success      bool   `json:"success"`
+	ErrorMessage string `json:"error_message"`
 }
 
 // InstalledApp represents an installed application
@@ -88,6 +97,7 @@ type Mobile struct {
 		GetAPIKey() string
 		GetClient() *mcp.Client
 		GetSessionId() string
+		GetImageID() string
 		IsVpc() bool
 		NetworkInterfaceIp() string
 		HttpPort() string
@@ -115,6 +125,7 @@ func NewMobile(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
+	GetImageID() string
 	IsVpc() bool
 	NetworkInterfaceIp() string
 	HttpPort() string
@@ -506,6 +517,18 @@ func (m *Mobile) Configure(mobileConfig *models.MobileExtraConfig) error {
 		}
 	}
 
+	// Configure navigation bar visibility
+	if err := m.setNavigationBarVisibility(mobileConfig.HideNavigationBar); err != nil {
+		return fmt.Errorf("failed to set navigation bar visibility: %v", err)
+	}
+
+	// Configure uninstall blacklist
+	if len(mobileConfig.UninstallBlacklist) > 0 {
+		if err := m.setUninstallBlacklist(mobileConfig.UninstallBlacklist); err != nil {
+			return fmt.Errorf("failed to set uninstall blacklist: %v", err)
+		}
+	}
+
 	return nil
 }
 
@@ -559,6 +582,49 @@ func (m *Mobile) setAppBlacklist(packageNames []string) error {
 	return m.executeTemplateCommand(command, fmt.Sprintf("App blacklist configuration (%d packages)", len(packageNames)))
 }
 
+// setNavigationBarVisibility sets navigation bar visibility
+func (m *Mobile) setNavigationBarVisibility(hide bool) error {
+	var templateName string
+	if hide {
+		templateName = "hide_navigation_bar"
+	} else {
+		templateName = "show_navigation_bar"
+	}
+
+	template, exists := command.GetMobileCommandTemplate(templateName)
+	if !exists {
+		return fmt.Errorf("navigation bar template not found: %s", templateName)
+	}
+
+	description := fmt.Sprintf("Navigation bar visibility (hide: %t)", hide)
+	return m.executeTemplateCommand(template, description)
+}
+
+// setUninstallBlacklist sets uninstall protection blacklist
+func (m *Mobile) setUninstallBlacklist(packageNames []string) error {
+	template, exists := command.GetMobileCommandTemplate("uninstall_blacklist")
+	if !exists {
+		return fmt.Errorf("uninstall blacklist template not found")
+	}
+
+	// Replace placeholder with actual package names (semicolon-separated for property value)
+	packageList := strings.Join(packageNames, ";")
+	command := strings.ReplaceAll(template, "{package_list}", packageList)
+
+	description := fmt.Sprintf("Uninstall blacklist configuration (%d packages)", len(packageNames))
+	return m.executeTemplateCommand(command, description)
+}
+
+// SetNavigationBarVisibility sets navigation bar visibility for mobile devices
+func (m *Mobile) SetNavigationBarVisibility(hide bool) error {
+	return m.setNavigationBarVisibility(hide)
+}
+
+// SetUninstallBlacklist sets uninstall protection blacklist for mobile devices
+func (m *Mobile) SetUninstallBlacklist(packageNames []string) error {
+	return m.setUninstallBlacklist(packageNames)
+}
+
 // executeTemplateCommand executes a mobile command template
 func (m *Mobile) executeTemplateCommand(commandTemplate, description string) error {
 	if m.command == nil {
@@ -577,4 +643,77 @@ func (m *Mobile) executeTemplateCommand(commandTemplate, description string) err
 	}
 
 	return nil
+}
+
+// GetAdbUrl retrieves the ADB connection URL for the mobile environment.
+// This method is only supported in mobile environments (mobile_latest image).
+// It uses the provided ADB public key to establish the connection and returns
+// the ADB connect URL.
+func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult {
+	// Build options JSON with adbkey_pub
+	optionsMap := map[string]string{"adbkey_pub": adbkeyPub}
+	optionsJSON, err := json.Marshal(optionsMap)
+	if err != nil {
+		errorMsg := fmt.Sprintf("Failed to marshal options: %v", err)
+		return &AdbUrlResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			URL:          "",
+			Success:      false,
+			ErrorMessage: errorMsg,
+		}
+	}
+
+	// Call GetLink API directly with protocol_type="adb" and options
+	protocolType := "adb"
+	optionsStr := string(optionsJSON)
+
+	getLinkRequest := &mcp.GetLinkRequest{
+		Authorization: tea.String("Bearer " + m.Session.GetAPIKey()),
+		SessionId:     tea.String(m.Session.GetSessionId()),
+		ProtocolType:  tea.String(protocolType),
+		Port:          nil,
+		Option:        tea.String(optionsStr),
+	}
+
+	// Log the API call (blue color)
+	fmt.Printf("\033[34m🔗 API Call: GetLink\033[0m\n")
+	fmt.Printf("   └─ SessionId=%s, ProtocolType=%s, Options=provided\n", m.Session.GetSessionId(), protocolType)
+
+	response, err := m.Session.GetClient().GetLink(getLinkRequest)
+	if err != nil {
+		errorMsg := fmt.Sprintf("Failed to get ADB URL: %v", err)
+		fmt.Printf("\033[31m❌ API Response Failed: GetLink\033[0m\n")
+		fmt.Printf("   └─ Error: %s\n", errorMsg)
+		return &AdbUrlResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			URL:          "",
+			Success:      false,
+			ErrorMessage: errorMsg,
+		}
+	}
+
+	// Extract request ID from response
+	requestID := ""
+	if response.Body != nil && response.Body.RequestId != nil {
+		requestID = tea.StringValue(response.Body.RequestId)
+	}
+
+	// Extract URL from response
+	url := ""
+	if response.Body != nil && response.Body.Data != nil && response.Body.Data.Url != nil {
+		url = tea.StringValue(response.Body.Data.Url)
+	}
+
+	// Log the successful response (green color, no masking for user convenience)
+	fmt.Printf("\033[32m✅ API Response: GetLink, RequestId=%s\033[0m\n", requestID)
+	if url != "" {
+		fmt.Printf("\033[32m   └─ url=%s\033[0m\n", url)
+	}
+
+	return &AdbUrlResult{
+		ApiResponse:  models.ApiResponse{RequestID: requestID},
+		URL:          url,
+		Success:      true,
+		ErrorMessage: "",
+	}
 }

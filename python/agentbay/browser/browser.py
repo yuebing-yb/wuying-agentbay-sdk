@@ -7,7 +7,7 @@ from agentbay.browser.browser_agent import BrowserAgent
 from agentbay.api.base_service import BaseService
 from agentbay.exceptions import BrowserError
 from agentbay.config import BROWSER_DATA_PATH
-from agentbay.logger import get_logger
+from agentbay.logger import get_logger, log_api_response_with_details
 
 # Initialize logger for this module
 logger = get_logger("browser")
@@ -237,6 +237,9 @@ class BrowserOption:
         solve_captchas: bool = False,
         proxies: Optional[list[BrowserProxy]] = None,
         extension_path: Optional[str] = "/tmp/extensions/",
+        cmd_args: Optional[list[str]] = None,
+        default_navigate_url: Optional[str] = None,
+        browser_type: Optional[Literal["chrome", "chromium"]] = None,
     ):
         self.use_stealth = use_stealth
         self.user_agent = user_agent
@@ -246,6 +249,9 @@ class BrowserOption:
         self.solve_captchas = solve_captchas
         self.proxies = proxies
         self.extension_path = extension_path
+        self.cmd_args = cmd_args
+        self.default_navigate_url = default_navigate_url
+        self.browser_type = browser_type
 
         # Validate proxies list items
         if proxies is not None:
@@ -260,6 +266,14 @@ class BrowserOption:
                 raise ValueError("extension_path must be a string")
             if not extension_path.strip():
                 raise ValueError("extension_path cannot be empty")
+
+        if cmd_args is not None:
+            if not isinstance(cmd_args, list):
+                raise ValueError("cmd_args must be a list")
+
+        # Validate browser_type
+        if browser_type is not None and browser_type not in ["chrome", "chromium"]:
+            raise ValueError("browser_type must be 'chrome' or 'chromium'")
 
     def to_map(self):
         option_map = dict()
@@ -281,6 +295,12 @@ class BrowserOption:
             option_map['proxies'] = [proxy.to_map() for proxy in self.proxies]
         if self.extension_path is not None:
             option_map['extensionPath'] = self.extension_path
+        if self.cmd_args is not None:
+            option_map['cmdArgs'] = self.cmd_args
+        if self.default_navigate_url is not None:
+            option_map['defaultNavigateUrl'] = self.default_navigate_url
+        if self.browser_type is not None:
+            option_map['browserType'] = self.browser_type
         return option_map
 
     def from_map(self, m: dict = None):
@@ -306,6 +326,12 @@ class BrowserOption:
             if len(proxy_list) > 1:
                 raise ValueError("proxies list length must be limited to 1")
             self.proxies = [BrowserProxy.from_map(proxy_data) for proxy_data in proxy_list]
+        if m.get('cmdArgs') is not None:
+            self.cmd_args = m.get('cmdArgs')
+        if m.get('defaultNavigateUrl') is not None:
+            self.default_navigate_url = m.get('defaultNavigateUrl')
+        if m.get('browserType') is not None:
+            self.browser_type = m.get('browserType')
         return self
 
 class Browser(BaseService):
@@ -350,11 +376,19 @@ class Browser(BaseService):
             if success:
                 self._initialized = True
                 self._option = option
+                log_api_response_with_details(
+                    api_name="InitBrowser",
+                    success=True,
+                    key_fields={
+                        "port": data.get("Port"),
+                        "status": "successfully initialized"
+                    }
+                )
                 logger.info("Browser instance was successfully initialized.")
 
             return success
         except Exception as e:
-            logger.error(f"Failed to initialize browser instance: {e}")
+            logger.exception(f"❌ Failed to initialize browser instance")
             self._initialized = False
             self._endpoint_url = None
             self._option = None
@@ -390,14 +424,28 @@ class Browser(BaseService):
                 self.endpoint_router_port = data.get("Port")
                 self._initialized = True
                 self._option = option
+                log_api_response_with_details(
+                    api_name="InitBrowser (async)",
+                    success=True,
+                    key_fields={
+                        "port": data.get("Port"),
+                        "status": "successfully initialized"
+                    }
+                )
                 logger.info("Browser instance successfully initialized")
             return success
         except Exception as e:
-            logger.error(f"Failed to initialize browser instance: {e}")
+            logger.exception(f"❌ Failed to initialize browser instance asynchronously")
             self._initialized = False
             self._endpoint_url = None
             self._option = None
             return False
+
+    def destroy(self):
+        """
+        Destroy the browser instance.
+        """
+        self._stop_browser()
 
     def _stop_browser(self):
         """

@@ -1,9 +1,10 @@
 import { AgentBay, CreateSessionParams, Session } from "../../src";
+import { log } from "../../src/utils/logger";
 
 function getTestAPIKey(): string {
   const apiKey = process.env.AGENTBAY_API_KEY;
   if (!apiKey) {
-    console.warn(
+    log(
       "Warning: AGENTBAY_API_KEY environment variable not set. Using default test key."
     );
     return "akm-xxx"; // Replace with your test API key
@@ -31,10 +32,10 @@ describe("AgentBay.list() Integration Tests", () => {
     agentBay = new AgentBay({ apiKey });
     uniqueId = generateUniqueId();
 
-    console.log(`Using unique ID for test: ${uniqueId}`);
+    log(`Using unique ID for test: ${uniqueId}`);
 
     // Create multiple sessions with different labels for testing
-    console.log("Creating session 1 with dev environment...");
+    log("Creating session 1 with dev environment...");
     const params1: CreateSessionParams = {
       labels: {
         project: `list-test-${uniqueId}`,
@@ -45,11 +46,11 @@ describe("AgentBay.list() Integration Tests", () => {
     const result1 = await agentBay.create(params1);
     if (result1.success && result1.session) {
       testSessions.push(result1.session);
-      console.log(`Session 1 created: ${result1.session.sessionId}`);
-      console.log(`Request ID: ${result1.requestId}`);
+      log(`Session 1 created: ${result1.session.sessionId}`);
+      log(`Request ID: ${result1.requestId}`);
     }
 
-    console.log("Creating session 2 with staging environment...");
+    log("Creating session 2 with staging environment...");
     const params2: CreateSessionParams = {
       labels: {
         project: `list-test-${uniqueId}`,
@@ -60,11 +61,11 @@ describe("AgentBay.list() Integration Tests", () => {
     const result2 = await agentBay.create(params2);
     if (result2.success && result2.session) {
       testSessions.push(result2.session);
-      console.log(`Session 2 created: ${result2.session.sessionId}`);
-      console.log(`Request ID: ${result2.requestId}`);
+      log(`Session 2 created: ${result2.session.sessionId}`);
+      log(`Request ID: ${result2.requestId}`);
     }
 
-    console.log("Creating session 3 with prod environment...");
+    log("Creating session 3 with prod environment...");
     const params3: CreateSessionParams = {
       labels: {
         project: `list-test-${uniqueId}`,
@@ -75,8 +76,8 @@ describe("AgentBay.list() Integration Tests", () => {
     const result3 = await agentBay.create(params3);
     if (result3.success && result3.session) {
       testSessions.push(result3.session);
-      console.log(`Session 3 created: ${result3.session.sessionId}`);
-      console.log(`Request ID: ${result3.requestId}`);
+      log(`Session 3 created: ${result3.session.sessionId}`);
+      log(`Request ID: ${result3.requestId}`);
     }
 
     // Verify all sessions were created
@@ -85,20 +86,20 @@ describe("AgentBay.list() Integration Tests", () => {
     }
 
     // Wait longer for sessions to be fully created and labels to propagate
-    console.log("Waiting 5 seconds for labels to propagate...");
+    log("Waiting 5 seconds for labels to propagate...");
     await sleep(5000);
   }, 60000);
 
   afterAll(async () => {
-    console.log("Cleaning up: Deleting all test sessions...");
+    log("Cleaning up: Deleting all test sessions...");
     for (const session of testSessions) {
       try {
         const result = await agentBay.delete(session);
-        console.log(
+        log(
           `Session ${session.sessionId} deleted. Success: ${result.success}, Request ID: ${result.requestId}`
         );
       } catch (error) {
-        console.warn(
+        log(
           `Warning: Error deleting session ${session.sessionId}: ${error}`
         );
       }
@@ -106,7 +107,7 @@ describe("AgentBay.list() Integration Tests", () => {
   }, 60000);
 
   test("should list all sessions without any label filter", async () => {
-    console.log("\n=== Testing list() without labels ===");
+    log("\n=== Testing list() without labels ===");
 
     const result = await agentBay.list();
 
@@ -116,13 +117,13 @@ describe("AgentBay.list() Integration Tests", () => {
     expect(result.requestId).not.toBe("");
     expect(result.sessionIds).toBeDefined();
 
-    console.log(`Total sessions found: ${result.totalCount}`);
-    console.log(`Sessions in current page: ${result.sessionIds.length}`);
-    console.log(`Request ID: ${result.requestId}`);
+    log(`Total sessions found: ${result.totalCount}`);
+    log(`Sessions in current page: ${result.sessionIds.length}`);
+    log(`Request ID: ${result.requestId}`);
   });
 
   test("should list sessions with a single label filter", async () => {
-    console.log("\n=== Testing list() with single label ===");
+    log("\n=== Testing list() with single label ===");
 
     const result = await agentBay.list({
       project: `list-test-${uniqueId}`,
@@ -142,13 +143,13 @@ describe("AgentBay.list() Integration Tests", () => {
 
     expect(foundCount).toBe(3);
 
-    console.log(`Found ${foundCount} test sessions`);
-    console.log(`Total sessions with label: ${result.sessionIds.length}`);
-    console.log(`Request ID: ${result.requestId}`);
+    log(`Found ${foundCount} test sessions`);
+    log(`Total sessions with label: ${result.sessionIds.length}`);
+    log(`Request ID: ${result.requestId}`);
   });
 
   test("should list sessions with multiple label filters", async () => {
-    console.log("\n=== Testing list() with multiple labels ===");
+    log("\n=== Testing list() with multiple labels ===");
 
     const result = await agentBay.list({
       project: `list-test-${uniqueId}`,
@@ -167,13 +168,13 @@ describe("AgentBay.list() Integration Tests", () => {
 
     expect(found).toBe(true);
 
-    console.log(`Found dev session: ${found}`);
-    console.log(`Total matching sessions: ${result.sessionIds.length}`);
-    console.log(`Request ID: ${result.requestId}`);
+    log(`Found dev session: ${found}`);
+    log(`Total matching sessions: ${result.sessionIds.length}`);
+    log(`Request ID: ${result.requestId}`);
   });
 
   test("should list sessions with pagination parameters", async () => {
-    console.log("\n=== Testing list() with pagination ===");
+    log("\n=== Testing list() with pagination ===");
 
     // List first page with limit of 2
     const resultPage1 = await agentBay.list(
@@ -186,10 +187,10 @@ describe("AgentBay.list() Integration Tests", () => {
     expect(resultPage1.success).toBe(true);
     expect(resultPage1.requestId).toBeDefined();
     expect(resultPage1.requestId).not.toBe("");
-    expect(resultPage1.data.length).toBeLessThanOrEqual(2);
+    expect(resultPage1.sessionIds.length).toBeLessThanOrEqual(2);
 
-    console.log(`Page 1 - Found ${resultPage1.data.length} sessions`);
-    console.log(`Request ID: ${resultPage1.requestId}`);
+    log(`Page 1 - Found ${resultPage1.sessionIds.length} sessions`);
+    log(`Request ID: ${resultPage1.requestId}`);
 
     // If there are more results, test page 2
     if (resultPage1.nextToken) {
@@ -203,13 +204,13 @@ describe("AgentBay.list() Integration Tests", () => {
       expect(resultPage2.requestId).toBeDefined();
       expect(resultPage2.requestId).not.toBe("");
 
-      console.log(`Page 2 - Found ${resultPage2.data.length} sessions`);
-      console.log(`Request ID: ${resultPage2.requestId}`);
+      log(`Page 2 - Found ${resultPage2.sessionIds.length} sessions`);
+      log(`Request ID: ${resultPage2.requestId}`);
     }
   });
 
   test("should return empty results for non-matching labels", async () => {
-    console.log("\n=== Testing list() with non-matching label ===");
+    log("\n=== Testing list() with non-matching label ===");
 
     const result = await agentBay.list({
       project: `list-test-${uniqueId}`,
@@ -229,12 +230,12 @@ describe("AgentBay.list() Integration Tests", () => {
 
     expect(foundCount).toBe(0);
 
-    console.log(`Correctly found ${foundCount} test sessions (expected 0)`);
-    console.log(`Request ID: ${result.requestId}`);
+    log(`Correctly found ${foundCount} test sessions (expected 0)`);
+    log(`Request ID: ${result.requestId}`);
   });
 
   test("should use default limit of 10 when not specified", async () => {
-    console.log("\n=== Testing list() with default limit ===");
+    log("\n=== Testing list() with default limit ===");
 
     const result = await agentBay.list({ owner: `test-${uniqueId}` });
 
@@ -244,18 +245,18 @@ describe("AgentBay.list() Integration Tests", () => {
     expect(result.requestId).not.toBe("");
     expect(result.maxResults).toBe(10);
 
-    console.log(`Max results: ${result.maxResults}`);
-    console.log(`Request ID: ${result.requestId}`);
+    log(`Max results: ${result.maxResults}`);
+    log(`Request ID: ${result.requestId}`);
   });
 
   test("should include request_id in all responses", async () => {
-    console.log("\n=== Testing list() request_id presence ===");
+    log("\n=== Testing list() request_id presence ===");
 
     // Test 1: No labels
     const result1 = await agentBay.list();
     expect(result1.requestId).toBeDefined();
     expect(result1.requestId).not.toBe("");
-    console.log(`Test 1 Request ID: ${result1.requestId}`);
+    log(`Test 1 Request ID: ${result1.requestId}`);
 
     // Test 2: With labels
     const result2 = await agentBay.list({
@@ -263,7 +264,7 @@ describe("AgentBay.list() Integration Tests", () => {
     });
     expect(result2.requestId).toBeDefined();
     expect(result2.requestId).not.toBe("");
-    console.log(`Test 2 Request ID: ${result2.requestId}`);
+    log(`Test 2 Request ID: ${result2.requestId}`);
 
     // Test 3: With pagination
     const result3 = await agentBay.list(
@@ -273,14 +274,14 @@ describe("AgentBay.list() Integration Tests", () => {
     );
     expect(result3.requestId).toBeDefined();
     expect(result3.requestId).not.toBe("");
-    console.log(`Test 3 Request ID: ${result3.requestId}`);
+    log(`Test 3 Request ID: ${result3.requestId}`);
   });
 
   test("should handle error scenarios correctly", async () => {
-    console.log("\\n=== Testing list() error scenarios ===");
+    log("\\n=== Testing list() error scenarios ===");
 
     // Test 1: Invalid page number (page = 0)
-    console.log("\\nTest 1: page=0 should return error");
+    log("\\nTest 1: page=0 should return error");
     const result1 = await agentBay.list(
       { project: `list-test-${uniqueId}` },
       0,
@@ -289,10 +290,10 @@ describe("AgentBay.list() Integration Tests", () => {
     expect(result1.success).toBe(false);
     expect(result1.errorMessage).toBeDefined();
     expect(result1.errorMessage).toContain("Page number must be >= 1");
-    console.log(`✓ Correctly rejected page=0: ${result1.errorMessage}`);
+    log(`✓ Correctly rejected page=0: ${result1.errorMessage}`);
 
     // Test 2: Invalid page number (page = -1)
-    console.log("\\nTest 2: page=-1 should return error");
+    log("\\nTest 2: page=-1 should return error");
     const result2 = await agentBay.list(
       { project: `list-test-${uniqueId}` },
       -1,
@@ -301,10 +302,10 @@ describe("AgentBay.list() Integration Tests", () => {
     expect(result2.success).toBe(false);
     expect(result2.errorMessage).toBeDefined();
     expect(result2.errorMessage).toContain("Page number must be >= 1");
-    console.log(`✓ Correctly rejected page=-1: ${result2.errorMessage}`);
+    log(`✓ Correctly rejected page=-1: ${result2.errorMessage}`);
 
     // Test 3: Out-of-range page number (page way beyond available data)
-    console.log("\\nTest 3: page=999999 should return error (no more pages)");
+    log("\\nTest 3: page=999999 should return error (no more pages)");
     const result3 = await agentBay.list(
       { project: `list-test-${uniqueId}` },
       999999,
@@ -313,18 +314,18 @@ describe("AgentBay.list() Integration Tests", () => {
     expect(result3.success).toBe(false);
     expect(result3.errorMessage).toBeDefined();
     expect(result3.errorMessage).toContain("No more pages available");
-    console.log(`✓ Correctly handled out-of-range page: ${result3.errorMessage}`);
+    log(`✓ Correctly handled out-of-range page: ${result3.errorMessage}`);
   });
 
   test("should traverse all pages and verify pagination completeness", async () => {
-    console.log("\\n=== Testing list() pagination completeness ===");
+    log("\\n=== Testing list() pagination completeness ===");
 
     const allSessionIds: string[] = [];
     let page = 1;
     const limit = 2;
     let totalCountFromApi = 0;
 
-    console.log(`\\nTraversing all pages with limit=${limit}...`);
+    log(`\\nTraversing all pages with limit=${limit}...`);
 
     while (true) {
       const result = await agentBay.list(
@@ -341,7 +342,7 @@ describe("AgentBay.list() Integration Tests", () => {
       allSessionIds.push(...result.sessionIds);
       totalCountFromApi = result.totalCount || 0;
 
-      console.log(
+      log(
         `Page ${page}: Found ${result.sessionIds.length} sessions, ` +
         `NextToken: ${result.nextToken ? "Yes" : "No"}, ` +
         `Total count: ${result.totalCount}`
@@ -352,7 +353,7 @@ describe("AgentBay.list() Integration Tests", () => {
 
       // Check if we've reached the end
       if (!result.nextToken) {
-        console.log(`\\n✓ Reached last page (page ${page})`);
+        log(`\\n✓ Reached last page (page ${page})`);
         break;
       }
 
@@ -378,19 +379,19 @@ describe("AgentBay.list() Integration Tests", () => {
     const uniqueSessionIds = new Set(allSessionIds);
     expect(allSessionIds.length).toBe(uniqueSessionIds.size);
 
-    console.log(`\\n✓ Pagination completeness verified:`);
-    console.log(`  - Total pages traversed: ${page}`);
-    console.log(`  - Total sessions collected: ${allSessionIds.length}`);
-    console.log(`  - Total count from API: ${totalCountFromApi}`);
-    console.log(`  - Found all 3 test sessions: Yes`);
-    console.log(`  - No duplicates: Yes`);
+    log(`\\n✓ Pagination completeness verified:`);
+    log(`  - Total pages traversed: ${page}`);
+    log(`  - Total sessions collected: ${allSessionIds.length}`);
+    log(`  - Total count from API: ${totalCountFromApi}`);
+    log(`  - Found all 3 test sessions: Yes`);
+    log(`  - No duplicates: Yes`);
   });
 
   test("should have consistent total_count across requests", async () => {
-    console.log("\\n=== Testing list() total_count consistency ===");
+    log("\\n=== Testing list() total_count consistency ===");
 
     // Test 1: Verify total_count >= number of test sessions
-    console.log("\\nTest 1: total_count should be >= 3 (our test sessions)");
+    log("\\nTest 1: total_count should be >= 3 (our test sessions)");
     const result1 = await agentBay.list(
       { owner: `test-${uniqueId}` },
       undefined,
@@ -399,10 +400,10 @@ describe("AgentBay.list() Integration Tests", () => {
 
     expect(result1.success).toBe(true);
     expect(result1.totalCount).toBeGreaterThanOrEqual(3);
-    console.log(`✓ total_count = ${result1.totalCount} (>= 3)`);
+    log(`✓ total_count = ${result1.totalCount} (>= 3)`);
 
     // Test 2: Verify total_count remains consistent across multiple calls
-    console.log("\\nTest 2: total_count should be consistent across multiple calls");
+    log("\\nTest 2: total_count should be consistent across multiple calls");
     const result2 = await agentBay.list(
       { owner: `test-${uniqueId}` },
       undefined,
@@ -410,10 +411,10 @@ describe("AgentBay.list() Integration Tests", () => {
     );
 
     expect(result1.totalCount).toBe(result2.totalCount);
-    console.log(`✓ total_count consistent: ${result1.totalCount} == ${result2.totalCount}`);
+    log(`✓ total_count consistent: ${result1.totalCount} == ${result2.totalCount}`);
 
     // Test 3: Verify total_count matches actual sessions when collecting all pages
-    console.log("\\nTest 3: total_count should match actual session count across all pages");
+    log("\\nTest 3: total_count should match actual session count across all pages");
 
     const allSessionIds: string[] = [];
     let page = 1;
@@ -449,13 +450,13 @@ describe("AgentBay.list() Integration Tests", () => {
     const uniqueSessionIds = new Set(allSessionIds);
     expect(uniqueSessionIds.size).toBe(expectedTotalCount);
 
-    console.log(
+    log(
       `✓ total_count matches actual count: ` +
       `${expectedTotalCount} == ${uniqueSessionIds.size}`
     );
 
     // Test 4: Verify session_ids count <= total_count for each page
-    console.log("\\nTest 4: session_ids count should be <= total_count on each page");
+    log("\\nTest 4: session_ids count should be <= total_count on each page");
     const result = await agentBay.list(
       { owner: `test-${uniqueId}` },
       undefined,
@@ -463,7 +464,7 @@ describe("AgentBay.list() Integration Tests", () => {
     );
 
     expect(result.sessionIds.length).toBeLessThanOrEqual(result.totalCount || 0);
-    console.log(
+    log(
       `✓ session_ids count (${result.sessionIds.length}) <= ` +
       `total_count (${result.totalCount})`
     );

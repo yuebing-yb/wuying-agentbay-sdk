@@ -25,7 +25,17 @@ import {
   OperationResult,
 } from "./types/api-response";
 import { UI } from "./ui";
-import { log, logError } from "./utils/logger";
+import {
+  log,
+  logError,
+  logInfo,
+  logDebug,
+  logAPICall,
+  logAPIResponseWithDetails,
+  logCodeExecutionOutput,
+  setRequestId,
+  getRequestId,
+} from "./utils/logger";
 import { WindowManager } from "./window";
 
 /**
@@ -278,7 +288,7 @@ export class Session {
     try {
       // If syncContext is true, trigger file uploads first
       if (syncContext) {
-        log("Triggering context synchronization before session deletion...");
+        logDebug("Triggering context synchronization before session deletion...");
 
         // Use the new sync method without callback (sync mode)
         const syncStartTime = Date.now();
@@ -289,9 +299,9 @@ export class Session {
           const syncDuration = Date.now() - syncStartTime;
 
           if (syncResult.success) {
-            log(`Context sync completed in ${syncDuration}ms`);
+            logInfo(`Context sync completed in ${syncDuration}ms`);
           } else {
-            log(`Context sync completed with failures after ${syncDuration}ms`);
+            logInfo(`Context sync completed with failures after ${syncDuration}ms`);
           }
         } catch (error) {
           const syncDuration = Date.now() - syncStartTime;
@@ -307,7 +317,7 @@ export class Session {
       });
 
       const response = await this.getClient().releaseMcpSession(request);
-      log(`Response from release_mcp_session: ${JSON.stringify(response)}`);
+      logDebug(`Response from release_mcp_session: ${JSON.stringify(response)}`);
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
@@ -505,14 +515,25 @@ export class Session {
         sessionId: this.sessionId,
       });
 
-      log("API Call: GetMcpResource");
-      log(`Request: SessionId=${this.sessionId}`);
+      logAPICall("GetMcpResource");
+      logDebug(`Request: SessionId=${this.sessionId}`);
 
       const response = await this.getClient().getMcpResource(request);
-      log(`Response from GetMcpResource: ${JSON.stringify(response)}`);
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
+
+      // Check for API-level errors
+      if (response?.body?.success === false && response.body?.code) {
+        const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+        logAPIResponseWithDetails("GetMcpResource", requestId, false, undefined, fullResponse);
+        return {
+          requestId,
+          success: false,
+          errorMessage,
+        };
+      }
 
       // Extract session info from response (matching Python structure)
       const responseBody = response.body;
@@ -554,6 +575,19 @@ export class Session {
         }
       }
 
+      // Log API response with key fields
+      const keyFields: Record<string, any> = {
+        session_id: this.sessionId,
+      };
+      if (sessionInfo.resourceUrl) {
+        keyFields.resource_url = sessionInfo.resourceUrl;
+      }
+      if (sessionInfo.appId) {
+        keyFields.app_id = sessionInfo.appId;
+      }
+      const fullResponse = responseBody ? JSON.stringify(responseBody, null, 2) : "";
+      logAPIResponseWithDetails("GetMcpResource", requestId, true, keyFields, fullResponse);
+
       return {
         requestId,
         success: true,
@@ -577,7 +611,8 @@ export class Session {
    */
   async getLink(
     protocolType?: string,
-    port?: number
+    port?: number,
+    options?: string
   ): Promise<OperationResult> {
     try {
       // Validate port range if port is provided
@@ -589,11 +624,19 @@ export class Session {
         }
       }
 
+      // Log API call
+      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${protocolType || 'default'}, Port=${port || 'default'}`;
+      if (options) {
+        requestParams += ', Options=provided';
+      }
+      logAPICall('GetLink', requestParams);
+
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
         sessionId: this.getSessionId(),
         protocolType,
         port,
+        option: options,
       });
 
       const response = await this.agentBay.getClient().getLink(request);
@@ -610,7 +653,7 @@ export class Session {
       }
 
       let data = responseBody.data || {}; // Capital D to match Python
-      log(`Data: ${JSON.stringify(data)}`);
+      logDebug(`Data: ${JSON.stringify(data)}`);;
 
       if (typeof data !== "object") {
         try {
@@ -621,6 +664,13 @@ export class Session {
       }
 
       const url = (data as any).Url || (data as any).url;
+
+      // Log API response
+      const keyFields: Record<string, any> = {};
+      if (url) {
+        keyFields.url = url;
+      }
+      logAPIResponseWithDetails('GetLink', requestId, true, keyFields);
 
       return {
         requestId,
@@ -648,7 +698,8 @@ export class Session {
    */
   async getLinkAsync(
     protocolType?: string,
-    port?: number
+    port?: number,
+    options?: string
   ): Promise<OperationResult> {
     try {
       // Validate port range if port is provided
@@ -660,11 +711,19 @@ export class Session {
         }
       }
 
+      // Log API call
+      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${protocolType || 'default'}, Port=${port || 'default'}`;
+      if (options) {
+        requestParams += ', Options=provided';
+      }
+      logAPICall('GetLink', requestParams);
+
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
         sessionId: this.getSessionId(),
         protocolType,
         port,
+        option: options,
       });
 
       // Note: In TypeScript, async is the default, but keeping this method for API compatibility
@@ -682,7 +741,7 @@ export class Session {
       }
 
       let data = responseBody?.data || {}; // Capital D to match Python
-      log(`Data: ${JSON.stringify(data)}`);
+      logDebug(`Data: ${JSON.stringify(data)}`);;
 
       if (typeof data !== "object") {
         try {
@@ -693,6 +752,13 @@ export class Session {
       }
 
       const url = (data as any).Url || (data as any).url;
+
+      // Log API response
+      const keyFields: Record<string, any> = {};
+      if (url) {
+        keyFields.url = url;
+      }
+      logAPIResponseWithDetails('GetLink', requestId, true, keyFields);
 
       return {
         requestId,
@@ -727,16 +793,25 @@ export class Session {
       imageId: imageId,
     });
 
-    log("API Call: ListMcpTools");
-    log(`Request: ImageId=${imageId}`);
+    logAPICall("ListMcpTools");
+    logDebug(`Request: ImageId=${imageId}`);
 
     const response = await this.getClient().listMcpTools(request);
 
     // Extract request ID
     const requestId = extractRequestId(response) || "";
 
-    if (response && response.body) {
-      log("Response from ListMcpTools:", response.body);
+    // Check for API-level errors
+    if (response?.body?.success === false && response.body?.code) {
+      const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+      logAPIResponseWithDetails("ListMcpTools", requestId, false, undefined, fullResponse);
+      return {
+        requestId,
+        success: false,
+        tools: [],
+        errorMessage,
+      };
     }
 
     // Parse the response data
@@ -760,6 +835,14 @@ export class Session {
     }
 
     this.mcpTools = tools; // Update the session's mcpTools field
+
+    // Log API response with key fields
+    const keyFields: Record<string, any> = {
+      image_id: imageId,
+      tool_count: tools.length,
+    };
+    const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
+    logAPIResponseWithDetails("ListMcpTools", requestId, true, keyFields, fullResponse);
 
     return {
       requestId,
@@ -853,6 +936,12 @@ export class Session {
            }
          }
 
+        // For run_code tool, extract and log the actual code execution output
+        if (toolName === "run_code" && actualResult) {
+          const dataStr = typeof actualResult === 'string' ? actualResult : JSON.stringify(actualResult);
+          logCodeExecutionOutput(requestId, dataStr);
+        }
+
         return {
           success: true,
           data: textContent || JSON.stringify(actualResult),
@@ -914,11 +1003,20 @@ export class Session {
           textContent = content[0].text;
         }
 
+        // For run_code tool, extract and log the actual code execution output
+        const reqId = extractRequestId(response) || "";
+        if (toolName === "run_code" && data) {
+          const dataStr = typeof response.body.data === 'string' 
+            ? response.body.data 
+            : JSON.stringify(response.body.data);
+          logCodeExecutionOutput(reqId, dataStr);
+        }
+
         return {
           success: true,
           data: textContent,
           errorMessage: "",
-          requestId: extractRequestId(response) || "",
+          requestId: reqId,
         };
       }
     } catch (error) {
