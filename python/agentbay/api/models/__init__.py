@@ -7,6 +7,9 @@ from __future__ import annotations
 from ._call_mcp_tool_request import CallMcpToolRequest
 from ._call_mcp_tool_response_body import CallMcpToolResponseBody
 from ._call_mcp_tool_response import CallMcpToolResponse
+from ._clear_context_request import ClearContextRequest
+from ._clear_context_response_body import ClearContextResponseBody
+from ._clear_context_response import ClearContextResponse
 from ._create_mcp_session_request import CreateMcpSessionRequest
 from ._create_mcp_session_shrink_request import CreateMcpSessionShrinkRequest
 from ._create_mcp_session_response_body import CreateMcpSessionResponseBody
@@ -56,7 +59,7 @@ from ._sync_context_response_body import SyncContextResponseBody
 from ._sync_context_response import SyncContextResponse
 from ._create_mcp_session_request import CreateMcpSessionRequestPersistenceDataList
 from ._create_mcp_session_request import AppManagerRule
-from ._create_mcp_session_request import MobileExtraConfig  
+from ._create_mcp_session_request import MobileExtraConfig
 from ._create_mcp_session_request import ExtraConfigs
 from ._create_mcp_session_response_body import CreateMcpSessionResponseBodyData
 from ._get_context_response_body import GetContextResponseBodyData
@@ -95,6 +98,9 @@ __all__ = [
     CallMcpToolRequest,
     CallMcpToolResponseBody,
     CallMcpToolResponse,
+    ClearContextRequest,
+    ClearContextResponseBody,
+    ClearContextResponse,
     CreateMcpSessionRequest,
     CreateMcpSessionShrinkRequest,
     CreateMcpSessionResponseBody,

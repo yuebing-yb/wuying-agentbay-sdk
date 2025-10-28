@@ -94,6 +94,32 @@ async function main() {
       log(`Error deleting session: ${error}`);
     }
 
+    // Example 5: Clear context data
+    log('\nExample 5: Clearing context data...');
+    log('Starting synchronous context clear (recommended approach)...');
+    try {
+      const clearResult = await agentBay.context.clear(context.id, 30, 2.0);
+      log(`Clear result: Success=${clearResult.success}, Status=${clearResult.status}, RequestID=${clearResult.requestId}`);
+
+      if (clearResult.success) {
+        log('✅ Context data cleared successfully');
+        log(`   Context ID: ${clearResult.contextId}`);
+        log(`   Final Status: ${clearResult.status}`);
+      } else {
+        log(`❌ Context data clearing failed: ${clearResult.errorMessage}`);
+      }
+    } catch (clearError: any) {
+      if (clearError.message.includes('timed out')) {
+        log(`⏱️ Clear timed out: ${clearError.message}`);
+      } else {
+        log(`❌ Error during context clear: ${clearError.message}`);
+      }
+    }
+
+    // Clean up
+    log('\nCleaning up...');
+    log('Note: Context data has been cleared, but the context itself still exists.');
+
     // Delete the context
     log('Deleting the context...');
     try {

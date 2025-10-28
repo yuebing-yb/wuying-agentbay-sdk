@@ -13,6 +13,8 @@ type iGetContextRequest interface {
 	GetAllowCreate() *bool
 	SetAuthorization(v string) *GetContextRequest
 	GetAuthorization() *string
+	SetContextId(v string) *GetContextRequest
+	GetContextId() *string
 	SetName(v string) *GetContextRequest
 	GetName() *string
 }
@@ -20,6 +22,7 @@ type iGetContextRequest interface {
 type GetContextRequest struct {
 	AllowCreate   *bool   `json:"AllowCreate,omitempty" xml:"AllowCreate,omitempty"`
 	Authorization *string `json:"Authorization,omitempty" xml:"Authorization,omitempty"`
+	ContextId     *string `json:"ContextId,omitempty" xml:"ContextId,omitempty"`
 	Name          *string `json:"Name,omitempty" xml:"Name,omitempty"`
 }
 
@@ -39,6 +42,11 @@ func (s *GetContextRequest) GetAuthorization() *string {
 	return s.Authorization
 }
 
+func (s *GetContextRequest) GetContextId() *string {
+	return s.ContextId
+}
+
+
 func (s *GetContextRequest) GetName() *string {
 	return s.Name
 }
@@ -50,6 +58,11 @@ func (s *GetContextRequest) SetAllowCreate(v bool) *GetContextRequest {
 
 func (s *GetContextRequest) SetAuthorization(v string) *GetContextRequest {
 	s.Authorization = &v
+	return s
+}
+
+func (s *GetContextRequest) SetContextId(v string) *GetContextRequest {
+	s.ContextId = &v
 	return s
 }
 

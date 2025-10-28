@@ -174,10 +174,10 @@ async function updateContext() {
     const result = await agentBay.context.get('my-context');
     if (result.success) {
       const context = result.context;
-      
+
       // Update the context name
       context.name = 'my-updated-context';
-      
+
       // Save the changes
       const updateResult = await agentBay.context.update(context);
       if (updateResult.success) {
@@ -224,7 +224,7 @@ async function deleteContext() {
     const result = await agentBay.context.get('my-context');
     if (result.success) {
       const context = result.context;
-      
+
       // Delete the context
       const deleteResult = await agentBay.context.delete(context);
       if (deleteResult.success) {
@@ -243,7 +243,171 @@ async function deleteContext() {
 deleteContext();
 ```
 
+### clear
+
+Clears the context's persistent data.
+
+```typescript
+clear(contextId: string, timeout?: number, pollInterval?: number): Promise<ClearContextResult>
+```
+
+**Parameters:**
+- `contextId` (string): The unique identifier of the context to clear.
+- `timeout` (number, optional): Timeout in seconds to wait for task completion. Default is 60 seconds.
+- `pollInterval` (number, optional): Interval in seconds between status polls. Default is 2.0 seconds.
+
+**Returns:**
+- `Promise<ClearContextResult>`: A promise that resolves to a result object containing the final task result. The status field will be "available" on success.
+
+**State Transitions:**
+- "clearing": Data clearing is in progress
+- "available": Clearing completed successfully (final success state)
+- "in-use": Context is being used
+- "pre-available": Context is being prepared
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+// Initialize the SDK
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+// Clear context data
+async function clearContext() {
+  try {
+    // Get an existing context
+    const result = await agentBay.context.get('my-context');
+    if (result.success && result.context) {
+      const context = result.context;
+
+      // Clear context data synchronously (wait for completion)
+      const clearResult = await agentBay.context.clear(context.id);
+      if (clearResult.success) {
+        console.log(`Context data cleared successfully`);
+        console.log(`Final Status: ${clearResult.status}`);
+        // Expected output: Final Status: available
+        console.log(`Request ID: ${clearResult.requestId}`);
+        // Expected: A valid UUID-format request ID
+      } else {
+        console.log(`Failed to clear context: ${clearResult.errorMessage}`);
+      }
+    } else {
+      console.log(`Failed to get context: ${result.errorMessage}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+clearContext();
+```
+
+### clearAsync
+
+Asynchronously initiates a task to clear the context's persistent data.
+
+```typescript
+clearAsync(contextId: string): Promise<ClearContextResult>
+```
+
+**Parameters:**
+- `contextId` (string): The unique identifier of the context to clear.
+
+**Returns:**
+- `Promise<ClearContextResult>`: A promise that resolves to a result object indicating the task has been successfully started, with status field set to "clearing".
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+// Initialize the SDK
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+// Start clearing context data asynchronously
+async function clearContextAsync() {
+  try {
+    // Get an existing context
+    const result = await agentBay.context.get('my-context');
+    if (result.success && result.context) {
+      const context = result.context;
+
+      // Start clearing context data asynchronously (non-blocking)
+      const clearResult = await agentBay.context.clearAsync(context.id);
+      if (clearResult.success) {
+        console.log(`Clear task started: Success=${clearResult.success}, Status=${clearResult.status}`);
+        // Expected output: Clear task started: Success=true, Status=clearing
+        console.log(`Request ID: ${clearResult.requestId}`);
+        // Expected: A valid UUID-format request ID
+      } else {
+        console.log(`Failed to start clear: ${clearResult.errorMessage}`);
+      }
+    } else {
+      console.log(`Failed to get context: ${result.errorMessage}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+clearContextAsync();
+```
+
+### getClearStatus
+
+Queries the status of the clearing task.
+
+```typescript
+getClearStatus(contextId: string): Promise<ClearContextResult>
+```
+
+**Parameters:**
+- `contextId` (string): The unique identifier of the context to check.
+
+**Returns:**
+- `Promise<ClearContextResult>`: A promise that resolves to a result object containing the current task status.
+
+**State Transitions:**
+- "clearing": Data clearing is in progress
+- "available": Clearing completed successfully (final success state)
+- "in-use": Context is being used
+- "pre-available": Context is being prepared
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+// Initialize the SDK
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+// Check clearing status
+async function checkClearStatus() {
+  try {
+    // Get an existing context
+    const result = await agentBay.context.get('my-context');
+    if (result.success && result.context) {
+      const context = result.context;
+
+      // Check clearing status
+      const statusResult = await agentBay.context.getClearStatus(context.id);
+      if (statusResult.success) {
+        console.log(`Current status: ${statusResult.status}`);
+        console.log(`Request ID: ${statusResult.requestId}`);
+        // Expected: Current status: clearing/available/in-use/pre-available
+      } else {
+        console.log(`Failed to get status: ${statusResult.errorMessage}`);
+      }
+    } else {
+      console.log(`Failed to get context: ${result.errorMessage}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+checkClearStatus();
+```
+
 ## Related Resources
 
 - [Session API Reference](session.md)
-- [ContextManager API Reference](context-manager.md) 
+- [ContextManager API Reference](context-manager.md)

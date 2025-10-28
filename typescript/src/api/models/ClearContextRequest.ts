@@ -2,26 +2,20 @@
 import * as $dara from '@darabonba/typescript';
 
 
-export class GetContextRequest extends $dara.Model {
-  allowCreate?: boolean;
+export class ClearContextRequest extends $dara.Model {
   authorization?: string;
-  contextId?: string;
-  name?: string;
+  id?: string;
   static names(): { [key: string]: string } {
     return {
-      allowCreate: 'AllowCreate',
       authorization: 'Authorization',
-      contextId: 'ContextId',
-      name: 'Name',
+      id: 'Id',
     };
   }
 
   static types(): { [key: string]: any } {
     return {
-      allowCreate: 'boolean',
       authorization: 'string',
-      contextId: 'string',
-      name: 'string',
+      id: 'string',
     };
   }
 

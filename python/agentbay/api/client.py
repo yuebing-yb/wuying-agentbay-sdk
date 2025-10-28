@@ -162,6 +162,80 @@ class Client(OpenApiClient):
         runtime = RuntimeOptions(read_timeout=read_timeout, connect_timeout=connect_timeout)
         return await self.call_mcp_tool_with_options_async(request, runtime)
 
+    def clear_context_with_options(
+        self,
+        request: main_models.ClearContextRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.ClearContextResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body['Authorization'] = request.authorization
+        if not DaraCore.is_null(request.id):
+            body['Id'] = request.id
+        req = open_api_util_models.OpenApiRequest(
+            body = Utils.parse_to_map(body)
+        )
+        params = open_api_util_models.Params(
+            action = 'ClearContext',
+            version = '2025-05-06',
+            protocol = 'HTTPS',
+            pathname = '/',
+            method = 'POST',
+            auth_type = 'Anonymous',
+            style = 'RPC',
+            req_body_type = 'formData',
+            body_type = 'json'
+        )
+        return DaraCore.from_map(
+            main_models.ClearContextResponse(),
+            self.do_rpcrequest(params.action, params.version, params.protocol, params.method, params.auth_type, params.body_type, req, runtime)
+        )
+
+    async def clear_context_with_options_async(
+        self,
+        request: main_models.ClearContextRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.ClearContextResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body['Authorization'] = request.authorization
+        if not DaraCore.is_null(request.id):
+            body['Id'] = request.id
+        req = open_api_util_models.OpenApiRequest(
+            body = Utils.parse_to_map(body)
+        )
+        params = open_api_util_models.Params(
+            action = 'ClearContext',
+            version = '2025-05-06',
+            protocol = 'HTTPS',
+            pathname = '/',
+            method = 'POST',
+            auth_type = 'Anonymous',
+            style = 'RPC',
+            req_body_type = 'formData',
+            body_type = 'json'
+        )
+        return DaraCore.from_map(
+            main_models.ClearContextResponse(),
+            await self.do_rpcrequest_async(params.action, params.version, params.protocol, params.method, params.auth_type, params.body_type, req, runtime)
+        )
+
+    def clear_context(
+        self,
+        request: main_models.ClearContextRequest,
+    ) -> main_models.ClearContextResponse:
+        runtime = RuntimeOptions()
+        return self.clear_context_with_options(request, runtime)
+
+    async def clear_context_async(
+        self,
+        request: main_models.ClearContextRequest,
+    ) -> main_models.ClearContextResponse:
+        runtime = RuntimeOptions()
+        return await self.clear_context_with_options_async(request, runtime)
+
     def create_mcp_session_with_options(
         self,
         tmp_req: main_models.CreateMcpSessionRequest,
@@ -355,6 +429,8 @@ class Client(OpenApiClient):
             body["AllowCreate"] = request.allow_create
         if not DaraCore.is_null(request.authorization):
             body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.context_id):
+            body['ContextId'] = request.context_id
         if not DaraCore.is_null(request.name):
             body["Name"] = request.name
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))

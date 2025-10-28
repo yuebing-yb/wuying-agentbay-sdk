@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-from darabonba.model import DaraModel 
+from darabonba.model import DaraModel
 
 
 class GetContextRequest(DaraModel):
@@ -9,10 +9,12 @@ class GetContextRequest(DaraModel):
         self,
         allow_create: bool = None,
         authorization: str = None,
+        context_id: str = None,
         name: str = None,
     ):
         self.allow_create = allow_create
         self.authorization = authorization
+        self.context_id = context_id
         self.name = name
 
     def validate(self):
@@ -32,6 +34,9 @@ class GetContextRequest(DaraModel):
         if self.name is not None:
             result['Name'] = self.name
 
+        if self.context_id is not None:
+            result['ContextId'] = self.context_id
+
         return result
 
     def from_map(self, m: dict = None):
@@ -41,6 +46,9 @@ class GetContextRequest(DaraModel):
 
         if m.get('Authorization') is not None:
             self.authorization = m.get('Authorization')
+
+        if m.get('ContextId') is not None:
+            self.context_id = m.get('ContextId')
 
         if m.get('Name') is not None:
             self.name = m.get('Name')

@@ -87,8 +87,30 @@ func main() {
 			context.Name, updateResult.RequestID)
 	}
 
+	// Example 5: Clear context data
+	fmt.Println("\nExample 5: Clearing context data...")
+	fmt.Println("Starting synchronous context clear (recommended approach)...")
+
+	// Synchronous clear (blocking until completion) - Recommended approach
+	clearResult, err := ab.Context.Clear(context.ID, 30, 2.0)
+	if err != nil {
+		fmt.Printf("❌ Error during context clear: %v\n", err)
+	} else {
+		fmt.Printf("Clear result: Success=%t, Status=%s, RequestID=%s\n",
+			clearResult.Success, clearResult.Status, clearResult.RequestID)
+
+		if clearResult.Success {
+			fmt.Println("✅ Context data cleared successfully")
+			fmt.Printf("   Context ID: %s\n", clearResult.ContextID)
+			fmt.Printf("   Final Status: %s\n", clearResult.Status)
+		} else {
+			fmt.Printf("❌ Context data clearing failed: %s\n", clearResult.ErrorMessage)
+		}
+	}
+
 	// Clean up
 	fmt.Println("\nCleaning up...")
+	fmt.Println("Note: Context data has been cleared, but the context itself still exists.")
 
 	// Delete the session
 	deleteSessionResult, err := ab.Delete(session)

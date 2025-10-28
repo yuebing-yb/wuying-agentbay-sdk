@@ -19,6 +19,7 @@ import {
   FileUrlResult,
   ContextFileListResult,
   ContextFileEntry,
+  ClearContextResult,
 } from "./types/api-response";
 
 /**
@@ -631,5 +632,251 @@ export class ContextService {
       count: body?.count,
       errorMessage: undefined,
     };
+  }
+
+  /**
+   * Asynchronously initiate a task to clear the context's persistent data.
+   *
+   * This is a non-blocking method that returns immediately after initiating the clearing task
+   * on the backend. The context's state will transition to "clearing" while the operation
+   * is in progress.
+   *
+   * @param contextId - Unique ID of the context to clear.
+   * @returns A ClearContextResult object indicating the task has been successfully started,
+   *          with status field set to "clearing".
+   * @throws APIError - If the backend API rejects the clearing request (e.g., invalid ID).
+   */
+  async clearAsync(contextId: string): Promise<ClearContextResult> {
+    try {
+      logAPICall("ClearContext");
+      logDebug(`Request: ContextId=${contextId}`);
+
+      const request = new $_client.ClearContextRequest({
+        authorization: `Bearer ${this.agentBay.getAPIKey()}`,
+        id: contextId,
+      });
+
+      const response = await this.agentBay.getClient().clearContext(request);
+
+      // Extract request ID
+      const requestId = extractRequestId(response) || "";
+
+      // Directly access response body object
+      if (!response.body) {
+        const fullResponse = "Empty response body";
+        logAPIResponseWithDetails("ClearContext", requestId, false, undefined, fullResponse);
+        return {
+          requestId,
+          success: false,
+          errorMessage: "Empty response body",
+        };
+      }
+
+      const body = response.body;
+
+      // Check for API-level errors
+      if (!body.success && body.code) {
+        const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+        const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+        logAPIResponseWithDetails("ClearContext", requestId, false, undefined, fullResponse);
+        return {
+          requestId,
+          success: false,
+          errorMessage,
+        };
+      }
+
+      // ClearContext API returns success info without Data field
+      // Initial status is "clearing" when the task starts
+      const keyFields: Record<string, any> = {
+        context_id: contextId,
+        status: "clearing",
+      };
+      const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+      logAPIResponseWithDetails("ClearContext", requestId, true, keyFields, fullResponse);
+
+      return {
+        requestId,
+        success: true,
+        contextId,
+        status: "clearing",
+        errorMessage: "",
+      };
+    } catch (error) {
+      logError("Error calling ClearContext:", error);
+      throw new APIError(`Failed to start context clearing for ${contextId}: ${error}`);
+    }
+  }
+
+  /**
+   * Queries the status of the clearing task.
+   *
+   * This method calls GetContext API directly and parses the raw response to extract
+   * the state field, which indicates the current clearing status.
+   *
+   * @param contextId - ID of the context.
+   * @returns ClearContextResult object containing the current task status.
+   */
+  async getClearStatus(contextId: string): Promise<ClearContextResult> {
+    try {
+      logAPICall("GetContext");
+      logDebug(`Request: ContextId=${contextId} (for clear status)`);
+
+      const request = new $_client.GetContextRequest({
+        authorization: `Bearer ${this.agentBay.getAPIKey()}`,
+        contextId: contextId,
+        allowCreate: "false",
+      });
+
+      const response = await this.agentBay.getClient().getContext(request);
+
+      // Extract request ID
+      const requestId = extractRequestId(response) || "";
+
+      // Directly access response body object
+      if (!response.body) {
+        const fullResponse = "Empty response body";
+        logAPIResponseWithDetails("GetContext (for clear status)", requestId, false, undefined, fullResponse);
+        return {
+          requestId,
+          success: false,
+          errorMessage: "Empty response body",
+        };
+      }
+
+      const body = response.body;
+
+      // Check for API-level errors
+      if (!body.success && body.code) {
+        const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+        const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+        logAPIResponseWithDetails("GetContext (for clear status)", requestId, false, undefined, fullResponse);
+        return {
+          requestId,
+          success: false,
+          errorMessage,
+        };
+      }
+
+      // Check if data exists
+      if (!body.data) {
+        const fullResponse = "No data in response";
+        logAPIResponseWithDetails("GetContext (for clear status)", requestId, false, undefined, fullResponse);
+        return {
+          requestId,
+          success: false,
+          errorMessage: "No data in response",
+        };
+      }
+
+      const data = body.data;
+
+      // Extract clearing status from the response data object
+      // The server's state field indicates the clearing status:
+      // - "clearing": Clearing is in progress
+      // - "available": Clearing completed successfully
+      // - "in-use": Context is being used
+      // - "pre-available": Context is being prepared
+      const contextIdFromResponse = data.id || "";
+      const state = data.state || "clearing"; // Extract state from response object
+      const errorMessage = ""; // ErrorMessage is not in GetContextResponseBodyData
+
+      const keyFields: Record<string, any> = {
+        context_id: contextIdFromResponse,
+        state: state,
+      };
+      const fullResponse = body ? JSON.stringify(body, null, 2) : "";
+      logAPIResponseWithDetails("GetContext (for clear status)", requestId, true, keyFields, fullResponse);
+
+      return {
+        requestId,
+        success: true,
+        contextId: contextIdFromResponse,
+        status: state,
+        errorMessage,
+      };
+    } catch (error) {
+      logError("Error calling GetContext (for clear status):", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Failed to get clear status: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * Synchronously clear the context's persistent data and wait for the final result.
+   *
+   * This method wraps the `clearAsync` and `getClearStatus` polling logic,
+   * providing the simplest and most direct way to handle clearing tasks.
+   *
+   * The clearing process transitions through the following states:
+   * - "clearing": Data clearing is in progress
+   * - "available": Clearing completed successfully (final success state)
+   *
+   * @param contextId - Unique ID of the context to clear.
+   * @param timeout - (Optional) Timeout in seconds to wait for task completion, default is 60 seconds.
+   * @param pollInterval - (Optional) Interval in seconds between status polls, default is 2 seconds.
+   * @returns A ClearContextResult object containing the final task result.
+   *          The status field will be "available" on success, or other states if interrupted.
+   * @throws APIError - If the task fails to complete within the specified timeout.
+   */
+  async clear(contextId: string, timeout = 60, pollInterval = 2.0): Promise<ClearContextResult> {
+    // 1. Asynchronously start the clearing task
+    const startResult = await this.clearAsync(contextId);
+    if (!startResult.success) {
+      return startResult;
+    }
+
+    logInfo(`Started context clearing task for: ${contextId}`);
+
+    // 2. Poll task status until completion or timeout
+    const startTime = Date.now();
+    const maxAttempts = Math.floor(timeout / pollInterval);
+    let attempt = 0;
+
+    while (attempt < maxAttempts) {
+      // Wait before querying
+      await new Promise(resolve => setTimeout(resolve, pollInterval * 1000));
+      attempt++;
+
+      // Query task status (using GetContext API with context ID)
+      const statusResult = await this.getClearStatus(contextId);
+
+      if (!statusResult.success) {
+        logError(`Failed to get clear status: ${statusResult.errorMessage}`);
+        return statusResult;
+      }
+
+      const status = statusResult.status;
+      logInfo(`Clear task status: ${status} (attempt ${attempt}/${maxAttempts})`);
+
+      // Check if completed
+      // When clearing is complete, the state changes from "clearing" to "available"
+      if (status === "available") {
+        const elapsed = (Date.now() - startTime) / 1000;
+        logInfo(`Context cleared successfully in ${elapsed.toFixed(2)} seconds`);
+        return {
+          requestId: statusResult.requestId,
+          success: true,
+          contextId: statusResult.contextId,
+          status,
+          errorMessage: "",
+        };
+      } else if (status && !["clearing", "pre-available"].includes(status)) {
+        // If status is not "clearing" or "pre-available", and not "available",
+        // treat it as a potential error or unexpected state
+        const elapsed = (Date.now() - startTime) / 1000;
+        logError(`Context in unexpected state after ${elapsed.toFixed(2)} seconds: ${status}`);
+        // Continue polling as the state might transition to "available"
+      }
+    }
+
+    // Timeout
+    const elapsed = (Date.now() - startTime) / 1000;
+    const errorMsg = `Context clearing timed out after ${elapsed.toFixed(2)} seconds`;
+    logError(errorMsg);
+    throw new APIError(errorMsg);
   }
 }

@@ -537,3 +537,24 @@ export function extractRequestId(response: any): string | undefined {
 
   return undefined;
 }
+
+/**
+ * Result of context clear operations, including the real-time status.
+ * Corresponds to Python's ClearContextResult type
+ */
+export interface ClearContextResult extends ApiResponse {
+  /** Request identifier for tracking API calls */
+  requestId: string;
+  /** Whether the operation was successful */
+  success: boolean;
+  /** Current status of the clearing task. This corresponds to the
+      context's state field. Possible values:
+      - "clearing": Context data is being cleared (in progress)
+      - "available": Clearing completed successfully
+      - Other values may indicate the context state after clearing */
+  status?: string;
+  /** The unique identifier of the context being cleared */
+  contextId?: string;
+  /** Optional error message if the operation failed */
+  errorMessage?: string;
+}
