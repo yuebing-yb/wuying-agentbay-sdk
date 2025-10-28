@@ -404,7 +404,7 @@ AgentBay SDK provides file compression capabilities to optimize storage space an
 3. **Bandwidth optimization**: Slow network connections or limited bandwidth
 4. **Storage cost reduction**: Minimize OSS storage usage for compressible content
 
-**Basic Archive Mode Setup:**
+**Basic Usage:**
 
 ```python
 from agentbay import AgentBay, CreateSessionParams
