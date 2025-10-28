@@ -21,9 +21,10 @@ A comprehensive example that demonstrates:
 2. **Sync Policy Configuration**: Setting up sync policy with Archive uploadMode
 3. **Session Management**: Creating and managing sessions with context sync
 4. **File Operations**: Writing files to the context path
-5. **Context Info**: Retrieving context status information
-6. **File Verification**: Verifying file information and properties
-7. **Cleanup**: Proper session cleanup and error handling
+5. **Context Sync**: Synchronizing context before retrieving information
+6. **Context Info**: Retrieving context status information
+7. **File Listing**: Listing files in context sync directory
+8. **Cleanup**: Proper session cleanup and error handling
 
 ## Key Features Demonstrated
 
@@ -65,15 +66,15 @@ sessionResult, err := ab.Create(sessionParams)
 ```go
 // Write file to context path
 writeResult, err := session.FileSystem.WriteFile(filePath, fileContent, "overwrite")
-
-// Get file information
-fileInfoResult, err := session.FileSystem.GetFileInfo(filePath)
 ```
 
-### Context Information Retrieval
+### Context Sync and Information Retrieval
 
 ```go
-// Get context status information
+// Call context sync before getting info
+syncResult, err := session.Context.Sync()
+
+// Get context status information after sync
 infoResult, err := session.Context.Info()
 
 // Display context status details
@@ -82,6 +83,21 @@ for index, status := range infoResult.ContextStatusData {
     fmt.Printf("Path: %s\n", status.Path)
     fmt.Printf("Status: %s\n", status.Status)
     fmt.Printf("Task Type: %s\n", status.TaskType)
+}
+```
+
+### File Listing in Context Directory
+
+```go
+// List files in context sync directory
+listResult, err := ab.Context.ListFiles(contextID, syncDirPath, 1, 10)
+
+// Display file entries
+for index, entry := range listResult.Entries {
+    fmt.Printf("FilePath: %s\n", entry.FilePath)
+    fmt.Printf("FileType: %s\n", entry.FileType)
+    fmt.Printf("FileName: %s\n", entry.FileName)
+    fmt.Printf("Size: %d bytes\n", entry.Size)
 }
 ```
 
@@ -145,7 +161,11 @@ The example will output detailed logs showing:
 ✅ File write successful!
    Request ID: req_xxxxx
 
-📊 Step 6: Testing context info functionality...
+🔄 Step 6: Testing context sync functionality...
+✅ Context sync successful!
+   Request ID: req_xxxxx
+
+📊 Step 6.5: Testing context info functionality after sync...
 ✅ Context info retrieved successfully!
    Request ID: req_xxxxx
    Context status data count: X
@@ -156,14 +176,16 @@ The example will output detailed logs showing:
        Status: Success
        Task Type: upload
 
-🔍 Step 7: Verifying file information...
-✅ File info retrieved successfully!
+🔍 Step 7: Listing files in context sync directory...
+✅ List files successful!
    Request ID: req_xxxxx
-📄 File details:
-   Size: 5120 bytes
-   Is Directory: false
-   Modified Time: 2025-10-22T09:52:00Z
-   Mode: 644
+   Total files found: X
+
+📋 Files in context sync directory:
+   [0] FilePath: /tmp/archive-mode-test/test-file-5kb.txt
+       FileType: file
+       FileName: test-file-5kb.txt
+       Size: 5120 bytes
 
 🎉 Archive upload mode example completed successfully!
 ✅ All operations completed without errors.

@@ -137,15 +137,35 @@ def archive_upload_mode_example(agent_bay, unique_id):
         print(f"✅ File write successful!")
         print(f"   Request ID: {write_result.request_id}")
 
-        # Step 6: Test context info functionality
-        print("\n📊 Step 6: Testing context info functionality...")
+        # Step 6: Test context sync and info functionality
+        print("\n📊 Step 6: Testing context sync and info functionality...")
+        
+        # Call context sync before getting info
+        print("🔄 Calling context sync before getting info...")
+        
+        # Use asyncio to handle the async sync method
+        import asyncio
+        
+        async def run_sync():
+            return await session.context.sync()
+        
+        sync_result = asyncio.run(run_sync())
+        
+        if not sync_result.success:
+            raise Exception(f"Context sync failed: {sync_result.error_message}")
+
+        print(f"✅ Context sync successful!")
+        print(f"   Sync Request ID: {sync_result.request_id}")
+
+        # Now call context info after sync
+        print("📋 Calling context info after sync...")
         info_result = session.context.info()
         
         if not info_result.success:
             raise Exception(f"Context info failed: {info_result.error_message}")
 
         print(f"✅ Context info retrieved successfully!")
-        print(f"   Request ID: {info_result.request_id}")
+        print(f"   Info Request ID: {info_result.request_id}")
         print(f"   Context status data count: {len(info_result.context_status_data)}")
         
         # Display context status details
@@ -159,22 +179,30 @@ def archive_upload_mode_example(agent_bay, unique_id):
                 if status.error_message:
                     print(f"       Error: {status.error_message}")
 
-        # Step 7: Verify file information
-        print("\n🔍 Step 7: Verifying file information...")
-        file_info_result = session.file_system.get_file_info(file_path)
+        # Step 7: List files in context sync directory
+        print("\n🔍 Step 7: Listing files in context sync directory...")
         
-        if not file_info_result.success:
-            raise Exception(f"Get file info failed: {file_info_result.error_message}")
+        # Use the sync directory path
+        sync_dir_path = "/tmp/archive-mode-test"
+        
+        list_result = agent_bay.context.list_files(context_result.context_id, sync_dir_path, page_number=1, page_size=10)
+        
+        if not list_result.success:
+            raise Exception(f"List files failed: {list_result.error_message if hasattr(list_result, 'error_message') else 'Unknown error'}")
 
-        print(f"✅ File info retrieved successfully!")
-        print(f"   Request ID: {file_info_result.request_id}")
+        print(f"✅ List files successful!")
+        print(f"   Request ID: {list_result.request_id}")
+        print(f"   Total files found: {len(list_result.entries)}")
         
-        if file_info_result.file_info:
-            print(f"📄 File details:")
-            print(f"   Size: {file_info_result.file_info.get('size', 'Unknown')} bytes")
-            print(f"   Is Directory: {file_info_result.file_info.get('isDirectory', False)}")
-            print(f"   Modified Time: {file_info_result.file_info.get('modTime', 'Unknown')}")
-            print(f"   Mode: {file_info_result.file_info.get('mode', 'Unknown')}")
+        if list_result.entries:
+            print("\n📋 Files in context sync directory:")
+            for index, entry in enumerate(list_result.entries):
+                print(f"   [{index}] FilePath: {entry.file_path}")
+                print(f"       FileType: {entry.file_type}")
+                print(f"       FileName: {entry.file_name}")
+                print(f"       Size: {entry.size} bytes")
+        else:
+            print("   No files found in context sync directory")
 
         print("\n🎉 Archive upload mode example completed successfully!")
         print("✅ All operations completed without errors.")

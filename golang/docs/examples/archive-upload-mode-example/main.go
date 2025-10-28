@@ -149,8 +149,20 @@ func archiveUploadModeExample(ab *agentbay.AgentBay, uniqueID string) error {
 	fmt.Printf("✅ File write successful!\n")
 	fmt.Printf("   Request ID: %s\n", writeResult.RequestID)
 
-	// Step 6: Test context info functionality
-	fmt.Println("\n📊 Step 6: Testing context info functionality...")
+	
+
+	// Step 6: Test context sync functionality
+	fmt.Println("\n🔄 Step 6: Testing context sync functionality...")
+	syncResult, err := session.Context.Sync()
+	if err != nil {
+		return fmt.Errorf("context sync failed: %v", err)
+	}
+
+	fmt.Printf("✅ Context sync successful!\n")
+	fmt.Printf("   Request ID: %s\n", syncResult.RequestID)
+
+	// Step 6.5: Test context info functionality after sync
+	fmt.Println("\n📊 Step 6.5: Testing context info functionality after sync...")
 	infoResult, err := session.Context.Info()
 	if err != nil {
 		return fmt.Errorf("context info failed: %v", err)
@@ -174,22 +186,36 @@ func archiveUploadModeExample(ab *agentbay.AgentBay, uniqueID string) error {
 		}
 	}
 
-	// Step 7: Verify file information
-	fmt.Println("\n🔍 Step 7: Verifying file information...")
-	fileInfoResult, err := session.FileSystem.GetFileInfo(filePath)
+	// Step 7: List files in context sync directory
+	fmt.Println("\n🔍 Step 7: Listing files in context sync directory...")
+	
+	// Use the sync directory path
+	syncDirPath := "/tmp/archive-mode-test"
+	
+	listResult, err := ab.Context.ListFiles(contextResult.ContextID, syncDirPath, 1, 10)
 	if err != nil {
-		return fmt.Errorf("get file info failed: %v", err)
+		return fmt.Errorf("list files failed: %v", err)
 	}
 
-	fmt.Printf("✅ File info retrieved successfully!\n")
-	fmt.Printf("   Request ID: %s\n", fileInfoResult.RequestID)
+	// Verify ListFiles success
+	if !listResult.Success {
+		return fmt.Errorf("list files failed: %s", listResult.ErrorMessage)
+	}
 
-	if fileInfoResult.FileInfo != nil {
-		fmt.Printf("📄 File details:\n")
-		fmt.Printf("   Size: %d bytes\n", fileInfoResult.FileInfo.Size)
-		fmt.Printf("   Is Directory: %t\n", fileInfoResult.FileInfo.IsDirectory)
-		fmt.Printf("   Modified Time: %s\n", fileInfoResult.FileInfo.ModTime)
-		fmt.Printf("   Mode: %s\n", fileInfoResult.FileInfo.Mode)
+	fmt.Printf("✅ List files successful!\n")
+	fmt.Printf("   Request ID: %s\n", listResult.RequestID)
+	fmt.Printf("   Total files found: %d\n", len(listResult.Entries))
+
+	if len(listResult.Entries) > 0 {
+		fmt.Println("\n📋 Files in context sync directory:")
+		for index, entry := range listResult.Entries {
+			fmt.Printf("   [%d] FilePath: %s\n", index, entry.FilePath)
+			fmt.Printf("       FileType: %s\n", entry.FileType)
+			fmt.Printf("       FileName: %s\n", entry.FileName)
+			fmt.Printf("       Size: %d bytes\n", entry.Size)
+		}
+	} else {
+		fmt.Println("   No files found in context sync directory")
 	}
 
 	fmt.Println("\n🎉 Archive upload mode example completed successfully!")

@@ -7,7 +7,6 @@ This guide covers AgentBay SDK's data persistence features, including context co
 - [Core Concepts](#core-concepts)
 - [Context Management](#context-management)
 - [Data Synchronization Strategies](#data-synchronization-strategies)
-  - [File Compression](#file-compression)
 
 <a id="core-concepts"></a>
 ## 🎯 Core Concepts
@@ -321,77 +320,6 @@ agent_bay.delete(session, sync_context=True)  # Ensures complete sync before del
 
 ## 🔄 Data Synchronization Strategies
 
-### File Compression
-
-AgentBay SDK supports automatic file compression during data synchronization to optimize storage space and transfer speed. When synchronizing large quantities of files, the compression strategy significantly reduces sync time.
-
-#### Compression Benefits
-
-**Storage Optimization:**
-- Reduces OSS storage costs by compressing files before upload
-- Saves bandwidth during upload/download operations
-
-**Performance Improvements:**
-- Faster upload/download times for compressible content
-- Reduced network latency for large file transfers
-- Better performance over slow network connections
-
-#### Compression Policy Configuration
-AgentBay SDK provides two upload modes for context synchronization through the `uploadMode` parameter in upload policy:
-
-**Upload Mode Options:**
-- **File Mode** (default): Files are uploaded without compression - faster for small files or already compressed content
-- **Archive Mode**: Files are compressed before upload - more efficient for large files and text-based content
-
-**Default Behavior:**
-By default, the upload policy uses `File` mode. To enable compression, you need to explicitly set the upload mode to `Archive`.
-
-**Basic Archive Mode Configuration:**
-
-```python
-from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy
-
-# Initialize AgentBay client
-agent_bay = AgentBay(api_key="your-api-key")
-
-# Create context
-context_result = agent_bay.context.get("my-project", create=True)
-context = context_result.context
-
-# Configure sync policy with Archive upload mode
-upload_policy = UploadPolicy(upload_mode="Archive")  # Enable compression
-sync_policy = SyncPolicy(upload_policy=upload_policy)
-
-# Create context sync with compression enabled
-context_sync = ContextSync(
-    context_id=context.id,
-    path="/tmp/data",
-    policy=sync_policy
-)
-
-# Create session with Archive mode
-session_params = CreateSessionParams(
-    labels={
-        "example": "archive-mode-demo",
-        "type": "compression-test",
-        "uploadMode": "Archive"
-    },
-    context_syncs=[context_sync]
-)
-
-session_result = agent_bay.create(session_params)
-session = session_result.session
-
-# Files written to /tmp/data will be compressed before upload
-session.file_system.write_file("/tmp/data/large-file.txt", large_content, mode="overwrite")
-
-# Clean up with sync to ensure compressed upload completes
-agent_bay.delete(session, sync_context=True)
-```
-
-
-
 ### Sync Policies
 
 #### Default Synchronization Behavior
@@ -481,6 +409,7 @@ AgentBay SDK provides file compression capabilities to optimize storage space an
 ```python
 from agentbay import AgentBay, CreateSessionParams
 from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, UploadMode
+import asyncio
 
 # Initialize AgentBay client
 agent_bay = AgentBay(api_key="your-api-key")
@@ -515,6 +444,28 @@ session = session_result.session
 # Files written to /tmp/data will be compressed before upload
 session.file_system.write_file("/tmp/data/large-file.txt", large_content, mode="overwrite")
 session.file_system.write_file("/tmp/data/config.json", config_data, mode="overwrite")
+
+# Perform context sync before getting info (async operation)
+async def run_sync():
+    return await session.context.sync()
+
+sync_result = asyncio.run(run_sync())
+if sync_result.success:
+    print("Context sync successful!")
+    
+    # Get context status information after sync
+    info_result = session.context.info()
+    if info_result.success:
+        print(f"Context status data count: {len(info_result.context_status_data)}")
+        for status in info_result.context_status_data:
+            print(f"Context ID: {status.context_id}, Path: {status.path}, Status: {status.status}")
+
+    # List files in context sync directory
+    list_result = agent_bay.context.list_files(context.id, "/tmp/data", page_number=1, page_size=10)
+    if list_result.success:
+        print(f"Total files found: {len(list_result.entries)}")
+        for entry in list_result.entries:
+            print(f"File: {entry.file_name}, Size: {entry.size} bytes, Type: {entry.file_type}")
 
 # Clean up with sync to ensure compressed upload completes
 agent_bay.delete(session, sync_context=True)

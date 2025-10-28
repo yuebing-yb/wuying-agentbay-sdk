@@ -125,8 +125,22 @@ async function archiveUploadModeExample(): Promise<void> {
     console.log(`✅ File write successful!`);
     console.log(`   Request ID: ${writeResult.requestId}`);
 
-    // Step 6: Test context info functionality
-    console.log("\n📊 Step 6: Testing context info functionality...");
+    // Step 6: Test context sync and info functionality
+    console.log("\n📊 Step 6: Testing context sync and info functionality...");
+    
+    // Call context sync before getting info
+    console.log("🔄 Calling context sync before getting info...");
+    const syncResult = await session!.context.sync();
+    
+    if (!syncResult.success) {
+      throw new Error(`Context sync failed: ${syncResult.errorMessage}`);
+    }
+
+    console.log(`✅ Context sync successful!`);
+    console.log(`   Sync Request ID: ${syncResult.requestId}`);
+
+    // Now call context info after sync
+    console.log("📋 Calling context info after sync...");
     const infoResult = await session!.context.info();
     
     if (!infoResult.success) {
@@ -134,7 +148,7 @@ async function archiveUploadModeExample(): Promise<void> {
     }
 
     console.log(`✅ Context info retrieved successfully!`);
-    console.log(`   Request ID: ${infoResult.requestId}`);
+    console.log(`   Info Request ID: ${infoResult.requestId}`);
     console.log(`   Context status data count: ${infoResult.contextStatusData.length}`);
     
     // Display context status details
@@ -151,23 +165,32 @@ async function archiveUploadModeExample(): Promise<void> {
       });
     }
 
-    // Step 7: Verify file information
-    console.log("\n🔍 Step 7: Verifying file information...");
-    const fileInfoResult = await fileSystem.getFileInfo(filePath);
+    // Step 7: List files in context sync directory
+    console.log("\n🔍 Step 7: Listing files in context sync directory...");
     
-    if (!fileInfoResult.success) {
-      throw new Error(`Get file info failed: ${fileInfoResult.errorMessage}`);
+    // Use the sync directory path
+    const syncDirPath = "/tmp/archive-mode-test";
+    
+    const listResult = await agentBay.context.listFiles(contextResult.contextId, syncDirPath, 1, 10);
+    
+    if (!listResult.success) {
+      throw new Error(`List files failed: ${listResult.errorMessage || 'Unknown error'}`);
     }
 
-    console.log(`✅ File info retrieved successfully!`);
-    console.log(`   Request ID: ${fileInfoResult.requestId}`);
+    console.log(`✅ List files successful!`);
+    console.log(`   Request ID: ${listResult.requestId}`);
+    console.log(`   Total files found: ${listResult.entries.length}`);
     
-    if (fileInfoResult.fileInfo) {
-      console.log(`📄 File details:`);
-      console.log(`   Size: ${fileInfoResult.fileInfo.size} bytes`);
-      console.log(`   Is Directory: ${fileInfoResult.fileInfo.isDirectory}`);
-      console.log(`   Modified Time: ${fileInfoResult.fileInfo.modTime}`);
-      console.log(`   Mode: ${fileInfoResult.fileInfo.mode}`);
+    if (listResult.entries.length > 0) {
+      console.log("\n📋 Files in context sync directory:");
+      listResult.entries.forEach((entry:any, index:any) => {
+        console.log(`   [${index}] FilePath: ${entry.filePath}`);
+        console.log(`       FileType: ${entry.fileType}`);
+        console.log(`       FileName: ${entry.fileName}`);
+        console.log(`       Size: ${entry.size} bytes`);
+      });
+    } else {
+      console.log("   No files found in context sync directory");
     }
 
     console.log("\n🎉 Archive upload mode example completed successfully!");

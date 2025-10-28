@@ -21,9 +21,10 @@ A comprehensive example that demonstrates:
 2. **Sync Policy Configuration**: Setting up sync policy with Archive uploadMode
 3. **Session Management**: Creating and managing sessions with context sync
 4. **File Operations**: Writing files to the context path
-5. **Context Info**: Retrieving context status information
-6. **File Verification**: Verifying file information and properties
-7. **Cleanup**: Proper session cleanup and error handling
+5. **Context Sync**: Synchronizing context before retrieving information
+6. **Context Info**: Retrieving context status information
+7. **File Listing**: Listing files in context sync directory
+8. **Cleanup**: Proper session cleanup and error handling
 
 ## Key Features Demonstrated
 
@@ -62,15 +63,20 @@ session_result = agent_bay.create(session_params)
 ```python
 # Write file to context path
 write_result = session.file_system.write_file(file_path, file_content, mode="overwrite")
-
-# Get file information
-file_info_result = session.file_system.get_file_info(file_path)
 ```
 
-### Context Information Retrieval
+### Context Sync and Information Retrieval
 
 ```python
-# Get context status information
+# Call context sync before getting info (async operation)
+import asyncio
+
+async def run_sync():
+    return await session.context.sync()
+
+sync_result = asyncio.run(run_sync())
+
+# Get context status information after sync
 info_result = session.context.info()
 
 # Display context status details
@@ -79,6 +85,20 @@ for index, status in enumerate(info_result.context_status_data):
     print(f"Path: {status.path}")
     print(f"Status: {status.status}")
     print(f"Task Type: {status.task_type}")
+```
+
+### File Listing in Context Directory
+
+```python
+# List files in context sync directory
+list_result = agent_bay.context.list_files(context_id, sync_dir_path, page_number=1, page_size=10)
+
+# Display file entries
+for index, entry in enumerate(list_result.entries):
+    print(f"FilePath: {entry.file_path}")
+    print(f"FileType: {entry.file_type}")
+    print(f"FileName: {entry.file_name}")
+    print(f"Size: {entry.size} bytes")
 ```
 
 ## Running the Example
@@ -139,9 +159,13 @@ The example will output detailed logs showing:
 ✅ File write successful!
    Request ID: req_xxxxx
 
-📊 Step 6: Testing context info functionality...
+📊 Step 6: Testing context sync and info functionality...
+🔄 Calling context sync before getting info...
+✅ Context sync successful!
+   Sync Request ID: req_xxxxx
+📋 Calling context info after sync...
 ✅ Context info retrieved successfully!
-   Request ID: req_xxxxx
+   Info Request ID: req_xxxxx
    Context status data count: X
 
 📋 Context status details:
@@ -150,14 +174,16 @@ The example will output detailed logs showing:
        Status: Success
        Task Type: upload
 
-🔍 Step 7: Verifying file information...
-✅ File info retrieved successfully!
+🔍 Step 7: Listing files in context sync directory...
+✅ List files successful!
    Request ID: req_xxxxx
-📄 File details:
-   Size: 5120 bytes
-   Is Directory: false
-   Modified Time: 2025-10-22T09:52:00Z
-   Mode: 644
+   Total files found: X
+
+📋 Files in context sync directory:
+   [0] FilePath: /tmp/archive-mode-test/test-file-5kb.txt
+       FileType: file
+       FileName: test-file-5kb.txt
+       Size: 5120 bytes
 
 🎉 Archive upload mode example completed successfully!
 ✅ All operations completed without errors.

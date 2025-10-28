@@ -21,9 +21,10 @@ A comprehensive example that demonstrates:
 2. **Sync Policy Configuration**: Setting up sync policy with Archive uploadMode
 3. **Session Management**: Creating and managing sessions with context sync
 4. **File Operations**: Writing files to the context path
-5. **Context Info**: Retrieving context status information
-6. **File Verification**: Verifying file information and properties
-7. **Cleanup**: Proper session cleanup and error handling
+5. **Context Sync**: Synchronizing context before retrieving information
+6. **Context Info**: Retrieving context status information
+7. **File Listing**: Listing files in context sync directory
+8. **Cleanup**: Proper session cleanup and error handling
 
 ## Key Features Demonstrated
 
@@ -66,15 +67,15 @@ const fileSystem = new FileSystem(session);
 
 // Write file to context path
 const writeResult = await fileSystem.writeFile(filePath, fileContent, "overwrite");
-
-// Get file information
-const fileInfoResult = await fileSystem.getFileInfo(filePath);
 ```
 
-### Context Information Retrieval
+### Context Sync and Information Retrieval
 
 ```typescript
-// Get context status information
+// Call context sync before getting info
+const syncResult = await session.context.sync();
+
+// Get context status information after sync
 const infoResult = await session.context.info();
 
 // Display context status details
@@ -83,6 +84,21 @@ infoResult.contextStatusData.forEach((status, index) => {
   console.log(`Path: ${status.path}`);
   console.log(`Status: ${status.status}`);
   console.log(`Task Type: ${status.taskType}`);
+});
+```
+
+### File Listing in Context Directory
+
+```typescript
+// List files in context sync directory
+const listResult = await agentBay.context.listFiles(contextId, syncDirPath, 1, 10);
+
+// Display file entries
+listResult.entries.forEach((entry, index) => {
+  console.log(`FilePath: ${entry.filePath}`);
+  console.log(`FileType: ${entry.fileType}`);
+  console.log(`FileName: ${entry.fileName}`);
+  console.log(`Size: ${entry.size} bytes`);
 });
 ```
 
@@ -144,9 +160,13 @@ The example will output detailed logs showing:
 ✅ File write successful!
    Request ID: req_xxxxx
 
-📊 Step 6: Testing context info functionality...
+📊 Step 6: Testing context sync and info functionality...
+🔄 Calling context sync before getting info...
+✅ Context sync successful!
+   Sync Request ID: req_xxxxx
+📋 Calling context info after sync...
 ✅ Context info retrieved successfully!
-   Request ID: req_xxxxx
+   Info Request ID: req_xxxxx
    Context status data count: X
 
 📋 Context status details:
@@ -155,14 +175,16 @@ The example will output detailed logs showing:
        Status: Success
        Task Type: upload
 
-🔍 Step 7: Verifying file information...
-✅ File info retrieved successfully!
+🔍 Step 7: Listing files in context sync directory...
+✅ List files successful!
    Request ID: req_xxxxx
-📄 File details:
-   Size: 5120 bytes
-   Is Directory: false
-   Modified Time: 2025-10-22T09:52:00Z
-   Mode: 644
+   Total files found: X
+
+📋 Files in context sync directory:
+   [0] FilePath: /tmp/archive-mode-test/test-file-5kb.txt
+       FileType: file
+       FileName: test-file-5kb.txt
+       Size: 5120 bytes
 
 🎉 Archive upload mode example completed successfully!
 ✅ All operations completed without errors.
