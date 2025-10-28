@@ -354,6 +354,24 @@ export class AgentBay {
         };
       }
 
+      // Check data-level success field (business logic success)
+      if (data.success === false) {
+        const errorMessage = data.errMsg || "Session creation failed";
+        logAPIResponseWithDetails(
+          "CreateMcpSession",
+          requestId,
+          false,
+          {},
+          errorMessage
+        );
+        logDebug("Full response:", JSON.stringify(sessionData, null, 2));
+        return {
+          requestId,
+          success: false,
+          errorMessage,
+        };
+      }
+
       const sessionId = data.sessionId;
       if (!sessionId) {
         logAPIResponseWithDetails(

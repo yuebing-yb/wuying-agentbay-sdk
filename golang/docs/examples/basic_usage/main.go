@@ -81,7 +81,7 @@ func main() {
 
 	// Get session link (no parameters)
 	fmt.Println("\nGetting session link...")
-	linkResult, err := session.GetLink(nil, nil)
+	linkResult, err := session.GetLink(nil, nil, nil)
 	if err != nil {
 		fmt.Printf("Error getting session link: %v\n", err)
 	} else {
@@ -92,7 +92,7 @@ func main() {
 	// Test GetLink with valid port in range [30100, 30199]
 	fmt.Println("\nTesting GetLink with valid port 30150...")
 	var validPort int32 = 30150
-	linkResultValidPort, err := session.GetLink(nil, &validPort)
+	linkResultValidPort, err := session.GetLink(nil, &validPort, nil)
 	if err != nil {
 		fmt.Printf("Error getting link with valid port 30150: %v\n", err)
 	} else {
@@ -103,7 +103,7 @@ func main() {
 	// Test GetLink with invalid port (for demonstration)
 	fmt.Println("\nTesting GetLink with invalid port 8080 (should fail)...")
 	var invalidPort int32 = 8080
-	linkResultInvalidPort, err := session.GetLink(nil, &invalidPort)
+	linkResultInvalidPort, err := session.GetLink(nil, &invalidPort, nil)
 	if err != nil {
 		fmt.Printf("Expected error with invalid port 8080: %v\n", err)
 	} else {
@@ -129,7 +129,7 @@ func main() {
 		fmt.Println("\nTesting GetLink with valid parameters (https, 30199)...")
 		httpsProtocol := "https"
 		var validHttpsPort int32 = 30199
-		linkResultWithValidParams, err := linuxSession.GetLink(&httpsProtocol, &validHttpsPort)
+		linkResultWithValidParams, err := linuxSession.GetLink(&httpsProtocol, &validHttpsPort, nil)
 		if err != nil {
 			fmt.Printf("Error getting link with valid params: %v\n", err)
 		} else {
@@ -140,7 +140,7 @@ func main() {
 		// Test GetLink with invalid parameters (for demonstration)
 		fmt.Println("\nTesting GetLink with invalid parameters (https, 443) - should fail...")
 		var invalidHttpsPort int32 = 443
-		linkResultWithInvalidParams, err := linuxSession.GetLink(&httpsProtocol, &invalidHttpsPort)
+		linkResultWithInvalidParams, err := linuxSession.GetLink(&httpsProtocol, &invalidHttpsPort, nil)
 		if err != nil {
 			fmt.Printf("Expected error with invalid port 443: %v\n", err)
 		} else {
