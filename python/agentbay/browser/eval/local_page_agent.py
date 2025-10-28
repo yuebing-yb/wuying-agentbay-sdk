@@ -163,7 +163,11 @@ class LocalBrowser(Browser):
                             # Recreate /tmp/chrome_cdp_ports.json with the required content
                             chrome_cdp_ports_path = "/tmp/chrome_cdp_ports.json"
                             with open(chrome_cdp_ports_path, "w") as f:
-                                json.dump({"chrome": str(self._cdp_port), "router": str(self._cdp_port)}, f)
+                                json.dump({
+                                    "chrome": str(self._cdp_port), 
+                                    "router": str(self._cdp_port),
+                                    "local": str(self._cdp_port)
+                                }, f)
 
                             # Launch headless browser and create a page for all tests
                             self._browser = await p.chromium.launch_persistent_context(
