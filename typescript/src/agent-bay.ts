@@ -34,6 +34,7 @@ import {
   setRequestId,
   getRequestId,
 } from "./utils/logger";
+import { VERSION, IS_RELEASE } from "./version";
 
 /**
  * Generate a random context name using alphanumeric characters with timestamp.
@@ -200,6 +201,10 @@ export class AgentBay {
         authorization: "Bearer " + this.apiKey,
       });
 
+      // Add SDK stats for tracking
+      const sdkStatsJson = `{"language":"TypeScript","version":"${VERSION}","is_release":${IS_RELEASE}}`;
+      request.sdkStats = sdkStatsJson;
+
       // Add labels if provided
       if (params.labels) {
         request.labels = JSON.stringify(params.labels);
@@ -289,7 +294,7 @@ export class AgentBay {
 
       // Add extra configs if provided
       if (params.extraConfigs) {
-        request.extraConfigs = params.extraConfigs;
+        request.extraConfigs = JSON.stringify(params.extraConfigs);
       }
 
       // Log API request

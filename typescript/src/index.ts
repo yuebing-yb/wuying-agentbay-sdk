@@ -1,6 +1,9 @@
 // IMPORTANT: Load config first to ensure .env file is loaded before logger initialization
 export { loadConfig, loadDotEnv, type Config } from "./config";
 
+// Export version information
+export { VERSION, IS_RELEASE } from "./version";
+
 // Export all public classes and interfaces
 export { AgentBay, type CreateSessionParams} from "./agent-bay";
 export * from "./agent";

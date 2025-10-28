@@ -267,6 +267,14 @@ func (client *Client) CreateMcpSessionWithOptions(tmpReq *CreateMcpSessionReques
 		body["VpcResource"] = request.VpcResource
 	}
 
+	if !dara.IsNil(request.ExtraConfigs) {
+		body["ExtraConfigs"] = request.ExtraConfigs
+	}
+
+	if !dara.IsNil(request.SdkStats) {
+		body["SdkStats"] = request.SdkStats
+	}
+
 	req := &openapiutil.OpenApiRequest{
 		Body: openapiutil.ParseToMap(body),
 	}

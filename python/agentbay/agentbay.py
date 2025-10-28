@@ -28,6 +28,7 @@ from agentbay.model import (
 from agentbay.session import Session
 from agentbay.session_params import CreateSessionParams, ListSessionParams
 from agentbay.deprecation import deprecated
+from agentbay.version import __version__, __is_release__
 from .logger import (
     get_logger,
     log_api_call,
@@ -399,6 +400,10 @@ class AgentBay:
                 params.context_syncs.append(file_transfer_context_sync)
 
             request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")#, session_id="session-04bdwfj84pts8knif")
+
+            # Add SDK stats for tracking
+            sdk_stats_json = f'{{"language":"Python","version":"{__version__}","is_release":{str(__is_release__).lower()}}}'
+            request.sdk_stats = sdk_stats_json
 
             # Add PolicyId if specified
             if hasattr(params, "policy_id") and params.policy_id:

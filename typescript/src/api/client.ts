@@ -232,6 +232,14 @@ export class Client extends OpenApi {
       body["VpcResource"] = request.vpcResource;
     }
 
+    if (!$dara.isNull(request.extraConfigs)) {
+      body["ExtraConfigs"] = request.extraConfigs;
+    }
+
+    if (!$dara.isNull(request.sdkStats)) {
+      body["SdkStats"] = request.sdkStats;
+    }
+
     const req = new $OpenApiUtil.OpenApiRequest({
       body: OpenApiUtil.parseToMap(body),
     });

@@ -269,6 +269,10 @@ class Client(OpenApiClient):
             body["SessionId"] = request.session_id
         if not DaraCore.is_null(request.vpc_resource):
             body["VpcResource"] = request.vpc_resource
+        if not DaraCore.is_null(request.extra_configs):
+            body["ExtraConfigs"] = request.extra_configs
+        if not DaraCore.is_null(request.sdk_stats):
+            body["SdkStats"] = request.sdk_stats
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="CreateMcpSession",
@@ -318,6 +322,10 @@ class Client(OpenApiClient):
             body["SessionId"] = request.session_id
         if not DaraCore.is_null(request.vpc_resource):
             body["VpcResource"] = request.vpc_resource
+        if not DaraCore.is_null(request.extra_configs):
+            body["ExtraConfigs"] = request.extra_configs
+        if not DaraCore.is_null(request.sdk_stats):
+            body["SdkStats"] = request.sdk_stats
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="CreateMcpSession",
