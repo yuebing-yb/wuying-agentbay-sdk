@@ -68,6 +68,14 @@ type UploadPolicy struct {
 	UploadMode UploadMode `json:"uploadMode"`
 }
 
+// DownloadPolicy defines the download policy for context synchronization
+type DownloadPolicy struct {
+	// AutoDownload enables automatic download
+	AutoDownload bool `json:"autoDownload"`
+	// DownloadStrategy defines the download strategy
+	DownloadStrategy DownloadStrategy `json:"downloadStrategy"`
+}
+
 // NewUploadPolicy creates a new upload policy with default values
 func NewUploadPolicy() *UploadPolicy {
 	return &UploadPolicy{
@@ -75,14 +83,6 @@ func NewUploadPolicy() *UploadPolicy {
 		UploadStrategy: UploadBeforeResourceRelease,
 		UploadMode:     UploadModeFile,
 	}
-}
-
-// DownloadPolicy defines the download policy for context synchronization
-type DownloadPolicy struct {
-	// AutoDownload enables automatic download
-	AutoDownload bool `json:"autoDownload"`
-	// DownloadStrategy defines the download strategy
-	DownloadStrategy DownloadStrategy `json:"downloadStrategy"`
 }
 
 // NewDownloadPolicy creates a new download policy with default values
