@@ -1,5 +1,5 @@
 import { AgentBay, CreateSessionParams, Session } from "../../src";
-import { ContextSync, newContextSync, newUploadPolicy, newSyncPolicy } from "../../src/context-sync";
+import { ContextSync, newContextSync, newUploadPolicy, newSyncPolicy, UploadMode } from "../../src/context-sync";
 import { FileSystem } from "../../src/filesystem/filesystem";
 import { log } from "../../src/utils/logger";
 
@@ -54,7 +54,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
   });
 
   describe("Basic Functionality Tests", () => {
-    test("should create session with default File upload mode and write file", async () => {
+    test("should create session with default File upload mode", async () => {
       log("\n=== Testing basic functionality with default File upload mode ===");
 
       // Step 1: Use context.get method to generate contextId
@@ -129,7 +129,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       // Use newSyncPolicy and modify uploadMode to Archive
       const syncPolicy = newSyncPolicy();
-      syncPolicy.uploadPolicy!.uploadMode = "Archive"; // Set uploadMode to Archive
+      syncPolicy.uploadPolicy!.uploadMode = UploadMode.Archive; // Set uploadMode to Archive
 
       const contextSync = newContextSync(
         contextResult.contextId,
@@ -139,7 +139,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       expect(contextSync.contextId).toBe(contextResult.contextId);
       expect(contextSync.path).toBe("/tmp/archive-mode-test");
-      expect(contextSync.policy?.uploadPolicy?.uploadMode).toBe("Archive");
+      expect(contextSync.policy?.uploadPolicy?.uploadMode).toBe(UploadMode.Archive);
 
       log("✅ newContextSync works correctly with contextId and path using Archive mode");
 
@@ -265,7 +265,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
           "/tmp/test",
           invalidSyncPolicy
         );
-      }).toThrow("Invalid uploadMode value: InvalidMode. Valid values are: \"File\", \"Archive\"");
+      }).toThrow(`Invalid uploadMode value: InvalidMode. Valid values are: ${UploadMode.File}, ${UploadMode.Archive}`);
 
       log("✅ newContextSync correctly threw error for invalid uploadMode");
     });
@@ -293,7 +293,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
       // Test with withPolicy - should throw error during validation
       expect(() => {
         contextSync.withPolicy(invalidSyncPolicy);
-      }).toThrow("Invalid uploadMode value: WrongValue. Valid values are: \"File\", \"Archive\"");
+      }).toThrow(`Invalid uploadMode value: WrongValue. Valid values are: ${UploadMode.File}, ${UploadMode.Archive}`);
 
       log("✅ withPolicy correctly threw error for invalid uploadMode");
     });
@@ -307,7 +307,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       // Test "File" mode
       const fileUploadPolicy = newUploadPolicy();
-      fileUploadPolicy.uploadMode = "File";
+      fileUploadPolicy.uploadMode = UploadMode.File;
       
       const fileSyncPolicy = newSyncPolicy();
       fileSyncPolicy.uploadPolicy = fileUploadPolicy;
@@ -324,7 +324,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       // Test "Archive" mode
       const archiveUploadPolicy = newUploadPolicy();
-      archiveUploadPolicy.uploadMode = "Archive";
+      archiveUploadPolicy.uploadMode = UploadMode.Archive;
       
       const archiveSyncPolicy = newSyncPolicy();
       archiveSyncPolicy.uploadPolicy = archiveUploadPolicy;

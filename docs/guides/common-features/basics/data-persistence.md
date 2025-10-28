@@ -394,8 +394,8 @@ AgentBay SDK provides file compression capabilities to optimize storage space an
 
 | Mode | Description | Best For | Compression |
 |------|-------------|----------|-------------|
-| `File` | Default mode - files uploaded as-is | Small files | None |
-| `Archive` | Files compressed before upload | Large text files, source code, logs | Yes |
+| `UploadMode.FILE` | Default mode - files uploaded as-is | Small files | None |
+| `UploadMode.ARCHIVE` | Files compressed before upload | Large text files, source code, logs | Yes |
 
 **When to Use Archive Mode:**
 
@@ -408,7 +408,7 @@ AgentBay SDK provides file compression capabilities to optimize storage space an
 
 ```python
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy
+from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, UploadMode
 
 # Initialize AgentBay client
 agent_bay = AgentBay(api_key="your-api-key")
@@ -418,7 +418,7 @@ context_result = agent_bay.context.get("my-project", create=True)
 context = context_result.context
 
 # Configure sync policy with Archive upload mode
-upload_policy = UploadPolicy(upload_mode="Archive")  # Enable compression
+upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)  # Enable compression
 sync_policy = SyncPolicy(upload_policy=upload_policy)
 
 # Create context sync with compression enabled
@@ -433,7 +433,6 @@ session_params = CreateSessionParams(
     labels={
         "example": "archive-mode-demo",
         "type": "compression-test",
-        "uploadMode": "Archive"  # Optional: for tracking
     },
     context_syncs=[context_sync]
 )

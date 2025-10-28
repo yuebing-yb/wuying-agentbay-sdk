@@ -17,7 +17,7 @@ import os
 import time
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy
+from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, UploadMode
 
 def get_api_key():
     """Get API key from environment variable with fallback."""
@@ -72,10 +72,10 @@ def archive_upload_mode_example(agent_bay, unique_id):
 
         # Step 2: Configure sync policy with Archive upload mode
         print("\n⚙️  Step 2: Configuring sync policy with Archive upload mode...")
-        upload_policy = UploadPolicy(upload_mode="Archive")
+        upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
         sync_policy = SyncPolicy(upload_policy=upload_policy)
         
-        print(f"✅ Sync policy configured with uploadMode: {sync_policy.upload_policy.upload_mode}")
+        print(f"✅ Sync policy configured with uploadMode: {sync_policy.upload_policy.upload_mode.value}")
 
         # Step 3: Create context sync configuration
         print("\n🔧 Step 3: Creating context sync configuration...")
@@ -88,7 +88,7 @@ def archive_upload_mode_example(agent_bay, unique_id):
         print(f"✅ Context sync created:")
         print(f"   Context ID: {context_sync.context_id}")
         print(f"   Path: {context_sync.path}")
-        print(f"   Upload Mode: {context_sync.policy.upload_policy.upload_mode}")
+        print(f"   Upload Mode: {context_sync.policy.upload_policy.upload_mode.value}")
 
         # Step 4: Create session with Archive mode context sync
         print("\n🏗️  Step 4: Creating session with Archive mode context sync...")
@@ -96,7 +96,7 @@ def archive_upload_mode_example(agent_bay, unique_id):
             labels={
                 "example": f"archive-mode-{unique_id}",
                 "type": "archive-upload-demo",
-                "uploadMode": "Archive"
+                "uploadMode": UploadMode.ARCHIVE.value
             },
             context_syncs=[context_sync]
         )

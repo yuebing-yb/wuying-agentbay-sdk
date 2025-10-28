@@ -31,7 +31,7 @@ A comprehensive example that demonstrates:
 
 ```python
 # Configure sync policy with Archive upload mode
-upload_policy = UploadPolicy(upload_mode="Archive")
+upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
 sync_policy = SyncPolicy(upload_policy=upload_policy)
 
 # Create context sync with Archive mode
@@ -49,7 +49,7 @@ session_params = CreateSessionParams(
     labels={
         "example": f"archive-mode-{unique_id}",
         "type": "archive-upload-demo",
-        "uploadMode": "Archive"
+        "uploadMode": UploadMode.ARCHIVE.value
     },
     context_syncs=[context_sync]
 )

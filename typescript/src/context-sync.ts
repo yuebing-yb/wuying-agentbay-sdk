@@ -8,6 +8,12 @@ export enum DownloadStrategy {
   DownloadAsync = "DownloadAsync",
 }
 
+// UploadMode defines the upload mode for context synchronization
+export enum UploadMode {
+  File = "File",
+  Archive = "Archive",
+}
+
 // Lifecycle defines the lifecycle options for recycle policy
 export enum Lifecycle {
   Lifecycle_1Day = "Lifecycle_1Day",
@@ -26,7 +32,7 @@ export enum Lifecycle {
 export interface UploadPolicy {
   autoUpload: boolean;
   uploadStrategy: UploadStrategy;
-  uploadMode: "File" | "Archive";
+  uploadMode: UploadMode;
 }
 
 // DownloadPolicy defines the download policy for context synchronization
@@ -221,7 +227,7 @@ export function newUploadPolicy(): UploadPolicy {
   return {
     autoUpload: true,
     uploadStrategy: UploadStrategy.UploadBeforeResourceRelease,
-    uploadMode: "File",
+    uploadMode: UploadMode.File,
   };
 }
 
@@ -282,8 +288,8 @@ function isValidLifecycle(lifecycle: Lifecycle): boolean {
 }
 
 // isValidUploadMode checks if the given uploadMode value is valid
-function isValidUploadMode(uploadMode: string): boolean {
-  return uploadMode === "File" || uploadMode === "Archive";
+function isValidUploadMode(uploadMode: UploadMode): boolean {
+  return uploadMode === UploadMode.File || uploadMode === UploadMode.Archive;
 }
 
 export function validateSyncPolicy(policy?: SyncPolicy): void {
@@ -298,7 +304,7 @@ export function validateSyncPolicy(policy?: SyncPolicy): void {
     if (!isValidUploadMode(policy.uploadPolicy.uploadMode)) {
       throw new Error(
         `Invalid uploadMode value: ${policy.uploadPolicy.uploadMode}. ` +
-        `Valid values are: "File", "Archive"`
+        `Valid values are: ${UploadMode.File}, ${UploadMode.Archive}`
       );
     }
   }

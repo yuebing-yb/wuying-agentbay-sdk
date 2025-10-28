@@ -32,7 +32,7 @@ A comprehensive example that demonstrates:
 ```go
 // Configure sync policy with Archive upload mode
 uploadPolicy := &agentbay.UploadPolicy{
-    UploadMode: "Archive", // Set to Archive mode
+    UploadMode: agentbay.UploadModeArchive, // Set to Archive mode
 }
 syncPolicy := &agentbay.SyncPolicy{
     UploadPolicy: uploadPolicy,
@@ -53,7 +53,7 @@ sessionParams := agentbay.NewCreateSessionParams().
     WithLabels(map[string]string{
         "example":    fmt.Sprintf("archive-mode-%s", uniqueID),
         "type":       "archive-upload-demo",
-        "uploadMode": "Archive",
+        "uploadMode": string(agentbay.UploadModeArchive),
     }).
     WithContextSync([]*agentbay.ContextSync{contextSync})
 

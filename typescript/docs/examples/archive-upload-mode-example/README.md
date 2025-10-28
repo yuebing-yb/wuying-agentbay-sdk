@@ -30,9 +30,11 @@ A comprehensive example that demonstrates:
 ### Archive Upload Mode Configuration
 
 ```typescript
+import { UploadMode } from "wuying-agentbay-sdk";
+
 // Configure sync policy with Archive upload mode
 const syncPolicy = newSyncPolicy();
-syncPolicy.uploadPolicy!.uploadMode = "Archive"; // Set to Archive mode
+syncPolicy.uploadPolicy!.uploadMode = UploadMode.Archive; // Set to Archive mode
 
 // Create context sync with Archive mode
 const contextSync = newContextSync(
@@ -49,7 +51,7 @@ const sessionParams: CreateSessionParams = {
   labels: {
     example: `archive-mode-${uniqueId}`,
     type: "archive-upload-demo",
-    uploadMode: "Archive"
+    uploadMode: UploadMode.Archive
   },
   contextSync: [contextSync]
 };

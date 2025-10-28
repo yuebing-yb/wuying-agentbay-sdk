@@ -80,7 +80,7 @@ func archiveUploadModeExample(ab *agentbay.AgentBay, uniqueID string) error {
 	// Step 2: Configure sync policy with Archive upload mode
 	fmt.Println("\n⚙️  Step 2: Configuring sync policy with Archive upload mode...")
 	uploadPolicy := &agentbay.UploadPolicy{
-		UploadMode: "Archive", // Set to Archive mode
+		UploadMode: agentbay.UploadModeArchive, // Set to Archive mode
 	}
 	syncPolicy := &agentbay.SyncPolicy{
 		UploadPolicy: uploadPolicy,

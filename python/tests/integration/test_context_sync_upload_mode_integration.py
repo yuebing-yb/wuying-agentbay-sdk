@@ -1,7 +1,7 @@
 import os
 import pytest
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList
+from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList, UploadMode
 from agentbay.session import Session
 import time
 import random
@@ -118,7 +118,7 @@ class TestContextSyncUploadModeIntegration:
         print(f"Generated contextId: {context_result.context_id}")
 
         # Create sync policy with Archive upload mode
-        upload_policy = UploadPolicy(upload_mode="Archive")
+        upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
         sync_policy = SyncPolicy(upload_policy=upload_policy)
 
         context_sync = ContextSync.new(
@@ -129,7 +129,7 @@ class TestContextSyncUploadModeIntegration:
 
         assert context_sync.context_id == context_result.context_id
         assert context_sync.path == "/tmp/archive-mode-test"
-        assert context_sync.policy.upload_policy.upload_mode == "Archive"
+        assert context_sync.policy.upload_policy.upload_mode == UploadMode.ARCHIVE
 
         print("✅ ContextSync.new works correctly with contextId and path using Archive mode")
 
@@ -232,22 +232,6 @@ class TestContextSyncUploadModeIntegration:
         print(f"Session {session.session_id} deleted successfully")
         self.test_sessions.remove(session)
 
-    def test_invalid_upload_mode_with_context_sync_new(self, agentbay_client: AgentBay):
-        """Test error handling when using invalid uploadMode with ContextSync.new."""
-        print("\n=== Testing invalid uploadMode with ContextSync.new ===")
-
-        context_name = f"invalid-context-{self.unique_id}"
-        context_result = agentbay_client.context.get(context_name, True)
-        assert context_result.success, f"Failed to create context: {context_result.error_message}"
-
-        # Create invalid upload policy
-        with pytest.raises(ValueError) as exc_info:
-            invalid_upload_policy = UploadPolicy(upload_mode="InvalidMode")
-
-        assert "Invalid upload_mode value: InvalidMode" in str(exc_info.value)
-        assert "Valid values are: 'File', 'Archive'" in str(exc_info.value)
-
-        print("✅ ContextSync correctly threw error for invalid uploadMode during UploadPolicy creation")
 
     def test_invalid_upload_mode_with_policy_assignment(self, agentbay_client: AgentBay):
         """Test error handling when using invalid uploadMode with policy assignment."""
@@ -257,23 +241,38 @@ class TestContextSyncUploadModeIntegration:
         context_result = agentbay_client.context.get(context_name, True)
         assert context_result.success, f"Failed to create context: {context_result.error_message}"
 
-        # Create a valid context sync first
-        context_sync = ContextSync(
-            context_id=context_result.context_id,
-            path="/tmp/test"
-        )
-
-        # Try to create invalid upload policy and assign it
+        # Test 1: Invalid upload mode through SyncPolicy creation (new test for agentbay.create scenario)
+        print("Testing invalid uploadMode through SyncPolicy instantiation (agentbay.create scenario)...")
+        
         with pytest.raises(ValueError) as exc_info:
-            invalid_upload_policy = UploadPolicy()
-            # This should trigger validation in __post_init__
-            invalid_upload_policy.upload_mode = "WrongValue"
-            invalid_upload_policy.__post_init__()
+            # This simulates what happens when user passes invalid uploadMode in agentbay.create
+            invalid_upload_policy = UploadPolicy(upload_mode="InvalidMode")
+            sync_policy = SyncPolicy(upload_policy=invalid_upload_policy)
 
-        assert "Invalid upload_mode value: WrongValue" in str(exc_info.value)
-        assert "Valid values are: 'File', 'Archive'" in str(exc_info.value)
+        assert "Invalid upload_mode value: InvalidMode" in str(exc_info.value)
+        assert "Valid values are: File, Archive" in str(exc_info.value)
 
-        print("✅ UploadPolicy correctly threw error for invalid uploadMode")
+        print("✅ SyncPolicy correctly threw error for invalid uploadMode during instantiation")
+
+        # Test 2: Test the complete flow with ContextSync (most realistic scenario)
+        print("Testing invalid uploadMode through complete ContextSync flow...")
+        
+        with pytest.raises(ValueError) as exc_info:
+            # This is the most realistic scenario - user creates ContextSync with invalid policy
+            invalid_upload_policy = UploadPolicy(upload_mode="BadValue")
+            sync_policy = SyncPolicy(upload_policy=invalid_upload_policy)
+            
+            # This would be used in agentbay.create(CreateSessionParams(context_syncs=[context_sync]))
+            context_sync = ContextSync.new(
+                context_id=context_result.context_id,
+                path="/tmp/test-invalid",
+                policy=sync_policy
+            )
+
+        assert "Invalid upload_mode value: BadValue" in str(exc_info.value)
+        assert "Valid values are: File, Archive" in str(exc_info.value)
+
+        print("✅ Complete ContextSync flow correctly threw error for invalid uploadMode")
 
     def test_valid_upload_mode_values(self, agentbay_client: AgentBay):
         """Test that valid uploadMode values are accepted."""
@@ -284,7 +283,7 @@ class TestContextSyncUploadModeIntegration:
         assert context_result.success, f"Failed to create context: {context_result.error_message}"
 
         # Test "File" mode
-        file_upload_policy = UploadPolicy(upload_mode="File")
+        file_upload_policy = UploadPolicy(upload_mode=UploadMode.FILE)
         file_sync_policy = SyncPolicy(upload_policy=file_upload_policy)
 
         # Should not raise any exception
@@ -294,11 +293,11 @@ class TestContextSyncUploadModeIntegration:
             policy=file_sync_policy
         )
         
-        assert file_context_sync.policy.upload_policy.upload_mode == "File"
+        assert file_context_sync.policy.upload_policy.upload_mode == UploadMode.FILE
         print("✅ 'File' uploadMode accepted successfully")
 
         # Test "Archive" mode
-        archive_upload_policy = UploadPolicy(upload_mode="Archive")
+        archive_upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
         archive_sync_policy = SyncPolicy(upload_policy=archive_upload_policy)
 
         # Should not raise any exception
@@ -308,7 +307,7 @@ class TestContextSyncUploadModeIntegration:
             policy=archive_sync_policy
         )
         
-        assert archive_context_sync.policy.upload_policy.upload_mode == "Archive"
+        assert archive_context_sync.policy.upload_policy.upload_mode == UploadMode.ARCHIVE
         print("✅ 'Archive' uploadMode accepted successfully")
 
     def test_upload_policy_serialization(self, agentbay_client: AgentBay):
@@ -316,7 +315,7 @@ class TestContextSyncUploadModeIntegration:
         print("\n=== Testing UploadPolicy serialization ===")
 
         # Test File mode serialization
-        file_policy = UploadPolicy(upload_mode="File")
+        file_policy = UploadPolicy(upload_mode=UploadMode.FILE)
         file_dict = file_policy.__dict__()
         
         assert "uploadMode" in file_dict
@@ -324,7 +323,7 @@ class TestContextSyncUploadModeIntegration:
         print("✅ File mode serialization works correctly")
 
         # Test Archive mode serialization
-        archive_policy = UploadPolicy(upload_mode="Archive")
+        archive_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
         archive_dict = archive_policy.__dict__()
         
         assert "uploadMode" in archive_dict
