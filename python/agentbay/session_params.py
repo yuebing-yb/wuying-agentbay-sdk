@@ -191,6 +191,7 @@ class CreateSessionParams:
         policy_id (Optional[str]): Policy id to apply when creating the session.
         enable_browser_replay (Optional[bool]): Whether to enable browser recording for the session. Defaults to False.
         extra_configs (Optional[ExtraConfigs]): Advanced configuration parameters for mobile environments.
+        framework (Optional[str]): Framework name for tracking (e.g., "langchain"). Defaults to empty string (direct call).
     """
 
     def __init__(
@@ -203,6 +204,7 @@ class CreateSessionParams:
         policy_id: Optional[str] = None,
         enable_browser_replay: Optional[bool] = None,
         extra_configs: Optional[ExtraConfigs] = None,
+        framework: Optional[str] = None,
     ):
         """
         Initialize CreateSessionParams.
@@ -225,6 +227,8 @@ class CreateSessionParams:
                 Defaults to False.
             extra_configs (Optional[ExtraConfigs], optional): Advanced configuration parameters for mobile environments.
                 Defaults to None.
+            framework (Optional[str], optional): Framework name for tracking (e.g., "langchain").
+                Defaults to None (empty string in tracking, indicating direct call).
         """
         self.labels = labels or {}
         self.image_id = image_id
@@ -243,6 +247,7 @@ class CreateSessionParams:
         self.policy_id = policy_id
         self.enable_browser_replay = enable_browser_replay if enable_browser_replay is not None else False
         self.extra_configs = extra_configs
+        self.framework = framework or ""
 
 
 class ListSessionParams:

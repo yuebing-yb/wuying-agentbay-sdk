@@ -113,7 +113,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 	// Add SDK stats for tracking
 	isRelease := isReleaseVersion()
-	sdkStatsJSON := fmt.Sprintf(`{"language":"Golang","version":"%s","is_release":%t}`, Version, isRelease)
+	framework := ""
+	if params != nil {
+		framework = params.Framework
+	}
+	sdkStatsJSON := fmt.Sprintf(`{"source":"sdk","sdk_language":"golang","sdk_version":"%s","is_release":%t,"framework":"%s"}`, Version, isRelease, framework)
 	createSessionRequest.SdkStats = tea.String(sdkStatsJSON)
 
 	// Add image_id if provided

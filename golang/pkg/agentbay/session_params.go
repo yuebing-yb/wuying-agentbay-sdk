@@ -27,6 +27,9 @@ type CreateSessionParams struct {
 
 	// ExtraConfigs contains extra configuration settings for different session types
 	ExtraConfigs *models.ExtraConfigs
+
+	// Framework specifies the framework name for tracking (e.g., "langchain"). Empty string means direct call.
+	Framework string
 }
 
 // NewCreateSessionParams creates a new CreateSessionParams with default values.

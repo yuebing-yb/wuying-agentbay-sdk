@@ -402,7 +402,8 @@ class AgentBay:
             request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")#, session_id="session-04bdwfj84pts8knif")
 
             # Add SDK stats for tracking
-            sdk_stats_json = f'{{"language":"Python","version":"{__version__}","is_release":{str(__is_release__).lower()}}}'
+            framework = params.framework if params and hasattr(params, 'framework') else ""
+            sdk_stats_json = f'{{"source":"sdk","sdk_language":"python","sdk_version":"{__version__}","is_release":{str(__is_release__).lower()},"framework":"{framework}"}}'
             request.sdk_stats = sdk_stats_json
 
             # Add PolicyId if specified

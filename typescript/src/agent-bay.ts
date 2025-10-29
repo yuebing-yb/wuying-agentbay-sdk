@@ -64,6 +64,7 @@ export interface CreateSessionParams {
   policyId?: string;
   enableBrowserReplay?: boolean;
   extraConfigs?: ExtraConfigs;
+  framework?: string;
 }
 
 /**
@@ -202,7 +203,8 @@ export class AgentBay {
       });
 
       // Add SDK stats for tracking
-      const sdkStatsJson = `{"language":"TypeScript","version":"${VERSION}","is_release":${IS_RELEASE}}`;
+      const framework = params?.framework || "";
+      const sdkStatsJson = `{"source":"sdk","sdk_language":"typescript","sdk_version":"${VERSION}","is_release":${IS_RELEASE},"framework":"${framework}"}`;
       request.sdkStats = sdkStatsJson;
 
       // Add labels if provided
