@@ -97,6 +97,9 @@ class Session:
         # File transfer context ID
         self.file_transfer_context_id: Optional[str] = None
 
+        # Browser recording context ID
+        self.record_context_id: Optional[str] = None
+
         # Initialize file system, command and code handlers
         self.file_system = FileSystem(self)
         self.command = Command(self)
@@ -164,8 +167,25 @@ class Session:
             DeleteResult: Result indicating success or failure and request ID.
         """
         try:
-            # If sync_context is True, trigger file uploads first
+            # Determine sync behavior based on enableBrowserReplay and sync_context
+            should_sync = False
+            sync_context_id = None
+
             if sync_context:
+                # User explicitly requested sync - sync all contexts
+                should_sync = True
+                logger.info("🔄 User requested context synchronization")
+            elif hasattr(self, "enableBrowserReplay") and self.enableBrowserReplay:
+                # Browser replay enabled but no explicit sync - sync only browser recording context
+                if hasattr(self, "record_context_id") and self.record_context_id:
+                    should_sync = True
+                    sync_context_id = self.record_context_id
+                    logger.info(f"🎥 Browser replay enabled - syncing recording context: {sync_context_id}")
+                else:
+                    logger.warning("⚠️  Browser replay enabled but no record_context_id found")
+
+            # Perform context synchronization if needed
+            if should_sync:
                 log_operation_start(
                     "Context synchronization", "Before session deletion"
                 )
@@ -177,7 +197,14 @@ class Session:
                     # Use asyncio.run to call the async context.sync synchronously (no callback)
                     import asyncio
 
-                    sync_result = asyncio.run(self.context.sync())
+                    if sync_context_id:
+                        # Sync specific context (browser recording)
+                        sync_result = asyncio.run(self.context.sync(context_id=sync_context_id))
+                        logger.info(f"🎥 Synced browser recording context: {sync_context_id}")
+                    else:
+                        # Sync all contexts
+                        sync_result = asyncio.run(self.context.sync())
+                        logger.info("🔄 Synced all contexts")
 
                     sync_duration = time.time() - sync_start_time
 

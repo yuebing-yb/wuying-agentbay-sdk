@@ -15,7 +15,7 @@ import { Browser } from "./browser";
 import { Code } from "./code";
 import { Command } from "./command";
 import { Computer } from "./computer";
-import { ContextManager, newContextManager } from "./context-manager";
+import { ContextManager, ContextSyncResult, newContextManager } from "./context-manager";
 import { FileSystem } from "./filesystem";
 import { Mobile } from "./mobile";
 import { Oss } from "./oss";
@@ -135,6 +135,9 @@ export class Session {
 
   // File transfer context ID
   public fileTransferContextId: string | null = null;
+
+  // Browser recording context ID
+  public recordContextId: string | null = null;
 
   // VPC-related information
   public isVpc = false; // Whether this session uses VPC resources
@@ -286,15 +289,39 @@ export class Session {
    */
   async delete(syncContext = false): Promise<DeleteResult> {
     try {
-      // If syncContext is true, trigger file uploads first
+      // Determine sync behavior based on enableBrowserReplay and syncContext
+      let shouldSync = false;
+      let syncContextId: string | null = null;
+
       if (syncContext) {
+        // User explicitly requested sync - sync all contexts
+        shouldSync = true;
+        logInfo("🔄 User requested context synchronization");
+      } else if (this.enableBrowserReplay && this.recordContextId) {
+        // Browser replay enabled but no explicit sync - sync only browser recording context
+        shouldSync = true;
+        syncContextId = this.recordContextId;
+        logInfo(`🎥 Browser replay enabled - syncing recording context: ${syncContextId}`);
+      }
+
+      // If syncContext is true, trigger file uploads first
+      if (shouldSync) {
         logDebug("Triggering context synchronization before session deletion...");
 
         // Use the new sync method without callback (sync mode)
         const syncStartTime = Date.now();
 
         try {
-          const syncResult = await this.context.sync();
+          let syncResult: ContextSyncResult;
+          if (syncContextId) {
+            // Sync specific context (browser recording)
+            syncResult = await this.context.sync(syncContextId);
+            logInfo(`🎥 Synced browser recording context: ${syncContextId}`);
+          } else {
+            // Sync all contexts
+            syncResult = await this.context.sync();
+            logInfo("🔄 Synced all contexts");
+          }
 
           const syncDuration = Date.now() - syncStartTime;
 
@@ -1006,8 +1033,8 @@ export class Session {
         // For run_code tool, extract and log the actual code execution output
         const reqId = extractRequestId(response) || "";
         if (toolName === "run_code" && data) {
-          const dataStr = typeof response.body.data === 'string' 
-            ? response.body.data 
+          const dataStr = typeof response.body.data === 'string'
+            ? response.body.data
             : JSON.stringify(response.body.data);
           logCodeExecutionOutput(reqId, dataStr);
         }

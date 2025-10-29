@@ -158,7 +158,7 @@ class AgentBay:
             return str(obj)
 
     def _build_session_from_response(
-        self, response_data: dict, params: CreateSessionParams
+        self, response_data: dict, params: CreateSessionParams, record_context_id: Optional[str] = None
     ) -> Session:
         """
         Build Session object from API response data.
@@ -204,6 +204,9 @@ class AgentBay:
         session.file_transfer_context_id = (
             self._file_transfer_context.id if self._file_transfer_context else None
         )
+
+        # Store the browser recording context ID if we created one
+        session.record_context_id = record_context_id
 
         # Store image_id used for this session
         setattr(session, "image_id", params.image_id)
@@ -631,7 +634,7 @@ class AgentBay:
             )
 
             # Build Session object from response data
-            session = self._build_session_from_response(data, params)
+            session = self._build_session_from_response(data, params, record_context_id)
 
             # Update browser replay context if enabled
             if (
@@ -1030,8 +1033,6 @@ class AgentBay:
         """
         try:
             # Delete the session and get the result
-            if hasattr(session, "enableBrowserReplay") and session.enableBrowserReplay:
-                sync_context = True
             delete_result = session.delete(sync_context=sync_context)
 
             with self._lock:

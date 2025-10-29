@@ -438,6 +438,10 @@ export class AgentBay {
 
       // Store the file transfer context ID if we created one
       session.fileTransferContextId = this.fileTransferContext ? this.fileTransferContext.id : null;
+
+      // Store the browser recording context ID if we created one
+      session.recordContextId = recordContextId || null;
+
       // Store imageId used for this session
       (session as any).imageId = params.imageId;
 
@@ -853,9 +857,6 @@ export class AgentBay {
   async delete(session: Session, syncContext = false): Promise<DeleteResult> {
     try {
       // Delete the session and get the result
-      if (session.enableBrowserReplay) {
-        syncContext = true;
-      }
       logAPICall("DeleteSession", { sessionId: session.sessionId });
       const deleteResult = await session.delete(syncContext);
 
