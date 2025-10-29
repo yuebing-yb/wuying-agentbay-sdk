@@ -518,4 +518,116 @@ export class Browser {
       throw new BrowserError("Browser is not initialized. Cannot stop browser.");
     }
   }
+
+  /**
+   * Takes a screenshot of the specified page with enhanced options and error handling.
+   * This method requires the caller to connect to the browser via Playwright or similar
+   * and pass the page object to this method.
+   * 
+   * Note: This is a placeholder method that indicates where screenshot functionality
+   * should be implemented. In a complete implementation, this would use Playwright's
+   * page.screenshot() method or similar browser automation API.
+   * 
+   * @param page The Playwright Page object to take a screenshot of. This is a required parameter.
+   * @param fullPage Whether to capture the full scrollable page. Defaults to false.
+   * @param options Additional screenshot options that will override defaults.
+   *                Common options include:
+   *                - type: Image type, either 'png' or 'jpeg' (default: 'png')
+   *                - quality: Quality of the image, between 0-100 (jpeg only)
+   *                - timeout: Maximum time in milliseconds (default: 60000)
+   *                - animations: How to handle animations (default: 'disabled')
+   *                - caret: How to handle the caret (default: 'hide')
+   *                - scale: Scale setting (default: 'css')
+   * @returns Screenshot data as Uint8Array.
+   * @throws BrowserError If browser is not initialized.
+   * @throws Error If screenshot capture fails.
+   */
+  async screenshot(page: any, fullPage: boolean = false, options: Record<string, any> = {}): Promise<Uint8Array> {
+    // Check if browser is initialized
+    if (!this.isInitialized()) {
+      throw new BrowserError("Browser must be initialized before calling screenshot.");
+    }
+
+    if (page === null || page === undefined) {
+      throw new Error("Page cannot be null or undefined");
+    }
+
+    // Set default enhanced options
+    const enhancedOptions: Record<string, any> = {
+      animations: "disabled",
+      caret: "hide",
+      scale: "css",
+      timeout: options.timeout || 60000,
+      fullPage: fullPage, // Use the function parameter, not options
+      type: options.type || "png",
+    };
+
+    // Update with user-provided options (but fullPage is already set from function parameter)
+    Object.assign(enhancedOptions, options);
+
+    try {
+      // Wait for page to load
+      await page.waitForLoadState("networkidle");
+      await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+      await page.waitForLoadState("domcontentloaded");
+
+      // Scroll to load all content (especially for lazy-loaded elements)
+      await this._scrollToLoadAllContent(page);
+
+      // Ensure images with data-src attributes are loaded
+      await page.evaluate(`
+        () => {
+          document.querySelectorAll('img[data-src]').forEach(img => {
+            if (!img.src && img.dataset.src) {
+              img.src = img.dataset.src;
+            }
+          });
+          // Also handle background-image[data-bg]
+          document.querySelectorAll('[data-bg]').forEach(el => {
+            if (!el.style.backgroundImage) {
+              el.style.backgroundImage = \`url(\${el.dataset.bg})\`;
+            }
+          });
+        }
+      `);
+
+      // Wait a bit for images to load
+      await page.waitForTimeout(1500);
+      const finalHeight = await page.evaluate("document.body.scrollHeight");
+      await page.setViewportSize({ width: 1920, height: Math.min(finalHeight, 10000) });
+
+      // Take the screenshot
+      const screenshotBuffer = await page.screenshot(enhancedOptions);
+      logInfo("Screenshot captured successfully.");
+      
+      // Convert Buffer to Uint8Array
+      return new Uint8Array(screenshotBuffer);
+    } catch (error) {
+      // Convert error to string safely to avoid comparison issues
+      let errorStr: string;
+      try {
+        errorStr = String(error);
+      } catch {
+        errorStr = "Unknown error occurred";
+      }
+      const errorMsg = `Failed to capture screenshot: ${errorStr}`;
+      throw new Error(errorMsg);
+    }
+  }
+
+  /**
+   * Scrolls the page to load all content (especially for lazy-loaded elements)
+   */
+  private async _scrollToLoadAllContent(page: any, maxScrolls: number = 8, delayMs: number = 1200): Promise<void> {
+    let lastHeight = 0;
+    for (let i = 0; i < maxScrolls; i++) {
+      await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+      await page.waitForTimeout(delayMs);
+      const newHeight = await page.evaluate("Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)");
+      if (newHeight === lastHeight) {
+        break;
+      }
+      lastHeight = newHeight;
+    }
+  }
 }

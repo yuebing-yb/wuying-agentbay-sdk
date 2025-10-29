@@ -428,3 +428,199 @@ func (b *Browser) Destroy() error {
 
 	return nil
 }
+
+// ScreenshotOptions represents options for taking screenshots
+type ScreenshotOptions struct {
+	FullPage bool
+	Type     string // "png" or "jpeg"
+	Quality  int    // 0-100 for jpeg
+	Timeout  int    // timeout in milliseconds
+}
+
+// Screenshot takes a screenshot of the specified page with enhanced options and error handling.
+// This method requires the caller to connect to the browser via Playwright or similar
+// and pass the page object to this method.
+//
+// Parameters:
+//   - page: The Playwright Page object to take a screenshot of. This is a required parameter.
+//   - options: Screenshot options including:
+//   - FullPage (bool): Whether to capture the full scrollable page. Defaults to false.
+//   - Type (string): Image type, either "png" or "jpeg". Defaults to "png".
+//   - Quality (int): Quality of the image, between 0-100 (jpeg only). Defaults to 0.
+//   - Timeout (int): Maximum time in milliseconds. Defaults to 60000.
+//
+// Returns:
+//   - []byte: Screenshot data as bytes.
+//   - error: Error if browser is not initialized or screenshot capture fails.
+func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error) {
+	if !b.initialized {
+		return nil, errors.New("browser must be initialized before calling screenshot")
+	}
+
+	// Create default options if none provided
+	if options == nil {
+		options = &ScreenshotOptions{
+			FullPage: false,
+			Type:     "png",
+			Quality:  0,
+			Timeout:  60000,
+		}
+	}
+
+	// Set default enhanced options
+	enhancedOptions := map[string]interface{}{
+		"animations": "disabled",
+		"caret":      "hide",
+		"scale":      "css",
+		"timeout":    options.Timeout,
+		"fullPage":   options.FullPage,
+		"type":       options.Type,
+	}
+
+	// Add quality if type is jpeg
+	if options.Type == "jpeg" && options.Quality > 0 {
+		enhancedOptions["quality"] = options.Quality
+	}
+
+	// Type assert page to Playwright Page interface
+	playwrightPage, ok := page.(interface {
+		WaitForLoadState(state string, options ...interface{}) error
+		Evaluate(expression string, options ...interface{}) (interface{}, error)
+		WaitForTimeout(timeout int)
+		SetViewportSize(width, height int) error
+		Screenshot(options map[string]interface{}) ([]byte, error)
+	})
+	if !ok {
+		return nil, errors.New("page must be a Playwright Page object")
+	}
+
+	try := func() ([]byte, error) {
+		// Wait for page to load
+		if err := playwrightPage.WaitForLoadState("networkidle"); err != nil {
+			return nil, err
+		}
+
+		if _, err := playwrightPage.Evaluate("window.scrollTo(0, document.body.scrollHeight)"); err != nil {
+			return nil, err
+		}
+
+		if err := playwrightPage.WaitForLoadState("domcontentloaded"); err != nil {
+			return nil, err
+		}
+
+		// Scroll to load all content (especially for lazy-loaded elements)
+		if err := b._scrollToLoadAllContent(playwrightPage, 8, 1200); err != nil {
+			return nil, err
+		}
+
+		// Ensure images with data-src attributes are loaded
+		_, err := playwrightPage.Evaluate(`
+			() => {
+				document.querySelectorAll('img[data-src]').forEach(img => {
+					if (!img.src && img.dataset.src) {
+						img.src = img.dataset.src;
+					}
+				});
+				// Also handle background-image[data-bg]
+				document.querySelectorAll('[data-bg]').forEach(el => {
+					if (!el.style.backgroundImage) {
+						el.style.backgroundImage = 'url(' + el.dataset.bg + ')';
+					}
+				});
+			}
+		`)
+		if err != nil {
+			return nil, err
+		}
+
+		// Wait a bit for images to load
+		playwrightPage.WaitForTimeout(1500)
+
+		finalHeightResult, err := playwrightPage.Evaluate("document.body.scrollHeight")
+		if err != nil {
+			return nil, err
+		}
+
+		finalHeight, ok := finalHeightResult.(int)
+		if !ok {
+			// Try to convert from float64 if that's what we got
+			if floatHeight, ok := finalHeightResult.(float64); ok {
+				finalHeight = int(floatHeight)
+			} else {
+				finalHeight = 10000
+			}
+		}
+
+		if err := playwrightPage.SetViewportSize(1920, min(finalHeight, 10000)); err != nil {
+			return nil, err
+		}
+
+		// Take the screenshot
+		screenshotBytes, err := playwrightPage.Screenshot(enhancedOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Println("Screenshot captured successfully.")
+		return screenshotBytes, nil
+	}
+
+	screenshotBytes, err := try()
+	if err != nil {
+		// Convert error to string safely to avoid comparison issues
+		errorStr := fmt.Sprintf("%v", err)
+		errorMsg := fmt.Sprintf("Failed to capture screenshot: %s", errorStr)
+		return nil, errors.New(errorMsg)
+	}
+
+	return screenshotBytes, nil
+}
+
+// _scrollToLoadAllContent scrolls the page to load all content (especially for lazy-loaded elements)
+func (b *Browser) _scrollToLoadAllContent(page interface {
+	Evaluate(expression string, options ...interface{}) (interface{}, error)
+	WaitForTimeout(timeout int)
+}, maxScrolls int, delayMs int) error {
+	if maxScrolls <= 0 {
+		maxScrolls = 8
+	}
+	if delayMs <= 0 {
+		delayMs = 1200
+	}
+
+	lastHeight := 0
+	for i := 0; i < maxScrolls; i++ {
+		_, err := page.Evaluate("window.scrollTo(0, document.body.scrollHeight)")
+		if err != nil {
+			return err
+		}
+
+		page.WaitForTimeout(delayMs)
+
+		newHeightResult, err := page.Evaluate("Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)")
+		if err != nil {
+			return err
+		}
+
+		newHeight := 0
+		if intHeight, ok := newHeightResult.(int); ok {
+			newHeight = intHeight
+		} else if floatHeight, ok := newHeightResult.(float64); ok {
+			newHeight = int(floatHeight)
+		}
+
+		if newHeight == lastHeight {
+			break
+		}
+		lastHeight = newHeight
+	}
+	return nil
+}
+
+// Helper function to find minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}

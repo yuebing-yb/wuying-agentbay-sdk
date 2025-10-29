@@ -1,236 +1,164 @@
-# Python Browser Examples
+# Browser Examples
 
-This directory contains Python examples demonstrating browser automation capabilities of the AgentBay SDK.
+This directory contains examples demonstrating various capabilities of the AgentBay browser automation system.
 
-## Prerequisites
+## Screenshot Examples
 
-1. **Install Python SDK**:
-   ```bash
-   pip install wuying-agentbay-sdk
-   ```
+### [browser_screenshot.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/browser_screenshot.py) - Browser Screenshot Demo
 
-2. **Install Playwright**:
-   ```bash
-   pip install playwright
-   playwright install chromium
-   ```
+Demonstrates how to capture screenshots using both the browser agent and direct Playwright integration methods:
 
-3. **Set API Key**:
-   ```bash
-   export AGENTBAY_API_KEY=your_api_key_here
-   ```
+- Creating a browser session with AgentBay
+- Using Playwright to connect to the browser instance
+- Taking screenshots using the browser agent (returns base64 data)
+- Taking screenshots using direct Playwright integration (returns bytes data)
+- Saving screenshots to local files
+- Customizing screenshot options (full page, image format, quality)
 
-## Examples
+**Key Features:**
+1. **Browser Agent Screenshots** - Uses `session.browser.agent.screenshot_async()` which returns base64 encoded data
+2. **Direct Playwright Screenshots** - Uses `session.browser.screenshot(page)` which returns raw bytes data
+3. **Multiple Formats** - Supports both PNG and JPEG formats with customizable quality
+4. **Full Page Capture** - Ability to capture entire web pages including content below the fold
+5. **Custom Options** - Configurable timeout, viewport settings, and other advanced options
 
-### 1. browser_context_cookie_persistence.py
-Demonstrates how to use Browser Context to persist cookies across multiple sessions. This example shows:
-- Creating sessions with Browser Context
-- Setting cookies manually using Playwright
-- Deleting sessions with context synchronization (`sync_context=True`)
-- Verifying cookie persistence in new sessions
-- Complete cleanup of resources
-
-**Key features demonstrated:**
-- Browser Context configuration with `auto_upload=True`
-- Manual cookie setting and verification
-- Cross-session cookie persistence
-- Proper resource cleanup
-
-### 2. search_agentbay_doc.py
-Demonstrates basic browser automation using direct Playwright interactions:
-- Connecting to AgentBay browser via CDP
-- Manual element selection and interaction
-- Search operations on websites
-
-### 3. search_agentbay_doc_by_agent.py
-Shows how to use the Agent module for intelligent browser automation:
-- Using natural language commands with `session.browser.agent.act_async()`
-- AI-powered element detection and interaction
-- Simplified automation for complex web interactions
-
-### 4. visit_aliyun.py
-Basic browser usage example showing:
-- Browser initialization
-- Simple page navigation
-- Basic browser operations
-
-### 5. browser_type_example.py
-
-Comprehensive example demonstrating browser type selection:
-- Chrome browser initialization
-- Chromium browser initialization
-- Default browser (None) usage
-- Browser configuration verification
-- Side-by-side comparison of browser types
-
-**Run:**
-```bash
-# Run full example (tests all browser types)
-python browser_type_example.py
-
-# Run quick example (Chrome only)
-python browser_type_example.py --quick
-```
-
-**Key features demonstrated:**
-- Browser type selection for Chrome, Chromium, and default
-- Configuration validation
-- Browser detection and verification
-- Command-line options for different test modes
-
-### 6. run_2048.py & run_sudoku.py
-Game automation examples demonstrating:
-- Complex interaction patterns
-- Agent-based automation for games
-- Advanced browser control
-
-## Browser Type Selection
-
-When using computer use images, you can choose between Chrome and Chromium:
-
-```python
-from agentbay.browser.browser import BrowserOption
-
-# Use Chrome (Google Chrome)
-option = BrowserOption(browser_type="chrome")
-await session.browser.initialize_async(option)
-
-# Use Chromium (open-source)
-option = BrowserOption(browser_type="chromium")
-await session.browser.initialize_async(option)
-
-# Use default (None - let browser image decide)
-option = BrowserOption()
-await session.browser.initialize_async(option)
-```
-
-## Running the Examples
-
-1. Install required dependencies:
-```bash
-pip install wuying-agentbay-sdk playwright
-playwright install chromium
-```
-
-2. Set your API key:
+**Usage:**
 ```bash
 export AGENTBAY_API_KEY=your_api_key_here
+python browser_screenshot.py
 ```
 
-3. Run any example:
-```bash
-python browser_context_cookie_persistence.py
-python search_agentbay_doc.py
-# ... etc
-```
+This will generate several screenshot files in the current directory:
+- `agent_screenshot.png` - Screenshot taken with browser agent
+- `agent_full_page_screenshot.png` - Full page screenshot taken with browser agent
+- `browser_screenshot.png` - Screenshot taken with direct Playwright integration
+- `browser_full_page_screenshot.jpg` - Full page screenshot in JPEG format
+- `browser_custom_screenshot.png` - Screenshot with custom options
 
-## Common Patterns
+## Other Examples
 
-### Basic Browser Initialization
+### [visit_aliyun.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/visit_aliyun.py) - Basic Browser Usage
+Demonstrates basic browser automation capabilities:
+- Create browser session
+- Use Playwright to connect to browser instance through CDP protocol
+- Navigate to websites and interact with page content
 
-```python
-import asyncio
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+### [browser_viewport.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/browser_viewport.py) - Viewport Configuration
+Shows how to configure browser viewport and screen dimensions:
+- Custom viewport sizes for different device types
+- Screen resolution configuration
+- Responsive design testing
 
-async def main():
-    api_key = os.getenv("AGENTBAY_API_KEY")
-    agent_bay = AgentBay(api_key=api_key)
-    
-    params = CreateSessionParams(image_id="browser_latest")
-    result = agent_bay.create(params)
-    
-    if not result.success:
-        raise RuntimeError(f"Failed to create session: {result.error_message}")
-    
-    session = result.session
-    option = BrowserOption()
-    success = await session.browser.initialize_async(option)
-    
-    if not success:
-        raise RuntimeError("Browser initialization failed")
+### [browser_stealth.py](file:///Users/lei/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/browser_stealth.py) - Stealth Mode
+Demonstrates anti-detection features:
+- Enable stealth mode to avoid bot detection
+- Custom user agent strings
+- Fingerprint randomization
 
-asyncio.run(main())
-```
+### [browser-proxies.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/browser-proxies.py) - Proxy Configuration
+Shows how to configure browser proxies:
+- Custom proxy servers
+- Authentication with username/password
+- Wuying proxy integration
 
-### Connecting Playwright
+### [browser_type_example.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/browser_type_example.py) - Browser Type Selection
+Demonstrates browser type selection:
+- Chrome vs Chromium selection
+- Computer use image requirements
+- Browser compatibility considerations
 
-```python
-from playwright.async_api import async_playwright
+### [browser_command_args.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/browser_command_args.py) - Command Line Arguments
+Shows how to customize browser behavior with command-line arguments:
+- Feature flags and switches
+- Performance optimizations
+- Debugging options
 
-endpoint_url = session.browser.get_endpoint_url()
+### [captcha_tongcheng.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/captcha_tongcheng.py) - CAPTCHA Handling
+Demonstrates CAPTCHA solving capabilities:
+- Automated CAPTCHA detection
+- Integration with solving services
+- Error handling and retry logic
 
-async with async_playwright() as p:
-    browser = await p.chromium.connect_over_cdp(endpoint_url)
-    context = browser.contexts[0]
-    page = await context.new_page()
-    
-    # Use page...
-    
-    await browser.close()
+### [game_2048.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/game_2048.py) - Game Automation
+Advanced example of game automation:
+- Complex interaction patterns
+- State detection and response
+- AI-driven decision making
 
-session.delete()
-```
+### [shop_inspector.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/shop_inspector.py) - E-commerce Scraping
+Comprehensive e-commerce site inspection:
+- Product extraction and normalization
+- Screenshot capture for verification
+- Data validation and filtering
 
-### Error Handling
+### [search_agentbay_doc.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/search_agentbay_doc.py) - Documentation Search
+Demonstrates search automation:
+- Form filling and submission
+- Result parsing and extraction
+- Multi-page navigation
 
-```python
-try:
-    success = await session.browser.initialize_async(option)
-    if not success:
-        raise RuntimeError("Initialization failed")
-    
-    # Use browser...
-    
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    session.delete()
-```
+### [admin_add_product.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/admin_add_product.py) - Admin Panel Automation
+Complex admin panel workflow automation:
+- Authentication and session management
+- Multi-step form completion
+- File uploads and image processing
 
-### Custom Configuration
+### [mini_max.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/mini_max.py) - AI Platform Integration
+Integration with AI platforms:
+- Login and authentication workflows
+- Content generation and management
+- Result validation and processing
 
-```python
-from agentbay.browser.browser import (
-    BrowserOption,
-    BrowserViewport,
-    BrowserFingerprint
-)
+### [expense_upload_invoices.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/expense_upload_invoices.py) - File Upload Automation
+File upload and processing automation:
+- Document upload workflows
+- Form completion and submission
+- Status monitoring and verification
 
-option = BrowserOption(
-    browser_type="chrome",
-    use_stealth=True,
-    viewport=BrowserViewport(1920, 1080),
-    fingerprint=BrowserFingerprint(
-        devices=["desktop"],
-        operating_systems=["windows", "macos"],
-        locales=["en-US"]
-    )
-)
-```
+### [game_sudoku.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/game_sudoku.py) - Logic Game Automation
+Logic puzzle automation:
+- Grid recognition and parsing
+- Rule-based solving algorithms
+- Interactive gameplay
 
-## Browser Context vs Regular Browser Sessions
+### [gv_quick_buy_seat.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/gv_quick_buy_seat.py) - Ticket Booking Automation
+High-speed booking automation:
+- Time-sensitive operations
+- Multi-step checkout processes
+- Error handling and recovery
 
-| Feature | Regular Browser Session | Browser Context Session |
-|---------|------------------------|-------------------------|
-| Cookie Persistence | No, cookies lost after session ends | Yes, cookies persist across sessions |
-| Setup Complexity | Simple | Requires context creation |
-| Use Case | One-time automation | Multi-session workflows |
-| Data Synchronization | None | Automatic with `auto_upload=True` |
+### [alimeeting_availability.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/alimeeting_availability.py) - Calendar Integration
+Calendar and scheduling automation:
+- Availability checking
+- Time slot selection
+- Meeting scheduling workflows
 
-## Best Practices
+### [sudoku_solver.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/sudoku_solver.py) - Simple Game Solver
+Simple game automation example:
+- Basic interaction patterns
+- State evaluation
+- Move execution
 
-1. **Always use context synchronization**: When deleting sessions with important browser data, use `sync_context=True`
-2. **Proper cleanup**: Always delete sessions and contexts when done
-3. **Error handling**: Implement proper error handling for network and browser operations
-4. **Resource management**: Close browser connections properly
-5. **Unique context names**: Use unique context names to avoid conflicts
+### [search_agentbay_doc_by_agent.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/search_agentbay_doc_by_agent.py) - Agent-Based Search
+Agent-driven search automation:
+- Natural language instructions
+- Autonomous navigation
+- Result extraction
 
-## Related Documentation
+### [browser_context_cookie_persistence.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/browser_context_cookie_persistence.py) - Cookie Management
+Cookie persistence and management:
+- Session preservation
+- Authentication state management
+- Context isolation
 
-- [Browser Extension Examples](../extension/README.md) - Dedicated extension management examples
-- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Main browser use guide
-- [Browser Context Tutorial](../../../../../docs/guides/browser-use/core-features/browser-context.md) - Browser context management
-- [Context Management API](../../../api/common-features/basics/context.md) - Context API reference
-- [Browser API Reference](../../../api/browser-use/browser.md) - Browser API reference 
+### [browser_replay.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/browser_replay.py) - Browser Replay
+Browser session recording and replay:
+- Action recording
+- Playback automation
+- Screenshot capture for verification
+
+### [call_for_user_jd.py](file:///Users/leizi/workspace/wuying-agentbay-sdk/python/docs/examples/browser-use/browser/call_for_user_jd.py) - User Simulation
+User behavior simulation:
+- Realistic interaction patterns
+- Timing variations
+- Error handling

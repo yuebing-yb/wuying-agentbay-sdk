@@ -601,6 +601,110 @@ const browser = await puppeteer.connect({
 });
 ```
 
+### Screenshot
+
+Takes a screenshot of the specified page with enhanced options and error handling.
+
+> **Note**: This method requires the caller to connect to the browser via Playwright or similar automation framework and pass the page object to this method. The actual screenshot capture is performed by the automation framework, not by this method directly.
+
+```go
+func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error)
+```
+
+**Parameters:**
+- `page` (interface{}): The Playwright Page object to take a screenshot of. This is a required parameter.
+- `options` (*ScreenshotOptions): Screenshot options including:
+  - `FullPage` (bool): Whether to capture the full scrollable page. Defaults to `false`.
+  - `Type` (string): Image type, either `"png"` or `"jpeg"`. Defaults to `"png"`.
+  - `Quality` (int): Quality of the image, between 0-100 (jpeg only). Defaults to `0`.
+  - `Timeout` (int): Maximum time in milliseconds. Defaults to `60000`.
+
+**Returns:**
+- `[]byte`: Screenshot data as bytes.
+- `error`: Error if screenshot capture fails.
+
+**Raises:**
+- `error`: If browser is not initialized.
+- `error`: If page is nil.
+
+**Example:**
+```go
+// Get browser endpoint and connect with Playwright
+endpoint, err := session.Browser.GetEndpointURL()
+if err != nil {
+    log.Fatal(err)
+}
+
+// Connect Playwright (example using playwright-go)
+pw, err := playwright.Run()
+if err != nil {
+    log.Fatal(err)
+}
+defer pw.Stop()
+
+browser, err := pw.Chromium.ConnectOverCDP(endpoint)
+if err != nil {
+    log.Fatal(err)
+}
+defer browser.Close()
+
+page, err := browser.Contexts()[0].NewPage()
+if err != nil {
+    log.Fatal(err)
+}
+
+// Navigate to a page
+_, err = page.Goto("https://example.com")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Take a simple screenshot (viewport only)
+screenshotData, err := session.Browser.Screenshot(page, nil)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Save to file
+err = ioutil.WriteFile("screenshot.png", screenshotData, 0644)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Take a full page screenshot with custom options
+options := &browser.ScreenshotOptions{
+    FullPage: true,
+    Type:     "jpeg",
+    Quality:  80,
+    Timeout:  30000,
+}
+fullPageData, err := session.Browser.Screenshot(page, options)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Save full page screenshot
+err = ioutil.WriteFile("full_page.jpg", fullPageData, 0644)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+**Advanced Usage:**
+```go
+// Handle errors gracefully
+screenshotData, err := session.Browser.Screenshot(page, nil)
+if err != nil {
+    if strings.Contains(err.Error(), "not initialized") {
+        log.Println("Browser not initialized")
+    } else if strings.Contains(err.Error(), "Page cannot be null") {
+        log.Println("Page is required")
+    } else {
+        log.Printf("Screenshot failed: %v", err)
+    }
+}
+```
+
 ## Performance Considerations
 
 ### Resource Usage

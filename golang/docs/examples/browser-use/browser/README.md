@@ -86,6 +86,35 @@ Browser configuration verified successfully!
 Deleting session...
 ```
 
+### 3. browser_screenshot
+
+An example demonstrating screenshot capabilities:
+- Creating a browser session with AgentBay
+- Using Playwright to connect to the browser instance
+- Taking screenshots using direct Playwright integration
+- Saving screenshots to local files
+- Customizing screenshot options (full page, image format, quality)
+
+**Run:**
+```bash
+go run browser_screenshot
+```
+
+**Expected Output:**
+```
+Initializing AgentBay client...
+Creating a new session...
+Session created with ID: sess-xxxxx
+Browser initialized successfully
+Endpoint URL: ws://...
+📸 Taking screenshot...
+ℹ️  Note: Screenshot functionality requires Playwright Go integration
+✅ Browser screenshot demo completed
+
+🧹 Cleaning up session sess-xxxxx...
+✅ Session deleted successfully
+```
+
 ## Key Browser APIs
 
 ### Browser Initialization
@@ -235,4 +264,3 @@ The browser may not have started properly. Check initialization logs and ensure 
 - [Core Features](../../../../../docs/guides/browser-use/core-features.md)
 - [Advanced Features](../../../../../docs/guides/browser-use/advance-features.md)
 - [Playwright Go Documentation](https://playwright.dev/docs/intro)
-

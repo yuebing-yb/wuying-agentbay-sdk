@@ -355,6 +355,98 @@ if option:
     print(f"Browser type: {option.browser_type}")
 ```
 
+#### screenshot(page, full_page: bool = False, **options) -> bytes
+
+Takes a screenshot of the specified page with enhanced options and error handling (asynchronous).
+
+This method captures screenshots of web pages with advanced features including:
+- Full page screenshots (scrolling to capture entire content)
+- Custom image formats (PNG, JPEG)
+- Quality control for JPEG images
+- Enhanced loading state management
+- Lazy-loaded content handling
+- Background image loading
+
+```python
+async def screenshot(self, page, full_page: bool = False, **options) -> bytes
+```
+
+**Parameters:**
+- `page` (Page): The Playwright Page object to take a screenshot of. This is a required parameter.
+- `full_page` (bool): Whether to capture the full scrollable page. Defaults to `False`.
+- `**options`: Additional screenshot options that will override defaults.
+  Common options include:
+  - `type` (str): Image type, either `'png'` or `'jpeg'` (default: `'png'`)
+  - `quality` (int): Quality of the image, between 0-100 (jpeg only)
+  - `timeout` (int): Maximum time in milliseconds (default: 60000)
+  - `animations` (str): How to handle animations (default: `'disabled'`)
+  - `caret` (str): How to handle the caret (default: `'hide'`)
+  - `scale` (str): Scale setting (default: `'css'`)
+
+**Returns:**
+- `bytes`: Screenshot data as bytes.
+
+**Raises:**
+- `BrowserError`: If browser is not initialized.
+- `ValueError`: If page is None.
+- `RuntimeError`: If screenshot capture fails.
+
+**Example:**
+```python
+import asyncio
+from playwright.async_api import async_playwright
+
+async def capture_screenshots():
+    # Get browser endpoint and connect with Playwright
+    endpoint_url = session.browser.get_endpoint_url()
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(endpoint_url)
+        context = browser.contexts[0]
+        page = await context.new_page()
+        
+        # Navigate to a page
+        await page.goto("https://example.com")
+        
+        # Take a simple screenshot (viewport only)
+        screenshot_data = await session.browser.screenshot(page)
+        with open("screenshot.png", "wb") as f:
+            f.write(screenshot_data)
+        
+        # Take a full page screenshot
+        full_page_data = await session.browser.screenshot(page, full_page=True)
+        with open("full_page.png", "wb") as f:
+            f.write(full_page_data)
+        
+        # Take a screenshot with custom options
+        custom_screenshot = await session.browser.screenshot(
+            page,
+            full_page=False,
+            type="jpeg",
+            quality=80,
+            timeout=30000
+        )
+        with open("custom_screenshot.jpg", "wb") as f:
+            f.write(custom_screenshot)
+        
+        await browser.close()
+
+asyncio.run(capture_screenshots())
+```
+
+**Advanced Usage:**
+```python
+# Handle errors gracefully
+try:
+    screenshot_data = await session.browser.screenshot(page)
+    # Process screenshot data...
+except BrowserError as e:
+    print(f"Browser not initialized: {e}")
+except RuntimeError as e:
+    print(f"Screenshot failed: {e}")
+except Exception as e:
+    print(f"Unexpected error: {e}")
+```
+
 ## Complete Usage Example
 
 ### Basic Usage

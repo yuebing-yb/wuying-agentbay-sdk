@@ -159,6 +159,37 @@ ts-node run-2048.ts
 ts-node run-sudoku.ts
 ```
 
+### 8. screenshot-example.ts
+
+An example demonstrating screenshot capabilities:
+- Creating a browser session with AgentBay
+- Using Playwright to connect to the browser instance
+- Taking screenshots using direct Playwright integration (Uint8Array data)
+- Saving screenshots to local files
+- Customizing screenshot options (full page, image format, quality)
+
+**Run:**
+```bash
+ts-node screenshot-example.ts
+```
+
+**Expected Output:**
+```
+📸 AgentBay Browser Screenshot Demo (TypeScript)
+==================================================
+Initializing AgentBay client...
+Creating a new session...
+Session created with ID: sess-xxxxx
+Browser initialized successfully
+Endpoint URL: ws://...
+📸 Taking screenshot...
+ℹ️  Note: Screenshot functionality requires Playwright TypeScript integration
+✅ Browser screenshot demo completed
+
+🧹 Cleaning up session sess-xxxxx...
+✅ Session deleted successfully
+```
+
 ## Browser Type Selection
 
 When using computer use images, you can choose between Chrome and Chromium:

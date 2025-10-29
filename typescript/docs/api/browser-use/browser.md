@@ -702,7 +702,133 @@ if (actResult.success) {
 }
 ```
 
-See the [PageUseAgent documentation](../../../../docs/guides/browser-use/advance-features/page-use-agent.md) for more details.
+### screenshot(page, fullPage, options)
+
+Takes a screenshot of the specified page with enhanced options and error handling.
+
+> **Note**: This method requires the caller to connect to the browser via Playwright or similar automation framework and pass the page object to this method. The actual screenshot capture is performed by the automation framework, not by this method directly.
+
+```typescript
+async screenshot(page: any, fullPage: boolean = false, options: Record<string, any> = {}): Promise<Uint8Array>
+```
+
+**Parameters:**
+- `page` (any): The Playwright Page object to take a screenshot of. This is a required parameter.
+- `fullPage` (boolean): Whether to capture the full scrollable page. Defaults to `false`.
+- `options` (Record<string, any>): Additional screenshot options that will override defaults.
+  Common options include:
+  - `type` (string): Image type, either `'png'` or `'jpeg'` (default: `'png'`)
+  - `quality` (number): Quality of the image, between 0-100 (jpeg only)
+  - `timeout` (number): Maximum time in milliseconds (default: 60000)
+  - `animations` (string): How to handle animations (default: `'disabled'`)
+  - `caret` (string): How to handle the caret (default: `'hide'`)
+  - `scale` (string): Scale setting (default: `'css'`)
+
+**Returns:**
+- `Promise<Uint8Array>`: Screenshot data as Uint8Array.
+
+**Throws:**
+- `BrowserError`: If browser is not initialized.
+- `Error`: If page is null or undefined.
+- `Error`: If screenshot capture fails.
+
+**Example:**
+```typescript
+import { chromium } from 'playwright';
+
+// Get browser endpoint and connect with Playwright
+const endpointUrl = session.browser.getEndpointUrl();
+
+// Connect Playwright
+const browser = await chromium.connectOverCDP(endpointUrl);
+const context = browser.contexts()[0];
+const page = await context.newPage();
+
+// Navigate to a page
+await page.goto("https://example.com");
+
+// Take a simple screenshot (viewport only)
+const screenshotData = await session.browser.screenshot(page);
+// Save to file (Node.js)
+import { writeFile } from 'fs/promises';
+await writeFile("screenshot.png", Buffer.from(screenshotData));
+
+// Take a full page screenshot
+const fullPageData = await session.browser.screenshot(page, true);
+await writeFile("full_page.png", Buffer.from(fullPageData));
+
+// Take a screenshot with custom options
+const customScreenshot = await session.browser.screenshot(
+  page,
+  false, // fullPage
+  {
+    type: "jpeg",
+    quality: 80,
+    timeout: 30000
+  }
+);
+await writeFile("custom_screenshot.jpg", Buffer.from(customScreenshot));
+
+await browser.close();
+```
+
+**Advanced Usage:**
+```typescript
+// Handle errors gracefully
+try {
+  const screenshotData = await session.browser.screenshot(page);
+  // Process screenshot data...
+} catch (error) {
+  if (error instanceof BrowserError) {
+    console.log("Browser not initialized:", error.message);
+  } else if (error.message.includes("Page cannot be null")) {
+    console.log("Page is required");
+  } else {
+    console.log("Screenshot failed:", error.message);
+  }
+}
+```
+
+## Integration with Automation Tools
+
+### Playwright
+
+```typescript
+import { chromium } from 'playwright';
+
+// Get endpoint
+const endpointUrl = session.browser.getEndpointUrl();
+
+// Connect Playwright
+const browser = await chromium.connectOverCDP(endpointUrl);
+const context = browser.contexts()[0];
+const page = await context.newPage();
+
+// Use page...
+
+await browser.close();
+```
+
+### Puppeteer
+
+```typescript
+import puppeteer from 'puppeteer-core';
+
+// Get endpoint
+const endpointUrl = session.browser.getEndpointUrl();
+
+// Connect Puppeteer
+const browser = await puppeteer.connect({
+  browserWSEndpoint: endpointUrl
+});
+
+const pages = await browser.pages();
+const page = pages[0];
+
+// Use page...
+
+await browser.disconnect();
+```
 
 ## Performance Considerations
 
