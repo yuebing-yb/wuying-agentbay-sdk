@@ -79,7 +79,7 @@ func TestBrowser_InitializeWithChrome_Integration(t *testing.T) {
 
 	// Create session with computer use image (required for chrome/chromium selection)
 	params := &agentbay.CreateSessionParams{
-		ImageId: "computer_use_latest",
+		ImageId: "linux_latest",
 	}
 
 	sessionResult, err := agentBay.Create(params)
