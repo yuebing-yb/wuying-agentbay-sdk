@@ -6,7 +6,7 @@ Custom images allow you to create tailored environments with specific operating 
 
 ### What are Custom Images?
 
-Custom images are user-defined environment templates that extend or customize AgentBay's official system images. They are ideal for scenarios where:
+Custom images are user-defined environment templates that extend or customize AgentBay's system images or existing custom images. They are ideal for scenarios where:
 
 1. **Production Deployments**: Lock environment versions for production stability to avoid breaking changes from automatic updates
 2. **Specialized Software**: Pre-install specific tools, libraries, or applications not included in system images
@@ -68,6 +68,12 @@ The [AgentBay Console](https://agentbay.console.aliyun.com/) provides a user-fri
 - Real-time preview of image specifications
 - Easy management of existing custom images
 
+**Supported image types:**
+- Computer Use images (Windows/Linux)
+- Mobile Use images (Android)
+
+**Note:** Browser Use images are currently not supported for customization.
+
 **To get started:**
 Visit the [AgentBay Console](https://agentbay.console.aliyun.com/) and navigate to the Custom Images section to explore the UI-based creation workflow.
 
@@ -80,6 +86,11 @@ The AgentBay CLI provides a programmatic approach to create custom images using 
 - Command-line automation for CI/CD integration
 - Version control for image configurations
 - Scriptable and repeatable image builds
+
+**Supported image types:**
+- CodeSpace images
+
+**Note:** Computer Use and Mobile Use images should use the AgentBay Console for customization.
 
 **To get started:**
 Visit the [AgentBay CLI GitHub repository](https://github.com/aliyun/agentbay-cli) for detailed installation instructions.
