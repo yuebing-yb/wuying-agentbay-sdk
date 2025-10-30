@@ -35,8 +35,8 @@ When adding new use cases to this directory:
 
 If you need assistance with any of these use cases:
 
-1. Check the [Troubleshooting sections](../../README.md#troubleshooting) in the main guides
-2. Visit the [Quick Start guide](../../../quickstart/README.md) for basic setup
-3. Consult the specific guide documents in the [guides directory](../../README.md)
+1. Visit the [Quick Start guide](../../../quickstart/README.md) for basic setup
+2. Consult the specific guide documents in the [guides directory](../../README.md)
+3. Check the troubleshooting sections in individual guide documents
 
 For additional support, please refer to the main [AgentBay SDK documentation](../../README.md).

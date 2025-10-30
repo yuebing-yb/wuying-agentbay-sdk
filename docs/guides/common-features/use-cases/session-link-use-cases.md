@@ -7,9 +7,9 @@ This document provides practical use cases for Session Link Access, showing you 
 ## 📋 Table of Contents
 
 - [Overview](#overview)
-- [Use Case 1: Browser Automation](#use-case-1-browser-automation-)
-- [Use Case 2: Access Web Applications](#use-case-2-access-web-applications-)
-- [Use Case 3: Connect to Custom Services](#use-case-3-connect-to-custom-services-)
+- [Use Case 1: Browser Automation](#use-case-1-browser-automation)
+- [Use Case 2: Access Web Applications](#use-case-2-access-web-applications)
+- [Use Case 3: Connect to Custom Services](#use-case-3-connect-to-custom-services)
 - [Quick Selection Guide](#quick-selection-guide)
 - [Complete Code Examples](#complete-code-examples)
 
@@ -25,6 +25,7 @@ Session Link provides **direct network access URLs** to services in your cloud s
 
 ---
 
+<a id="use-case-1-browser-automation"></a>
 ## Use Case 1: Browser Automation 🤖
 
 ### Your Need
@@ -84,6 +85,7 @@ asyncio.run(main())
 
 ---
 
+<a id="use-case-2-access-web-applications"></a>
 ## Use Case 2: Access Web Applications 🌐
 
 ### Your Need
@@ -129,6 +131,7 @@ print(f"Web app URL: {link.data}")
 
 ---
 
+<a id="use-case-3-connect-to-custom-services"></a>
 ## Use Case 3: Connect to Custom Services 🔌
 
 ### Your Need

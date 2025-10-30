@@ -400,7 +400,7 @@ which adb
 
 For detailed API documentation in other languages:
 
-- **Python**: [Mobile API Documentation](../../../python/docs/api/mobile-use/mobile.md#get_adb_url)
+- **Python**: [Mobile API Documentation](../../../python/docs/api/mobile-use/mobile.md#getadburl)
 - **Golang**: [Mobile API Documentation](../../../golang/docs/api/mobile-use/mobile.md#getadburl)
 - **TypeScript**: [Mobile API Documentation](../../../typescript/docs/api/mobile-use/mobile.md#getadburl)
 
