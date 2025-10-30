@@ -229,9 +229,68 @@ jobs:
           path: link_report.md
 ```
 
+## AI Context Files (llms.txt)
+
+### build_llms_txt.py
+
+Generate `llms.txt` and `llms-full.txt` files for AI coding assistants (Claude, Cursor, GitHub Copilot, etc.).
+
+**Purpose:**
+These files provide context to AI assistants when helping with code development ("vibe coding"):
+- `llms.txt`: Concise index with links to documentation (~900 tokens)
+- `llms-full.txt`: Complete documentation content (~140k tokens)
+
+**Usage:**
+
+Generate both files:
+```bash
+python scripts/build_llms_txt.py
+```
+
+Custom output directory:
+```bash
+python scripts/build_llms_txt.py --out-root /path/to/output
+```
+
+Adjust token limits:
+```bash
+python scripts/build_llms_txt.py --index-limit 100000 --full-limit 1000000
+```
+
+**What gets included:**
+- Main repository README
+- All documentation from `docs/` directory
+- Language-specific documentation (Python, TypeScript, Golang)
+- API references for all languages
+- Cookbook examples
+
+**Automatic exclusions:**
+- `node_modules/` directories
+- `__pycache__/` directories
+- `.git/` directories
+- `venv/` and `test_venv/` directories
+
+**Dependencies:**
+- Python 3.9+
+- Optional: `markdown` and `beautifulsoup4` for better text conversion
+  ```bash
+  pip install markdown beautifulsoup4
+  ```
+- Optional: `tiktoken` for accurate token counting
+  ```bash
+  pip install tiktoken
+  ```
+
+**How to use the generated files:**
+
+In your AI coding assistant (e.g., Cursor), reference these files as context:
+- Use `llms.txt` for quick reference and smaller context windows
+- Use `llms-full.txt` for comprehensive context with large language models
+
 ## Requirements
 
 - For TypeScript: Node.js and npm with required dependencies
 - For Python: Python with flake8, black, bandit, and pip-audit
 - For Golang: Go with necessary tools (gofmt, golint, gosec, govulncheck)
 - For Documentation Check: Python 3.6+ (no external dependencies)
+- For AI Context Files: Python 3.9+ (optional: markdown, beautifulsoup4, tiktoken)
