@@ -44,4 +44,4 @@ The example demonstrates different ways to execute commands:
 
 The code also demonstrates proper error handling and resource cleanup using try-finally.
 
-For more details on command execution, see the [Command API Reference](../../api-reference/command.md) and [Command Execution Tutorial](../../tutorials/command-execution.md).
+For more details on command execution, see the [Command API Reference](../../../../api/common-features/basics/command.md) and [Command Execution Tutorial](../../../../../../docs/guides/common-features/basics/command-execution.md).

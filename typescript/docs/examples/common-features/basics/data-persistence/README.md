@@ -124,6 +124,6 @@ All examples provide detailed console output showing:
 
 ## Related Documentation
 
-- [Data Persistence Guide](../../../../docs/guides/common-features/basics/data-persistence.md) - Comprehensive guide on data persistence
+- [Data Persistence Guide](../../../../../../docs/guides/common-features/basics/data-persistence.md) - Comprehensive guide on data persistence
 - [Context Management](../context-management/README.md) - Context creation and management
 - [File Operations](../filesystem-example/README.md) - File handling and management

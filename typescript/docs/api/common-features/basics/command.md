@@ -88,6 +88,6 @@ main().catch(console.error);
 ## Related Resources
 
 - [Session Class](session.md): The session class that provides access to the Command class.
-- [Code Class](code.md): For executing Python and JavaScript code.
+- [Code Class](../../codespace/code.md): For executing Python and JavaScript code.
 - [FileSystem Class](filesystem.md): Provides methods for file operations within a session.
 

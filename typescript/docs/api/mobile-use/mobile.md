@@ -543,4 +543,4 @@ if (!result.success) {
 - The returned URL format is: `adb connect <IP>:<Port>`
 
 **See Also:**
-- [Mobile GetAdbUrl Example](../../examples/mobile-get-adb-url/README.md) - Complete working example
+- [Mobile GetAdbUrl Example](../../examples/mobile-use/mobile-get-adb-url/README.md) - Complete working example

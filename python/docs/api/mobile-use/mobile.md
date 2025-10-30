@@ -475,6 +475,6 @@ agent_bay.delete(session)
 
 ## Related Documentation
 
-- [Application Management API](./application.md) - Detailed application management operations
-- [UI Automation API](./ui.md) - UI automation operations
-- [Session API](./session.md) - Session management
+- [Application Management API](../computer-use/application.md) - Detailed application management operations
+- [UI Automation API](../computer-use/ui.md) - UI automation operations
+- [Session API](../common-features/basics/session.md) - Session management

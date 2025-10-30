@@ -677,5 +677,5 @@ if option.BrowserType != nil {
 - [Core Features](../../../../docs/guides/browser-use/core-features.md) - Essential browser features
 - [Advanced Features](../../../../docs/guides/browser-use/advance-features.md) - Advanced configuration
 - [Browser Examples](../../examples/browser-use/browser/README.md) - Runnable example code
-- [Session Management](session.md) - Session lifecycle and management
+- [Session Management](../common-features/basics/session.md) - Session lifecycle and management
 

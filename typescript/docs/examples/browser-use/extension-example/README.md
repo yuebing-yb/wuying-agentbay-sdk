@@ -246,7 +246,7 @@ try {
 
 ## Related Resources
 
-- [Extension API Reference](../../api/browser-use/extension.md) - Complete API documentation
-- [Session API Reference](../../api/common-features/basics/session.md) - Browser session management
-- [Context API Reference](../../api/common-features/basics/context.md) - Context management
-- [AgentBay SDK Documentation](../../api/common-features/basics/agentbay.md) - Core SDK features
+- [Extension API Reference](../../../api/browser-use/extension.md) - Complete API documentation
+- [Session API Reference](../../../api/common-features/basics/session.md) - Browser session management
+- [Context API Reference](../../../api/common-features/basics/context.md) - Context management
+- [AgentBay SDK Documentation](../../../api/common-features/basics/agentbay.md) - Core SDK features

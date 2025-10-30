@@ -377,5 +377,5 @@ func main() {
 
 ## Related Resources
 
-- [Filesystem API Reference](filesystem.md)
-- [Session API Reference](session.md)
+- [Filesystem API Reference](../basics/filesystem.md)
+- [Session API Reference](../basics/session.md)

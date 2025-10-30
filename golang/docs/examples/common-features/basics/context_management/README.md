@@ -43,4 +43,4 @@ The example demonstrates a full lifecycle of context management:
 6. Clear the context's persistent data (demonstrates both async and sync methods)
 7. Clean up by deleting the session and context
 
-For more details on context management, see the [Context API Reference](../../api-reference/context.md) and [Data Persistence Tutorial](../../tutorials/data-persistence.md).
+For more details on context management, see the [Context API Reference](../../../../../../typescript/docs/api/common-features/basics/context.md) and [Data Persistence Tutorial](../../../../../../docs/guides/common-features/basics/data-persistence.md).

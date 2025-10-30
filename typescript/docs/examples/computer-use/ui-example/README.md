@@ -61,4 +61,4 @@ UI interaction capabilities are particularly useful for:
 - Implementing mobile device control applications
 - Developing UI testing frameworks
 
-For more details on UI interaction, see the [UI API Reference](../../api-reference/ui.md).
+For more details on UI interaction, see the [UI API Reference](../../../api/computer-use/ui.md).

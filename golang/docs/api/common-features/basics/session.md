@@ -541,8 +541,8 @@ func main() {
 
 - [FileSystem API Reference](filesystem.md)
 - [Command API Reference](command.md)
-- [UI API Reference](ui.md)
-- [Window API Reference](window.md)
-- [OSS API Reference](oss.md)
-- [Application API Reference](application.md)
+- [UI API Reference](../../computer-use/ui.md)
+- [Window API Reference](../../computer-use/window.md)
+- [OSS API Reference](../advanced/oss.md)
+- [Application API Reference](../../computer-use/application.md)
 - [Context API Reference](context-manager.md)

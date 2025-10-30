@@ -53,6 +53,6 @@ result, err = client.List(
 
 ## Related Documentation
 
-- [Session Management Guide](../../../../docs/guides/common-features/basics/session-management.md)
-- [AgentBay API Reference](../../api/agentbay.md)
+- [Session Management Guide](../../../../../../docs/guides/common-features/basics/session-management.md)
+- [AgentBay API Reference](../../../../../../typescript/docs/api/common-features/basics/agentbay.md)
 

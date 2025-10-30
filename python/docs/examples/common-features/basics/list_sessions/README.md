@@ -329,8 +329,8 @@ time.sleep(1)  # Wait 1 second between requests
 
 ## Related Documentation
 
-- [Session Management Guide](../../../../docs/guides/common-features/basics/session-management.md)
-- [AgentBay API Reference](../../api/agentbay.md)
+- [Session Management Guide](../../../../../../docs/guides/common-features/basics/session-management.md)
+- [AgentBay API Reference](../../../../../../typescript/docs/api/common-features/basics/agentbay.md)
 - [Label Management Example](../label_management/README.md)
 
 ## Support

@@ -403,18 +403,18 @@ playwright install chromium
 
 - [Python SDK Documentation](../../)
 - [API Reference](../api/)
-- [Quick Start Guide](../../../../docs/quickstart/)
-- [Feature Guides](../../../../docs/guides/)
-- [Common Features Guide](../../../../docs/guides/common-features/)
-- [Browser Use Guide](../../../../docs/guides/browser-use/)
-- [Computer Use Guide](../../../../docs/guides/computer-use/)
-- [Mobile Use Guide](../../../../docs/guides/mobile-use/)
-- [CodeSpace Guide](../../../../docs/guides/codespace/)
+- [Quick Start Guide](../../../docs/quickstart/README.md)
+- [Feature Guides](../../../docs/guides/README.md)
+- [Common Features Guide](../../../docs/guides/common-features/README.md)
+- [Browser Use Guide](../../../docs/guides/browser-use/README.md)
+- [Computer Use Guide](../../../docs/guides/computer-use/README.md)
+- [Mobile Use Guide](../../../docs/guides/mobile-use/README.md)
+- [CodeSpace Guide](../../../docs/guides/codespace/README.md)
 
 ## 🤝 Getting Help
 
 - [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
-- [Documentation](../../../../docs/)
+- [Documentation](../../../docs/README.md)
 
 ---
 

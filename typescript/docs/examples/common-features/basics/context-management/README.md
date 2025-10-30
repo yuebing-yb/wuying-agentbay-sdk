@@ -52,4 +52,4 @@ Context management allows you to work with persistent storage areas that can be 
 - Sharing data between different sessions
 - Creating templates for quick session initialization
 
-For more details on context management, see the [Context API Reference](../../api-reference/context.md) and [Data Persistence Tutorial](../../tutorials/data-persistence.md).
+For more details on context management, see the [Context API Reference](../../../../api/common-features/basics/context.md) and [Data Persistence Tutorial](../../../../../../docs/guides/common-features/basics/data-persistence.md).

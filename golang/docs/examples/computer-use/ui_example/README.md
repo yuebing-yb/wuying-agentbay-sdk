@@ -52,4 +52,4 @@ UI interaction capabilities are particularly useful for:
 - Implementing remote control applications
 - Developing UI testing frameworks
 
-For more details on UI interaction, see the [UI API Reference](../../api-reference/ui.md). 
+For more details on UI interaction, see the [UI API Reference](../../../../../typescript/docs/api/computer-use/ui.md). 

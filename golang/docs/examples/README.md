@@ -298,13 +298,13 @@ go mod tidy
 
 - [Golang SDK Documentation](../../)
 - [API Reference](../api/)
-- [Quick Start Guide](../../../../docs/quickstart/)
-- [Feature Guides](../../../../docs/guides/)
+- [Quick Start Guide](../../../docs/quickstart/README.md)
+- [Feature Guides](../../../docs/guides/README.md)
 
 ## 🤝 Getting Help
 
 - [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
-- [Documentation](../../../../docs/)
+- [Documentation](../../../docs/README.md)
 
 ---
 

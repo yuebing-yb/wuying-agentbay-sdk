@@ -702,7 +702,7 @@ if (actResult.success) {
 }
 ```
 
-See the [PageUseAgent documentation](browser_agent.md) for more details.
+See the [PageUseAgent documentation](../../../../docs/guides/browser-use/advance-features/page-use-agent.md) for more details.
 
 ## Performance Considerations
 
@@ -800,6 +800,6 @@ export class Browser {
 - [Core Features](../../../../docs/guides/browser-use/core-features.md) - Essential browser features
 - [Advanced Features](../../../../docs/guides/browser-use/advance-features.md) - Advanced configuration
 - [Browser Examples](../../examples/browser-use/browser/README.md) - Runnable example code
-- [PageUseAgent API](browser_agent.md) - AI-powered browser automation
-- [Session Management](session.md) - Session lifecycle and management
+- [PageUseAgent API](../../../../docs/guides/browser-use/advance-features/page-use-agent.md) - AI-powered browser automation
+- [Session Management](../common-features/basics/session.md) - Session lifecycle and management
 
