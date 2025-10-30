@@ -111,7 +111,7 @@ The following table shows the latest official system images provided by AgentBay
 - These are the current latest versions of official system images. You can also create and use **custom images** through the AgentBay console to meet your specific requirements.
 
 **⚠️ Production Environment Recommendation**:
-- The `xxx_latest` images are automatically updated to newer versions, which may introduce API incompatibilities with older SDK versions.
+- The `xxxx_latest` images are automatically updated to newer versions, which may introduce API incompatibilities with older SDK versions.
 - **For production environments**, it is strongly recommended to use **custom images** with fixed versions to ensure stability and avoid unexpected breaking changes.
 - Custom images can be created and managed through the [AgentBay Console](https://agentbay.console.aliyun.com/), allowing you to control exactly which version of the environment your application uses.
 
