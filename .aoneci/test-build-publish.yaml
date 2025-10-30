@@ -228,7 +228,9 @@ jobs:
           echo "Commit author: $(git log -1 --pretty=format:'%an <%ae>')"
           echo "Commit date: $(git log -1 --pretty=format:'%ci')"  
           echo "COMMIT_SHA=$(git rev-parse --short=12 HEAD)" >> $AONE_CI_ENV
-          echo "$COMMIT_SHA"
+          echo "FULL_COMMIT_SHA=$FULL_COMMIT_SHA" >> $AONE_CI_ENV
+          echo "BRANCH_NAME=$CURRENT_BRANCH" >> $AONE_CI_ENV
+          echo "================================"
       
       - id: validate_module
         run: |
