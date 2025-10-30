@@ -822,7 +822,7 @@ class FileSystem(BaseService):
         """
         args = {"path": path}
         try:
-            result = self._call_mcp_tool("create_directory", args)
+            result = self.session.call_mcp_tool("create_directory", args)
             logger.debug(f"📥 create_directory response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -858,7 +858,7 @@ class FileSystem(BaseService):
         """
         args = {"path": path, "edits": edits, "dryRun": dry_run}
         try:
-            result = self._call_mcp_tool("edit_file", args)
+            result = self.session.call_mcp_tool("edit_file", args)
             logger.debug(f"📥 edit_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -924,7 +924,7 @@ class FileSystem(BaseService):
 
         args = {"path": path}
         try:
-            result = self._call_mcp_tool("get_file_info", args)
+            result = self.session.call_mcp_tool("get_file_info", args)
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1017,7 +1017,7 @@ class FileSystem(BaseService):
 
         args = {"path": path}
         try:
-            result = self._call_mcp_tool("list_directory", args)
+            result = self.session.call_mcp_tool("list_directory", args)
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1061,7 +1061,7 @@ class FileSystem(BaseService):
         """
         args = {"source": source, "destination": destination}
         try:
-            result = self._call_mcp_tool("move_file", args)
+            result = self.session.call_mcp_tool("move_file", args)
             logger.debug(f"📥 move_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -1102,7 +1102,7 @@ class FileSystem(BaseService):
             args["length"] = length
 
         try:
-            result = self._call_mcp_tool("read_file", args)
+            result = self.session.call_mcp_tool("read_file", args)
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1200,7 +1200,7 @@ class FileSystem(BaseService):
 
         args = {"paths": paths}
         try:
-            result = self._call_mcp_tool("read_multiple_files", args)
+            result = self.session.call_mcp_tool("read_multiple_files", args)
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1257,7 +1257,7 @@ class FileSystem(BaseService):
             args["excludePatterns"] = ",".join(exclude_patterns)
 
         try:
-            result = self._call_mcp_tool("search_files", args)
+            result = self.session.call_mcp_tool("search_files", args)
             logger.debug(f"📥 search_files response: {result}")
 
             if result.success:
@@ -1315,7 +1315,7 @@ class FileSystem(BaseService):
 
         args = {"path": path, "content": content, "mode": mode}
         try:
-            result = self._call_mcp_tool("write_file", args)
+            result = self.session.call_mcp_tool("write_file", args)
             logger.debug(f"📥 write_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -1646,7 +1646,7 @@ class FileSystem(BaseService):
 
         args = {"path": path}
         try:
-            result = self._call_mcp_tool("get_file_change", args)
+            result = self.session.call_mcp_tool("get_file_change", args)
             try:
                 print("Response body:")
                 print(

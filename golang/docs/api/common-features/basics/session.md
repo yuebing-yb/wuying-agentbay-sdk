@@ -282,6 +282,73 @@ for i, tool := range toolsResult.Tools {
 // Tool: write_file - Write content to a file
 ```
 
+### CallMcpTool
+
+Call an MCP tool directly. This is the unified public API for calling MCP tools. All feature modules (Command, Code, Agent, etc.) use this method internally.
+
+```go
+CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
+```
+
+**Parameters:**
+- `toolName` (string): Name of the MCP tool to call
+- `args` (interface{}): Arguments to pass to the tool (typically a map or struct)
+
+**Returns:**
+- `*models.McpToolResult`: Result containing:
+  - `Success` (bool): Whether the tool call was successful
+  - `Data` (string): Tool output data (text content extracted from response)
+  - `ErrorMessage` (string): Error message if the call failed
+  - `RequestID` (string): Unique identifier for the API request
+- `error`: An error if the call fails at the transport level
+
+**Behavior:**
+- Automatically detects VPC vs non-VPC mode
+- In VPC mode, uses HTTP requests to the VPC endpoint
+- In non-VPC mode, uses traditional API calls
+- Parses response data to extract text content from `content[0].text`
+- Handles the `isError` flag in responses
+- Returns structured error information
+
+**Example:**
+```go
+// Call the shell tool to execute a command
+result, err := session.CallMcpTool("shell", map[string]interface{}{
+	"command":    "echo 'Hello World'",
+	"timeout_ms": 1000,
+})
+if err != nil {
+	fmt.Printf("Error calling tool: %v\n", err)
+	return
+}
+
+if result.Success {
+	fmt.Printf("Output: %s\n", result.Data)
+	// Output: Hello World
+	fmt.Printf("Request ID: %s\n", result.RequestID)
+} else {
+	fmt.Printf("Error: %s\n", result.ErrorMessage)
+}
+
+// Example with error handling
+result2, err := session.CallMcpTool("shell", map[string]interface{}{
+	"command":    "invalid_command_12345",
+	"timeout_ms": 1000,
+})
+if err != nil {
+	fmt.Printf("Error calling tool: %v\n", err)
+	return
+}
+
+if !result2.Success {
+	fmt.Printf("Command failed: %s\n", result2.ErrorMessage)
+	// Output: Command failed: sh: 1: invalid_command_12345: not found
+}
+```
+
+**See Also:**
+- For a complete example, see [MCP Tool Direct Call Example](../../../../examples/common-features/basics/mcp_tool_direct_call/README.md)
+
 ## Session Creation with Extra Configurations
 
 Sessions can be created with additional configurations for specific environments using the `ExtraConfigs` parameter in `CreateSessionParams`. This is particularly useful for mobile sessions that require app management rules and resolution settings.

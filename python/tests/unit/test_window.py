@@ -116,7 +116,7 @@ class TestWindowManager(unittest.TestCase):
 
         # Mock _call_mcp_tool method to return success result
         self.success_result.data = json.dumps(windows_data)
-        self.window_manager._call_mcp_tool = MagicMock(return_value=self.success_result)
+        self.session.call_mcp_tool = MagicMock(return_value=self.success_result)
 
         # Call the test method
         result = self.window_manager.list_root_windows()
@@ -132,7 +132,7 @@ class TestWindowManager(unittest.TestCase):
     def test_list_root_windows_failure(self):
         """Test failure when retrieving root windows list"""
         # Mock _call_mcp_tool method to return failed result
-        self.window_manager._call_mcp_tool = MagicMock(return_value=self.failed_result)
+        self.session.call_mcp_tool = MagicMock(return_value=self.failed_result)
 
         # Call the test method
         result = self.window_manager.list_root_windows()
@@ -157,7 +157,7 @@ class TestWindowManager(unittest.TestCase):
 
         # Mock _call_mcp_tool method to return success result
         self.success_result.data = json.dumps(active_window)
-        self.window_manager._call_mcp_tool = MagicMock(return_value=self.success_result)
+        self.session.call_mcp_tool = MagicMock(return_value=self.success_result)
 
         # Call the test method
         result = self.window_manager.get_active_window()
@@ -171,40 +171,40 @@ class TestWindowManager(unittest.TestCase):
     def test_window_operations(self):
         """Test window operation methods"""
         # Mock _call_mcp_tool method to return success result
-        self.window_manager._call_mcp_tool = MagicMock(return_value=self.success_result)
+        self.session.call_mcp_tool = MagicMock(return_value=self.success_result)
 
         # Test activate window
         result = self.window_manager.activate_window(1)
         self.assertTrue(result.success)
-        self.window_manager._call_mcp_tool.assert_called_with(
+        self.session.call_mcp_tool.assert_called_with(
             "activate_window", {"window_id": 1}
         )
 
         # Test maximize window
         result = self.window_manager.maximize_window(1)
         self.assertTrue(result.success)
-        self.window_manager._call_mcp_tool.assert_called_with(
+        self.session.call_mcp_tool.assert_called_with(
             "maximize_window", {"window_id": 1}
         )
 
         # Test minimize window
         result = self.window_manager.minimize_window(1)
         self.assertTrue(result.success)
-        self.window_manager._call_mcp_tool.assert_called_with(
+        self.session.call_mcp_tool.assert_called_with(
             "minimize_window", {"window_id": 1}
         )
 
         # Test restore window
         result = self.window_manager.restore_window(1)
         self.assertTrue(result.success)
-        self.window_manager._call_mcp_tool.assert_called_with(
+        self.session.call_mcp_tool.assert_called_with(
             "restore_window", {"window_id": 1}
         )
 
     def test_window_operations_error_handling(self):
         """Test error handling for window operations"""
         # Mock _call_mcp_tool method to throw an exception
-        self.window_manager._call_mcp_tool = MagicMock(
+        self.session.call_mcp_tool = MagicMock(
             side_effect=Exception("Operation exception")
         )
 

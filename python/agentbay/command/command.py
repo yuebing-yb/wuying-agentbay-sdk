@@ -67,7 +67,7 @@ class Command(BaseService):
         try:
             args = {"command": command, "timeout_ms": timeout_ms}
 
-            result = self._call_mcp_tool("shell", args)
+            result = self.session.call_mcp_tool("shell", args)
 
             if result.success:
                 return CommandResult(

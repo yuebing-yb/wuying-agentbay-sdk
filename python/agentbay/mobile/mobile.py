@@ -69,7 +69,7 @@ class Mobile(BaseService):
         """
         args = {"x": x, "y": y}
         try:
-            result = self._call_mcp_tool("tap", args)
+            result = self.session.call_mcp_tool("tap", args)
 
             if not result.success:
                 return BoolResult(
@@ -123,7 +123,7 @@ class Mobile(BaseService):
             "duration_ms": duration_ms,
         }
         try:
-            result = self._call_mcp_tool("swipe", args)
+            result = self.session.call_mcp_tool("swipe", args)
 
             if not result.success:
                 return BoolResult(
@@ -159,7 +159,7 @@ class Mobile(BaseService):
         """
         args = {"text": text}
         try:
-            result = self._call_mcp_tool("input_text", args)
+            result = self.session.call_mcp_tool("input_text", args)
 
             if not result.success:
                 return BoolResult(
@@ -201,7 +201,7 @@ class Mobile(BaseService):
         """
         args = {"key": key}
         try:
-            result = self._call_mcp_tool("send_key", args)
+            result = self.session.call_mcp_tool("send_key", args)
 
             if not result.success:
                 return BoolResult(
@@ -239,7 +239,7 @@ class Mobile(BaseService):
         """
         args = {"timeout_ms": timeout_ms}
         try:
-            result = self._call_mcp_tool("get_clickable_ui_elements", args)
+            result = self.session.call_mcp_tool("get_clickable_ui_elements", args)
             request_id = result.request_id
 
             if not result.success:
@@ -314,7 +314,7 @@ class Mobile(BaseService):
             return parsed
 
         try:
-            result = self._call_mcp_tool("get_all_ui_elements", args)
+            result = self.session.call_mcp_tool("get_all_ui_elements", args)
             request_id = result.request_id
 
             if not result.success:
@@ -373,7 +373,7 @@ class Mobile(BaseService):
                 "ignore_system_apps": ignore_system_apps,
             }
 
-            result = self._call_mcp_tool("get_installed_apps", args)
+            result = self.session.call_mcp_tool("get_installed_apps", args)
 
             if not result.success:
                 return InstalledAppListResult(
@@ -430,7 +430,7 @@ class Mobile(BaseService):
             if activity:
                 args["activity"] = activity
 
-            result = self._call_mcp_tool("start_app", args)
+            result = self.session.call_mcp_tool("start_app", args)
 
             if not result.success:
                 return ProcessListResult(
@@ -472,7 +472,7 @@ class Mobile(BaseService):
         """
         try:
             args = {"stop_cmd": stop_cmd}
-            result = self._call_mcp_tool("stop_app_by_cmd", args)
+            result = self.session.call_mcp_tool("stop_app_by_cmd", args)
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -493,7 +493,7 @@ class Mobile(BaseService):
         """
         args = {}
         try:
-            result = self._call_mcp_tool("system_screenshot", args)
+            result = self.session.call_mcp_tool("system_screenshot", args)
 
             if not result.success:
                 return OperationResult(

@@ -107,7 +107,7 @@ class UI(BaseService):
         """
         args = {"timeout_ms": timeout_ms}
         try:
-            result = self._call_mcp_tool("get_clickable_ui_elements", args)
+            result = self.session.call_mcp_tool("get_clickable_ui_elements", args)
             request_id = result.request_id
 
             if not result.success:
@@ -196,7 +196,7 @@ class UI(BaseService):
             return parsed
 
         try:
-            result = self._call_mcp_tool("get_all_ui_elements", args)
+            result = self.session.call_mcp_tool("get_all_ui_elements", args)
             request_id = result.request_id
 
             if not result.success:
@@ -265,7 +265,7 @@ class UI(BaseService):
         """
         args = {"key": key}
         try:
-            result = self._call_mcp_tool("send_key", args)
+            result = self.session.call_mcp_tool("send_key", args)
 
             if not result.success:
                 return BoolResult(
@@ -317,7 +317,7 @@ class UI(BaseService):
         """
         args = {"text": text}
         try:
-            result = self._call_mcp_tool("input_text", args)
+            result = self.session.call_mcp_tool("input_text", args)
 
             if not result.success:
                 return BoolResult(
@@ -387,7 +387,7 @@ class UI(BaseService):
             "duration_ms": duration_ms,
         }
         try:
-            result = self._call_mcp_tool("swipe", args)
+            result = self.session.call_mcp_tool("swipe", args)
 
             if not result.success:
                 return BoolResult(
@@ -442,7 +442,7 @@ class UI(BaseService):
         """
         args = {"x": x, "y": y, "button": button}
         try:
-            result = self._call_mcp_tool("click", args)
+            result = self.session.call_mcp_tool("click", args)
 
             if not result.success:
                 return BoolResult(
@@ -491,7 +491,7 @@ class UI(BaseService):
         """
         args = {}
         try:
-            result = self._call_mcp_tool("system_screenshot", args)
+            result = self.session.call_mcp_tool("system_screenshot", args)
 
             if not result.success:
                 return OperationResult(

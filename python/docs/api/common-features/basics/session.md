@@ -292,6 +292,92 @@ list_mcp_tools(image_id: Optional[str] = None) -> McpToolsResult
 **Raises:**
 - `AgentBayError`: If listing MCP tools fails due to API errors or other issues.
 
+**Example:**
+```python
+# List all available MCP tools
+result = session.list_mcp_tools()
+print(f"Found {len(result.tools)} MCP tools")
+# Output: Found 69 MCP tools
+
+# Display first 3 tools
+for tool in result.tools[:3]:
+    print(f"Tool: {tool.name}")
+    print(f"  Description: {tool.description}")
+    print(f"  Server: {tool.server}")
+```
+
+### call_mcp_tool
+
+Call an MCP tool directly. This is the unified public API for calling MCP tools. All feature modules (Command, Code, Agent, etc.) use this method internally.
+
+```python
+call_mcp_tool(
+    tool_name: str,
+    args: Dict[str, Any],
+    read_timeout: Optional[int] = None,
+    connect_timeout: Optional[int] = None
+) -> McpToolResult
+```
+
+**Parameters:**
+- `tool_name` (str): Name of the MCP tool to call
+- `args` (Dict[str, Any]): Arguments to pass to the tool as a dictionary
+- `read_timeout` (int, optional): Read timeout in seconds
+- `connect_timeout` (int, optional): Connection timeout in seconds
+
+**Returns:**
+- `McpToolResult`: Result containing:
+  - `success` (bool): Whether the tool call was successful
+  - `data` (str): Tool output data
+  - `error_message` (str): Error message if the call failed
+  - `request_id` (str): Unique identifier for the API request
+
+**Raises:**
+- `AgentBayError`: If calling the MCP tool fails due to API errors or other issues.
+
+**Behavior:**
+- Automatically detects VPC vs non-VPC mode
+- In VPC mode, uses HTTP requests to the VPC endpoint
+- In non-VPC mode, uses traditional API calls
+- Parses response data to extract text content
+- Handles both successful results and error responses
+
+**Example:**
+```python
+# Call the shell tool to execute a command
+result = session.call_mcp_tool("shell", {
+    "command": "echo 'Hello World'",
+    "timeout_ms": 1000
+})
+
+if result.success:
+    print(f"Output: {result.data}")
+    # Output: Hello World
+    print(f"Request ID: {result.request_id}")
+else:
+    print(f"Error: {result.error_message}")
+
+# Call with custom timeouts
+result = session.call_mcp_tool(
+    "shell",
+    {"command": "pwd", "timeout_ms": 1000},
+    read_timeout=30,
+    connect_timeout=10
+)
+
+# Example with error handling
+result = session.call_mcp_tool("shell", {
+    "command": "invalid_command_12345",
+    "timeout_ms": 1000
+})
+if not result.success:
+    print(f"Command failed: {result.error_message}")
+    # Output: Command failed: sh: 1: invalid_command_12345: not found
+```
+
+**See Also:**
+- For a complete example, see [MCP Tool Direct Call Example](../../../../examples/common-features/basics/mcp_tool_direct_call/README.md)
+
 ## Related Resources
 
 - [FileSystem API Reference](filesystem.md)

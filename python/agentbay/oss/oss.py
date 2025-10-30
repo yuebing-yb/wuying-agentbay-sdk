@@ -160,7 +160,7 @@ class Oss(BaseService):
             if region:
                 args["region"] = region
 
-            result = self._call_mcp_tool("oss_env_init", args)
+            result = self.session.call_mcp_tool("oss_env_init", args)
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -215,7 +215,7 @@ class Oss(BaseService):
         try:
             args = {"bucket": bucket, "object": object, "path": path}
 
-            result = self._call_mcp_tool("oss_upload", args)
+            result = self.session.call_mcp_tool("oss_upload", args)
             logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
@@ -254,7 +254,7 @@ class Oss(BaseService):
         try:
             args = {"url": url, "path": path}
 
-            result = self._call_mcp_tool("oss_upload_annon", args)
+            result = self.session.call_mcp_tool("oss_upload_annon", args)
             logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
@@ -295,7 +295,7 @@ class Oss(BaseService):
         try:
             args = {"bucket": bucket, "object": object, "path": path}
 
-            result = self._call_mcp_tool("oss_download", args)
+            result = self.session.call_mcp_tool("oss_download", args)
             logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
@@ -334,7 +334,7 @@ class Oss(BaseService):
         try:
             args = {"url": url, "path": path}
 
-            result = self._call_mcp_tool("oss_download_annon", args)
+            result = self.session.call_mcp_tool("oss_download_annon", args)
             logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:

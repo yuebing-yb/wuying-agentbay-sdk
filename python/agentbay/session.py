@@ -1,5 +1,5 @@
 import json
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 from .logger import (
     get_logger,
     log_api_call,
@@ -766,3 +766,320 @@ class Session:
         )
 
         return McpToolsResult(request_id=request_id, tools=tools)
+
+    def call_mcp_tool(
+        self,
+        tool_name: str,
+        args: Dict[str, Any],
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None,
+    ):
+        """
+        Call an MCP tool directly.
+
+        This is the unified public API for calling MCP tools. All feature modules
+        (Command, Code, Agent, etc.) use this method internally.
+
+        Args:
+            tool_name: Name of the MCP tool to call
+            args: Arguments to pass to the tool as a dictionary
+            read_timeout: Optional read timeout in seconds
+            connect_timeout: Optional connection timeout in seconds
+
+        Returns:
+            McpToolResult: Result containing success status, data, and error message
+
+        Example:
+            >>> result = session.call_mcp_tool("shell", {"command": "ls", "timeout_ms": 1000})
+            >>> if result.success:
+            >>>     print(result.data)
+        """
+        from agentbay.model import McpToolResult
+        from agentbay.api.models import CallMcpToolRequest
+        import requests
+
+        try:
+            args_json = json.dumps(args, ensure_ascii=False)
+
+            # Check if this is a VPC session
+            if self.is_vpc_enabled():
+                return self._call_mcp_tool_vpc(tool_name, args_json)
+
+            # Non-VPC mode: use traditional API call
+            return self._call_mcp_tool_api(
+                tool_name, args_json, read_timeout, connect_timeout
+            )
+        except Exception as e:
+            logger.error(f"❌ Failed to call MCP tool {tool_name}: {e}")
+            return McpToolResult(
+                request_id="",
+                success=False,
+                data="",
+                error_message=f"Failed to call MCP tool: {e}",
+            )
+
+    def _call_mcp_tool_vpc(self, tool_name: str, args_json: str):
+        """
+        Handle VPC-based MCP tool calls using HTTP requests.
+
+        Args:
+            tool_name: Name of the tool to call
+            args_json: JSON string of arguments
+
+        Returns:
+            McpToolResult: The response from the tool
+        """
+        from agentbay.model import McpToolResult
+        import requests
+        import time
+        import random
+        import string
+
+        log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
+
+        # Find server for this tool
+        server = self.find_server_for_tool(tool_name)
+        if not server:
+            log_operation_error(
+                "CallMcpTool(VPC)",
+                f"server not found for tool: {tool_name}",
+                False,
+            )
+            return McpToolResult(
+                request_id="",
+                success=False,
+                data="",
+                error_message=f"server not found for tool: {tool_name}",
+            )
+
+        # Check VPC network configuration
+        if not self.get_network_interface_ip() or not self.get_http_port():
+            log_operation_error(
+                "CallMcpTool(VPC)",
+                f"VPC network configuration incomplete: networkInterfaceIp={self.get_network_interface_ip()}, httpPort={self.get_http_port()}",
+                False,
+            )
+            return McpToolResult(
+                request_id="",
+                success=False,
+                data="",
+                error_message=f"VPC network configuration incomplete: networkInterfaceIp={self.get_network_interface_ip()}, httpPort={self.get_http_port()}",
+            )
+
+        # Construct VPC URL with query parameters
+        base_url = f"http://{self.get_network_interface_ip()}:{self.get_http_port()}/callTool"
+
+        # Prepare query parameters
+        request_id = f"vpc-{int(time.time() * 1000)}-{''.join(random.choices(string.ascii_lowercase + string.digits, k=9))}"
+        params = {
+            "server": server,
+            "tool": tool_name,
+            "args": args_json,
+            "token": self.get_token(),
+            "requestId": request_id,
+        }
+
+        # Set headers
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        try:
+            # Send HTTP request
+            response = requests.get(
+                base_url, params=params, headers=headers, timeout=30
+            )
+            response.raise_for_status()
+
+            # Parse response
+            response_data = response.json()
+
+            # Extract content
+            content = response_data.get("content", [])
+            is_error = response_data.get("isError", False)
+
+            # Extract text from content
+            text_content = ""
+            if content and isinstance(content, list) and len(content) > 0:
+                first_content = content[0]
+                if isinstance(first_content, dict):
+                    text_content = first_content.get("text", "")
+
+            if is_error:
+                log_operation_error(
+                    "CallMcpTool(VPC)",
+                    f"Tool returned error: {text_content}",
+                    False,
+                )
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message=text_content,
+                )
+
+            log_api_response_with_details(
+                "CallMcpTool(VPC)",
+                request_id,
+                True,
+                {"tool": tool_name},
+                text_content[:200] if text_content else "",
+            )
+
+            return McpToolResult(
+                request_id=request_id,
+                success=True,
+                data=text_content,
+                error_message="",
+            )
+
+        except requests.exceptions.RequestException as e:
+            log_operation_error(
+                "CallMcpTool(VPC)", f"HTTP request failed: {e}", True
+            )
+            return McpToolResult(
+                request_id=request_id,
+                success=False,
+                data="",
+                error_message=f"HTTP request failed: {e}",
+            )
+        except Exception as e:
+            log_operation_error(
+                "CallMcpTool(VPC)", f"Unexpected error: {e}", True
+            )
+            return McpToolResult(
+                request_id=request_id,
+                success=False,
+                data="",
+                error_message=f"Unexpected error: {e}",
+            )
+
+    def _call_mcp_tool_api(
+        self,
+        tool_name: str,
+        args_json: str,
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None,
+    ):
+        """
+        Handle traditional API-based MCP tool calls.
+
+        Args:
+            tool_name: Name of the tool to call
+            args_json: JSON string of arguments
+            read_timeout: Optional read timeout in seconds
+            connect_timeout: Optional connection timeout in seconds
+
+        Returns:
+            McpToolResult: The response from the tool
+        """
+        from agentbay.model import McpToolResult
+        from agentbay.api.models import CallMcpToolRequest
+
+        log_api_call(
+            "CallMcpTool",
+            f"Tool={tool_name}, SessionId={self.session_id}, ArgsLength={len(args_json)}",
+        )
+
+        request = CallMcpToolRequest(
+            authorization=f"Bearer {self.get_api_key()}",
+            session_id=self.session_id,
+            name=tool_name,
+            args=args_json,
+        )
+
+        try:
+            response = self.get_client().call_mcp_tool(
+                request, read_timeout=read_timeout, connect_timeout=connect_timeout
+            )
+
+            # Extract request ID
+            request_id = extract_request_id(response)
+
+            # Check for API-level errors
+            response_map = response.to_map()
+            if not response_map:
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message="Invalid response format",
+                )
+
+            body = response_map.get("body", {})
+            if not body:
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message="Invalid response body",
+                )
+
+            # Parse the Data field
+            data_str = body.get("Data", "")
+            if not data_str:
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message="Empty response data",
+                )
+
+            # Parse JSON data
+            try:
+                # Handle both string and dict responses
+                if isinstance(data_str, dict):
+                    data_obj = data_str
+                else:
+                    data_obj = json.loads(data_str)
+            except json.JSONDecodeError as e:
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message=f"Failed to parse response data: {e}",
+                )
+
+            # Extract content
+            content = data_obj.get("content", [])
+            is_error = data_obj.get("isError", False)
+
+            # Extract text from content
+            text_content = ""
+            if content and isinstance(content, list) and len(content) > 0:
+                first_content = content[0]
+                if isinstance(first_content, dict):
+                    text_content = first_content.get("text", "")
+
+            if is_error:
+                log_operation_error(
+                    "CallMcpTool", f"Tool returned error: {text_content}", False
+                )
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message=text_content,
+                )
+
+            log_api_response_with_details(
+                "CallMcpTool",
+                request_id,
+                True,
+                {"tool": tool_name},
+                text_content[:200] if text_content else "",
+            )
+
+            return McpToolResult(
+                request_id=request_id,
+                success=True,
+                data=text_content,
+                error_message="",
+            )
+
+        except Exception as e:
+            log_operation_error("CallMcpTool", f"API request failed: {e}", True)
+            return McpToolResult(
+                request_id="",
+                success=False,
+                data="",
+                error_message=f"API request failed: {e}",
+            )

@@ -165,6 +165,7 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_session = Mock()
+        self.session = self.mock_session  # Add session reference
         self.mock_session.get_api_key.return_value = "test-api-key"
         self.mock_session.get_session_id.return_value = "test-session-id"
         
@@ -181,13 +182,13 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
             {"eventType": "modify", "path": "/tmp/file2.txt", "pathType": "file"}
         ])
         
-        self.filesystem._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Test the method
         result = self.filesystem._get_file_change("/tmp/test_dir")
         
         # Verify the call
-        self.filesystem._call_mcp_tool.assert_called_once_with("get_file_change", {"path": "/tmp/test_dir"})
+        self.session.call_mcp_tool.assert_called_once_with("get_file_change", {"path": "/tmp/test_dir"})
         
         # Verify the result
         self.assertTrue(result.success)
@@ -207,7 +208,7 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
         mock_result.error_message = "Directory not found"
         mock_result.data = ""
         
-        self.filesystem._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Test the method
         result = self.filesystem._get_file_change("/tmp/nonexistent")
@@ -226,7 +227,7 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
         mock_result.request_id = "test-789"
         mock_result.data = "invalid json data"
         
-        self.filesystem._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Test the method
         result = self.filesystem._get_file_change("/tmp/test_dir")

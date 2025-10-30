@@ -69,7 +69,7 @@ class Computer(BaseService):
 
         args = {"x": x, "y": y, "button": button_str}
         try:
-            result = self._call_mcp_tool("click_mouse", args)
+            result = self.session.call_mcp_tool("click_mouse", args)
 
             if not result.success:
                 return BoolResult(
@@ -106,7 +106,7 @@ class Computer(BaseService):
         """
         args = {"x": x, "y": y}
         try:
-            result = self._call_mcp_tool("move_mouse", args)
+            result = self.session.call_mcp_tool("move_mouse", args)
 
             if not result.success:
                 return BoolResult(
@@ -165,7 +165,7 @@ class Computer(BaseService):
             "button": button_str,
         }
         try:
-            result = self._call_mcp_tool("drag_mouse", args)
+            result = self.session.call_mcp_tool("drag_mouse", args)
 
             if not result.success:
                 return BoolResult(
@@ -216,7 +216,7 @@ class Computer(BaseService):
 
         args = {"x": x, "y": y, "direction": direction_str, "amount": amount}
         try:
-            result = self._call_mcp_tool("scroll", args)
+            result = self.session.call_mcp_tool("scroll", args)
 
             if not result.success:
                 return BoolResult(
@@ -250,7 +250,7 @@ class Computer(BaseService):
         """
         args = {}
         try:
-            result = self._call_mcp_tool("get_cursor_position", args)
+            result = self.session.call_mcp_tool("get_cursor_position", args)
 
             if not result.success:
                 return OperationResult(
@@ -287,7 +287,7 @@ class Computer(BaseService):
         """
         args = {"text": text}
         try:
-            result = self._call_mcp_tool("input_text", args)
+            result = self.session.call_mcp_tool("input_text", args)
 
             if not result.success:
                 return BoolResult(
@@ -324,7 +324,7 @@ class Computer(BaseService):
         """
         args = {"keys": keys, "hold": hold}
         try:
-            result = self._call_mcp_tool("press_keys", args)
+            result = self.session.call_mcp_tool("press_keys", args)
 
             if not result.success:
                 return BoolResult(
@@ -360,7 +360,7 @@ class Computer(BaseService):
         """
         args = {"keys": keys}
         try:
-            result = self._call_mcp_tool("release_keys", args)
+            result = self.session.call_mcp_tool("release_keys", args)
 
             if not result.success:
                 return BoolResult(
@@ -396,7 +396,7 @@ class Computer(BaseService):
         """
         args = {}
         try:
-            result = self._call_mcp_tool("get_screen_size", args)
+            result = self.session.call_mcp_tool("get_screen_size", args)
 
             if not result.success:
                 return OperationResult(
@@ -430,7 +430,7 @@ class Computer(BaseService):
         """
         args = {}
         try:
-            result = self._call_mcp_tool("system_screenshot", args)
+            result = self.session.call_mcp_tool("system_screenshot", args)
 
             if not result.success:
                 return OperationResult(

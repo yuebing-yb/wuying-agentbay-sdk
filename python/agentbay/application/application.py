@@ -319,7 +319,7 @@ class ApplicationManager(BaseService):
                 "ignore_system_apps": ignore_system_apps,
             }
 
-            result = self._call_mcp_tool("get_installed_apps", args)
+            result = self.session.call_mcp_tool("get_installed_apps", args)
 
             if not result.success:
                 return InstalledAppListResult(
@@ -391,7 +391,7 @@ class ApplicationManager(BaseService):
             if activity:
                 args["activity"] = activity
 
-            result = self._call_mcp_tool("start_app", args)
+            result = self.session.call_mcp_tool("start_app", args)
 
             if not result.success:
                 return ProcessListResult(
@@ -448,7 +448,7 @@ class ApplicationManager(BaseService):
         """
         try:
             args = {"pname": pname}
-            result = self._call_mcp_tool("stop_app_by_pname", args)
+            result = self.session.call_mcp_tool("stop_app_by_pname", args)
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -486,7 +486,7 @@ class ApplicationManager(BaseService):
         """
         try:
             args = {"pid": pid}
-            result = self._call_mcp_tool("stop_app_by_pid", args)
+            result = self.session.call_mcp_tool("stop_app_by_pid", args)
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -524,7 +524,7 @@ class ApplicationManager(BaseService):
         """
         try:
             args = {"stop_cmd": stop_cmd}
-            result = self._call_mcp_tool("stop_app_by_cmd", args)
+            result = self.session.call_mcp_tool("stop_app_by_cmd", args)
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -549,7 +549,7 @@ class ApplicationManager(BaseService):
                 applications/processes.
         """
         try:
-            result = self._call_mcp_tool("list_visible_apps", {})
+            result = self.session.call_mcp_tool("list_visible_apps", {})
 
             if not result.success:
                 return ProcessListResult(

@@ -107,7 +107,7 @@ class Agent(BaseService):
         """
         try:
             args = {"task": task}
-            result = self._call_mcp_tool("flux_execute_task", args)
+            result = self.session.call_mcp_tool("flux_execute_task", args)
             if result.success:
                 content = json.loads(result.data)
                 task_id = content.get("task_id", "")
@@ -153,7 +153,7 @@ class Agent(BaseService):
         """
         try:
             args = {"task": task}
-            result = self._call_mcp_tool("flux_execute_task", args)
+            result = self.session.call_mcp_tool("flux_execute_task", args)
             if result.success:
                 content = json.loads(result.data)
                 task_id = content.get("task_id", "")
@@ -239,7 +239,7 @@ class Agent(BaseService):
         """
         try:
             args = {"task_id": task_id}
-            result = self._call_mcp_tool("flux_get_task_status", args)
+            result = self.session.call_mcp_tool("flux_get_task_status", args)
             if result.success:
                 content = json.loads(result.data)
                 return QueryResult(
@@ -291,7 +291,7 @@ class Agent(BaseService):
         try:
             args = {"task_id": task_id}
 
-            result = self._call_mcp_tool("flux_terminate_task", args)
+            result = self.session.call_mcp_tool("flux_terminate_task", args)
             if result.success:
                 content = json.loads(result.data)
                 task_id = content.get("task_id", task_id)
