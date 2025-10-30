@@ -24,6 +24,7 @@
 - [Data Persistence](guides/common-features/basics/data-persistence.md) - Cross-session data storage
 
 #### Advanced
+- [Custom Images](guides/common-features/advanced/custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](guides/common-features/advanced/session-link-access.md) - Session connectivity and URL generation
 - [VPC Sessions](guides/common-features/advanced/vpc-sessions.md) - Secure isolated network environments
 - [Agent Modules](guides/common-features/advanced/agent-modules.md) - AI-powered task automation

@@ -4,6 +4,7 @@ Advanced capabilities for complex use cases.
 
 ## Documentation
 
+- [Custom Images](custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](session-link-access.md) - Session connectivity and URL generation
 - [VPC Sessions](vpc-sessions.md) - Isolated network environments
 - [Agent Modules](agent-modules.md) - AI-powered task execution

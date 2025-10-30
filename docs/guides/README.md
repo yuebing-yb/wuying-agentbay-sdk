@@ -18,6 +18,7 @@ Features available across all environments:
 - [SDK Configuration](common-features/configuration/sdk-configuration.md) - SDK settings and environment variables
 
 **Advanced**
+- [Custom Images](common-features/advanced/custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](common-features/advanced/session-link-access.md) - Session connectivity and URL generation
 - [VPC Sessions](common-features/advanced/vpc-sessions.md) - Virtual private cloud session configuration
 - [Agent Modules](common-features/advanced/agent-modules.md) - AI-driven automation capabilities

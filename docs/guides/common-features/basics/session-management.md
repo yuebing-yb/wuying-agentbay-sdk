@@ -59,7 +59,7 @@ if session_result.success:
 
 ## Creating Sessions with Custom Parameters
 
-You can customize sessions by specifying parameters such as [image ID](../../../quickstart/basic-concepts.md#image-types) and [labels](#session-label-management):
+You can customize sessions by specifying parameters such as [image ID](../../../quickstart/basic-concepts.md#image-types) and [labels](#session-label-management). For production environments, consider using [custom images](../advanced/custom-images.md) with fixed versions:
 
 ```python
 from agentbay import AgentBay
