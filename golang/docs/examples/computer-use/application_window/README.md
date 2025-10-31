@@ -51,4 +51,4 @@ This example is useful for automation scenarios where you need to manipulate app
 - Developing screen sharing and remote control applications
 - Automating UI interactions
 
-For more details on window management, see the [Window API Reference](../../api-reference/window.md) and [Application API Reference](../../api-reference/application.md).
+For more details on window management, see the [Window API Reference](../../../../../typescript/docs/api/computer-use/window.md) and [Application API Reference](../../../../../typescript/docs/api/computer-use/application.md).

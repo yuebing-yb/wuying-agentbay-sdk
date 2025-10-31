@@ -47,4 +47,4 @@ Session parameters allow you to customize how sessions are created and make it e
 - Filtering sessions by purpose or state
 - Implementing session management in multi-user environments
 
-For more details on session parameters, see the [Session API Reference](../../api-reference/session.md) and [Session Management Tutorial](../../tutorials/session-management.md).
+For more details on session parameters, see the [Session API Reference](../../../../../../typescript/docs/api/common-features/basics/session.md) and [Session Management Tutorial](../../../../../../docs/guides/common-features/basics/session-management.md).

@@ -47,4 +47,4 @@ The example demonstrates a full lifecycle of context synchronization:
 8. Use the builder pattern for creating context sync configurations
 9. Clean up resources (session and context)
 
-For more details on context synchronization, see the [Context API Reference](../../api-reference/context.md) and [Data Persistence Tutorial](../../tutorials/data-persistence.md). 
+For more details on context synchronization, see the [Context API Reference](../../../../../../typescript/docs/api/common-features/basics/context.md) and [Data Persistence Tutorial](../../../../../../docs/guides/common-features/basics/data-persistence.md). 

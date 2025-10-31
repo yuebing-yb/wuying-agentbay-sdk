@@ -34,6 +34,7 @@ import {
   setRequestId,
   getRequestId,
 } from "./utils/logger";
+import { VERSION, IS_RELEASE } from "./version";
 
 /**
  * Generate a random context name using alphanumeric characters with timestamp.
@@ -63,6 +64,7 @@ export interface CreateSessionParams {
   policyId?: string;
   enableBrowserReplay?: boolean;
   extraConfigs?: ExtraConfigs;
+  framework?: string;
 }
 
 /**
@@ -200,6 +202,11 @@ export class AgentBay {
         authorization: "Bearer " + this.apiKey,
       });
 
+      // Add SDK stats for tracking
+      const framework = params?.framework || "";
+      const sdkStatsJson = `{"source":"sdk","sdk_language":"typescript","sdk_version":"${VERSION}","is_release":${IS_RELEASE},"framework":"${framework}"}`;
+      request.sdkStats = sdkStatsJson;
+
       // Add labels if provided
       if (params.labels) {
         request.labels = JSON.stringify(params.labels);
@@ -289,7 +296,7 @@ export class AgentBay {
 
       // Add extra configs if provided
       if (params.extraConfigs) {
-        request.extraConfigs = params.extraConfigs;
+        request.extraConfigs = JSON.stringify(params.extraConfigs);
       }
 
       // Log API request
@@ -431,6 +438,10 @@ export class AgentBay {
 
       // Store the file transfer context ID if we created one
       session.fileTransferContextId = this.fileTransferContext ? this.fileTransferContext.id : null;
+
+      // Store the browser recording context ID if we created one
+      session.recordContextId = recordContextId || null;
+
       // Store imageId used for this session
       (session as any).imageId = params.imageId;
 
@@ -846,9 +857,6 @@ export class AgentBay {
   async delete(session: Session, syncContext = false): Promise<DeleteResult> {
     try {
       // Delete the session and get the result
-      if (session.enableBrowserReplay) {
-        syncContext = true;
-      }
       logAPICall("DeleteSession", { sessionId: session.sessionId });
       const deleteResult = await session.delete(syncContext);
 

@@ -63,4 +63,4 @@ OSS integration allows you to:
 - Download resources from external sources
 - Implement file backup and restore functionality
 
-For more details on OSS integration, see the [OSS API Reference](../../api-reference/oss.md).
+For more details on OSS integration, see the [OSS API Reference](../../../../../../typescript/docs/api/common-features/advanced/oss.md).

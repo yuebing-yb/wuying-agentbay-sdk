@@ -133,6 +133,15 @@ if err != nil {
 - **CodeSpace** - Code execution and development environment
 - **Mobile Use** - Mobile device simulation and control
 
+## 🤖 AI-Assisted Development
+
+If you're using AI coding assistants (Claude, Cursor, GitHub Copilot, etc.) to develop with AgentBay SDK, you can use [llms.txt](./llms.txt) and [llms-full.txt](./llms-full.txt) as context for better code suggestions:
+
+- **[llms.txt](./llms.txt)** - Concise documentation index (~900 tokens) for quick reference
+- **[llms-full.txt](./llms-full.txt)** - Complete documentation corpus (~140k tokens) for comprehensive context
+
+These files contain the full SDK documentation across all languages (Python, TypeScript, Golang), API references, and cookbook examples. Simply reference them in your AI assistant to get better understanding of the SDK's architecture and APIs.
+
 ## 🆘 Get Help
 
 - [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)

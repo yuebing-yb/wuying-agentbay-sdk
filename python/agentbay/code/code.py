@@ -85,7 +85,7 @@ class Code(BaseService):
                 )
 
             args = {"code": code, "language": language, "timeout_s": timeout_s}
-            result = self._call_mcp_tool("run_code", args)
+            result = self.session.call_mcp_tool("run_code", args)
             logger.debug(f"Run code response: {result}")
 
             if result.success:

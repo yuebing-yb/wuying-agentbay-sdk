@@ -213,10 +213,10 @@ func main() {
 	}
 
 	context := result.Context
-	
+
 	// Update the context name
 	context.Name = "my-updated-context"
-	
+
 	// Save the changes
 	updateResult, err := client.Context.Update(context)
 	if err != nil {
@@ -273,7 +273,7 @@ func main() {
 	}
 
 	context := result.Context
-	
+
 	// Delete the context
 	deleteResult, err := client.Context.Delete(context)
 	if err != nil {
@@ -338,6 +338,150 @@ ListFiles(contextID string, parentFolderPath string, pageNumber int32, pageSize 
 - `*ContextFileListResult`: A result object containing the list of files and RequestID.
 - `error`: An error if the operation fails.
 
+### ClearAsync
+
+Asynchronously initiates a task to clear the context's persistent data.
+
+```go
+ClearAsync(contextID string) (*ContextClearResult, error)
+```
+
+**Parameters:**
+- `contextID` (string): The unique identifier of the context to clear.
+
+**Returns:**
+- `*ContextClearResult`: A result object indicating the task has been successfully started, with status field set to "clearing".
+- `error`: An error if the operation fails.
+
+**Example:**
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+	// Initialize the SDK
+	client, err := agentbay.NewAgentBay("your_api_key", nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get an existing context
+	result, err := client.Context.Get("my-context", false)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+
+	context := result.Context
+
+	// Start clearing context data asynchronously
+	clearResult, err := client.Context.ClearAsync(context.ID)
+	if err != nil {
+		fmt.Printf("Error starting context clear: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Clear task started: Success=%t, Status=%s\n",
+		clearResult.Success, clearResult.Status)
+	// Expected output: Clear task started: Success=true, Status=clearing
+	fmt.Printf("Request ID: %s\n", clearResult.RequestID)
+	// Expected: A valid UUID-format request ID
+}
+```
+
+### GetClearStatus
+
+Queries the status of the clearing task.
+
+```go
+GetClearStatus(contextID string) (*ContextClearResult, error)
+```
+
+**Parameters:**
+- `contextID` (string): The unique identifier of the context to check.
+
+**Returns:**
+- `*ContextClearResult`: A result object containing the current task status.
+- `error`: An error if the operation fails.
+
+**State Transitions:**
+- "clearing": Data clearing is in progress
+- "available": Clearing completed successfully (final success state)
+- "in-use": Context is being used
+- "pre-available": Context is being prepared
+
+**Example:**
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+	// Initialize the SDK
+	client, err := agentbay.NewAgentBay("your_api_key", nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get an existing context
+	result, err := client.Context.Get("my-context", false)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+
+	context := result.Context
+
+	// Check clearing status
+	statusResult, err := client.Context.GetClearStatus(context.ID)
+	if err != nil {
+		fmt.Printf("Error getting clear status: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Current status: %s\n", statusResult.Status)
+	fmt.Printf("Request ID: %s\n", statusResult.RequestID)
+	// Expected: Current status: clearing/available/in-use/pre-available
+}
+```
+
+### Clear
+
+Synchronously clears the context's persistent data and waits for the final result.
+
+```go
+Clear(contextID string, timeoutSeconds int, pollIntervalSeconds float64) (*ContextClearResult, error)
+```
+
+**Parameters:**
+- `contextID` (string): The unique identifier of the context to clear.
+- `timeoutSeconds` (int, optional): Timeout in seconds to wait for task completion, default is 60 seconds.
+- `pollIntervalSeconds` (float64, optional): Interval in seconds between status polls, default is 2.0 seconds.
+
+**Returns:**
+- `*ContextClearResult`: A result object containing the final task result. The status field will be "available" on success.
+- `error`: An error if the task fails to complete within the specified timeout.
+
+**State Transitions:**
+- "clearing": Data clearing is in progress
+- "available": Clearing completed successfully (final success state)
+- "in-use": Context is being used
+- "pre-available": Context is being prepared
+
+
 ### DeleteFile
 
 Deletes a file in a context.
@@ -357,4 +501,4 @@ DeleteFile(contextID string, filePath string) (*ContextFileDeleteResult, error)
 ## Related Resources
 
 - [Session API Reference](session.md)
-- [ContextManager API Reference](context-manager.md) 
+- [ContextManager API Reference](context-manager.md)

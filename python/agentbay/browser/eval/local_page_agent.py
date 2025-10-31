@@ -129,7 +129,15 @@ class LocalPageAgent(BrowserAgent):
 
     def _call_mcp_tool(self, name: str, args: dict, read_timeout: int = None, connect_timeout: int = None) -> OperationResult:
         if not self.mcp_client:
-            return super()._call_mcp_tool(name, args, read_timeout, connect_timeout)
+            # Call session's public method instead of BaseService's deprecated method
+            result = self.session.call_mcp_tool(name, args, read_timeout, connect_timeout)
+            # Convert McpToolResult to OperationResult for compatibility
+            return OperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                data=result.data,
+                error_message=result.error_message,
+            )
 
         target_loop = self.mcp_client._loop
         coro = self._call_mcp_tool_async(name, args)
@@ -163,7 +171,11 @@ class LocalBrowser(Browser):
                             # Recreate /tmp/chrome_cdp_ports.json with the required content
                             chrome_cdp_ports_path = "/tmp/chrome_cdp_ports.json"
                             with open(chrome_cdp_ports_path, "w") as f:
-                                json.dump({"chrome": str(self._cdp_port), "router": str(self._cdp_port)}, f)
+                                json.dump({
+                                    "chrome": str(self._cdp_port), 
+                                    "router": str(self._cdp_port),
+                                    "local": str(self._cdp_port)
+                                }, f)
 
                             # Launch headless browser and create a page for all tests
                             self._browser = await p.chromium.launch_persistent_context(

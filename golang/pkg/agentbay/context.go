@@ -3,6 +3,7 @@ package agentbay
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
@@ -69,6 +70,15 @@ type ContextModifyResult struct {
 type ContextDeleteResult struct {
 	models.ApiResponse
 	Success      bool
+	ErrorMessage string
+}
+
+// ContextClearResult wraps context clear operation result and RequestID
+type ContextClearResult struct {
+	models.ApiResponse
+	Success      bool
+	Status       string // Current status of the clearing task ("clearing", "available", etc.)
+	ContextID    string
 	ErrorMessage string
 }
 
@@ -803,4 +813,281 @@ func (cs *ContextService) DeleteFile(contextID string, filePath string) (*Contex
 		Success:      success,
 		ErrorMessage: errorMessage,
 	}, nil
+}
+
+// ClearAsync asynchronously initiates a task to clear the context's persistent data.
+// This is a non-blocking method that returns immediately after initiating the clearing task.
+// The context's state will transition to "clearing" while the operation is in progress.
+func (cs *ContextService) ClearAsync(contextID string) (*ContextClearResult, error) {
+	request := &mcp.ClearContextRequest{
+		Authorization: tea.String("Bearer " + cs.AgentBay.APIKey),
+		Id:             tea.String(contextID),
+	}
+
+	// Log API request
+	LogAPICall("ClearContext", fmt.Sprintf("ContextId=%s", contextID))
+
+	response, err := cs.AgentBay.Client.ClearContext(request)
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
+	// Log API response
+	if err != nil {
+		LogOperationError("ClearContext", err.Error(), true)
+		return &ContextClearResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Success:      false,
+			Status:       "",
+			ContextID:    contextID,
+			ErrorMessage: fmt.Sprintf("Failed to start context clearing: %v", err),
+		}, nil
+	}
+
+	// Check for empty response body
+	if response == nil || response.Body == nil {
+		respJSON, _ := json.MarshalIndent(response, "", "  ")
+		LogAPIResponseWithDetails("ClearContext", requestID, false, nil, string(respJSON))
+		return &ContextClearResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Success:      false,
+			Status:       "",
+			ContextID:    contextID,
+			ErrorMessage: "Empty response body",
+		}, nil
+	}
+
+	// Check for API-level errors
+	if response.Body.Success != nil && !*response.Body.Success && response.Body.Code != nil {
+		errorMsg := "Unknown error"
+		if response.Body.Message != nil {
+			errorMsg = fmt.Sprintf("[%s] %s", *response.Body.Code, *response.Body.Message)
+		} else {
+			errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
+		}
+		respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+		LogAPIResponseWithDetails("ClearContext", requestID, false, nil, string(respJSON))
+		return &ContextClearResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Success:      false,
+			Status:       "",
+			ContextID:    contextID,
+			ErrorMessage: errorMsg,
+		}, nil
+	}
+
+	// ClearContext API returns success info without Data field
+	// Initial status is "clearing" when the task starts
+	respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	LogAPIResponseWithDetails("ClearContext", requestID, true, nil, string(respJSON))
+	return &ContextClearResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Success:      true,
+		ContextID:    contextID,
+		Status:       "clearing",
+		ErrorMessage: "",
+	}, nil
+}
+
+// GetClearStatus queries the status of the clearing task.
+// This method calls GetContext API directly with contextID and parses the raw response to extract
+// the state field, which indicates the current clearing status.
+func (cs *ContextService) GetClearStatus(contextID string) (*ContextClearResult, error) {
+	request := &mcp.GetContextRequest{
+		Authorization: tea.String("Bearer " + cs.AgentBay.APIKey),
+		ContextId:     tea.String(contextID),
+		AllowCreate:   tea.Bool(false),
+	}
+
+	// Log API request
+	LogAPICall("GetContext", fmt.Sprintf("ContextId=%s (for clear status)", contextID))
+
+	response, err := cs.AgentBay.Client.GetContext(request)
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
+	// Log API response
+	if err != nil {
+		LogOperationError("GetContext (for clear status)", err.Error(), true)
+		return &ContextClearResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Success:      false,
+			Status:       "",
+			ContextID:    contextID,
+			ErrorMessage: fmt.Sprintf("Failed to get clear status: %v", err),
+		}, nil
+	}
+
+	// Check for empty response body
+	if response == nil || response.Body == nil {
+		return &ContextClearResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Success:      false,
+			Status:       "",
+			ContextID:    contextID,
+			ErrorMessage: "Empty response body",
+		}, nil
+	}
+
+	// Check for API-level errors
+	if response.Body.Success != nil && !*response.Body.Success && response.Body.Code != nil {
+		errorMsg := "Unknown error"
+		if response.Body.Message != nil {
+			errorMsg = fmt.Sprintf("[%s] %s", *response.Body.Code, *response.Body.Message)
+		} else {
+			errorMsg = fmt.Sprintf("[%s] Unknown error", *response.Body.Code)
+		}
+		respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+		LogAPIResponseWithDetails("GetContext (for clear status)", requestID, false, nil, string(respJSON))
+		return &ContextClearResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Success:      false,
+			Status:       "",
+			ContextID:    contextID,
+			ErrorMessage: errorMsg,
+		}, nil
+	}
+
+	// Check if data exists
+	if response.Body.Data == nil {
+		return &ContextClearResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			Success:      false,
+			Status:       "",
+			ContextID:    contextID,
+			ErrorMessage: "No data in response",
+		}, nil
+	}
+
+	data := response.Body.Data
+
+	// Extract clearing status from the response data object
+	// The server's state field indicates the clearing status:
+	// - "clearing": Clearing is in progress
+	// - "available": Clearing completed successfully
+	// - "in-use": Context is being used
+	// - "pre-available": Context is being prepared
+	var contextIDValue string
+	if data.Id != nil {
+		contextIDValue = tea.StringValue(data.Id)
+	}
+	var state string
+	if data.State != nil {
+		state = tea.StringValue(data.State)
+	} else {
+		state = "clearing" // Default to clearing if state is not provided
+	}
+
+	respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	keyFields := map[string]interface{}{
+		"context_id": contextIDValue,
+		"state":      state,
+	}
+	LogAPIResponseWithDetails("GetContext (for clear status)", requestID, true, keyFields, string(respJSON))
+
+	return &ContextClearResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Success:      true,
+		ContextID:    contextIDValue,
+		Status:       state,
+		ErrorMessage: "",
+	}, nil
+}
+
+// Clear synchronously clears the context's persistent data and waits for the final result.
+// This method wraps the ClearAsync and GetClearStatus polling logic.
+//
+// The clearing process transitions through the following states:
+// - "clearing": Data clearing is in progress
+// - "available": Clearing completed successfully (final success state)
+//
+// Parameters:
+//   - contextID: Unique ID of the context to clear
+//   - timeout: Timeout in seconds to wait for task completion (default: 60)
+//   - pollInterval: Interval in seconds between status polls (default: 2)
+//
+// Returns a ContextClearResult object containing the final task result.
+// The status field will be "available" on success, or other states if interrupted.
+func (cs *ContextService) Clear(contextID string, timeoutSeconds int, pollIntervalSeconds float64) (*ContextClearResult, error) {
+	// 1. Asynchronously start the clearing task
+	startResult, err := cs.ClearAsync(contextID)
+	if err != nil {
+		return nil, err
+	}
+	if !startResult.Success {
+		return startResult, nil
+	}
+
+	// Log started clearing task
+	fmt.Printf("Started context clearing task for: %s\n", contextID)
+
+	// 2. Poll task status until completion or timeout
+	maxAttempts := int(float64(timeoutSeconds) / pollIntervalSeconds)
+	attempt := 0
+
+	for attempt < maxAttempts {
+		// Wait before querying
+		if attempt > 0 {
+			time.Sleep(time.Duration(pollIntervalSeconds) * time.Second)
+		}
+		attempt++
+
+		// Query task status (using GetContext API with context ID)
+		statusResult, err := cs.GetClearStatus(contextID)
+		if err != nil {
+			LogOperationError("Clear", fmt.Sprintf("Failed to get clear status: %v", err), false)
+			return statusResult, err
+		}
+
+		if !statusResult.Success {
+			LogOperationError("Clear", fmt.Sprintf("Failed to get clear status: %s", statusResult.ErrorMessage), false)
+			return statusResult, nil
+		}
+
+		fmt.Printf("Clear task status: %s (attempt %d/%d)\n", statusResult.Status, attempt, maxAttempts)
+
+		// Check if completed
+		// When clearing is complete, the state changes from "clearing" to "available"
+		if statusResult.Status == "available" {
+			fmt.Printf("Context cleared successfully\n")
+			return &ContextClearResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: statusResult.RequestID,
+				},
+				Success:      true,
+				ContextID:    statusResult.ContextID,
+				Status:      statusResult.Status,
+				ErrorMessage: "",
+			}, nil
+		} else if statusResult.Status != "clearing" && statusResult.Status != "pre-available" {
+			// If status is not "clearing" or "pre-available", and not "available",
+			// treat it as a potential error or unexpected state
+			LogOperationError("Clear", fmt.Sprintf("Context in unexpected state: %s", statusResult.Status), false)
+			// Continue polling as the state might transition to "available"
+		}
+	}
+
+	// Timeout
+	errorMsg := fmt.Sprintf("Context clearing timed out after %d seconds", timeoutSeconds)
+	LogOperationError("Clear", errorMsg, false)
+	return nil, fmt.Errorf("%s", errorMsg)
 }

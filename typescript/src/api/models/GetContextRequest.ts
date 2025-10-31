@@ -5,11 +5,13 @@ import * as $dara from '@darabonba/typescript';
 export class GetContextRequest extends $dara.Model {
   allowCreate?: boolean;
   authorization?: string;
+  contextId?: string;
   name?: string;
   static names(): { [key: string]: string } {
     return {
       allowCreate: 'AllowCreate',
       authorization: 'Authorization',
+      contextId: 'ContextId',
       name: 'Name',
     };
   }
@@ -18,6 +20,7 @@ export class GetContextRequest extends $dara.Model {
     return {
       allowCreate: 'boolean',
       authorization: 'string',
+      contextId: 'string',
       name: 'string',
     };
   }

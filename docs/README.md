@@ -24,6 +24,7 @@
 - [Data Persistence](guides/common-features/basics/data-persistence.md) - Cross-session data storage
 
 #### Advanced
+- [Custom Images](guides/common-features/advanced/custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](guides/common-features/advanced/session-link-access.md) - Session connectivity and URL generation
 - [VPC Sessions](guides/common-features/advanced/vpc-sessions.md) - Secure isolated network environments
 - [Agent Modules](guides/common-features/advanced/agent-modules.md) - AI-powered task automation
@@ -103,7 +104,7 @@ Development environment for code execution and scripting.
 #### Agent Module
 An AI-powered Agent to complete tasks descibed in natural language
 
-- [Agent Guide](guides/agent/README.md) - Agent task execution guide
+- [Agent Guide](guides/common-features/advanced/agent-modules.md) - Agent task execution guide
 
 **Key Capabilities:**
 - Office Automation: Word/Excel/PowerPoint automation

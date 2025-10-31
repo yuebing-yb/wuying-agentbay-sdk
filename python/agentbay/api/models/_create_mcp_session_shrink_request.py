@@ -17,6 +17,8 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         persistence_data_list_shrink: Optional[str] = None,
         session_id: Optional[str] = None,
         vpc_resource: Optional[bool] = None,
+        extra_configs: Optional[str] = None,
+        sdk_stats: Optional[str] = None,
     ):
         self.authorization = authorization
         self.context_id = context_id
@@ -27,6 +29,8 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         self.persistence_data_list_shrink = persistence_data_list_shrink
         self.session_id = session_id
         self.vpc_resource = vpc_resource
+        self.extra_configs = extra_configs
+        self.sdk_stats = sdk_stats
 
     def validate(self):
         pass
@@ -63,6 +67,12 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         if self.vpc_resource is not None:
             result['VpcResource'] = self.vpc_resource
 
+        if self.extra_configs is not None:
+            result['ExtraConfigs'] = self.extra_configs
+
+        if self.sdk_stats is not None:
+            result['SdkStats'] = self.sdk_stats
+
         return result
 
     def from_map(self, m: Optional[dict] = None):
@@ -93,6 +103,12 @@ class CreateMcpSessionShrinkRequest(DaraModel):
 
         if m.get('VpcResource') is not None:
             self.vpc_resource = m.get('VpcResource')
+
+        if m.get('ExtraConfigs') is not None:
+            self.extra_configs = m.get('ExtraConfigs')
+
+        if m.get('SdkStats') is not None:
+            self.sdk_stats = m.get('SdkStats')
 
         return self
 

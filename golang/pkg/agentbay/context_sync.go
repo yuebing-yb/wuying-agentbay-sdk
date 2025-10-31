@@ -22,6 +22,16 @@ const (
 	DownloadAsync DownloadStrategy = "DownloadAsync"
 )
 
+// UploadMode defines the upload mode for context synchronization
+type UploadMode string
+
+const (
+	// UploadModeFile uploads files individually
+	UploadModeFile UploadMode = "File"
+	// UploadModeArchive uploads files as an archive
+	UploadModeArchive UploadMode = "Archive"
+)
+
 // Lifecycle defines the lifecycle options for recycle policy
 type Lifecycle string
 
@@ -54,17 +64,8 @@ type UploadPolicy struct {
 	AutoUpload bool `json:"autoUpload"`
 	// UploadStrategy defines the upload strategy
 	UploadStrategy UploadStrategy `json:"uploadStrategy"`
-	// UploadMode defines the upload mode: "File" or "Archive"
-	UploadMode string `json:"uploadMode"`
-}
-
-// NewUploadPolicy creates a new upload policy with default values
-func NewUploadPolicy() *UploadPolicy {
-	return &UploadPolicy{
-		AutoUpload:     true,
-		UploadStrategy: UploadBeforeResourceRelease,
-		UploadMode:     "File",
-	}
+	// UploadMode defines the upload mode
+	UploadMode UploadMode `json:"uploadMode"`
 }
 
 // DownloadPolicy defines the download policy for context synchronization
@@ -73,6 +74,15 @@ type DownloadPolicy struct {
 	AutoDownload bool `json:"autoDownload"`
 	// DownloadStrategy defines the download strategy
 	DownloadStrategy DownloadStrategy `json:"downloadStrategy"`
+}
+
+// NewUploadPolicy creates a new upload policy with default values
+func NewUploadPolicy() *UploadPolicy {
+	return &UploadPolicy{
+		AutoUpload:     true,
+		UploadStrategy: UploadBeforeResourceRelease,
+		UploadMode:     UploadModeFile,
+	}
 }
 
 // NewDownloadPolicy creates a new download policy with default values
@@ -312,8 +322,8 @@ type ContextSync struct {
 }
 
 // isValidUploadMode checks if the given uploadMode value is valid
-func isValidUploadMode(uploadMode string) bool {
-	return uploadMode == "File" || uploadMode == "Archive"
+func isValidUploadMode(uploadMode UploadMode) bool {
+	return uploadMode == UploadModeFile || uploadMode == UploadModeArchive
 }
 
 func validateSyncPolicy(policy *SyncPolicy) error {
@@ -325,8 +335,10 @@ func validateSyncPolicy(policy *SyncPolicy) error {
 	if policy.UploadPolicy != nil && policy.UploadPolicy.UploadMode != "" {
 		if !isValidUploadMode(policy.UploadPolicy.UploadMode) {
 			return fmt.Errorf(
-				"invalid uploadMode value: %s. Valid values are: \"File\", \"Archive\"",
+				"invalid uploadMode value: %s. Valid values are: \"%s\", \"%s\"",
 				policy.UploadPolicy.UploadMode,
+				UploadModeFile,
+				UploadModeArchive,
 			)
 		}
 	}

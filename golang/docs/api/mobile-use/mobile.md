@@ -728,6 +728,6 @@ session.Mobile.Swipe(500, 500, 500, 500, 1000)
 
 ## Related Resources
 
-- [Session API Reference](session.md)
-- [Computer API Reference](computer.md) - For Windows automation
-- [UI API Reference](ui.md)
+- [Session API Reference](../common-features/basics/session.md)
+- [Computer API Reference](../computer-use/computer.md) - For Windows automation
+- [UI API Reference](../computer-use/ui.md)

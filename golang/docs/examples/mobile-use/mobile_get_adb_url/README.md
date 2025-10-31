@@ -83,7 +83,7 @@ The example includes error handling for common scenarios:
 
 ## Related Documentation
 
-- [Mobile API Documentation](../../api/mobile.md)
-- [Session Creation Guide](../session_creation/README.md)
-- [Basic Usage Example](../basic_usage/README.md)
+- [Mobile API Documentation](../../../../../typescript/docs/api/mobile-use/mobile.md)
+- [Session Creation Guide](../../common-features/basics/session_creation/README.md)
+- [Basic Usage Example](../../basic_usage/README.md)
 

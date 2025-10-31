@@ -28,6 +28,7 @@ from agentbay.model import (
 from agentbay.session import Session
 from agentbay.session_params import CreateSessionParams, ListSessionParams
 from agentbay.deprecation import deprecated
+from agentbay.version import __version__, __is_release__
 from .logger import (
     get_logger,
     log_api_call,
@@ -157,7 +158,7 @@ class AgentBay:
             return str(obj)
 
     def _build_session_from_response(
-        self, response_data: dict, params: CreateSessionParams
+        self, response_data: dict, params: CreateSessionParams, record_context_id: Optional[str] = None
     ) -> Session:
         """
         Build Session object from API response data.
@@ -203,6 +204,9 @@ class AgentBay:
         session.file_transfer_context_id = (
             self._file_transfer_context.id if self._file_transfer_context else None
         )
+
+        # Store the browser recording context ID if we created one
+        session.record_context_id = record_context_id
 
         # Store image_id used for this session
         setattr(session, "image_id", params.image_id)
@@ -399,6 +403,11 @@ class AgentBay:
                 params.context_syncs.append(file_transfer_context_sync)
 
             request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")#, session_id="session-04bdwfj84pts8knif")
+
+            # Add SDK stats for tracking
+            framework = params.framework if params and hasattr(params, 'framework') else ""
+            sdk_stats_json = f'{{"source":"sdk","sdk_language":"python","sdk_version":"{__version__}","is_release":{str(__is_release__).lower()},"framework":"{framework}"}}'
+            request.sdk_stats = sdk_stats_json
 
             # Add PolicyId if specified
             if hasattr(params, "policy_id") and params.policy_id:
@@ -625,7 +634,7 @@ class AgentBay:
             )
 
             # Build Session object from response data
-            session = self._build_session_from_response(data, params)
+            session = self._build_session_from_response(data, params, record_context_id)
 
             # Update browser replay context if enabled
             if (
@@ -1024,8 +1033,6 @@ class AgentBay:
         """
         try:
             # Delete the session and get the result
-            if hasattr(session, "enableBrowserReplay") and session.enableBrowserReplay:
-                sync_context = True
             delete_result = session.delete(sync_context=sync_context)
 
             with self._lock:

@@ -29,6 +29,8 @@ type iCreateMcpSessionRequest interface {
 	GetVpcResource() *bool
 	SetExtraConfigs(v string) *CreateMcpSessionRequest
 	GetExtraConfigs() *string
+	SetSdkStats(v string) *CreateMcpSessionRequest
+	GetSdkStats() *string
 }
 
 type CreateMcpSessionRequest struct {
@@ -42,6 +44,7 @@ type CreateMcpSessionRequest struct {
 	SessionId           *string                                       `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
 	VpcResource         *bool                                         `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
 	ExtraConfigs        *string                                       `json:"ExtraConfigs,omitempty" xml:"ExtraConfigs,omitempty"`
+	SdkStats            *string                                       `json:"SdkStats,omitempty" xml:"SdkStats,omitempty"`
 }
 
 func (s CreateMcpSessionRequest) String() string {
@@ -140,6 +143,15 @@ func (s *CreateMcpSessionRequest) SetExtraConfigs(v string) *CreateMcpSessionReq
 
 func (s *CreateMcpSessionRequest) GetExtraConfigs() *string {
 	return s.ExtraConfigs
+}
+
+func (s *CreateMcpSessionRequest) SetSdkStats(v string) *CreateMcpSessionRequest {
+	s.SdkStats = &v
+	return s
+}
+
+func (s *CreateMcpSessionRequest) GetSdkStats() *string {
+	return s.SdkStats
 }
 
 func (s *CreateMcpSessionRequest) Validate() error {

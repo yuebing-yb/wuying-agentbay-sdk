@@ -86,7 +86,7 @@ The example includes proper error handling for common scenarios:
 
 ## See Also
 
-- [Mobile API Documentation](../../api/mobile.md)
-- [Session Management Guide](../../../guides/common-features/basics/session-management.md)
-- [Mobile Use Guide](../../../guides/mobile-use/README.md)
+- [Mobile API Documentation](../../../api/mobile-use/mobile.md)
+- [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md)
+- [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md)
 

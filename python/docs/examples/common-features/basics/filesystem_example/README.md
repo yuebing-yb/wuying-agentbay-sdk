@@ -82,4 +82,4 @@ The file transfer example demonstrates uploading and downloading files:
 
 ## API Reference
 
-For detailed information about the FileSystem API, see the [FileSystem API Reference](../../api/filesystem.md).
+For detailed information about the FileSystem API, see the [FileSystem API Reference](../../../../../../typescript/docs/api/common-features/basics/filesystem.md).

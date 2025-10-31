@@ -292,12 +292,83 @@ async function listMcpTools(session) {
 }
 ```
 
+### callMcpTool
+
+Call an MCP tool directly. This is the unified public API for calling MCP tools. All feature modules (Command, Code, Agent, etc.) use this method internally.
+
+```typescript
+callMcpTool(
+  toolName: string,
+  args: Record<string, any>,
+  readTimeout?: number,
+  connectTimeout?: number
+): Promise<McpToolResult>
+```
+
+**Parameters:**
+- `toolName` (string): Name of the MCP tool to call
+- `args` (Record<string, any>): Arguments to pass to the tool as an object
+- `readTimeout` (number, optional): Read timeout in seconds
+- `connectTimeout` (number, optional): Connection timeout in seconds
+
+**Returns:**
+- `Promise<McpToolResult>`: A promise that resolves to a result object containing:
+  - `success` (boolean): Whether the tool call was successful
+  - `data` (string): Tool output data
+  - `errorMessage` (string): Error message if the call failed
+  - `requestId` (string): Unique identifier for the API request
+
+**Behavior:**
+- Automatically detects VPC vs non-VPC mode
+- In VPC mode, uses HTTP requests to the VPC endpoint
+- In non-VPC mode, uses traditional API calls
+- Parses response data to extract text content
+- Handles both successful results and error responses
+
+**Example:**
+```typescript
+// Call the shell tool to execute a command
+const result = await session.callMcpTool('shell', {
+  command: "echo 'Hello World'",
+  timeout_ms: 1000
+});
+
+if (result.success) {
+  console.log(`Output: ${result.data}`);
+  // Output: Hello World
+  console.log(`Request ID: ${result.requestId}`);
+} else {
+  console.error(`Error: ${result.errorMessage}`);
+}
+
+// Call with custom timeouts
+const result2 = await session.callMcpTool(
+  'shell',
+  { command: 'pwd', timeout_ms: 1000 },
+  30,  // read timeout
+  10   // connect timeout
+);
+
+// Example with error handling
+const result3 = await session.callMcpTool('shell', {
+  command: 'invalid_command_12345',
+  timeout_ms: 1000
+});
+if (!result3.success) {
+  console.error(`Command failed: ${result3.errorMessage}`);
+  // Output: Command failed: sh: 1: invalid_command_12345: not found
+}
+```
+
+**See Also:**
+- For a complete example, see [MCP Tool Direct Call Example](../../../../examples/common-features/basics/mcp_tool_direct_call/README.md)
+
 ## Related Resources
 
 - [FileSystem API Reference](filesystem.md)
 - [Command API Reference](command.md)
-- [UI API Reference](ui.md)
-- [Window API Reference](window.md)
-- [OSS API Reference](oss.md)
-- [Application API Reference](application.md)
+- [UI API Reference](../../computer-use/ui.md)
+- [Window API Reference](../../computer-use/window.md)
+- [OSS API Reference](../advanced/oss.md)
+- [Application API Reference](../../computer-use/application.md)
 - [Context API Reference](context-manager.md)

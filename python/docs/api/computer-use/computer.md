@@ -602,4 +602,4 @@ if session_result.success:
 
 - [Window Management API](./window.md) - Detailed window management operations
 - [Application Management API](./application.md) - Detailed application management operations
-- [Session API](./session.md) - Session management
+- [Session API](../common-features/basics/session.md) - Session management

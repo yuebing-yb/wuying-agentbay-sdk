@@ -189,29 +189,58 @@ def main():
         # ===== FILE SEARCHING =====
         print("\n===== FILE SEARCHING =====")
 
-        # Create some files for searching
+        # Create some files for searching with names that match our search patterns
         fs.write_file(
-            "/tmp/test_directory/file1.txt",
+            "/tmp/test_directory/report_january.txt",
             "This file contains the word SEARCHABLE",
             "overwrite",
         )
         fs.write_file(
-            "/tmp/test_directory/file2.txt",
+            "/tmp/test_directory/report_february.txt",
             "This file does not contain the keyword",
             "overwrite",
         )
         fs.write_file(
-            "/tmp/test_directory/file3.txt",
+            "/tmp/test_directory/summary_2025.txt",
             "This file also contains SEARCHABLE term",
             "overwrite",
         )
+        fs.write_file(
+            "/tmp/test_directory/data_file.csv",
+            "Some CSV data content",
+            "overwrite",
+        )
 
-        # Example 9: Search for files
-        print("\nExample 9: Searching for files...")
-        result = fs.search_files("/tmp/test_directory", "SEARCHABLE")
+        # Example 9: Search for files with names containing "report"
+        print("\nExample 9: Searching for files with names containing 'report'...")
+        result = fs.search_files("/tmp/test_directory", "*report*")
         if result.success:
             search_results = result.matches
-            print(f"Found {len(search_results)} files matching the search pattern:")
+            print(f"Found {len(search_results)} files matching the search pattern '*report*':")
+            for result_file in search_results:
+                print(f"  - {result_file}")
+        else:
+            print(f"Error searching files: {result.error_message}")
+        print(f"Request ID: {result.request_id}")
+
+        # Example 10: Search for files ending with ".txt"
+        print("\nExample 10: Searching for files ending with '.txt'...")
+        result = fs.search_files("/tmp/test_directory", "*.txt")
+        if result.success:
+            search_results = result.matches
+            print(f"Found {len(search_results)} files matching the search pattern '*.txt':")
+            for result_file in search_results:
+                print(f"  - {result_file}")
+        else:
+            print(f"Error searching files: {result.error_message}")
+        print(f"Request ID: {result.request_id}")
+
+        # Example 11: Search for files containing "2025"
+        print("\nExample 11: Searching for files containing '2025'...")
+        result = fs.search_files("/tmp/test_directory", "*2025*")
+        if result.success:
+            search_results = result.matches
+            print(f"Found {len(search_results)} files matching the search pattern '*2025*':")
             for result_file in search_results:
                 print(f"  - {result_file}")
         else:
@@ -221,12 +250,12 @@ def main():
         # ===== MULTIPLE FILE READING =====
         print("\n===== MULTIPLE FILE READING =====")
 
-        # Example 10: Read multiple files
-        print("\nExample 10: Reading multiple files...")
+        # Example 12: Read multiple files
+        print("\nExample 12: Reading multiple files...")
         file_paths = [
-            "/tmp/test_directory/file1.txt",
-            "/tmp/test_directory/file2.txt",
-            "/tmp/test_directory/file3.txt",
+            "/tmp/test_directory/report_january.txt",
+            "/tmp/test_directory/report_february.txt",
+            "/tmp/test_directory/summary_2025.txt",
         ]
         result = fs.read_multiple_files(file_paths)
         if result.success:
@@ -242,8 +271,8 @@ def main():
         # ===== LARGE FILE OPERATIONS =====
         print("\n===== LARGE FILE OPERATIONS =====")
 
-        # Example 11: Write a large file with default chunk size
-        print("\nExample 11: Writing a large file with default chunk size...")
+        # Example 13: Write a large file with default chunk size
+        print("\nExample 13: Writing a large file with default chunk size...")
 
         # Generate approximately 1MB of test content
         line_content = "This is a line of test content for large file testing. " * 20
@@ -263,8 +292,8 @@ def main():
             print(f"Error: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # Example 12: Read the large file (automatic chunking)
-        print("\nExample 12: Reading the large file with automatic chunking...")
+        # Example 14: Read the large file (automatic chunking)
+        print("\nExample 14: Reading the large file with automatic chunking...")
 
         start_time = time.time()
         result = fs.read_file(test_file_path)
@@ -279,8 +308,8 @@ def main():
             print(f"Error reading large file: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # Example 13: Write another large file
-        print("\nExample 13: Writing another large file...")
+        # Example 15: Write another large file
+        print("\nExample 15: Writing another large file...")
 
         test_file_path2 = "/tmp/large_file_2.txt"
 
@@ -297,8 +326,8 @@ def main():
             print(f"Error: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # Example 14: Read the second large file
-        print("\nExample 14: Reading the second large file...")
+        # Example 16: Read the second large file
+        print("\nExample 16: Reading the second large file...")
 
         start_time = time.time()
         result = fs.read_file(test_file_path2)

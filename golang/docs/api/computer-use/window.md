@@ -258,6 +258,5 @@ func main() {
 
 ## Related Resources
 
-- [Session Class](session.md): The session class that provides access to the Window class.
-- [Application Class](application.md): The application class for managing applications in the cloud environment.
-- [Applications Concept](../concepts/applications.md): Conceptual information about applications and windows in the AgentBay cloud environment. 
+- [Computer API](computer.md): The recommended API for window management.
+- [Application Class](application.md): The application class for managing applications in the cloud environment. 

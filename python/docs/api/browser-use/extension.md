@@ -433,8 +433,8 @@ Each extension gets its own directory containing all extension files, including 
 
 ## Related Resources
 
-- [Session API Reference](session.md)
-- [Context API Reference](context.md) 
-- [AgentBay API Reference](agentbay.md)
+- [Session API Reference](../common-features/basics/session.md)
+- [Context API Reference](../common-features/basics/context.md) 
+- [AgentBay API Reference](../common-features/basics/agentbay.md)
 - [Extension Examples](../../examples/browser-use/extension/README.md) - Practical usage examples
-- [Browser Extensions Guide](../../../../docs/guides/browser-extensions.md) - Complete tutorial
+- [Browser Extensions Guide](../../../../docs/guides/browser-use/browser-extensions.md) - Complete tutorial

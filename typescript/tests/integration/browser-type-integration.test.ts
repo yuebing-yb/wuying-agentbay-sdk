@@ -21,7 +21,7 @@ describe("Browser Type - Integration Tests", () => {
     
     // Create a session with computer use image (required for browser type selection)
     const params = new CreateSessionParams();
-    params.imageId = "computer_use_latest";
+    params.imageId = "linux_latest";
     
     log("Creating session with computer use image for browser type testing...");
     const sessionResult: SessionResult = await agentBay.create(params);
@@ -46,8 +46,8 @@ describe("Browser Type - Integration Tests", () => {
   });
 
   describe("Browser Type Selection", () => {
-    it("should use chromium as default browser type", async () => {
-      log("=== Testing default chromium browser type ===");
+    it("should use default browser type (undefined)", async () => {
+      log("=== Testing default browser type (undefined) ===");
       
       // Create browser option with default settings
       const browserOption = {};
@@ -209,13 +209,14 @@ describe("Browser Type - Integration Tests", () => {
         browserType: "chromium"
       };
       
-      // Test default browser type (should be chromium)
+      // Test default browser type (should be undefined)
       const defaultOption = {};
       
       // These would be tested in the actual BrowserOptionClass.toMap() method
       // For this integration test, we verify the option structure
       expect(chromeOption.browserType).toBe("chrome");
       expect(chromiumOption.browserType).toBe("chromium");
+      expect(defaultOption.browserType).toBeUndefined();
       log("Browser type options structured correctly");
     });
 

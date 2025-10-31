@@ -2,17 +2,18 @@
 
 This guide shows you how to use `get_link()` to connect to your AgentBay cloud sessions.
 
-> **⚠️ Important Notice**: The Session Link feature is currently in whitelist-only access. To request access to this feature, please send your application to agentbay_dev@alibabacloud.com. For product feedback or suggestions, please submit through the [Alibaba Cloud ticket system](https://smartservice.console.aliyun.com/service/list).
+> **⚠️ Important Notice**: The Session Link feature is an exclusive premium feature for paid subscription users (Pro/Ultra). For more details about pricing and subscription plans, please visit the [AgentBay Billing Instructions](https://help.aliyun.com/zh/agentbay/product-overview/agentbay-billing-instructions).
 
 ## 📋 Table of Contents
 
-- [🎯 What is a Session Link?](#-what-is-a-session-link)
-- [🚀 Use Cases and Examples](#-use-cases-and-examples)
-- [📖 API Reference](#-api-reference)
-- [📖 Advanced Topics](#-advanced-topics)
+- [🎯 What is a Session Link?](#what-is-a-session-link)
+- [🚀 Use Cases and Examples](#use-cases-and-examples)
+- [📖 API Reference](#api-reference)
+- [📖 Advanced Topics](#advanced-topics)
 
 ---
 
+<a id="what-is-a-session-link"></a>
 ## 🎯 What is a Session Link?
 
 ### Simple Explanation
@@ -36,6 +37,7 @@ The `get_link()` method returns a URL that enables **direct connections** to ser
 
 ---
 
+<a id="use-cases-and-examples"></a>
 ## 🚀 Use Cases and Examples
 
 For practical examples and step-by-step guides, see the **[Session Link Use Cases](../use-cases/session-link-use-cases.md)** document, which covers:
@@ -51,6 +53,7 @@ The use cases document includes:
 
 ---
 
+<a id="api-reference"></a>
 ## 📖 API Reference
 
 ### Method Signature
@@ -131,6 +134,7 @@ link = session.get_link(port=30180)
 
 ---
 
+<a id="advanced-topics"></a>
 ## 📖 Advanced Topics
 
 ### Asynchronous Operations

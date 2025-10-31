@@ -172,7 +172,7 @@ class WindowManager(BaseService):
         args = {"timeout_ms": timeout_ms}
 
         try:
-            result = self._call_mcp_tool("list_root_windows", args)
+            result = self.session.call_mcp_tool("list_root_windows", args)
             if not result.success:
                 return WindowListResult(
                     request_id=result.request_id,
@@ -208,7 +208,7 @@ class WindowManager(BaseService):
         args = {"timeout_ms": timeout_ms}
 
         try:
-            result = self._call_mcp_tool("get_active_window", args)
+            result = self.session.call_mcp_tool("get_active_window", args)
             if not result.success:
                 return WindowInfoResult(
                     request_id=result.request_id,
@@ -247,7 +247,7 @@ class WindowManager(BaseService):
         args = {"window_id": window_id}
 
         try:
-            result = self._call_mcp_tool("activate_window", args)
+            result = self.session.call_mcp_tool("activate_window", args)
             if not result.success:
                 return BoolResult(
                     request_id=result.request_id,
@@ -292,7 +292,7 @@ class WindowManager(BaseService):
         args = {"window_id": window_id}
 
         try:
-            result = self._call_mcp_tool("maximize_window", args)
+            result = self.session.call_mcp_tool("maximize_window", args)
             if not result.success:
                 return BoolResult(
                     request_id=result.request_id,
@@ -337,7 +337,7 @@ class WindowManager(BaseService):
         args = {"window_id": window_id}
 
         try:
-            result = self._call_mcp_tool("minimize_window", args)
+            result = self.session.call_mcp_tool("minimize_window", args)
             if not result.success:
                 return BoolResult(
                     request_id=result.request_id,
@@ -382,7 +382,7 @@ class WindowManager(BaseService):
         args = {"window_id": window_id}
 
         try:
-            result = self._call_mcp_tool("restore_window", args)
+            result = self.session.call_mcp_tool("restore_window", args)
             if not result.success:
                 return BoolResult(
                     request_id=result.request_id,
@@ -427,7 +427,7 @@ class WindowManager(BaseService):
         args = {"window_id": window_id}
 
         try:
-            result = self._call_mcp_tool("close_window", args)
+            result = self.session.call_mcp_tool("close_window", args)
             if not result.success:
                 return BoolResult(
                     request_id=result.request_id,
@@ -472,7 +472,7 @@ class WindowManager(BaseService):
         args = {"window_id": window_id}
 
         try:
-            result = self._call_mcp_tool("fullscreen_window", args)
+            result = self.session.call_mcp_tool("fullscreen_window", args)
             if not result.success:
                 return BoolResult(
                     request_id=result.request_id,
@@ -519,7 +519,7 @@ class WindowManager(BaseService):
         args = {"window_id": window_id, "width": width, "height": height}
 
         try:
-            result = self._call_mcp_tool("resize_window", args)
+            result = self.session.call_mcp_tool("resize_window", args)
             if not result.success:
                 return BoolResult(
                     request_id=result.request_id,
@@ -564,7 +564,7 @@ class WindowManager(BaseService):
         args = {"on": on}
 
         try:
-            result = self._call_mcp_tool("focus_mode", args)
+            result = self.session.call_mcp_tool("focus_mode", args)
             if not result.success:
                 return BoolResult(
                     request_id=result.request_id,

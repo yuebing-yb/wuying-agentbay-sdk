@@ -336,3 +336,32 @@ class McpToolsResult(ApiResponse):
         """
         super().__init__(request_id)
         self.tools = tools or []
+
+
+class McpToolResult(ApiResponse):
+    """Result of an MCP tool call."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        data: str = "",
+        error_message: str = "",
+    ):
+        """
+        Initialize a McpToolResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the tool call was successful.
+                Defaults to False.
+            data (str, optional): Tool output data (often a string or JSON).
+                Defaults to "".
+            error_message (str, optional): Error message if the call failed.
+                Defaults to "".
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.data = data
+        self.error_message = error_message

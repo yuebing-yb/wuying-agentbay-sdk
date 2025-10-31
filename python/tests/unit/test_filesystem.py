@@ -10,7 +10,7 @@ from agentbay.filesystem.filesystem import (
     FileSystem,
     MultipleFileContentResult,
 )
-from agentbay.model import OperationResult
+from agentbay.model import OperationResult, McpToolResult
 
 
 class DummySession:
@@ -18,6 +18,8 @@ class DummySession:
         self.api_key = "dummy_key"
         self.session_id = "dummy_session"
         self.client = MagicMock()
+        # Add call_mcp_tool method for new API
+        self.call_mcp_tool = MagicMock()
 
     def get_api_key(self):
         return self.api_key
@@ -105,15 +107,16 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Invalid response body")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_create_directory_success(self, mock_call_mcp_tool):
+    
+    def test_create_directory_success(self):
         """
         Test create_directory method with successful response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123", success=True, data="True"
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.create_directory("/path/to/directory")
         self.assertIsInstance(result, BoolResult)
@@ -121,18 +124,18 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.data)
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_create_directory_error(self, mock_call_mcp_tool):
+    
+    def test_create_directory_error(self):
         """
         Test create_directory method with error response.
         """
         # Create an OperationResult object with error_message and request_id
-        mock_result = OperationResult(
+        mock_result = McpToolResult(
             request_id="request-123",
             success=False,
             error_message="Directory creation failed",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.create_directory("/path/to/directory")
         self.assertIsInstance(result, BoolResult)
@@ -140,15 +143,16 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Directory creation failed")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_edit_file_success(self, mock_call_mcp_tool):
+    
+    def test_edit_file_success(self):
         """
         Test edit_file method with successful response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123", success=True, data="True"
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.edit_file(
             "/path/to/file.txt", [{"oldText": "foo", "newText": "bar"}]
@@ -158,17 +162,18 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.data)
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_edit_file_error(self, mock_call_mcp_tool):
+    
+    def test_edit_file_error(self):
         """
         Test edit_file method with error response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123",
             success=False,
             error_message="Edit failed",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.edit_file(
             "/path/to/file.txt", [{"oldText": "foo", "newText": "bar"}]
@@ -215,17 +220,18 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Write failed")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_get_file_info_success(self, mock_call_mcp_tool):
+    
+    def test_get_file_info_success(self):
         """
         Test get_file_info method with successful response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123",
             success=True,
             data="name: test.txt\nsize: 100\nmodified: 2023-01-01T12:00:00Z\nisDirectory: false",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.get_file_info("/path/to/file.txt")
         self.assertIsInstance(result, FileInfoResult)
@@ -236,17 +242,18 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.file_info["modified"], "2023-01-01T12:00:00Z")
         self.assertEqual(result.file_info["isDirectory"], False)
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_get_file_info_error(self, mock_call_mcp_tool):
+    
+    def test_get_file_info_error(self):
         """
         Test get_file_info method with error response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123",
             success=False,
             error_message="File not found",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.get_file_info("/path/to/file.txt")
         self.assertIsInstance(result, FileInfoResult)
@@ -254,17 +261,18 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "File not found")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_list_directory_success(self, mock_call_mcp_tool):
+    
+    def test_list_directory_success(self):
         """
         Test list_directory method with successful response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123",
             success=True,
             data="[FILE] file1.txt\n[DIR] dir1\n[FILE] file2.txt",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.list_directory("/path/to/directory")
         self.assertIsInstance(result, DirectoryListResult)
@@ -278,17 +286,18 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.entries[2]["name"], "file2.txt")
         self.assertEqual(result.entries[2]["isDirectory"], False)
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_list_directory_error(self, mock_call_mcp_tool):
+    
+    def test_list_directory_error(self):
         """
         Test list_directory method with error response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123",
             success=False,
             error_message="Directory not found",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.list_directory("/path/to/directory")
         self.assertIsInstance(result, DirectoryListResult)
@@ -297,15 +306,16 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.error_message, "Directory not found")
         self.assertEqual(result.entries, [])
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_move_file_success(self, mock_call_mcp_tool):
+    
+    def test_move_file_success(self):
         """
         Test move_file method with successful response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123", success=True, data="True"
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.move_file("/path/to/source.txt", "/path/to/dest.txt")
         self.assertIsInstance(result, BoolResult)
@@ -313,17 +323,18 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.data)
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_move_file_error(self, mock_call_mcp_tool):
+    
+    def test_move_file_error(self):
         """
         Test move_file method with error response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123",
             success=False,
             error_message="Move operation failed",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.move_file("/path/to/source.txt", "/path/to/dest.txt")
         self.assertIsInstance(result, BoolResult)
@@ -331,17 +342,18 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Move operation failed")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_read_multiple_files_success(self, mock_call_mcp_tool):
+    
+    def test_read_multiple_files_success(self):
         """
         Test read_multiple_files method with successful response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123",
             success=True,
             data="file1.txt:\nFile 1 content\n---\nfile2.txt:\nFile 2 content\n---",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.read_multiple_files(
             ["/path/to/file1.txt", "/path/to/file2.txt"]
@@ -353,17 +365,18 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.contents["file1.txt"], "File 1 content")
         self.assertEqual(result.contents["file2.txt"], "File 2 content")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_search_files_success(self, mock_call_mcp_tool):
+    
+    def test_search_files_success(self):
         """
         Test search_files method with successful response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123",
             success=True,
             data="/path/to/file1.txt\n/path/to/file2.txt",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.search_files("/path/to", "pattern")
         self.assertIsInstance(result, FileSearchResult)
@@ -373,15 +386,16 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.matches[0], "/path/to/file1.txt")
         self.assertEqual(result.matches[1], "/path/to/file2.txt")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_search_files_with_exclude(self, mock_call_mcp_tool):
+    
+    def test_search_files_with_exclude(self):
         """
         Test search_files method with exclude patterns.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123", success=True, data="/path/to/file1.txt"
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.search_files(
             "/path/to", "pattern", exclude_patterns=["*.py", "node_modules"]

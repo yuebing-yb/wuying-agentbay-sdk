@@ -363,7 +363,7 @@ session.command.execute_command("unzip /home/guest/dataset.zip -d /home/guest/da
 
 ## Related Documentation
 
-- [Session Management](./session-management.md)
+- [Session Management](../basics/session-management.md)
 - [File Operations](../basics/file-operations.md)
 - [Data Persistence](../basics/data-persistence.md)
 - [Command Execution](../basics/command-execution.md)

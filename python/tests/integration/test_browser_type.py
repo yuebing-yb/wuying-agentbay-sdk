@@ -39,7 +39,7 @@ class TestBrowserTypeIntegration(unittest.TestCase):
         """Create a session with computer use image (required for browser type selection)."""
         # Create session parameters with computer use image
         session_param = CreateSessionParams()
-        session_param.image_id = "computer_use_latest"  # Required for browser type selection
+        session_param.image_id = "linux_latest"  # Required for browser type selection
 
         print("Creating session with computer use image...")
         result = self.agent_bay.create(session_param)
@@ -61,15 +61,15 @@ class TestBrowserTypeIntegration(unittest.TestCase):
             except Exception as e:
                 print(f"Error deleting session: {e}")
 
-    def test_browser_type_chromium_default(self):
-        """Test that chromium is the default browser type."""
-        print("\n=== Testing default chromium browser type ===")
+    def test_browser_type_default_none(self):
+        """Test that None is the default browser type."""
+        print("\n=== Testing default browser type (None) ===")
         
         # Create browser option with default settings
         browser_option = BrowserOption()
         
-        # Verify default browser type
-        self.assertEqual(browser_option.browser_type, "chromium")
+        # Verify default browser type is None
+        self.assertIsNone(browser_option.browser_type)
         print(f"Default browser type: {browser_option.browser_type}")
         
         # Initialize browser
@@ -211,13 +211,12 @@ class TestBrowserTypeIntegration(unittest.TestCase):
         self.assertEqual(chromium_map["browserType"], "chromium")
         print("Chromium browser type serialized correctly")
         
-        # Test default browser type serialization
+        # Test default browser type serialization (should be None/not in map)
         default_option = BrowserOption()
         default_map = default_option.to_map()
         
-        self.assertIn("browserType", default_map)
-        self.assertEqual(default_map["browserType"], "chromium")
-        print("Default browser type serialized correctly")
+        self.assertNotIn("browserType", default_map)
+        print("Default browser type (None) not included in map - correct")
 
     def test_browser_type_standard_image_fallback(self):
         """Test that browser type works with standard browser images (should fallback to default behavior)."""

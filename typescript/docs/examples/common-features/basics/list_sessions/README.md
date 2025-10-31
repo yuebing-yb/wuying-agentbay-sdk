@@ -49,6 +49,6 @@ const page2 = await agentBay.list({ project: "my-project" }, 2, 10);
 
 ## Related Documentation
 
-- [Session Management Guide](../../../../docs/guides/common-features/basics/session-management.md)
-- [AgentBay API Reference](../../api/agentbay.md)
+- [Session Management Guide](../../../../../../docs/guides/common-features/basics/session-management.md)
+- [AgentBay API Reference](../../../../api/common-features/basics/agentbay.md)
 

@@ -18,6 +18,7 @@ class TestMobile:
     def setup_method(self):
         """Set up test fixtures."""
         self.mock_session = Mock()
+        self.session = self.mock_session  # Add session reference for tests
         self.mobile = Mobile(self.mock_session)
 
     def test_mobile_initialization(self):
@@ -33,7 +34,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.error_message = ""
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.tap(100, 200)
@@ -42,7 +43,7 @@ class TestMobile:
         assert isinstance(result, BoolResult)
         assert result.success is True
         assert result.data is True
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "tap", {"x": 100, "y": 200}
         )
 
@@ -53,7 +54,7 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.swipe(100, 100, 200, 200)
@@ -61,7 +62,7 @@ class TestMobile:
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "swipe", {
                 "start_x": 100, "start_y": 100,
                 "end_x": 200, "end_y": 200,
@@ -76,13 +77,13 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.swipe(100, 100, 200, 200, duration_ms=500)
         
         # Assert
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "swipe", {
                 "start_x": 100, "start_y": 100,
                 "end_x": 200, "end_y": 200,
@@ -97,7 +98,7 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.input_text("Hello Mobile")
@@ -105,7 +106,7 @@ class TestMobile:
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "input_text", {"text": "Hello Mobile"}
         )
 
@@ -116,7 +117,7 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.send_key(4)  # BACK key
@@ -124,7 +125,7 @@ class TestMobile:
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "send_key", {"key": 4}
         )
 
@@ -137,7 +138,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.data = '[{"id": "button1", "text": "Click me"}]'  # JSON string
 
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
         result = self.mobile.get_clickable_ui_elements()
@@ -146,7 +147,7 @@ class TestMobile:
         assert result.success is True
         assert len(result.elements) == 1
         assert result.elements[0]["id"] == "button1"
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "get_clickable_ui_elements", {"timeout_ms": 2000}
         )
 
@@ -158,13 +159,13 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.data = '[]'  # JSON string
 
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
         result = self.mobile.get_clickable_ui_elements(timeout_ms=5000)
 
         # Assert
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "get_clickable_ui_elements", {"timeout_ms": 5000}
         )
 
@@ -177,7 +178,7 @@ class TestMobile:
         # Mock data with proper UI element structure including children
         mock_result.data = '[{"bounds": "[0,0][100,100]", "className": "Button", "text": "Click me", "type": "button", "resourceId": "btn1", "index": 0, "isParent": true, "children": [{"bounds": "[10,10][90,90]", "className": "Text", "text": "Label", "type": "text", "resourceId": "txt1", "index": 0, "isParent": false}]}, {"bounds": "[0,100][100,200]", "className": "TextView", "text": "Hello", "type": "text", "resourceId": "txt2", "index": 1, "isParent": false}]'
 
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
         result = self.mobile.get_all_ui_elements()
@@ -196,7 +197,7 @@ class TestMobile:
         # Verify second element
         assert result.elements[1]["text"] == "Hello"
         assert result.elements[1]["children"] == []
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "get_all_ui_elements", {"timeout_ms": 2000}
         )
 
@@ -209,7 +210,7 @@ class TestMobile:
         mock_result.data = '[{"name": "Calculator", "package_name": "com.calculator"}]'
         mock_result.request_id = "test-123"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.get_installed_apps(
@@ -221,7 +222,7 @@ class TestMobile:
         # Assert
         assert result.success is True
         assert len(result.data) == 1
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
             {"start_menu": False, "desktop": True, "ignore_system_apps": True}
         )
@@ -234,7 +235,7 @@ class TestMobile:
         mock_result.data = '[]'
         mock_result.request_id = "test-123"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.get_installed_apps(
@@ -244,7 +245,7 @@ class TestMobile:
         )
         
         # Assert
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
             {"start_menu": True, "desktop": False, "ignore_system_apps": False}
         )
@@ -257,7 +258,7 @@ class TestMobile:
         mock_result.data = '[{"pid": 1234, "name": "calculator"}]'
         mock_result.request_id = "test-123"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.start_app("com.android.calculator2")
@@ -265,7 +266,7 @@ class TestMobile:
         # Assert
         assert isinstance(result, ProcessListResult)
         assert result.success is True
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "start_app", {"start_cmd": "com.android.calculator2"}
         )
 
@@ -277,7 +278,7 @@ class TestMobile:
         mock_result.data = '[{"pid": 1234, "name": "settings"}]'
         mock_result.request_id = "test-123"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.start_app(
@@ -286,7 +287,7 @@ class TestMobile:
         )
         
         # Assert
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "start_app", {
                 "start_cmd": "com.android.settings",
                 "activity": ".MainActivity"
@@ -301,7 +302,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.error_message = ""
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.stop_app_by_cmd("com.android.calculator2")
@@ -309,7 +310,7 @@ class TestMobile:
         # Assert
         assert isinstance(result, AppOperationResult)
         assert result.success is True
-        self.mobile._call_mcp_tool.assert_called_once_with(
+        self.session.call_mcp_tool.assert_called_once_with(
             "stop_app_by_cmd", {"stop_cmd": "com.android.calculator2"}
         )
 
@@ -322,7 +323,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.data = "/path/to/mobile_screenshot.png"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.screenshot()
@@ -331,7 +332,7 @@ class TestMobile:
         assert isinstance(result, OperationResult)
         assert result.success is True
         assert result.data == "/path/to/mobile_screenshot.png"
-        self.mobile._call_mcp_tool.assert_called_once_with("system_screenshot", {})
+        self.session.call_mcp_tool.assert_called_once_with("system_screenshot", {})
 
     # ADB URL Tests
     def test_get_adb_url_success_with_valid_mobile_env(self):
@@ -437,7 +438,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.error_message = "MCP tool failed"
         
-        self.mobile._call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = Mock(return_value=mock_result)
         
         # Act
         result = self.mobile.tap(100, 200)
@@ -450,7 +451,7 @@ class TestMobile:
     def test_tap_exception(self):
         """Test tap when exception occurs."""
         # Arrange
-        self.mobile._call_mcp_tool = Mock(side_effect=Exception("Network error"))
+        self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
         
         # Act
         result = self.mobile.tap(100, 200)
@@ -463,7 +464,7 @@ class TestMobile:
     def test_get_clickable_ui_elements_exception(self):
         """Test UI elements retrieval when exception occurs."""
         # Arrange
-        self.mobile._call_mcp_tool = Mock(side_effect=Exception("Network error"))
+        self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
         
         # Act
         result = self.mobile.get_clickable_ui_elements()

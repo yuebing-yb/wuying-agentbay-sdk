@@ -728,6 +728,6 @@ func main() {
 
 ## Related Resources
 
-- [Session API Reference](session.md)
+- [Session API Reference](../common-features/basics/session.md)
 - [Window API Reference](window.md)
 - [UI API Reference](ui.md)

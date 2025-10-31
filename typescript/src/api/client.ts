@@ -128,6 +128,51 @@ export class Client extends OpenApi {
   }
 
   /**
+   * Delete Persistent Context
+   * 
+   * @param request - ClearContextRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns ClearContextResponse
+   */
+  async clearContextWithOptions(request: $_model.ClearContextRequest, runtime: $dara.RuntimeOptions): Promise<$_model.ClearContextResponse> {
+    request.validate();
+    const body : {[key: string ]: any} = { };
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+
+    if (!$dara.isNull(request.id)) {
+      body["Id"] = request.id;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "ClearContext",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.ClearContextResponse>(await this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime), new $_model.ClearContextResponse({}));
+  }
+
+  /**
+   * Delete Persistent Context
+   * 
+   * @param request - ClearContextRequest
+   * @returns ClearContextResponse
+   */
+  async clearContext(request: $_model.ClearContextRequest): Promise<$_model.ClearContextResponse> {
+    const runtime = new $dara.RuntimeOptions({ });
+    return await this.clearContextWithOptions(request, runtime);
+  }
+  /**
    * Create MCP session
    *
    * @param tmpReq - CreateMcpSessionRequest
@@ -185,6 +230,14 @@ export class Client extends OpenApi {
 
     if (!$dara.isNull(request.vpcResource)) {
       body["VpcResource"] = request.vpcResource;
+    }
+
+    if (!$dara.isNull(request.extraConfigs)) {
+      body["ExtraConfigs"] = request.extraConfigs;
+    }
+
+    if (!$dara.isNull(request.sdkStats)) {
+      body["SdkStats"] = request.sdkStats;
     }
 
     const req = new $OpenApiUtil.OpenApiRequest({
@@ -293,6 +346,10 @@ export class Client extends OpenApi {
 
     if (!$dara.isNull(request.authorization)) {
       body["Authorization"] = request.authorization;
+    }
+
+    if (!$dara.isNull(request.contextId)) {
+      body["ContextId"] = request.contextId;
     }
 
     if (!$dara.isNull(request.name)) {

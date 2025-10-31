@@ -8,6 +8,7 @@ This example demonstrates how to use the Context Management features of the Agen
 - Getting or creating a context
 - Creating a session with a context
 - Updating a context
+- Clearing context data (asynchronous and synchronous)
 - Deleting a context
 
 ## Running the Example
@@ -39,6 +40,7 @@ The example demonstrates a full lifecycle of context management:
 3. Get an existing context by name, or create it if it doesn't exist
 4. Create a session using the context
 5. Update the context's properties
-6. Clean up by deleting the session and context
+6. Clear the context's persistent data (demonstrates both async and sync methods)
+7. Clean up by deleting the session and context
 
-For more details on context management, see the [Context API Reference](../../api-reference/context.md) and [Data Persistence Tutorial](../../tutorials/data-persistence.md). 
+For more details on context management, see the [Context API Reference](../../../../../../typescript/docs/api/common-features/basics/context.md) and [Data Persistence Tutorial](../../../../../../docs/guides/common-features/basics/data-persistence.md).

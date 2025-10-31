@@ -7,7 +7,7 @@ from agentbay.filesystem.filesystem import (
     FileInfoResult,
     FileSystem,
 )
-from agentbay.model import OperationResult
+from agentbay.model import OperationResult, McpToolResult
 
 
 class DummySession:
@@ -15,6 +15,7 @@ class DummySession:
         self.api_key = "dummy_key"
         self.session_id = "dummy_session"
         self.client = MagicMock()
+        self.call_mcp_tool = MagicMock()
 
     def get_api_key(self):
         return self.api_key
@@ -38,15 +39,14 @@ class TestFileSystemRefactor(unittest.TestCase):
         self.fs = FileSystem(self.session)
 
     # Test internal chunk methods exist and work correctly
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_read_file_chunk_internal_method_exists(self, mock_call_mcp_tool):
+    def test_read_file_chunk_internal_method_exists(self):
         """
         Test that _read_file_chunk internal method exists and works correctly.
         """
-        mock_result = OperationResult(
+        mock_result = McpToolResult(
             request_id="request-123", success=True, data="chunk content"
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         # Test internal method exists
         self.assertTrue(hasattr(self.fs, '_read_file_chunk'))
@@ -57,15 +57,14 @@ class TestFileSystemRefactor(unittest.TestCase):
         self.assertEqual(result.content, "chunk content")
         self.assertEqual(result.request_id, "request-123")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._call_mcp_tool")
-    def test_write_file_chunk_internal_method_exists(self, mock_call_mcp_tool):
+    def test_write_file_chunk_internal_method_exists(self):
         """
         Test that _write_file_chunk internal method exists and works correctly.
         """
-        mock_result = OperationResult(
+        mock_result = McpToolResult(
             request_id="request-123", success=True, data="True"
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         # Test internal method exists
         self.assertTrue(hasattr(self.fs, '_write_file_chunk'))

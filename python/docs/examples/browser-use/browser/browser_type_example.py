@@ -27,7 +27,7 @@ async def test_browser_type(browser_type: str | None, description: str):
     print(f"\n{'='*60}")
     print(f"Testing: {description}")
     print(f"{'='*60}")
-    
+
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         raise RuntimeError("AGENTBAY_API_KEY environment variable not set")
@@ -38,25 +38,25 @@ async def test_browser_type(browser_type: str | None, description: str):
     print("\n1. Creating session with computer use image...")
     params = CreateSessionParams(image_id="browser_latest")
     result = agent_bay.create(params)
-    
+
     if not result.success:
         raise RuntimeError(f"Failed to create session: {result.error_message}")
-    
+
     session = result.session
     print(f"   ✓ Session created: {session.get_session_id()}")
 
     try:
         # Initialize browser with specified type
-        print(f"\n2. Initializing browser with type: {browser_type or 'default (None)')...")
+        print(f"\n2. Initializing browser with type: {browser_type or 'default (None)'}")
         option = BrowserOption(
             browser_type=browser_type,
             viewport=BrowserViewport(width=1920, height=1080)
         )
-        
+
         success = await session.browser.initialize_async(option)
         if not success:
             raise RuntimeError("Browser initialization failed")
-        
+
         print(f"   ✓ Browser initialized successfully")
 
         # Get endpoint URL
@@ -73,7 +73,7 @@ async def test_browser_type(browser_type: str | None, description: str):
             # Navigate to a page that shows browser info
             print("   ✓ Connected successfully")
             print("\n5. Verifying browser configuration...")
-            
+
             await page.goto("https://www.whatismybrowser.com/")
             await page.wait_for_load_state("networkidle")
 
@@ -81,12 +81,12 @@ async def test_browser_type(browser_type: str | None, description: str):
             user_agent = await page.evaluate("navigator.userAgent")
             viewport_width = await page.evaluate("window.innerWidth")
             viewport_height = await page.evaluate("window.innerHeight")
-            
+
             print(f"\n   Browser Information:")
             print(f"   - User Agent: {user_agent[:80]}...")
             print(f"   - Viewport: {viewport_width} x {viewport_height}")
             print(f"   - Configured Type: {browser_type or 'default'}")
-            
+
             # Check if Chrome or Chromium is in user agent
             if "Chrome" in user_agent:
                 if "Chromium" in user_agent:
@@ -111,33 +111,33 @@ async def main():
     print("=" * 60)
     print("\nThis example demonstrates browser type selection in AgentBay.")
     print("Note: browser_type is only available for computer use images.")
-    
+
     # Test 1: Chrome browser
     await test_browser_type(
         browser_type="chrome",
         description="Chrome Browser (Google Chrome)"
     )
-    
+
     await asyncio.sleep(2)  # Brief pause between tests
-    
+
     # Test 2: Chromium browser
     await test_browser_type(
         browser_type="chromium",
         description="Chromium Browser (Open Source)"
     )
-    
+
     await asyncio.sleep(2)  # Brief pause between tests
-    
+
     # Test 3: Default (None)
     await test_browser_type(
         browser_type=None,
         description="Default Browser (Platform decides)"
     )
-    
+
     print("\n" + "=" * 60)
     print("All browser type tests completed successfully!")
     print("=" * 60)
-    
+
     # Summary
     print("\nSummary:")
     print("- Chrome: Use when you need Google Chrome specific features")
@@ -151,7 +151,7 @@ async def quick_example():
     print("\n" + "=" * 60)
     print("Quick Example: Using Chrome Browser")
     print("=" * 60)
-    
+
     api_key = os.getenv("AGENTBAY_API_KEY")
     agent_bay = AgentBay(api_key=api_key)
 
@@ -164,20 +164,20 @@ async def quick_example():
         # Simply specify browser_type in BrowserOption
         option = BrowserOption(browser_type="chrome")
         success = await session.browser.initialize_async(option)
-        
+
         if success:
             print("✓ Chrome browser initialized successfully")
-            
+
             # Get endpoint and use with Playwright
             endpoint_url = session.browser.get_endpoint_url()
             async with async_playwright() as p:
                 browser = await p.chromium.connect_over_cdp(endpoint_url)
                 page = await browser.contexts[0].new_page()
-                
+
                 await page.goto("https://example.com")
                 title = await page.title()
                 print(f"✓ Page title: {title}")
-                
+
                 await browser.close()
     finally:
         session.delete()
@@ -185,18 +185,17 @@ async def quick_example():
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Browser Type Selection Example")
     parser.add_argument(
         "--quick",
         action="store_true",
         help="Run quick example only"
     )
-    
+
     args = parser.parse_args()
-    
+
     if args.quick:
         asyncio.run(quick_example())
     else:
         asyncio.run(main())
-

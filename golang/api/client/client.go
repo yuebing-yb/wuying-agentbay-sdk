@@ -148,7 +148,71 @@ func (client *Client) CallMcpTool(request *CallMcpToolRequest) (_result *CallMcp
 
 // Summary:
 //
-// # Create MCP session
+// Delete Persistent Context
+//
+// @param request - ClearContextRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return ClearContextResponse
+func (client *Client) ClearContextWithOptions(request *ClearContextRequest, runtime *dara.RuntimeOptions) (_result *ClearContextResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+
+	if !dara.IsNil(request.Id) {
+		body["Id"] = request.Id
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("ClearContext"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &ClearContextResponse{}
+	_body, _err := client.DoRPCRequest(params.Action, params.Version, params.Protocol, params.Method, params.AuthType, params.BodyType, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// Delete Persistent Context
+//
+// @param request - ClearContextRequest
+//
+// @return ClearContextResponse
+func (client *Client) ClearContext(request *ClearContextRequest) (_result *ClearContextResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &ClearContextResponse{}
+	_body, _err := client.ClearContextWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// 创建 mcp session
 //
 // @param tmpReq - CreateMcpSessionRequest
 //
@@ -201,6 +265,14 @@ func (client *Client) CreateMcpSessionWithOptions(tmpReq *CreateMcpSessionReques
 
 	if !dara.IsNil(request.VpcResource) {
 		body["VpcResource"] = request.VpcResource
+	}
+
+	if !dara.IsNil(request.ExtraConfigs) {
+		body["ExtraConfigs"] = request.ExtraConfigs
+	}
+
+	if !dara.IsNil(request.SdkStats) {
+		body["SdkStats"] = request.SdkStats
 	}
 
 	req := &openapiutil.OpenApiRequest{
@@ -473,6 +545,10 @@ func (client *Client) GetContextWithOptions(request *GetContextRequest, runtime 
 
 	if !dara.IsNil(request.Authorization) {
 		body["Authorization"] = request.Authorization
+	}
+
+	if !dara.IsNil(request.ContextId) {
+		body["ContextId"] = request.ContextId
 	}
 
 	if !dara.IsNil(request.Name) {

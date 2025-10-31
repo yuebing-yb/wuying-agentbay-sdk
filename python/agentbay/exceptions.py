@@ -75,3 +75,10 @@ class AgentError(AgentBayError):
 
     def __init__(self, message="Agent action error", *args, **kwargs):
         super().__init__(message, *args, **kwargs)
+
+
+class ClearanceTimeoutError(AgentBayError):
+    """Raised when context clearing operation times out."""
+
+    def __init__(self, message="Context clearing operation timed out", *args, **kwargs):
+        super().__init__(message, *args, **kwargs)

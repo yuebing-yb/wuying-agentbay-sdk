@@ -19,6 +19,7 @@ class CreateMcpSessionRequest(DaraModel):
         session_id: Optional[str] = None,
         vpc_resource: Optional[bool] = None,
         extra_configs: Optional[main_models.ExtraConfigs] = None,
+        sdk_stats: Optional[str] = None,
     ):
         self.authorization = authorization
         self.context_id = context_id
@@ -30,6 +31,7 @@ class CreateMcpSessionRequest(DaraModel):
         self.session_id = session_id
         self.vpc_resource = vpc_resource
         self.extra_configs = extra_configs
+        self.sdk_stats = sdk_stats
 
     def validate(self):
         if self.persistence_data_list:
@@ -76,6 +78,9 @@ class CreateMcpSessionRequest(DaraModel):
         if self.extra_configs is not None:
             result['ExtraConfigs'] = self.extra_configs.to_map()
 
+        if self.sdk_stats is not None:
+            result['SdkStats'] = self.sdk_stats
+
         return result
 
     def from_map(self, m: Optional[dict] = None):
@@ -113,6 +118,9 @@ class CreateMcpSessionRequest(DaraModel):
         if m.get('ExtraConfigs') is not None:
             temp_model = main_models.ExtraConfigs()
             self.extra_configs = temp_model.from_map(m.get('ExtraConfigs'))
+
+        if m.get('SdkStats') is not None:
+            self.sdk_stats = m.get('SdkStats')
 
         return self
 

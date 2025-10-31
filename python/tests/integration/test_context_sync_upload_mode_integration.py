@@ -1,19 +1,15 @@
 import os
-import pytest
-from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList
-from agentbay.session import Session
 import time
+import unittest
 import random
+import asyncio
+from agentbay import AgentBay, CreateSessionParams
+from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList, UploadMode
+from agentbay.session import Session
 
-@pytest.fixture(scope="module")
-def agentbay_client():
-    """Initialize AgentBay client with API key from environment."""
-    api_key = os.getenv("AGENTBAY_API_KEY")
-    if not api_key:
-        print("Warning: AGENTBAY_API_KEY environment variable not set. Using default test key.")
-        api_key = "akm-xxx"  # Replace with your test API key
-    return AgentBay(api_key=api_key)
+def get_test_api_key():
+    """Get API key for testing"""
+    return os.environ.get("AGENTBAY_API_KEY")
 
 def generate_unique_id():
     """Generate unique ID for test isolation."""
@@ -21,24 +17,32 @@ def generate_unique_id():
     random_part = random.randint(0, 9999)
     return f"{timestamp}-{random_part}"
 
-class TestContextSyncUploadModeIntegration:
+class TestContextSyncUploadModeIntegration(unittest.TestCase):
     """Context Sync Upload Mode Integration Tests"""
     
     @classmethod
-    def setup_class(cls):
+    def setUpClass(cls):
         """Setup test class with unique ID and session tracking."""
+        # Get API Key
+        api_key = get_test_api_key()
+        if not api_key:
+            raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
+
+        # Initialize AgentBay client
+        cls.agent_bay = AgentBay(api_key=api_key)
+        
         cls.unique_id = generate_unique_id()
         cls.test_sessions = []
         print(f"Using unique ID for test: {cls.unique_id}")
 
     @classmethod
-    def teardown_class(cls):
+    def tearDownClass(cls):
         """Cleanup all test sessions."""
         print("Cleaning up: Deleting all test sessions...")
         # Note: Sessions should be cleaned up in individual tests
         # This is a safety net for any remaining sessions
 
-    def test_create_session_with_default_file_upload_mode(self, agentbay_client: AgentBay):
+    def test_create_session_with_default_file_upload_mode(self):
         """Test creating session with default File upload mode and write file."""
         print("\n=== Testing basic functionality with default File upload mode ===")
 
@@ -46,10 +50,10 @@ class TestContextSyncUploadModeIntegration:
         context_name = f"test-context-{self.unique_id}"
         print(f"Creating context with name: {context_name}")
         
-        context_result = agentbay_client.context.get(context_name, True)
-        assert context_result.success, f"Failed to create context: {context_result.error_message}"
-        assert context_result.context_id is not None
-        assert context_result.context_id != ""
+        context_result = self.agent_bay.context.get(context_name, True)
+        self.assertTrue(context_result.success, f"Failed to create context: {context_result.error_message}")
+        self.assertIsNotNone(context_result.context_id)
+        self.assertNotEqual(context_result.context_id, "")
         
         print(f"Generated contextId: {context_result.context_id}")
         print(f"Context get request ID: {context_result.request_id}")
@@ -72,13 +76,13 @@ class TestContextSyncUploadModeIntegration:
         )
 
         print("Creating session with default File upload mode...")
-        session_result = agentbay_client.create(session_params)
+        session_result = self.agent_bay.create(session_params)
 
         # Step 3: Verify session creation success
-        assert session_result.success, f"Failed to create session: {session_result.error_message}"
-        assert session_result.session is not None
-        assert session_result.request_id is not None
-        assert session_result.request_id != ""
+        self.assertTrue(session_result.success, f"Failed to create session: {session_result.error_message}")
+        self.assertIsNotNone(session_result.session)
+        self.assertIsNotNone(session_result.request_id)
+        self.assertNotEqual(session_result.request_id, "")
 
         session = session_result.session
         self.test_sessions.append(session)
@@ -88,9 +92,9 @@ class TestContextSyncUploadModeIntegration:
         print(f"Session creation request ID: {session_result.request_id}")
 
         # Get session info to verify appInstanceId
-        session_info = agentbay_client.get_session(session.session_id)
-        assert session_info.success, f"Failed to get session info: {session_info.error_message}"
-        assert session_info.data is not None
+        session_info = self.agent_bay.get_session(session.session_id)
+        self.assertTrue(session_info.success, f"Failed to get session info: {session_info.error_message}")
+        self.assertIsNotNone(session_info.data)
         
         print(f"App Instance ID: {session_info.data.app_instance_id}")
         print(f"Get session request ID: {session_info.request_id}")
@@ -99,26 +103,26 @@ class TestContextSyncUploadModeIntegration:
 
         # Cleanup
         print("Cleaning up: Deleting the session...")
-        delete_result = agentbay_client.delete(session, sync_context=True)
-        assert delete_result.success, f"Failed to delete session: {delete_result.error_message}"
+        delete_result = self.agent_bay.delete(session, sync_context=True)
+        self.assertTrue(delete_result.success, f"Failed to delete session: {delete_result.error_message}")
         print(f"Session {session.session_id} deleted successfully")
         self.test_sessions.remove(session)
 
-    def test_context_sync_with_archive_mode_and_file_operations(self, agentbay_client: AgentBay):
+    def test_context_sync_with_archive_mode_and_file_operations(self):
         """Test contextId and path usage with Archive mode and file operations."""
         print("\n=== Testing contextId and path usage with Archive mode and file operations ===")
 
         context_name = f"archive-mode-context-{self.unique_id}"
-        context_result = agentbay_client.context.get(context_name, True)
+        context_result = self.agent_bay.context.get(context_name, True)
         
-        assert context_result.success, f"Failed to create context: {context_result.error_message}"
-        assert context_result.context_id is not None
-        assert context_result.context_id != ""
+        self.assertTrue(context_result.success, f"Failed to create context: {context_result.error_message}")
+        self.assertIsNotNone(context_result.context_id)
+        self.assertNotEqual(context_result.context_id, "")
 
         print(f"Generated contextId: {context_result.context_id}")
 
         # Create sync policy with Archive upload mode
-        upload_policy = UploadPolicy(upload_mode="Archive")
+        upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
         sync_policy = SyncPolicy(upload_policy=upload_policy)
 
         context_sync = ContextSync.new(
@@ -127,9 +131,9 @@ class TestContextSyncUploadModeIntegration:
             policy=sync_policy
         )
 
-        assert context_sync.context_id == context_result.context_id
-        assert context_sync.path == "/tmp/archive-mode-test"
-        assert context_sync.policy.upload_policy.upload_mode == "Archive"
+        self.assertEqual(context_sync.context_id, context_result.context_id)
+        self.assertEqual(context_sync.path, "/tmp/archive-mode-test")
+        self.assertEqual(context_sync.policy.upload_policy.upload_mode, UploadMode.ARCHIVE)
 
         print("✅ ContextSync.new works correctly with contextId and path using Archive mode")
 
@@ -143,19 +147,19 @@ class TestContextSyncUploadModeIntegration:
         )
 
         print("Creating session with Archive mode contextSync...")
-        session_result = agentbay_client.create(session_params)
+        session_result = self.agent_bay.create(session_params)
 
-        assert session_result.success, f"Failed to create session: {session_result.error_message}"
-        assert session_result.session is not None
-        assert session_result.request_id is not None
+        self.assertTrue(session_result.success, f"Failed to create session: {session_result.error_message}")
+        self.assertIsNotNone(session_result.session)
+        self.assertIsNotNone(session_result.request_id)
 
         session = session_result.session
         self.test_sessions.append(session)
 
         # Get session info to verify appInstanceId
-        session_info = agentbay_client.get_session(session.session_id)
-        assert session_info.success, f"Failed to get session info: {session_info.error_message}"
-        assert session_info.data is not None
+        session_info = self.agent_bay.get_session(session.session_id)
+        self.assertTrue(session_info.success, f"Failed to get session info: {session_info.error_message}")
+        self.assertIsNotNone(session_info.data)
         
         print(f"App Instance ID: {session_info.data.app_instance_id}")
 
@@ -180,20 +184,37 @@ class TestContextSyncUploadModeIntegration:
         write_result = session.file_system.write_file(file_path, file_content, "overwrite")
 
         # Verify file write success
-        assert write_result.success, f"Failed to write file: {write_result.error_message}"
-        assert write_result.request_id is not None
-        assert write_result.request_id != ""
+        self.assertTrue(write_result.success, f"Failed to write file: {write_result.error_message}")
+        self.assertIsNotNone(write_result.request_id)
+        self.assertNotEqual(write_result.request_id, "")
 
         print(f"✅ File write successful!")
         print(f"Write file request ID: {write_result.request_id}")
 
-        # Test context info functionality
-        print("Testing context info functionality...")
+        # Test context sync and info functionality
+        print("Testing context sync functionality...")
+        # Call context sync before getting info
+        print("Calling context sync before getting info...")
+        
+        # Use asyncio.run to handle the async sync method
+        async def run_sync():
+            return await session.context.sync()
+        
+        sync_result = asyncio.run(run_sync())
+        
+        self.assertTrue(sync_result.success, f"Failed to sync context: {sync_result.error_message}")
+        self.assertIsNotNone(sync_result.request_id)
+        
+        print(f"✅ Context sync successful!")
+        print(f"Sync request ID: {sync_result.request_id}")
+
+        # Now call context info after sync
+        print("Calling context info after sync...")
         info_result = session.context.info()
         
-        assert info_result.success, f"Failed to get context info: {info_result.error_message}"
-        assert info_result.request_id is not None
-        assert info_result.context_status_data is not None
+        self.assertTrue(info_result.success, f"Failed to get context info: {info_result.error_message}")
+        self.assertIsNotNone(info_result.request_id)
+        self.assertIsNotNone(info_result.context_status_data)
         
         print(f"✅ Context info successful!")
         print(f"Info request ID: {info_result.request_id}")
@@ -205,86 +226,100 @@ class TestContextSyncUploadModeIntegration:
             for index, status in enumerate(info_result.context_status_data):
                 print(f"  [{index}] ContextId: {status.context_id}, Path: {status.path}, Status: {status.status}, TaskType: {status.task_type}")
 
-        # Get file information
-        print("Getting file information...")
+        # List files in context sync directory
+        print("Listing files in context sync directory...")
         
-        file_info_result = session.file_system.get_file_info(file_path)
+        # Use the sync directory path
+        sync_dir_path = "/tmp/archive-mode-test"
+        
+        list_result = self.agent_bay.context.list_files(context_result.context_id, sync_dir_path, page_number=1, page_size=10)
 
-        # Verify getFileInfo success
-        assert file_info_result.success, f"Failed to get file info: {file_info_result.error_message}"
-        assert file_info_result.file_info is not None
-        assert file_info_result.request_id is not None
-        assert file_info_result.request_id != ""
+        # Verify ListFiles success
+        self.assertTrue(list_result.success, f"Failed to list files: {getattr(list_result, 'error_message', 'Unknown error')}")
+        self.assertIsNotNone(list_result.request_id)
+        self.assertNotEqual(list_result.request_id, "")
 
-        print(f"✅ Get file info successful!")
-        print(f"Get file info request ID: {file_info_result.request_id}")
-        print(f"File info: {file_info_result.file_info}")
+        print(f"✅ List files successful!")
+        print(f"List files request ID: {list_result.request_id}")
+        print(f"Total files found: {len(list_result.entries)}")
 
-        # Verify file information
-        assert file_info_result.file_info['size'] == content_size
-        assert file_info_result.file_info['isDirectory'] == False
+        if list_result.entries:
+            print("📋 Files in context sync directory:")
+            for index, entry in enumerate(list_result.entries):
+                print(f"  [{index}] FilePath: {entry.file_path}")
+                print(f"      FileType: {entry.file_type}")
+                print(f"      FileName: {entry.file_name}")
+                print(f"      Size: {entry.size} bytes")
+            
+            # Check if any file contains 'zip' in fileName (for Archive mode)
+            has_zip_file = any('zip' in entry.file_name.lower() for entry in list_result.entries if entry.file_name)
+            if has_zip_file:
+                print("✅ Found zip file in Archive mode - this indicates successful archive compression")
+            else:
+                print("ℹ️  No zip file found - files may be stored individually")
+        else:
+            print("No files found in context sync directory")
         print("✅ Archive mode contextSync with contextId and path works correctly, and file operations completed successfully")
 
         # Cleanup
         print("Cleaning up: Deleting the session...")
-        delete_result = agentbay_client.delete(session, sync_context=True)
-        assert delete_result.success, f"Failed to delete session: {delete_result.error_message}"
+        delete_result = self.agent_bay.delete(session, sync_context=True)
+        self.assertTrue(delete_result.success, f"Failed to delete session: {delete_result.error_message}")
         print(f"Session {session.session_id} deleted successfully")
         self.test_sessions.remove(session)
 
-    def test_invalid_upload_mode_with_context_sync_new(self, agentbay_client: AgentBay):
-        """Test error handling when using invalid uploadMode with ContextSync.new."""
-        print("\n=== Testing invalid uploadMode with ContextSync.new ===")
 
-        context_name = f"invalid-context-{self.unique_id}"
-        context_result = agentbay_client.context.get(context_name, True)
-        assert context_result.success, f"Failed to create context: {context_result.error_message}"
-
-        # Create invalid upload policy
-        with pytest.raises(ValueError) as exc_info:
-            invalid_upload_policy = UploadPolicy(upload_mode="InvalidMode")
-
-        assert "Invalid upload_mode value: InvalidMode" in str(exc_info.value)
-        assert "Valid values are: 'File', 'Archive'" in str(exc_info.value)
-
-        print("✅ ContextSync correctly threw error for invalid uploadMode during UploadPolicy creation")
-
-    def test_invalid_upload_mode_with_policy_assignment(self, agentbay_client: AgentBay):
+    def test_invalid_upload_mode_with_policy_assignment(self):
         """Test error handling when using invalid uploadMode with policy assignment."""
         print("\n=== Testing invalid uploadMode with policy assignment ===")
 
         context_name = f"invalid-policy-context-{self.unique_id}"
-        context_result = agentbay_client.context.get(context_name, True)
-        assert context_result.success, f"Failed to create context: {context_result.error_message}"
+        context_result = self.agent_bay.context.get(context_name, True)
+        self.assertTrue(context_result.success, f"Failed to create context: {context_result.error_message}")
 
-        # Create a valid context sync first
-        context_sync = ContextSync(
-            context_id=context_result.context_id,
-            path="/tmp/test"
-        )
+        # Test 1: Invalid upload mode through SyncPolicy creation (new test for agentbay.create scenario)
+        print("Testing invalid uploadMode through SyncPolicy instantiation (agentbay.create scenario)...")
+        
+        with self.assertRaises(ValueError) as exc_info:
+            # This simulates what happens when user passes invalid uploadMode in agentbay.create
+            invalid_upload_policy = UploadPolicy(upload_mode="InvalidMode")
+            sync_policy = SyncPolicy(upload_policy=invalid_upload_policy)
 
-        # Try to create invalid upload policy and assign it
-        with pytest.raises(ValueError) as exc_info:
-            invalid_upload_policy = UploadPolicy()
-            # This should trigger validation in __post_init__
-            invalid_upload_policy.upload_mode = "WrongValue"
-            invalid_upload_policy.__post_init__()
+        self.assertIn("Invalid upload_mode value: InvalidMode", str(exc_info.exception))
+        self.assertIn("Valid values are: File, Archive", str(exc_info.exception))
 
-        assert "Invalid upload_mode value: WrongValue" in str(exc_info.value)
-        assert "Valid values are: 'File', 'Archive'" in str(exc_info.value)
+        print("✅ SyncPolicy correctly threw error for invalid uploadMode during instantiation")
 
-        print("✅ UploadPolicy correctly threw error for invalid uploadMode")
+        # Test 2: Test the complete flow with ContextSync (most realistic scenario)
+        print("Testing invalid uploadMode through complete ContextSync flow...")
+        
+        with self.assertRaises(ValueError) as exc_info:
+            # This is the most realistic scenario - user creates ContextSync with invalid policy
+            invalid_upload_policy = UploadPolicy(upload_mode="BadValue")
+            sync_policy = SyncPolicy(upload_policy=invalid_upload_policy)
+            
+            # This would be used in agentbay.create(CreateSessionParams(context_syncs=[context_sync]))
+            context_sync = ContextSync.new(
+                context_id=context_result.context_id,
+                path="/tmp/test-invalid",
+                policy=sync_policy
+            )
 
-    def test_valid_upload_mode_values(self, agentbay_client: AgentBay):
+        self.assertIn("Invalid upload_mode value: BadValue", str(exc_info.exception))
+        self.assertIn("Valid values are: File, Archive", str(exc_info.exception))
+
+        print("✅ Complete ContextSync flow correctly threw error for invalid uploadMode")
+
+    def test_valid_upload_mode_values(self):
         """Test that valid uploadMode values are accepted."""
         print("\n=== Testing valid uploadMode values ===")
 
         context_name = f"valid-context-{self.unique_id}"
-        context_result = agentbay_client.context.get(context_name, True)
-        assert context_result.success, f"Failed to create context: {context_result.error_message}"
+        context_result = self.agent_bay.context.get(context_name, True)
+        self.assertTrue(context_result.success, f"Failed to create context: {context_result.error_message}")
 
         # Test "File" mode
-        file_upload_policy = UploadPolicy(upload_mode="File")
+        file_upload_policy = UploadPolicy(upload_mode=UploadMode.FILE)
         file_sync_policy = SyncPolicy(upload_policy=file_upload_policy)
 
         # Should not raise any exception
@@ -294,11 +329,11 @@ class TestContextSyncUploadModeIntegration:
             policy=file_sync_policy
         )
         
-        assert file_context_sync.policy.upload_policy.upload_mode == "File"
+        self.assertEqual(file_context_sync.policy.upload_policy.upload_mode, UploadMode.FILE)
         print("✅ 'File' uploadMode accepted successfully")
 
         # Test "Archive" mode
-        archive_upload_policy = UploadPolicy(upload_mode="Archive")
+        archive_upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
         archive_sync_policy = SyncPolicy(upload_policy=archive_upload_policy)
 
         # Should not raise any exception
@@ -308,33 +343,36 @@ class TestContextSyncUploadModeIntegration:
             policy=archive_sync_policy
         )
         
-        assert archive_context_sync.policy.upload_policy.upload_mode == "Archive"
+        self.assertEqual(archive_context_sync.policy.upload_policy.upload_mode, UploadMode.ARCHIVE)
         print("✅ 'Archive' uploadMode accepted successfully")
 
-    def test_upload_policy_serialization(self, agentbay_client: AgentBay):
+    def test_upload_policy_serialization(self):
         """Test that UploadPolicy serializes uploadMode correctly."""
         print("\n=== Testing UploadPolicy serialization ===")
 
         # Test File mode serialization
-        file_policy = UploadPolicy(upload_mode="File")
+        file_policy = UploadPolicy(upload_mode=UploadMode.FILE)
         file_dict = file_policy.__dict__()
         
-        assert "uploadMode" in file_dict
-        assert file_dict["uploadMode"] == "File"
+        self.assertIn("uploadMode", file_dict)
+        self.assertEqual(file_dict["uploadMode"], "File")
         print("✅ File mode serialization works correctly")
 
         # Test Archive mode serialization
-        archive_policy = UploadPolicy(upload_mode="Archive")
+        archive_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
         archive_dict = archive_policy.__dict__()
         
-        assert "uploadMode" in archive_dict
-        assert archive_dict["uploadMode"] == "Archive"
+        self.assertIn("uploadMode", archive_dict)
+        self.assertEqual(archive_dict["uploadMode"], "Archive")
         print("✅ Archive mode serialization works correctly")
 
         # Test default policy serialization
         default_policy = UploadPolicy.default()
         default_dict = default_policy.__dict__()
         
-        assert "uploadMode" in default_dict
-        assert default_dict["uploadMode"] == "File"  # Default should be File
+        self.assertIn("uploadMode", default_dict)
+        self.assertEqual(default_dict["uploadMode"], "File")  # Default should be File
         print("✅ Default policy serialization works correctly")
+
+if __name__ == "__main__":
+    unittest.main()

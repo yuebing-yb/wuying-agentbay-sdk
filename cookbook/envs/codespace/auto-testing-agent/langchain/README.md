@@ -139,7 +139,7 @@ You can specify which model to use by setting the `DASHSCOPE_MODEL` environment 
 ## Structure
 
 - [src/](./src/): Contains the LangChain-specific implementation
-- [data/](./data/): Data directory for outputs (test results, etc.)
+- `data/`: Data directory for outputs (test results, etc.) - created automatically when running tests
 - [README.md](./README.md): This documentation file
 
 ## Integration Details

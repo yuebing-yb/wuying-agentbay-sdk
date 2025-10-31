@@ -231,8 +231,8 @@ The browser may not have started properly. Check initialization logs and ensure 
 
 ## Additional Resources
 
-- [Browser Use Guide](../../../docs/guides/browser-use/README.md)
-- [Core Features](../../../docs/guides/browser-use/core-features.md)
-- [Advanced Features](../../../docs/guides/browser-use/advance-features.md)
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md)
+- [Core Features](../../../../../docs/guides/browser-use/core-features.md)
+- [Advanced Features](../../../../../docs/guides/browser-use/advance-features.md)
 - [Playwright Go Documentation](https://playwright.dev/docs/intro)
 

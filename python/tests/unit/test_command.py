@@ -10,6 +10,8 @@ class DummySession:
         self.api_key = "dummy_key"
         self.session_id = "dummy_session"
         self.client = MagicMock()
+        # Add call_mcp_tool method for new API
+        self.call_mcp_tool = MagicMock()
 
     def get_api_key(self):
         return self.api_key
@@ -26,15 +28,15 @@ class TestCommand(unittest.TestCase):
         self.session = DummySession()
         self.command = Command(self.session)
 
-    @patch("agentbay.command.command.Command._call_mcp_tool")
-    def test_execute_command_success(self, mock_call_mcp_tool):
+    def test_execute_command_success(self):
         """
         Test execute_command method with successful response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123", success=True, data="line1\nline2\n"
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.command.execute_command("ls -la")
         self.assertIsInstance(result, CommandResult)
@@ -44,20 +46,20 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
-        mock_call_mcp_tool.assert_called_once()
-        args = mock_call_mcp_tool.call_args[0][1]
+        self.session.call_mcp_tool.assert_called_once()
+        args = self.session.call_mcp_tool.call_args[0][1]
         self.assertEqual(args["command"], "ls -la")
         self.assertEqual(args["timeout_ms"], 1000)  # Default timeout
 
-    @patch("agentbay.command.command.Command._call_mcp_tool")
-    def test_execute_command_with_custom_timeout(self, mock_call_mcp_tool):
+    def test_execute_command_with_custom_timeout(self):
         """
         Test execute_command method with custom timeout.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123", success=True, data="line1\nline2\n"
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         custom_timeout = 2000
         result = self.command.execute_command("ls -la", timeout_ms=custom_timeout)
@@ -66,21 +68,21 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(result.output, "line1\nline2\n")
 
         # Verify custom timeout was used
-        mock_call_mcp_tool.assert_called_once()
-        args = mock_call_mcp_tool.call_args[0][1]
+        self.session.call_mcp_tool.assert_called_once()
+        args = self.session.call_mcp_tool.call_args[0][1]
         self.assertEqual(args["timeout_ms"], custom_timeout)
 
-    @patch("agentbay.command.command.Command._call_mcp_tool")
-    def test_execute_command_error(self, mock_call_mcp_tool):
+    def test_execute_command_error(self):
         """
         Test execute_command method with error response.
         """
-        mock_result = OperationResult(
+        from agentbay.model import McpToolResult
+        mock_result = McpToolResult(
             request_id="request-123",
             success=False,
             error_message="Command execution failed",
         )
-        mock_call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool.return_value = mock_result
 
         result = self.command.execute_command("ls -la")
         self.assertIsInstance(result, CommandResult)
@@ -89,12 +91,11 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(result.error_message, "Command execution failed")
         self.assertEqual(result.output, "")
 
-    @patch("agentbay.command.command.Command._call_mcp_tool")
-    def test_execute_command_exception(self, mock_call_mcp_tool):
+    def test_execute_command_exception(self):
         """
         Test execute_command method with exception.
         """
-        mock_call_mcp_tool.side_effect = Exception("mock error")
+        self.session.call_mcp_tool.side_effect = Exception("mock error")
 
         result = self.command.execute_command("ls -la")
         self.assertIsInstance(result, CommandResult)

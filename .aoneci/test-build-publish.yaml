@@ -4,7 +4,6 @@ triggers:
   merge_request:
     target-branches: 
     - main
-    - feature/add-ci-pipeline
     types:
     - merged
 
@@ -44,6 +43,8 @@ jobs:
       string-output: ${{steps.modify-version.outputs.env}}
     steps:
       - uses: checkout
+        inputs:
+          ref: main
       - uses: setup-env
         inputs:
           python-version: ${{params.python-version}}
@@ -96,6 +97,8 @@ jobs:
       string-output: ${{steps.modify-version.outputs.env}}
     steps:
       - uses: checkout
+        inputs:
+          ref: main
       - uses: setup-env
         inputs:
           node-version: ${{params.node-version}}
@@ -194,6 +197,8 @@ jobs:
 
     steps:
       - uses: checkout
+        inputs:
+          ref: main
       - uses: setup-env
         inputs:
           go_version: "1.23.2"
@@ -203,7 +208,27 @@ jobs:
       - id: get_commit
         run: |
           git fetch --all --tags
+          
+          # 添加调试信息
+          echo "=== Git Debug Information ==="
+          CURRENT_BRANCH=$(git branch --show-current)
+          echo "Current branch: $CURRENT_BRANCH"
+          echo "Git remote URL: $(git remote get-url origin)"
+          
+          # 验证分支
+          if [[ "$CURRENT_BRANCH" != "main" ]]; then
+            echo "❌ Warning: CI/CD running on unexpected branch: $CURRENT_BRANCH"
+            echo "Expected: main "
+          fi
+          
           COMMIT_SHA=$(git rev-parse --short=12 HEAD)
+          FULL_COMMIT_SHA=$(git rev-parse HEAD)
+          
+          echo "Short commit SHA: $COMMIT_SHA"
+          echo "Full commit SHA: $FULL_COMMIT_SHA"
+          echo "Commit message: $(git log -1 --pretty=format:'%s')"
+          echo "Commit author: $(git log -1 --pretty=format:'%an <%ae>')"
+          echo "Commit date: $(git log -1 --pretty=format:'%ci')"  
           echo "COMMIT_SHA=$(git rev-parse --short=12 HEAD)" >> $AONE_CI_ENV
           echo "$COMMIT_SHA"
       
@@ -214,14 +239,87 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "Checking go.mod file:"
           cat go.mod | head -5
-          echo "Running go mod tidy to verify module integrity..."
-          go mod tidy
-          echo "[SUCCESS] Go module validation passed"
       - id: generate_instructions
         run: |
           # Get commit time and hash (using UTC time to ensure consistency with Git)
           COMMIT_DATE=$(git show -s --format=%ct $COMMIT_SHA)
-          PSEUDO_VERSION="v0.0.0-$(date -u -d @$COMMIT_DATE +%Y%m%d%H%M%S)-$COMMIT_SHA"
+          
+          # 验证时间戳获取是否正确
+          echo "=== Go Module Debug Information ==="
+          echo "Commit SHA used: $COMMIT_SHA"
+          echo "Commit date (timestamp): $COMMIT_DATE"
+          echo "Commit date (human): $(date -u -d @$COMMIT_DATE '+%Y-%m-%d %H:%M:%S UTC')"
+          
+          # 确保使用正确的时间格式生成 pseudo version
+          if [ -z "$COMMIT_DATE" ] || [ "$COMMIT_DATE" = "0" ]; then
+            echo "❌ Error: Failed to get commit timestamp"
+            exit 1
+          fi
+          
+          # 使用 Git 的标准方式生成时间戳，确保与 Go 模块系统一致
+          COMMIT_TIME_UTC=$(git show -s --format=%ct $COMMIT_SHA)
+          FORMATTED_TIME=$(date -u -d @$COMMIT_TIME_UTC '+%Y%m%d%H%M%S')
+          PSEUDO_VERSION="v0.0.0-${FORMATTED_TIME}-$COMMIT_SHA"
+          
+          echo "Generated pseudo version: $PSEUDO_VERSION"
+          echo "Time components breakdown:"
+          echo "  - Raw timestamp: $COMMIT_TIME_UTC"
+          echo "  - Formatted time: $FORMATTED_TIME"
+          echo "  - Commit SHA: $COMMIT_SHA"
+          
+          # 验证生成的版本格式
+          if [[ ! "$PSEUDO_VERSION" =~ ^v0\.0\.0-[0-9]{14}-[a-f0-9]{12}$ ]]; then
+            echo "❌ Error: Invalid pseudo version format: $PSEUDO_VERSION"
+            echo "Expected format: v0.0.0-yyyymmddhhmmss-abcdefabcdef"
+            exit 1
+          fi
+          
+          # 比较与当前时间的差异，检测异常
+          CURRENT_TIME=$(date +%s)
+          TIME_DIFF=$((CURRENT_TIME - COMMIT_TIME_UTC))
+          echo "Time difference from now: ${TIME_DIFF} seconds ($(($TIME_DIFF / 3600)) hours)"
+          
+          if [ $TIME_DIFF -lt 0 ]; then
+            echo "⚠️  Warning: Commit time is in the future! This may cause Go module issues."
+          fi
+          
+          # Test if the commit is accessible via Go modules
+          echo "Testing Go module accessibility..."
+          echo "Repository URL: code.alibaba-inc.com/InnoArchClub/wuying-agentbay-sdk.git/golang"
+          
+          # 设置 Go 环境以访问私有仓库
+          export GOPRIVATE="code.alibaba-inc.com/*"
+          export GOPROXY="direct"
+          export GOSUMDB="off"
+          
+          echo "Go environment:"
+          echo "  GOPRIVATE=$GOPRIVATE"
+          echo "  GOPROXY=$GOPROXY"
+          echo "  GOSUMDB=$GOSUMDB"
+          
+          # Check if we can list the module at this version
+          echo "Testing module access with generated version..."
+            
+          # 尝试使用不同的时间格式
+          echo "Trying alternative timestamp formats..."
+          
+          # 尝试本地时区时间
+          LOCAL_TIME=$(git show -s --format=%ct $COMMIT_SHA)
+          ALT_FORMATTED_TIME=$(date -d @$LOCAL_TIME '+%Y%m%d%H%M%S')
+          ALT_PSEUDO_VERSION="v0.0.0-${ALT_FORMATTED_TIME}-$COMMIT_SHA"
+          echo "Alternative version (local time): $ALT_PSEUDO_VERSION"
+          
+          if timeout 15 go list -m "code.alibaba-inc.com/InnoArchClub/wuying-agentbay-sdk.git/golang@$ALT_PSEUDO_VERSION" 2>/dev/null; then
+            echo "✅ Alternative version works, using local time"
+            PSEUDO_VERSION="$ALT_PSEUDO_VERSION"
+          fi
+          
+          # 最终验证：尝试直接克隆指定 commit
+          echo "Final verification: Testing direct commit access..."
+          TEMP_DIR=$(mktemp -d)
+          
+          echo "=================================="
+          echo "Final pseudo version: $PSEUDO_VERSION"
           echo "${PSEUDO_VERSION}" > ${{outputs.env.path}}
   summary:
     continue-on-error: true

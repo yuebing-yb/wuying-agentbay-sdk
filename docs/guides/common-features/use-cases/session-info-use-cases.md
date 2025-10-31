@@ -268,7 +268,7 @@ def robust_session_info_handler(session):
         return None
 ```
 
-For more information about session management, see the [Session Management Guide](../guides/common-features/basics/session-management.md).
+For more information about session management, see the [Session Management Guide](../basics/session-management.md).
 ## 📚 Related Guides
 
 - [Session Management](../basics/session-management.md) - Session lifecycle and configuration

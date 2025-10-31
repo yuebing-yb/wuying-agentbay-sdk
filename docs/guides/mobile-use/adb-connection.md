@@ -400,7 +400,7 @@ which adb
 
 For detailed API documentation in other languages:
 
-- **Python**: [Mobile API Documentation](../../../python/docs/api/mobile-use/mobile.md#get_adb_url)
+- **Python**: [Mobile API Documentation](../../../python/docs/api/mobile-use/mobile.md#getadburl)
 - **Golang**: [Mobile API Documentation](../../../golang/docs/api/mobile-use/mobile.md#getadburl)
 - **TypeScript**: [Mobile API Documentation](../../../typescript/docs/api/mobile-use/mobile.md#getadburl)
 
@@ -408,9 +408,9 @@ For detailed API documentation in other languages:
 
 Complete working examples for all languages:
 
-- **Python**: [mobile_get_adb_url_example.py](../../../python/docs/examples/mobile_get_adb_url_example.py)
-- **Golang**: [mobile_get_adb_url Example](../../../golang/docs/examples/mobile_get_adb_url/)
-- **TypeScript**: [mobile-get-adb-url Example](../../../typescript/docs/examples/mobile-get-adb-url/)
+- **Python**: [mobile_get_adb_url_example.py](../../../python/docs/examples/mobile-use/mobile_get_adb_url_example.py)
+- **Golang**: [mobile_get_adb_url Example](../../../golang/docs/examples/mobile-use/mobile_get_adb_url/README.md)
+- **TypeScript**: [mobile-get-adb-url Example](../../../typescript/docs/examples/mobile-use/mobile-get-adb-url/README.md)
 
 ## Related Guides
 

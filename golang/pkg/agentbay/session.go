@@ -955,20 +955,61 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string) (*models.McpToolResu
 			}
 		}
 
-		// Convert Data to string if it's not already
-		dataStr := ""
+		// Parse response data to extract text content
+		var dataObj map[string]interface{}
 		if str, ok := response.Body.Data.(string); ok {
-			dataStr = str
-		} else {
-			// Try to marshal as JSON if it's not a string
-			if dataBytes, err := json.Marshal(response.Body.Data); err == nil {
-				dataStr = string(dataBytes)
+			// If data is a string, try to parse it as JSON
+			if err := json.Unmarshal([]byte(str), &dataObj); err != nil {
+				// If parsing fails, return the raw string
+				return &models.McpToolResult{
+					Success:      true,
+					Data:         str,
+					ErrorMessage: "",
+					RequestID:    requestID,
+				}, nil
 			}
+		} else if obj, ok := response.Body.Data.(map[string]interface{}); ok {
+			// If data is already a map, use it directly
+			dataObj = obj
+		} else {
+			// For other types, try to marshal and unmarshal
+			if dataBytes, err := json.Marshal(response.Body.Data); err == nil {
+				if err := json.Unmarshal(dataBytes, &dataObj); err != nil {
+					// If parsing fails, return the marshaled string
+					return &models.McpToolResult{
+						Success:      true,
+						Data:         string(dataBytes),
+						ErrorMessage: "",
+						RequestID:    requestID,
+					}, nil
+				}
+			}
+		}
+
+		// Extract text content from the parsed data
+		textContent := s.extractTextContentFromResponse(dataObj)
+
+		// Check for errors in the response
+		isError := false
+		if isErrorVal, exists := dataObj["isError"]; exists {
+			if isErrorBool, ok := isErrorVal.(bool); ok {
+				isError = isErrorBool
+			}
+		}
+
+		if isError {
+			LogOperationError("CallMcpTool", fmt.Sprintf("Tool returned error: %s", textContent), false)
+			return &models.McpToolResult{
+				Success:      false,
+				Data:         "",
+				ErrorMessage: textContent,
+				RequestID:    requestID,
+			}, nil
 		}
 
 		return &models.McpToolResult{
 			Success:      true,
-			Data:         dataStr,
+			Data:         textContent,
 			ErrorMessage: "",
 			RequestID:    requestID,
 		}, nil

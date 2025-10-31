@@ -230,7 +230,7 @@ option = BrowserOption(
 ## Related Documentation
 
 - [Browser Extension Examples](../extension/README.md) - Dedicated extension management examples
-- [Browser Automation Guide](../../../guides/browser-automation.md)
-- [Browser Context Tutorial](../../../tutorials/browser-context.md)
-- [Context Management Guide](../../../guides/context-management.md)
-- [API Reference - Browser](../../../api-reference/python/browser.md) 
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Main browser use guide
+- [Browser Context Tutorial](../../../../../docs/guides/browser-use/core-features/browser-context.md) - Browser context management
+- [Context Management API](../../../api/common-features/basics/context.md) - Context API reference
+- [Browser API Reference](../../../api/browser-use/browser.md) - Browser API reference 

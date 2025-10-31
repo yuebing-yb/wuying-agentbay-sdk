@@ -298,10 +298,10 @@ npm install --save-dev @types/node
 
 ## Additional Resources
 
-- [Browser API Reference](../../api/browser.md)
-- [Browser Use Guide](../../../../docs/guides/browser-use/README.md)
-- [Core Features](../../../../docs/guides/browser-use/core-features.md)
-- [Advanced Features](../../../../docs/guides/browser-use/advance-features.md)
+- [Browser API Reference](../../../api/browser-use/browser.md)
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md)
+- [Core Features](../../../../../docs/guides/browser-use/core-features.md)
+- [Advanced Features](../../../../../docs/guides/browser-use/advance-features.md)
 - [Playwright Documentation](https://playwright.dev/docs/intro)
 
 ## Example Output

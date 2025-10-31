@@ -9,17 +9,18 @@ from agentbay.application.application import (
     Process,
     ProcessListResult,
 )
-from agentbay.model import OperationResult
+from agentbay.model import OperationResult, McpToolResult
 
 
 class TestApplicationApi(unittest.TestCase):
     def setUp(self):
         self.mock_session = MagicMock()
+        self.session = self.mock_session  # Add session reference
         self.app_manager = ApplicationManager(self.mock_session)
 
     def test_get_installed_apps_success(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=True,
                 data="""[
@@ -55,8 +56,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_get_installed_apps_failure(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=False,
                 error_message="Failed to get installed apps",
@@ -69,8 +70,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_start_app_success(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=True,
                 data="""[
@@ -97,8 +98,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_start_app_failure(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=False,
                 error_message="Failed to start app",
@@ -113,8 +114,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_stop_app_by_cmd_success(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123", success=True, data=None
             )
         )
@@ -124,8 +125,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_stop_app_by_cmd_failure(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=False,
                 error_message="Failed to stop app",
@@ -138,8 +139,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_stop_app_by_pname_success(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123", success=True, data=None
             )
         )
@@ -149,8 +150,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_stop_app_by_pname_failure(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=False,
                 error_message="Failed to stop app by pname",
@@ -163,8 +164,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_stop_app_by_pid_success(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123", success=True, data=None
             )
         )
@@ -174,8 +175,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_stop_app_by_pid_failure(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=False,
                 error_message="Failed to stop app by pid",
@@ -188,8 +189,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_list_visible_apps_success(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=True,
                 data="""[
@@ -208,8 +209,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_list_visible_apps_failure(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=False,
                 error_message="Failed to list visible apps",
@@ -222,8 +223,8 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
     def test_start_app_with_activity_success(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-123",
                 success=True,
                 data="""[
@@ -251,7 +252,7 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
 
         # Verify that activity was passed correctly
-        self.app_manager._call_mcp_tool.assert_called_with(
+        self.session.call_mcp_tool.assert_called_with(
             "start_app",
             {
                 "start_cmd": "monkey -p com.autonavi.minimap -c android.intent.category.LAUNCHER 1",
@@ -260,8 +261,8 @@ class TestApplicationApi(unittest.TestCase):
         )
 
     def test_start_app_with_activity_and_work_directory(self):
-        self.app_manager._call_mcp_tool = MagicMock(
-            return_value=OperationResult(
+        self.session.call_mcp_tool = MagicMock(
+            return_value=McpToolResult(
                 request_id="request-456",
                 success=True,
                 data="""[
@@ -283,7 +284,7 @@ class TestApplicationApi(unittest.TestCase):
         self.assertEqual(result.data[0].pname, "com.xingin.xhs")
 
         # Verify all parameters were passed correctly
-        self.app_manager._call_mcp_tool.assert_called_with(
+        self.session.call_mcp_tool.assert_called_with(
             "start_app",
             {
                 "start_cmd": "monkey -p com.xingin.xhs -c android.intent.category.LAUNCHER 1",

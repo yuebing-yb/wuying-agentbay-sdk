@@ -11,8 +11,6 @@ This guide covers computer UI automation capabilities in AgentBay SDK for deskto
 - [Mouse Operations](#mouse-operations)
 - [Keyboard Operations](#keyboard-operations)
 - [Screen Operations](#screen-operations)
-- [Best Practices](#best-practices)
-- [Common Use Cases](#common-use-cases)
 - [Troubleshooting](#troubleshooting)
 
 <a id="overview"></a>

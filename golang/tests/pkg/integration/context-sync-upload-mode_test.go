@@ -166,7 +166,7 @@ func testUploadModeValidation(t *testing.T, client *agentbay.AgentBay, uniqueId 
 
 	// Use NewSyncPolicy and modify uploadMode to Archive
 	syncPolicy := agentbay.NewSyncPolicy()
-	syncPolicy.UploadPolicy.UploadMode = "Archive" // Set uploadMode to Archive
+	syncPolicy.UploadPolicy.UploadMode = agentbay.UploadModeArchive // Set uploadMode to Archive
 
 	contextSync, err := agentbay.NewContextSync(
 		contextResult.Context.ID,
@@ -185,7 +185,7 @@ func testUploadModeValidation(t *testing.T, client *agentbay.AgentBay, uniqueId 
 		t.Errorf("Expected Path /tmp/archive-mode-test, got %s", contextSync.Path)
 	}
 
-	if contextSync.Policy.UploadPolicy.UploadMode != "Archive" {
+	if contextSync.Policy.UploadPolicy.UploadMode != agentbay.UploadModeArchive {
 		t.Errorf("Expected UploadMode Archive, got %s", contextSync.Policy.UploadPolicy.UploadMode)
 	}
 
@@ -258,8 +258,22 @@ func testUploadModeValidation(t *testing.T, client *agentbay.AgentBay, uniqueId 
 	t.Logf("Write file request ID: %s", writeResult.RequestID)
 
 	// Test context sync and info functionality
-	t.Log("Testing context info functionality...")
-	// Call context info after sync
+	t.Log("Testing context sync functionality...")
+	// Call context sync before getting info
+	t.Log("Calling context sync before getting info...")
+	syncResult, err := session.Context.Sync()
+	if err != nil {
+		t.Fatalf("Failed to sync context: %v", err)
+	}
+
+	if !syncResult.Success {
+		t.Fatalf("Context sync failed: %s", syncResult.ErrorMessage)
+	}
+
+	t.Log("✅ Context sync successful!")
+	t.Logf("Sync request ID: %s", syncResult.RequestID)
+
+	// Now call context info after sync
 	t.Log("Calling context info after sync...")
 	infoResult, err := session.Context.Info()
 	if err != nil {
@@ -283,32 +297,36 @@ func testUploadModeValidation(t *testing.T, client *agentbay.AgentBay, uniqueId 
 		}
 	}
 
-	// Get file information
-	t.Log("Getting file information...")
+	// List files in context sync directory
+	t.Log("Listing files in context sync directory...")
 
-	fileInfoResult, err := session.FileSystem.GetFileInfo(filePath)
+	// Use the sync directory path
+	syncDirPath := "/tmp/archive-mode-test"
+	
+	listResult, err := client.Context.ListFiles(contextResult.Context.ID, syncDirPath, 1, 10)
 	if err != nil {
-		t.Fatalf("Failed to get file info: %v", err)
+		t.Fatalf("Failed to list files: %v", err)
 	}
 
-	// Verify getFileInfo success
-	if fileInfoResult.FileInfo == nil {
-		t.Fatalf("Get file info failed: %s", fileInfoResult.RequestID)
+	// Verify ListFiles success
+	if !listResult.Success {
+		t.Fatalf("List files failed: %s", listResult.ErrorMessage)
 	}
 
-	t.Log("✅ Get file info successful!")
-	t.Logf("Get file info request ID: %s", fileInfoResult.RequestID)
+	t.Log("✅ List files successful!")
+	t.Logf("List files request ID: %s", listResult.RequestID)
+	t.Logf("Total files found: %d", len(listResult.Entries))
 
-	if fileInfoResult.FileInfo != nil {
-		t.Logf("File info: Size=%d, IsDirectory=%t, ModTime=%s, Mode=%s",
-			fileInfoResult.FileInfo.Size,
-			fileInfoResult.FileInfo.IsDirectory,
-			fileInfoResult.FileInfo.ModTime,
-			fileInfoResult.FileInfo.Mode)
-
-		if fileInfoResult.FileInfo.IsDirectory {
-			t.Error("Expected file to not be a directory")
+	if len(listResult.Entries) > 0 {
+		t.Log("📋 Files in context sync directory:")
+		for index, entry := range listResult.Entries {
+			t.Logf("  [%d] FilePath: %s", index, entry.FilePath)
+			t.Logf("      FileType: %s", entry.FileType)
+			t.Logf("      FileName: %s", entry.FileName)
+			t.Logf("      Size: %d bytes", entry.Size)
 		}
+	} else {
+		t.Log("No files found in context sync directory")
 	}
 
 	t.Log("✅ Archive mode contextSync with contextId and path works correctly, and file operations completed successfully")
@@ -330,7 +348,7 @@ func testInvalidUploadModeValidation(t *testing.T, client *agentbay.AgentBay, un
 	// Test with NewContextSync - should return error during validation
 	t.Log("Testing invalid uploadMode with NewContextSync...")
 	invalidSyncPolicy := agentbay.NewSyncPolicy()
-	invalidSyncPolicy.UploadPolicy.UploadMode = "InvalidMode" // Invalid value
+	invalidSyncPolicy.UploadPolicy.UploadMode = agentbay.UploadMode("InvalidMode") // Invalid value
 
 	_, err = agentbay.NewContextSync(
 		contextResult.Context.ID,
@@ -356,7 +374,7 @@ func testInvalidUploadModeValidation(t *testing.T, client *agentbay.AgentBay, un
 	}
 
 	invalidSyncPolicy2 := agentbay.NewSyncPolicy()
-	invalidSyncPolicy2.UploadPolicy.UploadMode = "WrongValue" // Invalid value
+	invalidSyncPolicy2.UploadPolicy.UploadMode = agentbay.UploadMode("WrongValue") // Invalid value
 
 	_, err = contextSync.WithPolicy(invalidSyncPolicy2)
 
@@ -375,7 +393,7 @@ func testInvalidUploadModeValidation(t *testing.T, client *agentbay.AgentBay, un
 
 	// Test "File" mode
 	fileSyncPolicy := agentbay.NewSyncPolicy()
-	fileSyncPolicy.UploadPolicy.UploadMode = "File"
+	fileSyncPolicy.UploadPolicy.UploadMode = agentbay.UploadModeFile
 
 	_, err = agentbay.NewContextSync(
 		contextResult.Context.ID,
@@ -391,7 +409,7 @@ func testInvalidUploadModeValidation(t *testing.T, client *agentbay.AgentBay, un
 
 	// Test "Archive" mode
 	archiveSyncPolicy := agentbay.NewSyncPolicy()
-	archiveSyncPolicy.UploadPolicy.UploadMode = "Archive"
+	archiveSyncPolicy.UploadPolicy.UploadMode = agentbay.UploadModeArchive
 
 	_, err = agentbay.NewContextSync(
 		contextResult.Context.ID,

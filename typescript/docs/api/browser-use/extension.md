@@ -518,8 +518,8 @@ The service automatically handles context lifecycle:
 
 ## Related Resources
 
-- [Session API Reference](session.md)
-- [Context API Reference](context.md) 
-- [AgentBay API Reference](agentbay.md)
-- [Extension Examples](../../examples/extension-example/README.md) - Practical usage examples
-- [Browser Extensions Guide](../../../../docs/guides/browser-extensions.md) - Complete tutorial
+- [Session API Reference](../common-features/basics/session.md)
+- [Context API Reference](../common-features/basics/context.md) 
+- [AgentBay API Reference](../common-features/basics/agentbay.md)
+- [Extension Examples](../../examples/browser-use/extension-example/README.md) - Practical usage examples
+- [Browser Extensions Guide](../../../../docs/guides/browser-use/browser-extensions.md) - Complete tutorial

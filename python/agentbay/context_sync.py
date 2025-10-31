@@ -15,6 +15,12 @@ class DownloadStrategy(Enum):
 
     DOWNLOAD_ASYNC = "DownloadAsync"
 
+class UploadMode(Enum):
+    """Upload mode for context synchronization"""
+    
+    FILE = "File"
+    ARCHIVE = "Archive"
+
 
 class Lifecycle(Enum):
     """Lifecycle options for recycle policy"""
@@ -39,19 +45,20 @@ class UploadPolicy:
     Attributes:
         auto_upload: Enables automatic upload
         upload_strategy: Defines the upload strategy
-        upload_mode: Defines the upload mode ("File" or "Archive")
+        upload_mode: Defines the upload mode (UploadMode.FILE or UploadMode.ARCHIVE)
     """
 
     auto_upload: bool = True
     upload_strategy: UploadStrategy = UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
-    upload_mode: str = "File"
+    upload_mode: UploadMode = UploadMode.FILE
 
     def __post_init__(self):
         """Validate upload_mode value"""
-        if self.upload_mode not in ["File", "Archive"]:
+        if not isinstance(self.upload_mode, UploadMode):
+            valid_values = [e.value for e in UploadMode]
             raise ValueError(
                 f"Invalid upload_mode value: {self.upload_mode}. "
-                f"Valid values are: 'File', 'Archive'"
+                f"Valid values are: {', '.join(valid_values)}"
             )
 
     @classmethod
@@ -65,7 +72,7 @@ class UploadPolicy:
             "uploadStrategy": (
                 self.upload_strategy.value if self.upload_strategy else None
             ),
-            "uploadMode": self.upload_mode,
+            "uploadMode": self.upload_mode.value if self.upload_mode else None,
         }
 
 
