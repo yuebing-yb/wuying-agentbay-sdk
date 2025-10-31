@@ -2,6 +2,175 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.10.0] - 2025-10-31
+
+### Added
+
+#### 🤖 AI Context Support
+- **AI Coding Assistant Integration**: Added llms.txt and llms-full.txt files for better AI assistant context
+  - Comprehensive codebase documentation for AI tools
+  - Enhanced development experience with Claude Code and similar assistants
+  - Structured project information for better AI understanding
+
+#### 🔧 MCP Tool Enhancement
+- **Unified MCP Tool API**: New public API for MCP tool invocation across all SDKs
+  - Python: `session.call_mcp_tool(tool, args)` for direct MCP tool calls
+  - TypeScript: `session.callMcpTool(tool, args)` for direct MCP tool calls
+  - Golang: `session.CallMcpTool(tool, args)` for direct MCP tool calls
+  - Simplified tool invocation without manual server discovery
+  - Better error handling and response parsing
+
+#### 📊 SDK Statistics & Tracking
+- **SDK Stats Module**: Automatic SDK usage tracking and version reporting
+  - Auto-detection of SDK version from package metadata
+  - Release tracking for Python, TypeScript, and Golang
+  - Statistics collection for better service improvement
+
+#### 🗑️ Context Management Enhancement
+- **Context Clear API**: New API for clearing context data
+  - Python: `context.clear(context_id)` with status polling
+  - TypeScript: `context.clear(contextId)` with status polling
+  - Golang: `context.Clear(contextId)` with status polling
+  - Asynchronous clearing with status monitoring
+  - Non-blocking operation with completion detection
+
+#### 🌐 Browser Automation Enhancement
+- **Browser Type Selection**: Support for different browser engines
+  - Choose between Chromium, Firefox, and WebKit
+  - `browser_type` option in `BrowserOption` across all SDKs
+  - Default browser selection per image type
+  - Browser-specific optimization and compatibility
+
+- **Browser Navigation & Arguments**: Enhanced browser initialization
+  - `default_navigate_url` parameter for automatic page navigation
+  - `cmd_args` parameter for custom browser command line arguments
+  - Better control over browser startup behavior
+
+- **Golang Browser Support**: Added full browser automation for Golang SDK
+  - `session.Browser` interface matching Python and TypeScript
+  - Complete browser API implementation
+  - Browser context and page management
+
+#### 📱 Mobile Enhancement
+- **ADB Connection URL**: Direct ADB connection support for mobile automation
+  - Python: `session.mobile.get_adb_url()` returns ADB connection URL
+  - TypeScript: `session.mobile.getAdbUrl()` returns ADB connection URL
+  - Golang: `session.Mobile.GetAdbUrl()` returns ADB connection URL
+  - Enable external ADB client connections
+  - Enhanced mobile automation capabilities
+
+#### 🪟 Application Management
+- **Windows Application Management**: Enhanced Windows automation capabilities
+  - List installed applications with details
+  - Launch and stop applications programmatically
+  - Application state monitoring
+  - Integration with Computer module for desktop automation
+
+#### 📝 Enhanced Logging System
+- **Comprehensive Logging Infrastructure**: Unified logging across all SDKs
+  - File logging support with log rotation
+  - Environment-based log level configuration (`AGENTBAY_LOG_LEVEL`)
+  - API call and response logging with sanitization
+  - Process and thread information in async operations
+  - Python: loguru-based logging with enhanced formatting
+  - TypeScript: winston-based logging with color support
+  - Golang: structured logging with context support
+
+#### 📋 Code Execution Enhancement
+- **Code Execution Output Logging**: Better visibility for code execution
+  - Detailed output logging for `run_code` operations
+  - Comprehensive integration tests for code execution
+  - Better error reporting and debugging
+
+#### 📄 Data Persistence Enhancement
+- **File Compression Support**: Archive mode for data persistence
+  - Compress files before upload to reduce storage costs
+  - Archive mode configuration in context sync
+  - Automatic decompression on download
+  - Support for .tar.gz format
+
+### Changed
+
+#### 🔄 Session Link Access Model
+- **Breaking Change**: Session Link access changed from whitelist to paid subscription
+  - Whitelist-based access deprecated
+  - New subscription-based access model
+  - Updated documentation with new access requirements
+
+#### 🖼️ Image Naming Convention
+- **Image ID Pattern Update**: Standardized image naming from `xxx_latest` to `xxxx_latest`
+  - Old: `browser-latest`, `computer-latest`
+  - New: `browser_latest`, `computer_latest`, `mobile_latest`, `code_latest`
+  - Better consistency across all system images
+
+#### 🎨 Browser Context Management
+- **Browser Replay Context Sync**: Fixed context synchronization behavior
+  - Only sync browser replay context when `sync_context` is explicitly False
+  - Better control over context persistence
+  - Reduced unnecessary sync operations
+
+#### 📚 Documentation Reorganization
+- **Documentation Structure Improvement**: Better organized documentation
+  - Updated API documentation links to new directory structure
+  - Added custom images guide with comprehensive examples
+  - Enhanced session management documentation
+  - Added markdown link checker for quality assurance
+  - Fixed 166 broken markdown links across documentation
+  - Production environment recommendations for image types
+
+### Fixed
+
+#### 🐛 Browser Issues
+- **Browser Image ID**: Fixed browser image references
+  - Corrected `browser-latest` to `browser_latest` across all SDKs
+  - Fixed default browser type values (none/undefined/nil)
+  - Fixed browser type example syntax errors
+  - Fixed bad reference links in browser API documents
+  - Fixed browser page creation to use context 0
+
+#### 🔧 TypeScript Issues
+- **ESLint Compliance**: Fixed TypeScript code quality issues
+  - Fixed `prefer-const` errors in API client
+  - Improved error handling consistency
+  - Better code organization
+
+#### 📁 File System Issues
+- **File Search Functionality**: Fixed filesystem example issues
+  - Corrected file search implementation
+  - Better error handling in filesystem operations
+  - Fixed OSS sync file deletion issues
+
+#### 📱 Mobile Issues
+- **Mobile UI Element Methods**: Aligned mobile.py with ui.py implementation
+  - Consistent method signatures across modules
+  - Added JSON parsing in `get_clickable_ui_elements`
+  - Fixed screenshot saving in automation examples
+
+#### 🧪 Testing Issues
+- **Test Case Quality**: Improved test reliability
+  - Fixed bad test case design for browser type switching
+  - Fixed mobile getAdbUrl unit tests across SDKs
+  - Improved pytest configuration and compatibility
+  - Fixed BoolResult parameter order in tests
+
+### Documentation
+
+- **Comprehensive Documentation Updates**: Major improvements across all areas
+  - Added comprehensive custom images guide
+  - Updated data persistence documentation with archive mode
+  - Added Windows application management examples
+  - Added logging documentation for all SDKs
+  - Removed outdated logging and mobile examples docs
+  - Added production environment recommendations
+  - Updated Session Link access documentation
+  - Fixed markdown link issues and emoji anchor compatibility
+
+### Statistics
+
+- **Code Changes**: 474 files changed, +76,538 insertions, -4,059 deletions
+- **Commits**: 122 commits from 9 contributors
+- **Main Contributors**: yuebing.yb (78 commits), litiantian (23 commits), SuHangNewCommer (9 commits)
+
 ## [0.9.0] - 2025-10-15
 
 ### Added
