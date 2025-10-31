@@ -152,12 +152,6 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
   - Updated Session Link access documentation
   - Fixed markdown link issues and emoji anchor compatibility
 
-### Statistics
-
-- **Code Changes**: 474 files changed, +76,538 insertions, -4,059 deletions
-- **Commits**: 122 commits from 9 contributors
-- **Main Contributors**: yuebing.yb (78 commits), litiantian (23 commits), SuHangNewCommer (9 commits)
-
 ## [0.9.0] - 2025-10-15
 
 ### Added
