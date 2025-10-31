@@ -136,7 +136,7 @@ export class Client extends OpenApi {
    */
   async clearContextWithOptions(request: $_model.ClearContextRequest, runtime: $dara.RuntimeOptions): Promise<$_model.ClearContextResponse> {
     request.validate();
-    let body : {[key: string ]: any} = { };
+    const body : {[key: string ]: any} = { };
     if (!$dara.isNull(request.authorization)) {
       body["Authorization"] = request.authorization;
     }
@@ -145,10 +145,10 @@ export class Client extends OpenApi {
       body["Id"] = request.id;
     }
 
-    let req = new $OpenApiUtil.OpenApiRequest({
+    const req = new $OpenApiUtil.OpenApiRequest({
       body: OpenApiUtil.parseToMap(body),
     });
-    let params = new $OpenApiUtil.Params({
+    const params = new $OpenApiUtil.Params({
       action: "ClearContext",
       version: "2025-05-06",
       protocol: "HTTPS",
@@ -169,7 +169,7 @@ export class Client extends OpenApi {
    * @returns ClearContextResponse
    */
   async clearContext(request: $_model.ClearContextRequest): Promise<$_model.ClearContextResponse> {
-    let runtime = new $dara.RuntimeOptions({ });
+    const runtime = new $dara.RuntimeOptions({ });
     return await this.clearContextWithOptions(request, runtime);
   }
   /**
