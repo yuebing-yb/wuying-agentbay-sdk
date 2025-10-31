@@ -20,6 +20,11 @@ def main():
     # Create a session
     print("\n1. Creating session...")
     session_result = agent_bay.create()
+    if not session_result.success:
+        print(f"✗ Failed to create session: {session_result.error_message}")
+        print(f"  Request ID: {session_result.request_id}")
+        return
+
     session = session_result.session
     print(f"✓ Session created successfully")
     print(f"  Session ID: {session.session_id}")
