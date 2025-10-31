@@ -59,13 +59,6 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
   - Enable external ADB client connections
   - Enhanced mobile automation capabilities
 
-#### 🪟 Application Management
-- **Windows Application Management**: Enhanced Windows automation capabilities
-  - List installed applications with details
-  - Launch and stop applications programmatically
-  - Application state monitoring
-  - Integration with Computer module for desktop automation
-
 #### 📝 Enhanced Logging System
 - **Comprehensive Logging Infrastructure**: Unified logging across all SDKs
   - File logging support with log rotation
@@ -96,12 +89,6 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
   - Whitelist-based access deprecated
   - New subscription-based access model
   - Updated documentation with new access requirements
-
-#### 🖼️ Image Naming Convention
-- **Image ID Pattern Update**: Standardized image naming from `xxx_latest` to `xxxx_latest`
-  - Old: `browser-latest`, `computer-latest`
-  - New: `browser_latest`, `computer_latest`, `mobile_latest`, `code_latest`
-  - Better consistency across all system images
 
 #### 🎨 Browser Context Management
 - **Browser Replay Context Sync**: Fixed context synchronization behavior
