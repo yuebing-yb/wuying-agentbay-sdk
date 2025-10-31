@@ -35,9 +35,9 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
   - Non-blocking operation with completion detection
 
 #### 🌐 Browser Automation Enhancement
-- **Browser Type Selection**: Support for different browser engines
-  - Choose between Chromium, Firefox, and WebKit
-  - `browser_type` option in `BrowserOption` across all SDKs
+- **Browser Type Selection**: Support for different browser types
+  - Choose between Chrome and Chromium browsers
+  - `browser_type` option in `BrowserOption` across all SDKs (values: "chrome", "chromium", or None for default)
   - Default browser selection per image type
   - Browser-specific optimization and compatibility
 
