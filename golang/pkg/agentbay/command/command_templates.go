@@ -59,8 +59,12 @@ const ShowNavigationBarTemplate = "setprop persist.wy.hasnavibar true; killall c
 // Uninstall blacklist template
 // Parameters:
 //
-//	package_list (string): Semicolon-separated list of package names
-const UninstallBlacklistTemplate = "setprop persist.wy.pm_lock \"{package_list}\""
+//	package_list (string): Newline-separated list of package names
+const UninstallBlacklistTemplate = `cat > /data/system/pm_lock.conf << 'EOF'
+{package_list}
+EOF
+chmod 644 /data/system/pm_lock.conf
+setprop persist.wy.pm_lock.trigger 1`
 
 // MobileCommandTemplates contains mobile command templates for easy access
 var MobileCommandTemplates = map[string]string{

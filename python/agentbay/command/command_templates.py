@@ -56,8 +56,13 @@ SHOW_NAVIGATION_BAR_TEMPLATE = "setprop persist.wy.hasnavibar true; killall com.
 
 # Uninstall blacklist template
 # Parameters:
-#   package_list (str): Semicolon-separated list of package names
-UNINSTALL_BLACKLIST_TEMPLATE = "setprop persist.wy.pm_lock \"{package_list}\""
+#   package_list (str): Newline-separated list of package names
+UNINSTALL_BLACKLIST_TEMPLATE = """cat > /data/system/pm_lock.conf << 'EOF'
+{package_list}
+EOF
+chmod 644 /data/system/pm_lock.conf
+setprop persist.wy.pm_lock.trigger 1
+"""
 
 # Mobile command templates dictionary for easy access
 MOBILE_COMMAND_TEMPLATES = {

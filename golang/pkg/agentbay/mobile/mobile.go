@@ -1078,8 +1078,8 @@ func (m *Mobile) setUninstallBlacklist(packageNames []string) error {
 		return fmt.Errorf("uninstall blacklist template not found")
 	}
 
-	// Replace placeholder with actual package names (semicolon-separated for property value)
-	packageList := strings.Join(packageNames, ";")
+	// Replace placeholder with actual package names (newline-separated for file content)
+	packageList := strings.Join(packageNames, "\n")
 	command := strings.ReplaceAll(template, "{package_list}", packageList)
 
 	description := fmt.Sprintf("Uninstall blacklist configuration (%d packages)", len(packageNames))

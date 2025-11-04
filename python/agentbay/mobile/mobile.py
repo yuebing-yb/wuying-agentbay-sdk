@@ -893,9 +893,9 @@ class Mobile(BaseService):
 
     def _set_uninstall_blacklist(self, package_names: List[str]):
         """Execute uninstall blacklist command."""
-        # Use semicolon-separated format for uninstall blacklist property
+        # Use newline-separated format for uninstall blacklist file content
         params = {
-            "package_list": ';'.join(package_names)
+            "package_list": '\n'.join(package_names)
         }
         operation_name = f"Uninstall blacklist configuration ({len(package_names)} packages)"
         self._execute_template_command("uninstall_blacklist", params, operation_name)
