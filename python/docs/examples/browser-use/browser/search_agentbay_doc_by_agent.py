@@ -13,8 +13,6 @@ from agentbay.session_params import CreateSessionParams
 from agentbay.browser.browser import BrowserOption
 from agentbay.browser.browser_agent import ActOptions
 
-from playwright.async_api import async_playwright
-
 
 async def main():
     # Get API key from environment variable
@@ -40,24 +38,18 @@ async def main():
 
         if await session.browser.initialize_async(BrowserOption()):
             print("Browser initialized successfully")
-            endpoint_url = session.browser.get_endpoint_url()
-            print("endpoint_url =", endpoint_url)
+            agent = session.browser.agent
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
-                agent = session.browser.agent
+            await agent.navigate_async("https://www.aliyun.com")
 
-                await agent.navigate_async("https://www.aliyun.com")
+            await agent.act_async(
+                ActOptions(action="搜索框输入'AgentBay帮助文档'并回车")
+            )
+            await agent.act_async(ActOptions(action="点击搜索结果中的第一项"))
+            await agent.act_async(ActOptions(action="点击'帮助文档'"))
+            await agent.act_async(ActOptions(action="滚动页面到底部"))
 
-                await agent.act_async(
-                    ActOptions(action="搜索框输入'AgentBay帮助文档'并回车")
-                )
-                await agent.act_async(ActOptions(action="点击搜索结果中的第一项"))
-                await agent.act_async(ActOptions(action="点击'帮助文档'"))
-                await agent.act_async(ActOptions(action="滚动页面到底部"))
-
-                await asyncio.sleep(5)
-                await browser.close()
+            await asyncio.sleep(5)
         else:
             print("Failed to initialize browser")
         agent_bay.delete(session)

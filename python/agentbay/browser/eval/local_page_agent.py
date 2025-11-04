@@ -207,7 +207,7 @@ class LocalBrowser(Browser):
     def get_endpoint_url(self) -> str:
         return f"http://localhost:{self._cdp_port}"
 
-    async def _playwright_interactive_loop(self):
+    async def _playwright_interactive_loop(self) -> None:
         """Run interactive loop."""
         while True:
             await asyncio.sleep(3)
@@ -217,5 +217,5 @@ class LocalSession(Session):
         super().__init__(None, "local_session")
         self.browser = LocalBrowser(self)
 
-    def delete(self, sync_context: bool = False):
+    def delete(self, sync_context: bool = False) -> None:
         pass
