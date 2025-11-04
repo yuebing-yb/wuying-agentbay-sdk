@@ -4,6 +4,7 @@ version = "0.10.2"
 description = "Python SDK for interacting with the Wuying AgentBay cloud runtime environment"
 readme = ["README.md", "CHANGELOG.md"]
 packages = [{include = "agentbay"}]
+include = ["docs/**/*"]
 authors = ["Wuying AI Team <wuying-ai-team@alibabacloud.com>"]
 homepage = "https://github.com/aliyun/wuying-agentbay-sdk"
 repository = "https://github.com/aliyun/wuying-agentbay-sdk"
