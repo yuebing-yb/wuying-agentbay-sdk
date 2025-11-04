@@ -1,11 +1,9 @@
 name: Test Build and Upload
 
 triggers:
-  merge_request:
-    target-branches: 
-    - main
-    types:
-    - merged
+  push:
+    branches:
+      - main
 
 params:
   python-version:
