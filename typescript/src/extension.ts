@@ -202,7 +202,7 @@ export class ExtensionsService {
    *   it creates a new context with the provided name or a generated default name.
    *   Context initialization is handled lazily on first use.
    */
-  constructor(agentBay: AgentBay, contextId: string = "") {
+  constructor(agentBay: AgentBay, contextId = "") {
     if (!agentBay) {
       throw new AgentBayError("AgentBay instance is required");
     }

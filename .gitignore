@@ -39,6 +39,7 @@ coverage/
 .nyc_output/
 *.tsbuildinfo
 tsconfig.json
+.typedoc-output/
 
 # Golang
 *.exe

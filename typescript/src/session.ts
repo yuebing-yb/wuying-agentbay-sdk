@@ -680,7 +680,7 @@ export class Session {
       }
 
       let data = responseBody.data || {}; // Capital D to match Python
-      logDebug(`Data: ${JSON.stringify(data)}`);;
+      logDebug(`Data: ${JSON.stringify(data)}`);
 
       if (typeof data !== "object") {
         try {
@@ -768,7 +768,7 @@ export class Session {
       }
 
       let data = responseBody?.data || {}; // Capital D to match Python
-      logDebug(`Data: ${JSON.stringify(data)}`);;
+      logDebug(`Data: ${JSON.stringify(data)}`);
 
       if (typeof data !== "object") {
         try {
@@ -886,7 +886,7 @@ export class Session {
    * @param autoGenSession - Whether to automatically generate session if not exists (default: false)
    * @returns McpToolResult containing the response data
    */
-  async callMcpTool(toolName: string, args: any, autoGenSession: boolean = false): Promise<import("./agent/agent").McpToolResult> {
+  async callMcpTool(toolName: string, args: any, autoGenSession = false): Promise<import("./agent/agent").McpToolResult> {
     try {
       const argsJSON = JSON.stringify(args);
 

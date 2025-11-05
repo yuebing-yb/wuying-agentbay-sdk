@@ -1,13 +1,5 @@
 import { ApiResponse } from "../types/api-response";
-import {
-  log,
-  logError,
-  logInfo,
-  logDebug,
-  logAPICall,
-  logAPIResponseWithDetails,
-  setRequestId,
-} from "../utils/logger";
+import { logDebug } from "../utils/logger";
 
 /**
  * Result of task execution.

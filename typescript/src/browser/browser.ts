@@ -542,7 +542,7 @@ export class Browser {
    * @throws BrowserError If browser is not initialized.
    * @throws Error If screenshot capture fails.
    */
-  async screenshot(page: any, fullPage: boolean = false, options: Record<string, any> = {}): Promise<Uint8Array> {
+  async screenshot(page: any, fullPage = false, options: Record<string, any> = {}): Promise<Uint8Array> {
     // Check if browser is initialized
     if (!this.isInitialized()) {
       throw new BrowserError("Browser must be initialized before calling screenshot.");
@@ -618,7 +618,7 @@ export class Browser {
   /**
    * Scrolls the page to load all content (especially for lazy-loaded elements)
    */
-  private async _scrollToLoadAllContent(page: any, maxScrolls: number = 8, delayMs: number = 1200): Promise<void> {
+  private async _scrollToLoadAllContent(page: any, maxScrolls = 8, delayMs = 1200): Promise<void> {
     let lastHeight = 0;
     for (let i = 0; i < maxScrolls; i++) {
       await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");

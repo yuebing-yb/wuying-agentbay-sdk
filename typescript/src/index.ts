@@ -10,19 +10,23 @@ export * from "./agent";
 export * from "./api";
 export * from "./application";
 export * from "./browser";
+export { Code } from "./code";
 export * from "./command";
 export { Context, ContextService } from "./context";
+export { Computer } from "./computer";
 export * from "./exceptions";
 export * from "./extension";
 export * from "./filesystem";
 export * from "./oss";
+export { Mobile } from "./mobile";
+export { WindowManager } from "./window";
 export { Session } from "./session";
 export { type ListSessionParams } from "./types";
 export * from "./types";
 export * from "./ui";
-export * from './context-sync'
-export * from './context-manager'
-export * from './session-params'
+export * from "./context-sync";
+export * from "./context-manager";
+export * from "./session-params";
 // Export utility functions
 export {
   log,

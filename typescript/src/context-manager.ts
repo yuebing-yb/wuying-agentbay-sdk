@@ -166,8 +166,8 @@ export class ContextManager {
     path?: string,
     mode?: string,
     callback?: SyncCallback,
-    maxRetries: number = 150,
-    retryInterval: number = 1500
+    maxRetries = 150,
+    retryInterval = 1500
   ): Promise<ContextSyncResult> {
     const request = new SyncContextRequest({
       authorization: `Bearer ${this.session.getAPIKey()}`,
@@ -284,8 +284,8 @@ export class ContextManager {
     callback: SyncCallback,
     contextId?: string,
     path?: string,
-    maxRetries: number = 150,
-    retryInterval: number = 1500
+    maxRetries = 150,
+    retryInterval = 1500
   ): Promise<void> {
     for (let retry = 0; retry < maxRetries; retry++) {
       try {
@@ -351,8 +351,8 @@ export class ContextManager {
   private async pollForCompletionAsync(
     contextId?: string,
     path?: string,
-    maxRetries: number = 150,
-    retryInterval: number = 1500
+    maxRetries = 150,
+    retryInterval = 1500
   ): Promise<boolean> {
     for (let retry = 0; retry < maxRetries; retry++) {
       try {

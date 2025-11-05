@@ -11,6 +11,7 @@ import {
   maskSensitiveData,
   setLogLevel,
   getLogLevel,
+  setupLogger,
 } from "../../src/utils/logger";
 
 describe("Logger", () => {
@@ -18,6 +19,13 @@ describe("Logger", () => {
   let stderrWriteStub: sinon.SinonStub;
 
   beforeEach(() => {
+    // Re-enable console logging for logger tests
+    // (setup.ts may have disabled it for other tests)
+    setupLogger({
+      enableConsole: true,
+      level: 'DEBUG'
+    });
+
     stdoutWriteStub = sinon.stub(process.stdout, "write");
     stderrWriteStub = sinon.stub(process.stderr, "write");
     setLogLevel('DEBUG');

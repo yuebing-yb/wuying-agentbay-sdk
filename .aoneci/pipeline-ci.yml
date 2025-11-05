@@ -105,6 +105,8 @@ jobs:
                       "loguru>=0.7.0"
           # Install test dependencies
           pip install pytest pytest-cov pytest-asyncio
+          # Install documentation generation dependencies
+          pip install pydoc-markdown
           # Add current directory to PYTHONPATH so tests can import agentbay
           export PYTHONPATH="${PYTHONPATH}:$(pwd)"
           # Run tests
@@ -149,7 +151,12 @@ jobs:
         name: "TypeScript Unit Tests"
         run: |
           cd typescript
-          # Reuse installed dependencies to avoid duplicate installation
+          # Set npm timeout and retry strategy
+          npm config set fetch-timeout 300000
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          # Ensure dependencies are installed (in case lint step failed)
+          npm ci --prefer-offline --no-audit
           npm run build
           npm run test:unit
 

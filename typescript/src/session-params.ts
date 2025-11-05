@@ -79,7 +79,7 @@ export class BrowserContext {
    */
   constructor(
     contextId: string,
-    autoUpload: boolean = true,
+    autoUpload = true,
     extensionOption?: ExtensionOption
   ) {
     this.contextId = contextId;

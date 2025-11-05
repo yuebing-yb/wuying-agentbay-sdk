@@ -691,7 +691,7 @@ export class AgentBay {
   async list(
     labels: Record<string, string> = {},
     page?: number,
-    limit: number = 10
+    limit = 10
   ): Promise<SessionListResult> {
     try {
       // Validate page number

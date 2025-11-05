@@ -1,0 +1,28 @@
+# TypeScript SDK API Reference (Preview)
+
+These documents are generated automatically using TypeDoc. Run `npm run docs:generate` to refresh them after changing the SDK.
+
+## Structure
+- `browser-use`
+  - browser.md
+  - extension.md
+- `codespace`
+  - code.md
+- `common-features/advanced`
+  - agent.md
+  - oss.md
+- `common-features/basics`
+  - agentbay.md
+  - command.md
+  - context-manager.md
+  - context.md
+  - filesystem.md
+  - logging.md
+  - session.md
+- `computer-use`
+  - application.md
+  - computer.md
+  - ui.md
+  - window.md
+- `mobile-use`
+  - mobile.md

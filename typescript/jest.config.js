@@ -26,5 +26,8 @@ module.exports = {
         '/node_modules/',
         '/dist/'
     ],
+    // Suppress console output during tests to avoid test noise
+    // Set log level to only show critical errors
+    setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
     // globals configuration moved to transform options above
 };

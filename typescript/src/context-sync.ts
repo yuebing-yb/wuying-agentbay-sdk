@@ -61,11 +61,11 @@ export interface RecyclePolicy {
 
 // ExtractPolicyClass provides a class-based implementation with default values
 export class ExtractPolicyClass implements ExtractPolicy {
-  extract: boolean = true;
-  deleteSrcFile: boolean = true;
-  extractToCurrentFolder: boolean = false;
+  extract = true;
+  deleteSrcFile = true;
+  extractToCurrentFolder = false;
 
-  constructor(extract: boolean = true, deleteSrcFile: boolean = true, extractToCurrentFolder: boolean = false) {
+  constructor(extract = true, deleteSrcFile = true, extractToCurrentFolder = false) {
     this.extract = extract;
     this.deleteSrcFile = deleteSrcFile;
     this.extractToCurrentFolder = extractToCurrentFolder;
