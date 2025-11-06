@@ -35,13 +35,52 @@ export class Command {
   }
 
   /**
-   * Execute a command in the session environment.
-   * Corresponds to Python's execute_command() method
+   * Executes a shell command in the session environment.
    *
-   * @param command - The command to execute
-   * @param timeoutMs - The timeout in milliseconds. Default is 1000ms.
-   * @returns CommandResult with command output and requestId
-   * @throws APIError if the operation fails.
+   * @param command - The shell command to execute.
+   * @param timeoutMs - Timeout in milliseconds. Defaults to 1000ms.
+   *
+   * @returns Promise resolving to CommandResult containing:
+   *          - success: Whether the command executed successfully
+   *          - output: Combined stdout and stderr output
+   *          - requestId: Unique identifier for this API request
+   *          - errorMessage: Error description if execution failed
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   *
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // Execute a simple command
+   *   const cmdResult = await session.command.executeCommand('echo "Hello"');
+   *   if (cmdResult.success) {
+   *     console.log(`Output: ${cmdResult.output}`);
+   *     // Output: Output: Hello
+   *   }
+   *
+   *   // Execute with custom timeout
+   *   const longCmd = await session.command.executeCommand(
+   *     'sleep 2 && echo "Done"',
+   *     3000
+   *   );
+   *
+   *   await session.delete();
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - Executes in a Linux shell environment
+   * - Combines stdout and stderr in the output
+   * - Default timeout is 1000ms (1 second)
+   * - Command runs with session user permissions
+   *
+   * @see {@link FileSystem.readFile}, {@link FileSystem.writeFile}
    */
   async executeCommand(
     command: string,

@@ -63,19 +63,74 @@ Context service for managing persistent contexts.
 
 ▸ **create**(`params?`): `Promise`\<`SessionResult`\>
 
-Create a new session in the AgentBay cloud environment.
+Creates a new AgentBay session with specified configuration.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `params` | ``CreateSessionParams`` | Optional parameters for creating the session |
+| `params` | ``CreateSessionParams`` | Configuration parameters for the session: - labels: Key-value pairs for session metadata - imageId: Custom image ID for the session environment - contextSync: Array of context synchronization configurations - browserContext: Browser-specific context configuration - isVpc: Whether to create a VPC session - policyId: Security policy ID - enableBrowserReplay: Enable browser session recording - extraConfigs: Additional configuration options - framework: Framework identifier for tracking |
 
 #### Returns
 
 `Promise`\<`SessionResult`\>
 
-SessionResult containing the created session and request ID
+Promise resolving to SessionResult containing:
+         - success: Whether session creation succeeded
+         - session: Session object for interacting with the environment
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if creation failed
+
+**`Throws`**
+
+Error if API call fails or authentication is invalid.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+// Create session with default parameters
+const result = await agentBay.create();
+if (result.success) {
+  const session = result.session;
+  console.log(`Session ID: ${session.sessionId}`);
+  // Output: Session ID: session-04bdwfj7u22a1s30g
+
+  // Use the session
+  const fileResult = await session.filesystem.readFile('/etc/hostname');
+  console.log(`Hostname: ${fileResult.data}`);
+
+  // Clean up
+  await session.delete();
+}
+
+// Create session with custom parameters
+const customResult = await agentBay.create({
+  labels: { project: 'demo', env: 'test' },
+  imageId: 'custom-image-v1',
+  isVpc: true
+});
+if (customResult.success) {
+  console.log('VPC session created');
+  await customResult.session.delete();
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- Creates a new isolated cloud runtime environment
+- Automatically creates file transfer context if not provided
+- Waits for context synchronization if contextSync is specified
+- For VPC sessions, includes VPC-specific configuration
+- Browser replay creates a separate recording context
+
+**`See`**
+
+[get](agentbay.md#get), [list](agentbay.md#list), [Session.delete](session.md#delete)
 
 ___
 

@@ -211,7 +211,92 @@ CallMcpTool is a wrapper that converts the result to browser.McpToolResult
 func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error)
 ```
 
-Delete deletes this session.
+Delete deletes this session. Delete deletes the session and releases all associated resources.
+
+Parameters:
+  - syncContext: Optional boolean to synchronize context data before deletion. If true, uploads all
+    context data to OSS. Defaults to false.
+
+Returns:
+  - *DeleteResult: Result containing success status and request ID
+  - error: Error if the operation fails
+
+Behavior:
+
+- If syncContext is true: Uploads all context data to OSS before deletion - If syncContext is false:
+Deletes immediately without sync - Continues with deletion even if context sync fails - Releases all
+associated resources (browser, computer, mobile, etc.)
+
+Example:
+
+
+package main
+
+
+import (
+
+	"fmt"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+)
+
+
+func main() {
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay("your_api_key")
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	// Create a session
+
+	result, err := client.Create(nil)
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	session := result.Session
+
+	fmt.Printf("Session ID: %s\n", session.SessionID)
+
+	// Output: Session ID: session-04bdwfj7u22a1s30g
+
+
+	// Delete session without context sync
+
+	deleteResult, err := session.Delete()
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+	if deleteResult.Success {
+
+		fmt.Println("Session deleted successfully")
+
+		// Output: Session deleted successfully
+
+	}
+
+}
+
+Note:
+
+- Use syncContext=true when you need to preserve context data - For temporary sessions, use
+syncContext=false for faster cleanup - Always call Delete() when done to avoid resource leaks
 
 #### FindServerForTool
 
@@ -275,7 +360,100 @@ GetLabels gets the labels for this session.
 func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*LinkResult, error)
 ```
 
-GetLink gets the link for this session.
+GetLink gets the link for this session. GetLink retrieves an access link for the session.
+
+Parameters:
+  - protocolType: Protocol type for the link (optional, reserved for future use)
+  - port: Specific port number to access (must be in range [30100, 30199])
+  - options: Additional options (optional)
+
+Returns:
+  - *LinkResult: Result containing the access URL and request ID
+  - error: Error if port is out of range or operation fails
+
+Behavior:
+
+- Without port: Returns the default session access URL - With port: Returns URL for accessing
+specific port-mapped service - Port must be in range [30100, 30199] for port forwarding
+
+Example:
+
+
+package main
+
+
+import (
+
+	"fmt"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+)
+
+
+func main() {
+
+	client, err := agentbay.NewAgentBay("your_api_key")
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	result, err := client.Create(nil)
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	session := result.Session
+
+
+	// Get default session link
+
+	linkResult, err := session.GetLink(nil, nil, nil)
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+	fmt.Printf("Session link: %s\n", linkResult.Link)
+
+	// Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
+
+
+	// Get link for specific port
+
+	port := int32(30150)
+
+	portLinkResult, err := session.GetLink(nil, &port, nil)
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+	fmt.Printf("Port 30150 link: %s\n", portLinkResult.Link)
+
+	// Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
+
+
+	session.Delete()
+
+}
+
+Note:
+
+- Use default link for general session access - Use port-specific links for services on specific
+ports - Validate port range before calling to avoid errors
 
 #### GetLinkForBrowser
 
@@ -339,7 +517,87 @@ HttpPort returns the HTTP port for VPC sessions
 func (s *Session) Info() (*InfoResult, error)
 ```
 
-Info gets information about this session.
+Info gets information about this session. Info retrieves detailed information about the current
+session.
+
+Returns:
+  - *InfoResult: Result containing SessionInfo object and request ID
+  - error: Error if the operation fails or session not found
+
+Behavior:
+
+- Retrieves current session metadata from the backend - Includes resource URL, type, and connection
+properties - Information is fetched in real-time from the API
+
+Example:
+
+
+package main
+
+
+import (
+
+	"fmt"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+)
+
+
+func main() {
+
+	client, err := agentbay.NewAgentBay("your_api_key")
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	result, err := client.Create(nil)
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	session := result.Session
+
+
+	// Get session information
+
+	infoResult, err := session.Info()
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	info := infoResult.Info
+
+	fmt.Printf("Session ID: %s\n", info.SessionId)
+
+	fmt.Printf("Resource URL: %s\n", info.ResourceUrl)
+
+	fmt.Printf("Resource Type: %s\n", info.ResourceType)
+
+	// Output:
+
+	// Session ID: session-04bdwfj7u22a1s30g
+
+	// Resource URL: https://...
+
+	// Resource Type: vpc
+
+
+	session.Delete()
+
+}
 
 #### IsVPCEnabled
 
@@ -921,6 +1179,14 @@ func LogInfo(message string)
 ```
 
 LogInfo logs an informational message
+
+### LogInfoWithColor
+
+```go
+func LogInfoWithColor(message string)
+```
+
+LogInfoWithColor logs an informational message with custom color
 
 ### LogOperationError
 

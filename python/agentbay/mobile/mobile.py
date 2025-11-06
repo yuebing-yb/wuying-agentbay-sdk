@@ -58,14 +58,36 @@ class Mobile(BaseService):
     # Touch Operations
     def tap(self, x: int, y: int) -> BoolResult:
         """
-        Taps on the screen at the specified coordinates.
+        Taps on the mobile screen at the specified coordinates.
 
         Args:
-            x (int): X coordinate.
-            y (int): Y coordinate.
+            x (int): X coordinate in pixels.
+            y (int): Y coordinate in pixels.
 
         Returns:
-            BoolResult: Result object containing success status and error message if any.
+            BoolResult: Object with success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            
+            if result.success:
+                session = result.session
+                mobile = session.mobile
+                
+                # Tap at coordinates
+                tap_result = mobile.tap(500, 1000)
+                if tap_result.success:
+                    print("Tap successful")
+                
+                session.delete()
+            ```
+
+        See Also:
+            swipe, long_press
         """
         args = {"x": x, "y": y}
         try:

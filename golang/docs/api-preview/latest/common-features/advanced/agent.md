@@ -91,7 +91,7 @@ QueryResult represents the result of query operations
 
 ## Related Resources
 
-- [Session API Reference](../advanced/session.md)
+- [Session API Reference](session.md)
 
 ---
 

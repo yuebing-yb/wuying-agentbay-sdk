@@ -164,19 +164,46 @@ ___
 ▸ **listDirectory**(`path`): `Promise`\<`DirectoryListResult`\>
 
 Lists the contents of a directory.
-Corresponds to Python's list_directory() method
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `path` | `string` | Path to the directory to list. |
+| `path` | `string` | Absolute path to the directory to list. |
 
 #### Returns
 
 `Promise`\<`DirectoryListResult`\>
 
-DirectoryListResult with directory entries and requestId
+Promise resolving to DirectoryListResult containing array of entries.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+
+if (result.success) {
+  const session = result.session;
+
+  // List directory contents
+  const listResult = await session.filesystem.listDirectory('/tmp');
+  if (listResult.success) {
+    console.log(`Found ${listResult.entries.length} entries`);
+    for (const entry of listResult.entries) {
+      console.log(`${entry.name} (${entry.isDirectory ? 'dir' : 'file'})`);
+    }
+  }
+
+  await session.delete();
+}
+```
+
+**`See`**
+
+[readFile](filesystem.md#readfile), [writeFile](filesystem.md#writefile)
 
 ___
 
@@ -206,19 +233,61 @@ ___
 
 ▸ **readFile**(`path`): `Promise`\<`FileContentResult`\>
 
-Reads the contents of a file. Automatically handles large files by chunking.
+Reads the entire content of a file.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `path` | `string` | Path to the file to read. |
+| `path` | `string` | Absolute path to the file to read. |
 
 #### Returns
 
 `Promise`\<`FileContentResult`\>
 
-FileContentResult with complete file content and requestId
+Promise resolving to FileContentResult containing:
+         - success: Whether the read operation succeeded
+         - content: String content of the file
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if read failed
+
+**`Throws`**
+
+Error if the API call fails.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+
+if (result.success) {
+  const session = result.session;
+
+  // Read a text file
+  const fileResult = await session.filesystem.readFile('/etc/hostname');
+  if (fileResult.success) {
+    console.log(`Content: ${fileResult.content}`);
+    // Output: Content: agentbay-session-xyz
+  }
+
+  await session.delete();
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- Automatically handles large files by reading in 60KB chunks
+- Returns empty string for empty files
+- Fails if path is a directory or doesn't exist
+- Content is returned as UTF-8 string
+
+**`See`**
+
+[writeFile](filesystem.md#writefile), [listDirectory](filesystem.md#listdirectory)
 
 ___
 
@@ -319,21 +388,64 @@ ___
 
 ▸ **writeFile**(`path`, `content`, `mode?`): `Promise`\<`BoolResult`\>
 
-Writes content to a file. Automatically handles large files by chunking.
+Writes content to a file.
 
 #### Parameters
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `path` | `string` | `undefined` | Path to the file to write. |
-| `content` | `string` | `undefined` | Content to write to the file. |
-| `mode` | `string` | `"overwrite"` | Optional: Write mode. One of "overwrite", "append", or "create_new". Default is "overwrite". |
+| `path` | `string` | `undefined` | Absolute path to the file to write. |
+| `content` | `string` | `undefined` | String content to write to the file. |
+| `mode` | `string` | `"overwrite"` | Write mode: "overwrite" (default) or "append". |
 
 #### Returns
 
 `Promise`\<`BoolResult`\>
 
-BoolResult indicating success or failure with requestId
+Promise resolving to BoolResult with success status.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+
+if (result.success) {
+  const session = result.session;
+
+  // Write to a file (overwrite mode)
+  const writeResult = await session.filesystem.writeFile(
+    '/tmp/test.txt',
+    'Hello, AgentBay!'
+  );
+  if (writeResult.success) {
+    console.log('File written successfully');
+  }
+
+  // Append to a file
+  const appendResult = await session.filesystem.writeFile(
+    '/tmp/test.txt',
+    '\nNew line',
+    'append'
+  );
+
+  await session.delete();
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- Automatically handles large files by writing in 60KB chunks
+- Creates parent directories if they don't exist
+- "overwrite" mode replaces existing file content
+- "append" mode adds content to the end of the file
+
+**`See`**
+
+[readFile](filesystem.md#readfile), [listDirectory](filesystem.md#listdirectory)
 
 ## Related Resources
 

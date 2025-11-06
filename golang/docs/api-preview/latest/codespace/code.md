@@ -66,7 +66,7 @@ CodeResult represents the result of a code execution
 
 ## Related Resources
 
-- [Session API Reference](../../codespace/session.md)
+- [Session API Reference](session.md)
 
 ---
 

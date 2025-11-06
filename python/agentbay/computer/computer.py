@@ -47,20 +47,76 @@ class Computer(BaseService):
     # Mouse Operations
     def click_mouse(self, x: int, y: int, button: Union[MouseButton, str] = MouseButton.LEFT) -> BoolResult:
         """
-        Clicks the mouse at the specified coordinates.
+        Clicks the mouse at the specified screen coordinates.
 
         Args:
-            x (int): X coordinate.
-            y (int): Y coordinate.
-            button (Union[MouseButton, str], optional): Button type. Can be MouseButton enum or string.
-                Valid values: MouseButton.LEFT, MouseButton.RIGHT, MouseButton.MIDDLE, MouseButton.DOUBLE_LEFT
-                or their string equivalents. Defaults to MouseButton.LEFT.
+            x (int): X coordinate in pixels (0 is left edge of screen).
+            y (int): Y coordinate in pixels (0 is top edge of screen).
+            button (Union[MouseButton, str], optional): Mouse button to click. Options:
+                - MouseButton.LEFT or "left": Single left click
+                - MouseButton.RIGHT or "right": Right click (context menu)
+                - MouseButton.MIDDLE or "middle": Middle click (scroll wheel)
+                - MouseButton.DOUBLE_LEFT or "double_left": Double left click
+                Defaults to MouseButton.LEFT.
 
         Returns:
-            BoolResult: Result object containing success status and error message if any.
+            BoolResult: Object containing:
+                - success (bool): Whether the click succeeded
+                - data (bool): True if successful, None otherwise
+                - error_message (str): Error description if failed
 
         Raises:
-            ValueError: If button is not a valid option.
+            ValueError: If button is not one of the valid options.
+
+        Behavior:
+            - Clicks at the exact pixel coordinates provided
+            - Does not move the mouse cursor before clicking
+            - For double-click, use MouseButton.DOUBLE_LEFT
+            - Right-click typically opens context menus
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.computer.computer import MouseButton
+
+            # Initialize and create a session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            
+            if result.success:
+                session = result.session
+                computer = session.computer
+                
+                # Single left click at coordinates
+                click_result = computer.click_mouse(100, 200)
+                if click_result.success:
+                    print("Left click successful")
+                    # Output: Left click successful
+                
+                # Right click to open context menu
+                right_click_result = computer.click_mouse(300, 400, MouseButton.RIGHT)
+                if right_click_result.success:
+                    print("Right click successful")
+                    # Output: Right click successful
+                
+                # Double click
+                double_click_result = computer.click_mouse(500, 600, MouseButton.DOUBLE_LEFT)
+                if double_click_result.success:
+                    print("Double click successful")
+                    # Output: Double click successful
+                
+                # Clean up
+                session.delete()
+            ```
+
+        Note:
+            - Coordinates are absolute screen positions, not relative to windows
+            - Use `get_screen_size()` to determine valid coordinate ranges
+            - Consider using `move_mouse()` first if you need to see cursor movement
+            - For UI automation, consider using higher-level methods from `ui` module
+
+        See Also:
+            move_mouse, drag_mouse, get_cursor_position, get_screen_size
         """
         button_str = button.value if isinstance(button, MouseButton) else button
         valid_buttons = [b.value for b in MouseButton]
@@ -277,13 +333,40 @@ class Computer(BaseService):
     # Keyboard Operations
     def input_text(self, text: str) -> BoolResult:
         """
-        Inputs text into the active field.
+        Types text into the currently focused input field.
 
         Args:
-            text (str): The text to input.
+            text (str): The text to input. Supports Unicode characters.
 
         Returns:
-            BoolResult: Result object containing success status and error message if any.
+            BoolResult: Object with success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            
+            if result.success:
+                session = result.session
+                computer = session.computer
+                
+                # Type text into focused field
+                input_result = computer.input_text("Hello, AgentBay!")
+                if input_result.success:
+                    print("Text input successful")
+                
+                session.delete()
+            ```
+
+        Note:
+            - Requires an input field to be focused first
+            - Use click_mouse() or UI automation to focus the field
+            - Supports special characters and Unicode
+
+        See Also:
+            press_keys, click_mouse
         """
         args = {"text": text}
         try:

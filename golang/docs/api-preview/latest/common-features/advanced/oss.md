@@ -120,8 +120,8 @@ UploadResult represents the result of a file upload operation
 
 ## Related Resources
 
-- [Session API Reference](../advanced/session.md)
-- [FileSystem API Reference](../advanced/filesystem.md)
+- [Session API Reference](session.md)
+- [FileSystem API Reference](filesystem.md)
 
 ---
 

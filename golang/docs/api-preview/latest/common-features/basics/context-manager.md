@@ -252,6 +252,14 @@ func LogInfo(message string)
 
 LogInfo logs an informational message
 
+### LogInfoWithColor
+
+```go
+func LogInfoWithColor(message string)
+```
+
+LogInfoWithColor logs an informational message with custom color
+
 ### LogOperationError
 
 ```go

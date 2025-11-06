@@ -236,19 +236,85 @@ ___
 
 ▸ **delete**(`syncContext?`): `Promise`\<``DeleteResult``\>
 
-Delete this session.
+Deletes the session and releases all associated resources.
 
 #### Parameters
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `syncContext` | `boolean` | `false` | Whether to sync context data (trigger file uploads) before deleting the session. Defaults to false. |
+| `syncContext` | `boolean` | `false` | Whether to synchronize context data before deletion. If true, uploads all context data to OSS. If false but browser replay is enabled, syncs only the recording context. Defaults to false. |
 
 #### Returns
 
 `Promise`\<``DeleteResult``\>
 
-DeleteResult indicating success or failure and request ID
+Promise resolving to DeleteResult containing:
+         - success: Whether deletion succeeded
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if deletion failed
+
+**`Throws`**
+
+Error if the API call fails or network issues occur.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+// Initialize the SDK
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+// Create a session
+const result = await agentBay.create();
+if (result.success) {
+  const session = result.session;
+  console.log(`Session ID: ${session.sessionId}`);
+  // Output: Session ID: session-04bdwfj7u22a1s30g
+
+  // Delete session without context sync
+  const deleteResult = await session.delete();
+  if (deleteResult.success) {
+    console.log('Session deleted successfully');
+    // Output: Session deleted successfully
+  }
+}
+
+// Example with context synchronization
+const result2 = await agentBay.create();
+if (result2.success) {
+  const session = result2.session;
+
+  // Perform operations that modify context
+  await session.filesystem.writeFile('/tmp/data.txt', 'Important data');
+
+  // Delete with context sync to preserve data
+  const deleteResult = await session.delete(true);
+  if (deleteResult.success) {
+    console.log('Session deleted and context synced');
+    // Output: Session deleted and context synced
+  }
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- If `syncContext=true`: Uploads all context data to OSS before deletion
+- If `syncContext=false` but browser replay enabled: Syncs only recording context
+- If `syncContext=false` and no browser replay: Deletes immediately without sync
+- Continues with deletion even if context sync fails
+- Releases all associated resources (browser, computer, mobile, etc.)
+
+**Best Practices:**
+- Use `syncContext=true` when you need to preserve context data for later retrieval
+- For temporary sessions, use `syncContext=false` for faster cleanup
+- Always call `delete()` when done to avoid resource leaks
+- Handle deletion errors gracefully in production code
+
+**`See`**
+
+[info](session.md#info), [ContextManager.sync](context-manager.md#sync)
 
 ___
 
@@ -340,25 +406,75 @@ ___
 
 ▸ **getLink**(`protocolType?`, `port?`, `options?`): `Promise`\<`OperationResult`\>
 
-Get a link associated with the current session.
+Retrieves an access link for the session.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `protocolType?` | `string` | Optional protocol type to use for the link |
-| `port?` | `number` | Optional port to use for the link (must be in range [30100, 30199]) |
+| `protocolType?` | `string` | Protocol type for the link (optional, reserved for future use) |
+| `port?` | `number` | Specific port number to access (must be in range [30100, 30199]). If not specified, returns the default session link. |
 | `options?` | `string` | - |
 
 #### Returns
 
 `Promise`\<`OperationResult`\>
 
-OperationResult containing the link as data and request ID
+Promise resolving to OperationResult containing:
+         - success: Whether the operation succeeded
+         - data: String URL for accessing the session
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if operation failed
 
 **`Throws`**
 
-Error if the operation fails (matching Python SessionError)
+Error if the API call fails or port is out of valid range.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+
+if (result.success) {
+  const session = result.session;
+
+  // Get default session link
+  const linkResult = await session.getLink();
+  if (linkResult.success) {
+    console.log(`Session link: ${linkResult.data}`);
+    // Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
+  }
+
+  // Get link for specific port
+  const portLinkResult = await session.getLink(undefined, 30150);
+  if (portLinkResult.success) {
+    console.log(`Port 30150 link: ${portLinkResult.data}`);
+    // Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
+  }
+
+  await session.delete();
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- Without port: Returns the default session access URL
+- With port: Returns URL for accessing specific port-mapped service
+- Port must be in range [30100, 30199] for port forwarding
+- For ADB connections, use `session.mobile.getAdbUrl()` instead
+
+**Best Practices:**
+- Use default link for general session access
+- Use port-specific links when you've started services on specific ports
+- Validate port range before calling to avoid errors
+
+**`See`**
+
+[info](session.md#info), [Mobile.getAdbUrl](../../mobile-use/mobile.md#getadburl)
 
 ___
 
@@ -428,17 +544,61 @@ ___
 
 ▸ **info**(): `Promise`\<`OperationResult`\>
 
-Gets information about this session.
+Retrieves detailed information about the current session.
 
 #### Returns
 
 `Promise`\<`OperationResult`\>
 
-OperationResult containing the session information as data and request ID
+Promise resolving to OperationResult containing:
+         - success: Whether the operation succeeded
+         - data: SessionInfo object with session details
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if operation failed
 
 **`Throws`**
 
-Error if the operation fails (matching Python SessionError)
+Error if the API call fails or network issues occur.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+
+if (result.success) {
+  const session = result.session;
+
+  // Get session information
+  const infoResult = await session.info();
+  if (infoResult.success) {
+    const info = infoResult.data;
+    console.log(`Session ID: ${info.sessionId}`);
+    console.log(`Resource URL: ${info.resourceUrl}`);
+    console.log(`Resource Type: ${info.resourceType}`);
+    // Output:
+    // Session ID: session-04bdwfj7u22a1s30g
+    // Resource URL: https://...
+    // Resource Type: vpc
+  }
+
+  await session.delete();
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- Retrieves current session metadata from the backend
+- Includes resource URL, type, and connection properties
+- For VPC sessions, includes VPC-specific information
+- Information is fetched in real-time from the API
+
+**`See`**
+
+[delete](session.md#delete), [getLink](session.md#getlink)
 
 ___
 

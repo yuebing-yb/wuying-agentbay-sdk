@@ -404,7 +404,7 @@ UIElementsResult represents the result containing UI elements
 
 ## Related Resources
 
-- [Session API Reference](../../mobile-use/session.md)
+- [Session API Reference](session.md)
 
 ---
 

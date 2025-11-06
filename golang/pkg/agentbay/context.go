@@ -225,6 +225,44 @@ func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, e
 }
 
 // Get gets a context by name. Optionally creates it if it doesn't exist.
+// Get retrieves an existing context or creates a new one.
+//
+// Parameters:
+//   - name: The name of the context to retrieve or create
+//   - create: If true, creates the context if it doesn't exist
+//
+// Returns:
+//   - *ContextResult: Result containing Context object and request ID
+//   - error: Error if the operation fails
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay("your_api_key")
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// Get existing context or create if not exists
+//		contextResult, err := client.Context.Get("my-context", true)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		context := contextResult.Context
+//		fmt.Printf("Context ID: %s\n", context.ID)
+//		fmt.Printf("Context Name: %s\n", context.Name)
+//		// Output:
+//		// Context ID: ctx-abc123
+//		// Context Name: my-context
+//	}
 func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) {
 	request := &mcp.GetContextRequest{
 		Name:          tea.String(name),
@@ -348,6 +386,50 @@ func (cs *ContextService) Create(name string) (*ContextCreateResult, error) {
 
 // Update updates the specified context.
 // Returns a result with success status.
+// Update modifies an existing context's properties.
+//
+// Parameters:
+//   - context: Context object with updated properties
+//
+// Returns:
+//   - *ContextModifyResult: Result containing success status and request ID
+//   - error: Error if the operation fails
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay("your_api_key")
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// Get context
+//		contextResult, err := client.Context.Get("my-context", true)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// Update context name
+//		context := contextResult.Context
+//		context.Name = "my-renamed-context"
+//
+//		updateResult, err := client.Context.Update(context)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		if updateResult.Success {
+//			fmt.Println("Context updated successfully")
+//			// Output: Context updated successfully
+//		}
+//	}
 func (cs *ContextService) Update(context *Context) (*ContextModifyResult, error) {
 	request := &mcp.ModifyContextRequest{
 		Id:            tea.String(context.ID),
@@ -821,7 +903,7 @@ func (cs *ContextService) DeleteFile(contextID string, filePath string) (*Contex
 func (cs *ContextService) ClearAsync(contextID string) (*ContextClearResult, error) {
 	request := &mcp.ClearContextRequest{
 		Authorization: tea.String("Bearer " + cs.AgentBay.APIKey),
-		Id:             tea.String(contextID),
+		Id:            tea.String(contextID),
 	}
 
 	// Log API request
@@ -1075,7 +1157,7 @@ func (cs *ContextService) Clear(contextID string, timeoutSeconds int, pollInterv
 				},
 				Success:      true,
 				ContextID:    statusResult.ContextID,
-				Status:      statusResult.Status,
+				Status:       statusResult.Status,
 				ErrorMessage: "",
 			}, nil
 		} else if statusResult.Status != "clearing" && statusResult.Status != "pre-available" {

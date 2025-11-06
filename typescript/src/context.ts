@@ -208,6 +208,30 @@ export class ContextService {
    * @param create - Whether to create the context if it doesn't exist.
    * @returns ContextResult with context data and requestId
    */
+  /**
+   * Retrieves an existing context or creates a new one.
+   *
+   * @param name - The name of the context to retrieve or create.
+   * @param create - If true, creates the context if it doesn't exist. Defaults to false.
+   *
+   * @returns Promise resolving to ContextResult containing the Context object.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * // Get existing context or create if not exists
+   * const contextResult = await agentBay.context.get('my-context', true);
+   * if (contextResult.success) {
+   *   console.log(`Context ID: ${contextResult.context.id}`);
+   *   console.log(`Context Name: ${contextResult.context.name}`);
+   * }
+   * ```
+   *
+   * @see {@link update}, {@link list}
+   */
   async get(name: string, create = false): Promise<ContextResult> {
     try {
       const request = new $_client.GetContextRequest({
@@ -318,6 +342,34 @@ export class ContextService {
    *
    * @param context - The Context object to update.
    * @returns OperationResult with updated context data and requestId
+   */
+  /**
+   * Updates a context's name.
+   *
+   * @param context - The Context object with updated name.
+   *
+   * @returns Promise resolving to OperationResult with success status.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * // Get context and update its name
+   * const getResult = await agentBay.context.get('old-name');
+   * if (getResult.success) {
+   *   const context = getResult.context;
+   *   context.name = 'new-name';
+   *   
+   *   const updateResult = await agentBay.context.update(context);
+   *   if (updateResult.success) {
+   *     console.log('Context name updated');
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link get}, {@link list}
    */
   async update(context: Context): Promise<OperationResult> {
     try {

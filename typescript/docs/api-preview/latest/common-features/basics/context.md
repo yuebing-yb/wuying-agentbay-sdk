@@ -175,21 +175,39 @@ ___
 
 ▸ **get**(`name`, `create?`): `Promise`\<`ContextResult`\>
 
-Gets a context by name. Optionally creates it if it doesn't exist.
-Corresponds to Python's get() method
+Retrieves an existing context or creates a new one.
 
 #### Parameters
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `name` | `string` | `undefined` | The name of the context to get. |
-| `create` | `boolean` | `false` | Whether to create the context if it doesn't exist. |
+| `name` | `string` | `undefined` | The name of the context to retrieve or create. |
+| `create` | `boolean` | `false` | If true, creates the context if it doesn't exist. Defaults to false. |
 
 #### Returns
 
 `Promise`\<`ContextResult`\>
 
-ContextResult with context data and requestId
+Promise resolving to ContextResult containing the Context object.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+// Get existing context or create if not exists
+const contextResult = await agentBay.context.get('my-context', true);
+if (contextResult.success) {
+  console.log(`Context ID: ${contextResult.context.id}`);
+  console.log(`Context Name: ${contextResult.context.name}`);
+}
+```
+
+**`See`**
+
+[update](context.md#update), [list](context.md#list)
 
 ___
 
@@ -300,20 +318,43 @@ ___
 
 ▸ **update**(`context`): `Promise`\<`OperationResult`\>
 
-Updates the specified context.
-Corresponds to Python's update() method
+Updates a context's name.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `context` | ``Context`` | The Context object to update. |
+| `context` | ``Context`` | The Context object with updated name. |
 
 #### Returns
 
 `Promise`\<`OperationResult`\>
 
-OperationResult with updated context data and requestId
+Promise resolving to OperationResult with success status.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+// Get context and update its name
+const getResult = await agentBay.context.get('old-name');
+if (getResult.success) {
+  const context = getResult.context;
+  context.name = 'new-name';
+  
+  const updateResult = await agentBay.context.update(context);
+  if (updateResult.success) {
+    console.log('Context name updated');
+  }
+}
+```
+
+**`See`**
+
+[get](context.md#get), [list](context.md#list)
 
 ## Related Resources
 

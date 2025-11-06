@@ -328,7 +328,7 @@ Helper function to find minimum of two integers
 ## Related Resources
 
 - [Extension API Reference](../../browser-use/extension.md)
-- [Session API Reference](../../browser-use/session.md)
+- [Session API Reference](session.md)
 
 ---
 

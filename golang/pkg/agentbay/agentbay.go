@@ -103,6 +103,66 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 
 // Create creates a new session in the AgentBay cloud environment.
 // If params is nil, default parameters will be used.
+// Create creates a new AgentBay session with specified configuration.
+//
+// Parameters:
+//   - params: Configuration parameters for the session (optional)
+//   - Labels: Key-value pairs for session metadata
+//   - ImageId: Custom image ID for the session environment
+//   - IsVpc: Whether to create a VPC session
+//   - PolicyId: Security policy ID
+//   - ExtraConfigs: Additional configuration options
+//
+// Returns:
+//   - *SessionResult: Result containing Session object and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Creates a new isolated cloud runtime environment
+// - Waits for session to be ready before returning
+// - For VPC sessions, includes VPC-specific configuration
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay("your_api_key")
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// Create session with default parameters
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		session := result.Session
+//		fmt.Printf("Session ID: %s\n", session.SessionID)
+//		// Output: Session ID: session-04bdwfj7u22a1s30g
+//
+//		// Create session with custom parameters
+//		params := agentbay.NewCreateSessionParams()
+//		params.Labels = map[string]string{"project": "demo"}
+//		params.IsVpc = true
+//
+//		customResult, err := client.Create(params)
+//		if err != nil {
+//			panic(err)
+//		}
+//		fmt.Println("VPC session created")
+//		// Output: VPC session created
+//
+//		session.Delete()
+//		customResult.Session.Delete()
+//	}
 func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if params == nil {
 		params = NewCreateSessionParams()

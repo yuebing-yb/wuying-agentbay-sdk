@@ -46,7 +46,94 @@ Command handles command execution operations in the AgentBay cloud environment.
 func (c *Command) ExecuteCommand(command string, timeoutMs ...int) (*CommandResult, error)
 ```
 
-ExecuteCommand executes a command in the session environment.
+ExecuteCommand executes a command in the session environment. ExecuteCommand executes a shell
+command in the session environment.
+
+Parameters:
+  - command: The shell command to execute
+  - timeoutMs: Timeout in milliseconds (optional, defaults to 1000ms)
+
+Returns:
+  - *CommandResult: Result containing command output and request ID
+  - error: Error if the operation fails
+
+Behavior:
+
+- Executes in a Linux shell environment - Combines stdout and stderr in the output - Default timeout
+is 1000ms (1 second) - Command runs with session user permissions
+
+Example:
+
+
+package main
+
+
+import (
+
+	"fmt"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+)
+
+
+func main() {
+
+	client, err := agentbay.NewAgentBay("your_api_key")
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	result, err := client.Create(nil)
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	session := result.Session
+
+
+	// Execute a simple command
+
+	cmdResult, err := session.Command.ExecuteCommand("echo 'Hello'")
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+
+	fmt.Printf("Output: %s\n", cmdResult.Output)
+
+	// Output: Output: Hello
+
+
+	// Execute with custom timeout
+
+	longCmd, err := session.Command.ExecuteCommand("sleep 2 && echo 'Done'", 3000)
+
+	if err != nil {
+
+		panic(err)
+
+	}
+
+	fmt.Println(longCmd.Output)
+
+	// Output: Done
+
+
+	session.Delete()
+
+}
 
 ### Related Functions
 

@@ -375,6 +375,38 @@ export class FileSystem {
    * @param path - Path to the directory to list.
    * @returns DirectoryListResult with directory entries and requestId
    */
+  /**
+   * Lists the contents of a directory.
+   *
+   * @param path - Absolute path to the directory to list.
+   *
+   * @returns Promise resolving to DirectoryListResult containing array of entries.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   *
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // List directory contents
+   *   const listResult = await session.filesystem.listDirectory('/tmp');
+   *   if (listResult.success) {
+   *     console.log(`Found ${listResult.entries.length} entries`);
+   *     for (const entry of listResult.entries) {
+   *       console.log(`${entry.name} (${entry.isDirectory ? 'dir' : 'file'})`);
+   *     }
+   *   }
+   *
+   *   await session.delete();
+   * }
+   * ```
+   *
+   * @see {@link readFile}, {@link writeFile}
+   */
   async listDirectory(path: string): Promise<DirectoryListResult> {
     try {
       const args = {
@@ -735,6 +767,49 @@ export class FileSystem {
    * @param path - Path to the file to read.
    * @returns FileContentResult with complete file content and requestId
    */
+  /**
+   * Reads the entire content of a file.
+   *
+   * @param path - Absolute path to the file to read.
+   *
+   * @returns Promise resolving to FileContentResult containing:
+   *          - success: Whether the read operation succeeded
+   *          - content: String content of the file
+   *          - requestId: Unique identifier for this API request
+   *          - errorMessage: Error description if read failed
+   *
+   * @throws Error if the API call fails.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   *
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // Read a text file
+   *   const fileResult = await session.filesystem.readFile('/etc/hostname');
+   *   if (fileResult.success) {
+   *     console.log(`Content: ${fileResult.content}`);
+   *     // Output: Content: agentbay-session-xyz
+   *   }
+   *
+   *   await session.delete();
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - Automatically handles large files by reading in 60KB chunks
+   * - Returns empty string for empty files
+   * - Fails if path is a directory or doesn't exist
+   * - Content is returned as UTF-8 string
+   *
+   * @see {@link writeFile}, {@link listDirectory}
+   */
   async readFile(
     path: string
   ): Promise<FileContentResult> {
@@ -831,6 +906,54 @@ export class FileSystem {
    * @param content - Content to write to the file.
    * @param mode - Optional: Write mode. One of "overwrite", "append", or "create_new". Default is "overwrite".
    * @returns BoolResult indicating success or failure with requestId
+   */
+  /**
+   * Writes content to a file.
+   *
+   * @param path - Absolute path to the file to write.
+   * @param content - String content to write to the file.
+   * @param mode - Write mode: "overwrite" (default) or "append".
+   *
+   * @returns Promise resolving to BoolResult with success status.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   *
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // Write to a file (overwrite mode)
+   *   const writeResult = await session.filesystem.writeFile(
+   *     '/tmp/test.txt',
+   *     'Hello, AgentBay!'
+   *   );
+   *   if (writeResult.success) {
+   *     console.log('File written successfully');
+   *   }
+   *
+   *   // Append to a file
+   *   const appendResult = await session.filesystem.writeFile(
+   *     '/tmp/test.txt',
+   *     '\nNew line',
+   *     'append'
+   *   );
+   *
+   *   await session.delete();
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - Automatically handles large files by writing in 60KB chunks
+   * - Creates parent directories if they don't exist
+   * - "overwrite" mode replaces existing file content
+   * - "append" mode adds content to the end of the file
+   *
+   * @see {@link readFile}, {@link listDirectory}
    */
   async writeFile(
     path: string,
