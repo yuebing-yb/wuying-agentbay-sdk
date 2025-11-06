@@ -56,6 +56,39 @@ func (b *Browser) IsInitialized() bool
 
 IsInitialized returns true if the browser was initialized, false otherwise
 
+#### Screenshot
+
+```go
+func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error)
+```
+
+Screenshot takes a screenshot of the specified page with enhanced options and error handling.
+This method requires the caller to connect to the browser via Playwright or similar and pass the
+page object to this method.
+
+Parameters:
+  - page: The Playwright Page object to take a screenshot of. This is a required parameter.
+  - options: Screenshot options including:
+  - FullPage (bool): Whether to capture the full scrollable page. Defaults to false.
+  - Type (string): Image type, either "png" or "jpeg". Defaults to "png".
+  - Quality (int): Quality of the image, between 0-100 (jpeg only). Defaults to 0.
+  - Timeout (int): Maximum time in milliseconds. Defaults to 60000.
+
+Returns:
+  - []byte: Screenshot data as bytes.
+  - error: Error if browser is not initialized or screenshot capture fails.
+
+#### _scrollToLoadAllContent
+
+```go
+func (b *Browser) _scrollToLoadAllContent(page interface {
+	Evaluate(expression string, options ...interface{}) (interface{}, error)
+	WaitForTimeout(timeout int)
+}, maxScrolls int, delayMs int) error
+```
+
+_scrollToLoadAllContent scrolls the page to load all content (especially for lazy-loaded elements)
+
 ### Related Functions
 
 #### NewBrowser
@@ -248,6 +281,19 @@ type McpToolResult struct {
 
 McpToolResult represents the result of CallMcpTool call
 
+## Type ScreenshotOptions
+
+```go
+type ScreenshotOptions struct {
+	FullPage	bool
+	Type		string	// "png" or "jpeg"
+	Quality		int	// 0-100 for jpeg
+	Timeout		int	// timeout in milliseconds
+}
+```
+
+ScreenshotOptions represents options for taking screenshots
+
 ## Type SessionInterface
 
 ```go
@@ -264,6 +310,16 @@ type SessionInterface interface {
 ```
 
 SessionInterface defines the interface that Session must implement for Browser
+
+## Functions
+
+### min
+
+```go
+func min(a, b int) int
+```
+
+Helper function to find minimum of two integers
 
 ---
 

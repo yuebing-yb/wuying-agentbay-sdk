@@ -194,7 +194,7 @@ func main() {
 	_, currentFile, _, _ := runtime.Caller(0)
 	scriptDir := filepath.Dir(currentFile)
 	projectRoot := filepath.Dir(scriptDir)
-	docsRoot := filepath.Join(projectRoot, "docs", "api-preview", "golang", "latest")
+	docsRoot := filepath.Join(projectRoot, "docs", "api-preview", "latest")
 
 	if err := os.RemoveAll(docsRoot); err != nil {
 		panic(err)
@@ -274,7 +274,11 @@ func loadPackageDoc(projectRoot, relPath string) (*packageDoc, error) {
 
 	dir := filepath.Join(projectRoot, relPath)
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, dir, nil, parser.ParseComments)
+	// Filter out test files (*_test.go) to exclude test functions from documentation
+	filter := func(fi os.FileInfo) bool {
+		return !strings.HasSuffix(fi.Name(), "_test.go")
+	}
+	pkgs, err := parser.ParseDir(fset, dir, filter, parser.ParseComments)
 	if err != nil {
 		return nil, fmt.Errorf("parse package %s: %w", relPath, err)
 	}

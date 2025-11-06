@@ -14,7 +14,7 @@ func TestGenerateGoAPIDocs(t *testing.T) {
 		t.Fatalf("resolve module root: %v", err)
 	}
 
-	docsDir := filepath.Join(moduleRoot, "docs", "api-preview", "golang", "latest")
+	docsDir := filepath.Join(moduleRoot, "docs", "api-preview", "latest")
 	if err := os.RemoveAll(docsDir); err != nil {
 		t.Fatalf("cleanup docs dir: %v", err)
 	}
