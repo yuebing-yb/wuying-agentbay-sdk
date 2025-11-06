@@ -6,9 +6,9 @@
 
 | Language | Install Command | Documentation |
 |----------|----------------|---------------|
-| Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) |
-| TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) |
-| Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) |
+| Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) \| [API Reference](python/docs/api-preview/latest/) |
+| TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) \| [API Reference](typescript/docs/api-preview/latest/) |
+| Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) \| [API Reference](golang/docs/api-preview/latest/) |
 
 ## 🚀 Prerequisites
 
@@ -108,10 +108,11 @@ if err != nil {
   - 📱 [Mobile Automation](docs/guides/mobile-use/README.md) - Android UI testing and gesture automation
   - 💻 [CodeSpace](docs/guides/codespace/README.md) - Cloud-based code execution environments
 - [Feature Guides](docs/guides/README.md) - Complete feature introduction
-- API Reference - Core API quick lookup
-  - [Python API Reference](python/docs/api/README.md)
-  - [TypeScript API Reference](typescript/docs/api/README.md)
-  - [Golang API Reference](golang/docs/api/README.md)
+- **API Reference** - Comprehensive API documentation with examples
+  - [Python API Reference](python/docs/api-preview/latest/) - Auto-generated from source code
+  - [TypeScript API Reference](typescript/docs/api-preview/latest/) - Auto-generated from source code
+  - [Golang API Reference](golang/docs/api-preview/latest/) - Auto-generated from source code
+  - 📝 All API docs include complete runnable examples and actual output
 - [Cookbook](cookbook/README.md) - Real-world examples and recipes
 
 ## 🔧 Core Features

@@ -44,10 +44,10 @@ DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("browser-use/extension.md", "Extension", ("agentbay.extension",)),
     DocMapping("codespace/code.md", "Code", ("agentbay.code",)),
     DocMapping("computer-use/application.md", "Application", ("agentbay.application",)),
-    DocMapping("computer-use/computer.md", "Computer", ("agentbay.computer",)),
+    DocMapping("computer-use/computer.md", "Computer", ("agentbay.computer.computer",)),
     DocMapping("computer-use/ui.md", "UI", ("agentbay.ui",)),
     DocMapping("computer-use/window.md", "Window Manager", ("agentbay.window",)),
-    DocMapping("mobile-use/mobile.md", "Mobile", ("agentbay.mobile",)),
+    DocMapping("mobile-use/mobile.md", "Mobile", ("agentbay.mobile.mobile",)),
 )
 
 
