@@ -762,7 +762,106 @@ func formatComment(comment string) string {
 	}
 	var buf bytes.Buffer
 	doc.ToText(&buf, comment, "", "\n", 100)
-	return strings.TrimSpace(buf.String())
+	text := strings.TrimSpace(buf.String())
+
+	// Process the text to wrap code examples in markdown code blocks
+	return wrapCodeExamples(text)
+}
+
+func wrapCodeExamples(text string) string {
+	lines := strings.Split(text, "\n")
+	var result strings.Builder
+	inCodeBlock := false
+	var codeLines []string
+
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		trimmedLine := strings.TrimSpace(line)
+
+		// Detect "Example:" line
+		if !inCodeBlock && trimmedLine == "Example:" {
+			result.WriteString("**Example:**\n\n")
+
+			// Skip all empty lines after "Example:"
+			i++
+			for i < len(lines) && strings.TrimSpace(lines[i]) == "" {
+				i++
+			}
+
+			// Start code block and continue until end of comment
+			if i < len(lines) {
+				inCodeBlock = true
+				codeLines = []string{}
+				i-- // Reprocess this line in code block mode
+			}
+			continue
+		}
+
+		if inCodeBlock {
+			// Collect all code lines
+			codeLines = append(codeLines, line)
+		} else {
+			result.WriteString(line)
+			result.WriteString("\n")
+		}
+	}
+
+	// Process and write code block if we collected any
+	if inCodeBlock && len(codeLines) > 0 {
+		result.WriteString("```go\n")
+
+		// Clean up excessive empty lines in code
+		// Keep empty lines only between major sections (comments, imports, functions)
+		prevEmpty := false
+		prevWasComment := false
+
+		for i, line := range codeLines {
+			trimmed := strings.TrimSpace(line)
+			isEmpty := trimmed == ""
+			isComment := strings.HasPrefix(trimmed, "//")
+
+			// Determine if we should keep this empty line
+			keepEmptyLine := false
+			if isEmpty {
+				// Look at next non-empty line
+				nextLine := ""
+				for j := i + 1; j < len(codeLines); j++ {
+					next := strings.TrimSpace(codeLines[j])
+					if next != "" {
+						nextLine = next
+						break
+					}
+				}
+
+				// Keep empty line before comments or after closing braces
+				if strings.HasPrefix(nextLine, "//") || prevWasComment {
+					keepEmptyLine = true
+				}
+			}
+
+			// Skip consecutive empty lines or unnecessary empty lines
+			if isEmpty {
+				if prevEmpty || !keepEmptyLine {
+					prevEmpty = true
+					continue
+				}
+			}
+
+			result.WriteString(line)
+			result.WriteString("\n")
+			prevEmpty = isEmpty
+			prevWasComment = isComment
+		}
+
+		// Remove trailing empty lines
+		resultStr := result.String()
+		for strings.HasSuffix(resultStr, "\n\n") {
+			resultStr = strings.TrimSuffix(resultStr, "\n")
+		}
+		return strings.TrimSpace(resultStr) + "\n```"
+	}
+
+	return strings.TrimSpace(result.String())
 }
 
 func writeReadme(docsRoot string) error {

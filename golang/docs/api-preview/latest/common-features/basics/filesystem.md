@@ -275,59 +275,33 @@ Behavior:
 - Returns list of DirectoryEntry objects with name, type, size, and mtime - Entry types: "file" or
 "directory" - Fails if path doesn't exist or is not a directory
 
-Example:
+**Example:**
 
-
+```go
 package main
-
-
 import (
-
 	"fmt"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
 )
-
-
 func main() {
-
 	client, err := agentbay.NewAgentBay("your_api_key")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	result, err := client.Create(nil)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	session := result.Session
-
 
 	// List directory contents
 
 	listResult, err := session.FileSystem.ListDirectory("/tmp")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	for _, entry := range listResult.Entries {
-
 		fmt.Printf("%s (%s)\n", entry.Name, entry.Type)
-
 	}
 
 	// Output:
@@ -336,10 +310,9 @@ func main() {
 
 	// subdir (directory)
 
-
 	session.Delete()
-
 }
+```
 
 #### MoveFile
 
@@ -370,63 +343,38 @@ Behavior:
 - Automatically handles large files by reading in 50KB chunks - Returns empty string for empty files
 - Fails if path is a directory or doesn't exist
 
-Example:
+**Example:**
 
-
+```go
 package main
-
-
 import (
-
 	"fmt"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
 )
-
-
 func main() {
-
 	client, err := agentbay.NewAgentBay("your_api_key")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	result, err := client.Create(nil)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	session := result.Session
-
 
 	// Read a text file
 
 	fileResult, err := session.FileSystem.ReadFile("/etc/hostname")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	fmt.Printf("Content: %s\n", fileResult.Content)
 
 	// Output: Content: agentbay-session-xyz
 
-
 	session.Delete()
-
 }
+```
 
 #### ReadMultipleFiles
 
@@ -494,75 +442,44 @@ Behavior:
 don't exist - "overwrite" mode replaces existing file content - "append" mode adds to existing file
 content
 
-Example:
+**Example:**
 
-
+```go
 package main
-
-
 import (
-
 	"fmt"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
 )
-
-
 func main() {
-
 	client, err := agentbay.NewAgentBay("your_api_key")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	result, err := client.Create(nil)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	session := result.Session
-
 
 	// Write to a file
 
 	writeResult, err := session.FileSystem.WriteFile(
-
 		"/tmp/test.txt",
-
 		"Hello, AgentBay!",
-
 		"overwrite",
-
 	)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	if writeResult.Success {
-
 		fmt.Println("File written successfully")
 
 		// Output: File written successfully
 
 	}
-
-
 	session.Delete()
-
 }
+```
 
 #### readFileChunk
 

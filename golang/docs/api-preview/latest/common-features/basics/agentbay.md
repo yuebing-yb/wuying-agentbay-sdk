@@ -56,77 +56,48 @@ Behavior:
 - Creates a new isolated cloud runtime environment - Waits for session to be ready before returning
 - For VPC sessions, includes VPC-specific configuration
 
-Example:
+**Example:**
 
-
+```go
 package main
-
-
 import (
-
 	"fmt"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
 )
-
-
 func main() {
-
 	client, err := agentbay.NewAgentBay("your_api_key")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
 
 	// Create session with default parameters
 
 	result, err := client.Create(nil)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	session := result.Session
-
 	fmt.Printf("Session ID: %s\n", session.SessionID)
 
 	// Output: Session ID: session-04bdwfj7u22a1s30g
 
-
 	// Create session with custom parameters
 
 	params := agentbay.NewCreateSessionParams()
-
 	params.Labels = map[string]string{"project": "demo"}
-
 	params.IsVpc = true
-
-
 	customResult, err := client.Create(params)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
 	fmt.Println("VPC session created")
 
 	// Output: VPC session created
 
-
 	session.Delete()
-
 	customResult.Session.Delete()
-
 }
+```
 
 #### Delete
 
@@ -152,24 +123,18 @@ Returns:
   - *SessionResult: Result containing the Session instance, request ID, and success status
   - error: An error if the operation fails
 
-Example:
+**Example:**
 
-
+```go
 result, err := agentBay.Get("my-session-id")
-
 if err != nil {
-
     log.Fatal(err)
-
 }
-
 if result.Success {
-
     fmt.Printf("Session ID: %s\n", result.Session.SessionID)
-
     fmt.Printf("Request ID: %s\n", result.RequestID)
-
 }
+```
 
 #### GetSession
 
@@ -196,44 +161,32 @@ Returns:
   - *SessionListResult: Paginated list of session IDs that match the labels
   - error: An error if the operation fails
 
-Example:
+**Example:**
 
-
+```go
 agentBay, _ := agentbay.NewAgentBay("your_api_key")
-
 
 // List all sessions
 
 result, err := agentBay.List(nil, nil, nil)
 
-
 // List sessions with specific labels
 
 result, err := agentBay.List(map[string]string{"project": "demo"}, nil, nil)
 
-
 // List sessions with pagination
 
 page := 2
-
 limit := int32(10)
-
 result, err := agentBay.List(map[string]string{"my-label": "my-value"}, &page, &limit)
-
-
 if err == nil {
-
     for _, sessionId := range result.SessionIds {
-
         fmt.Printf("Session ID: %s\n", sessionId)
-
     }
-
     fmt.Printf("Total count: %d\n", result.TotalCount)
-
     fmt.Printf("Request ID: %s\n", result.RequestID)
-
 }
+```
 
 #### ListByLabels
 

@@ -195,47 +195,28 @@ Returns:
   - *ContextResult: Result containing Context object and request ID
   - error: Error if the operation fails
 
-Example:
+**Example:**
 
-
+```go
 package main
-
-
 import (
-
 	"fmt"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
 )
-
-
 func main() {
-
 	client, err := agentbay.NewAgentBay("your_api_key")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
 
 	// Get existing context or create if not exists
 
 	contextResult, err := client.Context.Get("my-context", true)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	context := contextResult.Context
-
 	fmt.Printf("Context ID: %s\n", context.ID)
-
 	fmt.Printf("Context Name: %s\n", context.Name)
 
 	// Output:
@@ -245,6 +226,7 @@ func main() {
 	// Context Name: my-context
 
 }
+```
 
 #### GetClearStatus
 
@@ -304,68 +286,43 @@ Returns:
   - *ContextModifyResult: Result containing success status and request ID
   - error: Error if the operation fails
 
-Example:
+**Example:**
 
-
+```go
 package main
-
-
 import (
-
 	"fmt"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
 )
-
-
 func main() {
-
 	client, err := agentbay.NewAgentBay("your_api_key")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
 
 	// Get context
 
 	contextResult, err := client.Context.Get("my-context", true)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
 
 	// Update context name
 
 	context := contextResult.Context
-
 	context.Name = "my-renamed-context"
-
-
 	updateResult, err := client.Context.Update(context)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	if updateResult.Success {
-
 		fmt.Println("Context updated successfully")
 
 		// Output: Context updated successfully
 
 	}
-
 }
+```
 
 ## Type ContextListParams
 

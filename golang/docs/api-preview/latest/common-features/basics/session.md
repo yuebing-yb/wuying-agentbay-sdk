@@ -227,76 +227,51 @@ Behavior:
 Deletes immediately without sync - Continues with deletion even if context sync fails - Releases all
 associated resources (browser, computer, mobile, etc.)
 
-Example:
+**Example:**
 
-
+```go
 package main
-
-
 import (
-
 	"fmt"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
 )
-
-
 func main() {
 
 	// Initialize the SDK
 
 	client, err := agentbay.NewAgentBay("your_api_key")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
 
 	// Create a session
 
 	result, err := client.Create(nil)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	session := result.Session
-
 	fmt.Printf("Session ID: %s\n", session.SessionID)
 
 	// Output: Session ID: session-04bdwfj7u22a1s30g
 
-
 	// Delete session without context sync
 
 	deleteResult, err := session.Delete()
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
 	if deleteResult.Success {
-
 		fmt.Println("Session deleted successfully")
 
 		// Output: Session deleted successfully
 
 	}
-
 }
-
 Note:
-
 - Use syncContext=true when you need to preserve context data - For temporary sessions, use
 syncContext=false for faster cleanup - Always call Delete() when done to avoid resource leaks
+```
 
 #### FindServerForTool
 
@@ -376,84 +351,52 @@ Behavior:
 - Without port: Returns the default session access URL - With port: Returns URL for accessing
 specific port-mapped service - Port must be in range [30100, 30199] for port forwarding
 
-Example:
+**Example:**
 
-
+```go
 package main
-
-
 import (
-
 	"fmt"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
 )
-
-
 func main() {
-
 	client, err := agentbay.NewAgentBay("your_api_key")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	result, err := client.Create(nil)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	session := result.Session
-
 
 	// Get default session link
 
 	linkResult, err := session.GetLink(nil, nil, nil)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
 	fmt.Printf("Session link: %s\n", linkResult.Link)
 
 	// Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
 
-
 	// Get link for specific port
 
 	port := int32(30150)
-
 	portLinkResult, err := session.GetLink(nil, &port, nil)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
 	fmt.Printf("Port 30150 link: %s\n", portLinkResult.Link)
 
 	// Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
 
-
 	session.Delete()
-
 }
-
 Note:
-
 - Use default link for general session access - Use port-specific links for services on specific
 ports - Validate port range before calling to avoid errors
+```
 
 #### GetLinkForBrowser
 
@@ -529,61 +472,34 @@ Behavior:
 - Retrieves current session metadata from the backend - Includes resource URL, type, and connection
 properties - Information is fetched in real-time from the API
 
-Example:
+**Example:**
 
-
+```go
 package main
-
-
 import (
-
 	"fmt"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
 )
-
-
 func main() {
-
 	client, err := agentbay.NewAgentBay("your_api_key")
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	result, err := client.Create(nil)
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	session := result.Session
-
 
 	// Get session information
 
 	infoResult, err := session.Info()
-
 	if err != nil {
-
 		panic(err)
-
 	}
-
-
 	info := infoResult.Info
-
 	fmt.Printf("Session ID: %s\n", info.SessionId)
-
 	fmt.Printf("Resource URL: %s\n", info.ResourceUrl)
-
 	fmt.Printf("Resource Type: %s\n", info.ResourceType)
 
 	// Output:
@@ -594,10 +510,9 @@ func main() {
 
 	// Resource Type: vpc
 
-
 	session.Delete()
-
 }
+```
 
 #### IsVPCEnabled
 
