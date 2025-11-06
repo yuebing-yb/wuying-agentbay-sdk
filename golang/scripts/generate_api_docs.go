@@ -34,12 +34,23 @@ type packageDoc struct {
 }
 
 type Metadata struct {
+	Global  GlobalConfig            `yaml:"global"`
 	Modules map[string]ModuleConfig `yaml:"modules"`
+}
+
+type GlobalConfig struct {
+	ImageRequirements map[string]string `yaml:"image_requirements"`
+	BestPractices     map[string]string `yaml:"best_practices"`
 }
 
 type ModuleConfig struct {
 	Tutorial         *TutorialConfig  `yaml:"tutorial"`
 	RelatedResources []ResourceConfig `yaml:"related_resources"`
+	Overview         string           `yaml:"overview"`
+	Requirements     []string         `yaml:"requirements"`
+	BestPractices    []string         `yaml:"best_practices"`
+	DataTypes        []DataTypeInfo   `yaml:"data_types"`
+	ImportantNotes   []string         `yaml:"important_notes"`
 	Emoji            string           `yaml:"emoji"`
 	Category         string           `yaml:"category"`
 }
@@ -54,6 +65,11 @@ type ResourceConfig struct {
 	Name     string `yaml:"name"`
 	Module   string `yaml:"module"`
 	Category string `yaml:"category"`
+}
+
+type DataTypeInfo struct {
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
 }
 
 var mappings = []docMapping{
@@ -257,32 +273,154 @@ func getTutorialSection(moduleName string, metadata *Metadata) string {
 }
 
 func calculateResourcePath(resource ResourceConfig, moduleConfig ModuleConfig) string {
-	category := resource.Category
-	if category == "" {
-		category = moduleConfig.Category
+	targetCategory := resource.Category
+	if targetCategory == "" {
+		targetCategory = "common-features/basics"
 	}
-	if category == "" {
-		category = "common-features/basics"
+
+	currentCategory := moduleConfig.Category
+	if currentCategory == "" {
+		currentCategory = "common-features/basics"
 	}
 
 	module := resource.Module
 
-	switch category {
-	case "common-features/basics":
+	// If same category, just use module name
+	if targetCategory == currentCategory {
 		return fmt.Sprintf("%s.md", module)
-	case "common-features/advanced":
-		return fmt.Sprintf("../advanced/%s.md", module)
-	case "browser-use":
-		return fmt.Sprintf("../../browser-use/%s.md", module)
-	case "codespace":
-		return fmt.Sprintf("../../codespace/%s.md", module)
-	case "computer-use":
-		return fmt.Sprintf("../../computer-use/%s.md", module)
-	case "mobile-use":
-		return fmt.Sprintf("../../mobile-use/%s.md", module)
-	default:
-		return fmt.Sprintf("../../%s/%s.md", category, module)
 	}
+
+	// Calculate relative path based on current and target categories
+	switch currentCategory {
+	case "common-features/basics":
+		switch targetCategory {
+		case "common-features/advanced":
+			return fmt.Sprintf("../advanced/%s.md", module)
+		case "browser-use":
+			return fmt.Sprintf("../../../browser-use/%s.md", module)
+		case "codespace":
+			return fmt.Sprintf("../../../codespace/%s.md", module)
+		case "computer-use":
+			return fmt.Sprintf("../../../computer-use/%s.md", module)
+		case "mobile-use":
+			return fmt.Sprintf("../../../mobile-use/%s.md", module)
+		default:
+			return fmt.Sprintf("../../../%s/%s.md", targetCategory, module)
+		}
+	case "common-features/advanced":
+		switch targetCategory {
+		case "common-features/basics":
+			return fmt.Sprintf("../basics/%s.md", module)
+		case "browser-use":
+			return fmt.Sprintf("../../../browser-use/%s.md", module)
+		case "codespace":
+			return fmt.Sprintf("../../../codespace/%s.md", module)
+		case "computer-use":
+			return fmt.Sprintf("../../../computer-use/%s.md", module)
+		case "mobile-use":
+			return fmt.Sprintf("../../../mobile-use/%s.md", module)
+		default:
+			return fmt.Sprintf("../../../%s/%s.md", targetCategory, module)
+		}
+	case "browser-use", "codespace", "computer-use", "mobile-use":
+		switch targetCategory {
+		case "common-features/basics":
+			return fmt.Sprintf("../../common-features/basics/%s.md", module)
+		case "common-features/advanced":
+			return fmt.Sprintf("../../common-features/advanced/%s.md", module)
+		case "browser-use":
+			return fmt.Sprintf("../%s.md", module)
+		case "codespace":
+			return fmt.Sprintf("../../codespace/%s.md", module)
+		case "computer-use":
+			return fmt.Sprintf("../../computer-use/%s.md", module)
+		case "mobile-use":
+			return fmt.Sprintf("../../mobile-use/%s.md", module)
+		default:
+			return fmt.Sprintf("../../%s/%s.md", targetCategory, module)
+		}
+	default:
+		// Fallback for unknown categories
+		return fmt.Sprintf("../../%s/%s.md", targetCategory, module)
+	}
+}
+
+func getOverviewSection(moduleName string, metadata *Metadata) string {
+	config, ok := metadata.Modules[moduleName]
+	if !ok || config.Overview == "" {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("## Overview\n\n")
+	buf.WriteString(strings.TrimSpace(config.Overview))
+	buf.WriteString("\n\n")
+
+	return buf.String()
+}
+
+func getRequirementsSection(moduleName string, metadata *Metadata) string {
+	config, ok := metadata.Modules[moduleName]
+	if !ok || len(config.Requirements) == 0 {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("## Requirements\n\n")
+	for _, req := range config.Requirements {
+		fmt.Fprintf(&buf, "- %s\n", req)
+	}
+	buf.WriteString("\n")
+
+	return buf.String()
+}
+
+func getDataTypesSection(moduleName string, metadata *Metadata) string {
+	config, ok := metadata.Modules[moduleName]
+	if !ok || len(config.DataTypes) == 0 {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("## Data Types\n\n")
+	for _, dt := range config.DataTypes {
+		fmt.Fprintf(&buf, "### %s\n\n", dt.Name)
+		fmt.Fprintf(&buf, "%s\n\n", dt.Description)
+	}
+
+	return buf.String()
+}
+
+func getImportantNotesSection(moduleName string, metadata *Metadata) string {
+	config, ok := metadata.Modules[moduleName]
+	if !ok || len(config.ImportantNotes) == 0 {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("## Important Notes\n\n")
+	for _, note := range config.ImportantNotes {
+		fmt.Fprintf(&buf, "- %s\n", note)
+	}
+	buf.WriteString("\n")
+
+	return buf.String()
+}
+
+func getBestPracticesSection(moduleName string, metadata *Metadata) string {
+	config, ok := metadata.Modules[moduleName]
+	if !ok || len(config.BestPractices) == 0 {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("## Best Practices\n\n")
+	for i, practice := range config.BestPractices {
+		fmt.Fprintf(&buf, "%d. %s\n", i+1, practice)
+	}
+	buf.WriteString("\n")
+
+	return buf.String()
 }
 
 func getRelatedResourcesSection(moduleName string, metadata *Metadata) string {
@@ -347,11 +485,37 @@ func generateDoc(projectRoot, docsRoot string, mapping docMapping, metadata *Met
 		buf.WriteString(tutorialSection)
 	}
 
+	// Add overview section
+	overviewSection := getOverviewSection(moduleName, metadata)
+	if overviewSection != "" {
+		buf.WriteString(overviewSection)
+	}
+
+	// Add package comment if exists
 	if pkgComment := strings.TrimSpace(pkgDoc.doc.Doc); pkgComment != "" {
 		buf.WriteString(pkgComment)
 		buf.WriteString("\n\n")
 	}
 
+	// Add requirements section
+	requirementsSection := getRequirementsSection(moduleName, metadata)
+	if requirementsSection != "" {
+		buf.WriteString(requirementsSection)
+	}
+
+	// Add data types section
+	dataTypesSection := getDataTypesSection(moduleName, metadata)
+	if dataTypesSection != "" {
+		buf.WriteString(dataTypesSection)
+	}
+
+	// Add important notes section
+	importantNotesSection := getImportantNotesSection(moduleName, metadata)
+	if importantNotesSection != "" {
+		buf.WriteString(importantNotesSection)
+	}
+
+	// Add types from source code
 	types, err := selectTypes(pkgDoc.doc, mapping)
 	if err != nil {
 		return err
@@ -360,6 +524,7 @@ func generateDoc(projectRoot, docsRoot string, mapping docMapping, metadata *Met
 		writeType(&buf, pkgDoc, typ)
 	}
 
+	// Add functions from source code
 	funcs, err := selectFuncs(pkgDoc.doc, mapping)
 	if err != nil {
 		return err
@@ -371,6 +536,7 @@ func generateDoc(projectRoot, docsRoot string, mapping docMapping, metadata *Met
 		}
 	}
 
+	// Add constants and variables from source code
 	values, err := selectValues(pkgDoc.doc, mapping.ValueNames)
 	if err != nil {
 		return err
@@ -380,6 +546,12 @@ func generateDoc(projectRoot, docsRoot string, mapping docMapping, metadata *Met
 		for _, val := range values {
 			writeValue(&buf, pkgDoc, val)
 		}
+	}
+
+	// Add best practices section
+	bestPracticesSection := getBestPracticesSection(moduleName, metadata)
+	if bestPracticesSection != "" {
+		buf.WriteString(bestPracticesSection)
 	}
 
 	// Add related resources section

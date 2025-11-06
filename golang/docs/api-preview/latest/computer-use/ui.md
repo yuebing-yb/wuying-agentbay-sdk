@@ -237,7 +237,7 @@ UIResult represents the result of a UI action
 
 ## Related Resources
 
-- [Computer API Reference](../../computer-use/computer.md)
+- [Computer API Reference](computer.md)
 
 ---
 

@@ -212,8 +212,8 @@ WindowResult represents the result of a window action
 
 ## Related Resources
 
-- [Computer API Reference](../../computer-use/computer.md)
-- [Application API Reference](../../computer-use/application.md)
+- [Computer API Reference](computer.md)
+- [Application API Reference](application.md)
 
 ---
 

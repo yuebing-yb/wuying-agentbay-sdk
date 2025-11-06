@@ -4,6 +4,11 @@
 
 - [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
 
+## Overview
+
+The Command module provides methods for executing shell commands within a session in the AgentBay cloud environment.
+It supports both synchronous command execution with configurable timeouts.
+
 Command templates for various AgentBay operations.
 
 This module contains shell command templates used by different modules
@@ -18,6 +23,10 @@ Parameter conventions:
 - Use snake_case for parameter names
 - Include descriptive parameter names (e.g., lock_switch, package_list)
 - Document expected parameter types and values
+
+## Requirements
+
+- Any session image (browser_latest, code_latest, windows_latest, mobile_latest)
 
 ## Type Command
 
@@ -176,6 +185,14 @@ func GetMobileCommandTemplate(templateName string) (string, bool)
 ```
 
 GetMobileCommandTemplate returns a mobile command template by name
+
+## Best Practices
+
+1. Always specify appropriate timeout values based on expected command duration
+2. Handle command execution errors gracefully
+3. Use absolute paths when referencing files in commands
+4. Be aware that commands run with session user permissions
+5. Clean up temporary files created by commands
 
 ## Related Resources
 

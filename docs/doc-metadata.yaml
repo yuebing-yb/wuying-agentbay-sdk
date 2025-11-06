@@ -1,6 +1,22 @@
 # Documentation metadata configuration file
 # This file centralizes metadata for API documentation generation
 
+# Global documentation configuration
+global:
+  # Requirements for different image types
+  image_requirements:
+    browser_latest: "Browser automation features require the `browser_latest` image"
+    code_latest: "Code execution features require the `code_latest` image"
+    windows_latest: "Computer use features require the `windows_latest` image"
+    mobile_latest: "Mobile automation features require the `mobile_latest` image"
+
+  # Common best practices
+  best_practices:
+    error_handling: "Always check for errors after API calls and handle them appropriately"
+    resource_cleanup: "Always clean up resources (sessions, contexts) when done to avoid resource leaks"
+    timeout_config: "Configure appropriate timeouts based on your operation's expected duration"
+    logging: "Enable logging for debugging and monitoring purposes"
+
 modules:
   # Session module
   session:
@@ -86,6 +102,20 @@ modules:
       url: ../../../../../docs/guides/common-features/basics/command-execution.md
       text: Command Execution Guide
       description: Learn how to execute commands in sessions
+
+    overview: |
+      The Command module provides methods for executing shell commands within a session in the AgentBay cloud environment.
+      It supports both synchronous command execution with configurable timeouts.
+
+    requirements:
+      - "Any session image (browser_latest, code_latest, windows_latest, mobile_latest)"
+
+    best_practices:
+      - "Always specify appropriate timeout values based on expected command duration"
+      - "Handle command execution errors gracefully"
+      - "Use absolute paths when referencing files in commands"
+      - "Be aware that commands run with session user permissions"
+      - "Clean up temporary files created by commands"
 
     related_resources:
       - name: Session API Reference
@@ -206,6 +236,20 @@ modules:
       text: Browser Use Guide
       description: Complete guide to browser automation
 
+    overview: |
+      The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,
+      screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
+
+    requirements:
+      - "Requires `browser_latest` image for browser automation features"
+
+    best_practices:
+      - "Wait for page load completion before interacting with elements"
+      - "Use appropriate selectors (CSS, XPath) for reliable element identification"
+      - "Handle navigation timeouts and errors gracefully"
+      - "Take screenshots for debugging and verification"
+      - "Clean up browser resources after automation tasks"
+
     related_resources:
       - name: Extension API Reference
         module: extension
@@ -247,6 +291,20 @@ modules:
       text: Code Execution Guide
       description: Execute code in isolated environments
 
+    overview: |
+      The Code module provides secure code execution capabilities in isolated environments.
+      It supports multiple programming languages including Python, JavaScript, and more.
+
+    requirements:
+      - "Requires `code_latest` image for code execution features"
+
+    best_practices:
+      - "Validate code syntax before execution"
+      - "Set appropriate execution timeouts"
+      - "Handle execution errors and exceptions"
+      - "Use proper resource limits to prevent resource exhaustion"
+      - "Clean up temporary files after code execution"
+
     related_resources:
       - name: Session API Reference
         module: session
@@ -265,6 +323,35 @@ modules:
       url: ../../../../../docs/guides/computer-use/README.md
       text: Computer Use Guide
       description: Automate desktop applications
+
+    overview: |
+      The Computer module provides comprehensive desktop automation capabilities including mouse operations,
+      keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
+
+    requirements:
+      - "Requires `windows_latest` image for computer use features"
+
+    data_types:
+      - name: MouseButton
+        description: "Mouse button constants: Left, Right, Middle"
+      - name: ScrollDirection
+        description: "Scroll direction constants: Up, Down, Left, Right"
+      - name: KeyModifier
+        description: "Keyboard modifier keys: Ctrl, Alt, Shift, Win"
+
+    important_notes:
+      - "Key names in PressKeys and ReleaseKeys are case-sensitive"
+      - "Coordinate validation: x and y must be non-negative integers"
+      - "Drag operation requires valid start and end coordinates"
+      - "Screenshot operations may have size limitations"
+
+    best_practices:
+      - "Verify screen coordinates before mouse operations"
+      - "Use appropriate delays between UI interactions"
+      - "Handle window focus changes properly"
+      - "Take screenshots for verification and debugging"
+      - "Use keyboard shortcuts for efficient automation"
+      - "Clean up windows and applications after automation"
 
     related_resources:
       - name: Application API Reference
@@ -353,6 +440,21 @@ modules:
       url: ../../../../../docs/guides/mobile-use/README.md
       text: Mobile Use Guide
       description: Automate mobile applications
+
+    overview: |
+      The Mobile module provides mobile device automation capabilities including touch gestures,
+      text input, app management, and screenshot capture. It supports Android device automation.
+
+    requirements:
+      - "Requires `mobile_latest` image for mobile automation features"
+
+    best_practices:
+      - "Verify element coordinates before tap operations"
+      - "Use appropriate swipe durations for smooth gestures"
+      - "Wait for UI elements to load before interaction"
+      - "Take screenshots for verification and debugging"
+      - "Handle app installation and uninstallation properly"
+      - "Configure app whitelists/blacklists for security"
 
     related_resources:
       - name: Session API Reference

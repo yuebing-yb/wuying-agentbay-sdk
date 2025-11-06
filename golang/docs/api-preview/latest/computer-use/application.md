@@ -185,8 +185,8 @@ ProcessListResult wraps process list and RequestID
 
 ## Related Resources
 
-- [Computer API Reference](../../computer-use/computer.md)
-- [Window API Reference](../../computer-use/window.md)
+- [Computer API Reference](computer.md)
+- [Window API Reference](window.md)
 
 ---
 
