@@ -296,6 +296,32 @@ function createReadme() {
   writeDocument('README.md', lines.join('\n'))
 }
 
+function enhanceDocumentation() {
+  const enhanceScript = path.join(__dirname, 'enhance-typedoc-output.ts')
+  if (!existsSync(enhanceScript)) {
+    console.warn('⚠️  Enhancement script not found, skipping metadata injection')
+    return
+  }
+
+  try {
+    const result = runWithFallback(
+      'ts-node',
+      'ts-node@10.9.2',
+      [enhanceScript],
+      {
+        cwd: projectRoot,
+        stdio: 'inherit',
+      },
+    )
+
+    if (result.status !== 0) {
+      console.warn('⚠️  Documentation enhancement failed, continuing without metadata')
+    }
+  } catch (error) {
+    console.warn('⚠️  Documentation enhancement failed:', error.message)
+  }
+}
+
 function main() {
   runTypedoc()
 
@@ -328,6 +354,8 @@ function main() {
   }
 
   process.stdout.write('✅ TypeScript API documentation generated at docs/api-preview/latest\n')
+
+  enhanceDocumentation()
 }
 
 if (require.main === module) {

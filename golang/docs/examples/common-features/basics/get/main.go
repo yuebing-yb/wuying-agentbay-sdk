@@ -64,4 +64,18 @@ func main() {
 	} else {
 		fmt.Printf("Failed to delete session %s\n", sessionId)
 	}
+
+	// Try to get the session again after deletion (should fail)
+	fmt.Println("\nAttempting to get the deleted session...")
+	getAfterDeleteResult, err := client.Get(sessionId)
+	if err != nil || !getAfterDeleteResult.Success {
+		fmt.Println("Expected behavior: Cannot retrieve deleted session")
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		} else {
+			fmt.Printf("Error message: %s\n", getAfterDeleteResult.ErrorMessage)
+		}
+	} else {
+		fmt.Println("Unexpected: Session still exists after deletion")
+	}
 }

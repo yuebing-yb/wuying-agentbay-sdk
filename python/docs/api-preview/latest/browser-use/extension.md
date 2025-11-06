@@ -1,5 +1,10 @@
 # Extension API Reference
 
+## 🧩 Related Tutorial
+
+- [Browser Extensions Guide](../../../../../docs/guides/browser-use/core-features/extension.md) - Learn how to use browser extensions
+
+
 ```python
 logger = get_logger("extension")
 ```
@@ -188,6 +193,10 @@ used with BrowserContext for browser session creation.
         extension_ids=ext_option.extension_ids
     )
     ```
+
+## Related Resources
+
+- [Browser API Reference](../../browser-use/browser.md)
 
 ---
 

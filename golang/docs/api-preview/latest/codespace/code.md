@@ -1,5 +1,9 @@
 # Code API Reference
 
+## 💻 Related Tutorial
+
+- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
+
 ## Type Code
 
 ```go
@@ -59,6 +63,10 @@ type CodeResult struct {
 ```
 
 CodeResult represents the result of a code execution
+
+## Related Resources
+
+- [Session API Reference](../../codespace/session.md)
 
 ---
 

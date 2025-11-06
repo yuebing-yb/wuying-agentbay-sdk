@@ -1,5 +1,13 @@
 # Interface: LoggerConfig
 
+## 📝 Related Tutorial
+
+- [Logging Configuration Guide](../../../../../docs/guides/common-features/configuration/logging.md) - Configure logging for the SDK
+
+## 📝 Related Tutorial
+
+- [Logging Configuration Guide](../../../../../docs/guides/common-features/configuration/logging.md) - Configure logging for the SDK
+
 Logger configuration options
 
 ## Table of contents
@@ -34,3 +42,13 @@ ___
 ### maxFileSize
 
 • `Optional` **maxFileSize**: `string`
+
+## Related Resources
+
+- [AgentBay API Reference](agentbay.md)
+
+
+## Related Resources
+
+- [AgentBay API Reference](agentbay.md)
+

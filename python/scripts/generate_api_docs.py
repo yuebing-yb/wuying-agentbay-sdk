@@ -7,9 +7,10 @@ import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Any, Iterable, Sequence
 
 import docspec
+import yaml
 from pydoc_markdown import PydocMarkdown
 from pydoc_markdown.contrib.loaders.python import PythonLoader
 from pydoc_markdown.contrib.processors.crossref import CrossrefProcessor
@@ -27,6 +28,7 @@ class DocMapping:
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DOCS_ROOT = PROJECT_ROOT / "docs" / "api-preview" / "latest"
+METADATA_PATH = PROJECT_ROOT.parent / "docs" / "doc-metadata.yaml"
 
 DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("common-features/basics/agentbay.md", "AgentBay", ("agentbay.agentbay",)),
@@ -99,8 +101,76 @@ def render_markdown(module_names: Iterable[str]) -> str:
     return markdown.strip()
 
 
-def format_markdown(raw_content: str, title: str) -> str:
+def load_metadata() -> dict[str, Any]:
+    """Load metadata from the configuration file."""
+    if not METADATA_PATH.exists():
+        return {}
+    with open(METADATA_PATH, 'r', encoding='utf-8') as f:
+        return yaml.safe_load(f) or {}
+
+
+def get_module_name_from_path(module_path: str) -> str:
+    """Extract module name from Python module path (e.g., agentbay.session -> session)."""
+    return module_path.split('.')[-1]
+
+
+def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
+    """Generate tutorial section markdown."""
+    module_config = metadata.get('modules', {}).get(module_name, {})
+    tutorial = module_config.get('tutorial')
+    if not tutorial:
+        return ""
+
+    emoji = module_config.get('emoji', '📖')
+    return f"""## {emoji} Related Tutorial
+
+- [{tutorial['text']}]({tutorial['url']}) - {tutorial['description']}
+
+"""
+
+
+def calculate_resource_path(resource: dict[str, Any], module_config: dict[str, Any]) -> str:
+    """Calculate relative path for a related resource."""
+    category = resource.get('category', module_config.get('category', 'common-features/basics'))
+    module = resource['module']
+
+    # Determine the path based on category
+    if category == 'common-features/basics':
+        return f"{module}.md"
+    elif category == 'common-features/advanced':
+        return f"../advanced/{module}.md"
+    elif category == 'browser-use':
+        return f"../../browser-use/{module}.md"
+    elif category == 'codespace':
+        return f"../../codespace/{module}.md"
+    elif category == 'computer-use':
+        return f"../../computer-use/{module}.md"
+    elif category == 'mobile-use':
+        return f"../../mobile-use/{module}.md"
+    else:
+        return f"../../{category}/{module}.md"
+
+
+def get_related_resources_section(module_name: str, metadata: dict[str, Any]) -> str:
+    """Generate related resources section markdown."""
+    module_config = metadata.get('modules', {}).get(module_name, {})
+    resources = module_config.get('related_resources', [])
+    if not resources:
+        return ""
+
+    lines = ["## Related Resources\n"]
+    for resource in resources:
+        path = calculate_resource_path(resource, module_config)
+        lines.append(f"- [{resource['name']}]({path})")
+
+    return "\n".join(lines) + "\n\n"
+
+
+def format_markdown(raw_content: str, title: str, module_name: str, metadata: dict[str, Any]) -> str:
+    """Enhanced markdown formatting with metadata injection."""
     content = raw_content.lstrip()
+
+    # 1. Add title
     if content.startswith("#"):
         lines = content.splitlines()
         lines[0] = f"# {title} API Reference"
@@ -108,6 +178,19 @@ def format_markdown(raw_content: str, title: str) -> str:
     else:
         content = f"# {title} API Reference\n\n{content}"
 
+    # 2. Add tutorial link after title
+    tutorial_section = get_tutorial_section(module_name, metadata)
+    if tutorial_section:
+        lines = content.split('\n', 2)
+        if len(lines) >= 2:
+            content = lines[0] + '\n\n' + tutorial_section + '\n'.join(lines[1:])
+
+    # 3. Add related resources before footer
+    resources_section = get_related_resources_section(module_name, metadata)
+    if resources_section:
+        content = content.rstrip() + "\n\n" + resources_section
+
+    # 4. Add footer
     content = content.rstrip() + "\n\n---\n\n*Documentation generated automatically from source code using pydoc-markdown.*\n"
     return content
 
@@ -137,10 +220,12 @@ def write_readme() -> None:
 
 
 def main() -> None:
+    metadata = load_metadata()
     ensure_clean_docs_root()
     for mapping in DOC_MAPPINGS:
         markdown = render_markdown(mapping.modules)
-        formatted = format_markdown(markdown, mapping.title)
+        module_name = get_module_name_from_path(mapping.modules[0])
+        formatted = format_markdown(markdown, mapping.title, module_name, metadata)
         output_path = DOCS_ROOT / mapping.target
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(formatted, encoding="utf-8")

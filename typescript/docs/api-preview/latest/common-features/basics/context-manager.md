@@ -1,5 +1,13 @@
 # Class: ContextManager
 
+## 🗂️ Related Tutorial
+
+- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
+
+## 🗂️ Related Tutorial
+
+- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
+
 ## Table of contents
 
 ### Constructors
@@ -65,7 +73,19 @@ ___
 #### Parameters
 
 | Name | Type | Default value |
-| :------ | :------ | :------ |
+| :------ | :------ | :---## Related Resources
+
+- [Context API Reference](context.md)
+- [Session API Reference](session.md)
+
+
+## Related Resources
+
+- [Context API Reference](context.md)
+- [Session API Reference](session.md)
+
+
+--- |
 | `contextId?` | `string` | `undefined` |
 | `path?` | `string` | `undefined` |
 | `mode?` | `string` | `undefined` |

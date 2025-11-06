@@ -1,5 +1,9 @@
 # Command API Reference
 
+## ⚡ Related Tutorial
+
+- [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
+
 Command templates for various AgentBay operations.
 
 This module contains shell command templates used by different modules
@@ -85,6 +89,11 @@ func GetMobileCommandTemplate(templateName string) (string, bool)
 ```
 
 GetMobileCommandTemplate returns a mobile command template by name
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [FileSystem API Reference](filesystem.md)
 
 ---
 

@@ -1,5 +1,9 @@
 # Mobile API Reference
 
+## 📱 Related Tutorial
+
+- [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
+
 ## Type AdbUrlResult
 
 ```go
@@ -397,6 +401,10 @@ type UIElementsResult struct {
 ```
 
 UIElementsResult represents the result containing UI elements
+
+## Related Resources
+
+- [Session API Reference](../../mobile-use/session.md)
 
 ---
 

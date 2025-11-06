@@ -1,5 +1,13 @@
 # Class: Code
 
+## 💻 Related Tutorial
+
+- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
+
+## 💻 Related Tutorial
+
+- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
+
 Handles code execution operations in the AgentBay cloud environment.
 
 ## Table of contents
@@ -45,7 +53,17 @@ Corresponds to Python's run_code() method
 #### Parameters
 
 | Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
+| :------ | :------ | :------ | :---## Related Resources
+
+- [Session API Reference](../../codespace/session.md)
+
+
+## Related Resources
+
+- [Session API Reference](../../codespace/session.md)
+
+
+--- |
 | `code` | `string` | `undefined` | The code to execute. |
 | `language` | `string` | `undefined` | The programming language of the code. Must be either 'python' or 'javascript'. |
 | `timeoutS` | `number` | `60` | The timeout for the code execution in seconds. Default is 60s. Note: Due to gateway limitations, each request cannot exceed 60 seconds. |

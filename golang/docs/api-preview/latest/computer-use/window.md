@@ -1,5 +1,9 @@
 # Window API Reference
 
+## 🪟 Related Tutorial
+
+- [Window Management Guide](../../../../../docs/guides/computer-use/window-management.md) - Manage application windows
+
 ## Type Window
 
 ```go
@@ -205,6 +209,11 @@ type WindowResult struct {
 ```
 
 WindowResult represents the result of a window action
+
+## Related Resources
+
+- [Computer API Reference](../../computer-use/computer.md)
+- [Application API Reference](../../computer-use/application.md)
 
 ---
 

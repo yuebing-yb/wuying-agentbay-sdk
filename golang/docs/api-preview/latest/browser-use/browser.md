@@ -1,5 +1,9 @@
 # Browser API Reference
 
+## 🌐 Related Tutorial
+
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
+
 ## Type Browser
 
 ```go
@@ -320,6 +324,11 @@ func min(a, b int) int
 ```
 
 Helper function to find minimum of two integers
+
+## Related Resources
+
+- [Extension API Reference](../../browser-use/extension.md)
+- [Session API Reference](../../browser-use/session.md)
 
 ---
 

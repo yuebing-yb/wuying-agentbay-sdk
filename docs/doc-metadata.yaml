@@ -1,0 +1,348 @@
+# Documentation metadata configuration file
+# This file centralizes metadata for API documentation generation
+
+modules:
+  # Session module
+  session:
+    # Module paths for each language
+    python: agentbay.session
+    typescript: session
+    golang: pkg/agentbay
+
+    # Related tutorial
+    tutorial:
+      url: ../../../../../docs/guides/common-features/basics/session-management.md
+      text: Session Management Guide
+      description: Detailed tutorial on session lifecycle and management
+
+    # Related resources (will be auto-linked)
+    related_resources:
+      - name: FileSystem API Reference
+        module: filesystem
+      - name: Command API Reference
+        module: command
+      - name: Context API Reference
+        module: context
+      - name: Context Manager API Reference
+        module: context-manager
+      - name: OSS API Reference
+        module: oss
+        category: advanced
+      - name: Application API Reference
+        module: application
+        category: computer-use
+
+    # Decoration
+    emoji: 🔧
+    category: common-features/basics
+
+  # AgentBay module
+  agentbay:
+    python: agentbay.agentbay
+    typescript: agent-bay
+    golang: pkg/agentbay
+
+    tutorial:
+      url: ../../../../../docs/quickstart/first-session.md
+      text: First Session Tutorial
+      description: Get started with creating your first AgentBay session
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+      - name: Context API Reference
+        module: context
+
+    emoji: 🚀
+    category: common-features/basics
+
+  # FileSystem module
+  filesystem:
+    python: agentbay.filesystem
+    typescript: filesystem
+    golang: pkg/agentbay/filesystem
+
+    tutorial:
+      url: ../../../../../docs/guides/common-features/basics/file-operations.md
+      text: File Operations Guide
+      description: Complete guide to file system operations
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+      - name: Command API Reference
+        module: command
+
+    emoji: 📁
+    category: common-features/basics
+
+  # Command module
+  command:
+    python: agentbay.command
+    typescript: command
+    golang: pkg/agentbay/command
+
+    tutorial:
+      url: ../../../../../docs/guides/common-features/basics/command-execution.md
+      text: Command Execution Guide
+      description: Learn how to execute commands in sessions
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+      - name: FileSystem API Reference
+        module: filesystem
+
+    emoji: ⚡
+    category: common-features/basics
+
+  # Context module
+  context:
+    python: agentbay.context
+    typescript: context
+    golang: pkg/agentbay
+
+    tutorial:
+      url: ../../../../../docs/guides/common-features/basics/data-persistence.md
+      text: Data Persistence Guide
+      description: Learn about context management and data persistence
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+      - name: Context Manager API Reference
+        module: context-manager
+
+    emoji: 💾
+    category: common-features/basics
+
+  # Context Manager module
+  context-manager:
+    python: agentbay.context_manager
+    typescript: context-manager
+    golang: pkg/agentbay
+
+    tutorial:
+      url: ../../../../../docs/guides/common-features/basics/data-persistence.md
+      text: Data Persistence Guide
+      description: Learn about context management and data persistence
+
+    related_resources:
+      - name: Context API Reference
+        module: context
+      - name: Session API Reference
+        module: session
+
+    emoji: 🗂️
+    category: common-features/basics
+
+  # Logging module
+  logging:
+    python: agentbay.logger
+    typescript: logger
+    golang: pkg/agentbay
+
+    tutorial:
+      url: ../../../../../docs/guides/common-features/configuration/logging.md
+      text: Logging Configuration Guide
+      description: Configure logging for the SDK
+
+    related_resources:
+      - name: AgentBay API Reference
+        module: agentbay
+
+    emoji: 📝
+    category: common-features/basics
+
+  # Agent module
+  agent:
+    python: agentbay.agent
+    typescript: agent
+    golang: pkg/agentbay/agent
+
+    tutorial:
+      url: ../../../../../docs/guides/common-features/advanced/agent-modules.md
+      text: Agent Modules Guide
+      description: Learn about agent modules and custom agents
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+
+    emoji: 🤖
+    category: common-features/advanced
+
+  # OSS module
+  oss:
+    python: agentbay.oss
+    typescript: oss
+    golang: pkg/agentbay/oss
+
+    tutorial:
+      url: ../../../../../docs/guides/common-features/advanced/oss-integration.md
+      text: OSS Integration Guide
+      description: Integrate with Alibaba Cloud OSS for file storage
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+      - name: FileSystem API Reference
+        module: filesystem
+
+    emoji: ☁️
+    category: common-features/advanced
+
+  # Browser module
+  browser:
+    python: agentbay.browser
+    typescript: browser
+    golang: pkg/agentbay/browser
+
+    tutorial:
+      url: ../../../../../docs/guides/browser-use/README.md
+      text: Browser Use Guide
+      description: Complete guide to browser automation
+
+    related_resources:
+      - name: Extension API Reference
+        module: extension
+      - name: Session API Reference
+        module: session
+
+    emoji: 🌐
+    category: browser-use
+
+  # Extension module
+  extension:
+    python: agentbay.extension
+    typescript: extension
+    golang: pkg/agentbay
+
+    tutorial:
+      url: ../../../../../docs/guides/browser-use/core-features/extension.md
+      text: Browser Extensions Guide
+      description: Learn how to use browser extensions
+
+    related_resources:
+      - name: Browser API Reference
+        module: browser
+
+    emoji: 🧩
+    category: browser-use
+
+  # Code module
+  code:
+    python: agentbay.code
+    typescript: code
+    golang: pkg/agentbay/code
+
+    tutorial:
+      url: ../../../../../docs/guides/codespace/code-execution.md
+      text: Code Execution Guide
+      description: Execute code in isolated environments
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+
+    emoji: 💻
+    category: codespace
+
+  # Computer module
+  computer:
+    python: agentbay.computer
+    typescript: computer
+    golang: pkg/agentbay/computer
+
+    tutorial:
+      url: ../../../../../docs/guides/computer-use/README.md
+      text: Computer Use Guide
+      description: Automate desktop applications
+
+    related_resources:
+      - name: Application API Reference
+        module: application
+      - name: UI API Reference
+        module: ui
+      - name: Window API Reference
+        module: window
+
+    emoji: 🖥️
+    category: computer-use
+
+  # Application module
+  application:
+    python: agentbay.application
+    typescript: application
+    golang: pkg/agentbay/application
+
+    tutorial:
+      url: ../../../../../docs/guides/computer-use/computer-application-management.md
+      text: Application Management Guide
+      description: Manage desktop applications
+
+    related_resources:
+      - name: Computer API Reference
+        module: computer
+      - name: Window API Reference
+        module: window
+
+    emoji: 📱
+    category: computer-use
+
+  # UI module
+  ui:
+    python: agentbay.ui
+    typescript: ui
+    golang: pkg/agentbay/ui
+
+    tutorial:
+      url: ../../../../../docs/guides/computer-use/computer-ui-automation.md
+      text: UI Automation Guide
+      description: Automate UI interactions
+
+    related_resources:
+      - name: Computer API Reference
+        module: computer
+
+    emoji: 🎨
+    category: computer-use
+
+  # Window module
+  window:
+    python: agentbay.window
+    typescript: window
+    golang: pkg/agentbay/window
+
+    tutorial:
+      url: ../../../../../docs/guides/computer-use/window-management.md
+      text: Window Management Guide
+      description: Manage application windows
+
+    related_resources:
+      - name: Computer API Reference
+        module: computer
+      - name: Application API Reference
+        module: application
+
+    emoji: 🪟
+    category: computer-use
+
+  # Mobile module
+  mobile:
+    python: agentbay.mobile
+    typescript: mobile
+    golang: pkg/agentbay/mobile
+
+    tutorial:
+      url: ../../../../../docs/guides/mobile-use/README.md
+      text: Mobile Use Guide
+      description: Automate mobile applications
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+
+    emoji: 📱
+    category: mobile-use
+

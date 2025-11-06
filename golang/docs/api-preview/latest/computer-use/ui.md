@@ -1,5 +1,9 @@
 # UI API Reference
 
+## 🎨 Related Tutorial
+
+- [UI Automation Guide](../../../../../docs/guides/computer-use/computer-ui-automation.md) - Automate UI interactions
+
 ## Type KeyActionResult
 
 ```go
@@ -230,6 +234,10 @@ type UIResult struct {
 ```
 
 UIResult represents the result of a UI action
+
+## Related Resources
+
+- [Computer API Reference](../../computer-use/computer.md)
 
 ---
 

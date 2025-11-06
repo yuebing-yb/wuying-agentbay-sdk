@@ -1,5 +1,13 @@
 # Class: WindowManager
 
+## 🪟 Related Tutorial
+
+- [Window Management Guide](../../../../../docs/guides/computer-use/window-management.md) - Manage application windows
+
+## 🪟 Related Tutorial
+
+- [Window Management Guide](../../../../../docs/guides/computer-use/window-management.md) - Manage application windows
+
 Handles window management operations in the AgentBay cloud environment.
 
 **`Deprecated`**
@@ -359,7 +367,19 @@ Corresponds to Python's restore_window() method
 #### Parameters
 
 | Name | Type | Description |
-| :------ | :------ | :------ |
+| :------ | :------ | :---## Related Resources
+
+- [Computer API Reference](../../computer-use/computer.md)
+- [Application API Reference](../../computer-use/application.md)
+
+
+## Related Resources
+
+- [Computer API Reference](../../computer-use/computer.md)
+- [Application API Reference](../../computer-use/application.md)
+
+
+--- |
 | `windowId` | `number` | The ID of the window to restore. |
 
 #### Returns

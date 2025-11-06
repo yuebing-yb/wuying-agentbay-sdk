@@ -963,15 +963,34 @@ export class AgentBay {
       }
 
       return result;
-    } catch (error) {
-      logError("Error calling GetSession:", error);
-      return {
-        requestId: "",
-        httpStatusCode: 0,
-        code: "",
-        success: false,
-        errorMessage: `Failed to get session ${sessionId}: ${error}`,
-      };
+    } catch (error: any) {
+      // Check if this is an expected business error (e.g., session not found)
+      const errorStr = String(error);
+      const errorCode = error?.data?.Code || error?.code || "";
+
+      if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
+        // This is an expected error - session doesn't exist
+        // Use info level logging without stack trace
+        logInfo(`Session not found: ${sessionId}`);
+        logDebug(`GetSession error details: ${errorStr}`);
+        return {
+          requestId: "",
+          httpStatusCode: 400,
+          code: "InvalidMcpSession.NotFound",
+          success: false,
+          errorMessage: `Session ${sessionId} not found`,
+        };
+      } else {
+        // This is an unexpected error - log with full error
+        logError("Error calling GetSession:", error);
+        return {
+          requestId: "",
+          httpStatusCode: 0,
+          code: "",
+          success: false,
+          errorMessage: `Failed to get session ${sessionId}: ${error}`,
+        };
+      }
     }
   }
 

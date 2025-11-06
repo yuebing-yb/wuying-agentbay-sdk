@@ -1,5 +1,13 @@
 # Class: UI
 
+## 🎨 Related Tutorial
+
+- [UI Automation Guide](../../../../../docs/guides/computer-use/computer-ui-automation.md) - Automate UI interactions
+
+## 🎨 Related Tutorial
+
+- [UI Automation Guide](../../../../../docs/guides/computer-use/computer-ui-automation.md) - Automate UI interactions
+
 Handles UI operations in the AgentBay cloud environment.
 
 **`Deprecated`**
@@ -228,7 +236,17 @@ Corresponds to Python's swipe() method
 #### Parameters
 
 | Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
+| :------ | :------ | :------ | :---## Related Resources
+
+- [Computer API Reference](../../computer-use/computer.md)
+
+
+## Related Resources
+
+- [Computer API Reference](../../computer-use/computer.md)
+
+
+--- |
 | `startX` | `number` | `undefined` | The starting X coordinate |
 | `startY` | `number` | `undefined` | The starting Y coordinate |
 | `endX` | `number` | `undefined` | The ending X coordinate |

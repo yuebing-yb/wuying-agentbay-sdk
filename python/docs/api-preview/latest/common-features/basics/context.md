@@ -1,5 +1,10 @@
 # Context API Reference
 
+## 💾 Related Tutorial
+
+- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
+
+
 ```python
 logger = get_logger("context")
 ```
@@ -244,16 +249,18 @@ is in progress.
 
 **Arguments**:
 
-- `context_id`: Unique ID of the context to clear.
-
-**Raises**:
-
-- `AgentBayError`: If the backend API rejects the clearing request (e.g., invalid ID).
+- `context_id` - Unique ID of the context to clear.
+  
 
 **Returns**:
 
-A ClearContextResult object indicating the task has been successfully started,
-with status field set to "clearing".
+  A ClearContextResult object indicating the task has been successfully started,
+  with status field set to "clearing".
+  
+
+**Raises**:
+
+- `AgentBayError` - If the backend API rejects the clearing request (e.g., invalid ID).
 
 #### get\_clear\_status
 
@@ -268,11 +275,12 @@ the state field, which indicates the current clearing status.
 
 **Arguments**:
 
-- `context_id`: ID of the context.
+- `context_id` - ID of the context.
+  
 
 **Returns**:
 
-ClearContextResult object containing the current task status.
+  ClearContextResult object containing the current task status.
 
 #### clear
 
@@ -293,19 +301,26 @@ The clearing process transitions through the following states:
 
 **Arguments**:
 
-- `context_id`: Unique ID of the context to clear.
-- `timeout`: (Optional) Timeout in seconds to wait for task completion, default is 60 seconds.
-- `poll_interval`: (Optional) Interval in seconds between status polls, default is 2 seconds.
-
-**Raises**:
-
-- `ClearanceTimeoutError`: If the task fails to complete within the specified timeout.
-- `AgentBayError`: If an API or network error occurs during execution.
+- `context_id` - Unique ID of the context to clear.
+- `timeout` - Timeout in seconds to wait for task completion. Defaults to 60.
+- `poll_interval` - Interval in seconds between status polls. Defaults to 2.0.
+  
 
 **Returns**:
 
-A ClearContextResult object containing the final task result.
-The status field will be "available" on success, or other states if interrupted.
+  ClearContextResult object containing the final task result.
+  The status field will be "available" on success.
+  
+
+**Raises**:
+
+- `ClearanceTimeoutError` - If the task fails to complete within the timeout.
+- `AgentBayError` - If an API or network error occurs during execution.
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Context Manager API Reference](context-manager.md)
 
 ---
 

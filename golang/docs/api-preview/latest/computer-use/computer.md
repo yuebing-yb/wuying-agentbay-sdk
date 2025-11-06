@@ -1,5 +1,9 @@
 # Computer API Reference
 
+## 🖥️ Related Tutorial
+
+- [Computer Use Guide](../../../../../docs/guides/computer-use/README.md) - Automate desktop applications
+
 ## Type BoolResult
 
 ```go
@@ -268,6 +272,12 @@ type ScrollDirection string
 ```
 
 ScrollDirection represents scroll directions
+
+## Related Resources
+
+- [Application API Reference](../../computer-use/application.md)
+- [UI API Reference](../../computer-use/ui.md)
+- [Window API Reference](../../computer-use/window.md)
 
 ---
 

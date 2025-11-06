@@ -1,5 +1,9 @@
 # Agent API Reference
 
+## 🤖 Related Tutorial
+
+- [Agent Modules Guide](../../../../../docs/guides/common-features/advanced/agent-modules.md) - Learn about agent modules and custom agents
+
 ## Type Agent
 
 ```go
@@ -84,6 +88,10 @@ type QueryResult struct {
 ```
 
 QueryResult represents the result of query operations
+
+## Related Resources
+
+- [Session API Reference](../advanced/session.md)
 
 ---
 

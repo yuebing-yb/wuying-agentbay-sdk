@@ -1,5 +1,9 @@
 # Logging API Reference
 
+## 🚀 Related Tutorial
+
+- [First Session Tutorial](../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
+
 ## Type LoggerConfig
 
 ```go
@@ -104,6 +108,22 @@ func LogCodeExecutionOutput(requestID, rawOutput string)
 ```
 
 LogCodeExecutionOutput extracts and logs the actual code execution output from run_code response
+
+### LogDebug
+
+```go
+func LogDebug(message string)
+```
+
+LogDebug logs a debug message
+
+### LogInfo
+
+```go
+func LogInfo(message string)
+```
+
+LogInfo logs an informational message
 
 ### LogOperationError
 
@@ -283,6 +303,11 @@ const (
 ```
 
 Log level constants
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Context API Reference](context.md)
 
 ---
 

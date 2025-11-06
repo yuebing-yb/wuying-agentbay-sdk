@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type docMapping struct {
@@ -29,6 +31,29 @@ type docMapping struct {
 type packageDoc struct {
 	doc  *doc.Package
 	fset *token.FileSet
+}
+
+type Metadata struct {
+	Modules map[string]ModuleConfig `yaml:"modules"`
+}
+
+type ModuleConfig struct {
+	Tutorial         *TutorialConfig  `yaml:"tutorial"`
+	RelatedResources []ResourceConfig `yaml:"related_resources"`
+	Emoji            string           `yaml:"emoji"`
+	Category         string           `yaml:"category"`
+}
+
+type TutorialConfig struct {
+	URL         string `yaml:"url"`
+	Text        string `yaml:"text"`
+	Description string `yaml:"description"`
+}
+
+type ResourceConfig struct {
+	Name     string `yaml:"name"`
+	Module   string `yaml:"module"`
+	Category string `yaml:"category"`
 }
 
 var mappings = []docMapping{
@@ -190,11 +215,103 @@ var mappings = []docMapping{
 
 var packageCache = map[string]*packageDoc{}
 
+func loadMetadata(projectRoot string) (*Metadata, error) {
+	metadataPath := filepath.Join(filepath.Dir(projectRoot), "docs", "doc-metadata.yaml")
+	data, err := os.ReadFile(metadataPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &Metadata{Modules: make(map[string]ModuleConfig)}, nil
+		}
+		return nil, err
+	}
+
+	var metadata Metadata
+	if err := yaml.Unmarshal(data, &metadata); err != nil {
+		return nil, err
+	}
+
+	return &metadata, nil
+}
+
+func extractModuleName(packagePath string) string {
+	parts := strings.Split(packagePath, "/")
+	return parts[len(parts)-1]
+}
+
+func getTutorialSection(moduleName string, metadata *Metadata) string {
+	config, ok := metadata.Modules[moduleName]
+	if !ok || config.Tutorial == nil {
+		return ""
+	}
+
+	emoji := config.Emoji
+	if emoji == "" {
+		emoji = "📖"
+	}
+
+	return fmt.Sprintf("## %s Related Tutorial\n\n- [%s](%s) - %s\n\n",
+		emoji,
+		config.Tutorial.Text,
+		config.Tutorial.URL,
+		config.Tutorial.Description)
+}
+
+func calculateResourcePath(resource ResourceConfig, moduleConfig ModuleConfig) string {
+	category := resource.Category
+	if category == "" {
+		category = moduleConfig.Category
+	}
+	if category == "" {
+		category = "common-features/basics"
+	}
+
+	module := resource.Module
+
+	switch category {
+	case "common-features/basics":
+		return fmt.Sprintf("%s.md", module)
+	case "common-features/advanced":
+		return fmt.Sprintf("../advanced/%s.md", module)
+	case "browser-use":
+		return fmt.Sprintf("../../browser-use/%s.md", module)
+	case "codespace":
+		return fmt.Sprintf("../../codespace/%s.md", module)
+	case "computer-use":
+		return fmt.Sprintf("../../computer-use/%s.md", module)
+	case "mobile-use":
+		return fmt.Sprintf("../../mobile-use/%s.md", module)
+	default:
+		return fmt.Sprintf("../../%s/%s.md", category, module)
+	}
+}
+
+func getRelatedResourcesSection(moduleName string, metadata *Metadata) string {
+	config, ok := metadata.Modules[moduleName]
+	if !ok || len(config.RelatedResources) == 0 {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("## Related Resources\n\n")
+	for _, resource := range config.RelatedResources {
+		path := calculateResourcePath(resource, config)
+		fmt.Fprintf(&buf, "- [%s](%s)\n", resource.Name, path)
+	}
+	buf.WriteString("\n")
+
+	return buf.String()
+}
+
 func main() {
 	_, currentFile, _, _ := runtime.Caller(0)
 	scriptDir := filepath.Dir(currentFile)
 	projectRoot := filepath.Dir(scriptDir)
 	docsRoot := filepath.Join(projectRoot, "docs", "api-preview", "latest")
+
+	metadata, err := loadMetadata(projectRoot)
+	if err != nil {
+		panic(err)
+	}
 
 	if err := os.RemoveAll(docsRoot); err != nil {
 		panic(err)
@@ -204,7 +321,7 @@ func main() {
 	}
 
 	for _, mapping := range mappings {
-		if err := generateDoc(projectRoot, docsRoot, mapping); err != nil {
+		if err := generateDoc(projectRoot, docsRoot, mapping, metadata); err != nil {
 			panic(err)
 		}
 	}
@@ -214,7 +331,7 @@ func main() {
 	}
 }
 
-func generateDoc(projectRoot, docsRoot string, mapping docMapping) error {
+func generateDoc(projectRoot, docsRoot string, mapping docMapping, metadata *Metadata) error {
 	pkgDoc, err := loadPackageDoc(projectRoot, mapping.PackagePath)
 	if err != nil {
 		return err
@@ -222,6 +339,13 @@ func generateDoc(projectRoot, docsRoot string, mapping docMapping) error {
 
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "# %s API Reference\n\n", mapping.Title)
+
+	// Add tutorial section
+	moduleName := extractModuleName(mapping.PackagePath)
+	tutorialSection := getTutorialSection(moduleName, metadata)
+	if tutorialSection != "" {
+		buf.WriteString(tutorialSection)
+	}
 
 	if pkgComment := strings.TrimSpace(pkgDoc.doc.Doc); pkgComment != "" {
 		buf.WriteString(pkgComment)
@@ -256,6 +380,12 @@ func generateDoc(projectRoot, docsRoot string, mapping docMapping) error {
 		for _, val := range values {
 			writeValue(&buf, pkgDoc, val)
 		}
+	}
+
+	// Add related resources section
+	resourcesSection := getRelatedResourcesSection(moduleName, metadata)
+	if resourcesSection != "" {
+		buf.WriteString(resourcesSection)
 	}
 
 	buf.WriteString("---\n\n*Documentation generated automatically from Go source code.*\n")

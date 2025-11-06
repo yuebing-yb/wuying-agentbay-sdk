@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -760,8 +761,27 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 
 	// Log API response
 	if err != nil {
-		LogOperationError("GetSession", err.Error(), true)
-		return nil, err
+		// Check if this is an expected business error (e.g., session not found)
+		errorStr := err.Error()
+		if strings.Contains(errorStr, "InvalidMcpSession.NotFound") || strings.Contains(errorStr, "NotFound") {
+			// This is an expected error - session doesn't exist
+			// Use info level logging without stack trace
+			LogInfo(fmt.Sprintf("Session not found: %s", sessionID))
+			LogDebug(fmt.Sprintf("GetSession error details: %s", errorStr))
+			return &GetSessionResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				HttpStatusCode: 400,
+				Code:           "InvalidMcpSession.NotFound",
+				Success:        false,
+				ErrorMessage:   fmt.Sprintf("Session %s not found", sessionID),
+			}, nil
+		} else {
+			// This is an unexpected error - log with stack trace
+			LogOperationError("GetSession", err.Error(), true)
+			return nil, err
+		}
 	}
 
 	// Extract RequestID

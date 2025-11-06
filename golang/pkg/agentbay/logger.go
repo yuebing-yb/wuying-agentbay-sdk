@@ -517,3 +517,35 @@ func maskSensitiveDataWithRegex(str string) string {
 
 	return result
 }
+
+// LogInfo logs an informational message
+func LogInfo(message string) {
+	if GlobalLogLevel > LOG_INFO {
+		return
+	}
+
+	reset, _, _, _, blue := getColorCodes()
+	coloredMsg := fmt.Sprintf("%sℹ️  %s%s", blue, message, reset)
+	plainMsg := fmt.Sprintf("ℹ️  %s", message)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredMsg)
+	}
+	writeToFile(plainMsg)
+}
+
+// LogDebug logs a debug message
+func LogDebug(message string) {
+	if GlobalLogLevel > LOG_DEBUG {
+		return
+	}
+
+	reset, _, _, _, _ := getColorCodes()
+	coloredMsg := fmt.Sprintf("%s🐛 %s%s", reset, message, reset)
+	plainMsg := fmt.Sprintf("🐛 %s", message)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredMsg)
+	}
+	writeToFile(plainMsg)
+}

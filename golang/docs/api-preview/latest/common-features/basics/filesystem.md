@@ -1,5 +1,9 @@
 # File System API Reference
 
+## 📁 Related Tutorial
+
+- [File Operations Guide](../../../../../docs/guides/common-features/basics/file-operations.md) - Complete guide to file system operations
+
 ## Type DirectoryEntry
 
 ```go
@@ -380,6 +384,11 @@ type SearchFilesResult struct {
 ```
 
 SearchFilesResult wraps file search result and RequestID
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Command API Reference](command.md)
 
 ---
 

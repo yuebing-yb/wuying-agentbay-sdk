@@ -1,5 +1,13 @@
 # Class: Mobile
 
+## 📱 Related Tutorial
+
+- [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
+
+## 📱 Related Tutorial
+
+- [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
+
 ## Table of contents
 
 ### Constructors
@@ -362,7 +370,17 @@ Tap at specified coordinates.
 #### Parameters
 
 | Name | Type |
-| :------ | :------ |
+| :------ | :---## Related Resources
+
+- [Session API Reference](../../mobile-use/session.md)
+
+
+## Related Resources
+
+- [Session API Reference](../../mobile-use/session.md)
+
+
+--- |
 | `x` | `number` |
 | `y` | `number` |
 

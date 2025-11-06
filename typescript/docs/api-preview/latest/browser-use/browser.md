@@ -1,5 +1,13 @@
 # Class: Browser
 
+## 🌐 Related Tutorial
+
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
+
+## 🌐 Related Tutorial
+
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
+
 ## Table of contents
 
 ### Constructors
@@ -146,7 +154,19 @@ page.screenshot() method or similar browser automation API.
 #### Parameters
 
 | Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
+| :------ | :------ | :------ | :---## Related Resources
+
+- [Extension API Reference](../../browser-use/extension.md)
+- [Session API Reference](../../browser-use/session.md)
+
+
+## Related Resources
+
+- [Extension API Reference](../../browser-use/extension.md)
+- [Session API Reference](../../browser-use/session.md)
+
+
+--- |
 | `page` | `any` | `undefined` | The Playwright Page object to take a screenshot of. This is a required parameter. |
 | `fullPage` | `boolean` | `false` | Whether to capture the full scrollable page. Defaults to false. |
 | `options` | `Record`\<`string`, `any`\> | `{}` | Additional screenshot options that will override defaults. Common options include: - type: Image type, either 'png' or 'jpeg' (default: 'png') - quality: Quality of the image, between 0-100 (jpeg only) - timeout: Maximum time in milliseconds (default: 60000) - animations: How to handle animations (default: 'disabled') - caret: How to handle the caret (default: 'hide') - scale: Scale setting (default: 'css') |

@@ -1,5 +1,9 @@
 # Application API Reference
 
+## 📱 Related Tutorial
+
+- [Application Management Guide](../../../../../docs/guides/computer-use/computer-application-management.md) - Manage desktop applications
+
 ## Type AppOperationResult
 
 ```go
@@ -178,6 +182,11 @@ type ProcessListResult struct {
 ```
 
 ProcessListResult wraps process list and RequestID
+
+## Related Resources
+
+- [Computer API Reference](../../computer-use/computer.md)
+- [Window API Reference](../../computer-use/window.md)
 
 ---
 

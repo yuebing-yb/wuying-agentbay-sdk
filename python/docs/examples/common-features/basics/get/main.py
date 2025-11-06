@@ -6,6 +6,7 @@ This example shows:
 2. Retrieving the session using the Get API
 3. Using the session for operations
 4. Cleaning up resources
+5. Attempting to get a deleted session (error handling demonstration)
 """
 
 import os
@@ -56,6 +57,16 @@ def main():
         print(f"Session {session_id} deleted successfully")
     else:
         print(f"Failed to delete session {session_id}")
+
+    # Try to get the session again after deletion (should fail)
+    print("\nAttempting to get the deleted session...")
+    get_after_delete_result = agentbay.get(session_id)
+
+    if not get_after_delete_result.success:
+        print("Expected behavior: Cannot retrieve deleted session")
+        print(f"Error message: {get_after_delete_result.error_message}")
+    else:
+        print("Unexpected: Session still exists after deletion")
 
 
 if __name__ == "__main__":
