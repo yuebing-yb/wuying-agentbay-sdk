@@ -39,6 +39,7 @@ from .logger import (
     log_operation_error,
     log_warning,
     mask_sensitive_data,
+    log_info_with_color,
 )
 
 # Initialize logger for this module
@@ -1143,8 +1144,8 @@ class AgentBay:
             error_str = str(e)
             if "InvalidMcpSession.NotFound" in error_str or "NotFound" in error_str:
                 # This is an expected error - session doesn't exist
-                # Use info level logging without stack trace
-                logger.info(f"Session not found: {session_id}")
+                # Use info level logging without stack trace, but with red color for visibility
+                log_info_with_color(f"Session not found: {session_id}")
                 logger.debug(f"GetSession error details: {error_str}")
                 return GetSessionResult(
                     request_id="",

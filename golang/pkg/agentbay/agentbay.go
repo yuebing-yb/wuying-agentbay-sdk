@@ -765,8 +765,8 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 		errorStr := err.Error()
 		if strings.Contains(errorStr, "InvalidMcpSession.NotFound") || strings.Contains(errorStr, "NotFound") {
 			// This is an expected error - session doesn't exist
-			// Use info level logging without stack trace
-			LogInfo(fmt.Sprintf("Session not found: %s", sessionID))
+			// Use info level logging without stack trace, but with red color for visibility
+			LogInfoWithColor(fmt.Sprintf("Session not found: %s", sessionID))
 			LogDebug(fmt.Sprintf("GetSession error details: %s", errorStr))
 			return &GetSessionResult{
 				ApiResponse: models.ApiResponse{

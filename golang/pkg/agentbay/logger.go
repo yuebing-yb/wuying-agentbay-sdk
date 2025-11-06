@@ -549,3 +549,19 @@ func LogDebug(message string) {
 	}
 	writeToFile(plainMsg)
 }
+
+// LogInfoWithColor logs an informational message with custom color
+func LogInfoWithColor(message string) {
+	if GlobalLogLevel > LOG_INFO {
+		return
+	}
+
+	reset, _, red, _, _ := getColorCodes()
+	coloredMsg := fmt.Sprintf("%sℹ️  %s%s", red, message, reset)
+	plainMsg := fmt.Sprintf("ℹ️  %s", message)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredMsg)
+	}
+	writeToFile(plainMsg)
+}

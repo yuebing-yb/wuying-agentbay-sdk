@@ -33,6 +33,7 @@ import {
   maskSensitiveData,
   setRequestId,
   getRequestId,
+  logInfoWithColor,
 } from "./utils/logger";
 import { VERSION, IS_RELEASE } from "./version";
 
@@ -970,8 +971,8 @@ export class AgentBay {
 
       if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
         // This is an expected error - session doesn't exist
-        // Use info level logging without stack trace
-        logInfo(`Session not found: ${sessionId}`);
+        // Use info level logging without stack trace, but with red color for visibility
+        logInfoWithColor(`Session not found: ${sessionId}`);
         logDebug(`GetSession error details: ${errorStr}`);
         return {
           requestId: "",

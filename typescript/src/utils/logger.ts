@@ -735,3 +735,28 @@ export function logOperationError(
     logError(message, String(error));
   }
 }
+
+/**
+ * Log an info level message with custom color
+ * @param message The message to log
+ * @param color ANSI color code (defaults to red)
+ */
+export function logInfoWithColor(message: string, color: string = ANSI_RED): void {
+  if (!shouldLog('INFO')) return;
+
+  const emoji = 'ℹ️  INFO';
+  const fullMessage = `${emoji}: ${message}`;
+
+  if (useColors) {
+    if (consoleLoggingEnabled) {
+      process.stdout.write(`${color}${fullMessage}${ANSI_RESET}\n`);
+    }
+  } else {
+    if (consoleLoggingEnabled) {
+      process.stdout.write(fullMessage + "\n");
+    }
+  }
+
+  // Write to file without colors
+  writeToFile(fullMessage);
+}

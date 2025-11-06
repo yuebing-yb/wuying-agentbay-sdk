@@ -439,3 +439,15 @@ def log_warning(message: str, details: str = "") -> None:
     log.opt(depth=1).warning(f"⚠️  {message}")
     if details:
         log.opt(depth=1).warning(f"📝 Details: {details}")
+
+
+def log_info_with_color(message: str, color: str = "\033[31m") -> None:
+    """
+    Log an INFO level message with custom color.
+
+    Args:
+        message: Message to log
+        color: ANSI color code (default is red: \033[31m)
+    """
+    colored_message = f"{color}{message}{COLOR_RESET}"
+    log.opt(depth=1).info(colored_message)
