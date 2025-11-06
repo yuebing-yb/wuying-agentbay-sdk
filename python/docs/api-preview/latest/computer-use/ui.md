@@ -2,7 +2,7 @@
 
 ## 🎨 Related Tutorial
 
-- [UI Automation Guide](../../../../../../docs/guides/computer-use/computer-ui-automation.md) - Automate UI interactions
+- [UI Automation Guide](../../../../../docs/guides/computer-use/computer-ui-automation.md) - Automate UI interactions
 
 
 UI module for AgentBay.

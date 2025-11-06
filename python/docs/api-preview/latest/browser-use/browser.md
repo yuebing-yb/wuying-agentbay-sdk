@@ -2,7 +2,7 @@
 
 ## 🌐 Related Tutorial
 
-- [Browser Use Guide](../../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
 
 
 Browser automation operations for the AgentBay SDK.

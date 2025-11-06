@@ -2,7 +2,7 @@
 
 ## 💻 Related Tutorial
 
-- [Code Execution Guide](../../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
+- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
 
 ## Related Resources
 

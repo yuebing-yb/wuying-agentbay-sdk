@@ -11,7 +11,7 @@ modules:
 
     # Related tutorial
     tutorial:
-      url: ../../../../../../docs/guides/common-features/basics/session-management.md
+      url: ../../../../../docs/guides/common-features/basics/session-management.md
       text: Session Management Guide
       description: Detailed tutorial on session lifecycle and management
 
@@ -43,7 +43,7 @@ modules:
     golang: pkg/agentbay
 
     tutorial:
-      url: ../../../../../../docs/quickstart/first-session.md
+      url: ../../../../../docs/quickstart/first-session.md
       text: First Session Tutorial
       description: Get started with creating your first AgentBay session
 
@@ -63,7 +63,7 @@ modules:
     golang: pkg/agentbay/filesystem
 
     tutorial:
-      url: ../../../../../../docs/guides/common-features/basics/file-operations.md
+      url: ../../../../../docs/guides/common-features/basics/file-operations.md
       text: File Operations Guide
       description: Complete guide to file system operations
 
@@ -83,7 +83,7 @@ modules:
     golang: pkg/agentbay/command
 
     tutorial:
-      url: ../../../../../../docs/guides/common-features/basics/command-execution.md
+      url: ../../../../../docs/guides/common-features/basics/command-execution.md
       text: Command Execution Guide
       description: Learn how to execute commands in sessions
 
@@ -103,7 +103,7 @@ modules:
     golang: pkg/agentbay
 
     tutorial:
-      url: ../../../../../../docs/guides/common-features/basics/data-persistence.md
+      url: ../../../../../docs/guides/common-features/basics/data-persistence.md
       text: Data Persistence Guide
       description: Learn about context management and data persistence
 
@@ -123,7 +123,7 @@ modules:
     golang: pkg/agentbay
 
     tutorial:
-      url: ../../../../../../docs/guides/common-features/basics/data-persistence.md
+      url: ../../../../../docs/guides/common-features/basics/data-persistence.md
       text: Data Persistence Guide
       description: Learn about context management and data persistence
 
@@ -143,7 +143,7 @@ modules:
     golang: pkg/agentbay
 
     tutorial:
-      url: ../../../../../../docs/guides/common-features/configuration/logging.md
+      url: ../../../../../docs/guides/common-features/configuration/logging.md
       text: Logging Configuration Guide
       description: Configure logging for the SDK
 
@@ -161,7 +161,7 @@ modules:
     golang: pkg/agentbay/agent
 
     tutorial:
-      url: ../../../../../../docs/guides/common-features/advanced/agent-modules.md
+      url: ../../../../../docs/guides/common-features/advanced/agent-modules.md
       text: Agent Modules Guide
       description: Learn about agent modules and custom agents
 
@@ -180,7 +180,7 @@ modules:
     golang: pkg/agentbay/oss
 
     tutorial:
-      url: ../../../../../../docs/guides/common-features/advanced/oss-integration.md
+      url: ../../../../../docs/guides/common-features/advanced/oss-integration.md
       text: OSS Integration Guide
       description: Integrate with Alibaba Cloud OSS for file storage
 
@@ -202,7 +202,7 @@ modules:
     golang: pkg/agentbay/browser
 
     tutorial:
-      url: ../../../../../../docs/guides/browser-use/README.md
+      url: ../../../../../docs/guides/browser-use/README.md
       text: Browser Use Guide
       description: Complete guide to browser automation
 
@@ -224,7 +224,7 @@ modules:
     golang: pkg/agentbay
 
     tutorial:
-      url: ../../../../../../docs/guides/browser-use/core-features/extension.md
+      url: ../../../../../docs/guides/browser-use/core-features/extension.md
       text: Browser Extensions Guide
       description: Learn how to use browser extensions
 
@@ -243,7 +243,7 @@ modules:
     golang: pkg/agentbay/code
 
     tutorial:
-      url: ../../../../../../docs/guides/codespace/code-execution.md
+      url: ../../../../../docs/guides/codespace/code-execution.md
       text: Code Execution Guide
       description: Execute code in isolated environments
 
@@ -262,7 +262,7 @@ modules:
     golang: pkg/agentbay/computer
 
     tutorial:
-      url: ../../../../../../docs/guides/computer-use/README.md
+      url: ../../../../../docs/guides/computer-use/README.md
       text: Computer Use Guide
       description: Automate desktop applications
 
@@ -287,7 +287,7 @@ modules:
     golang: pkg/agentbay/application
 
     tutorial:
-      url: ../../../../../../docs/guides/computer-use/computer-application-management.md
+      url: ../../../../../docs/guides/computer-use/computer-application-management.md
       text: Application Management Guide
       description: Manage desktop applications
 
@@ -309,7 +309,7 @@ modules:
     golang: pkg/agentbay/ui
 
     tutorial:
-      url: ../../../../../../docs/guides/computer-use/computer-ui-automation.md
+      url: ../../../../../docs/guides/computer-use/computer-ui-automation.md
       text: UI Automation Guide
       description: Automate UI interactions
 
@@ -328,7 +328,7 @@ modules:
     golang: pkg/agentbay/window
 
     tutorial:
-      url: ../../../../../../docs/guides/computer-use/window-management.md
+      url: ../../../../../docs/guides/computer-use/window-management.md
       text: Window Management Guide
       description: Manage application windows
 
@@ -350,7 +350,7 @@ modules:
     golang: pkg/agentbay/mobile
 
     tutorial:
-      url: ../../../../../../docs/guides/mobile-use/README.md
+      url: ../../../../../docs/guides/mobile-use/README.md
       text: Mobile Use Guide
       description: Automate mobile applications
 

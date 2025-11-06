@@ -54,9 +54,27 @@ function getTutorialSection(moduleName: string, metadata: Metadata): string {
   }
 
   const emoji = config.emoji || '📖';
+  
+  // Calculate correct relative path based on category depth
+  // From: typescript/docs/api-preview/latest/{category}/{file}.md
+  // To: project_root/docs/guides/...
+  // Need to go up: {category_depth} + 3 (latest, api-preview, docs) + 1 (typescript) = category_depth + 4
+  const category = config.category || 'common-features/basics';
+  const categoryDepth = category.split('/').length;
+  const depth = categoryDepth + 4; // +4 for latest/api-preview/docs/typescript
+  const upLevels = '../'.repeat(depth);
+  
+  // Replace the hardcoded path with dynamically calculated one
+  let tutorialUrl = config.tutorial.url;
+  // Extract the part after 'docs/' from the URL
+  const docsMatch = tutorialUrl.match(/docs\/(.+)$/);
+  if (docsMatch) {
+    tutorialUrl = `${upLevels}docs/${docsMatch[1]}`;
+  }
+  
   return `## ${emoji} Related Tutorial
 
-- [${config.tutorial.text}](${config.tutorial.url}) - ${config.tutorial.description}
+- [${config.tutorial.text}](${tutorialUrl}) - ${config.tutorial.description}
 
 `;
 }

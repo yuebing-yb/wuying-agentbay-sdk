@@ -2,7 +2,7 @@
 
 ## 📱 Related Tutorial
 
-- [Application Management Guide](../../../../../../docs/guides/computer-use/computer-application-management.md) - Manage desktop applications
+- [Application Management Guide](../../../../../docs/guides/computer-use/computer-application-management.md) - Manage desktop applications
 
 ## Related Resources
 

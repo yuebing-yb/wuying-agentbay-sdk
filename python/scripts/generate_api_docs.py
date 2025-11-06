@@ -122,9 +122,27 @@ def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
         return ""
 
     emoji = module_config.get('emoji', '📖')
+    
+    # Calculate correct relative path based on category depth
+    # From: python/docs/api-preview/latest/{category}/{file}.md
+    # To: project_root/docs/guides/...
+    # Need to go up: {category_depth} + 3 (latest, api-preview, docs) + 1 (python) = category_depth + 4
+    category = module_config.get('category', 'common-features/basics')
+    category_depth = len(category.split('/'))
+    depth = category_depth + 4  # +4 for latest/api-preview/docs/python
+    up_levels = '../' * depth
+    
+    # Replace the hardcoded path with dynamically calculated one
+    tutorial_url = tutorial['url']
+    # Extract the part after 'docs/' from the URL
+    import re
+    docs_match = re.search(r'docs/(.+)$', tutorial_url)
+    if docs_match:
+        tutorial_url = f"{up_levels}docs/{docs_match.group(1)}"
+    
     return f"""## {emoji} Related Tutorial
 
-- [{tutorial['text']}]({tutorial['url']}) - {tutorial['description']}
+- [{tutorial['text']}]({tutorial_url}) - {tutorial['description']}
 
 """
 

@@ -2,7 +2,7 @@
 
 ## 📱 Related Tutorial
 
-- [Mobile Use Guide](../../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
+- [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
 
 ## Table of contents
 

@@ -2,7 +2,7 @@
 
 ## 🪟 Related Tutorial
 
-- [Window Management Guide](../../../../../../docs/guides/computer-use/window-management.md) - Manage application windows
+- [Window Management Guide](../../../../../docs/guides/computer-use/window-management.md) - Manage application windows
 
 ## Related Resources
 

@@ -2,7 +2,7 @@
 
 ## 🧩 Related Tutorial
 
-- [Browser Extensions Guide](../../../../../../docs/guides/browser-use/core-features/extension.md) - Learn how to use browser extensions
+- [Browser Extensions Guide](../../../../../docs/guides/browser-use/core-features/extension.md) - Learn how to use browser extensions
 
 Provides methods to manage user browser extensions.
 This service integrates with the existing context functionality for file operations.
