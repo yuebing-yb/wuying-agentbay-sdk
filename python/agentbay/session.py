@@ -644,10 +644,33 @@ class Session:
             )
 
         except Exception as e:
-            logger.exception(f"❌ Failed to get session info for session {self.session_id}")
-            raise SessionError(
-                f"Failed to get session info for session {self.session_id}: {e}"
-            )
+            # Check if this is an expected business error (e.g., session not found)
+            error_str = str(e)
+            error_code = ""
+
+            # Try to extract error code from the exception
+            if hasattr(e, 'data') and hasattr(e.data, 'get'):
+                error_code = e.data.get('Code', '')
+            elif 'InvalidMcpSession.NotFound' in error_str or 'NotFound' in error_str:
+                error_code = 'InvalidMcpSession.NotFound'
+
+            if error_code == 'InvalidMcpSession.NotFound':
+                # This is an expected error - session doesn't exist
+                # Use info level logging without stack trace, but with red color for visibility
+                from agentbay.logger import log_info_with_color
+                log_info_with_color(f"Session not found: {self.session_id}")
+                logger.debug(f"GetMcpResource error details: {error_str}")
+                return OperationResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Session {self.session_id} not found"
+                )
+            else:
+                # This is an unexpected error - log with full error
+                logger.exception(f"❌ Failed to get session info for session {self.session_id}")
+                raise SessionError(
+                    f"Failed to get session info for session {self.session_id}: {e}"
+                )
 
     def get_link(
         self, protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None

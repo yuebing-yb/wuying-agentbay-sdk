@@ -33,6 +33,7 @@ import {
   logAPICall,
   logAPIResponseWithDetails,
   logCodeExecutionOutput,
+  logInfoWithColor,
   setRequestId,
   getRequestId,
 } from "./utils/logger";
@@ -620,11 +621,28 @@ export class Session {
         success: true,
         data: sessionInfo,
       };
-    } catch (error) {
-      logError("Error calling GetMcpResource:", error);
-      throw new Error(
-        `Failed to get session info for session ${this.sessionId}: ${error}`
-      );
+    } catch (error: any) {
+      // Check if this is an expected business error (e.g., session not found)
+      const errorStr = String(error);
+      const errorCode = error?.data?.Code || error?.code || "";
+
+      if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
+        // This is an expected error - session doesn't exist
+        // Use info level logging without stack trace, but with red color for visibility
+        logInfoWithColor(`Session not found: ${this.sessionId}`);
+        logDebug(`GetMcpResource error details: ${errorStr}`);
+        return {
+          requestId: "",
+          success: false,
+          errorMessage: `Session ${this.sessionId} not found`
+        };
+      } else {
+        // This is an unexpected error - log with full error
+        logError(`❌ Failed to get session info for session ${this.sessionId}`, error);
+        throw new Error(
+          `Failed to get session info for session ${this.sessionId}: ${error}`
+        );
+      }
     }
   }
 

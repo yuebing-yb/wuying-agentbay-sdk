@@ -568,6 +568,29 @@ func (s *Session) Info() (*InfoResult, error) {
 
 	// Log API response
 	if err != nil {
+		// Check if this is an expected business error (e.g., session not found)
+		errorStr := err.Error()
+		errorCode := ""
+
+		// Try to extract error code from the error
+		if strings.Contains(errorStr, "InvalidMcpSession.NotFound") || strings.Contains(errorStr, "NotFound") {
+			errorCode = "InvalidMcpSession.NotFound"
+		}
+
+		if errorCode == "InvalidMcpSession.NotFound" {
+			// This is an expected error - session doesn't exist
+			// Use info level logging without stack trace, but with red color for visibility
+			LogInfoWithColor(fmt.Sprintf("Session not found: %s", s.SessionID))
+			LogDebug(fmt.Sprintf("GetMcpResource error details: %s", errorStr))
+			return &InfoResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				Info: nil,
+			}, fmt.Errorf("Session %s not found", s.SessionID)
+		}
+
+		// This is an unexpected error - log with full error
 		LogOperationError("GetMcpResource", err.Error(), true)
 		return nil, err
 	}
