@@ -4,10 +4,6 @@
 
 - [Browser Extensions Guide](../../../../../docs/guides/browser-use/core-features/extension.md) - Learn how to use browser extensions
 
-## 🧩 Related Tutorial
-
-- [Browser Extensions Guide](../../../../../docs/guides/browser-use/core-features/extension.md) - Learn how to use browser extensions
-
 Provides methods to manage user browser extensions.
 This service integrates with the existing context functionality for file operations.
 
@@ -230,11 +226,6 @@ Updates an existing browser extension in the current context with a new file.
 
 | Name | Type | Description |
 | :------ | :------ | :---## Related Resources
-
-- [Browser API Reference](../../browser-use/browser.md)
-
-
-## Related Resources
 
 - [Browser API Reference](../../browser-use/browser.md)
 

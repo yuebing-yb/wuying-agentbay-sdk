@@ -4,10 +4,6 @@
 
 - [UI Automation Guide](../../../../../docs/guides/computer-use/computer-ui-automation.md) - Automate UI interactions
 
-## 🎨 Related Tutorial
-
-- [UI Automation Guide](../../../../../docs/guides/computer-use/computer-ui-automation.md) - Automate UI interactions
-
 Handles UI operations in the AgentBay cloud environment.
 
 **`Deprecated`**
@@ -237,11 +233,6 @@ Corresponds to Python's swipe() method
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :---## Related Resources
-
-- [Computer API Reference](../../computer-use/computer.md)
-
-
-## Related Resources
 
 - [Computer API Reference](../../computer-use/computer.md)
 

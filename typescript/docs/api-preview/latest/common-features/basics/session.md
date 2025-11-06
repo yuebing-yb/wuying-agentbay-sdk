@@ -4,10 +4,6 @@
 
 - [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
-## 🔧 Related Tutorial
-
-- [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
-
 Represents a session in the AgentBay cloud environment.
 
 ## Table of contents
@@ -488,16 +484,6 @@ Sets the labels for this session.
 
 | Name | Type | Description |
 | :------ | :------ | :---## Related Resources
-
-- [FileSystem API Reference](filesystem.md)
-- [Command API Reference](command.md)
-- [Context API Reference](context.md)
-- [Context Manager API Reference](context-manager.md)
-- [OSS API Reference](../../advanced/oss.md)
-- [Application API Reference](../../computer-use/application.md)
-
-
-## Related Resources
 
 - [FileSystem API Reference](filesystem.md)
 - [Command API Reference](command.md)

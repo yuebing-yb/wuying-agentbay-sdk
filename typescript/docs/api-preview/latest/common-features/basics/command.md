@@ -4,10 +4,6 @@
 
 - [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
 
-## ⚡ Related Tutorial
-
-- [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
-
 Handles command execution operations in the AgentBay cloud environment.
 
 ## Table of contents
@@ -51,12 +47,6 @@ Corresponds to Python's execute_command() method
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :---## Related Resources
-
-- [Session API Reference](session.md)
-- [FileSystem API Reference](filesystem.md)
-
-
-## Related Resources
 
 - [Session API Reference](session.md)
 - [FileSystem API Reference](filesystem.md)

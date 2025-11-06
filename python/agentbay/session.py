@@ -157,14 +157,86 @@ class Session:
 
     def delete(self, sync_context: bool = False) -> DeleteResult:
         """
-        Delete this session.
+        Delete this session and release all associated resources.
 
         Args:
-            sync_context (bool): Whether to sync context data (trigger file uploads)
+            sync_context (bool, optional): Whether to sync context data (trigger file uploads)
                 before deleting the session. Defaults to False.
 
         Returns:
-            DeleteResult: Result indicating success or failure and request ID.
+            DeleteResult: Result indicating success or failure with request ID.
+                - success (bool): True if deletion succeeded
+                - error_message (str): Error details if deletion failed
+                - request_id (str): Unique identifier for this API request
+
+        Raises:
+            SessionError: If the deletion request fails or the response is invalid.
+
+        Behavior:
+            The deletion process follows these steps:
+            1. If sync_context=True, synchronizes all context data before deletion
+            2. If browser replay is enabled, automatically syncs recording context
+            3. Calls the ReleaseMcpSession API to delete the session
+            4. Returns success/failure status with request ID
+
+            Context Synchronization:
+            - When sync_context=True: Uploads all modified files in all contexts
+            - When browser replay enabled: Uploads browser recording data
+            - Synchronization failures do not prevent session deletion
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize the SDK
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            # Create a session
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+                print(f"Session ID: {session.session_id}")
+                # Output: Session ID: session-04bdwfj7u22a1s30g
+
+                # Use the session for some work
+                cmd_result = session.command.run("echo 'Hello World'")
+                print(f"Command output: {cmd_result.data}")
+                # Output: Command output: Hello World
+
+                # Delete the session (without context sync)
+                delete_result = session.delete()
+                if delete_result.success:
+                    print("Session deleted successfully")
+                    # Output: Session deleted successfully
+                    print(f"Request ID: {delete_result.request_id}")
+                    # Output: Request ID: 7C1B2D7A-0E5F-5D8C-9A3B-4F6E8D2C1A9B
+                else:
+                    print(f"Failed to delete: {delete_result.error_message}")
+
+                # Example with context synchronization
+                result2 = agent_bay.create()
+                if result2.success:
+                    session2 = result2.session
+
+                    # Create a file in the session
+                    session2.file_system.write_file("/tmp/data.txt", "Important data")
+
+                    # Delete with context sync (uploads the file first)
+                    delete_result2 = session2.delete(sync_context=True)
+                    if delete_result2.success:
+                        print("Session deleted with context synced")
+                        # Output: Session deleted with context synced
+            ```
+
+        Note:
+            - Always delete sessions when done to avoid resource leaks
+            - Use sync_context=True if you need to preserve modified files
+            - Browser replay data is automatically synced if enabled
+            - The session object becomes invalid after deletion
+            - Deletion is idempotent - deleting an already deleted session succeeds
+
+        See Also:
+            AgentBay.create, AgentBay.delete, ContextManager.sync
         """
         try:
             # Determine sync behavior based on enableBrowserReplay and sync_context
@@ -440,14 +512,78 @@ class Session:
 
     def info(self) -> OperationResult:
         """
-        Gets information about this session.
+        Get detailed information about this session.
 
         Returns:
-            OperationResult: Result containing the session information as data and
-                request ID.
+            OperationResult: Result containing SessionInfo object and request ID.
+                - success (bool): Always True if no exception
+                - data (SessionInfo): Session information object with fields:
+                    - session_id (str): The session identifier
+                    - resource_url (str): URL for accessing the session
+                    - app_id (str): Application ID (for desktop sessions)
+                    - auth_code (str): Authentication code
+                    - connection_properties (str): Connection configuration
+                    - resource_id (str): Resource identifier
+                    - resource_type (str): Type of resource (e.g., "Desktop")
+                    - ticket (str): Access ticket
+                - request_id (str): Unique identifier for this API request
 
         Raises:
-            SessionError: If the operation fails.
+            SessionError: If the API request fails or response is invalid.
+
+        Behavior:
+            This method calls the GetMcpResource API to retrieve session metadata.
+            The returned SessionInfo contains:
+            - session_id: The session identifier
+            - resource_url: URL for accessing the session
+            - Desktop-specific fields (app_id, auth_code, connection_properties, etc.)
+              are populated from the DesktopInfo section of the API response
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize the SDK
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            # Create a session
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Get session information
+                info_result = session.info()
+                if info_result.success:
+                    info = info_result.data
+                    print(f"Session ID: {info.session_id}")
+                    # Output: Session ID: session-04bdwfj7u22a1s30g
+
+                    print(f"Resource URL: {info.resource_url}")
+                    # Output: Resource URL: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
+
+                    print(f"Resource Type: {info.resource_type}")
+                    # Output: Resource Type: Desktop
+
+                    print(f"Request ID: {info_result.request_id}")
+                    # Output: Request ID: 8D2C3E4F-1A5B-6C7D-8E9F-0A1B2C3D4E5F
+
+                    # Use resource_url for external access
+                    if info.resource_url:
+                        print(f"Access session at: {info.resource_url}")
+                        # Output: Access session at: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
+
+                # Clean up
+                session.delete()
+            ```
+
+        Note:
+            - Session info is retrieved from the AgentBay API in real-time
+            - The resource_url can be used for browser-based access
+            - Desktop-specific fields (app_id, auth_code) are only populated for desktop sessions
+            - This method does not modify the session state
+
+        See Also:
+            AgentBay.create, Session.delete, Session.get_link
         """
         try:
             request = GetMcpResourceRequest(
@@ -517,21 +653,62 @@ class Session:
         self, protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None
     ) -> OperationResult:
         """
-        Get a link associated with the current session.
+        Get an access link for this session.
 
         Args:
-            protocol_type (Optional[str], optional): The protocol type to use for the
-                link. Defaults to None.
-            port (Optional[int], optional): The port to use for the link. Must be an integer in the range [30100, 30199].
+            protocol_type (Optional[str], optional): The protocol type for the link.
+                Defaults to None (uses session default).
+            port (Optional[int], optional): The port number to expose. Must be in range [30100, 30199].
                 Defaults to None.
-            options (Optional[str], optional): Additional options as a JSON string (e.g., for adb configuration).
+            options (Optional[str], optional): Additional configuration as JSON string.
                 Defaults to None.
 
         Returns:
-            OperationResult: Result containing the link as data and request ID.
+            OperationResult: Result containing the access URL and request ID.
+                - success (bool): True if the operation succeeded
+                - data (str): The access URL
+                - request_id (str): Unique identifier for this API request
 
         Raises:
-            SessionError: If the request fails or the response is invalid.
+            SessionError: If port is out of valid range [30100, 30199] or the API request fails.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize the SDK
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            # Create a session
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Get default link
+                link_result = session.get_link()
+                if link_result.success:
+                    print(f"Session link: {link_result.data}")
+                    # Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
+                    print(f"Request ID: {link_result.request_id}")
+                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                # Get link with specific port
+                port_link_result = session.get_link(port=30150)
+                if port_link_result.success:
+                    print(f"Link with port: {port_link_result.data}")
+                    # Output: Link with port: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com:30150
+
+                # Clean up
+                session.delete()
+            ```
+
+        Note:
+            - Port must be in range [30100, 30199] if specified
+            - The returned URL format depends on the session configuration
+            - For mobile ADB connections, use session.mobile.get_adb_url() instead
+
+        See Also:
+            Session.info, Session.get_link_async, Mobile.get_adb_url
         """
         try:
             # Validate port range if port is provided

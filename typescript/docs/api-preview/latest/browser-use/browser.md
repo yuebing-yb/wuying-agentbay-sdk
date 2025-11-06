@@ -4,10 +4,6 @@
 
 - [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
 
-## 🌐 Related Tutorial
-
-- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
-
 ## Table of contents
 
 ### Constructors
@@ -155,12 +151,6 @@ page.screenshot() method or similar browser automation API.
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :---## Related Resources
-
-- [Extension API Reference](../../browser-use/extension.md)
-- [Session API Reference](../../browser-use/session.md)
-
-
-## Related Resources
 
 - [Extension API Reference](../../browser-use/extension.md)
 - [Session API Reference](../../browser-use/session.md)

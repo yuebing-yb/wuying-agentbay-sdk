@@ -4,10 +4,6 @@
 
 - [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
 
-## 💻 Related Tutorial
-
-- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
-
 Handles code execution operations in the AgentBay cloud environment.
 
 ## Table of contents
@@ -54,11 +50,6 @@ Corresponds to Python's run_code() method
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :---## Related Resources
-
-- [Session API Reference](../../codespace/session.md)
-
-
-## Related Resources
 
 - [Session API Reference](../../codespace/session.md)
 

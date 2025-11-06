@@ -260,6 +260,19 @@ def log_warning(message: str, details: str = "") -> None
 
 Log warning with consistent formatting.
 
+#### log\_info\_with\_color
+
+```python
+def log_info_with_color(message: str, color: str = "\033[31m") -> None
+```
+
+Log an INFO level message with custom color.
+
+**Arguments**:
+
+- `message` - Message to log
+- `color` - ANSI color code (default is red: [31m)
+
 ---
 
 *Documentation generated automatically from source code using pydoc-markdown.*

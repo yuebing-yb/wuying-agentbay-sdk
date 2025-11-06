@@ -4,10 +4,6 @@
 
 - [Agent Modules Guide](../../../../../docs/guides/common-features/advanced/agent-modules.md) - Learn about agent modules and custom agents
 
-## 🤖 Related Tutorial
-
-- [Agent Modules Guide](../../../../../docs/guides/common-features/advanced/agent-modules.md) - Learn about agent modules and custom agents
-
 An Agent to manipulate applications to complete specific tasks.
 
 ## Table of contents
@@ -93,11 +89,6 @@ Terminate a task with a specified task ID.
 
 | Name | Type | Description |
 | :------ | :------ | :---## Related Resources
-
-- [Session API Reference](../advanced/session.md)
-
-
-## Related Resources
 
 - [Session API Reference](../advanced/session.md)
 
