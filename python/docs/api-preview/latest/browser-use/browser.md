@@ -4,6 +4,17 @@
 
 - [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
 
+## Overview
+
+The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,
+screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
+
+
+## Requirements
+
+- Requires `browser_latest` image for browser automation features
+
+
 
 ```python
 logger = get_logger("browser")
@@ -880,6 +891,14 @@ Asynchronously extract information from a web page.
 
   Tuple[bool, T]: A tuple containing a success boolean and the extracted data as a
   Pydantic model instance, or None on failure.
+
+## Best Practices
+
+1. Wait for page load completion before interacting with elements
+2. Use appropriate selectors (CSS, XPath) for reliable element identification
+3. Handle navigation timeouts and errors gracefully
+4. Take screenshots for debugging and verification
+5. Clean up browser resources after automation tasks
 
 ## Related Resources
 

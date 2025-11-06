@@ -25,9 +25,19 @@ interface ResourceConfig {
   category?: string;
 }
 
+interface DataTypeInfo {
+  name: string;
+  description: string;
+}
+
 interface ModuleConfig {
   tutorial?: TutorialConfig;
   related_resources?: ResourceConfig[];
+  overview?: string;
+  requirements?: string[];
+  best_practices?: string[];
+  data_types?: DataTypeInfo[];
+  important_notes?: string[];
   emoji?: string;
   category?: string;
 }
@@ -54,7 +64,7 @@ function getTutorialSection(moduleName: string, metadata: Metadata): string {
   }
 
   const emoji = config.emoji || '📖';
-  
+
   // Calculate correct relative path based on category depth
   // From: typescript/docs/api-preview/latest/{category}/{file}.md
   // To: project_root/docs/guides/...
@@ -63,7 +73,7 @@ function getTutorialSection(moduleName: string, metadata: Metadata): string {
   const categoryDepth = category.split('/').length;
   const depth = categoryDepth + 4; // +4 for latest/api-preview/docs/typescript
   const upLevels = '../'.repeat(depth);
-  
+
   // Replace the hardcoded path with dynamically calculated one
   let tutorialUrl = config.tutorial.url;
   // Extract the part after 'docs/' from the URL
@@ -71,12 +81,86 @@ function getTutorialSection(moduleName: string, metadata: Metadata): string {
   if (docsMatch) {
     tutorialUrl = `${upLevels}docs/${docsMatch[1]}`;
   }
-  
+
   return `## ${emoji} Related Tutorial
 
 - [${config.tutorial.text}](${tutorialUrl}) - ${config.tutorial.description}
 
 `;
+}
+
+function getOverviewSection(moduleName: string, metadata: Metadata): string {
+  const config = metadata.modules?.[moduleName];
+  if (!config?.overview) {
+    return '';
+  }
+
+  return `## Overview
+
+${config.overview}
+
+`;
+}
+
+function getRequirementsSection(moduleName: string, metadata: Metadata): string {
+  const config = metadata.modules?.[moduleName];
+  if (!config?.requirements || config.requirements.length === 0) {
+    return '';
+  }
+
+  const lines = ['## Requirements\n'];
+  for (const req of config.requirements) {
+    lines.push(`- ${req}`);
+  }
+  lines.push('\n');
+
+  return lines.join('\n');
+}
+
+function getDataTypesSection(moduleName: string, metadata: Metadata): string {
+  const config = metadata.modules?.[moduleName];
+  if (!config?.data_types || config.data_types.length === 0) {
+    return '';
+  }
+
+  const lines = ['## Data Types\n'];
+  for (const dataType of config.data_types) {
+    lines.push(`### ${dataType.name}\n`);
+    lines.push(`${dataType.description}\n`);
+  }
+  lines.push('');
+
+  return lines.join('\n');
+}
+
+function getImportantNotesSection(moduleName: string, metadata: Metadata): string {
+  const config = metadata.modules?.[moduleName];
+  if (!config?.important_notes || config.important_notes.length === 0) {
+    return '';
+  }
+
+  const lines = ['## Important Notes\n'];
+  for (const note of config.important_notes) {
+    lines.push(`- ${note}`);
+  }
+  lines.push('\n');
+
+  return lines.join('\n');
+}
+
+function getBestPracticesSection(moduleName: string, metadata: Metadata): string {
+  const config = metadata.modules?.[moduleName];
+  if (!config?.best_practices || config.best_practices.length === 0) {
+    return '';
+  }
+
+  const lines = ['## Best Practices\n'];
+  for (let i = 0; i < config.best_practices.length; i++) {
+    lines.push(`${i + 1}. ${config.best_practices[i]}`);
+  }
+  lines.push('\n');
+
+  return lines.join('\n');
 }
 
 function calculateResourcePath(resource: ResourceConfig, moduleConfig: ModuleConfig): string {
@@ -165,6 +249,57 @@ function addBeforeFooter(content: string, insertion: string): string {
   return lines.join('\n');
 }
 
+function addAfterSection(content: string, sectionName: string, insertion: string): string {
+  const lines = content.split('\n');
+  let sectionIndex = -1;
+
+  // Find the section
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === `## ${sectionName}`) {
+      sectionIndex = i;
+      break;
+    }
+  }
+
+  if (sectionIndex === -1) {
+    // Section not found, add after title
+    return addAfterTitle(content, insertion);
+  }
+
+  // Find the end of this section (next ## or end of file)
+  let endIndex = lines.length;
+  for (let i = sectionIndex + 1; i < lines.length; i++) {
+    if (lines[i].trim().startsWith('## ')) {
+      endIndex = i;
+      break;
+    }
+  }
+
+  lines.splice(endIndex, 0, insertion.trimEnd(), '');
+  return lines.join('\n');
+}
+
+function insertAfterTitle(content: string, sections: string[]): string {
+  const lines = content.split('\n');
+  let titleIndex = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith('# ')) {
+      titleIndex = i;
+      break;
+    }
+  }
+
+  if (titleIndex === -1) {
+    return sections.join('') + content;
+  }
+
+  // Insert all sections after title
+  const combinedSections = sections.join('');
+  lines.splice(titleIndex + 1, 0, '', combinedSections.trimEnd());
+  return lines.join('\n');
+}
+
 function enhanceMarkdownFile(filePath: string, metadata: Metadata): void {
   let content = fs.readFileSync(filePath, 'utf8');
   const moduleName = extractModuleName(filePath);
@@ -174,10 +309,48 @@ function enhanceMarkdownFile(filePath: string, metadata: Metadata): void {
     return;
   }
 
-  // Add tutorial section after title (only if not already present)
+  // Collect all sections to insert after title
+  const sectionsAfterTitle: string[] = [];
+
+  // 1. Tutorial section (only if not already present)
   const tutorialSection = getTutorialSection(moduleName, metadata);
   if (tutorialSection && !content.includes('Related Tutorial')) {
-    content = addAfterTitle(content, tutorialSection);
+    sectionsAfterTitle.push(tutorialSection);
+  }
+
+  // 2. Overview section (only if not already present)
+  const overviewSection = getOverviewSection(moduleName, metadata);
+  if (overviewSection && !content.includes('## Overview')) {
+    sectionsAfterTitle.push(overviewSection);
+  }
+
+  // 3. Requirements section (only if not already present)
+  const requirementsSection = getRequirementsSection(moduleName, metadata);
+  if (requirementsSection && !content.includes('## Requirements')) {
+    sectionsAfterTitle.push(requirementsSection);
+  }
+
+  // 4. Data types section (only if not already present)
+  const dataTypesSection = getDataTypesSection(moduleName, metadata);
+  if (dataTypesSection && !content.includes('## Data Types')) {
+    sectionsAfterTitle.push(dataTypesSection);
+  }
+
+  // 5. Important notes section (only if not already present)
+  const importantNotesSection = getImportantNotesSection(moduleName, metadata);
+  if (importantNotesSection && !content.includes('## Important Notes')) {
+    sectionsAfterTitle.push(importantNotesSection);
+  }
+
+  // Insert all sections after title at once
+  if (sectionsAfterTitle.length > 0) {
+    content = insertAfterTitle(content, sectionsAfterTitle);
+  }
+
+  // Add best practices before related resources (only if not already present)
+  const bestPracticesSection = getBestPracticesSection(moduleName, metadata);
+  if (bestPracticesSection && !content.includes('## Best Practices')) {
+    content = addBeforeFooter(content, bestPracticesSection);
   }
 
   // Add related resources before footer (only if not already present)

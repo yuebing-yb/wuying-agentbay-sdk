@@ -4,6 +4,17 @@
 
 - [Command Execution Guide](../../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
 
+## Overview
+
+The Command module provides methods for executing shell commands within a session in the AgentBay cloud environment.
+It supports both synchronous command execution with configurable timeouts.
+
+
+## Requirements
+
+- Any session image (browser_latest, code_latest, windows_latest, mobile_latest)
+
+
 
 ```python
 class CommandResult(ApiResponse)
@@ -101,6 +112,14 @@ Execute a shell command in the cloud environment with a specified timeout.
 **See Also**:
 
   Command.execute_command_async
+
+## Best Practices
+
+1. Always specify appropriate timeout values based on expected command duration
+2. Handle command execution errors gracefully
+3. Use absolute paths when referencing files in commands
+4. Be aware that commands run with session user permissions
+5. Clean up temporary files created by commands
 
 ## Related Resources
 

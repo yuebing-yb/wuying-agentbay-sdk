@@ -4,6 +4,16 @@
 
 - [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
 
+## Overview
+
+The Code module provides secure code execution capabilities in isolated environments.
+It supports multiple programming languages including Python, JavaScript, and more.
+
+
+## Requirements
+
+- Requires `code_latest` image for code execution features
+
 Handles code execution operations in the AgentBay cloud environment.
 
 ## Table of contents
@@ -63,6 +73,15 @@ CodeExecutionResult with code execution output and requestId
 **`Throws`**
 
 Error if an unsupported language is specified.
+
+## Best Practices
+
+1. Validate code syntax before execution
+2. Set appropriate execution timeouts
+3. Handle execution errors and exceptions
+4. Use proper resource limits to prevent resource exhaustion
+5. Clean up temporary files after code execution
+
 
 ## Related Resources
 

@@ -4,6 +4,17 @@
 
 - [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
 
+## Overview
+
+The Mobile module provides mobile device automation capabilities including touch gestures,
+text input, app management, and screenshot capture. It supports Android device automation.
+
+
+## Requirements
+
+- Requires `mobile_latest` image for mobile automation features
+
+
 
 Mobile module for mobile device UI automation and configuration.
 Handles touch operations, UI element interactions, application management, screenshot capabilities,
@@ -389,6 +400,15 @@ the ADB connect URL.
 **Raises**:
 
 - `SessionError` - If the session is not in mobile environment.
+
+## Best Practices
+
+1. Verify element coordinates before tap operations
+2. Use appropriate swipe durations for smooth gestures
+3. Wait for UI elements to load before interaction
+4. Take screenshots for verification and debugging
+5. Handle app installation and uninstallation properly
+6. Configure app whitelists/blacklists for security
 
 ## Related Resources
 
