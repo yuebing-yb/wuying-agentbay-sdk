@@ -2,7 +2,7 @@
 
 ## ⚡ Related Tutorial
 
-- [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
+- [Command Execution Guide](../../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
 
 Handles command execution operations in the AgentBay cloud environment.
 
@@ -46,13 +46,7 @@ Corresponds to Python's execute_command() method
 #### Parameters
 
 | Name | Type | Default value | Description |
-| :------ | :------ | :------ | :---## Related Resources
-
-- [Session API Reference](session.md)
-- [FileSystem API Reference](filesystem.md)
-
-
---- |
+| :------ | :------ | :------ | :------ |
 | `command` | `string` | `undefined` | The command to execute |
 | `timeoutMs` | `number` | `1000` | The timeout in milliseconds. Default is 1000ms. |
 
@@ -65,3 +59,9 @@ CommandResult with command output and requestId
 **`Throws`**
 
 APIError if the operation fails.
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [FileSystem API Reference](filesystem.md)
+

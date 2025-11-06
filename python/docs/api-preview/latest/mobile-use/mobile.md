@@ -2,7 +2,7 @@
 
 ## 📱 Related Tutorial
 
-- [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
+- [Mobile Use Guide](../../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
 
 
 Mobile module for mobile device UI automation and configuration.
@@ -11,7 +11,7 @@ and mobile environment configuration operations.
 
 ## Related Resources
 
-- [Session API Reference](../../mobile-use/session.md)
+- [Session API Reference](../common-features/basics/session.md)
 
 ---
 

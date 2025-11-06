@@ -2,7 +2,7 @@
 
 ## 🚀 Related Tutorial
 
-- [First Session Tutorial](../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
+- [First Session Tutorial](../../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
 
 Main class for interacting with the AgentBay cloud runtime environment.
 
@@ -252,15 +252,15 @@ ___
 #### Parameters
 
 | Name | Type | Description |
-| :------ | :------ | :---## Related Resources
-
-- [Session API Reference](session.md)
-- [Context API Reference](context.md)
-
-
---- |
+| :------ | :------ | :------ |
 | `sessionId` | `string` | The ID of the session to remove. |
 
 #### Returns
 
 `void`
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Context API Reference](context.md)
+

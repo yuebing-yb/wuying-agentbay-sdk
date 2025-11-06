@@ -2,12 +2,12 @@
 
 ## 🪟 Related Tutorial
 
-- [Window Management Guide](../../../../../docs/guides/computer-use/window-management.md) - Manage application windows
+- [Window Management Guide](../../../../../../docs/guides/computer-use/window-management.md) - Manage application windows
 
 ## Related Resources
 
-- [Computer API Reference](../../computer-use/computer.md)
-- [Application API Reference](../../computer-use/application.md)
+- [Computer API Reference](computer.md)
+- [Application API Reference](application.md)
 
 ---
 

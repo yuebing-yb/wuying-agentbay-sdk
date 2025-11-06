@@ -2,7 +2,7 @@
 
 ## 📱 Related Tutorial
 
-- [Application Management Guide](../../../../../docs/guides/computer-use/computer-application-management.md) - Manage desktop applications
+- [Application Management Guide](../../../../../../docs/guides/computer-use/computer-application-management.md) - Manage desktop applications
 
 Handles application operations in the AgentBay cloud environment.
 
@@ -218,13 +218,7 @@ Stop an application by process name.
 #### Parameters
 
 | Name | Type | Description |
-| :------ | :------ | :---## Related Resources
-
-- [Computer API Reference](../../computer-use/computer.md)
-- [Window API Reference](../../computer-use/window.md)
-
-
---- |
+| :------ | :------ | :------ |
 | `pname` | `string` | The process name of the application to stop. |
 
 #### Returns
@@ -236,3 +230,9 @@ A promise that resolves to the result of stopping the application.
 **`Deprecated`**
 
 Use session.computer.stopAppByPName() for desktop or session.mobile.stopAppByPName() for mobile instead.
+
+## Related Resources
+
+- [Computer API Reference](computer.md)
+- [Window API Reference](window.md)
+

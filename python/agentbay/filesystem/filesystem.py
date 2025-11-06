@@ -959,11 +959,68 @@ class FileSystem(BaseService):
         List the contents of a directory.
 
         Args:
-            path: The path of the directory to list.
+            path (str): The path of the directory to list.
 
         Returns:
-            DirectoryListResult: Result object containing directory entries and error
-                message if any.
+            DirectoryListResult: Result object containing directory entries and error message if any.
+                - success (bool): True if the operation succeeded
+                - entries (List[Dict[str, Union[str, bool]]]): List of directory entries (if success is True)
+                    Each entry contains:
+                    - name (str): Name of the file or directory
+                    - isDirectory (bool): True if entry is a directory, False if file
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            FileError: If the directory does not exist or cannot be accessed.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize and create session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Create some test files and directories
+                session.filesystem.create_directory("/tmp/testdir")
+                session.filesystem.write_file("/tmp/testdir/file1.txt", "Content 1")
+                session.filesystem.write_file("/tmp/testdir/file2.txt", "Content 2")
+                session.filesystem.create_directory("/tmp/testdir/subdir")
+
+                # List the directory
+                list_result = session.filesystem.list_directory("/tmp/testdir")
+                if list_result.success:
+                    print(f"Found {len(list_result.entries)} entries")
+                    # Output: Found 3 entries
+                    for entry in list_result.entries:
+                        entry_type = "DIR" if entry["isDirectory"] else "FILE"
+                        print(f"[{entry_type}] {entry['name']}")
+                    # Output: [FILE] file1.txt
+                    # Output: [FILE] file2.txt
+                    # Output: [DIR] subdir
+                    print(f"Request ID: {list_result.request_id}")
+                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                # Handle directory not found
+                result = session.filesystem.list_directory("/tmp/nonexistent")
+                if not result.success:
+                    print(f"Error: {result.error_message}")
+                    # Output: Error: Failed to list directory
+
+                # Clean up
+                session.delete()
+            ```
+
+        Note:
+            - Returns empty list for empty directories
+            - Each entry includes name and isDirectory flag
+            - Does not recursively list subdirectories
+
+        See Also:
+            FileSystem.create_directory, FileSystem.get_file_info, FileSystem.read_file
         """
 
         def parse_directory_listing(text) -> List[Dict[str, Union[str, bool]]]:
@@ -1339,11 +1396,58 @@ class FileSystem(BaseService):
         Read the contents of a file. Automatically handles large files by chunking.
 
         Args:
-            path: The path of the file to read.
+            path (str): The path of the file to read.
 
         Returns:
-            FileContentResult: Result object containing file content and error message
-                if any.
+            FileContentResult: Result object containing file content and error message if any.
+                - success (bool): True if the operation succeeded
+                - content (str): The file content (if success is True)
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            FileError: If the file does not exist or is a directory.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize and create session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Write a file first
+                write_result = session.filesystem.write_file("/tmp/test.txt", "Hello, World!")
+                if write_result.success:
+                    print("File written successfully")
+
+                # Read the file
+                read_result = session.filesystem.read_file("/tmp/test.txt")
+                if read_result.success:
+                    print(f"File content: {read_result.content}")
+                    # Output: File content: Hello, World!
+                    print(f"Request ID: {read_result.request_id}")
+                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                # Handle file not found
+                result = session.filesystem.read_file("/tmp/nonexistent.txt")
+                if not result.success:
+                    print(f"Error: {result.error_message}")
+                    # Output: Error: Path does not exist or is a directory: /tmp/nonexistent.txt
+
+                # Clean up
+                session.delete()
+            ```
+
+        Note:
+            - Automatically handles large files by reading in chunks (default 50KB per chunk)
+            - Returns empty string for empty files
+            - Returns error if path is a directory
+
+        See Also:
+            FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
         """
         # Use default chunk size
         chunk_size = self.DEFAULT_CHUNK_SIZE
@@ -1418,13 +1522,68 @@ class FileSystem(BaseService):
         Write content to a file. Automatically handles large files by chunking.
 
         Args:
-            path: The path of the file to write.
-            content: The content to write to the file.
-            mode: The write mode ("overwrite" or "append").
+            path (str): The path of the file to write.
+            content (str): The content to write to the file.
+            mode (str, optional): The write mode. Defaults to "overwrite".
+                - "overwrite": Replace file content
+                - "append": Append to existing content
 
         Returns:
-            BoolResult: Result object containing success status and error message if
-                any.
+            BoolResult: Result object containing success status and error message if any.
+                - success (bool): True if the operation succeeded
+                - data (bool): True if the file was written successfully
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            FileError: If the write operation fails.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize and create session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Write a new file (overwrite mode)
+                write_result = session.filesystem.write_file("/tmp/test.txt", "Hello, World!")
+                if write_result.success:
+                    print("File written successfully")
+                    # Output: File written successfully
+                    print(f"Request ID: {write_result.request_id}")
+                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                # Append to existing file
+                append_result = session.filesystem.write_file(
+                    "/tmp/test.txt",
+                    "\nAppended content",
+                    mode="append"
+                )
+                if append_result.success:
+                    print("Content appended successfully")
+
+                # Verify the content
+                read_result = session.filesystem.read_file("/tmp/test.txt")
+                if read_result.success:
+                    print(f"File content: {read_result.content}")
+                    # Output: File content: Hello, World!
+                    # Appended content
+
+                # Clean up
+                session.delete()
+            ```
+
+        Note:
+            - Automatically handles large files by writing in chunks (default 50KB per chunk)
+            - Creates parent directories if they don't exist
+            - In "overwrite" mode, replaces the entire file content
+            - In "append" mode, adds content to the end of the file
+
+        See Also:
+            FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
         """
         # Use default chunk size
         chunk_size = self.DEFAULT_CHUNK_SIZE

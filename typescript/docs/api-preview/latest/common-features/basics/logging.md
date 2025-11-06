@@ -2,7 +2,7 @@
 
 ## 📝 Related Tutorial
 
-- [Logging Configuration Guide](../../../../../docs/guides/common-features/configuration/logging.md) - Configure logging for the SDK
+- [Logging Configuration Guide](../../../../../../docs/guides/common-features/configuration/logging.md) - Configure logging for the SDK
 
 Logger configuration options
 

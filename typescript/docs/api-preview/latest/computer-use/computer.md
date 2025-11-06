@@ -2,7 +2,7 @@
 
 ## 🖥️ Related Tutorial
 
-- [Computer Use Guide](../../../../../docs/guides/computer-use/README.md) - Automate desktop applications
+- [Computer Use Guide](../../../../../../docs/guides/computer-use/README.md) - Automate desktop applications
 
 ## Table of contents
 
@@ -500,16 +500,16 @@ Stops an application by process name.
 #### Parameters
 
 | Name | Type |
-| :------ | :---## Related Resources
-
-- [Application API Reference](../../computer-use/application.md)
-- [UI API Reference](../../computer-use/ui.md)
-- [Window API Reference](../../computer-use/window.md)
-
-
---- |
+| :------ | :------ |
 | `pname` | `string` |
 
 #### Returns
 
 `Promise`\<`any`\>
+
+## Related Resources
+
+- [Application API Reference](application.md)
+- [UI API Reference](ui.md)
+- [Window API Reference](window.md)
+

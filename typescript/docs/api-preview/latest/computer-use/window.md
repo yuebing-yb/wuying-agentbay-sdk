@@ -2,7 +2,7 @@
 
 ## 🪟 Related Tutorial
 
-- [Window Management Guide](../../../../../docs/guides/computer-use/window-management.md) - Manage application windows
+- [Window Management Guide](../../../../../../docs/guides/computer-use/window-management.md) - Manage application windows
 
 Handles window management operations in the AgentBay cloud environment.
 
@@ -363,13 +363,7 @@ Corresponds to Python's restore_window() method
 #### Parameters
 
 | Name | Type | Description |
-| :------ | :------ | :---## Related Resources
-
-- [Computer API Reference](../../computer-use/computer.md)
-- [Application API Reference](../../computer-use/application.md)
-
-
---- |
+| :------ | :------ | :------ |
 | `windowId` | `number` | The ID of the window to restore. |
 
 #### Returns
@@ -377,3 +371,9 @@ Corresponds to Python's restore_window() method
 `Promise`\<`BoolResult`\>
 
 BoolResult with requestId
+
+## Related Resources
+
+- [Computer API Reference](computer.md)
+- [Application API Reference](application.md)
+

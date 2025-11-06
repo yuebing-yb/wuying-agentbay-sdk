@@ -2,7 +2,7 @@
 
 ## ☁️ Related Tutorial
 
-- [OSS Integration Guide](../../../../../docs/guides/common-features/advanced/oss-integration.md) - Integrate with Alibaba Cloud OSS for file storage
+- [OSS Integration Guide](../../../../../../docs/guides/common-features/advanced/oss-integration.md) - Integrate with Alibaba Cloud OSS for file storage
 
 Handles OSS operations in the AgentBay cloud environment.
 
@@ -159,13 +159,7 @@ Corresponds to Python's upload_anonymous() method
 #### Parameters
 
 | Name | Type | Description |
-| :------ | :------ | :---## Related Resources
-
-- [Session API Reference](../advanced/session.md)
-- [FileSystem API Reference](../advanced/filesystem.md)
-
-
---- |
+| :------ | :------ | :------ |
 | `url` | `string` | The anonymous upload URL |
 | `path` | `string` | The local file path to upload |
 
@@ -178,3 +172,9 @@ OSSUploadResult with upload result and requestId
 **`Throws`**
 
 APIError if the operation fails.
+
+## Related Resources
+
+- [Session API Reference](../../common-features/basics/session.md)
+- [FileSystem API Reference](../../common-features/basics/filesystem.md)
+

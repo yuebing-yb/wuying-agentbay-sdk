@@ -2,7 +2,7 @@
 
 ## 📱 Related Tutorial
 
-- [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
+- [Mobile Use Guide](../../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
 
 ## Table of contents
 
@@ -366,15 +366,15 @@ Tap at specified coordinates.
 #### Parameters
 
 | Name | Type |
-| :------ | :---## Related Resources
-
-- [Session API Reference](../../mobile-use/session.md)
-
-
---- |
+| :------ | :------ |
 | `x` | `number` |
 | `y` | `number` |
 
 #### Returns
 
 `Promise`\<`BoolResult`\>
+
+## Related Resources
+
+- [Session API Reference](../common-features/basics/session.md)
+

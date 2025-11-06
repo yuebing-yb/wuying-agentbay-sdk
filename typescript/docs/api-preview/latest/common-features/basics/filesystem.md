@@ -2,7 +2,7 @@
 
 ## 📁 Related Tutorial
 
-- [File Operations Guide](../../../../../docs/guides/common-features/basics/file-operations.md) - Complete guide to file system operations
+- [File Operations Guide](../../../../../../docs/guides/common-features/basics/file-operations.md) - Complete guide to file system operations
 
 Handles file operations in the AgentBay cloud environment.
 
@@ -324,13 +324,7 @@ Writes content to a file. Automatically handles large files by chunking.
 #### Parameters
 
 | Name | Type | Default value | Description |
-| :------ | :------ | :------ | :---## Related Resources
-
-- [Session API Reference](session.md)
-- [Command API Reference](command.md)
-
-
---- |
+| :------ | :------ | :------ | :------ |
 | `path` | `string` | `undefined` | Path to the file to write. |
 | `content` | `string` | `undefined` | Content to write to the file. |
 | `mode` | `string` | `"overwrite"` | Optional: Write mode. One of "overwrite", "append", or "create_new". Default is "overwrite". |
@@ -340,3 +334,9 @@ Writes content to a file. Automatically handles large files by chunking.
 `Promise`\<`BoolResult`\>
 
 BoolResult indicating success or failure with requestId
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Command API Reference](command.md)
+

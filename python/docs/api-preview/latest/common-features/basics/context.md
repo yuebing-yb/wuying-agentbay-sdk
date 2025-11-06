@@ -2,7 +2,7 @@
 
 ## 💾 Related Tutorial
 
-- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
+- [Data Persistence Guide](../../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
 
 
 ```python
@@ -133,21 +133,75 @@ Gets a context by name or ID. Optionally creates it if it doesn't exist.
 
 **Arguments**:
 
-- `name` _Optional[str]_ - The name of the context to get.
-- `create` _bool, optional_ - Whether to create the context if it doesn't exist.
-- `context_id` _Optional[str]_ - The ID of the context to get.
+- `name` _Optional[str], optional_ - The name of the context to get. Defaults to None.
+- `create` _bool, optional_ - Whether to create the context if it doesn't exist. Defaults to False.
+- `context_id` _Optional[str], optional_ - The ID of the context to get. Defaults to None.
   
 
 **Returns**:
 
-- `ContextResult` - The ContextResult object containing the Context and request
-  ID.
+- `ContextResult` - The ContextResult object containing the Context and request ID.
+  - success (bool): True if the operation succeeded
+  - context (Context): The context object (if success is True)
+  - context_id (str): The ID of the context
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Raises**:
+
+- `AgentBayError` - If neither name nor context_id is provided, or if create=True with context_id.
+  
+
+**Example**:
+
+    ```python
+    from agentbay import AgentBay
+
+    # Initialize the SDK
+    agent_bay = AgentBay(api_key="your_api_key")
+
+    # Get an existing context by name
+    result = agent_bay.context.get(name="my-context")
+    if result.success:
+        context = result.context
+        print(f"Context ID: {context.id}")
+        # Output: Context ID: ctx-04bdwfj7u22a1s30g
+        print(f"Context Name: {context.name}")
+        # Output: Context Name: my-context
+
+    # Create a new context if it doesn't exist
+    result = agent_bay.context.get(name="new-context", create=True)
+    if result.success:
+        print(f"Context created: {result.context.id}")
+        # Output: Context created: ctx-04bdwfj7u22a1s30h
+        print(f"Request ID: {result.request_id}")
+        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+    # Get a context by ID
+    result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
+    if result.success:
+        print(f"Found context: {result.context.name}")
+
+    # Handle context not found
+    result = agent_bay.context.get(name="nonexistent-context")
+    if not result.success:
+        print(f"Error: {result.error_message}")
+        # Output: Error: Context not found
+    ```
   
 
 **Notes**:
 
-  Validation of parameter combinations is done by the server. If both name and
-  context_id are provided, the request will be forwarded to the server for validation.
+  - Either name or context_id must be provided (not both)
+  - When create=True, only name parameter is allowed
+  - Created contexts are persistent and can be shared across sessions
+  - Context names must be unique within your account
+  
+
+**See Also**:
+
+  ContextService.list, ContextService.update, ContextService.delete
 
 #### create
 
@@ -172,16 +226,78 @@ Creates a new context with the given name.
 def update(context: Context) -> OperationResult
 ```
 
-Updates the specified context.
+Updates the specified context (currently only name can be updated).
 
 **Arguments**:
 
-- `context` _Context_ - The Context object to update.
+- `context` _Context_ - The Context object to update. Must have id and name attributes.
   
 
 **Returns**:
 
 - `OperationResult` - Result object containing success status and request ID.
+  - success (bool): True if the operation succeeded
+  - data (str): Success message (if success is True)
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Raises**:
+
+- `AgentBayError` - If the context update fails.
+  
+
+**Example**:
+
+    ```python
+    from agentbay import AgentBay
+    from agentbay.context import Context
+
+    # Initialize the SDK
+    agent_bay = AgentBay(api_key="your_api_key")
+
+    # Get an existing context
+    result = agent_bay.context.get(name="old-name")
+    if result.success:
+        context = result.context
+        print(f"Original name: {context.name}")
+        # Output: Original name: old-name
+
+        # Update the context name
+        context.name = "new-name"
+        update_result = agent_bay.context.update(context)
+        if update_result.success:
+            print(f"Context updated successfully")
+            # Output: Context updated successfully
+            print(f"Request ID: {update_result.request_id}")
+            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+        # Verify the update
+        verify_result = agent_bay.context.get(context_id=context.id)
+        if verify_result.success:
+            print(f"New name: {verify_result.context.name}")
+            # Output: New name: new-name
+
+    # Handle update failure
+    invalid_context = Context(id="invalid-id", name="new-name")
+    result = agent_bay.context.update(invalid_context)
+    if not result.success:
+        print(f"Error: {result.error_message}")
+        # Output: Error: Context not found
+    ```
+  
+
+**Notes**:
+
+  - Currently only the context name can be updated
+  - Context ID cannot be changed
+  - The context must exist before it can be updated
+  - Updated name must be unique within your account
+  
+
+**See Also**:
+
+  ContextService.get, ContextService.list, ContextService.delete
 
 #### delete
 

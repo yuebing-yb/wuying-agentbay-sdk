@@ -2,7 +2,7 @@
 
 ## 🔧 Related Tutorial
 
-- [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
+- [Session Management Guide](../../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
 
 ```python
@@ -477,7 +477,7 @@ This is the unified public API for calling MCP tools. All feature modules
 - [Command API Reference](command.md)
 - [Context API Reference](context.md)
 - [Context Manager API Reference](context-manager.md)
-- [OSS API Reference](../../advanced/oss.md)
+- [OSS API Reference](../../common-features/advanced/oss.md)
 - [Application API Reference](../../computer-use/application.md)
 
 ---

@@ -2,7 +2,7 @@
 
 ## 🧩 Related Tutorial
 
-- [Browser Extensions Guide](../../../../../docs/guides/browser-use/core-features/extension.md) - Learn how to use browser extensions
+- [Browser Extensions Guide](../../../../../../docs/guides/browser-use/core-features/extension.md) - Learn how to use browser extensions
 
 Provides methods to manage user browser extensions.
 This service integrates with the existing context functionality for file operations.
@@ -225,12 +225,7 @@ Updates an existing browser extension in the current context with a new file.
 #### Parameters
 
 | Name | Type | Description |
-| :------ | :------ | :---## Related Resources
-
-- [Browser API Reference](../../browser-use/browser.md)
-
-
---- |
+| :------ | :------ | :------ |
 | `extensionId` | `string` | ID of the extension to update. |
 | `newLocalPath` | `string` | Path to the new local extension file. |
 
@@ -251,3 +246,8 @@ If the extension doesn't exist in the context.
 **`Throws`**
 
 If update fails.
+
+## Related Resources
+
+- [Browser API Reference](browser.md)
+

@@ -33,10 +33,10 @@ METADATA_PATH = PROJECT_ROOT.parent / "docs" / "doc-metadata.yaml"
 DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("common-features/basics/agentbay.md", "AgentBay", ("agentbay.agentbay",)),
     DocMapping("common-features/basics/session.md", "Session", ("agentbay.session",)),
-    DocMapping("common-features/basics/command.md", "Command", ("agentbay.command",)),
+    DocMapping("common-features/basics/command.md", "Command", ("agentbay.command.command",)),
     DocMapping("common-features/basics/context.md", "Context", ("agentbay.context",)),
     DocMapping("common-features/basics/context-manager.md", "Context Manager", ("agentbay.context_manager",)),
-    DocMapping("common-features/basics/filesystem.md", "File System", ("agentbay.filesystem",)),
+    DocMapping("common-features/basics/filesystem.md", "File System", ("agentbay.filesystem.filesystem",)),
     DocMapping("common-features/basics/logging.md", "Logging", ("agentbay.logger",)),
     DocMapping("common-features/advanced/agent.md", "Agent", ("agentbay.agent",)),
     DocMapping("common-features/advanced/oss.md", "OSS", ("agentbay.oss",)),
@@ -131,24 +131,25 @@ def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
 
 def calculate_resource_path(resource: dict[str, Any], module_config: dict[str, Any]) -> str:
     """Calculate relative path for a related resource."""
-    category = resource.get('category', module_config.get('category', 'common-features/basics'))
+    target_category = resource.get('category', 'common-features/basics')
+    current_category = module_config.get('category', 'common-features/basics')
     module = resource['module']
 
-    # Determine the path based on category
-    if category == 'common-features/basics':
+    # If same category, just use module name
+    if target_category == current_category:
         return f"{module}.md"
-    elif category == 'common-features/advanced':
-        return f"../advanced/{module}.md"
-    elif category == 'browser-use':
-        return f"../../browser-use/{module}.md"
-    elif category == 'codespace':
-        return f"../../codespace/{module}.md"
-    elif category == 'computer-use':
-        return f"../../computer-use/{module}.md"
-    elif category == 'mobile-use':
-        return f"../../mobile-use/{module}.md"
-    else:
-        return f"../../{category}/{module}.md"
+
+    # Calculate relative path from current category to target category
+    current_parts = current_category.split('/')
+    target_parts = target_category.split('/')
+
+    # Go up from current directory
+    relative_path = '../' * len(current_parts)
+
+    # Go down to target directory
+    relative_path += '/'.join(target_parts) + '/' + module + '.md'
+
+    return relative_path
 
 
 def get_related_resources_section(module_name: str, metadata: dict[str, Any]) -> str:

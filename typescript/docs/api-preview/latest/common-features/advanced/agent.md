@@ -2,7 +2,7 @@
 
 ## 🤖 Related Tutorial
 
-- [Agent Modules Guide](../../../../../docs/guides/common-features/advanced/agent-modules.md) - Learn about agent modules and custom agents
+- [Agent Modules Guide](../../../../../../docs/guides/common-features/advanced/agent-modules.md) - Learn about agent modules and custom agents
 
 An Agent to manipulate applications to complete specific tasks.
 
@@ -88,12 +88,7 @@ Terminate a task with a specified task ID.
 #### Parameters
 
 | Name | Type | Description |
-| :------ | :------ | :---## Related Resources
-
-- [Session API Reference](../advanced/session.md)
-
-
---- |
+| :------ | :------ | :------ |
 | `taskId` | `string` | The ID of the running task. |
 
 #### Returns
@@ -101,3 +96,8 @@ Terminate a task with a specified task ID.
 `Promise`\<``ExecutionResult``\>
 
 ExecutionResult containing success status, task output, and error message if any.
+
+## Related Resources
+
+- [Session API Reference](../../common-features/basics/session.md)
+

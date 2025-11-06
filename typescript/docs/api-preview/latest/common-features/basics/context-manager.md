@@ -2,7 +2,7 @@
 
 ## 🗂️ Related Tutorial
 
-- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
+- [Data Persistence Guide](../../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
 
 ## Table of contents
 
@@ -69,13 +69,7 @@ ___
 #### Parameters
 
 | Name | Type | Default value |
-| :------ | :------ | :---## Related Resources
-
-- [Context API Reference](context.md)
-- [Session API Reference](session.md)
-
-
---- |
+| :------ | :------ | :------ |
 | `contextId?` | `string` | `undefined` |
 | `path?` | `string` | `undefined` |
 | `mode?` | `string` | `undefined` |
@@ -86,3 +80,9 @@ ___
 #### Returns
 
 `Promise`\<``ContextSyncResult``\>
+
+## Related Resources
+
+- [Context API Reference](context.md)
+- [Session API Reference](session.md)
+

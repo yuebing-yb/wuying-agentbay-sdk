@@ -2,7 +2,7 @@
 
 ## 🧩 Related Tutorial
 
-- [Browser Extensions Guide](../../../../../docs/guides/browser-use/core-features/extension.md) - Learn how to use browser extensions
+- [Browser Extensions Guide](../../../../../../docs/guides/browser-use/core-features/extension.md) - Learn how to use browser extensions
 
 
 ```python
@@ -196,7 +196,7 @@ used with BrowserContext for browser session creation.
 
 ## Related Resources
 
-- [Browser API Reference](../../browser-use/browser.md)
+- [Browser API Reference](browser.md)
 
 ---
 

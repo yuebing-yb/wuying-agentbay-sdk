@@ -2,7 +2,7 @@
 
 ## 💾 Related Tutorial
 
-- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
+- [Data Persistence Guide](../../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
 
 Provides methods to manage persistent contexts in the AgentBay cloud environment.
 
@@ -306,13 +306,7 @@ Corresponds to Python's update() method
 #### Parameters
 
 | Name | Type | Description |
-| :------ | :------ | :---## Related Resources
-
-- [Session API Reference](session.md)
-- [Context Manager API Reference](context-manager.md)
-
-
---- |
+| :------ | :------ | :------ |
 | `context` | ``Context`` | The Context object to update. |
 
 #### Returns
@@ -320,3 +314,9 @@ Corresponds to Python's update() method
 `Promise`\<`OperationResult`\>
 
 OperationResult with updated context data and requestId
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Context Manager API Reference](context-manager.md)
+

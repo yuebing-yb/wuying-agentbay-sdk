@@ -62,25 +62,29 @@ function getTutorialSection(moduleName: string, metadata: Metadata): string {
 }
 
 function calculateResourcePath(resource: ResourceConfig, moduleConfig: ModuleConfig): string {
-  const category = resource.category || moduleConfig.category || 'common-features/basics';
+  const targetCategory = resource.category || 'common-features/basics';
+  const currentCategory = moduleConfig.category || 'common-features/basics';
   const module = resource.module;
 
-  switch (category) {
-    case 'common-features/basics':
-      return `${module}.md`;
-    case 'common-features/advanced':
-      return `../advanced/${module}.md`;
-    case 'browser-use':
-      return `../../browser-use/${module}.md`;
-    case 'codespace':
-      return `../../codespace/${module}.md`;
-    case 'computer-use':
-      return `../../computer-use/${module}.md`;
-    case 'mobile-use':
-      return `../../mobile-use/${module}.md`;
-    default:
-      return `../../${category}/${module}.md`;
+  // If same category, just use module name
+  if (targetCategory === currentCategory) {
+    return `${module}.md`;
   }
+
+  // Calculate relative path from current category to target category
+  const currentParts = currentCategory.split('/');
+  const targetParts = targetCategory.split('/');
+
+  // Go up from current directory
+  let relativePath = '';
+  for (let i = 0; i < currentParts.length; i++) {
+    relativePath += '../';
+  }
+
+  // Go down to target directory
+  relativePath += targetParts.join('/') + '/' + module + '.md';
+
+  return relativePath;
 }
 
 function getRelatedResourcesSection(moduleName: string, metadata: Metadata): string {
@@ -119,14 +123,28 @@ function addAfterTitle(content: string, insertion: string): string {
 }
 
 function addBeforeFooter(content: string, insertion: string): string {
-  const footerMarker = '---';
-  const lastFooterIndex = content.lastIndexOf(footerMarker);
+  // Look for the documentation footer marker (standalone line with ---)
+  const lines = content.split('\n');
+  let footerIndex = -1;
 
-  if (lastFooterIndex === -1) {
+  // Find the last standalone --- line (not in a table)
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i].trim();
+    if (line === '---') {
+      // Check if this is not part of a table (previous line should not be a table row)
+      if (i === 0 || !lines[i - 1].includes('|')) {
+        footerIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (footerIndex === -1) {
     return content + '\n' + insertion;
   }
 
-  return content.slice(0, lastFooterIndex) + insertion + '\n' + content.slice(lastFooterIndex);
+  lines.splice(footerIndex, 0, insertion.trimEnd(), '');
+  return lines.join('\n');
 }
 
 function enhanceMarkdownFile(filePath: string, metadata: Metadata): void {
@@ -138,15 +156,15 @@ function enhanceMarkdownFile(filePath: string, metadata: Metadata): void {
     return;
   }
 
-  // Add tutorial section after title
+  // Add tutorial section after title (only if not already present)
   const tutorialSection = getTutorialSection(moduleName, metadata);
-  if (tutorialSection) {
+  if (tutorialSection && !content.includes('Related Tutorial')) {
     content = addAfterTitle(content, tutorialSection);
   }
 
-  // Add related resources before footer
+  // Add related resources before footer (only if not already present)
   const resourcesSection = getRelatedResourcesSection(moduleName, metadata);
-  if (resourcesSection) {
+  if (resourcesSection && !content.includes('## Related Resources')) {
     content = addBeforeFooter(content, resourcesSection);
   }
 
