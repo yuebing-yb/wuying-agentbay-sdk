@@ -216,7 +216,7 @@ describe("Context Clear Operations", () => {
             expect(result.success).toBe(true);
             expect(result.contextId).toBe("context-123");
             expect(result.status).toBe("available");
-            expect(result.requestId).toBe("status-request-id-2");
+            expect(result.requestId).toBe("clear-request-id");
         });
 
         it("should timeout if clearing takes too long", async () => {

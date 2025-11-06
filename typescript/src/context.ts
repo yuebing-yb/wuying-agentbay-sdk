@@ -858,7 +858,7 @@ export class ContextService {
         const elapsed = (Date.now() - startTime) / 1000;
         logInfo(`Context cleared successfully in ${elapsed.toFixed(2)} seconds`);
         return {
-          requestId: statusResult.requestId,
+          requestId: startResult.requestId,
           success: true,
           contextId: statusResult.contextId,
           status,

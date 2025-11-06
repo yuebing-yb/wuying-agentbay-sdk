@@ -806,10 +806,15 @@ class ContextService:
         on the backend. The context's state will transition to "clearing" while the operation
         is in progress.
 
-        :param context_id: Unique ID of the context to clear.
-        :return: A ClearContextResult object indicating the task has been successfully started,
-                 with status field set to "clearing".
-        :raises AgentBayError: If the backend API rejects the clearing request (e.g., invalid ID).
+        Args:
+            context_id: Unique ID of the context to clear.
+
+        Returns:
+            A ClearContextResult object indicating the task has been successfully started,
+            with status field set to "clearing".
+
+        Raises:
+            AgentBayError: If the backend API rejects the clearing request (e.g., invalid ID).
         """
         try:
             log_api_call("ClearContext", f"ContextId={context_id}")
@@ -866,8 +871,11 @@ class ContextService:
         This method calls GetContext API directly and parses the raw response to extract
         the state field, which indicates the current clearing status.
 
-        :param context_id: ID of the context.
-        :return: ClearContextResult object containing the current task status.
+        Args:
+            context_id: ID of the context.
+
+        Returns:
+            ClearContextResult object containing the current task status.
         """
         try:
             log_api_call("GetContext", f"ContextId={context_id} (for clear status)")
@@ -953,13 +961,18 @@ class ContextService:
         - "clearing": Data clearing is in progress
         - "available": Clearing completed successfully (final success state)
 
-        :param context_id: Unique ID of the context to clear.
-        :param timeout: (Optional) Timeout in seconds to wait for task completion, default is 60 seconds.
-        :param poll_interval: (Optional) Interval in seconds between status polls, default is 2 seconds.
-        :return: A ClearContextResult object containing the final task result.
-                 The status field will be "available" on success, or other states if interrupted.
-        :raises ClearanceTimeoutError: If the task fails to complete within the specified timeout.
-        :raises AgentBayError: If an API or network error occurs during execution.
+        Args:
+        context_id: Unique ID of the context to clear.
+        timeout: Timeout in seconds to wait for task completion. Defaults to 60.
+        poll_interval: Interval in seconds between status polls. Defaults to 2.0.
+
+    Returns:
+        ClearContextResult object containing the final task result.
+        The status field will be "available" on success.
+
+    Raises:
+        ClearanceTimeoutError: If the task fails to complete within the timeout.
+        AgentBayError: If an API or network error occurs during execution.
         """
         # 1. Asynchronously start the clearing task
         start_result = self.clear_async(context_id)
@@ -988,7 +1001,7 @@ class ContextService:
                 return status_result
 
             status = status_result.status
-            logger.info(
+            logger.debug(
                 f"Clear task status: {status} (attempt {attempt}/{max_attempts})"
             )
 
@@ -998,7 +1011,7 @@ class ContextService:
                 elapsed = time.time() - start_time
                 logger.info(f"Context cleared successfully in {elapsed:.2f} seconds")
                 return ClearContextResult(
-                    request_id=status_result.request_id,
+                    request_id=start_result.request_id,
                     success=True,
                     context_id=status_result.context_id,
                     status=status,

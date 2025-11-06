@@ -1071,7 +1071,7 @@ func (cs *ContextService) Clear(contextID string, timeoutSeconds int, pollInterv
 			fmt.Printf("Context cleared successfully\n")
 			return &ContextClearResult{
 				ApiResponse: models.ApiResponse{
-					RequestID: statusResult.RequestID,
+					RequestID: startResult.RequestID,
 				},
 				Success:      true,
 				ContextID:    statusResult.ContextID,
