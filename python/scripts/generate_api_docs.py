@@ -263,16 +263,24 @@ def get_related_resources_section(module_name: str, metadata: dict[str, Any]) ->
 def fix_code_block_indentation(content: str) -> str:
     """
     Fix code block indentation in Example sections.
-    pydoc-markdown adds 4 spaces before code fences in examples, which breaks rendering.
+    pydoc-markdown adds indentation before code fences in examples, which breaks rendering.
     This function removes that extra indentation.
+
+    Handles two patterns:
+    1. **Example**:\n\n    ```python (4 spaces)
+    2. **Example**:\n\n        ```python (8 spaces)
     """
     import re
-    # Pattern to match Example sections with indented code blocks
-    # Matches: "**Example**:\n\n    ```python" and all lines until closing ```
-    # Allow empty lines (without the 4 spaces)
-    pattern = r'(\*\*Example\*\*:)\n\n(    ```python\n(?:.*\n)*?    ```)'
 
-    def fix_block(match):
+    # Pattern 1: 4-space indentation (most common)
+    # Matches: "**Example**:\n\n    ```python"
+    pattern1 = r'(\*\*Example\*\*:)\n\n(    ```python\n(?:.*\n)*?    ```)'
+
+    # Pattern 2: 8-space indentation (when source has blank line after Example:)
+    # Matches: "**Example**:\n\n  \n        ```python" (with an extra line containing 2 spaces)
+    pattern2 = r'(\*\*Example\*\*:)\n\n  \n(        ```python\n(?:.*\n)*?        ```)'
+
+    def fix_block_4_spaces(match):
         header = match.group(1)  # "**Example**:"
         code_block = match.group(2)  # The indented code block
 
@@ -282,12 +290,29 @@ def fix_code_block_indentation(content: str) -> str:
             if line.startswith('    '):  # 4 spaces
                 fixed_lines.append(line[4:])  # Remove the 4 spaces
             else:
-                # Empty line or line without 4-space prefix
                 fixed_lines.append(line)
 
         return header + '\n\n' + '\n'.join(fixed_lines)
 
-    return re.sub(pattern, fix_block, content, flags=re.MULTILINE)
+    def fix_block_8_spaces(match):
+        header = match.group(1)  # "**Example**:"
+        code_block = match.group(2)  # The indented code block
+
+        # Remove 8 spaces from each line that has them
+        fixed_lines = []
+        for line in code_block.split('\n'):
+            if line.startswith('        '):  # 8 spaces
+                fixed_lines.append(line[8:])  # Remove the 8 spaces
+            else:
+                fixed_lines.append(line)
+
+        return header + '\n\n' + '\n'.join(fixed_lines)
+
+    # Apply both patterns
+    content = re.sub(pattern2, fix_block_8_spaces, content, flags=re.MULTILINE)
+    content = re.sub(pattern1, fix_block_4_spaces, content, flags=re.MULTILINE)
+
+    return content
 
 
 def format_markdown(raw_content: str, title: str, module_name: str, metadata: dict[str, Any]) -> str:

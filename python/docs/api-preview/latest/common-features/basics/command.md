@@ -61,44 +61,44 @@ Execute a shell command in the cloud environment with a specified timeout.
 
 **Example**:
 
-            ```python
-            from agentbay import AgentBay
+```python
+from agentbay import AgentBay
 
-            # Initialize and create session
-            agent_bay = AgentBay(api_key="your_api_key")
-            result = agent_bay.create()
-            if result.success:
-                session = result.session
+# Initialize and create session
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
+if result.success:
+    session = result.session
 
-                # Execute a simple command
-                cmd_result = session.command.execute_command("echo 'Hello, World!'")
-                if cmd_result.success:
-                    print(f"Command output: {cmd_result.output}")
-                    # Output: Command output: Hello, World!
-                    print(f"Request ID: {cmd_result.request_id}")
-                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+    # Execute a simple command
+    cmd_result = session.command.execute_command("echo 'Hello, World!'")
+    if cmd_result.success:
+        print(f"Command output: {cmd_result.output}")
+        # Output: Command output: Hello, World!
+        print(f"Request ID: {cmd_result.request_id}")
+        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
-                # Execute a command with custom timeout (5 seconds)
-                cmd_result = session.command.execute_command("sleep 2 && echo 'Done'", timeout_ms=5000)
-                if cmd_result.success:
-                    print(f"Command output: {cmd_result.output}")
-                    # Output: Command output: Done
+    # Execute a command with custom timeout (5 seconds)
+    cmd_result = session.command.execute_command("sleep 2 && echo 'Done'", timeout_ms=5000)
+    if cmd_result.success:
+        print(f"Command output: {cmd_result.output}")
+        # Output: Command output: Done
 
-                # Execute a command that lists files
-                cmd_result = session.command.execute_command("ls -la /tmp")
-                if cmd_result.success:
-                    print(f"Directory listing:
+    # Execute a command that lists files
+    cmd_result = session.command.execute_command("ls -la /tmp")
+    if cmd_result.success:
+        print(f"Directory listing:
 {cmd_result.output}")
 
-                # Handle command timeout
-                cmd_result = session.command.execute_command("sleep 10", timeout_ms=1000)
-                if not cmd_result.success:
-                    print(f"Error: {cmd_result.error_message}")
-                    # Output: Error: Command execution timed out
+    # Handle command timeout
+    cmd_result = session.command.execute_command("sleep 10", timeout_ms=1000)
+    if not cmd_result.success:
+        print(f"Error: {cmd_result.error_message}")
+        # Output: Error: Command execution timed out
 
-                # Clean up
-                session.delete()
-            ```
+    # Clean up
+    session.delete()
+```
   
 
 **Notes**:
