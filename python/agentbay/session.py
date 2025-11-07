@@ -992,9 +992,37 @@ class Session:
             McpToolResult: Result containing success status, data, and error message
 
         Example:
-            >>> result = session.call_mcp_tool("shell", {"command": "ls", "timeout_ms": 1000})
-            >>> if result.success:
-            >>>     print(result.data)
+            ```python
+            # Call the shell tool to execute a command
+            result = session.call_mcp_tool("shell", {
+                "command": "echo 'Hello World'",
+                "timeout_ms": 1000
+            })
+
+            if result.success:
+                print(f"Output: {result.data}")
+                # Output: Hello World
+                print(f"Request ID: {result.request_id}")
+            else:
+                print(f"Error: {result.error_message}")
+
+            # Call with custom timeouts
+            result = session.call_mcp_tool(
+                "shell",
+                {"command": "pwd", "timeout_ms": 1000},
+                read_timeout=30,
+                connect_timeout=10
+            )
+
+            # Example with error handling
+            result = session.call_mcp_tool("shell", {
+                "command": "invalid_command_12345",
+                "timeout_ms": 1000
+            })
+            if not result.success:
+                print(f"Command failed: {result.error_message}")
+                # Output: Command failed: sh: 1: invalid_command_12345: not found
+            ```
         """
         from agentbay.model import McpToolResult
         from agentbay.api.models import CallMcpToolRequest

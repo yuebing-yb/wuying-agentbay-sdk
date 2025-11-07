@@ -160,8 +160,37 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 //		fmt.Println("VPC session created")
 //		// Output: VPC session created
 //
+//		// RECOMMENDED: Create a session with context synchronization
+//		// First, create a context
+//		contextResult, err := client.Context.Get("my-context", true)
+//		if err != nil {
+//			panic(err)
+//		}
+//		// Result: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
+//
+//		contextSync := &agentbay.ContextSync{
+//			ContextID: contextResult.Context.ID,
+//			Path:      "/home/wuying",
+//			Policy:    agentbay.NewSyncPolicy(),
+//		}
+//		syncParams := &agentbay.CreateSessionParams{
+//			ImageId:     "windows_latest",
+//			ContextSync: []*agentbay.ContextSync{contextSync},
+//		}
+//		syncResult, err := client.Create(syncParams)
+//		if err != nil {
+//			panic(err)
+//		}
+//		fmt.Printf("Created session with context sync: %s\n", syncResult.Session.SessionID)
+//		// Result: Waiting for context synchronization to complete...
+//		// Result: Context SdkCtx-xxxxxxxxxxxxxxx status: Preparing, path: /home/wuying
+//		// Result: Context SdkCtx-xxxxxxxxxxxxxxx status: Success, path: /home/wuying
+//		// Result: Context synchronization completed successfully
+//		// Result: Created session with context sync: session-xxxxxxxxxxxxxxx
+//
 //		session.Delete()
 //		customResult.Session.Delete()
+//		syncResult.Session.Delete()
 //	}
 func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if params == nil {

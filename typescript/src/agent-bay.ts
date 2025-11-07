@@ -232,6 +232,26 @@ export class AgentBay {
    *   console.log('VPC session created');
    *   await customResult.session.delete();
    * }
+   *
+   * // RECOMMENDED: Create a session with context synchronization
+   * const contextResult = await agentBay.context.get('my-context', true);
+   * if (contextResult.success && contextResult.context) {
+   *   const contextSync = new ContextSync({
+   *     contextId: contextResult.context.id,
+   *     path: '/mnt/persistent',
+   *     policy: SyncPolicy.default()
+   *   });
+   *
+   *   const syncResult = await agentBay.create({
+   *     imageId: 'linux_latest',
+   *     contextSync: [contextSync]
+   *   });
+   *
+   *   if (syncResult.success) {
+   *     console.log(`Created session with context sync: ${syncResult.session.sessionId}`);
+   *     await syncResult.session.delete();
+   *   }
+   * }
    * ```
    *
    * @remarks

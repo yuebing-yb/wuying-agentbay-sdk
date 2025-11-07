@@ -419,6 +419,18 @@ class AgentBay:
             if result.success:
                 print(f"Session created with labels: {result.session.session_id}")
                 result.session.delete()
+
+            # Create a browser session with browser replay enabled
+            browser_params = CreateSessionParams(
+                image_id="browser_latest",
+                enable_browser_replay=True  # Enable browser replay
+            )
+            browser_result = agent_bay.create(browser_params)
+            if browser_result.success:
+                browser_session = browser_result.session
+                print(f"Created browser session with replay: {browser_session.session_id}")
+                # Browser replay files are automatically generated for internal processing
+                browser_session.delete()
             ```
 
         Note:

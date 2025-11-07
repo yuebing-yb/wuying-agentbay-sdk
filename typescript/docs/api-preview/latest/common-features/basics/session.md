@@ -551,23 +551,33 @@ Retrieves detailed information about the current session.
 `Promise`\<`OperationResult`\>
 
 Promise resolving to OperationResult containing:
-         - success: Whether the operation succeeded
-         - data: SessionInfo object with session details
+         - success: Whether the operation succeeded (always true if no exception)
+         - data: SessionInfo object with the following fields:
+           - sessionId (string): The session identifier
+           - resourceUrl (string): URL for accessing the session
+           - appId (string): Application ID (for desktop sessions)
+           - authCode (string): Authentication code
+           - connectionProperties (string): Connection configuration
+           - resourceId (string): Resource identifier
+           - resourceType (string): Type of resource (e.g., "Desktop")
+           - ticket (string): Access ticket
          - requestId: Unique identifier for this API request
          - errorMessage: Error description if operation failed
 
 **`Throws`**
 
-Error if the API call fails or network issues occur.
+Error if the API request fails or response is invalid.
 
 **`Example`**
 
 ```typescript
 import { AgentBay } from 'wuying-agentbay-sdk';
 
+// Initialize the SDK
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-const result = await agentBay.create();
 
+// Create a session
+const result = await agentBay.create();
 if (result.success) {
   const session = result.session;
 
@@ -576,14 +586,25 @@ if (result.success) {
   if (infoResult.success) {
     const info = infoResult.data;
     console.log(`Session ID: ${info.sessionId}`);
+    // Output: Session ID: session-04bdwfj7u22a1s30g
+
     console.log(`Resource URL: ${info.resourceUrl}`);
+    // Output: Resource URL: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
+
     console.log(`Resource Type: ${info.resourceType}`);
-    // Output:
-    // Session ID: session-04bdwfj7u22a1s30g
-    // Resource URL: https://...
-    // Resource Type: vpc
+    // Output: Resource Type: Desktop
+
+    console.log(`Request ID: ${infoResult.requestId}`);
+    // Output: Request ID: 8D2C3E4F-1A5B-6C7D-8E9F-0A1B2C3D4E5F
+
+    // Use resource_url for external access
+    if (info.resourceUrl) {
+      console.log(`Access session at: ${info.resourceUrl}`);
+      // Output: Access session at: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
+    }
   }
 
+  // Clean up
   await session.delete();
 }
 ```
@@ -591,10 +612,16 @@ if (result.success) {
 **`Remarks`**
 
 **Behavior:**
-- Retrieves current session metadata from the backend
-- Includes resource URL, type, and connection properties
-- For VPC sessions, includes VPC-specific information
-- Information is fetched in real-time from the API
+- This method calls the GetMcpResource API to retrieve session metadata
+- The returned SessionInfo contains:
+  - sessionId: The session identifier
+  - resourceUrl: URL for accessing the session
+  - Desktop-specific fields (appId, authCode, connectionProperties, etc.)
+    are populated from the DesktopInfo section of the API response
+- Session info is retrieved from the AgentBay API in real-time
+- The resourceUrl can be used for browser-based access
+- Desktop-specific fields (appId, authCode) are only populated for desktop sessions
+- This method does not modify the session state
 
 **`See`**
 

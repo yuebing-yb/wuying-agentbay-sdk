@@ -329,6 +329,66 @@ func (s *Session) GetLabels() (*LabelResult, error)
 
 GetLabels gets the labels for this session.
 
+Returns:
+  - *LabelResult: Result containing labels as JSON string and request ID
+  - error: Error if the operation fails
+
+Behavior:
+
+- Retrieves the labels that were previously set for this session - Returns labels as a JSON string -
+Can be used to identify and filter sessions
+
+**Example:**
+
+```go
+package main
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay("your_api_key")
+	if err != nil {
+		panic(err)
+	}
+
+	// Create a session with labels
+
+	params := agentbay.NewCreateSessionParams()
+	params.Labels = map[string]string{
+		"project": "demo",
+		"env":     "production",
+	}
+	result, err := client.Create(params)
+	if err != nil {
+		panic(err)
+	}
+	session := result.Session
+
+	// Get labels from the session
+
+	labelResult, err := session.GetLabels()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Retrieved labels: %s\n", labelResult.Labels)
+
+	// Output: Retrieved labels: {"project":"demo","env":"production"}
+
+	// Parse the JSON to use the labels
+
+	var labels map[string]string
+	if err := json.Unmarshal([]byte(labelResult.Labels), &labels); err == nil {
+		fmt.Printf("Project: %s, Environment: %s\n", labels["project"], labels["env"])
+
+		// Output: Project: demo, Environment: production
+
+	}
+	session.Delete()
+}
+```
+
 #### GetLink
 
 ```go
@@ -554,6 +614,69 @@ func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error)
 ```
 
 SetLabels sets the labels for this session.
+
+Parameters:
+  - labels: Labels to set for the session as a map of key-value pairs
+
+Returns:
+  - *LabelResult: Result containing request ID
+  - error: Error if validation fails or operation fails
+
+Behavior:
+
+- Validates that labels map is not nil or empty - All keys and values must be non-empty strings
+- Converts labels to JSON and sends to the backend - Labels can be used for session filtering and
+organization
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay("your_api_key")
+	if err != nil {
+		panic(err)
+	}
+
+	// Create a session
+
+	result, err := client.Create(nil)
+	if err != nil {
+		panic(err)
+	}
+	session := result.Session
+
+	// Set labels for the session
+
+	labels := map[string]string{
+		"project": "demo",
+		"env":     "test",
+	}
+	labelResult, err := session.SetLabels(labels)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Labels set successfully (RequestID: %s)\n", labelResult.RequestID)
+
+	// Output: Labels set successfully (RequestID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B)
+
+	// Get labels back
+
+	getResult, err := session.GetLabels()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Retrieved labels: %s\n", getResult.Labels)
+
+	// Output: Retrieved labels: {"project":"demo","env":"test"}
+
+	session.Delete()
+}
+```
 
 #### ValidateLabels
 

@@ -353,22 +353,23 @@ class ExtensionsService:
             ValueError: If extension_ids is empty or invalid.
             
         Example:
-            ```python
-            # Create extensions
-            ext1 = extensions_service.create("/path/to/ext1.zip")
-            ext2 = extensions_service.create("/path/to/ext2.zip")
-            
-            # Create extension option for browser integration
-            ext_option = extensions_service.create_extension_option([ext1.id, ext2.id])
-            
-            # Use with BrowserContext
-            browser_context = BrowserContext(
-                context_id="browser_session",
-                auto_upload=True,
-                extension_context_id=ext_option.context_id,
-                extension_ids=ext_option.extension_ids
-            )
-            ```
+
+        ```python
+        # Create extensions
+        ext1 = extensions_service.create("/path/to/ext1.zip")
+        ext2 = extensions_service.create("/path/to/ext2.zip")
+        
+        # Create extension option for browser integration
+        ext_option = extensions_service.create_extension_option([ext1.id, ext2.id])
+        
+        # Use with BrowserContext
+        browser_context = BrowserContext(
+            context_id="browser_session",
+            auto_upload=True,
+            extension_context_id=ext_option.context_id,
+            extension_ids=ext_option.extension_ids
+        )
+        ```
         """
         return ExtensionOption(
             context_id=self.context_id,
