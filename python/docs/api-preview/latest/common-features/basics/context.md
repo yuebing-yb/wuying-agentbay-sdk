@@ -156,40 +156,40 @@ Gets a context by name or ID. Optionally creates it if it doesn't exist.
 
 **Example**:
 
-    ```python
-    from agentbay import AgentBay
+```python
+from agentbay import AgentBay
 
-    # Initialize the SDK
-    agent_bay = AgentBay(api_key="your_api_key")
+# Initialize the SDK
+agent_bay = AgentBay(api_key="your_api_key")
 
-    # Get an existing context by name
-    result = agent_bay.context.get(name="my-context")
-    if result.success:
-        context = result.context
-        print(f"Context ID: {context.id}")
-        # Output: Context ID: ctx-04bdwfj7u22a1s30g
-        print(f"Context Name: {context.name}")
-        # Output: Context Name: my-context
+# Get an existing context by name
+result = agent_bay.context.get(name="my-context")
+if result.success:
+    context = result.context
+    print(f"Context ID: {context.id}")
+    # Output: Context ID: ctx-04bdwfj7u22a1s30g
+    print(f"Context Name: {context.name}")
+    # Output: Context Name: my-context
 
-    # Create a new context if it doesn't exist
-    result = agent_bay.context.get(name="new-context", create=True)
-    if result.success:
-        print(f"Context created: {result.context.id}")
-        # Output: Context created: ctx-04bdwfj7u22a1s30h
-        print(f"Request ID: {result.request_id}")
-        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+# Create a new context if it doesn't exist
+result = agent_bay.context.get(name="new-context", create=True)
+if result.success:
+    print(f"Context created: {result.context.id}")
+    # Output: Context created: ctx-04bdwfj7u22a1s30h
+    print(f"Request ID: {result.request_id}")
+    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
-    # Get a context by ID
-    result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
-    if result.success:
-        print(f"Found context: {result.context.name}")
+# Get a context by ID
+result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
+if result.success:
+    print(f"Found context: {result.context.name}")
 
-    # Handle context not found
-    result = agent_bay.context.get(name="nonexistent-context")
-    if not result.success:
-        print(f"Error: {result.error_message}")
-        # Output: Error: Context not found
-    ```
+# Handle context not found
+result = agent_bay.context.get(name="nonexistent-context")
+if not result.success:
+    print(f"Error: {result.error_message}")
+    # Output: Error: Context not found
+```
   
 
 **Notes**:
@@ -250,42 +250,42 @@ Updates the specified context (currently only name can be updated).
 
 **Example**:
 
-    ```python
-    from agentbay import AgentBay
-    from agentbay.context import Context
+```python
+from agentbay import AgentBay
+from agentbay.context import Context
 
-    # Initialize the SDK
-    agent_bay = AgentBay(api_key="your_api_key")
+# Initialize the SDK
+agent_bay = AgentBay(api_key="your_api_key")
 
-    # Get an existing context
-    result = agent_bay.context.get(name="old-name")
-    if result.success:
-        context = result.context
-        print(f"Original name: {context.name}")
-        # Output: Original name: old-name
+# Get an existing context
+result = agent_bay.context.get(name="old-name")
+if result.success:
+    context = result.context
+    print(f"Original name: {context.name}")
+    # Output: Original name: old-name
 
-        # Update the context name
-        context.name = "new-name"
-        update_result = agent_bay.context.update(context)
-        if update_result.success:
-            print(f"Context updated successfully")
-            # Output: Context updated successfully
-            print(f"Request ID: {update_result.request_id}")
-            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+    # Update the context name
+    context.name = "new-name"
+    update_result = agent_bay.context.update(context)
+    if update_result.success:
+        print(f"Context updated successfully")
+        # Output: Context updated successfully
+        print(f"Request ID: {update_result.request_id}")
+        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
-        # Verify the update
-        verify_result = agent_bay.context.get(context_id=context.id)
-        if verify_result.success:
-            print(f"New name: {verify_result.context.name}")
-            # Output: New name: new-name
+    # Verify the update
+    verify_result = agent_bay.context.get(context_id=context.id)
+    if verify_result.success:
+        print(f"New name: {verify_result.context.name}")
+        # Output: New name: new-name
 
-    # Handle update failure
-    invalid_context = Context(id="invalid-id", name="new-name")
-    result = agent_bay.context.update(invalid_context)
-    if not result.success:
-        print(f"Error: {result.error_message}")
-        # Output: Error: Context not found
-    ```
+# Handle update failure
+invalid_context = Context(id="invalid-id", name="new-name")
+result = agent_bay.context.update(invalid_context)
+if not result.success:
+    print(f"Error: {result.error_message}")
+    # Output: Error: Context not found
+```
   
 
 **Notes**:

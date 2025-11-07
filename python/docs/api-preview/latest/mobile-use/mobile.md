@@ -102,23 +102,23 @@ Taps on the mobile screen at the specified coordinates.
 
 **Example**:
 
-    ```python
-    from agentbay import AgentBay
+```python
+from agentbay import AgentBay
 
-    agent_bay = AgentBay(api_key="your_api_key")
-    result = agent_bay.create()
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
 
-    if result.success:
-        session = result.session
-        mobile = session.mobile
+if result.success:
+    session = result.session
+    mobile = session.mobile
 
-        # Tap at coordinates
-        tap_result = mobile.tap(500, 1000)
-        if tap_result.success:
-            print("Tap successful")
+    # Tap at coordinates
+    tap_result = mobile.tap(500, 1000)
+    if tap_result.success:
+        print("Tap successful")
 
-        session.delete()
-    ```
+    session.delete()
+```
   
 
 **See Also**:

@@ -159,39 +159,39 @@ Clicks the mouse at the specified screen coordinates.
 
 **Example**:
 
-    ```python
-    from agentbay import AgentBay
-    from agentbay.computer.computer import MouseButton
+```python
+from agentbay import AgentBay
+from agentbay.computer.computer import MouseButton
 
-    # Initialize and create a session
-    agent_bay = AgentBay(api_key="your_api_key")
-    result = agent_bay.create()
+# Initialize and create a session
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
 
-    if result.success:
-        session = result.session
-        computer = session.computer
+if result.success:
+    session = result.session
+    computer = session.computer
 
-        # Single left click at coordinates
-        click_result = computer.click_mouse(100, 200)
-        if click_result.success:
-            print("Left click successful")
-            # Output: Left click successful
+    # Single left click at coordinates
+    click_result = computer.click_mouse(100, 200)
+    if click_result.success:
+        print("Left click successful")
+        # Output: Left click successful
 
-        # Right click to open context menu
-        right_click_result = computer.click_mouse(300, 400, MouseButton.RIGHT)
-        if right_click_result.success:
-            print("Right click successful")
-            # Output: Right click successful
+    # Right click to open context menu
+    right_click_result = computer.click_mouse(300, 400, MouseButton.RIGHT)
+    if right_click_result.success:
+        print("Right click successful")
+        # Output: Right click successful
 
-        # Double click
-        double_click_result = computer.click_mouse(500, 600, MouseButton.DOUBLE_LEFT)
-        if double_click_result.success:
-            print("Double click successful")
-            # Output: Double click successful
+    # Double click
+    double_click_result = computer.click_mouse(500, 600, MouseButton.DOUBLE_LEFT)
+    if double_click_result.success:
+        print("Double click successful")
+        # Output: Double click successful
 
-        # Clean up
-        session.delete()
-    ```
+    # Clean up
+    session.delete()
+```
   
 
 **Notes**:
@@ -321,23 +321,23 @@ Types text into the currently focused input field.
 
 **Example**:
 
-    ```python
-    from agentbay import AgentBay
+```python
+from agentbay import AgentBay
 
-    agent_bay = AgentBay(api_key="your_api_key")
-    result = agent_bay.create()
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
 
-    if result.success:
-        session = result.session
-        computer = session.computer
+if result.success:
+    session = result.session
+    computer = session.computer
 
-        # Type text into focused field
-        input_result = computer.input_text("Hello, AgentBay!")
-        if input_result.success:
-            print("Text input successful")
+    # Type text into focused field
+    input_result = computer.input_text("Hello, AgentBay!")
+    if input_result.success:
+        print("Text input successful")
 
-        session.delete()
-    ```
+    session.delete()
+```
   
 
 **Notes**:

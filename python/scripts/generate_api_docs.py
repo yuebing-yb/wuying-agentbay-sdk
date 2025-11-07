@@ -260,9 +260,42 @@ def get_related_resources_section(module_name: str, metadata: dict[str, Any]) ->
     return "\n".join(lines) + "\n\n"
 
 
+def fix_code_block_indentation(content: str) -> str:
+    """
+    Fix code block indentation in Example sections.
+    pydoc-markdown adds 4 spaces before code fences in examples, which breaks rendering.
+    This function removes that extra indentation.
+    """
+    import re
+    # Pattern to match Example sections with indented code blocks
+    # Matches: "**Example**:\n\n    ```python" and all lines until closing ```
+    # Allow empty lines (without the 4 spaces)
+    pattern = r'(\*\*Example\*\*:)\n\n(    ```python\n(?:.*\n)*?    ```)'
+
+    def fix_block(match):
+        header = match.group(1)  # "**Example**:"
+        code_block = match.group(2)  # The indented code block
+
+        # Remove 4 spaces from each line that has them
+        fixed_lines = []
+        for line in code_block.split('\n'):
+            if line.startswith('    '):  # 4 spaces
+                fixed_lines.append(line[4:])  # Remove the 4 spaces
+            else:
+                # Empty line or line without 4-space prefix
+                fixed_lines.append(line)
+
+        return header + '\n\n' + '\n'.join(fixed_lines)
+
+    return re.sub(pattern, fix_block, content, flags=re.MULTILINE)
+
+
 def format_markdown(raw_content: str, title: str, module_name: str, metadata: dict[str, Any]) -> str:
     """Enhanced markdown formatting with metadata injection."""
     content = raw_content.lstrip()
+
+    # Fix code block indentation in Example sections
+    content = fix_code_block_indentation(content)
 
     # 1. Add title
     if content.startswith("#"):

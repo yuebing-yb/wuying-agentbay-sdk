@@ -392,44 +392,44 @@ List the contents of a directory.
 
 **Example**:
 
-    ```python
-    from agentbay import AgentBay
+```python
+from agentbay import AgentBay
 
-    # Initialize and create session
-    agent_bay = AgentBay(api_key="your_api_key")
-    result = agent_bay.create()
-    if result.success:
-        session = result.session
+# Initialize and create session
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
+if result.success:
+    session = result.session
 
-        # Create some test files and directories
-        session.filesystem.create_directory("/tmp/testdir")
-        session.filesystem.write_file("/tmp/testdir/file1.txt", "Content 1")
-        session.filesystem.write_file("/tmp/testdir/file2.txt", "Content 2")
-        session.filesystem.create_directory("/tmp/testdir/subdir")
+    # Create some test files and directories
+    session.filesystem.create_directory("/tmp/testdir")
+    session.filesystem.write_file("/tmp/testdir/file1.txt", "Content 1")
+    session.filesystem.write_file("/tmp/testdir/file2.txt", "Content 2")
+    session.filesystem.create_directory("/tmp/testdir/subdir")
 
-        # List the directory
-        list_result = session.filesystem.list_directory("/tmp/testdir")
-        if list_result.success:
-            print(f"Found {len(list_result.entries)} entries")
-            # Output: Found 3 entries
-            for entry in list_result.entries:
-                entry_type = "DIR" if entry["isDirectory"] else "FILE"
-                print(f"[{entry_type}] {entry['name']}")
-            # Output: [FILE] file1.txt
-            # Output: [FILE] file2.txt
-            # Output: [DIR] subdir
-            print(f"Request ID: {list_result.request_id}")
-            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+    # List the directory
+    list_result = session.filesystem.list_directory("/tmp/testdir")
+    if list_result.success:
+        print(f"Found {len(list_result.entries)} entries")
+        # Output: Found 3 entries
+        for entry in list_result.entries:
+            entry_type = "DIR" if entry["isDirectory"] else "FILE"
+            print(f"[{entry_type}] {entry['name']}")
+        # Output: [FILE] file1.txt
+        # Output: [FILE] file2.txt
+        # Output: [DIR] subdir
+        print(f"Request ID: {list_result.request_id}")
+        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
-        # Handle directory not found
-        result = session.filesystem.list_directory("/tmp/nonexistent")
-        if not result.success:
-            print(f"Error: {result.error_message}")
-            # Output: Error: Failed to list directory
+    # Handle directory not found
+    result = session.filesystem.list_directory("/tmp/nonexistent")
+    if not result.success:
+        print(f"Error: {result.error_message}")
+        # Output: Error: Failed to list directory
 
-        # Clean up
-        session.delete()
-    ```
+    # Clean up
+    session.delete()
+```
   
 
 **Notes**:
@@ -533,37 +533,37 @@ Read the contents of a file. Automatically handles large files by chunking.
 
 **Example**:
 
-    ```python
-    from agentbay import AgentBay
+```python
+from agentbay import AgentBay
 
-    # Initialize and create session
-    agent_bay = AgentBay(api_key="your_api_key")
-    result = agent_bay.create()
-    if result.success:
-        session = result.session
+# Initialize and create session
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
+if result.success:
+    session = result.session
 
-        # Write a file first
-        write_result = session.filesystem.write_file("/tmp/test.txt", "Hello, World!")
-        if write_result.success:
-            print("File written successfully")
+    # Write a file first
+    write_result = session.filesystem.write_file("/tmp/test.txt", "Hello, World!")
+    if write_result.success:
+        print("File written successfully")
 
-        # Read the file
-        read_result = session.filesystem.read_file("/tmp/test.txt")
-        if read_result.success:
-            print(f"File content: {read_result.content}")
-            # Output: File content: Hello, World!
-            print(f"Request ID: {read_result.request_id}")
-            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+    # Read the file
+    read_result = session.filesystem.read_file("/tmp/test.txt")
+    if read_result.success:
+        print(f"File content: {read_result.content}")
+        # Output: File content: Hello, World!
+        print(f"Request ID: {read_result.request_id}")
+        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
-        # Handle file not found
-        result = session.filesystem.read_file("/tmp/nonexistent.txt")
-        if not result.success:
-            print(f"Error: {result.error_message}")
-            # Output: Error: Path does not exist or is a directory: /tmp/nonexistent.txt
+    # Handle file not found
+    result = session.filesystem.read_file("/tmp/nonexistent.txt")
+    if not result.success:
+        print(f"Error: {result.error_message}")
+        # Output: Error: Path does not exist or is a directory: /tmp/nonexistent.txt
 
-        # Clean up
-        session.delete()
-    ```
+    # Clean up
+    session.delete()
+```
   
 
 **Notes**:
