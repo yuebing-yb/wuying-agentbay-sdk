@@ -44,6 +44,23 @@ func (b *Browser) GetEndpointURL() (string, error)
 
 GetEndpointURL returns the endpoint URL if the browser is initialized
 
+**Example:**
+
+```go
+endpointURL, err := session.Browser.GetEndpointURL()
+if err != nil {
+    log.Fatalf("Failed to get endpoint URL: %v", err)
+}
+
+// Use with Playwright
+
+pw, err := playwright.Run()
+defer pw.Stop()
+browser, err := pw.Chromium.ConnectOverCDP(endpointURL)
+defer browser.Close()
+page, err := browser.Contexts()[0].NewPage()
+```
+
 #### GetOption
 
 ```go
@@ -60,6 +77,31 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error)
 
 Initialize initializes the browser instance with the given options. Returns true and nil error if
 successful, false and error otherwise.
+
+**Example:**
+
+```go
+option := browser.NewBrowserOption()
+
+// Add custom configuration
+
+customUA := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+option.UserAgent = &customUA
+option.Viewport = &browser.BrowserViewport{
+    Width:  1920,
+    Height: 1080,
+}
+
+// Initialize browser
+
+success, err := session.Browser.Initialize(option)
+if err != nil {
+    log.Fatalf("Failed to initialize browser: %v", err)
+}
+if !success {
+    log.Fatal("Browser initialization returned false")
+}
+```
 
 #### IsInitialized
 
@@ -124,6 +166,16 @@ type BrowserFingerprint struct {
 
 BrowserFingerprint represents browser fingerprint options
 
+**Example:**
+
+```go
+fingerprint := &browser.BrowserFingerprint{
+    Devices:          []string{"desktop"},
+    OperatingSystems: []string{"windows", "macos"},
+    Locales:          []string{"en-US", "en-GB"},
+}
+```
+
 ### Methods
 
 #### ToMap
@@ -163,6 +215,32 @@ type BrowserOption struct {
 ```
 
 BrowserOption represents browser initialization options
+
+**Example:**
+
+```go
+option := browser.NewBrowserOption()
+
+// Custom user agent
+
+ua := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+option.UserAgent = &ua
+
+// Viewport and screen
+
+option.Viewport = &browser.BrowserViewport{Width: 1920, Height: 1080}
+option.Screen = &browser.BrowserScreen{Width: 1920, Height: 1080}
+
+// Stealth mode
+
+option.UseStealth = true
+
+// Validate configuration
+
+if err := option.Validate(); err != nil {
+    log.Fatalf("Invalid configuration: %v", err)
+}
+```
 
 ### Methods
 
@@ -207,6 +285,40 @@ type BrowserProxy struct {
 
 BrowserProxy represents browser proxy configuration. Supports two types of proxy: custom proxy and
 wuying proxy. Wuying proxy supports two strategies: restricted and polling.
+
+**Example:**
+
+```go
+// Custom proxy
+
+server := "proxy.example.com:8080"
+username := "user"
+password := "pass"
+customProxy := &browser.BrowserProxy{
+    Type:     "custom",
+    Server:   &server,
+    Username: &username,
+    Password: &password,
+}
+
+// WuYing proxy with restricted strategy
+
+strategy := "restricted"
+wuyingProxy := &browser.BrowserProxy{
+    Type:     "wuying",
+    Strategy: &strategy,
+}
+
+// WuYing proxy with polling strategy
+
+pollingStrategy := "polling"
+pollSize := 10
+pollingProxy := &browser.BrowserProxy{
+    Type:     "wuying",
+    Strategy: &pollingStrategy,
+    PollSize: &pollSize,
+}
+```
 
 ### Methods
 

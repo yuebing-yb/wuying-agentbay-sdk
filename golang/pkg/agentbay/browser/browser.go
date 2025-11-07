@@ -11,6 +11,35 @@ import (
 // BrowserProxy represents browser proxy configuration.
 // Supports two types of proxy: custom proxy and wuying proxy.
 // Wuying proxy supports two strategies: restricted and polling.
+//
+// Example:
+//
+//	// Custom proxy
+//	server := "proxy.example.com:8080"
+//	username := "user"
+//	password := "pass"
+//	customProxy := &browser.BrowserProxy{
+//	    Type:     "custom",
+//	    Server:   &server,
+//	    Username: &username,
+//	    Password: &password,
+//	}
+//
+//	// WuYing proxy with restricted strategy
+//	strategy := "restricted"
+//	wuyingProxy := &browser.BrowserProxy{
+//	    Type:     "wuying",
+//	    Strategy: &strategy,
+//	}
+//
+//	// WuYing proxy with polling strategy
+//	pollingStrategy := "polling"
+//	pollSize := 10
+//	pollingProxy := &browser.BrowserProxy{
+//	    Type:     "wuying",
+//	    Strategy: &pollingStrategy,
+//	    PollSize: &pollSize,
+//	}
 type BrowserProxy struct {
 	Type     string  `json:"type"`               // Type of proxy - "custom" or "wuying"
 	Server   *string `json:"server,omitempty"`   // Proxy server address (required for custom type)
@@ -112,6 +141,14 @@ func (s *BrowserScreen) ToMap() map[string]interface{} {
 }
 
 // BrowserFingerprint represents browser fingerprint options
+//
+// Example:
+//
+//	fingerprint := &browser.BrowserFingerprint{
+//	    Devices:          []string{"desktop"},
+//	    OperatingSystems: []string{"windows", "macos"},
+//	    Locales:          []string{"en-US", "en-GB"},
+//	}
 type BrowserFingerprint struct {
 	Devices          []string `json:"devices,omitempty"`          // Device types: "desktop" or "mobile"
 	OperatingSystems []string `json:"operatingSystems,omitempty"` // OS types: "windows", "macos", "linux", "android", "ios"
@@ -162,6 +199,26 @@ func (f *BrowserFingerprint) ToMap() map[string]interface{} {
 }
 
 // BrowserOption represents browser initialization options
+//
+// Example:
+//
+//	option := browser.NewBrowserOption()
+//
+//	// Custom user agent
+//	ua := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+//	option.UserAgent = &ua
+//
+//	// Viewport and screen
+//	option.Viewport = &browser.BrowserViewport{Width: 1920, Height: 1080}
+//	option.Screen = &browser.BrowserScreen{Width: 1920, Height: 1080}
+//
+//	// Stealth mode
+//	option.UseStealth = true
+//
+//	// Validate configuration
+//	if err := option.Validate(); err != nil {
+//	    log.Fatalf("Invalid configuration: %v", err)
+//	}
 type BrowserOption struct {
 	UseStealth         bool                `json:"useStealth,omitempty"`         // Enable stealth mode
 	UserAgent          *string             `json:"userAgent,omitempty"`          // Custom user agent
@@ -323,6 +380,22 @@ func (b *Browser) GetOption() *BrowserOption {
 }
 
 // GetEndpointURL returns the endpoint URL if the browser is initialized
+//
+// Example:
+//
+//	endpointURL, err := session.Browser.GetEndpointURL()
+//	if err != nil {
+//	    log.Fatalf("Failed to get endpoint URL: %v", err)
+//	}
+//
+//	// Use with Playwright
+//	pw, err := playwright.Run()
+//	defer pw.Stop()
+//
+//	browser, err := pw.Chromium.ConnectOverCDP(endpointURL)
+//	defer browser.Close()
+//
+//	page, err := browser.Contexts()[0].NewPage()
 func (b *Browser) GetEndpointURL() (string, error) {
 	if !b.initialized {
 		return "", errors.New("browser is not initialized. Cannot access endpoint URL")
@@ -347,6 +420,28 @@ func (b *Browser) GetEndpointURL() (string, error) {
 
 // Initialize initializes the browser instance with the given options.
 // Returns true and nil error if successful, false and error otherwise.
+//
+// Example:
+//
+//	option := browser.NewBrowserOption()
+//
+//	// Add custom configuration
+//	customUA := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+//	option.UserAgent = &customUA
+//
+//	option.Viewport = &browser.BrowserViewport{
+//	    Width:  1920,
+//	    Height: 1080,
+//	}
+//
+//	// Initialize browser
+//	success, err := session.Browser.Initialize(option)
+//	if err != nil {
+//	    log.Fatalf("Failed to initialize browser: %v", err)
+//	}
+//	if !success {
+//	    log.Fatal("Browser initialization returned false")
+//	}
 func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	if b.initialized {
 		return true, nil
