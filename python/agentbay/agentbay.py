@@ -22,6 +22,7 @@ from agentbay.model import (
     GetSessionData,
     GetSessionResult,
     SessionListResult,
+    SessionPauseResult,
     SessionResult,
     extract_request_id,
 )
@@ -1215,3 +1216,49 @@ class AgentBay:
             success=True,
             session=session,
         )
+
+    def pause(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
+        """
+        Synchronously pause a session, putting it into a dormant state.
+
+        Args:
+            session (Session): The session to pause.
+            timeout (int, optional): Timeout in seconds to wait for the session to pause.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionPauseResult: Result containing the request ID, success status, and final session status.
+        """
+        try:
+            # Call session's pause method
+            return session.pause(timeout, poll_interval)
+        except Exception as e:
+            log_operation_error("pause_session", str(e), exc_info=True)
+            return SessionPauseResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to pause session {session.session_id}: {e}",
+            )
+
+    async def pause_async(self, session: Session) -> SessionPauseResult:
+        """
+        Asynchronously pause a session, putting it into a dormant state.
+
+        Args:
+            session (Session): The session to pause.
+
+        Returns:
+            SessionPauseResult: Result containing the request ID and success status.
+        """
+        try:
+            # Call session's pause_async method
+            return await session.pause_async()
+        except Exception as e:
+            log_operation_error("pause_session_async", str(e), exc_info=True)
+            return SessionPauseResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to pause session {session.session_id}: {e}",
+            )

@@ -27,6 +27,7 @@ from agentbay.exceptions import SessionError
 from agentbay.filesystem import FileSystem
 from agentbay.mobile import Mobile
 from agentbay.model import DeleteResult, OperationResult, extract_request_id
+from agentbay.model import SessionPauseResult, SessionResumeResult
 from agentbay.oss import Oss
 from agentbay.ui import UI
 from agentbay.agent import Agent
@@ -1087,4 +1088,350 @@ class Session:
                 success=False,
                 data="",
                 error_message=f"API request failed: {e}",
+            )
+
+    def pause(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
+        """
+        Synchronously pause this session, putting it into a dormant state.
+
+        This method internally calls the PauseSessionAsync API and then polls the GetSession API
+        to check the session status until it becomes PAUSED or until timeout.
+
+        Args:
+            timeout (int, optional): Timeout in seconds to wait for the session to pause.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionPauseResult: Result containing the request ID, success status, and final session status.
+        """
+        try:
+            # Use asyncio.run to call the async pause API and poll for status
+            # This allows us to reuse the async implementation in a synchronous context
+            import asyncio
+            
+            # Create a new event loop if there isn't one already
+            try:
+                loop = asyncio.get_running_loop()
+                # If we're already in an event loop, we need to run the async method differently
+                # This can happen in environments like Jupyter notebooks
+                result = asyncio.run_coroutine_threadsafe(
+                    self.pause_async(timeout, poll_interval), loop
+                ).result()
+            except RuntimeError:
+                # No event loop running, we can use asyncio.run
+                result = asyncio.run(self.pause_async(timeout, poll_interval))
+            
+            return result
+        except Exception as e:
+            log_operation_error("PauseSession", str(e), exc_info=True)
+            return SessionPauseResult(
+                request_id="",
+                success=False,
+                error_message=f"Unexpected error pausing session: {e}",
+            )
+
+    async def pause_async(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
+        """
+        Asynchronously pause this session, putting it into a dormant state.
+
+        This method directly calls the PauseSessionAsync API and then polls the GetSession API
+        asynchronously to check the session status until it becomes PAUSED or until timeout.
+
+        Args:
+            timeout (int, optional): Timeout in seconds to wait for the session to pause.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionPauseResult: Result containing the request ID, success status, and final session status.
+        """
+        try:
+            import asyncio
+            from agentbay.api.models import PauseSessionAsyncRequest
+            
+            request = PauseSessionAsyncRequest(
+                authorization=f"Bearer {self.get_api_key()}",
+                session_id=self.session_id,
+            )
+
+            log_api_call("PauseSessionAsync", f"SessionId={self.session_id}")
+
+            response = await self.get_client().pause_session_async_async(request)
+
+            # Extract request ID
+            request_id = extract_request_id(response)
+
+            # Check for API-level errors
+            response_map = response.to_map()
+            if not response_map:
+                return SessionPauseResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response format",
+                )
+
+            body = response_map.get("body", {})
+            if not body:
+                return SessionPauseResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response body",
+                )
+
+            # Extract fields from response body
+            success = body.get("Success", False)
+            code = body.get("Code", "")
+            message = body.get("Message", "")
+            http_status_code = body.get("HttpStatusCode", 0)
+            
+            # Build error message if not successful
+            if not success:
+                error_message = f"[{code}] {message}" if code or message else "Unknown error"
+                log_operation_error("PauseSessionAsync", error_message)
+                return SessionPauseResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_message,
+                    code=code,
+                    message=message,
+                    http_status_code=http_status_code,
+                )
+
+            log_operation_success("PauseSessionAsync", f"Session {self.session_id} pause initiated successfully")
+            
+            # Poll for session status until PAUSED or timeout
+            import time
+            start_time = time.time()
+            max_attempts = int(timeout / poll_interval)
+            attempt = 0
+
+            while attempt < max_attempts:
+                # Get session status
+                get_result = self.agent_bay.get_session(self.session_id)
+                if not get_result.success:
+                    logger.error(f"Failed to get session status: {get_result.error_message}")
+                    return SessionPauseResult(
+                        request_id=get_result.request_id,
+                        success=False,
+                        error_message=f"Failed to get session status: {get_result.error_message}",
+                    )
+
+                # Check session status
+                if get_result.data:
+                    status = getattr(get_result.data, 'status', None) or "UNKNOWN"
+                    logger.info(f"Session status: {status} (attempt {attempt + 1}/{max_attempts})")
+
+                    # Check if session is paused
+                    if status == "PAUSED":
+                        elapsed = time.time() - start_time
+                        logger.info(f"Session paused successfully in {elapsed:.2f} seconds")
+                        return SessionPauseResult(
+                            request_id=get_result.request_id,
+                            success=True,
+                            status=status,
+                        )
+                    elif status not in ("RUNNING", "PAUSING"):
+                        # If status is not RUNNING, PAUSING, or PAUSED, treat as unexpected
+                        elapsed = time.time() - start_time
+                        logger.warning(f"Session in unexpected state after {elapsed:.2f} seconds: {status}")
+                        # Continue polling as the state might transition to PAUSED
+
+                # Wait before next query (using asyncio.sleep to avoid blocking)
+                # Only wait if we're not at the last attempt
+                attempt += 1
+                if attempt < max_attempts:
+                    await asyncio.sleep(poll_interval)
+
+            # Timeout
+            elapsed = time.time() - start_time
+            error_msg = f"Session pause timed out after {elapsed:.2f} seconds"
+            logger.error(error_msg)
+            return SessionPauseResult(
+                request_id="",
+                success=False,
+                error_message=error_msg,
+            )
+
+        except Exception as e:
+            log_operation_error("PauseSessionAsync", str(e), exc_info=True)
+            return SessionPauseResult(
+                request_id="",
+                success=False,
+                error_message=f"Unexpected error pausing session: {e}",
+            )
+
+    def resume(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
+        """
+        Synchronously resume this session from a paused state.
+
+        This method internally calls the ResumeSessionAsync API and then polls the GetSession API
+        to check the session status until it becomes RUNNING or until timeout.
+
+        Args:
+            timeout (int, optional): Timeout in seconds to wait for the session to resume.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionResumeResult: Result containing the request ID, success status, and final session status.
+        """
+        try:
+            # Use asyncio.run to call the async resume API and poll for status
+            # This allows us to reuse the async implementation in a synchronous context
+            import asyncio
+            
+            # Create a new event loop if there isn't one already
+            try:
+                loop = asyncio.get_running_loop()
+                # If we're already in an event loop, we need to run the async method differently
+                # This can happen in environments like Jupyter notebooks
+                result = asyncio.run_coroutine_threadsafe(
+                    self.resume_async(timeout, poll_interval), loop
+                ).result()
+            except RuntimeError:
+                # No event loop running, we can use asyncio.run
+                result = asyncio.run(self.resume_async(timeout, poll_interval))
+            
+            return result
+        except Exception as e:
+            log_operation_error("ResumeSession", str(e), exc_info=True)
+            return SessionResumeResult(
+                request_id="",
+                success=False,
+                error_message=f"Unexpected error resuming session: {e}",
+            )
+
+    async def resume_async(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
+        """
+        Asynchronously resume this session from a paused state.
+
+        This method directly calls the ResumeSessionAsync API and then polls the GetSession API
+        asynchronously to check the session status until it becomes RUNNING or until timeout.
+
+        Args:
+            timeout (int, optional): Timeout in seconds to wait for the session to resume.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionResumeResult: Result containing the request ID, success status, and final session status.
+        """
+        try:
+            import asyncio
+            from agentbay.api.models import ResumeSessionAsyncRequest
+            
+            request = ResumeSessionAsyncRequest(
+                authorization=f"Bearer {self.get_api_key()}",
+                session_id=self.session_id,
+            )
+
+            log_api_call("ResumeSessionAsync", f"SessionId={self.session_id}")
+
+            response = await self.get_client().resume_session_async_async(request)
+
+            # Extract request ID
+            request_id = extract_request_id(response)
+
+            # Check for API-level errors
+            response_map = response.to_map()
+            if not response_map:
+                return SessionResumeResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response format",
+                )
+
+            body = response_map.get("body", {})
+            if not body:
+                return SessionResumeResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response body",
+                )
+
+            # Extract fields from response body
+            success = body.get("Success", False)
+            code = body.get("Code", "")
+            message = body.get("Message", "")
+            http_status_code = body.get("HttpStatusCode", 0)
+            
+            # Build error message if not successful
+            if not success:
+                error_message = f"[{code}] {message}" if code or message else "Unknown error"
+                log_operation_error("ResumeSessionAsync", error_message)
+                return SessionResumeResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_message,
+                    code=code,
+                    message=message,
+                    http_status_code=http_status_code,
+                )
+
+            log_operation_success("ResumeSessionAsync", f"Session {self.session_id} resume initiated successfully")
+            
+            # Poll for session status until RUNNING or timeout
+            import time
+            start_time = time.time()
+            max_attempts = int(timeout / poll_interval)
+            attempt = 0
+
+            while attempt < max_attempts:
+                # Get session status
+                get_result = self.agent_bay.get_session(self.session_id)
+                if not get_result.success:
+                    logger.error(f"Failed to get session status: {get_result.error_message}")
+                    return SessionResumeResult(
+                        request_id=get_result.request_id,
+                        success=False,
+                        error_message=f"Failed to get session status: {get_result.error_message}",
+                    )
+
+                # Check session status
+                if get_result.data:
+                    status = getattr(get_result.data, 'status', None) or "UNKNOWN"
+                    logger.info(f"Session status: {status} (attempt {attempt + 1}/{max_attempts})")
+
+                    # Check if session is running
+                    if status == "RUNNING":
+                        elapsed = time.time() - start_time
+                        logger.info(f"Session resumed successfully in {elapsed:.2f} seconds")
+                        return SessionResumeResult(
+                            request_id=get_result.request_id,
+                            success=True,
+                            status=status,
+                        )
+                    elif status not in ("PAUSED", "RESUMING"):
+                        # If status is not PAUSED, RESUMING, or RUNNING, treat as unexpected
+                        elapsed = time.time() - start_time
+                        logger.warning(f"Session in unexpected state after {elapsed:.2f} seconds: {status}")
+                        # Continue polling as the state might transition to RUNNING
+
+                # Wait before next query (using asyncio.sleep to avoid blocking)
+                # Only wait if we're not at the last attempt
+                attempt += 1
+                if attempt < max_attempts:
+                    await asyncio.sleep(poll_interval)
+
+            # Timeout
+            elapsed = time.time() - start_time
+            error_msg = f"Session resume timed out after {elapsed:.2f} seconds"
+            logger.error(error_msg)
+            return SessionResumeResult(
+                request_id="",
+                success=False,
+                error_message=error_msg,
+            )
+
+        except Exception as e:
+            log_operation_error("ResumeSessionAsync", str(e), exc_info=True)
+            return SessionResumeResult(
+                request_id="",
+                success=False,
+                error_message=f"Unexpected error resuming session: {e}",
             )

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from darabonba.model import DaraModel
 
-class GetSessionRequest(DaraModel):
+class ResumeSessionAsyncRequest(DaraModel):
     def __init__(
         self,
         authorization: str = None,

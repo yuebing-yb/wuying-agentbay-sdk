@@ -378,6 +378,214 @@ if not result.success:
 **See Also:**
 - For a complete example, see [MCP Tool Direct Call Example](../../../../examples/common-features/basics/mcp_tool_direct_call/README.md)
 
+### pause
+
+Synchronously pause this session, putting it into a dormant state to reduce resource usage and costs.
+
+```python
+pause(timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult
+```
+
+**Parameters:**
+- `timeout` (int, optional): Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+- `poll_interval` (float, optional): Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+**Returns:**
+- `SessionPauseResult`: A result object containing:
+  - `success` (bool): Whether the pause operation was successful
+  - `request_id` (str): Unique identifier for the API request
+  - `status` (str): Current status of the session ("PAUSED" when successful)
+  - `error_message` (str): Error message if the operation failed
+
+**Behavior:**
+- Calls the PauseSessionAsync API to initiate the pause operation
+- Polls the GetSession API to check session status until it becomes "PAUSED" or timeout
+- During pause, compute resources are suspended but storage is preserved
+- Resource usage and costs are lower during pause
+
+**Example:**
+```python
+from agentbay import AgentBay
+
+# Initialize the SDK and create a session
+agent_bay = AgentBay(api_key="your_api_key")
+session_result = agent_bay.create()
+session = session_result.session
+
+# Perform your tasks...
+
+# Pause the session to reduce resource usage
+pause_result = session.pause()
+if pause_result.success:
+    print("Session paused successfully")
+    print(f"Request ID: {pause_result.request_id}")
+    # Output: Session paused successfully
+    # Output: Request ID: B1F98082-52F0-17F7-A149-7722D6205AD6
+else:
+    print(f"Failed to pause session: {pause_result.error_message}")
+```
+
+### pause_async
+
+Asynchronously pause this session, putting it into a dormant state to reduce resource usage and costs.
+
+```python
+async pause_async(timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult
+```
+
+**Parameters:**
+- `timeout` (int, optional): Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+- `poll_interval` (float, optional): Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+**Returns:**
+- `SessionPauseResult`: A result object containing:
+  - `success` (bool): Whether the pause operation was successful
+  - `request_id` (str): Unique identifier for the API request
+  - `status` (str): Current status of the session ("PAUSED" when successful)
+  - `error_message` (str): Error message if the operation failed
+
+**Behavior:**
+- Calls the PauseSessionAsync API to initiate the pause operation
+- Polls the GetSession API to check session status until it becomes "PAUSED" or timeout
+- During pause, compute resources are suspended but storage is preserved
+- Resource usage and costs are lower during pause
+
+**Example:**
+```python
+import asyncio
+from agentbay import AgentBay
+
+async def pause_session_example():
+    # Initialize the SDK and create a session
+    agent_bay = AgentBay(api_key="your_api_key")
+    session_result = agent_bay.create()
+    session = session_result.session
+
+    # Perform your tasks...
+
+    # Asynchronously pause the session to reduce resource usage
+    pause_result = await session.pause_async()
+    if pause_result.success:
+        print("Session paused successfully")
+        print(f"Request ID: {pause_result.request_id}")
+        # Output: Session paused successfully
+        # Output: Request ID: B1F98082-52F0-17F7-A149-7722D6205AD6
+    else:
+        print(f"Failed to pause session: {pause_result.error_message}")
+
+# Run the async function
+asyncio.run(pause_session_example())
+```
+
+### resume
+
+Synchronously resume this session from a paused state to continue work.
+
+```python
+resume(timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult
+```
+
+**Parameters:**
+- `timeout` (int, optional): Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+- `poll_interval` (float, optional): Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+**Returns:**
+- `SessionResumeResult`: A result object containing:
+  - `success` (bool): Whether the resume operation was successful
+  - `request_id` (str): Unique identifier for the API request
+  - `status` (str): Current status of the session ("RUNNING" when successful)
+  - `error_message` (str): Error message if the operation failed
+
+**Behavior:**
+- Calls the ResumeSessionAsync API to initiate the resume operation
+- Polls the GetSession API to check session status until it becomes "RUNNING" or timeout
+- All session state is preserved during pause and resume operations
+
+**Example:**
+```python
+from agentbay import AgentBay
+
+# Initialize the SDK and get a paused session
+agent_bay = AgentBay(api_key="your_api_key")
+# Assuming you have a paused session with session_id
+get_result = agent_bay.get("your_paused_session_id")
+if get_result.success:
+    session = get_result.session
+    
+    # Resume the session to continue work
+    resume_result = session.resume()
+    if resume_result.success:
+        print("Session resumed successfully")
+        print(f"Request ID: {resume_result.request_id}")
+        # Output: Session resumed successfully
+        # Output: Request ID: C2A87193-63E1-28G8-B25A-8833E7316BE7
+        
+        # Continue with your tasks...
+        result = session.command.execute_command("echo 'Hello after resume!'")
+        print(f"Command output: {result.output}")
+    else:
+        print(f"Failed to resume session: {resume_result.error_message}")
+else:
+    print(f"Failed to get session: {get_result.error_message}")
+```
+
+### resume_async
+
+Asynchronously resume this session from a paused state to continue work.
+
+```python
+async resume_async(timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult
+```
+
+**Parameters:**
+- `timeout` (int, optional): Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+- `poll_interval` (float, optional): Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+**Returns:**
+- `SessionResumeResult`: A result object containing:
+  - `success` (bool): Whether the resume operation was successful
+  - `request_id` (str): Unique identifier for the API request
+  - `status` (str): Current status of the session ("RUNNING" when successful)
+  - `error_message` (str): Error message if the operation failed
+
+**Behavior:**
+- Calls the ResumeSessionAsync API to initiate the resume operation
+- Polls the GetSession API to check session status until it becomes "RUNNING" or timeout
+- All session state is preserved during pause and resume operations
+
+**Example:**
+```python
+import asyncio
+from agentbay import AgentBay
+
+async def resume_session_example():
+    # Initialize the SDK and get a paused session
+    agent_bay = AgentBay(api_key="your_api_key")
+    # Assuming you have a paused session with session_id
+    get_result = agent_bay.get("your_paused_session_id")
+    if get_result.success:
+        session = get_result.session
+        
+        # Asynchronously resume the session to continue work
+        resume_result = await session.resume_async()
+        if resume_result.success:
+            print("Session resumed successfully")
+            print(f"Request ID: {resume_result.request_id}")
+            # Output: Session resumed successfully
+            # Output: Request ID: C2A87193-63E1-28G8-B25A-8833E7316BE7
+            
+            # Continue with your tasks...
+            result = session.command.execute_command("echo 'Hello after async resume!'")
+            print(f"Command output: {result.output}")
+        else:
+            print(f"Failed to resume session: {resume_result.error_message}")
+    else:
+        print(f"Failed to get session: {get_result.error_message}")
+
+# Run the async function
+asyncio.run(resume_session_example())
+```
+
 ## Related Resources
 
 - [FileSystem API Reference](filesystem.md)

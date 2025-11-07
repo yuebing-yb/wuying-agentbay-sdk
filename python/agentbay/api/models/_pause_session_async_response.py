@@ -7,12 +7,12 @@ from typing import Dict
 from agentbay.api import models as main_models
 from darabonba.model import DaraModel
 
-class GetSessionResponse(DaraModel):
+class PauseSessionAsyncResponse(DaraModel):
     def __init__(
         self,
         headers: Dict[str, str] = None,
         status_code: int = None,
-        body: main_models.GetSessionResponseBody = None,
+        body: main_models.PauseSessionAsyncResponseBody = None,
     ):
         self.headers = headers
         self.status_code = status_code
@@ -47,7 +47,7 @@ class GetSessionResponse(DaraModel):
             self.status_code = m.get('statusCode')
 
         if m.get('body') is not None:
-            temp_model = main_models.GetSessionResponseBody()
+            temp_model = main_models.PauseSessionAsyncResponseBody()
             self.body = temp_model.from_map(m.get('body'))
 
         return self
