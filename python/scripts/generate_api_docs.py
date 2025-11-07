@@ -28,7 +28,7 @@ class DocMapping:
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DOCS_ROOT = PROJECT_ROOT / "docs" / "api-preview" / "latest"
-METADATA_PATH = PROJECT_ROOT.parent / "docs" / "doc-metadata.yaml"
+METADATA_PATH = PROJECT_ROOT.parent / "scripts" / "doc-metadata.yaml"
 
 DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("common-features/basics/agentbay.md", "AgentBay", ("agentbay.agentbay",)),

@@ -47,7 +47,7 @@ interface Metadata {
 }
 
 function loadMetadata(): Metadata {
-  const metadataPath = path.join(__dirname, '../../docs/doc-metadata.yaml');
+  const metadataPath = path.join(__dirname, '../../scripts/doc-metadata.yaml');
   const content = fs.readFileSync(metadataPath, 'utf8');
   return yaml.load(content) as Metadata;
 }

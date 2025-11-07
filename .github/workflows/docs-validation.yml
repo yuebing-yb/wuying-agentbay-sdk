@@ -10,7 +10,7 @@ on:
       - 'python/scripts/generate_api_docs.py'
       - 'typescript/scripts/enhance-typedoc-output.ts'
       - 'golang/scripts/generate_api_docs.go'
-      - 'docs/doc-metadata.yaml'
+      - 'scripts/doc-metadata.yaml'
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -20,7 +20,7 @@ on:
       - 'python/scripts/generate_api_docs.py'
       - 'typescript/scripts/enhance-typedoc-output.ts'
       - 'golang/scripts/generate_api_docs.go'
-      - 'docs/doc-metadata.yaml'
+      - 'scripts/doc-metadata.yaml'
 
 jobs:
   validate-python-docs:

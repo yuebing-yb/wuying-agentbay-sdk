@@ -211,7 +211,7 @@ var mappings = []docMapping{
 var packageCache = map[string]*packageDoc{}
 
 func loadMetadata(projectRoot string) (*Metadata, error) {
-	metadataPath := filepath.Join(filepath.Dir(projectRoot), "docs", "doc-metadata.yaml")
+	metadataPath := filepath.Join(filepath.Dir(projectRoot), "scripts", "doc-metadata.yaml")
 	data, err := os.ReadFile(metadataPath)
 	if err != nil {
 		if os.IsNotExist(err) {
