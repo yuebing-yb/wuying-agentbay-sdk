@@ -253,6 +253,47 @@ class ContextService:
         Returns:
             ContextListResult: A result object containing the list of Context objects,
                 pagination information, and request ID.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.context import ContextListParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def list_contexts():
+                try:
+                    # List contexts with default pagination (max 10)
+                    result = agent_bay.context.list()
+                    if result.success:
+                        print(f"Total contexts: {result.total_count}")
+                        # Output: Total contexts: 25
+                        print(f"Contexts in this page: {len(result.contexts)}")
+                        # Output: Contexts in this page: 10
+                        for context in result.contexts:
+                            print(f"  - {context.name} (ID: {context.id})")
+                            # Output:   - my-context-1 (ID: ctx-04bdwfj7u22a1s30g)
+
+                        # List with custom pagination
+                        params = ContextListParams(max_results=5)
+                        result = agent_bay.context.list(params)
+                        if result.success:
+                            print(f"Got {len(result.contexts)} contexts")
+                            # Output: Got 5 contexts
+                            if result.next_token:
+                                # Get next page
+                                next_params = ContextListParams(
+                                    max_results=5,
+                                    next_token=result.next_token
+                                )
+                                next_result = agent_bay.context.list(next_params)
+                                print(f"Next page has {len(next_result.contexts)} contexts")
+                                # Output: Next page has 5 contexts
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            list_contexts()
+            ```
         """
         try:
             if params is None:
@@ -538,6 +579,34 @@ class ContextService:
 
         Returns:
             ContextResult: The created ContextResult object with request ID.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def create_context():
+                try:
+                    # Create a new context
+                    result = agent_bay.context.create("my-new-context")
+                    if result.success:
+                        context = result.context
+                        print(f"Context created successfully")
+                        # Output: Context created successfully
+                        print(f"Context ID: {context.id}")
+                        # Output: Context ID: ctx-04bdwfj7u22a1s30g
+                        print(f"Context Name: {context.name}")
+                        # Output: Context Name: my-new-context
+                        print(f"Request ID: {result.request_id}")
+                        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+                    else:
+                        print(f"Failed to create context: {result.error_message}")
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            create_context()
+            ```
         """
         return self.get(name, create=True)
 
@@ -664,6 +733,34 @@ class ContextService:
 
         Returns:
             OperationResult: Result object containing success status and request ID.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def delete_context():
+                try:
+                    # Get a context first
+                    result = agent_bay.context.get(name="my-context")
+                    if result.success and result.context:
+                        # Delete the context
+                        delete_result = agent_bay.context.delete(result.context)
+                        if delete_result.success:
+                            print("Context deleted successfully")
+                            # Output: Context deleted successfully
+                            print(f"Request ID: {delete_result.request_id}")
+                            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+                        else:
+                            print(f"Failed to delete context: {delete_result.error_message}")
+                    else:
+                        print(f"Failed to get context: {result.error_message}")
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            delete_context()
+            ```
         """
         try:
             log_api_call("DeleteContext", f"Id={context.id}")
@@ -714,7 +811,57 @@ class ContextService:
             raise AgentBayError(f"Failed to delete context {context.id}: {e}")
 
     def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
-        """Get a presigned download URL for a file in a context."""
+        """
+        Get a presigned download URL for a file in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            file_path (str): The path to the file in the context.
+
+        Returns:
+            FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            import requests
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def download_context_file():
+                try:
+                    # Get a context
+                    ctx_result = agent_bay.context.get(name="my-context", create=True)
+                    if ctx_result.success:
+                        context = ctx_result.context
+
+                        # Get download URL for a file
+                        url_result = agent_bay.context.get_file_download_url(
+                            context.id,
+                            "/data/output.txt"
+                        )
+                        if url_result.success:
+                            print(f"Download URL obtained")
+                            # Output: Download URL obtained
+                            print(f"URL expires in: {url_result.expire_time} seconds")
+                            # Output: URL expires in: 3600 seconds
+                            print(f"Request ID: {url_result.request_id}")
+                            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                            # Download the file using the presigned URL
+                            response = requests.get(url_result.url)
+                            if response.status_code == 200:
+                                content = response.text
+                                print(f"Downloaded content: {content}")
+                                # Output: Downloaded content: Hello World
+                        else:
+                            print(f"Failed to get download URL: {url_result.error_message}")
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            download_context_file()
+            ```
+        """
         log_api_call(
             "GetContextFileDownloadUrl", f"ContextId={context_id}, FilePath={file_path}"
         )
@@ -758,7 +905,61 @@ class ContextService:
         )
 
     def get_file_upload_url(self, context_id: str, file_path: str) -> FileUrlResult:
-        """Get a presigned upload URL for a file in a context."""
+        """
+        Get a presigned upload URL for a file in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            file_path (str): The path to the file in the context.
+
+        Returns:
+            FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            import requests
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def upload_context_file():
+                try:
+                    # Get a context
+                    ctx_result = agent_bay.context.get(name="my-context", create=True)
+                    if ctx_result.success:
+                        context = ctx_result.context
+
+                        # Get upload URL for a file
+                        url_result = agent_bay.context.get_file_upload_url(
+                            context.id,
+                            "/data/input.txt"
+                        )
+                        if url_result.success:
+                            print(f"Upload URL obtained")
+                            # Output: Upload URL obtained
+                            print(f"URL expires in: {url_result.expire_time} seconds")
+                            # Output: URL expires in: 3600 seconds
+                            print(f"Request ID: {url_result.request_id}")
+                            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                            # Upload the file using the presigned URL
+                            file_content = "Hello World"
+                            response = requests.put(
+                                url_result.url,
+                                data=file_content.encode('utf-8'),
+                                headers={'Content-Type': 'text/plain'}
+                            )
+                            if response.status_code in (200, 204):
+                                print("File uploaded successfully")
+                                # Output: File uploaded successfully
+                        else:
+                            print(f"Failed to get upload URL: {url_result.error_message}")
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            upload_context_file()
+            ```
+        """
         log_api_call(
             "GetContextFileUploadUrl", f"ContextId={context_id}, FilePath={file_path}"
         )
@@ -802,7 +1003,47 @@ class ContextService:
         )
 
     def delete_file(self, context_id: str, file_path: str) -> OperationResult:
-        """Delete a file in a context."""
+        """
+        Delete a file in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            file_path (str): The path to the file to delete.
+
+        Returns:
+            OperationResult: A result object containing success status and request ID.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def delete_context_file():
+                try:
+                    # Get a context
+                    ctx_result = agent_bay.context.get(name="my-context", create=True)
+                    if ctx_result.success:
+                        context = ctx_result.context
+
+                        # Delete a file from the context
+                        delete_result = agent_bay.context.delete_file(
+                            context.id,
+                            "/data/temp.txt"
+                        )
+                        if delete_result.success:
+                            print("File deleted successfully")
+                            # Output: File deleted successfully
+                            print(f"Request ID: {delete_result.request_id}")
+                            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+                        else:
+                            print(f"Failed to delete file: {delete_result.error_message}")
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            delete_context_file()
+            ```
+        """
         log_api_call(
             "DeleteContextFile", f"ContextId={context_id}, FilePath={file_path}"
         )
@@ -844,7 +1085,59 @@ class ContextService:
         page_number: int = 1,
         page_size: int = 50,
     ) -> ContextFileListResult:
-        """List files under a specific folder path in a context."""
+        """
+        List files under a specific folder path in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            parent_folder_path (str): The parent folder path to list files from.
+            page_number (int): The page number for pagination. Default is 1.
+            page_size (int): The number of items per page. Default is 50.
+
+        Returns:
+            ContextFileListResult: A result object containing the list of files and request ID.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def list_context_files():
+                try:
+                    # Get a context
+                    ctx_result = agent_bay.context.get(name="my-context", create=True)
+                    if ctx_result.success:
+                        context = ctx_result.context
+
+                        # List files in the context
+                        files_result = agent_bay.context.list_files(
+                            context.id,
+                            "/data",
+                            page_number=1,
+                            page_size=10
+                        )
+                        if files_result.success:
+                            print(f"Found {files_result.count} files")
+                            # Output: Found 3 files
+                            print(f"Request ID: {files_result.request_id}")
+                            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                            for file_entry in files_result.entries:
+                                print(f"  - {file_entry.file_name} ({file_entry.file_path})")
+                                # Output:   - input.txt (/data/input.txt)
+                                print(f"    Size: {file_entry.size} bytes")
+                                # Output:     Size: 1024 bytes
+                                print(f"    Status: {file_entry.status}")
+                                # Output:     Status: active
+                        else:
+                            print(f"Failed to list files: {files_result.error_message}")
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            list_context_files()
+            ```
+        """
         log_api_call(
             "DescribeContextFiles",
             f"ContextId={context_id}, ParentFolderPath={parent_folder_path}, "

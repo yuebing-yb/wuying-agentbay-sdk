@@ -20,6 +20,14 @@ screenshot capture, and content extraction. It enables automated testing and web
 logger = get_logger("browser")
 ```
 
+## BrowserFingerprintContext Objects
+
+```python
+class BrowserFingerprintContext()
+```
+
+Browser fingerprint context configuration.
+
 ## BrowserProxy Objects
 
 ```python

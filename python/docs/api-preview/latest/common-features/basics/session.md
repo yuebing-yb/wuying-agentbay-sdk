@@ -209,6 +209,26 @@ Sets the labels for this session.
 **Raises**:
 
 - `SessionError` - If the operation fails.
+  
+
+**Example**:
+
+```python
+# Set session labels
+labels = {
+    "project": "demo",
+    "environment": "testing",
+    "version": "1.0.0"
+}
+result = session.set_labels(labels)
+if result.success:
+    print("Labels set successfully")
+    # Output: Labels set successfully
+    print(f"Request ID: {result.request_id}")
+    # Output: Request ID: B1F98082-52F0-17F7-A149-7722D6205AD6
+else:
+    print(f"Failed to set labels: {result.error_message}")
+```
 
 #### get\_labels
 
@@ -226,6 +246,22 @@ Gets the labels for this session.
 **Raises**:
 
 - `SessionError` - If the operation fails.
+  
+
+**Example**:
+
+```python
+# Get session labels
+try:
+    result = session.get_labels()
+    if result.success:
+        print(f"Session labels: {result.data}")
+        # Output: Session labels: {'environment': 'testing', 'project': 'demo', 'version': '1.0.0'}
+    else:
+        print(f"Failed to get labels: {result.error_message}")
+except AgentBayError as e:
+    print(f"Failed to get labels: {e}")
+```
 
 #### info
 

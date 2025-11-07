@@ -53,10 +53,94 @@ export class ContextManager {
     this.session = session;
   }
 
+  /**
+   * Gets information about context synchronization status for the current session.
+   *
+   * @returns Promise resolving to ContextInfoResult containing context status data and request ID
+   * @throws Error if the API call fails
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function getContextInfo() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get context synchronization information
+   *       const infoResult = await session.context.info();
+   *       console.log(`Request ID: ${infoResult.requestId}`);
+   *       // Output: Request ID: 41FC3D61-4AFB-1D2E-A08E-5737B2313234
+   *       console.log(`Context status data count: ${infoResult.contextStatusData.length}`);
+   *       // Output: Context status data count: 0
+   *
+   *       if (infoResult.contextStatusData.length > 0) {
+   *         infoResult.contextStatusData.forEach(item => {
+   *           console.log(`Context ${item.contextId}: Status=${item.status}, Path=${item.path}`);
+   *         });
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * getContextInfo().catch(console.error);
+   * ```
+   */
   async info(): Promise<ContextInfoResult> {
     return this.infoWithParams();
   }
 
+  /**
+   * Gets information about context synchronization status with optional filter parameters.
+   *
+   * @param contextId - Optional context ID to filter results
+   * @param path - Optional path to filter results
+   * @param taskType - Optional task type to filter results (e.g., "upload", "download")
+   * @returns Promise resolving to ContextInfoResult containing filtered context status data and request ID
+   * @throws Error if the API call fails
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function getContextInfoWithParams() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get info for a specific context and path
+   *       const infoResult = await session.context.infoWithParams(
+   *         'SdkCtx-04bdw8o39bq47rv1t',
+   *         '/mnt/persistent'
+   *       );
+   *
+   *       console.log(`Request ID: ${infoResult.requestId}`);
+   *       // Output: Request ID: EB18A2D5-3C51-1F50-9FF1-8543CA328772
+   *       infoResult.contextStatusData.forEach(item => {
+   *         console.log(`Context ${item.contextId}: Status=${item.status}`);
+   *       });
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * getContextInfoWithParams().catch(console.error);
+   * ```
+   */
   async infoWithParams(
     contextId?: string,
     path?: string,
@@ -161,6 +245,75 @@ export class ContextManager {
     }
   }
 
+  /**
+   * Synchronizes a context with the session. Supports both async and callback modes.
+   *
+   * @param contextId - Optional context ID to synchronize
+   * @param path - Optional path where the context should be mounted
+   * @param mode - Optional synchronization mode (e.g., "upload", "download")
+   * @param callback - Optional callback function. If provided, runs in background and calls callback when complete
+   * @param maxRetries - Maximum number of retries for polling completion status (default: 150)
+   * @param retryInterval - Milliseconds to wait between retries (default: 1500)
+   * @returns Promise resolving to ContextSyncResult with success status and request ID
+   * @throws Error if the API call fails
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function syncContext() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get or create a context
+   *       const contextResult = await agentBay.context.get('my-context', true);
+   *       if (contextResult.context) {
+   *         // Sync mode: wait for completion
+   *         const syncResult = await session.context.sync(
+   *           contextResult.context.id,
+   *           '/mnt/persistent',
+   *           'upload'
+   *         );
+   *
+   *         console.log(`Sync completed - Success: ${syncResult.success}`);
+   *         // Output: Sync completed - Success: true
+   *         console.log(`Request ID: ${syncResult.requestId}`);
+   *         // Output: Request ID: 39B00280-B9DA-17D1-BCBB-9C577E057F0A
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * syncContext().catch(console.error);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Callback mode: returns immediately
+   * const syncResult = await session.context.sync(
+   *   contextId,
+   *   '/mnt/persistent',
+   *   'upload',
+   *   (success: boolean) => {
+   *     if (success) {
+   *       console.log('Context sync completed successfully');
+   *     } else {
+   *       console.log('Context sync failed or timed out');
+   *     }
+   *   }
+   * );
+   * console.log(`Sync triggered - Success: ${syncResult.success}`);
+   * // Output: Sync triggered - Success: true
+   * ```
+   */
   async sync(
     contextId?: string,
     path?: string,

@@ -104,6 +104,50 @@ export class ContextService {
    *
    * @param params - Optional parameters for listing contexts.
    * @returns ContextListResult with contexts list and pagination information
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function listContexts() {
+   *   try {
+   *     // List contexts with default pagination (max 10)
+   *     const result = await agentBay.context.list();
+   *     if (result.success) {
+   *       console.log(`Total contexts: ${result.totalCount}`);
+   *       // Output: Total contexts: 25
+   *       console.log(`Contexts in this page: ${result.contexts.length}`);
+   *       // Output: Contexts in this page: 10
+   *       for (const context of result.contexts) {
+   *         console.log(`  - ${context.name} (ID: ${context.id})`);
+   *         // Output:   - my-context-1 (ID: ctx-04bdwfj7u22a1s30g)
+   *       }
+   *
+   *       // List with custom pagination
+   *       const customResult = await agentBay.context.list({ maxResults: 5 });
+   *       if (customResult.success) {
+   *         console.log(`Got ${customResult.contexts.length} contexts`);
+   *         // Output: Got 5 contexts
+   *         if (customResult.nextToken) {
+   *           // Get next page
+   *           const nextResult = await agentBay.context.list({
+   *             maxResults: 5,
+   *             nextToken: customResult.nextToken
+   *           });
+   *           console.log(`Next page has ${nextResult.contexts.length} contexts`);
+   *           // Output: Next page has 5 contexts
+   *         }
+   *       }
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * listContexts().catch(console.error);
+   * ```
    */
   async list(params?: ContextListParams): Promise<ContextListResult> {
     try {
@@ -313,6 +357,37 @@ export class ContextService {
    *
    * @param name - The name for the new context.
    * @returns ContextResult with created context data and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function createContext() {
+   *   try {
+   *     // Create a new context
+   *     const result = await agentBay.context.create('my-new-context');
+   *     if (result.success) {
+   *       const context = result.context;
+   *       console.log('Context created successfully');
+   *       // Output: Context created successfully
+   *       console.log(`Context ID: ${context.id}`);
+   *       // Output: Context ID: ctx-04bdwfj7u22a1s30g
+   *       console.log(`Context Name: ${context.name}`);
+   *       // Output: Context Name: my-new-context
+   *       console.log(`Request ID: ${result.requestId}`);
+   *       // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *     } else {
+   *       console.log(`Failed to create context: ${result.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * createContext().catch(console.error);
+   * ```
    */
   async create(name: string): Promise<ContextResult> {
     return await this.get(name, true);
