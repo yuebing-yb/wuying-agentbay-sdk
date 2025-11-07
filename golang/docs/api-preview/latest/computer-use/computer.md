@@ -72,7 +72,7 @@ application management, and screen operations.
 #### ActivateWindow
 
 ```go
-func (c *Computer) ActivateWindow(windowID int) (*window.WindowResult, error)
+func (c *Computer) ActivateWindow(windowID int) (*WindowResult, error)
 ```
 
 ActivateWindow activates the specified window
@@ -88,7 +88,7 @@ ClickMouse clicks the mouse at the specified coordinates
 #### CloseWindow
 
 ```go
-func (c *Computer) CloseWindow(windowID int) (*window.WindowResult, error)
+func (c *Computer) CloseWindow(windowID int) (*WindowResult, error)
 ```
 
 CloseWindow closes the specified window
@@ -104,7 +104,7 @@ DragMouse drags the mouse from one point to another
 #### FocusMode
 
 ```go
-func (c *Computer) FocusMode(on bool) (*window.WindowResult, error)
+func (c *Computer) FocusMode(on bool) (*WindowResult, error)
 ```
 
 FocusMode toggles focus mode on or off
@@ -112,7 +112,7 @@ FocusMode toggles focus mode on or off
 #### FullscreenWindow
 
 ```go
-func (c *Computer) FullscreenWindow(windowID int) (*window.WindowResult, error)
+func (c *Computer) FullscreenWindow(windowID int) (*WindowResult, error)
 ```
 
 FullscreenWindow makes the specified window fullscreen
@@ -120,7 +120,7 @@ FullscreenWindow makes the specified window fullscreen
 #### GetActiveWindow
 
 ```go
-func (c *Computer) GetActiveWindow(timeoutMs ...int) (*window.WindowDetailResult, error)
+func (c *Computer) GetActiveWindow(timeoutMs ...int) (*WindowDetailResult, error)
 ```
 
 GetActiveWindow gets the currently active window
@@ -152,7 +152,7 @@ InputText inputs text into the active field
 #### ListRootWindows
 
 ```go
-func (c *Computer) ListRootWindows(timeoutMs ...int) (*window.WindowListResult, error)
+func (c *Computer) ListRootWindows(timeoutMs ...int) (*WindowListResult, error)
 ```
 
 ListRootWindows lists all root windows
@@ -160,7 +160,7 @@ ListRootWindows lists all root windows
 #### MaximizeWindow
 
 ```go
-func (c *Computer) MaximizeWindow(windowID int) (*window.WindowResult, error)
+func (c *Computer) MaximizeWindow(windowID int) (*WindowResult, error)
 ```
 
 MaximizeWindow maximizes the specified window
@@ -168,7 +168,7 @@ MaximizeWindow maximizes the specified window
 #### MinimizeWindow
 
 ```go
-func (c *Computer) MinimizeWindow(windowID int) (*window.WindowResult, error)
+func (c *Computer) MinimizeWindow(windowID int) (*WindowResult, error)
 ```
 
 MinimizeWindow minimizes the specified window
@@ -200,7 +200,7 @@ ReleaseKeys releases multiple keyboard keys
 #### ResizeWindow
 
 ```go
-func (c *Computer) ResizeWindow(windowID int, width int, height int) (*window.WindowResult, error)
+func (c *Computer) ResizeWindow(windowID int, width int, height int) (*WindowResult, error)
 ```
 
 ResizeWindow resizes the specified window
@@ -208,7 +208,7 @@ ResizeWindow resizes the specified window
 #### RestoreWindow
 
 ```go
-func (c *Computer) RestoreWindow(windowID int) (*window.WindowResult, error)
+func (c *Computer) RestoreWindow(windowID int) (*WindowResult, error)
 ```
 
 RestoreWindow restores the specified window
@@ -302,6 +302,70 @@ type ScrollDirection string
 ```
 
 ScrollDirection represents scroll directions
+
+## Type Window
+
+```go
+type Window struct {
+	WindowID		int		`json:"window_id"`
+	Title			string		`json:"title"`
+	AbsoluteUpperLeftX	int		`json:"absolute_upper_left_x,omitempty"`
+	AbsoluteUpperLeftY	int		`json:"absolute_upper_left_y,omitempty"`
+	Width			int		`json:"width,omitempty"`
+	Height			int		`json:"height,omitempty"`
+	PID			int		`json:"pid,omitempty"`
+	PName			string		`json:"pname,omitempty"`
+	ChildWindows		[]Window	`json:"child_windows,omitempty"`
+}
+```
+
+Window represents a window in the system
+
+## Type WindowDetailResult
+
+```go
+type WindowDetailResult struct {
+	models.ApiResponse
+	Window	*Window
+}
+```
+
+WindowDetailResult represents the result of getting window details
+
+## Type WindowInfo
+
+```go
+type WindowInfo struct {
+	WindowID	int	`json:"window_id"`
+	Title		string	`json:"title"`
+	PID		int	`json:"pid"`
+	PName		string	`json:"pname"`
+}
+```
+
+WindowInfo represents window information
+
+## Type WindowListResult
+
+```go
+type WindowListResult struct {
+	models.ApiResponse
+	Windows	[]*WindowInfo
+}
+```
+
+WindowListResult represents the result of listing windows
+
+## Type WindowResult
+
+```go
+type WindowResult struct {
+	models.ApiResponse
+	Success	bool
+}
+```
+
+WindowResult represents the result of a window action
 
 ## Best Practices
 

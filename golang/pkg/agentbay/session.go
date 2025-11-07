@@ -13,7 +13,6 @@ import (
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/agent"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/code"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
@@ -22,8 +21,6 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/mobile"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/ui"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/window"
 )
 
 // SessionResult wraps Session object and RequestID
@@ -129,11 +126,6 @@ type Session struct {
 	Code       *code.Code
 	Oss        *oss.OSSManager
 
-	// UI, application and window management
-	UI          *ui.UIManager
-	Application *application.ApplicationManager
-	Window      *window.WindowManager
-
 	// Platform-specific automation modules
 	Computer *computer.Computer
 	Mobile   *mobile.Mobile
@@ -166,13 +158,6 @@ func NewSession(agentBay *AgentBay, sessionID string) *Session {
 
 	// Initialize Browser
 	session.Browser = browser.NewBrowser(session)
-
-	// Initialize UI
-	session.UI = ui.NewUI(session)
-
-	// Initialize application and window managers
-	session.Application = application.NewApplicationManager(session)
-	session.Window = window.NewWindowManager(session)
 
 	// Initialize platform-specific automation modules
 	session.Computer = computer.NewComputer(session)

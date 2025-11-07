@@ -82,10 +82,8 @@ describe("TestContextPagination", () => {
 
       expect(result.contexts[0].id).toBe("context-1");
       expect(result.contexts[0].name).toBe("context-1-name");
-      expect(result.contexts[0].state).toBe("available");
       expect(result.contexts[1].id).toBe("context-2");
       expect(result.contexts[1].name).toBe("context-2-name");
-      expect(result.contexts[1].state).toBe("in-use");
     });
   });
 

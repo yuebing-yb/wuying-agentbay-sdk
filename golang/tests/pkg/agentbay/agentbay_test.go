@@ -72,7 +72,7 @@ func TestAgentBay_Create_List_Delete(t *testing.T) {
 
 	// List all sessions
 	fmt.Println("Listing sessions...")
-	listResult, err := agentBay.ListByLabels(nil)
+	listResult, err := agentBay.List(nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Error listing sessions: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestAgentBay_Create_List_Delete(t *testing.T) {
 	}
 
 	// List sessions again to ensure it's deleted
-	listResult, err = agentBay.ListByLabels(nil)
+	listResult, err = agentBay.List(nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Error listing sessions after deletion: %v", err)
 	}
@@ -124,8 +124,8 @@ func TestAgentBay_Create_List_Delete(t *testing.T) {
 	}
 }
 
-// TestAgentBay_ListByLabels tests the functionality of listing sessions by labels
-func TestAgentBay_ListByLabels(t *testing.T) {
+// TestAgentBay_List tests the functionality of listing sessions by labels
+func TestAgentBay_List(t *testing.T) {
 	// Initialize AgentBay client
 	apiKey := testutil.GetTestAPIKey(t)
 	agentBayClient, err := agentbay.NewAgentBay(apiKey)
@@ -192,7 +192,7 @@ func TestAgentBay_ListByLabels(t *testing.T) {
 
 	// Test 1: List all sessions
 	t.Log("Listing all sessions...")
-	listResult, err := agentBayClient.ListByLabels(nil)
+	listResult, err := agentBayClient.List(nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Error listing all sessions: %v", err)
 	}
@@ -202,9 +202,8 @@ func TestAgentBay_ListByLabels(t *testing.T) {
 
 	// Test 2: List sessions by environment=development label
 	t.Log("Listing sessions with environment=development...")
-	devParams := agentbay.NewListSessionParams()
-	devParams.Labels = map[string]string{"environment": "development"}
-	devResult, err := agentBayClient.ListByLabels(devParams)
+	devLabels := map[string]string{"environment": "development"}
+	devResult, err := agentBayClient.List(devLabels, nil, nil)
 	if err != nil {
 		t.Logf("Error listing sessions by environment=development: %v", err)
 	} else {
@@ -227,9 +226,8 @@ func TestAgentBay_ListByLabels(t *testing.T) {
 
 	// Test 3: List sessions by owner=team-b label
 	t.Log("Listing sessions with owner=team-b...")
-	teamBParams := agentbay.NewListSessionParams()
-	teamBParams.Labels = map[string]string{"owner": "team-b"}
-	teamBResult, err := agentBayClient.ListByLabels(teamBParams)
+	teamBLabels := map[string]string{"owner": "team-b"}
+	teamBResult, err := agentBayClient.List(teamBLabels, nil, nil)
 	if err != nil {
 		t.Logf("Error listing sessions by owner=team-b: %v", err)
 	} else {
@@ -252,12 +250,11 @@ func TestAgentBay_ListByLabels(t *testing.T) {
 
 	// Test 4: List sessions with multiple labels (environment=testing AND project=project-y)
 	t.Log("Listing sessions with environment=testing AND project=project-y...")
-	multiParams := agentbay.NewListSessionParams()
-	multiParams.Labels = map[string]string{
+	multiLabels := map[string]string{
 		"environment": "testing",
 		"project":     "project-y",
 	}
-	multiResult, err := agentBayClient.ListByLabels(multiParams)
+	multiResult, err := agentBayClient.List(multiLabels, nil, nil)
 	if err != nil {
 		t.Logf("Error listing sessions by multiple labels: %v", err)
 	} else {
@@ -286,9 +283,8 @@ func TestAgentBay_ListByLabels(t *testing.T) {
 
 	// Test 5: List sessions with non-existent label
 	t.Log("Listing sessions with non-existent label...")
-	nonExistentParams := agentbay.NewListSessionParams()
-	nonExistentParams.Labels = map[string]string{"non-existent": "value"}
-	nonExistentResult, err := agentBayClient.ListByLabels(nonExistentParams)
+	nonExistentLabels := map[string]string{"non-existent": "value"}
+	nonExistentResult, err := agentBayClient.List(nonExistentLabels, nil, nil)
 	if err != nil {
 		t.Logf("Error listing sessions by non-existent label: %v", err)
 	} else {

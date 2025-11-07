@@ -8,18 +8,14 @@ describe("TestContext", () => {
       const context = new Context(
         "test-id",
         "test-context",
-        "available",
         "2025-05-29T12:00:00Z",
-        "2025-05-29T12:30:00Z",
-        "linux"
+        "2025-05-29T12:30:00Z"
       );
 
       expect(context.id).toBe("test-id");
       expect(context.name).toBe("test-context");
-      expect(context.state).toBe("available");
       expect(context.createdAt).toBe("2025-05-29T12:00:00Z");
       expect(context.lastUsedAt).toBe("2025-05-29T12:30:00Z");
-      expect(context.osType).toBe("linux");
     });
   });
 });
@@ -93,10 +89,8 @@ describe("TestContextService", () => {
 
       expect(result.contexts[0].id).toBe("context-1");
       expect(result.contexts[0].name).toBe("context-1-name");
-      expect(result.contexts[0].state).toBe("available");
       expect(result.contexts[1].id).toBe("context-2");
       expect(result.contexts[1].name).toBe("context-2-name");
-      expect(result.contexts[1].state).toBe("in-use");
 
       expect(mockClient.listContexts.calledOnce).toBe(true);
     });
@@ -158,7 +152,6 @@ describe("TestContextService", () => {
 
       expect(result.context!.id).toBe("context-1");
       expect(result.context!.name).toBe("test-context");
-      expect(result.context!.state).toBe("available");
 
       expect(mockClient.getContext.calledOnce).toBe(true);
       expect(mockClient.listContexts.calledOnce).toBe(true);
@@ -222,7 +215,6 @@ describe("TestContextService", () => {
 
       expect(result.context!.id).toBe("new-context-id");
       expect(result.context!.name).toBe("new-context");
-      expect(result.context!.state).toBe("available");
 
       expect(mockClient.getContext.calledOnce).toBe(true);
       expect(mockClient.listContexts.calledOnce).toBe(true);

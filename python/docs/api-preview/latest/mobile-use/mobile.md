@@ -26,6 +26,14 @@ and mobile environment configuration operations.
 logger = get_logger("mobile")
 ```
 
+## UIElementListResult Objects
+
+```python
+class UIElementListResult(ApiResponse)
+```
+
+Result of UI element listing operations.
+
 ## KeyCode Objects
 
 ```python

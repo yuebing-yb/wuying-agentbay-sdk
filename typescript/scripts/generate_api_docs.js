@@ -43,10 +43,7 @@ const docMappings = [
     identifiers: ['Class ExtensionsService', 'Class Extension', 'ExtensionsService', 'Extension'],
   },
   { target: 'codespace/code.md', symbol: 'Code', identifiers: ['Class Code', 'Code'] },
-  { target: 'computer-use/application.md', symbol: 'Application', identifiers: ['Class Application', 'Application'] },
   { target: 'computer-use/computer.md', symbol: 'Computer', identifiers: ['Class Computer', 'Computer'] },
-  { target: 'computer-use/ui.md', symbol: 'UI', identifiers: ['Class UI', 'UI'] },
-  { target: 'computer-use/window.md', symbol: 'WindowManager', identifiers: ['Class WindowManager', 'WindowManager'] },
   { target: 'mobile-use/mobile.md', symbol: 'Mobile', identifiers: ['Class Mobile', 'Mobile'] },
 ]
 

@@ -392,114 +392,320 @@ export class Computer {
    * Lists all root windows.
    */
   async listRootWindows(timeoutMs = 3000): Promise<WindowListResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.listRootWindows(timeoutMs);
+    try {
+      const args = { timeout_ms: timeoutMs };
+      const response = await this.session.callMcpTool('list_root_windows', args);
+
+      if (!response.success) {
+        return {
+          requestId: response.requestId,
+          success: false,
+          windows: [],
+          errorMessage: response.errorMessage,
+        };
+      }
+
+      const windows = response.data ? JSON.parse(response.data) : [];
+      return {
+        requestId: response.requestId,
+        success: true,
+        windows,
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        windows: [],
+        errorMessage: `Failed to list root windows: ${error}`,
+      };
+    }
   }
 
   /**
    * Gets the currently active window.
    */
   async getActiveWindow(timeoutMs = 3000): Promise<WindowInfoResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.getActiveWindow(timeoutMs);
+    try {
+      const args = { timeout_ms: timeoutMs };
+      const response = await this.session.callMcpTool('get_active_window', args);
+
+      if (!response.success) {
+        return {
+          requestId: response.requestId,
+          success: false,
+          window: null,
+          errorMessage: response.errorMessage,
+        };
+      }
+
+      const window = response.data ? JSON.parse(response.data) : null;
+      return {
+        requestId: response.requestId,
+        success: true,
+        window,
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        window: null,
+        errorMessage: `Failed to get active window: ${error}`,
+      };
+    }
   }
 
   /**
    * Activates the specified window.
    */
   async activateWindow(windowId: number): Promise<WindowBoolResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.activateWindow(windowId);
+    try {
+      const args = { window_id: windowId };
+      const response = await this.session.callMcpTool('activate_window', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to activate window: ${error}`,
+      };
+    }
   }
 
   /**
    * Closes the specified window.
    */
   async closeWindow(windowId: number): Promise<WindowBoolResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.closeWindow(windowId);
+    try {
+      const args = { window_id: windowId };
+      const response = await this.session.callMcpTool('close_window', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to close window: ${error}`,
+      };
+    }
   }
 
   /**
    * Maximizes the specified window.
    */
   async maximizeWindow(windowId: number): Promise<WindowBoolResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.maximizeWindow(windowId);
+    try {
+      const args = { window_id: windowId };
+      const response = await this.session.callMcpTool('maximize_window', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to maximize window: ${error}`,
+      };
+    }
   }
 
   /**
    * Minimizes the specified window.
    */
   async minimizeWindow(windowId: number): Promise<WindowBoolResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.minimizeWindow(windowId);
+    try {
+      const args = { window_id: windowId };
+      const response = await this.session.callMcpTool('minimize_window', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to minimize window: ${error}`,
+      };
+    }
   }
 
   /**
    * Restores the specified window.
    */
   async restoreWindow(windowId: number): Promise<WindowBoolResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.restoreWindow(windowId);
+    try {
+      const args = { window_id: windowId };
+      const response = await this.session.callMcpTool('restore_window', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to restore window: ${error}`,
+      };
+    }
   }
 
   /**
    * Resizes the specified window.
    */
   async resizeWindow(windowId: number, width: number, height: number): Promise<WindowBoolResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.resizeWindow(windowId, width, height);
+    try {
+      const args = { window_id: windowId, width, height };
+      const response = await this.session.callMcpTool('resize_window', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to resize window: ${error}`,
+      };
+    }
   }
 
   /**
    * Makes the specified window fullscreen.
    */
   async fullscreenWindow(windowId: number): Promise<WindowBoolResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.fullscreenWindow(windowId);
+    try {
+      const args = { window_id: windowId };
+      const response = await this.session.callMcpTool('fullscreen_window', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to make window fullscreen: ${error}`,
+      };
+    }
   }
 
   /**
    * Toggles focus mode on or off.
    */
   async focusMode(on: boolean): Promise<WindowBoolResult> {
-    const { WindowManager } = await import('../window/window');
-    const windowManager = new WindowManager(this.session);
-    return windowManager.focusMode(on);
+    try {
+      const args = { on };
+      const response = await this.session.callMcpTool('focus_mode', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to toggle focus mode: ${error}`,
+      };
+    }
   }
 
-  // Application Management Operations (delegated to existing application module)
+  // Application Management Operations
 
   /**
    * Gets the list of installed applications.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async getInstalledApps(): Promise<any> {
-    const { Application } = await import('../application/application');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const app = new Application(this.session as any);
-    return app.getInstalledApps();
+  async getInstalledApps(startMenu = true, desktop = false, ignoreSystemApps = true): Promise<any> {
+    try {
+      const args = {
+        start_menu: startMenu,
+        desktop,
+        ignore_system_apps: ignoreSystemApps,
+      };
+
+      const response = await this.session.callMcpTool('get_installed_apps', args);
+
+      if (!response.success) {
+        return {
+          requestId: response.requestId,
+          success: false,
+          data: [],
+          errorMessage: response.errorMessage,
+        };
+      }
+
+      const apps = response.data ? JSON.parse(response.data) : [];
+      return {
+        requestId: response.requestId,
+        success: true,
+        data: apps,
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        data: [],
+        errorMessage: `Failed to get installed apps: ${error}`,
+      };
+    }
   }
 
   /**
    * Starts the specified application.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async startApp(startCmd: string, workDirectory = ""): Promise<any> {
-    const { Application } = await import('../application/application');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const app = new Application(this.session as any);
-    return app.startApp(startCmd, workDirectory);
+  async startApp(startCmd: string, workDirectory = "", activity = ""): Promise<any> {
+    try {
+      const args: Record<string, string> = { start_cmd: startCmd };
+      if (workDirectory) args.work_directory = workDirectory;
+      if (activity) args.activity = activity;
+
+      const response = await this.session.callMcpTool('start_app', args);
+
+      if (!response.success) {
+        return {
+          requestId: response.requestId,
+          success: false,
+          data: [],
+          errorMessage: response.errorMessage,
+        };
+      }
+
+      const processes = response.data ? JSON.parse(response.data) : [];
+      return {
+        requestId: response.requestId,
+        success: true,
+        data: processes,
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        data: [],
+        errorMessage: `Failed to start app: ${error}`,
+      };
+    }
   }
 
   /**
@@ -507,10 +713,22 @@ export class Computer {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async stopAppByPName(pname: string): Promise<any> {
-    const { Application } = await import('../application/application');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const app = new Application(this.session as any);
-    return app.stopAppByPName(pname);
+    try {
+      const args = { pname };
+      const response = await this.session.callMcpTool('stop_app_by_pname', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to stop app by pname: ${error}`,
+      };
+    }
   }
 
   /**
@@ -518,10 +736,22 @@ export class Computer {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async stopAppByPID(pid: number): Promise<any> {
-    const { Application } = await import('../application/application');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const app = new Application(this.session as any);
-    return app.stopAppByPID(pid);
+    try {
+      const args = { pid };
+      const response = await this.session.callMcpTool('stop_app_by_pid', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to stop app by pid: ${error}`,
+      };
+    }
   }
 
   /**
@@ -529,10 +759,22 @@ export class Computer {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async stopAppByCmd(cmd: string): Promise<any> {
-    const { Application } = await import('../application/application');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const app = new Application(this.session as any);
-    return app.stopAppByCmd(cmd);
+    try {
+      const args = { stop_cmd: cmd };
+      const response = await this.session.callMcpTool('stop_app_by_cmd', args);
+
+      return {
+        requestId: response.requestId,
+        success: response.success,
+        errorMessage: response.errorMessage || '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to stop app by cmd: ${error}`,
+      };
+    }
   }
 
   /**
@@ -540,9 +782,31 @@ export class Computer {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async listVisibleApps(): Promise<any> {
-    const { Application } = await import('../application/application');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const app = new Application(this.session as any);
-    return app.listVisibleApps();
+    try {
+      const response = await this.session.callMcpTool('list_visible_apps', {});
+
+      if (!response.success) {
+        return {
+          requestId: response.requestId,
+          success: false,
+          data: [],
+          errorMessage: response.errorMessage,
+        };
+      }
+
+      const processes = response.data ? JSON.parse(response.data) : [];
+      return {
+        requestId: response.requestId,
+        success: true,
+        data: processes,
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        data: [],
+        errorMessage: `Failed to list visible apps: ${error}`,
+      };
+    }
   }
 } 

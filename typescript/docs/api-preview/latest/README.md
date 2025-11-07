@@ -20,9 +20,6 @@ These documents are generated automatically using TypeDoc. Run `npm run docs:gen
   - logging.md
   - session.md
 - `computer-use`
-  - application.md
   - computer.md
-  - ui.md
-  - window.md
 - `mobile-use`
   - mobile.md

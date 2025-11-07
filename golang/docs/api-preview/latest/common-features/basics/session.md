@@ -162,11 +162,6 @@ type Session struct {
 	Code		*code.Code
 	Oss		*oss.OSSManager
 
-	// UI, application and window management
-	UI		*ui.UIManager
-	Application	*application.ApplicationManager
-	Window		*window.WindowManager
-
 	// Platform-specific automation modules
 	Computer	*computer.Computer
 	Mobile		*mobile.Mobile

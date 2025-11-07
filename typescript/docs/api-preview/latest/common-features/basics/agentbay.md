@@ -25,7 +25,6 @@ Main class for interacting with the AgentBay cloud runtime environment.
 - [getClient](agentbay.md#getclient)
 - [getSession](agentbay.md#getsession)
 - [list](agentbay.md#list)
-- [listByLabels](agentbay.md#listbylabels)
 - [removeSession](agentbay.md#removesession)
 
 ## Constructors
@@ -290,33 +289,6 @@ if (result.success) {
   console.log(`Request ID: ${result.requestId}`);
 }
 ```
-
-___
-
-### listByLabels
-
-▸ **listByLabels**(`params?`): `Promise`\<``SessionListResult``\>
-
-List sessions filtered by the provided labels with pagination support.
-It returns sessions that match all the specified labels.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `params?` | ``ListSessionParams`` | Parameters including labels and pagination options (required) |
-
-#### Returns
-
-`Promise`\<``SessionListResult``\>
-
-API response with sessions list and pagination info
-
-**`Deprecated`**
-
-This method is deprecated and will be removed in a future version. Use list() instead.
-
-**Breaking Change**: This method currently only accepts ListSessionParams parameters，
 
 ___
 

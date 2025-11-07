@@ -18,19 +18,11 @@ type Context struct {
 	// Name is the name of the context.
 	Name string
 
-	// State is deprecated and will be removed in a future version.
-	// Deprecated: This field is no longer used.
-	State string
-
 	// CreatedAt is the date and time when the Context was created.
 	CreatedAt string
 
 	// LastUsedAt is the date and time when the Context was last used.
 	LastUsedAt string
-
-	// OSType is deprecated and will be removed in a future version.
-	// Deprecated: This field is no longer used.
-	OSType string
 }
 
 // ContextResult wraps context operation result and RequestID
@@ -187,10 +179,8 @@ func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, e
 				context := &Context{
 					ID:         tea.StringValue(contextData.Id),
 					Name:       tea.StringValue(contextData.Name),
-					State:      tea.StringValue(contextData.State),
 					CreatedAt:  tea.StringValue(contextData.CreateTime),
 					LastUsedAt: tea.StringValue(contextData.LastUsedTime),
-					OSType:     tea.StringValue(contextData.OsType),
 				}
 				contexts = append(contexts, context)
 			}
@@ -332,17 +322,13 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 	context := &Context{
 		ID:         tea.StringValue(response.Body.Data.Id),
 		Name:       tea.StringValue(response.Body.Data.Name),
-		State:      tea.StringValue(response.Body.Data.State),
 		CreatedAt:  tea.StringValue(response.Body.Data.CreateTime),
 		LastUsedAt: tea.StringValue(response.Body.Data.LastUsedTime),
-		OSType:     tea.StringValue(response.Body.Data.OsType),
 	}
 
 	keyFields := map[string]interface{}{
 		"context_id": context.ID,
 		"name":       context.Name,
-		"state":      context.State,
-		"os_type":    context.OSType,
 	}
 	if context.CreatedAt != "" {
 		keyFields["created_at"] = context.CreatedAt

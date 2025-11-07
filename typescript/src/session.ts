@@ -10,7 +10,6 @@ import {
   ReleaseMcpSessionRequest,
   SetLabelRequest,
 } from "./api/models/model";
-import { Application } from "./application";
 import { Browser } from "./browser";
 import { Code } from "./code";
 import { Command } from "./command";
@@ -24,7 +23,6 @@ import {
   extractRequestId,
   OperationResult,
 } from "./types/api-response";
-import { UI } from "./ui";
 import {
   log,
   logError,
@@ -37,7 +35,6 @@ import {
   setRequestId,
   getRequestId,
 } from "./utils/logger";
-import { WindowManager } from "./window";
 
 /**
  * Represents an MCP tool with complete information.
@@ -158,11 +155,6 @@ export class Session {
   public code: Code;
   public oss: Oss;
 
-  // Application, window, and UI management (matching Python naming)
-  public application: Application; // application in Python (ApplicationManager)
-  public window: WindowManager;
-  public ui: UI;
-
   // Computer and Mobile automation (new modules)
   public computer: Computer;
   public mobile: Mobile;
@@ -194,11 +186,6 @@ export class Session {
     this.command = new Command(this);
     this.code = new Code(this);
     this.oss = new Oss(this);
-
-    // Initialize application and window managers (matching Python naming)
-    this.application = new Application(this);
-    this.window = new WindowManager(this);
-    this.ui = new UI(this);
 
     // Initialize Computer and Mobile modules
     this.computer = new Computer(this);

@@ -15,7 +15,6 @@ Represents a session in the AgentBay cloud environment.
 ### Properties
 
 - [agent](session.md#agent)
-- [application](session.md#application)
 - [browser](session.md#browser)
 - [code](session.md#code)
 - [command](session.md#command)
@@ -34,8 +33,6 @@ Represents a session in the AgentBay cloud environment.
 - [resourceUrl](session.md#resourceurl)
 - [sessionId](session.md#sessionid)
 - [token](session.md#token)
-- [ui](session.md#ui)
-- [window](session.md#window)
 
 ### Methods
 
@@ -81,12 +78,6 @@ Initialize a Session object.
 ### agent
 
 • **agent**: [`Agent`](../advanced/agent.md)
-
-___
-
-### application
-
-• **application**: [`Application`](../../computer-use/application.md)
 
 ___
 
@@ -195,18 +186,6 @@ ___
 ### token
 
 • **token**: `string` = `""`
-
-___
-
-### ui
-
-• **ui**: [`UI`](../../computer-use/ui.md)
-
-___
-
-### window
-
-• **window**: [`WindowManager`](../../computer-use/window.md)
 
 ## Methods
 

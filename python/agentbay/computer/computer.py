@@ -9,9 +9,8 @@ from typing import List, Optional, Dict, Any, Union
 
 from agentbay.api.base_service import BaseService
 from agentbay.exceptions import AgentBayError
-from agentbay.model import BoolResult, OperationResult
-from agentbay.application.application import InstalledAppListResult, InstalledApp, ProcessListResult, AppOperationResult
-from agentbay.window.window import WindowListResult, WindowInfoResult
+from agentbay.model import BoolResult, OperationResult, ApiResponse
+import json
 
 
 class MouseButton(str, Enum):
@@ -28,6 +27,157 @@ class ScrollDirection(str, Enum):
     DOWN = "down"
     LEFT = "left"
     RIGHT = "right"
+
+
+class InstalledApp:
+    """Represents an installed application."""
+    def __init__(self, name: str, start_cmd: str, stop_cmd: Optional[str] = None, work_directory: Optional[str] = None):
+        self.name = name
+        self.start_cmd = start_cmd
+        self.stop_cmd = stop_cmd
+        self.work_directory = work_directory
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "InstalledApp":
+        return cls(
+            name=data.get("name", ""),
+            start_cmd=data.get("start_cmd", ""),
+            stop_cmd=data.get("stop_cmd"),
+            work_directory=data.get("work_directory"),
+        )
+
+
+class Process:
+    """Represents a running process."""
+    def __init__(self, pname: str, pid: int, cmdline: Optional[str] = None):
+        self.pname = pname
+        self.pid = pid
+        self.cmdline = cmdline
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Process":
+        return cls(
+            pname=data.get("pname", ""),
+            pid=data.get("pid", 0),
+            cmdline=data.get("cmdline"),
+        )
+
+
+class Window:
+    """Represents a window in the system."""
+    def __init__(
+        self,
+        window_id: int,
+        title: str,
+        absolute_upper_left_x: Optional[int] = None,
+        absolute_upper_left_y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        pid: Optional[int] = None,
+        pname: Optional[str] = None,
+        child_windows: Optional[List["Window"]] = None,
+    ):
+        self.window_id = window_id
+        self.title = title
+        self.absolute_upper_left_x = absolute_upper_left_x
+        self.absolute_upper_left_y = absolute_upper_left_y
+        self.width = width
+        self.height = height
+        self.pid = pid
+        self.pname = pname
+        self.child_windows = child_windows or []
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Window":
+        child_windows = []
+        if "child_windows" in data and data["child_windows"]:
+            child_windows = [cls.from_dict(child) for child in data["child_windows"]]
+        return cls(
+            window_id=data.get("window_id", 0),
+            title=data.get("title", ""),
+            absolute_upper_left_x=data.get("absolute_upper_left_x"),
+            absolute_upper_left_y=data.get("absolute_upper_left_y"),
+            width=data.get("width"),
+            height=data.get("height"),
+            pid=data.get("pid"),
+            pname=data.get("pname"),
+            child_windows=child_windows,
+        )
+
+
+class InstalledAppListResult(ApiResponse):
+    """Result of operations returning a list of InstalledApps."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        data: Optional[List[InstalledApp]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.data = data if data is not None else []
+        self.error_message = error_message
+
+
+class ProcessListResult(ApiResponse):
+    """Result of operations returning a list of Processes."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        data: Optional[List[Process]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.data = data if data is not None else []
+        self.error_message = error_message
+
+
+class AppOperationResult(ApiResponse):
+    """Result of application operations like start/stop."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message
+
+
+class WindowListResult(ApiResponse):
+    """Result of window listing operations."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        windows: Optional[List[Any]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.windows = windows or []
+        self.error_message = error_message
+
+
+class WindowInfoResult(ApiResponse):
+    """Result of window info operations."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        window: Any = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.window = window
+        self.error_message = error_message
+
+
 class Computer(BaseService):
     """
     Handles computer UI automation operations in the AgentBay cloud environment.
@@ -678,7 +828,7 @@ class Computer(BaseService):
         window_manager = WindowManager(self.session)
         return window_manager.focus_mode(on)
 
-    # Application Management Operations (delegated to existing application module)
+    # Application Management Operations
     def get_installed_apps(
         self, start_menu: bool = True, desktop: bool = False, ignore_system_apps: bool = True
     ) -> InstalledAppListResult:
@@ -693,9 +843,45 @@ class Computer(BaseService):
         Returns:
             InstalledAppListResult: Result object containing list of installed apps and error message if any.
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.get_installed_apps(start_menu, desktop, ignore_system_apps)
+        try:
+            args = {
+                "start_menu": start_menu,
+                "desktop": desktop,
+                "ignore_system_apps": ignore_system_apps,
+            }
+
+            result = self.session.call_mcp_tool("get_installed_apps", args)
+
+            if not result.success:
+                return InstalledAppListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message,
+                )
+
+            try:
+                apps_json = json.loads(result.data)
+                installed_apps = []
+
+                for app_data in apps_json:
+                    app = InstalledApp.from_dict(app_data)
+                    installed_apps.append(app)
+
+                return InstalledAppListResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=installed_apps,
+                )
+            except json.JSONDecodeError as e:
+                return InstalledAppListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=f"Failed to parse applications JSON: {e}",
+                )
+        except Exception as e:
+            return InstalledAppListResult(
+                success=False, error_message=str(e)
+            )
 
     def start_app(self, start_cmd: str, work_directory: str = "", activity: str = "") -> ProcessListResult:
         """
@@ -709,20 +895,83 @@ class Computer(BaseService):
         Returns:
             ProcessListResult: Result object containing list of processes started and error message if any.
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.start_app(start_cmd, work_directory, activity)
+        try:
+            args = {"start_cmd": start_cmd}
+            if work_directory:
+                args["work_directory"] = work_directory
+            if activity:
+                args["activity"] = activity
 
-    def list_visible_apps(self):
+            result = self.session.call_mcp_tool("start_app", args)
+
+            if not result.success:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message,
+                )
+
+            try:
+                processes_json = json.loads(result.data)
+                processes = []
+
+                for process_data in processes_json:
+                    process = Process.from_dict(process_data)
+                    processes.append(process)
+
+                return ProcessListResult(
+                    request_id=result.request_id, success=True, data=processes
+                )
+            except json.JSONDecodeError as e:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=f"Failed to parse processes JSON: {e}",
+                )
+        except Exception as e:
+            return ProcessListResult(success=False, error_message=str(e))
+
+    def list_visible_apps(self) -> ProcessListResult:
         """
-        Lists all visible applications.
+        Lists all applications with visible windows.
+
+        Returns detailed process information for applications that have visible windows,
+        including process ID, name, command line, and other system information.
+        This is useful for system monitoring and process management tasks.
 
         Returns:
-            Result object containing list of visible apps and error message if any.
+            ProcessListResult: Result object containing list of visible applications
+                with detailed process information.
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.list_visible_apps()
+        try:
+            result = self.session.call_mcp_tool("list_visible_apps", {})
+
+            if not result.success:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message,
+                )
+
+            try:
+                processes_json = json.loads(result.data)
+                processes = []
+
+                for process_data in processes_json:
+                    process = Process.from_dict(process_data)
+                    processes.append(process)
+
+                return ProcessListResult(
+                    request_id=result.request_id, success=True, data=processes
+                )
+            except json.JSONDecodeError as e:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=f"Failed to parse processes JSON: {e}",
+                )
+        except Exception as e:
+            return ProcessListResult(success=False, error_message=str(e))
 
     def stop_app_by_pname(self, pname: str) -> AppOperationResult:
         """
@@ -734,9 +983,17 @@ class Computer(BaseService):
         Returns:
             AppOperationResult: Result object containing success status and error message if any.
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.stop_app_by_pname(pname)
+        try:
+            args = {"pname": pname}
+            result = self.session.call_mcp_tool("stop_app_by_pname", args)
+
+            return AppOperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                error_message=result.error_message,
+            )
+        except Exception as e:
+            return AppOperationResult(success=False, error_message=str(e))
 
     def stop_app_by_pid(self, pid: int) -> AppOperationResult:
         """
@@ -748,9 +1005,17 @@ class Computer(BaseService):
         Returns:
             AppOperationResult: Result object containing success status and error message if any.
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.stop_app_by_pid(pid)
+        try:
+            args = {"pid": pid}
+            result = self.session.call_mcp_tool("stop_app_by_pid", args)
+
+            return AppOperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                error_message=result.error_message,
+            )
+        except Exception as e:
+            return AppOperationResult(success=False, error_message=str(e))
 
     def stop_app_by_cmd(self, stop_cmd: str) -> AppOperationResult:
         """
@@ -762,22 +1027,14 @@ class Computer(BaseService):
         Returns:
             AppOperationResult: Result object containing success status and error message if any.
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.stop_app_by_cmd(stop_cmd)
+        try:
+            args = {"stop_cmd": stop_cmd}
+            result = self.session.call_mcp_tool("stop_app_by_cmd", args)
 
-    def list_visible_apps(self) -> ProcessListResult:
-        """
-        Lists all applications with visible windows.
-        
-        Returns detailed process information for applications that have visible windows,
-        including process ID, name, command line, and other system information.
-        This is useful for system monitoring and process management tasks.
-
-        Returns:
-            ProcessListResult: Result object containing list of visible applications
-                with detailed process information.
-        """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.list_visible_apps() 
+            return AppOperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                error_message=result.error_message,
+            )
+        except Exception as e:
+            return AppOperationResult(success=False, error_message=str(e))

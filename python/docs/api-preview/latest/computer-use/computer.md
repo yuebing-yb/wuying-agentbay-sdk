@@ -105,6 +105,91 @@ LEFT = "left"
 RIGHT = "right"
 ```
 
+## InstalledApp Objects
+
+```python
+class InstalledApp()
+```
+
+Represents an installed application.
+
+#### from\_dict
+
+```python
+@classmethod
+def from_dict(cls, data: Dict[str, Any]) -> "InstalledApp"
+```
+
+## Process Objects
+
+```python
+class Process()
+```
+
+Represents a running process.
+
+#### from\_dict
+
+```python
+@classmethod
+def from_dict(cls, data: Dict[str, Any]) -> "Process"
+```
+
+## Window Objects
+
+```python
+class Window()
+```
+
+Represents a window in the system.
+
+#### from\_dict
+
+```python
+@classmethod
+def from_dict(cls, data: Dict[str, Any]) -> "Window"
+```
+
+## InstalledAppListResult Objects
+
+```python
+class InstalledAppListResult(ApiResponse)
+```
+
+Result of operations returning a list of InstalledApps.
+
+## ProcessListResult Objects
+
+```python
+class ProcessListResult(ApiResponse)
+```
+
+Result of operations returning a list of Processes.
+
+## AppOperationResult Objects
+
+```python
+class AppOperationResult(ApiResponse)
+```
+
+Result of application operations like start/stop.
+
+## WindowListResult Objects
+
+```python
+class WindowListResult(ApiResponse)
+```
+
+Result of window listing operations.
+
+## WindowInfoResult Objects
+
+```python
+class WindowInfoResult(ApiResponse)
+```
+
+Result of window info operations.
+
 ## Computer Objects
 
 ```python
@@ -629,14 +714,19 @@ Starts the specified application.
 #### list\_visible\_apps
 
 ```python
-def list_visible_apps()
+def list_visible_apps() -> ProcessListResult
 ```
 
-Lists all visible applications.
+Lists all applications with visible windows.
+
+Returns detailed process information for applications that have visible windows,
+including process ID, name, command line, and other system information.
+This is useful for system monitoring and process management tasks.
 
 **Returns**:
 
-  Result object containing list of visible apps and error message if any.
+- `ProcessListResult` - Result object containing list of visible applications
+  with detailed process information.
 
 #### stop\_app\_by\_pname
 
@@ -688,23 +778,6 @@ Stops an application by stop command.
 **Returns**:
 
 - `AppOperationResult` - Result object containing success status and error message if any.
-
-#### list\_visible\_apps
-
-```python
-def list_visible_apps() -> ProcessListResult
-```
-
-Lists all applications with visible windows.
-
-Returns detailed process information for applications that have visible windows,
-including process ID, name, command line, and other system information.
-This is useful for system monitoring and process management tasks.
-
-**Returns**:
-
-- `ProcessListResult` - Result object containing list of visible applications
-  with detailed process information.
 
 ## Best Practices
 

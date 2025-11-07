@@ -31,20 +31,16 @@ class Context:
     Attributes:
         id (str): The unique identifier of the context.
         name (str): The name of the context.
-        state (str): **Deprecated.** This field is no longer used and will be removed in a future version.
         created_at (str): Date and time when the Context was created.
         last_used_at (str): Date and time when the Context was last used.
-        os_type (str): **Deprecated.** This field is no longer used and will be removed in a future version.
     """
 
     def __init__(
         self,
         id: str,
         name: str,
-        state: str = "available",
         created_at: Optional[str] = None,
         last_used_at: Optional[str] = None,
-        os_type: Optional[str] = None,
     ):
         """
         Initialize a Context object.
@@ -52,19 +48,15 @@ class Context:
         Args:
             id (str): The unique identifier of the context.
             name (str): The name of the context.
-            state (str, optional): **Deprecated.** This parameter is no longer used.
             created_at (Optional[str], optional): Date and time when the Context was
                 created. Defaults to None.
             last_used_at (Optional[str], optional): Date and time when the Context was
                 last used. Defaults to None.
-            os_type (Optional[str], optional): **Deprecated.** This parameter is no longer used.
         """
         self.id = id
         self.name = name
-        self.state = state
         self.created_at = created_at
         self.last_used_at = last_used_at
-        self.os_type = os_type
 
 
 class ContextResult(ApiResponse):
@@ -322,10 +314,8 @@ class ContextService:
                             context = Context(
                                 id=context_data.get("Id", ""),
                                 name=context_data.get("Name", ""),
-                                state=context_data.get("State", ""),
                                 created_at=context_data.get("CreateTime"),
                                 last_used_at=context_data.get("LastUsedTime"),
-                                os_type=context_data.get("OsType"),
                             )
                             contexts.append(context)
                 next_token = body.get("NextToken")
@@ -509,10 +499,8 @@ class ContextService:
                 context = Context(
                     id=context_id,
                     name=context_name,
-                    state=data.get("State", "") or "available",
                     created_at=data.get("CreateTime"),
                     last_used_at=data.get("LastUsedTime"),
-                    os_type=data.get("OsType"),
                 )
                 return ContextResult(
                     request_id=request_id,

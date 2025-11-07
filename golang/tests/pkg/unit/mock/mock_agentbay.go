@@ -83,18 +83,3 @@ func (mr *MockAgentBayInterfaceMockRecorder) List(labels, page, limit interface{
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockAgentBayInterface)(nil).List), labels, page, limit)
 }
-
-// ListByLabels mocks base method.
-func (m *MockAgentBayInterface) ListByLabels(params *agentbay.ListSessionParams) (*agentbay.SessionListResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListByLabels", params)
-	ret0, _ := ret[0].(*agentbay.SessionListResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListByLabels indicates an expected call of ListByLabels.
-func (mr *MockAgentBayInterfaceMockRecorder) ListByLabels(params interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByLabels", reflect.TypeOf((*MockAgentBayInterface)(nil).ListByLabels), params)
-}

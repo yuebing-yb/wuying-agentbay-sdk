@@ -19,7 +19,6 @@ from agentbay.api.models import (
     ReleaseMcpSessionRequest,
     SetLabelRequest,
 )
-from agentbay.application import ApplicationManager
 from agentbay.code import Code
 from agentbay.command import Command
 from agentbay.computer import Computer
@@ -28,9 +27,7 @@ from agentbay.filesystem import FileSystem
 from agentbay.mobile import Mobile
 from agentbay.model import DeleteResult, OperationResult, extract_request_id
 from agentbay.oss import Oss
-from agentbay.ui import UI
 from agentbay.agent import Agent
-from agentbay.window import WindowManager
 from agentbay.context_manager import ContextManager
 
 if TYPE_CHECKING:
@@ -106,15 +103,10 @@ class Session:
         self.code = Code(self)
         self.oss = Oss(self)
 
-        # Initialize application and window managers
-        self.application = ApplicationManager(self)
-        self.window = WindowManager(self)
-
         # Initialize Computer and Mobile modules
         self.computer = Computer(self)
         self.mobile = Mobile(self)
 
-        self.ui = UI(self)
         self.context = ContextManager(self)
         self.browser = Browser(self)
 

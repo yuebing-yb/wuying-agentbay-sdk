@@ -150,55 +150,6 @@ class TestAgentBay(unittest.TestCase):
     @patch("agentbay.agentbay.extract_request_id")
     @patch("agentbay.agentbay.load_config")
     @patch("agentbay.agentbay.mcp_client")
-    def test_list_by_labels(
-        self, mock_mcp_client, mock_load_config, mock_extract_request_id
-    ):
-        """Test listing sessions by labels"""
-        # Mock configuration and request ID
-        mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
-            "endpoint": "test.endpoint.com",
-            "timeout_ms": 30000,
-        }
-        mock_extract_request_id.return_value = "list-request-id"
-
-        # Mock client and response
-        mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {
-            "body": {
-                "Data": [
-                    {"SessionId": "session-1"},
-                    {"SessionId": "session-2"},
-                ]
-            }
-        }
-        mock_client.list_session.return_value = mock_response
-        mock_mcp_client.return_value = mock_client
-
-        # Create AgentBay instance
-        agent_bay = AgentBay(api_key="test-key")
-
-        # Create ListSessionParams object with labels
-        params = ListSessionParams(labels={"env": "prod", "app": "test"})
-
-        # Test listing sessions by labels
-        result = agent_bay.list_by_labels(params)
-
-        # Verify results
-        self.assertEqual(result.request_id, "list-request-id")
-        self.assertEqual(len(result.session_ids), 2)
-        self.assertEqual(result.session_ids[0], "session-1")
-        self.assertEqual(result.session_ids[1], "session-2")
-
-        # Verify cached sessions
-        self.assertEqual(len(agent_bay._sessions), 2)
-        self.assertIn("session-1", agent_bay._sessions)
-        self.assertIn("session-2", agent_bay._sessions)
-
-    @patch("agentbay.agentbay.extract_request_id")
-    @patch("agentbay.agentbay.load_config")
-    @patch("agentbay.agentbay.mcp_client")
     def test_list(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
     ):

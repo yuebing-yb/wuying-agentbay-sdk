@@ -30,7 +30,7 @@ func main() {
 		fmt.Printf("Found %d contexts (RequestID: %s):\n", len(listResult.Contexts), listResult.RequestID)
 		for _, ctx := range listResult.Contexts {
 			fmt.Printf("- %s (%s): state=%s, os=%s\n",
-				ctx.Name, ctx.ID, ctx.State, ctx.OSType)
+				ctx.Name, ctx.ID)
 		}
 	}
 

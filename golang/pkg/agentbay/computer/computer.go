@@ -6,7 +6,6 @@ import (
 
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/window"
 )
 
 // MouseButton represents mouse button types
@@ -28,6 +27,45 @@ const (
 	ScrollDirectionLeft  ScrollDirection = "left"
 	ScrollDirectionRight ScrollDirection = "right"
 )
+
+// Window represents a window in the system
+type Window struct {
+	WindowID           int      `json:"window_id"`
+	Title              string   `json:"title"`
+	AbsoluteUpperLeftX int      `json:"absolute_upper_left_x,omitempty"`
+	AbsoluteUpperLeftY int      `json:"absolute_upper_left_y,omitempty"`
+	Width              int      `json:"width,omitempty"`
+	Height             int      `json:"height,omitempty"`
+	PID                int      `json:"pid,omitempty"`
+	PName              string   `json:"pname,omitempty"`
+	ChildWindows       []Window `json:"child_windows,omitempty"`
+}
+
+// WindowInfo represents window information
+type WindowInfo struct {
+	WindowID int    `json:"window_id"`
+	Title    string `json:"title"`
+	PID      int    `json:"pid"`
+	PName    string `json:"pname"`
+}
+
+// WindowListResult represents the result of listing windows
+type WindowListResult struct {
+	models.ApiResponse
+	Windows []*WindowInfo
+}
+
+// WindowDetailResult represents the result of getting window details
+type WindowDetailResult struct {
+	models.ApiResponse
+	Window *Window
+}
+
+// WindowResult represents the result of a window action
+type WindowResult struct {
+	models.ApiResponse
+	Success bool
+}
 
 // CursorPosition represents the cursor position on screen
 type CursorPosition struct {
@@ -460,61 +498,207 @@ func (c *Computer) Screenshot() *ScreenshotResult {
 }
 
 // ListRootWindows lists all root windows
-func (c *Computer) ListRootWindows(timeoutMs ...int) (*window.WindowListResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.ListRootWindows()
+func (c *Computer) ListRootWindows(timeoutMs ...int) (*WindowListResult, error) {
+	args := map[string]interface{}{}
+
+	result, err := c.Session.CallMcpTool("list_root_windows", args)
+	if err != nil {
+		return nil, fmt.Errorf("error listing root windows: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("error listing root windows: %s", result.ErrorMessage)
+	}
+
+	var windows []*WindowInfo
+	if err := json.Unmarshal([]byte(result.Data), &windows); err != nil {
+		return nil, fmt.Errorf("failed to parse window information: %w", err)
+	}
+
+	return &WindowListResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Windows: windows,
+	}, nil
 }
 
 // GetActiveWindow gets the currently active window
-func (c *Computer) GetActiveWindow(timeoutMs ...int) (*window.WindowDetailResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.GetActiveWindow()
+func (c *Computer) GetActiveWindow(timeoutMs ...int) (*WindowDetailResult, error) {
+	args := map[string]interface{}{}
+
+	result, err := c.Session.CallMcpTool("get_active_window", args)
+	if err != nil {
+		return nil, fmt.Errorf("error getting active window: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("error getting active window: %s", result.ErrorMessage)
+	}
+
+	var window Window
+	if err := json.Unmarshal([]byte(result.Data), &window); err != nil {
+		return nil, fmt.Errorf("failed to parse window information: %w", err)
+	}
+
+	return &WindowDetailResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Window: &window,
+	}, nil
 }
 
 // ActivateWindow activates the specified window
-func (c *Computer) ActivateWindow(windowID int) (*window.WindowResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.ActivateWindow(windowID)
+func (c *Computer) ActivateWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
+		"window_id": windowID,
+	}
+
+	result, err := c.Session.CallMcpTool("activate_window", args)
+	if err != nil {
+		return nil, fmt.Errorf("error activating window: %w", err)
+	}
+
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success: result.Success,
+	}, nil
 }
 
 // CloseWindow closes the specified window
-func (c *Computer) CloseWindow(windowID int) (*window.WindowResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.CloseWindow(windowID)
+func (c *Computer) CloseWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
+		"window_id": windowID,
+	}
+
+	result, err := c.Session.CallMcpTool("close_window", args)
+	if err != nil {
+		return nil, fmt.Errorf("error closing window: %w", err)
+	}
+
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success: result.Success,
+	}, nil
 }
 
 // MaximizeWindow maximizes the specified window
-func (c *Computer) MaximizeWindow(windowID int) (*window.WindowResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.MaximizeWindow(windowID)
+func (c *Computer) MaximizeWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
+		"window_id": windowID,
+	}
+
+	result, err := c.Session.CallMcpTool("maximize_window", args)
+	if err != nil {
+		return nil, fmt.Errorf("error maximizing window: %w", err)
+	}
+
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success: result.Success,
+	}, nil
 }
 
 // MinimizeWindow minimizes the specified window
-func (c *Computer) MinimizeWindow(windowID int) (*window.WindowResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.MinimizeWindow(windowID)
+func (c *Computer) MinimizeWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
+		"window_id": windowID,
+	}
+
+	result, err := c.Session.CallMcpTool("minimize_window", args)
+	if err != nil {
+		return nil, fmt.Errorf("error minimizing window: %w", err)
+	}
+
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success: result.Success,
+	}, nil
 }
 
 // RestoreWindow restores the specified window
-func (c *Computer) RestoreWindow(windowID int) (*window.WindowResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.RestoreWindow(windowID)
+func (c *Computer) RestoreWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
+		"window_id": windowID,
+	}
+
+	result, err := c.Session.CallMcpTool("restore_window", args)
+	if err != nil {
+		return nil, fmt.Errorf("error restoring window: %w", err)
+	}
+
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success: result.Success,
+	}, nil
 }
 
 // ResizeWindow resizes the specified window
-func (c *Computer) ResizeWindow(windowID int, width int, height int) (*window.WindowResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.ResizeWindow(windowID, width, height)
+func (c *Computer) ResizeWindow(windowID int, width int, height int) (*WindowResult, error) {
+	args := map[string]interface{}{
+		"window_id": windowID,
+		"width":     width,
+		"height":    height,
+	}
+
+	result, err := c.Session.CallMcpTool("resize_window", args)
+	if err != nil {
+		return nil, fmt.Errorf("error resizing window: %w", err)
+	}
+
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success: result.Success,
+	}, nil
 }
 
 // FullscreenWindow makes the specified window fullscreen
-func (c *Computer) FullscreenWindow(windowID int) (*window.WindowResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.FullscreenWindow(windowID)
+func (c *Computer) FullscreenWindow(windowID int) (*WindowResult, error) {
+	args := map[string]interface{}{
+		"window_id": windowID,
+	}
+
+	result, err := c.Session.CallMcpTool("fullscreen_window", args)
+	if err != nil {
+		return nil, fmt.Errorf("error making window fullscreen: %w", err)
+	}
+
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success: result.Success,
+	}, nil
 }
 
 // FocusMode toggles focus mode on or off
-func (c *Computer) FocusMode(on bool) (*window.WindowResult, error) {
-	windowManager := window.NewWindowManager(c.Session)
-	return windowManager.FocusMode(on)
+func (c *Computer) FocusMode(on bool) (*WindowResult, error) {
+	args := map[string]interface{}{
+		"on": on,
+	}
+
+	result, err := c.Session.CallMcpTool("focus_mode", args)
+	if err != nil {
+		return nil, fmt.Errorf("error toggling focus mode: %w", err)
+	}
+
+	return &WindowResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success: result.Success,
+	}, nil
 }

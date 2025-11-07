@@ -8,10 +8,9 @@ from typing import List, Optional, Dict, Any
 
 from agentbay.api.base_service import BaseService
 from agentbay.exceptions import AgentBayError, SessionError
-from agentbay.model import BoolResult, OperationResult
+from agentbay.model import BoolResult, OperationResult, ApiResponse
 from agentbay.model.response import AdbUrlResult
-from agentbay.ui.ui import UIElementListResult
-from agentbay.application.application import (
+from agentbay.computer.computer import (
     InstalledAppListResult,
     ProcessListResult,
     AppOperationResult,
@@ -23,6 +22,21 @@ from agentbay.command import MOBILE_COMMAND_TEMPLATES
 
 # Initialize logger for this module
 logger = get_logger("mobile")
+
+
+class UIElementListResult(ApiResponse):
+    """Result of UI element listing operations."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        elements: Optional[List[Dict[str, Any]]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.elements = elements or []
+        self.error_message = error_message
 
 
 class KeyCode:

@@ -141,33 +141,6 @@ if browser_result.success:
 
   AgentBay.get, AgentBay.list, Session.delete, CreateSessionParams
 
-#### list\_by\_labels
-
-```python
-@deprecated(
-    reason="This method is deprecated and will be removed in a future version.",
-    replacement="list()",
-)
-def list_by_labels(
-    params: Optional[Union[ListSessionParams, Dict[str, str]]] = None
-) -> SessionListResult
-```
-
-Lists sessions filtered by the provided labels with pagination support.
-It returns sessions that match all the specified labels.
-
-**Arguments**:
-
-  params (Optional[Union[ListSessionParams, Dict[str, str]]], optional):
-  Parameters for listing sessions or a dictionary of labels.
-  Defaults to None.
-  
-
-**Returns**:
-
-- `SessionListResult` - Result containing a list of sessions and pagination
-  information.
-
 #### list
 
 ```python

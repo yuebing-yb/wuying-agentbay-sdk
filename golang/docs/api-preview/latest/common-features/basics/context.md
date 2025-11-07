@@ -14,19 +14,11 @@ type Context struct {
 	// Name is the name of the context.
 	Name	string
 
-	// State is deprecated and will be removed in a future version.
-	// Deprecated: This field is no longer used.
-	State	string
-
 	// CreatedAt is the date and time when the Context was created.
 	CreatedAt	string
 
 	// LastUsedAt is the date and time when the Context was last used.
 	LastUsedAt	string
-
-	// OSType is deprecated and will be removed in a future version.
-	// Deprecated: This field is no longer used.
-	OSType	string
 }
 ```
 

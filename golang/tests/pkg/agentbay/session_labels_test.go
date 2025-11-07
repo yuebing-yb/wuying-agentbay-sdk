@@ -304,8 +304,9 @@ func TestListByUIDLabel(t *testing.T) {
 	params := agentbay.NewListSessionParams()
 	params.Labels = uidFilter
 	params.MaxResults = 4 // Set page size to 4
+	limit := int32(4)
 
-	firstPageResult, err := agentBayClient.ListByLabels(params)
+	firstPageResult, err := agentBayClient.List(params.Labels, nil, &limit)
 	if err != nil {
 		t.Fatalf("Error listing first page of sessions: %v", err)
 	}

@@ -37,11 +37,6 @@ export class Context {
   name: string;
 
   /**
-   * @deprecated This field is no longer used and will be removed in a future version.
-   */
-  state: string;
-
-  /**
    * Date and time when the Context was created.
    */
   createdAt?: string;
@@ -52,34 +47,23 @@ export class Context {
   lastUsedAt?: string;
 
   /**
-   * @deprecated This field is no longer used and will be removed in a future version.
-   */
-  osType?: string;
-
-  /**
    * Initialize a Context object.
    *
    * @param id - The unique identifier of the context.
    * @param name - The name of the context.
-   * @param state - **Deprecated.** This parameter is no longer used.
    * @param createdAt - Date and time when the Context was created.
    * @param lastUsedAt - Date and time when the Context was last used.
-   * @param osType - **Deprecated.** This parameter is no longer used.
    */
   constructor(
     id: string,
     name: string,
-    state = "available",
     createdAt?: string,
-    lastUsedAt?: string,
-    osType?: string
+    lastUsedAt?: string
   ) {
     this.id = id;
     this.name = name;
-    this.state = state;
     this.createdAt = createdAt;
     this.lastUsedAt = lastUsedAt;
-    this.osType = osType;
   }
 }
 
@@ -161,10 +145,8 @@ export class ContextService {
             new Context(
               contextData.id || "",
               contextData.name || "",
-              contextData.state || "available",
               contextData.createTime,
-              contextData.lastUsedTime,
-              contextData.osType
+              contextData.lastUsedTime
             )
           );
         }

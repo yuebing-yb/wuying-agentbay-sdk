@@ -225,17 +225,6 @@ if err == nil {
 }
 ```
 
-#### ListByLabels
-
-```go
-func (a *AgentBay) ListByLabels(params *ListSessionParams) (*SessionListResult, error)
-```
-
-ListByLabels lists sessions filtered by the provided labels with pagination support. It returns
-sessions that match all the specified labels.
-
-Deprecated: This method is deprecated and will be removed in a future version. Use List() instead.
-
 ### Related Functions
 
 #### NewAgentBay

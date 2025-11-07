@@ -16,7 +16,4 @@ type AgentBayInterface interface {
 
 	// List returns paginated list of Sessions filtered by labels
 	List(labels map[string]string, page *int, limit *int32) (*agentbay.SessionListResult, error)
-
-	// ListByLabels lists sessions by labels with pagination (deprecated, use List instead)
-	ListByLabels(params *agentbay.ListSessionParams) (*agentbay.SessionListResult, error)
 }

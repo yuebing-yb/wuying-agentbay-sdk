@@ -27,7 +27,6 @@ from agentbay.model import (
 )
 from agentbay.session import Session
 from agentbay.session_params import CreateSessionParams, ListSessionParams
-from agentbay.deprecation import deprecated
 from agentbay.version import __version__, __is_release__
 from .logger import (
     get_logger,
@@ -732,147 +731,8 @@ class AgentBay:
             return SessionResult(
                 request_id="",
                 success=False,
-                error_message=f"Unexpected error creating session: {e}",
-            )
-
-    @deprecated(
-        reason="This method is deprecated and will be removed in a future version.",
-        replacement="list()",
-    )
-    def list_by_labels(
-        self, params: Optional[Union[ListSessionParams, Dict[str, str]]] = None
-    ) -> SessionListResult:
-        """
-        Lists sessions filtered by the provided labels with pagination support.
-        It returns sessions that match all the specified labels.
-
-        Args:
-            params (Optional[Union[ListSessionParams, Dict[str, str]]], optional):
-                Parameters for listing sessions or a dictionary of labels.
-                Defaults to None.
-
-        Returns:
-            SessionListResult: Result containing a list of sessions and pagination
-            information.
-        """
-        try:
-            # Use default params if none provided
-            if params is None:
-                params = ListSessionParams()
-            # Convert dict to ListSessionParams if needed
-            elif isinstance(params, dict):
-                params = ListSessionParams(labels=params)
-
-            # Convert labels to JSON
-            labels_json = json.dumps(params.labels)
-
-            # Create request with pagination parameters
-            request = ListSessionRequest(
-                authorization=f"Bearer {self.api_key}",
-                labels=labels_json,
-                max_results=params.max_results,
-            )
-
-            # Add next_token if provided
-            if params.next_token:
-                request.next_token = params.next_token
-
-            request_details = f"Labels={labels_json}, MaxResults={params.max_results}"
-            if request.next_token:
-                request_details += f", NextToken={request.next_token}"
-            log_api_call("list_session", request_details)
-
-            # Make the API call
-            response = self.client.list_session(request)
-
-            # Extract request ID
-            request_id = extract_request_id(response)
-
-            response_map = response.to_map()
-            body = response_map.get("body", {})
-
-            # Check for errors in the response
-            if isinstance(body, dict) and body.get("Success") is False:
-                # Extract error code and message
-                code = body.get("Code", "Unknown")
-                message = body.get("Message", "Unknown error")
-                return SessionListResult(
-                    request_id=request_id,
-                    success=False,
-                    error_message=f"[{code}] {message}",
-                    session_ids=[],
-                    next_token="",
-                    max_results=params.max_results,
-                    total_count=0,
-                )
-
-            session_ids = []
-            next_token = ""
-            max_results = params.max_results  # Use the requested max_results
-            total_count = 0
-
-            try:
-                response_body = json.dumps(body, ensure_ascii=False, indent=2)
-            except Exception:
-                response_body = str(body)
-
-            # Extract pagination information
-            if isinstance(body, dict):
-                next_token = body.get("NextToken", "")
-                # Use API response MaxResults if present, otherwise use requested value
-                max_results = int(body.get("MaxResults", params.max_results))
-                total_count = int(body.get("TotalCount", 0))
-
-            # Extract session data
-            response_data = body.get("Data")
-
-            # Handle both list and dict responses
-            if isinstance(response_data, list):
-                # Data is a list of session objects
-                for session_data in response_data:
-                    if isinstance(session_data, dict):
-                        session_id = session_data.get("SessionId")
-                        if session_id:
-                            # Check if we already have this session in our cache
-                            with self._lock:
-                                if session_id not in self._sessions:
-                                    # Create a new session object
-                                    session = Session(self, session_id)
-                                    self._sessions[session_id] = session
-
-                                session_ids.append(session_id)
-
-            # Log API response with key details
-            log_api_response_with_details(
-                api_name="ListSession",
-                request_id=request_id,
-                success=True,
-                key_fields={
-                    "total_count": total_count,
-                    "returned_count": len(session_ids),
-                    "has_more": "yes" if next_token else "no"
-                },
-                full_response=response_body
-            )
-
-            # Return SessionListResult with request ID and pagination info
-            return SessionListResult(
-                request_id=request_id,
-                success=True,
-                session_ids=session_ids,
-                next_token=next_token,
-                max_results=max_results,
-                total_count=total_count,
-            )
-
-        except Exception as e:
-            log_operation_error("list_session", str(e), exc_info=True)
-            return SessionListResult(
-                request_id="",
-                success=False,
-                session_ids=[],
-                error_message=f"Failed to list sessions by labels: {e}",
-            )
+            error_message=f"Unexpected error creating session: {e}",
+        )
 
     def list(
         self,

@@ -25,10 +25,7 @@ This directory is generated. Run `python scripts/generate_api_docs.py` to refres
 
 ## Computer Use
 
-- `computer-use/application.md` – Application
 - `computer-use/computer.md` – Computer
-- `computer-use/ui.md` – UI
-- `computer-use/window.md` – Window Manager
 
 ## Mobile Use
 

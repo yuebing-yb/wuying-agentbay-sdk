@@ -234,9 +234,17 @@ ___
 
 ### getInstalledApps
 
-▸ **getInstalledApps**(): `Promise`\<`any`\>
+▸ **getInstalledApps**(`startMenu?`, `desktop?`, `ignoreSystemApps?`): `Promise`\<`any`\>
 
 Gets the list of installed applications.
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `startMenu` | `boolean` | `true` |
+| `desktop` | `boolean` | `false` |
+| `ignoreSystemApps` | `boolean` | `true` |
 
 #### Returns
 
@@ -469,7 +477,7 @@ ___
 
 ### startApp
 
-▸ **startApp**(`startCmd`, `workDirectory?`): `Promise`\<`any`\>
+▸ **startApp**(`startCmd`, `workDirectory?`, `activity?`): `Promise`\<`any`\>
 
 Starts the specified application.
 
@@ -479,6 +487,7 @@ Starts the specified application.
 | :------ | :------ | :------ |
 | `startCmd` | `string` | `undefined` |
 | `workDirectory` | `string` | `""` |
+| `activity` | `string` | `""` |
 
 #### Returns
 

@@ -22,10 +22,8 @@ Represents a persistent storage context in the AgentBay cloud environment.
 
 - `id` _str_ - The unique identifier of the context.
 - `name` _str_ - The name of the context.
-- `state` _str_ - **Deprecated.** This field is no longer used and will be removed in a future version.
 - `created_at` _str_ - Date and time when the Context was created.
 - `last_used_at` _str_ - Date and time when the Context was last used.
-- `os_type` _str_ - **Deprecated.** This field is no longer used and will be removed in a future version.
 
 ## ContextResult Objects
 
