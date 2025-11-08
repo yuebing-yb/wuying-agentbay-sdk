@@ -308,6 +308,40 @@ Moves the mouse to the specified coordinates.
 **Returns**:
 
 - `BoolResult` - Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
+
+if result.success:
+    session = result.session
+    computer = session.computer
+
+    # Move mouse to coordinates (300, 400)
+    move_result = computer.move_mouse(300, 400)
+    if move_result.success:
+        print("Mouse moved successfully")
+        # Output: Mouse moved successfully
+
+    session.delete()
+```
+  
+
+**Notes**:
+
+  - Moves the cursor smoothly to the target position
+  - Does not click after moving
+  - Use get_cursor_position() to verify the new position
+  
+
+**See Also**:
+
+  click_mouse, drag_mouse, get_cursor_position
 
 #### drag\_mouse
 
@@ -385,6 +419,42 @@ Gets the current cursor position.
 
 - `OperationResult` - Result object containing cursor position data
   with keys 'x' and 'y', and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
+
+if result.success:
+    session = result.session
+    computer = session.computer
+
+    # Get current cursor position
+    position_result = computer.get_cursor_position()
+    if position_result.success:
+        x = position_result.data["x"]
+        y = position_result.data["y"]
+        print(f"Cursor is at position ({x}, {y})")
+        # Output: Cursor is at position (512, 384)
+
+    session.delete()
+```
+  
+
+**Notes**:
+
+  - Returns the absolute screen coordinates
+  - Useful for verifying mouse movements
+  - Position is in pixels from top-left corner (0, 0)
+  
+
+**See Also**:
+
+  move_mouse, click_mouse, get_screen_size
 
 #### input\_text
 
@@ -453,6 +523,50 @@ Presses the specified keys.
 **Returns**:
 
 - `BoolResult` - Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
+
+if result.success:
+    session = result.session
+    computer = session.computer
+
+    # Press Ctrl+A to select all
+    press_result = computer.press_keys(["Ctrl", "a"])
+    if press_result.success:
+        print("Keys pressed successfully")
+        # Output: Keys pressed successfully
+
+    # Hold Shift key for subsequent operations
+    hold_result = computer.press_keys(["Shift"], hold=True)
+    if hold_result.success:
+        print("Key held successfully")
+        # Output: Key held successfully
+
+    # Remember to release held keys
+    computer.release_keys(["Shift"])
+
+    session.delete()
+```
+  
+
+**Notes**:
+
+  - Key names are case-sensitive
+  - When hold=True, remember to call release_keys() afterwards
+  - Supports modifier keys like Ctrl, Alt, Shift
+  - Can press multiple keys simultaneously for shortcuts
+  
+
+**See Also**:
+
+  release_keys, input_text
 
 #### release\_keys
 
@@ -484,6 +598,43 @@ Gets the screen size and DPI scaling factor.
 - `OperationResult` - Result object containing screen size data
   with keys 'width', 'height', and 'dpiScalingFactor',
   and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
+
+if result.success:
+    session = result.session
+    computer = session.computer
+
+    # Get screen size information
+    size_result = computer.get_screen_size()
+    if size_result.success:
+        width = size_result.data["width"]
+        height = size_result.data["height"]
+        dpi_scaling = size_result.data["dpiScalingFactor"]
+        print(f"Screen size: {width}x{height}, DPI scaling: {dpi_scaling}")
+        # Output: Screen size: 1024x768, DPI scaling: 1.0
+
+    session.delete()
+```
+  
+
+**Notes**:
+
+  - Returns the full screen dimensions in pixels
+  - DPI scaling factor affects coordinate calculations on high-DPI displays
+  - Use this to determine valid coordinate ranges for mouse operations
+  
+
+**See Also**:
+
+  click_mouse, move_mouse, screenshot
 
 #### screenshot
 
@@ -497,6 +648,42 @@ Takes a screenshot of the current screen.
 
 - `OperationResult` - Result object containing the path to the screenshot
   and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create()
+
+if result.success:
+    session = result.session
+    computer = session.computer
+
+    # Take a screenshot
+    screenshot_result = computer.screenshot()
+    if screenshot_result.success:
+        screenshot_url = screenshot_result.data
+        print(f"Screenshot saved to: {screenshot_url}")
+        # Output: Screenshot saved to: https://wuying-intelligence-service-cn-hangzhou.oss-cn-hangzhou.aliyuncs.com/...
+
+    session.delete()
+```
+  
+
+**Notes**:
+
+  - Returns an OSS URL to the screenshot image
+  - Screenshot captures the entire screen
+  - Useful for debugging and verification
+  - Image format is typically PNG
+  
+
+**See Also**:
+
+  get_screen_size
 
 #### list\_root\_windows
 

@@ -85,6 +85,49 @@ func (c *Computer) ClickMouse(x, y int, button MouseButton) *BoolResult
 
 ClickMouse clicks the mouse at the specified coordinates
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Click at coordinates (500, 300) with left mouse button
+
+	clickResult := session.Computer.ClickMouse(500, 300, computer.MouseButtonLeft)
+	if clickResult.Success {
+		fmt.Println("Mouse clicked successfully")
+	} else {
+		fmt.Printf("Error: %s\n", clickResult.ErrorMessage)
+	}
+
+	// Double click
+
+	doubleClickResult := session.Computer.ClickMouse(500, 300, computer.MouseButtonDoubleLeft)
+	if doubleClickResult.Success {
+		fmt.Println("Double click successful")
+	}
+	session.Delete()
+}
+```
+
 #### CloseWindow
 
 ```go
@@ -141,6 +184,42 @@ func (c *Computer) GetScreenSize() *ScreenSize
 
 GetScreenSize gets the size of the primary screen
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Get the screen size
+
+	screenSize := session.Computer.GetScreenSize()
+	if screenSize.ErrorMessage == "" {
+		fmt.Printf("Screen size: %dx%d\n", screenSize.Width, screenSize.Height)
+		fmt.Printf("DPI scaling factor: %.2f\n", screenSize.DpiScalingFactor)
+	} else {
+		fmt.Printf("Error: %s\n", screenSize.ErrorMessage)
+	}
+	session.Delete()
+}
+```
+
 #### InputText
 
 ```go
@@ -148,6 +227,41 @@ func (c *Computer) InputText(text string) *BoolResult
 ```
 
 InputText inputs text into the active field
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Input text into the active field
+
+	inputResult := session.Computer.InputText("Hello World")
+	if inputResult.Success {
+		fmt.Println("Text input successful")
+	} else {
+		fmt.Printf("Error: %s\n", inputResult.ErrorMessage)
+	}
+	session.Delete()
+}
+```
 
 #### ListRootWindows
 
@@ -220,6 +334,41 @@ func (c *Computer) Screenshot() *ScreenshotResult
 ```
 
 Screenshot takes a screenshot of the current screen
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Take a screenshot of the current screen
+
+	screenshot := session.Computer.Screenshot()
+	if screenshot.ErrorMessage == "" {
+		fmt.Printf("Screenshot URL: %s\n", screenshot.Data)
+	} else {
+		fmt.Printf("Error: %s\n", screenshot.ErrorMessage)
+	}
+	session.Delete()
+}
+```
 
 #### Scroll
 

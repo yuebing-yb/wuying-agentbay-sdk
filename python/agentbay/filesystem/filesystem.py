@@ -831,7 +831,7 @@ class FileSystem(BaseService):
                 session = result.session
 
                 # Create a directory
-                create_result = session.filesystem.create_directory("/tmp/mydir")
+                create_result = session.file_system.create_directory("/tmp/mydir")
                 if create_result.success:
                     print("Directory created successfully")
                     # Output: Directory created successfully
@@ -839,7 +839,7 @@ class FileSystem(BaseService):
                     # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
                 # Create nested directories
-                nested_result = session.filesystem.create_directory("/tmp/parent/child/grandchild")
+                nested_result = session.file_system.create_directory("/tmp/parent/child/grandchild")
                 if nested_result.success:
                     print("Nested directories created")
 
@@ -894,11 +894,11 @@ class FileSystem(BaseService):
                 session = result.session
 
                 # Create a test file
-                session.filesystem.write_file("/tmp/config.txt", "DEBUG=false\\nLOG_LEVEL=info")
+                session.file_system.write_file("/tmp/config.txt", "DEBUG=false\\nLOG_LEVEL=info")
 
                 # Edit the file with single replacement
                 edits = [{"oldText": "DEBUG=false", "newText": "DEBUG=true"}]
-                edit_result = session.filesystem.edit_file("/tmp/config.txt", edits)
+                edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
                 if edit_result.success:
                     print("File edited successfully")
                     # Output: File edited successfully
@@ -908,12 +908,12 @@ class FileSystem(BaseService):
                     {"oldText": "DEBUG=true", "newText": "DEBUG=false"},
                     {"oldText": "LOG_LEVEL=info", "newText": "LOG_LEVEL=debug"}
                 ]
-                multi_edit_result = session.filesystem.edit_file("/tmp/config.txt", edits)
+                multi_edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
                 if multi_edit_result.success:
                     print("Multiple edits applied")
 
                 # Preview changes with dry_run
-                dry_run_result = session.filesystem.edit_file(
+                dry_run_result = session.file_system.edit_file(
                     "/tmp/config.txt",
                     [{"oldText": "debug", "newText": "trace"}],
                     dry_run=True
@@ -967,10 +967,10 @@ class FileSystem(BaseService):
                 session = result.session
 
                 # Create a test file
-                session.filesystem.write_file("/tmp/test.txt", "Sample content")
+                session.file_system.write_file("/tmp/test.txt", "Sample content")
 
                 # Get file information
-                info_result = session.filesystem.get_file_info("/tmp/test.txt")
+                info_result = session.file_system.get_file_info("/tmp/test.txt")
                 if info_result.success:
                     print(f"File info: {info_result.file_info}")
                     # Output: File info: {'size': 14, 'isDirectory': False, ...}
@@ -980,8 +980,8 @@ class FileSystem(BaseService):
                     # Output: Is directory: False
 
                 # Get directory information
-                session.filesystem.create_directory("/tmp/mydir")
-                dir_info = session.filesystem.get_file_info("/tmp/mydir")
+                session.file_system.create_directory("/tmp/mydir")
+                dir_info = session.file_system.get_file_info("/tmp/mydir")
                 if dir_info.success:
                     print(f"Is directory: {dir_info.file_info.get('isDirectory')}")
                     # Output: Is directory: True
@@ -1088,13 +1088,13 @@ class FileSystem(BaseService):
                 session = result.session
 
                 # Create some test files and directories
-                session.filesystem.create_directory("/tmp/testdir")
-                session.filesystem.write_file("/tmp/testdir/file1.txt", "Content 1")
-                session.filesystem.write_file("/tmp/testdir/file2.txt", "Content 2")
-                session.filesystem.create_directory("/tmp/testdir/subdir")
+                session.file_system.create_directory("/tmp/testdir")
+                session.file_system.write_file("/tmp/testdir/file1.txt", "Content 1")
+                session.file_system.write_file("/tmp/testdir/file2.txt", "Content 2")
+                session.file_system.create_directory("/tmp/testdir/subdir")
 
                 # List the directory
-                list_result = session.filesystem.list_directory("/tmp/testdir")
+                list_result = session.file_system.list_directory("/tmp/testdir")
                 if list_result.success:
                     print(f"Found {len(list_result.entries)} entries")
                     # Output: Found 3 entries
@@ -1108,7 +1108,7 @@ class FileSystem(BaseService):
                     # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
                 # Handle directory not found
-                result = session.filesystem.list_directory("/tmp/nonexistent")
+                result = session.file_system.list_directory("/tmp/nonexistent")
                 if not result.success:
                     print(f"Error: {result.error_message}")
                     # Output: Error: Failed to list directory
@@ -1230,10 +1230,10 @@ class FileSystem(BaseService):
                 session = result.session
 
                 # Create a test file
-                session.filesystem.write_file("/tmp/original.txt", "Test content")
+                session.file_system.write_file("/tmp/original.txt", "Test content")
 
                 # Move the file to a new location
-                move_result = session.filesystem.move_file("/tmp/original.txt", "/tmp/moved.txt")
+                move_result = session.file_system.move_file("/tmp/original.txt", "/tmp/moved.txt")
                 if move_result.success:
                     print("File moved successfully")
                     # Output: File moved successfully
@@ -1241,7 +1241,7 @@ class FileSystem(BaseService):
                     # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
                 # Verify the move
-                read_result = session.filesystem.read_file("/tmp/moved.txt")
+                read_result = session.file_system.read_file("/tmp/moved.txt")
                 if read_result.success:
                     print(f"Content at new location: {read_result.content}")
                     # Output: Content at new location: Test content
@@ -1345,13 +1345,13 @@ class FileSystem(BaseService):
                 session = result.session
 
                 # Create multiple test files
-                session.filesystem.write_file("/tmp/file1.txt", "Content of file 1")
-                session.filesystem.write_file("/tmp/file2.txt", "Content of file 2")
-                session.filesystem.write_file("/tmp/file3.txt", "Content of file 3")
+                session.file_system.write_file("/tmp/file1.txt", "Content of file 1")
+                session.file_system.write_file("/tmp/file2.txt", "Content of file 2")
+                session.file_system.write_file("/tmp/file3.txt", "Content of file 3")
 
                 # Read multiple files at once
                 paths = ["/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt"]
-                read_result = session.filesystem.read_multiple_files(paths)
+                read_result = session.file_system.read_multiple_files(paths)
                 if read_result.success:
                     print(f"Read {len(read_result.contents)} files")
                     # Output: Read 3 files
@@ -1485,12 +1485,12 @@ class FileSystem(BaseService):
                 session = result.session
 
                 # Create test files
-                session.filesystem.write_file("/tmp/test/file1.py", "print('hello')")
-                session.filesystem.write_file("/tmp/test/file2.py", "print('world')")
-                session.filesystem.write_file("/tmp/test/file3.txt", "text content")
+                session.file_system.write_file("/tmp/test/file1.py", "print('hello')")
+                session.file_system.write_file("/tmp/test/file2.py", "print('world')")
+                session.file_system.write_file("/tmp/test/file3.txt", "text content")
 
-                # Search for Python files
-                search_result = session.filesystem.search_files("/tmp/test", "*.py")
+                # Search for Python files (using partial name matching, NOT wildcards)
+                search_result = session.file_system.search_files("/tmp/test", ".py")
                 if search_result.success:
                     print(f"Found {len(search_result.matches)} Python files:")
                     # Output: Found 2 Python files:
@@ -1499,14 +1499,15 @@ class FileSystem(BaseService):
                     # Output:   - /tmp/test/file1.py
                     # Output:   - /tmp/test/file2.py
 
-                # Search with exclusion pattern
-                search_result = session.filesystem.search_files(
+                # Search with exclusion pattern (exclude files containing ".txt")
+                search_result = session.file_system.search_files(
                     "/tmp/test",
-                    "*",
-                    exclude_patterns=["*.txt"]
+                    "file",
+                    exclude_patterns=[".txt"]
                 )
                 if search_result.success:
                     print(f"Found {len(search_result.matches)} files (excluding .txt)")
+                    # Output: Found 2 files (excluding .txt)
 
                 # Clean up
                 session.delete()
@@ -1622,12 +1623,12 @@ class FileSystem(BaseService):
                 session = result.session
 
                 # Write a file first
-                write_result = session.filesystem.write_file("/tmp/test.txt", "Hello, World!")
+                write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
                 if write_result.success:
                     print("File written successfully")
 
                 # Read the file
-                read_result = session.filesystem.read_file("/tmp/test.txt")
+                read_result = session.file_system.read_file("/tmp/test.txt")
                 if read_result.success:
                     print(f"File content: {read_result.content}")
                     # Output: File content: Hello, World!
@@ -1635,7 +1636,7 @@ class FileSystem(BaseService):
                     # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
                 # Handle file not found
-                result = session.filesystem.read_file("/tmp/nonexistent.txt")
+                result = session.file_system.read_file("/tmp/nonexistent.txt")
                 if not result.success:
                     print(f"Error: {result.error_message}")
                     # Output: Error: Path does not exist or is a directory: /tmp/nonexistent.txt
@@ -1752,7 +1753,7 @@ class FileSystem(BaseService):
                 session = result.session
 
                 # Write a new file (overwrite mode)
-                write_result = session.filesystem.write_file("/tmp/test.txt", "Hello, World!")
+                write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
                 if write_result.success:
                     print("File written successfully")
                     # Output: File written successfully
@@ -1760,7 +1761,7 @@ class FileSystem(BaseService):
                     # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
                 # Append to existing file
-                append_result = session.filesystem.write_file(
+                append_result = session.file_system.write_file(
                     "/tmp/test.txt",
                     "\nAppended content",
                     mode="append"
@@ -1769,7 +1770,7 @@ class FileSystem(BaseService):
                     print("Content appended successfully")
 
                 # Verify the content
-                read_result = session.filesystem.read_file("/tmp/test.txt")
+                read_result = session.file_system.read_file("/tmp/test.txt")
                 if read_result.success:
                     print(f"File content: {read_result.content}")
                     # Output: File content: Hello, World!

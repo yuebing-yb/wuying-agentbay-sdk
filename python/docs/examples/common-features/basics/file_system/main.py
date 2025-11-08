@@ -213,7 +213,7 @@ def main():
 
         # Example 9: Search for files with names containing "report"
         print("\nExample 9: Searching for files with names containing 'report'...")
-        result = fs.search_files("/tmp/test_directory", "*report*")
+        result = fs.search_files("/tmp/test_directory", "report")
         if result.success:
             search_results = result.matches
             print(f"Found {len(search_results)} files matching the search pattern '*report*':")
@@ -225,7 +225,7 @@ def main():
 
         # Example 10: Search for files ending with ".txt"
         print("\nExample 10: Searching for files ending with '.txt'...")
-        result = fs.search_files("/tmp/test_directory", "*.txt")
+        result = fs.search_files("/tmp/test_directory", ".txt")
         if result.success:
             search_results = result.matches
             print(f"Found {len(search_results)} files matching the search pattern '*.txt':")
@@ -237,7 +237,7 @@ def main():
 
         # Example 11: Search for files containing "2025"
         print("\nExample 11: Searching for files containing '2025'...")
-        result = fs.search_files("/tmp/test_directory", "*2025*")
+        result = fs.search_files("/tmp/test_directory", "2025")
         if result.success:
             search_results = result.matches
             print(f"Found {len(search_results)} files matching the search pattern '*2025*':")

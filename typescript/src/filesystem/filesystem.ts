@@ -882,8 +882,8 @@ export class FileSystem {
    *       await session.fileSystem.writeFile('/tmp/test/file2.py', "print('world')");
    *       await session.fileSystem.writeFile('/tmp/test/file3.txt', 'text content');
    *
-   *       // Search for Python files
-   *       const searchResult = await session.fileSystem.searchFiles('/tmp/test', '*.py');
+   *       // Search for Python files (using partial name matching, NOT wildcards)
+   *       const searchResult = await session.fileSystem.searchFiles('/tmp/test', '.py');
    *       if (searchResult.success) {
    *         console.log(`Found ${searchResult.matches.length} Python files:`);
    *         // Output: Found 2 Python files:
@@ -894,11 +894,11 @@ export class FileSystem {
    *         // Output:   - /tmp/test/file2.py
    *       }
    *
-   *       // Search with exclusion pattern
+   *       // Search with exclusion pattern (exclude files containing ".txt")
    *       const excludeResult = await session.fileSystem.searchFiles(
    *         '/tmp/test',
-   *         '*',
-   *         ['*.txt']
+   *         'file',
+   *         ['.txt']
    *       );
    *       if (excludeResult.success) {
    *         console.log(`Found ${excludeResult.matches.length} files (excluding .txt)`);
@@ -1283,6 +1283,50 @@ export class FileSystem {
 
   /**
    * Get file change information for the specified directory path
+   *
+   * @param path - Directory path to monitor
+   * @returns Promise resolving to result containing detected file changes
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetFileChange() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create test directory
+   *       await session.fileSystem.createDirectory('/tmp/watch_dir');
+   *
+   *       // Check for file changes
+   *       const changeResult = await session.fileSystem.getFileChange('/tmp/watch_dir');
+   *       if (changeResult.success) {
+   *         console.log(`Detected ${changeResult.events.length} changes`);
+   *         // Output: Detected 0 changes
+   *
+   *         if (changeResult.events.length > 0) {
+   *           changeResult.events.forEach(event => {
+   *             console.log(`- ${event.eventType}: ${event.path} (${event.pathType})`);
+   *           });
+   *         } else {
+   *           console.log('No changes detected');
+   *           // Output: No changes detected
+   *         }
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetFileChange().catch(console.error);
+   * ```
    */
   async getFileChange(path: string): Promise<FileChangeResult> {
     try {
@@ -1344,6 +1388,74 @@ export class FileSystem {
 
   /**
    * Watch a directory for file changes and call the callback function when changes occur
+   *
+   * @param path - Directory path to monitor
+   * @param callback - Function called when changes are detected
+   * @param interval - Polling interval in milliseconds (default: 500, minimum: 100)
+   * @param signal - Signal to abort the monitoring
+   * @returns Promise that resolves when monitoring stops
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateWatchDirectory() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create test directory
+   *       const testDir = '/tmp/agentbay_watch_test';
+   *       await session.fileSystem.createDirectory(testDir);
+   *
+   *       // Set up callback function
+   *       const callback = (events) => {
+   *         console.log(`Detected ${events.length} file changes:`);
+   *         events.forEach(event => {
+   *           console.log(`- ${event.eventType}: ${event.path} (${event.pathType})`);
+   *         });
+   *       };
+   *
+   *       // Create AbortController for stopping the watch
+   *       const controller = new AbortController();
+   *
+   *       // Start monitoring
+   *       const watchPromise = session.fileSystem.watchDirectory(
+   *         testDir,
+   *         callback,
+   *         1000, // 1 second interval
+   *         controller.signal
+   *       );
+   *
+   *       // Simulate file operations after a delay
+   *       setTimeout(async () => {
+   *         // Create a file
+   *         const testFile = `${testDir}/test.txt`;
+   *         await session.fileSystem.writeFile(testFile, 'Hello, AgentBay!');
+   *
+   *         // Stop monitoring after another delay
+   *         setTimeout(() => {
+   *           controller.abort();
+   *         }, 2000);
+   *       }, 2000);
+   *
+   *       // Wait for monitoring to complete
+   *       await watchPromise;
+   *       console.log('Monitoring stopped');
+   *       // Output: Monitoring stopped
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateWatchDirectory().catch(console.error);
+   * ```
    */
   async watchDirectory(
     path: string,

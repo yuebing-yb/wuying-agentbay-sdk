@@ -79,7 +79,7 @@ def main():
                 print(f"  - {path}: {content}")
         
         print("\n=== Test 9: Search Files ===")
-        search_result = filesystem.search_files(test_dir, "*.txt")
+        search_result = filesystem.search_files(test_dir, ".txt")
         print(f"Success: {search_result.success}")
         print(f"Found {len(search_result.matches) if search_result.matches else 0} files:")
         if search_result.matches:

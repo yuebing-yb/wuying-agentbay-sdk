@@ -57,6 +57,43 @@ export class Computer {
 
   /**
    * Click mouse at specified coordinates.
+   *
+   * @param x - X coordinate for the click
+   * @param y - Y coordinate for the click
+   * @param button - Mouse button to click (default: 'left'). Valid values: 'left', 'right', 'middle', 'double_left'
+   * @returns Promise resolving to result with success status
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateClickMouse() {
+   *   try {
+   *     const result = await agentBay.create({
+   *       imageId: 'windows_latest'
+   *     });
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Click at coordinates (100, 100) with left button
+   *       const clickResult = await session.computer.clickMouse(100, 100, 'left');
+   *       if (clickResult.success) {
+   *         console.log('Mouse clicked successfully');
+   *       } else {
+   *         console.log(`Click failed: ${clickResult.errorMessage}`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateClickMouse().catch(console.error);
+   * ```
    */
   async clickMouse(x: number, y: number, button: MouseButton | string = MouseButton.LEFT): Promise<BoolResult> {
     const buttonStr = typeof button === 'string' ? button : button;
@@ -634,6 +671,53 @@ export class Computer {
 
   /**
    * Gets the list of installed applications.
+   *
+   * @param startMenu - Whether to include applications from start menu (default: true)
+   * @param desktop - Whether to include applications from desktop (default: false)
+   * @param ignoreSystemApps - Whether to exclude system applications (default: true)
+   * @returns Promise resolving to result containing array of installed applications
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetInstalledApps() {
+   *   try {
+   *     const result = await agentBay.create({
+   *       imageId: 'windows_latest'
+   *     });
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get installed applications from start menu
+   *       const appsResult = await session.computer.getInstalledApps();
+   *       if (appsResult.success) {
+   *         console.log(`Found ${appsResult.data.length} installed applications`);
+   *         // Output: Found 15 installed applications
+   *         appsResult.data.forEach(app => {
+   *           console.log(`  - ${app.name}: ${app.path}`);
+   *         });
+   *         // Output:   - Notepad: C:\Windows\System32\notepad.exe
+   *         // Output:   - Calculator: calculator:
+   *       }
+   *
+   *       // Get applications including desktop shortcuts
+   *       const desktopAppsResult = await session.computer.getInstalledApps(true, true, true);
+   *       if (desktopAppsResult.success) {
+   *         console.log(`Found ${desktopAppsResult.data.length} applications (including desktop)`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetInstalledApps().catch(console.error);
+   * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getInstalledApps(startMenu = true, desktop = false, ignoreSystemApps = true): Promise<any> {

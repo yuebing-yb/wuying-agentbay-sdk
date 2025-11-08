@@ -528,16 +528,19 @@ Behavior:
 package main
 import (
 	"fmt"
+	"os"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 func main() {
-	client, err := agentbay.NewAgentBay("your_api_key")
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	result, err := client.Create(nil)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	session := result.Session
 
@@ -545,10 +548,15 @@ func main() {
 
 	listResult, err := session.FileSystem.ListDirectory("/tmp")
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	for _, entry := range listResult.Entries {
-		fmt.Printf("%s (%s)\n", entry.Name, entry.Type)
+		entryType := "file"
+		if entry.IsDirectory {
+			entryType = "directory"
+		}
+		fmt.Printf("%s (%s)\n", entry.Name, entryType)
 	}
 
 	// Output:
@@ -656,16 +664,19 @@ Behavior:
 package main
 import (
 	"fmt"
+	"os"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 func main() {
-	client, err := agentbay.NewAgentBay("your_api_key")
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	result, err := client.Create(nil)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	session := result.Session
 
@@ -673,7 +684,8 @@ func main() {
 
 	fileResult, err := session.FileSystem.ReadFile("/etc/hostname")
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	fmt.Printf("Content: %s\n", fileResult.Content)
 
@@ -786,12 +798,12 @@ func main() {
 	}
 	session := result.Session
 
-	// Search for all .txt files, excluding those in node_modules
+	// Search for all .txt files (using partial name matching, NOT wildcards)
 
 	searchResult, err := session.FileSystem.SearchFiles(
 		"/tmp",
-		"*.txt",
-		[]string{"node_modules/*"},
+		".txt",
+		[]string{"node_modules"},
 	)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -947,16 +959,19 @@ content
 package main
 import (
 	"fmt"
+	"os"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 func main() {
-	client, err := agentbay.NewAgentBay("your_api_key")
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	result, err := client.Create(nil)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	session := result.Session
 
@@ -968,7 +983,8 @@ func main() {
 		"overwrite",
 	)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	if writeResult.Success {
 		fmt.Println("File written successfully")
