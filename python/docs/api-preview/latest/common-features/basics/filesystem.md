@@ -909,6 +909,51 @@ This is a synchronous wrapper around the async FileTransfer.upload method.
 **Returns**:
 
 - `UploadResult` - Result of the upload operation
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams, ContextSync
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def upload_file_example():
+    try:
+        # Create a session with context sync configuration
+        context_sync = ContextSync(
+            context_id="your_context_id",
+            path="/workspace"
+        )
+        params = CreateSessionParams(context_syncs=[context_sync])
+        result = agent_bay.create(params)
+
+        if result.success:
+            session = result.session
+
+            # Upload a local file to remote path
+            upload_result = session.file_system.upload_file(
+                local_path="/local/path/to/file.txt",
+                remote_path="/workspace/file.txt",
+                content_type="text/plain",
+                wait=True,
+                wait_timeout=30.0
+            )
+
+            if upload_result.success:
+                print(f"File uploaded successfully: {upload_result.path}")
+                print(f"Bytes sent: {upload_result.bytes_sent}")
+                print(f"HTTP status: {upload_result.http_status}")
+            else:
+                print(f"Upload failed: {upload_result.error}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+upload_file_example()
+```
 
 #### download\_file
 
@@ -942,6 +987,51 @@ This is a synchronous wrapper around the async FileTransfer.download method.
 **Returns**:
 
 - `DownloadResult` - Result of the download operation
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams, ContextSync
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def download_file_example():
+    try:
+        # Create a session with context sync configuration
+        context_sync = ContextSync(
+            context_id="your_context_id",
+            path="/workspace"
+        )
+        params = CreateSessionParams(context_syncs=[context_sync])
+        result = agent_bay.create(params)
+
+        if result.success:
+            session = result.session
+
+            # Download a remote file to local path
+            download_result = session.file_system.download_file(
+                remote_path="/workspace/file.txt",
+                local_path="/local/path/to/file.txt",
+                overwrite=True,
+                wait=True,
+                wait_timeout=30.0
+            )
+
+            if download_result.success:
+                print(f"File downloaded successfully: {download_result.local_path}")
+                print(f"Bytes received: {download_result.bytes_received}")
+                print(f"HTTP status: {download_result.http_status}")
+            else:
+                print(f"Download failed: {download_result.error}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+download_file_example()
+```
 
 #### watch\_directory
 
@@ -969,6 +1059,54 @@ Watch a directory for file changes and call the callback function when changes o
 
 - `threading.Thread` - The monitoring thread. Call thread.start() to begin monitoring.
   Use the thread's stop_event attribute to stop monitoring.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+import time
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def demonstrate_watch_directory():
+    try:
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Create a test directory
+            session.file_system.create_directory("/tmp/watch_test")
+
+            # Define callback function
+            def on_file_change(events):
+                for event in events:
+                    print(f"{event.event_type}: {event.path} ({event.path_type})")
+
+            # Start monitoring
+            monitor_thread = session.file_system.watch_directory(
+                path="/tmp/watch_test",
+                callback=on_file_change,
+                interval=0.5
+            )
+            monitor_thread.start()
+
+            # Create some test files to trigger events
+            session.file_system.write_file("/tmp/watch_test/test1.txt", "content 1")
+            time.sleep(1)
+            session.file_system.write_file("/tmp/watch_test/test2.txt", "content 2")
+            time.sleep(1)
+
+            # Stop monitoring
+            monitor_thread.stop_event.set()
+            monitor_thread.join()
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_watch_directory()
+```
 
 ## Related Resources
 

@@ -173,6 +173,38 @@ func (m *Mobile) InputText(text string) *BoolResult
 
 InputText inputs text into the active field
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := &agentbay.CreateSessionParams{
+		ImageId: "mobile_latest",
+	}
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	inputResult := session.Mobile.InputText("Hello Mobile")
+	if inputResult.Success {
+		fmt.Println("Text input successful")
+	}
+	session.Delete()
+}
+```
+
 #### Screenshot
 
 ```go

@@ -42,7 +42,7 @@ DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("common-features/advanced/oss.md", "OSS", ("agentbay.oss.oss",)),
     DocMapping("browser-use/browser.md", "Browser", ("agentbay.browser.browser", "agentbay.browser.browser_agent")),
     DocMapping("browser-use/extension.md", "Extension", ("agentbay.extension",)),
-    DocMapping("codespace/code.md", "Code", ("agentbay.code",)),
+    DocMapping("codespace/code.md", "Code", ("agentbay.code.code",)),
     DocMapping("computer-use/computer.md", "Computer", ("agentbay.computer.computer",)),
     DocMapping("mobile-use/mobile.md", "Mobile", ("agentbay.mobile.mobile",)),
 )

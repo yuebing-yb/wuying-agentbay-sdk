@@ -163,17 +163,48 @@ ___
 
 ▸ **inputText**(`text`): `Promise`\<`BoolResult`\>
 
-Input text.
+Input text at the current focus position.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `text` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `text` | `string` | Text to input |
 
 #### Returns
 
 `Promise`\<`BoolResult`\>
+
+Promise resolving to BoolResult with success status
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+
+async function demonstrateInputText() {
+  try {
+    const result = await agentBay.create({ imageId: 'mobile_latest' });
+    if (result.success && result.session) {
+      const session = result.session;
+
+      // Input text at current focus position
+      const inputResult = await session.mobile.inputText('Hello Mobile');
+      if (inputResult.success) {
+        console.log('Text input successfully');
+      }
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateInputText().catch(console.error);
+```
 
 ___
 
@@ -181,11 +212,43 @@ ___
 
 ▸ **screenshot**(): `Promise`\<`ScreenshotResult`\>
 
-Take a screenshot.
+Take a screenshot of the current mobile screen.
 
 #### Returns
 
 `Promise`\<`ScreenshotResult`\>
+
+Promise resolving to ScreenshotResult containing screenshot URL
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+
+async function demonstrateScreenshot() {
+  try {
+    const result = await agentBay.create({ imageId: 'mobile_latest' });
+    if (result.success && result.session) {
+      const session = result.session;
+
+      // Take a screenshot
+      const screenshotResult = await session.mobile.screenshot();
+      if (screenshotResult.success) {
+        console.log('Screenshot taken successfully');
+        console.log(`Screenshot URL: ${screenshotResult.data}`);
+      }
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateScreenshot().catch(console.error);
+```
 
 ___
 
@@ -349,21 +412,52 @@ ___
 
 ▸ **swipe**(`startX`, `startY`, `endX`, `endY`, `durationMs?`): `Promise`\<`BoolResult`\>
 
-Swipe from one position to another.
+Swipe from one position to another on the mobile screen.
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `startX` | `number` | `undefined` |
-| `startY` | `number` | `undefined` |
-| `endX` | `number` | `undefined` |
-| `endY` | `number` | `undefined` |
-| `durationMs` | `number` | `300` |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `startX` | `number` | `undefined` | Starting X coordinate |
+| `startY` | `number` | `undefined` | Starting Y coordinate |
+| `endX` | `number` | `undefined` | Ending X coordinate |
+| `endY` | `number` | `undefined` | Ending Y coordinate |
+| `durationMs` | `number` | `300` | Swipe duration in milliseconds. Default is 300 |
 
 #### Returns
 
 `Promise`\<`BoolResult`\>
+
+Promise resolving to BoolResult with success status
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+
+async function demonstrateSwipe() {
+  try {
+    const result = await agentBay.create({ imageId: 'mobile_latest' });
+    if (result.success && result.session) {
+      const session = result.session;
+
+      // Swipe up gesture from (200, 400) to (200, 100)
+      const swipeResult = await session.mobile.swipe(200, 400, 200, 100, 300);
+      if (swipeResult.success) {
+        console.log('Swipe gesture completed successfully');
+      }
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateSwipe().catch(console.error);
+```
 
 ___
 
@@ -371,18 +465,51 @@ ___
 
 ▸ **tap**(`x`, `y`): `Promise`\<`BoolResult`\>
 
-Tap at specified coordinates.
+Tap at specified coordinates on the mobile screen.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `x` | `number` |
-| `y` | `number` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `x` | `number` | X coordinate for the tap |
+| `y` | `number` | Y coordinate for the tap |
 
 #### Returns
 
 `Promise`\<`BoolResult`\>
+
+Promise resolving to BoolResult with success status
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+
+async function demonstrateTap() {
+  try {
+    const result = await agentBay.create({ imageId: 'mobile_latest' });
+    if (result.success && result.session) {
+      const session = result.session;
+
+      // Tap at coordinates (100, 100)
+      const tapResult = await session.mobile.tap(100, 100);
+      if (tapResult.success) {
+        console.log('Tap executed successfully');
+      } else {
+        console.log(`Tap failed: ${tapResult.errorMessage}`);
+      }
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateTap().catch(console.error);
+```
 
 ## Best Practices
 

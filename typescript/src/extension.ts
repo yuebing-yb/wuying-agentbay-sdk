@@ -337,12 +337,44 @@ export class ExtensionsService {
 
   /**
    * Uploads a new browser extension from a local path into the current context.
-   * 
+   *
    * @param localPath - Path to the local extension file (must be a .zip file).
    * @returns Promise that resolves to an Extension object.
    * @throws {Error} If the local file doesn't exist.
    * @throws {Error} If the file format is not supported (only .zip is supported).
    * @throws {AgentBayError} If upload fails.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay, ExtensionsService } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateCreateExtension() {
+   *   try {
+   *     // Create extensions service with auto-generated context
+   *     const extensionsService = new ExtensionsService(agentBay);
+   *
+   *     // Upload a browser extension
+   *     const extension = await extensionsService.create('/path/to/my-extension.zip');
+   *     if (extension) {
+   *       console.log(`Extension uploaded successfully`);
+   *       // Output: Extension uploaded successfully
+   *       console.log(`Extension ID: ${extension.id}`);
+   *       // Output: Extension ID: ext_a1b2c3d4e5f6...
+   *       console.log(`Extension name: ${extension.name}`);
+   *       // Output: Extension name: my-extension.zip
+   *     }
+   *
+   *     // Clean up the auto-created context
+   *     await extensionsService.cleanup();
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateCreateExtension().catch(console.error);
+   * ```
    */
   async create(localPath: string): Promise<Extension> {
     await this._ensureInitialized();

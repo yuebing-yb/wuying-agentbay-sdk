@@ -328,6 +328,41 @@ func (m *Mobile) Swipe(startX, startY, endX, endY, durationMs int) *BoolResult {
 }
 
 // InputText inputs text into the active field
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		inputResult := session.Mobile.InputText("Hello Mobile")
+//		if inputResult.Success {
+//			fmt.Println("Text input successful")
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) InputText(text string) *BoolResult {
 	args := map[string]interface{}{
 		"text": text,

@@ -1002,6 +1002,47 @@ Gets the list of installed applications.
 **Returns**:
 
 - `InstalledAppListResult` - Result object containing list of installed apps and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay, CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+params = CreateSessionParams(image_id="windows_latest")
+result = agent_bay.create(params)
+
+if result.success:
+    session = result.session
+    computer = session.computer
+
+    # Get installed applications from start menu
+    apps_result = computer.get_installed_apps()
+    if apps_result.success:
+        for app in apps_result.data:
+            print(f"App: {app.name}, Command: {app.start_cmd}")
+
+    # Get all applications including desktop
+    all_apps_result = computer.get_installed_apps(start_menu=True, desktop=True)
+    if all_apps_result.success:
+        print(f"Total apps found: {len(all_apps_result.data)}")
+
+    session.delete()
+```
+  
+
+**Notes**:
+
+  - start_menu parameter includes applications from Windows Start Menu
+  - desktop parameter includes shortcuts from Desktop
+  - ignore_system_apps parameter filters out system applications
+  - Each app object contains name, start_cmd, stop_cmd, and work_directory
+  
+
+**See Also**:
+
+  start_app, list_visible_apps, stop_app_by_pname
 
 #### start\_app
 

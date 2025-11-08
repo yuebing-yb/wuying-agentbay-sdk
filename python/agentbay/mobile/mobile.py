@@ -497,6 +497,42 @@ class Mobile(BaseService):
         Returns:
             InstalledAppListResult: The result containing the list of installed
                 applications.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def list_installed_apps():
+                try:
+                    # Create a session with mobile_latest image
+                    params = CreateSessionParams(image_id="mobile_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Get installed apps (excluding system apps)
+                        apps_result = session.mobile.get_installed_apps(
+                            start_menu=False,
+                            desktop=False,
+                            ignore_system_apps=True
+                        )
+
+                        if apps_result.success:
+                            print(f"Found {len(apps_result.data)} installed apps")
+                            for app in apps_result.data:
+                                print(f"App: {app.name}, Package: {app.start_cmd}")
+                        else:
+                            print(f"Failed to get apps: {apps_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            list_installed_apps()
+            ```
         """
         try:
             args = {
@@ -554,6 +590,41 @@ class Mobile(BaseService):
 
         Returns:
             ProcessListResult: The result containing the list of processes started.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def start_mobile_app():
+                try:
+                    # Create a session with mobile_latest image
+                    params = CreateSessionParams(image_id="mobile_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Start Settings app with activity
+                        start_result = session.mobile.start_app(
+                            start_cmd="com.android.settings",
+                            activity=".Settings"
+                        )
+
+                        if start_result.success:
+                            print(f"Started {len(start_result.data)} processes")
+                            for process in start_result.data:
+                                print(f"Process: {process.name}, PID: {process.pid}")
+                        else:
+                            print(f"Failed to start app: {start_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            start_mobile_app()
+            ```
         """
         try:
             args = {"start_cmd": start_cmd}
@@ -601,6 +672,36 @@ class Mobile(BaseService):
 
         Returns:
             AppOperationResult: The result of the operation.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def stop_mobile_app():
+                try:
+                    # Create a session with mobile_latest image
+                    params = CreateSessionParams(image_id="mobile_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Stop an application using package name
+                        stop_result = session.mobile.stop_app_by_cmd("com.android.settings")
+
+                        if stop_result.success:
+                            print("App stopped successfully")
+                        else:
+                            print(f"Failed to stop app: {stop_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            stop_mobile_app()
+            ```
         """
         try:
             args = {"stop_cmd": stop_cmd}
@@ -895,6 +996,38 @@ class Mobile(BaseService):
 
         Raises:
             SessionError: If the session is not in mobile environment.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def get_adb_connection():
+                try:
+                    # Create a session with mobile_latest image
+                    params = CreateSessionParams(image_id="mobile_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Get ADB URL with public key
+                        adbkey_pub = "QAAAAM0muSn7yQCY...your_adb_public_key...EAAQAA="
+                        adb_result = session.mobile.get_adb_url(adbkey_pub)
+
+                        if adb_result.success:
+                            print(f"ADB URL: {adb_result.data}")
+                            print(f"Request ID: {adb_result.request_id}")
+                        else:
+                            print(f"Failed to get ADB URL: {adb_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            get_adb_connection()
+            ```
         """
         try:
             # Build options JSON with adbkey_pub

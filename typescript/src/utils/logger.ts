@@ -13,6 +13,37 @@ export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 
 /**
  * Logger configuration options
+ *
+ * @example
+ * ```typescript
+ * import { AgentBay, setupLogger } from 'wuying-agentbay-sdk';
+ *
+ * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+ *
+ * async function demonstrateLogging() {
+ *     try {
+ *         // Configure logging with file output
+ *         setupLogger({
+ *             level: 'DEBUG',
+ *             logFile: '/var/log/agentbay.log',
+ *             maxFileSize: '100 MB',
+ *             enableConsole: true
+ *         });
+ *
+ *         // Create a session - logs will be written to both console and file
+ *         const result = await agentBay.create();
+ *         if (result.success) {
+ *             const session = result.session;
+ *             console.log(`Session created: ${session.sessionId}`);
+ *             await session.delete();
+ *         }
+ *     } catch (error) {
+ *         console.error('Error:', error);
+ *     }
+ * }
+ *
+ * demonstrateLogging().catch(console.error);
+ * ```
  */
 export interface LoggerConfig {
   level?: LogLevel;
@@ -329,6 +360,37 @@ function writeToFile(message: string): void {
 /**
  * Setup logger configuration
  * @param config Logger configuration options
+ *
+ * @example
+ * ```typescript
+ * import { AgentBay, setupLogger } from 'wuying-agentbay-sdk';
+ *
+ * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+ *
+ * async function demonstrateLogging() {
+ *     try {
+ *         // Configure logging to file only
+ *         setupLogger({
+ *             level: 'DEBUG',
+ *             logFile: '/var/log/myapp.log',
+ *             maxFileSize: '100 MB',
+ *             enableConsole: false
+ *         });
+ *
+ *         // Create a session - logs will only be written to file
+ *         const result = await agentBay.create({ imageId: 'browser_latest' });
+ *         if (result.success) {
+ *             const session = result.session;
+ *             // All operations will be logged to file
+ *             await session.delete();
+ *         }
+ *     } catch (error) {
+ *         console.error('Error:', error);
+ *     }
+ * }
+ *
+ * demonstrateLogging().catch(console.error);
+ * ```
  */
 export function setupLogger(config: LoggerConfig): void {
   if (config.level) {

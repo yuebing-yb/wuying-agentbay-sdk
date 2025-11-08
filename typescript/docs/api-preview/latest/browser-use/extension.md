@@ -128,6 +128,39 @@ If the file format is not supported (only .zip is supported).
 
 If upload fails.
 
+**`Example`**
+
+```typescript
+import { AgentBay, ExtensionsService } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateCreateExtension() {
+  try {
+    // Create extensions service with auto-generated context
+    const extensionsService = new ExtensionsService(agentBay);
+
+    // Upload a browser extension
+    const extension = await extensionsService.create('/path/to/my-extension.zip');
+    if (extension) {
+      console.log(`Extension uploaded successfully`);
+      // Output: Extension uploaded successfully
+      console.log(`Extension ID: ${extension.id}`);
+      // Output: Extension ID: ext_a1b2c3d4e5f6...
+      console.log(`Extension name: ${extension.name}`);
+      // Output: Extension name: my-extension.zip
+    }
+
+    // Clean up the auto-created context
+    await extensionsService.cleanup();
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateCreateExtension().catch(console.error);
+```
+
 ___
 
 ### createExtensionOption

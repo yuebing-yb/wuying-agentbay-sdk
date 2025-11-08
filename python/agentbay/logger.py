@@ -123,8 +123,48 @@ class AgentBayLogger:
             force_reinit: Force reinitialization even if already initialized (default: False)
 
         Example:
-            >>> from agentbay.logger import AgentBayLogger
-            >>> AgentBayLogger.setup(level="DEBUG", max_file_size="10 MB")
+            Configure logging for different scenarios::
+
+                from agentbay.logger import AgentBayLogger, get_logger
+
+                # Basic setup with debug level
+                AgentBayLogger.setup(level="DEBUG")
+                logger = get_logger("app")
+                logger.debug("Debug mode enabled")
+                # Output: Debug mode enabled
+
+                # Setup with custom log file and rotation
+                AgentBayLogger.setup(
+                    level="INFO",
+                    log_file="/var/log/agentbay/app.log",
+                    max_file_size="50 MB",
+                    retention="7 days"
+                )
+                logger = get_logger("app")
+                logger.info("Application started with file logging")
+                # Output: Application started with file logging
+                # Also written to /var/log/agentbay/app.log
+
+                # Console-only logging without colors (for CI/CD)
+                AgentBayLogger.setup(
+                    level="WARNING",
+                    enable_file=False,
+                    colorize=False
+                )
+                logger = get_logger("ci")
+                logger.warning("This is a warning in CI environment")
+                # Output: This is a warning in CI environment (no colors)
+
+                # File-only logging (no console output)
+                AgentBayLogger.setup(
+                    level="DEBUG",
+                    log_file="/tmp/debug.log",
+                    enable_console=False,
+                    enable_file=True
+                )
+                logger = get_logger("debug")
+                logger.debug("This only appears in the log file")
+                # No console output, but written to /tmp/debug.log
         """
         # Automatically reset if already initialized and force_reinit is True
         if cls._initialized and force_reinit:
@@ -224,9 +264,35 @@ class AgentBayLogger:
     def set_level(cls, level: str) -> None:
         """
         Set the logging level.
-        
+
         Args:
             level: New log level
+
+        Example:
+            Change log level during runtime::
+
+                from agentbay.logger import AgentBayLogger, get_logger
+
+                # Start with INFO level
+                AgentBayLogger.setup(level="INFO")
+                logger = get_logger("app")
+
+                logger.info("This will appear")
+                # Output: This will appear
+                logger.debug("This won't appear")
+                # No output (DEBUG < INFO)
+
+                # Change to DEBUG level at runtime
+                AgentBayLogger.set_level("DEBUG")
+                logger.debug("Now debug messages appear")
+                # Output: Now debug messages appear
+
+                # Change to WARNING level
+                AgentBayLogger.set_level("WARNING")
+                logger.info("This won't appear anymore")
+                # No output (INFO < WARNING)
+                logger.warning("But warnings still appear")
+                # Output: But warnings still appear
         """
         cls._log_level = level.upper()
         if cls._initialized:
@@ -280,6 +346,55 @@ def mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
 
     Returns:
         Masked data (deep copy)
+
+    Example:
+        Mask sensitive information in various data structures::
+
+            from agentbay.logger import mask_sensitive_data
+
+            # Mask API keys and passwords in a dictionary
+            user_data = {
+                "username": "john_doe",
+                "password": "secret123",
+                "api_key": "sk_live_1234567890abcdef",
+                "email": "john@example.com"
+            }
+            masked = mask_sensitive_data(user_data)
+            print(masked)
+            # Output: {'username': 'john_doe', 'password': '****', 'api_key': 'sk****ef', 'email': 'john@example.com'}
+
+            # Mask nested dictionaries
+            config = {
+                "database": {
+                    "host": "localhost",
+                    "password": "db_password_123"
+                },
+                "auth": {
+                    "token": "Bearer xyz123abc456"
+                }
+            }
+            masked_config = mask_sensitive_data(config)
+            print(masked_config)
+            # Output: {'database': {'host': 'localhost', 'password': '****'}, 'auth': {'token': 'Be****56'}}
+
+            # Mask with custom field names
+            custom_data = {
+                "user_id": "12345",
+                "credit_card": "1234-5678-9012-3456",
+                "ssn": "123-45-6789"
+            }
+            masked_custom = mask_sensitive_data(custom_data, fields=['credit_card', 'ssn'])
+            print(masked_custom)
+            # Output: {'user_id': '12345', 'credit_card': '12****56', 'ssn': '12****89'}
+
+            # Mask lists containing sensitive data
+            user_list = [
+                {"name": "Alice", "api_key": "key_alice_123"},
+                {"name": "Bob", "api_key": "key_bob_456"}
+            ]
+            masked_list = mask_sensitive_data(user_list)
+            print(masked_list)
+            # Output: [{'name': 'Alice', 'api_key': 'ke****23'}, {'name': 'Bob', 'api_key': 'ke****56'}]
     """
     if fields is None:
         fields = SENSITIVE_FIELDS

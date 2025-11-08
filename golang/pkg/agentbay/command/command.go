@@ -75,7 +75,7 @@ func NewCommand(session interface {
 //
 //	func main() {
 //		// Initialize AgentBay client
-//		client, err := agentbay.NewAgentBay("", nil)
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 //		if err != nil {
 //			fmt.Printf("Error initializing AgentBay client: %v\n", err)
 //			os.Exit(1)

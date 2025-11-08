@@ -211,6 +211,45 @@ class ExtensionsService:
         """
         Lists all available browser extensions within this context from the cloud.
         Uses the context service to list files under the extensions directory.
+
+        Returns:
+            List[Extension]: List of all extensions in the context.
+
+        Raises:
+            AgentBayError: If listing fails.
+
+        Example:
+
+        ```python
+        from agentbay import AgentBay
+        from agentbay.extension import ExtensionsService
+
+        agent_bay = AgentBay(api_key="your_api_key")
+
+        def list_all_extensions():
+            try:
+                # Create extensions service
+                extensions_service = ExtensionsService(agent_bay, "my_extensions")
+
+                # List all extensions
+                extensions = extensions_service.list()
+
+                if extensions:
+                    print(f"Found {len(extensions)} extension(s):")
+                    for ext in extensions:
+                        print(f"  - {ext.name} (ID: {ext.id})")
+                        if ext.created_at:
+                            print(f"    Created at: {ext.created_at}")
+                else:
+                    print("No extensions found")
+
+                # Clean up
+                extensions_service.cleanup()
+            except Exception as e:
+                print(f"Error: {e}")
+
+        list_all_extensions()
+        ```
         """
         try:
             # Use context service to list files in the extensions directory
@@ -238,7 +277,52 @@ class ExtensionsService:
             raise AgentBayError(f"An error occurred while listing browser extensions: {e}") from e
 
     def create(self, local_path: str) -> Extension:
-        """Uploads a new browser extension from a local path into the current context."""
+        """
+        Uploads a new browser extension from a local path into the current context.
+
+        Args:
+            local_path (str): Path to the local extension ZIP file.
+
+        Returns:
+            Extension: Extension object with generated ID and metadata.
+
+        Raises:
+            FileNotFoundError: If the local file doesn't exist.
+            ValueError: If the file format is not supported (only ZIP files allowed).
+            AgentBayError: If upload fails.
+
+        Example:
+
+        ```python
+        from agentbay import AgentBay
+        from agentbay.extension import ExtensionsService
+
+        agent_bay = AgentBay(api_key="your_api_key")
+
+        def upload_browser_extension():
+            try:
+                # Create extensions service
+                extensions_service = ExtensionsService(agent_bay, "my_extensions")
+
+                # Upload extension from local path
+                extension = extensions_service.create("/path/to/my-extension.zip")
+
+                print(f"Extension uploaded successfully:")
+                print(f"  Name: {extension.name}")
+                print(f"  ID: {extension.id}")
+
+                # Clean up
+                extensions_service.cleanup()
+            except FileNotFoundError as e:
+                print(f"File not found: {e}")
+            except ValueError as e:
+                print(f"Invalid file format: {e}")
+            except Exception as e:
+                print(f"Error: {e}")
+
+        upload_browser_extension()
+        ```
+        """
         if not os.path.exists(local_path):
             raise FileNotFoundError(f"The specified local file was not found: {local_path}")
         
@@ -259,7 +343,60 @@ class ExtensionsService:
         return Extension(id=extension_id, name=extension_name)
 
     def update(self, extension_id: str, new_local_path: str) -> Extension:
-        """Updates an existing browser extension in the current context with a new file."""
+        """
+        Updates an existing browser extension in the current context with a new file.
+
+        Args:
+            extension_id (str): ID of the extension to update.
+            new_local_path (str): Path to the new extension ZIP file.
+
+        Returns:
+            Extension: Updated extension object.
+
+        Raises:
+            FileNotFoundError: If the new local file doesn't exist.
+            ValueError: If the extension ID doesn't exist in the context.
+            AgentBayError: If update fails.
+
+        Example:
+
+        ```python
+        from agentbay import AgentBay
+        from agentbay.extension import ExtensionsService
+
+        agent_bay = AgentBay(api_key="your_api_key")
+
+        def update_browser_extension():
+            try:
+                # Create extensions service
+                extensions_service = ExtensionsService(agent_bay, "my_extensions")
+
+                # First, upload an extension
+                extension = extensions_service.create("/path/to/extension-v1.zip")
+                print(f"Extension created: {extension.id}")
+
+                # Update the extension with a new version
+                updated_ext = extensions_service.update(
+                    extension.id,
+                    "/path/to/extension-v2.zip"
+                )
+
+                print(f"Extension updated successfully:")
+                print(f"  Name: {updated_ext.name}")
+                print(f"  ID: {updated_ext.id}")
+
+                # Clean up
+                extensions_service.cleanup()
+            except FileNotFoundError as e:
+                print(f"File not found: {e}")
+            except ValueError as e:
+                print(f"Extension not found: {e}")
+            except Exception as e:
+                print(f"Error: {e}")
+
+        update_browser_extension()
+        ```
+        """
         if not os.path.exists(new_local_path):
             raise FileNotFoundError(f"The specified new local file was not found: {new_local_path}")
 
@@ -323,7 +460,48 @@ class ExtensionsService:
             return False
 
     def delete(self, extension_id: str) -> bool:
-        """Deletes a browser extension from the current context."""
+        """
+        Deletes a browser extension from the current context.
+
+        Args:
+            extension_id (str): ID of the extension to delete.
+
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+
+        Example:
+
+        ```python
+        from agentbay import AgentBay
+        from agentbay.extension import ExtensionsService
+
+        agent_bay = AgentBay(api_key="your_api_key")
+
+        def delete_browser_extension():
+            try:
+                # Create extensions service
+                extensions_service = ExtensionsService(agent_bay, "my_extensions")
+
+                # Upload an extension
+                extension = extensions_service.create("/path/to/extension.zip")
+                print(f"Extension created: {extension.id}")
+
+                # Delete the extension
+                success = extensions_service.delete(extension.id)
+
+                if success:
+                    print(f"Extension {extension.id} deleted successfully")
+                else:
+                    print(f"Failed to delete extension {extension.id}")
+
+                # Clean up
+                extensions_service.cleanup()
+            except Exception as e:
+                print(f"Error: {e}")
+
+        delete_browser_extension()
+        ```
+        """
         remote_path = f"{EXTENSIONS_BASE_PATH}/{extension_id}"
         try:
             # Use context service to delete the file

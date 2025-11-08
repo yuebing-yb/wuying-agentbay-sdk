@@ -103,18 +103,88 @@ GetEndpointURL returns the endpoint URL if the browser is initialized
 **Example:**
 
 ```go
-endpointURL, err := session.Browser.GetEndpointURL()
-if err != nil {
-    log.Fatalf("Failed to get endpoint URL: %v", err)
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+	"github.com/playwright-community/playwright-go"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("browser_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Initialize browser
+
+	option := browser.NewBrowserOption()
+	success, err := session.Browser.Initialize(option)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if !success {
+		os.Exit(1)
+	}
+
+	// Get CDP endpoint URL
+
+	endpointURL, err := session.Browser.GetEndpointURL()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("CDP endpoint: %s\n", endpointURL)
+
+	// Connect with Playwright
+
+	pw, err := playwright.Run()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer pw.Stop()
+	browserInstance, err := pw.Chromium.ConnectOverCDP(endpointURL)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer browserInstance.Close()
+
+	// Get or create page
+
+	contexts := browserInstance.Contexts()
+	if len(contexts) == 0 {
+		fmt.Println("No browser contexts available")
+		os.Exit(1)
+	}
+	page, err := contexts[0].NewPage()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Navigate to a website
+
+	_, err = page.Goto("https://example.com")
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	title, _ := page.Title()
+	fmt.Printf("Page title: %s\n", title)
+	session.Delete()
 }
-
-// Use with Playwright
-
-pw, err := playwright.Run()
-defer pw.Stop()
-browser, err := pw.Chromium.ConnectOverCDP(endpointURL)
-defer browser.Close()
-page, err := browser.Contexts()[0].NewPage()
 ```
 
 #### GetOption

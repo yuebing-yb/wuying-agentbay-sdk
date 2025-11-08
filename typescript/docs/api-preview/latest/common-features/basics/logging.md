@@ -6,6 +6,38 @@
 
 Logger configuration options
 
+**`Example`**
+
+```typescript
+import { AgentBay, setupLogger } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateLogging() {
+    try {
+        // Configure logging with file output
+        setupLogger({
+            level: 'DEBUG',
+            logFile: '/var/log/agentbay.log',
+            maxFileSize: '100 MB',
+            enableConsole: true
+        });
+
+        // Create a session - logs will be written to both console and file
+        const result = await agentBay.create();
+        if (result.success) {
+            const session = result.session;
+            console.log(`Session created: ${session.sessionId}`);
+            await session.delete();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+demonstrateLogging().catch(console.error);
+```
+
 ## Table of contents
 
 ### Properties

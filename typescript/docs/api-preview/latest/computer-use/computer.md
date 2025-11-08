@@ -300,6 +300,41 @@ Get cursor position.
 
 `Promise`\<`CursorPosition`\>
 
+Promise resolving to result containing cursor coordinates
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+
+async function demonstrateGetCursorPosition() {
+  try {
+    const result = await agentBay.create({
+      imageId: 'windows_latest'
+    });
+    if (result.success && result.session) {
+      const session = result.session;
+
+      // Get current cursor position
+      const positionResult = await session.computer.getCursorPosition();
+      if (positionResult.success) {
+        console.log(`Cursor at: (${positionResult.x}, ${positionResult.y})`);
+      } else {
+        console.log(`Failed to get cursor position: ${positionResult.errorMessage}`);
+      }
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetCursorPosition().catch(console.error);
+```
+
 ___
 
 ### getInstalledApps
@@ -376,6 +411,41 @@ Get screen size.
 #### Returns
 
 `Promise`\<`ScreenSize`\>
+
+Promise resolving to result containing screen dimensions and DPI scaling
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+
+async function demonstrateGetScreenSize() {
+  try {
+    const result = await agentBay.create({
+      imageId: 'windows_latest'
+    });
+    if (result.success && result.session) {
+      const session = result.session;
+
+      // Get screen size and DPI information
+      const sizeResult = await session.computer.getScreenSize();
+      if (sizeResult.success) {
+        console.log(`Screen: ${sizeResult.width}x${sizeResult.height}, DPI: ${sizeResult.dpiScalingFactor}`);
+      } else {
+        console.log(`Failed to get screen size: ${sizeResult.errorMessage}`);
+      }
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetScreenSize().catch(console.error);
+```
 
 ___
 

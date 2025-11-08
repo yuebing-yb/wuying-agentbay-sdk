@@ -879,7 +879,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 //	)
 //
 //	func main() {
-//		client, err := agentbay.NewAgentBay("", nil)
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 //		if err != nil {
 //			fmt.Printf("Error: %v\n", err)
 //			os.Exit(1)

@@ -982,11 +982,52 @@ export class AgentBay {
    *
    * @example
    * ```typescript
-   * const result = await agentBay.get("my-session-id");
-   * if (result.success) {
-   *   console.log(result.session.sessionId);
-   *   console.log(result.requestId);
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function getSessionExample() {
+   *   try {
+   *     // First, create a session
+   *     const createResult = await agentBay.create();
+   *     if (!createResult.success) {
+   *       console.error(`Failed to create session: ${createResult.errorMessage}`);
+   *       return;
+   *     }
+   *
+   *     const sessionId = createResult.session.sessionId;
+   *     console.log(`Created session with ID: ${sessionId}`);
+   *     // Output: Created session with ID: session-xxxxxxxxxxxxxx
+   *
+   *     // Retrieve the session by its ID
+   *     const result = await agentBay.get(sessionId);
+   *     if (result.success) {
+   *       console.log(`Successfully retrieved session: ${result.session.sessionId}`);
+   *       // Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
+   *       console.log(`Request ID: ${result.requestId}`);
+   *       // Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+   *
+   *       // Use the retrieved session
+   *       const fileResult = await result.session.fileSystem.readFile('/etc/hostname');
+   *       if (fileResult.success) {
+   *         console.log(`Hostname: ${fileResult.content}`);
+   *       }
+   *
+   *       // Clean up
+   *       const deleteResult = await result.session.delete();
+   *       if (deleteResult.success) {
+   *         console.log(`Session ${sessionId} deleted successfully`);
+   *         // Output: Session session-xxxxxxxxxxxxxx deleted successfully
+   *       }
+   *     } else {
+   *       console.error(`Failed to get session: ${result.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
    * }
+   *
+   * getSessionExample().catch(console.error);
    * ```
    */
   async get(sessionId: string): Promise<SessionResult> {
