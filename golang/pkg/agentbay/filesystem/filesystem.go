@@ -258,6 +258,58 @@ func NewFileSystem(session interface {
 }
 
 // CreateDirectory creates a new directory.
+//
+// Parameters:
+//   - path: Absolute path to the directory to create
+//
+// Returns:
+//   - *FileDirectoryResult: Result containing success status and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Creates the directory and any necessary parent directories
+// - Fails if the directory already exists
+// - Returns success if the directory is created successfully
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Create a directory
+//		createResult, err := session.FileSystem.CreateDirectory("/tmp/test_directory")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		if createResult.Success {
+//			fmt.Println("Directory created successfully")
+//			// Output: Directory created successfully
+//		}
+//
+//		session.Delete()
+//	}
 func (fs *FileSystem) CreateDirectory(path string) (*FileDirectoryResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -281,6 +333,70 @@ func (fs *FileSystem) CreateDirectory(path string) (*FileDirectoryResult, error)
 }
 
 // EditFile edits a file with specified changes.
+//
+// Parameters:
+//   - path: Absolute path to the file to edit
+//   - edits: Array of edit operations, each containing "oldText" and "newText" keys
+//   - dryRun: If true, preview changes without applying them
+//
+// Returns:
+//   - *FileWriteResult: Result containing success status and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Performs find-and-replace operations on the file content
+// - In dry-run mode, shows what changes would be made without applying them
+// - All edits are applied sequentially in the order provided
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// First write a file
+//		_, err = session.FileSystem.WriteFile("/tmp/test.txt", "Hello, World!", "overwrite")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Edit the file
+//		edits := []map[string]string{
+//			{"oldText": "World", "newText": "AgentBay"},
+//		}
+//		editResult, err := session.FileSystem.EditFile("/tmp/test.txt", edits, false)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		if editResult.Success {
+//			fmt.Println("File edited successfully")
+//			// Output: File edited successfully
+//		}
+//
+//		session.Delete()
+//	}
 func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bool) (*FileWriteResult, error) {
 	args := map[string]interface{}{
 		"path":    path,
@@ -306,6 +422,58 @@ func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bo
 }
 
 // GetFileInfo gets information about a file or directory.
+//
+// Parameters:
+//   - path: Absolute path to the file or directory
+//
+// Returns:
+//   - *FileInfoResult: Result containing file information and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Returns detailed information including size, permissions, modification time
+// - Works for both files and directories
+// - Fails if the path doesn't exist
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Get file information
+//		fileInfo, err := session.FileSystem.GetFileInfo("/etc/hostname")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		fmt.Printf("File size: %d bytes\n", fileInfo.FileInfo.Size)
+//		fmt.Printf("Is directory: %t\n", fileInfo.FileInfo.IsDirectory)
+//		// Output: File size: 16 bytes
+//		// Output: Is directory: false
+//
+//		session.Delete()
+//	}
 func (fs *FileSystem) GetFileInfo(path string) (*FileInfoResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -418,6 +586,66 @@ func (fs *FileSystem) ListDirectory(path string) (*DirectoryListResult, error) {
 }
 
 // MoveFile moves a file or directory from source to destination.
+//
+// Parameters:
+//   - source: Absolute path to the source file or directory
+//   - destination: Absolute path to the destination
+//
+// Returns:
+//   - *FileWriteResult: Result containing success status and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Moves files or directories to a new location
+// - Can be used to rename files/directories
+// - Fails if source doesn't exist or destination already exists
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// First create a file
+//		_, err = session.FileSystem.WriteFile("/tmp/old_name.txt", "test content", "overwrite")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Move/rename the file
+//		moveResult, err := session.FileSystem.MoveFile("/tmp/old_name.txt", "/tmp/new_name.txt")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		if moveResult.Success {
+//			fmt.Println("File moved successfully")
+//			// Output: File moved successfully
+//		}
+//
+//		session.Delete()
+//	}
 func (fs *FileSystem) MoveFile(source, destination string) (*FileWriteResult, error) {
 	args := map[string]string{
 		"source":      source,
@@ -480,6 +708,60 @@ func (fs *FileSystem) readFileChunk(path string, optionalParams ...int) (*FileRe
 }
 
 // ReadMultipleFiles reads multiple files and returns their contents as a map.
+//
+// Parameters:
+//   - paths: Array of absolute paths to files to read
+//
+// Returns:
+//   - map[string]string: Map with file paths as keys and their contents as values
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Reads multiple files in a single operation
+// - Returns a map with paths as keys and file contents as values
+// - Fails if any of the specified files don't exist
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Read multiple files at once
+//		contents, err := session.FileSystem.ReadMultipleFiles([]string{
+//			"/etc/hostname",
+//			"/etc/os-release",
+//		})
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		for path, content := range contents {
+//			fmt.Printf("%s: %d bytes\n", path, len(content))
+//		}
+//
+//		session.Delete()
+//	}
 func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, error) {
 	args := map[string]interface{}{
 		"paths": paths,
@@ -528,6 +810,64 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, erro
 }
 
 // SearchFiles searches for files matching a pattern.
+//
+// Parameters:
+//   - path: Absolute path to the directory to search in
+//   - pattern: Pattern to match (supports wildcards like *.txt)
+//   - excludePatterns: Array of patterns to exclude from results
+//
+// Returns:
+//   - *SearchFilesResult: Result containing matching file paths and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Recursively searches the directory and subdirectories
+// - Supports glob patterns for matching
+// - Exclude patterns help filter out unwanted results
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Search for all .txt files, excluding those in node_modules
+//		searchResult, err := session.FileSystem.SearchFiles(
+//			"/tmp",
+//			"*.txt",
+//			[]string{"node_modules/*"},
+//		)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		fmt.Printf("Found %d files\n", len(searchResult.Results))
+//		for _, file := range searchResult.Results {
+//			fmt.Println(file)
+//		}
+//
+//		session.Delete()
+//	}
 func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (*SearchFilesResult, error) {
 	args := map[string]interface{}{
 		"path":             path,
@@ -881,7 +1221,86 @@ func parseFileChangeData(rawData string) ([]*FileChangeEvent, error) {
 	return events, fmt.Errorf("failed to parse JSON: expected array or object, got %s", rawData)
 }
 
-// GetFileChange gets file change information for the specified directory path
+// GetFileChange gets file change information for the specified directory path.
+//
+// Parameters:
+//   - path: Absolute path to the directory to monitor
+//
+// Returns:
+//   - *FileChangeResult: Result containing detected file changes and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Detects file changes (create, modify, delete) since the last check
+// - Returns empty Events array if no changes detected
+// - Automatically tracks the last checked state for the directory
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"time"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Create a test directory
+//		_, err = session.FileSystem.CreateDirectory("/tmp/watch_test")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Initial check to establish baseline
+//		_, err = session.FileSystem.GetFileChange("/tmp/watch_test")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Create a new file
+//		_, err = session.FileSystem.WriteFile("/tmp/watch_test/test.txt", "content", "overwrite")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Wait a bit for changes to be detected
+//		time.Sleep(1 * time.Second)
+//
+//		// Check for changes
+//		changeResult, err := session.FileSystem.GetFileChange("/tmp/watch_test")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		if changeResult.HasChanges() {
+//			fmt.Printf("Detected %d changes\n", len(changeResult.Events))
+//			for _, event := range changeResult.Events {
+//				fmt.Println(event.String())
+//			}
+//		}
+//
+//		session.Delete()
+//	}
 func (fs *FileSystem) GetFileChange(path string) (*FileChangeResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -930,7 +1349,89 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 	return fs.WatchDirectory(path, callback, 500*time.Millisecond, stopCh)
 }
 
-// WatchDirectory watches a directory for file changes and calls the callback function when changes occur
+// WatchDirectory watches a directory for file changes and calls the callback function when changes occur.
+//
+// Parameters:
+//   - path: Absolute path to the directory to watch
+//   - callback: Function called when changes are detected, receives array of FileChangeEvent
+//   - interval: Polling interval (e.g., 1*time.Second for 1 second)
+//   - stopCh: Channel to signal when to stop watching
+//
+// Returns:
+//   - *sync.WaitGroup: WaitGroup that can be used to wait for monitoring to stop
+//
+// Behavior:
+//
+// - Continuously monitors directory for file changes at specified interval
+// - Calls callback function asynchronously when changes detected
+// - Stops monitoring when stopCh is closed
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"time"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Create test directory
+//		_, err = session.FileSystem.CreateDirectory("/tmp/watch_demo")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Define callback function
+//		callback := func(events []*filesystem.FileChangeEvent) {
+//			fmt.Printf("Detected %d changes:\n", len(events))
+//			for _, event := range events {
+//				fmt.Println(event.String())
+//			}
+//		}
+//
+//		// Create stop channel
+//		stopCh := make(chan struct{})
+//
+//		// Start watching with 1 second interval
+//		wg := session.FileSystem.WatchDirectory(
+//			"/tmp/watch_demo",
+//			callback,
+//			1*time.Second,
+//			stopCh,
+//		)
+//
+//		// Simulate file operations
+//		time.Sleep(2 * time.Second)
+//		session.FileSystem.WriteFile("/tmp/watch_demo/test.txt", "content", "overwrite")
+//
+//		// Wait for changes to be detected
+//		time.Sleep(2 * time.Second)
+//
+//		// Stop monitoring
+//		close(stopCh)
+//		wg.Wait()
+//
+//		fmt.Println("Monitoring stopped")
+//		session.Delete()
+//	}
 func (fs *FileSystem) WatchDirectory(
 	path string,
 	callback func([]*FileChangeEvent),

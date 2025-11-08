@@ -192,6 +192,90 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession 
 
 CallMcpTool calls the MCP tool and handles both VPC and non-VPC scenarios
 
+This is the unified public API for calling MCP tools. All feature modules (Command, Code, Agent,
+etc.) use this method internally.
+
+Parameters:
+  - toolName: Name of the MCP tool to call
+  - args: Arguments to pass to the tool (typically a map or struct)
+  - autoGenSession: Optional boolean to auto-generate session if not exists (default: false)
+
+Returns:
+  - *models.McpToolResult: Result containing:
+  - Success: Whether the tool call was successful
+  - Data: Tool output data (text content extracted from response)
+  - ErrorMessage: Error message if the call failed
+  - RequestID: Unique identifier for the API request
+  - error: Error if the call fails at the transport level
+
+Behavior:
+
+- Automatically detects VPC vs non-VPC mode - In VPC mode, uses HTTP requests to the VPC endpoint
+- In non-VPC mode, uses traditional API calls - Parses response data to extract text content from
+content[0].text - Handles the isError flag in responses - Returns structured error information
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Call the shell tool to execute a command
+
+	toolResult, err := session.CallMcpTool("shell", map[string]interface{}{
+		"command":    "echo 'Hello World'",
+		"timeout_ms": 1000,
+	})
+	if err != nil {
+		fmt.Printf("Error calling tool: %v\n", err)
+		os.Exit(1)
+	}
+	if toolResult.Success {
+		fmt.Printf("Output: %s\n", toolResult.Data)
+
+		// Output: Hello World
+
+		fmt.Printf("Request ID: %s\n", toolResult.RequestID)
+	} else {
+		fmt.Printf("Error: %s\n", toolResult.ErrorMessage)
+	}
+
+	// Example with error handling
+
+	toolResult2, err := session.CallMcpTool("shell", map[string]interface{}{
+		"command":    "invalid_command_12345",
+		"timeout_ms": 1000,
+	})
+	if err != nil {
+		fmt.Printf("Error calling tool: %v\n", err)
+		os.Exit(1)
+	}
+	if !toolResult2.Success {
+		fmt.Printf("Command failed: %s\n", toolResult2.ErrorMessage)
+
+		// Output: Command failed: sh: 1: invalid_command_12345: not found
+
+	}
+	session.Delete()
+}
+```
+
 #### CallMcpToolForBrowser
 
 ```go
@@ -593,6 +677,68 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error)
 
 ListMcpTools lists MCP tools available for this session. It uses the ImageId from the session
 creation, or "linux_latest" as default.
+
+Returns:
+  - *McpToolsResult: Result containing list of MCP tools and request ID
+  - error: Error if the operation fails
+
+Behavior:
+
+- Uses the ImageId from session creation - Defaults to "linux_latest" if ImageId is empty -
+Retrieves all available MCP tools for the specified image - Updates the session's McpTools field
+with the retrieved tools
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List MCP tools available for this session
+
+	toolsResult, err := session.ListMcpTools()
+	if err != nil {
+		fmt.Printf("Error listing MCP tools: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Found %d MCP tools\n", len(toolsResult.Tools))
+
+	// Output: Found 27 MCP tools
+
+	// Display first few tools
+
+	for i, tool := range toolsResult.Tools {
+		if i < 3 {
+			fmt.Printf("Tool: %s - %s\n", tool.Name, tool.Description)
+		}
+	}
+
+	// Output: Tool: execute_command - Execute a command on the system
+
+	// Output: Tool: read_file - Read contents of a file
+
+	// Output: Tool: write_file - Write content to a file
+
+	fmt.Printf("Request ID: %s\n", toolsResult.RequestID)
+	session.Delete()
+}
+```
 
 #### NetworkInterfaceIp
 

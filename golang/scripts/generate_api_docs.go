@@ -74,11 +74,16 @@ type DataTypeInfo struct {
 
 var mappings = []docMapping{
 	{
-		Target:          "common-features/basics/agentbay.md",
-		Title:           "AgentBay",
-		PackagePath:     "pkg/agentbay",
-		TypeNames:       []string{"AgentBayConfig", "AgentBay", "Option"},
-		IncludeAllFuncs: true,
+		Target:      "common-features/basics/agentbay.md",
+		Title:       "AgentBay",
+		PackagePath: "pkg/agentbay",
+		TypeNames:   []string{"AgentBayConfig", "AgentBay", "Option"},
+		FuncNames: []string{
+			"NewAgentBay",
+			"NewAgentBayWithDefaults",
+			"WithConfig",
+			"WithEnvFile",
+		},
 	},
 	{
 		Target:      "common-features/basics/session.md",
@@ -157,12 +162,24 @@ var mappings = []docMapping{
 		IncludeAllFuncs: true,
 	},
 	{
-		Target:          "common-features/basics/logging.md",
-		Title:           "Logging",
-		PackagePath:     "pkg/agentbay",
-		TypeNames:       []string{"LoggerConfig"},
-		IncludeAllFuncs: true,
-		ValueNames:      []string{"LOG_DEBUG", "LOG_INFO", "LOG_WARN", "LOG_ERROR"},
+		Target:      "common-features/basics/logging.md",
+		Title:       "Logging",
+		PackagePath: "pkg/agentbay",
+		TypeNames:   []string{"LoggerConfig"},
+		FuncNames: []string{
+			"SetLogLevel",
+			"GetLogLevel",
+			"SetupLogger",
+			"LogDebug",
+			"LogInfo",
+			"LogInfoWithColor",
+			"LogOperationError",
+			"LogAPICall",
+			"LogAPIResponseWithDetails",
+			"LogCodeExecutionOutput",
+			"MaskSensitiveData",
+		},
+		ValueNames: []string{"LOG_DEBUG", "LOG_INFO", "LOG_WARN", "LOG_ERROR"},
 	},
 	{
 		Target:          "common-features/advanced/agent.md",
@@ -610,9 +627,19 @@ func selectFuncs(docPkg *doc.Package, mapping docMapping) ([]*doc.Func, error) {
 		return nil, nil
 	}
 
+	// Build index of all functions (both package-level and type-associated)
 	index := make(map[string]*doc.Func)
+
+	// Add package-level functions
 	for _, fn := range docPkg.Funcs {
 		index[fn.Name] = fn
+	}
+
+	// Add type-associated functions (constructors and factory functions)
+	for _, typ := range docPkg.Types {
+		for _, fn := range typ.Funcs {
+			index[fn.Name] = fn
+		}
 	}
 
 	selected := make([]*doc.Func, 0, len(mapping.FuncNames))

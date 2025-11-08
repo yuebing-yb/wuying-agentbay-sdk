@@ -146,6 +146,61 @@ ClearAsync asynchronously initiates a task to clear the context's persistent dat
 non-blocking method that returns immediately after initiating the clearing task. The context's state
 will transition to "clearing" while the operation is in progress.
 
+Parameters:
+  - contextID: Unique ID of the context to clear
+
+Returns:
+  - *ContextClearResult: Result containing task status and request ID
+  - error: Error if the operation fails
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get an existing context
+
+	contextResult, err := client.Context.Get("my-context", false)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+	context := contextResult.Context
+
+	// Start clearing context data asynchronously
+
+	clearResult, err := client.Context.ClearAsync(context.ID)
+	if err != nil {
+		fmt.Printf("Error starting context clear: %v\n", err)
+		os.Exit(1)
+	}
+	if clearResult.Success {
+		fmt.Printf("Clear task started: Status=%s\n", clearResult.Status)
+
+		// Output: Clear task started: Status=clearing
+
+	}
+	fmt.Printf("Request ID: %s\n", clearResult.RequestID)
+
+	// Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+}
+```
+
 #### Create
 
 ```go
@@ -387,6 +442,67 @@ func (cs *ContextService) GetClearStatus(contextID string) (*ContextClearResult,
 GetClearStatus queries the status of the clearing task. This method calls GetContext API directly
 with contextID and parses the raw response to extract the state field, which indicates the current
 clearing status.
+
+Parameters:
+  - contextID: Unique ID of the context to check
+
+Returns:
+  - *ContextClearResult: Result containing current task status and request ID
+  - error: Error if the operation fails
+
+State Transitions:
+  - "clearing": Data clearing is in progress
+  - "available": Clearing completed successfully (final success state)
+  - "in-use": Context is being used
+  - "pre-available": Context is being prepared
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get an existing context
+
+	contextResult, err := client.Context.Get("my-context", false)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+	context := contextResult.Context
+
+	// Check clearing status
+
+	statusResult, err := client.Context.GetClearStatus(context.ID)
+	if err != nil {
+		fmt.Printf("Error getting clear status: %v\n", err)
+		os.Exit(1)
+	}
+	if statusResult.Success {
+		fmt.Printf("Current status: %s\n", statusResult.Status)
+
+		// Output: Current status: clearing (or available/in-use/pre-available)
+
+	}
+	fmt.Printf("Request ID: %s\n", statusResult.RequestID)
+
+	// Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+}
+```
 
 #### GetFileDownloadUrl
 

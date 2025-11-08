@@ -819,6 +819,33 @@ class FileSystem(BaseService):
         Returns:
             BoolResult: Result object containing success status and error message if
                 any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize and create session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Create a directory
+                create_result = session.filesystem.create_directory("/tmp/mydir")
+                if create_result.success:
+                    print("Directory created successfully")
+                    # Output: Directory created successfully
+                    print(f"Request ID: {create_result.request_id}")
+                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                # Create nested directories
+                nested_result = session.filesystem.create_directory("/tmp/parent/child/grandchild")
+                if nested_result.success:
+                    print("Nested directories created")
+
+                # Clean up
+                session.delete()
+            ```
         """
         args = {"path": path}
         try:
@@ -855,6 +882,48 @@ class FileSystem(BaseService):
         Returns:
             BoolResult: Result object containing success status and error message if
                 any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize and create session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Create a test file
+                session.filesystem.write_file("/tmp/config.txt", "DEBUG=false\\nLOG_LEVEL=info")
+
+                # Edit the file with single replacement
+                edits = [{"oldText": "DEBUG=false", "newText": "DEBUG=true"}]
+                edit_result = session.filesystem.edit_file("/tmp/config.txt", edits)
+                if edit_result.success:
+                    print("File edited successfully")
+                    # Output: File edited successfully
+
+                # Edit with multiple replacements
+                edits = [
+                    {"oldText": "DEBUG=true", "newText": "DEBUG=false"},
+                    {"oldText": "LOG_LEVEL=info", "newText": "LOG_LEVEL=debug"}
+                ]
+                multi_edit_result = session.filesystem.edit_file("/tmp/config.txt", edits)
+                if multi_edit_result.success:
+                    print("Multiple edits applied")
+
+                # Preview changes with dry_run
+                dry_run_result = session.filesystem.edit_file(
+                    "/tmp/config.txt",
+                    [{"oldText": "debug", "newText": "trace"}],
+                    dry_run=True
+                )
+                if dry_run_result.success:
+                    print("Dry run completed, no changes applied")
+
+                # Clean up
+                session.delete()
+            ```
         """
         args = {"path": path, "edits": edits, "dryRun": dry_run}
         try:
@@ -886,6 +955,40 @@ class FileSystem(BaseService):
 
         Returns:
             FileInfoResult: Result object containing file info and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize and create session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Create a test file
+                session.filesystem.write_file("/tmp/test.txt", "Sample content")
+
+                # Get file information
+                info_result = session.filesystem.get_file_info("/tmp/test.txt")
+                if info_result.success:
+                    print(f"File info: {info_result.file_info}")
+                    # Output: File info: {'size': 14, 'isDirectory': False, ...}
+                    print(f"Size: {info_result.file_info.get('size')} bytes")
+                    # Output: Size: 14 bytes
+                    print(f"Is directory: {info_result.file_info.get('isDirectory')}")
+                    # Output: Is directory: False
+
+                # Get directory information
+                session.filesystem.create_directory("/tmp/mydir")
+                dir_info = session.filesystem.get_file_info("/tmp/mydir")
+                if dir_info.success:
+                    print(f"Is directory: {dir_info.file_info.get('isDirectory')}")
+                    # Output: Is directory: True
+
+                # Clean up
+                session.delete()
+            ```
         """
 
         def parse_file_info(file_info_str: str) -> dict:
@@ -1115,6 +1218,37 @@ class FileSystem(BaseService):
         Returns:
             BoolResult: Result object containing success status and error message if
                 any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize and create session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Create a test file
+                session.filesystem.write_file("/tmp/original.txt", "Test content")
+
+                # Move the file to a new location
+                move_result = session.filesystem.move_file("/tmp/original.txt", "/tmp/moved.txt")
+                if move_result.success:
+                    print("File moved successfully")
+                    # Output: File moved successfully
+                    print(f"Request ID: {move_result.request_id}")
+                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                # Verify the move
+                read_result = session.filesystem.read_file("/tmp/moved.txt")
+                if read_result.success:
+                    print(f"Content at new location: {read_result.content}")
+                    # Output: Content at new location: Test content
+
+                # Clean up
+                session.delete()
+            ```
         """
         args = {"source": source, "destination": destination}
         try:
@@ -1199,6 +1333,37 @@ class FileSystem(BaseService):
             MultipleFileContentResult: Result object containing a dictionary mapping
                 file paths to contents,
             and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize and create session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Create multiple test files
+                session.filesystem.write_file("/tmp/file1.txt", "Content of file 1")
+                session.filesystem.write_file("/tmp/file2.txt", "Content of file 2")
+                session.filesystem.write_file("/tmp/file3.txt", "Content of file 3")
+
+                # Read multiple files at once
+                paths = ["/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt"]
+                read_result = session.filesystem.read_multiple_files(paths)
+                if read_result.success:
+                    print(f"Read {len(read_result.contents)} files")
+                    # Output: Read 3 files
+                    for path, content in read_result.contents.items():
+                        print(f"{path}: {content}")
+                    # Output: /tmp/file1.txt: Content of file 1
+                    # Output: /tmp/file2.txt: Content of file 2
+                    # Output: /tmp/file3.txt: Content of file 3
+
+                # Clean up
+                session.delete()
+            ```
         """
 
         def parse_multiple_files_response(text: str) -> Dict[str, str]:
@@ -1308,6 +1473,44 @@ class FileSystem(BaseService):
         Returns:
             FileSearchResult: Result object containing matching file paths and error
                 message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            # Initialize and create session
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+            if result.success:
+                session = result.session
+
+                # Create test files
+                session.filesystem.write_file("/tmp/test/file1.py", "print('hello')")
+                session.filesystem.write_file("/tmp/test/file2.py", "print('world')")
+                session.filesystem.write_file("/tmp/test/file3.txt", "text content")
+
+                # Search for Python files
+                search_result = session.filesystem.search_files("/tmp/test", "*.py")
+                if search_result.success:
+                    print(f"Found {len(search_result.matches)} Python files:")
+                    # Output: Found 2 Python files:
+                    for match in search_result.matches:
+                        print(f"  - {match}")
+                    # Output:   - /tmp/test/file1.py
+                    # Output:   - /tmp/test/file2.py
+
+                # Search with exclusion pattern
+                search_result = session.filesystem.search_files(
+                    "/tmp/test",
+                    "*",
+                    exclude_patterns=["*.txt"]
+                )
+                if search_result.success:
+                    print(f"Found {len(search_result.matches)} files (excluding .txt)")
+
+                # Clean up
+                session.delete()
+            ```
         """
         args = {"path": path, "pattern": pattern}
         if exclude_patterns:

@@ -79,6 +79,43 @@ A ClearContextResult object containing the final task result.
 
 APIError - If the task fails to complete within the specified timeout.
 
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function clearContext() {
+  try {
+    // Get an existing context
+    const getResult = await agentBay.context.get('my-context');
+    if (getResult.success && getResult.context) {
+      const context = getResult.context;
+
+      // Clear context data synchronously (wait for completion)
+      const clearResult = await agentBay.context.clear(context.id);
+      if (clearResult.success) {
+        console.log('Context data cleared successfully');
+        // Output: Context data cleared successfully
+        console.log(`Final Status: ${clearResult.status}`);
+        // Output: Final Status: available
+        console.log(`Request ID: ${clearResult.requestId}`);
+        // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+      } else {
+        console.log(`Failed to clear context: ${clearResult.errorMessage}`);
+      }
+    } else {
+      console.log(`Failed to get context: ${getResult.errorMessage}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+clearContext().catch(console.error);
+```
+
 ___
 
 ### clearAsync
@@ -107,6 +144,43 @@ A ClearContextResult object indicating the task has been successfully started,
 **`Throws`**
 
 APIError - If the backend API rejects the clearing request (e.g., invalid ID).
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function clearContextAsync() {
+  try {
+    // Get an existing context
+    const getResult = await agentBay.context.get('my-context');
+    if (getResult.success && getResult.context) {
+      const context = getResult.context;
+
+      // Start clearing context data asynchronously (non-blocking)
+      const clearResult = await agentBay.context.clearAsync(context.id);
+      if (clearResult.success) {
+        console.log(`Clear task started successfully`);
+        // Output: Clear task started successfully
+        console.log(`Status: ${clearResult.status}`);
+        // Output: Status: clearing
+        console.log(`Request ID: ${clearResult.requestId}`);
+        // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+      } else {
+        console.log(`Failed to start clear: ${clearResult.errorMessage}`);
+      }
+    } else {
+      console.log(`Failed to get context: ${getResult.errorMessage}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+clearContextAsync().catch(console.error);
+```
 
 ___
 
@@ -181,6 +255,41 @@ Corresponds to Python's delete() method
 `Promise`\<`OperationResult`\>
 
 OperationResult with requestId
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function deleteContext() {
+  try {
+    // Get an existing context
+    const getResult = await agentBay.context.get('my-context');
+    if (getResult.success && getResult.context) {
+      const context = getResult.context;
+
+      // Delete the context
+      const deleteResult = await agentBay.context.delete(context);
+      if (deleteResult.success) {
+        console.log('Context deleted successfully');
+        // Output: Context deleted successfully
+        console.log(`Request ID: ${deleteResult.requestId}`);
+        // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+      } else {
+        console.log(`Failed to delete context: ${deleteResult.errorMessage}`);
+      }
+    } else {
+      console.log(`Failed to get context: ${getResult.errorMessage}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+deleteContext().catch(console.error);
+```
 
 ___
 
@@ -263,6 +372,41 @@ the state field, which indicates the current clearing status.
 `Promise`\<`ClearContextResult`\>
 
 ClearContextResult object containing the current task status.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function checkClearStatus() {
+  try {
+    // Get an existing context
+    const getResult = await agentBay.context.get('my-context');
+    if (getResult.success && getResult.context) {
+      const context = getResult.context;
+
+      // Check clearing status
+      const statusResult = await agentBay.context.getClearStatus(context.id);
+      if (statusResult.success) {
+        console.log(`Current status: ${statusResult.status}`);
+        // Output: Current status: clearing (or available/in-use/pre-available)
+        console.log(`Request ID: ${statusResult.requestId}`);
+        // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+      } else {
+        console.log(`Failed to get status: ${statusResult.errorMessage}`);
+      }
+    } else {
+      console.log(`Failed to get context: ${getResult.errorMessage}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+checkClearStatus().catch(console.error);
+```
 
 ___
 
