@@ -122,6 +122,41 @@ func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult
 
 GetClickableUIElements retrieves all clickable UI elements within the specified timeout
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := &agentbay.CreateSessionParams{
+		ImageId: "mobile_latest",
+	}
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	elementsResult := session.Mobile.GetClickableUIElements(5000)
+	if elementsResult.ErrorMessage == "" {
+		fmt.Printf("Found %d clickable elements\n", len(elementsResult.Elements))
+		for _, elem := range elementsResult.Elements {
+			fmt.Printf("  - Text: %s, ResourceID: %s\n", elem.Text, elem.ResourceID)
+		}
+	}
+	session.Delete()
+}
+```
+
 #### GetInstalledApps
 
 ```go
@@ -145,6 +180,38 @@ func (m *Mobile) Screenshot() *ScreenshotResult
 ```
 
 Screenshot takes a screenshot of the current screen
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := &agentbay.CreateSessionParams{
+		ImageId: "mobile_latest",
+	}
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	screenshot := session.Mobile.Screenshot()
+	if screenshot.ErrorMessage == "" {
+		fmt.Printf("Screenshot URL: %s\n", screenshot.Data)
+	}
+	session.Delete()
+}
+```
 
 #### SendKey
 
@@ -218,6 +285,38 @@ func (m *Mobile) Swipe(startX, startY, endX, endY, durationMs int) *BoolResult
 
 Swipe performs a swipe gesture on the screen
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := &agentbay.CreateSessionParams{
+		ImageId: "mobile_latest",
+	}
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	swipeResult := session.Mobile.Swipe(100, 500, 900, 500, 300)
+	if swipeResult.Success {
+		fmt.Println("Swipe successful")
+	}
+	session.Delete()
+}
+```
+
 #### Tap
 
 ```go
@@ -225,6 +324,38 @@ func (m *Mobile) Tap(x, y int) *BoolResult
 ```
 
 Tap taps on the screen at specific coordinates
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := &agentbay.CreateSessionParams{
+		ImageId: "mobile_latest",
+	}
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	tapResult := session.Mobile.Tap(500, 500)
+	if tapResult.Success {
+		fmt.Println("Tap successful")
+	}
+	session.Delete()
+}
+```
 
 #### executeTemplateCommand
 

@@ -218,6 +218,39 @@ func (c *Computer) ClickMouse(x, y int, button MouseButton) *BoolResult {
 }
 
 // MoveMouse moves the mouse cursor to specific coordinates
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Move mouse to coordinates (300, 200)
+//
+//		moveResult := session.Computer.MoveMouse(300, 200)
+//		if moveResult.Success {
+//			fmt.Println("Mouse moved successfully")
+//		} else {
+//			fmt.Printf("Error: %s\n", moveResult.ErrorMessage)
+//		}
+//		session.Delete()
+//	}
 func (c *Computer) MoveMouse(x, y int) *BoolResult {
 	args := map[string]interface{}{
 		"x": x,
@@ -245,6 +278,40 @@ func (c *Computer) MoveMouse(x, y int) *BoolResult {
 }
 
 // DragMouse drags the mouse from one point to another
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Drag from (100, 100) to (300, 300) with left button
+//
+//		dragResult := session.Computer.DragMouse(100, 100, 300, 300, computer.MouseButtonLeft)
+//		if dragResult.Success {
+//			fmt.Println("Drag operation successful")
+//		} else {
+//			fmt.Printf("Error: %s\n", dragResult.ErrorMessage)
+//		}
+//		session.Delete()
+//	}
 func (c *Computer) DragMouse(fromX, fromY, toX, toY int, button MouseButton) *BoolResult {
 	// Validate button parameter
 	validButtons := []MouseButton{MouseButtonLeft, MouseButtonRight, MouseButtonMiddle}
@@ -294,6 +361,40 @@ func (c *Computer) DragMouse(fromX, fromY, toX, toY int, button MouseButton) *Bo
 }
 
 // Scroll scrolls the mouse wheel at specific coordinates
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Scroll down 5 units at coordinates (400, 300)
+//
+//		scrollResult := session.Computer.Scroll(400, 300, computer.ScrollDirectionDown, 5)
+//		if scrollResult.Success {
+//			fmt.Println("Scroll operation successful")
+//		} else {
+//			fmt.Printf("Error: %s\n", scrollResult.ErrorMessage)
+//		}
+//		session.Delete()
+//	}
 func (c *Computer) Scroll(x, y int, direction ScrollDirection, amount int) *BoolResult {
 	// Validate direction parameter
 	validDirections := []ScrollDirection{ScrollDirectionUp, ScrollDirectionDown, ScrollDirectionLeft, ScrollDirectionRight}
@@ -342,6 +443,39 @@ func (c *Computer) Scroll(x, y int, direction ScrollDirection, amount int) *Bool
 }
 
 // GetCursorPosition gets the current cursor position
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Get the current cursor position
+//
+//		position := session.Computer.GetCursorPosition()
+//		if position.ErrorMessage == "" {
+//			fmt.Printf("Cursor position: (%d, %d)\n", position.X, position.Y)
+//		} else {
+//			fmt.Printf("Error: %s\n", position.ErrorMessage)
+//		}
+//		session.Delete()
+//	}
 func (c *Computer) GetCursorPosition() *CursorPosition {
 	args := map[string]interface{}{}
 
@@ -449,6 +583,39 @@ func (c *Computer) InputText(text string) *BoolResult {
 }
 
 // PressKeys presses multiple keyboard keys simultaneously
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Press Ctrl+C (copy)
+//
+//		pressResult := session.Computer.PressKeys([]string{"Ctrl", "c"}, false)
+//		if pressResult.Success {
+//			fmt.Println("Keys pressed successfully")
+//		} else {
+//			fmt.Printf("Error: %s\n", pressResult.ErrorMessage)
+//		}
+//		session.Delete()
+//	}
 func (c *Computer) PressKeys(keys []string, hold bool) *BoolResult {
 	args := map[string]interface{}{
 		"keys": keys,
@@ -476,6 +643,43 @@ func (c *Computer) PressKeys(keys []string, hold bool) *BoolResult {
 }
 
 // ReleaseKeys releases multiple keyboard keys
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Hold Shift key first
+//
+//		session.Computer.PressKeys([]string{"Shift"}, true)
+//
+//		// Release Shift key
+//
+//		releaseResult := session.Computer.ReleaseKeys([]string{"Shift"})
+//		if releaseResult.Success {
+//			fmt.Println("Keys released successfully")
+//		} else {
+//			fmt.Printf("Error: %s\n", releaseResult.ErrorMessage)
+//		}
+//		session.Delete()
+//	}
 func (c *Computer) ReleaseKeys(keys []string) *BoolResult {
 	args := map[string]interface{}{
 		"keys": keys,

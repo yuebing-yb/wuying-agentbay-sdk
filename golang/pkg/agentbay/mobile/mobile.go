@@ -201,6 +201,41 @@ func NewMobile(session interface {
 }
 
 // Tap taps on the screen at specific coordinates
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		tapResult := session.Mobile.Tap(500, 500)
+//		if tapResult.Success {
+//			fmt.Println("Tap successful")
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) Tap(x, y int) *BoolResult {
 	args := map[string]interface{}{
 		"x": x,
@@ -228,6 +263,41 @@ func (m *Mobile) Tap(x, y int) *BoolResult {
 }
 
 // Swipe performs a swipe gesture on the screen
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		swipeResult := session.Mobile.Swipe(100, 500, 900, 500, 300)
+//		if swipeResult.Success {
+//			fmt.Println("Swipe successful")
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) Swipe(startX, startY, endX, endY, durationMs int) *BoolResult {
 	args := map[string]interface{}{
 		"start_x":     startX,
@@ -310,6 +380,44 @@ func (m *Mobile) SendKey(key int) *BoolResult {
 }
 
 // GetClickableUIElements retrieves all clickable UI elements within the specified timeout
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		elementsResult := session.Mobile.GetClickableUIElements(5000)
+//		if elementsResult.ErrorMessage == "" {
+//			fmt.Printf("Found %d clickable elements\n", len(elementsResult.Elements))
+//			for _, elem := range elementsResult.Elements {
+//				fmt.Printf("  - Text: %s, ResourceID: %s\n", elem.Text, elem.ResourceID)
+//			}
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult {
 	args := map[string]interface{}{
 		"timeout_ms": timeoutMs,
@@ -520,6 +628,41 @@ func (m *Mobile) StopAppByCmd(stopCmd string) *BoolResult {
 }
 
 // Screenshot takes a screenshot of the current screen
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		screenshot := session.Mobile.Screenshot()
+//		if screenshot.ErrorMessage == "" {
+//			fmt.Printf("Screenshot URL: %s\n", screenshot.Data)
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) Screenshot() *ScreenshotResult {
 	args := map[string]interface{}{}
 

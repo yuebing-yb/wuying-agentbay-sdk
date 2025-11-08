@@ -385,6 +385,41 @@ class Computer(BaseService):
 
         Raises:
             ValueError: If button is not a valid option.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+
+            if result.success:
+                session = result.session
+                computer = session.computer
+
+                # Drag from (100, 100) to (200, 200) with left button
+                drag_result = computer.drag_mouse(100, 100, 200, 200)
+                if drag_result.success:
+                    print("Drag operation successful")
+                    # Output: Drag operation successful
+
+                # Drag with right button
+                right_drag_result = computer.drag_mouse(300, 300, 400, 400, MouseButton.RIGHT)
+                if right_drag_result.success:
+                    print("Right button drag successful")
+                    # Output: Right button drag successful
+
+                session.delete()
+            ```
+
+        Note:
+            - Performs a click-and-drag operation from start to end coordinates
+            - Useful for selecting text, moving windows, or drawing
+            - DOUBLE_LEFT button is not supported for drag operations
+            - Use LEFT, RIGHT, or MIDDLE button only
+
+        See Also:
+            click_mouse, move_mouse
         """
         button_str = button.value if isinstance(button, MouseButton) else button
         valid_buttons = ["left", "right", "middle"]
@@ -442,6 +477,48 @@ class Computer(BaseService):
 
         Raises:
             ValueError: If direction is not a valid option.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.computer.computer import ScrollDirection
+
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+
+            if result.success:
+                session = result.session
+                computer = session.computer
+
+                # Scroll down at coordinates (500, 500) by 3 units
+                scroll_result = computer.scroll(500, 500, ScrollDirection.DOWN, 3)
+                if scroll_result.success:
+                    print("Scroll down successful")
+                    # Output: Scroll down successful
+
+                # Scroll up (default direction) by 2 units
+                up_scroll_result = computer.scroll(500, 500, amount=2)
+                if up_scroll_result.success:
+                    print("Scroll up successful")
+                    # Output: Scroll up successful
+
+                # Scroll right
+                right_scroll_result = computer.scroll(500, 500, ScrollDirection.RIGHT, 1)
+                if right_scroll_result.success:
+                    print("Scroll right successful")
+                    # Output: Scroll right successful
+
+                session.delete()
+            ```
+
+        Note:
+            - Scroll operations are performed at the specified coordinates
+            - The amount parameter controls how many scroll units to move
+            - Larger amounts result in faster scrolling
+            - Useful for navigating long documents or web pages
+
+        See Also:
+            click_mouse, move_mouse
         """
         direction_str = direction.value if isinstance(direction, ScrollDirection) else direction
         valid_directions = [d.value for d in ScrollDirection]
@@ -686,6 +763,37 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.create()
+
+            if result.success:
+                session = result.session
+                computer = session.computer
+
+                # Press and hold Shift key
+                computer.press_keys(["Shift"], hold=True)
+
+                # Release the Shift key
+                release_result = computer.release_keys(["Shift"])
+                if release_result.success:
+                    print("Key released successfully")
+                    # Output: Key released successfully
+
+                session.delete()
+            ```
+
+        Note:
+            - Should be used after press_keys() with hold=True
+            - Key names are case-sensitive
+            - Releases all keys specified in the list
+
+        See Also:
+            press_keys, input_text
         """
         args = {"keys": keys}
         try:

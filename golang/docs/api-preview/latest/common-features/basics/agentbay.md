@@ -163,13 +163,56 @@ Returns:
 **Example:**
 
 ```go
-result, err := agentBay.Get("my-session-id")
-if err != nil {
-    log.Fatal(err)
-}
-if result.Success {
-    fmt.Printf("Session ID: %s\n", result.Session.SessionID)
-    fmt.Printf("Request ID: %s\n", result.RequestID)
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay("", nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	createResult, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	sessionID := createResult.Session.SessionID
+	fmt.Printf("Created session with ID: %s\n", sessionID)
+
+	// Output: Created session with ID: session-xxxxxxxxxxxxxx
+
+	result, err := client.Get(sessionID)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if result.Success {
+		fmt.Printf("Successfully retrieved session: %s\n", result.Session.SessionID)
+
+		// Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
+
+		fmt.Printf("Request ID: %s\n", result.RequestID)
+
+		// Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+
+		deleteResult, err := result.Session.Delete()
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		if deleteResult.Success {
+			fmt.Printf("Session %s deleted successfully\n", sessionID)
+
+			// Output: Session session-xxxxxxxxxxxxxx deleted successfully
+
+		}
+	} else {
+		fmt.Printf("Failed to get session: %s\n", result.ErrorMessage)
+	}
 }
 ```
 

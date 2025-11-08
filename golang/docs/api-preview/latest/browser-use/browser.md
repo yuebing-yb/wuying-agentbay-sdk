@@ -36,6 +36,62 @@ func (b *Browser) Destroy() error
 
 Destroy the browser instance
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Initialize browser
+
+	option := browser.NewBrowserOption()
+	success, err := session.Browser.Initialize(option)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if !success {
+		fmt.Println("Failed to initialize browser")
+		os.Exit(1)
+	}
+	fmt.Println("Browser initialized successfully")
+
+	// Output: Browser initialized successfully
+
+	// Use browser for automation tasks...
+
+	// Destroy browser instance
+
+	err = session.Browser.Destroy()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Browser destroyed successfully")
+
+	// Output: Browser destroyed successfully
+
+	session.Delete()
+}
+```
+
 #### GetEndpointURL
 
 ```go
@@ -132,6 +188,114 @@ Parameters:
 Returns:
   - []byte: Screenshot data as bytes.
   - error: Error if browser is not initialized or screenshot capture fails.
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+	"github.com/playwright-community/playwright-go"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Initialize browser
+
+	option := browser.NewBrowserOption()
+	success, err := session.Browser.Initialize(option)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if !success {
+		os.Exit(1)
+	}
+
+	// Get endpoint URL and connect with Playwright
+
+	endpointURL, err := session.Browser.GetEndpointURL()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Connect to browser via Playwright
+
+	pw, err := playwright.Run()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer pw.Stop()
+	browser, err := pw.Chromium.ConnectOverCDP(endpointURL)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer browser.Close()
+
+	// Get the page
+
+	contexts := browser.Contexts()
+	if len(contexts) == 0 {
+		fmt.Println("No browser contexts available")
+		os.Exit(1)
+	}
+	page, err := contexts[0].NewPage()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Navigate to a URL
+
+	_, err = page.Goto("https://example.com")
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Take screenshot with custom options
+
+	screenshotOptions := &browser.ScreenshotOptions{
+		FullPage: true,
+		Type:     "png",
+		Timeout:  60000,
+	}
+	screenshotData, err := session.Browser.Screenshot(page, screenshotOptions)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Save screenshot to file
+
+	err = os.WriteFile("/tmp/screenshot.png", screenshotData, 0644)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Screenshot saved successfully (%d bytes)\n", len(screenshotData))
+
+	// Output: Screenshot saved successfully (12345 bytes)
+
+	session.Delete()
+}
+```
 
 #### _scrollToLoadAllContent
 

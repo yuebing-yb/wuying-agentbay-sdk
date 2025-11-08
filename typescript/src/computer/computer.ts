@@ -123,6 +123,46 @@ export class Computer {
 
   /**
    * Move mouse to specified coordinates.
+   *
+   * @param x - X coordinate to move to
+   * @param y - Y coordinate to move to
+   * @returns Promise resolving to result with success status
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstrateMoveMouse() {
+   *   try {
+   *     const result = await agentBay.create({
+   *       imageId: 'windows_latest'
+   *     });
+   *     if (result.success && result.session) {
+   *       const session = result.session;
+   *
+   *       // Move mouse to coordinates (300, 400)
+   *       const moveResult = await session.computer.moveMouse(300, 400);
+   *       if (moveResult.success) {
+   *         console.log('Mouse moved successfully');
+   *
+   *         // Verify new position
+   *         const pos = await session.computer.getCursorPosition();
+   *         console.log(`New position: (${pos.x}, ${pos.y})`);
+   *       } else {
+   *         console.log(`Move failed: ${moveResult.errorMessage}`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateMoveMouse().catch(console.error);
+   * ```
    */
   async moveMouse(x: number, y: number): Promise<BoolResult> {
     const args = { x, y };
@@ -146,6 +186,45 @@ export class Computer {
 
   /**
    * Drag mouse from one position to another.
+   *
+   * @param fromX - Starting X coordinate
+   * @param fromY - Starting Y coordinate
+   * @param toX - Ending X coordinate
+   * @param toY - Ending Y coordinate
+   * @param button - Mouse button to use for drag (default: 'left'). Valid values: 'left', 'right', 'middle'
+   * @returns Promise resolving to result with success status
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstrateDragMouse() {
+   *   try {
+   *     const result = await agentBay.create({
+   *       imageId: 'windows_latest'
+   *     });
+   *     if (result.success && result.session) {
+   *       const session = result.session;
+   *
+   *       // Drag from (100, 100) to (300, 300) with left button
+   *       const dragResult = await session.computer.dragMouse(100, 100, 300, 300, 'left');
+   *       if (dragResult.success) {
+   *         console.log('Drag operation completed successfully');
+   *       } else {
+   *         console.log(`Drag failed: ${dragResult.errorMessage}`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateDragMouse().catch(console.error);
+   * ```
    */
   async dragMouse(fromX: number, fromY: number, toX: number, toY: number, button: MouseButton | string = MouseButton.LEFT): Promise<BoolResult> {
     const buttonStr = typeof button === 'string' ? button : button;
@@ -175,6 +254,44 @@ export class Computer {
 
   /**
    * Scroll at specified coordinates.
+   *
+   * @param x - X coordinate to scroll at
+   * @param y - Y coordinate to scroll at
+   * @param direction - Scroll direction (default: 'up'). Valid values: 'up', 'down', 'left', 'right'
+   * @param amount - Scroll amount (default: 1)
+   * @returns Promise resolving to result with success status
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstrateScroll() {
+   *   try {
+   *     const result = await agentBay.create({
+   *       imageId: 'windows_latest'
+   *     });
+   *     if (result.success && result.session) {
+   *       const session = result.session;
+   *
+   *       // Scroll up at center of screen, amount 3
+   *       const scrollResult = await session.computer.scroll(400, 300, 'up', 3);
+   *       if (scrollResult.success) {
+   *         console.log('Scroll completed successfully');
+   *       } else {
+   *         console.log(`Scroll failed: ${scrollResult.errorMessage}`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateScroll().catch(console.error);
+   * ```
    */
   async scroll(x: number, y: number, direction: ScrollDirection | string = ScrollDirection.UP, amount = 1): Promise<BoolResult> {
     const directionStr = typeof direction === 'string' ? direction : direction;
@@ -203,7 +320,42 @@ export class Computer {
   }
 
   /**
-   * Input text.
+   * Input text at the current cursor position.
+   *
+   * @param text - Text to input
+   * @returns Promise resolving to result with success status
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstrateInputText() {
+   *   try {
+   *     const result = await agentBay.create({
+   *       imageId: 'windows_latest'
+   *     });
+   *     if (result.success && result.session) {
+   *       const session = result.session;
+   *
+   *       // Input text at current cursor position
+   *       const inputResult = await session.computer.inputText('Hello AgentBay!');
+   *       if (inputResult.success) {
+   *         console.log('Text input successfully');
+   *       } else {
+   *         console.log(`Input failed: ${inputResult.errorMessage}`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateInputText().catch(console.error);
+   * ```
    */
   async inputText(text: string): Promise<BoolResult> {
     const args = { text };
@@ -226,7 +378,49 @@ export class Computer {
   }
 
   /**
-   * Press keys.
+   * Press one or more keys.
+   *
+   * @param keys - Array of key names to press
+   * @param hold - Whether to hold the keys down (default: false)
+   * @returns Promise resolving to result with success status
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstratePressKeys() {
+   *   try {
+   *     const result = await agentBay.create({
+   *       imageId: 'windows_latest'
+   *     });
+   *     if (result.success && result.session) {
+   *       const session = result.session;
+   *
+   *       // Press Enter key
+   *       const enterResult = await session.computer.pressKeys(['Enter']);
+   *       if (enterResult.success) {
+   *         console.log('Enter key pressed successfully');
+   *       }
+   *
+   *       // Press Ctrl+C (hold the keys)
+   *       const ctrlCResult = await session.computer.pressKeys(['Ctrl', 'c'], true);
+   *       if (ctrlCResult.success) {
+   *         console.log('Ctrl+C pressed successfully');
+   *         // Remember to release the keys
+   *         await session.computer.releaseKeys(['Ctrl', 'c']);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstratePressKeys().catch(console.error);
+   * ```
    */
   async pressKeys(keys: string[], hold = false): Promise<BoolResult> {
     const args = { keys, hold };
@@ -249,7 +443,45 @@ export class Computer {
   }
 
   /**
-   * Release keys.
+   * Release previously pressed keys.
+   *
+   * @param keys - Array of key names to release
+   * @returns Promise resolving to result with success status
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstrateReleaseKeys() {
+   *   try {
+   *     const result = await agentBay.create({
+   *       imageId: 'windows_latest'
+   *     });
+   *     if (result.success && result.session) {
+   *       const session = result.session;
+   *
+   *       // Press and hold Ctrl key
+   *       await session.computer.pressKeys(['Ctrl'], true);
+   *
+   *       // Release Ctrl key
+   *       const releaseResult = await session.computer.releaseKeys(['Ctrl']);
+   *       if (releaseResult.success) {
+   *         console.log('Ctrl key released successfully');
+   *       } else {
+   *         console.log(`Release failed: ${releaseResult.errorMessage}`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateReleaseKeys().catch(console.error);
+   * ```
    */
   async releaseKeys(keys: string[]): Promise<BoolResult> {
     const args = { keys };
@@ -394,6 +626,41 @@ export class Computer {
 
   /**
    * Take a screenshot.
+   *
+   * @returns Promise resolving to result containing screenshot URL
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstrateScreenshot() {
+   *     try {
+   *         const result = await agentBay.create({
+   *             imageId: 'windows_latest'
+   *         });
+   *         if (result.success && result.session) {
+   *             const session = result.session;
+   *
+   *             // Take a screenshot
+   *             const screenshotResult = await session.computer.screenshot();
+   *             if (screenshotResult.success) {
+   *                 console.log('Screenshot taken successfully');
+   *                 console.log(`Screenshot URL: ${screenshotResult.data}`);
+   *             } else {
+   *                 console.log(`Screenshot failed: ${screenshotResult.errorMessage}`);
+   *             }
+   *
+   *             await session.delete();
+   *         }
+   *     } catch (error) {
+   *         console.error('Error:', error);
+   *     }
+   * }
+   *
+   * demonstrateScreenshot().catch(console.error);
+   * ```
    */
   async screenshot(): Promise<ScreenshotResult> {
     try {

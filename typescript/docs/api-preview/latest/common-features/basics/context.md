@@ -301,14 +301,53 @@ Delete a file in a context.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `contextId` | `string` |
-| `filePath` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `contextId` | `string` | The ID of the context. |
+| `filePath` | `string` | The path to the file to delete. |
 
 #### Returns
 
 `Promise`\<`OperationResult`\>
+
+OperationResult indicating success or failure.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function deleteContextFile() {
+  try {
+    // Get an existing context
+    const contextResult = await agentBay.context.get('my-context');
+    if (contextResult.success && contextResult.context) {
+      const context = contextResult.context;
+
+      // Delete a file from the context
+      const deleteResult = await agentBay.context.deleteFile(
+        context.id,
+        '/data/myfile.txt'
+      );
+
+      if (deleteResult.success) {
+        console.log('File deleted successfully');
+        // Output: File deleted successfully
+        console.log(`Request ID: ${deleteResult.requestId}`);
+        // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+      } else {
+        console.error(`Failed to delete file: ${deleteResult.errorMessage}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+deleteContextFile().catch(console.error);
+```
 
 ___
 
@@ -418,14 +457,63 @@ Get a presigned download URL for a file in a context.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `contextId` | `string` |
-| `filePath` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `contextId` | `string` | The ID of the context. |
+| `filePath` | `string` | The path to the file in the context. |
 
 #### Returns
 
 `Promise`\<`FileUrlResult`\>
+
+FileUrlResult with the presigned URL and expiration time.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+import axios from 'axios';
+import * as fs from 'fs';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function downloadFileFromContext() {
+  try {
+    // Get an existing context
+    const contextResult = await agentBay.context.get('my-context');
+    if (contextResult.success && contextResult.context) {
+      const context = contextResult.context;
+
+      // Get presigned download URL
+      const urlResult = await agentBay.context.getFileDownloadUrl(
+        context.id,
+        '/data/myfile.txt'
+      );
+
+      if (urlResult.success) {
+        console.log('Download URL obtained successfully');
+        // Output: Download URL obtained successfully
+        console.log(`URL expires at: ${urlResult.expireTime}`);
+        // Output: URL expires at: 2024-01-01T12:00:00Z
+
+        // Download file using the presigned URL
+        const response = await axios.get(urlResult.url, {
+          responseType: 'arraybuffer'
+        });
+        fs.writeFileSync('/local/path/downloaded.txt', response.data);
+        console.log('File downloaded successfully');
+        // Output: File downloaded successfully
+      } else {
+        console.error(`Failed to get download URL: ${urlResult.errorMessage}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+downloadFileFromContext().catch(console.error);
+```
 
 ___
 
@@ -437,14 +525,63 @@ Get a presigned upload URL for a file in a context.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `contextId` | `string` |
-| `filePath` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `contextId` | `string` | The ID of the context. |
+| `filePath` | `string` | The path to the file in the context. |
 
 #### Returns
 
 `Promise`\<`FileUrlResult`\>
+
+FileUrlResult with the presigned URL and expiration time.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+import * as fs from 'fs';
+import axios from 'axios';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function uploadFileToContext() {
+  try {
+    // Get or create a context
+    const contextResult = await agentBay.context.get('my-context', true);
+    if (contextResult.success && contextResult.context) {
+      const context = contextResult.context;
+
+      // Get presigned upload URL
+      const urlResult = await agentBay.context.getFileUploadUrl(
+        context.id,
+        '/data/myfile.txt'
+      );
+
+      if (urlResult.success) {
+        console.log('Upload URL obtained successfully');
+        // Output: Upload URL obtained successfully
+        console.log(`URL expires at: ${urlResult.expireTime}`);
+        // Output: URL expires at: 2024-01-01T12:00:00Z
+
+        // Upload file using the presigned URL
+        const fileContent = fs.readFileSync('/local/path/file.txt');
+        await axios.put(urlResult.url, fileContent, {
+          headers: { 'Content-Type': 'text/plain' }
+        });
+        console.log('File uploaded successfully');
+        // Output: File uploaded successfully
+      } else {
+        console.error(`Failed to get upload URL: ${urlResult.errorMessage}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+uploadFileToContext().catch(console.error);
+```
 
 ___
 
@@ -522,16 +659,63 @@ List files under a specific folder path in a context.
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `contextId` | `string` | `undefined` |
-| `parentFolderPath` | `string` | `undefined` |
-| `pageNumber` | `number` | `1` |
-| `pageSize` | `number` | `50` |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `contextId` | `string` | `undefined` | The ID of the context. |
+| `parentFolderPath` | `string` | `undefined` | The parent folder path to list files from. |
+| `pageNumber` | `number` | `1` | Page number for pagination (default: 1). |
+| `pageSize` | `number` | `50` | Number of files per page (default: 50). |
 
 #### Returns
 
 `Promise`\<`ContextFileListResult`\>
+
+ContextFileListResult with file entries and total count.
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function listContextFiles() {
+  try {
+    // Get an existing context
+    const contextResult = await agentBay.context.get('my-context');
+    if (contextResult.success && contextResult.context) {
+      const context = contextResult.context;
+
+      // List files in a folder
+      const listResult = await agentBay.context.listFiles(
+        context.id,
+        '/data'
+      );
+
+      if (listResult.success) {
+        console.log(`Found ${listResult.entries.length} files`);
+        // Output: Found 5 files
+        console.log(`Total count: ${listResult.count}`);
+        // Output: Total count: 5
+
+        for (const entry of listResult.entries) {
+          console.log(`  - ${entry.fileName} (${entry.size} bytes)`);
+          // Output:   - myfile.txt (1024 bytes)
+        }
+
+        console.log(`Request ID: ${listResult.requestId}`);
+        // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+      } else {
+        console.error(`Failed to list files: ${listResult.errorMessage}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+listContextFiles().catch(console.error);
+```
 
 ___
 
