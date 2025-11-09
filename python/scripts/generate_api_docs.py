@@ -312,12 +312,50 @@ def fix_code_block_indentation(content: str) -> str:
     return content
 
 
+def fix_dict_formatting(content: str) -> str:
+    """
+    Fix dictionary formatting errors in code blocks.
+    pydoc-markdown sometimes incorrectly renders Python dictionary lines as markdown list items.
+
+    This fixes patterns like:
+    - `"key"` - "value",
+
+    Back to proper Python dict syntax:
+        "key": "value",
+    """
+    import re
+
+    # Pattern: matches lines like '- `"key"` - "value",' or '- `{"key"` - ...'
+    # Captures the key and value parts
+    pattern = r'^(\s*)- `([^`]+)` - (.+)$'
+
+    def fix_dict_line(match):
+        indent = match.group(1)  # Preserve indentation
+        key = match.group(2)     # The key part (e.g., "username")
+        value = match.group(3)   # The value part (e.g., "john_doe",)
+
+        # Reconstruct as proper Python dict syntax
+        return f'{indent}    {key}: {value}'
+
+    # Apply the fix line by line
+    lines = content.split('\n')
+    fixed_lines = []
+    for line in lines:
+        fixed_line = re.sub(pattern, fix_dict_line, line)
+        fixed_lines.append(fixed_line)
+
+    return '\n'.join(fixed_lines)
+
+
 def format_markdown(raw_content: str, title: str, module_name: str, metadata: dict[str, Any]) -> str:
     """Enhanced markdown formatting with metadata injection."""
     content = raw_content.lstrip()
 
     # Fix code block indentation in Example sections
     content = fix_code_block_indentation(content)
+
+    # Fix dictionary formatting errors
+    content = fix_dict_formatting(content)
 
     # 1. Add title
     if content.startswith("#"):

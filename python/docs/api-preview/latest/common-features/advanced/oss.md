@@ -56,16 +56,16 @@ Create an OSS client with the provided credentials.
 
 **Arguments**:
 
-- `access_key_id` - The Access Key ID for OSS authentication.
-- `access_key_secret` - The Access Key Secret for OSS authentication.
-- `securityToken` - Optional security token for temporary credentials.
-- `endpoint` - The OSS service endpoint. If not specified, the default is used.
-- `region` - The OSS region. If not specified, the default is used.
+    access_key_id: The Access Key ID for OSS authentication.
+    access_key_secret: The Access Key Secret for OSS authentication.
+    securityToken: Optional security token for temporary credentials.
+    endpoint: The OSS service endpoint. If not specified, the default is used.
+    region: The OSS region. If not specified, the default is used.
   
 
 **Returns**:
 
-- `OSSClientResult` - Result object containing client configuration and error
+    OSSClientResult: Result object containing client configuration and error
   message if any.
   
 
@@ -117,14 +117,14 @@ the OSS environment.
 
 **Arguments**:
 
-- `bucket` - OSS bucket name.
-- `object` - Object key in OSS.
-- `path` - Local file or directory path to upload.
+    bucket: OSS bucket name.
+    object: Object key in OSS.
+    path: Local file or directory path to upload.
   
 
 **Returns**:
 
-- `OSSUploadResult` - Result object containing upload result and error message
+    OSSUploadResult: Result object containing upload result and error message
   if any.
   
 
@@ -179,13 +179,13 @@ Upload a local file or directory to a URL anonymously.
 
 **Arguments**:
 
-- `url` - The HTTP/HTTPS URL to upload the file to.
-- `path` - Local file or directory path to upload.
+    url: The HTTP/HTTPS URL to upload the file to.
+    path: Local file or directory path to upload.
   
 
 **Returns**:
 
-- `OSSUploadResult` - Result object containing upload result and error message
+    OSSUploadResult: Result object containing upload result and error message
   if any.
   
 
@@ -234,14 +234,14 @@ the OSS environment.
 
 **Arguments**:
 
-- `bucket` - OSS bucket name.
-- `object` - Object key in OSS.
-- `path` - Local file or directory path to download to.
+    bucket: OSS bucket name.
+    object: Object key in OSS.
+    path: Local file or directory path to download to.
   
 
 **Returns**:
 
-- `OSSDownloadResult` - Result object containing download status and error
+    OSSDownloadResult: Result object containing download status and error
   message if any.
   
 
@@ -296,13 +296,13 @@ Download a file from a URL anonymously to a local file path.
 
 **Arguments**:
 
-- `url` - The HTTP/HTTPS URL to download the file from.
-- `path` - Local file or directory path to download to.
+    url: The HTTP/HTTPS URL to download the file from.
+    path: Local file or directory path to download to.
   
 
 **Returns**:
 
-- `OSSDownloadResult` - Result object containing download status and error
+    OSSDownloadResult: Result object containing download status and error
   message if any.
   
 

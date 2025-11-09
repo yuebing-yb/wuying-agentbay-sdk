@@ -50,7 +50,7 @@ Validate the extension option configuration.
 
 **Returns**:
 
-- `bool` - True if configuration is valid, False otherwise.
+    bool: True if configuration is valid, False otherwise.
 
 ## ExtensionsService Objects
 
@@ -108,12 +108,12 @@ Uses the context service to list files under the extensions directory.
 
 **Returns**:
 
-- `List[Extension]` - List of all extensions in the context.
+    List[Extension]: List of all extensions in the context.
   
 
 **Raises**:
 
-- `AgentBayError` - If listing fails.
+    AgentBayError: If listing fails.
   
 
 **Example**:
@@ -165,14 +165,14 @@ Uploads a new browser extension from a local path into the current context.
 
 **Returns**:
 
-- `Extension` - Extension object with generated ID and metadata.
+    Extension: Extension object with generated ID and metadata.
   
 
 **Raises**:
 
-- `FileNotFoundError` - If the local file doesn't exist.
-- `ValueError` - If the file format is not supported (only ZIP files allowed).
-- `AgentBayError` - If upload fails.
+    FileNotFoundError: If the local file doesn't exist.
+    ValueError: If the file format is not supported (only ZIP files allowed).
+    AgentBayError: If upload fails.
   
 
 **Example**:
@@ -224,14 +224,14 @@ Updates an existing browser extension in the current context with a new file.
 
 **Returns**:
 
-- `Extension` - Updated extension object.
+    Extension: Updated extension object.
   
 
 **Raises**:
 
-- `FileNotFoundError` - If the new local file doesn't exist.
-- `ValueError` - If the extension ID doesn't exist in the context.
-- `AgentBayError` - If update fails.
+    FileNotFoundError: If the new local file doesn't exist.
+    ValueError: If the extension ID doesn't exist in the context.
+    AgentBayError: If update fails.
   
 
 **Example**:
@@ -284,7 +284,7 @@ Cleans up the auto-created context if it was created by this service.
 
 **Returns**:
 
-- `bool` - True if cleanup was successful or not needed, False if cleanup failed.
+    bool: True if cleanup was successful or not needed, False if cleanup failed.
   
 
 **Notes**:
@@ -307,7 +307,7 @@ Deletes a browser extension from the current context.
 
 **Returns**:
 
-- `bool` - True if deletion was successful, False otherwise.
+    bool: True if deletion was successful, False otherwise.
   
 
 **Example**:
@@ -364,12 +364,12 @@ used with BrowserContext for browser session creation.
 
 **Returns**:
 
-- `ExtensionOption` - Configuration object for browser extension integration.
+    ExtensionOption: Configuration object for browser extension integration.
   
 
 **Raises**:
 
-- `ValueError` - If extension_ids is empty or invalid.
+    ValueError: If extension_ids is empty or invalid.
   
 
 **Example**:

@@ -47,14 +47,14 @@ Get information about context synchronization status.
 
 **Arguments**:
 
-- `context_id` - Optional ID of the context to get information for
-- `path` - Optional path where the context is mounted
-- `task_type` - Optional type of task to get information for (e.g., "upload", "download")
+    context_id: Optional ID of the context to get information for
+    path: Optional path where the context is mounted
+    task_type: Optional type of task to get information for (e.g., "upload", "download")
   
 
 **Returns**:
 
-- `ContextInfoResult` - Result object containing context status data and request ID
+    ContextInfoResult: Result object containing context status data and request ID
   
 
 **Example**:
@@ -108,18 +108,18 @@ This method supports two modes:
 
 **Arguments**:
 
-- `context_id` - Optional ID of the context to synchronize
-- `path` - Optional path where the context should be mounted
-- `mode` - Optional synchronization mode (e.g., "upload", "download")
-- `callback` - Optional callback function that receives success status. If provided, the method
+    context_id: Optional ID of the context to synchronize
+    path: Optional path where the context should be mounted
+    mode: Optional synchronization mode (e.g., "upload", "download")
+    callback: Optional callback function that receives success status. If provided, the method
   runs in background and calls callback when complete
-- `max_retries` - Maximum number of retries for polling completion status (default: 150)
-- `retry_interval` - Milliseconds to wait between retries (default: 1500)
+    max_retries: Maximum number of retries for polling completion status (default: 150)
+    retry_interval: Milliseconds to wait between retries (default: 1500)
   
 
 **Returns**:
 
-- `ContextSyncResult` - Result object containing success status and request ID
+    ContextSyncResult: Result object containing success status and request ID
   
   Example (Async mode - waits for completion):
     ```python

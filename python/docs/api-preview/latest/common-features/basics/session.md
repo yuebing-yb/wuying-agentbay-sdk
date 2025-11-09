@@ -106,7 +106,7 @@ Delete this session and release all associated resources.
 
 **Returns**:
 
-- `DeleteResult` - Result indicating success or failure with request ID.
+    DeleteResult: Result indicating success or failure with request ID.
   - success (bool): True if deletion succeeded
   - error_message (str): Error details if deletion failed
   - request_id (str): Unique identifier for this API request
@@ -114,7 +114,7 @@ Delete this session and release all associated resources.
 
 **Raises**:
 
-- `SessionError` - If the deletion request fails or the response is invalid.
+    SessionError: If the deletion request fails or the response is invalid.
   
   Behavior:
   The deletion process follows these steps:
@@ -203,12 +203,12 @@ Sets the labels for this session.
 
 **Returns**:
 
-- `OperationResult` - Result indicating success or failure with request ID.
+    OperationResult: Result indicating success or failure with request ID.
   
 
 **Raises**:
 
-- `SessionError` - If the operation fails.
+    SessionError: If the operation fails.
   
 
 **Example**:
@@ -240,12 +240,12 @@ Gets the labels for this session.
 
 **Returns**:
 
-- `OperationResult` - Result containing the labels as data and request ID.
+    OperationResult: Result containing the labels as data and request ID.
   
 
 **Raises**:
 
-- `SessionError` - If the operation fails.
+    SessionError: If the operation fails.
   
 
 **Example**:
@@ -273,7 +273,7 @@ Get detailed information about this session.
 
 **Returns**:
 
-- `OperationResult` - Result containing SessionInfo object and request ID.
+    OperationResult: Result containing SessionInfo object and request ID.
   - success (bool): Always True if no exception
   - data (SessionInfo): Session information object with fields:
   - session_id (str): The session identifier
@@ -289,7 +289,7 @@ Get detailed information about this session.
 
 **Raises**:
 
-- `SessionError` - If the API request fails or response is invalid.
+    SessionError: If the API request fails or response is invalid.
   
   Behavior:
   This method calls the GetMcpResource API to retrieve session metadata.
@@ -373,7 +373,7 @@ Get an access link for this session.
 
 **Returns**:
 
-- `OperationResult` - Result containing the access URL and request ID.
+    OperationResult: Result containing the access URL and request ID.
   - success (bool): True if the operation succeeded
   - data (str): The access URL
   - request_id (str): Unique identifier for this API request
@@ -381,7 +381,7 @@ Get an access link for this session.
 
 **Raises**:
 
-- `SessionError` - If port is out of valid range [30100, 30199] or the API request fails.
+    SessionError: If port is out of valid range [30100, 30199] or the API request fails.
   
 
 **Example**:
@@ -449,12 +449,12 @@ Asynchronously get a link associated with the current session.
 
 **Returns**:
 
-- `OperationResult` - Result containing the link as data and request ID.
+    OperationResult: Result containing the link as data and request ID.
   
 
 **Raises**:
 
-- `SessionError` - If the request fails or the response is invalid.
+    SessionError: If the request fails or the response is invalid.
 
 #### list\_mcp\_tools
 
@@ -466,7 +466,7 @@ List MCP tools available for this session.
 
 **Arguments**:
 
-- `image_id` - Optional image ID, defaults to session's image_id or "linux_latest"
+    image_id: Optional image ID, defaults to session's image_id or "linux_latest"
   
 
 **Returns**:
@@ -490,16 +490,16 @@ This is the unified public API for calling MCP tools. All feature modules
 
 **Arguments**:
 
-- `tool_name` - Name of the MCP tool to call
-- `args` - Arguments to pass to the tool as a dictionary
-- `read_timeout` - Optional read timeout in seconds
-- `connect_timeout` - Optional connection timeout in seconds
-- `auto_gen_session` - Whether to automatically generate session if not exists (default: False)
+    tool_name: Name of the MCP tool to call
+    args: Arguments to pass to the tool as a dictionary
+    read_timeout: Optional read timeout in seconds
+    connect_timeout: Optional connection timeout in seconds
+    auto_gen_session: Whether to automatically generate session if not exists (default: False)
   
 
 **Returns**:
 
-- `McpToolResult` - Result containing success status, data, and error message
+    McpToolResult: Result containing success status, data, and error message
   
 
 **Example**:

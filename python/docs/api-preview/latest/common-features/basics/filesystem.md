@@ -313,12 +313,12 @@ Create a new directory at the specified path.
 
 **Arguments**:
 
-- `path` - The path of the directory to create.
+    path: The path of the directory to create.
   
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if
+    BoolResult: Result object containing success status and error message if
   any.
   
 
@@ -362,14 +362,14 @@ Edit a file by replacing occurrences of oldText with newText.
 
 **Arguments**:
 
-- `path` - The path of the file to edit.
-- `edits` - A list of dictionaries specifying oldText and newText.
-- `dry_run` - If True, preview changes without applying them.
+    path: The path of the file to edit.
+    edits: A list of dictionaries specifying oldText and newText.
+    dry_run: If True, preview changes without applying them.
   
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if
+    BoolResult: Result object containing success status and error message if
   any.
   
 
@@ -426,12 +426,12 @@ Get information about a file or directory.
 
 **Arguments**:
 
-- `path` - The path of the file or directory to inspect.
+    path: The path of the file or directory to inspect.
   
 
 **Returns**:
 
-- `FileInfoResult` - Result object containing file info and error message if any.
+    FileInfoResult: Result object containing file info and error message if any.
   
 
 **Example**:
@@ -484,7 +484,7 @@ List the contents of a directory.
 
 **Returns**:
 
-- `DirectoryListResult` - Result object containing directory entries and error message if any.
+    DirectoryListResult: Result object containing directory entries and error message if any.
   - success (bool): True if the operation succeeded
   - entries (List[Dict[str, Union[str, bool]]]): List of directory entries (if success is True)
   Each entry contains:
@@ -496,7 +496,7 @@ List the contents of a directory.
 
 **Raises**:
 
-- `FileError` - If the directory does not exist or cannot be accessed.
+    FileError: If the directory does not exist or cannot be accessed.
   
 
 **Example**:
@@ -562,13 +562,13 @@ Move a file or directory from source path to destination path.
 
 **Arguments**:
 
-- `source` - The source path of the file or directory.
-- `destination` - The destination path.
+    source: The source path of the file or directory.
+    destination: The destination path.
   
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if
+    BoolResult: Result object containing success status and error message if
   any.
   
 
@@ -614,12 +614,12 @@ Read the contents of multiple files at once.
 
 **Arguments**:
 
-- `paths` - A list of file paths to read.
+    paths: A list of file paths to read.
   
 
 **Returns**:
 
-- `MultipleFileContentResult` - Result object containing a dictionary mapping
+    MultipleFileContentResult: Result object containing a dictionary mapping
   file paths to contents,
   and error message if any.
   
@@ -669,14 +669,14 @@ Search for files in the specified path using a pattern.
 
 **Arguments**:
 
-- `path` - The base directory path to search in.
-- `pattern` - The glob pattern to search for.
-- `exclude_patterns` - Optional list of patterns to exclude from the search.
+    path: The base directory path to search in.
+    pattern: The glob pattern to search for.
+    exclude_patterns: Optional list of patterns to exclude from the search.
   
 
 **Returns**:
 
-- `FileSearchResult` - Result object containing matching file paths and error
+    FileSearchResult: Result object containing matching file paths and error
   message if any.
   
 
@@ -735,7 +735,7 @@ Read the contents of a file. Automatically handles large files by chunking.
 
 **Returns**:
 
-- `FileContentResult` - Result object containing file content and error message if any.
+    FileContentResult: Result object containing file content and error message if any.
   - success (bool): True if the operation succeeded
   - content (str): The file content (if success is True)
   - request_id (str): Unique identifier for this API request
@@ -744,7 +744,7 @@ Read the contents of a file. Automatically handles large files by chunking.
 
 **Raises**:
 
-- `FileError` - If the file does not exist or is a directory.
+    FileError: If the file does not exist or is a directory.
   
 
 **Example**:
@@ -812,7 +812,7 @@ Write content to a file. Automatically handles large files by chunking.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
   - success (bool): True if the operation succeeded
   - data (bool): True if the file was written successfully
   - request_id (str): Unique identifier for this API request
@@ -821,7 +821,7 @@ Write content to a file. Automatically handles large files by chunking.
 
 **Raises**:
 
-- `FileError` - If the write operation fails.
+    FileError: If the write operation fails.
   
 
 **Example**:
@@ -897,18 +897,18 @@ This is a synchronous wrapper around the async FileTransfer.upload method.
 
 **Arguments**:
 
-- `local_path` - Local file path to upload
-- `remote_path` - Remote file path to upload to
-- `content_type` - Optional content type for the file
-- `wait` - Whether to wait for the sync operation to complete
-- `wait_timeout` - Timeout for waiting for sync completion
-- `poll_interval` - Interval between polling for sync completion
-- `progress_cb` - Callback for upload progress updates
+    local_path: Local file path to upload
+    remote_path: Remote file path to upload to
+    content_type: Optional content type for the file
+    wait: Whether to wait for the sync operation to complete
+    wait_timeout: Timeout for waiting for sync completion
+    poll_interval: Interval between polling for sync completion
+    progress_cb: Callback for upload progress updates
   
 
 **Returns**:
 
-- `UploadResult` - Result of the upload operation
+    UploadResult: Result of the upload operation
   
 
 **Example**:
@@ -975,18 +975,18 @@ This is a synchronous wrapper around the async FileTransfer.download method.
 
 **Arguments**:
 
-- `remote_path` - Remote file path to download from
-- `local_path` - Local file path to download to
-- `overwrite` - Whether to overwrite existing local file
-- `wait` - Whether to wait for the sync operation to complete
-- `wait_timeout` - Timeout for waiting for sync completion
-- `poll_interval` - Interval between polling for sync completion
-- `progress_cb` - Callback for download progress updates
+    remote_path: Remote file path to download from
+    local_path: Local file path to download to
+    overwrite: Whether to overwrite existing local file
+    wait: Whether to wait for the sync operation to complete
+    wait_timeout: Timeout for waiting for sync completion
+    poll_interval: Interval between polling for sync completion
+    progress_cb: Callback for download progress updates
   
 
 **Returns**:
 
-- `DownloadResult` - Result of the download operation
+    DownloadResult: Result of the download operation
   
 
 **Example**:
@@ -1047,17 +1047,17 @@ Watch a directory for file changes and call the callback function when changes o
 
 **Arguments**:
 
-- `path` - The directory path to monitor for file changes.
-- `callback` - Callback function that will be called with a list of FileChangeEvent
+    path: The directory path to monitor for file changes.
+    callback: Callback function that will be called with a list of FileChangeEvent
   objects when changes are detected.
-- `interval` - Polling interval in seconds. Defaults to 0.5.
-- `stop_event` - Optional threading.Event to stop the monitoring. If not provided,
+    interval: Polling interval in seconds. Defaults to 0.5.
+    stop_event: Optional threading.Event to stop the monitoring. If not provided,
   a new Event will be created and returned via the thread object.
   
 
 **Returns**:
 
-- `threading.Thread` - The monitoring thread. Call thread.start() to begin monitoring.
+    threading.Thread: The monitoring thread. Call thread.start() to begin monitoring.
   Use the thread's stop_event attribute to stop monitoring.
   
 

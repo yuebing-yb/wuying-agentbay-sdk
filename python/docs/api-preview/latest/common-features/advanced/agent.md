@@ -49,12 +49,12 @@ get_task_status and the max_try_times.
 
 **Arguments**:
 
-- `task` - Task description in human language.
+    task: Task description in human language.
   
 
 **Returns**:
 
-- `ExecutionResult` - Result object containing success status, task ID,
+    ExecutionResult: Result object containing success status, task ID,
   task status, and error message if any.
   
 
@@ -122,13 +122,13 @@ so set a proper max_try_times according to your task complexity.
 
 **Arguments**:
 
-- `task` - Task description in human language.
-- `max_try_times` - Maximum number of retries.
+    task: Task description in human language.
+    max_try_times: Maximum number of retries.
   
 
 **Returns**:
 
-- `ExecutionResult` - Result object containing success status, task ID,
+    ExecutionResult: Result object containing success status, task ID,
   task status, and error message if any.
   
 
@@ -179,12 +179,12 @@ Get the status of the task with the given task ID.
 
 **Arguments**:
 
-- `task_id` - The ID of the task to query.
+    task_id: The ID of the task to query.
   
 
 **Returns**:
 
-- `QueryResult` - Result object containing success status, task status,
+    QueryResult: Result object containing success status, task status,
   task action, task product, and error message if any.
   
 
@@ -239,12 +239,12 @@ Terminate a task with a specified task ID.
 
 **Arguments**:
 
-- `task_id` - The ID of the running task to terminate.
+    task_id: The ID of the running task to terminate.
   
 
 **Returns**:
 
-- `ExecutionResult` - Result object containing success status, task ID,
+    ExecutionResult: Result object containing success status, task ID,
   task status, and error message if any.
   
 

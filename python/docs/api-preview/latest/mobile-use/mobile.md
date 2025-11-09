@@ -105,7 +105,7 @@ Taps on the mobile screen at the specified coordinates.
 
 **Returns**:
 
-- `BoolResult` - Object with success status and error message if any.
+    BoolResult: Object with success status and error message if any.
   
 
 **Example**:
@@ -157,7 +157,7 @@ Performs a swipe gesture from one point to another.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
   
 
 **Example**:
@@ -195,7 +195,7 @@ Inputs text into the active field.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
   
 
 **Example**:
@@ -239,7 +239,7 @@ Sends a key press event.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
   
 
 **Example**:
@@ -278,7 +278,7 @@ Retrieves all clickable UI elements within the specified timeout.
 
 **Returns**:
 
-- `UIElementListResult` - Result object containing clickable UI elements and
+    UIElementListResult: Result object containing clickable UI elements and
   error message if any.
   
 
@@ -317,7 +317,7 @@ Retrieves all UI elements within the specified timeout.
 
 **Returns**:
 
-- `UIElementListResult` - Result object containing UI elements and error
+    UIElementListResult: Result object containing UI elements and error
   message if any.
   
 
@@ -359,7 +359,7 @@ Retrieves a list of installed applications.
 
 **Returns**:
 
-- `InstalledAppListResult` - The result containing the list of installed
+    InstalledAppListResult: The result containing the list of installed
   applications.
   
 
@@ -421,7 +421,7 @@ optional activity.
 
 **Returns**:
 
-- `ProcessListResult` - The result containing the list of processes started.
+    ProcessListResult: The result containing the list of processes started.
   
 
 **Example**:
@@ -475,7 +475,7 @@ Stops an application by stop command.
 
 **Returns**:
 
-- `AppOperationResult` - The result of the operation.
+    AppOperationResult: The result of the operation.
   
 
 **Example**:
@@ -519,7 +519,7 @@ Takes a screenshot of the current screen.
 
 **Returns**:
 
-- `OperationResult` - Result object containing the path to the screenshot
+    OperationResult: Result object containing the path to the screenshot
   and error message if any.
   
 
@@ -553,7 +553,7 @@ Configure mobile settings from MobileExtraConfig.
 
 **Arguments**:
 
-- `mobile_config` - MobileExtraConfig object containing mobile configuration.
+    mobile_config: MobileExtraConfig object containing mobile configuration.
 
 #### set\_resolution\_lock
 
@@ -770,14 +770,14 @@ the ADB connect URL.
 
 **Returns**:
 
-- `AdbUrlResult` - Result object containing the ADB connection URL
-- `(format` - "adb connect <IP>:<Port>") and request ID.
+    AdbUrlResult: Result object containing the ADB connection URL
+    (format: "adb connect <IP>:<Port>") and request ID.
   Returns error if not in mobile environment.
   
 
 **Raises**:
 
-- `SessionError` - If the session is not in mobile environment.
+    SessionError: If the session is not in mobile environment.
   
 
 **Example**:

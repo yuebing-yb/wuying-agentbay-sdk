@@ -498,6 +498,49 @@ func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult {
 }
 
 // GetAllUIElements retrieves all UI elements within the specified timeout
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		elementsResult := session.Mobile.GetAllUIElements(5000)
+//		if elementsResult.ErrorMessage == "" {
+//			fmt.Printf("Found %d total elements\n", len(elementsResult.Elements))
+//			for _, elem := range elementsResult.Elements {
+//				if elem.Bounds != nil {
+//					fmt.Printf("  - Element: %s at (%d, %d, %d, %d)\n",
+//						elem.ClassName,
+//						elem.Bounds.Left, elem.Bounds.Top,
+//						elem.Bounds.Right, elem.Bounds.Bottom)
+//				}
+//			}
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 	args := map[string]interface{}{
 		"timeout_ms": timeoutMs,
@@ -543,6 +586,45 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 }
 
 // GetInstalledApps retrieves a list of installed applications
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Get all user-installed apps (excluding system apps)
+//		appsResult := session.Mobile.GetInstalledApps(true, true, true)
+//		if appsResult.ErrorMessage == "" {
+//			fmt.Printf("Found %d installed apps\n", len(appsResult.Apps))
+//			for _, app := range appsResult.Apps {
+//				fmt.Printf("  - %s: %s\n", app.Name, app.StartCmd)
+//			}
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *InstalledAppListResult {
 	args := map[string]interface{}{
 		"start_menu":         startMenu,
@@ -893,6 +975,50 @@ func (m *Mobile) executeTemplateCommand(commandTemplate, description string) err
 // This method is only supported in mobile environments (mobile_latest image).
 // It uses the provided ADB public key to establish the connection and returns
 // the ADB connect URL.
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Read ADB public key from file (typically ~/.android/adbkey.pub)
+//		adbPubKey, err := os.ReadFile(os.Getenv("HOME") + "/.android/adbkey.pub")
+//		if err != nil {
+//			fmt.Printf("Error reading ADB key: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Get ADB URL
+//		adbResult := session.Mobile.GetAdbUrl(string(adbPubKey))
+//		if adbResult.Success {
+//			fmt.Printf("ADB URL: %s\n", adbResult.URL)
+//			// Output: ADB URL: adb connect xx.xx.xx.xx:xxxxx
+//		} else {
+//			fmt.Printf("Error: %s\n", adbResult.ErrorMessage)
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult {
 	// Build options JSON with adbkey_pub
 	optionsMap := map[string]string{"adbkey_pub": adbkeyPub}

@@ -48,22 +48,22 @@ Execute code in the specified language with a timeout.
 
 **Arguments**:
 
-- `code` - The code to execute.
-- `language` - The programming language of the code. Must be either 'python'
+    code: The code to execute.
+    language: The programming language of the code. Must be either 'python'
   or 'javascript'.
-- `timeout_s` - The timeout for the code execution in seconds. Default is 60s.
-- `Note` - Due to gateway limitations, each request cannot exceed 60 seconds.
+    timeout_s: The timeout for the code execution in seconds. Default is 60s.
+    Note: Due to gateway limitations, each request cannot exceed 60 seconds.
   
 
 **Returns**:
 
-- `CodeExecutionResult` - Result object containing success status, execution
+    CodeExecutionResult: Result object containing success status, execution
   result, and error message if any.
   
 
 **Raises**:
 
-- `CommandError` - If the code execution fails or if an unsupported language is
+    CommandError: If the code execution fails or if an unsupported language is
   specified.
   
   Important:
@@ -97,7 +97,7 @@ Execute code in the specified language with a timeout.
   python_code = """
   print("Hello from Python!")
   result = 2 + 3
-- `print(f"Result` - {result}")
+    print(f"Result: {result}")
   """
   
   code_result = session.code.run_code(python_code, "python")
@@ -127,7 +127,7 @@ Execute code in the specified language with a timeout.
   
   session.delete()
   except Exception as e:
-- `print(f"Error` - {e}")
+    print(f"Error: {e}")
   
   execute_code_example()
 

@@ -47,7 +47,7 @@ Execute a shell command in the cloud environment with a specified timeout.
 
 **Returns**:
 
-- `CommandResult` - Result object containing success status, command output, and error message if any.
+    CommandResult: Result object containing success status, command output, and error message if any.
   - success (bool): True if the operation succeeded
   - output (str): The command output (stdout and stderr combined)
   - request_id (str): Unique identifier for this API request
@@ -56,7 +56,7 @@ Execute a shell command in the cloud environment with a specified timeout.
 
 **Raises**:
 
-- `CommandError` - If the command execution fails.
+    CommandError: If the command execution fails.
   
 
 **Example**:

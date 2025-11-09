@@ -362,6 +362,36 @@ Return the API key for this session.
 
 `string`
 
+The API key string
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateGetAPIKey() {
+  try {
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Get the API key
+      const apiKey = session.getAPIKey();
+      console.log('API key length:', apiKey.length);
+      // Output: API key length: 32
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetAPIKey().catch(console.error);
+```
+
 ___
 
 ### getAgentBay
@@ -374,6 +404,36 @@ Return the AgentBay instance that created this session.
 
 [`AgentBay`](agentbay.md)
 
+The AgentBay client instance
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateGetAgentBay() {
+  try {
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Get the AgentBay instance from session
+      const agentBayInstance = session.getAgentBay();
+      console.log('AgentBay instance retrieved');
+      // Output: AgentBay instance retrieved
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetAgentBay().catch(console.error);
+```
+
 ___
 
 ### getClient
@@ -385,6 +445,36 @@ Return the HTTP client for this session.
 #### Returns
 
 ``Client``
+
+The Client instance used for API communication
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateGetClient() {
+  try {
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Get the internal client
+      const client = session.getClient();
+      console.log('Client retrieved successfully');
+      // Output: Client retrieved successfully
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetClient().catch(console.error);
+```
 
 ___
 
@@ -616,6 +706,35 @@ Return the session_id for this session.
 #### Returns
 
 `string`
+
+The session ID string
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateGetSessionId() {
+  try {
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Get the session ID
+      const sessionId = session.getSessionId();
+      console.log(`Session ID: ${sessionId}`);\n       // Output: Session ID: session-04bdwfj7u22a1s30g
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetSessionId().catch(console.error);
+```
 
 ___
 

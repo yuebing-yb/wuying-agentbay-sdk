@@ -952,19 +952,88 @@ class Computer(BaseService):
                 error_message=f"Failed to take screenshot: {str(e)}",
             )
 
-    # Window Management Operations (delegated to existing window module)
+    # Window Management Operations
     def list_root_windows(self, timeout_ms: int = 3000) -> WindowListResult:
         """
         Lists all root windows.
 
         Args:
             timeout_ms (int, optional): Timeout in milliseconds. Defaults to 3000.
+
         Returns:
             WindowListResult: Result object containing list of windows and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def list_windows_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # List all root windows
+                        windows_result = session.computer.list_root_windows()
+                        if windows_result.success:
+                            print(f"Found {len(windows_result.windows)} root windows")
+                            for window in windows_result.windows:
+                                print(f"Window: {window.title}, ID: {window.window_id}")
+                        else:
+                            print(f"Failed to list windows: {windows_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            list_windows_example()
+            ```
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.list_root_windows(timeout_ms)
+        try:
+            args = {"timeout_ms": timeout_ms}
+            result = self.session.call_mcp_tool("list_root_windows", args)
+
+            if not result.success:
+                return WindowListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    windows=[],
+                    error_message=result.error_message,
+                )
+
+            # Parse the windows data
+            windows = []
+            if result.data:
+                try:
+                    windows_data = json.loads(result.data)
+                    for window_data in windows_data:
+                        windows.append(Window.from_dict(window_data))
+                except json.JSONDecodeError as e:
+                    return WindowListResult(
+                        request_id=result.request_id,
+                        success=False,
+                        windows=[],
+                        error_message=f"Failed to parse windows JSON: {e}",
+                    )
+
+            return WindowListResult(
+                request_id=result.request_id,
+                success=True,
+                windows=windows,
+                error_message="",
+            )
+        except Exception as e:
+            return WindowListResult(
+                request_id="",
+                success=False,
+                windows=[],
+                error_message=f"Failed to list root windows: {str(e)}",
+            )
 
     def get_active_window(self, timeout_ms: int = 3000) -> WindowInfoResult:
         """
@@ -972,12 +1041,82 @@ class Computer(BaseService):
 
         Args:
             timeout_ms (int, optional): Timeout in milliseconds. Defaults to 3000.
+
         Returns:
             WindowInfoResult: Result object containing active window info and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def get_active_window_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Get the currently active window
+                        window_result = session.computer.get_active_window()
+                        if window_result.success:
+                            window = window_result.window
+                            print(f"Active window: {window.title}")
+                            print(f"Window ID: {window.window_id}")
+                            print(f"Position: ({window.absolute_upper_left_x}, {window.absolute_upper_left_y})")
+                            print(f"Size: {window.width}x{window.height}")
+                        else:
+                            print(f"Failed to get active window: {window_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            get_active_window_example()
+            ```
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.get_active_window(timeout_ms)
+        try:
+            args = {"timeout_ms": timeout_ms}
+            result = self.session.call_mcp_tool("get_active_window", args)
+
+            if not result.success:
+                return WindowInfoResult(
+                    request_id=result.request_id,
+                    success=False,
+                    window=None,
+                    error_message=result.error_message,
+                )
+
+            # Parse the window data
+            window = None
+            if result.data:
+                try:
+                    window_data = json.loads(result.data)
+                    window = Window.from_dict(window_data)
+                except json.JSONDecodeError as e:
+                    return WindowInfoResult(
+                        request_id=result.request_id,
+                        success=False,
+                        window=None,
+                        error_message=f"Failed to parse window JSON: {e}",
+                    )
+
+            return WindowInfoResult(
+                request_id=result.request_id,
+                success=True,
+                window=window,
+                error_message="",
+            )
+        except Exception as e:
+            return WindowInfoResult(
+                request_id="",
+                success=False,
+                window=None,
+                error_message=f"Failed to get active window: {str(e)}",
+            )
 
     def activate_window(self, window_id: int) -> BoolResult:
         """
@@ -988,10 +1127,74 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def activate_window_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # First, list all windows to get window IDs
+                        windows_result = session.computer.list_root_windows()
+                        if windows_result.success and len(windows_result.windows) > 0:
+                            # Activate the first window
+                            window_id = windows_result.windows[0].window_id
+                            activate_result = session.computer.activate_window(window_id)
+                            if activate_result.success:
+                                print(f"Window {window_id} activated successfully")
+                                # Output: Window 65938 activated successfully
+                            else:
+                                print(f"Failed to activate window: {activate_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            activate_window_example()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Use list_root_windows() to get available window IDs
+            - Activating a window brings it to the foreground
+
+        See Also:
+            list_root_windows, get_active_window, close_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.activate_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("activate_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to activate window: {str(e)}",
+            )
 
     def close_window(self, window_id: int) -> BoolResult:
         """
@@ -1002,10 +1205,74 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def close_window_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # First, list all windows to get window IDs
+                        windows_result = session.computer.list_root_windows()
+                        if windows_result.success and len(windows_result.windows) > 0:
+                            # Close the first window
+                            window_id = windows_result.windows[0].window_id
+                            close_result = session.computer.close_window(window_id)
+                            if close_result.success:
+                                print(f"Window {window_id} closed successfully")
+                                # Output: Window 65938 closed successfully
+                            else:
+                                print(f"Failed to close window: {close_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            close_window_example()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Use list_root_windows() to get available window IDs
+            - Closing a window terminates it permanently
+
+        See Also:
+            list_root_windows, activate_window, minimize_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.close_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("close_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to close window: {str(e)}",
+            )
 
     def maximize_window(self, window_id: int) -> BoolResult:
         """
@@ -1016,10 +1283,74 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def maximize_window_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Get the active window
+                        window_result = session.computer.get_active_window()
+                        if window_result.success and window_result.window:
+                            # Maximize the active window
+                            window_id = window_result.window.window_id
+                            maximize_result = session.computer.maximize_window(window_id)
+                            if maximize_result.success:
+                                print(f"Window {window_id} maximized successfully")
+                                # Output: Window 65938 maximized successfully
+                            else:
+                                print(f"Failed to maximize window: {maximize_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            maximize_window_example()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Maximizing expands the window to fill the screen
+            - Use restore_window() to return to previous size
+
+        See Also:
+            minimize_window, restore_window, fullscreen_window, resize_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.maximize_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("maximize_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to maximize window: {str(e)}",
+            )
 
     def minimize_window(self, window_id: int) -> BoolResult:
         """
@@ -1030,10 +1361,74 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def minimize_window_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Get the active window
+                        window_result = session.computer.get_active_window()
+                        if window_result.success and window_result.window:
+                            # Minimize the active window
+                            window_id = window_result.window.window_id
+                            minimize_result = session.computer.minimize_window(window_id)
+                            if minimize_result.success:
+                                print(f"Window {window_id} minimized successfully")
+                                # Output: Window 65938 minimized successfully
+                            else:
+                                print(f"Failed to minimize window: {minimize_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            minimize_window_example()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Minimizing hides the window in the taskbar
+            - Use restore_window() or activate_window() to bring it back
+
+        See Also:
+            maximize_window, restore_window, activate_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.minimize_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("minimize_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to minimize window: {str(e)}",
+            )
 
     def restore_window(self, window_id: int) -> BoolResult:
         """
@@ -1044,10 +1439,78 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def restore_window_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Get the active window
+                        window_result = session.computer.get_active_window()
+                        if window_result.success and window_result.window:
+                            window_id = window_result.window.window_id
+
+                            # First minimize the window
+                            session.computer.minimize_window(window_id)
+
+                            # Then restore it
+                            restore_result = session.computer.restore_window(window_id)
+                            if restore_result.success:
+                                print(f"Window {window_id} restored successfully")
+                                # Output: Window 65938 restored successfully
+                            else:
+                                print(f"Failed to restore window: {restore_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            restore_window_example()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Restoring returns a minimized or maximized window to its normal state
+            - Works for windows that were previously minimized or maximized
+
+        See Also:
+            minimize_window, maximize_window, activate_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.restore_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("restore_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to restore window: {str(e)}",
+            )
 
     def resize_window(self, window_id: int, width: int, height: int) -> BoolResult:
         """
@@ -1060,10 +1523,74 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def resize_window_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Get the active window
+                        window_result = session.computer.get_active_window()
+                        if window_result.success and window_result.window:
+                            # Resize the active window to 800x600
+                            window_id = window_result.window.window_id
+                            resize_result = session.computer.resize_window(window_id, 800, 600)
+                            if resize_result.success:
+                                print(f"Window {window_id} resized to 800x600 successfully")
+                                # Output: Window 65938 resized to 800x600 successfully
+                            else:
+                                print(f"Failed to resize window: {resize_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            resize_window_example()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Width and height are in pixels
+            - Some windows may have minimum or maximum size constraints
+
+        See Also:
+            maximize_window, restore_window, get_screen_size
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.resize_window(window_id, width, height)
+        try:
+            args = {"window_id": window_id, "width": width, "height": height}
+            result = self.session.call_mcp_tool("resize_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to resize window: {str(e)}",
+            )
 
     def fullscreen_window(self, window_id: int) -> BoolResult:
         """
@@ -1074,10 +1601,75 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def fullscreen_window_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Get the active window
+                        window_result = session.computer.get_active_window()
+                        if window_result.success and window_result.window:
+                            # Make the active window fullscreen
+                            window_id = window_result.window.window_id
+                            fullscreen_result = session.computer.fullscreen_window(window_id)
+                            if fullscreen_result.success:
+                                print(f"Window {window_id} set to fullscreen successfully")
+                                # Output: Window 65938 set to fullscreen successfully
+                            else:
+                                print(f"Failed to fullscreen window: {fullscreen_result.error_message}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            fullscreen_window_example()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Fullscreen mode hides window borders and taskbar
+            - Different from maximize_window() which keeps window borders
+            - Press F11 or ESC to exit fullscreen in most applications
+
+        See Also:
+            maximize_window, restore_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.fullscreen_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("fullscreen_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to fullscreen window: {str(e)}",
+            )
 
     def focus_mode(self, on: bool) -> BoolResult:
         """
@@ -1088,10 +1680,74 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.session_params import CreateSessionParams
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def focus_mode_example():
+                try:
+                    # Create a session with windows_latest image
+                    params = CreateSessionParams(image_id="windows_latest")
+                    result = agent_bay.create(params)
+                    if result.success:
+                        session = result.session
+
+                        # Enable focus mode
+                        enable_result = session.computer.focus_mode(True)
+                        if enable_result.success:
+                            print("Focus mode enabled successfully")
+                            # Output: Focus mode enabled successfully
+
+                        # Disable focus mode
+                        disable_result = session.computer.focus_mode(False)
+                        if disable_result.success:
+                            print("Focus mode disabled successfully")
+                            # Output: Focus mode disabled successfully
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            focus_mode_example()
+            ```
+
+        Note:
+            - Focus mode helps reduce distractions by managing window focus
+            - When enabled, may prevent background windows from stealing focus
+            - Behavior depends on the window manager and OS settings
+
+        See Also:
+            activate_window, get_active_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.focus_mode(on)
+        try:
+            args = {"on": on}
+            result = self.session.call_mcp_tool("focus_mode", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to toggle focus mode: {str(e)}",
+            )
 
     # Application Management Operations
     def get_installed_apps(

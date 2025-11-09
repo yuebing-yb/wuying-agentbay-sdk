@@ -71,15 +71,15 @@ to override existing configuration.
 
 **Arguments**:
 
-- `level` - Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-- `log_file` - Path to log file (optional)
-- `enable_console` - Whether to enable console logging
-- `enable_file` - Whether to enable file logging
-- `rotation` - Log file rotation size (deprecated, use max_file_size)
-- `retention` - Log file retention period
-- `max_file_size` - Maximum log file size before rotation (e.g., "10 MB", "100 MB")
-- `colorize` - Whether to use colors in console output (None = auto-detect)
-- `force_reinit` - Force reinitialization even if already initialized (default: False)
+    level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    log_file: Path to log file (optional)
+    enable_console: Whether to enable console logging
+    enable_file: Whether to enable file logging
+    rotation: Log file rotation size (deprecated, use max_file_size)
+    retention: Log file retention period
+    max_file_size: Maximum log file size before rotation (e.g., "10 MB", "100 MB")
+    colorize: Whether to use colors in console output (None = auto-detect)
+    force_reinit: Force reinitialization even if already initialized (default: False)
   
 
 **Example**:
@@ -138,7 +138,7 @@ Get a logger instance.
 
 **Arguments**:
 
-- `name` - Logger name (optional)
+    name: Logger name (optional)
   
 
 **Returns**:
@@ -156,7 +156,7 @@ Set the logging level.
 
 **Arguments**:
 
-- `level` - New log level
+    level: New log level
   
 
 **Example**:
@@ -196,7 +196,7 @@ Convenience function to get a named logger.
 
 **Arguments**:
 
-- `name` - Logger name (defaults to "agentbay")
+    name: Logger name (defaults to "agentbay")
   
 
 **Returns**:
@@ -231,8 +231,8 @@ Mask sensitive information in data structures.
 
 **Arguments**:
 
-- `data` - Data to mask (dict, str, list, etc.)
-- `fields` - Additional sensitive field names
+    data: Data to mask (dict, str, list, etc.)
+    fields: Additional sensitive field names
   
 
 **Returns**:
@@ -248,10 +248,10 @@ Mask sensitive information in data structures.
   
   # Mask API keys and passwords in a dictionary
   user_data = {
-- `"username"` - "john_doe",
-- `"password"` - "secret123",
-- `"api_key"` - "sk_live_1234567890abcdef",
-- `"email"` - "john@example.com"
+    "username": "john_doe",
+    "password": "secret123",
+    "api_key": "sk_live_1234567890abcdef",
+    "email": "john@example.com"
   }
   masked = mask_sensitive_data(user_data)
   print(masked)
@@ -259,12 +259,12 @@ Mask sensitive information in data structures.
   
   # Mask nested dictionaries
   config = {
-- `"database"` - {
-- `"host"` - "localhost",
-- `"password"` - "db_password_123"
+    "database": {
+    "host": "localhost",
+    "password": "db_password_123"
   },
-- `"auth"` - {
-- `"token"` - "Bearer xyz123abc456"
+    "auth": {
+    "token": "Bearer xyz123abc456"
   }
   }
   masked_config = mask_sensitive_data(config)
@@ -273,9 +273,9 @@ Mask sensitive information in data structures.
   
   # Mask with custom field names
   custom_data = {
-- `"user_id"` - "12345",
-- `"credit_card"` - "1234-5678-9012-3456",
-- `"ssn"` - "123-45-6789"
+    "user_id": "12345",
+    "credit_card": "1234-5678-9012-3456",
+    "ssn": "123-45-6789"
   }
   masked_custom = mask_sensitive_data(custom_data, fields=['credit_card', 'ssn'])
   print(masked_custom)
@@ -283,8 +283,8 @@ Mask sensitive information in data structures.
   
   # Mask lists containing sensitive data
   user_list = [
-- `{"name"` - "Alice", "api_key": "key_alice_123"},
-- `{"name"` - "Bob", "api_key": "key_bob_456"}
+    {"name": "Alice", "api_key": "key_alice_123"},
+    {"name": "Bob", "api_key": "key_bob_456"}
   ]
   masked_list = mask_sensitive_data(user_list)
   print(masked_list)
@@ -320,11 +320,11 @@ Log API response with key details at INFO level.
 
 **Arguments**:
 
-- `api_name` - Name of the API being called
-- `request_id` - Request ID from the response
-- `success` - Whether the API call was successful
-- `key_fields` - Dictionary of key business fields to log
-- `full_response` - Full response body (logged at DEBUG level)
+    api_name: Name of the API being called
+    request_id: Request ID from the response
+    success: Whether the API call was successful
+    key_fields: Dictionary of key business fields to log
+    full_response: Full response body (logged at DEBUG level)
 
 #### log\_code\_execution\_output
 
@@ -336,8 +336,8 @@ Extract and log the actual code execution output from run_code response.
 
 **Arguments**:
 
-- `request_id` - Request ID from the API response
-- `raw_output` - Raw JSON output from the MCP tool
+    request_id: Request ID from the API response
+    raw_output: Raw JSON output from the MCP tool
 
 #### log\_operation\_start
 
@@ -367,9 +367,9 @@ Log operation error with optional exception info.
 
 **Arguments**:
 
-- `operation` - Name of the operation that failed
-- `error` - Error message
-- `exc_info` - Whether to include exception traceback
+    operation: Name of the operation that failed
+    error: Error message
+    exc_info: Whether to include exception traceback
 
 #### log\_warning
 
@@ -389,8 +389,8 @@ Log an INFO level message with custom color.
 
 **Arguments**:
 
-- `message` - Message to log
-- `color` - ANSI color code (default is red: [31m)
+    message: Message to log
+    color: ANSI color code (default is red: [31m)
 
 ---
 

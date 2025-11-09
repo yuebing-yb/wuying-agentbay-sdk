@@ -172,6 +172,39 @@ Delete a session by session object.
 
 DeleteResult indicating success or failure and request ID
 
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function createAndDeleteSession() {
+  try {
+    // Create a session
+    const createResult = await agentBay.create();
+    if (createResult.success) {
+      const session = createResult.session;
+      console.log(`Created session with ID: ${session.sessionId}`);
+
+      // Use the session for operations...
+
+      // Delete the session when done
+      const deleteResult = await agentBay.delete(session);
+      if (deleteResult.success) {
+        console.log('Session deleted successfully');
+      } else {
+        console.log(`Failed to delete session: ${deleteResult.errorMessage}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+createAndDeleteSession().catch(console.error);
+```
+
 ___
 
 ### get
@@ -252,9 +285,41 @@ ___
 
 ▸ **getAPIKey**(): `string`
 
+Get the API key used for authentication.
+
 #### Returns
 
 `string`
+
+The API key string
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateGetAPIKey() {
+  try {
+    // Get the API key
+    const apiKey = agentBay.getAPIKey();
+    console.log('API key length:', apiKey.length);
+    // Output: API key length: 32
+    console.log('API key retrieved successfully');
+    // Output: API key retrieved successfully
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetAPIKey().catch(console.error);
+```
+
+**`Remarks`**
+
+**Security Note:** Be careful when logging or exposing API keys. Always keep them secure
+and never commit them to version control.
 
 ___
 
@@ -262,9 +327,45 @@ ___
 
 ▸ **getClient**(): ``Client``
 
+Get the internal HTTP client instance.
+
+This is primarily for internal use and advanced scenarios where you need direct access
+to the underlying API client.
+
 #### Returns
 
 ``Client``
+
+The Client instance used for API communication
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateGetClient() {
+  try {
+    // Get the internal client
+    const client = agentBay.getClient();
+    console.log('Client retrieved successfully');
+    // Output: Client retrieved successfully
+
+    // The client is used internally by the SDK for API calls
+    // Most users don't need to interact with it directly
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetClient().catch(console.error);
+```
+
+**`Remarks`**
+
+**Note:** This method is primarily for internal use. Most users should interact
+with the SDK through higher-level methods like `create()`, `get()`, and `list()`.
 
 ___
 
@@ -337,15 +438,63 @@ ___
 
 ▸ **removeSession**(`sessionId`): `void`
 
+Remove a session from the internal session cache.
+
+This is an internal utility method that removes a session reference from the AgentBay client's
+session cache without actually deleting the session from the cloud. Use this when you need to
+clean up local references to a session that was deleted externally or no longer needed.
+
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `sessionId` | `string` | The ID of the session to remove. |
+| `sessionId` | `string` | The ID of the session to remove from the cache. |
 
 #### Returns
 
 `void`
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateRemoveSession() {
+  try {
+    // Create a session
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+      console.log(`Created session with ID: ${session.sessionId}`);
+      // Output: Created session with ID: session-xxxxxxxxxxxxxx
+
+      // Delete the session from cloud
+      await session.delete();
+
+      // Remove the session reference from local cache
+      agentBay.removeSession(session.sessionId);
+      console.log('Session removed from cache');
+      // Output: Session removed from cache
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateRemoveSession().catch(console.error);
+```
+
+**`Remarks`**
+
+**Note:** This method only removes the session from the local cache. It does not delete the
+session from the cloud. To delete a session from the cloud, use [delete](agentbay.md#delete) or
+[Session.delete](session.md#delete).
+
+**`See`**
+
+[delete](agentbay.md#delete), [Session.delete](session.md#delete)
 
 ## Related Resources
 

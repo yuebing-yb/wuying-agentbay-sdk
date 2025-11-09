@@ -830,6 +830,38 @@ export class AgentBay {
    * @param session - The session to delete.
    * @param syncContext - Whether to sync context data (trigger file uploads) before deleting the session. Defaults to false.
    * @returns DeleteResult indicating success or failure and request ID
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function createAndDeleteSession() {
+   *   try {
+   *     // Create a session
+   *     const createResult = await agentBay.create();
+   *     if (createResult.success) {
+   *       const session = createResult.session;
+   *       console.log(`Created session with ID: ${session.sessionId}`);
+   *
+   *       // Use the session for operations...
+   *
+   *       // Delete the session when done
+   *       const deleteResult = await agentBay.delete(session);
+   *       if (deleteResult.success) {
+   *         console.log('Session deleted successfully');
+   *       } else {
+   *         console.log(`Failed to delete session: ${deleteResult.errorMessage}`);
+   *       }
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * createAndDeleteSession().catch(console.error);
+   * ```
    */
   async delete(session: Session, syncContext = false): Promise<DeleteResult> {
     try {
@@ -859,8 +891,51 @@ export class AgentBay {
   }
 
   /**
+   * Remove a session from the internal session cache.
    *
-   * @param sessionId - The ID of the session to remove.
+   * This is an internal utility method that removes a session reference from the AgentBay client's
+   * session cache without actually deleting the session from the cloud. Use this when you need to
+   * clean up local references to a session that was deleted externally or no longer needed.
+   *
+   * @param sessionId - The ID of the session to remove from the cache.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateRemoveSession() {
+   *   try {
+   *     // Create a session
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *       console.log(`Created session with ID: ${session.sessionId}`);
+   *       // Output: Created session with ID: session-xxxxxxxxxxxxxx
+   *
+   *       // Delete the session from cloud
+   *       await session.delete();
+   *
+   *       // Remove the session reference from local cache
+   *       agentBay.removeSession(session.sessionId);
+   *       console.log('Session removed from cache');
+   *       // Output: Session removed from cache
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateRemoveSession().catch(console.error);
+   * ```
+   *
+   * @remarks
+   * **Note:** This method only removes the session from the local cache. It does not delete the
+   * session from the cloud. To delete a session from the cloud, use {@link delete} or
+   * {@link Session.delete}.
+   *
+   * @see {@link delete}, {@link Session.delete}
    */
   public removeSession(sessionId: string): void {
     this.sessions.delete(sessionId);
@@ -1085,11 +1160,76 @@ export class AgentBay {
     };
   }
 
-  // For internal use by the Session class
+  /**
+   * Get the internal HTTP client instance.
+   *
+   * This is primarily for internal use and advanced scenarios where you need direct access
+   * to the underlying API client.
+   *
+   * @returns The Client instance used for API communication
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetClient() {
+   *   try {
+   *     // Get the internal client
+   *     const client = agentBay.getClient();
+   *     console.log('Client retrieved successfully');
+   *     // Output: Client retrieved successfully
+   *
+   *     // The client is used internally by the SDK for API calls
+   *     // Most users don't need to interact with it directly
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetClient().catch(console.error);
+   * ```
+   *
+   * @remarks
+   * **Note:** This method is primarily for internal use. Most users should interact
+   * with the SDK through higher-level methods like `create()`, `get()`, and `list()`.
+   */
   getClient(): Client {
     return this.client;
   }
 
+  /**
+   * Get the API key used for authentication.
+   *
+   * @returns The API key string
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetAPIKey() {
+   *   try {
+   *     // Get the API key
+   *     const apiKey = agentBay.getAPIKey();
+   *     console.log('API key length:', apiKey.length);
+   *     // Output: API key length: 32
+   *     console.log('API key retrieved successfully');
+   *     // Output: API key retrieved successfully
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetAPIKey().catch(console.error);
+   * ```
+   *
+   * @remarks
+   * **Security Note:** Be careful when logging or exposing API keys. Always keep them secure
+   * and never commit them to version control.
+   */
   getAPIKey(): string {
     return this.apiKey;
   }

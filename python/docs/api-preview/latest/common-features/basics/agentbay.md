@@ -27,7 +27,7 @@ Generate a random context name string using alphanumeric characters with optiona
 
 **Returns**:
 
-- `str` - Random alphanumeric string with optional timestamp prefix
+    str: Random alphanumeric string with optional timestamp prefix
   
 
 **Examples**:
@@ -66,7 +66,7 @@ Create a new session in the AgentBay cloud environment.
 
 **Returns**:
 
-- `SessionResult` - Result containing the created session and request ID.
+    SessionResult: Result containing the created session and request ID.
   - success (bool): True if the operation succeeded
   - session (Session): The created session object (if success is True)
   - request_id (str): Unique identifier for this API request
@@ -75,8 +75,8 @@ Create a new session in the AgentBay cloud environment.
 
 **Raises**:
 
-- `ValueError` - If API key is not provided and AGENTBAY_API_KEY environment variable is not set.
-- `ClientException` - If the API request fails due to network or authentication issues.
+    ValueError: If API key is not provided and AGENTBAY_API_KEY environment variable is not set.
+    ClientException: If the API request fails due to network or authentication issues.
   
 
 **Example**:
@@ -163,7 +163,7 @@ Returns paginated list of session IDs filtered by labels.
 
 **Returns**:
 
-- `SessionListResult` - Paginated list of session IDs that match the labels.
+    SessionListResult: Paginated list of session IDs that match the labels.
   - success (bool): True if the operation succeeded
   - session_ids (List[str]): List of session IDs
   - request_id (str): Unique identifier for this API request
@@ -175,7 +175,7 @@ Returns paginated list of session IDs filtered by labels.
 
 **Raises**:
 
-- `ClientException` - If the API request fails due to network or authentication issues.
+    ClientException: If the API request fails due to network or authentication issues.
   
 
 **Example**:
@@ -255,7 +255,7 @@ Delete a session by session object.
 
 **Returns**:
 
-- `DeleteResult` - Result indicating success or failure and request ID.
+    DeleteResult: Result indicating success or failure and request ID.
 
 #### get\_session
 
@@ -272,7 +272,7 @@ Get session information by session ID.
 
 **Returns**:
 
-- `GetSessionResult` - Result containing session information.
+    GetSessionResult: Result containing session information.
 
 #### get
 
@@ -289,7 +289,7 @@ Get a session by its ID.
 
 **Returns**:
 
-- `SessionResult` - Result containing the Session instance, request ID, and success status.
+    SessionResult: Result containing the Session instance, request ID, and success status.
   - success (bool): True if the operation succeeded
   - session (Session): The session object (if success is True)
   - request_id (str): Unique identifier for this API request
@@ -298,7 +298,7 @@ Get a session by its ID.
 
 **Raises**:
 
-- `ClientException` - If the API request fails due to network or authentication issues.
+    ClientException: If the API request fails due to network or authentication issues.
   
 
 **Example**:

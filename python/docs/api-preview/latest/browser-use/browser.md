@@ -178,7 +178,7 @@ This is the async version of the screenshot method.
 
 - `page` _Page_ - The Playwright Page object to take a screenshot of. This is a required parameter.
 - `full_page` _bool_ - Whether to capture the full scrollable page. Defaults to False.
-- `**options` - Additional screenshot options that will override defaults.
+    **options: Additional screenshot options that will override defaults.
   Common options include:
   - type (str): Image type, either 'png' or 'jpeg' (default: 'png')
   - quality (int): Quality of the image, between 0-100 (jpeg only)
@@ -190,13 +190,13 @@ This is the async version of the screenshot method.
 
 **Returns**:
 
-- `bytes` - Screenshot data as bytes.
+    bytes: Screenshot data as bytes.
   
 
 **Raises**:
 
-- `BrowserError` - If browser is not initialized.
-- `RuntimeError` - If screenshot capture fails.
+    BrowserError: If browser is not initialized.
+    RuntimeError: If screenshot capture fails.
 
 #### get\_endpoint\_url
 
@@ -298,12 +298,12 @@ Navigates the browser to the specified URL.
 
 **Returns**:
 
-- `str` - A success message if navigation succeeds, or an error message if it fails.
+    str: A success message if navigation succeeds, or an error message if it fails.
   
 
 **Raises**:
 
-- `BrowserError` - If the browser is not initialized or navigation fails.
+    BrowserError: If the browser is not initialized or navigation fails.
   
   Behavior:
   - Calls the MCP tool `page_use_navigate` with the specified URL
@@ -383,13 +383,13 @@ Captures a screenshot of the current browser page.
 
 **Returns**:
 
-- `str` - Base64-encoded data URL of the screenshot (format: `data:image/png;base64,...`),
+    str: Base64-encoded data URL of the screenshot (format: `data:image/png;base64,...`),
   or an error message string if the operation fails.
   
 
 **Raises**:
 
-- `BrowserError` - If the browser is not initialized or screenshot operation fails.
+    BrowserError: If the browser is not initialized or screenshot operation fails.
   
   Behavior:
   - Captures the entire scrollable page if `full_page=True`
@@ -490,7 +490,7 @@ Asynchronously takes a screenshot of the specified page.
 
 **Returns**:
 
-- `str` - A base64 encoded data URL of the screenshot, or an error message.
+    str: A base64 encoded data URL of the screenshot, or an error message.
 
 #### close\_async
 
@@ -521,14 +521,14 @@ Performs an action on a web page element (click, type, select, etc.).
 
 **Returns**:
 
-- `ActResult` - Object containing:
+    ActResult: Object containing:
   - success (bool): Whether the action succeeded
   - message (str): Description of the result or error message
   
 
 **Raises**:
 
-- `BrowserError` - If the browser is not initialized or the action fails.
+    BrowserError: If the browser is not initialized or the action fails.
   
   Behavior:
   - Supports actions: click, type, select, hover, scroll, etc.
@@ -619,7 +619,7 @@ Asynchronously perform an action on a web page.
 
 **Returns**:
 
-- `ActResult` - The result of the action.
+    ActResult: The result of the action.
 
 #### observe
 
@@ -654,7 +654,7 @@ Observes and identifies interactive elements on a web page using natural languag
 
 **Raises**:
 
-- `BrowserError` - If the browser is not initialized or observation fails.
+    BrowserError: If the browser is not initialized or observation fails.
   
   Behavior:
   - Uses AI to interpret natural language instructions
@@ -787,7 +787,7 @@ Extracts structured data from a web page using a Pydantic schema.
 
 **Raises**:
 
-- `BrowserError` - If the browser is not initialized or extraction fails.
+    BrowserError: If the browser is not initialized or extraction fails.
   
   Behavior:
   - Uses AI to extract data matching the provided Pydantic schema

@@ -225,7 +225,7 @@ Clicks the mouse at the specified screen coordinates.
 
 **Returns**:
 
-- `BoolResult` - Object containing:
+    BoolResult: Object containing:
   - success (bool): Whether the click succeeded
   - data (bool): True if successful, None otherwise
   - error_message (str): Error description if failed
@@ -233,7 +233,7 @@ Clicks the mouse at the specified screen coordinates.
 
 **Raises**:
 
-- `ValueError` - If button is not one of the valid options.
+    ValueError: If button is not one of the valid options.
   
   Behavior:
   - Clicks at the exact pixel coordinates provided
@@ -307,7 +307,7 @@ Moves the mouse to the specified coordinates.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
   
 
 **Example**:
@@ -365,17 +365,17 @@ Drags the mouse from one point to another.
 - `button` _Union[MouseButton, str], optional_ - Button type. Can be MouseButton enum or string.
   Valid values: MouseButton.LEFT, MouseButton.RIGHT, MouseButton.MIDDLE
   or their string equivalents. Defaults to MouseButton.LEFT.
-- `Note` - DOUBLE_LEFT is not supported for drag operations.
+    Note: DOUBLE_LEFT is not supported for drag operations.
   
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
   
 
 **Raises**:
 
-- `ValueError` - If button is not a valid option.
+    ValueError: If button is not a valid option.
   
 
 **Example**:
@@ -441,12 +441,12 @@ Scrolls the mouse wheel at the specified coordinates.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
   
 
 **Raises**:
 
-- `ValueError` - If direction is not a valid option.
+    ValueError: If direction is not a valid option.
   
 
 **Example**:
@@ -506,7 +506,7 @@ Gets the current cursor position.
 
 **Returns**:
 
-- `OperationResult` - Result object containing cursor position data
+    OperationResult: Result object containing cursor position data
   with keys 'x' and 'y', and error message if any.
   
 
@@ -560,7 +560,7 @@ Types text into the currently focused input field.
 
 **Returns**:
 
-- `BoolResult` - Object with success status and error message if any.
+    BoolResult: Object with success status and error message if any.
   
 
 **Example**:
@@ -611,7 +611,7 @@ Presses the specified keys.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
   
 
 **Example**:
@@ -672,7 +672,7 @@ Releases the specified keys.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
   
 
 **Example**:
@@ -721,7 +721,7 @@ Gets the screen size and DPI scaling factor.
 
 **Returns**:
 
-- `OperationResult` - Result object containing screen size data
+    OperationResult: Result object containing screen size data
   with keys 'width', 'height', and 'dpiScalingFactor',
   and error message if any.
   
@@ -772,7 +772,7 @@ Takes a screenshot of the current screen.
 
 **Returns**:
 
-- `OperationResult` - Result object containing the path to the screenshot
+    OperationResult: Result object containing the path to the screenshot
   and error message if any.
   
 
@@ -822,10 +822,44 @@ Lists all root windows.
 **Arguments**:
 
 - `timeout_ms` _int, optional_ - Timeout in milliseconds. Defaults to 3000.
+  
 
 **Returns**:
 
-- `WindowListResult` - Result object containing list of windows and error message if any.
+    WindowListResult: Result object containing list of windows and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def list_windows_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # List all root windows
+            windows_result = session.computer.list_root_windows()
+            if windows_result.success:
+                print(f"Found {len(windows_result.windows)} root windows")
+                for window in windows_result.windows:
+                    print(f"Window: {window.title}, ID: {window.window_id}")
+            else:
+                print(f"Failed to list windows: {windows_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+list_windows_example()
+```
 
 #### get\_active\_window
 
@@ -838,10 +872,46 @@ Gets the currently active window.
 **Arguments**:
 
 - `timeout_ms` _int, optional_ - Timeout in milliseconds. Defaults to 3000.
+  
 
 **Returns**:
 
-- `WindowInfoResult` - Result object containing active window info and error message if any.
+    WindowInfoResult: Result object containing active window info and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def get_active_window_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # Get the currently active window
+            window_result = session.computer.get_active_window()
+            if window_result.success:
+                window = window_result.window
+                print(f"Active window: {window.title}")
+                print(f"Window ID: {window.window_id}")
+                print(f"Position: ({window.absolute_upper_left_x}, {window.absolute_upper_left_y})")
+                print(f"Size: {window.width}x{window.height}")
+            else:
+                print(f"Failed to get active window: {window_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+get_active_window_example()
+```
 
 #### activate\_window
 
@@ -858,7 +928,55 @@ Activates the specified window.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def activate_window_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # First, list all windows to get window IDs
+            windows_result = session.computer.list_root_windows()
+            if windows_result.success and len(windows_result.windows) > 0:
+                # Activate the first window
+                window_id = windows_result.windows[0].window_id
+                activate_result = session.computer.activate_window(window_id)
+                if activate_result.success:
+                    print(f"Window {window_id} activated successfully")
+                    # Output: Window 65938 activated successfully
+                else:
+                    print(f"Failed to activate window: {activate_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+activate_window_example()
+```
+  
+
+**Notes**:
+
+  - The window must exist in the system
+  - Use list_root_windows() to get available window IDs
+  - Activating a window brings it to the foreground
+  
+
+**See Also**:
+
+  list_root_windows, get_active_window, close_window
 
 #### close\_window
 
@@ -875,7 +993,55 @@ Closes the specified window.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def close_window_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # First, list all windows to get window IDs
+            windows_result = session.computer.list_root_windows()
+            if windows_result.success and len(windows_result.windows) > 0:
+                # Close the first window
+                window_id = windows_result.windows[0].window_id
+                close_result = session.computer.close_window(window_id)
+                if close_result.success:
+                    print(f"Window {window_id} closed successfully")
+                    # Output: Window 65938 closed successfully
+                else:
+                    print(f"Failed to close window: {close_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+close_window_example()
+```
+  
+
+**Notes**:
+
+  - The window must exist in the system
+  - Use list_root_windows() to get available window IDs
+  - Closing a window terminates it permanently
+  
+
+**See Also**:
+
+  list_root_windows, activate_window, minimize_window
 
 #### maximize\_window
 
@@ -892,7 +1058,55 @@ Maximizes the specified window.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def maximize_window_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # Get the active window
+            window_result = session.computer.get_active_window()
+            if window_result.success and window_result.window:
+                # Maximize the active window
+                window_id = window_result.window.window_id
+                maximize_result = session.computer.maximize_window(window_id)
+                if maximize_result.success:
+                    print(f"Window {window_id} maximized successfully")
+                    # Output: Window 65938 maximized successfully
+                else:
+                    print(f"Failed to maximize window: {maximize_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+maximize_window_example()
+```
+  
+
+**Notes**:
+
+  - The window must exist in the system
+  - Maximizing expands the window to fill the screen
+  - Use restore_window() to return to previous size
+  
+
+**See Also**:
+
+  minimize_window, restore_window, fullscreen_window, resize_window
 
 #### minimize\_window
 
@@ -909,7 +1123,55 @@ Minimizes the specified window.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def minimize_window_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # Get the active window
+            window_result = session.computer.get_active_window()
+            if window_result.success and window_result.window:
+                # Minimize the active window
+                window_id = window_result.window.window_id
+                minimize_result = session.computer.minimize_window(window_id)
+                if minimize_result.success:
+                    print(f"Window {window_id} minimized successfully")
+                    # Output: Window 65938 minimized successfully
+                else:
+                    print(f"Failed to minimize window: {minimize_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+minimize_window_example()
+```
+  
+
+**Notes**:
+
+  - The window must exist in the system
+  - Minimizing hides the window in the taskbar
+  - Use restore_window() or activate_window() to bring it back
+  
+
+**See Also**:
+
+  maximize_window, restore_window, activate_window
 
 #### restore\_window
 
@@ -926,7 +1188,59 @@ Restores the specified window.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def restore_window_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # Get the active window
+            window_result = session.computer.get_active_window()
+            if window_result.success and window_result.window:
+                window_id = window_result.window.window_id
+
+                # First minimize the window
+                session.computer.minimize_window(window_id)
+
+                # Then restore it
+                restore_result = session.computer.restore_window(window_id)
+                if restore_result.success:
+                    print(f"Window {window_id} restored successfully")
+                    # Output: Window 65938 restored successfully
+                else:
+                    print(f"Failed to restore window: {restore_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+restore_window_example()
+```
+  
+
+**Notes**:
+
+  - The window must exist in the system
+  - Restoring returns a minimized or maximized window to its normal state
+  - Works for windows that were previously minimized or maximized
+  
+
+**See Also**:
+
+  minimize_window, maximize_window, activate_window
 
 #### resize\_window
 
@@ -945,7 +1259,55 @@ Resizes the specified window.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def resize_window_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # Get the active window
+            window_result = session.computer.get_active_window()
+            if window_result.success and window_result.window:
+                # Resize the active window to 800x600
+                window_id = window_result.window.window_id
+                resize_result = session.computer.resize_window(window_id, 800, 600)
+                if resize_result.success:
+                    print(f"Window {window_id} resized to 800x600 successfully")
+                    # Output: Window 65938 resized to 800x600 successfully
+                else:
+                    print(f"Failed to resize window: {resize_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+resize_window_example()
+```
+  
+
+**Notes**:
+
+  - The window must exist in the system
+  - Width and height are in pixels
+  - Some windows may have minimum or maximum size constraints
+  
+
+**See Also**:
+
+  maximize_window, restore_window, get_screen_size
 
 #### fullscreen\_window
 
@@ -962,7 +1324,56 @@ Makes the specified window fullscreen.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def fullscreen_window_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # Get the active window
+            window_result = session.computer.get_active_window()
+            if window_result.success and window_result.window:
+                # Make the active window fullscreen
+                window_id = window_result.window.window_id
+                fullscreen_result = session.computer.fullscreen_window(window_id)
+                if fullscreen_result.success:
+                    print(f"Window {window_id} set to fullscreen successfully")
+                    # Output: Window 65938 set to fullscreen successfully
+                else:
+                    print(f"Failed to fullscreen window: {fullscreen_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+fullscreen_window_example()
+```
+  
+
+**Notes**:
+
+  - The window must exist in the system
+  - Fullscreen mode hides window borders and taskbar
+  - Different from maximize_window() which keeps window borders
+  - Press F11 or ESC to exit fullscreen in most applications
+  
+
+**See Also**:
+
+  maximize_window, restore_window
 
 #### focus\_mode
 
@@ -979,7 +1390,55 @@ Toggles focus mode on or off.
 
 **Returns**:
 
-- `BoolResult` - Result object containing success status and error message if any.
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def focus_mode_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # Enable focus mode
+            enable_result = session.computer.focus_mode(True)
+            if enable_result.success:
+                print("Focus mode enabled successfully")
+                # Output: Focus mode enabled successfully
+
+            # Disable focus mode
+            disable_result = session.computer.focus_mode(False)
+            if disable_result.success:
+                print("Focus mode disabled successfully")
+                # Output: Focus mode disabled successfully
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+focus_mode_example()
+```
+  
+
+**Notes**:
+
+  - Focus mode helps reduce distractions by managing window focus
+  - When enabled, may prevent background windows from stealing focus
+  - Behavior depends on the window manager and OS settings
+  
+
+**See Also**:
+
+  activate_window, get_active_window
 
 #### get\_installed\_apps
 
@@ -1001,7 +1460,7 @@ Gets the list of installed applications.
 
 **Returns**:
 
-- `InstalledAppListResult` - Result object containing list of installed apps and error message if any.
+    InstalledAppListResult: Result object containing list of installed apps and error message if any.
   
 
 **Example**:
@@ -1063,7 +1522,7 @@ Starts the specified application.
 
 **Returns**:
 
-- `ProcessListResult` - Result object containing list of processes started and error message if any.
+    ProcessListResult: Result object containing list of processes started and error message if any.
 
 #### list\_visible\_apps
 
@@ -1079,7 +1538,7 @@ This is useful for system monitoring and process management tasks.
 
 **Returns**:
 
-- `ProcessListResult` - Result object containing list of visible applications
+    ProcessListResult: Result object containing list of visible applications
   with detailed process information.
 
 #### stop\_app\_by\_pname
@@ -1097,7 +1556,7 @@ Stops an application by process name.
 
 **Returns**:
 
-- `AppOperationResult` - Result object containing success status and error message if any.
+    AppOperationResult: Result object containing success status and error message if any.
 
 #### stop\_app\_by\_pid
 
@@ -1114,7 +1573,7 @@ Stops an application by process ID.
 
 **Returns**:
 
-- `AppOperationResult` - Result object containing success status and error message if any.
+    AppOperationResult: Result object containing success status and error message if any.
 
 #### stop\_app\_by\_cmd
 
@@ -1131,7 +1590,7 @@ Stops an application by stop command.
 
 **Returns**:
 
-- `AppOperationResult` - Result object containing success status and error message if any.
+    AppOperationResult: Result object containing success status and error message if any.
 
 ## Best Practices
 

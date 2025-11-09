@@ -117,7 +117,7 @@ Lists all available contexts with pagination support.
 
 **Returns**:
 
-- `ContextListResult` - A result object containing the list of Context objects,
+    ContextListResult: A result object containing the list of Context objects,
   pagination information, and request ID.
   
 
@@ -182,7 +182,7 @@ Gets a context by name or ID. Optionally creates it if it doesn't exist.
 
 **Returns**:
 
-- `ContextResult` - The ContextResult object containing the Context and request ID.
+    ContextResult: The ContextResult object containing the Context and request ID.
   - success (bool): True if the operation succeeded
   - context (Context): The context object (if success is True)
   - context_id (str): The ID of the context
@@ -192,7 +192,7 @@ Gets a context by name or ID. Optionally creates it if it doesn't exist.
 
 **Raises**:
 
-- `AgentBayError` - If neither name nor context_id is provided, or if create=True with context_id.
+    AgentBayError: If neither name nor context_id is provided, or if create=True with context_id.
   
 
 **Example**:
@@ -260,7 +260,7 @@ Creates a new context with the given name.
 
 **Returns**:
 
-- `ContextResult` - The created ContextResult object with request ID.
+    ContextResult: The created ContextResult object with request ID.
   
 
 **Example**:
@@ -307,7 +307,7 @@ Updates the specified context (currently only name can be updated).
 
 **Returns**:
 
-- `OperationResult` - Result object containing success status and request ID.
+    OperationResult: Result object containing success status and request ID.
   - success (bool): True if the operation succeeded
   - data (str): Success message (if success is True)
   - request_id (str): Unique identifier for this API request
@@ -316,7 +316,7 @@ Updates the specified context (currently only name can be updated).
 
 **Raises**:
 
-- `AgentBayError` - If the context update fails.
+    AgentBayError: If the context update fails.
   
 
 **Example**:
@@ -386,7 +386,7 @@ Deletes the specified context.
 
 **Returns**:
 
-- `OperationResult` - Result object containing success status and request ID.
+    OperationResult: Result object containing success status and request ID.
   
 
 **Example**:
@@ -434,7 +434,7 @@ Get a presigned download URL for a file in a context.
 
 **Returns**:
 
-- `FileUrlResult` - A result object containing the presigned URL, expire time, and request ID.
+    FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
   
 
 **Example**:
@@ -495,7 +495,7 @@ Get a presigned upload URL for a file in a context.
 
 **Returns**:
 
-- `FileUrlResult` - A result object containing the presigned URL, expire time, and request ID.
+    FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
   
 
 **Example**:
@@ -560,7 +560,7 @@ Delete a file in a context.
 
 **Returns**:
 
-- `OperationResult` - A result object containing success status and request ID.
+    OperationResult: A result object containing success status and request ID.
   
 
 **Example**:
@@ -616,7 +616,7 @@ List files under a specific folder path in a context.
 
 **Returns**:
 
-- `ContextFileListResult` - A result object containing the list of files and request ID.
+    ContextFileListResult: A result object containing the list of files and request ID.
   
 
 **Example**:
@@ -675,7 +675,7 @@ is in progress.
 
 **Arguments**:
 
-- `context_id` - Unique ID of the context to clear.
+    context_id: Unique ID of the context to clear.
   
 
 **Returns**:
@@ -686,7 +686,7 @@ is in progress.
 
 **Raises**:
 
-- `AgentBayError` - If the backend API rejects the clearing request (e.g., invalid ID).
+    AgentBayError: If the backend API rejects the clearing request (e.g., invalid ID).
 
 #### get\_clear\_status
 
@@ -701,7 +701,7 @@ the state field, which indicates the current clearing status.
 
 **Arguments**:
 
-- `context_id` - ID of the context.
+    context_id: ID of the context.
   
 
 **Returns**:
@@ -727,9 +727,9 @@ The clearing process transitions through the following states:
 
 **Arguments**:
 
-- `context_id` - Unique ID of the context to clear.
-- `timeout` - Timeout in seconds to wait for task completion. Defaults to 60.
-- `poll_interval` - Interval in seconds between status polls. Defaults to 2.0.
+    context_id: Unique ID of the context to clear.
+    timeout: Timeout in seconds to wait for task completion. Defaults to 60.
+    poll_interval: Interval in seconds between status polls. Defaults to 2.0.
   
 
 **Returns**:
@@ -740,8 +740,8 @@ The clearing process transitions through the following states:
 
 **Raises**:
 
-- `ClearanceTimeoutError` - If the task fails to complete within the timeout.
-- `AgentBayError` - If an API or network error occurs during execution.
+    ClearanceTimeoutError: If the task fails to complete within the timeout.
+    AgentBayError: If an API or network error occurs during execution.
 
 ## Related Resources
 
