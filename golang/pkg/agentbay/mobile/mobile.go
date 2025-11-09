@@ -389,6 +389,42 @@ func (m *Mobile) InputText(text string) *BoolResult {
 }
 
 // SendKey sends a key press event
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Send BACK key (keycode 4)
+//		keyResult := session.Mobile.SendKey(4)
+//		if keyResult.Success {
+//			fmt.Println("Key press successful")
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) SendKey(key int) *BoolResult {
 	args := map[string]interface{}{
 		"key": key,
@@ -672,6 +708,45 @@ func (m *Mobile) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *In
 }
 
 // StartApp starts a specified application
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Start an Android app (example: Calculator)
+//		processResult := session.Mobile.StartApp("com.android.calculator2", "", "com.android.calculator2.Calculator")
+//		if processResult.ErrorMessage == "" {
+//			fmt.Printf("App started, %d processes found\n", len(processResult.Processes))
+//			for _, proc := range processResult.Processes {
+//				fmt.Printf("  - Process: %s (PID: %d)\n", proc.PName, proc.PID)
+//			}
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) StartApp(startCmd, workDirectory, activity string) *ProcessListResult {
 	args := map[string]interface{}{
 		"start_cmd":      startCmd,
@@ -719,6 +794,42 @@ func (m *Mobile) StartApp(startCmd, workDirectory, activity string) *ProcessList
 }
 
 // StopAppByCmd stops an application using the provided stop command
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := &agentbay.CreateSessionParams{
+//			ImageId: "mobile_latest",
+//		}
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Stop an Android app by package name
+//		stopResult := session.Mobile.StopAppByCmd("com.android.calculator2")
+//		if stopResult.Success {
+//			fmt.Println("App stopped successfully")
+//		}
+//
+//		session.Delete()
+//	}
 func (m *Mobile) StopAppByCmd(stopCmd string) *BoolResult {
 	args := map[string]interface{}{
 		"stop_cmd": stopCmd,
@@ -849,6 +960,50 @@ func (m *Mobile) Configure(mobileConfig *models.MobileExtraConfig) error {
 }
 
 // SetResolutionLock sets display resolution lock for mobile devices
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Enable resolution lock to prevent automatic resolution changes
+//		err = session.Mobile.SetResolutionLock(true)
+//		if err != nil {
+//			fmt.Printf("Error setting resolution lock: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Println("Resolution lock enabled successfully")
+//
+//		// Disable resolution lock to allow automatic resolution changes
+//		err = session.Mobile.SetResolutionLock(false)
+//		if err != nil {
+//			fmt.Printf("Error disabling resolution lock: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Println("Resolution lock disabled successfully")
+//
+//		session.Delete()
+//	}
 func (m *Mobile) SetResolutionLock(enable bool) error {
 	return m.setResolutionLock(enable)
 }
@@ -932,21 +1087,187 @@ func (m *Mobile) setUninstallBlacklist(packageNames []string) error {
 }
 
 // SetNavigationBarVisibility sets navigation bar visibility for mobile devices
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Hide navigation bar for full-screen experience
+//		err = session.Mobile.SetNavigationBarVisibility(true)
+//		if err != nil {
+//			fmt.Printf("Error hiding navigation bar: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Println("Navigation bar hidden successfully")
+//
+//		// Show navigation bar again
+//		err = session.Mobile.SetNavigationBarVisibility(false)
+//		if err != nil {
+//			fmt.Printf("Error showing navigation bar: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Println("Navigation bar shown successfully")
+//
+//		session.Delete()
+//	}
 func (m *Mobile) SetNavigationBarVisibility(hide bool) error {
 	return m.setNavigationBarVisibility(hide)
 }
 
 // SetUninstallBlacklist sets uninstall protection blacklist for mobile devices
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Protect critical apps from being uninstalled
+//		protectedApps := []string{
+//			"com.android.chrome",
+//			"com.google.android.gms",
+//			"com.android.vending",
+//		}
+//		err = session.Mobile.SetUninstallBlacklist(protectedApps)
+//		if err != nil {
+//			fmt.Printf("Error setting uninstall blacklist: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Printf("Protected %d apps from uninstallation\n", len(protectedApps))
+//
+//		session.Delete()
+//	}
 func (m *Mobile) SetUninstallBlacklist(packageNames []string) error {
 	return m.setUninstallBlacklist(packageNames)
 }
 
 // SetAppWhitelist sets app whitelist for mobile devices
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Only allow specific apps to run (kiosk mode)
+//		allowedApps := []string{
+//			"com.example.kiosk",
+//			"com.android.settings",
+//		}
+//		err = session.Mobile.SetAppWhitelist(allowedApps)
+//		if err != nil {
+//			fmt.Printf("Error setting app whitelist: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Printf("Restricted device to %d allowed apps\n", len(allowedApps))
+//
+//		session.Delete()
+//	}
 func (m *Mobile) SetAppWhitelist(packageNames []string) error {
 	return m.setAppWhitelist(packageNames)
 }
 
 // SetAppBlacklist sets app blacklist for mobile devices
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Block specific apps from running
+//		blockedApps := []string{
+//			"com.facebook.katana",
+//			"com.instagram.android",
+//			"com.snapchat.android",
+//		}
+//		err = session.Mobile.SetAppBlacklist(blockedApps)
+//		if err != nil {
+//			fmt.Printf("Error setting app blacklist: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Printf("Blocked %d apps from running\n", len(blockedApps))
+//
+//		session.Delete()
+//	}
 func (m *Mobile) SetAppBlacklist(packageNames []string) error {
 	return m.setAppBlacklist(packageNames)
 }

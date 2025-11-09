@@ -234,6 +234,58 @@ type BrowserOption struct {
 }
 
 // NewBrowserOption creates a new BrowserOption with default values and validation
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Create browser option with default values
+//		option := browser.NewBrowserOption()
+//
+//		// Customize user agent
+//		customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+//		option.UserAgent = &customUA
+//
+//		// Set viewport
+//		option.Viewport = &browser.BrowserViewport{Width: 1920, Height: 1080}
+//
+//		// Enable stealth mode
+//		option.UseStealth = true
+//
+//		// Initialize browser with custom options
+//		success, err := session.Browser.Initialize(option)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		if !success {
+//			fmt.Println("Failed to initialize browser")
+//			os.Exit(1)
+//		}
+//		fmt.Println("Browser initialized with custom options")
+//
+//		// Output: Browser initialized with custom options
+//
+//		session.Delete()
+//	}
 func NewBrowserOption() *BrowserOption {
 	defaultExtPath := "/tmp/extensions/"
 	return &BrowserOption{
@@ -245,6 +297,32 @@ func NewBrowserOption() *BrowserOption {
 }
 
 // Validate validates the BrowserOption
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//	)
+//	func main() {
+//		option := browser.NewBrowserOption()
+//
+//		// Set custom configuration
+//		customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+//		option.UserAgent = &customUA
+//		option.UseStealth = true
+//
+//		// Validate before use
+//		if err := option.Validate(); err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Println("Browser option validated successfully")
+//
+//		// Output: Browser option validated successfully
+//	}
 func (o *BrowserOption) Validate() error {
 	// Validate proxies
 	if len(o.Proxies) > 1 {
@@ -370,11 +448,115 @@ func NewBrowser(session SessionInterface) *Browser {
 }
 
 // IsInitialized returns true if the browser was initialized, false otherwise
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Check if browser is initialized before use
+//		if session.Browser.IsInitialized() {
+//			fmt.Println("Browser is already initialized")
+//		} else {
+//			fmt.Println("Browser is not initialized yet")
+//		}
+//
+//		// Output: Browser is not initialized yet
+//
+//		// Initialize browser
+//		option := browser.NewBrowserOption()
+//		success, err := session.Browser.Initialize(option)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		if !success {
+//			os.Exit(1)
+//		}
+//
+//		// Check again after initialization
+//		if session.Browser.IsInitialized() {
+//			fmt.Println("Browser is now initialized")
+//		}
+//
+//		// Output: Browser is now initialized
+//
+//		session.Delete()
+//	}
 func (b *Browser) IsInitialized() bool {
 	return b.initialized
 }
 
 // GetOption returns the current BrowserOption used to initialize the browser, or nil if not set
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Initialize browser with custom options
+//		option := browser.NewBrowserOption()
+//		customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+//		option.UserAgent = &customUA
+//		option.UseStealth = true
+//
+//		success, err := session.Browser.Initialize(option)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		if !success {
+//			os.Exit(1)
+//		}
+//
+//		// Get current browser option
+//		currentOption := session.Browser.GetOption()
+//		if currentOption != nil {
+//			fmt.Printf("Stealth mode: %v\n", currentOption.UseStealth)
+//			if currentOption.UserAgent != nil {
+//				fmt.Printf("User agent: %s\n", *currentOption.UserAgent)
+//			}
+//		}
+//
+//		// Output: Stealth mode: true
+//		// Output: User agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0
+//
+//		session.Delete()
+//	}
 func (b *Browser) GetOption() *BrowserOption {
 	return b.option
 }

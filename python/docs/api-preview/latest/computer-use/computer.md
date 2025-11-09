@@ -1523,6 +1523,52 @@ Starts the specified application.
 **Returns**:
 
     ProcessListResult: Result object containing list of processes started and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def start_application_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # Start Notepad application
+            start_result = session.computer.start_app("notepad.exe")
+            if start_result.success:
+                print(f"Started {len(start_result.data)} process(es)")
+                for process in start_result.data:
+                    print(f"Process: {process.pname}, PID: {process.pid}")
+            else:
+                print(f"Failed to start app: {start_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+start_application_example()
+```
+  
+
+**Notes**:
+
+  - The start_cmd can be an executable name or full path
+  - work_directory is optional and defaults to the system default
+  - activity parameter is for mobile apps (Android)
+  - Returns process information for all started processes
+  
+
+**See Also**:
+
+  get_installed_apps, stop_app_by_pname, list_visible_apps
 
 #### list\_visible\_apps
 
@@ -1540,6 +1586,54 @@ This is useful for system monitoring and process management tasks.
 
     ProcessListResult: Result object containing list of visible applications
   with detailed process information.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def list_running_apps_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # List all applications with visible windows
+            apps_result = session.computer.list_visible_apps()
+            if apps_result.success:
+                print(f"Found {len(apps_result.data)} visible applications")
+                for process in apps_result.data:
+                    print(f"App: {process.pname}, PID: {process.pid}")
+                    if process.cmdline:
+                        print(f"  Command line: {process.cmdline}")
+            else:
+                print(f"Failed to list apps: {apps_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+list_running_apps_example()
+```
+  
+
+**Notes**:
+
+  - Only returns applications with visible windows
+  - Hidden or minimized windows may not appear
+  - Useful for monitoring currently active applications
+  - Process information includes PID, name, and command line
+  
+
+**See Also**:
+
+  get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
 #### stop\_app\_by\_pname
 
@@ -1557,6 +1651,53 @@ Stops an application by process name.
 **Returns**:
 
     AppOperationResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def stop_application_by_name_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # First, start an application
+            session.computer.start_app("notepad.exe")
+
+            # Stop the application by process name
+            stop_result = session.computer.stop_app_by_pname("notepad.exe")
+            if stop_result.success:
+                print("Application stopped successfully")
+            else:
+                print(f"Failed to stop app: {stop_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+stop_application_by_name_example()
+```
+  
+
+**Notes**:
+
+  - The process name should match exactly (case-sensitive on some systems)
+  - This will stop all processes matching the given name
+  - If multiple instances are running, all will be terminated
+  - The .exe extension may be required on Windows
+  
+
+**See Also**:
+
+  start_app, stop_app_by_pid, stop_app_by_cmd, list_visible_apps
 
 #### stop\_app\_by\_pid
 
@@ -1574,6 +1715,57 @@ Stops an application by process ID.
 **Returns**:
 
     AppOperationResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def stop_application_by_pid_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # First, start an application
+            start_result = session.computer.start_app("notepad.exe")
+            if start_result.success and len(start_result.data) > 0:
+                # Get the PID of the started process
+                process_pid = start_result.data[0].pid
+                print(f"Started process with PID: {process_pid}")
+
+                # Stop the application by PID
+                stop_result = session.computer.stop_app_by_pid(process_pid)
+                if stop_result.success:
+                    print(f"Process {process_pid} stopped successfully")
+                else:
+                    print(f"Failed to stop process: {stop_result.error_message}")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+stop_application_by_pid_example()
+```
+  
+
+**Notes**:
+
+  - PID must be a valid process ID
+  - More precise than stopping by name (only stops specific process)
+  - The process must be owned by the session or have appropriate permissions
+  - PID can be obtained from start_app() or list_visible_apps()
+  
+
+**See Also**:
+
+  start_app, stop_app_by_pname, stop_app_by_cmd, list_visible_apps
 
 #### stop\_app\_by\_cmd
 
@@ -1591,6 +1783,57 @@ Stops an application by stop command.
 **Returns**:
 
     AppOperationResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def stop_application_by_cmd_example():
+    try:
+        # Create a session with windows_latest image
+        params = CreateSessionParams(image_id="windows_latest")
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+
+            # First, get installed apps to find stop command
+            apps_result = session.computer.get_installed_apps()
+            if apps_result.success and len(apps_result.data) > 0:
+                # Find an app with a stop command
+                for app in apps_result.data:
+                    if app.stop_cmd:
+                        print(f"Stopping {app.name} with command: {app.stop_cmd}")
+                        stop_result = session.computer.stop_app_by_cmd(app.stop_cmd)
+                        if stop_result.success:
+                            print("Application stopped successfully")
+                        else:
+                            print(f"Failed: {stop_result.error_message}")
+                        break
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+stop_application_by_cmd_example()
+```
+  
+
+**Notes**:
+
+  - The stop_cmd should be the command registered to stop the application
+  - Typically obtained from get_installed_apps() which returns app metadata
+  - Some applications may not have a stop command defined
+  - The command is executed as-is without shell interpretation
+  
+
+**See Also**:
+
+  get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
 ## Best Practices
 

@@ -687,6 +687,40 @@ is in progress.
 **Raises**:
 
     AgentBayError: If the backend API rejects the clearing request (e.g., invalid ID).
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def clear_context_async():
+    try:
+        # Get a context
+        result = agent_bay.context.get(name="my-context", create=True)
+        if result.success:
+            context = result.context
+
+            # Start clearing context data asynchronously (non-blocking)
+            clear_result = agent_bay.context.clear_async(context.id)
+            if clear_result.success:
+                print(f"Clear task started: Status={clear_result.status}")
+                # Output: Clear task started: Status=clearing
+                print(f"Request ID: {clear_result.request_id}")
+                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+                # You can now check status periodically using get_clear_status
+            else:
+                print(f"Failed to start clear: {clear_result.error_message}")
+        else:
+            print(f"Failed to get context: {result.error_message}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+clear_context_async()
+```
 
 #### get\_clear\_status
 
@@ -707,6 +741,52 @@ the state field, which indicates the current clearing status.
 **Returns**:
 
   ClearContextResult object containing the current task status.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+import time
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def check_clear_status():
+    try:
+        # Get a context
+        result = agent_bay.context.get(name="my-context", create=True)
+        if result.success:
+            context = result.context
+
+            # Start clearing asynchronously
+            clear_result = agent_bay.context.clear_async(context.id)
+            if clear_result.success:
+                print("Clear task started, checking status...")
+                # Output: Clear task started, checking status...
+
+                # Poll for status until complete
+                for i in range(30):
+                    time.sleep(2)
+                    status_result = agent_bay.context.get_clear_status(context.id)
+                    if status_result.success:
+                        print(f"Current status: {status_result.status}")
+                        # Output: Current status: clearing (or available when done)
+                        if status_result.status == "available":
+                            print("Context cleared successfully!")
+                            # Output: Context cleared successfully!
+                            break
+                    else:
+                        print(f"Failed to get status: {status_result.error_message}")
+                        break
+            else:
+                print(f"Failed to start clear: {clear_result.error_message}")
+        else:
+            print(f"Failed to get context: {result.error_message}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+check_clear_status()
+```
 
 #### clear
 

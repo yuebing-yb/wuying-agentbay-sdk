@@ -35,6 +35,71 @@ class ContextSyncResult(ApiResponse)
 class ContextManager()
 ```
 
+Manages context operations within a session in the AgentBay cloud environment.
+
+The ContextManager provides methods to get information about context synchronization
+status and to synchronize contexts with the session.
+
+**Example**:
+
+```python
+import asyncio
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+async def complete_context_manager_example():
+    try:
+        # Create a session
+        result = agent_bay.create()
+        if not result.success:
+            print(f"Failed to create session: {result.error_message}")
+            return
+
+        session = result.session
+        print(f"Session created: {session.get_session_id()}")
+
+        # Get or create a context
+        context_result = agent_bay.context.get('my-persistent-context', True)
+        if not context_result.context:
+            print("Failed to get context")
+            return
+
+        print(f"Context ID: {context_result.context_id}")
+
+        # Check initial context status
+        info_result = session.context.info()
+        print(f"Initial context status data count: {len(info_result.context_status_data)}")
+
+        # Synchronize context and wait for completion
+        sync_result = await session.context.sync(
+            context_id=context_result.context_id,
+            path="/mnt/persistent",
+            mode="upload"
+        )
+
+        print(f"Sync completed - Success: {sync_result.success}")
+        print(f"Request ID: {sync_result.request_id}")
+
+        # Check final context status
+        final_info = session.context.info(
+            context_id=context_result.context_id,
+            path="/mnt/persistent"
+        )
+
+        print(f"Final context status data count: {len(final_info.context_status_data)}")
+        for item in final_info.context_status_data:
+            print(f"  Context {item.context_id}: Status={item.status}, TaskType={item.task_type}")
+
+        # Cleanup
+        session.delete()
+        print("Session deleted")
+    except Exception as e:
+        print(f"Error: {e}")
+
+asyncio.run(complete_context_manager_example())
+```
+
 #### info
 
 ```python

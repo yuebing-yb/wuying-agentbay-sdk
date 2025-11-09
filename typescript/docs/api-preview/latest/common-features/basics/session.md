@@ -342,13 +342,46 @@ Find the server that provides the given tool.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `toolName` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `toolName` | `string` | Name of the tool to find |
 
 #### Returns
 
 `string`
+
+The server name that provides the tool, or empty string if not found
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateFindServerForTool() {
+  try {
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // List available MCP tools first
+      await session.listMcpTools();
+
+      // Find the server that provides the 'shell' tool
+      const server = session.findServerForTool('shell');
+      console.log(`Server for 'shell' tool: ${server}`);
+      // Output: Server for 'shell' tool: cli_server
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateFindServerForTool().catch(console.error);
+```
 
 ___
 
@@ -487,6 +520,36 @@ Return the HTTP port for VPC sessions.
 #### Returns
 
 `string`
+
+The HTTP port string for VPC sessions
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateGetHttpPort() {
+  try {
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Get the HTTP port for VPC sessions
+      const httpPort = session.getHttpPort();
+      console.log(`HTTP Port: ${httpPort}`);
+      // Output: HTTP Port: 8080
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetHttpPort().catch(console.error);
+```
 
 ___
 
@@ -695,6 +758,36 @@ Return the network interface IP for VPC sessions.
 
 `string`
 
+The network interface IP string for VPC sessions
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateGetNetworkInterfaceIp() {
+  try {
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Get the network interface IP for VPC sessions
+      const networkIp = session.getNetworkInterfaceIp();
+      console.log(`Network Interface IP: ${networkIp}`);
+      // Output: Network Interface IP: 192.168.1.100
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetNetworkInterfaceIp().catch(console.error);
+```
+
 ___
 
 ### getSessionId
@@ -747,6 +840,36 @@ Return the token for VPC sessions.
 #### Returns
 
 `string`
+
+The token string for VPC sessions
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateGetToken() {
+  try {
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Get the token for VPC sessions
+      const token = session.getToken();
+      console.log('Token length:', token.length);
+      // Output: Token length: 64
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateGetToken().catch(console.error);
+```
 
 ___
 
@@ -848,6 +971,35 @@ Return whether this session uses VPC resources.
 #### Returns
 
 `boolean`
+
+boolean indicating if VPC is enabled for this session
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });\n *
+async function demonstrateIsVpcEnabled() {
+  try {
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Check if VPC is enabled
+      const isVpc = session.isVpcEnabled();
+      console.log(`VPC enabled: ${isVpc}`);
+      // Output: VPC enabled: false
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateIsVpcEnabled().catch(console.error);
+```
 
 ___
 

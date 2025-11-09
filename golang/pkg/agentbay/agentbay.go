@@ -700,7 +700,88 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 	}, nil
 }
 
-// Delete deletes a session by ID.
+// Delete deletes a session from the AgentBay cloud environment.
+//
+// Parameters:
+//   - session: The session to delete
+//   - syncContext: Optional boolean to synchronize context data before deletion.
+//     If true, uploads all context data to OSS. Defaults to false.
+//
+// Returns:
+//   - *DeleteResult: Result containing success status and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - If syncContext is true: Uploads all context data to OSS before deletion
+// - If syncContext is false: Deletes immediately without sync
+// - Continues with deletion even if context sync fails
+// - Releases all associated resources
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Initialize the SDK
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf(\"Error initializing AgentBay client: %v\\n\", err)
+//			os.Exit(1)
+//		}
+//
+//		// Create a context first
+//		contextResult, err := client.Context.Create(\"test-context\")
+//		if err != nil {
+//			fmt.Printf(\"Error creating context: %v\\n\", err)
+//			os.Exit(1)
+//		}
+//		// Output: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
+//
+//		// Create a session with context synchronization
+//		contextSync := &agentbay.ContextSync{
+//			ContextID: contextResult.ContextID,
+//			Path:      \"/home/wuying\",
+//			Policy:    agentbay.NewSyncPolicy(),
+//		}
+//		params := &agentbay.CreateSessionParams{
+//			ImageId:     \"windows_latest\",
+//			ContextSync: []*agentbay.ContextSync{contextSync},
+//		}
+//
+//		createResult, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf(\"Error creating session: %v\\n\", err)
+//			os.Exit(1)
+//		}
+//
+//		session := createResult.Session
+//		fmt.Printf(\"Created session with ID: %s\\n\", session.SessionID)
+//		// Output: Created session with ID: session-xxxxxxxxxxxxxxx
+//
+//		// Use the session for operations...
+//
+//		// Delete the session with context synchronization
+//		deleteResult, err := client.Delete(session, true)
+//		if err != nil {
+//			fmt.Printf(\"Error deleting session: %v\\n\", err)
+//			os.Exit(1)
+//		}
+//
+//		if deleteResult.Success {
+//			fmt.Println(\"Session deleted successfully with synchronized context\")
+//			// Output: Session deleted successfully with synchronized context
+//		}
+//		fmt.Printf(\"Request ID: %s\\n\", deleteResult.RequestID)
+//		// Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+//	}
 func (a *AgentBay) Delete(session *Session, syncContext ...bool) (*DeleteResult, error) {
 	result, err := session.Delete(syncContext...)
 	if err == nil {

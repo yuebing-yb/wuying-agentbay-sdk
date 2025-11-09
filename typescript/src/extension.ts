@@ -296,9 +296,45 @@ export class ExtensionsService {
   /**
    * Lists all available browser extensions within this context from the cloud.
    * Uses the context service to list files under the extensions directory.
-   * 
+   *
    * @returns Promise that resolves to an array of Extension objects.
    * @throws {AgentBayError} If listing extensions fails.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay, ExtensionsService } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateListExtensions() {
+   *   try {
+   *     // Create extensions service
+   *     const extensionsService = new ExtensionsService(agentBay, 'my_extensions');
+   *
+   *     // Upload some extensions
+   *     await extensionsService.create('/path/to/ext1.zip');
+   *     await extensionsService.create('/path/to/ext2.zip');
+   *
+   *     // List all extensions
+   *     const extensions = await extensionsService.list();
+   *     console.log(`Found ${extensions.length} extensions`);
+   *     // Output: Found 2 extensions
+   *
+   *     extensions.forEach(ext => {
+   *       console.log(`- Extension: ${ext.name} (ID: ${ext.id})`);
+   *       // Output: - Extension: ext1.zip (ID: ext_a1b2c3d4...)
+   *       // Output: - Extension: ext2.zip (ID: ext_e5f6g7h8...)
+   *     });
+   *
+   *     // Clean up
+   *     await extensionsService.cleanup();
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateListExtensions().catch(console.error);
+   * ```
    */
   async list(): Promise<Extension[]> {
     await this._ensureInitialized();
@@ -403,13 +439,51 @@ export class ExtensionsService {
 
   /**
    * Updates an existing browser extension in the current context with a new file.
-   * 
+   *
    * @param extensionId - ID of the extension to update.
    * @param newLocalPath - Path to the new local extension file.
    * @returns Promise that resolves to an Extension object.
    * @throws {Error} If the new local file doesn't exist.
    * @throws {Error} If the extension doesn't exist in the context.
    * @throws {AgentBayError} If update fails.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay, ExtensionsService } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateUpdateExtension() {
+   *   try {
+   *     // Create extensions service
+   *     const extensionsService = new ExtensionsService(agentBay, 'my_extensions');
+   *
+   *     // Upload initial extension
+   *     const extension = await extensionsService.create('/path/to/my-extension-v1.zip');
+   *     console.log(`Extension created: ${extension.id}`);
+   *     // Output: Extension created: ext_a1b2c3d4...
+   *
+   *     // Update the extension with a new version
+   *     const updatedExtension = await extensionsService.update(
+   *       extension.id,
+   *       '/path/to/my-extension-v2.zip'
+   *     );
+   *     if (updatedExtension) {
+   *       console.log('Extension updated successfully');
+   *       // Output: Extension updated successfully
+   *       console.log(`Updated extension name: ${updatedExtension.name}`);
+   *       // Output: Updated extension name: my-extension-v2.zip
+   *     }
+   *
+   *     // Clean up
+   *     await extensionsService.cleanup();
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateUpdateExtension().catch(console.error);
+   * ```
    */
   async update(extensionId: string, newLocalPath: string): Promise<Extension> {
     await this._ensureInitialized();
@@ -454,12 +528,47 @@ export class ExtensionsService {
 
   /**
    * Cleans up the auto-created context if it was created by this service.
-   * 
+   *
    * @returns Promise that resolves to true if cleanup was successful or not needed, false if cleanup failed.
-   * 
+   *
    * Note:
    *   This method only works if the context was auto-created by this service.
    *   For existing contexts, no cleanup is performed.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay, ExtensionsService } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateCleanup() {
+   *   try {
+   *     // Create extensions service with auto-generated context
+   *     const extensionsService = new ExtensionsService(agentBay);
+   *
+   *     // Upload an extension
+   *     const extension = await extensionsService.create('/path/to/my-extension.zip');
+   *     console.log(`Extension created: ${extension.id}`);
+   *     // Output: Extension created: ext_a1b2c3d4...
+   *
+   *     // List extensions
+   *     const extensions = await extensionsService.list();
+   *     console.log(`Total extensions: ${extensions.length}`);
+   *     // Output: Total extensions: 1
+   *
+   *     // Clean up the auto-created context and all extensions
+   *     const success = await extensionsService.cleanup();
+   *     if (success) {
+   *       console.log('Extension context cleaned up successfully');
+   *       // Output: Extension context cleaned up successfully
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateCleanup().catch(console.error);
+   * ```
    */
   async cleanup(): Promise<boolean> {
     await this._ensureInitialized();
@@ -486,9 +595,54 @@ export class ExtensionsService {
 
   /**
    * Deletes a browser extension from the current context.
-   * 
+   *
    * @param extensionId - ID of the extension to delete.
    * @returns Promise that resolves to true if deletion was successful, false otherwise.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay, ExtensionsService } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateDeleteExtension() {
+   *   try {
+   *     // Create extensions service
+   *     const extensionsService = new ExtensionsService(agentBay, 'my_extensions');
+   *
+   *     // Upload an extension
+   *     const extension = await extensionsService.create('/path/to/my-extension.zip');
+   *     console.log(`Extension created: ${extension.id}`);
+   *     // Output: Extension created: ext_a1b2c3d4...
+   *
+   *     // Verify the extension exists
+   *     const extensions = await extensionsService.list();
+   *     console.log(`Total extensions: ${extensions.length}`);
+   *     // Output: Total extensions: 1
+   *
+   *     // Delete the extension
+   *     const success = await extensionsService.delete(extension.id);
+   *     if (success) {
+   *       console.log('Extension deleted successfully');
+   *       // Output: Extension deleted successfully
+   *     } else {
+   *       console.log('Failed to delete extension');
+   *     }
+   *
+   *     // Verify deletion
+   *     const remainingExtensions = await extensionsService.list();
+   *     console.log(`Remaining extensions: ${remainingExtensions.length}`);
+   *     // Output: Remaining extensions: 0
+   *
+   *     // Clean up
+   *     await extensionsService.cleanup();
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateDeleteExtension().catch(console.error);
+   * ```
    */
   async delete(extensionId: string): Promise<boolean> {
     await this._ensureInitialized();

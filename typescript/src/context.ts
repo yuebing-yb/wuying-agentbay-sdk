@@ -227,14 +227,6 @@ export class ContextService {
   }
 
   /**
-   * Gets a context by name. Optionally creates it if it doesn't exist.
-   * Corresponds to Python's get() method
-   *
-   * @param name - The name of the context to get.
-   * @param create - Whether to create the context if it doesn't exist.
-   * @returns ContextResult with context data and requestId
-   */
-  /**
    * Retrieves an existing context or creates a new one.
    *
    * @param name - The name of the context to retrieve or create.
@@ -248,12 +240,27 @@ export class ContextService {
    *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    *
-   * // Get existing context or create if not exists
-   * const contextResult = await agentBay.context.get('my-context', true);
-   * if (contextResult.success) {
-   *   console.log(`Context ID: ${contextResult.context.id}`);
-   *   console.log(`Context Name: ${contextResult.context.name}`);
+   * async function getOrCreateContext() {
+   *   try {
+   *     // Get existing context or create if not exists
+   *     const result = await agentBay.context.get('my-context', true);
+   *     if (result.success) {
+   *       const context = result.context;
+   *       console.log(`Context ID: ${context.id}`);
+   *       // Output: Context ID: ctx-04bdwfj7u22a1s30g
+   *       console.log(`Context Name: ${context.name}`);
+   *       // Output: Context Name: my-context
+   *       console.log(`Request ID: ${result.requestId}`);
+   *       // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *     } else {
+   *       console.log(`Failed to get context: ${result.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
    * }
+   *
+   * getOrCreateContext().catch(console.error);
    * ```
    *
    * @see {@link update}, {@link list}
@@ -394,13 +401,6 @@ export class ContextService {
   }
 
   /**
-   * Updates the specified context.
-   * Corresponds to Python's update() method
-   *
-   * @param context - The Context object to update.
-   * @returns OperationResult with updated context data and requestId
-   */
-  /**
    * Updates a context's name.
    *
    * @param context - The Context object with updated name.
@@ -413,17 +413,33 @@ export class ContextService {
    *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    *
-   * // Get context and update its name
-   * const getResult = await agentBay.context.get('old-name');
-   * if (getResult.success) {
-   *   const context = getResult.context;
-   *   context.name = 'new-name';
-   *   
-   *   const updateResult = await agentBay.context.update(context);
-   *   if (updateResult.success) {
-   *     console.log('Context name updated');
+   * async function updateContextName() {
+   *   try {
+   *     // Get an existing context
+   *     const getResult = await agentBay.context.get('old-name');
+   *     if (getResult.success && getResult.context) {
+   *       const context = getResult.context;
+   *       context.name = 'new-name';
+   *
+   *       // Update the context
+   *       const updateResult = await agentBay.context.update(context);
+   *       if (updateResult.success) {
+   *         console.log('Context name updated successfully');
+   *         // Output: Context name updated successfully
+   *         console.log(`Request ID: ${updateResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       } else {
+   *         console.log(`Failed to update context: ${updateResult.errorMessage}`);
+   *       }
+   *     } else {
+   *       console.log(`Failed to get context: ${getResult.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
    *   }
    * }
+   *
+   * updateContextName().catch(console.error);
    * ```
    *
    * @see {@link get}, {@link list}

@@ -77,6 +77,55 @@ func (c *Computer) ActivateWindow(windowID int) (*WindowResult, error)
 
 ActivateWindow activates the specified window
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List all root windows
+
+	windowList, err := session.Computer.ListRootWindows()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if len(windowList.Windows) > 0 {
+		targetWindow := windowList.Windows[0]
+		fmt.Printf("Activating window: %s (ID: %d)\n", targetWindow.Title, targetWindow.WindowID)
+
+		// Activate the first window
+
+		activateResult, err := session.Computer.ActivateWindow(targetWindow.WindowID)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		if activateResult.Success {
+			fmt.Println("Window activated successfully")
+		}
+	}
+	session.Delete()
+}
+```
+
 #### ClickMouse
 
 ```go
@@ -136,6 +185,55 @@ func (c *Computer) CloseWindow(windowID int) (*WindowResult, error)
 
 CloseWindow closes the specified window
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List all root windows
+
+	windowList, err := session.Computer.ListRootWindows()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if len(windowList.Windows) > 0 {
+		targetWindow := windowList.Windows[0]
+		fmt.Printf("Closing window: %s (ID: %d)\n", targetWindow.Title, targetWindow.WindowID)
+
+		// Close the window
+
+		closeResult, err := session.Computer.CloseWindow(targetWindow.WindowID)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		if closeResult.Success {
+			fmt.Println("Window closed successfully")
+		}
+	}
+	session.Delete()
+}
+```
+
 #### DragMouse
 
 ```go
@@ -188,6 +286,54 @@ func (c *Computer) FocusMode(on bool) (*WindowResult, error)
 
 FocusMode toggles focus mode on or off
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Enable focus mode
+
+	focusResult, err := session.Computer.FocusMode(true)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if focusResult.Success {
+		fmt.Println("Focus mode enabled")
+	}
+
+	// Disable focus mode
+
+	unfocusResult, err := session.Computer.FocusMode(false)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if unfocusResult.Success {
+		fmt.Println("Focus mode disabled")
+	}
+	session.Delete()
+}
+```
+
 #### FullscreenWindow
 
 ```go
@@ -203,6 +349,45 @@ func (c *Computer) GetActiveWindow(timeoutMs ...int) (*WindowDetailResult, error
 ```
 
 GetActiveWindow gets the currently active window
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Get the currently active window
+
+	windowResult, err := session.Computer.GetActiveWindow()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if windowResult.Window != nil {
+		fmt.Printf("Active Window ID: %d\n", windowResult.Window.WindowID)
+		fmt.Printf("Window Title: %s\n", windowResult.Window.Title)
+		fmt.Printf("Process Name: %s\n", windowResult.Window.PName)
+	}
+	session.Delete()
+}
+```
 
 #### GetCursorPosition
 
@@ -350,6 +535,55 @@ func (c *Computer) MaximizeWindow(windowID int) (*WindowResult, error)
 
 MaximizeWindow maximizes the specified window
 
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List all root windows
+
+	windowList, err := session.Computer.ListRootWindows()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if len(windowList.Windows) > 0 {
+		targetWindow := windowList.Windows[0]
+		fmt.Printf("Maximizing window: %s (ID: %d)\n", targetWindow.Title, targetWindow.WindowID)
+
+		// Maximize the window
+
+		maxResult, err := session.Computer.MaximizeWindow(targetWindow.WindowID)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		if maxResult.Success {
+			fmt.Println("Window maximized successfully")
+		}
+	}
+	session.Delete()
+}
+```
+
 #### MinimizeWindow
 
 ```go
@@ -357,6 +591,55 @@ func (c *Computer) MinimizeWindow(windowID int) (*WindowResult, error)
 ```
 
 MinimizeWindow minimizes the specified window
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List all root windows
+
+	windowList, err := session.Computer.ListRootWindows()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if len(windowList.Windows) > 0 {
+		targetWindow := windowList.Windows[0]
+		fmt.Printf("Minimizing window: %s (ID: %d)\n", targetWindow.Title, targetWindow.WindowID)
+
+		// Minimize the window
+
+		minResult, err := session.Computer.MinimizeWindow(targetWindow.WindowID)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		if minResult.Success {
+			fmt.Println("Window minimized successfully")
+		}
+	}
+	session.Delete()
+}
+```
 
 #### MoveMouse
 

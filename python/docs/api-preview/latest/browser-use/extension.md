@@ -51,6 +51,44 @@ Validate the extension option configuration.
 **Returns**:
 
     bool: True if configuration is valid, False otherwise.
+  
+
+**Example**:
+
+  
+```python
+from agentbay import AgentBay
+from agentbay.extension import ExtensionsService
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def validate_extension_option():
+    try:
+        # Create extensions service
+        extensions_service = ExtensionsService(agent_bay, "my_extensions")
+
+        # Upload extensions
+        ext1 = extensions_service.create("/path/to/ext1.zip")
+        ext2 = extensions_service.create("/path/to/ext2.zip")
+
+        # Create extension option
+        ext_option = extensions_service.create_extension_option([ext1.id, ext2.id])
+
+        # Validate the configuration
+        if ext_option.validate():
+            print("Extension option is valid")
+            print(f"Context ID: {ext_option.context_id}")
+            print(f"Extension IDs: {ext_option.extension_ids}")
+        else:
+            print("Extension option validation failed")
+
+        # Clean up
+        extensions_service.cleanup()
+    except Exception as e:
+        print(f"Error: {e}")
+
+validate_extension_option()
+```
 
 ## ExtensionsService Objects
 
@@ -291,6 +329,42 @@ Cleans up the auto-created context if it was created by this service.
 
   This method only works if the context was auto-created by this service.
   For existing contexts, no cleanup is performed.
+  
+
+**Example**:
+
+  
+```python
+from agentbay import AgentBay
+from agentbay.extension import ExtensionsService
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def manage_extensions_with_cleanup():
+    try:
+        # Create extensions service with auto-generated context
+        extensions_service = ExtensionsService(agent_bay)
+
+        # Upload some extensions
+        ext1 = extensions_service.create("/path/to/extension1.zip")
+        ext2 = extensions_service.create("/path/to/extension2.zip")
+
+        print(f"Uploaded {ext1.name} and {ext2.name}")
+
+        # List all extensions
+        extensions = extensions_service.list()
+        print(f"Total extensions in context: {len(extensions)}")
+
+        # Clean up the auto-created context
+        if extensions_service.cleanup():
+            print("Extension context cleaned up successfully")
+        else:
+            print("Failed to clean up extension context")
+    except Exception as e:
+        print(f"Error: {e}")
+
+manage_extensions_with_cleanup()
+```
 
 #### delete
 
