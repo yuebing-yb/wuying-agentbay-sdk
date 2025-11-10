@@ -487,6 +487,85 @@ def fix_dict_formatting(content: str) -> str:
     return '\n'.join(fixed_lines)
 
 
+def fix_restructuredtext_code_blocks(content: str) -> str:
+    """
+    Fix reStructuredText-style code blocks that weren't converted to markdown.
+
+    pydoc-markdown sometimes fails to convert RST code blocks (marked with :: and indentation)
+    to proper markdown code blocks, leaving indented code without fencing.
+    This causes Python comments (starting with #) to be interpreted as markdown headers.
+
+    This function wraps such indented code blocks with proper markdown code fences.
+    """
+    import re
+
+    lines = content.split('\n')
+    fixed_lines = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        # Detect pattern: line ends with :: followed by indented code without code fence
+        if line.strip().endswith('::'):
+            # This is an RST code block marker
+            # Remove the :: suffix and keep the description
+            if line.strip() == '::':
+                # Standalone :: - skip it
+                i += 1
+                # Skip empty lines
+                while i < len(lines) and not lines[i].strip():
+                    i += 1
+            else:
+                # Description with :: at the end - keep the description without ::
+                description = line.rstrip(':').rstrip()
+                if description:
+                    fixed_lines.append(description)
+                i += 1
+                # Skip empty lines immediately after
+                while i < len(lines) and not lines[i].strip():
+                    fixed_lines.append(lines[i])
+                    i += 1
+
+            # Check if next line is indented code (starts with spaces) but not a code fence
+            if i < len(lines) and lines[i].startswith('  ') and not lines[i].strip().startswith('```'):
+                # Found indented code block without fence - need to wrap it
+                fixed_lines.append('')
+                fixed_lines.append('```python')
+
+                # Collect all indented lines (code block)
+                indent_level = len(lines[i]) - len(lines[i].lstrip())
+                while i < len(lines):
+                    current_line = lines[i]
+
+                    # Empty line - keep it
+                    if not current_line.strip():
+                        fixed_lines.append('')
+                        i += 1
+                        continue
+
+                    # Line with same or more indentation - part of code block
+                    current_indent = len(current_line) - len(current_line.lstrip())
+                    if current_indent >= indent_level:
+                        # Remove the base indentation
+                        fixed_lines.append(current_line[indent_level:])
+                        i += 1
+                    else:
+                        # Less indentation - end of code block
+                        break
+
+                # Close the code fence
+                fixed_lines.append('```')
+                fixed_lines.append('')
+
+            continue
+
+        fixed_lines.append(line)
+        i += 1
+
+    return '\n'.join(fixed_lines)
+
+
 def format_markdown(raw_content: str, title: str, module_name: str, metadata: dict[str, Any]) -> str:
     """Enhanced markdown formatting with metadata injection."""
     content = raw_content.lstrip()
@@ -500,6 +579,9 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
 
     # Fix dictionary formatting errors
     content = fix_dict_formatting(content)
+
+    # Fix reStructuredText-style code blocks
+    content = fix_restructuredtext_code_blocks(content)
 
     # 1. Add title
     if content.startswith("#"):
