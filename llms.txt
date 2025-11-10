@@ -114,10 +114,11 @@ if err != nil {
   - 📱 [Mobile Automation](docs/guides/mobile-use/README.md) - Android UI testing and gesture automation
   - 💻 [CodeSpace](docs/guides/codespace/README.md) - Cloud-based code execution environments
 - [Feature Guides](docs/guides/README.md) - Complete feature introduction
-- API Reference - Core API quick lookup
-  - [Python API Reference](python/docs/api/README.md)
-  - [TypeScript API Reference](typescript/docs/api/README.md)
-  - [Golang API Reference](golang/docs/api/README.md)
+- **API Reference** - Comprehensive API documentation with examples
+  - [Python API Reference](python/docs/api/) - Auto-generated from source code
+  - [TypeScript API Reference](typescript/docs/api/) - Auto-generated from source code
+  - [Golang API Reference](golang/docs/api/) - Auto-generated from source code
+  - 📝 All API docs include complete runnable examples and actual output
 - [Cookbook](cookbook/README.md) - Real-world examples and recipes
 
 ## 🔧 Core Features
@@ -138,6 +139,15 @@ if err != nil {
 - **Browser Use** - Web automation, scraping, and browser control  
 - **CodeSpace** - Code execution and development environment
 - **Mobile Use** - Mobile device simulation and control
+
+## 🤖 AI-Assisted Development
+
+If you're using AI coding assistants (Claude, Cursor, GitHub Copilot, etc.) to develop with AgentBay SDK, you can use [llms.txt](./llms.txt) and [llms-full.txt](./llms-full.txt) as context for better code suggestions:
+
+- **[llms.txt](./llms.txt)** - Concise documentation index (~900 tokens) for quick reference
+- **[llms-full.txt](./llms-full.txt)** - Complete documentation corpus (~140k tokens) for comprehensive context
+
+These files contain the full SDK documentation across all languages (Python, TypeScript, Golang), API references, and cookbook examples. Simply reference them in your AI assistant to get better understanding of the SDK's architecture and APIs.
 
 ## 🆘 Get Help
 
@@ -169,11 +179,12 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - [Code Example](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/code-example.md)
 - [Browser Command-Line Arguments Configuration Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features/browser-command-args.md)
 - [Browser Context Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features/browser-context.md)
+- [Browser Fingerprint Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features/browser-fingerprint.md)
 - [Browser Proxy Configuration Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features/browser-proxies.md)
+- [Browser Screenshot API](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features/browser-screenshot.md)
 - [Call For User](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features/call-for-user.md)
 - [CAPTCHA Resolution](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features/captcha.md)
 - [Browser Extension Management](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features/extension.md)
-- [Browser Stealth Mode Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features/stealth-mode.md)
 - [AIBrowser Core Features](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/core-features.md)
 - [Integration with community framework/tools/services](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/browser-use/integrations.md)
 - [CodeSpace Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/codespace/README.md)
