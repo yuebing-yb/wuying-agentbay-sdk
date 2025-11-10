@@ -14,9 +14,9 @@ const yaml = require('js-yaml')
 const { runWithFallback } = require('./run_with_fallback')
 
 const projectRoot = path.resolve(__dirname, '..')
-const docsRoot = path.join(projectRoot, 'docs', 'api-preview')
-const docsDir = path.join(docsRoot, 'latest')
-const legacyDocsDir = path.join(docsRoot, 'typescript')
+const docsRoot = path.join(projectRoot, 'docs', 'api')
+const docsDir = docsRoot
+const legacyDocsDir = path.join(projectRoot, 'docs', 'api-preview', 'typescript')
 const outputDir = path.join(projectRoot, '.typedoc-output')
 
 const docMappings = [
@@ -270,7 +270,7 @@ function collectPagesContent(pages, identifiers) {
 
 function createReadme() {
   const lines = [
-    '# TypeScript SDK API Reference (Preview)',
+    '# TypeScript SDK API Reference',
     '',
     'These documents are generated automatically using TypeDoc. Run `npm run docs:generate` to refresh them after changing the SDK.',
     '',
@@ -573,7 +573,7 @@ function getTutorialSection(moduleName, metadata) {
   const emoji = config.emoji || '📖'
   const category = config.category || 'common-features/basics'
   const categoryDepth = category.split('/').length
-  const depth = categoryDepth + 4
+  const depth = categoryDepth + 3
   const upLevels = '../'.repeat(depth)
 
   let tutorialUrl = config.tutorial.url
@@ -886,7 +886,7 @@ function main() {
     rmSync(outputDir, { recursive: true, force: true })
   }
 
-  process.stdout.write('✅ TypeScript API documentation generated at docs/api-preview/latest\n')
+  process.stdout.write('✅ TypeScript API documentation generated at docs/api\n')
 
   enhanceDocumentation()
 }

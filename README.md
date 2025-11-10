@@ -6,9 +6,9 @@
 
 | Language | Install Command | Documentation |
 |----------|----------------|---------------|
-| Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) \| [API Reference](python/docs/api-preview/latest/) |
-| TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) \| [API Reference](typescript/docs/api-preview/latest/) |
-| Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) \| [API Reference](golang/docs/api-preview/latest/) |
+| Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) \| [API Reference](python/docs/api/) |
+| TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) \| [API Reference](typescript/docs/api/) |
+| Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) \| [API Reference](golang/docs/api/) |
 
 ## 🚀 Prerequisites
 
@@ -109,9 +109,9 @@ if err != nil {
   - 💻 [CodeSpace](docs/guides/codespace/README.md) - Cloud-based code execution environments
 - [Feature Guides](docs/guides/README.md) - Complete feature introduction
 - **API Reference** - Comprehensive API documentation with examples
-  - [Python API Reference](python/docs/api-preview/latest/) - Auto-generated from source code
-  - [TypeScript API Reference](typescript/docs/api-preview/latest/) - Auto-generated from source code
-  - [Golang API Reference](golang/docs/api-preview/latest/) - Auto-generated from source code
+  - [Python API Reference](python/docs/api/) - Auto-generated from source code
+  - [TypeScript API Reference](typescript/docs/api/) - Auto-generated from source code
+  - [Golang API Reference](golang/docs/api/) - Auto-generated from source code
   - 📝 All API docs include complete runnable examples and actual output
 - [Cookbook](cookbook/README.md) - Real-world examples and recipes
 

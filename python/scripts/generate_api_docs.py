@@ -27,7 +27,7 @@ class DocMapping:
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DOCS_ROOT = PROJECT_ROOT / "docs" / "api-preview" / "latest"
+DOCS_ROOT = PROJECT_ROOT / "docs" / "api"
 METADATA_PATH = PROJECT_ROOT.parent / "scripts" / "doc-metadata.yaml"
 
 DOC_MAPPINGS: Sequence[DocMapping] = (
@@ -215,12 +215,12 @@ def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
     emoji = module_config.get('emoji', '📖')
 
     # Calculate correct relative path based on category depth
-    # From: python/docs/api-preview/latest/{category}/{file}.md
+    # From: python/docs/api/{category}/{file}.md
     # To: project_root/docs/guides/...
-    # Need to go up: {category_depth} + 3 (latest, api-preview, docs) + 1 (python) = category_depth + 4
+    # Need to go up: {category_depth} + 2 (api, docs) + 1 (python) = category_depth + 3
     category = module_config.get('category', 'common-features/basics')
     category_depth = len(category.split('/'))
-    depth = category_depth + 4  # +4 for latest/api-preview/docs/python
+    depth = category_depth + 3  # +3 for api/docs/python
     up_levels = '../' * depth
 
     # Replace the hardcoded path with dynamically calculated one
@@ -568,7 +568,7 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
 
 def write_readme() -> None:
     lines = [
-        "# AgentBay Python SDK API Reference (Preview)",
+        "# AgentBay Python SDK API Reference",
         "",
         "This directory is generated. Run `python scripts/generate_api_docs.py` to refresh it.",
         "",

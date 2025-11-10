@@ -1,615 +1,1487 @@
-# Session Struct
+# Session API Reference
 
-The `Session` struct represents a session in the AgentBay cloud environment. It provides methods for managing file systems, executing commands, and more.
-
-## 📖 Related Tutorial
+## 🔧 Related Tutorial
 
 - [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
-## Properties
+## Type Session
 
 ```go
-AgentBay  // The AgentBay client instance
-SessionID  // The ID of this session
-ImageId  // The image ID used when creating this session
-IsVpcEnabled  // Whether this session uses VPC resources
-NetworkInterfaceIP  // Network interface IP for VPC sessions
-HttpPortNumber  // HTTP port for VPC sessions
-FileSystem  // The FileSystem instance for this session
-Command  // The Command instance for this session
-Code  // The Code instance for this session
-Oss  // The Oss instance for this session
-UI  // The UI instance for this session
-Application  // The ApplicationManager instance for this session
-Window  // The WindowManager instance for this session
-Agent  // The Agent instance for this session
-Context  // The ContextManager instance for this session
-McpTools []McpTool  // MCP tools available for this session
+type Session struct {
+	AgentBay	*AgentBay
+	SessionID	string
+	ImageId		string	// ImageId used when creating this session
+
+	// VPC-related information
+	IsVpcEnabled		bool	// Whether this session uses VPC resources
+	NetworkInterfaceIP	string	// Network interface IP for VPC sessions
+	HttpPortNumber		string	// HTTP port for VPC sessions
+	Token			string	// Token for VPC sessions
+
+	// Resource URL for accessing the session
+	ResourceUrl	string
+
+	// File transfer context ID for file operations
+	FileTransferContextID	string
+
+	// File, command and code handlers
+	FileSystem	*filesystem.FileSystem
+	Command		*command.Command
+	Code		*code.Code
+	Oss		*oss.OSSManager
+
+	// Platform-specific automation modules
+	Computer	*computer.Computer
+	Mobile		*mobile.Mobile
+
+	// Browser for web automation
+	Browser	*browser.Browser
+
+	// Agent for task execution
+	Agent	*agent.Agent
+
+	// Context management
+	Context	*ContextManager
+
+	// MCP tools available for this session
+	McpTools	[]McpTool
+}
 ```
 
-**Accessor Methods:**
+Session represents a session in the AgentBay cloud environment.
+
+### Methods
+
+#### Delete
+
 ```go
-IsVpc() bool  // Returns whether this session uses VPC resources
-NetworkInterfaceIp() string  // Returns the network interface IP for VPC sessions
-HttpPort() string  // Returns the HTTP port for VPC sessions
+func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error)
 ```
 
-## Methods
+Delete deletes this session. Delete deletes the session and releases all associated resources.
 
-### Delete
+Parameters:
+  - syncContext: Optional boolean to synchronize context data before deletion. If true, uploads all
+    context data to OSS. Defaults to false.
 
-Deletes this session.
+Returns:
+  - *DeleteResult: Result containing success status and request ID
+  - error: Error if the operation fails
 
-```go
-Delete(syncContext ...bool) (*DeleteResult, error)
-```
+Behavior:
 
-**Parameters:**
-- `syncContext` (bool, optional): If true, the API will trigger a file upload via `Context.Sync()` before actually releasing the session. Default is false.
-
-**Returns:**
-- `*DeleteResult`: A result object containing success status and RequestID.
-- `error`: An error if the session deletion fails.
-
-**Behavior:**
-- When `syncContext` is true, the API will first call `Context.Sync()` to trigger file upload.
-- It will then check `Context.Info()` to retrieve ContextStatusData and monitor only upload task items' Status.
-- The API waits until all upload tasks show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
-- Any "Failed" status upload tasks will have their error messages printed.
-- The session deletion only proceeds after context sync status checking for upload tasks completes.
+- If syncContext is true: Uploads all context data to OSS before deletion - If syncContext is false:
+Deletes immediately without sync - Continues with deletion even if context sync fails - Releases all
+associated resources (browser, computer, mobile, etc.)
 
 **Example:**
+
 ```go
 package main
-
 import (
 	"fmt"
-	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
+
 	// Initialize the SDK
+
 	client, err := agentbay.NewAgentBay("your_api_key")
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	// Create a session
-	createResult, err := client.Create(nil)
+
+	result, err := client.Create(nil)
 	if err != nil {
-		fmt.Printf("Error creating session: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
+	session := result.Session
+	fmt.Printf("Session ID: %s\n", session.SessionID)
 
-	session := createResult.Session
-	fmt.Printf("Session created with ID: %s\n", session.SessionID)
-	// Output: Session created with ID: session-04bdwfj7u20b0o113
+	// Output: Session ID: session-04bdwfj7u22a1s30g
 
-	// Use the session...
+	// Delete session without context sync
 
-	// Delete the session with context synchronization
-	deleteResult, err := session.Delete(true)
+	deleteResult, err := session.Delete()
 	if err != nil {
-		fmt.Printf("Error deleting session: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
+	if deleteResult.Success {
+		fmt.Println("Session deleted successfully")
 
-	fmt.Println("Session deleted successfully with synchronized context")
-	// Output: Session deleted successfully with synchronized context
-	fmt.Printf("Request ID: %s\n", deleteResult.RequestID)
-	// Output: Request ID: 863E5FCC-BBD2-12C2-BE98-8519BB5AF1F7
-}
-```
+		// Output: Session deleted successfully
 
-### SetLabels
-
-Sets labels for this session.
-
-```go
-SetLabels(labels map[string]string) (*models.Response, error)
-```
-
-**Parameters:**
-- `labels` (map[string]string): Key-value pairs representing the labels to set.
-
-**Returns:**
-- `*models.Response`: A response object containing RequestID and status information.
-- `error`: An error if setting labels fails.
-
-**Example:**
-```go
-// Set session labels
-labels := map[string]string{
-	"project":     "demo",
-	"environment": "testing",
-	"version":     "1.0.0",
-}
-
-response, err := session.SetLabels(labels)
-if err != nil {
-	fmt.Printf("Error setting labels: %v\n", err)
-	os.Exit(1)
-}
-
-fmt.Println("Labels set successfully")
-// Output: Labels set successfully
-fmt.Printf("Request ID: %s\n", response.RequestID)
-// Output: Request ID: 010A3CC9-F3FB-1EC3-A540-19E8BBEAEF42
-```
-
-### GetLabels
-
-Gets the labels for this session.
-
-```go
-GetLabels() (*LabelResult, error)
-```
-
-**Returns:**
-- `*LabelResult`: A result object containing the labels data, request ID, and success status.
-- `error`: An error if getting labels fails.
-
-**Example:**
-```go
-// Get session labels
-result, err := session.GetLabels()
-if err != nil {
-	fmt.Printf("Error getting labels: %v\n", err)
-	os.Exit(1)
-}
-
-fmt.Println("Session labels:")
-// Parse the labels JSON string
-var labels map[string]string
-if err := json.Unmarshal([]byte(result.Labels), &labels); err == nil {
-	for key, value := range labels {
-		fmt.Printf("%s: %s\n", key, value)
 	}
 }
-// Output: Session labels:
-// environment: testing
-// project: demo
-// version: 1.0.0
+Note:
+- Use syncContext=true when you need to preserve context data - For temporary sessions, use
+syncContext=false for faster cleanup - Always call Delete() when done to avoid resource leaks
 ```
 
-### Info
-
-Gets information about this session.
+#### GetLabels
 
 ```go
-Info() (*SessionInfo, error)
+func (s *Session) GetLabels() (*LabelResult, error)
 ```
 
-**Returns:**
-- `*SessionInfo`: An object containing information about the session.
-- `error`: An error if getting session information fails.
+GetLabels gets the labels for this session.
+
+Returns:
+  - *LabelResult: Result containing labels as JSON string and request ID
+  - error: Error if the operation fails
+
+Behavior:
+
+- Retrieves the labels that were previously set for this session - Returns labels as a JSON string -
+Can be used to identify and filter sessions
 
 **Example:**
-```go
-// Get session information
-infoResult, err := session.Info()
-if err != nil {
-	fmt.Printf("Error getting session info: %v\n", err)
-	os.Exit(1)
-}
-
-fmt.Printf("Session ID: %s\n", infoResult.Info.SessionId)
-// Output: Session ID: session-04bdwfj7u20b0o115
-fmt.Printf("Resource URL: %s\n", infoResult.Info.ResourceUrl)
-// Output: Resource URL: https://pre-myspace-wuying.aliyun.com/app/InnoArchClub/mcp_container/mcp.html?authcode=...
-fmt.Printf("App ID: %s\n", infoResult.Info.AppId)
-// Output: App ID: mcp-server-ubuntu
-```
-
-### GetLink
-
-Gets a link for this session.
-
-```go
-GetLink(protocolType *string, port *int32) (*LinkResult, error)
-```
-
-**Parameters:**
-- `protocolType` (*string): The protocol type for the link. If nil, the default protocol will be used.
-- `port` (*int32): The port for the link. If nil, the default port will be used. **Port must be an integer in the range [30100, 30199]**.
-
-**Returns:**
-- `*LinkResult`: A result object containing the link and request ID.
-- `error`: An error if getting the link fails or if the port is outside the valid range.
-
-**Port Range Validation:**
-- Valid port range: **[30100, 30199]**
-- If a port outside this range is provided, the method will return an error with the message: `"invalid port value: {port}. Port must be an integer in the range [30100, 30199]"`
-- Common ports like 80, 443, 8080, etc. are **not allowed** and will result in validation errors
-
-**Example:**
-```go
-// Get link with specific protocol and valid port
-// Note: For ComputerUse images, port must be explicitly specified
-protocolType := "https"
-var validPort int32 = 30150  // Valid port in range [30100, 30199]
-linkResult, err := session.GetLink(&protocolType, &validPort)
-if err != nil {
-	fmt.Printf("Error getting link: %v\n", err)
-	os.Exit(1)
-}
-
-fmt.Printf("Session link: %s (RequestID: %s)\n", linkResult.Link, linkResult.RequestID)
-// Output: Session link: https://gw-cn-hangzhou-ai-linux.wuyinggw.com:8008/... (RequestID: 57D0226F-EF89-1C95-929F-577EC40A1F20)
-
-// Example of invalid port usage (will fail)
-var invalidPort int32 = 8080  // Invalid port - outside [30100, 30199] range
-_, err = session.GetLink(nil, &invalidPort)
-if err != nil {
-	fmt.Printf("Expected error with invalid port: %v\n", err)
-	// Output: invalid port value: 8080. Port must be an integer in the range [30100, 30199]
-}
-```
-
-### ListMcpTools
-
-Lists MCP tools available for this session.
-
-```go
-ListMcpTools() (*McpToolsResult, error)
-```
-
-**Returns:**
-- `*McpToolsResult`: A result object containing the list of MCP tools and request ID.
-- `error`: An error if listing MCP tools fails.
-
-**Example:**
-```go
-// List MCP tools
-toolsResult, err := session.ListMcpTools()
-if err != nil {
-	fmt.Printf("Error listing MCP tools: %v\n", err)
-	os.Exit(1)
-}
-
-fmt.Printf("Found %d MCP tools\n", len(toolsResult.Tools))
-// Output: Found 27 MCP tools
-for i, tool := range toolsResult.Tools {
-	if i < 3 {
-		fmt.Printf("Tool: %s - %s\n", tool.Name, tool.Description)
-	}
-}
-// Output: Tool: execute_command - Execute a command on the system
-// Tool: read_file - Read contents of a file
-// Tool: write_file - Write content to a file
-```
-
-### CallMcpTool
-
-Call an MCP tool directly. This is the unified public API for calling MCP tools. All feature modules (Command, Code, Agent, etc.) use this method internally.
-
-```go
-CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
-```
-
-**Parameters:**
-- `toolName` (string): Name of the MCP tool to call
-- `args` (interface{}): Arguments to pass to the tool (typically a map or struct)
-
-**Returns:**
-- `*models.McpToolResult`: Result containing:
-  - `Success` (bool): Whether the tool call was successful
-  - `Data` (string): Tool output data (text content extracted from response)
-  - `ErrorMessage` (string): Error message if the call failed
-  - `RequestID` (string): Unique identifier for the API request
-- `error`: An error if the call fails at the transport level
-
-**Behavior:**
-- Automatically detects VPC vs non-VPC mode
-- In VPC mode, uses HTTP requests to the VPC endpoint
-- In non-VPC mode, uses traditional API calls
-- Parses response data to extract text content from `content[0].text`
-- Handles the `isError` flag in responses
-- Returns structured error information
-
-**Example:**
-```go
-// Call the shell tool to execute a command
-result, err := session.CallMcpTool("shell", map[string]interface{}{
-	"command":    "echo 'Hello World'",
-	"timeout_ms": 1000,
-})
-if err != nil {
-	fmt.Printf("Error calling tool: %v\n", err)
-	return
-}
-
-if result.Success {
-	fmt.Printf("Output: %s\n", result.Data)
-	// Output: Hello World
-	fmt.Printf("Request ID: %s\n", result.RequestID)
-} else {
-	fmt.Printf("Error: %s\n", result.ErrorMessage)
-}
-
-// Example with error handling
-result2, err := session.CallMcpTool("shell", map[string]interface{}{
-	"command":    "invalid_command_12345",
-	"timeout_ms": 1000,
-})
-if err != nil {
-	fmt.Printf("Error calling tool: %v\n", err)
-	return
-}
-
-if !result2.Success {
-	fmt.Printf("Command failed: %s\n", result2.ErrorMessage)
-	// Output: Command failed: sh: 1: invalid_command_12345: not found
-}
-```
-
-**See Also:**
-- For a complete example, see [MCP Tool Direct Call Example](../../../../examples/common-features/basics/mcp_tool_direct_call/README.md)
-
-## Session Creation with Extra Configurations
-
-Sessions can be created with additional configurations for specific environments using the `ExtraConfigs` parameter in `CreateSessionParams`. This is particularly useful for mobile sessions that require app management rules and resolution settings.
-
-### Mobile Session Configuration
-
-For mobile sessions, you can configure app management rules and display settings using `MobileExtraConfig`:
 
 ```go
 package main
-
 import (
+	"encoding/json"
 	"fmt"
-	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
-
 func main() {
-	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
+	client, err := agentbay.NewAgentBay("your_api_key")
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
-	// Create mobile configuration with whitelist
-	appRule := &models.AppManagerRule{
-		RuleType: "White",
-		AppPackageNameList: []string{
-			"com.android.settings",
-			"com.example.test.app",
-			"com.trusted.service",
-		},
-	}
-	mobileConfig := &models.MobileExtraConfig{
-		LockResolution:     true,
-		HideNavigationBar:  true,
-		UninstallBlacklist: []string{"com.critical.app", "com.system.service"},
-		AppManagerRule:     appRule,
-	}
-	extraConfigs := &models.ExtraConfigs{
-		Mobile: mobileConfig,
-	}
+	// Create a session with labels
 
-	// Create session parameters with mobile configuration
-	params := agentbay.NewCreateSessionParams().
-		WithImageId("mobile_latest").
-		WithLabels(map[string]string{
-			"project":     "mobile-testing",
-			"config_type": "whitelist",
-		}).
-		WithExtraConfigs(extraConfigs)
-
-	// Create the session
+	params := agentbay.NewCreateSessionParams()
+	params.Labels = map[string]string{
+		"project": "demo",
+		"env":     "production",
+	}
 	result, err := client.Create(params)
 	if err != nil {
-		fmt.Printf("Error creating mobile session: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-
 	session := result.Session
-	fmt.Printf("Mobile session created with ID: %s\n", session.SessionID)
 
-	// Use the session...
+	// Get labels from the session
 
-	// Clean up
-	deleteResult, err := session.Delete()
+	labelResult, err := session.GetLabels()
 	if err != nil {
-		fmt.Printf("Error deleting session: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
+	fmt.Printf("Retrieved labels: %s\n", labelResult.Labels)
 
-	fmt.Printf("Session deleted (RequestID: %s)\n", deleteResult.RequestID)
+	// Output: Retrieved labels: {"project":"demo","env":"production"}
+
+	// Parse the JSON to use the labels
+
+	var labels map[string]string
+	if err := json.Unmarshal([]byte(labelResult.Labels), &labels); err == nil {
+		fmt.Printf("Project: %s, Environment: %s\n", labels["project"], labels["env"])
+
+		// Output: Project: demo, Environment: production
+
+	}
+	session.Delete()
 }
 ```
 
-### App Manager Rules
-
-The `AppManagerRule` struct allows you to control which applications are allowed or blocked in mobile sessions:
-
-#### Whitelist Configuration
-```go
-// Create whitelist rule - only specified apps are allowed
-appRule := &models.AppManagerRule{
-	RuleType: "White",
-	AppPackageNameList: []string{
-		"com.android.settings",
-		"com.google.android.gms",
-		"com.trusted.app",
-	},
-}
-```
-
-#### Blacklist Configuration
-```go
-// Create blacklist rule - specified apps are blocked
-appRule := &models.AppManagerRule{
-	RuleType: "Black",
-	AppPackageNameList: []string{
-		"com.malware.suspicious",
-		"com.unwanted.adware",
-		"com.blocked.app",
-	},
-}
-```
-
-### Mobile Extra Config Options
-
-The `MobileExtraConfig` struct provides the following options:
-
-- **`LockResolution`** (bool): When set to `true`, locks the display resolution to prevent changes during the session. When `false`, allows flexible resolution adjustments.
-- **`HideNavigationBar`** (bool): Controls the visibility of the system navigation bar.
-  - `true`: Hides the navigation bar for an immersive full-screen experience
-  - `false`: Shows the navigation bar (default system behavior)
-- **`UninstallBlacklist`** ([]string): A list of package names that should be protected from uninstallation. These applications will be added to the system's uninstall protection list, preventing accidental or malicious removal of critical apps.
-- **`AppManagerRule`** (*AppManagerRule): Defines the application access control rules for the mobile session.
-
-### JSON Serialization
-
-Extra configurations are automatically serialized to JSON when creating sessions. You can also manually serialize them for inspection:
+#### GetLink
 
 ```go
-// Serialize extra configs to JSON
-jsonStr, err := extraConfigs.ToJSON()
-if err != nil {
-	fmt.Printf("Error serializing extra configs: %v\n", err)
-	return
-}
-fmt.Printf("Extra configs JSON: %s\n", jsonStr)
-
-// Get JSON from session parameters
-params := agentbay.NewCreateSessionParams().WithExtraConfigs(extraConfigs)
-paramsJSON, err := params.GetExtraConfigsJSON()
-if err != nil {
-	fmt.Printf("Error getting extra configs JSON: %v\n", err)
-	return
-}
-fmt.Printf("Session params JSON: %s\n", paramsJSON)
+func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*LinkResult, error)
 ```
 
-### Advanced Mobile Configuration Example
+GetLink gets the link for this session. GetLink retrieves an access link for the session.
 
-Here's a comprehensive example demonstrating all mobile configuration options:
+Parameters:
+  - protocolType: Protocol type for the link (optional, reserved for future use)
+  - port: Specific port number to access (must be in range [30100, 30199])
+  - options: Additional options (optional)
+
+Returns:
+  - *LinkResult: Result containing the access URL and request ID
+  - error: Error if port is out of range or operation fails
+
+Behavior:
+
+- Without port: Returns the default session access URL - With port: Returns URL for accessing
+specific port-mapped service - Port must be in range [30100, 30199] for port forwarding
+
+**Example:**
 
 ```go
 package main
-
 import (
 	"fmt"
-	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
-
 func main() {
-	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
+	client, err := agentbay.NewAgentBay("your_api_key")
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-
-	// Create comprehensive mobile configuration
-	appRule := &models.AppManagerRule{
-		RuleType: "White",
-		AppPackageNameList: []string{
-			"com.android.settings",
-			"com.example.test.app",
-			"com.trusted.service",
-		},
-	}
-
-	mobileConfig := &models.MobileExtraConfig{
-		LockResolution:     true,  // Lock resolution for consistent testing
-		HideNavigationBar:  true,  // Hide navigation bar for immersive UI
-		UninstallBlacklist: []string{
-			"com.android.systemui",     // Protect system UI
-			"com.android.settings",     // Protect settings app
-			"com.google.android.gms",   // Protect Google services
-			"com.critical.security.app", // Protect security app
-		},
-		AppManagerRule: appRule,
-	}
-
-	extraConfigs := &models.ExtraConfigs{
-		Mobile: mobileConfig,
-	}
-
-	// Create session with comprehensive configuration
-	params := agentbay.NewCreateSessionParams().
-		WithImageId("mobile_latest").
-		WithLabels(map[string]string{
-			"project":     "mobile-automation",
-			"config_type": "comprehensive",
-			"features":    "navbar_hidden,uninstall_protected,app_whitelist",
-		}).
-		WithExtraConfigs(extraConfigs)
-
-	result, err := client.Create(params)
+	result, err := client.Create(nil)
 	if err != nil {
-		fmt.Printf("Error creating mobile session: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-
 	session := result.Session
-	fmt.Printf("Comprehensive mobile session created with ID: %s\n", session.SessionID)
-	fmt.Println("Configuration applied:")
-	fmt.Println("- Resolution locked for consistent testing")
-	fmt.Println("- Navigation bar hidden for immersive experience")
-	fmt.Println("- Critical system apps protected from uninstallation")
-	fmt.Println("- App whitelist enabled for security")
 
-	// Use the session for mobile automation...
+	// Get default session link
 
-	// Clean up
-	deleteResult, err := session.Delete()
+	linkResult, err := session.GetLink(nil, nil, nil)
 	if err != nil {
-		fmt.Printf("Error deleting session: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
+	fmt.Printf("Session link: %s\n", linkResult.Link)
 
-	fmt.Printf("Session deleted (RequestID: %s)\n", deleteResult.RequestID)
+	// Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
+
+	// Get link for specific port
+
+	port := int32(30150)
+	portLinkResult, err := session.GetLink(nil, &port, nil)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Port 30150 link: %s\n", portLinkResult.Link)
+
+	// Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
+
+	session.Delete()
+}
+Note:
+- Use default link for general session access - Use port-specific links for services on specific
+ports - Validate port range before calling to avoid errors
+```
+
+#### GetToken
+
+```go
+func (s *Session) GetToken() string
+```
+
+GetToken returns the token for VPC sessions
+
+#### Info
+
+```go
+func (s *Session) Info() (*InfoResult, error)
+```
+
+Info gets information about this session. Info retrieves detailed information about the current
+session.
+
+Returns:
+  - *InfoResult: Result containing SessionInfo object and request ID
+  - error: Error if the operation fails or session not found
+
+Behavior:
+
+- Retrieves current session metadata from the backend - Includes resource URL, type, and connection
+properties - Information is fetched in real-time from the API
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay("your_api_key")
+	if err != nil {
+		panic(err)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		panic(err)
+	}
+	session := result.Session
+
+	// Get session information
+
+	infoResult, err := session.Info()
+	if err != nil {
+		panic(err)
+	}
+	info := infoResult.Info
+	fmt.Printf("Session ID: %s\n", info.SessionId)
+	fmt.Printf("Resource URL: %s\n", info.ResourceUrl)
+	fmt.Printf("Resource Type: %s\n", info.ResourceType)
+
+	// Output:
+
+	// Session ID: session-04bdwfj7u22a1s30g
+
+	// Resource URL: https://...
+
+	// Resource Type: vpc
+
+	session.Delete()
 }
 ```
 
-### Best Practices
+#### ListMcpTools
 
-1. **Use Appropriate Image IDs**: For mobile sessions with extra configs, use `mobile_latest` or specific mobile image IDs.
+```go
+func (s *Session) ListMcpTools() (*McpToolsResult, error)
+```
 
-2. **Set Descriptive Labels**: Use labels to identify the configuration type and purpose:
-   ```go
-   WithLabels(map[string]string{
-       "config_type": "whitelist",
-       "security":    "enabled",
-       "project":     "mobile-testing",
-       "features":    "navbar_hidden,uninstall_protected",
-   })
-   ```
+ListMcpTools lists MCP tools available for this session. It uses the ImageId from the session
+creation, or "linux_latest" as default.
 
-3. **Navigation Bar Configuration**: 
-   - Use `HideNavigationBar: true` for immersive UI testing or kiosk-mode applications
-   - Use `HideNavigationBar: false` for standard mobile app testing where navigation is needed
+Returns:
+  - *McpToolsResult: Result containing list of MCP tools and request ID
+  - error: Error if the operation fails
 
-4. **Uninstall Protection Strategy**:
-   - Always protect critical system apps like `com.android.systemui` and `com.android.settings`
-   - Include security and management apps in the uninstall blacklist
-   - Consider protecting Google Play Services (`com.google.android.gms`) for app compatibility
+Behavior:
 
-5. **Test Configurations**: Validate your app package names and configuration settings in a test environment before production use.
+- Uses the ImageId from session creation - Defaults to "linux_latest" if ImageId is empty -
+Retrieves all available MCP tools for the specified image - Updates the session's McpTools field
+with the retrieved tools
 
-6. **Handle Errors Gracefully**: Always check for errors when creating sessions with extra configurations, as invalid configurations may cause session creation to fail.
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List MCP tools available for this session
+
+	toolsResult, err := session.ListMcpTools()
+	if err != nil {
+		fmt.Printf("Error listing MCP tools: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Found %d MCP tools\n", len(toolsResult.Tools))
+
+	// Output: Found 27 MCP tools
+
+	// Display first few tools
+
+	for i, tool := range toolsResult.Tools {
+		if i < 3 {
+			fmt.Printf("Tool: %s - %s\n", tool.Name, tool.Description)
+		}
+	}
+
+	// Output: Tool: execute_command - Execute a command on the system
+
+	// Output: Tool: read_file - Read contents of a file
+
+	// Output: Tool: write_file - Write content to a file
+
+	fmt.Printf("Request ID: %s\n", toolsResult.RequestID)
+	session.Delete()
+}
+```
+
+#### SetLabels
+
+```go
+func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error)
+```
+
+SetLabels sets the labels for this session.
+
+Parameters:
+  - labels: Labels to set for the session as a map of key-value pairs
+
+Returns:
+  - *LabelResult: Result containing request ID
+  - error: Error if validation fails or operation fails
+
+Behavior:
+
+- Validates that labels map is not nil or empty - All keys and values must be non-empty strings
+- Converts labels to JSON and sends to the backend - Labels can be used for session filtering and
+organization
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay("your_api_key")
+	if err != nil {
+		panic(err)
+	}
+
+	// Create a session
+
+	result, err := client.Create(nil)
+	if err != nil {
+		panic(err)
+	}
+	session := result.Session
+
+	// Set labels for the session
+
+	labels := map[string]string{
+		"project": "demo",
+		"env":     "test",
+	}
+	labelResult, err := session.SetLabels(labels)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Labels set successfully (RequestID: %s)\n", labelResult.RequestID)
+
+	// Output: Labels set successfully (RequestID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B)
+
+	// Get labels back
+
+	getResult, err := session.GetLabels()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Retrieved labels: %s\n", getResult.Labels)
+
+	// Output: Retrieved labels: {"project":"demo","env":"test"}
+
+	session.Delete()
+}
+```
+
+### Related Functions
+
+#### NewSession
+
+```go
+func NewSession(agentBay *AgentBay, sessionID string) *Session
+```
+
+NewSession creates a new Session object.
+
+## Type CreateSessionParams
+
+```go
+type CreateSessionParams struct {
+	// Labels are custom labels for the Session. These can be used for organizing and filtering sessions.
+	Labels	map[string]string
+
+	// ImageId specifies the image ID to use for the session.
+	ImageId	string
+
+	// ContextSync is a list of context synchronization configurations.
+	// These configurations define how contexts should be synchronized and mounted.
+	ContextSync	[]*ContextSync
+
+	// IsVpc specifies whether to create a VPC-based session. Defaults to false.
+	IsVpc	bool
+
+	// PolicyId specifies the policy ID to apply when creating the session.
+	PolicyId	string
+
+	// ExtraConfigs contains extra configuration settings for different session types
+	ExtraConfigs	*models.ExtraConfigs
+
+	// Framework specifies the framework name for tracking (e.g., "langchain"). Empty string means direct call.
+	Framework	string
+}
+```
+
+CreateSessionParams provides a way to configure the parameters for creating a new session in the
+AgentBay cloud environment.
+
+### Methods
+
+#### AddContextSync
+
+```go
+func (p *CreateSessionParams) AddContextSync(contextID, path string, policy *SyncPolicy) *CreateSessionParams
+```
+
+AddContextSync adds a context sync configuration to the session parameters.
+
+#### AddContextSyncConfig
+
+```go
+func (p *CreateSessionParams) AddContextSyncConfig(contextSync *ContextSync) *CreateSessionParams
+```
+
+AddContextSyncConfig adds a pre-configured context sync to the session parameters.
+
+#### GetExtraConfigsJSON
+
+```go
+func (p *CreateSessionParams) GetExtraConfigsJSON() (string, error)
+```
+
+GetExtraConfigsJSON returns the extra configs as a JSON string.
+
+#### GetLabelsJSON
+
+```go
+func (p *CreateSessionParams) GetLabelsJSON() (string, error)
+```
+
+GetLabelsJSON returns the labels as a JSON string.
+
+#### WithContextSync
+
+```go
+func (p *CreateSessionParams) WithContextSync(contextSyncs []*ContextSync) *CreateSessionParams
+```
+
+WithContextSync sets the context sync configurations for the session parameters.
+
+#### WithExtraConfigs
+
+```go
+func (p *CreateSessionParams) WithExtraConfigs(extraConfigs *models.ExtraConfigs) *CreateSessionParams
+```
+
+WithExtraConfigs sets the extra configurations for the session parameters and returns the updated
+parameters.
+
+#### WithImageId
+
+```go
+func (p *CreateSessionParams) WithImageId(imageId string) *CreateSessionParams
+```
+
+WithImageId sets the image ID for the session parameters and returns the updated parameters.
+
+#### WithIsVpc
+
+```go
+func (p *CreateSessionParams) WithIsVpc(isVpc bool) *CreateSessionParams
+```
+
+WithIsVpc sets the VPC flag for the session parameters and returns the updated parameters.
+
+#### WithLabels
+
+```go
+func (p *CreateSessionParams) WithLabels(labels map[string]string) *CreateSessionParams
+```
+
+WithLabels sets the labels for the session parameters and returns the updated parameters.
+
+#### WithPolicyId
+
+```go
+func (p *CreateSessionParams) WithPolicyId(policyId string) *CreateSessionParams
+```
+
+WithPolicyId sets the policy ID for the session parameters and returns the updated parameters.
+
+### Related Functions
+
+#### NewCreateSessionParams
+
+```go
+func NewCreateSessionParams() *CreateSessionParams
+```
+
+NewCreateSessionParams creates a new CreateSessionParams with default values.
+
+## Type SessionResult
+
+```go
+type SessionResult struct {
+	models.ApiResponse
+	Session		*Session
+	Success		bool
+	ErrorMessage	string
+}
+```
+
+SessionResult wraps Session object and RequestID
+
+## Type SessionListResult
+
+```go
+type SessionListResult struct {
+	models.ApiResponse
+	SessionIds	[]string	// Session IDs
+	NextToken	string		// Token for the next page
+	MaxResults	int32		// Number of results per page
+	TotalCount	int32		// Total number of results
+}
+```
+
+SessionListResult wraps Session list and RequestID
+
+## Type InfoResult
+
+```go
+type InfoResult struct {
+	models.ApiResponse
+	Info	*SessionInfo
+}
+```
+
+InfoResult wraps SessionInfo and RequestID
+
+## Type LabelResult
+
+```go
+type LabelResult struct {
+	models.ApiResponse
+	Labels	string
+}
+```
+
+LabelResult wraps label operation result and RequestID
+
+## Type LinkResult
+
+```go
+type LinkResult struct {
+	models.ApiResponse
+	Link	string
+}
+```
+
+LinkResult wraps link result and RequestID
+
+## Type DeleteResult
+
+```go
+type DeleteResult struct {
+	models.ApiResponse
+	Success		bool
+	ErrorMessage	string
+}
+```
+
+DeleteResult wraps deletion operation result and RequestID
+
+## Type McpToolsResult
+
+```go
+type McpToolsResult struct {
+	models.ApiResponse
+	Tools	[]McpTool
+}
+```
+
+McpToolsResult wraps MCP tools list and RequestID
+
+## Type McpTool
+
+```go
+type McpTool struct {
+	Name		string			`json:"name"`		// Tool name
+	Description	string			`json:"description"`	// Tool description
+	InputSchema	map[string]interface{}	`json:"inputSchema"`	// Input parameter schema
+	Server		string			`json:"server"`		// Server name that provides this tool
+	Tool		string			`json:"tool"`		// Tool identifier
+}
+```
+
+McpTool represents an MCP tool with complete information
+
+### Methods
+
+#### GetName
+
+```go
+func (m *McpTool) GetName() string
+```
+
+GetName returns the tool name
+
+#### GetServer
+
+```go
+func (m *McpTool) GetServer() string
+```
+
+GetServer returns the server name that provides this tool
+
+## Type SessionInfo
+
+```go
+type SessionInfo struct {
+	SessionId		string
+	ResourceUrl		string
+	AppId			string
+	AuthCode		string
+	ConnectionProperties	string
+	ResourceId		string
+	ResourceType		string
+	Ticket			string
+}
+```
+
+SessionInfo contains information about a session.
+
+## Type ContextSync
+
+```go
+type ContextSync struct {
+	// ContextID is the ID of the context to synchronize
+	ContextID	string	`json:"contextId"`
+	// Path is the path where the context should be mounted
+	Path	string	`json:"path"`
+	// Policy defines the synchronization policy
+	Policy	*SyncPolicy	`json:"policy,omitempty"`
+}
+```
+
+ContextSync defines the context synchronization configuration
+
+### Methods
+
+#### WithPolicy
+
+```go
+func (cs *ContextSync) WithPolicy(policy *SyncPolicy) (*ContextSync, error)
+```
+
+WithPolicy sets the policy and returns the context sync for chaining
+
+### Related Functions
+
+#### NewContextSync
+
+```go
+func NewContextSync(contextID, path string, policy *SyncPolicy) (*ContextSync, error)
+```
+
+NewContextSync creates a new context sync configuration
+
+## Type SyncPolicy
+
+```go
+type SyncPolicy struct {
+	// UploadPolicy defines the upload policy
+	UploadPolicy	*UploadPolicy	`json:"uploadPolicy,omitempty"`
+	// DownloadPolicy defines the download policy
+	DownloadPolicy	*DownloadPolicy	`json:"downloadPolicy,omitempty"`
+	// DeletePolicy defines the delete policy
+	DeletePolicy	*DeletePolicy	`json:"deletePolicy,omitempty"`
+	// ExtractPolicy defines the extract policy
+	ExtractPolicy	*ExtractPolicy	`json:"extractPolicy,omitempty"`
+	// RecyclePolicy defines the recycle policy
+	RecyclePolicy	*RecyclePolicy	`json:"recyclePolicy,omitempty"`
+	// BWList defines the black and white list
+	BWList	*BWList	`json:"bwList,omitempty"`
+}
+```
+
+SyncPolicy defines the synchronization policy
+
+### Related Functions
+
+#### NewSyncPolicy
+
+```go
+func NewSyncPolicy() *SyncPolicy
+```
+
+NewSyncPolicy creates a new sync policy with default values
+
+## Type UploadPolicy
+
+```go
+type UploadPolicy struct {
+	// AutoUpload enables automatic upload
+	AutoUpload	bool	`json:"autoUpload"`
+	// UploadStrategy defines the upload strategy
+	UploadStrategy	UploadStrategy	`json:"uploadStrategy"`
+	// UploadMode defines the upload mode
+	UploadMode	UploadMode	`json:"uploadMode"`
+}
+```
+
+UploadPolicy defines the upload policy for context synchronization
+
+### Related Functions
+
+#### NewUploadPolicy
+
+```go
+func NewUploadPolicy() *UploadPolicy
+```
+
+NewUploadPolicy creates a new upload policy with default values
+
+## Type DownloadPolicy
+
+```go
+type DownloadPolicy struct {
+	// AutoDownload enables automatic download
+	AutoDownload	bool	`json:"autoDownload"`
+	// DownloadStrategy defines the download strategy
+	DownloadStrategy	DownloadStrategy	`json:"downloadStrategy"`
+}
+```
+
+DownloadPolicy defines the download policy for context synchronization
+
+### Related Functions
+
+#### NewDownloadPolicy
+
+```go
+func NewDownloadPolicy() *DownloadPolicy
+```
+
+NewDownloadPolicy creates a new download policy with default values
+
+## Type DeletePolicy
+
+```go
+type DeletePolicy struct {
+	// SyncLocalFile enables synchronization of local file deletions
+	SyncLocalFile bool `json:"syncLocalFile"`
+}
+```
+
+DeletePolicy defines the delete policy for context synchronization
+
+### Related Functions
+
+#### NewDeletePolicy
+
+```go
+func NewDeletePolicy() *DeletePolicy
+```
+
+NewDeletePolicy creates a new delete policy with default values
+
+## Type ExtractPolicy
+
+```go
+type ExtractPolicy struct {
+	// Extract enables file extraction
+	Extract	bool	`json:"extract"`
+	// DeleteSrcFile enables deletion of source file after extraction
+	DeleteSrcFile	bool	`json:"deleteSrcFile"`
+	// ExtractToCurrentFolder enables extraction to current folder
+	ExtractToCurrentFolder	bool	`json:"extractToCurrentFolder"`
+}
+```
+
+ExtractPolicy defines the extract policy for context synchronization
+
+### Related Functions
+
+#### NewExtractPolicy
+
+```go
+func NewExtractPolicy() *ExtractPolicy
+```
+
+NewExtractPolicy creates a new extract policy with default values
+
+## Type RecyclePolicy
+
+```go
+type RecyclePolicy struct {
+	// Lifecycle defines how long the context data should be retained
+	Lifecycle	Lifecycle	`json:"lifecycle"`
+	// Paths specifies which directories or files should be subject to the recycle policy
+	Paths	[]string	`json:"paths"`
+}
+```
+
+RecyclePolicy defines the recycle policy for context synchronization
+
+The RecyclePolicy determines how long context data should be retained and which paths are subject to
+the policy.
+
+Lifecycle field determines the data retention period:
+  - Lifecycle1Day: Keep data for 1 day
+  - Lifecycle3Days: Keep data for 3 days
+  - Lifecycle5Days: Keep data for 5 days
+  - Lifecycle10Days: Keep data for 10 days
+  - Lifecycle15Days: Keep data for 15 days
+  - Lifecycle30Days: Keep data for 30 days
+  - Lifecycle90Days: Keep data for 90 days
+  - Lifecycle180Days: Keep data for 180 days
+  - Lifecycle360Days: Keep data for 360 days
+  - LifecycleForever: Keep data permanently (default)
+
+Paths field specifies which directories or files should be subject to the recycle policy:
+  - Must use exact directory/file paths
+  - Wildcard patterns (* ? [ ]) are NOT supported
+  - Empty string "" means apply to all paths in the context
+  - Multiple paths can be specified as a slice
+  - Default: []string{""} (applies to all paths)
+
+### Related Functions
+
+#### NewRecyclePolicy
+
+```go
+func NewRecyclePolicy() *RecyclePolicy
+```
+
+NewRecyclePolicy creates a new recycle policy with default values
+
+## Type WhiteList
+
+```go
+type WhiteList struct {
+	// Path is the path to include in the white list
+	Path	string	`json:"path"`
+	// ExcludePaths are the paths to exclude from the white list
+	ExcludePaths	[]string	`json:"excludePaths,omitempty"`
+}
+```
+
+WhiteList defines the white list configuration
+
+## Type BWList
+
+```go
+type BWList struct {
+	// WhiteLists defines the white lists
+	WhiteLists []*WhiteList `json:"whiteLists,omitempty"`
+}
+```
+
+BWList defines the black and white list configuration
+
+## Functions
+
+### Deprecated
+
+```go
+func Deprecated(reason, replacement, version string)
+```
+
+Deprecated marks a function or method as deprecated and emits a warning
+
+### FindDotEnvFile
+
+```go
+func FindDotEnvFile(startPath string) string
+```
+
+FindDotEnvFile searches for .env file upward from startPath. Search order: 1. Current working
+directory 2. Parent directories (up to root) 3. Git repository root (if found)
+
+Args:
+
+
+startPath: Starting directory for search (empty string means current directory)
+
+Returns:
+
+
+Path to .env file if found, empty string otherwise
+
+### GetLogLevel
+
+```go
+func GetLogLevel() int
+```
+
+GetLogLevel returns the current global log level
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+
+	// Check current level
+
+	currentLevel := agentbay.GetLogLevel()
+	fmt.Printf("Current log level: %d\n", currentLevel)
+}
+```
+
+### LoadDotEnvWithFallback
+
+```go
+func LoadDotEnvWithFallback(customEnvPath string)
+```
+
+LoadDotEnvWithFallback loads .env file with improved search strategy.
+
+Args:
+
+
+customEnvPath: Custom path to .env file (empty string means search upward)
+
+### LogAPICall
+
+```go
+func LogAPICall(apiName, requestParams string)
+```
+
+LogAPICall logs an API call with request parameters
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see API calls
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// API calls are automatically logged by the SDK
+
+	// Output: 🔗 API Call: create_session
+
+}
+```
+
+### LogAPIResponseWithDetails
+
+```go
+func LogAPIResponseWithDetails(apiName, requestID string, success bool, keyFields map[string]interface{}, fullResponse string)
+```
+
+LogAPIResponseWithDetails logs a structured API response with key fields
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see detailed responses
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// API responses are automatically logged by the SDK
+
+	// Output: ✅ API Response: create_session, RequestId=xxx
+
+}
+```
+
+### LogCodeExecutionOutput
+
+```go
+func LogCodeExecutionOutput(requestID, rawOutput string)
+```
+
+LogCodeExecutionOutput extracts and logs the actual code execution output from run_code response
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to INFO to see code execution output
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Execute code in the session
+
+	execResult, err := session.Code.RunCode("print('Hello from AgentBay')", "python")
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Code execution completed: %v\n", execResult.Success)
+
+	// Output: 📋 Code Execution Output (RequestID: xxx):
+
+	// Output:    Hello from AgentBay
+
+}
+```
+
+### LogDebug
+
+```go
+func LogDebug(message string)
+```
+
+LogDebug logs a debug message
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see debug messages
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Log debug messages
+
+	agentbay.LogDebug("Debugging session creation process")
+
+	// Output: 🐛 Debugging session creation process
+
+}
+```
+
+### LogInfo
+
+```go
+func LogInfo(message string)
+```
+
+LogInfo logs an informational message
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to INFO or DEBUG to see info messages
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Log informational messages
+
+	agentbay.LogInfo("Session created successfully")
+
+	// Output: ℹ️  Session created successfully
+
+}
+```
+
+### LogInfoWithColor
+
+```go
+func LogInfoWithColor(message string)
+```
+
+LogInfoWithColor logs an informational message with custom color
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to INFO or DEBUG to see colored messages
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Log informational messages with color emphasis
+
+	agentbay.LogInfoWithColor("Important: Session ready for use")
+
+	// Output: ℹ️  Important: Session ready for use
+
+}
+```
+
+### LogOperationError
+
+```go
+func LogOperationError(operation, errorMsg string, withStack bool)
+```
+
+LogOperationError logs an operation error with optional stack trace
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+
+		// Log operation errors
+
+		agentbay.LogOperationError("Create Session", err.Error(), false)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Output: ❌ Failed: Create Session
+
+	// Output: 💥 Error: session creation failed
+
+}
+```
+
+### MaskSensitiveData
+
+```go
+func MaskSensitiveData(data interface{}) interface{}
+```
+
+MaskSensitiveData recursively masks sensitive information in data structures
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Create data with sensitive information
+
+	data := map[string]interface{}{
+		"api_key":    "sk_live_1234567890",
+		"password":   "secret123",
+		"auth_token": "Bearer xyz",
+		"username":   "john_doe",
+	}
+
+	// Mask sensitive data
+
+	masked := agentbay.MaskSensitiveData(data)
+	fmt.Printf("Masked data: %v\n", masked)
+
+	// Output: Masked data: map[api_key:sk****90 auth_token:Be****yz password:se****23 username:john_doe]
+
+}
+```
+
+### SetDeprecationConfig
+
+```go
+func SetDeprecationConfig(config *DeprecationConfig)
+```
+
+SetDeprecationConfig sets the global deprecation configuration
+
+### SetLogLevel
+
+```go
+func SetLogLevel(level int)
+```
+
+SetLogLevel sets the global log level
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see all messages
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Change to INFO level to reduce verbosity
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+
+	// Continue with your operations
+
+}
+```
+
+### SetupLogger
+
+```go
+func SetupLogger(config LoggerConfig)
+```
+
+SetupLogger configures the logger with file logging support
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Configure file logging with rotation
+
+	agentbay.SetupLogger(agentbay.LoggerConfig{
+		Level:       "DEBUG",
+		LogFile:     "/tmp/agentbay.log",
+		MaxFileSize: "100 MB",
+	})
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// All logs will be written to both console and file
+
+}
+```
 
 ## Related Resources
 
 - [FileSystem API Reference](filesystem.md)
 - [Command API Reference](command.md)
-- [UI API Reference](../../computer-use/ui.md)
-- [Window API Reference](../../computer-use/window.md)
+- [Context API Reference](context.md)
+- [Context Manager API Reference](context-manager.md)
 - [OSS API Reference](../advanced/oss.md)
-- [Application API Reference](../../computer-use/application.md)
-- [Context API Reference](context-manager.md)
+
+---
+
+*Documentation generated automatically from Go source code.*

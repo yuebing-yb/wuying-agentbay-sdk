@@ -1,266 +1,281 @@
 # Browser API Reference
 
-The Browser API provides methods for initializing and managing browser instances in the AgentBay cloud environment. It supports both headless and non-headless browsers with extensive configuration options including stealth mode, custom viewports, fingerprinting, proxies, and more.
+## 🌐 Related Tutorial
+
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
 
 ## Overview
 
-The Browser API is accessed through a session instance and provides methods for browser lifecycle management and connection to automation frameworks via Chrome DevTools Protocol (CDP).
+The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,
+screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
+
+## Requirements
+
+- Requires `browser_latest` image for browser automation features
+
+## Type Browser
 
 ```go
-import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
-
-// Access browser through session
-session := result.Session
-browserAPI := session.Browser
-```
-
-## Data Types
-
-### BrowserOption
-
-Configuration options for initializing a browser instance.
-
-```go
-type BrowserOption struct {
-    UseStealth         bool                `json:"useStealth,omitempty"`         // Enable stealth mode
-    UserAgent          *string             `json:"userAgent,omitempty"`          // Custom user agent
-    Viewport           *BrowserViewport    `json:"viewport,omitempty"`           // Viewport configuration
-    Screen             *BrowserScreen      `json:"screen,omitempty"`             // Screen configuration
-    Fingerprint        *BrowserFingerprint `json:"fingerprint,omitempty"`        // Fingerprint configuration
-    SolveCaptchas      bool                `json:"solveCaptchas,omitempty"`      // Auto-solve captchas
-    Proxies            []*BrowserProxy     `json:"proxies,omitempty"`            // Proxy configurations
-    ExtensionPath      *string             `json:"extensionPath,omitempty"`      // Path to extensions directory
-    BrowserType        *string             `json:"browserType,omitempty"`        // Browser type: "chrome" or "chromium"
-    CmdArgs            []string            `json:"cmdArgs,omitempty"`            // Chrome/Chromium command-line arguments
-    DefaultNavigateUrl *string             `json:"defaultNavigateUrl,omitempty"` // Default navigation URL after initialization
+type Browser struct {
+	session		SessionInterface
+	endpointURL	string
+	initialized	bool
+	option		*BrowserOption
 }
 ```
 
-**Field Descriptions:**
+Browser provides browser-related operations for the session
 
-- `UseStealth`: Enables stealth mode to avoid detection by anti-bot systems
-- `UserAgent`: Custom user agent string for the browser
-- `Viewport`: Browser viewport dimensions (affects the visible area)
-- `Screen`: Screen dimensions (affects screen properties)
-- `Fingerprint`: Browser fingerprint configuration for randomization
-- `SolveCaptchas`: Automatically solve captchas during browsing
-- `Proxies`: List of proxy configurations (maximum 1 proxy)
-- `ExtensionPath`: Path to directory containing browser extensions
-- `BrowserType`: Browser type selection - `"chrome"` or `"chromium"` (computer use images only), or `nil` for default
-- `CmdArgs`: List of Chrome/Chromium command-line arguments to customize browser behavior
-- `DefaultNavigateUrl`: URL that the browser automatically navigates to after initialization. Recommended to use Chrome internal pages (e.g., `"chrome://version/"`) to avoid timeout issues
+### Methods
 
-### BrowserViewport
-
-Defines the browser viewport dimensions.
+#### Destroy
 
 ```go
-type BrowserViewport struct {
-    Width  int `json:"width"`  // Viewport width in pixels
-    Height int `json:"height"` // Viewport height in pixels
-}
+func (b *Browser) Destroy() error
 ```
 
-**Common Viewport Sizes:**
-- Desktop: `1920x1080`, `1366x768`, `1280x720`
-- Laptop: `1440x900`, `1366x768`
-- Tablet: `1024x768`, `768x1024`
-- Mobile: `375x667`, `414x896`
-
-### BrowserScreen
-
-Defines the screen dimensions (usually same or larger than viewport).
-
-```go
-type BrowserScreen struct {
-    Width  int `json:"width"`  // Screen width in pixels
-    Height int `json:"height"` // Screen height in pixels
-}
-```
-
-### BrowserFingerprint
-
-Configuration for browser fingerprint randomization.
-
-```go
-type BrowserFingerprint struct {
-    Devices          []string `json:"devices,omitempty"`          // Device types
-    OperatingSystems []string `json:"operatingSystems,omitempty"` // Operating systems
-    Locales          []string `json:"locales,omitempty"`          // Locale strings
-}
-```
-
-**Valid Values:**
-
-- **Devices**: `"desktop"`, `"mobile"`
-- **Operating Systems**: `"windows"`, `"macos"`, `"linux"`, `"android"`, `"ios"`
-- **Locales**: Standard locale strings (e.g., `"en-US"`, `"zh-CN"`, `"ja-JP"`)
+Destroy the browser instance
 
 **Example:**
+
 ```go
-fingerprint := &browser.BrowserFingerprint{
-    Devices:          []string{"desktop"},
-    OperatingSystems: []string{"windows", "macos"},
-    Locales:          []string{"en-US", "en-GB"},
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Initialize browser
+
+	option := browser.NewBrowserOption()
+	success, err := session.Browser.Initialize(option)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if !success {
+		fmt.Println("Failed to initialize browser")
+		os.Exit(1)
+	}
+	fmt.Println("Browser initialized successfully")
+
+	// Output: Browser initialized successfully
+
+	// Use browser for automation tasks...
+
+	// Destroy browser instance
+
+	err = session.Browser.Destroy()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Browser destroyed successfully")
+
+	// Output: Browser destroyed successfully
+
+	session.Delete()
 }
 ```
 
-### BrowserProxy
-
-Configuration for browser proxy settings.
+#### GetEndpointURL
 
 ```go
-type BrowserProxy struct {
-    Type         string  `json:"type"`                   // Proxy type: "custom" or "wuying"
-    Server       *string `json:"server,omitempty"`       // Proxy server (for custom type)
-    Username     *string `json:"username,omitempty"`     // Proxy username (optional)
-    Password     *string `json:"password,omitempty"`     // Proxy password (optional)
-    Strategy     *string `json:"strategy,omitempty"`     // Proxy strategy (for wuying type)
-    PollSize     *int    `json:"pollSize,omitempty"`     // Poll size (for polling strategy)
+func (b *Browser) GetEndpointURL() (string, error)
+```
+
+GetEndpointURL returns the endpoint URL if the browser is initialized
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+	"github.com/playwright-community/playwright-go"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("browser_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Initialize browser
+
+	option := browser.NewBrowserOption()
+	success, err := session.Browser.Initialize(option)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if !success {
+		os.Exit(1)
+	}
+
+	// Get CDP endpoint URL
+
+	endpointURL, err := session.Browser.GetEndpointURL()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("CDP endpoint: %s\n", endpointURL)
+
+	// Connect with Playwright
+
+	pw, err := playwright.Run()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer pw.Stop()
+	browserInstance, err := pw.Chromium.ConnectOverCDP(endpointURL)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer browserInstance.Close()
+
+	// Get or create page
+
+	contexts := browserInstance.Contexts()
+	if len(contexts) == 0 {
+		fmt.Println("No browser contexts available")
+		os.Exit(1)
+	}
+	page, err := contexts[0].NewPage()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Navigate to a website
+
+	_, err = page.Goto("https://example.com")
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	title, _ := page.Title()
+	fmt.Printf("Page title: %s\n", title)
+	session.Delete()
 }
 ```
 
-**Proxy Types:**
-
-1. **Custom Proxy** (`type: "custom"`):
-   ```go
-   server := "proxy.example.com:8080"
-   username := "user"
-   password := "pass"
-   
-   proxy := &browser.BrowserProxy{
-       Type:     "custom",
-       Server:   &server,
-       Username: &username,
-       Password: &password,
-   }
-   ```
-
-2. **WuYing Proxy** (`type: "wuying"`):
-   - **Restricted Strategy**: Uses a single dedicated IP
-     ```go
-     strategy := "restricted"
-     proxy := &browser.BrowserProxy{
-         Type:     "wuying",
-         Strategy: &strategy,
-     }
-     ```
-   
-   - **Polling Strategy**: Rotates through a pool of IPs
-     ```go
-     strategy := "polling"
-     pollSize := 10
-     proxy := &browser.BrowserProxy{
-         Type:     "wuying",
-         Strategy: &strategy,
-         PollSize: &pollSize,
-     }
-     ```
-
-**Validation Rules:**
-- Maximum 1 proxy allowed in the `Proxies` list
-- `Server` is required for `custom` type
-- `Strategy` is required for `wuying` type
-- `PollSize` must be > 0 for `polling` strategy
-
-## Methods
-
-### NewBrowserOption
-
-Creates a new BrowserOption with default values.
+#### GetOption
 
 ```go
-func NewBrowserOption() *BrowserOption
+func (b *Browser) GetOption() *BrowserOption
 ```
 
-**Returns:**
-- `*BrowserOption`: A new BrowserOption instance with default values
-
-**Default Values:**
-- `UseStealth`: `false`
-- `SolveCaptchas`: `false`
-- `ExtensionPath`: `"/tmp/extensions/"`
-- `BrowserType`: `nil` (lets browser image decide)
+GetOption returns the current BrowserOption used to initialize the browser, or nil if not set
 
 **Example:**
-```go
-option := browser.NewBrowserOption()
-// Customize as needed
-customUA := "Mozilla/5.0 ..."
-option.UserAgent = &customUA
-```
-
-### Validate
-
-Validates the BrowserOption configuration.
 
 ```go
-func (o *BrowserOption) Validate() error
-```
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
 
-**Returns:**
-- `error`: An error if validation fails, `nil` otherwise
+	// Initialize browser with custom options
 
-**Validation Rules:**
-- Maximum 1 proxy in `Proxies` list
-- `ExtensionPath` cannot be empty if provided
-- `BrowserType` must be `"chrome"`, `"chromium"`, or `nil`
+	option := browser.NewBrowserOption()
+	customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+	option.UserAgent = &customUA
+	option.UseStealth = true
+	success, err := session.Browser.Initialize(option)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if !success {
+		os.Exit(1)
+	}
 
-**Example:**
-```go
-option := browser.NewBrowserOption()
-if err := option.Validate(); err != nil {
-    log.Fatalf("Invalid browser option: %v", err)
+	// Get current browser option
+
+	currentOption := session.Browser.GetOption()
+	if currentOption != nil {
+		fmt.Printf("Stealth mode: %v\n", currentOption.UseStealth)
+		if currentOption.UserAgent != nil {
+			fmt.Printf("User agent: %s\n", *currentOption.UserAgent)
+		}
+	}
+
+	// Output: Stealth mode: true
+
+	// Output: User agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0
+
+	session.Delete()
 }
 ```
 
-### ToMap
-
-Converts BrowserOption to a map for API requests.
-
-```go
-func (o *BrowserOption) ToMap() map[string]interface{}
-```
-
-**Returns:**
-- `map[string]interface{}`: A map representation of the browser options
-
-**Example:**
-```go
-option := browser.NewBrowserOption()
-optionMap := option.ToMap()
-// optionMap can be used in API requests
-```
-
-### Initialize
-
-Initializes the browser with the given options (synchronous).
+#### Initialize
 
 ```go
 func (b *Browser) Initialize(option *BrowserOption) (bool, error)
 ```
 
-**Parameters:**
-- `option` (*BrowserOption): Browser configuration options
-
-**Returns:**
-- `bool`: `true` if initialization was successful
-- `error`: An error if the operation fails
+Initialize initializes the browser instance with the given options. Returns true and nil error if
+successful, false and error otherwise.
 
 **Example:**
+
 ```go
 option := browser.NewBrowserOption()
 
 // Add custom configuration
+
 customUA := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
 option.UserAgent = &customUA
-
 option.Viewport = &browser.BrowserViewport{
     Width:  1920,
     Height: 1080,
 }
 
 // Initialize browser
+
 success, err := session.Browser.Initialize(option)
 if err != nil {
     log.Fatalf("Failed to initialize browser: %v", err)
@@ -270,515 +285,506 @@ if !success {
 }
 ```
 
-### GetEndpointURL
-
-Retrieves the CDP (Chrome DevTools Protocol) endpoint URL for connecting automation tools.
-
-```go
-func (b *Browser) GetEndpointURL() (string, error)
-```
-
-**Returns:**
-- `string`: The CDP WebSocket endpoint URL (e.g., `ws://host:port/devtools/browser/...`)
-- `error`: An error if the operation fails
-
-**Example:**
-```go
-endpointURL, err := session.Browser.GetEndpointURL()
-if err != nil {
-    log.Fatalf("Failed to get endpoint URL: %v", err)
-}
-
-// Use with Playwright
-browser, err := pw.Chromium.ConnectOverCDP(endpointURL)
-```
-
-### IsInitialized
-
-Checks if the browser has been initialized.
+#### IsInitialized
 
 ```go
 func (b *Browser) IsInitialized() bool
 ```
 
-**Returns:**
-- `bool`: `true` if the browser is initialized, `false` otherwise
+IsInitialized returns true if the browser was initialized, false otherwise
 
 **Example:**
-```go
-if session.Browser.IsInitialized() {
-    fmt.Println("Browser is ready")
-} else {
-    fmt.Println("Browser needs initialization")
-}
-```
-
-### GetOption
-
-Retrieves the current browser configuration.
-
-```go
-func (b *Browser) GetOption() *BrowserOption
-```
-
-**Returns:**
-- `*BrowserOption`: The current browser configuration, or `nil` if not initialized
-
-**Example:**
-```go
-option := session.Browser.GetOption()
-if option != nil {
-    fmt.Printf("Browser type: %v\n", option.BrowserType)
-}
-```
-
-## Complete Usage Example
-
-### Basic Usage
 
 ```go
 package main
-
 import (
-    "fmt"
-    "log"
-    "os"
-
-    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
-    "github.com/playwright-community/playwright-go"
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
 )
-
 func main() {
-    // Initialize AgentBay
-    agentBay := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
 
-    // Create session
-    params := &agentbay.CreateSessionParams{
-        ImageId: "browser_latest",
-    }
-    result, err := agentBay.Create(params)
-    if err != nil || !result.Success {
-        log.Fatalf("Failed to create session: %v", err)
-    }
-    defer result.Session.Delete()
+	// Check if browser is initialized before use
 
-    // Initialize browser with default options
-    option := browser.NewBrowserOption()
-    success, err := result.Session.Browser.Initialize(option)
-    if err != nil || !success {
-        log.Fatalf("Browser initialization failed: %v", err)
-    }
+	if session.Browser.IsInitialized() {
+		fmt.Println("Browser is already initialized")
+	} else {
+		fmt.Println("Browser is not initialized yet")
+	}
 
-    // Get CDP endpoint
-    endpoint, err := result.Session.Browser.GetEndpointURL()
-    if err != nil {
-        log.Fatalf("Failed to get endpoint: %v", err)
-    }
+	// Output: Browser is not initialized yet
 
-    // Connect with Playwright
-    pw, err := playwright.Run()
-    if err != nil {
-        log.Fatalf("Failed to start Playwright: %v", err)
-    }
-    defer pw.Stop()
+	// Initialize browser
 
-    browserInstance, err := pw.Chromium.ConnectOverCDP(endpoint)
-    if err != nil {
-        log.Fatalf("Failed to connect: %v", err)
-    }
-    defer browserInstance.Close()
+	option := browser.NewBrowserOption()
+	success, err := session.Browser.Initialize(option)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if !success {
+		os.Exit(1)
+	}
 
-    // Use the browser
-    page, err := browserInstance.Contexts()[0].NewPage()
-    if err != nil {
-        log.Fatalf("Failed to create page: %v", err)
-    }
+	// Check again after initialization
 
-    _, err = page.Goto("https://example.com")
-    if err != nil {
-        log.Fatalf("Failed to navigate: %v", err)
-    }
+	if session.Browser.IsInitialized() {
+		fmt.Println("Browser is now initialized")
+	}
 
-    title, _ := page.Title()
-    fmt.Printf("Page title: %s\n", title)
+	// Output: Browser is now initialized
+
+	session.Delete()
 }
 ```
 
-### Advanced Configuration
-
-```go
-// Create custom browser configuration
-option := browser.NewBrowserOption()
-
-// Custom user agent
-ua := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
-option.UserAgent = &ua
-
-// Viewport and screen
-option.Viewport = &browser.BrowserViewport{Width: 1920, Height: 1080}
-option.Screen = &browser.BrowserScreen{Width: 1920, Height: 1080}
-
-// Browser type (for computer use images)
-chromeType := "chrome"
-option.BrowserType = &chromeType
-
-// Stealth mode
-option.UseStealth = true
-
-// Command-line arguments
-option.CmdArgs = []string{
-    "--disable-features=PrivacySandboxSettings4",
-    "--disable-background-timer-throttling",
-}
-
-// Default navigation URL (recommended: Chrome internal pages)
-defaultUrl := "chrome://version/"
-option.DefaultNavigateUrl = &defaultUrl
-
-// Fingerprint randomization
-option.Fingerprint = &browser.BrowserFingerprint{
-    Devices:          []string{"desktop"},
-    OperatingSystems: []string{"windows", "macos"},
-    Locales:          []string{"en-US"},
-}
-
-// Proxy configuration
-proxyServer := "proxy.example.com:8080"
-proxyUser := "username"
-proxyPass := "password"
-option.Proxies = []*browser.BrowserProxy{
-    {
-        Type:     "custom",
-        Server:   &proxyServer,
-        Username: &proxyUser,
-        Password: &proxyPass,
-    },
-}
-
-// Validate before use
-if err := option.Validate(); err != nil {
-    log.Fatalf("Invalid configuration: %v", err)
-}
-
-// Initialize with custom options
-success, err := session.Browser.Initialize(option)
-if err != nil || !success {
-    log.Fatalf("Failed to initialize: %v", err)
-}
-```
-
-## Error Handling
-
-### Common Errors
-
-1. **Browser Not Initialized**
-   ```go
-   endpoint, err := session.Browser.GetEndpointURL()
-   if err != nil {
-       // Error: "browser not initialized"
-       log.Fatal("Initialize browser before getting endpoint")
-   }
-   ```
-
-2. **Invalid Configuration**
-   ```go
-   option := browser.NewBrowserOption()
-   invalidType := "firefox"
-   option.BrowserType = &invalidType
-   
-   _, err := session.Browser.Initialize(option)
-   // Error: "browserType must be 'chrome' or 'chromium'"
-   ```
-
-3. **Multiple Proxies**
-   ```go
-   option.Proxies = []*browser.BrowserProxy{proxy1, proxy2}
-   err := option.Validate()
-   // Error: "proxies list length must be limited to 1"
-   ```
-
-### Best Practices
-
-```go
-// Always check both success and error
-success, err := session.Browser.Initialize(option)
-if err != nil {
-    log.Fatalf("Error: %v", err)
-}
-if !success {
-    log.Fatal("Initialization failed without error")
-}
-
-// Validate options before initialization
-if err := option.Validate(); err != nil {
-    log.Fatalf("Invalid options: %v", err)
-}
-
-// Check initialization status
-if !session.Browser.IsInitialized() {
-    log.Fatal("Browser must be initialized first")
-}
-
-// Use defer for cleanup
-defer session.Delete()
-defer pw.Stop()
-defer browserInstance.Close()
-```
-
-## Browser Type Selection
-
-> **Note:** The `BrowserType` option is only available for **computer use images**. For standard browser images, the browser type is determined by the image.
-
-### Choosing Browser Type
-
-```go
-// Use Chrome (Google Chrome)
-chromeType := "chrome"
-option := browser.NewBrowserOption()
-option.BrowserType = &chromeType
-
-// Use Chromium (open-source)
-chromiumType := "chromium"
-option := browser.NewBrowserOption()
-option.BrowserType = &chromiumType
-
-// Use default (nil - let browser image decide)
-option := browser.NewBrowserOption()
-// option.BrowserType is nil by default
-```
-
-### When to Use Each Type
-
-**Chrome** (`"chrome"`):
-- Need specific Chrome-only features
-- Testing against actual Chrome browser
-- Matching production Chrome environment
-
-**Chromium** (`"chromium"`):
-- Open-source preference
-- Lighter resource usage
-- Standard web automation
-
-**Default** (`nil`):
-- Let the platform choose optimal browser
-- Maximum compatibility
-- Recommended for most use cases
-
-## Integration with Automation Tools
-
-### Playwright
-
-```go
-import "github.com/playwright-community/playwright-go"
-
-// Get endpoint
-endpoint, err := session.Browser.GetEndpointURL()
-
-// Connect Playwright
-pw, err := playwright.Run()
-defer pw.Stop()
-
-browser, err := pw.Chromium.ConnectOverCDP(endpoint)
-defer browser.Close()
-
-page, err := browser.Contexts()[0].NewPage()
-```
-
-### Puppeteer (via Node.js)
-
-```go
-// Get endpoint
-endpoint, err := session.Browser.GetEndpointURL()
-fmt.Printf("Use this endpoint in Node.js: %s\n", endpoint)
-```
-
-```javascript
-// In Node.js
-const puppeteer = require('puppeteer-core');
-const browser = await puppeteer.connect({
-    browserWSEndpoint: 'ws://...' // endpoint from Go
-});
-```
-
-### Screenshot
-
-Takes a screenshot of the specified page with enhanced options and error handling.
-
-> **Note**: This method requires the caller to connect to the browser via Playwright or similar automation framework and pass the page object to this method. The actual screenshot capture is performed by the automation framework, not by this method directly.
+#### Screenshot
 
 ```go
 func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error)
 ```
 
-**Parameters:**
-- `page` (interface{}): The Playwright Page object to take a screenshot of. This is a required parameter.
-- `options` (*ScreenshotOptions): Screenshot options including:
-  - `FullPage` (bool): Whether to capture the full scrollable page. Defaults to `false`.
-  - `Type` (string): Image type, either `"png"` or `"jpeg"`. Defaults to `"png"`.
-  - `Quality` (int): Quality of the image, between 0-100 (jpeg only). Defaults to `0`.
-  - `Timeout` (int): Maximum time in milliseconds. Defaults to `60000`.
+Screenshot takes a screenshot of the specified page with enhanced options and error handling.
+This method requires the caller to connect to the browser via Playwright or similar and pass the
+page object to this method.
 
-**Returns:**
-- `[]byte`: Screenshot data as bytes.
-- `error`: Error if screenshot capture fails.
+Parameters:
+  - page: The Playwright Page object to take a screenshot of. This is a required parameter.
+  - options: Screenshot options including:
+  - FullPage (bool): Whether to capture the full scrollable page. Defaults to false.
+  - Type (string): Image type, either "png" or "jpeg". Defaults to "png".
+  - Quality (int): Quality of the image, between 0-100 (jpeg only). Defaults to 0.
+  - Timeout (int): Maximum time in milliseconds. Defaults to 60000.
 
-**Raises:**
-- `error`: If browser is not initialized.
-- `error`: If page is nil.
+Returns:
+  - []byte: Screenshot data as bytes.
+  - error: Error if browser is not initialized or screenshot capture fails.
 
 **Example:**
+
 ```go
-// Get browser endpoint and connect with Playwright
-endpoint, err := session.Browser.GetEndpointURL()
-if err != nil {
-    log.Fatal(err)
-}
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+	"github.com/playwright-community/playwright-go"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
 
-// Connect Playwright (example using playwright-go)
-pw, err := playwright.Run()
-if err != nil {
-    log.Fatal(err)
-}
-defer pw.Stop()
+	// Initialize browser
 
-browser, err := pw.Chromium.ConnectOverCDP(endpoint)
-if err != nil {
-    log.Fatal(err)
-}
-defer browser.Close()
+	option := browser.NewBrowserOption()
+	success, err := session.Browser.Initialize(option)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if !success {
+		os.Exit(1)
+	}
 
-page, err := browser.Contexts()[0].NewPage()
-if err != nil {
-    log.Fatal(err)
-}
+	// Get endpoint URL and connect with Playwright
 
-// Navigate to a page
-_, err = page.Goto("https://example.com")
-if err != nil {
-    log.Fatal(err)
-}
+	endpointURL, err := session.Browser.GetEndpointURL()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
 
-// Take a simple screenshot (viewport only)
-screenshotData, err := session.Browser.Screenshot(page, nil)
-if err != nil {
-    log.Fatal(err)
-}
+	// Connect to browser via Playwright
 
-// Save to file
-err = ioutil.WriteFile("screenshot.png", screenshotData, 0644)
-if err != nil {
-    log.Fatal(err)
-}
+	pw, err := playwright.Run()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer pw.Stop()
+	browser, err := pw.Chromium.ConnectOverCDP(endpointURL)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer browser.Close()
 
-// Take a full page screenshot with custom options
-options := &browser.ScreenshotOptions{
-    FullPage: true,
-    Type:     "jpeg",
-    Quality:  80,
-    Timeout:  30000,
-}
-fullPageData, err := session.Browser.Screenshot(page, options)
-if err != nil {
-    log.Fatal(err)
-}
+	// Get the page
 
-// Save full page screenshot
-err = ioutil.WriteFile("full_page.jpg", fullPageData, 0644)
-if err != nil {
-    log.Fatal(err)
+	contexts := browser.Contexts()
+	if len(contexts) == 0 {
+		fmt.Println("No browser contexts available")
+		os.Exit(1)
+	}
+	page, err := contexts[0].NewPage()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Navigate to a URL
+
+	_, err = page.Goto("https://example.com")
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Take screenshot with custom options
+
+	screenshotOptions := &browser.ScreenshotOptions{
+		FullPage: true,
+		Type:     "png",
+		Timeout:  60000,
+	}
+	screenshotData, err := session.Browser.Screenshot(page, screenshotOptions)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Save screenshot to file
+
+	err = os.WriteFile("/tmp/screenshot.png", screenshotData, 0644)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Screenshot saved successfully (%d bytes)\n", len(screenshotData))
+
+	// Output: Screenshot saved successfully (12345 bytes)
+
+	session.Delete()
 }
 ```
 
-**Advanced Usage:**
+### Related Functions
+
+#### NewBrowser
+
 ```go
-// Handle errors gracefully
-screenshotData, err := session.Browser.Screenshot(page, nil)
-if err != nil {
-    if strings.Contains(err.Error(), "not initialized") {
-        log.Println("Browser not initialized")
-    } else if strings.Contains(err.Error(), "Page cannot be null") {
-        log.Println("Page is required")
-    } else {
-        log.Printf("Screenshot failed: %v", err)
-    }
+func NewBrowser(session SessionInterface) *Browser
+```
+
+NewBrowser creates a new Browser instance
+
+## Type BrowserFingerprint
+
+```go
+type BrowserFingerprint struct {
+	Devices			[]string	`json:"devices,omitempty"`		// Device types: "desktop" or "mobile"
+	OperatingSystems	[]string	`json:"operatingSystems,omitempty"`	// OS types: "windows", "macos", "linux", "android", "ios"
+	Locales			[]string	`json:"locales,omitempty"`		// Locale identifiers
 }
 ```
 
-## Performance Considerations
+BrowserFingerprint represents browser fingerprint options
 
-### Resource Usage
-
-- **Fingerprinting**: Minimal performance impact
-- **Proxies**: May add latency depending on proxy location
-- **Extensions**: Each extension increases memory usage
-
-### Optimization Tips
-
-1. **Reuse Sessions**: Keep sessions alive for multiple operations
-2. **Appropriate Viewport**: Use actual target viewport size
-3. **Minimal Extensions**: Only load necessary extensions
-4. **Connection Pooling**: Maintain persistent CDP connections
-
-## Troubleshooting
-
-### Browser Won't Initialize
+**Example:**
 
 ```go
-// Check session status
-if !result.Success {
-    log.Printf("Session creation failed: %s", result.ErrorMessage)
+fingerprint := &browser.BrowserFingerprint{
+    Devices:          []string{"desktop"},
+    OperatingSystems: []string{"windows", "macos"},
+    Locales:          []string{"en-US", "en-GB"},
 }
-
-// Verify image supports browser
-params := &agentbay.CreateSessionParams{
-    ImageId: "browser_latest", // Ensure browser-enabled image
-}
-
-// Check initialization
-success, err := session.Browser.Initialize(option)
-log.Printf("Success: %v, Error: %v", success, err)
 ```
 
-### CDP Connection Fails
+### Related Functions
+
+#### NewBrowserFingerprint
 
 ```go
-// Ensure browser is initialized
-if !session.Browser.IsInitialized() {
-    log.Fatal("Browser not initialized")
-}
-
-// Get and verify endpoint
-endpoint, err := session.Browser.GetEndpointURL()
-if err != nil {
-    log.Fatalf("Cannot get endpoint: %v", err)
-}
-log.Printf("Endpoint: %s", endpoint)
+func NewBrowserFingerprint(devices, operatingSystems, locales []string) (*BrowserFingerprint, error)
 ```
 
-### Configuration Issues
+NewBrowserFingerprint creates a new BrowserFingerprint with validation
+
+## Type BrowserOption
 
 ```go
-// Validate before use
+type BrowserOption struct {
+	UseStealth		bool			`json:"useStealth,omitempty"`		// Enable stealth mode
+	UserAgent		*string			`json:"userAgent,omitempty"`		// Custom user agent
+	Viewport		*BrowserViewport	`json:"viewport,omitempty"`		// Viewport configuration
+	Screen			*BrowserScreen		`json:"screen,omitempty"`		// Screen configuration
+	Fingerprint		*BrowserFingerprint	`json:"fingerprint,omitempty"`		// Fingerprint configuration
+	SolveCaptchas		bool			`json:"solveCaptchas,omitempty"`	// Auto-solve captchas
+	Proxies			[]*BrowserProxy		`json:"proxies,omitempty"`		// Proxy configurations
+	ExtensionPath		*string			`json:"extensionPath,omitempty"`	// Path to extensions directory
+	CmdArgs			[]string		`json:"cmdArgs,omitempty"`		// Additional command line arguments
+	DefaultNavigateUrl	*string			`json:"defaultNavigateUrl,omitempty"`	// Default URL to navigate to when browser starts
+	BrowserType		*string			`json:"browserType,omitempty"`		// Browser type: "chrome" or "chromium"
+}
+```
+
+BrowserOption represents browser initialization options
+
+**Example:**
+
+```go
+option := browser.NewBrowserOption()
+
+// Custom user agent
+
+ua := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+option.UserAgent = &ua
+
+// Viewport and screen
+
+option.Viewport = &browser.BrowserViewport{Width: 1920, Height: 1080}
+option.Screen = &browser.BrowserScreen{Width: 1920, Height: 1080}
+
+// Stealth mode
+
+option.UseStealth = true
+
+// Validate configuration
+
 if err := option.Validate(); err != nil {
-    log.Fatalf("Configuration error: %v", err)
-}
-
-// Check pointer fields
-if option.UserAgent != nil {
-    log.Printf("Using custom UA: %s", *option.UserAgent)
-}
-
-if option.BrowserType != nil {
-    log.Printf("Browser type: %s", *option.BrowserType)
+    log.Fatalf("Invalid configuration: %v", err)
 }
 ```
 
-## See Also
+### Related Functions
 
-- [Browser Use Guide](../../../../docs/guides/browser-use/README.md) - Complete guide with examples
-- [Core Features](../../../../docs/guides/browser-use/core-features.md) - Essential browser features
-- [Advanced Features](../../../../docs/guides/browser-use/advance-features.md) - Advanced configuration
-- [Browser Examples](../../examples/browser-use/browser/README.md) - Runnable example code
-- [Session Management](../common-features/basics/session.md) - Session lifecycle and management
+#### NewBrowserOption
 
+```go
+func NewBrowserOption() *BrowserOption
+```
+
+NewBrowserOption creates a new BrowserOption with default values and validation
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Create browser option with default values
+
+	option := browser.NewBrowserOption()
+
+	// Customize user agent
+
+	customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+	option.UserAgent = &customUA
+
+	// Set viewport
+
+	option.Viewport = &browser.BrowserViewport{Width: 1920, Height: 1080}
+
+	// Enable stealth mode
+
+	option.UseStealth = true
+
+	// Initialize browser with custom options
+
+	success, err := session.Browser.Initialize(option)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if !success {
+		fmt.Println("Failed to initialize browser")
+		os.Exit(1)
+	}
+	fmt.Println("Browser initialized with custom options")
+
+	// Output: Browser initialized with custom options
+
+	session.Delete()
+}
+```
+
+## Type BrowserProxy
+
+```go
+type BrowserProxy struct {
+	Type		string	`json:"type"`			// Type of proxy - "custom" or "wuying"
+	Server		*string	`json:"server,omitempty"`	// Proxy server address (required for custom type)
+	Username	*string	`json:"username,omitempty"`	// Proxy username (optional for custom type)
+	Password	*string	`json:"password,omitempty"`	// Proxy password (optional for custom type)
+	Strategy	*string	`json:"strategy,omitempty"`	// Strategy for wuying: "restricted" or "polling"
+	PollSize	*int	`json:"pollsize,omitempty"`	// Pool size (optional for wuying with polling strategy)
+}
+```
+
+BrowserProxy represents browser proxy configuration. Supports two types of proxy: custom proxy and
+wuying proxy. Wuying proxy supports two strategies: restricted and polling.
+
+**Example:**
+
+```go
+// Custom proxy
+
+server := "proxy.example.com:8080"
+username := "user"
+password := "pass"
+customProxy := &browser.BrowserProxy{
+    Type:     "custom",
+    Server:   &server,
+    Username: &username,
+    Password: &password,
+}
+
+// WuYing proxy with restricted strategy
+
+strategy := "restricted"
+wuyingProxy := &browser.BrowserProxy{
+    Type:     "wuying",
+    Strategy: &strategy,
+}
+
+// WuYing proxy with polling strategy
+
+pollingStrategy := "polling"
+pollSize := 10
+pollingProxy := &browser.BrowserProxy{
+    Type:     "wuying",
+    Strategy: &pollingStrategy,
+    PollSize: &pollSize,
+}
+```
+
+### Related Functions
+
+#### NewBrowserProxy
+
+```go
+func NewBrowserProxy(proxyType string, server, username, password, strategy *string, pollSize *int) (*BrowserProxy, error)
+```
+
+NewBrowserProxy creates a new BrowserProxy with validation
+
+## Type BrowserScreen
+
+```go
+type BrowserScreen struct {
+	Width	int	`json:"width"`	// Screen width
+	Height	int	`json:"height"`	// Screen height
+}
+```
+
+BrowserScreen represents browser screen options
+
+## Type BrowserViewport
+
+```go
+type BrowserViewport struct {
+	Width	int	`json:"width"`	// Viewport width
+	Height	int	`json:"height"`	// Viewport height
+}
+```
+
+BrowserViewport represents browser viewport options
+
+## Type LinkResult
+
+```go
+type LinkResult struct {
+	Link string
+}
+```
+
+SessionInterface defines a minimal interface for Browser to interact with Session This interface
+allows us to avoid circular dependencies while still accessing necessary Session methods LinkResult
+represents the result of GetLink call
+
+## Type McpToolResult
+
+```go
+type McpToolResult struct {
+	Success		bool
+	Data		string
+	ErrorMessage	string
+}
+```
+
+McpToolResult represents the result of CallMcpTool call
+
+## Type ScreenshotOptions
+
+```go
+type ScreenshotOptions struct {
+	FullPage	bool
+	Type		string	// "png" or "jpeg"
+	Quality		int	// 0-100 for jpeg
+	Timeout		int	// timeout in milliseconds
+}
+```
+
+ScreenshotOptions represents options for taking screenshots
+
+## Type SessionInterface
+
+```go
+type SessionInterface interface {
+	GetAPIKey() string
+	GetSessionID() string
+	GetClient() *client.Client
+	CallMcpToolForBrowser(toolName string, args interface{}) (*McpToolResult, error)
+	GetLinkForBrowser(protocolType *string, port *int32, options *string) (*LinkResult, error)
+	IsVPCEnabled() bool
+	GetNetworkInterfaceIP() string
+	GetHttpPortNumber() string
+}
+```
+
+SessionInterface defines the interface that Session must implement for Browser
+
+## Best Practices
+
+1. Wait for page load completion before interacting with elements
+2. Use appropriate selectors (CSS, XPath) for reliable element identification
+3. Handle navigation timeouts and errors gracefully
+4. Take screenshots for debugging and verification
+5. Clean up browser resources after automation tasks
+
+## Related Resources
+
+- [Session API Reference](../../common-features/basics/session.md)
+
+---
+
+*Documentation generated automatically from Go source code.*

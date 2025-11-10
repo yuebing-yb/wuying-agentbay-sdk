@@ -1,363 +1,546 @@
-# AgentBay Class API Reference
+# AgentBay API Reference
 
-The `AgentBay` class is the main entry point for interacting with the AgentBay cloud environment. It provides methods for creating, retrieving, listing, and deleting sessions.
-
-## 📖 Related Tutorials
-
-- [SDK Configuration Guide](../../../../../docs/guides/common-features/configuration/sdk-configuration.md) - Detailed tutorial on configuring the SDK
-- [VPC Sessions Guide](../../../../../docs/guides/common-features/advanced/vpc-sessions.md) - Tutorial on creating sessions in VPC environments
-- [Session Link Access Guide](../../../../../docs/guides/common-features/advanced/session-link-access.md) - Tutorial on accessing sessions via links
-
-## Constructor
-
-### AgentBay
+#### generate\_random\_context\_name
 
 ```python
-AgentBay(api_key=None, cfg=None)
+def generate_random_context_name(length: int = 8,
+                                 include_timestamp: bool = True) -> str
 ```
 
-**Parameters:**
-- `api_key` (str, optional): The API key for authentication. If not provided, the SDK will look for the `AGENTBAY_API_KEY` environment variable.
-- `cfg` (Config, optional): Configuration object containing endpoint and timeout_ms. If not provided, default configuration is used.
+Generate a random context name string using alphanumeric characters with optional timestamp.
 
-**Raises:**
-- `ValueError`: If no API key is provided and `AGENTBAY_API_KEY` environment variable is not set.
+**Arguments**:
 
-## Properties
+- `length` _int_ - Length of the random part. Defaults to 8.
+- `include_timestamp` _bool_ - Whether to include timestamp prefix. Defaults to True.
+  
 
-###
+**Returns**:
 
-```python
-context
-```
-A `ContextService` instance for managing persistent contexts. See the [Context API Reference](context.md) for more details.
+    str: Random alphanumeric string with optional timestamp prefix in format:
+  - With timestamp: "YYYYMMDDHHMMSS_<random>" (e.g., "20250112143025_kG8hN2pQ")
+  - Without timestamp: "<random>" (e.g., "kG8hN2pQ")
+  
 
-## Methods
-
-Creates a new session in the AgentBay cloud environment.
+**Example**:
 
 ```python
-create(params: Optional[CreateSessionParams] = None) -> SessionResult
-```
+from agentbay import AgentBay, generate_random_context_name
 
-**Parameters:**
-- `params` (CreateSessionParams, optional): Parameters for session creation. If None, default parameters will be used.
-
-**Returns:**
-- `SessionResult`: A result object containing the new Session instance, success status, request ID, and error message if any.
-
-**Behavior:**
-- When `params` includes valid `persistence_data_list`, after creating the session, the API will internally wait for context synchronization to complete.
-- It will retrieve ContextStatusData via `session.context.info` and continuously monitor all data items' Status until all items show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
-- Any "Failed" status items will have their error messages printed.
-- The create operation only returns after context status checking completes.
-
-**Raises:**
-- `AgentBayError`: If the session creation fails due to API errors or other issues.
-
-**Example:**
-```python
-from agentbay import AgentBay, Config
-from agentbay.session_params import CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy
-
-# Initialize the SDK with default configuration
 agent_bay = AgentBay(api_key="your_api_key")
 
-# Or initialize with custom configuration
-config = Config(
-    endpoint="https://agentbay.example.com",
-    timeout_ms=30000
-)
-agent_bay_with_config = AgentBay(api_key="your_api_key", cfg=config)
+def demonstrate_generate_context_name():
+    try:
+        # Generate context name with timestamp (default)
+        name_with_timestamp = generate_random_context_name()
+        print(f"Context name with timestamp: {name_with_timestamp}")
+        # Output: Context name with timestamp: 20250112143025_kG8hN2pQ
+
+        # Generate context name without timestamp
+        name_without_timestamp = generate_random_context_name(8, False)
+        print(f"Context name without timestamp: {name_without_timestamp}")
+        # Output: Context name without timestamp: kG8hN2pQ
+
+        # Generate longer random name
+        long_name = generate_random_context_name(16, False)
+        print(f"Long context name: {long_name}")
+        # Output: Long context name: kG8hN2pQ7mX9vZ1L
+
+        # Use generated name to create a context
+        context_name = generate_random_context_name()
+        result = agent_bay.context.get(context_name, create=True)
+        if result.success:
+            print(f"Created context: {result.context.name}")
+            # Output: Created context: 20250112143025_kG8hN2pQ
+            print(f"Context ID: {result.context.id}")
+            # Output: Context ID: ctx-12345678
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_generate_context_name()
+```
+  
+
+**Notes**:
+
+  - Characters are randomly selected from a-zA-Z0-9
+  - Timestamp format is YYYYMMDDHHMMSS (local time)
+  - Useful for creating unique context names that can be sorted chronologically
+  
+
+**See Also**:
+
+  AgentBay.context.get, AgentBay.context.create
+
+## Config Objects
+
+```python
+class Config()
+```
+
+## AgentBay Objects
+
+```python
+class AgentBay()
+```
+
+AgentBay represents the main client for interacting with the AgentBay cloud runtime
+environment.
+
+#### create
+
+```python
+def create(params: Optional[CreateSessionParams] = None) -> SessionResult
+```
+
+Create a new session in the AgentBay cloud environment.
+
+**Arguments**:
+
+- `params` _Optional[CreateSessionParams], optional_ - Parameters for creating the session.
+  Defaults to None (uses default configuration).
+  
+
+**Returns**:
+
+    SessionResult: Result containing the created session and request ID.
+  - success (bool): True if the operation succeeded
+  - session (Session): The created session object (if success is True)
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Raises**:
+
+    ValueError: If API key is not provided and AGENTBAY_API_KEY environment variable is not set.
+    ClientException: If the API request fails due to network or authentication issues.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay, CreateSessionParams
+
+# Initialize the SDK
+agent_bay = AgentBay(api_key="your_api_key")
 
 # Create a session with default parameters
-default_result = agent_bay.create()
-if default_result.success:
-    default_session = default_result.session
-    print(f"Created session with ID: {default_session.session_id}")
+result = agent_bay.create()
+if result.success:
+    session = result.session
+    print(f"Session created: {session.session_id}")
+    # Output: Session created: session-04bdwfj7u22a1s30g
+    print(f"Request ID: {result.request_id}")
+    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+    # Use the session
+    info_result = session.info()
+    if info_result.success:
+        print(f"Session status: {info_result.data['Status']}")
+        # Output: Session status: Running
+
+    # Clean up
+    session.delete()
 
 # Create a session with custom parameters
 params = CreateSessionParams(
-    image_id="linux_latest",
-    labels={"project": "demo", "environment": "testing"},
-    enable_browser_replay=True  # Enable browser replay for browser sessions
+    image_id="browser-chrome",
+    labels={"project": "demo", "env": "test"}
 )
-custom_result = agent_bay.create(params)
-if custom_result.success:
-    custom_session = custom_result.session
-    print(f"Created custom session with ID: {custom_session.session_id}")
-
-# Create a session with context synchronization
-context_sync = ContextSync.new(
-    context_id="your_context_id",
-    path="/mnt/persistent",
-    policy=SyncPolicy.default()
-)
-sync_params = CreateSessionParams(
-    image_id="linux_latest",
-    context_syncs=[context_sync]
-)
-sync_result = agent_bay.create(sync_params)
-if sync_result.success:
-    sync_session = sync_result.session
-    print(f"Created session with context sync: {sync_session.session_id}")
+result = agent_bay.create(params)
+if result.success:
+    print(f"Session created with labels: {result.session.session_id}")
+    result.session.delete()
 
 # Create a browser session with browser replay enabled
 browser_params = CreateSessionParams(
     image_id="browser_latest",
-    enable_browser_replay=True,  # Enable browser replay
+    enable_browser_replay=True  # Enable browser replay
 )
 browser_result = agent_bay.create(browser_params)
 if browser_result.success:
     browser_session = browser_result.session
     print(f"Created browser session with replay: {browser_session.session_id}")
     # Browser replay files are automatically generated for internal processing
-
-# Create a mobile session with configuration
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
-
-app_whitelist_rule = AppManagerRule(
-    rule_type="White",
-    app_package_name_list=[
-        "com.android.settings",
-        "com.example.trusted.app",
-        "com.system.essential.service"
-    ]
-)
-mobile_config = MobileExtraConfig(
-    lock_resolution=True,  # Lock screen resolution for consistent testing
-    app_manager_rule=app_whitelist_rule,
-    hide_navigation_bar=True,  # Hide navigation bar for immersive experience
-    uninstall_blacklist=[  # Protect critical apps from uninstallation
-        "com.android.systemui",
-        "com.android.settings",
-        "com.google.android.gms"
-    ]
-)
-extra_configs = ExtraConfigs(mobile=mobile_config)
-
-mobile_params = CreateSessionParams(
-    image_id="mobile_latest",
-    labels={"project": "mobile-testing", "config_type": "whitelist"},
-    extra_configs=extra_configs
-)
-mobile_result = agent_bay.create(mobile_params)
-if mobile_result.success:
-    mobile_session = mobile_result.session
-    print(f"Created mobile session with whitelist: {mobile_session.session_id}")
-
-# Create a mobile session with blacklist configuration
-app_blacklist_rule = AppManagerRule(
-    rule_type="Black",
-    app_package_name_list=[
-        "com.malware.suspicious",
-        "com.unwanted.adware",
-        "com.social.distraction"
-    ]
-)
-mobile_security_config = MobileExtraConfig(
-    lock_resolution=False,  # Allow adaptive resolution
-    app_manager_rule=app_blacklist_rule,
-    hide_navigation_bar=False,  # Show navigation bar (default behavior)
-    uninstall_blacklist=["com.android.systemui"]  # Protect system UI from uninstallation
-)
-security_extra_configs = ExtraConfigs(mobile=mobile_security_config)
-
-mobile_security_params = CreateSessionParams(
-    image_id="mobile_latest",
-    labels={"project": "mobile-security", "config_type": "blacklist", "security": "enabled"},
-    extra_configs=security_extra_configs
-)
-security_result = agent_bay.create(mobile_security_params)
-if security_result.success:
-    security_session = security_result.session
-    print(f"Created secure mobile session with blacklist: {security_session.session_id}")
+    browser_session.delete()
 ```
+  
 
-### get
+**Notes**:
 
-Retrieves a session by its ID.
+  - A default file transfer context is automatically created for each session
+  - For VPC sessions, MCP tools information is automatically fetched
+  - If context_syncs are provided, the method waits for synchronization to complete
+  - Session is automatically cached in the AgentBay instance
+  
+
+**See Also**:
+
+  AgentBay.get, AgentBay.list, Session.delete, CreateSessionParams
+
+#### list
 
 ```python
-get(session_id: str) -> SessionResult
+def list(labels: Optional[Dict[str, str]] = None,
+         page: Optional[int] = None,
+         limit: Optional[int] = None) -> SessionListResult
 ```
 
-**Parameters:**
-- `session_id` (str): The ID of the session to retrieve.
+Returns paginated list of session IDs filtered by labels.
 
-**Returns:**
-- `SessionResult`: A result object containing the Session instance, request ID, success status, and error message if any.
+**Arguments**:
 
-**Example:**
+- `labels` _Optional[Dict[str, str]], optional_ - Labels to filter sessions.
+  Defaults to None (returns all sessions).
+- `page` _Optional[int], optional_ - Page number for pagination (starting from 1).
+  Defaults to None (returns first page).
+- `limit` _Optional[int], optional_ - Maximum number of items per page.
+  Defaults to None (uses default of 10).
+  
+
+**Returns**:
+
+    SessionListResult: Paginated list of session IDs that match the labels.
+  - success (bool): True if the operation succeeded
+  - session_ids (List[str]): List of session IDs
+  - request_id (str): Unique identifier for this API request
+  - next_token (str): Token for fetching the next page (empty if no more pages)
+  - max_results (int): Maximum number of results per page
+  - total_count (int): Total number of sessions matching the filter
+  - error_message (str): Error description (if success is False)
+  
+
+**Raises**:
+
+    ClientException: If the API request fails due to network or authentication issues.
+  
+
+**Example**:
+
 ```python
 from agentbay import AgentBay
-
-agentbay = AgentBay(api_key="your_api_key")
-
-create_result = agentbay.create()
-if not create_result.success:
-    print(f"Failed to create session: {create_result.error_message}")
-    exit(1)
-
-session_id = create_result.session.session_id
-print(f"Created session with ID: {session_id}")
-# Output: Created session with ID: session-xxxxxxxxxxxxxx
-
-result = agentbay.get(session_id)
-if result.success:
-    print(f"Successfully retrieved session: {result.session.session_id}")
-    # Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
-    print(f"Request ID: {result.request_id}")
-    # Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-    
-    delete_result = result.session.delete()
-    if delete_result.success:
-        print(f"Session {session_id} deleted successfully")
-        # Output: Session session-xxxxxxxxxxxxxx deleted successfully
-else:
-    print(f"Failed to get session: {result.error_message}")
-```
-
-
-
-```python
-list_by_labels(params: Optional[Union[ListSessionParams, Dict[str, str]]] = None) -> SessionListResult
-```
-
-**Parameters:**
-- `params` (ListSessionParams or Dict[str, str], optional): Parameters for filtering sessions by labels. If a dictionary is provided, it will be treated as labels. If None, all sessions will be returned.
-
-**Returns:**
-- `SessionListResult`: A result object containing the filtered sessions, pagination information, and request ID.
-
-**Raises:**
-- `AgentBayError`: If the session listing fails.
-
-**Example:**
-```python
-from agentbay import AgentBay
-from agentbay.session_params import ListSessionParams
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
 
-# Create pagination parameters
-params = ListSessionParams(
-    max_results=10,  # Maximum results per page
-    next_token="",   # Token for the next page, empty for the first page
-    labels={"environment": "production", "project": "demo"}  # Filter labels
-)
-
-# Get the first page of results
-result = agent_bay.list_by_labels(params)
-
-# Process the results
-if result.success:
-    # Print the current page sessions
-    for session in result.sessions:
-        print(f"Session ID: {session.session_id}")
-
-    # Print pagination information
-    print(f"Total count: {result.total_count}")
-    print(f"Max results per page: {result.max_results}")
-    print(f"Next token: {result.next_token}")
-
-    # If there is a next page, retrieve it
-    if result.next_token:
-        params.next_token = result.next_token
-        next_page_result = agent_bay.list_by_labels(params)
-        # Process the next page...
-```
-
-### list
-
-Returns paginated list of Sessions filtered by labels.
-
-```python
-list(labels: Optional[Dict[str, str]] = None, page: Optional[int] = None, limit: Optional[int] = None) -> SessionListResult
-```
-
-**Parameters:**
-- `labels` (Optional[Dict[str, str]], optional): Labels to filter Sessions. Defaults to None (empty dict, returns all sessions).
-- `page` (Optional[int], optional): Page number for pagination (starting from 1). Defaults to None (returns first page).
-- `limit` (Optional[int], optional): Maximum number of items per page. Defaults to None (uses default of 10).
-
-**Returns:**
-- `SessionListResult`: Paginated list of session IDs that match the labels, including request_id, success status, and pagination information.
-
-**Key Features:**
-- **Simple Interface**: Pass labels directly as a dictionary parameter
-- **Pagination Support**: Use `page` and `limit` parameters for easy pagination
-- **Request ID**: All responses include a `request_id` for tracking and debugging
-- **Flexible Filtering**: Filter by any combination of labels or list all sessions
-
-**Example:**
-```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
+# Create some sessions with labels
+for i in range(3):
+    params = CreateSessionParams(labels={"project": "demo", "index": str(i)})
+    result = agent_bay.create(params)
+    if result.success:
+        print(f"Created session {i}: {result.session.session_id}")
 
 # List all sessions
 result = agent_bay.list()
+if result.success:
+    print(f"Total sessions: {result.total_count}")
+    # Output: Total sessions: 3
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+    # Output: Session ID: session-04bdwfj7u22a1s30g
+    # Output: Session ID: session-04bdwfj7u22a1s30h
+    # Output: Session ID: session-04bdwfj7u22a1s30i
 
 # List sessions with specific labels
 result = agent_bay.list(labels={"project": "demo"})
-
-# List sessions with pagination (page 2, 10 items per page)
-result = agent_bay.list(labels={"my-label": "my-value"}, page=2, limit=10)
-
 if result.success:
-    for session_id in result.session_ids:
-        print(f"Session ID: {session_id}")
-    print(f"Total count: {result.total_count}")
-    print(f"Request ID: {result.request_id}")
-else:
-    print(f"Error: {result.error_message}")
-```
+    print(f"Sessions with project=demo: {len(result.session_ids)}")
+    # Output: Sessions with project=demo: 3
 
-### delete
+# List sessions with pagination
+result = agent_bay.list(labels={"project": "demo"}, page=1, limit=2)
+if result.success:
+    print(f"Page 1: {len(result.session_ids)} sessions")
+    # Output: Page 1: 2 sessions
+    print(f"Has more pages: {bool(result.next_token)}")
+    # Output: Has more pages: True
+
+# Get next page
+result = agent_bay.list(labels={"project": "demo"}, page=2, limit=2)
+if result.success:
+    print(f"Page 2: {len(result.session_ids)} sessions")
+    # Output: Page 2: 1 sessions
+```
+  
+
+**Notes**:
+
+  - Page numbers start from 1
+  - Returns error if page number is less than 1
+  - Returns error if requested page exceeds available pages
+  - Empty labels dict returns all sessions
+  
+
+**See Also**:
+
+  AgentBay.create, AgentBay.get, Session.info
+
+#### delete
 
 ```python
-delete(session: Session, sync_context: bool = False) -> DeleteResult
+def delete(session: Session, sync_context: bool = False) -> DeleteResult
 ```
 
-**Parameters:**
-- `session` (Session): The session to delete.
-- `sync_context` (bool, optional): If True, the API will trigger a file upload via `session.context.sync` before actually releasing the session. Default is False.
+Delete a session by session object.
 
-**Returns:**
-- `DeleteResult`: A result object containing success status, request ID, and error message if any.
+**Arguments**:
 
-**Behavior:**
-- When `sync_context` is True, the API will first call `session.context.sync` to trigger file upload.
-- It will then check `session.context.info` to retrieve ContextStatusData and monitor all data items' Status.
-- The API waits until all items show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
-- Any "Failed" status items will have their error messages printed.
-- The session deletion only proceeds after context sync status checking completes.
+- `session` _Session_ - The session to delete.
+- `sync_context` _bool_ - Whether to sync context data (trigger file uploads)
+  before deleting the session. Defaults to False.
+  
 
-**Raises:**
-- `AgentBayError`: If the session deletion fails.
+**Returns**:
 
-**Example:**
+    DeleteResult: Result indicating success or failure and request ID.
+  - success (bool): True if deletion succeeded
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def demonstrate_delete():
+    try:
+        # Create a session
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+            print(f"Created session: {session.session_id}")
+            # Output: Created session: session-04bdwfj7u22a1s30g
+
+            # Use the session
+            info_result = session.info()
+            if info_result.success:
+                print(f"Session status: {info_result.data['Status']}")
+                # Output: Session status: Running
+
+            # Delete the session without syncing context
+            delete_result = agent_bay.delete(session)
+            if delete_result.success:
+                print("Session deleted successfully")
+                # Output: Session deleted successfully
+                print(f"Request ID: {delete_result.request_id}")
+                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+        # Create another session and delete with context sync
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Write some files to the session
+            session.file_system.write_file("/tmp/test.txt", "test content")
+
+            # Delete with context sync (triggers file upload to OSS)
+            delete_result = agent_bay.delete(session, sync_context=True)
+            if delete_result.success:
+                print("Session deleted with context sync")
+                # Output: Session deleted with context sync
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_delete()
+```
+  
+
+**Notes**:
+
+  - After deletion, the session object is removed from the AgentBay cache
+  - If sync_context=True, context data is uploaded to OSS before deletion
+  - Session cannot be used after deletion
+  
+
+**See Also**:
+
+  Session.delete, AgentBay.create, AgentBay.get
+
+#### get\_session
+
+```python
+def get_session(session_id: str) -> GetSessionResult
+```
+
+Get session information by session ID.
+
+This method retrieves detailed session metadata from the API. Unlike `get()`,
+this returns raw session data without creating a Session object.
+
+**Arguments**:
+
+- `session_id` _str_ - The ID of the session to retrieve.
+  
+
+**Returns**:
+
+    GetSessionResult: Result containing session information.
+  - success (bool): True if the operation succeeded
+  - data (GetSessionData): Session information object with fields:
+  - session_id (str): Session ID
+  - app_instance_id (str): Application instance ID
+  - resource_id (str): Resource ID
+  - resource_url (str): Resource URL for accessing the session
+  - vpc_resource (bool): Whether this is a VPC resource
+  - network_interface_ip (str): Network interface IP (for VPC sessions)
+  - http_port (str): HTTP port (for VPC sessions)
+  - token (str): Authentication token (for VPC sessions)
+  - request_id (str): Unique identifier for this API request
+  - http_status_code (int): HTTP status code
+  - code (str): API response code
+  - error_message (str): Error description (if success is False)
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def demonstrate_get_session():
+    try:
+        # Create a session first
+        create_result = agent_bay.create()
+        if create_result.success:
+            session_id = create_result.session.session_id
+            print(f"Created session: {session_id}")
+            # Output: Created session: session-04bdwfj7u22a1s30g
+
+            # Get session information
+            get_result = agent_bay.get_session(session_id)
+            if get_result.success:
+                print("Session information retrieved:")
+                # Output: Session information retrieved:
+                print(f"  Session ID: {get_result.data.session_id}")
+                # Output:   Session ID: session-04bdwfj7u22a1s30g
+                print(f"  App Instance ID: {get_result.data.app_instance_id}")
+                # Output:   App Instance ID: ai-12345678
+                print(f"  Resource URL: {get_result.data.resource_url[:50]}...")
+                # Output:   Resource URL: https://session.agentbay.com/...
+                print(f"  VPC Resource: {get_result.data.vpc_resource}")
+                # Output:   VPC Resource: False
+                print(f"  Request ID: {get_result.request_id}")
+                # Output:   Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+            else:
+                print(f"Failed to get session: {get_result.error_message}")
+
+            # Clean up
+            create_result.session.delete()
+
+        # Try to get a non-existent session
+        get_result = agent_bay.get_session("non-existent-session")
+        if not get_result.success:
+            print(f"Error: {get_result.error_message}")
+            # Output: Error: Session non-existent-session not found
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_get_session()
+```
+  
+
+**Notes**:
+
+  - Returns session metadata without creating a Session object
+  - Use `get()` instead if you need a Session object for API calls
+  - Returns error if session does not exist or is no longer valid
+  
+
+**See Also**:
+
+  AgentBay.get, AgentBay.create, Session.info
+
+#### get
+
+```python
+def get(session_id: str) -> SessionResult
+```
+
+Get a session by its ID.
+
+**Arguments**:
+
+- `session_id` _str_ - The ID of the session to retrieve. Must be a non-empty string.
+  
+
+**Returns**:
+
+    SessionResult: Result containing the Session instance, request ID, and success status.
+  - success (bool): True if the operation succeeded
+  - session (Session): The session object (if success is True)
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Raises**:
+
+    ClientException: If the API request fails due to network or authentication issues.
+  
+
+**Example**:
+
 ```python
 from agentbay import AgentBay
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
 
-# Create a session
-result = agent_bay.create()
-if result.success:
-    session = result.session
-    print(f"Created session with ID: {session.session_id}")
+# Create a session first
+create_result = agent_bay.create()
+if create_result.success:
+    session_id = create_result.session.session_id
+    print(f"Created session: {session_id}")
+    # Output: Created session: session-04bdwfj7u22a1s30g
 
-    # Use the session for operations...
+    # Get the session by ID
+    get_result = agent_bay.get(session_id)
+    if get_result.success:
+        session = get_result.session
+        print(f"Retrieved session: {session.session_id}")
+        # Output: Retrieved session: session-04bdwfj7u22a1s30g
+        print(f"Request ID: {get_result.request_id}")
+        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
 
-    # Delete the session when done
-    delete_result = agent_bay.delete(session)
-    if delete_result.success:
-        print("Session deleted successfully")
-    else:
-        print(f"Failed to delete session: {delete_result.error_message}")
+        # Use the session
+        info_result = session.info()
+        if info_result.success:
+            print(f"Session status: {info_result.data['Status']}")
+            # Output: Session status: Running
+
+        # Clean up
+        session.delete()
+
+# Handle session not found
+result = agent_bay.get("non-existent-session")
+if not result.success:
+    print(f"Error: {result.error_message}")
+    # Output: Error: Failed to get session non-existent-session: Session non-existent-session not found
 ```
+  
+
+**Notes**:
+
+  - A default file transfer context is automatically created for the retrieved session
+  - VPC-related information (network_interface_ip, http_port, token) is populated from the API response
+  - Returns an error if session_id is empty or the session does not exist
+  
+
+**See Also**:
+
+  AgentBay.create, AgentBay.list, Session.info
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Context API Reference](context.md)
+
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*

@@ -1,1061 +1,1117 @@
 # Browser API Reference
 
-The Browser API provides methods for initializing and managing browser instances in the AgentBay cloud environment. It supports both headless and non-headless browsers with extensive configuration options including stealth mode, custom viewports, fingerprinting, proxies, and more.
+## 🌐 Related Tutorial
+
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
 
 ## Overview
 
-The Browser API is accessed through a session instance and provides methods for browser lifecycle management and connection to automation frameworks via Chrome DevTools Protocol (CDP).
+The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,
+screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
+
+
+## Requirements
+
+- Requires `browser_latest` image for browser automation features
+
+
+
+## BrowserFingerprintContext Objects
+
+```python
+class BrowserFingerprintContext()
+```
+
+Browser fingerprint context configuration.
+
+## BrowserProxy Objects
+
+```python
+class BrowserProxy()
+```
+
+Browser proxy configuration.
+Supports two types of proxy: custom proxy, wuying proxy.
+wuying proxy support two strategies: restricted and polling.
+
+## BrowserViewport Objects
+
+```python
+class BrowserViewport()
+```
+
+Browser viewport options.
+
+## BrowserScreen Objects
+
+```python
+class BrowserScreen()
+```
+
+Browser screen options.
+
+## BrowserFingerprint Objects
+
+```python
+class BrowserFingerprint()
+```
+
+Browser fingerprint options.
+
+## BrowserOption Objects
+
+```python
+class BrowserOption()
+```
+
+browser initialization options.
+
+## Browser Objects
+
+```python
+class Browser(BaseService)
+```
+
+Browser provides browser-related operations for the session.
+
+#### initialize
+
+```python
+def initialize(option: "BrowserOption") -> bool
+```
+
+Initialize the browser instance with the given options.
+Returns True if successful, False otherwise.
+
+**Arguments**:
+
+- `option` _BrowserOption_ - Browser configuration options.
+  
+
+**Returns**:
+
+    bool: True if initialization was successful, False otherwise.
+  
+
+**Example**:
 
 ```python
 from agentbay import AgentBay
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.fingerprint import FingerprintFormat, BrowserFingerprintGenerator
+from agentbay.browser.browser import BrowserOption, BrowserViewport
 
-# Access browser through session
-session = result.session
-browser_api = session.browser
-```
-
-## Classes
-
-### BrowserOption
-
-Configuration options for initializing a browser instance.
-
-```python
-class BrowserOption:
-    def __init__(
-        self,
-        use_stealth: bool = False,
-        user_agent: str = None,
-        viewport: BrowserViewport = None,
-        screen: BrowserScreen = None,
-        fingerprint: BrowserFingerprint = None,
-        fingerprint_format: Optional[FingerprintFormat] = None,
-        fingerprint_persistent: bool = False,
-        solve_captchas: bool = False,
-        proxies: Optional[list[BrowserProxy]] = None,
-        extension_path: Optional[str] = "/tmp/extensions/",
-        browser_type: Optional[Literal["chrome", "chromium"]] = None,
-        cmd_args: Optional[list[str]] = None,
-        default_navigate_url: Optional[str] = None,
-    )
-```
-
-**Parameters:**
-
-- `use_stealth` (bool): Enable stealth mode to avoid detection by anti-bot systems. Default: `False`
-- `user_agent` (str | None): Custom user agent string for the browser. Default: `None`
-- `viewport` (BrowserViewport | None): Browser viewport dimensions. Default: `None`
-- `screen` (BrowserScreen | None): Screen dimensions. Default: `None`
-- `fingerprint` (BrowserFingerprint | None): Browser fingerprint configuration for random generation. Default: `None`
-- `fingerprint_format` (FingerprintFormat | None): Complete fingerprint data to apply directly to the browser. Takes precedence over `fingerprint` parameter. Default: `None`
-- `fingerprint_persistent` (bool): Enable fingerprint persistence across sessions using the same fingerprint context. Default: `False`
-- `solve_captchas` (bool): Automatically solve captchas during browsing. Default: `False`
-- `proxies` (list[BrowserProxy] | None): List of proxy configurations (max 1). Default: `None`
-- `extension_path` (str | None): Path to directory containing browser extensions. Default: `"/tmp/extensions/"`
-- `browser_type` (Literal["chrome", "chromium"] | None): Browser type selection (computer use images only). Default: `None`
-- `cmd_args` (list[str] | None): List of Chrome/Chromium command-line arguments to customize browser behavior. Default: `None`
-- `default_navigate_url` (str | None): URL that the browser automatically navigates to after initialization. Recommended to use Chrome internal pages (e.g., `chrome://version/`) to avoid timeout issues. Default: `None`
-
-**Methods:**
-
-#### to_map()
-
-Converts BrowserOption to a dictionary for API requests.
-
-```python
-def to_map(self) -> dict
-```
-
-**Returns:**
-- `dict`: Dictionary representation of the browser options
-
-**Example:**
-```python
-option = BrowserOption(use_stealth=True)
-option_map = option.to_map()
-```
-
-#### from_map()
-
-Creates BrowserOption from a dictionary.
-
-```python
-def from_map(self, m: dict = None) -> BrowserOption
-```
-
-**Parameters:**
-- `m` (dict): Dictionary containing browser option data
-
-**Returns:**
-- `BrowserOption`: Self (for method chaining)
-
-**Example:**
-```python
-option = BrowserOption()
-option.from_map({"useStealth": True, "browserType": "chrome"})
-```
-
-### BrowserViewport
-
-Defines the browser viewport dimensions.
-
-```python
-class BrowserViewport:
-    def __init__(self, width: int, height: int):
-        self.width = width
-        self.height = height
-```
-
-**Parameters:**
-- `width` (int): Viewport width in pixels
-- `height` (int): Viewport height in pixels
-
-**Common Viewport Sizes:**
-```python
-# Desktop
-BrowserViewport(1920, 1080)
-BrowserViewport(1366, 768)
-
-# Laptop
-BrowserViewport(1440, 900)
-
-# Tablet
-BrowserViewport(1024, 768)
-
-# Mobile
-BrowserViewport(375, 667)
-BrowserViewport(414, 896)
-```
-
-### BrowserScreen
-
-Defines the screen dimensions (usually same or larger than viewport).
-
-```python
-class BrowserScreen:
-    def __init__(self, width: int, height: int):
-        self.width = width
-        self.height = height
-```
-
-**Parameters:**
-- `width` (int): Screen width in pixels
-- `height` (int): Screen height in pixels
-
-### BrowserFingerprint
-
-Configuration for browser fingerprint randomization.
-
-```python
-class BrowserFingerprint:
-    def __init__(
-        self,
-        devices: list[str] = None,
-        operating_systems: list[str] = None,
-        locales: list[str] = None,
-    ):
-        self.devices = devices
-        self.operating_systems = operating_systems
-        self.locales = locales
-```
-
-**Parameters:**
-- `devices` (list[str]): Device types - `["desktop", "mobile"]`
-- `operating_systems` (list[str]): OS types - `["windows", "macos", "linux", "android", "ios"]`
-- `locales` (list[str]): Locale strings - e.g., `["en-US", "zh-CN", "ja-JP"]`
-
-**Example:**
-```python
-fingerprint = BrowserFingerprint(
-    devices=["desktop"],
-    operating_systems=["windows", "macos"],
-    locales=["en-US", "en-GB"]
-)
-```
-
-### FingerprintFormat
-
-Complete fingerprint data structure containing detailed browser characteristics and HTTP headers.
-
-```python
-class FingerprintFormat:
-    def __init__(self, fingerprint: Fingerprint, headers: Dict[str, str]):
-        self.fingerprint = fingerprint
-        self.headers = headers
-```
-
-**Parameters:**
-- `fingerprint` (Fingerprint): Detailed browser fingerprint data including navigator, screen, and other properties
-- `headers` (Dict[str, str]): HTTP headers to be sent with requests
-
-**Methods:**
-
-#### to_json()
-Converts the fingerprint format to JSON string.
-
-```python
-def to_json(self, indent: int = 2, ensure_ascii: bool = False) -> str
-```
-
-#### from_json()
-Creates FingerprintFormat from JSON string.
-
-```python
-@classmethod
-def from_json(cls, json_str: str) -> FingerprintFormat
-```
-
-#### to_dict()
-Converts to dictionary format.
-
-```python
-def to_dict(self) -> Dict[str, Any]
-```
-
-**Usage Examples:**
-
-1. **Loading from file:**
-```python
-from agentbay.browser.fingerprint import FingerprintFormat
-
-# Load fingerprint from JSON file
-with open("fingerprint.json", "r") as f:
-    fingerprint_format = FingerprintFormat.from_json(f.read())
-
-option = BrowserOption(fingerprint_format=fingerprint_format)
-```
-
-2. **Generating from local browser:**
-```python
-from agentbay.browser.fingerprint import BrowserFingerprintGenerator
-
-# Generate fingerprint from local Chrome installation
-generator = BrowserFingerprintGenerator(headless=False)
-fingerprint_format = await generator.generate_fingerprint()
-
-option = BrowserOption(fingerprint_format=fingerprint_format)
-```
-
-3. **Saving generated fingerprint:**
-```python
-# Generate and save fingerprint for reuse
-generator = BrowserFingerprintGenerator()
-fingerprint_format = await generator.generate_fingerprint()
-
-# Save to file
-with open("my_fingerprint.json", "w") as f:
-    f.write(fingerprint_format.to_json())
-```
-
-**Note:** When both `fingerprint` and `fingerprint_format` are provided, `fingerprint_format` takes precedence.
-
-### BrowserFingerprintGenerator
-
-Utility class for generating browser fingerprints from local Chrome installations.
-
-```python
-class BrowserFingerprintGenerator:
-    def __init__(self, headless: bool = True, use_chrome_channel: bool = True):
-        self.headless = headless
-        self.use_chrome_channel = use_chrome_channel
-```
-
-**Parameters:**
-- `headless` (bool): Whether to run the local browser in headless mode during fingerprint extraction. Default: `True`
-- `use_chrome_channel` (bool): Whether to use Chrome channel for browser detection. Default: `True`
-
-**Methods:**
-
-#### generate_fingerprint()
-Extracts comprehensive browser fingerprint from local Chrome installation.
-
-```python
-async def generate_fingerprint(self) -> Optional[FingerprintFormat]
-```
-
-**Returns:**
-- `Optional[FingerprintFormat]`: Complete fingerprint data including navigator properties, screen dimensions, and HTTP headers, or `None` if generation failed
-
-**Example:**
-```python
-import asyncio
-from agentbay.browser.fingerprint import BrowserFingerprintGenerator
-
-async def main():
-    # Generate fingerprint from local Chrome (visible mode)
-    generator = BrowserFingerprintGenerator(headless=False)
-    fingerprint_format = await generator.generate_fingerprint()
-    
-    if fingerprint_format:
-        print(f"User Agent: {fingerprint_format.fingerprint.navigator.userAgent}")
-        print(f"Screen Size: {fingerprint_format.fingerprint.screen.width}x{fingerprint_format.fingerprint.screen.height}")
-    else:
-        print("Failed to generate fingerprint")
-
-asyncio.run(main())
-```
-
-**Use Cases:**
-- **Local-to-Remote Sync**: Capture your local browser's fingerprint and apply it to remote sessions
-- **Fingerprint Collection**: Generate multiple fingerprints for testing purposes
-- **Custom Fingerprint Creation**: Extract specific characteristics from different browser configurations
-
-### BrowserProxy
-
-Configuration for browser proxy settings.
-
-```python
-class BrowserProxy:
-    def __init__(
-        self,
-        proxy_type: str,
-        server: str = None,
-        username: str = None,
-        password: str = None,
-        strategy: str = None,
-        poll_size: int = None,
-    ):
-        self.proxy_type = proxy_type
-        self.server = server
-        self.username = username
-        self.password = password
-        self.strategy = strategy
-        self.poll_size = poll_size
-```
-
-**Proxy Types:**
-
-1. **Custom Proxy** (`proxy_type="custom"`):
-   ```python
-   proxy = BrowserProxy(
-       proxy_type="custom",
-       server="proxy.example.com:8080",
-       username="user",
-       password="pass"
-   )
-   ```
-
-2. **WuYing Proxy** (`proxy_type="wuying"`):
-   - **Restricted Strategy**: Single dedicated IP
-     ```python
-     proxy = BrowserProxy(
-         proxy_type="wuying",
-         strategy="restricted"
-     )
-     ```
-   
-   - **Polling Strategy**: Rotating IP pool
-     ```python
-     proxy = BrowserProxy(
-         proxy_type="wuying",
-         strategy="polling",
-         poll_size=10
-     )
-     ```
-
-**Validation Rules:**
-- Maximum 1 proxy allowed in the `proxies` list
-- `server` is required for `custom` type
-- `strategy` is required for `wuying` type
-- `poll_size` must be > 0 for `polling` strategy
-
-## Browser Class
-
-### Methods
-
-#### initialize(option: BrowserOption) -> bool
-
-Initializes the browser with the given options (synchronous).
-
-```python
-def initialize(self, option: BrowserOption) -> bool
-```
-
-**Parameters:**
-- `option` (BrowserOption): Browser configuration options
-
-**Returns:**
-- `bool`: `True` if initialization was successful, `False` otherwise
-
-**Raises:**
-- `ValueError`: If browser option validation fails
-
-**Example:**
-```python
-option = BrowserOption(
-    use_stealth=True,
-    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-    viewport=BrowserViewport(1920, 1080)
-)
-
-success = session.browser.initialize(option)
-if not success:
-    raise RuntimeError("Browser initialization failed")
-```
-
-#### initialize_async(option: BrowserOption) -> bool
-
-Initializes the browser with the given options (asynchronous).
-
-```python
-async def initialize_async(self, option: BrowserOption) -> bool
-```
-
-**Parameters:**
-- `option` (BrowserOption): Browser configuration options
-
-**Returns:**
-- `bool`: `True` if initialization was successful, `False` otherwise
-
-**Raises:**
-- `ValueError`: If browser option validation fails
-
-**Example:**
-```python
-import asyncio
-
-async def main():
-    option = BrowserOption(browser_type="chrome")
-    success = await session.browser.initialize_async(option)
-    if not success:
-        raise RuntimeError("Browser initialization failed")
-
-asyncio.run(main())
-```
-
-#### get_endpoint_url() -> str
-
-Retrieves the CDP (Chrome DevTools Protocol) endpoint URL for connecting automation tools.
-
-```python
-def get_endpoint_url(self) -> str
-```
-
-**Returns:**
-- `str`: The CDP WebSocket endpoint URL (e.g., `ws://host:port/devtools/browser/...`)
-
-**Raises:**
-- `RuntimeError`: If browser is not initialized
-
-**Example:**
-```python
-endpoint_url = session.browser.get_endpoint_url()
-
-# Use with Playwright
-from playwright.async_api import async_playwright
-
-async with async_playwright() as p:
-    browser = await p.chromium.connect_over_cdp(endpoint_url)
-```
-
-#### is_initialized() -> bool
-
-Checks if the browser has been initialized.
-
-```python
-def is_initialized(self) -> bool
-```
-
-**Returns:**
-- `bool`: `True` if the browser is initialized, `False` otherwise
-
-**Example:**
-```python
-if session.browser.is_initialized():
-    print("Browser is ready")
-else:
-    print("Browser needs initialization")
-```
-
-#### get_option() -> BrowserOption
-
-Retrieves the current browser configuration.
-
-```python
-def get_option(self) -> BrowserOption | None
-```
-
-**Returns:**
-- `BrowserOption | None`: The current browser configuration, or `None` if not initialized
-
-**Example:**
-```python
-option = session.browser.get_option()
-if option:
-    print(f"Browser type: {option.browser_type}")
-```
-
-#### screenshot(page, full_page: bool = False, **options) -> bytes
-
-Takes a screenshot of the specified page with enhanced options and error handling (asynchronous).
-
-This method captures screenshots of web pages with advanced features including:
-- Full page screenshots (scrolling to capture entire content)
-- Custom image formats (PNG, JPEG)
-- Quality control for JPEG images
-- Enhanced loading state management
-- Lazy-loaded content handling
-- Background image loading
-
-```python
-async def screenshot(self, page, full_page: bool = False, **options) -> bytes
-```
-
-**Parameters:**
-- `page` (Page): The Playwright Page object to take a screenshot of. This is a required parameter.
-- `full_page` (bool): Whether to capture the full scrollable page. Defaults to `False`.
-- `**options`: Additional screenshot options that will override defaults.
-  Common options include:
-  - `type` (str): Image type, either `'png'` or `'jpeg'` (default: `'png'`)
-  - `quality` (int): Quality of the image, between 0-100 (jpeg only)
-  - `timeout` (int): Maximum time in milliseconds (default: 60000)
-  - `animations` (str): How to handle animations (default: `'disabled'`)
-  - `caret` (str): How to handle the caret (default: `'hide'`)
-  - `scale` (str): Scale setting (default: `'css'`)
-
-**Returns:**
-- `bytes`: Screenshot data as bytes.
-
-**Raises:**
-- `BrowserError`: If browser is not initialized.
-- `ValueError`: If page is None.
-- `RuntimeError`: If screenshot capture fails.
-
-**Example:**
-```python
-import asyncio
-from playwright.async_api import async_playwright
-
-async def capture_screenshots():
-    # Get browser endpoint and connect with Playwright
-    endpoint_url = session.browser.get_endpoint_url()
-    async with async_playwright() as p:
-        browser = await p.chromium.connect_over_cdp(endpoint_url)
-        context = browser.contexts[0]
-        page = await context.new_page()
-        
-        # Navigate to a page
-        await page.goto("https://example.com")
-        
-        # Take a simple screenshot (viewport only)
-        screenshot_data = await session.browser.screenshot(page)
-        with open("screenshot.png", "wb") as f:
-            f.write(screenshot_data)
-        
-        # Take a full page screenshot
-        full_page_data = await session.browser.screenshot(page, full_page=True)
-        with open("full_page.png", "wb") as f:
-            f.write(full_page_data)
-        
-        # Take a screenshot with custom options
-        custom_screenshot = await session.browser.screenshot(
-            page,
-            full_page=False,
-            type="jpeg",
-            quality=80,
-            timeout=30000
-        )
-        with open("custom_screenshot.jpg", "wb") as f:
-            f.write(custom_screenshot)
-        
-        await browser.close()
-
-asyncio.run(capture_screenshots())
-```
-
-**Advanced Usage:**
-```python
-# Handle errors gracefully
-try:
-    screenshot_data = await session.browser.screenshot(page)
-    # Process screenshot data...
-except BrowserError as e:
-    print(f"Browser not initialized: {e}")
-except RuntimeError as e:
-    print(f"Screenshot failed: {e}")
-except Exception as e:
-    print(f"Unexpected error: {e}")
-```
-
-## Complete Usage Example
-
-### Basic Usage
-
-```python
-import os
-import asyncio
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from playwright.async_api import async_playwright
-
-async def main():
-    # Initialize AgentBay
-    api_key = os.getenv("AGENTBAY_API_KEY")
-    agent_bay = AgentBay(api_key=api_key)
-
-    # Create session
-    params = CreateSessionParams(image_id="browser_latest")
-    result = agent_bay.create(params)
-    if not result.success:
-        raise RuntimeError(f"Failed to create session: {result.error_message}")
-
-    session = result.session
-
-    try:
-        # Initialize browser with default options
-        option = BrowserOption()
-        ok = await session.browser.initialize_async(option)
-        if not ok:
-            raise RuntimeError("Browser initialization failed")
-
-        # Get CDP endpoint
-        endpoint_url = session.browser.get_endpoint_url()
-
-        # Connect with Playwright
-        async with async_playwright() as p:
-            browser = await p.chromium.connect_over_cdp(endpoint_url)
-            context = browser.contexts[0]
-            page = await context.new_page()
-
-            # Navigate and interact
-            await page.goto("https://example.com")
-            title = await page.title()
-            print(f"Page title: {title}")
-
-            await browser.close()
-
-    finally:
-        session.delete()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### Advanced Configuration
-
-```python
-from agentbay.browser.browser import (
-    BrowserOption,
-    BrowserViewport,
-    BrowserScreen,
-    BrowserFingerprint,
-    BrowserProxy
-)
-
-# Create custom browser configuration
-option = BrowserOption(
-    # Custom user agent
-    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
-    
-    # Viewport and screen
-    viewport=BrowserViewport(width=1920, height=1080),
-    screen=BrowserScreen(width=1920, height=1080),
-    
-    # Browser type (for computer use images)
-    browser_type="chrome",
-    
-    # Stealth mode
-    use_stealth=True,
-    
-    # Command-line arguments
-    cmd_args=[
-        "--disable-features=PrivacySandboxSettings4",
-        "--disable-background-timer-throttling",
-    ],
-    
-    # Default navigation URL (recommended: Chrome internal pages)
-    default_navigate_url="chrome://version/",
-    
-    # Fingerprint randomization (generates random fingerprint)
-    fingerprint=BrowserFingerprint(
-        devices=["desktop"],
-        operating_systems=["windows", "macos"],
-        locales=["en-US"]
-    ),
-    
-    # OR use specific fingerprint format (takes precedence over fingerprint)
-    # fingerprint_format=my_fingerprint_format,
-    
-    # Enable fingerprint persistence across sessions
-    fingerprint_persistent=True,
-    
-    # Proxy configuration
-    proxies=[BrowserProxy(
-        proxy_type="custom",
-        server="proxy.example.com:8080",
-        username="username",
-        password="password"
-    )]
-)
-
-# Initialize with custom options
-success = await session.browser.initialize_async(option)
-if not success:
-    raise RuntimeError("Failed to initialize browser")
-```
-
-### Fingerprint Usage Examples
-
-#### 1. Random Fingerprint Generation
-
-```python
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint
-
-# Generate random fingerprint based on criteria
-option = BrowserOption(
-    use_stealth=True,
-    fingerprint=BrowserFingerprint(
-        devices=["desktop"],
-        operating_systems=["windows"],
-        locales=["en-US", "en-GB"]
-    )
-)
-
-success = await session.browser.initialize_async(option)
-```
-
-#### 2. Local Browser Fingerprint Sync
-
-```python
-import asyncio
-from agentbay.browser.fingerprint import BrowserFingerprintGenerator
-from agentbay.browser.browser import BrowserOption
-
-async def sync_local_fingerprint():
-    # Generate fingerprint from local Chrome
-    generator = BrowserFingerprintGenerator(headless=False)
-    fingerprint_format = await generator.generate_fingerprint()
-    
-    if not fingerprint_format:
-        raise RuntimeError("Failed to generate local fingerprint")
-    
-    # Apply local fingerprint to remote browser
-    option = BrowserOption(
-        use_stealth=True,
-        fingerprint_format=fingerprint_format
-    )
-    
-    success = await session.browser.initialize_async(option)
-    if success:
-        print("Local fingerprint synced to remote browser")
-
-asyncio.run(sync_local_fingerprint())
-```
-
-#### 3. Self-Customized Fingerprint Generation
-
-```python
-import os
-from agentbay.browser.fingerprint import FingerprintFormat
-from agentbay.browser.browser import BrowserOption
-
-# Load fingerprint from local JSON file
-fingerprint_file = "path/to/fingerprint.json"
-with open(fingerprint_file, "r") as f:
-    fingerprint_format = FingerprintFormat.from_json(f.read())
-
-# Use loaded fingerprint
-option = BrowserOption(
-    use_stealth=True,
-    fingerprint_format=fingerprint_format
-)
-
-success = await session.browser.initialize_async(option)
-```
-
-#### 4. Fingerprint Persistence Across Sessions
-
-```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
-
-# Create contexts for persistence
 agent_bay = AgentBay(api_key="your_api_key")
 
-# Create browser context
-browser_context_result = agent_bay.context.get("my-browser-context", create_if_not_exists=True)
-browser_context = BrowserContext(browser_context_result.context.id)
+def initialize_browser():
+    try:
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
 
-# Create fingerprint context
-fp_context_result = agent_bay.context.get("my-fingerprint-context", create_if_not_exists=True)
-fp_context = BrowserFingerprintContext(fp_context_result.context.id)
-browser_context.fingerprint_context = fp_context
+            # Initialize browser with default options
+            browser_option = BrowserOption()
+            success = session.browser.initialize(browser_option)
+            if success:
+                print("Browser initialized successfully")
+                # Output: Browser initialized successfully
+            else:
+                print("Browser initialization failed")
 
-# First session - generate and persist fingerprint
-params1 = CreateSessionParams(
-    image_id="browser_latest",
-    browser_context=browser_context
-)
-session1 = agent_bay.create(params1).session
+            # Initialize with custom viewport
+            browser_option = BrowserOption(
+                use_stealth=True,
+                viewport=BrowserViewport(width=1920, height=1080)
+            )
+            success = session.browser.initialize(browser_option)
+            if success:
+                print("Browser initialized with custom viewport")
+                # Output: Browser initialized with custom viewport
 
-option1 = BrowserOption(
-    use_stealth=True,
-    fingerprint_persistent=True,
-    fingerprint=BrowserFingerprint(
-        devices=["desktop"],
-        operating_systems=["windows"],
-        locales=["en-US"]
-    )
-)
-await session1.browser.initialize_async(option1)
-# ... use browser ...
-agent_bay.delete(session1, sync_context=True)  # Save fingerprint to context
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
 
-# Second session - reuse persisted fingerprint
-params2 = CreateSessionParams(
-    image_id="browser_latest",
-    browser_context=browser_context
-)
-session2 = agent_bay.create(params2).session
-
-option2 = BrowserOption(
-    use_stealth=True,
-    fingerprint_persistent=True  # Will load previously saved fingerprint
-)
-await session2.browser.initialize_async(option2)
-# Browser will have the same fingerprint as session1
+initialize_browser()
 ```
 
-
-## Error Handling
-
-### Common Errors
-
-1. **Browser Not Initialized**
-   ```python
-   try:
-       endpoint = session.browser.get_endpoint_url()
-   except RuntimeError as e:
-       # Error: "Browser not initialized"
-       print("Initialize browser before getting endpoint")
-   ```
-
-2. **Invalid Configuration**
-   ```python
-   try:
-       option = BrowserOption(browser_type="firefox")  # Invalid
-       await session.browser.initialize_async(option)
-   except ValueError as e:
-       # Error: "browser_type must be 'chrome' or 'chromium'"
-       print(f"Configuration error: {e}")
-   ```
-
-3. **Multiple Proxies**
-   ```python
-   try:
-       option = BrowserOption(proxies=[proxy1, proxy2])
-   except ValueError as e:
-       # Error: "proxies list length must be limited to 1"
-       print(f"Too many proxies: {e}")
-   ```
-
-### Best Practices
+#### initialize\_async
 
 ```python
-# Check initialization status
-if not session.browser.is_initialized():
-    print("Browser not initialized")
+async def initialize_async(option: "BrowserOption") -> bool
+```
 
-# Always use try-finally for cleanup
-try:
-    ok = await session.browser.initialize_async(option)
-    if not ok:
-        raise RuntimeError("Initialization failed")
-    
-    # Use the browser...
-    
-finally:
+Initialize the browser instance with the given options asynchronously.
+Returns True if successful, False otherwise.
+
+**Arguments**:
+
+- `option` _BrowserOption_ - Browser configuration options.
+  
+
+**Returns**:
+
+    bool: True if initialization was successful, False otherwise.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.browser.browser import BrowserOption, BrowserViewport
+import asyncio
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+async def initialize_browser_async():
+    try:
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Initialize browser asynchronously with default options
+            browser_option = BrowserOption()
+            success = await session.browser.initialize_async(browser_option)
+            if success:
+                print("Browser initialized successfully")
+                # Output: Browser initialized successfully
+            else:
+                print("Browser initialization failed")
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+asyncio.run(initialize_browser_async())
+```
+
+#### destroy
+
+```python
+def destroy()
+```
+
+Destroy the browser instance.
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.browser.browser import BrowserOption
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def demonstrate_browser_destroy():
+    try:
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Initialize the browser
+            browser_option = BrowserOption(use_stealth=True)
+            success = session.browser.initialize(browser_option)
+
+            if success:
+                print("Browser initialized successfully")
+                # Output: Browser initialized successfully
+
+                # Check if browser is initialized
+                if session.browser.is_initialized():
+                    print("Browser is active")
+                    # Output: Browser is active
+
+                # Destroy the browser instance
+                session.browser.destroy()
+                print("Browser destroyed")
+                # Output: Browser destroyed
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_browser_destroy()
+```
+
+#### screenshot
+
+```python
+async def screenshot(page, full_page: bool = False, **options) -> bytes
+```
+
+Takes a screenshot of the specified page with enhanced options and error handling.
+This is the async version of the screenshot method.
+
+**Arguments**:
+
+- `page` _Page_ - The Playwright Page object to take a screenshot of. This is a required parameter.
+- `full_page` _bool_ - Whether to capture the full scrollable page. Defaults to False.
+    **options: Additional screenshot options that will override defaults.
+  Common options include:
+  - type (str): Image type, either 'png' or 'jpeg' (default: 'png')
+  - quality (int): Quality of the image, between 0-100 (jpeg only)
+  - timeout (int): Maximum time in milliseconds (default: 60000)
+  - animations (str): How to handle animations (default: 'disabled')
+  - caret (str): How to handle the caret (default: 'hide')
+  - scale (str): Scale setting (default: 'css')
+  
+
+**Returns**:
+
+    bytes: Screenshot data as bytes.
+  
+
+**Raises**:
+
+    BrowserError: If browser is not initialized.
+    RuntimeError: If screenshot capture fails.
+
+#### get\_endpoint\_url
+
+```python
+def get_endpoint_url() -> str
+```
+
+Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
+When initialized, always fetches the latest CDP url from session.get_link().
+
+**Returns**:
+
+    str: The browser CDP endpoint URL.
+  
+
+**Raises**:
+
+    BrowserError: If browser is not initialized or endpoint URL cannot be retrieved.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.browser.browser import BrowserOption
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def get_browser_endpoint():
+    try:
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Initialize the browser
+            browser_option = BrowserOption()
+            success = session.browser.initialize(browser_option)
+
+            if success:
+                # Get the browser endpoint URL
+                endpoint_url = session.browser.get_endpoint_url()
+                print(f"Browser endpoint URL: {endpoint_url}")
+                # Output: Browser endpoint URL: ws://127.0.0.1:9222/devtools/browser/...
+
+                # Use this URL to connect with Playwright or other automation tools
+                print("You can now connect to this browser using Playwright")
+                # Output: You can now connect to this browser using Playwright
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+get_browser_endpoint()
+```
+
+#### get\_option
+
+```python
+def get_option() -> Optional["BrowserOption"]
+```
+
+Returns the current BrowserOption used to initialize the browser, or None if not set.
+
+**Returns**:
+
+    Optional[BrowserOption]: The browser options if initialized, None otherwise.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.browser.browser import BrowserOption, BrowserViewport
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def get_browser_options():
+    try:
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Get options before initialization (should be None)
+            options = session.browser.get_option()
+            if options is None:
+                print("No browser options set yet")
+                # Output: No browser options set yet
+
+            # Initialize with specific options
+            browser_option = BrowserOption(
+                use_stealth=True,
+                viewport=BrowserViewport(width=1920, height=1080)
+            )
+            session.browser.initialize(browser_option)
+
+            # Get options after initialization
+            current_options = session.browser.get_option()
+            if current_options:
+                print(f"Browser initialized with stealth mode: {current_options.use_stealth}")
+                # Output: Browser initialized with stealth mode: True
+                print(f"Viewport size: {current_options.viewport.width}x{current_options.viewport.height}")
+                # Output: Viewport size: 1920x1080
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+get_browser_options()
+```
+
+#### is\_initialized
+
+```python
+def is_initialized() -> bool
+```
+
+Returns True if the browser was initialized, False otherwise.
+
+**Returns**:
+
+    bool: True if browser is initialized, False otherwise.
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.browser.browser import BrowserOption
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def check_browser_initialization():
+    try:
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Check if browser is initialized before initialization
+            if not session.browser.is_initialized():
+                print("Browser not initialized yet")
+                # Output: Browser not initialized yet
+
+                # Initialize the browser
+                browser_option = BrowserOption(use_stealth=True)
+                success = session.browser.initialize(browser_option)
+
+                if success:
+                    # Check again after initialization
+                    if session.browser.is_initialized():
+                        print("Browser is now initialized")
+                        # Output: Browser is now initialized
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+check_browser_initialization()
+```
+
+#### logger
+
+#### T
+
+```python
+T = TypeVar("T", bound=BaseModel)
+```
+
+## ActOptions Objects
+
+```python
+class ActOptions()
+```
+
+Options for configuring the behavior of the act method.
+
+## ActResult Objects
+
+```python
+class ActResult()
+```
+
+Result of the act method.
+
+## ObserveOptions Objects
+
+```python
+class ObserveOptions()
+```
+
+Options for configuring the behavior of the observe method.
+
+## ObserveResult Objects
+
+```python
+class ObserveResult()
+```
+
+Result of the observe method.
+
+## ExtractOptions Objects
+
+```python
+class ExtractOptions(Generic[T])
+```
+
+Options for configuring the behavior of the extract method.
+
+## BrowserAgent Objects
+
+```python
+class BrowserAgent(BaseService)
+```
+
+BrowserAgent handles browser automation and agent logic.
+
+#### navigate\_async
+
+```python
+async def navigate_async(url: str) -> str
+```
+
+Navigates the browser to the specified URL.
+
+**Arguments**:
+
+- `url` _str_ - The URL to navigate to. Must be a valid HTTP/HTTPS URL.
+  
+
+**Returns**:
+
+    str: A success message if navigation succeeds, or an error message if it fails.
+  
+
+**Raises**:
+
+    BrowserError: If the browser is not initialized or navigation fails.
+  
+  Behavior:
+  - Calls the MCP tool `page_use_navigate` with the specified URL
+  - Waits for the page to load before returning
+  - Returns an error message if navigation fails (e.g., invalid URL, network error)
+  
+
+**Example**:
+
+  
+```python
+from agentbay import AgentBay
+
+# Initialize and create a session with browser
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create(enable_browser=True)
+
+if result.success:
+    session = result.session
+    browser = session.browser
+
+    # Initialize the browser
+    browser.init()
+
+    # Navigate to a URL
+    import asyncio
+    nav_result = asyncio.run(browser.agent.navigate_async("https://www.example.com"))
+    print(nav_result)
+    # Output: Successfully navigated to https://www.example.com
+
+    # Take a screenshot to verify
+    screenshot_data = browser.agent.screenshot()
+    print(f"Screenshot captured: {len(screenshot_data)} characters")
+    # Output: Screenshot captured: 50000 characters
+
+    # Clean up
     session.delete()
-
-# Validate options if needed
-try:
-    option = BrowserOption(browser_type="chrome")
-    # Validation happens in __init__
-except ValueError as e:
-    print(f"Invalid option: {e}")
 ```
+  
 
-## Browser Type Selection
+**Notes**:
 
-> **Note:** The `browser_type` parameter is only available for **computer use images**. For standard browser images, the browser type is determined by the image.
+  - The browser must be initialized before calling this method
+  - This is an async method and must be awaited or run with `asyncio.run()`
+  - For synchronous usage, consider using browser automation frameworks directly
+  
 
-### Choosing Browser Type
+**See Also**:
+
+  screenshot, act, observe
+
+#### screenshot
 
 ```python
-# Use Chrome (Google Chrome)
-option = BrowserOption(browser_type="chrome")
-
-# Use Chromium (open-source)
-option = BrowserOption(browser_type="chromium")
-
-# Use default (None - let browser image decide)
-option = BrowserOption()  # browser_type is None by default
+def screenshot(page=None,
+               full_page: bool = True,
+               quality: int = 80,
+               clip: Optional[Dict[str, float]] = None,
+               timeout: Optional[int] = None) -> str
 ```
 
-### When to Use Each Type
+Captures a screenshot of the current browser page.
 
-**Chrome** (`"chrome"`):
-- Need specific Chrome-only features
-- Testing against actual Chrome browser
-- Matching production Chrome environment
+**Arguments**:
 
-**Chromium** (`"chromium"`):
-- Open-source preference
-- Lighter resource usage
-- Standard web automation
+- `page` _Optional[Page]_ - The Playwright Page object to screenshot. If None,
+  uses the currently focused page. Defaults to None.
+- `full_page` _bool_ - Whether to capture the full scrollable page or just the viewport.
+  Defaults to True.
+- `quality` _int_ - Image quality for JPEG format (0-100). Higher values mean better quality
+  but larger file size. Defaults to 80.
+- `clip` _Optional[Dict[str, float]]_ - Clipping region with keys: x, y, width, height (in pixels).
+  If specified, only this region is captured. Defaults to None.
+- `timeout` _Optional[int]_ - Maximum time to wait for screenshot in milliseconds.
+  Defaults to None (uses default timeout).
+  
 
-**Default** (`None`):
-- Let the platform choose optimal browser
-- Maximum compatibility
-- Recommended for most use cases
+**Returns**:
 
-## Integration with Automation Tools
+    str: Base64-encoded data URL of the screenshot (format: `data:image/png;base64,...`),
+  or an error message string if the operation fails.
+  
 
-### Playwright (Async)
+**Raises**:
+
+    BrowserError: If the browser is not initialized or screenshot operation fails.
+  
+  Behavior:
+  - Captures the entire scrollable page if `full_page=True`
+  - Captures only the visible viewport if `full_page=False`
+  - Uses PNG format by default for lossless quality
+  - Automatically scrolls the page when capturing full page
+  - Returns base64-encoded data URL that can be saved or displayed
+  
+
+**Example**:
+
+  
+```python
+from agentbay import AgentBay
+import base64
+import asyncio
+
+# Initialize and create a session with browser
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create(enable_browser=True)
+
+if result.success:
+    session = result.session
+    browser = session.browser
+
+    # Initialize the browser
+    browser.init()
+
+    # Navigate to a page
+    asyncio.run(browser.agent.navigate_async("https://www.example.com"))
+
+    # Take a full-page screenshot
+    screenshot_data = browser.agent.screenshot(full_page=True, quality=90)
+    print(f"Full page screenshot: {len(screenshot_data)} characters")
+    # Output: Full page screenshot: 75000 characters
+
+    # Save the screenshot to a file
+    if screenshot_data.startswith("data:image"):
+        # Extract base64 data
+        base64_data = screenshot_data.split(",")[1]
+        image_bytes = base64.b64decode(base64_data)
+        with open("screenshot.png", "wb") as f:
+            f.write(image_bytes)
+        print("Screenshot saved to screenshot.png")
+        # Output: Screenshot saved to screenshot.png
+
+    # Take a viewport-only screenshot with custom quality
+    viewport_screenshot = browser.agent.screenshot(full_page=False, quality=60)
+    print(f"Viewport screenshot: {len(viewport_screenshot)} characters")
+    # Output: Viewport screenshot: 30000 characters
+
+    # Take a screenshot of a specific region
+    clipped_screenshot = browser.agent.screenshot(
+        clip={"x": 0, "y": 0, "width": 800, "height": 600}
+    )
+    print(f"Clipped screenshot: {len(clipped_screenshot)} characters")
+    # Output: Clipped screenshot: 25000 characters
+
+    # Clean up
+    session.delete()
+```
+  
+
+**Notes**:
+
+  - The browser must be initialized before calling this method
+  - Full-page screenshots may take longer for very long pages
+  - Higher quality values result in larger data sizes
+  - The returned data URL can be directly used in HTML `<img>` tags
+  - For large screenshots, consider using `clip` to capture specific regions
+  
+
+**See Also**:
+
+  navigate_async, act, observe
+
+#### screenshot\_async
 
 ```python
-from playwright.async_api import async_playwright
-
-# Get endpoint
-endpoint_url = session.browser.get_endpoint_url()
-
-# Connect Playwright
-async with async_playwright() as p:
-    browser = await p.chromium.connect_over_cdp(endpoint_url)
-    context = browser.contexts[0]
-    page = await context.new_page()
-    
-    # Use page...
-    
-    await browser.close()
+async def screenshot_async(page=None,
+                           full_page: bool = True,
+                           quality: int = 80,
+                           clip: Optional[Dict[str, float]] = None,
+                           timeout: Optional[int] = None) -> str
 ```
 
-### Playwright (Sync)
+Asynchronously takes a screenshot of the specified page.
+
+**Arguments**:
+
+- `page` _Optional[Page]_ - The Playwright Page object to take a screenshot of. If None,
+  the agent's currently focused page will be used.
+- `full_page` _bool_ - Whether to capture the full scrollable page.
+- `quality` _int_ - The quality of the image (0-100), for JPEG format.
+- `clip` _Optional[Dict[str, float]]_ - An object specifying the clipping region {x, y, width, height}.
+- `timeout` _Optional[int]_ - Custom timeout for the operation in milliseconds.
+  
+
+**Returns**:
+
+    str: A base64 encoded data URL of the screenshot, or an error message.
+
+#### close\_async
 
 ```python
-from playwright.sync_api import sync_playwright
-
-# Get endpoint
-endpoint_url = session.browser.get_endpoint_url()
-
-# Connect Playwright
-with sync_playwright() as p:
-    browser = p.chromium.connect_over_cdp(endpoint_url)
-    context = browser.contexts[0]
-    page = context.new_page()
-    
-    # Use page...
-    
-    browser.close()
+async def close_async() -> bool
 ```
 
-### Puppeteer (via Node.js)
+Asynchronously closes the remote browser agent session.
+This will terminate the browser process managed by the agent.
+
+#### act
 
 ```python
-# Get endpoint in Python
-endpoint_url = session.browser.get_endpoint_url()
-print(f"Use this endpoint in Node.js: {endpoint_url}")
+def act(action_input: Union[ObserveResult, ActOptions],
+        page=None) -> "ActResult"
 ```
 
-```javascript
-// In Node.js
-const puppeteer = require('puppeteer-core');
-const browser = await puppeteer.connect({
-    browserWSEndpoint: 'ws://...' // endpoint from Python
-});
+Performs an action on a web page element (click, type, select, etc.).
+
+**Arguments**:
+
+- `action_input` _Union[ObserveResult, ActOptions]_ - The action to perform. Can be:
+  - ObserveResult: Result from `observe()` method containing element selector
+  - ActOptions: Custom action configuration with selector and action type
+- `page` _Optional[Page]_ - The Playwright Page object to act on. If None,
+  uses the currently focused page. Defaults to None.
+  
+
+**Returns**:
+
+    ActResult: Object containing:
+  - success (bool): Whether the action succeeded
+  - message (str): Description of the result or error message
+  
+
+**Raises**:
+
+    BrowserError: If the browser is not initialized or the action fails.
+  
+  Behavior:
+  - Supports actions: click, type, select, hover, scroll, etc.
+  - Automatically waits for elements to be actionable
+  - Uses element selectors from observe results or custom selectors
+  - Calls the MCP tool `page_use_act` to perform the action
+  
+
+**Example**:
+
+  
+```python
+from agentbay import AgentBay
+from agentbay.browser.browser_agent import ObserveOptions, ActOptions
+import asyncio
+
+# Initialize and create a session with browser
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create(enable_browser=True)
+
+if result.success:
+    session = result.session
+    browser = session.browser
+
+    # Initialize the browser
+    browser.init()
+
+    # Navigate to a page
+    asyncio.run(browser.agent.navigate_async("https://www.example.com"))
+
+    # Method 1: Use observe + act (recommended)
+    # First, observe elements on the page
+    observe_options = ObserveOptions(
+        instruction="Find the search button"
+    )
+    success, observe_results = browser.agent.observe(observe_options)
+
+    if success and observe_results:
+        # Act on the first observed element
+        act_result = browser.agent.act(observe_results[0])
+        print(f"Action result: {act_result.message}")
+        # Output: Action result: Successfully clicked element
+
+    # Method 2: Use custom ActOptions
+    # Directly specify the action
+    act_options = ActOptions(
+        selector="`search`-input",
+        description="Search input field",
+        method="fill",
+        arguments={"text": "AgentBay SDK"}
+    )
+    act_result = browser.agent.act(act_options)
+    print(f"Action result: {act_result.message}")
+    # Output: Action result: Successfully filled text
+
+    # Clean up
+    session.delete()
 ```
+  
 
-## PageUseAgent Integration
+**Notes**:
 
-The Browser class includes an `agent` property for AI-powered browser automation.
+  - The browser must be initialized before calling this method
+  - Using `observe()` + `act()` is recommended for reliable element interaction
+  - Custom ActOptions requires knowledge of element selectors
+  - Actions are performed with automatic retry and waiting for elements
+  
+
+**See Also**:
+
+  observe, navigate_async, screenshot
+
+#### act\_async
 
 ```python
-from agentbay.browser.browser_agent import ActOptions
-
-# Use PageUseAgent for natural language actions
-act_result = await session.browser.agent.act_async(
-    ActOptions(action="Click the sign in button"),
-    page
-)
-
-if act_result.success:
-    print(f"Action completed: {act_result.message}")
-else:
-    print(f"Action failed: {act_result.message}")
+async def act_async(action_input: Union[ObserveResult, ActOptions],
+                    page=None) -> "ActResult"
 ```
 
-See the [PageUseAgent documentation](../../../../docs/guides/browser-use/advance-features/page-use-agent.md) for more details.
+Asynchronously perform an action on a web page.
 
-## Performance Considerations
+**Arguments**:
 
-### Resource Usage
+- `page` _Optional[Page]_ - The Playwright Page object to act on. If None, the agent's
+  currently focused page will be used automatically.
+- `action_input` _Union[ObserveResult, ActOptions]_ - The action to perform.
+  
 
-- **Fingerprinting**: Minimal performance impact
-- **Proxies**: May add latency depending on proxy location
-- **Extensions**: Each extension increases memory usage
+**Returns**:
 
-### Optimization Tips
+    ActResult: The result of the action.
 
-1. **Reuse Sessions**: Keep sessions alive for multiple operations
-2. **Appropriate Viewport**: Use actual target viewport size
-3. **Minimal Extensions**: Only load necessary extensions
-4. **Async Operations**: Use `initialize_async` for better concurrency
-
-## Troubleshooting
-
-### Browser Won't Initialize
+#### observe
 
 ```python
-# Check session status
-if not result.success:
-    print(f"Session creation failed: {result.error_message}")
-
-# Verify image supports browser
-params = CreateSessionParams(image_id="browser_latest")
-
-# Check initialization
-success = await session.browser.initialize_async(option)
-print(f"Initialization success: {success}")
+def observe(options: ObserveOptions,
+            page=None) -> Tuple[bool, List[ObserveResult]]
 ```
 
-### CDP Connection Fails
+Observes and identifies interactive elements on a web page using natural language instructions.
+
+**Arguments**:
+
+- `options` _ObserveOptions_ - Configuration for observation with fields:
+  - instruction (str): Natural language description of elements to find
+  - iframes (bool, optional): Whether to search within iframes. Defaults to False.
+  - dom_settle_timeout_ms (int, optional): Time to wait for DOM to settle (ms)
+  - use_vision (bool, optional): Whether to use vision-based element detection
+- `page` _Optional[Page]_ - The Playwright Page object to observe. If None,
+  uses the currently focused page. Defaults to None.
+  
+
+**Returns**:
+
+  Tuple[bool, List[ObserveResult]]: A tuple containing:
+  - success (bool): Whether observation succeeded
+  - results (List[ObserveResult]): List of found elements, each with:
+  - selector (str): CSS selector for the element
+  - description (str): Description of the element
+  - method (str): Suggested action method (click, fill, etc.)
+  - arguments (dict): Suggested arguments for the action
+  
+
+**Raises**:
+
+    BrowserError: If the browser is not initialized or observation fails.
+  
+  Behavior:
+  - Uses AI to interpret natural language instructions
+  - Identifies matching elements on the page
+  - Returns actionable element information (selectors, methods)
+  - Can search within iframes if specified
+  - Optionally uses vision-based detection for better accuracy
+  
+
+**Example**:
+
+  
+```python
+from agentbay import AgentBay
+from agentbay.browser.browser_agent import ObserveOptions
+import asyncio
+
+# Initialize and create a session with browser
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create(enable_browser=True)
+
+if result.success:
+    session = result.session
+    browser = session.browser
+
+    # Initialize the browser
+    browser.init()
+
+    # Navigate to a page
+    asyncio.run(browser.agent.navigate_async("https://www.example.com"))
+
+    # Observe elements using natural language
+    observe_options = ObserveOptions(
+        instruction="Find all clickable buttons on the page"
+    )
+    success, results = browser.agent.observe(observe_options)
+
+    if success:
+        print(f"Found {len(results)} elements")
+        # Output: Found 5 elements
+
+        for i, result in enumerate(results):
+            print(f"Element {i+1}:")
+            print(f"  Selector: {result.selector}")
+            print(f"  Description: {result.description}")
+            print(f"  Suggested method: {result.method}")
+            # Output:
+            # Element 1:
+            #   Selector: `submit`-button
+            #   Description: Submit button
+            #   Suggested method: click
+
+    # Observe with vision-based detection
+    observe_options_vision = ObserveOptions(
+        instruction="Find the login form",
+        use_vision=True
+    )
+    success, results = browser.agent.observe(observe_options_vision)
+
+    if success and results:
+        # Use the observed element with act()
+        act_result = browser.agent.act(results[0])
+        print(f"Action: {act_result.message}")
+        # Output: Action: Successfully clicked element
+
+    # Clean up
+    session.delete()
+```
+  
+
+**Notes**:
+
+  - The browser must be initialized before calling this method
+  - Natural language instructions should be clear and specific
+  - Vision-based detection (`use_vision=True`) provides better accuracy but is slower
+  - Results can be directly passed to `act()` method
+  - Empty results list indicates no matching elements found
+  
+
+**See Also**:
+
+  act, extract, navigate_async
+
+#### observe\_async
 
 ```python
-# Ensure browser is initialized
-if not session.browser.is_initialized():
-    raise RuntimeError("Browser not initialized")
-
-# Get and verify endpoint
-endpoint_url = session.browser.get_endpoint_url()
-print(f"Endpoint: {endpoint_url}")
+async def observe_async(options: ObserveOptions,
+                        page=None) -> Tuple[bool, List[ObserveResult]]
 ```
 
-### Configuration Issues
+Asynchronously observe elements or state on a web page.
+
+**Arguments**:
+
+- `page` _Optional[Page]_ - The Playwright Page object to observe. If None, the agent's
+  currently focused page will be used.
+- `options` _ObserveOptions_ - Options to configure the observation behavior.
+  
+
+**Returns**:
+
+  Tuple[bool, List[ObserveResult]]: A tuple containing a success boolean and a list
+  of observation results.
+
+#### extract
 
 ```python
-# Check option values
-option = BrowserOption(browser_type="chrome")
-print(f"Browser type: {option.browser_type}")
-print(f"Use stealth: {option.use_stealth}")
-
-# Validate through initialization (validation happens in __init__)
-try:
-    option = BrowserOption(browser_type="firefox")  # Will raise ValueError
-except ValueError as e:
-    print(f"Invalid configuration: {e}")
+def extract(options: ExtractOptions, page=None) -> Tuple[bool, T]
 ```
 
-## See Also
+Extracts structured data from a web page using a Pydantic schema.
 
-- [Browser Use Guide](../../../../docs/guides/browser-use/README.md) - Complete guide with examples
-- [Core Features](../../../../docs/guides/browser-use/core-features.md) - Essential browser features
-- [Advanced Features](../../../../docs/guides/browser-use/advance-features.md) - Advanced configuration including fingerprinting
-- [Browser Fingerprint Examples](../../examples/browser-use/browser/) - Fingerprint usage examples
-- [Browser Examples](../../examples/browser-use/browser/README.md) - Runnable example code
-- [PageUseAgent API](../../../../docs/guides/browser-use/advance-features/page-use-agent.md) - AI-powered browser automation
-- [Session Management](../common-features/basics/session.md) - Session lifecycle and management
+**Arguments**:
 
+- `options` _ExtractOptions_ - Configuration for extraction with fields:
+  - schema (Type[BaseModel]): Pydantic model defining the data structure to extract
+  - instruction (str, optional): Natural language instruction for extraction
+  - use_vision (bool, optional): Whether to use vision-based extraction
+- `page` _Optional[Page]_ - The Playwright Page object to extract from. If None,
+  uses the currently focused page. Defaults to None.
+  
+
+**Returns**:
+
+  Tuple[bool, T]: A tuple containing:
+  - success (bool): Whether extraction succeeded
+  - data (T): Extracted data as an instance of the provided Pydantic model,
+  or None if extraction failed
+  
+
+**Raises**:
+
+    BrowserError: If the browser is not initialized or extraction fails.
+  
+  Behavior:
+  - Uses AI to extract data matching the provided Pydantic schema
+  - Automatically identifies relevant data on the page
+  - Returns structured data validated against the schema
+  - Can use vision-based extraction for better accuracy
+  - Handles complex nested data structures
+  
+
+**Example**:
+
+  
+```python
+from agentbay import AgentBay
+from agentbay.browser.browser_agent import ExtractOptions
+from pydantic import BaseModel
+from typing import List
+import asyncio
+
+# Define the data schema
+class ProductInfo(BaseModel):
+    name: str
+    price: float
+    description: str
+    in_stock: bool
+
+class ProductList(BaseModel):
+    products: List[ProductInfo]
+    total_count: int
+
+# Initialize and create a session with browser
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create(enable_browser=True)
+
+if result.success:
+    session = result.session
+    browser = session.browser
+
+    # Initialize the browser
+    browser.init()
+
+    # Navigate to a product page
+    asyncio.run(browser.agent.navigate_async("https://www.example.com/products"))
+
+    # Extract product information
+    extract_options = ExtractOptions(
+        schema=ProductList,
+        instruction="Extract all product information from the page"
+    )
+    success, data = browser.agent.extract(extract_options)
+
+    if success and data:
+        print(f"Total products: {data.total_count}")
+        # Output: Total products: 10
+
+        for product in data.products:
+            print(f"Product: {product.name}")
+            print(f"  Price: ${product.price}")
+            print(f"  In stock: {product.in_stock}")
+            # Output:
+            # Product: AgentBay SDK
+            #   Price: $99.99
+            #   In stock: True
+
+    # Extract with vision-based detection
+    extract_options_vision = ExtractOptions(
+        schema=ProductInfo,
+        instruction="Extract the featured product details",
+        use_vision=True
+    )
+    success, product_data = browser.agent.extract(extract_options_vision)
+
+    if success and product_data:
+        print(f"Featured product: {product_data.name}")
+        print(f"Description: {product_data.description}")
+        # Output:
+        # Featured product: Premium Plan
+        # Description: Full access to all features
+
+    # Clean up
+    session.delete()
+```
+  
+
+**Notes**:
+
+  - The browser must be initialized before calling this method
+  - The Pydantic schema must accurately represent the data structure
+  - Vision-based extraction (`use_vision=True`) provides better accuracy
+  - Complex nested schemas are supported
+  - Extraction may fail if the page structure doesn't match the schema
+  
+
+**See Also**:
+
+  observe, act, navigate_async
+
+#### extract\_async
+
+```python
+async def extract_async(options: ExtractOptions, page=None) -> Tuple[bool, T]
+```
+
+Asynchronously extract information from a web page.
+
+**Arguments**:
+
+- `page` _Optional[Page]_ - The Playwright Page object to extract from. If None, the agent's
+  currently focused page will be used.
+- `options` _ExtractOptions_ - Options to configure the extraction, including schema.
+  
+
+**Returns**:
+
+  Tuple[bool, T]: A tuple containing a success boolean and the extracted data as a
+  Pydantic model instance, or None on failure.
+
+## Best Practices
+
+1. Wait for page load completion before interacting with elements
+2. Use appropriate selectors (CSS, XPath) for reliable element identification
+3. Handle navigation timeouts and errors gracefully
+4. Take screenshots for debugging and verification
+5. Clean up browser resources after automation tasks
+
+## Related Resources
+
+- [Extension API Reference](extension.md)
+- [Session API Reference](../common-features/basics/session.md)
+
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*

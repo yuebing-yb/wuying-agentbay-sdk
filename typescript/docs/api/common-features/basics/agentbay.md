@@ -1,391 +1,155 @@
-# AgentBay Class API Reference
+# Class: AgentBay
 
-The `AgentBay` class is the main entry point for interacting with the AgentBay cloud environment. It provides methods for creating, retrieving, listing, and deleting sessions.
+## 🚀 Related Tutorial
 
-## 📖 Related Tutorials
+- [First Session Tutorial](../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
 
-- [SDK Configuration Guide](../../../../../docs/guides/common-features/configuration/sdk-configuration.md) - Detailed tutorial on configuring the SDK
-- [VPC Sessions Guide](../../../../../docs/guides/common-features/advanced/vpc-sessions.md) - Tutorial on creating sessions in VPC environments
-- [Session Link Access Guide](../../../../../docs/guides/common-features/advanced/session-link-access.md) - Tutorial on accessing sessions via links
+Main class for interacting with the AgentBay cloud runtime environment.
 
-## Constructor
+## Table of contents
 
-### new AgentBay()
 
-```typescript
-constructor(options: { apiKey?: string; config?: Config } = {})
-```
+### Properties
 
-**Parameters:**
-- `options` (object): Configuration options object
-  - `apiKey` (string, optional): The API key for authentication. If not provided, the SDK will look for the `AGENTBAY_API_KEY` environment variable.
-  - `config` (Config, optional): Custom configuration object containing endpoint and timeout_ms. If not provided, default configuration is used.
 
-**Throws:**
-- `Error`: If no API key is provided and `AGENTBAY_API_KEY` environment variable is not set.
+### Methods
+
+- [create](agentbay.md#create)
+- [delete](agentbay.md#delete)
+- [get](agentbay.md#get)
+- [list](agentbay.md#list)
+- [removeSession](agentbay.md#removesession)
 
 ## Properties
 
-### context
+```typescript
+context: [`ContextService`](context.md)
+```
 
-A `ContextService` instance for managing persistent contexts. See the [Context API Reference](context.md) for more details.
 
 ## Methods
 
+### create
 
-Creates a new session in the AgentBay cloud environment.
+▸ **create**(`params?`): `Promise`\<`SessionResult`\>
 
+Creates a new AgentBay session with specified configuration.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `params` | ``CreateSessionParams`` | Configuration parameters for the session: - labels: Key-value pairs for session metadata - imageId: Custom image ID for the session environment - contextSync: Array of context synchronization configurations - browserContext: Browser-specific context configuration - isVpc: Whether to create a VPC session - policyId: Security policy ID - enableBrowserReplay: Enable browser session recording - extraConfigs: Additional configuration options - framework: Framework identifier for tracking |
+
+#### Returns
+
+`Promise`\<`SessionResult`\>
+
+Promise resolving to SessionResult containing:
+         - success: Whether session creation succeeded
+         - session: Session object for interacting with the environment
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if creation failed
+
+**`Throws`**
+
+Error if API call fails or authentication is invalid.
+
+**`Example`**
 
 ```typescript
-create(params?: CreateSessionParams): Promise<SessionResult>
-```
+import { AgentBay } from 'wuying-agentbay-sdk';
 
-**Parameters:**
-- `params` (CreateSessionParams, optional): Parameters for session creation.
-
-**Returns:**
-- `Promise<SessionResult>`: A promise that resolves to a result object containing the new Session instance, success status, request ID, and error message if any.
-
-**Behavior:**
-- When `params` includes valid `PersistenceDataList`, after creating the session, the API will check `session.context.info` to retrieve ContextStatusData.
-- It will continuously monitor all data items' Status in ContextStatusData until all items show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
-- Any "Failed" status items will have their error messages printed.
-- The Create operation only returns after context status checking completes.
-
-**Throws:**
-- `Error`: If the session creation fails.
-
-**Example:**
-```typescript
-import { AgentBay, CreateSessionParams } from 'wuying-agentbay-sdk';
-import { ContextSync, SyncPolicy } from 'wuying-agentbay-sdk/context-sync';
-
-// Initialize the SDK with default configuration
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 
-// Or initialize with custom configuration
-const agentBayWithConfig = new AgentBay({
-  apiKey: 'your_api_key',
-  config: {
-    endpoint: 'https://agentbay.example.com',
-    timeout_ms: 30000
-  }
+// Create session with default parameters
+const result = await agentBay.create();
+if (result.success) {
+  const session = result.session;
+  console.log(`Session ID: ${session.sessionId}`);
+  // Output: Session ID: session-04bdwfj7u22a1s30g
+
+  // Use the session
+  const fileResult = await session.filesystem.readFile('/etc/hostname');
+  console.log(`Hostname: ${fileResult.data}`);
+
+  // Clean up
+  await session.delete();
+}
+
+// Create session with custom parameters
+const customResult = await agentBay.create({
+  labels: { project: 'demo', env: 'test' },
+  imageId: 'custom-image-v1',
+  isVpc: true
 });
-
-// Create a session with default parameters
-async function createDefaultSession() {
-  const result = await agentBay.create();
-  if (result.success) {
-    console.log(`Created session with ID: ${result.session.sessionId}`);
-    return result.session;
-  }
-  throw new Error(`Failed to create session: ${result.errorMessage}`);
-}
-
-// Create a session with custom parameters
-async function createCustomSession() {
-  const params: CreateSessionParams = {
-    imageId: 'linux_latest',
-    labels: { project: 'demo', environment: 'testing' }
-  };
-  
-  const result = await agentBay.create(params);
-  if (result.success) {
-    console.log(`Created custom session with ID: ${result.session.sessionId}`);
-    return result.session;
-  }
-  throw new Error(`Failed to create session: ${result.errorMessage}`);
-}
-
-// Create a mobile session with extra configurations
-async function createMobileSession() {
-  import { MobileExtraConfig, AppManagerRule, ExtraConfigs } from 'wuying-agentbay-sdk';
-  
-  const appRule: AppManagerRule = {
-    ruleType: "White",
-    appPackageNameList: [
-      "com.android.settings",
-      "com.example.trusted.app",
-      "com.system.essential.service"
-    ]
-  };
-
-  const mobileConfig: MobileExtraConfig = {
-    lockResolution: true,  // Lock screen resolution for consistent testing
-    appManagerRule: appRule,
-    hideNavigationBar: true,  // Hide navigation bar for immersive experience
-    uninstallBlacklist: [  // Protect critical apps from uninstallation
-      "com.android.systemui",
-      "com.android.settings",
-      "com.google.android.gms"
-    ]
-  };
-
-  const extraConfigs: ExtraConfigs = { mobile: mobileConfig };
-
-  const params = new CreateSessionParams()
-    .withImageId("mobile_latest")
-    .withLabels({ project: "mobile-testing", config_type: "whitelist" })
-    .withExtraConfigs(extraConfigs);
-
-  const result = await agentBay.create(params);
-  if (result.success) {
-    console.log(`Created mobile session with extra configs: ${result.session.sessionId}`);
-    return result.session;
-  }
-  throw new Error(`Failed to create mobile session: ${result.errorMessage}`);
-}
-
-// Create a mobile session with blacklist configuration
-async function createMobileSessionWithBlacklist() {
-  const appRule: AppManagerRule = {
-    ruleType: "Black",
-    appPackageNameList: [
-      "com.malware.suspicious",
-      "com.unwanted.adware",
-      "com.social.distraction"
-    ]
-  };
-
-  const mobileSecurityConfig: MobileExtraConfig = {
-    lockResolution: false,  // Allow adaptive resolution
-    appManagerRule: appRule,
-    hideNavigationBar: false,  // Show navigation bar (default behavior)
-    uninstallBlacklist: ["com.android.systemui"]  // Protect system UI from uninstallation
-  };
-
-  const extraConfigs: ExtraConfigs = { mobile: mobileSecurityConfig };
-
-  const params = new CreateSessionParams()
-    .withImageId("mobile_latest")
-    .withLabels({ project: "mobile-security", config_type: "blacklist", security: "enabled" })
-    .withExtraConfigs(extraConfigs);
-
-  const result = await agentBay.create(params);
-  if (result.success) {
-    console.log(`Created secure mobile session with blacklist: ${result.session.sessionId}`);
-    return result.session;
-  }
-  throw new Error(`Failed to create secure mobile session: ${result.errorMessage}`);
+if (customResult.success) {
+  console.log('VPC session created');
+  await customResult.session.delete();
 }
 
 // RECOMMENDED: Create a session with context synchronization
-async function createSessionWithSync() {
+const contextResult = await agentBay.context.get('my-context', true);
+if (contextResult.success && contextResult.context) {
   const contextSync = new ContextSync({
-    contextId: 'your_context_id',
+    contextId: contextResult.context.id,
     path: '/mnt/persistent',
     policy: SyncPolicy.default()
   });
-  
-  const params: CreateSessionParams = {
+
+  const syncResult = await agentBay.create({
     imageId: 'linux_latest',
     contextSync: [contextSync]
-  };
-  
-  const result = await agentBay.create(params);
-  if (result.success) {
-    console.log(`Created session with context sync: ${result.session.sessionId}`);
-    return result.session;
-  }
-  throw new Error(`Failed to create session: ${result.errorMessage}`);
-}
-```
+  });
 
-### get
-
-Retrieves a session by its ID.
-
-```typescript
-get(sessionId: string): Promise<SessionResult>
-```
-
-**Parameters:**
-- `sessionId` (string): The ID of the session to retrieve.
-
-**Returns:**
-- `Promise<SessionResult>`: A promise that resolves to a result object containing the Session instance, request ID, success status, and error message if any.
-
-**Example:**
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-async function getSessionExample() {
-  const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-  const createResult = await agentBay.create();
-  if (!createResult.success) {
-    console.error(`Failed to create session: ${createResult.errorMessage}`);
-    return;
-  }
-
-  const sessionId = createResult.session.sessionId;
-  console.log(`Created session with ID: ${sessionId}`);
-  // Output: Created session with ID: session-xxxxxxxxxxxxxx
-
-  const result = await agentBay.get(sessionId);
-  if (result.success) {
-    console.log(`Successfully retrieved session: ${result.session.sessionId}`);
-    // Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
-    console.log(`Request ID: ${result.requestId}`);
-    // Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-    
-    const deleteResult = await result.session.delete();
-    if (deleteResult.success) {
-      console.log(`Session ${sessionId} deleted successfully`);
-      // Output: Session session-xxxxxxxxxxxxxx deleted successfully
-    }
-  } else {
-    console.error(`Failed to get session: ${result.errorMessage}`);
+  if (syncResult.success) {
+    console.log(`Created session with context sync: ${syncResult.session.sessionId}`);
+    await syncResult.session.delete();
   }
 }
-
-getSessionExample();
 ```
 
+**`Remarks`**
 
-```typescript
-listByLabels(params?: ListSessionParams): Promise<SessionListResult>
-```
+**Behavior:**
+- Creates a new isolated cloud runtime environment
+- Automatically creates file transfer context if not provided
+- Waits for context synchronization if contextSync is specified
+- For VPC sessions, includes VPC-specific configuration
+- Browser replay creates a separate recording context
 
-**Parameters:**
-- `params` (ListSessionParams, optional): Parameters including labels and pagination options. If not provided, defaults will be used (labels `{}`, maxResults `10`).
+**`See`**
 
-**Returns:**
-- `Promise<SessionListResult>`: A promise that resolves to a result object containing the filtered sessions, pagination information, and request ID.
+[get](agentbay.md#get), [list](agentbay.md#list), [Session.delete](session.md#delete)
 
-**Throws:**
-- `Error`: If the session listing fails.
-
-**Example:**
-```typescript
-import { AgentBay, ListSessionParams } from 'wuying-agentbay-sdk';
-
-// Initialize the SDK
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-// List sessions by labels with pagination
-async function listSessionsByLabels() {
-  // Create pagination parameters
-  const params: ListSessionParams = {
-    maxResults: 10,  // Maximum results per page
-    nextToken: '',   // Token for the next page, empty for the first page
-    labels: { environment: 'production', project: 'demo' }  // Filter labels
-  };
-  
-  // Get the first page of results
-  const result = await agentBay.listByLabels(params);
-  
-  // Process the results
-  if (result.success) {
-    // Print the current page sessions
-    console.log(`Found ${result.data.length} sessions:`);
-    result.data.forEach(session => {
-      console.log(`Session ID: ${session.sessionId}`);
-    });
-    
-    // Print pagination information
-    console.log(`Total count: ${result.totalCount}`);
-    console.log(`Max results per page: ${result.maxResults}`);
-    console.log(`Next token: ${result.nextToken}`);
-    
-    // If there is a next page, retrieve it
-    if (result.nextToken) {
-      const nextParams = {
-        ...params,
-        nextToken: result.nextToken
-      };
-      const nextPageResult = await agentBay.listByLabels(nextParams);
-      // Process the next page...
-    }
-  }
-}
-
-listSessionsByLabels();
-```
-
-### list
-
-Returns paginated list of Sessions filtered by labels.
-
-```typescript
-list(labels?: Record<string, string>, page?: number, limit?: number): Promise<SessionListResult>
-```
-
-**Parameters:**
-- `labels` (Record<string, string>, optional): Labels to filter Sessions. Defaults to empty object (returns all sessions).
-- `page` (number, optional): Page number for pagination (starting from 1). Defaults to undefined (returns first page).
-- `limit` (number, optional): Maximum number of items per page. Defaults to 10.
-
-**Returns:**
-- `Promise<SessionListResult>`: A promise that resolves to a paginated list of session IDs that match the labels, including requestId, success status, and pagination information.
-
-**Key Features:**
-- **Simple Interface**: Pass labels directly as an object parameter
-- **Pagination Support**: Use `page` and `limit` parameters for easy pagination
-- **Request ID**: All responses include a `requestId` for tracking and debugging
-- **Flexible Filtering**: Filter by any combination of labels or list all sessions
-
-**Example:**
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay('your_api_key');
-
-async function listSessions() {
-  // List all sessions
-  let result = await agentBay.list();
-
-  // List sessions with specific labels
-  result = await agentBay.list({ project: 'demo' });
-
-  // List sessions with pagination (page 2, 10 items per page)
-  result = await agentBay.list({ 'my-label': 'my-value' }, 2, 10);
-
-  if (result.success) {
-    for (const sessionId of result.sessionIds) {
-      console.log(`Session ID: ${sessionId}`);
-    }
-    console.log(`Total count: ${result.totalCount}`);
-    console.log(`Request ID: ${result.requestId}`);
-  } else {
-    console.error(`Error: ${result.errorMessage}`);
-  }
-}
-
-listSessions();
-```
+___
 
 ### delete
 
-```typescript
-delete(session: Session, syncContext?: boolean): Promise<DeleteResult>
-```
+▸ **delete**(`session`, `syncContext?`): `Promise`\<``DeleteResult``\>
 
-**Parameters:**
-- `session` (Session): The session to delete.
-- `syncContext` (boolean, optional): If true, the API will trigger a file upload via `session.context.sync` before actually releasing the session. Default is false.
+Delete a session by session object.
 
-**Returns:**
-- `Promise<DeleteResult>`: A promise that resolves to a result object containing success status, request ID, and error message if any.
+#### Parameters
 
-**Behavior:**
-- When `syncContext` is true, the API will first call `session.context.sync` to trigger file upload.
-- It will then check `session.context.info` to retrieve ContextStatusData and monitor all data items' Status.
-- The API waits until all items show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
-- Any "Failed" status items will have their error messages printed.
-- The session deletion only proceeds after context sync status checking completes.
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `session` | [`Session`](session.md) | `undefined` | The session to delete. |
+| `syncContext` | `boolean` | `false` | Whether to sync context data (trigger file uploads) before deleting the session. Defaults to false. |
 
-**Throws:**
-- `Error`: If the session deletion fails.
+#### Returns
 
-**Example:**
+`Promise`\<``DeleteResult``\>
+
+DeleteResult indicating success or failure and request ID
+
+**`Example`**
+
 ```typescript
 import { AgentBay } from 'wuying-agentbay-sdk';
 
-// Initialize the SDK
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 
-// Create and delete a session
 async function createAndDeleteSession() {
   try {
     // Create a session
@@ -393,9 +157,9 @@ async function createAndDeleteSession() {
     if (createResult.success) {
       const session = createResult.session;
       console.log(`Created session with ID: ${session.sessionId}`);
-      
+
       // Use the session for operations...
-      
+
       // Delete the session when done
       const deleteResult = await agentBay.delete(session);
       if (deleteResult.success) {
@@ -409,5 +173,192 @@ async function createAndDeleteSession() {
   }
 }
 
-createAndDeleteSession();
+createAndDeleteSession().catch(console.error);
 ```
+
+___
+
+### get
+
+▸ **get**(`sessionId`): `Promise`\<`SessionResult`\>
+
+Get a session by its ID.
+
+This method retrieves a session by calling the GetSession API
+and returns a SessionResult containing the Session object and request ID.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `sessionId` | `string` | The ID of the session to retrieve |
+
+#### Returns
+
+`Promise`\<`SessionResult`\>
+
+Promise resolving to SessionResult with the Session instance, request ID, and success status
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function getSessionExample() {
+  try {
+    // First, create a session
+    const createResult = await agentBay.create();
+    if (!createResult.success) {
+      console.error(`Failed to create session: ${createResult.errorMessage}`);
+      return;
+    }
+
+    const sessionId = createResult.session.sessionId;
+    console.log(`Created session with ID: ${sessionId}`);
+    // Output: Created session with ID: session-xxxxxxxxxxxxxx
+
+    // Retrieve the session by its ID
+    const result = await agentBay.get(sessionId);
+    if (result.success) {
+      console.log(`Successfully retrieved session: ${result.session.sessionId}`);
+      // Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
+      console.log(`Request ID: ${result.requestId}`);
+      // Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+
+      // Use the retrieved session
+      const fileResult = await result.session.fileSystem.readFile('/etc/hostname');
+      if (fileResult.success) {
+        console.log(`Hostname: ${fileResult.content}`);
+      }
+
+      // Clean up
+      const deleteResult = await result.session.delete();
+      if (deleteResult.success) {
+        console.log(`Session ${sessionId} deleted successfully`);
+        // Output: Session session-xxxxxxxxxxxxxx deleted successfully
+      }
+    } else {
+      console.error(`Failed to get session: ${result.errorMessage}`);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+getSessionExample().catch(console.error);
+```
+
+### list
+
+▸ **list**(`labels?`, `page?`, `limit?`): `Promise`\<``SessionListResult``\>
+
+Returns paginated list of session IDs filtered by labels.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `labels` | `Record`\<`string`, `string`\> | `{}` | Optional labels to filter sessions (defaults to empty object) |
+| `page?` | `number` | `undefined` | Optional page number for pagination (starting from 1, defaults to 1) |
+| `limit` | `number` | `10` | Optional maximum number of items per page (defaults to 10) |
+
+#### Returns
+
+`Promise`\<``SessionListResult``\>
+
+SessionListResult - Paginated list of session IDs that match the labels
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: "your_api_key" });
+
+// List all sessions
+const result = await agentBay.list();
+
+// List sessions with specific labels
+const result = await agentBay.list({ project: "demo" });
+
+// List sessions with pagination
+const result = await agentBay.list({ "my-label": "my-value" }, 2, 10);
+
+if (result.success) {
+  for (const sessionId of result.sessionIds) {
+    console.log(`Session ID: ${sessionId}`);
+  }
+  console.log(`Total count: ${result.totalCount}`);
+  console.log(`Request ID: ${result.requestId}`);
+}
+```
+
+___
+
+### removeSession
+
+▸ **removeSession**(`sessionId`): `void`
+
+Remove a session from the internal session cache.
+
+This is an internal utility method that removes a session reference from the AgentBay client's
+session cache without actually deleting the session from the cloud. Use this when you need to
+clean up local references to a session that was deleted externally or no longer needed.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `sessionId` | `string` | The ID of the session to remove from the cache. |
+
+#### Returns
+
+`void`
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function demonstrateRemoveSession() {
+  try {
+    // Create a session
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+      console.log(`Created session with ID: ${session.sessionId}`);
+      // Output: Created session with ID: session-xxxxxxxxxxxxxx
+
+      // Delete the session from cloud
+      await session.delete();
+
+      // Remove the session reference from local cache
+      agentBay.removeSession(session.sessionId);
+      console.log('Session removed from cache');
+      // Output: Session removed from cache
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+demonstrateRemoveSession().catch(console.error);
+```
+
+**`Remarks`**
+
+**Note:** This method only removes the session from the local cache. It does not delete the
+session from the cloud. To delete a session from the cloud, use [delete](agentbay.md#delete) or
+[Session.delete](session.md#delete).
+
+**`See`**
+
+[delete](agentbay.md#delete), [Session.delete](session.md#delete)
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Context API Reference](context.md)
+

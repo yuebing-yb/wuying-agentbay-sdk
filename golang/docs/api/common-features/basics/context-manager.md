@@ -1,428 +1,891 @@
-# ContextManager API Reference
+# Context Manager API Reference
 
-The `ContextManager` class provides functionality for managing contexts within a session. It enables you to interact with the contexts that are synchronized to the session, including reading and writing data, and managing file operations.
+## 🚀 Related Tutorial
 
-## 📖 Related Tutorial
+- [First Session Tutorial](../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
 
-- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md) - Detailed tutorial on context management and data persistence
-
-## Overview
-
-The `ContextManager` is accessed through a session instance (`session.Context`) and provides functionality for managing contexts within that session.
-
-## Data Types
+## Type ContextStatusData
 
 ```go
 type ContextStatusData struct {
-	ContextId    string  // The ID of the context
-	Path         string  // The path where the context is mounted
-	ErrorMessage string  // Error message if the operation failed
-	Status       string  // Status of the synchronization task
-	StartTime    int64   // Start time of the task (Unix timestamp)
-	FinishTime   int64   // Finish time of the task (Unix timestamp)
-	TaskType     string  // Type of the task (e.g., "upload", "download")
+	ContextId	string	`json:"contextId"`
+	Path		string	`json:"path"`
+	ErrorMessage	string	`json:"errorMessage"`
+	Status		string	`json:"status"`
+	StartTime	int64	`json:"startTime"`
+	FinishTime	int64	`json:"finishTime"`
+	TaskType	string	`json:"taskType"`
 }
 ```
 
-## Result Types
+ContextStatusData represents the parsed context status data
+
+## Type ContextStatusItem
+
+```go
+type ContextStatusItem struct {
+	Type	string	`json:"type"`
+	Data	string	`json:"data"`
+}
+```
+
+ContextStatusItem represents an item in the context status response
+
+## Type ContextInfoResult
 
 ```go
 type ContextInfoResult struct {
-	models.ApiResponse              // Embedded ApiResponse struct
-	ContextStatusData []ContextStatusData  // Array of context status data objects
+	models.ApiResponse
+	Success			bool
+	ContextStatusData	[]ContextStatusData	// Parsed context status data
+	ErrorMessage		string
 }
 ```
+
+ContextInfoResult wraps context info result and RequestID
+
+## Type ContextSyncResult
 
 ```go
 type ContextSyncResult struct {
-	models.ApiResponse  // Embedded ApiResponse struct
-	Success bool        // Indicates whether the synchronization was successful
+	models.ApiResponse
+	Success		bool
+	ErrorMessage	string
 }
 ```
 
-## Methods
+ContextSyncResult wraps context sync result and RequestID
 
-### Info
-
-Gets information about context synchronization status for the current session.
+## Type ContextManager
 
 ```go
-Info() (*ContextInfoResult, error)
+type ContextManager struct {
+	Session interface {
+		GetAPIKey() string
+		GetClient() *mcp.Client
+		GetSessionId() string
+	}
+}
 ```
 
-**Returns:**
-- `*ContextInfoResult`: A result object containing the context status data and RequestID.
-- `error`: An error if the operation fails.
+ContextManager handles context operations for a specific session.
+
+### Methods
+
+#### Info
+
+```go
+func (cm *ContextManager) Info() (*ContextInfoResult, error)
+```
+
+Info retrieves context information for the current session.
 
 **Example:**
+
 ```go
 package main
-
 import (
 	"fmt"
 	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-	// Initialize the SDK
 	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
-
-	// Create a session
-	createResult, err := client.Create(nil)
+	result, err := client.Create(nil)
 	if err != nil {
-		fmt.Printf("Error creating session: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
-	
-	session := createResult.Session
-	defer session.Delete()
-	
+	session := result.Session
+
 	// Get context synchronization information
+
 	infoResult, err := session.Context.Info()
 	if err != nil {
-		fmt.Printf("Error getting context info: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
-	
-	fmt.Printf("Request ID: %s\n", infoResult.RequestID)
 	fmt.Printf("Context status data count: %d\n", len(infoResult.ContextStatusData))
 	for _, item := range infoResult.ContextStatusData {
-		fmt.Printf("  Context %s: Status=%s, Path=%s, TaskType=%s\n",
-			item.ContextId, item.Status, item.Path, item.TaskType)
+		fmt.Printf("Context %s: Status=%s, Path=%s\n", item.ContextId, item.Status, item.Path)
 	}
+
+	// Output: Context status data count: 0
+
+	session.Delete()
 }
-
-// Expected output:
-// Request ID: 41FC3D61-4AFB-1D2E-A08E-5737B2313234
-// Context status data count: 0
 ```
 
-### InfoWithParams
-
-Gets information about context synchronization status with optional filter parameters.
+#### InfoWithParams
 
 ```go
-InfoWithParams(contextId, path, taskType string) (*ContextInfoResult, error)
+func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*ContextInfoResult, error)
 ```
 
-**Parameters:**
-- `contextId` (string): Optional. The ID of the context to get information for.
-- `path` (string): Optional. The path where the context is mounted.
-- `taskType` (string): Optional. The type of task to get information for (e.g., "upload", "download").
+InfoWithParams retrieves context information for the current session with optional parameters.
 
-**Returns:**
-- `*ContextInfoResult`: A result object containing the context status data and RequestID.
-- `error`: An error if the operation fails.
+#### Sync
 
-**Example:**
 ```go
-// Get info for a specific context and path
-infoResult, err := session.Context.InfoWithParams(
-	"SdkCtx-04bdw8o39bq47rv1t",
-	"/mnt/persistent",
-	"",
-)
-if err != nil {
-	fmt.Printf("Error getting context info: %v\n", err)
-	os.Exit(1)
-}
-
-fmt.Printf("Request ID: %s\n", infoResult.RequestID)
-for _, item := range infoResult.ContextStatusData {
-	fmt.Printf("  Context %s: Status=%s\n", item.ContextId, item.Status)
-}
-
-// Expected output when no sync tasks are found:
-// Request ID: EB18A2D5-3C51-1F50-9FF1-8543CA328772
-// Context status data count: 0
+func (cm *ContextManager) Sync() (*ContextSyncResult, error)
 ```
 
-### Sync
+Sync synchronizes the context for the current session.
 
-Synchronizes a context with the session (without waiting for completion).
+#### SyncWithCallback
 
 ```go
-Sync() (*ContextSyncResult, error)
+func (cm *ContextManager) SyncWithCallback(contextId, path, mode string, callback SyncCallback, maxRetries int, retryInterval int) (*ContextSyncResult, error)
 ```
 
-**Returns:**
-- `*ContextSyncResult`: A result object containing success status and RequestID.
-- `error`: An error if the operation fails.
+SyncWithCallback synchronizes the context with callback support (dual-mode). If callback is
+provided, it runs in background and calls callback when complete. If callback is nil, it waits for
+completion before returning.
 
-**Example:**
-```go
-// Trigger context synchronization
-syncResult, err := session.Context.Sync()
-if err != nil {
-	fmt.Printf("Error synchronizing context: %v\n", err)
-	os.Exit(1)
-}
+Example (Synchronous mode - waits for completion):
 
-fmt.Printf("Sync triggered - Success: %v\n", syncResult.Success)
-fmt.Printf("Request ID: %s\n", syncResult.RequestID)
 
-// Expected output:
-// Sync triggered - Success: true
-// Request ID: 8D845246-2279-13E5-8F15-9DE68CB1B686
-```
-
-### SyncWithParams
-
-Synchronizes a context with the session with optional parameters (without waiting for completion).
-
-```go
-SyncWithParams(contextId, path, mode string) (*ContextSyncResult, error)
-```
-
-**Parameters:**
-- `contextId` (string): Optional. The ID of the context to synchronize.
-- `path` (string): Optional. The path where the context should be mounted.
-- `mode` (string): Optional. The synchronization mode (e.g., "upload", "download"). Defaults to "upload" if empty.
-
-**Returns:**
-- `*ContextSyncResult`: A result object containing success status and RequestID.
-- `error`: An error if the operation fails.
-
-**Example:**
-```go
 package main
 
 import (
+
 	"fmt"
+
 	"os"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
 )
 
 func main() {
-	// Initialize the SDK
+
 	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+
+		fmt.Printf("Error: %v\n", err)
+
 		os.Exit(1)
+
 	}
 
-	// Create a session
-	createResult, err := client.Create(nil)
+	result, err := client.Create(nil)
+
 	if err != nil {
-		fmt.Printf("Error creating session: %v\n", err)
+
+		fmt.Printf("Error: %v\n", err)
+
 		os.Exit(1)
+
 	}
-	
-	session := createResult.Session
-	defer session.Delete()
-	
+
+	session := result.Session
+
+
 	// Get or create a context
+
 	contextResult, err := client.Context.Get("my-context", true)
+
 	if err != nil {
-		fmt.Printf("Error getting context: %v\n", err)
+
+		fmt.Printf("Error: %v\n", err)
+
 		os.Exit(1)
+
 	}
-	
-	// Synchronize the context with specific parameters
-	syncResult, err := session.Context.SyncWithParams(
+
+
+	// Synchronous mode: callback is nil, so it waits for completion
+
+	syncResult, err := session.Context.SyncWithCallback(
+
 		contextResult.ContextID,
+
 		"/mnt/persistent",
+
 		"upload",
+
+		nil,  // No callback - synchronous mode
+
+		10,   // maxRetries
+
+		1000, // retryInterval in milliseconds
+
 	)
+
 	if err != nil {
-		fmt.Printf("Error synchronizing context: %v\n", err)
+
+		fmt.Printf("Error: %v\n", err)
+
 		os.Exit(1)
+
 	}
-	
-	fmt.Printf("Sync triggered - Success: %v\n", syncResult.Success)
-	fmt.Printf("Request ID: %s\n", syncResult.RequestID)
+
+	fmt.Printf("Sync completed - Success: %v\n", syncResult.Success)
+
+
+	// Output: No sync tasks found
+
+	// Output: Sync completed - Success: true
+
+
+	session.Delete()
+
 }
 
-// Expected output:
-// Sync triggered - Success: true
-// Request ID: 8D845246-2279-13E5-8F15-9DE68CB1B686
-```
+Example (Asynchronous mode - with callback):
 
-### SyncWithCallback
 
-Synchronizes a context with support for both synchronous (blocking) and asynchronous (callback) modes.
-
-```go
-SyncWithCallback(contextId, path, mode string, callback SyncCallback, maxRetries int, retryInterval int) (*ContextSyncResult, error)
-```
-
-**Parameters:**
-- `contextId` (string): Optional. The ID of the context to synchronize.
-- `path` (string): Optional. The path where the context should be mounted.
-- `mode` (string): Optional. The synchronization mode (e.g., "upload", "download"). Defaults to "upload" if empty.
-- `callback` (SyncCallback): Optional. If provided, the function runs in background and calls callback when complete. If nil, waits for completion before returning.
-- `maxRetries` (int): Maximum number of retries for polling completion status.
-- `retryInterval` (int): Milliseconds to wait between retries.
-
-**Returns:**
-- `*ContextSyncResult`: A result object containing success status and RequestID.
-- `error`: An error if the operation fails.
-
-**Example (Synchronous mode - waits for completion):**
-```go
-// Synchronous mode: callback is nil, so it waits for completion
-syncResult, err := session.Context.SyncWithCallback(
-	contextResult.ContextID,
-	"/mnt/persistent",
-	"upload",
-	nil,  // No callback - synchronous mode
-	10,   // maxRetries
-	1000, // retryInterval in milliseconds
-)
-if err != nil {
-	fmt.Printf("Error in SyncWithCallback: %v\n", err)
-	os.Exit(1)
-}
-
-fmt.Printf("Sync completed - Success: %v\n", syncResult.Success)
-fmt.Printf("Request ID: %s\n", syncResult.RequestID)
-
-// Expected output:
-// No sync tasks found
-// Sync completed - Success: true
-// Request ID: 39B00280-B9DA-17D1-BCBB-9C577E057F0A
-```
-
-**Example (Asynchronous mode - with callback):**
-```go
-// Asynchronous mode: with callback, returns immediately
-syncResult, err := session.Context.SyncWithCallback(
-	contextResult.ContextID,
-	"/mnt/persistent",
-	"upload",
-	func(success bool) {
-		if success {
-			fmt.Println("Context sync completed successfully")
-		} else {
-			fmt.Println("Context sync failed or timed out")
-		}
-	},
-	150,  // maxRetries
-	1500, // retryInterval in milliseconds
-)
-if err != nil {
-	fmt.Printf("Error in SyncWithCallback: %v\n", err)
-	os.Exit(1)
-}
-
-fmt.Printf("Sync triggered - Success: %v\n", syncResult.Success)
-fmt.Printf("Request ID: %s\n", syncResult.RequestID)
-// ... callback will be called asynchronously when sync completes
-
-// Expected output:
-// Sync triggered - Success: true
-// Request ID: 39B00280-B9DA-17D1-BCBB-9C577E057F0A
-// Context sync completed successfully  (printed by callback after completion)
-```
-
-## Complete Usage Example
-
-```go
 package main
 
 import (
+
 	"fmt"
+
 	"os"
+
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
 )
 
 func main() {
-	// Initialize the SDK
+
 	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+
+		fmt.Printf("Error: %v\n", err)
+
 		os.Exit(1)
+
 	}
 
-	// Create a session
-	createResult, err := client.Create(nil)
+	result, err := client.Create(nil)
+
 	if err != nil {
-		fmt.Printf("Error creating session: %v\n", err)
+
+		fmt.Printf("Error: %v\n", err)
+
 		os.Exit(1)
+
 	}
-	
-	session := createResult.Session
-	defer session.Delete()
-	
-	fmt.Printf("Session created: %s\n", session.GetSessionId())
-	
+
+	session := result.Session
+
+
 	// Get or create a context
-	contextResult, err := client.Context.Get("my-persistent-context", true)
+
+	contextResult, err := client.Context.Get("my-context", true)
+
 	if err != nil {
-		fmt.Printf("Error getting context: %v\n", err)
+
+		fmt.Printf("Error: %v\n", err)
+
 		os.Exit(1)
+
 	}
-	
-	fmt.Printf("Context ID: %s\n", contextResult.ContextID)
-	
-	// Check initial context status
-	infoResult, err := session.Context.Info()
-	if err != nil {
-		fmt.Printf("Error getting context info: %v\n", err)
-		os.Exit(1)
-	}
-	
-	fmt.Printf("Initial context status data count: %d\n", len(infoResult.ContextStatusData))
-	
-	// Synchronize context and wait for completion
+
+
+	// Asynchronous mode: with callback, returns immediately
+
 	syncResult, err := session.Context.SyncWithCallback(
+
 		contextResult.ContextID,
+
 		"/mnt/persistent",
+
 		"upload",
-		nil,  // nil callback means synchronous mode
-		10,   // maxRetries
-		1000, // retryInterval in ms
+
+		func(success bool) {
+
+			if success {
+
+				fmt.Println("Context sync completed successfully")
+
+			} else {
+
+				fmt.Println("Context sync failed or timed out")
+
+			}
+
+		},
+
+		150,  // maxRetries
+
+		1500, // retryInterval in milliseconds
+
 	)
+
 	if err != nil {
-		fmt.Printf("Error in sync: %v\n", err)
+
+		fmt.Printf("Error: %v\n", err)
+
 		os.Exit(1)
+
 	}
-	
-	fmt.Printf("Sync completed - Success: %v\n", syncResult.Success)
-	fmt.Printf("Request ID: %s\n", syncResult.RequestID)
-	
-	// Check final context status
-	finalInfo, err := session.Context.InfoWithParams(
-		contextResult.ContextID,
-		"/mnt/persistent",
-		"",
-	)
-	if err != nil {
-		fmt.Printf("Error getting final context info: %v\n", err)
-		os.Exit(1)
-	}
-	
-	fmt.Printf("Final context status data count: %d\n", len(finalInfo.ContextStatusData))
-	for _, item := range finalInfo.ContextStatusData {
-		fmt.Printf("  Context %s: Status=%s, TaskType=%s\n",
-			item.ContextId, item.Status, item.TaskType)
-	}
+
+	fmt.Printf("Sync triggered - Success: %v\n", syncResult.Success)
+
+
+	// Wait for callback to complete
+
+	time.Sleep(5 * time.Second)
+
+
+	// Output: Sync triggered - Success: true
+
+	// Output: Context sync completed successfully
+
+
+	session.Delete()
+
 }
 
-// Expected output:
-// Session created: session-04bdwfj7u1sew7t4f
-// Context ID: SdkCtx-04bdw8o39bq47rv1t
-// Initial context status data count: 0
-// No sync tasks found
-// Sync completed - Success: true
-// Request ID: 39B00280-B9DA-17D1-BCBB-9C577E057F0A
-// Final context status data count: 0
+#### SyncWithParams
+
+```go
+func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*ContextSyncResult, error)
 ```
 
-## Notes
+SyncWithParams synchronizes the context for the current session with optional parameters.
 
-- The `ContextManager` is designed to work with contexts synchronized to a session. It is different from the `ContextService` (accessible via `client.Context`) which manages contexts globally.
-- `Info()` and `InfoWithParams()` return information about the current synchronization tasks for contexts in the session.
-- `Sync()` and `SyncWithParams()` trigger the synchronization but return immediately without waiting for completion.
-- `SyncWithCallback()` provides a dual-mode interface: if callback is nil, it waits for completion (synchronous mode); if callback is provided, it returns immediately and calls the callback when complete (asynchronous mode).
-- Synchronization polling checks the status every `retryInterval` milliseconds for up to `maxRetries` attempts.
-- Empty `ContextStatusData` arrays are normal when there are no active sync tasks.
+### Related Functions
+
+#### NewContextManager
+
+```go
+func NewContextManager(session interface {
+	GetAPIKey() string
+	GetClient() *mcp.Client
+	GetSessionId() string
+}) *ContextManager
+```
+
+NewContextManager creates a new ContextManager object.
+
+## Functions
+
+### Deprecated
+
+```go
+func Deprecated(reason, replacement, version string)
+```
+
+Deprecated marks a function or method as deprecated and emits a warning
+
+### FindDotEnvFile
+
+```go
+func FindDotEnvFile(startPath string) string
+```
+
+FindDotEnvFile searches for .env file upward from startPath. Search order: 1. Current working
+directory 2. Parent directories (up to root) 3. Git repository root (if found)
+
+Args:
+
+
+startPath: Starting directory for search (empty string means current directory)
+
+Returns:
+
+
+Path to .env file if found, empty string otherwise
+
+### GetLogLevel
+
+```go
+func GetLogLevel() int
+```
+
+GetLogLevel returns the current global log level
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+
+	// Check current level
+
+	currentLevel := agentbay.GetLogLevel()
+	fmt.Printf("Current log level: %d\n", currentLevel)
+}
+```
+
+### LoadDotEnvWithFallback
+
+```go
+func LoadDotEnvWithFallback(customEnvPath string)
+```
+
+LoadDotEnvWithFallback loads .env file with improved search strategy.
+
+Args:
+
+
+customEnvPath: Custom path to .env file (empty string means search upward)
+
+### LogAPICall
+
+```go
+func LogAPICall(apiName, requestParams string)
+```
+
+LogAPICall logs an API call with request parameters
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see API calls
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// API calls are automatically logged by the SDK
+
+	// Output: 🔗 API Call: create_session
+
+}
+```
+
+### LogAPIResponseWithDetails
+
+```go
+func LogAPIResponseWithDetails(apiName, requestID string, success bool, keyFields map[string]interface{}, fullResponse string)
+```
+
+LogAPIResponseWithDetails logs a structured API response with key fields
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see detailed responses
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// API responses are automatically logged by the SDK
+
+	// Output: ✅ API Response: create_session, RequestId=xxx
+
+}
+```
+
+### LogCodeExecutionOutput
+
+```go
+func LogCodeExecutionOutput(requestID, rawOutput string)
+```
+
+LogCodeExecutionOutput extracts and logs the actual code execution output from run_code response
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to INFO to see code execution output
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Execute code in the session
+
+	execResult, err := session.Code.RunCode("print('Hello from AgentBay')", "python")
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Code execution completed: %v\n", execResult.Success)
+
+	// Output: 📋 Code Execution Output (RequestID: xxx):
+
+	// Output:    Hello from AgentBay
+
+}
+```
+
+### LogDebug
+
+```go
+func LogDebug(message string)
+```
+
+LogDebug logs a debug message
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see debug messages
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Log debug messages
+
+	agentbay.LogDebug("Debugging session creation process")
+
+	// Output: 🐛 Debugging session creation process
+
+}
+```
+
+### LogInfo
+
+```go
+func LogInfo(message string)
+```
+
+LogInfo logs an informational message
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to INFO or DEBUG to see info messages
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Log informational messages
+
+	agentbay.LogInfo("Session created successfully")
+
+	// Output: ℹ️  Session created successfully
+
+}
+```
+
+### LogInfoWithColor
+
+```go
+func LogInfoWithColor(message string)
+```
+
+LogInfoWithColor logs an informational message with custom color
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to INFO or DEBUG to see colored messages
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Log informational messages with color emphasis
+
+	agentbay.LogInfoWithColor("Important: Session ready for use")
+
+	// Output: ℹ️  Important: Session ready for use
+
+}
+```
+
+### LogOperationError
+
+```go
+func LogOperationError(operation, errorMsg string, withStack bool)
+```
+
+LogOperationError logs an operation error with optional stack trace
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+
+		// Log operation errors
+
+		agentbay.LogOperationError("Create Session", err.Error(), false)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Output: ❌ Failed: Create Session
+
+	// Output: 💥 Error: session creation failed
+
+}
+```
+
+### MaskSensitiveData
+
+```go
+func MaskSensitiveData(data interface{}) interface{}
+```
+
+MaskSensitiveData recursively masks sensitive information in data structures
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Create data with sensitive information
+
+	data := map[string]interface{}{
+		"api_key":    "sk_live_1234567890",
+		"password":   "secret123",
+		"auth_token": "Bearer xyz",
+		"username":   "john_doe",
+	}
+
+	// Mask sensitive data
+
+	masked := agentbay.MaskSensitiveData(data)
+	fmt.Printf("Masked data: %v\n", masked)
+
+	// Output: Masked data: map[api_key:sk****90 auth_token:Be****yz password:se****23 username:john_doe]
+
+}
+```
+
+### SetDeprecationConfig
+
+```go
+func SetDeprecationConfig(config *DeprecationConfig)
+```
+
+SetDeprecationConfig sets the global deprecation configuration
+
+### SetLogLevel
+
+```go
+func SetLogLevel(level int)
+```
+
+SetLogLevel sets the global log level
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see all messages
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Change to INFO level to reduce verbosity
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+
+	// Continue with your operations
+
+}
+```
+
+### SetupLogger
+
+```go
+func SetupLogger(config LoggerConfig)
+```
+
+SetupLogger configures the logger with file logging support
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Configure file logging with rotation
+
+	agentbay.SetupLogger(agentbay.LoggerConfig{
+		Level:       "DEBUG",
+		LogFile:     "/tmp/agentbay.log",
+		MaxFileSize: "100 MB",
+	})
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// All logs will be written to both console and file
+
+}
+```
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Context API Reference](context.md)
+
+---
+
+*Documentation generated automatically from Go source code.*

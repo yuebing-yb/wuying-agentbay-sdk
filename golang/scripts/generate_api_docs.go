@@ -476,7 +476,7 @@ func main() {
 	_, currentFile, _, _ := runtime.Caller(0)
 	scriptDir := filepath.Dir(currentFile)
 	projectRoot := filepath.Dir(scriptDir)
-	docsRoot := filepath.Join(projectRoot, "docs", "api-preview", "latest")
+	docsRoot := filepath.Join(projectRoot, "docs", "api")
 
 	metadata, err := loadMetadata(projectRoot)
 	if err != nil {

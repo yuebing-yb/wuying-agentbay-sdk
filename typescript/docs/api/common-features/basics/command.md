@@ -1,93 +1,104 @@
-# Command Class API Reference
+# Class: Command
 
-The `Command` class provides methods for executing commands within a session in the AgentBay cloud environment.
+## ⚡ Related Tutorial
 
-## 📖 Related Tutorial
+- [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
 
-- [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md) - Detailed tutorial on executing shell commands
+## Overview
+
+The Command module provides methods for executing shell commands within a session in the AgentBay cloud environment.
+It supports both synchronous command execution with configurable timeouts.
+
+
+## Requirements
+
+- Any session image (browser_latest, code_latest, windows_latest, mobile_latest)
+
+Handles command execution operations in the AgentBay cloud environment.
+
+## Table of contents
+
+
+### Methods
+
+- [executeCommand](command.md#executecommand)
 
 ## Methods
 
 ### executeCommand
 
-Executes a shell command in the cloud environment.
+▸ **executeCommand**(`command`, `timeoutMs?`): `Promise`\<`CommandResult`\>
 
-```typescript
-executeCommand(command: string, timeoutMs: number = 1000): Promise<CommandResult>
-```
+Executes a shell command in the session environment.
 
-**Parameters:**
-- `command` (string): The command to execute.
-- `timeoutMs` (number, optional): The timeout for the command execution in milliseconds. Default is 1000ms.
+#### Parameters
 
-**Returns:**
-- `Promise<CommandResult>`: A promise that resolves to a result object containing the command output, success status, and request ID.
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `command` | `string` | `undefined` | The shell command to execute. |
+| `timeoutMs` | `number` | `1000` | Timeout in milliseconds. Defaults to 1000ms. |
 
-**CommandResult Interface:**
-```typescript
-interface CommandResult {
-    requestId: string;      // Unique identifier for the API request
-    success: boolean;       // Whether the operation was successful
-    output: string;         // The command output (stdout)
-    errorMessage?: string;  // Error message if the operation failed
-}
-```
+#### Returns
 
-**Note:** The `output` field contains the standard output (stdout) of the executed command. Error output (stderr) is typically included in the `errorMessage` field when the command fails.
+`Promise`\<`CommandResult`\>
 
-**Usage Example:**
+Promise resolving to CommandResult containing:
+         - success: Whether the command executed successfully
+         - output: Combined stdout and stderr output
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if execution failed
+
+**`Example`**
 
 ```typescript
 import { AgentBay } from 'wuying-agentbay-sdk';
 
-async function main() {
-    // Initialize AgentBay with API key
-    const apiKey = process.env.AGENTBAY_API_KEY!;
-    const ab = new AgentBay({ apiKey });
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
 
-    // Create a session
-    const sessionResult = await ab.create();
-    const session = sessionResult.session;
+if (result.success) {
+  const session = result.session;
 
-    try {
-        // Execute a command with default timeout (1000ms)
-        const result = await session.command.executeCommand("ls -la");
-        if (result.success) {
-            console.log(`Command output:\n${result.output}`);
-            // Expected output: Directory listing showing files and folders
-            console.log(`Request ID: ${result.requestId}`);
-            // Expected: A valid UUID-format request ID
-        } else {
-            console.error(`Command execution failed: ${result.errorMessage}`);
-        }
+  // Execute a simple command
+  const cmdResult = await session.command.executeCommand('echo "Hello"');
+  if (cmdResult.success) {
+    console.log(`Output: ${cmdResult.output}`);
+    // Output: Output: Hello
+  }
 
-        // Execute a command with custom timeout (5000ms)
-        const resultWithTimeout = await session.command.executeCommand(
-            "sleep 2 && echo 'Done'", 
-            5000
-        );
-        if (resultWithTimeout.success) {
-            console.log(`Command output: ${resultWithTimeout.output}`);
-            // Expected output: "Done\n"
-            // The command waits 2 seconds then outputs "Done"
-        } else {
-            console.error(`Command execution failed: ${resultWithTimeout.errorMessage}`);
-        }
+  // Execute with custom timeout
+  const longCmd = await session.command.executeCommand(
+    'sleep 2 && echo "Done"',
+    3000
+  );
 
-        // Note: If a command exceeds its timeout, it will return an error
-        // Example: await session.command.executeCommand("sleep 3", 1000)
-        // Returns error in errorMessage field
-    } catch (error) {
-        console.error('Error:', error);
-    }
+  await session.delete();
 }
-
-main().catch(console.error);
 ```
+
+**`Remarks`**
+
+**Behavior:**
+- Executes in a Linux shell environment
+- Combines stdout and stderr in the output
+- Default timeout is 1000ms (1 second)
+- Command runs with session user permissions
+
+**`See`**
+
+[FileSystem.readFile](filesystem.md#readfile), [FileSystem.writeFile](filesystem.md#writefile)
+
+## Best Practices
+
+1. Always specify appropriate timeout values based on expected command duration
+2. Handle command execution errors gracefully
+3. Use absolute paths when referencing files in commands
+4. Be aware that commands run with session user permissions
+5. Clean up temporary files created by commands
+
 
 ## Related Resources
 
-- [Session Class](session.md): The session class that provides access to the Command class.
-- [Code Class](../../codespace/code.md): For executing Python and JavaScript code.
-- [FileSystem Class](filesystem.md): Provides methods for file operations within a session.
+- [Session API Reference](session.md)
+- [FileSystem API Reference](filesystem.md)
 

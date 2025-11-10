@@ -1,113 +1,118 @@
-# Code Module - Python
+# Code API Reference
 
-The Code module handles code execution operations in the AgentBay cloud environment.
+## 💻 Related Tutorial
 
-## 📖 Related Tutorial
+- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
 
-- [Code Execution Guide](../../../../docs/guides/codespace/code-execution.md) - Detailed tutorial on executing code in cloud environments
+## Overview
 
-## Methods
+The Code module provides secure code execution capabilities in isolated environments.
+It supports multiple programming languages including Python, JavaScript, and more.
 
-### run_code
 
-Executes code in a specified programming language with a timeout.
+## Requirements
+
+- Requires `code_latest` image for code execution features
+
+
+
+## CodeExecutionResult Objects
 
 ```python
-run_code(code: str, language: str, timeout_s: int = 60) -> CodeExecutionResult
+class CodeExecutionResult(ApiResponse)
 ```
 
-**Parameters:**
-- `code` (str): The code to execute.
-- `language` (str): The programming language of the code. Must be either 'python' or 'javascript'.
-- `timeout_s` (int, optional): The timeout for the code execution in seconds. Default is 60s. Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+Result of code execution operations.
 
-**Returns:**
-- `CodeExecutionResult`: A result object containing success status, execution result, error message if any, and request ID.
-
-**Important Note:**
-The `run_code` method requires a session created with the `code_latest` image to function properly. If you encounter errors indicating that the tool is not found, make sure to create your session with `image_id="code_latest"` in the `CreateSessionParams`.
-
-**Usage Example:**
+## Code Objects
 
 ```python
-import os
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-# Initialize AgentBay with API key
-api_key = os.getenv("AGENTBAY_API_KEY")
-agent_bay = AgentBay(api_key=api_key)
-
-# Create a session with code_latest image
-params = CreateSessionParams(image_id="code_latest")
-session_result = agent_bay.create(params)
-if session_result.success:
-    session = session_result.session
-else:
-    print(f"Failed to create session: {session_result.error_message}")
-    exit(1)
-
-# Execute Python code
-python_code = """
-print("Hello from Python!")
-result = 2 + 3
-print(f"Result: {result}")
-"""
-
-code_result = session.code.run_code(python_code, "python")
-if code_result.success:
-    print(f"Python code output:\n{code_result.result}")
-    # Expected output:
-    # Hello from Python!
-    # Result: 5
-    print(f"Request ID: {code_result.request_id}")
-    # Expected: A valid UUID-format request ID
-else:
-    print(f"Code execution failed: {code_result.error_message}")
-
-# Execute JavaScript code
-js_code = """
-console.log("Hello from JavaScript!");
-const result = 2 + 3;
-console.log("Result:", result);
-"""
-
-js_result = session.code.run_code(js_code, "javascript", timeout_s=30)
-if js_result.success:
-    print(f"JavaScript code output:\n{js_result.result}")
-    # Expected output:
-    # Hello from JavaScript!
-    # Result: 5
-    print(f"Request ID: {js_result.request_id}")
-    # Expected: A valid UUID-format request ID
-else:
-    print(f"Code execution failed: {js_result.error_message}")
+class Code(BaseService)
 ```
 
-## Error Handling
+Handles code execution operations in the AgentBay cloud environment.
 
-The run_code method returns a CodeExecutionResult with `success=False` if:
-- The specified language is not supported (only 'python' and 'javascript' are supported)
-- The code execution fails in the cloud environment
-- Network or API communication errors occur
-
-In these cases, the `error_message` field will contain details about the failure.
-
-## Types
-
-### CodeExecutionResult
+#### run\_code
 
 ```python
-class CodeExecutionResult(ApiResponse):
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        result: str = "",
-        error_message: str = "",
-    ):
-        # Inherits request_id from ApiResponse
-        self.success = success        # Whether the operation was successful
-        self.result = result          # The execution result/output
-        self.error_message = error_message  # Error message if failed
-``` 
+def run_code(code: str,
+             language: str,
+             timeout_s: int = 60) -> CodeExecutionResult
+```
+
+Execute code in the specified language with a timeout.
+
+**Arguments**:
+
+    code: The code to execute.
+    language: The programming language of the code. Must be either 'python'
+  or 'javascript'.
+    timeout_s: The timeout for the code execution in seconds. Default is 60s.
+    Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+  
+
+**Returns**:
+
+    CodeExecutionResult: Result object containing success status, execution
+  result, and error message if any.
+  
+
+**Raises**:
+
+    CommandError: If the code execution fails or if an unsupported language is
+  specified.
+  
+  Important:
+  The `run_code` method requires a session created with the `code_latest`
+  image to function properly. If you encounter errors indicating that the
+  tool is not found, make sure to create your session with
+  `image_id="code_latest"` in the `CreateSessionParams`.
+  
+
+**Example**:
+
+  Execute Python and JavaScript code in a code execution environment::
+  
+  from agentbay import AgentBay
+  from agentbay.session_params import CreateSessionParams
+  
+  agent_bay = AgentBay(api_key="your_api_key")
+  
+  def execute_python_code():
+  try:
+  # Create a session with code_latest image
+  params = CreateSessionParams(image_id="code_latest")
+  result = agent_bay.create(params)
+  if result.success:
+  session = result.session
+  
+  # Execute Python code
+  python_code = "print('Hello from Python!')
+  result = 2 + 3
+    print(f'Result: {result}')"
+  
+  code_result = session.code.run_code(python_code, "python")
+  if code_result.success:
+  print(f"Python code output: {code_result.result}")
+  
+  session.delete()
+  except Exception as e:
+    print(f"Error: {e}")
+  
+  execute_python_code()
+
+## Best Practices
+
+1. Validate code syntax before execution
+2. Set appropriate execution timeouts
+3. Handle execution errors and exceptions
+4. Use proper resource limits to prevent resource exhaustion
+5. Clean up temporary files after code execution
+
+## Related Resources
+
+- [Session API Reference](../common-features/basics/session.md)
+
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*
