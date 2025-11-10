@@ -48,11 +48,13 @@ from agentbay.context_sync import ContextSync
 from agentbay.config import BROWSER_DATA_PATH
 
 
-def generate_random_context_name(
+def _generate_random_context_name(
     length: int = 8, include_timestamp: bool = True
 ) -> str:
     """
     Generate a random context name string using alphanumeric characters with optional timestamp.
+
+    This is an internal helper function used by the SDK to generate unique context names.
 
     Args:
         length (int): Length of the random part. Defaults to 8.
@@ -63,51 +65,11 @@ def generate_random_context_name(
             - With timestamp: "YYYYMMDDHHMMSS_<random>" (e.g., "20250112143025_kG8hN2pQ")
             - Without timestamp: "<random>" (e.g., "kG8hN2pQ")
 
-    Example:
-        ```python
-        from agentbay import AgentBay, generate_random_context_name
-
-        agent_bay = AgentBay(api_key="your_api_key")
-
-        def demonstrate_generate_context_name():
-            try:
-                # Generate context name with timestamp (default)
-                name_with_timestamp = generate_random_context_name()
-                print(f"Context name with timestamp: {name_with_timestamp}")
-                # Output: Context name with timestamp: 20250112143025_kG8hN2pQ
-
-                # Generate context name without timestamp
-                name_without_timestamp = generate_random_context_name(8, False)
-                print(f"Context name without timestamp: {name_without_timestamp}")
-                # Output: Context name without timestamp: kG8hN2pQ
-
-                # Generate longer random name
-                long_name = generate_random_context_name(16, False)
-                print(f"Long context name: {long_name}")
-                # Output: Long context name: kG8hN2pQ7mX9vZ1L
-
-                # Use generated name to create a context
-                context_name = generate_random_context_name()
-                result = agent_bay.context.get(context_name, create=True)
-                if result.success:
-                    print(f"Created context: {result.context.name}")
-                    # Output: Created context: 20250112143025_kG8hN2pQ
-                    print(f"Context ID: {result.context.id}")
-                    # Output: Context ID: ctx-12345678
-
-            except Exception as e:
-                print(f"Error: {e}")
-
-        demonstrate_generate_context_name()
-        ```
-
     Note:
+        - This is a private function for internal SDK use only
         - Characters are randomly selected from a-zA-Z0-9
         - Timestamp format is YYYYMMDDHHMMSS (local time)
         - Useful for creating unique context names that can be sorted chronologically
-
-    See Also:
-        AgentBay.context.get, AgentBay.context.create
     """
     import time
 
@@ -641,7 +603,7 @@ class AgentBay:
 
                 # Create browser recording persistence configuration
                 record_path = "/home/guest/record"
-                record_context_name = generate_random_context_name()
+                record_context_name = _generate_random_context_name()
                 result = self.context.get(record_context_name, True)
                 record_context_id = result.context_id if result.success else ""
                 record_persistence = CreateMcpSessionRequestPersistenceDataList(

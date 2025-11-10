@@ -1,4 +1,4 @@
-from .agentbay import AgentBay, Config, generate_random_context_name
+from .agentbay import AgentBay, Config
 from .command import Command
 from .computer import Computer
 from .exceptions import AgentBayError, APIError, AuthenticationError
@@ -13,10 +13,13 @@ from .context_sync import (
     SyncPolicy,
     UploadPolicy,
     UploadStrategy,
+    UploadMode,
     DownloadPolicy,
     DownloadStrategy,
     DeletePolicy,
     ExtractPolicy,
+    RecyclePolicy,
+    Lifecycle,
     BWList,
     WhiteList,
 )
@@ -42,10 +45,13 @@ __all__ = [
     "SyncPolicy",
     "UploadPolicy",
     "UploadStrategy",
+    "UploadMode",
     "DownloadPolicy",
     "DownloadStrategy",
     "DeletePolicy",
     "ExtractPolicy",
+    "RecyclePolicy",
+    "Lifecycle",
     "BWList",
     "WhiteList",
     "ContextManager",
@@ -57,5 +63,4 @@ __all__ = [
     "AgentBayLogger",
     "get_logger",
     "log",
-    "generate_random_context_name",
 ]
