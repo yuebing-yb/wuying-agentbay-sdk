@@ -1,6 +1,7 @@
 import { AgentBay } from "./agent-bay";
 import { Agent } from "./agent/agent";
 import { Client } from "./api/client";
+import * as $_client from "./api";
 import {
   CallMcpToolRequest,
   GetLabelRequest,
@@ -23,6 +24,8 @@ import {
   DeleteResult,
   extractRequestId,
   OperationResult,
+  SessionPauseResult,
+  SessionResumeResult,
 } from "./types/api-response";
 import { UI } from "./ui";
 import {
@@ -30,6 +33,7 @@ import {
   logError,
   logInfo,
   logDebug,
+  logWarn,
   logAPICall,
   logAPIResponseWithDetails,
   logCodeExecutionOutput,
@@ -1054,6 +1058,268 @@ export class Session {
         data: "",
         errorMessage: error instanceof Error ? error.message : String(error),
         requestId: "",
+      };
+    }
+  }
+
+  /**
+   * Asynchronously pause this session, putting it into a dormant state.
+   *
+   * This method directly calls the PauseSessionAsync API and then polls the GetSession API
+   * asynchronously to check the session status until it becomes PAUSED or until timeout.
+   *
+   * @param timeout - Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+   * @param pollInterval - Interval in seconds between status polls. Defaults to 2.0 seconds.
+   * @returns SessionPauseResult indicating success or failure and request ID
+   */
+  async pause_async(timeout: number = 600, pollInterval: number = 2.0): Promise<SessionPauseResult> {
+    try {
+      const request = new $_client.PauseSessionAsyncRequest({
+        authorization: `Bearer ${this.getAPIKey()}`,
+        sessionId: this.sessionId,
+      });
+
+      logAPICall("PauseSessionAsync", `SessionId=${this.sessionId}`);
+
+      const response = await this.getClient().pauseSessionAsync(request);
+
+      // Extract request ID
+      const requestId = extractRequestId(response) || "";
+
+      // Check for API-level errors
+      const responseMap = response.to_map ? response.to_map() : response;
+      if (!responseMap) {
+        return {
+          requestId: requestId || "",
+          success: false,
+          errorMessage: "Invalid response format",
+        };
+      }
+
+      const body = responseMap.body;
+      if (!body) {
+        return {
+          requestId: requestId || "",
+          success: false,
+          errorMessage: "Invalid response body",
+        };
+      }
+
+      // Extract fields from response body
+      const success = body.success !== false;
+      const code = body.code || "";
+      const message = body.message || "";
+      const httpStatusCode = body.httpStatusCode || 0;
+
+      // Build error message if not successful
+      if (!success) {
+        const errorMessage = `[${code}] ${message}` || "Unknown error";
+        logError("PauseSessionAsync", errorMessage);
+        return {
+          requestId: requestId || "",
+          success: false,
+          errorMessage,
+          code,
+          message,
+          httpStatusCode,
+        };
+      }
+
+      logInfo(`PauseSessionAsync`, `Session ${this.sessionId} pause initiated successfully`);
+
+      // Poll for session status until PAUSED or timeout
+      const startTime = Date.now();
+      const maxAttempts = Math.floor(timeout / pollInterval);
+      let attempt = 0;
+
+      while (attempt < maxAttempts) {
+        // Get session status
+        const getResult = await this.agentBay.getSession(this.sessionId);
+        if (!getResult.success) {
+          logError(`Failed to get session status: ${getResult.errorMessage}`);
+          return {
+            requestId: getResult.requestId || "",
+            success: false,
+            errorMessage: `Failed to get session status: ${getResult.errorMessage}`,
+          };
+        }
+
+        // Check session status
+        if (getResult.data) {
+          const status = getResult.data.status || "UNKNOWN";
+          logDebug(`Session status: ${status} (attempt ${attempt + 1}/${maxAttempts})`);
+
+          // Check if session is paused
+          if (status === "PAUSED") {
+            const elapsed = Date.now() - startTime;
+            logInfo(`Session paused successfully in ${elapsed}ms`);
+            return {
+              requestId: getResult.requestId || "",
+              success: true,
+              status,
+            };
+          } else if (status !== "RUNNING" && status !== "PAUSING") {
+            // If status is not RUNNING, PAUSING, or PAUSED, treat as unexpected
+            const elapsed = Date.now() - startTime;
+            logWarn(`Session in unexpected state after ${elapsed}ms: ${status}`);
+            // Continue polling as the state might transition to PAUSED
+          }
+        }
+
+        // Wait before next query (using setTimeout to avoid blocking)
+        // Only wait if we're not at the last attempt
+        attempt++;
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval * 1000));
+        }
+      }
+
+      // Timeout
+      const elapsed = Date.now() - startTime;
+      const errorMsg = `Session pause timed out after ${elapsed}ms`;
+      logError(errorMsg);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: errorMsg,
+      };
+    } catch (error) {
+      logError("PauseSessionAsync", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Unexpected error pausing session: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * Asynchronously resume this session from a paused state.
+   *
+   * This method directly calls the ResumeSessionAsync API and then polls the GetSession API
+   * asynchronously to check the session status until it becomes RUNNING or until timeout.
+   *
+   * @param timeout - Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+   * @param pollInterval - Interval in seconds between status polls. Defaults to 2.0 seconds.
+   * @returns SessionResumeResult indicating success or failure and request ID
+   */
+  async resume_async(timeout: number = 600, pollInterval: number = 2.0): Promise<SessionResumeResult> {
+    try {
+      const request = new $_client.ResumeSessionAsyncRequest({
+        authorization: `Bearer ${this.getAPIKey()}`,
+        sessionId: this.sessionId,
+      });
+
+      logAPICall("ResumeSessionAsync", `SessionId=${this.sessionId}`);
+
+      const response = await this.getClient().resumeSessionAsync(request);
+
+      // Extract request ID
+      const requestId = extractRequestId(response) || "";
+
+      // Check for API-level errors
+      const responseMap = response.to_map ? response.to_map() : response;
+      if (!responseMap) {
+        return {
+          requestId: requestId || "",
+          success: false,
+          errorMessage: "Invalid response format",
+        };
+      }
+
+      const body = responseMap.body;
+      if (!body) {
+        return {
+          requestId: requestId || "",
+          success: false,
+          errorMessage: "Invalid response body",
+        };
+      }
+
+      // Extract fields from response body
+      const success = body.success !== false;
+      const code = body.code || "";
+      const message = body.message || "";
+      const httpStatusCode = body.httpStatusCode || 0;
+
+      // Build error message if not successful
+      if (!success) {
+        const errorMessage = `[${code}] ${message}` || "Unknown error";
+        logError("ResumeSessionAsync", errorMessage);
+        return {
+          requestId: requestId || "",
+          success: false,
+          errorMessage,
+          code,
+          message,
+          httpStatusCode,
+        };
+      }
+
+      logInfo(`ResumeSessionAsync`, `Session ${this.sessionId} resume initiated successfully`);
+
+      // Poll for session status until RUNNING or timeout
+      const startTime = Date.now();
+      const maxAttempts = Math.floor(timeout / pollInterval);
+      let attempt = 0;
+
+      while (attempt < maxAttempts) {
+        // Get session status
+        const getResult = await this.agentBay.getSession(this.sessionId);
+        if (!getResult.success) {
+          logError(`Failed to get session status: ${getResult.errorMessage}`);
+          return {
+            requestId: getResult.requestId || "",
+            success: false,
+            errorMessage: `Failed to get session status: ${getResult.errorMessage}`,
+          };
+        }
+
+        // Check session status
+        if (getResult.data) {
+          const status = getResult.data.status || "UNKNOWN";
+          logDebug(`Session status: ${status} (attempt ${attempt + 1}/${maxAttempts})`);
+
+          // Check if session is running
+          if (status === "RUNNING") {
+            const elapsed = Date.now() - startTime;
+            logInfo(`Session resumed successfully in ${elapsed}ms`);
+            return {
+              requestId: getResult.requestId || "",
+              success: true,
+              status,
+            };
+          } else if (status !== "PAUSED" && status !== "RESUMING") {
+            // If status is not PAUSED, RESUMING, or RUNNING, treat as unexpected
+            const elapsed = Date.now() - startTime;
+            logWarn(`Session in unexpected state after ${elapsed}ms: ${status}`);
+            // Continue polling as the state might transition to RUNNING
+          }
+        }
+
+        // Wait before next query (using setTimeout to avoid blocking)
+        // Only wait if we're not at the last attempt
+        attempt++;
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval * 1000));
+        }
+      }
+
+      // Timeout
+      const elapsed = Date.now() - startTime;
+      const errorMsg = `Session resume timed out after ${elapsed}ms`;
+      logError(errorMsg);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: errorMsg,
+      };
+    } catch (error) {
+      logError("ResumeSessionAsync", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Unexpected error resuming session: ${error}`,
       };
     }
   }

@@ -17,6 +17,8 @@ import {
   DeleteResult,
   extractRequestId,
   GetSessionResult as $GetSessionResult,
+  SessionPauseResult,
+  SessionResumeResult,
   SessionResult,
 } from "./types/api-response";
 import {
@@ -948,6 +950,7 @@ export class AgentBay {
           token: body.data.token || "",
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
+          status: body.data.status || "",
         };
 
         logAPIResponseWithDetails(
@@ -1046,6 +1049,46 @@ export class AgentBay {
       success: true,
       session,
     };
+  }
+
+  /**
+   * Asynchronously pause a session, putting it into a dormant state.
+   *
+   * @param session - The session to pause.
+   * @returns SessionPauseResult indicating success or failure and request ID
+   */
+  async pause(session: Session): Promise<SessionPauseResult> {
+    try {
+      // Call session's pause_async method
+      return await session.pause_async();
+    } catch (error) {
+      logError("pause_session_async", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Failed to pause session ${session.sessionId}: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * Asynchronously resume a session from a paused state.
+   *
+   * @param session - The session to resume.
+   * @returns SessionResumeResult indicating success or failure and request ID
+   */
+  async resume(session: Session): Promise<SessionResumeResult> {
+    try {
+      // Call session's resume_async method
+      return await session.resume_async();
+    } catch (error) {
+      logError("resume_session_async", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Failed to resume session ${session.sessionId}: ${error}`,
+      };
+    }
   }
 
   // For internal use by the Session class

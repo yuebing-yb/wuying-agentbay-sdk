@@ -363,6 +363,199 @@ if (!result3.success) {
 **See Also:**
 - For a complete example, see [MCP Tool Direct Call Example](../../../../examples/common-features/basics/mcp_tool_direct_call/README.md)
 
+### pause_async
+
+Asynchronously pause this session, putting it into a dormant state to reduce resource usage and costs.
+
+```typescript
+pause_async(timeout?: number, pollInterval?: number): Promise<SessionPauseResult>
+```
+
+**Parameters:**
+- `timeout` (number, optional): Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+- `pollInterval` (number, optional): Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+**Returns:**
+- `Promise<SessionPauseResult>`: A promise that resolves to a result object containing:
+  - `success` (boolean): Whether the pause operation was successful
+  - `requestId` (string): Unique identifier for the API request
+  - `status` (string): Current status of the session ("PAUSED" when successful)
+  - `errorMessage` (string): Error message if the operation failed
+
+**Behavior:**
+- Calls the PauseSessionAsync API to initiate the pause operation
+- Polls the GetSession API to check session status until it becomes "PAUSED" or timeout
+- During pause, compute resources are suspended but storage is preserved
+- Resource usage and costs are lower during pause
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+// Initialize the SDK and create a session
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const sessionResult = await agentBay.create();
+const session = sessionResult.session;
+
+// Perform your tasks...
+
+// Asynchronously pause the session to reduce resource usage
+const pauseResult = await session.pause_async();
+if (pauseResult.success) {
+  console.log("Session paused successfully");
+  console.log(`Request ID: ${pauseResult.requestId}`);
+} else {
+  console.log(`Failed to pause session: ${pauseResult.errorMessage}`);
+}
+```
+
+### resume_async
+
+Asynchronously resume this session from a paused state to continue work.
+
+```typescript
+resume_async(timeout?: number, pollInterval?: number): Promise<SessionResumeResult>
+```
+
+**Parameters:**
+- `timeout` (number, optional): Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+- `pollInterval` (number, optional): Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+**Returns:**
+- `Promise<SessionResumeResult>`: A promise that resolves to a result object containing:
+  - `success` (boolean): Whether the resume operation was successful
+  - `requestId` (string): Unique identifier for the API request
+  - `status` (string): Current status of the session ("RUNNING" when successful)
+  - `errorMessage` (string): Error message if the operation failed
+
+**Behavior:**
+- Calls the ResumeSessionAsync API to initiate the resume operation
+- Polls the GetSession API to check session status until it becomes "RUNNING" or timeout
+- All session state is preserved during pause and resume operations
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+// Initialize the SDK and get a paused session
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+// Assuming you have a paused session with session_id
+const getResult = await agentBay.get("your_paused_session_id");
+if (getResult.success) {
+  const session = getResult.session;
+  
+  // Asynchronously resume the session to continue work
+  const resumeResult = await session.resume_async();
+  if (resumeResult.success) {
+    console.log("Session resumed successfully");
+    console.log(`Request ID: ${resumeResult.requestId}`);
+    
+    // Continue with your tasks...
+    const result = await session.command.execute_command("echo 'Hello after async resume!'");
+    console.log(`Command output: ${result.output}`);
+  } else {
+    console.log(`Failed to resume session: ${resumeResult.errorMessage}`);
+  }
+} else {
+  console.log(`Failed to get session: ${getResult.errorMessage}`);
+}
+```
+
+## AgentBay Methods
+
+### pause
+
+Synchronously pause a session, putting it into a dormant state to reduce resource usage and costs.
+
+```typescript
+pause(session: Session): Promise<SessionPauseResult>
+```
+
+**Parameters:**
+- `session` (Session): The session to pause.
+
+**Returns:**
+- `Promise<SessionPauseResult>`: A promise that resolves to a result object containing:
+  - `success` (boolean): Whether the pause operation was successful
+  - `requestId` (string): Unique identifier for the API request
+  - `status` (string): Current status of the session ("PAUSED" when successful)
+  - `errorMessage` (string): Error message if the operation failed
+
+**Behavior:**
+- Calls the session's `pause_async` method to initiate the pause operation
+- This is a convenience method that wraps the asynchronous operation
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+// Initialize the SDK and create a session
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const sessionResult = await agentBay.create();
+const session = sessionResult.session;
+
+// Perform your tasks...
+
+// Pause the session using AgentBay's method
+const pauseResult = await agentBay.pause(session);
+if (pauseResult.success) {
+  console.log("Session paused successfully");
+  console.log(`Request ID: ${pauseResult.requestId}`);
+} else {
+  console.log(`Failed to pause session: ${pauseResult.errorMessage}`);
+}
+```
+
+### resume
+
+Synchronously resume a session from a paused state to continue work.
+
+```typescript
+resume(session: Session): Promise<SessionResumeResult>
+```
+
+**Parameters:**
+- `session` (Session): The session to resume.
+
+**Returns:**
+- `Promise<SessionResumeResult>`: A promise that resolves to a result object containing:
+  - `success` (boolean): Whether the resume operation was successful
+  - `requestId` (string): Unique identifier for the API request
+  - `status` (string): Current status of the session ("RUNNING" when successful)
+  - `errorMessage` (string): Error message if the operation failed
+
+**Behavior:**
+- Calls the session's `resume_async` method to initiate the resume operation
+- This is a convenience method that wraps the asynchronous operation
+
+**Example:**
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+// Initialize the SDK and get a paused session
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+// Assuming you have a paused session with session_id
+const getResult = await agentBay.get("your_paused_session_id");
+if (getResult.success) {
+  const session = getResult.session;
+  
+  // Resume the session using AgentBay's method
+  const resumeResult = await agentBay.resume(session);
+  if (resumeResult.success) {
+    console.log("Session resumed successfully");
+    console.log(`Request ID: ${resumeResult.requestId}`);
+    
+    // Continue with your tasks...
+    const result = await session.command.execute_command("echo 'Hello after resume!'");
+    console.log(`Command output: ${result.output}`);
+  } else {
+    console.log(`Failed to resume session: ${resumeResult.errorMessage}`);
+  }
+} else {
+  console.log(`Failed to get session: ${getResult.errorMessage}`);
+}
+```
+
 ## Related Resources
 
 - [FileSystem API Reference](filesystem.md)
