@@ -15,10 +15,10 @@ class TestContextManager(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_session = MagicMock()
-        self.mock_session.get_api_key.return_value = "test-api-key"
+        self.mock_session._get_api_key.return_value = "test-api-key"
         self.mock_session.get_session_id.return_value = "test-session-id"
         self.mock_client = MagicMock()
-        self.mock_session.get_client.return_value = self.mock_client
+        self.mock_session._get_client.return_value = self.mock_client
 
         self.context_manager = ContextManager(self.mock_session)
 

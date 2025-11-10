@@ -6,8 +6,6 @@
 
 
 
-## Context Objects
-
 ```python
 class Context()
 ```

@@ -183,8 +183,8 @@ class AgentBay:
 
         resource_url = response_data.get("ResourceUrl", "")
 
-        __logger.info(f"🆔 Session created: {session_id}")
-        __logger.debug(f"🔗 Resource URL: {resource_url}")
+        _logger.info(f"🆔 Session created: {session_id}")
+        _logger.debug(f"🔗 Resource URL: {resource_url}")
 
         # Create Session object
         from agentbay.session import Session
@@ -273,7 +273,7 @@ class AgentBay:
             has_failure = False
 
             for item in info_result.context_status_data:
-                __logger.info(
+                _logger.info(
                     f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
                 )
 
@@ -283,7 +283,7 @@ class AgentBay:
 
                 if item.status == "Failed":
                     has_failure = True
-                    __logger.error(
+                    _logger.error(
                         f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
                     )
 
@@ -294,7 +294,7 @@ class AgentBay:
                     log_operation_success("Context synchronization")
                 break
 
-            __logger.debug(
+            _logger.debug(
                 f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}"
             )
             time.sleep(retry_interval)
@@ -317,9 +317,9 @@ class AgentBay:
                 else:
                     req_map["Authorization"] = auth[:2] + "****" + auth[-2:]
             request_body = json.dumps(req_map, ensure_ascii=False, indent=2)
-            __logger.debug(f"📤 CreateMcpSessionRequest body:\n{request_body}")
+            _logger.debug(f"📤 CreateMcpSessionRequest body:\n{request_body}")
         except Exception:
-            __logger.debug(f"📤 CreateMcpSessionRequest: {request}")
+            _logger.debug(f"📤 CreateMcpSessionRequest: {request}")
 
     def _update_browser_replay_context(
         self, response_data: dict, record_context_id: str

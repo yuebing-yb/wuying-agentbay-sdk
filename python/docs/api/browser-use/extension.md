@@ -6,8 +6,6 @@
 
 
 
-#### EXTENSIONS\_BASE\_PATH
-
 ```python
 EXTENSIONS_BASE_PATH = "/tmp/extensions"
 ```

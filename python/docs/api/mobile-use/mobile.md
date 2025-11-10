@@ -20,8 +20,6 @@ Mobile module for mobile device UI automation and configuration.
 Handles touch operations, UI element interactions, application management, screenshot capabilities,
 and mobile environment configuration operations.
 
-#### logger
-
 ## UIElementListResult Objects
 
 ```python

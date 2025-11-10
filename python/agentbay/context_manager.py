@@ -394,6 +394,8 @@ class ContextManager:
         request_id = extract_request_id(response)
         response_map = response.to_map()
 
+        success = False  # Initialize success variable
+
         if isinstance(response_map, dict):
             body = response_map.get("body", {})
             try:
@@ -525,7 +527,7 @@ class ContextManager:
                         callback(True)
                     break
 
-                logger.info(
+                _logger.info(
                     f"⏳ Waiting for context sync to complete, attempt {retry+1}/{max_retries}"
                 )
                 time.sleep(retry_interval / 1000.0)
@@ -604,7 +606,7 @@ class ContextManager:
                         _logger.info("ℹ️  No sync tasks found")
                         return True
 
-                logger.info(
+                _logger.info(
                     f"⏳ Waiting for context sync to complete, attempt {retry+1}/{max_retries}"
                 )
                 await asyncio.sleep(retry_interval / 1000.0)

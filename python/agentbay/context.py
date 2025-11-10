@@ -18,7 +18,7 @@ import json
 import time
 
 # Initialize logger for this module
-logger = get_logger("context")
+_logger = get_logger("context")
 
 if TYPE_CHECKING:
     from agentbay.agentbay import AgentBay
@@ -284,7 +284,7 @@ class ContextService:
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
             try:
                 response_map = response.to_map()
@@ -434,7 +434,7 @@ class ContextService:
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
             try:
                 response_map = response.to_map()
@@ -581,7 +581,7 @@ class ContextService:
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
             try:
                 response_map = response.to_map() if hasattr(response, "to_map") else {}
@@ -607,14 +607,14 @@ class ContextService:
                     error_message=error_message,
                 )
             except Exception as e:
-                logger.exception(f"Error parsing ModifyContext response: {e}")
+                _logger.exception(f"Error parsing ModifyContext response: {e}")
                 return OperationResult(
                     request_id=request_id,
                     success=False,
                     error_message=f"Failed to parse response: {str(e)}",
                 )
         except Exception as e:
-            logger.exception(f"Error calling ModifyContext: {e}")
+            _logger.exception(f"Error calling ModifyContext: {e}")
             raise AgentBayError(f"Failed to update context {context.id}: {e}")
 
     def delete(self, context: Context) -> OperationResult:
@@ -646,7 +646,7 @@ class ContextService:
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
             try:
                 response_map = response.to_map() if hasattr(response, "to_map") else {}
@@ -672,14 +672,14 @@ class ContextService:
                     error_message=error_message,
                 )
             except Exception as e:
-                logger.exception(f"Error parsing DeleteContext response: {e}")
+                _logger.exception(f"Error parsing DeleteContext response: {e}")
                 return OperationResult(
                     request_id=request_id,
                     success=False,
                     error_message=f"Failed to parse response: {str(e)}",
                 )
         except Exception as e:
-            logger.exception(f"Error calling DeleteContext: {e}")
+            _logger.exception(f"Error calling DeleteContext: {e}")
             raise AgentBayError(f"Failed to delete context {context.id}: {e}")
 
     def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
@@ -715,7 +715,7 @@ class ContextService:
             )
             log_api_response(response_body)
         except Exception:
-            logger.debug(f"Response: {resp}")
+            _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
 
@@ -775,7 +775,7 @@ class ContextService:
             )
             log_api_response(response_body)
         except Exception:
-            logger.debug(f"Response: {resp}")
+            _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
 
@@ -835,7 +835,7 @@ class ContextService:
             )
             log_api_response(response_body)
         except Exception:
-            logger.debug(f"Response: {resp}")
+            _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
         success = bool(body and getattr(body, "success", False))
@@ -899,7 +899,7 @@ class ContextService:
             )
             log_api_response(response_body)
         except Exception:
-            logger.debug(f"Response: {resp}")
+            _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
         raw_list = getattr(body, "data", None) or []
@@ -961,7 +961,7 @@ class ContextService:
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
 
             request_id = extract_request_id(response)
 
@@ -1032,7 +1032,7 @@ class ContextService:
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
 
             request_id = extract_request_id(response)
 
@@ -1127,7 +1127,7 @@ class ContextService:
         if not start_result.success:
             return start_result
 
-        logger.info(f"Started context clearing task for: {context_id}")
+        _logger.info(f"Started context clearing task for: {context_id}")
 
         # 2. Poll task status until completion or timeout
         start_time = time.time()
@@ -1143,13 +1143,13 @@ class ContextService:
             status_result = self.get_clear_status(context_id)
 
             if not status_result.success:
-                logger.error(
+                _logger.error(
                     f"Failed to get clear status: {status_result.error_message}"
                 )
                 return status_result
 
             status = status_result.status
-            logger.debug(
+            _logger.debug(
                 f"Clear task status: {status} (attempt {attempt}/{max_attempts})"
             )
 
@@ -1157,7 +1157,7 @@ class ContextService:
             # When clearing is complete, the state changes from "clearing" to "available"
             if status == "available":
                 elapsed = time.time() - start_time
-                logger.info(f"Context cleared successfully in {elapsed:.2f} seconds")
+                _logger.info(f"Context cleared successfully in {elapsed:.2f} seconds")
                 return ClearContextResult(
                     request_id=start_result.request_id,
                     success=True,
@@ -1169,7 +1169,7 @@ class ContextService:
                 # If status is not "clearing" or "pre-available", and not "available",
                 # treat it as a potential error or unexpected state
                 elapsed = time.time() - start_time
-                logger.warning(
+                _logger.warning(
                     f"Context in unexpected state after {elapsed:.2f} seconds: {status}"
                 )
                 # Continue polling as the state might transition to "available"
@@ -1177,5 +1177,5 @@ class ContextService:
         # Timeout
         elapsed = time.time() - start_time
         error_msg = f"Context clearing timed out after {elapsed:.2f} seconds"
-        logger.error(f"{error_msg}")
+        _logger.error(f"{error_msg}")
         raise ClearanceTimeoutError(error_msg)

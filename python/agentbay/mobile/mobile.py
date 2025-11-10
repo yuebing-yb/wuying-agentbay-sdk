@@ -21,7 +21,7 @@ from agentbay.logger import get_logger
 from agentbay.command import MOBILE_COMMAND_TEMPLATES
 
 # Initialize logger for this module
-logger = get_logger("mobile")
+_logger = get_logger("mobile")
 
 
 class UIElementListResult(ApiResponse):
@@ -872,7 +872,7 @@ class Mobile(BaseService):
             set_navigation_bar_visibility, set_uninstall_blacklist
         """
         if not mobile_config:
-            logger.warning("No mobile configuration provided")
+            _logger.warning("No mobile configuration provided")
             return
         
         # Configure resolution lock
@@ -890,7 +890,7 @@ class Mobile(BaseService):
                 else:
                     self._set_app_blacklist(package_names)
             elif not package_names:
-                logger.warning(f"No package names provided for {app_rule.rule_type} list")
+                _logger.warning(f"No package names provided for {app_rule.rule_type} list")
         
         # Configure navigation bar visibility
         if mobile_config.hide_navigation_bar is not None:
@@ -962,7 +962,7 @@ class Mobile(BaseService):
             - Whitelist takes precedence over blacklist if both are set
         """
         if not package_names:
-            logger.warning("Empty package names list for whitelist")
+            _logger.warning("Empty package names list for whitelist")
             return
         self._set_app_whitelist(package_names)
 
@@ -998,7 +998,7 @@ class Mobile(BaseService):
             - Whitelist takes precedence over blacklist if both are set
         """
         if not package_names:
-            logger.warning("Empty package names list for blacklist")
+            _logger.warning("Empty package names list for blacklist")
             return
         self._set_app_blacklist(package_names)
 
@@ -1068,7 +1068,7 @@ class Mobile(BaseService):
             - The protection persists for the session lifetime
         """
         if not package_names:
-            logger.warning("Empty package names list for uninstall blacklist")
+            _logger.warning("Empty package names list for uninstall blacklist")
             return
         self._set_uninstall_blacklist(package_names)
 
@@ -1132,7 +1132,7 @@ class Mobile(BaseService):
             result = self.session.get_link(protocol_type="adb", options=options_json)
 
             # Log the operation
-            logger.info(f"✅ get_adb_url completed successfully. RequestID: {result.request_id}")
+            _logger.info(f"✅ get_adb_url completed successfully. RequestID: {result.request_id}")
 
             # Return wrapped in AdbUrlResult
             return AdbUrlResult(
@@ -1144,7 +1144,7 @@ class Mobile(BaseService):
 
         except Exception as e:
             error_msg = f"Failed to get ADB URL: {str(e)}"
-            logger.error(f"❌ {error_msg}")
+            _logger.error(f"❌ {error_msg}")
             return AdbUrlResult(
                 request_id="",
                 success=False,
@@ -1156,18 +1156,18 @@ class Mobile(BaseService):
         """Execute a command using template and parameters."""
         template = MOBILE_COMMAND_TEMPLATES.get(template_name)
         if not template:
-            logger.error(f"Template '{template_name}' not found")
+            _logger.error(f"Template '{template_name}' not found")
             return
             
         command = template.format(**params)
-        
-        logger.info(f"Executing {operation_name}")
+
+        _logger.info(f"Executing {operation_name}")
         result = self.session.command.execute_command(command)
         
         if result.success:
-            logger.info(f"✅ {operation_name} completed successfully")
+            _logger.info(f"✅ {operation_name} completed successfully")
         else:
-            logger.error(f"❌ {operation_name} failed: {result.error_message}")
+            _logger.error(f"❌ {operation_name} failed: {result.error_message}")
 
     def _set_resolution_lock(self, enable: bool):
         """Execute resolution lock command."""

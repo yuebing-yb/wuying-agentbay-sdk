@@ -6,8 +6,6 @@
 
 
 
-## OSSClientResult Objects
-
 ```python
 class OSSClientResult(ApiResponse)
 ```

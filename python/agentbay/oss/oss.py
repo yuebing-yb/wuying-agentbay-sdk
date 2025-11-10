@@ -7,7 +7,7 @@ from agentbay.exceptions import AgentBayError, OssError
 from agentbay.model import ApiResponse
 
 # Initialize logger for this module
-logger = get_logger("oss")
+_logger = get_logger("oss")
 
 
 class OSSClientResult(ApiResponse):
@@ -201,7 +201,7 @@ class Oss(BaseService):
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
 
             if result.success:
                 try:
@@ -293,7 +293,7 @@ class Oss(BaseService):
             args = {"bucket": bucket, "object": object, "path": path}
 
             result = self.session.call_mcp_tool("oss_upload", args)
-            logger.debug(f"📥 OSS Response: {result}")
+            _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
                 return OSSUploadResult(
@@ -363,7 +363,7 @@ class Oss(BaseService):
             args = {"url": url, "path": path}
 
             result = self.session.call_mcp_tool("oss_upload_annon", args)
-            logger.debug(f"📥 OSS Response: {result}")
+            _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
                 return OSSUploadResult(
@@ -447,7 +447,7 @@ class Oss(BaseService):
             args = {"bucket": bucket, "object": object, "path": path}
 
             result = self.session.call_mcp_tool("oss_download", args)
-            logger.debug(f"📥 OSS Response: {result}")
+            _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
                 return OSSDownloadResult(
@@ -517,7 +517,7 @@ class Oss(BaseService):
             args = {"url": url, "path": path}
 
             result = self.session.call_mcp_tool("oss_download_annon", args)
-            logger.debug(f"📥 OSS Response: {result}")
+            _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
                 return OSSDownloadResult(
