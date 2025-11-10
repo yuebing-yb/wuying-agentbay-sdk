@@ -2,7 +2,7 @@
 
 ## ⚡ Related Tutorial
 
-- [Command Execution Guide](../../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
+- [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md) - Learn how to execute commands in sessions
 
 ## Overview
 

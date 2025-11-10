@@ -2,7 +2,7 @@
 
 ## 🖥️ Related Tutorial
 
-- [Computer Use Guide](../../../../../docs/guides/computer-use/README.md) - Automate desktop applications
+- [Computer Use Guide](../../../../docs/guides/computer-use/README.md) - Automate desktop applications
 
 ## Overview
 
@@ -1822,12 +1822,6 @@ stop_application_by_cmd_example()
 4. Take screenshots for verification and debugging
 5. Use keyboard shortcuts for efficient automation
 6. Clean up windows and applications after automation
-
-## Related Resources
-
-- [Application API Reference](application.md)
-- [UI API Reference](ui.md)
-- [Window API Reference](window.md)
 
 ---
 

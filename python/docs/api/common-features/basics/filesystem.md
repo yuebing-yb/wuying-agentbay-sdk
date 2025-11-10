@@ -2,7 +2,7 @@
 
 ## 📁 Related Tutorial
 
-- [File Operations Guide](../../../../../../docs/guides/common-features/basics/file-operations.md) - Complete guide to file system operations
+- [File Operations Guide](../../../../../docs/guides/common-features/basics/file-operations.md) - Complete guide to file system operations
 
 
 

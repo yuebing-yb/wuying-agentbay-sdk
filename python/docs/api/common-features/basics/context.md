@@ -2,7 +2,7 @@
 
 ## 💾 Related Tutorial
 
-- [Data Persistence Guide](../../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
+- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
 
 
 

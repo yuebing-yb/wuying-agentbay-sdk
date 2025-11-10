@@ -2,7 +2,7 @@
 
 ## 🌐 Related Tutorial
 
-- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
+- [Browser Use Guide](../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
 
 ## Overview
 
@@ -1109,7 +1109,6 @@ Asynchronously extract information from a web page.
 
 ## Related Resources
 
-- [Extension API Reference](extension.md)
 - [Session API Reference](../common-features/basics/session.md)
 
 ---

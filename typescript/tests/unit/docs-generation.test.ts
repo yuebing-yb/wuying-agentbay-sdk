@@ -4,7 +4,7 @@ import path from 'path'
 
 describe('TypeScript API documentation generator', () => {
   const packageRoot = path.resolve(__dirname, '..', '..')
-  const docsDir = path.join(packageRoot, 'docs', 'api-preview', 'latest')
+  const docsDir = path.join(packageRoot, 'docs', 'api')
 
   beforeAll(() => {
     if (existsSync(docsDir)) {

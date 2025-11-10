@@ -1,32 +1,8 @@
 # Session API Reference
 
-## Overview
+## 🔧 Related Tutorial
 
-The Session API is the core interface for interacting with the AgentBay cloud environment. A session represents
-a cloud-based runtime instance that provides access to various automation capabilities including file operations,
-command execution, browser automation, computer use, mobile automation, and data persistence through contexts.
-
-Each session is isolated and provides a clean environment for executing your automation tasks. Sessions can be
-configured with different images (browser_latest, code_latest, windows_latest, mobile_latest) to provide specific
-capabilities based on your automation needs.
-
-
-## Properties
-
-```python
-agent_bay  # The AgentBay instance that created this session
-session_id  # The ID of this session
-file_system  # The FileSystem instance for this session
-command  # The Command instance for this session
-code  # The Code instance for this session
-oss  # The Oss instance for this session
-computer  # The Computer instance for this session
-mobile  # The Mobile instance for this session
-browser  # The Browser instance for this session
-context  # The ContextManager instance for this session
-agent  # The Agent instance for this session
-image_id  # The image ID used for this session
-```
+- [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
 
 
@@ -37,6 +13,194 @@ class Session()
 ```
 
 Session represents a session in the AgentBay cloud environment.
+
+#### get\_http\_port
+
+```python
+def get_http_port() -> str
+```
+
+Return the HTTP port for VPC sessions.
+
+**Returns**:
+
+    str: The VPC HTTP port number
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def check_http_port():
+    try:
+        # Create a session
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Check if VPC is enabled
+            if session.is_vpc_enabled():
+                # Get HTTP port
+                http_port = session.get_http_port()
+                print(f"VPC HTTP Port: {http_port}")
+                # Output: VPC HTTP Port: 8080
+            else:
+                print("Session is not VPC-enabled")
+                # Output: Session is not VPC-enabled
+                http_port = session.get_http_port()
+                print(f"HTTP Port: {http_port}")
+                # Output: HTTP Port:
+
+            # Clean up
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+check_http_port()
+```
+  
+
+**Notes**:
+
+  This method returns an empty string for non-VPC sessions.
+  Use `is_vpc_enabled()` to check if VPC is active.
+  
+
+**See Also**:
+
+  Session.is_vpc_enabled, Session.get_network_interface_ip
+
+#### get\_token
+
+```python
+def get_token() -> str
+```
+
+Return the token for VPC sessions.
+
+**Returns**:
+
+    str: The VPC authentication token
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def check_vpc_token():
+    try:
+        # Create a session
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Check if VPC is enabled
+            if session.is_vpc_enabled():
+                # Get VPC authentication token
+                token = session.get_token()
+                print(f"VPC Token: {token[:10]}...")
+                # Output: VPC Token: abc123def4...
+            else:
+                print("Session is not VPC-enabled")
+                # Output: Session is not VPC-enabled
+                token = session.get_token()
+                print(f"Token: {token}")
+                # Output: Token:
+
+            # Clean up
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+check_vpc_token()
+```
+  
+
+**Notes**:
+
+  This method returns an empty string for non-VPC sessions.
+  Use `is_vpc_enabled()` to check if VPC is active.
+  
+
+**See Also**:
+
+  Session.is_vpc_enabled, Session.call_mcp_tool
+
+#### find\_server\_for\_tool
+
+```python
+def find_server_for_tool(tool_name: str) -> str
+```
+
+Find the server that provides the given MCP tool.
+
+**Arguments**:
+
+- `tool_name` _str_ - Name of the MCP tool to find
+  
+
+**Returns**:
+
+    str: The server name that provides the tool, or empty string if not found
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def find_tool_server():
+    try:
+        # Create a session
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # List available tools first
+            tools_result = session.list_mcp_tools()
+            print(f"Found {len(tools_result.tools)} tools")
+            # Output: Found 69 tools
+
+            # Find server for a specific tool
+            server = session.find_server_for_tool("shell")
+            if server:
+                print(f"The 'shell' tool is provided by: {server}")
+                # Output: The 'shell' tool is provided by: mcp-server-system
+            else:
+                print("Tool 'shell' not found")
+
+            # Find server for another tool
+            file_server = session.find_server_for_tool("read_file")
+            if file_server:
+                print(f"The 'read_file' tool is provided by: {file_server}")
+                # Output: The 'read_file' tool is provided by: mcp-server-filesystem
+
+            # Clean up
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+find_tool_server()
+```
+  
+
+**Notes**:
+
+  This method searches the session's cached mcp_tools list.
+  Call `list_mcp_tools()` first to populate the tool list.
+  
+
+**See Also**:
+
+  Session.list_mcp_tools, Session.call_mcp_tool
 
 #### delete
 

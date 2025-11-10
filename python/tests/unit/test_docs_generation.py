@@ -6,7 +6,7 @@ from pathlib import Path
 
 def test_generate_python_api_docs():
     project_root = Path(__file__).resolve().parents[2]
-    docs_dir = project_root / "docs" / "api-preview" / "latest"
+    docs_dir = project_root / "docs" / "api"
 
     if docs_dir.exists():
         shutil.rmtree(docs_dir)
