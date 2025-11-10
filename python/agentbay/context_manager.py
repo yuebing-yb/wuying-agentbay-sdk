@@ -184,7 +184,7 @@ class ContextManager:
             ```
         """
         request = GetContextInfoRequest(
-            authorization=f"Bearer {self.session.get_api_key()}",
+            authorization=f"Bearer {self.session._get_api_key()}",
             session_id=self.session.get_session_id(),
         )
         if context_id:
@@ -375,7 +375,7 @@ class ContextManager:
             ```
         """
         request = SyncContextRequest(
-            authorization=f"Bearer {self.session.get_api_key()}",
+            authorization=f"Bearer {self.session._get_api_key()}",
             session_id=self.session.get_session_id(),
         )
         if context_id:

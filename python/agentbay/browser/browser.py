@@ -687,7 +687,7 @@ class Browser(BaseService):
                 browser_option_dict['enableRecord'] = True
 
             request = InitBrowserRequest(
-                authorization=f"Bearer {self.session.get_api_key()}",
+                authorization=f"Bearer {self.session._get_api_key()}",
                 session_id=self.session.get_session_id(),
                 persistent_path=BROWSER_DATA_PATH,
                 browser_option=browser_option_dict,
@@ -771,7 +771,7 @@ class Browser(BaseService):
                 browser_option_dict['enableRecord'] = True
 
             request = InitBrowserRequest(
-                authorization=f"Bearer {self.session.get_api_key()}",
+                authorization=f"Bearer {self.session._get_api_key()}",
                 session_id=self.session.get_session_id(),
                 persistent_path=BROWSER_DATA_PATH,
                 browser_option=browser_option_dict,

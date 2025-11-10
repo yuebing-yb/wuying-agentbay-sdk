@@ -119,44 +119,12 @@ Lists all available contexts with pagination support.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
-from agentbay.context import ContextListParams
+            ```python
+                    result = agent_bay.context.list()
 
-agent_bay = AgentBay(api_key="your_api_key")
+                        result = agent_bay.context.list(params)
 
-def list_contexts():
-    try:
-        # List contexts with default pagination (max 10)
-        result = agent_bay.context.list()
-        if result.success:
-            print(f"Total contexts: {result.total_count}")
-            # Output: Total contexts: 25
-            print(f"Contexts in this page: {len(result.contexts)}")
-            # Output: Contexts in this page: 10
-            for context in result.contexts:
-                print(f"  - {context.name} (ID: {context.id})")
-                # Output:   - my-context-1 (ID: ctx-04bdwfj7u22a1s30g)
-
-            # List with custom pagination
-            params = ContextListParams(max_results=5)
-            result = agent_bay.context.list(params)
-            if result.success:
-                print(f"Got {len(result.contexts)} contexts")
-                # Output: Got 5 contexts
-                if result.next_token:
-                    # Get next page
-                    next_params = ContextListParams(
-                        max_results=5,
-                        next_token=result.next_token
-                    )
-                    next_result = agent_bay.context.list(next_params)
-                    print(f"Next page has {len(next_result.contexts)} contexts")
-                    # Output: Next page has 5 contexts
-    except Exception as e:
-        print(f"Error: {e}")
-
-list_contexts()
+                                next_result = agent_bay.context.list(next_params)
 ```
 
 #### get
@@ -193,39 +161,14 @@ Gets a context by name or ID. Optionally creates it if it doesn't exist.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
+            ```python
+            result = agent_bay.context.get(name="my-context")
 
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+            result = agent_bay.context.get(name="new-context", create=True)
 
-# Get an existing context by name
-result = agent_bay.context.get(name="my-context")
-if result.success:
-    context = result.context
-    print(f"Context ID: {context.id}")
-    # Output: Context ID: ctx-04bdwfj7u22a1s30g
-    print(f"Context Name: {context.name}")
-    # Output: Context Name: my-context
+            result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
 
-# Create a new context if it doesn't exist
-result = agent_bay.context.get(name="new-context", create=True)
-if result.success:
-    print(f"Context created: {result.context.id}")
-    # Output: Context created: ctx-04bdwfj7u22a1s30h
-    print(f"Request ID: {result.request_id}")
-    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-# Get a context by ID
-result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
-if result.success:
-    print(f"Found context: {result.context.name}")
-
-# Handle context not found
-result = agent_bay.context.get(name="nonexistent-context")
-if not result.success:
-    print(f"Error: {result.error_message}")
-    # Output: Error: Context not found
+            result = agent_bay.context.get(name="nonexistent-context")
 ```
   
 
@@ -261,31 +204,8 @@ Creates a new context with the given name.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def create_context():
-    try:
-        # Create a new context
-        result = agent_bay.context.create("my-new-context")
-        if result.success:
-            context = result.context
-            print(f"Context created successfully")
-            # Output: Context created successfully
-            print(f"Context ID: {context.id}")
-            # Output: Context ID: ctx-04bdwfj7u22a1s30g
-            print(f"Context Name: {context.name}")
-            # Output: Context Name: my-new-context
-            print(f"Request ID: {result.request_id}")
-            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-        else:
-            print(f"Failed to create context: {result.error_message}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-create_context()
+            ```python
+                    result = agent_bay.context.create("my-new-context")
 ```
 
 #### update
@@ -317,41 +237,14 @@ Updates the specified context (currently only name can be updated).
 
 **Example**:
 
-```python
-from agentbay import AgentBay
-from agentbay.context import Context
+            ```python
+            result = agent_bay.context.get(name="old-name")
 
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+                update_result = agent_bay.context.update(context)
 
-# Get an existing context
-result = agent_bay.context.get(name="old-name")
-if result.success:
-    context = result.context
-    print(f"Original name: {context.name}")
-    # Output: Original name: old-name
+                verify_result = agent_bay.context.get(context_id=context.id)
 
-    # Update the context name
-    context.name = "new-name"
-    update_result = agent_bay.context.update(context)
-    if update_result.success:
-        print(f"Context updated successfully")
-        # Output: Context updated successfully
-        print(f"Request ID: {update_result.request_id}")
-        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-    # Verify the update
-    verify_result = agent_bay.context.get(context_id=context.id)
-    if verify_result.success:
-        print(f"New name: {verify_result.context.name}")
-        # Output: New name: new-name
-
-# Handle update failure
-invalid_context = Context(id="invalid-id", name="new-name")
-result = agent_bay.context.update(invalid_context)
-if not result.success:
-    print(f"Error: {result.error_message}")
-    # Output: Error: Context not found
+            result = agent_bay.context.update(invalid_context)
 ```
   
 
@@ -387,31 +280,10 @@ Deletes the specified context.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
+            ```python
+                    result = agent_bay.context.get(name="my-context")
 
-agent_bay = AgentBay(api_key="your_api_key")
-
-def delete_context():
-    try:
-        # Get a context first
-        result = agent_bay.context.get(name="my-context")
-        if result.success and result.context:
-            # Delete the context
-            delete_result = agent_bay.context.delete(result.context)
-            if delete_result.success:
-                print("Context deleted successfully")
-                # Output: Context deleted successfully
-                print(f"Request ID: {delete_result.request_id}")
-                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-            else:
-                print(f"Failed to delete context: {delete_result.error_message}")
-        else:
-            print(f"Failed to get context: {result.error_message}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-delete_context()
+                        delete_result = agent_bay.context.delete(result.context)
 ```
 
 #### get\_file\_download\_url
@@ -435,44 +307,10 @@ Get a presigned download URL for a file in a context.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
-import requests
+            ```python
+                    ctx_result = agent_bay.context.get(name="my-context", create=True)
 
-agent_bay = AgentBay(api_key="your_api_key")
-
-def download_context_file():
-    try:
-        # Get a context
-        ctx_result = agent_bay.context.get(name="my-context", create=True)
-        if ctx_result.success:
-            context = ctx_result.context
-
-            # Get download URL for a file
-            url_result = agent_bay.context.get_file_download_url(
-                context.id,
-                "/data/output.txt"
-            )
-            if url_result.success:
-                print(f"Download URL obtained")
-                # Output: Download URL obtained
-                print(f"URL expires in: {url_result.expire_time} seconds")
-                # Output: URL expires in: 3600 seconds
-                print(f"Request ID: {url_result.request_id}")
-                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                # Download the file using the presigned URL
-                response = requests.get(url_result.url)
-                if response.status_code == 200:
-                    content = response.text
-                    print(f"Downloaded content: {content}")
-                    # Output: Downloaded content: Hello World
-            else:
-                print(f"Failed to get download URL: {url_result.error_message}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-download_context_file()
+                        url_result = agent_bay.context.get_file_download_url(
 ```
 
 #### get\_file\_upload\_url
@@ -496,48 +334,10 @@ Get a presigned upload URL for a file in a context.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
-import requests
+            ```python
+                    ctx_result = agent_bay.context.get(name="my-context", create=True)
 
-agent_bay = AgentBay(api_key="your_api_key")
-
-def upload_context_file():
-    try:
-        # Get a context
-        ctx_result = agent_bay.context.get(name="my-context", create=True)
-        if ctx_result.success:
-            context = ctx_result.context
-
-            # Get upload URL for a file
-            url_result = agent_bay.context.get_file_upload_url(
-                context.id,
-                "/data/input.txt"
-            )
-            if url_result.success:
-                print(f"Upload URL obtained")
-                # Output: Upload URL obtained
-                print(f"URL expires in: {url_result.expire_time} seconds")
-                # Output: URL expires in: 3600 seconds
-                print(f"Request ID: {url_result.request_id}")
-                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                # Upload the file using the presigned URL
-                file_content = "Hello World"
-                response = requests.put(
-                    url_result.url,
-                    data=file_content.encode('utf-8'),
-                    headers={'Content-Type': 'text/plain'}
-                )
-                if response.status_code in (200, 204):
-                    print("File uploaded successfully")
-                    # Output: File uploaded successfully
-            else:
-                print(f"Failed to get upload URL: {url_result.error_message}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-upload_context_file()
+                        url_result = agent_bay.context.get_file_upload_url(
 ```
 
 #### delete\_file
@@ -561,34 +361,10 @@ Delete a file in a context.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
+            ```python
+                    ctx_result = agent_bay.context.get(name="my-context", create=True)
 
-agent_bay = AgentBay(api_key="your_api_key")
-
-def delete_context_file():
-    try:
-        # Get a context
-        ctx_result = agent_bay.context.get(name="my-context", create=True)
-        if ctx_result.success:
-            context = ctx_result.context
-
-            # Delete a file from the context
-            delete_result = agent_bay.context.delete_file(
-                context.id,
-                "/data/temp.txt"
-            )
-            if delete_result.success:
-                print("File deleted successfully")
-                # Output: File deleted successfully
-                print(f"Request ID: {delete_result.request_id}")
-                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-            else:
-                print(f"Failed to delete file: {delete_result.error_message}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-delete_context_file()
+                        delete_result = agent_bay.context.delete_file(
 ```
 
 #### list\_files
@@ -617,44 +393,10 @@ List files under a specific folder path in a context.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
+            ```python
+                    ctx_result = agent_bay.context.get(name="my-context", create=True)
 
-agent_bay = AgentBay(api_key="your_api_key")
-
-def list_context_files():
-    try:
-        # Get a context
-        ctx_result = agent_bay.context.get(name="my-context", create=True)
-        if ctx_result.success:
-            context = ctx_result.context
-
-            # List files in the context
-            files_result = agent_bay.context.list_files(
-                context.id,
-                "/data",
-                page_number=1,
-                page_size=10
-            )
-            if files_result.success:
-                print(f"Found {files_result.count} files")
-                # Output: Found 3 files
-                print(f"Request ID: {files_result.request_id}")
-                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                for file_entry in files_result.entries:
-                    print(f"  - {file_entry.file_name} ({file_entry.file_path})")
-                    # Output:   - input.txt (/data/input.txt)
-                    print(f"    Size: {file_entry.size} bytes")
-                    # Output:     Size: 1024 bytes
-                    print(f"    Status: {file_entry.status}")
-                    # Output:     Status: active
-            else:
-                print(f"Failed to list files: {files_result.error_message}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-list_context_files()
+                        files_result = agent_bay.context.list_files(
 ```
 
 #### clear\_async
@@ -687,35 +429,10 @@ is in progress.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
+            ```python
+                    result = agent_bay.context.get(name="my-context", create=True)
 
-agent_bay = AgentBay(api_key="your_api_key")
-
-def clear_context_async():
-    try:
-        # Get a context
-        result = agent_bay.context.get(name="my-context", create=True)
-        if result.success:
-            context = result.context
-
-            # Start clearing context data asynchronously (non-blocking)
-            clear_result = agent_bay.context.clear_async(context.id)
-            if clear_result.success:
-                print(f"Clear task started: Status={clear_result.status}")
-                # Output: Clear task started: Status=clearing
-                print(f"Request ID: {clear_result.request_id}")
-                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                # You can now check status periodically using get_clear_status
-            else:
-                print(f"Failed to start clear: {clear_result.error_message}")
-        else:
-            print(f"Failed to get context: {result.error_message}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-clear_context_async()
+                        clear_result = agent_bay.context.clear_async(context.id)
 ```
 
 #### get\_clear\_status
@@ -741,47 +458,12 @@ the state field, which indicates the current clearing status.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
-import time
+            ```python
+                    result = agent_bay.context.get(name="my-context", create=True)
 
-agent_bay = AgentBay(api_key="your_api_key")
+                        clear_result = agent_bay.context.clear_async(context.id)
 
-def check_clear_status():
-    try:
-        # Get a context
-        result = agent_bay.context.get(name="my-context", create=True)
-        if result.success:
-            context = result.context
-
-            # Start clearing asynchronously
-            clear_result = agent_bay.context.clear_async(context.id)
-            if clear_result.success:
-                print("Clear task started, checking status...")
-                # Output: Clear task started, checking status...
-
-                # Poll for status until complete
-                for i in range(30):
-                    time.sleep(2)
-                    status_result = agent_bay.context.get_clear_status(context.id)
-                    if status_result.success:
-                        print(f"Current status: {status_result.status}")
-                        # Output: Current status: clearing (or available when done)
-                        if status_result.status == "available":
-                            print("Context cleared successfully!")
-                            # Output: Context cleared successfully!
-                            break
-                    else:
-                        print(f"Failed to get status: {status_result.error_message}")
-                        break
-            else:
-                print(f"Failed to start clear: {clear_result.error_message}")
-        else:
-            print(f"Failed to get context: {result.error_message}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-check_clear_status()
+                                status_result = agent_bay.context.get_clear_status(context.id)
 ```
 
 #### clear
@@ -822,47 +504,10 @@ The clearing process transitions through the following states:
 
 **Example**:
 
-```python
-from agentbay import AgentBay
-from agentbay.exceptions import ClearanceTimeoutError
+        ```python
+                result = agent_bay.context.get(name="my-context", create=True)
 
-agent_bay = AgentBay(api_key="your_api_key")
-
-def clear_context_example():
-    try:
-        # Get or create a context
-        result = agent_bay.context.get(name="my-context", create=True)
-        if result.success:
-            context = result.context
-            print(f"Context ID: {context.id}")
-            # Output: Context ID: ctx-04bdwfj7u22a1s30g
-
-            # Clear the context data synchronously
-            # This will wait for the clearing to complete
-            clear_result = agent_bay.context.clear(
-                context.id,
-                timeout=60,
-                poll_interval=2.0
-            )
-
-            if clear_result.success:
-                print("Context cleared successfully")
-                # Output: Context cleared successfully
-                print(f"Final status: {clear_result.status}")
-                # Output: Final status: available
-                print(f"Request ID: {clear_result.request_id}")
-                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-            else:
-                print(f"Failed to clear context: {clear_result.error_message}")
-        else:
-            print(f"Failed to get context: {result.error_message}")
-
-    except ClearanceTimeoutError as e:
-        print(f"Clearing timed out: {e}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-clear_context_example()
+                    clear_result = agent_bay.context.clear(
 ```
 
 ## Related Resources

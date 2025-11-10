@@ -196,7 +196,7 @@ class BaseService:
 
             # Non-VPC mode: use traditional API call
             request = CallMcpToolRequest(
-                authorization=f"Bearer {self.session.get_api_key()}",
+                authorization=f"Bearer {self.session._get_api_key()}",
                 session_id=self.session.get_session_id(),
                 name=name,
                 args=args_json,

@@ -112,47 +112,8 @@ class Session:
 
         self.agent = Agent(self)
 
-    def get_api_key(self) -> str:
-        """
-        Return the API key for this session.
-
-        Returns:
-            str: The API key used for authentication
-
-        Example:
-            ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def check_api_key():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Get API key (useful for debugging or logging)
-                        api_key = session.get_api_key()
-                        print(f"Using API key: {api_key[:10]}...")
-                        # Output: Using API key: sk-1234567...
-
-                        # Verify API key is set
-                        if api_key:
-                            print("API key is configured")
-                            # Output: API key is configured
-
-                        # Clean up
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            check_api_key()
-            ```
-
-        See Also:
-            AgentBay.__init__, Session.get_session_id
-        """
+    def _get_api_key(self) -> str:
+        """Internal method to get the API key for this session."""
         return self.agent_bay.api_key
 
     def get_client(self):
@@ -660,7 +621,7 @@ class Session:
 
             # Proceed with session deletion
             request = ReleaseMcpSessionRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
             )
             response = self.get_client().release_mcp_session(request)
@@ -809,7 +770,7 @@ class Session:
             labels_json = json.dumps(labels)
 
             request = SetLabelRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
                 labels=labels_json,
             )
@@ -864,7 +825,7 @@ class Session:
         """
         try:
             request = GetLabelRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
             )
 
@@ -978,7 +939,7 @@ class Session:
         """
         try:
             request = GetMcpResourceRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
             )
 
@@ -1140,7 +1101,7 @@ class Session:
             )
 
             request = GetLinkRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.get_session_id(),
                 protocol_type=protocol_type,
                 port=port,
@@ -1233,7 +1194,7 @@ class Session:
             )
 
             request = GetLinkRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.get_session_id(),
                 protocol_type=protocol_type,
                 port=port,
@@ -1351,7 +1312,7 @@ class Session:
             image_id = getattr(self, "image_id", "") or "linux_latest"
 
         request = ListMcpToolsRequest(
-            authorization=f"Bearer {self.get_api_key()}", image_id=image_id
+            authorization=f"Bearer {self._get_api_key()}", image_id=image_id
         )
 
         log_api_call("ListMcpTools", f"ImageId={image_id}")
@@ -1642,7 +1603,7 @@ class Session:
         )
 
         request = CallMcpToolRequest(
-            authorization=f"Bearer {self.get_api_key()}",
+            authorization=f"Bearer {self._get_api_key()}",
             session_id=self.session_id,
             name=tool_name,
             args=args_json,
