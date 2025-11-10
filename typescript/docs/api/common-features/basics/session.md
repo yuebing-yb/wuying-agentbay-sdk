@@ -374,7 +374,7 @@ if (result.success) {
 
 **`See`**
 
-[info](session.md#info), [Mobile.getAdbUrl](../../mobile-use/mobile.md#getadburl)
+[info](session.md#info)
 
 ___
 
