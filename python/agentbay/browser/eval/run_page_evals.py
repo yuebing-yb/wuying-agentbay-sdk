@@ -10,13 +10,13 @@ from dotenv import load_dotenv
 from agentbay.browser.eval.page_agent import PageAgent
 from agentbay.logger import get_logger
 
-logger = get_logger("run_page_evals")
+_logger = get_logger("run_page_evals")
 
 
 async def run_single_task(
     task_name: str, task_config: Dict[str, Any]
 ) -> Dict[str, Any]:
-    logger.info(f"🚀 Starting task: {task_name}")
+    _logger.info(f"🚀 Starting task: {task_name}")
     overall_start = time.perf_counter()
 
     agent = PageAgent(enable_metrics=True)
@@ -29,16 +29,16 @@ async def run_single_task(
     try:
         task_module = importlib.import_module(f"page_tasks.{task_name}")
 
-        #result = await task_module.run(agent, logger, task_config)
-        result = await agent.run_task(task_module, logger, task_config)
+        #result = await task_module.run(agent, _logger, task_config)
+        result = await agent.run_task(task_module, _logger, task_config)
 
         status = "✅ Passed" if result.get("_success") else "❌ Failed"
-        logger.info(f"{status} - Task: {task_name}")
+        _logger.info(f"{status} - Task: {task_name}")
         if not result.get("_success"):
-            logger.error(f"Error: {result.get('error')}")
+            _logger.error(f"Error: {result.get('error')}")
 
     except Exception as e:
-        logger.error(f"💥 Unhandled exception in task {task_name}: {e}", exc_info=True)
+        _logger.error(f"💥 Unhandled exception in task {task_name}: {e}", exc_info=True)
         result = {"_success": False, "error": str(e)}
     finally:
         close_start = time.perf_counter()
@@ -120,7 +120,7 @@ async def main():
         with open("page_evals.config.json", "r") as f:
             config = json.load(f)
     except FileNotFoundError:
-        logger.error("page_evals.config.json not found! Please create it.")
+        _logger.error("page_evals.config.json not found! Please create it.")
         return
 
     all_tasks = config["tasks"]
@@ -130,14 +130,14 @@ async def main():
             task for task in all_tasks if task.get("name") == args.eval_name
         ]
         if not tasks_to_run:
-            logger.error(f"Task with name '{args.eval_name}' not found in config file.")
+            _logger.error(f"Task with name '{args.eval_name}' not found in config file.")
             return
     elif args.category:
         tasks_to_run = [
             task for task in all_tasks if args.category in task.get("categories", [])
         ]
         if not tasks_to_run:
-            logger.error(
+            _logger.error(
                 f"No tasks found for category '{args.category}' in config file."
             )
             return
@@ -174,7 +174,7 @@ async def main():
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
-    logger.info(f"📊 Evaluation summary written to {summary_path}")
+    _logger.info(f"📊 Evaluation summary written to {summary_path}")
 
 
 if __name__ == "__main__":

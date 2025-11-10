@@ -174,7 +174,7 @@ class AgentBayLogger:
             return
 
         # Remove default handler
-        # Use try-except to handle cases where logger.remove() might fail
+        # Use try-except to handle cases where _logger.remove() might fail
         # (e.g., in pytest environment where handlers might be managed externally)
         try:
             logger.remove()
@@ -301,14 +301,14 @@ class AgentBayLogger:
             cls.setup(level=cls._log_level)
 
 
-# Initialize the logger automatically on module import
+# Initialize the _logger automatically on module import
 # This provides immediate logging capability without explicit setup
 # Read from environment variable if available, otherwise use INFO
 _env_log_level = os.getenv("AGENTBAY_LOG_LEVEL", "INFO")
 AgentBayLogger.setup(level=_env_log_level)
 
 
-# Export convenience functions for the logger
+# Export convenience functions for the _logger
 def get_logger(name: str = "agentbay"):
     """
     Convenience function to get a named logger.
@@ -322,7 +322,7 @@ def get_logger(name: str = "agentbay"):
     return AgentBayLogger.get_logger(name)
 
 
-# Module-level logger for convenience functions
+# Module-level _logger for convenience functions
 log = get_logger("agentbay")
 
 

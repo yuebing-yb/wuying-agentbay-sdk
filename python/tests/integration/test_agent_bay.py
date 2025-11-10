@@ -34,19 +34,34 @@ class TestAgentBay(unittest.TestCase):
 
     def test_init_without_api_key(self):
         """Test initialization without API key."""
+        # Save original API key
+        original_key = os.environ.get("AGENTBAY_API_KEY")
+
         os.environ["AGENTBAY_API_KEY"] = "env_api_key"
         try:
             agent_bay = AgentBay()
             self.assertEqual(agent_bay.api_key, "env_api_key")
         finally:
-            del os.environ["AGENTBAY_API_KEY"]
+            # Restore original API key
+            if original_key is not None:
+                os.environ["AGENTBAY_API_KEY"] = original_key
+            else:
+                del os.environ["AGENTBAY_API_KEY"]
 
     def test_init_without_api_key_raises_error(self):
         """Test initialization without API key raises error."""
-        if "AGENTBAY_API_KEY" in os.environ:
-            del os.environ["AGENTBAY_API_KEY"]
-        with self.assertRaises(ValueError):
-            AgentBay()
+        # Save original API key
+        original_key = os.environ.get("AGENTBAY_API_KEY")
+
+        try:
+            if "AGENTBAY_API_KEY" in os.environ:
+                del os.environ["AGENTBAY_API_KEY"]
+            with self.assertRaises(ValueError):
+                AgentBay()
+        finally:
+            # Restore original API key
+            if original_key is not None:
+                os.environ["AGENTBAY_API_KEY"] = original_key
 
     def test_create_list_delete(self):
         """Test create, list, and delete methods."""
@@ -271,19 +286,11 @@ class TestRecyclePolicy(unittest.TestCase):
         """Test that ContextSync throws error when creating with invalid recyclePolicy path."""
         print("Testing ContextSync creation with invalid recyclePolicy path...")
 
-        # Create custom recyclePolicy with invalid wildcard path
-        invalid_recycle_policy = RecyclePolicy(
-            lifecycle=Lifecycle.LIFECYCLE_1DAY,
-            paths=["/invalid/path/*"]  # Invalid path with wildcard
-        )
-
-        print(f"Invalid path: {invalid_recycle_policy.paths[0]}")
-
         # Test that RecyclePolicy constructor throws an error for invalid path
         with self.assertRaises(ValueError) as context:
             RecyclePolicy(
                 lifecycle=Lifecycle.LIFECYCLE_1DAY,
-                paths=["/invalid/path/*"]
+                paths=["/invalid/path/*"]  # Invalid path with wildcard
             )
 
         # Verify the error message

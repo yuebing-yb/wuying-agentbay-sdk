@@ -17,8 +17,8 @@ from agentbay.logger import (
     log_code_execution_output,
 )
 
-# Initialize logger for this module
-logger = get_logger("base_service")
+# Initialize _logger for this module
+_logger = get_logger("base_service")
 
 
 class BaseService:
@@ -261,7 +261,7 @@ class BaseService:
         except AgentBayError as e:
             handled_error = self._handle_error(e)
             request_id = "" if "request_id" not in locals() else request_id
-            logger.exception(f"❌ Failed to call MCP tool {name}")
+            _logger.exception(f"❌ Failed to call MCP tool {name}")
             return OperationResult(
                 request_id=request_id,
                 success=False,
@@ -270,7 +270,7 @@ class BaseService:
         except Exception as e:
             handled_error = self._handle_error(e)
             request_id = "" if "request_id" not in locals() else request_id
-            logger.exception(f"❌ Failed to call MCP tool {name}")
+            _logger.exception(f"❌ Failed to call MCP tool {name}")
             return OperationResult(
                 request_id=request_id,
                 success=False,
@@ -340,9 +340,9 @@ class BaseService:
                     error_content_json = json.dumps(
                         error_content, ensure_ascii=False, indent=2
                     )
-                    logger.debug(f"error_content = {error_content_json}")
+                    _logger.debug(f"error_content = {error_content_json}")
                 except Exception:
-                    logger.debug(f"error_content: {error_content}")
+                    _logger.debug(f"error_content: {error_content}")
                 error_message = "; ".join(
                     item.get("text", "Unknown error")
                     for item in error_content

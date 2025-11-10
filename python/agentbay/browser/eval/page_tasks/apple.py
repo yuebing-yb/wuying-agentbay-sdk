@@ -3,7 +3,7 @@ from typing import Dict, Any
 from mcp_server.page_agent import PageAgent
 
 
-async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     await agent.goto("https://www.apple.com/iphone-16-pro/")
 
     actions = [
@@ -19,7 +19,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
     for action in actions:
         await agent.act(action)
 
-    logger.info("Verifying success message visibility...")
+    _logger.info("Verifying success message visibility...")
     try:
         page = await agent.get_current_page()
         success_message_locator = page.locator(
@@ -29,13 +29,13 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
         is_visible = True
 
     except Exception as e:
-        logger.error(f"Error during final validation: {e}")
+        _logger.error(f"Error during final validation: {e}")
         return {"_success": False, "error": str(e)}
 
     if is_visible:
-        logger.info("✅ Validation passed: Trade-in success message is visible.")
+        _logger.info("✅ Validation passed: Trade-in success message is visible.")
     else:
-        logger.error(
+        _logger.error(
             "Validation failed: Trade-in success message was not found or not visible."
         )
 

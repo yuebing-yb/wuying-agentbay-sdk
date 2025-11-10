@@ -177,7 +177,7 @@ def validate_extracted_data(extracted_data: Dict[str, Any]) -> tuple[bool, str]:
     return True, "Validation passed"
 
 
-async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     await agent.goto(
         "https://browserbase.github.io/stagehand-eval-sites/sites/ncc-area-codes/"
     )
@@ -198,8 +198,8 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
     success, error_msg = validate_extracted_data(extracted_data.model_dump())
 
     if not success:
-        logger.error(f"Validation Failed: {error_msg}")
+        _logger.error(f"Validation Failed: {error_msg}")
         return {"_success": False, "error": error_msg}
 
-    logger.info("✅ Validation passed for extract_area_codes.")
+    _logger.info("✅ Validation passed for extract_area_codes.")
     return {"_success": True}

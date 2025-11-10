@@ -50,7 +50,7 @@ from agentbay.logger import get_logger
 
 MAX_IMAGE = 5
 
-logger = get_logger(__name__)
+_logger = get_logger(__name__)
 
 
 def encode_image(image):
@@ -202,7 +202,7 @@ The potentially important snapshots of the webpage in the agent's trajectory and
 			score = re.findall(pattern, score_text)[0]
 			record.append({'Response': response, 'Score': int(score)})
 		except Exception as e:
-			logger.error(f'Error processing response: {type(e).__name__}: {e}')
+			_logger.error(f'Error processing response: {type(e).__name__}: {e}')
 			score = 0
 			record.append({'Response': response, 'Score': 0})
 
@@ -257,9 +257,9 @@ async def Online_Mind2Web_eval_with_retry(task, last_actions, images_path, model
 			return await Online_Mind2Web_eval(task, last_actions, images_path, model, score_threshold)
 		except Exception as e:
 			if attempt == max_retries - 1:  # Last attempt
-				logger.error(f'Failed to evaluate after {max_retries} attempts. Error: {type(e).__name__}: {str(e)}')
+				_logger.error(f'Failed to evaluate after {max_retries} attempts. Error: {type(e).__name__}: {str(e)}')
 				raise
-			logger.warning(f'Attempt {attempt + 1} failed. Retrying... Error: {type(e).__name__}: {str(e)}')
+			_logger.warning(f'Attempt {attempt + 1} failed. Retrying... Error: {type(e).__name__}: {str(e)}')
 			await asyncio.sleep(2**attempt)  # Exponential backoff
 
 
@@ -414,7 +414,7 @@ SUPPORTED_MODELS = {
 # Check for SERPER API key
 SERPER_API_KEY = os.getenv('SERPER_API_KEY')
 if not SERPER_API_KEY:
-	logger.warning('SERPER_API_KEY is not set. Search functionality will not be available.')
+	_logger.warning('SERPER_API_KEY is not set. Search functionality will not be available.')
 
 
 def create_controller_with_serp_search():
@@ -441,7 +441,7 @@ def create_controller_with_serp_search():
 			serp_data = {k: v for k, v in serp_data.items() if k not in ['searchParameters', 'credits']}
 
 			# Log the search data for debugging
-			logger.debug(f"SERP search for '{query}': {json.dumps(serp_data, indent=2)}")
+			_logger.debug(f"SERP search for '{query}': {json.dumps(serp_data, indent=2)}")
 
 			# Convert to string for the agent
 			serp_data_str = json.dumps(serp_data)
@@ -449,7 +449,7 @@ def create_controller_with_serp_search():
 			return ActionResult(extracted_content=serp_data_str, include_in_memory=False)
 
 		except Exception as e:
-			logger.error(f'Error in SERP search: {type(e).__name__}: {e}')
+			_logger.error(f'Error in SERP search: {type(e).__name__}: {e}')
 			return ActionResult(extracted_content=f'Search error: {str(e)}', include_in_memory=False)
 
 	return controller
@@ -474,7 +474,7 @@ def get_llm(model_name: str):
 	api_key = os.getenv(api_key_env) if api_key_env else None
 
 	if not api_key and api_key_env:
-		logger.warning(
+		_logger.warning(
 			f'API key environment variable {api_key_env} not found or empty for model {model_name}. Trying without API key if possible.'
 		)
 		api_key = None
@@ -504,7 +504,7 @@ def get_llm(model_name: str):
 			if api_key_secret:
 				kwargs['api_key'] = api_key_secret
 			elif config.get('base_url'):
-				logger.warning(
+				_logger.warning(
 					f'API key for {model_name} at {config["base_url"]} is missing, but base_url is specified. Authentication may fail.'
 				)
 			return ChatOpenAI(**kwargs)
@@ -585,7 +585,7 @@ async def reformat_agent_history(
 			try:
 				total_tokens_used += int(step_metadata['input_tokens'])
 			except (ValueError, TypeError):
-				logger.warning(
+				_logger.warning(
 					f"Task {task_id}, Step {step_num}: Could not parse input_tokens '{step_metadata['input_tokens']}' as integer."
 				)
 
@@ -604,7 +604,7 @@ async def reformat_agent_history(
 					end_time_float = float(end_time)
 					task_duration = end_time_float - start_time_float
 				except (ValueError, TypeError) as e:
-					logger.warning(f'Could not calculate task duration due to invalid timestamp format: {e}')
+					_logger.warning(f'Could not calculate task duration due to invalid timestamp format: {e}')
 
 	# Create results structure with new fields
 	results = {
@@ -730,7 +730,7 @@ def calculate_local_summary(results_dir: str | None = None) -> dict:
 
 	path = Path(results_dir)
 	if not path.is_dir():
-		logger.warning(f'Results directory {results_dir} does not exist')
+		_logger.warning(f'Results directory {results_dir} does not exist')
 		return {
 			'timestamp': datetime.now().isoformat(),
 			'total_tasks': 0,
@@ -765,7 +765,7 @@ def calculate_local_summary(results_dir: str | None = None) -> dict:
 						total_score += score
 						results_with_score += 1
 			except Exception as e:
-				logger.error(f'Error reading result file {result_file}: {type(e).__name__}: {e}')
+				_logger.error(f'Error reading result file {result_file}: {type(e).__name__}: {e}')
 
 	# Calculate statistics
 	failed_tasks = total_tasks - successful_tasks
@@ -1008,13 +1008,13 @@ async def load_existing_result(task_folder: Path) -> dict:
 
 async def setup_browser_session(task: Task, headless: bool) -> BrowserSession:
 	"""Setup browser session for the task"""
-	logger.debug(f'Browser setup: Creating unique user data directory for task {task.task_id}')
+	_logger.debug(f'Browser setup: Creating unique user data directory for task {task.task_id}')
 	# Create unique user data directory
 	base_user_data_dir = Path(BrowserProfile().user_data_dir).parent
 	unique_user_data_dir = base_user_data_dir / f'task_{task.task_id}'
 	unique_user_data_dir.mkdir(parents=True, exist_ok=True)
 
-	logger.debug(f'Browser setup: Initializing BrowserSession for task {task.task_id}')
+	_logger.debug(f'Browser setup: Initializing BrowserSession for task {task.task_id}')
 	browser_session = BrowserSession(
 		browser_profile=BrowserProfile(
 			user_data_dir=str(unique_user_data_dir),
@@ -1024,16 +1024,16 @@ async def setup_browser_session(task: Task, headless: bool) -> BrowserSession:
 	)
 
 	# Start browser session
-	logger.debug(f'Browser setup: Starting browser session for task {task.task_id}')
+	_logger.debug(f'Browser setup: Starting browser session for task {task.task_id}')
 	await browser_session.start()
-	logger.debug(f'Browser setup: Browser session started for task {task.task_id}')
+	_logger.debug(f'Browser setup: Browser session started for task {task.task_id}')
 
 	# Navigate to task starting url if provided
 	if task.website:
-		logger.debug(f'Browser setup: Navigating to {task.website} for task {task.task_id}')
+		_logger.debug(f'Browser setup: Navigating to {task.website} for task {task.task_id}')
 		await browser_session.navigate(task.website)
 
-	logger.debug(f'Browser setup: Setup completed for task {task.task_id}')
+	_logger.debug(f'Browser setup: Setup completed for task {task.task_id}')
 	return browser_session
 
 
@@ -1092,13 +1092,13 @@ def save_result_to_server(convex_url: str, secret_key: str, payload: dict) -> bo
 async def cleanup_browser_safe(browser_session: BrowserSession):
 	"""Safe browser cleanup with timeout"""
 	try:
-		logger.debug('Browser cleanup: Starting close operation for session')
+		_logger.debug('Browser cleanup: Starting close operation for session')
 		await asyncio.wait_for(browser_session.close(), timeout=30)
-		logger.debug('Browser cleanup: Close operation completed successfully')
+		_logger.debug('Browser cleanup: Close operation completed successfully')
 	except TimeoutError:
-		logger.warning('Browser cleanup: Timed out after 30 seconds')
+		_logger.warning('Browser cleanup: Timed out after 30 seconds')
 	except Exception as e:
-		logger.warning(f'Browser cleanup: Failed with error: {type(e).__name__}: {e}')
+		_logger.warning(f'Browser cleanup: Failed with error: {type(e).__name__}: {e}')
 
 
 def determine_current_stage(completed_stages: set) -> Stage:
@@ -1140,9 +1140,9 @@ async def run_task_with_semaphore(
 	planner_interval: int = 1,
 ) -> dict:
 	"""Clean pipeline approach for running tasks"""
-	logger.info(f'Task {task.task_id}: Waiting to acquire semaphore (current value: ~{semaphore_runs._value})')
+	_logger.info(f'Task {task.task_id}: Waiting to acquire semaphore (current value: ~{semaphore_runs._value})')
 	async with semaphore_runs:
-		logger.info(f'Task {task.task_id}: Semaphore acquired (remaining slots: ~{semaphore_runs._value})')
+		_logger.info(f'Task {task.task_id}: Semaphore acquired (remaining slots: ~{semaphore_runs._value})')
 		task_result = None
 		browser_session = None
 
@@ -1151,7 +1151,7 @@ async def run_task_with_semaphore(
 			task_result = TaskResult(task.task_id, run_id, task.confirmed_task, task, max_steps_per_task)
 			task_folder = Path(f'saved_trajectories/{task.task_id}')
 
-			logger.info(f'Task {task.task_id}: Starting execution pipeline.')
+			_logger.info(f'Task {task.task_id}: Starting execution pipeline.')
 			try:
 				# Stage 1: Try to load existing result
 				try:
@@ -1162,32 +1162,32 @@ async def run_task_with_semaphore(
 					if existing_data.get('has_evaluation'):
 						task_result.stage_completed(Stage.EVALUATE, existing_data['evaluation_data'])
 
-					logger.info(f'Task {task.task_id}: Successfully loaded existing result. Skipping execution.')
+					_logger.info(f'Task {task.task_id}: Successfully loaded existing result. Skipping execution.')
 
 				except Exception:
 					# No existing result, need to execute full pipeline
-					logger.info(f'Task {task.task_id}: No existing result found. Starting execution pipeline.')
+					_logger.info(f'Task {task.task_id}: No existing result found. Starting execution pipeline.')
 
 					agent_history = None  # Initialize to track agent execution
 
 					# Stage 2: Setup browser
 					try:
-						logger.info(f'Task {task.task_id}: Browser setup starting.')
+						_logger.info(f'Task {task.task_id}: Browser setup starting.')
 						browser_session = await run_stage(
 							Stage.SETUP_BROWSER, lambda: setup_browser_session(task, headless), timeout=120
 						)
 						task_result.stage_completed(Stage.SETUP_BROWSER)
-						logger.info(f'Task {task.task_id}: Browser session started successfully.')
+						_logger.info(f'Task {task.task_id}: Browser session started successfully.')
 					except Exception as e:
 						error = StageError(Stage.SETUP_BROWSER, 'exception', str(e))
 						task_result.stage_failed(Stage.SETUP_BROWSER, error)
-						logger.error(f'Task {task.task_id}: Browser setup failed: {str(e)}')
+						_logger.error(f'Task {task.task_id}: Browser setup failed: {str(e)}')
 						# Continue to server save instead of early return
 
 					# Stage 3: Run agent
 					if browser_session:  # Only run agent if browser setup succeeded
 						try:
-							logger.info(f'Task {task.task_id}: Agent run starting.')
+							_logger.info(f'Task {task.task_id}: Agent run starting.')
 							agent_history = await run_stage(
 								Stage.RUN_AGENT,
 								lambda: run_agent_with_browser(
@@ -1207,68 +1207,68 @@ async def run_task_with_semaphore(
 								timeout=600,
 							)
 							task_result.stage_completed(Stage.RUN_AGENT)
-							logger.info(f'Task {task.task_id}: Agent run completed.')
+							_logger.info(f'Task {task.task_id}: Agent run completed.')
 						except Exception as e:
 							error = StageError(Stage.RUN_AGENT, 'exception', str(e))
 							task_result.stage_failed(Stage.RUN_AGENT, error)
-							logger.error(f'Task {task.task_id}: Agent run failed: {str(e)}')
+							_logger.error(f'Task {task.task_id}: Agent run failed: {str(e)}')
 							# Continue to server save instead of early return
 
 					# Stage 4: Format history
 					if agent_history is not None:  # Only format if agent ran successfully
 						try:
-							logger.info(f'Task {task.task_id}: History formatting starting.')
+							_logger.info(f'Task {task.task_id}: History formatting starting.')
 							formatted_data = await run_stage(
 								Stage.FORMAT_HISTORY,
 								lambda: reformat_agent_history(agent_history, task.task_id, run_id, task.confirmed_task),
 							)
 							task_result.stage_completed(Stage.FORMAT_HISTORY, formatted_data)
-							logger.info(f'Task {task.task_id}: Agent history formatted.')
+							_logger.info(f'Task {task.task_id}: Agent history formatted.')
 						except Exception as e:
 							error = StageError(Stage.FORMAT_HISTORY, 'exception', str(e))
 							task_result.stage_failed(Stage.FORMAT_HISTORY, error)
-							logger.error(f'Task {task.task_id}: History formatting failed: {str(e)}')
+							_logger.error(f'Task {task.task_id}: History formatting failed: {str(e)}')
 							# Continue to server save instead of early return
 
 				# Stage 5: Evaluate (if we have execution data and no existing evaluation)
 				if task_result.has_execution_data() and Stage.EVALUATE not in task_result.completed_stages:
 					try:
-						logger.info(f'Task {task.task_id}: Evaluation starting.')
+						_logger.info(f'Task {task.task_id}: Evaluation starting.')
 						evaluation = await run_stage(
 							Stage.EVALUATE, lambda: evaluate_task_result(eval_model, task_folder), timeout=300
 						)
 						task_result.stage_completed(Stage.EVALUATE, evaluation)
-						logger.info(f'Task {task.task_id}: Evaluation completed.')
+						_logger.info(f'Task {task.task_id}: Evaluation completed.')
 					except Exception as e:
 						error = StageError(Stage.EVALUATE, 'exception', str(e))
 						task_result.stage_failed(Stage.EVALUATE, error)
-						logger.error(f'Task {task.task_id}: Evaluation failed: {str(e)}')
+						_logger.error(f'Task {task.task_id}: Evaluation failed: {str(e)}')
 
 				# Stage 6: Save to server (always attempt)
 				try:
-					logger.info(f'Task {task.task_id}: Saving result to server.')
+					_logger.info(f'Task {task.task_id}: Saving result to server.')
 					await run_stage(
 						Stage.SAVE_SERVER,
 						lambda: asyncio.to_thread(save_result_to_server, convex_url, secret_key, task_result.server_payload),
 						timeout=60,
 					)
 					task_result.stage_completed(Stage.SAVE_SERVER)
-					logger.info(f'Task {task.task_id}: Successfully saved result to server.')
+					_logger.info(f'Task {task.task_id}: Successfully saved result to server.')
 				except Exception as e:
 					error = StageError(Stage.SAVE_SERVER, 'exception', str(e))
 					task_result.stage_failed(Stage.SAVE_SERVER, error)
 					task_result.mark_server_save_failed(str(e))
-					logger.error(f'Task {task.task_id}: Server save failed: {str(e)}')
+					_logger.error(f'Task {task.task_id}: Server save failed: {str(e)}')
 
 			except TimeoutError:
 				current_stage = determine_current_stage(task_result.completed_stages)
 				error = StageError(current_stage, 'timeout', 'Operation timed out')
 				task_result.stage_failed(current_stage, error)
-				logger.error(f'Task {task.task_id}: {current_stage.value} timed out')
+				_logger.error(f'Task {task.task_id}: {current_stage.value} timed out')
 
 				# Attempt to save result even if timeout occurred
 				try:
-					logger.info(f'Task {task.task_id}: Attempting server save after timeout.')
+					_logger.info(f'Task {task.task_id}: Attempting server save after timeout.')
 					await run_stage(
 						Stage.SAVE_SERVER,
 						lambda: asyncio.to_thread(save_result_to_server, convex_url, secret_key, task_result.server_payload),
@@ -1277,15 +1277,15 @@ async def run_task_with_semaphore(
 					task_result.stage_completed(Stage.SAVE_SERVER)
 				except Exception as save_e:
 					task_result.mark_server_save_failed(str(save_e))
-					logger.error(f'Task {task.task_id}: Emergency server save after timeout failed: {str(save_e)}')
+					_logger.error(f'Task {task.task_id}: Emergency server save after timeout failed: {str(save_e)}')
 
 			except asyncio.CancelledError:
 				task_result.mark_cancelled()
-				logger.warning(f'Task {task.task_id}: Task was cancelled')
+				_logger.warning(f'Task {task.task_id}: Task was cancelled')
 
 				# Attempt to save result even if cancelled
 				try:
-					logger.info(f'Task {task.task_id}: Attempting server save after cancellation.')
+					_logger.info(f'Task {task.task_id}: Attempting server save after cancellation.')
 					await run_stage(
 						Stage.SAVE_SERVER,
 						lambda: asyncio.to_thread(save_result_to_server, convex_url, secret_key, task_result.server_payload),
@@ -1294,15 +1294,15 @@ async def run_task_with_semaphore(
 					task_result.stage_completed(Stage.SAVE_SERVER)
 				except Exception as save_e:
 					task_result.mark_server_save_failed(str(save_e))
-					logger.error(f'Task {task.task_id}: Emergency server save after cancellation failed: {str(save_e)}')
+					_logger.error(f'Task {task.task_id}: Emergency server save after cancellation failed: {str(save_e)}')
 
 			except Exception as e:
 				task_result.mark_critical_error(str(e))
-				logger.critical(f'Task {task.task_id}: Critical error: {str(e)}', exc_info=True)
+				_logger.critical(f'Task {task.task_id}: Critical error: {str(e)}', exc_info=True)
 
 				# Attempt to save result even if critical error occurred
 				try:
-					logger.info(f'Task {task.task_id}: Attempting server save after critical error.')
+					_logger.info(f'Task {task.task_id}: Attempting server save after critical error.')
 					await run_stage(
 						Stage.SAVE_SERVER,
 						lambda: asyncio.to_thread(save_result_to_server, convex_url, secret_key, task_result.server_payload),
@@ -1311,18 +1311,18 @@ async def run_task_with_semaphore(
 					task_result.stage_completed(Stage.SAVE_SERVER)
 				except Exception as save_e:
 					task_result.mark_server_save_failed(str(save_e))
-					logger.error(f'Task {task.task_id}: Emergency server save after critical error failed: {str(save_e)}')
+					_logger.error(f'Task {task.task_id}: Emergency server save after critical error failed: {str(save_e)}')
 
 		except Exception as init_error:
 			# Handle catastrophic initialization errors
-			logger.critical(f'Task {task.task_id}: Catastrophic initialization error: {str(init_error)}', exc_info=True)
+			_logger.critical(f'Task {task.task_id}: Catastrophic initialization error: {str(init_error)}', exc_info=True)
 			if task_result is None:
 				# Create minimal task result for server reporting
 				try:
 					task_result = TaskResult(task.task_id, run_id, task.confirmed_task, task, max_steps_per_task)
 					task_result.mark_critical_error(f'Initialization failed: {str(init_error)}')
 				except Exception as result_error:
-					logger.critical(f'Task {task.task_id}: Cannot create TaskResult: {str(result_error)}')
+					_logger.critical(f'Task {task.task_id}: Cannot create TaskResult: {str(result_error)}')
 					# Return minimal error status as last resort
 					return {
 						'task_id': task.task_id,
@@ -1332,21 +1332,21 @@ async def run_task_with_semaphore(
 
 			# Try emergency server save
 			try:
-				logger.info(f'Task {task.task_id}: Attempting emergency server save after initialization error.')
+				_logger.info(f'Task {task.task_id}: Attempting emergency server save after initialization error.')
 				await asyncio.to_thread(save_result_to_server, convex_url, secret_key, task_result.server_payload)
 			except Exception as save_e:
-				logger.error(f'Task {task.task_id}: Emergency server save after initialization error failed: {str(save_e)}')
+				_logger.error(f'Task {task.task_id}: Emergency server save after initialization error failed: {str(save_e)}')
 
 		finally:
 			# Always cleanup browser if it was created
 			if browser_session:
-				logger.info(f'Task {task.task_id}: Starting browser cleanup')
+				_logger.info(f'Task {task.task_id}: Starting browser cleanup')
 				await cleanup_browser_safe(browser_session)
-				logger.info(f'Task {task.task_id}: Browser cleanup completed')
+				_logger.info(f'Task {task.task_id}: Browser cleanup completed')
 			else:
-				logger.info(f'Task {task.task_id}: No browser to cleanup')
+				_logger.info(f'Task {task.task_id}: No browser to cleanup')
 
-		logger.info(f'Task {task.task_id}: About to release semaphore (remaining slots: ~{semaphore_runs._value})')
+		_logger.info(f'Task {task.task_id}: About to release semaphore (remaining slots: ~{semaphore_runs._value})')
 		return (
 			task_result.get_local_status()
 			if task_result
@@ -1379,11 +1379,11 @@ async def run_multiple_tasks(
 	"""
 	Run multiple tasks in parallel and evaluate results.
 	"""
-	logger.info(f'Creating semaphore with max_parallel_runs={max_parallel_runs}')
+	_logger.info(f'Creating semaphore with max_parallel_runs={max_parallel_runs}')
 	semaphore_runs = asyncio.Semaphore(max_parallel_runs)
 	tasks_to_run = tasks[start_index:end_index] if end_index else tasks[start_index:]
 
-	logger.info(f'Starting {len(tasks_to_run)} tasks with parallel limit of {max_parallel_runs}')
+	_logger.info(f'Starting {len(tasks_to_run)} tasks with parallel limit of {max_parallel_runs}')
 
 	# Run all tasks in parallel with additional parameters
 	task_results = await asyncio.gather(
@@ -1420,7 +1420,7 @@ async def run_multiple_tasks(
 
 	for i, result in enumerate(task_results):
 		if isinstance(result, Exception):
-			logger.error(f'Task {i} failed with exception: {type(result).__name__}: {result}')
+			_logger.error(f'Task {i} failed with exception: {type(result).__name__}: {result}')
 			processed_results.append({'task_id': f'task_{i}', 'success': False, 'error': str(result)})
 			failed_tasks += 1
 		else:
@@ -1430,16 +1430,16 @@ async def run_multiple_tasks(
 			else:
 				failed_tasks += 1
 
-	logger.info(f'All {len(tasks_to_run)} tasks completed. Success: {successful_tasks}, Failed: {failed_tasks}')
+	_logger.info(f'All {len(tasks_to_run)} tasks completed. Success: {successful_tasks}, Failed: {failed_tasks}')
 
 	# After all tasks are complete, calculate a local summary
-	logger.info('All tasks completed. Calculating result summary...')
+	_logger.info('All tasks completed. Calculating result summary...')
 	summary = calculate_local_summary()
 
 	# Log the summary statistics
-	logger.info(f'Completed {summary["total_tasks"]} tasks')
-	logger.info(f'Success rate: {summary["success_rate"]:.2%}')
-	logger.info(f'Average score: {summary["average_score"]:.2f}')
+	_logger.info(f'Completed {summary["total_tasks"]} tasks')
+	_logger.info(f'Success rate: {summary["success_rate"]:.2%}')
+	_logger.info(f'Average score: {summary["average_score"]:.2f}')
 
 	return {'task_results': processed_results, 'summary': summary}
 
@@ -1449,11 +1449,11 @@ def fetch_tasks_from_server(convex_url: str, secret_key: str, test_case_name: st
 	"""Fetches the specified test case file from the Convex HTTP endpoint."""
 
 	if not convex_url:
-		logger.error('Error: EVALUATION_TOOL_URL environment variable not set.')
+		_logger.error('Error: EVALUATION_TOOL_URL environment variable not set.')
 		return None
 
 	if not secret_key:
-		logger.error('Error: EVALUATION_TOOL_SECRET_KEY environment variable not set.')
+		_logger.error('Error: EVALUATION_TOOL_SECRET_KEY environment variable not set.')
 		return None
 
 	endpoint_url = f'{convex_url}/api/getTestCase'
@@ -1463,36 +1463,36 @@ def fetch_tasks_from_server(convex_url: str, secret_key: str, test_case_name: st
 	}
 	payload = {'name': test_case_name}
 
-	logger.info(f"Fetching test case '{test_case_name}' from {endpoint_url}...")
+	_logger.info(f"Fetching test case '{test_case_name}' from {endpoint_url}...")
 
 	try:
 		response = requests.post(endpoint_url, headers=headers, json=payload)
 
-		logger.info(f'Fetch Status Code: {response.status_code}')
+		_logger.info(f'Fetch Status Code: {response.status_code}')
 
 		if response.status_code == 200:
 			try:
 				data = response.json()
-				logger.info(f"Successfully fetched test case data for '{test_case_name}'.")
+				_logger.info(f"Successfully fetched test case data for '{test_case_name}'.")
 				# Assuming the data is the list of tasks
 				if isinstance(data, list):
 					return data
 				else:
-					logger.error(f'Error: Fetched data is not a list. Type: {type(data)}')
-					logger.error(f'Raw response: {response.text}')
+					_logger.error(f'Error: Fetched data is not a list. Type: {type(data)}')
+					_logger.error(f'Raw response: {response.text}')
 					return None
 
 			except json.JSONDecodeError:
-				logger.error('Error: Failed to decode JSON response.')
-				logger.error(f'Raw response text: {response.text}')
+				_logger.error('Error: Failed to decode JSON response.')
+				_logger.error(f'Raw response text: {response.text}')
 				return None
 		else:
-			logger.error(f"Error: Failed to fetch test case '{test_case_name}'. Status: {response.status_code}")
-			logger.error(f'Response: {response.text}')
+			_logger.error(f"Error: Failed to fetch test case '{test_case_name}'. Status: {response.status_code}")
+			_logger.error(f'Response: {response.text}')
 			return None
 
 	except requests.exceptions.RequestException as e:
-		logger.error(f'Error during request to fetch test case: {type(e).__name__}: {e}')
+		_logger.error(f'Error during request to fetch test case: {type(e).__name__}: {e}')
 		return None
 
 
@@ -1511,7 +1511,7 @@ def get_git_info():
 		commit_timestamp = int(commit_timestamp_str)
 		return {'branch': branch, 'hash': commit_hash, 'timestamp': commit_timestamp}
 	except (subprocess.CalledProcessError, FileNotFoundError, ValueError) as e:
-		logger.warning(f'Could not retrieve git info: {type(e).__name__}: {e}. Using defaults.')
+		_logger.warning(f'Could not retrieve git info: {type(e).__name__}: {e}. Using defaults.')
 		return {
 			'branch': 'unknown',
 			'hash': 'unknown',
@@ -1523,7 +1523,7 @@ def get_git_info():
 def start_new_run(convex_url: str, secret_key: str, run_details: dict):
 	"""Sends a request to start a new evaluation run and returns the run ID."""
 	if not convex_url or not secret_key:
-		logger.error('Error: Convex URL or Secret Key not provided for starting run.')
+		_logger.error('Error: Convex URL or Secret Key not provided for starting run.')
 		return None
 
 	endpoint_url = f'{convex_url}/api/startRun'
@@ -1532,37 +1532,37 @@ def start_new_run(convex_url: str, secret_key: str, run_details: dict):
 		'Content-Type': 'application/json',
 	}
 
-	logger.info(f'Sending request to start run at {endpoint_url}...')
+	_logger.info(f'Sending request to start run at {endpoint_url}...')
 	# Avoid logging secret key in run_details if it were ever passed
 	loggable_details = {k: v for k, v in run_details.items() if k != 'secret_key'}
-	logger.info(f'Run details: {json.dumps(loggable_details, indent=2)}')
+	_logger.info(f'Run details: {json.dumps(loggable_details, indent=2)}')
 
 	try:
 		response = requests.post(endpoint_url, headers=headers, json=run_details)
-		logger.info(f'Start Run Status Code: {response.status_code}')
+		_logger.info(f'Start Run Status Code: {response.status_code}')
 
 		if response.status_code == 200:
 			try:
 				data = response.json()
 				run_id = data.get('runId')
 				if run_id:
-					logger.info(f'Successfully started run. Run ID: {run_id}')
+					_logger.info(f'Successfully started run. Run ID: {run_id}')
 					return run_id
 				else:
-					logger.error("Error: 'runId' not found in successful startRun response.")
-					logger.error(f'Raw response: {response.text}')
+					_logger.error("Error: 'runId' not found in successful startRun response.")
+					_logger.error(f'Raw response: {response.text}')
 					return None
 			except json.JSONDecodeError:
-				logger.error('Error: Failed to decode startRun JSON response.')
-				logger.error(f'Raw response text: {response.text}')
+				_logger.error('Error: Failed to decode startRun JSON response.')
+				_logger.error(f'Raw response text: {response.text}')
 				return None
 		else:
-			logger.error('Error: Failed to start run.')
-			logger.error(f'Response: {response.text}')
+			_logger.error('Error: Failed to start run.')
+			_logger.error(f'Response: {response.text}')
 			return None
 
 	except requests.exceptions.RequestException as e:
-		logger.error(f'Error during startRun request: {type(e).__name__}: {e}')
+		_logger.error(f'Error during startRun request: {type(e).__name__}: {e}')
 		return None
 
 
@@ -1571,16 +1571,16 @@ def save_task_result_to_server(convex_url: str, secret_key: str, result_details:
 	"""Sends a request to save a single task result to the Convex backend."""
 
 	if not convex_url:
-		logger.error('Error: EVALUATION_TOOL_URL environment variable not set for saving task result.')
+		_logger.error('Error: EVALUATION_TOOL_URL environment variable not set for saving task result.')
 		return False
 
 	if not secret_key:
-		logger.error('Error: EVALUATION_TOOL_SECRET_KEY environment variable not set for saving task result.')
+		_logger.error('Error: EVALUATION_TOOL_SECRET_KEY environment variable not set for saving task result.')
 		return False
 
 	# Ensure runId is present in the details being sent
 	if 'runId' not in result_details or not result_details['runId']:
-		logger.error("Error: 'runId' is missing or empty in result_details for saveTaskResult.")
+		_logger.error("Error: 'runId' is missing or empty in result_details for saveTaskResult.")
 		return False
 
 	endpoint_url = f'{convex_url}/api/saveTaskResult'
@@ -1589,31 +1589,31 @@ def save_task_result_to_server(convex_url: str, secret_key: str, result_details:
 		'Content-Type': 'application/json',
 	}
 
-	logger.info(f'Sending request to save task result at {endpoint_url}...')
-	logger.debug(f'Result details payload: {json.dumps(result_details, indent=2)}')  # Log details at debug level
+	_logger.info(f'Sending request to save task result at {endpoint_url}...')
+	_logger.debug(f'Result details payload: {json.dumps(result_details, indent=2)}')  # Log details at debug level
 
 	try:
 		response = requests.post(endpoint_url, headers=headers, json=result_details)
 
-		logger.info(f'Save Task Result Status Code: {response.status_code}')
+		_logger.info(f'Save Task Result Status Code: {response.status_code}')
 
 		if response.status_code == 200:
 			try:
 				data = response.json()
-				logger.info(f'Successfully saved task result: {data.get("message")}')
-				logger.info(f'Result ID: {data.get("resultId")}')
+				_logger.info(f'Successfully saved task result: {data.get("message")}')
+				_logger.info(f'Result ID: {data.get("resultId")}')
 				return True
 			except json.JSONDecodeError:
-				logger.error('Error: Failed to decode saveTaskResult JSON response.')
-				logger.error(f'Raw response text: {response.text}')
+				_logger.error('Error: Failed to decode saveTaskResult JSON response.')
+				_logger.error(f'Raw response text: {response.text}')
 				return False
 		else:
-			logger.error('Error: Failed to save task result.')
-			logger.error(f'Response: {response.text}')
+			_logger.error('Error: Failed to save task result.')
+			_logger.error(f'Response: {response.text}')
 			return False
 
 	except requests.exceptions.RequestException as e:
-		logger.error(f'Error during saveTaskResult request: {type(e).__name__}: {e}')
+		_logger.error(f'Error during saveTaskResult request: {type(e).__name__}: {e}')
 		return False
 
 
@@ -1656,12 +1656,12 @@ if __name__ == '__main__':
 	parser.add_argument('--planner-interval', type=int, default=1, help='Run planner every N steps (default: 1)')
 	args = parser.parse_args()
 
-	# Logger is already configured via agentbay.logger module
-	logger = get_logger(__name__)
+	# Logger is already configured via agentbay._logger module
+	_logger = get_logger(__name__)
 
 	if args.evaluate_only:
 		# Just evaluate existing results
-		logger.info('Evaluating existing results...')
+		_logger.info('Evaluating existing results...')
 		summary = calculate_local_summary()
 
 		# Save evaluation results
@@ -1670,39 +1670,39 @@ if __name__ == '__main__':
 		with open(eval_file, 'w') as f:
 			json.dump(summary, f, indent=2)
 
-		logger.info(f'Evaluation complete. Success rate: {summary["success_rate"]:.2%}')
-		logger.info(f'Average score: {summary["average_score"]:.2f}')
-		logger.info(f'Full results saved to {eval_file}')
+		_logger.info(f'Evaluation complete. Success rate: {summary["success_rate"]:.2%}')
+		_logger.info(f'Average score: {summary["average_score"]:.2f}')
+		_logger.info(f'Full results saved to {eval_file}')
 
 	else:
-		logger.info('Running tasks...')
+		_logger.info('Running tasks...')
 		# Run tasks and evaluate
 		load_dotenv()
 
 		# --- Clear trajectories if fresh_start is True ---
 		results_dir_path = Path('saved_trajectories')
 		if args.fresh_start:
-			logger.info(f'--fresh-start is True. Clearing {results_dir_path}...')
+			_logger.info(f'--fresh-start is True. Clearing {results_dir_path}...')
 			if results_dir_path.exists():
 				try:
 					shutil.rmtree(results_dir_path)
-					logger.info(f'Successfully removed {results_dir_path}.')
+					_logger.info(f'Successfully removed {results_dir_path}.')
 				except OSError as e:
-					logger.error(f'Error removing directory {results_dir_path}: {type(e).__name__}: {e}')
+					_logger.error(f'Error removing directory {results_dir_path}: {type(e).__name__}: {e}')
 					# Decide if you want to exit or continue
 					# exit(1) # Uncomment to exit on error
 			else:
-				logger.info(f'{results_dir_path} does not exist, no need to clear.')
+				_logger.info(f'{results_dir_path} does not exist, no need to clear.')
 
 			# Recreate the directory
 			try:
 				results_dir_path.mkdir(parents=True, exist_ok=True)
-				logger.info(f'Recreated directory {results_dir_path}.')
+				_logger.info(f'Recreated directory {results_dir_path}.')
 			except OSError as e:
-				logger.error(f'Error creating directory {results_dir_path}: {type(e).__name__}: {e}')
+				_logger.error(f'Error creating directory {results_dir_path}: {type(e).__name__}: {e}')
 				# exit(1) # Uncomment to exit on error
 		else:
-			logger.info('--fresh-start is False. Existing trajectories in saved_trajectories will be kept.')
+			_logger.info('--fresh-start is False. Existing trajectories in saved_trajectories will be kept.')
 		# -------------------------------------------------
 
 		# --- Fetch Tasks from Server ---
@@ -1711,29 +1711,29 @@ if __name__ == '__main__':
 		TEST_CASE_NAME = 'OnlineMind2Web'  # Name of the test case to fetch
 
 		if not CONVEX_URL or not SECRET_KEY:
-			logger.error('Error: EVALUATION_TOOL_URL or EVALUATION_TOOL_SECRET_KEY environment variables not set.')
+			_logger.error('Error: EVALUATION_TOOL_URL or EVALUATION_TOOL_SECRET_KEY environment variables not set.')
 			exit(1)  # Exit if config is missing
 
-		logger.info(f"Attempting to fetch task list '{TEST_CASE_NAME}' from server...")
+		_logger.info(f"Attempting to fetch task list '{TEST_CASE_NAME}' from server...")
 		fetched_task_data = fetch_tasks_from_server(CONVEX_URL, SECRET_KEY, TEST_CASE_NAME)
 
 		if fetched_task_data is None:
-			logger.error('Failed to fetch tasks from the server. Exiting.')
+			_logger.error('Failed to fetch tasks from the server. Exiting.')
 			exit(1)  # Exit if fetch fails
 
 		try:
 			tasks = [Task(**task_data) for task_data in fetched_task_data]
-			logger.info(f'Successfully loaded {len(tasks)} tasks from the server.')
+			_logger.info(f'Successfully loaded {len(tasks)} tasks from the server.')
 		except TypeError as e:
-			logger.error(
+			_logger.error(
 				f'Error creating Task objects from fetched data. Ensure the data structure matches Task requirements (task_id, confirmed_task, etc.). Error: {type(e).__name__}: {e}'
 			)
-			logger.error(f'First item in fetched data: {fetched_task_data[0] if fetched_task_data else "None"}')
+			_logger.error(f'First item in fetched data: {fetched_task_data[0] if fetched_task_data else "None"}')
 			exit(1)
 		# -----------------------------
 
 		# --- Start Run on Server ---
-		logger.info('Attempting to start a new run on the server...')
+		_logger.info('Attempting to start a new run on the server...')
 		git_info = get_git_info()
 
 		# Collect additional data from args to store with the run
@@ -1763,56 +1763,56 @@ if __name__ == '__main__':
 		run_id = start_new_run(CONVEX_URL, SECRET_KEY, run_data)
 
 		if not run_id:
-			logger.error('Failed to start a new run on the server. Exiting.')
+			_logger.error('Failed to start a new run on the server. Exiting.')
 			exit(1)
 
-		logger.info(f'Successfully obtained run ID: {run_id}. Proceeding with tasks...')
+		_logger.info(f'Successfully obtained run ID: {run_id}. Proceeding with tasks...')
 
 		# Log search mode being used
 		if args.use_serp:
 			if SERPER_API_KEY:
-				logger.info('🔍 Using SERP search (Serper API) instead of Google search')
+				_logger.info('🔍 Using SERP search (Serper API) instead of Google search')
 			else:
-				logger.warning('⚠️ --use-serp flag provided but SERPER_API_KEY not set. Search will fail!')
+				_logger.warning('⚠️ --use-serp flag provided but SERPER_API_KEY not set. Search will fail!')
 		else:
-			logger.info('🔍 Using default Google search')
+			_logger.info('🔍 Using default Google search')
 
 		# Log memory configuration
 		if args.enable_memory:
-			logger.info(f'🧠 Memory enabled: mem0 system with interval={args.memory_interval} steps')
+			_logger.info(f'🧠 Memory enabled: mem0 system with interval={args.memory_interval} steps')
 		else:
-			logger.info('🧠 Memory disabled')
+			_logger.info('🧠 Memory disabled')
 
 		# Log other agent configuration
-		logger.info(f'🎯 Max actions per step: {args.max_actions_per_step}')
+		_logger.info(f'🎯 Max actions per step: {args.max_actions_per_step}')
 
 		if args.validate_output:
-			logger.info('✅ Output validation enabled')
+			_logger.info('✅ Output validation enabled')
 		else:
-			logger.info('✅ Output validation disabled')
+			_logger.info('✅ Output validation disabled')
 
 		if args.planner_model:
-			logger.info(f'🗺️ Planner enabled: {args.planner_model} (interval={args.planner_interval} steps)')
+			_logger.info(f'🗺️ Planner enabled: {args.planner_model} (interval={args.planner_interval} steps)')
 		else:
-			logger.info('🗺️ Planner disabled')
+			_logger.info('🗺️ Planner disabled')
 		# -------------------------
 
 		# --- Get LLMs ---
-		logger.info(f'Instantiating agent LLM: {args.model}')
+		_logger.info(f'Instantiating agent LLM: {args.model}')
 		try:
 			# Get the selected LLM for the agent
 			llm = get_llm(args.model)
-			logger.info('Agent LLM instantiated successfully.')
+			_logger.info('Agent LLM instantiated successfully.')
 		except Exception as e:
-			logger.error(f'Failed to instantiate agent LLM ({args.model}): {type(e).__name__}: {e}', exc_info=True)
+			_logger.error(f'Failed to instantiate agent LLM ({args.model}): {type(e).__name__}: {e}', exc_info=True)
 			exit(1)
 
-		logger.info(f'Instantiating evaluation LLM: {args.eval_model}')
+		_logger.info(f'Instantiating evaluation LLM: {args.eval_model}')
 		try:
 			eval_model = get_llm(args.eval_model)
-			logger.info(f'Evaluation LLM ({args.eval_model}) instantiated successfully.')
+			_logger.info(f'Evaluation LLM ({args.eval_model}) instantiated successfully.')
 		except Exception as e:
-			logger.error(
+			_logger.error(
 				f'Failed to instantiate evaluation LLM ({args.eval_model}): {type(e).__name__}: {e}. Make sure required API keys are set.',
 				exc_info=True,
 			)
@@ -1821,12 +1821,12 @@ if __name__ == '__main__':
 		# Get planner LLM if specified
 		planner_llm = None
 		if args.planner_model:
-			logger.info(f'Instantiating planner LLM: {args.planner_model}')
+			_logger.info(f'Instantiating planner LLM: {args.planner_model}')
 			try:
 				planner_llm = get_llm(args.planner_model)
-				logger.info(f'Planner LLM ({args.planner_model}) instantiated successfully.')
+				_logger.info(f'Planner LLM ({args.planner_model}) instantiated successfully.')
 			except Exception as e:
-				logger.error(
+				_logger.error(
 					f'Failed to instantiate planner LLM ({args.planner_model}): {type(e).__name__}: {e}. Make sure required API keys are set.',
 					exc_info=True,
 				)
@@ -1858,7 +1858,7 @@ if __name__ == '__main__':
 			)
 		)
 
-		logger.info('Task completed. Saving results...')
+		_logger.info('Task completed. Saving results...')
 		# Save results
 		timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 		results_file = f'saved_trajectories/eval_results_{timestamp}.json'
@@ -1871,7 +1871,7 @@ if __name__ == '__main__':
 
 		# Print summary
 		summary = results['summary']
-		logger.info(f'Completed {summary["total_tasks"]} tasks.')
-		logger.info(f'Success rate: {summary["success_rate"]:.2%}')
-		logger.info(f'Average score: {summary["average_score"]:.2f}')
-		logger.info(f'Results saved to {results_file}')
+		_logger.info(f'Completed {summary["total_tasks"]} tasks.')
+		_logger.info(f'Success rate: {summary["success_rate"]:.2%}')
+		_logger.info(f'Average score: {summary["average_score"]:.2f}')
+		_logger.info(f'Results saved to {results_file}')

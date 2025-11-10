@@ -13,12 +13,12 @@ class ApartmentListings(BaseModel):
     listings: List[Listing]
 
 
-async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
-    logger.info("Navigating to apartments.com with extended timeout...")
+async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+    _logger.info("Navigating to apartments.com with extended timeout...")
     await agent.goto(
         "https://www.apartments.com/san-francisco-ca/2-bedrooms/"
     )
-    logger.info("Page navigation completed.")
+    _logger.info("Page navigation completed.")
 
     extract_method = config.get("extract_method", "domExtract")
     use_text_extract = extract_method == "textExtract"
@@ -35,11 +35,11 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
 
     if not extracted_data or not extracted_data.listings:
         error_msg = "Extraction failed: The process returned no listings."
-        logger.error(error_msg)
+        _logger.error(error_msg)
         return {"_success": False, "error": error_msg}
 
     listings = extracted_data.listings
-    logger.info(f"Successfully extracted {len(listings)} apartment listings.")
+    _logger.info(f"Successfully extracted {len(listings)} apartment listings.")
 
     expected_min_length = 20
     if len(listings) < expected_min_length:
@@ -47,14 +47,14 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
             f"Validation failed: Incorrect number of listings extracted. "
             f"Expected at least {expected_min_length}, but got {len(listings)}."
         )
-        logger.error(error_msg)
+        _logger.error(error_msg)
         return {"_success": False, "error": error_msg}
 
     first_listing = listings[0]
     if not first_listing.price.startswith("$") or not first_listing.address:
         error_msg = f"Validation failed: First listing format is incorrect. Got: {first_listing.dict()}"
-        logger.error(error_msg)
+        _logger.error(error_msg)
         return {"_success": False, "error": error_msg}
 
-    logger.info("✅ Validation passed for extract_apartments.")
+    _logger.info("✅ Validation passed for extract_apartments.")
     return {"_success": True}
