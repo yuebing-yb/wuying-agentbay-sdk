@@ -281,6 +281,37 @@ export class Mobile {
 
   /**
    * Send Android key code.
+   *
+   * @param key - Android key code (e.g., 4 for BACK, 3 for HOME, 24 for VOLUME_UP)
+   * @returns Promise resolving to BoolResult with success status
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstrateSendKey() {
+   *   try {
+   *     const result = await agentBay.create({ imageId: 'mobile_latest' });
+   *     if (result.success && result.session) {
+   *       const session = result.session;
+   *
+   *       // Send BACK key (key code 4)
+   *       const keyResult = await session.mobile.sendKey(4);
+   *       if (keyResult.success) {
+   *         console.log('Key sent successfully');
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateSendKey().catch(console.error);
+   * ```
    */
   async sendKey(key: number): Promise<BoolResult> {
     const args = { key };
@@ -464,6 +495,40 @@ export class Mobile {
 
   /**
    * Start an app.
+   *
+   * @param startCmd - Start command using "monkey -p" format (e.g., 'monkey -p com.android.settings')
+   * @param workDirectory - Optional working directory for the app
+   * @param activity - Optional activity name to launch
+   * @returns Promise resolving to ProcessResult containing launched process information
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstrateStartApp() {
+   *   try {
+   *     const result = await agentBay.create({ imageId: 'mobile_latest' });
+   *     if (result.success && result.session) {
+   *       const session = result.session;
+   *
+   *       // Start Settings app using monkey -p format
+   *       const startResult = await session.mobile.startApp('monkey -p com.android.settings');
+   *       if (startResult.success) {
+   *         console.log('App started successfully');
+   *         console.log('Processes:', startResult.processes);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateStartApp().catch(console.error);
+   * ```
    */
   async startApp(startCmd: string, workDirectory = '', activity = ''): Promise<ProcessResult> {
     const args = { start_cmd: startCmd, work_directory: workDirectory, activity };
@@ -516,6 +581,40 @@ export class Mobile {
 
   /**
    * Stop app by command.
+   *
+   * @param stopCmd - Package name of the app to stop (e.g., 'com.android.settings')
+   * @returns Promise resolving to BoolResult with success status
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   *
+   * async function demonstrateStopApp() {
+   *   try {
+   *     const result = await agentBay.create({ imageId: 'mobile_latest' });
+   *     if (result.success && result.session) {
+   *       const session = result.session;
+   *
+   *       // Start an app first
+   *       await session.mobile.startApp('monkey -p com.android.settings');
+   *
+   *       // Stop the app by package name
+   *       const stopResult = await session.mobile.stopAppByCmd('com.android.settings');
+   *       if (stopResult.success) {
+   *         console.log('App stopped successfully');
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateStopApp().catch(console.error);
+   * ```
    */
   async stopAppByCmd(stopCmd: string): Promise<BoolResult> {
     const args = { stop_cmd: stopCmd };
