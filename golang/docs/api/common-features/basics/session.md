@@ -230,7 +230,7 @@ GetLink(protocolType *string, port *int32) (*LinkResult, error)
 // Get link with specific protocol and valid port
 // Note: For ComputerUse images, port must be explicitly specified
 protocolType := "https"
-var validPort int32 = 30150  // Valid port in range [30100, 30199]
+	var validPort int32 = 30150  // Valid port in range [30100, 30199]
 linkResult, err := session.GetLink(&protocolType, &validPort)
 if err != nil {
 	fmt.Printf("Error getting link: %v\n", err)
@@ -241,7 +241,7 @@ fmt.Printf("Session link: %s (RequestID: %s)\n", linkResult.Link, linkResult.Req
 // Output: Session link: https://gw-cn-hangzhou-ai-linux.wuyinggw.com:8008/... (RequestID: 57D0226F-EF89-1C95-929F-577EC40A1F20)
 
 // Example of invalid port usage (will fail)
-var invalidPort int32 = 8080  // Invalid port - outside [30100, 30199] range
+	var invalidPort int32 = 8080  // Invalid port - outside [30100, 30199] range
 _, err = session.GetLink(nil, &invalidPort)
 if err != nil {
 	fmt.Printf("Expected error with invalid port: %v\n", err)
@@ -348,6 +348,321 @@ if !result2.Success {
 
 **See Also:**
 - For a complete example, see [MCP Tool Direct Call Example](../../../../examples/common-features/basics/mcp_tool_direct_call/README.md)
+
+### PauseAsync
+
+Asynchronously pause this session, putting it into a dormant state to reduce resource usage and costs.
+
+```go
+PauseAsync(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+```
+
+**Parameters:**
+- `timeout` (int): Timeout in seconds to wait for the session to pause. Defaults to 600 seconds if <= 0.
+- `pollInterval` (float64): Interval in seconds between status polls. Defaults to 2.0 seconds if <= 0.
+
+**Returns:**
+- `*models.SessionPauseResult`: A result object containing:
+  - `Success` (bool): Whether the pause operation was successful
+  - `RequestID` (string): Unique identifier for the API request
+  - `Status` (string): Current status of the session ("PAUSED" when successful)
+  - `ErrorMessage` (string): Error message if the operation failed
+  - `Code` (string): Error code if the operation failed
+  - `Message` (string): Error message if the operation failed
+  - `HTTPCode` (int32): HTTP status code if the operation failed
+- `error`: An error if the call fails at the transport level
+
+**Behavior:**
+- Calls the PauseSessionAsync API to initiate the pause operation
+- Polls the GetSession API to check session status until it becomes "PAUSED" or timeout
+- During pause, compute resources are suspended but storage is preserved
+- Resource usage and costs are lower during pause
+
+**Example:**
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+	// Initialize the SDK
+	client, err := agentbay.NewAgentBay("your_api_key")
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Create a session
+	createResult, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error creating session: %v\n", err)
+		os.Exit(1)
+	}
+
+	session := createResult.Session
+	fmt.Printf("Session created with ID: %s\n", session.SessionID)
+
+	// Perform your tasks...
+
+	// Asynchronously pause the session to reduce resource usage
+	pauseResult, err := session.PauseAsync(600, 2.0)
+	if err != nil {
+		fmt.Printf("Error pausing session: %v\n", err)
+		os.Exit(1)
+	}
+
+	if pauseResult.Success {
+		fmt.Println("Session paused successfully")
+		fmt.Printf("Request ID: %s\n", pauseResult.RequestID)
+		// Output: Session paused successfully
+		// Output: Request ID: B1F98082-52F0-17F7-A149-7722D6205AD6
+	} else {
+		fmt.Printf("Failed to pause session: %s\n", pauseResult.ErrorMessage)
+	}
+}
+```
+
+### ResumeAsync
+
+Asynchronously resume this session from a paused state to continue work.
+
+```go
+ResumeAsync(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+```
+
+**Parameters:**
+- `timeout` (int): Timeout in seconds to wait for the session to resume. Defaults to 600 seconds if <= 0.
+- `pollInterval` (float64): Interval in seconds between status polls. Defaults to 2.0 seconds if <= 0.
+
+**Returns:**
+- `*models.SessionResumeResult`: A result object containing:
+  - `Success` (bool): Whether the resume operation was successful
+  - `RequestID` (string): Unique identifier for the API request
+  - `Status` (string): Current status of the session ("RUNNING" when successful)
+  - `ErrorMessage` (string): Error message if the operation failed
+  - `Code` (string): Error code if the operation failed
+  - `Message` (string): Error message if the operation failed
+  - `HTTPCode` (int32): HTTP status code if the operation failed
+- `error`: An error if the call fails at the transport level
+
+**Behavior:**
+- Calls the ResumeSessionAsync API to initiate the resume operation
+- Polls the GetSession API to check session status until it becomes "RUNNING" or timeout
+- All session state is preserved during pause and resume operations
+
+**Example:**
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+	// Initialize the SDK
+	client, err := agentbay.NewAgentBay("your_api_key")
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get a paused session (assuming you have a paused session with session_id)
+	getResult, err := client.Get("your_paused_session_id")
+	if err != nil {
+		fmt.Printf("Error getting session: %v\n", err)
+		os.Exit(1)
+	}
+
+	if getResult.Success {
+		session := getResult.Session
+		
+		// Asynchronously resume the session to continue work
+		resumeResult, err := session.ResumeAsync(600, 2.0)
+		if err != nil {
+			fmt.Printf("Error resuming session: %v\n", err)
+			os.Exit(1)
+		}
+
+		if resumeResult.Success {
+			fmt.Println("Session resumed successfully")
+			fmt.Printf("Request ID: %s\n", resumeResult.RequestID)
+			// Output: Session resumed successfully
+			// Output: Request ID: C2A87193-63E1-28G8-B25A-8833E7316BE7
+			
+			// Continue with your tasks...
+			result, err := session.Command.ExecuteCommand("echo 'Hello after async resume!'")
+			if err != nil {
+				fmt.Printf("Error executing command: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Command output: %s\n", result.Output)
+		} else {
+			fmt.Printf("Failed to resume session: %s\n", resumeResult.ErrorMessage)
+		}
+	} else {
+		fmt.Printf("Failed to get session: %s\n", getResult.ErrorMessage)
+	}
+}
+```
+
+## AgentBay Methods
+
+### Pause
+
+Synchronously pause a session, putting it into a dormant state to reduce resource usage and costs.
+
+```go
+Pause(session *Session) (*models.SessionPauseResult, error)
+```
+
+**Parameters:**
+- `session` (*Session): The session to pause.
+
+**Returns:**
+- `*models.SessionPauseResult`: A result object containing:
+  - `Success` (bool): Whether the pause operation was successful
+  - `RequestID` (string): Unique identifier for the API request
+  - `Status` (string): Current status of the session ("PAUSED" when successful)
+  - `ErrorMessage` (string): Error message if the operation failed
+- `error`: An error if the call fails at the transport level
+
+**Behavior:**
+- Calls the session's `PauseAsync` method with default parameters (600s timeout, 2.0s poll interval)
+- This is a convenience method that wraps the asynchronous operation
+
+**Example:**
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+	// Initialize the SDK
+	client, err := agentbay.NewAgentBay("your_api_key")
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Create a session
+	createResult, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error creating session: %v\n", err)
+		os.Exit(1)
+	}
+
+	session := createResult.Session
+	fmt.Printf("Session created with ID: %s\n", session.SessionID)
+
+	// Perform your tasks...
+
+	// Pause the session using AgentBay's method
+	pauseResult, err := client.Pause(session)
+	if err != nil {
+		fmt.Printf("Error pausing session: %v\n", err)
+		os.Exit(1)
+	}
+
+	if pauseResult.Success {
+		fmt.Println("Session paused successfully")
+		fmt.Printf("Request ID: %s\n", pauseResult.RequestID)
+	} else {
+		fmt.Printf("Failed to pause session: %s\n", pauseResult.ErrorMessage)
+	}
+}
+```
+
+### Resume
+
+Synchronously resume a session from a paused state to continue work.
+
+```go
+Resume(session *Session) (*models.SessionResumeResult, error)
+```
+
+**Parameters:**
+- `session` (*Session): The session to resume.
+
+**Returns:**
+- `*models.SessionResumeResult`: A result object containing:
+  - `Success` (bool): Whether the resume operation was successful
+  - `RequestID` (string): Unique identifier for the API request
+  - `Status` (string): Current status of the session ("RUNNING" when successful)
+  - `ErrorMessage` (string): Error message if the operation failed
+- `error`: An error if the call fails at the transport level
+
+**Behavior:**
+- Calls the session's `ResumeAsync` method with default parameters (600s timeout, 2.0s poll interval)
+- This is a convenience method that wraps the asynchronous operation
+
+**Example:**
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+	// Initialize the SDK
+	client, err := agentbay.NewAgentBay("your_api_key")
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get a paused session (assuming you have a paused session with session_id)
+	getResult, err := client.Get("your_paused_session_id")
+	if err != nil {
+		fmt.Printf("Error getting session: %v\n", err)
+		os.Exit(1)
+	}
+
+	if getResult.Success {
+		session := getResult.Session
+		
+		// Resume the session using AgentBay's method
+		resumeResult, err := client.Resume(session)
+		if err != nil {
+			fmt.Printf("Error resuming session: %v\n", err)
+			os.Exit(1)
+		}
+
+		if resumeResult.Success {
+			fmt.Println("Session resumed successfully")
+			fmt.Printf("Request ID: %s\n", resumeResult.RequestID)
+			
+			// Continue with your tasks...
+			result, err := session.Command.ExecuteCommand("echo 'Hello after resume!'")
+			if err != nil {
+				fmt.Printf("Error executing command: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Command output: %s\n", result.Output)
+		} else {
+			fmt.Printf("Failed to resume session: %s\n", resumeResult.ErrorMessage)
+		}
+	} else {
+		fmt.Printf("Failed to get session: %s\n", getResult.ErrorMessage)
+	}
+}
+```
 
 ## Session Creation with Extra Configurations
 

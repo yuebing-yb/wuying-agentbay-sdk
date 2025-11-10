@@ -10,6 +10,7 @@ import (
 
 	"math/rand"
 
+	"github.com/alibabacloud-go/tea/dara"
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/agent"
@@ -1082,4 +1083,258 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 	}
 
 	return ""
+}
+
+// PauseAsync asynchronously pauses this session, putting it into a dormant state to reduce resource usage and costs.
+//
+// Parameters:
+//   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+//   - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+//
+// Returns:
+//   - *models.SessionPauseResult: A result object containing success status, request ID, and error message if any.
+func (s *Session) PauseAsync(timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
+	// Set default values if not provided
+	if timeout <= 0 {
+		timeout = 600
+	}
+	if pollInterval <= 0 {
+		pollInterval = 2.0
+	}
+
+	// Create pause request
+	request := &mcp.PauseSessionAsyncRequest{}
+	request.SetAuthorization(fmt.Sprintf("Bearer %s", s.GetAPIKey()))
+	request.SetSessionId(s.SessionID)
+
+	// Call PauseSessionAsync API to initiate the pause operation
+	response, err := s.GetClient().PauseSessionAsync(request)
+	if err != nil {
+		return &models.SessionPauseResult{
+			ApiResponse:  models.WithRequestID(""),
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to call PauseSessionAsync API: %v", err),
+		}, nil
+	}
+
+	// Extract request ID
+	requestID := models.ExtractRequestID(response)
+
+	// Check for API-level errors
+	if response.Body == nil {
+		return &models.SessionPauseResult{
+			ApiResponse:  models.WithRequestID(requestID),
+			Success:      false,
+			ErrorMessage: "Invalid response body",
+		}, nil
+	}
+
+	body := response.Body
+	if !dara.IsNil(body.Success) && !*body.Success {
+		errorMessage := fmt.Sprintf("[%s] %s", tea.StringValue(body.Code), tea.StringValue(body.Message))
+		if errorMessage == "[]" {
+			errorMessage = "Unknown error"
+		}
+		return &models.SessionPauseResult{
+			ApiResponse:  models.WithRequestID(requestID),
+			Success:      false,
+			ErrorMessage: errorMessage,
+			Code:         tea.StringValue(body.Code),
+			Message:      tea.StringValue(body.Message),
+			HTTPCode:     tea.Int32Value(body.HttpStatusCode),
+		}, nil
+	}
+
+	// Pause initiated successfully
+	fmt.Printf("PauseSessionAsync: Session %s pause initiated successfully\n", s.SessionID)
+
+	// Poll for session status until PAUSED or timeout
+	startTime := time.Now()
+	maxAttempts := int(float64(timeout) / pollInterval)
+
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		// Get session status
+		getSessionResult, err := s.AgentBay.GetSession(s.SessionID)
+		if err != nil || !getSessionResult.Success {
+			errorMessage := "Failed to get session status"
+			if err != nil {
+				errorMessage = fmt.Sprintf("Failed to get session status: %v", err)
+			} else if getSessionResult.ErrorMessage != "" {
+				errorMessage = fmt.Sprintf("Failed to get session status: %s", getSessionResult.ErrorMessage)
+			}
+			return &models.SessionPauseResult{
+				ApiResponse:  models.WithRequestID(getSessionResult.GetRequestID()),
+				Success:      false,
+				ErrorMessage: errorMessage,
+			}, nil
+		}
+
+		// Check session status
+		if getSessionResult.Data != nil {
+			status := getSessionResult.Data.Status
+			if status == "" {
+				status = "UNKNOWN"
+			}
+			fmt.Printf("Session status: %s (attempt %d/%d)\n", status, attempt+1, maxAttempts)
+
+			// Check if session is paused
+			if status == "PAUSED" {
+				elapsed := time.Since(startTime)
+				fmt.Printf("Session paused successfully in %v\n", elapsed)
+				return &models.SessionPauseResult{
+					ApiResponse: models.WithRequestID(getSessionResult.GetRequestID()),
+					Success:     true,
+					Status:      status,
+				}, nil
+			} else if status != "RUNNING" && status != "PAUSING" {
+				// If status is not RUNNING, PAUSING, or PAUSED, treat as unexpected
+				elapsed := time.Since(startTime)
+				fmt.Printf("Session in unexpected state after %v: %s\n", elapsed, status)
+				// Continue polling as the state might transition to PAUSED
+			}
+		}
+
+		// Wait before next query (using time.Sleep to avoid blocking)
+		// Only wait if we're not at the last attempt
+		if attempt < maxAttempts-1 {
+			time.Sleep(time.Duration(pollInterval*1000) * time.Millisecond)
+		}
+	}
+
+	// Timeout
+	elapsed := time.Since(startTime)
+	errorMessage := fmt.Sprintf("Session pause timed out after %v", elapsed)
+	fmt.Printf("ERROR: %s\n", errorMessage)
+	return &models.SessionPauseResult{
+		ApiResponse:  models.WithRequestID(""),
+		Success:      false,
+		ErrorMessage: errorMessage,
+	}, nil
+}
+
+// ResumeAsync asynchronously resumes this session from a paused state to continue work.
+//
+// Parameters:
+//   - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+//   - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+//
+// Returns:
+//   - *models.SessionResumeResult: A result object containing success status, request ID, and error message if any.
+func (s *Session) ResumeAsync(timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
+	// Set default values if not provided
+	if timeout <= 0 {
+		timeout = 600
+	}
+	if pollInterval <= 0 {
+		pollInterval = 2.0
+	}
+
+	// Create resume request
+	request := &mcp.ResumeSessionAsyncRequest{}
+	request.SetAuthorization(fmt.Sprintf("Bearer %s", s.GetAPIKey()))
+	request.SetSessionId(s.SessionID)
+
+	// Call ResumeSessionAsync API to initiate the resume operation
+	response, err := s.GetClient().ResumeSessionAsync(request)
+	if err != nil {
+		return &models.SessionResumeResult{
+			ApiResponse:  models.WithRequestID(""),
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to call ResumeSessionAsync API: %v", err),
+		}, nil
+	}
+
+	// Extract request ID
+	requestID := models.ExtractRequestID(response)
+
+	// Check for API-level errors
+	if response.Body == nil {
+		return &models.SessionResumeResult{
+			ApiResponse:  models.WithRequestID(requestID),
+			Success:      false,
+			ErrorMessage: "Invalid response body",
+		}, nil
+	}
+
+	body := response.Body
+	if !dara.IsNil(body.Success) && !*body.Success {
+		errorMessage := fmt.Sprintf("[%s] %s", tea.StringValue(body.Code), tea.StringValue(body.Message))
+		if errorMessage == "[]" {
+			errorMessage = "Unknown error"
+		}
+		return &models.SessionResumeResult{
+			ApiResponse:  models.WithRequestID(requestID),
+			Success:      false,
+			ErrorMessage: errorMessage,
+			Code:         tea.StringValue(body.Code),
+			Message:      tea.StringValue(body.Message),
+			HTTPCode:     tea.Int32Value(body.HttpStatusCode),
+		}, nil
+	}
+
+	// Resume initiated successfully
+	fmt.Printf("ResumeSessionAsync: Session %s resume initiated successfully\n", s.SessionID)
+
+	// Poll for session status until RUNNING or timeout
+	startTime := time.Now()
+	maxAttempts := int(float64(timeout) / pollInterval)
+
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		// Get session status
+		getSessionResult, err := s.AgentBay.GetSession(s.SessionID)
+		if err != nil || !getSessionResult.Success {
+			errorMessage := "Failed to get session status"
+			if err != nil {
+				errorMessage = fmt.Sprintf("Failed to get session status: %v", err)
+			} else if getSessionResult.ErrorMessage != "" {
+				errorMessage = fmt.Sprintf("Failed to get session status: %s", getSessionResult.ErrorMessage)
+			}
+			return &models.SessionResumeResult{
+				ApiResponse:  models.WithRequestID(getSessionResult.GetRequestID()),
+				Success:      false,
+				ErrorMessage: errorMessage,
+			}, nil
+		}
+
+		// Check session status
+		if getSessionResult.Data != nil {
+			status := getSessionResult.Data.Status
+			if status == "" {
+				status = "UNKNOWN"
+			}
+			fmt.Printf("Session status: %s (attempt %d/%d)\n", status, attempt+1, maxAttempts)
+
+			// Check if session is running
+			if status == "RUNNING" {
+				elapsed := time.Since(startTime)
+				fmt.Printf("Session resumed successfully in %v\n", elapsed)
+				return &models.SessionResumeResult{
+					ApiResponse: models.WithRequestID(getSessionResult.GetRequestID()),
+					Success:     true,
+					Status:      status,
+				}, nil
+			} else if status != "PAUSED" && status != "RESUMING" {
+				// If status is not PAUSED, RESUMING, or RUNNING, treat as unexpected
+				elapsed := time.Since(startTime)
+				fmt.Printf("Session in unexpected state after %v: %s\n", elapsed, status)
+				// Continue polling as the state might transition to RUNNING
+			}
+		}
+
+		// Wait before next query (using time.Sleep to avoid blocking)
+		// Only wait if we're not at the last attempt
+		if attempt < maxAttempts-1 {
+			time.Sleep(time.Duration(pollInterval*1000) * time.Millisecond)
+		}
+	}
+
+	// Timeout
+	elapsed := time.Since(startTime)
+	errorMessage := fmt.Sprintf("Session resume timed out after %v", elapsed)
+	fmt.Printf("ERROR: %s\n", errorMessage)
+	return &models.SessionResumeResult{
+		ApiResponse:  models.WithRequestID(""),
+		Success:      false,
+		ErrorMessage: errorMessage,
+	}, nil
 }

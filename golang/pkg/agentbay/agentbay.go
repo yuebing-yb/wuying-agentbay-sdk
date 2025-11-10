@@ -743,6 +743,7 @@ type GetSessionData struct {
 	Token              string
 	VpcResource        bool
 	ResourceUrl        string
+	Status             string
 }
 
 // GetSession retrieves session information by session ID
@@ -798,32 +799,35 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 
 		if response.Body.Data != nil {
 			data := &GetSessionData{}
-			if response.Body.Data.AppInstanceId != nil {
-				data.AppInstanceID = *response.Body.Data.AppInstanceId
+			if response.Body.Data.GetAppInstanceId() != nil {
+				data.AppInstanceID = *response.Body.Data.GetAppInstanceId()
 			}
-			if response.Body.Data.ResourceId != nil {
-				data.ResourceID = *response.Body.Data.ResourceId
+			if response.Body.Data.GetResourceId() != nil {
+				data.ResourceID = *response.Body.Data.GetResourceId()
 			}
-			if response.Body.Data.SessionId != nil {
-				data.SessionID = *response.Body.Data.SessionId
+			if response.Body.Data.GetSessionId() != nil {
+				data.SessionID = *response.Body.Data.GetSessionId()
 			}
-			if response.Body.Data.Success != nil {
-				data.Success = *response.Body.Data.Success
+			if response.Body.Data.GetSuccess() != nil {
+				data.Success = *response.Body.Data.GetSuccess()
 			}
-			if response.Body.Data.HttpPort != nil {
-				data.HttpPort = *response.Body.Data.HttpPort
+			if response.Body.Data.GetHttpPort() != nil {
+				data.HttpPort = *response.Body.Data.GetHttpPort()
 			}
-			if response.Body.Data.NetworkInterfaceIp != nil {
-				data.NetworkInterfaceIP = *response.Body.Data.NetworkInterfaceIp
+			if response.Body.Data.GetNetworkInterfaceIp() != nil {
+				data.NetworkInterfaceIP = *response.Body.Data.GetNetworkInterfaceIp()
 			}
-			if response.Body.Data.Token != nil {
-				data.Token = *response.Body.Data.Token
+			if response.Body.Data.GetToken() != nil {
+				data.Token = *response.Body.Data.GetToken()
 			}
-			if response.Body.Data.VpcResource != nil {
-				data.VpcResource = *response.Body.Data.VpcResource
+			if response.Body.Data.GetVpcResource() != nil {
+				data.VpcResource = *response.Body.Data.GetVpcResource()
 			}
-			if response.Body.Data.ResourceUrl != nil {
-				data.ResourceUrl = *response.Body.Data.ResourceUrl
+			if response.Body.Data.GetResourceUrl() != nil {
+				data.ResourceUrl = *response.Body.Data.GetResourceUrl()
+			}
+			if response.Body.Data.GetStatus() != nil {
+				data.Status = *response.Body.Data.GetStatus()
 			}
 			result.Data = data
 
@@ -965,4 +969,28 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 		Success: true,
 		Session: session,
 	}, nil
+}
+
+// Pause synchronously pauses a session, putting it into a dormant state to reduce resource usage and costs.
+//
+// Parameters:
+//   - session: The session to pause.
+//
+// Returns:
+//   - *models.SessionPauseResult: A result object containing success status, request ID, and error message if any.
+func (ab *AgentBay) Pause(session *Session) (*models.SessionPauseResult, error) {
+	// Call session's PauseAsync method with default parameters
+	return session.PauseAsync(600, 2.0)
+}
+
+// Resume synchronously resumes a session from a paused state to continue work.
+//
+// Parameters:
+//   - session: The session to resume.
+//
+// Returns:
+//   - *models.SessionResumeResult: A result object containing success status, request ID, and error message if any.
+func (ab *AgentBay) Resume(session *Session) (*models.SessionResumeResult, error) {
+	// Call session's ResumeAsync method with default parameters
+	return session.ResumeAsync(600, 2.0)
 }
