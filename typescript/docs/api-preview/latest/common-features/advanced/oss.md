@@ -8,9 +8,6 @@ Handles OSS operations in the AgentBay cloud environment.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](oss.md#constructor)
 
 ### Methods
 
@@ -19,24 +16,6 @@ Handles OSS operations in the AgentBay cloud environment.
 - [envInit](oss.md#envinit)
 - [upload](oss.md#upload)
 - [uploadAnonymous](oss.md#uploadanonymous)
-
-## Constructors
-
-### constructor
-
-• **new Oss**(`session`): [`Oss`](oss.md)
-
-Initialize an Oss object.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `session` | [`Session`](../basics/session.md) | The Session instance that this Oss belongs to. |
-
-#### Returns
-
-[`Oss`](oss.md)
 
 ## Methods
 

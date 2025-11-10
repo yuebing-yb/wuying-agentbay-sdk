@@ -16,17 +16,10 @@ text input, app management, and screenshot capture. It supports Android device a
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](mobile.md#constructor)
 
 ### Methods
 
 - [configure](mobile.md#configure)
-- [getAdbUrl](mobile.md#getadburl)
-- [getAllUIElements](mobile.md#getalluielements)
-- [getClickableUIElements](mobile.md#getclickableuielements)
-- [getInstalledApps](mobile.md#getinstalledapps)
 - [inputText](mobile.md#inputtext)
 - [screenshot](mobile.md#screenshot)
 - [sendKey](mobile.md#sendkey)
@@ -39,22 +32,6 @@ text input, app management, and screenshot capture. It supports Android device a
 - [stopAppByCmd](mobile.md#stopappbycmd)
 - [swipe](mobile.md#swipe)
 - [tap](mobile.md#tap)
-
-## Constructors
-
-### constructor
-
-• **new Mobile**(`session`): [`Mobile`](mobile.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `session` | `MobileSession` |
-
-#### Returns
-
-[`Mobile`](mobile.md)
 
 ## Methods
 
@@ -77,87 +54,6 @@ resolution lock and app access management.
 `Promise`\<`OperationResult`\>
 
 OperationResult indicating success or failure
-
-___
-
-### getAdbUrl
-
-▸ **getAdbUrl**(`adbkeyPub`): `Promise`\<`AdbUrlResult`\>
-
-Retrieves the ADB connection URL for the mobile environment.
-This method is only supported in mobile environments (mobile_latest image).
-It uses the provided ADB public key to establish the connection and returns
-the ADB connect URL.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `adbkeyPub` | `string` | ADB public key for authentication |
-
-#### Returns
-
-`Promise`\<`AdbUrlResult`\>
-
-AdbUrlResult containing the ADB connection URL
-
-___
-
-### getAllUIElements
-
-▸ **getAllUIElements**(`timeoutMs?`): `Promise`\<`UIElementsResult`\>
-
-Get all UI elements.
-
-#### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `timeoutMs` | `number` | `3000` |
-
-#### Returns
-
-`Promise`\<`UIElementsResult`\>
-
-___
-
-### getClickableUIElements
-
-▸ **getClickableUIElements**(`timeoutMs?`): `Promise`\<`UIElementsResult`\>
-
-Get clickable UI elements.
-
-#### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `timeoutMs` | `number` | `5000` |
-
-#### Returns
-
-`Promise`\<`UIElementsResult`\>
-
-___
-
-### getInstalledApps
-
-▸ **getInstalledApps**(`startMenu?`, `desktop?`, `ignoreSystemApps?`): `Promise`\<`InstalledAppsResult`\>
-
-Get installed apps.
-
-#### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `startMenu` | `boolean` | `false` |
-| `desktop` | `boolean` | `true` |
-| `ignoreSystemApps` | `boolean` | `true` |
-
-#### Returns
-
-`Promise`\<`InstalledAppsResult`\>
-
-___
 
 ### inputText
 

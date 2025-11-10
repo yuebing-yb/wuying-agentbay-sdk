@@ -21,11 +21,14 @@ type docMapping struct {
 	Target          string
 	Title           string
 	PackagePath     string
+	ModuleName      string   // Optional: module name for metadata lookup (defaults to extractModuleName(PackagePath))
 	TypeNames       []string
 	FuncNames       []string
 	ValueNames      []string
 	IncludeAllTypes bool
 	IncludeAllFuncs bool
+	HiddenMethods   []string // Methods to hide from documentation
+	PriorityTypes   []string // Types to show first (main types before auxiliary types)
 }
 
 type packageDoc struct {
@@ -41,6 +44,17 @@ type Metadata struct {
 type GlobalConfig struct {
 	ImageRequirements map[string]string `yaml:"image_requirements"`
 	BestPractices     map[string]string `yaml:"best_practices"`
+	AutoFilterRules   AutoFilterRules   `yaml:"auto_filter_rules"`
+}
+
+type AutoFilterRules struct {
+	ExcludeSimpleGetters         []string `yaml:"exclude_simple_getters"`
+	ExcludeVpcHelpers            []string `yaml:"exclude_vpc_helpers"`
+	ExcludeSerializationMethods  []string `yaml:"exclude_serialization_methods"`
+	ExcludeMarshalMethods        []string `yaml:"exclude_marshal_methods"`
+	ExcludeLowercaseMethods      bool     `yaml:"exclude_lowercase_methods"`
+	ExcludeValidationMethods     bool     `yaml:"exclude_validation_methods"`
+	ExcludeInternalHelpers       bool     `yaml:"exclude_internal_helpers"`
 }
 
 type ModuleConfig struct {
@@ -89,18 +103,23 @@ var mappings = []docMapping{
 		Target:      "common-features/basics/session.md",
 		Title:       "Session",
 		PackagePath: "pkg/agentbay",
+		ModuleName:  "session", // Use "session" for metadata lookup instead of "agentbay"
 		TypeNames: []string{
+			// Main types (show first)
+			"Session",
+			"CreateSessionParams",
+			// Result types
 			"SessionResult",
 			"SessionListResult",
 			"InfoResult",
 			"LabelResult",
 			"LinkResult",
 			"DeleteResult",
-			"McpTool",
 			"McpToolsResult",
+			// MCP and Info types
+			"McpTool",
 			"SessionInfo",
-			"Session",
-			"CreateSessionParams",
+			// Policy types
 			"ContextSync",
 			"SyncPolicy",
 			"UploadPolicy",
@@ -110,6 +129,23 @@ var mappings = []docMapping{
 			"RecyclePolicy",
 			"WhiteList",
 			"BWList",
+		},
+		PriorityTypes: []string{
+			"Session",
+			"CreateSessionParams",
+		},
+		// HiddenMethods now handled by auto-filter rules in metadata.yaml
+		// Only need to specify special cases not covered by auto-rules
+		HiddenMethods: []string{
+			"FindServerForTool",      // Internal MCP tool lookup helper
+			"callMcpToolAPI",         // Internal implementation
+			"callMcpToolVPC",         // Internal implementation
+			"extractTextContentFromResponse", // Internal helper
+			"GetCommand",             // Internal accessor
+			"GetMcpTools",            // Internal accessor
+			"ensureDefaults",         // Internal helper
+			"CallMcpToolForBrowser",  // Duplicate interface method
+			"GetLinkForBrowser",      // Duplicate interface method
 		},
 		IncludeAllFuncs: true,
 	},
@@ -474,8 +510,13 @@ func generateDoc(projectRoot, docsRoot string, mapping docMapping, metadata *Met
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "# %s API Reference\n\n", mapping.Title)
 
+	// Determine module name for metadata lookup
+	moduleName := mapping.ModuleName
+	if moduleName == "" {
+		moduleName = extractModuleName(mapping.PackagePath)
+	}
+
 	// Add tutorial section
-	moduleName := extractModuleName(mapping.PackagePath)
 	tutorialSection := getTutorialSection(moduleName, metadata)
 	if tutorialSection != "" {
 		buf.WriteString(tutorialSection)
@@ -517,7 +558,7 @@ func generateDoc(projectRoot, docsRoot string, mapping docMapping, metadata *Met
 		return err
 	}
 	for _, typ := range types {
-		writeType(&buf, pkgDoc, typ)
+		writeType(&buf, pkgDoc, typ, mapping, metadata.Global.AutoFilterRules)
 	}
 
 	// Add functions from source code
@@ -525,9 +566,16 @@ func generateDoc(projectRoot, docsRoot string, mapping docMapping, metadata *Met
 	if err != nil {
 		return err
 	}
-	if len(funcs) > 0 {
+	// Filter out hidden functions (apply same rules as methods)
+	visibleFuncs := make([]*doc.Func, 0)
+	for _, fn := range funcs {
+		if !shouldSkipMethod(fn.Name, fn.Doc, mapping.HiddenMethods, metadata.Global.AutoFilterRules) {
+			visibleFuncs = append(visibleFuncs, fn)
+		}
+	}
+	if len(visibleFuncs) > 0 {
 		buf.WriteString("## Functions\n\n")
-		for _, fn := range funcs {
+		for _, fn := range visibleFuncs {
 			writeFunc(&buf, pkgDoc, fn)
 		}
 	}
@@ -691,7 +739,106 @@ func selectValues(docPkg *doc.Package, names []string) ([]*doc.Value, error) {
 	return results, nil
 }
 
-func writeType(buf *bytes.Buffer, pkg *packageDoc, typ *doc.Type) {
+// toCamelCase converts snake_case to CamelCase (e.g., get_api_key -> GetApiKey)
+func toCamelCase(s string) string {
+	parts := strings.Split(s, "_")
+	for i, part := range parts {
+		if part != "" {
+			parts[i] = strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// matchesMethodName checks if a method name matches a pattern (supports snake_case and CamelCase)
+func matchesMethodName(methodName, pattern string) bool {
+	// Direct case-insensitive match
+	if strings.EqualFold(methodName, pattern) {
+		return true
+	}
+	// Convert pattern from snake_case to CamelCase and compare
+	camelPattern := toCamelCase(pattern)
+	if strings.EqualFold(methodName, camelPattern) {
+		return true
+	}
+	return false
+}
+
+// shouldSkipMethod checks if a method should be hidden from documentation
+func shouldSkipMethod(methodName string, methodDoc string, hiddenMethods []string, autoRules AutoFilterRules) bool {
+	// Convert to lowercase for case-insensitive comparison
+	lowerName := strings.ToLower(methodName)
+
+	// Check if method is in the explicit hidden methods list
+	for _, hidden := range hiddenMethods {
+		if matchesMethodName(methodName, hidden) {
+			return true
+		}
+	}
+
+	// Skip methods starting with underscore (private methods)
+	if strings.HasPrefix(methodName, "_") {
+		return true
+	}
+
+	// Apply auto-filter rules
+
+	// 1. Exclude simple getters
+	for _, getter := range autoRules.ExcludeSimpleGetters {
+		if matchesMethodName(methodName, getter) {
+			return true
+		}
+	}
+
+	// 2. Exclude VPC helpers
+	for _, helper := range autoRules.ExcludeVpcHelpers {
+		if matchesMethodName(methodName, helper) {
+			return true
+		}
+	}
+
+	// 3. Exclude serialization methods (ToMap, FromMap, etc.)
+	for _, serMethod := range autoRules.ExcludeSerializationMethods {
+		if matchesMethodName(methodName, serMethod) {
+			return true
+		}
+	}
+
+	// 4. Exclude marshal/unmarshal methods
+	for _, marshalMethod := range autoRules.ExcludeMarshalMethods {
+		if matchesMethodName(methodName, marshalMethod) {
+			return true
+		}
+	}
+
+	// 5. Exclude lowercase methods (Go convention: lowercase = package-private)
+	if autoRules.ExcludeLowercaseMethods {
+		if len(methodName) > 0 && methodName[0] >= 'a' && methodName[0] <= 'z' {
+			return true
+		}
+	}
+
+	// 6. Exclude validation methods (starting with Validate or containing validate)
+	if autoRules.ExcludeValidationMethods {
+		if strings.HasPrefix(lowerName, "validate") ||
+		   strings.Contains(lowerName, "_validate") ||
+		   strings.HasSuffix(lowerName, "validate") {
+			return true
+		}
+	}
+
+	// 7. Exclude internal helpers (check docstring for "internal" or "helper")
+	if autoRules.ExcludeInternalHelpers && methodDoc != "" {
+		lowerDoc := strings.ToLower(methodDoc)
+		if strings.Contains(lowerDoc, "internal") || strings.Contains(lowerDoc, "helper") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func writeType(buf *bytes.Buffer, pkg *packageDoc, typ *doc.Type, mapping docMapping, autoRules AutoFilterRules) {
 	fmt.Fprintf(buf, "## Type %s\n\n", typ.Name)
 	buf.WriteString("```go\n")
 	buf.WriteString(formatNode(pkg.fset, typ.Decl))
@@ -702,29 +849,51 @@ func writeType(buf *bytes.Buffer, pkg *packageDoc, typ *doc.Type) {
 	}
 
 	if len(typ.Methods) > 0 {
-		buf.WriteString("### Methods\n\n")
+		// Filter out hidden methods
+		visibleMethods := make([]*doc.Func, 0)
 		for _, method := range typ.Methods {
-			fmt.Fprintf(buf, "#### %s\n\n", method.Name)
-			buf.WriteString("```go\n")
-			buf.WriteString(formatNode(pkg.fset, method.Decl))
-			buf.WriteString("\n```\n\n")
-			if text := formatComment(method.Doc); text != "" {
-				buf.WriteString(text)
-				buf.WriteString("\n\n")
+			if !shouldSkipMethod(method.Name, method.Doc, mapping.HiddenMethods, autoRules) {
+				visibleMethods = append(visibleMethods, method)
+			}
+		}
+
+		// Only write Methods section if there are visible methods
+		if len(visibleMethods) > 0 {
+			buf.WriteString("### Methods\n\n")
+			for _, method := range visibleMethods {
+				fmt.Fprintf(buf, "#### %s\n\n", method.Name)
+				buf.WriteString("```go\n")
+				buf.WriteString(formatNode(pkg.fset, method.Decl))
+				buf.WriteString("\n```\n\n")
+				if text := formatComment(method.Doc); text != "" {
+					buf.WriteString(text)
+					buf.WriteString("\n\n")
+				}
 			}
 		}
 	}
 
 	if len(typ.Funcs) > 0 {
-		buf.WriteString("### Related Functions\n\n")
+		// Filter out hidden functions (apply same rules as methods)
+		visibleFuncs := make([]*doc.Func, 0)
 		for _, fn := range typ.Funcs {
-			fmt.Fprintf(buf, "#### %s\n\n", fn.Name)
-			buf.WriteString("```go\n")
-			buf.WriteString(formatNode(pkg.fset, fn.Decl))
-			buf.WriteString("\n```\n\n")
-			if text := formatComment(fn.Doc); text != "" {
-				buf.WriteString(text)
-				buf.WriteString("\n\n")
+			if !shouldSkipMethod(fn.Name, fn.Doc, mapping.HiddenMethods, autoRules) {
+				visibleFuncs = append(visibleFuncs, fn)
+			}
+		}
+
+		// Only write Related Functions section if there are visible functions
+		if len(visibleFuncs) > 0 {
+			buf.WriteString("### Related Functions\n\n")
+			for _, fn := range visibleFuncs {
+				fmt.Fprintf(buf, "#### %s\n\n", fn.Name)
+				buf.WriteString("```go\n")
+				buf.WriteString(formatNode(pkg.fset, fn.Decl))
+				buf.WriteString("\n```\n\n")
+				if text := formatComment(fn.Doc); text != "" {
+					buf.WriteString(text)
+					buf.WriteString("\n\n")
+				}
 			}
 		}
 	}

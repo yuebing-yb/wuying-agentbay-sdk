@@ -17,6 +17,47 @@ global:
     timeout_config: "Configure appropriate timeouts based on your operation's expected duration"
     logging: "Enable logging for debugging and monitoring purposes"
 
+  # Auto-filtering rules for internal methods/functions
+  auto_filter_rules:
+    # Exclude simple getter methods
+    exclude_simple_getters:
+      - get_api_key
+      - get_client
+      - get_session_id
+      - get_image_id
+      - get_command
+      - get_mcp_tools
+
+    # Exclude VPC-related helper methods
+    exclude_vpc_helpers:
+      - is_vpc
+      - is_vpc_enabled
+      - network_interface_ip
+      - http_port
+      - get_network_interface_ip
+      - get_http_port_number
+
+    # Exclude serialization methods
+    exclude_serialization_methods:
+      - to_map
+      - from_map
+      - to_dict
+      - from_dict
+
+    # Exclude marshal/unmarshal methods
+    exclude_marshal_methods:
+      - marshal_json
+      - unmarshal_json
+
+    # Exclude lowercase methods (Go package-private convention)
+    exclude_lowercase_methods: true
+
+    # Exclude validation methods
+    exclude_validation_methods: true
+
+    # Exclude internal helpers (check docstring for "internal" or "helper")
+    exclude_internal_helpers: true
+
 modules:
   # Session module
   session:
@@ -44,9 +85,6 @@ modules:
       - name: OSS API Reference
         module: oss
         category: common-features/advanced
-      - name: Application API Reference
-        module: application
-        category: computer-use
 
     # Decoration
     emoji: 🔧
@@ -251,9 +289,6 @@ modules:
       - "Clean up browser resources after automation tasks"
 
     related_resources:
-      - name: Extension API Reference
-        module: extension
-        category: browser-use
       - name: Session API Reference
         module: session
         category: common-features/basics
@@ -352,17 +387,6 @@ modules:
       - "Take screenshots for verification and debugging"
       - "Use keyboard shortcuts for efficient automation"
       - "Clean up windows and applications after automation"
-
-    related_resources:
-      - name: Application API Reference
-        module: application
-        category: computer-use
-      - name: UI API Reference
-        module: ui
-        category: computer-use
-      - name: Window API Reference
-        module: window
-        category: computer-use
 
     emoji: 🖥️
     category: computer-use

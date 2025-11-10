@@ -46,9 +46,6 @@ const browserContext = new BrowserContext({
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](extension.md#constructor)
 
 ### Methods
 
@@ -58,25 +55,6 @@ const browserContext = new BrowserContext({
 - [delete](extension.md#delete)
 - [list](extension.md#list)
 - [update](extension.md#update)
-
-## Constructors
-
-### constructor
-
-• **new ExtensionsService**(`agentBay`, `contextId?`): [`ExtensionsService`](extension.md)
-
-Initializes the ExtensionsService with a context.
-
-#### Parameters
-
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `agentBay` | [`AgentBay`](../common-features/basics/agentbay.md) | `undefined` | The AgentBay client instance. |
-| `contextId` | `string` | `""` | The context ID or name. If empty or not provided, a default context name will be generated automatically. If the context doesn't exist, it will be automatically created. Note: The service automatically detects if the context exists. If not, it creates a new context with the provided name or a generated default name. Context initialization is handled lazily on first use. |
-
-#### Returns
-
-[`ExtensionsService`](extension.md)
 
 ## Methods
 

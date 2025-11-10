@@ -1024,12 +1024,6 @@ WindowResult represents the result of a window action
 5. Use keyboard shortcuts for efficient automation
 6. Clean up windows and applications after automation
 
-## Related Resources
-
-- [Application API Reference](application.md)
-- [UI API Reference](ui.md)
-- [Window API Reference](window.md)
-
 ---
 
 *Documentation generated automatically from Go source code.*

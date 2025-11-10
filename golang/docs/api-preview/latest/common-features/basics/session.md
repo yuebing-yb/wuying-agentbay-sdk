@@ -1,140 +1,8 @@
 # Session API Reference
 
-## 🚀 Related Tutorial
+## 🔧 Related Tutorial
 
-- [First Session Tutorial](../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
-
-## Type SessionResult
-
-```go
-type SessionResult struct {
-	models.ApiResponse
-	Session		*Session
-	Success		bool
-	ErrorMessage	string
-}
-```
-
-SessionResult wraps Session object and RequestID
-
-## Type SessionListResult
-
-```go
-type SessionListResult struct {
-	models.ApiResponse
-	SessionIds	[]string	// Session IDs
-	NextToken	string		// Token for the next page
-	MaxResults	int32		// Number of results per page
-	TotalCount	int32		// Total number of results
-}
-```
-
-SessionListResult wraps Session list and RequestID
-
-## Type InfoResult
-
-```go
-type InfoResult struct {
-	models.ApiResponse
-	Info	*SessionInfo
-}
-```
-
-InfoResult wraps SessionInfo and RequestID
-
-## Type LabelResult
-
-```go
-type LabelResult struct {
-	models.ApiResponse
-	Labels	string
-}
-```
-
-LabelResult wraps label operation result and RequestID
-
-## Type LinkResult
-
-```go
-type LinkResult struct {
-	models.ApiResponse
-	Link	string
-}
-```
-
-LinkResult wraps link result and RequestID
-
-## Type DeleteResult
-
-```go
-type DeleteResult struct {
-	models.ApiResponse
-	Success		bool
-	ErrorMessage	string
-}
-```
-
-DeleteResult wraps deletion operation result and RequestID
-
-## Type McpTool
-
-```go
-type McpTool struct {
-	Name		string			`json:"name"`		// Tool name
-	Description	string			`json:"description"`	// Tool description
-	InputSchema	map[string]interface{}	`json:"inputSchema"`	// Input parameter schema
-	Server		string			`json:"server"`		// Server name that provides this tool
-	Tool		string			`json:"tool"`		// Tool identifier
-}
-```
-
-McpTool represents an MCP tool with complete information
-
-### Methods
-
-#### GetName
-
-```go
-func (m *McpTool) GetName() string
-```
-
-GetName returns the tool name
-
-#### GetServer
-
-```go
-func (m *McpTool) GetServer() string
-```
-
-GetServer returns the server name that provides this tool
-
-## Type McpToolsResult
-
-```go
-type McpToolsResult struct {
-	models.ApiResponse
-	Tools	[]McpTool
-}
-```
-
-McpToolsResult wraps MCP tools list and RequestID
-
-## Type SessionInfo
-
-```go
-type SessionInfo struct {
-	SessionId		string
-	ResourceUrl		string
-	AppId			string
-	AuthCode		string
-	ConnectionProperties	string
-	ResourceId		string
-	ResourceType		string
-	Ticket			string
-}
-```
-
-SessionInfo contains information about a session.
+- [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
 ## Type Session
 
@@ -183,106 +51,6 @@ type Session struct {
 Session represents a session in the AgentBay cloud environment.
 
 ### Methods
-
-#### CallMcpTool
-
-```go
-func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
-```
-
-CallMcpTool calls the MCP tool and handles both VPC and non-VPC scenarios
-
-This is the unified public API for calling MCP tools. All feature modules (Command, Code, Agent,
-etc.) use this method internally.
-
-Parameters:
-  - toolName: Name of the MCP tool to call
-  - args: Arguments to pass to the tool (typically a map or struct)
-  - autoGenSession: Optional boolean to auto-generate session if not exists (default: false)
-
-Returns:
-  - *models.McpToolResult: Result containing:
-  - Success: Whether the tool call was successful
-  - Data: Tool output data (text content extracted from response)
-  - ErrorMessage: Error message if the call failed
-  - RequestID: Unique identifier for the API request
-  - error: Error if the call fails at the transport level
-
-Behavior:
-
-- Automatically detects VPC vs non-VPC mode - In VPC mode, uses HTTP requests to the VPC endpoint
-- In non-VPC mode, uses traditional API calls - Parses response data to extract text content from
-content[0].text - Handles the isError flag in responses - Returns structured error information
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Call the shell tool to execute a command
-
-	toolResult, err := session.CallMcpTool("shell", map[string]interface{}{
-		"command":    "echo 'Hello World'",
-		"timeout_ms": 1000,
-	})
-	if err != nil {
-		fmt.Printf("Error calling tool: %v\n", err)
-		os.Exit(1)
-	}
-	if toolResult.Success {
-		fmt.Printf("Output: %s\n", toolResult.Data)
-
-		// Output: Hello World
-
-		fmt.Printf("Request ID: %s\n", toolResult.RequestID)
-	} else {
-		fmt.Printf("Error: %s\n", toolResult.ErrorMessage)
-	}
-
-	// Example with error handling
-
-	toolResult2, err := session.CallMcpTool("shell", map[string]interface{}{
-		"command":    "invalid_command_12345",
-		"timeout_ms": 1000,
-	})
-	if err != nil {
-		fmt.Printf("Error calling tool: %v\n", err)
-		os.Exit(1)
-	}
-	if !toolResult2.Success {
-		fmt.Printf("Command failed: %s\n", toolResult2.ErrorMessage)
-
-		// Output: Command failed: sh: 1: invalid_command_12345: not found
-
-	}
-	session.Delete()
-}
-```
-
-#### CallMcpToolForBrowser
-
-```go
-func (s *Session) CallMcpToolForBrowser(toolName string, args interface{}) (*browser.McpToolResult, error)
-```
-
-CallMcpTool is a wrapper that converts the result to browser.McpToolResult
 
 #### Delete
 
@@ -351,54 +119,6 @@ Note:
 - Use syncContext=true when you need to preserve context data - For temporary sessions, use
 syncContext=false for faster cleanup - Always call Delete() when done to avoid resource leaks
 ```
-
-#### FindServerForTool
-
-```go
-func (s *Session) FindServerForTool(toolName string) string
-```
-
-FindServerForTool searches for the server that provides the given tool
-
-#### GetAPIKey
-
-```go
-func (s *Session) GetAPIKey() string
-```
-
-GetAPIKey returns the API key for this session.
-
-#### GetClient
-
-```go
-func (s *Session) GetClient() *mcp.Client
-```
-
-GetClient returns the HTTP client for this session.
-
-#### GetCommand
-
-```go
-func (s *Session) GetCommand() *command.Command
-```
-
-GetCommand returns the command handler for this session.
-
-#### GetHttpPortNumber
-
-```go
-func (s *Session) GetHttpPortNumber() string
-```
-
-GetHttpPortNumber returns the HTTP port for VPC sessions.
-
-#### GetImageID
-
-```go
-func (s *Session) GetImageID() string
-```
-
-GetImageID returns the image ID for this session.
 
 #### GetLabels
 
@@ -537,46 +257,6 @@ Note:
 ports - Validate port range before calling to avoid errors
 ```
 
-#### GetLinkForBrowser
-
-```go
-func (s *Session) GetLinkForBrowser(protocolType *string, port *int32, options *string) (*browser.LinkResult, error)
-```
-
-GetLinkForBrowser is a wrapper that converts the result to browser.LinkResult
-
-#### GetMcpTools
-
-```go
-func (s *Session) GetMcpTools() []interface{}
-```
-
-GetMcpTools returns the MCP tools available for this session
-
-#### GetNetworkInterfaceIP
-
-```go
-func (s *Session) GetNetworkInterfaceIP() string
-```
-
-GetNetworkInterfaceIP returns the network interface IP for VPC sessions.
-
-#### GetSessionID
-
-```go
-func (s *Session) GetSessionID() string
-```
-
-GetSessionID returns the session ID for this session (browser interface method).
-
-#### GetSessionId
-
-```go
-func (s *Session) GetSessionId() string
-```
-
-GetSessionId returns the session ID for this session.
-
 #### GetToken
 
 ```go
@@ -584,14 +264,6 @@ func (s *Session) GetToken() string
 ```
 
 GetToken returns the token for VPC sessions
-
-#### HttpPort
-
-```go
-func (s *Session) HttpPort() string
-```
-
-HttpPort returns the HTTP port for VPC sessions
 
 #### Info
 
@@ -652,22 +324,6 @@ func main() {
 	session.Delete()
 }
 ```
-
-#### IsVPCEnabled
-
-```go
-func (s *Session) IsVPCEnabled() bool
-```
-
-IsVPCEnabled returns whether this session uses VPC resources.
-
-#### IsVpc
-
-```go
-func (s *Session) IsVpc() bool
-```
-
-IsVpc returns whether this session uses VPC resources
 
 #### ListMcpTools
 
@@ -740,14 +396,6 @@ func main() {
 }
 ```
 
-#### NetworkInterfaceIp
-
-```go
-func (s *Session) NetworkInterfaceIp() string
-```
-
-NetworkInterfaceIp returns the network interface IP for VPC sessions
-
 #### SetLabels
 
 ```go
@@ -818,39 +466,6 @@ func main() {
 	session.Delete()
 }
 ```
-
-#### ValidateLabels
-
-```go
-func (s *Session) ValidateLabels(labels map[string]string) string
-```
-
-ValidateLabels validates labels parameter for label operations. Returns error message if validation
-fails, empty string if validation passes
-
-#### callMcpToolAPI
-
-```go
-func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool) (*models.McpToolResult, error)
-```
-
-callMcpToolAPI handles traditional API-based MCP tool calls
-
-#### callMcpToolVPC
-
-```go
-func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResult, error)
-```
-
-callMcpToolVPC handles VPC-based MCP tool calls
-
-#### extractTextContentFromResponse
-
-```go
-func (s *Session) extractTextContentFromResponse(data interface{}) string
-```
-
-extractTextContentFromResponse extracts text content from various response formats
 
 ### Related Functions
 
@@ -986,6 +601,138 @@ func NewCreateSessionParams() *CreateSessionParams
 
 NewCreateSessionParams creates a new CreateSessionParams with default values.
 
+## Type SessionResult
+
+```go
+type SessionResult struct {
+	models.ApiResponse
+	Session		*Session
+	Success		bool
+	ErrorMessage	string
+}
+```
+
+SessionResult wraps Session object and RequestID
+
+## Type SessionListResult
+
+```go
+type SessionListResult struct {
+	models.ApiResponse
+	SessionIds	[]string	// Session IDs
+	NextToken	string		// Token for the next page
+	MaxResults	int32		// Number of results per page
+	TotalCount	int32		// Total number of results
+}
+```
+
+SessionListResult wraps Session list and RequestID
+
+## Type InfoResult
+
+```go
+type InfoResult struct {
+	models.ApiResponse
+	Info	*SessionInfo
+}
+```
+
+InfoResult wraps SessionInfo and RequestID
+
+## Type LabelResult
+
+```go
+type LabelResult struct {
+	models.ApiResponse
+	Labels	string
+}
+```
+
+LabelResult wraps label operation result and RequestID
+
+## Type LinkResult
+
+```go
+type LinkResult struct {
+	models.ApiResponse
+	Link	string
+}
+```
+
+LinkResult wraps link result and RequestID
+
+## Type DeleteResult
+
+```go
+type DeleteResult struct {
+	models.ApiResponse
+	Success		bool
+	ErrorMessage	string
+}
+```
+
+DeleteResult wraps deletion operation result and RequestID
+
+## Type McpToolsResult
+
+```go
+type McpToolsResult struct {
+	models.ApiResponse
+	Tools	[]McpTool
+}
+```
+
+McpToolsResult wraps MCP tools list and RequestID
+
+## Type McpTool
+
+```go
+type McpTool struct {
+	Name		string			`json:"name"`		// Tool name
+	Description	string			`json:"description"`	// Tool description
+	InputSchema	map[string]interface{}	`json:"inputSchema"`	// Input parameter schema
+	Server		string			`json:"server"`		// Server name that provides this tool
+	Tool		string			`json:"tool"`		// Tool identifier
+}
+```
+
+McpTool represents an MCP tool with complete information
+
+### Methods
+
+#### GetName
+
+```go
+func (m *McpTool) GetName() string
+```
+
+GetName returns the tool name
+
+#### GetServer
+
+```go
+func (m *McpTool) GetServer() string
+```
+
+GetServer returns the server name that provides this tool
+
+## Type SessionInfo
+
+```go
+type SessionInfo struct {
+	SessionId		string
+	ResourceUrl		string
+	AppId			string
+	AuthCode		string
+	ConnectionProperties	string
+	ResourceId		string
+	ResourceType		string
+	Ticket			string
+}
+```
+
+SessionInfo contains information about a session.
+
 ## Type ContextSync
 
 ```go
@@ -1041,24 +788,6 @@ type SyncPolicy struct {
 ```
 
 SyncPolicy defines the synchronization policy
-
-### Methods
-
-#### MarshalJSON
-
-```go
-func (sp *SyncPolicy) MarshalJSON() ([]byte, error)
-```
-
-MarshalJSON ensures all fields have default values before marshaling
-
-#### ensureDefaults
-
-```go
-func (sp *SyncPolicy) ensureDefaults()
-```
-
-ensureDefaults ensures all policy fields have default values if not provided
 
 ### Related Functions
 
@@ -1199,16 +928,6 @@ Paths field specifies which directories or files should be subject to the recycl
   - Multiple paths can be specified as a slice
   - Default: []string{""} (applies to all paths)
 
-### Methods
-
-#### Validate
-
-```go
-func (rp *RecyclePolicy) Validate() error
-```
-
-Validate validates the RecyclePolicy configuration
-
 ### Related Functions
 
 #### NewRecyclePolicy
@@ -1232,14 +951,6 @@ type WhiteList struct {
 
 WhiteList defines the white list configuration
 
-### Methods
-
-#### Validate
-
-```go
-func (wl *WhiteList) Validate() error
-```
-
 ## Type BWList
 
 ```go
@@ -1260,24 +971,6 @@ func Deprecated(reason, replacement, version string)
 ```
 
 Deprecated marks a function or method as deprecated and emits a warning
-
-### DeprecatedFunc
-
-```go
-func DeprecatedFunc(reason, replacement, version string) func()
-```
-
-DeprecatedFunc is a helper function to mark functions as deprecated Usage: defer
-DeprecatedFunc("reason", "replacement", "version")()
-
-### DeprecatedMethod
-
-```go
-func DeprecatedMethod(methodName, reason, replacement, version string) func()
-```
-
-DeprecatedMethod is a helper function to mark methods as deprecated Usage: defer
-DeprecatedMethod("MethodName", "reason", "replacement", "version")()
 
 ### FindDotEnvFile
 
@@ -1781,134 +1474,13 @@ func main() {
 }
 ```
 
-### containsWildcard
-
-```go
-func containsWildcard(path string) bool
-```
-
-### getColorCodes
-
-```go
-func getColorCodes() (reset, green, red, yellow, blue string)
-```
-
-getColorCodes returns ANSI color codes based on environment detection
-
-### getVersion
-
-```go
-func getVersion() string
-```
-
-getVersion attempts to read version from Go module info Returns the version from go.mod or a default
-fallback
-
-### init
-
-```go
-func init()
-```
-
-Initialize log level from environment variable
-
-### isIDEEnvironment
-
-```go
-func isIDEEnvironment() bool
-```
-
-isIDEEnvironment detects if running in an IDE that supports ANSI colors
-
-### isReleaseVersion
-
-```go
-func isReleaseVersion() bool
-```
-
-isReleaseVersion checks if this is a release build Returns true only if the SDK is installed from
-GitHub (github.com/aliyun/wuying-agentbay-sdk/golang) Returns false if: 1. Developing the SDK
-locally (main module) 2. Installed via go.mod replace from internal source (code.alibaba-inc.com) 3.
-Installed from a pseudo-version
-
-### isSensitiveField
-
-```go
-func isSensitiveField(fieldName string, sensitiveFields []string) bool
-```
-
-### isValidLifecycle
-
-```go
-func isValidLifecycle(lifecycle Lifecycle) bool
-```
-
-isValidLifecycle checks if the given lifecycle value is valid
-
-### isValidUploadMode
-
-```go
-func isValidUploadMode(uploadMode UploadMode) bool
-```
-
-isValidUploadMode checks if the given uploadMode value is valid
-
-### maskSensitiveDataInternal
-
-```go
-func maskSensitiveDataInternal(data interface{}, fields []string) interface{}
-```
-
-### maskSensitiveDataString
-
-```go
-func maskSensitiveDataString(jsonStr string) string
-```
-
-maskSensitiveDataString masks sensitive information in a JSON string
-
-### maskSensitiveDataWithRegex
-
-```go
-func maskSensitiveDataWithRegex(str string) string
-```
-
-maskSensitiveDataWithRegex masks sensitive data using regex patterns
-
-### parseFileSize
-
-```go
-func parseFileSize(sizeStr string) int64
-```
-
-parseFileSize parses size string like "10 MB" to bytes
-
-### parseLogLevel
-
-```go
-func parseLogLevel(levelStr string) int
-```
-
-parseLogLevel converts string to log level constant
-
-### validateSyncPolicy
-
-```go
-func validateSyncPolicy(policy *SyncPolicy) error
-```
-
-### writeToFile
-
-```go
-func writeToFile(message string)
-```
-
-writeToFile writes a message to the log file with rotation
-
 ## Related Resources
 
-- [Session API Reference](session.md)
+- [FileSystem API Reference](filesystem.md)
+- [Command API Reference](command.md)
 - [Context API Reference](context.md)
+- [Context Manager API Reference](context-manager.md)
+- [OSS API Reference](../advanced/oss.md)
 
 ---
 

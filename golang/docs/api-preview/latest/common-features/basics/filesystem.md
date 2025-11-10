@@ -15,16 +15,6 @@ type DirectoryEntry struct {
 
 DirectoryEntry represents a directory entry
 
-### Related Functions
-
-#### parseDirectoryListing
-
-```go
-func parseDirectoryListing(text string) ([]*DirectoryEntry, error)
-```
-
-Helper function to parse directory listing from string
-
 ## Type DirectoryListResult
 
 ```go
@@ -58,14 +48,6 @@ func (e *FileChangeEvent) String() string
 
 String returns string representation of FileChangeEvent
 
-#### ToDict
-
-```go
-func (e *FileChangeEvent) ToDict() map[string]string
-```
-
-ToDict converts FileChangeEvent to map
-
 ### Related Functions
 
 #### FileChangeEventFromDict
@@ -75,14 +57,6 @@ func FileChangeEventFromDict(data map[string]interface{}) *FileChangeEvent
 ```
 
 FileChangeEventFromDict creates FileChangeEvent from map
-
-#### parseFileChangeData
-
-```go
-func parseFileChangeData(rawData string) ([]*FileChangeEvent, error)
-```
-
-parseFileChangeData parses raw JSON data into FileChangeEvent slice
 
 ## Type FileChangeResult
 
@@ -168,16 +142,6 @@ type FileInfo struct {
 ```
 
 FileInfo represents file or directory information
-
-### Related Functions
-
-#### parseFileInfo
-
-```go
-func parseFileInfo(fileInfoStr string) (*FileInfo, error)
-```
-
-Helper function to parse file info from string
 
 ## Type FileInfoResult
 
@@ -995,22 +959,6 @@ func main() {
 	session.Delete()
 }
 ```
-
-#### readFileChunk
-
-```go
-func (fs *FileSystem) readFileChunk(path string, optionalParams ...int) (*FileReadResult, error)
-```
-
-readFileChunk reads a file chunk. Internal method used for chunked file operations.
-
-#### writeFileChunk
-
-```go
-func (fs *FileSystem) writeFileChunk(path, content string, mode string) (*FileWriteResult, error)
-```
-
-writeFileChunk writes a file chunk. Internal method used for chunked file operations.
 
 ### Related Functions
 

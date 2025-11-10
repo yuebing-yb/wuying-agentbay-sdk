@@ -8,17 +8,12 @@ Handles file operations in the AgentBay cloud environment.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](filesystem.md#constructor)
 
 ### Methods
 
 - [createDirectory](filesystem.md#createdirectory)
 - [downloadFile](filesystem.md#downloadfile)
 - [editFile](filesystem.md#editfile)
-- [getFileChange](filesystem.md#getfilechange)
-- [getFileInfo](filesystem.md#getfileinfo)
 - [listDirectory](filesystem.md#listdirectory)
 - [moveFile](filesystem.md#movefile)
 - [readFile](filesystem.md#readfile)
@@ -27,24 +22,6 @@ Handles file operations in the AgentBay cloud environment.
 - [uploadFile](filesystem.md#uploadfile)
 - [watchDirectory](filesystem.md#watchdirectory)
 - [writeFile](filesystem.md#writefile)
-
-## Constructors
-
-### constructor
-
-• **new FileSystem**(`session`): [`FileSystem`](filesystem.md)
-
-Initialize a FileSystem object.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `session` | [`Session`](session.md) | The Session instance that this FileSystem belongs to. |
-
-#### Returns
-
-[`FileSystem`](filesystem.md)
 
 ## Methods
 
@@ -265,136 +242,6 @@ async function demonstrateEditFile() {
 
 demonstrateEditFile().catch(console.error);
 ```
-
-___
-
-### getFileChange
-
-▸ **getFileChange**(`path`): `Promise`\<``FileChangeResult``\>
-
-Get file change information for the specified directory path
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `path` | `string` | Directory path to monitor |
-
-#### Returns
-
-`Promise`\<``FileChangeResult``\>
-
-Promise resolving to result containing detected file changes
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetFileChange() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Create test directory
-      await session.fileSystem.createDirectory('/tmp/watch_dir');
-
-      // Check for file changes
-      const changeResult = await session.fileSystem.getFileChange('/tmp/watch_dir');
-      if (changeResult.success) {
-        console.log(`Detected ${changeResult.events.length} changes`);
-        // Output: Detected 0 changes
-
-        if (changeResult.events.length > 0) {
-          changeResult.events.forEach(event => {
-            console.log(`- ${event.eventType}: ${event.path} (${event.pathType})`);
-          });
-        } else {
-          console.log('No changes detected');
-          // Output: No changes detected
-        }
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetFileChange().catch(console.error);
-```
-
-___
-
-### getFileInfo
-
-▸ **getFileInfo**(`path`): `Promise`\<`FileInfoResult`\>
-
-Gets information about a file or directory.
-Corresponds to Python's get_file_info() method
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `path` | `string` | Path to the file or directory to inspect. |
-
-#### Returns
-
-`Promise`\<`FileInfoResult`\>
-
-FileInfoResult with file info and requestId
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetFileInfo() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Create a test file
-      await session.fileSystem.writeFile('/tmp/test.txt', 'Sample content');
-
-      // Get file information
-      const infoResult = await session.fileSystem.getFileInfo('/tmp/test.txt');
-      if (infoResult.success) {
-        console.log(`File info: ${JSON.stringify(infoResult.fileInfo)}`);
-        // Output: File info: {"size": 14, "isDirectory": false, ...}
-        console.log(`Size: ${infoResult.fileInfo.size} bytes`);
-        // Output: Size: 14 bytes
-        console.log(`Is directory: ${infoResult.fileInfo.isDirectory}`);
-        // Output: Is directory: false
-      }
-
-      // Get directory information
-      await session.fileSystem.createDirectory('/tmp/mydir');
-      const dirInfo = await session.fileSystem.getFileInfo('/tmp/mydir');
-      if (dirInfo.success) {
-        console.log(`Is directory: ${dirInfo.fileInfo.isDirectory}`);
-        // Output: Is directory: true
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetFileInfo().catch(console.error);
-```
-
-___
 
 ### listDirectory
 

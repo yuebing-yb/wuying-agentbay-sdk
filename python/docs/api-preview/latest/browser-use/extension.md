@@ -6,10 +6,6 @@
 
 
 
-```python
-logger = get_logger("extension")
-```
-
 #### EXTENSIONS\_BASE\_PATH
 
 ```python

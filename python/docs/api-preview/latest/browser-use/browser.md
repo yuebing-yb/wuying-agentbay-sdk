@@ -16,10 +16,6 @@ screenshot capture, and content extraction. It enables automated testing and web
 
 
 
-```python
-logger = get_logger("browser")
-```
-
 ## BrowserFingerprintContext Objects
 
 ```python
@@ -38,120 +34,6 @@ Browser proxy configuration.
 Supports two types of proxy: custom proxy, wuying proxy.
 wuying proxy support two strategies: restricted and polling.
 
-#### to\_map
-
-```python
-def to_map()
-```
-
-Convert BrowserProxy to dictionary format.
-
-**Returns**:
-
-    dict: Dictionary representation of the proxy configuration.
-  
-
-**Example**:
-
-```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserProxy
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def convert_proxy_to_map():
-    try:
-        # Create custom proxy
-        custom_proxy = BrowserProxy(
-            proxy_type="custom",
-            server="127.0.0.1:9090",
-            username="user",
-            password="pass"
-        )
-
-        # Convert to map
-        proxy_map = custom_proxy.to_map()
-        print(f"Custom proxy map: {proxy_map}")
-        # Output: Custom proxy map: {'type': 'custom', 'server': '127.0.0.1:9090', 'username': 'user', 'password': 'pass'}
-
-        # Create wuying proxy with polling strategy
-        wuying_proxy = BrowserProxy(
-            proxy_type="wuying",
-            strategy="polling",
-            pollsize=10
-        )
-
-        proxy_map = wuying_proxy.to_map()
-        print(f"Wuying proxy map: {proxy_map}")
-        # Output: Wuying proxy map: {'type': 'wuying', 'strategy': 'polling', 'pollsize': 10}
-    except Exception as e:
-        print(f"Error: {e}")
-
-convert_proxy_to_map()
-```
-
-#### from\_map
-
-```python
-@classmethod
-def from_map(cls, m: dict = None)
-```
-
-Create BrowserProxy from dictionary format.
-
-**Arguments**:
-
-- `m` _dict_ - Dictionary containing proxy configuration.
-  
-
-**Returns**:
-
-    BrowserProxy: BrowserProxy instance created from the dictionary, or None if m is None.
-  
-
-**Raises**:
-
-    ValueError: If the proxy configuration is invalid.
-  
-
-**Example**:
-
-```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserProxy
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def create_proxy_from_map():
-    try:
-        # Create custom proxy from dictionary
-        custom_proxy_dict = {
-            "type": "custom",
-            "server": "127.0.0.1:9090",
-            "username": "user",
-            "password": "pass"
-        }
-
-        custom_proxy = BrowserProxy.from_map(custom_proxy_dict)
-        print(f"Created custom proxy: {custom_proxy.type} at {custom_proxy.server}")
-        # Output: Created custom proxy: custom at 127.0.0.1:9090
-
-        # Create wuying proxy from dictionary
-        wuying_proxy_dict = {
-            "type": "wuying",
-            "strategy": "polling",
-            "pollsize": 10
-        }
-
-        wuying_proxy = BrowserProxy.from_map(wuying_proxy_dict)
-        print(f"Created wuying proxy: {wuying_proxy.type} with {wuying_proxy.strategy} strategy")
-        # Output: Created wuying proxy: wuying with polling strategy
-    except Exception as e:
-        print(f"Error: {e}")
-
-create_proxy_from_map()
-```
-
 ## BrowserViewport Objects
 
 ```python
@@ -159,92 +41,6 @@ class BrowserViewport()
 ```
 
 Browser viewport options.
-
-#### to\_map
-
-```python
-def to_map()
-```
-
-Convert BrowserViewport to dictionary format.
-
-**Returns**:
-
-    dict: Dictionary representation of the viewport configuration.
-  
-
-**Example**:
-
-```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserViewport
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def convert_viewport_to_map():
-    try:
-        # Create viewport with custom size
-        viewport = BrowserViewport(width=1920, height=1080)
-
-        # Convert to map
-        viewport_map = viewport.to_map()
-        print(f"Viewport map: {viewport_map}")
-        # Output: Viewport map: {'width': 1920, 'height': 1080}
-
-        # Create viewport with mobile size
-        mobile_viewport = BrowserViewport(width=375, height=812)
-        mobile_map = mobile_viewport.to_map()
-        print(f"Mobile viewport map: {mobile_map}")
-        # Output: Mobile viewport map: {'width': 375, 'height': 812}
-    except Exception as e:
-        print(f"Error: {e}")
-
-convert_viewport_to_map()
-```
-
-#### from\_map
-
-```python
-def from_map(m: dict = None)
-```
-
-Update BrowserViewport from dictionary format.
-
-**Arguments**:
-
-- `m` _dict_ - Dictionary containing viewport configuration.
-  
-
-**Returns**:
-
-    BrowserViewport: Updated viewport instance.
-  
-
-**Example**:
-
-```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserViewport
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def create_viewport_from_map():
-    try:
-        # Create a default viewport
-        viewport = BrowserViewport()
-        print(f"Default viewport: {viewport.width}x{viewport.height}")
-        # Output: Default viewport: 1920x1080
-
-        # Update viewport from dictionary
-        viewport_dict = {"width": 1280, "height": 720}
-        viewport.from_map(viewport_dict)
-        print(f"Updated viewport: {viewport.width}x{viewport.height}")
-        # Output: Updated viewport: 1280x720
-    except Exception as e:
-        print(f"Error: {e}")
-
-create_viewport_from_map()
-```
 
 ## BrowserScreen Objects
 
@@ -254,92 +50,6 @@ class BrowserScreen()
 
 Browser screen options.
 
-#### to\_map
-
-```python
-def to_map()
-```
-
-Convert BrowserScreen to dictionary format.
-
-**Returns**:
-
-    dict: Dictionary representation of the screen configuration.
-  
-
-**Example**:
-
-```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserScreen
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def convert_screen_to_map():
-    try:
-        # Create screen with custom size
-        screen = BrowserScreen(width=1920, height=1080)
-
-        # Convert to map
-        screen_map = screen.to_map()
-        print(f"Screen map: {screen_map}")
-        # Output: Screen map: {'width': 1920, 'height': 1080}
-
-        # Create screen with 4K size
-        screen_4k = BrowserScreen(width=3840, height=2160)
-        screen_4k_map = screen_4k.to_map()
-        print(f"4K screen map: {screen_4k_map}")
-        # Output: 4K screen map: {'width': 3840, 'height': 2160}
-    except Exception as e:
-        print(f"Error: {e}")
-
-convert_screen_to_map()
-```
-
-#### from\_map
-
-```python
-def from_map(m: dict = None)
-```
-
-Update BrowserScreen from dictionary format.
-
-**Arguments**:
-
-- `m` _dict_ - Dictionary containing screen configuration.
-  
-
-**Returns**:
-
-    BrowserScreen: Updated screen instance.
-  
-
-**Example**:
-
-```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserScreen
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def create_screen_from_map():
-    try:
-        # Create a default screen
-        screen = BrowserScreen()
-        print(f"Default screen: {screen.width}x{screen.height}")
-        # Output: Default screen: 1920x1080
-
-        # Update screen from dictionary
-        screen_dict = {"width": 2560, "height": 1440}
-        screen.from_map(screen_dict)
-        print(f"Updated screen: {screen.width}x{screen.height}")
-        # Output: Updated screen: 2560x1440
-    except Exception as e:
-        print(f"Error: {e}")
-
-create_screen_from_map()
-```
-
 ## BrowserFingerprint Objects
 
 ```python
@@ -348,18 +58,6 @@ class BrowserFingerprint()
 
 Browser fingerprint options.
 
-#### to\_map
-
-```python
-def to_map()
-```
-
-#### from\_map
-
-```python
-def from_map(m: dict = None)
-```
-
 ## BrowserOption Objects
 
 ```python
@@ -367,18 +65,6 @@ class BrowserOption()
 ```
 
 browser initialization options.
-
-#### to\_map
-
-```python
-def to_map()
-```
-
-#### from\_map
-
-```python
-def from_map(m: dict = None)
-```
 
 ## Browser Objects
 
@@ -504,6 +190,45 @@ def destroy()
 ```
 
 Destroy the browser instance.
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.browser.browser import BrowserOption
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def demonstrate_browser_destroy():
+    try:
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Initialize the browser
+            browser_option = BrowserOption(use_stealth=True)
+            success = session.browser.initialize(browser_option)
+
+            if success:
+                print("Browser initialized successfully")
+                # Output: Browser initialized successfully
+
+                # Check if browser is initialized
+                if session.browser.is_initialized():
+                    print("Browser is active")
+                    # Output: Browser is active
+
+                # Destroy the browser instance
+                session.browser.destroy()
+                print("Browser destroyed")
+                # Output: Browser destroyed
+
+            session.delete()
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_browser_destroy()
+```
 
 #### screenshot
 
@@ -697,10 +422,6 @@ check_browser_initialization()
 ```
 
 #### logger
-
-```python
-logger = get_logger("browser_agent")
-```
 
 #### T
 

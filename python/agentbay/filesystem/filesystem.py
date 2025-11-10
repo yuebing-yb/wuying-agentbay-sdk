@@ -551,7 +551,77 @@ class FileChangeEvent:
 
 
 class FileChangeResult(ApiResponse):
-    """Result of file change detection operations."""
+    """
+    Result of file change detection operations.
+
+    This class provides methods to check and filter file change events detected
+    in a directory. It is typically returned by file monitoring operations.
+
+    Example:
+        ```python
+        from agentbay import AgentBay
+        import time
+
+        agent_bay = AgentBay(api_key="your_api_key")
+
+        def analyze_file_changes():
+            try:
+                result = agent_bay.create()
+                if result.success:
+                    session = result.session
+
+                    # Create a test directory and some files
+                    session.file_system.create_directory("/tmp/change_test")
+                    session.file_system.write_file("/tmp/change_test/file1.txt", "original content")
+                    session.file_system.write_file("/tmp/change_test/file2.txt", "original content")
+
+                    # Wait a moment for changes to be detected
+                    time.sleep(1)
+
+                    # Make some changes
+                    session.file_system.write_file("/tmp/change_test/file1.txt", "modified content")
+                    session.file_system.write_file("/tmp/change_test/file3.txt", "new file")
+
+                    time.sleep(1)
+
+                    # Get file changes using the internal API
+                    change_result = session.file_system._get_file_change("/tmp/change_test")
+
+                    if change_result.success:
+                        # Check if there are any changes
+                        if change_result.has_changes():
+                            print(f"Detected {len(change_result.events)} change(s)")
+                            # Output: Detected 2 change(s)
+
+                            # Get modified files
+                            modified = change_result.get_modified_files()
+                            if modified:
+                                print(f"Modified files: {modified}")
+                                # Output: Modified files: ['/tmp/change_test/file1.txt']
+
+                            # Get created files
+                            created = change_result.get_created_files()
+                            if created:
+                                print(f"Created files: {created}")
+                                # Output: Created files: ['/tmp/change_test/file3.txt']
+
+                            # Get deleted files
+                            deleted = change_result.get_deleted_files()
+                            if deleted:
+                                print(f"Deleted files: {deleted}")
+                            else:
+                                print("No files were deleted")
+                                # Output: No files were deleted
+                        else:
+                            print("No changes detected")
+
+                    session.delete()
+            except Exception as e:
+                print(f"Error: {e}")
+
+        analyze_file_changes()
+        ```
+    """
 
     def __init__(
         self,
@@ -582,11 +652,21 @@ class FileChangeResult(ApiResponse):
         self.error_message = error_message
 
     def has_changes(self) -> bool:
-        """Check if there are any file changes."""
+        """
+        Check if there are any file changes.
+
+        Returns:
+            bool: True if there are any file change events, False otherwise.
+        """
         return len(self.events) > 0
 
     def get_modified_files(self) -> List[str]:
-        """Get list of modified file paths."""
+        """
+        Get list of modified file paths.
+
+        Returns:
+            List[str]: List of file paths that were modified.
+        """
         return [
             event.path
             for event in self.events
@@ -594,7 +674,12 @@ class FileChangeResult(ApiResponse):
         ]
 
     def get_created_files(self) -> List[str]:
-        """Get list of created file paths."""
+        """
+        Get list of created file paths.
+
+        Returns:
+            List[str]: List of file paths that were created.
+        """
         return [
             event.path
             for event in self.events
@@ -602,7 +687,12 @@ class FileChangeResult(ApiResponse):
         ]
 
     def get_deleted_files(self) -> List[str]:
-        """Get list of deleted file paths."""
+        """
+        Get list of deleted file paths.
+
+        Returns:
+            List[str]: List of file paths that were deleted.
+        """
         return [
             event.path
             for event in self.events

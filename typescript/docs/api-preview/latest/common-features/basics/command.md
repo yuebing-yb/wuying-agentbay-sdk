@@ -18,31 +18,10 @@ Handles command execution operations in the AgentBay cloud environment.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](command.md#constructor)
 
 ### Methods
 
 - [executeCommand](command.md#executecommand)
-
-## Constructors
-
-### constructor
-
-• **new Command**(`session`): [`Command`](command.md)
-
-Initialize a Command object.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `session` | [`Session`](session.md) | The Session instance that this Command belongs to. |
-
-#### Returns
-
-[`Command`](command.md)
 
 ## Methods
 

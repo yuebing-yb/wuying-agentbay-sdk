@@ -1,20 +1,9 @@
 # Context Manager API Reference
 
-```python
-logger = get_logger("context_manager")
-```
-
 ## ContextStatusData Objects
 
 ```python
 class ContextStatusData()
-```
-
-#### from\_dict
-
-```python
-@classmethod
-def from_dict(cls, data: Dict[str, Any]) -> "ContextStatusData"
 ```
 
 ## ContextInfoResult Objects

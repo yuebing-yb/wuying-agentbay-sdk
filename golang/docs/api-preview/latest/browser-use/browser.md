@@ -480,17 +480,6 @@ func main() {
 }
 ```
 
-#### _scrollToLoadAllContent
-
-```go
-func (b *Browser) _scrollToLoadAllContent(page interface {
-	Evaluate(expression string, options ...interface{}) (interface{}, error)
-	WaitForTimeout(timeout int)
-}, maxScrolls int, delayMs int) error
-```
-
-_scrollToLoadAllContent scrolls the page to load all content (especially for lazy-loaded elements)
-
 ### Related Functions
 
 #### NewBrowser
@@ -522,16 +511,6 @@ fingerprint := &browser.BrowserFingerprint{
     Locales:          []string{"en-US", "en-GB"},
 }
 ```
-
-### Methods
-
-#### ToMap
-
-```go
-func (f *BrowserFingerprint) ToMap() map[string]interface{}
-```
-
-ToMap converts BrowserFingerprint to map for API request
 
 ### Related Functions
 
@@ -586,55 +565,6 @@ option.UseStealth = true
 
 if err := option.Validate(); err != nil {
     log.Fatalf("Invalid configuration: %v", err)
-}
-```
-
-### Methods
-
-#### ToMap
-
-```go
-func (o *BrowserOption) ToMap() map[string]interface{}
-```
-
-ToMap converts BrowserOption to map for API request
-
-#### Validate
-
-```go
-func (o *BrowserOption) Validate() error
-```
-
-Validate validates the BrowserOption
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
-)
-func main() {
-	option := browser.NewBrowserOption()
-
-	// Set custom configuration
-
-	customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
-	option.UserAgent = &customUA
-	option.UseStealth = true
-
-	// Validate before use
-
-	if err := option.Validate(); err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Println("Browser option validated successfully")
-
-	// Output: Browser option validated successfully
-
 }
 ```
 
@@ -757,16 +687,6 @@ pollingProxy := &browser.BrowserProxy{
 }
 ```
 
-### Methods
-
-#### ToMap
-
-```go
-func (p *BrowserProxy) ToMap() map[string]interface{}
-```
-
-ToMap converts BrowserProxy to map for API request
-
 ### Related Functions
 
 #### NewBrowserProxy
@@ -788,16 +708,6 @@ type BrowserScreen struct {
 
 BrowserScreen represents browser screen options
 
-### Methods
-
-#### ToMap
-
-```go
-func (s *BrowserScreen) ToMap() map[string]interface{}
-```
-
-ToMap converts BrowserScreen to map for API request
-
 ## Type BrowserViewport
 
 ```go
@@ -808,16 +718,6 @@ type BrowserViewport struct {
 ```
 
 BrowserViewport represents browser viewport options
-
-### Methods
-
-#### ToMap
-
-```go
-func (v *BrowserViewport) ToMap() map[string]interface{}
-```
-
-ToMap converts BrowserViewport to map for API request
 
 ## Type LinkResult
 
@@ -873,16 +773,6 @@ type SessionInterface interface {
 
 SessionInterface defines the interface that Session must implement for Browser
 
-## Functions
-
-### min
-
-```go
-func min(a, b int) int
-```
-
-Helper function to find minimum of two integers
-
 ## Best Practices
 
 1. Wait for page load completion before interacting with elements
@@ -893,7 +783,6 @@ Helper function to find minimum of two integers
 
 ## Related Resources
 
-- [Extension API Reference](extension.md)
 - [Session API Reference](../../common-features/basics/session.md)
 
 ---

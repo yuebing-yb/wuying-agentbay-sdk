@@ -16,10 +16,6 @@ It supports multiple programming languages including Python, JavaScript, and mor
 
 
 
-```python
-logger = get_logger("code")
-```
-
 ## CodeExecutionResult Objects
 
 ```python

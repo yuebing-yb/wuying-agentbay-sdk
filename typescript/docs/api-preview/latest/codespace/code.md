@@ -18,34 +18,10 @@ Handles code execution operations in the AgentBay cloud environment.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](code.md#constructor)
 
 ### Methods
 
 - [runCode](code.md#runcode)
-
-## Constructors
-
-### constructor
-
-• **new Code**(`session`): [`Code`](code.md)
-
-Initialize a Code object.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `session` | `Object` | The Session instance that this Code belongs to. |
-| `session.callMcpTool` | (`toolName`: `string`, `args`: `any`) => `Promise`\<\{ `data`: `string` ; `errorMessage`: `string` ; `requestId`: `string` ; `success`: `boolean`  }\> | - |
-| `session.getAPIKey` | () => `string` | - |
-| `session.getSessionId` | () => `string` | - |
-
-#### Returns
-
-[`Code`](code.md)
 
 ## Methods
 

@@ -355,22 +355,6 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 
 SyncWithParams synchronizes the context for the current session with optional parameters.
 
-#### pollForCompletion
-
-```go
-func (cm *ContextManager) pollForCompletion(callback SyncCallback, contextId, path string, maxRetries, retryInterval int)
-```
-
-pollForCompletion polls the info interface to check if sync is completed and calls callback.
-
-#### pollForCompletionSync
-
-```go
-func (cm *ContextManager) pollForCompletionSync(contextId, path string, maxRetries, retryInterval int) (bool, error)
-```
-
-pollForCompletionSync is the synchronous version of polling for sync completion.
-
 ### Related Functions
 
 #### NewContextManager
@@ -394,24 +378,6 @@ func Deprecated(reason, replacement, version string)
 ```
 
 Deprecated marks a function or method as deprecated and emits a warning
-
-### DeprecatedFunc
-
-```go
-func DeprecatedFunc(reason, replacement, version string) func()
-```
-
-DeprecatedFunc is a helper function to mark functions as deprecated Usage: defer
-DeprecatedFunc("reason", "replacement", "version")()
-
-### DeprecatedMethod
-
-```go
-func DeprecatedMethod(methodName, reason, replacement, version string) func()
-```
-
-DeprecatedMethod is a helper function to mark methods as deprecated Usage: defer
-DeprecatedMethod("MethodName", "reason", "replacement", "version")()
 
 ### FindDotEnvFile
 
@@ -914,130 +880,6 @@ func main() {
 
 }
 ```
-
-### containsWildcard
-
-```go
-func containsWildcard(path string) bool
-```
-
-### getColorCodes
-
-```go
-func getColorCodes() (reset, green, red, yellow, blue string)
-```
-
-getColorCodes returns ANSI color codes based on environment detection
-
-### getVersion
-
-```go
-func getVersion() string
-```
-
-getVersion attempts to read version from Go module info Returns the version from go.mod or a default
-fallback
-
-### init
-
-```go
-func init()
-```
-
-Initialize log level from environment variable
-
-### isIDEEnvironment
-
-```go
-func isIDEEnvironment() bool
-```
-
-isIDEEnvironment detects if running in an IDE that supports ANSI colors
-
-### isReleaseVersion
-
-```go
-func isReleaseVersion() bool
-```
-
-isReleaseVersion checks if this is a release build Returns true only if the SDK is installed from
-GitHub (github.com/aliyun/wuying-agentbay-sdk/golang) Returns false if: 1. Developing the SDK
-locally (main module) 2. Installed via go.mod replace from internal source (code.alibaba-inc.com) 3.
-Installed from a pseudo-version
-
-### isSensitiveField
-
-```go
-func isSensitiveField(fieldName string, sensitiveFields []string) bool
-```
-
-### isValidLifecycle
-
-```go
-func isValidLifecycle(lifecycle Lifecycle) bool
-```
-
-isValidLifecycle checks if the given lifecycle value is valid
-
-### isValidUploadMode
-
-```go
-func isValidUploadMode(uploadMode UploadMode) bool
-```
-
-isValidUploadMode checks if the given uploadMode value is valid
-
-### maskSensitiveDataInternal
-
-```go
-func maskSensitiveDataInternal(data interface{}, fields []string) interface{}
-```
-
-### maskSensitiveDataString
-
-```go
-func maskSensitiveDataString(jsonStr string) string
-```
-
-maskSensitiveDataString masks sensitive information in a JSON string
-
-### maskSensitiveDataWithRegex
-
-```go
-func maskSensitiveDataWithRegex(str string) string
-```
-
-maskSensitiveDataWithRegex masks sensitive data using regex patterns
-
-### parseFileSize
-
-```go
-func parseFileSize(sizeStr string) int64
-```
-
-parseFileSize parses size string like "10 MB" to bytes
-
-### parseLogLevel
-
-```go
-func parseLogLevel(levelStr string) int
-```
-
-parseLogLevel converts string to log level constant
-
-### validateSyncPolicy
-
-```go
-func validateSyncPolicy(policy *SyncPolicy) error
-```
-
-### writeToFile
-
-```go
-func writeToFile(message string)
-```
-
-writeToFile writes a message to the log file with rotation
 
 ## Related Resources
 

@@ -8,33 +8,11 @@ An Agent to manipulate applications to complete specific tasks.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](agent.md#constructor)
 
 ### Methods
 
 - [executeTask](agent.md#executetask)
-- [getTaskStatus](agent.md#gettaskstatus)
 - [terminateTask](agent.md#terminatetask)
-
-## Constructors
-
-### constructor
-
-• **new Agent**(`session`): [`Agent`](agent.md)
-
-Initialize an Agent object.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `session` | ``McpSession`` | The Session instance that this Agent belongs to. |
-
-#### Returns
-
-[`Agent`](agent.md)
 
 ## Methods
 
@@ -95,71 +73,6 @@ async function demonstrateAgentTask() {
 
 demonstrateAgentTask().catch(console.error);
 ```
-
-___
-
-### getTaskStatus
-
-▸ **getTaskStatus**(`taskId`): `Promise`\<``QueryResult``\>
-
-Get the status of the task with the given task ID.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `taskId` | `string` | Task ID |
-
-#### Returns
-
-`Promise`\<``QueryResult``\>
-
-QueryResult containing the task status
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetTaskStatus() {
-  try {
-    const result = await agentBay.create({ imageId: 'windows_latest' });
-    if (result.success) {
-      const session = result.session;
-
-      // Start a task
-      const taskResult = await session.agent.executeTask(
-        'Open calculator',
-        10
-      );
-
-      if (taskResult.taskId) {
-        // Query the task status
-        const statusResult = await session.agent.getTaskStatus(taskResult.taskId);
-
-        if (statusResult.success) {
-          console.log('Task status retrieved successfully');
-          // Output: Task status retrieved successfully
-          console.log(`Status output: ${statusResult.output}`);
-          // Parse the output to get detailed status information
-          const status = JSON.parse(statusResult.output);
-          console.log(`Task status: ${status.status}`);
-        }
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetTaskStatus().catch(console.error);
-```
-
-___
 
 ### terminateTask
 

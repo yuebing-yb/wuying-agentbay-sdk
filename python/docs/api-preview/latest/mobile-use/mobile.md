@@ -22,10 +22,6 @@ and mobile environment configuration operations.
 
 #### logger
 
-```python
-logger = get_logger("mobile")
-```
-
 ## UIElementListResult Objects
 
 ```python
@@ -551,9 +547,109 @@ def configure(mobile_config)
 
 Configure mobile settings from MobileExtraConfig.
 
+This method is typically called automatically during session creation when
+MobileExtraConfig is provided in CreateSessionParams. It can also be called
+manually to reconfigure mobile settings during a session.
+
 **Arguments**:
 
-    mobile_config: MobileExtraConfig object containing mobile configuration.
+- `mobile_config` _MobileExtraConfig_ - Mobile configuration object with settings for:
+  - lock_resolution (bool): Whether to lock device resolution
+  - app_manager_rule (AppManagerRule): App whitelist/blacklist rules
+  - hide_navigation_bar (bool): Whether to hide navigation bar
+  - uninstall_blacklist (List[str]): Apps protected from uninstallation
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import (
+    CreateSessionParams,
+    ExtraConfigs,
+    MobileExtraConfig,
+    AppManagerRule
+)
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def demonstrate_mobile_configuration():
+    try:
+        # Method 1: Configure mobile settings during session creation
+        app_rule = AppManagerRule(
+            rule_type="White",
+            app_package_name_list=[
+                "com.android.settings",
+                "com.android.chrome",
+                "com.example.myapp"
+            ]
+        )
+
+        mobile_config = MobileExtraConfig(
+            lock_resolution=True,
+            app_manager_rule=app_rule,
+            hide_navigation_bar=True,
+            uninstall_blacklist=[
+                "com.android.settings",
+                "com.example.important"
+            ]
+        )
+
+        extra_configs = ExtraConfigs(mobile=mobile_config)
+        params = CreateSessionParams(
+            image_id="mobile_latest",
+            extra_configs=extra_configs
+        )
+
+        # Mobile configuration is applied automatically during creation
+        result = agent_bay.create(params)
+        if result.success:
+            session = result.session
+            print("Mobile session created with configuration")
+            # Output: Mobile session created with configuration
+
+            # Method 2: Manually reconfigure mobile settings during session
+            new_app_rule = AppManagerRule(
+                rule_type="Black",
+                app_package_name_list=[
+                    "com.example.unwanted",
+                    "com.ads.provider"
+                ]
+            )
+
+            new_mobile_config = MobileExtraConfig(
+                lock_resolution=False,
+                app_manager_rule=new_app_rule,
+                hide_navigation_bar=False
+            )
+
+            # Apply new configuration
+            session.mobile.configure(new_mobile_config)
+            print("Mobile configuration updated")
+            # Output: Mobile configuration updated
+
+            session.delete()
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_mobile_configuration()
+```
+  
+
+**Notes**:
+
+  - This method is called automatically during session creation if MobileExtraConfig is provided
+  - Configuration changes are applied immediately
+  - Resolution lock prevents resolution changes
+  - App whitelist/blacklist affects app launching permissions
+  - Uninstall blacklist protects apps from being uninstalled
+  
+
+**See Also**:
+
+  set_resolution_lock, set_app_whitelist, set_app_blacklist,
+  set_navigation_bar_visibility, set_uninstall_blacklist
 
 #### set\_resolution\_lock
 

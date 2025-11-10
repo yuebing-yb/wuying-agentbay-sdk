@@ -16,45 +16,24 @@ screenshot capture, and content extraction. It enables automated testing and web
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](browser.md#constructor)
 
 ### Properties
 
-- [agent](browser.md#agent)
 
 ### Methods
 
 - [destroy](browser.md#destroy)
-- [getEndpointUrl](browser.md#getendpointurl)
-- [getOption](browser.md#getoption)
 - [initialize](browser.md#initialize)
 - [initializeAsync](browser.md#initializeasync)
 - [isInitialized](browser.md#isinitialized)
 - [screenshot](browser.md#screenshot)
 
-## Constructors
-
-### constructor
-
-• **new Browser**(`session`): [`Browser`](browser.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `session` | [`Session`](../common-features/basics/session.md) |
-
-#### Returns
-
-[`Browser`](browser.md)
-
 ## Properties
 
-### agent
+```typescript
+agent: ``BrowserAgent``
+```
 
-• **agent**: ``BrowserAgent``
 
 ## Methods
 
@@ -67,80 +46,6 @@ Destroy the browser instance.
 #### Returns
 
 `Promise`\<`void`\>
-
-___
-
-### getEndpointUrl
-
-▸ **getEndpointUrl**(): `Promise`\<`string`\>
-
-Returns the endpoint URL if the browser is initialized, otherwise throws an exception.
-When initialized, always fetches the latest CDP url from session.getLink().
-
-#### Returns
-
-`Promise`\<`string`\>
-
-Promise resolving to the CDP endpoint URL
-
-**`Throws`**
-
-If browser is not initialized
-
-**`Example`**
-
-```typescript
-import { AgentBay, BrowserOptionClass } from 'wuying-agentbay-sdk';
-import { chromium } from 'playwright';
-
-const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function demonstrateGetEndpointUrl() {
-    try {
-        const result = await agentBay.create({ imageId: 'browser_latest' });
-        if (result.success && result.session) {
-            const session = result.session;
-
-            // Initialize browser
-            const option = new BrowserOptionClass();
-            await session.browser.initializeAsync(option);
-
-            // Get CDP endpoint URL
-            const endpointUrl = await session.browser.getEndpointUrl();
-            console.log('CDP Endpoint:', endpointUrl);
-
-            // Connect Playwright to the browser
-            const browser = await chromium.connectOverCDP(endpointUrl);
-            const context = browser.contexts()[0];
-            const page = await context.newPage();
-
-            // Use the browser...
-            await page.goto('https://example.com');
-
-            await browser.close();
-            await session.delete();
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-demonstrateGetEndpointUrl().catch(console.error);
-```
-
-___
-
-### getOption
-
-▸ **getOption**(): ``null`` \| ``BrowserOptionClass``
-
-Returns the current BrowserOption used to initialize the browser, or null if not set.
-
-#### Returns
-
-``null`` \| ``BrowserOptionClass``
-
-___
 
 ### initialize
 
@@ -331,6 +236,5 @@ demonstrateScreenshot().catch(console.error);
 
 ## Related Resources
 
-- [Extension API Reference](extension.md)
 - [Session API Reference](../common-features/basics/session.md)
 

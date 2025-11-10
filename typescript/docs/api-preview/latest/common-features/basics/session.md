@@ -8,184 +8,47 @@ Represents a session in the AgentBay cloud environment.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](session.md#constructor)
 
 ### Properties
 
-- [agent](session.md#agent)
-- [browser](session.md#browser)
-- [code](session.md#code)
-- [command](session.md#command)
-- [computer](session.md#computer)
-- [context](session.md#context)
-- [enableBrowserReplay](session.md#enablebrowserreplay)
-- [fileSystem](session.md#filesystem)
-- [fileTransferContextId](session.md#filetransfercontextid)
-- [httpPort](session.md#httpport)
-- [isVpc](session.md#isvpc)
-- [mcpTools](session.md#mcptools)
-- [mobile](session.md#mobile)
-- [networkInterfaceIp](session.md#networkinterfaceip)
-- [oss](session.md#oss)
-- [recordContextId](session.md#recordcontextid)
-- [resourceUrl](session.md#resourceurl)
-- [sessionId](session.md#sessionid)
-- [token](session.md#token)
 
 ### Methods
 
 - [callMcpTool](session.md#callmcptool)
 - [delete](session.md#delete)
 - [findServerForTool](session.md#findserverfortool)
-- [getAPIKey](session.md#getapikey)
-- [getAgentBay](session.md#getagentbay)
-- [getClient](session.md#getclient)
-- [getHttpPort](session.md#gethttpport)
 - [getLabels](session.md#getlabels)
 - [getLink](session.md#getlink)
 - [getLinkAsync](session.md#getlinkasync)
-- [getNetworkInterfaceIp](session.md#getnetworkinterfaceip)
-- [getSessionId](session.md#getsessionid)
-- [getToken](session.md#gettoken)
 - [info](session.md#info)
 - [isVpcEnabled](session.md#isvpcenabled)
 - [listMcpTools](session.md#listmcptools)
 - [setLabels](session.md#setlabels)
 
-## Constructors
-
-### constructor
-
-• **new Session**(`agentBay`, `sessionId`): [`Session`](session.md)
-
-Initialize a Session object.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `agentBay` | [`AgentBay`](agentbay.md) | The AgentBay instance that created this session. |
-| `sessionId` | `string` | The ID of this session. |
-
-#### Returns
-
-[`Session`](session.md)
-
 ## Properties
 
-### agent
+```typescript
+agent: [`Agent`](../advanced/agent.md)
+browser: [`Browser`](../../browser-use/browser.md)
+code: [`Code`](../../codespace/code.md)
+command: [`Command`](command.md)
+computer: [`Computer`](../../computer-use/computer.md)
+context: [`ContextManager`](context-manager.md)
+enableBrowserReplay: `boolean` = `false`
+fileSystem: [`FileSystem`](filesystem.md)
+fileTransferContextId: ``null`` | `string` = `null`
+httpPort: `string` = `""`
+isVpc: `boolean` = `false`
+mcpTools: `McpTool`[] = `[]`
+mobile: [`Mobile`](../../mobile-use/mobile.md)
+networkInterfaceIp: `string` = `""`
+oss: [`Oss`](../advanced/oss.md)
+recordContextId: ``null`` | `string` = `null`
+resourceUrl: `string` = `""`
+sessionId: `string`
+token: `string` = `""`
+```
 
-• **agent**: [`Agent`](../advanced/agent.md)
-
-___
-
-### browser
-
-• **browser**: [`Browser`](../../browser-use/browser.md)
-
-___
-
-### code
-
-• **code**: [`Code`](../../codespace/code.md)
-
-___
-
-### command
-
-• **command**: [`Command`](command.md)
-
-___
-
-### computer
-
-• **computer**: [`Computer`](../../computer-use/computer.md)
-
-___
-
-### context
-
-• **context**: [`ContextManager`](context-manager.md)
-
-___
-
-### enableBrowserReplay
-
-• **enableBrowserReplay**: `boolean` = `false`
-
-___
-
-### fileSystem
-
-• **fileSystem**: [`FileSystem`](filesystem.md)
-
-___
-
-### fileTransferContextId
-
-• **fileTransferContextId**: ``null`` \| `string` = `null`
-
-___
-
-### httpPort
-
-• **httpPort**: `string` = `""`
-
-___
-
-### isVpc
-
-• **isVpc**: `boolean` = `false`
-
-___
-
-### mcpTools
-
-• **mcpTools**: `McpTool`[] = `[]`
-
-___
-
-### mobile
-
-• **mobile**: [`Mobile`](../../mobile-use/mobile.md)
-
-___
-
-### networkInterfaceIp
-
-• **networkInterfaceIp**: `string` = `""`
-
-___
-
-### oss
-
-• **oss**: [`Oss`](../advanced/oss.md)
-
-___
-
-### recordContextId
-
-• **recordContextId**: ``null`` \| `string` = `null`
-
-___
-
-### resourceUrl
-
-• **resourceUrl**: `string` = `""`
-
-___
-
-### sessionId
-
-• **sessionId**: `string`
-
-___
-
-### token
-
-• **token**: `string` = `""`
 
 ## Methods
 
@@ -383,176 +246,6 @@ async function demonstrateFindServerForTool() {
 demonstrateFindServerForTool().catch(console.error);
 ```
 
-___
-
-### getAPIKey
-
-▸ **getAPIKey**(): `string`
-
-Return the API key for this session.
-
-#### Returns
-
-`string`
-
-The API key string
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetAPIKey() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get the API key
-      const apiKey = session.getAPIKey();
-      console.log('API key length:', apiKey.length);
-      // Output: API key length: 32
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetAPIKey().catch(console.error);
-```
-
-___
-
-### getAgentBay
-
-▸ **getAgentBay**(): [`AgentBay`](agentbay.md)
-
-Return the AgentBay instance that created this session.
-
-#### Returns
-
-[`AgentBay`](agentbay.md)
-
-The AgentBay client instance
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetAgentBay() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get the AgentBay instance from session
-      const agentBayInstance = session.getAgentBay();
-      console.log('AgentBay instance retrieved');
-      // Output: AgentBay instance retrieved
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetAgentBay().catch(console.error);
-```
-
-___
-
-### getClient
-
-▸ **getClient**(): ``Client``
-
-Return the HTTP client for this session.
-
-#### Returns
-
-``Client``
-
-The Client instance used for API communication
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetClient() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get the internal client
-      const client = session.getClient();
-      console.log('Client retrieved successfully');
-      // Output: Client retrieved successfully
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetClient().catch(console.error);
-```
-
-___
-
-### getHttpPort
-
-▸ **getHttpPort**(): `string`
-
-Return the HTTP port for VPC sessions.
-
-#### Returns
-
-`string`
-
-The HTTP port string for VPC sessions
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetHttpPort() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get the HTTP port for VPC sessions
-      const httpPort = session.getHttpPort();
-      console.log(`HTTP Port: ${httpPort}`);
-      // Output: HTTP Port: 8080
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetHttpPort().catch(console.error);
-```
-
-___
-
 ### getLabels
 
 ▸ **getLabels**(): `Promise`\<`OperationResult`\>
@@ -745,133 +438,6 @@ async function getSessionLinkAsync() {
 
 getSessionLinkAsync().catch(console.error);
 ```
-
-___
-
-### getNetworkInterfaceIp
-
-▸ **getNetworkInterfaceIp**(): `string`
-
-Return the network interface IP for VPC sessions.
-
-#### Returns
-
-`string`
-
-The network interface IP string for VPC sessions
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetNetworkInterfaceIp() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get the network interface IP for VPC sessions
-      const networkIp = session.getNetworkInterfaceIp();
-      console.log(`Network Interface IP: ${networkIp}`);
-      // Output: Network Interface IP: 192.168.1.100
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetNetworkInterfaceIp().catch(console.error);
-```
-
-___
-
-### getSessionId
-
-▸ **getSessionId**(): `string`
-
-Return the session_id for this session.
-
-#### Returns
-
-`string`
-
-The session ID string
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetSessionId() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get the session ID
-      const sessionId = session.getSessionId();
-      console.log(`Session ID: ${sessionId}`);\n       // Output: Session ID: session-04bdwfj7u22a1s30g
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetSessionId().catch(console.error);
-```
-
-___
-
-### getToken
-
-▸ **getToken**(): `string`
-
-Return the token for VPC sessions.
-
-#### Returns
-
-`string`
-
-The token string for VPC sessions
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetToken() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get the token for VPC sessions
-      const token = session.getToken();
-      console.log('Token length:', token.length);
-      // Output: Token length: 64
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetToken().catch(console.error);
-```
-
-___
 
 ### info
 
@@ -1125,5 +691,4 @@ setSessionLabels().catch(console.error);
 - [Context API Reference](context.md)
 - [Context Manager API Reference](context-manager.md)
 - [OSS API Reference](../../common-features/advanced/oss.md)
-- [Application API Reference](../../computer-use/application.md)
 

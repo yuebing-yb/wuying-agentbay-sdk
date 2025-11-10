@@ -6,31 +6,12 @@
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](context-manager.md#constructor)
 
 ### Methods
 
 - [info](context-manager.md#info)
 - [infoWithParams](context-manager.md#infowithparams)
 - [sync](context-manager.md#sync)
-
-## Constructors
-
-### constructor
-
-• **new ContextManager**(`session`): [`ContextManager`](context-manager.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `session` | ``SessionInterface`` |
-
-#### Returns
-
-[`ContextManager`](context-manager.md)
 
 ## Methods
 

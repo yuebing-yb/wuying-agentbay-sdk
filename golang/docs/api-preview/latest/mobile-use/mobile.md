@@ -828,54 +828,6 @@ func main() {
 }
 ```
 
-#### executeTemplateCommand
-
-```go
-func (m *Mobile) executeTemplateCommand(commandTemplate, description string) error
-```
-
-executeTemplateCommand executes a mobile command template
-
-#### setAppBlacklist
-
-```go
-func (m *Mobile) setAppBlacklist(packageNames []string) error
-```
-
-setAppBlacklist sets app blacklist configuration
-
-#### setAppWhitelist
-
-```go
-func (m *Mobile) setAppWhitelist(packageNames []string) error
-```
-
-setAppWhitelist sets app whitelist configuration
-
-#### setNavigationBarVisibility
-
-```go
-func (m *Mobile) setNavigationBarVisibility(hide bool) error
-```
-
-setNavigationBarVisibility sets navigation bar visibility
-
-#### setResolutionLock
-
-```go
-func (m *Mobile) setResolutionLock(enable bool) error
-```
-
-setResolutionLock internal method to set resolution lock
-
-#### setUninstallBlacklist
-
-```go
-func (m *Mobile) setUninstallBlacklist(packageNames []string) error
-```
-
-setUninstallBlacklist sets uninstall protection blacklist
-
 ### Related Functions
 
 #### NewMobile
@@ -963,16 +915,6 @@ type UIBounds struct {
 
 UIBounds represents the bounds of a UI element
 
-### Related Functions
-
-#### parseBoundsString
-
-```go
-func parseBoundsString(s string) *UIBounds
-```
-
-parseBoundsString parses bounds string format "left,top,right,bottom"
-
 ## Type UIElement
 
 ```go
@@ -990,16 +932,6 @@ type UIElement struct {
 ```
 
 UIElement represents a UI element structure
-
-### Methods
-
-#### UnmarshalJSON
-
-```go
-func (e *UIElement) UnmarshalJSON(data []byte) error
-```
-
-UnmarshalJSON custom unmarshaler to handle string format bounds
 
 ## Type UIElementsResult
 

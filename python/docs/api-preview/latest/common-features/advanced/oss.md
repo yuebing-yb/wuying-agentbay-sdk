@@ -6,10 +6,6 @@
 
 
 
-```python
-logger = get_logger("oss")
-```
-
 ## OSSClientResult Objects
 
 ```python

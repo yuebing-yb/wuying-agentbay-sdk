@@ -806,6 +806,44 @@ class Browser(BaseService):
     def destroy(self):
         """
         Destroy the browser instance.
+
+        Example:
+            ```python
+            from agentbay import AgentBay
+            from agentbay.browser.browser import BrowserOption
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            def demonstrate_browser_destroy():
+                try:
+                    result = agent_bay.create()
+                    if result.success:
+                        session = result.session
+
+                        # Initialize the browser
+                        browser_option = BrowserOption(use_stealth=True)
+                        success = session.browser.initialize(browser_option)
+
+                        if success:
+                            print("Browser initialized successfully")
+                            # Output: Browser initialized successfully
+
+                            # Check if browser is initialized
+                            if session.browser.is_initialized():
+                                print("Browser is active")
+                                # Output: Browser is active
+
+                            # Destroy the browser instance
+                            session.browser.destroy()
+                            print("Browser destroyed")
+                            # Output: Browser destroyed
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            demonstrate_browser_destroy()
+            ```
         """
         self._stop_browser()
 

@@ -54,23 +54,117 @@ def ensure_clean_docs_root() -> None:
     DOCS_ROOT.mkdir(parents=True, exist_ok=True)
 
 
-def prune_members(container, module_name: str) -> None:
+def should_exclude_method(method: docspec.Function, exclude_methods: list = None, global_rules: dict = None) -> bool:
+    """
+    Determine if a method should be excluded from documentation based on smart rules.
+
+    Args:
+        method: The method to check
+        exclude_methods: Explicit list of method names to exclude
+        global_rules: Global auto-filtering rules from metadata
+
+    Returns:
+        bool: True if the method should be excluded
+    """
+    if exclude_methods is None:
+        exclude_methods = []
+    if global_rules is None:
+        global_rules = {}
+
+    method_name = method.name
+
+    # Rule 1: Explicit exclusion list (module-specific)
+    if method_name in exclude_methods:
+        return True
+
+    # Rule 2: Simple getter methods from global config
+    simple_getters = global_rules.get('exclude_simple_getters', [])
+    if method_name in simple_getters:
+        return True
+
+    # Rule 3: VPC helper methods from global config
+    vpc_helpers = global_rules.get('exclude_vpc_helpers', [])
+    if method_name in vpc_helpers:
+        return True
+
+    # Rule 4: Validation methods
+    if global_rules.get('exclude_validation_methods', False):
+        if method_name.startswith('_validate_') or method_name.endswith('_validate'):
+            return True
+
+    # Rule 5: Internal helper methods (find/search with "internal" in docstring)
+    if global_rules.get('exclude_internal_helpers', False):
+        if method_name.startswith('find_') or method_name.startswith('search_'):
+            # Extract docstring content (handle both string and Docstring object)
+            docstring = ''
+            if method.docstring:
+                if isinstance(method.docstring, str):
+                    docstring = method.docstring
+                elif hasattr(method.docstring, 'content'):
+                    docstring = method.docstring.content or ''
+            if 'internal' in docstring.lower() or 'helper' in docstring.lower():
+                return True
+
+    # Rule 6: Serialization methods (to_map, from_map, to_dict, from_dict)
+    serialization_methods = global_rules.get('exclude_serialization_methods', [])
+    if method_name in serialization_methods:
+        return True
+
+    # Rule 7: Marshal/Unmarshal methods (MarshalJSON, UnmarshalJSON, etc.)
+    marshal_methods = global_rules.get('exclude_marshal_methods', [])
+    if method_name in marshal_methods:
+        return True
+
+    return False
+
+
+def prune_members(container, module_name: str, exclude_methods: list = None, global_rules: dict = None) -> None:
+    """
+    Prune members from the documentation tree using smart filtering rules.
+
+    Args:
+        container: The docspec container to prune
+        module_name: Name of the module being processed
+        exclude_methods: List of method names to exclude from documentation
+        global_rules: Global auto-filtering rules from metadata
+    """
     members = getattr(container, "members", None)
     if not members:
         return
+
+    if exclude_methods is None:
+        exclude_methods = []
+    if global_rules is None:
+        global_rules = {}
 
     filtered = []
     for member in members:
         if isinstance(member, docspec.Indirection):
             continue
 
-        prune_members(member, module_name)
+        # Apply smart filtering for methods
+        if isinstance(member, docspec.Function):
+            if should_exclude_method(member, exclude_methods, global_rules):
+                continue
+
+        prune_members(member, module_name, exclude_methods, global_rules)
         filtered.append(member)
 
     members[:] = filtered
 
 
-def render_markdown(module_names: Iterable[str]) -> str:
+def render_markdown(module_names: Iterable[str], exclude_methods: list = None, global_rules: dict = None) -> str:
+    """
+    Render markdown documentation for the given modules.
+
+    Args:
+        module_names: List of module names to document
+        exclude_methods: List of method names to exclude from documentation
+        global_rules: Global auto-filtering rules from metadata
+
+    Returns:
+        str: The rendered markdown content
+    """
     loader = PythonLoader(search_path=[str(PROJECT_ROOT)], modules=list(module_names))
     pydoc = PydocMarkdown(
         loaders=[loader],
@@ -89,7 +183,7 @@ def render_markdown(module_names: Iterable[str]) -> str:
 
     modules = pydoc.load_modules()
     for module in modules:
-        prune_members(module, module.name)
+        prune_members(module, module.name, exclude_methods, global_rules)
 
     pydoc.process(modules)
     markdown = pydoc.renderer.render_to_string(modules)
@@ -156,6 +250,22 @@ def get_overview_section(module_name: str, metadata: dict[str, Any]) -> str:
 {overview}
 
 """
+
+
+def get_properties_section(module_name: str, metadata: dict[str, Any]) -> str:
+    """Generate properties section markdown."""
+    module_config = metadata.get('modules', {}).get(module_name, {})
+    properties = module_config.get('properties', [])
+    if not properties:
+        return ""
+
+    lines = ["## Properties\n"]
+    lines.append("```python")
+    for prop in properties:
+        lines.append(f"{prop['name']}  # {prop['description']}")
+    lines.append("```\n")
+
+    return "\n".join(lines) + "\n"
 
 
 def get_requirements_section(module_name: str, metadata: dict[str, Any]) -> str:
@@ -257,6 +367,36 @@ def get_related_resources_section(module_name: str, metadata: dict[str, Any]) ->
     return "\n".join(lines) + "\n\n"
 
 
+def remove_logger_definitions(content: str) -> str:
+    """
+    Remove logger initialization code blocks from the beginning of documentation.
+    These are module-level code that should not appear in API reference.
+    """
+    import re
+
+    # Pattern to match logger code block at the beginning
+    # Matches: ```python\nlogger = get_logger("...")\n```
+    pattern = r'^```python\nlogger = get_logger\(["\'].*?["\']\)\n```\n\n'
+
+    content = re.sub(pattern, '', content, flags=re.MULTILINE)
+    return content
+
+
+def remove_sessioninfo_class(content: str) -> str:
+    """
+    Remove SessionInfo Objects section as it provides little value.
+    This is a data class with no methods, only shown in Session.info() return type.
+    """
+    import re
+
+    # Pattern to match SessionInfo Objects section
+    # Matches from "## SessionInfo Objects" to the next "##" heading
+    pattern = r'## SessionInfo Objects\n\n```python\nclass SessionInfo\(\)\n```\n\nSessionInfo contains information about a session\.\n\n'
+
+    content = re.sub(pattern, '', content, flags=re.MULTILINE)
+    return content
+
+
 def fix_code_block_indentation(content: str) -> str:
     """
     Fix code block indentation in Example sections.
@@ -351,6 +491,10 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
     """Enhanced markdown formatting with metadata injection."""
     content = raw_content.lstrip()
 
+    # Remove unwanted content
+    content = remove_logger_definitions(content)
+    content = remove_sessioninfo_class(content)
+
     # Fix code block indentation in Example sections
     content = fix_code_block_indentation(content)
 
@@ -377,6 +521,11 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
     overview_section = get_overview_section(module_name, metadata)
     if overview_section:
         sections_after_title.append(overview_section)
+
+    # Properties section
+    properties_section = get_properties_section(module_name, metadata)
+    if properties_section:
+        sections_after_title.append(properties_section)
 
     # Requirements section
     requirements_section = get_requirements_section(module_name, metadata)
@@ -444,9 +593,19 @@ def write_readme() -> None:
 def main() -> None:
     metadata = load_metadata()
     ensure_clean_docs_root()
+
+    # Get global auto-filtering rules
+    global_rules = metadata.get('global', {}).get('auto_filter_rules', {})
+
     for mapping in DOC_MAPPINGS:
-        markdown = render_markdown(mapping.modules)
         module_name = get_module_name_from_path(mapping.modules[0])
+
+        # Get module-specific exclude_methods list from metadata
+        module_config = metadata.get('modules', {}).get(module_name, {})
+        exclude_methods = module_config.get('exclude_methods', [])
+
+        # Render markdown with method exclusions (both global and module-specific)
+        markdown = render_markdown(mapping.modules, exclude_methods, global_rules)
         formatted = format_markdown(markdown, mapping.title, module_name, metadata)
         output_path = DOCS_ROOT / mapping.target
         output_path.parent.mkdir(parents=True, exist_ok=True)

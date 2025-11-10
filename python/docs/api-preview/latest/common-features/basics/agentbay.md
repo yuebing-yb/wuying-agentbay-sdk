@@ -1,15 +1,5 @@
 # AgentBay API Reference
 
-## 🚀 Related Tutorial
-
-- [First Session Tutorial](../../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
-
-
-
-```python
-logger = get_logger("agentbay")
-```
-
 #### generate\_random\_context\_name
 
 ```python
@@ -21,19 +11,67 @@ Generate a random context name string using alphanumeric characters with optiona
 
 **Arguments**:
 
-- `length` _int_ - Length of the random part. Defaults to 16.
-- `include_timestamp` _bool_ - Whether to include timestamp. Defaults to True.
+- `length` _int_ - Length of the random part. Defaults to 8.
+- `include_timestamp` _bool_ - Whether to include timestamp prefix. Defaults to True.
   
 
 **Returns**:
 
-    str: Random alphanumeric string with optional timestamp prefix
+    str: Random alphanumeric string with optional timestamp prefix in format:
+  - With timestamp: "YYYYMMDDHHMMSS_<random>" (e.g., "20250112143025_kG8hN2pQ")
+  - Without timestamp: "<random>" (e.g., "kG8hN2pQ")
   
 
-**Examples**:
+**Example**:
 
-  generate_random_context_name()  # Returns: "20250912143025_kG8hN2pQ7mX9vZ1L"
-  generate_random_context_name(8, False)  # Returns: "kG8hN2pQ"
+```python
+from agentbay import AgentBay, generate_random_context_name
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def demonstrate_generate_context_name():
+    try:
+        # Generate context name with timestamp (default)
+        name_with_timestamp = generate_random_context_name()
+        print(f"Context name with timestamp: {name_with_timestamp}")
+        # Output: Context name with timestamp: 20250112143025_kG8hN2pQ
+
+        # Generate context name without timestamp
+        name_without_timestamp = generate_random_context_name(8, False)
+        print(f"Context name without timestamp: {name_without_timestamp}")
+        # Output: Context name without timestamp: kG8hN2pQ
+
+        # Generate longer random name
+        long_name = generate_random_context_name(16, False)
+        print(f"Long context name: {long_name}")
+        # Output: Long context name: kG8hN2pQ7mX9vZ1L
+
+        # Use generated name to create a context
+        context_name = generate_random_context_name()
+        result = agent_bay.context.get(context_name, create=True)
+        if result.success:
+            print(f"Created context: {result.context.name}")
+            # Output: Created context: 20250112143025_kG8hN2pQ
+            print(f"Context ID: {result.context.id}")
+            # Output: Context ID: ctx-12345678
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_generate_context_name()
+```
+  
+
+**Notes**:
+
+  - Characters are randomly selected from a-zA-Z0-9
+  - Timestamp format is YYYYMMDDHHMMSS (local time)
+  - Useful for creating unique context names that can be sorted chronologically
+  
+
+**See Also**:
+
+  AgentBay.context.get, AgentBay.context.create
 
 ## Config Objects
 
@@ -256,6 +294,72 @@ Delete a session by session object.
 **Returns**:
 
     DeleteResult: Result indicating success or failure and request ID.
+  - success (bool): True if deletion succeeded
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def demonstrate_delete():
+    try:
+        # Create a session
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+            print(f"Created session: {session.session_id}")
+            # Output: Created session: session-04bdwfj7u22a1s30g
+
+            # Use the session
+            info_result = session.info()
+            if info_result.success:
+                print(f"Session status: {info_result.data['Status']}")
+                # Output: Session status: Running
+
+            # Delete the session without syncing context
+            delete_result = agent_bay.delete(session)
+            if delete_result.success:
+                print("Session deleted successfully")
+                # Output: Session deleted successfully
+                print(f"Request ID: {delete_result.request_id}")
+                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+        # Create another session and delete with context sync
+        result = agent_bay.create()
+        if result.success:
+            session = result.session
+
+            # Write some files to the session
+            session.file_system.write_file("/tmp/test.txt", "test content")
+
+            # Delete with context sync (triggers file upload to OSS)
+            delete_result = agent_bay.delete(session, sync_context=True)
+            if delete_result.success:
+                print("Session deleted with context sync")
+                # Output: Session deleted with context sync
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_delete()
+```
+  
+
+**Notes**:
+
+  - After deletion, the session object is removed from the AgentBay cache
+  - If sync_context=True, context data is uploaded to OSS before deletion
+  - Session cannot be used after deletion
+  
+
+**See Also**:
+
+  Session.delete, AgentBay.create, AgentBay.get
 
 #### get\_session
 
@@ -265,6 +369,9 @@ def get_session(session_id: str) -> GetSessionResult
 
 Get session information by session ID.
 
+This method retrieves detailed session metadata from the API. Unlike `get()`,
+this returns raw session data without creating a Session object.
+
 **Arguments**:
 
 - `session_id` _str_ - The ID of the session to retrieve.
@@ -273,6 +380,82 @@ Get session information by session ID.
 **Returns**:
 
     GetSessionResult: Result containing session information.
+  - success (bool): True if the operation succeeded
+  - data (GetSessionData): Session information object with fields:
+  - session_id (str): Session ID
+  - app_instance_id (str): Application instance ID
+  - resource_id (str): Resource ID
+  - resource_url (str): Resource URL for accessing the session
+  - vpc_resource (bool): Whether this is a VPC resource
+  - network_interface_ip (str): Network interface IP (for VPC sessions)
+  - http_port (str): HTTP port (for VPC sessions)
+  - token (str): Authentication token (for VPC sessions)
+  - request_id (str): Unique identifier for this API request
+  - http_status_code (int): HTTP status code
+  - code (str): API response code
+  - error_message (str): Error description (if success is False)
+  
+
+**Example**:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay(api_key="your_api_key")
+
+def demonstrate_get_session():
+    try:
+        # Create a session first
+        create_result = agent_bay.create()
+        if create_result.success:
+            session_id = create_result.session.session_id
+            print(f"Created session: {session_id}")
+            # Output: Created session: session-04bdwfj7u22a1s30g
+
+            # Get session information
+            get_result = agent_bay.get_session(session_id)
+            if get_result.success:
+                print("Session information retrieved:")
+                # Output: Session information retrieved:
+                print(f"  Session ID: {get_result.data.session_id}")
+                # Output:   Session ID: session-04bdwfj7u22a1s30g
+                print(f"  App Instance ID: {get_result.data.app_instance_id}")
+                # Output:   App Instance ID: ai-12345678
+                print(f"  Resource URL: {get_result.data.resource_url[:50]}...")
+                # Output:   Resource URL: https://session.agentbay.com/...
+                print(f"  VPC Resource: {get_result.data.vpc_resource}")
+                # Output:   VPC Resource: False
+                print(f"  Request ID: {get_result.request_id}")
+                # Output:   Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+            else:
+                print(f"Failed to get session: {get_result.error_message}")
+
+            # Clean up
+            create_result.session.delete()
+
+        # Try to get a non-existent session
+        get_result = agent_bay.get_session("non-existent-session")
+        if not get_result.success:
+            print(f"Error: {get_result.error_message}")
+            # Output: Error: Session non-existent-session not found
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+demonstrate_get_session()
+```
+  
+
+**Notes**:
+
+  - Returns session metadata without creating a Session object
+  - Use `get()` instead if you need a Session object for API calls
+  - Returns error if session does not exist or is no longer valid
+  
+
+**See Also**:
+
+  AgentBay.get, AgentBay.create, Session.info
 
 #### get
 

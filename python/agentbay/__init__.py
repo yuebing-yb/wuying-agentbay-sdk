@@ -1,4 +1,4 @@
-from .agentbay import AgentBay, Config
+from .agentbay import AgentBay, Config, generate_random_context_name
 from .command import Command
 from .computer import Computer
 from .exceptions import AgentBayError, APIError, AuthenticationError
@@ -57,4 +57,5 @@ __all__ = [
     "AgentBayLogger",
     "get_logger",
     "log",
+    "generate_random_context_name",
 ]

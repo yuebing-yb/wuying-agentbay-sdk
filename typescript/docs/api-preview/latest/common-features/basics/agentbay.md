@@ -8,53 +8,24 @@ Main class for interacting with the AgentBay cloud runtime environment.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](agentbay.md#constructor)
 
 ### Properties
 
-- [context](agentbay.md#context)
 
 ### Methods
 
 - [create](agentbay.md#create)
 - [delete](agentbay.md#delete)
 - [get](agentbay.md#get)
-- [getAPIKey](agentbay.md#getapikey)
-- [getClient](agentbay.md#getclient)
-- [getSession](agentbay.md#getsession)
 - [list](agentbay.md#list)
 - [removeSession](agentbay.md#removesession)
 
-## Constructors
-
-### constructor
-
-• **new AgentBay**(`options?`): [`AgentBay`](agentbay.md)
-
-Initialize the AgentBay client.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `options` | `Object` | Configuration options |
-| `options.apiKey?` | `string` | API key for authentication. If not provided, will look for AGENTBAY_API_KEY environment variable. |
-| `options.config?` | ``Config`` | Custom configuration object. If not provided, will use environment-based configuration. |
-| `options.envFile?` | `string` | Custom path to .env file. If not provided, will search upward from current directory. |
-
-#### Returns
-
-[`AgentBay`](agentbay.md)
-
 ## Properties
 
-### context
+```typescript
+context: [`ContextService`](context.md)
+```
 
-• **context**: [`ContextService`](context.md)
-
-Context service for managing persistent contexts.
 
 ## Methods
 
@@ -278,116 +249,6 @@ async function getSessionExample() {
 
 getSessionExample().catch(console.error);
 ```
-
-___
-
-### getAPIKey
-
-▸ **getAPIKey**(): `string`
-
-Get the API key used for authentication.
-
-#### Returns
-
-`string`
-
-The API key string
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetAPIKey() {
-  try {
-    // Get the API key
-    const apiKey = agentBay.getAPIKey();
-    console.log('API key length:', apiKey.length);
-    // Output: API key length: 32
-    console.log('API key retrieved successfully');
-    // Output: API key retrieved successfully
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetAPIKey().catch(console.error);
-```
-
-**`Remarks`**
-
-**Security Note:** Be careful when logging or exposing API keys. Always keep them secure
-and never commit them to version control.
-
-___
-
-### getClient
-
-▸ **getClient**(): ``Client``
-
-Get the internal HTTP client instance.
-
-This is primarily for internal use and advanced scenarios where you need direct access
-to the underlying API client.
-
-#### Returns
-
-``Client``
-
-The Client instance used for API communication
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateGetClient() {
-  try {
-    // Get the internal client
-    const client = agentBay.getClient();
-    console.log('Client retrieved successfully');
-    // Output: Client retrieved successfully
-
-    // The client is used internally by the SDK for API calls
-    // Most users don't need to interact with it directly
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateGetClient().catch(console.error);
-```
-
-**`Remarks`**
-
-**Note:** This method is primarily for internal use. Most users should interact
-with the SDK through higher-level methods like `create()`, `get()`, and `list()`.
-
-___
-
-### getSession
-
-▸ **getSession**(`sessionId`): `Promise`\<`GetSessionResult`\>
-
-Get session information by session ID.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `sessionId` | `string` | The ID of the session to retrieve. |
-
-#### Returns
-
-`Promise`\<`GetSessionResult`\>
-
-GetSessionResult containing session information
-
-___
 
 ### list
 

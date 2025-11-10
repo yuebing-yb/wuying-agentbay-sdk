@@ -6,10 +6,6 @@
 
 
 
-```python
-logger = get_logger("agent")
-```
-
 ## QueryResult Objects
 
 ```python

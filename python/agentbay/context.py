@@ -1432,6 +1432,50 @@ class ContextService:
     Raises:
         ClearanceTimeoutError: If the task fails to complete within the timeout.
         AgentBayError: If an API or network error occurs during execution.
+
+    Example:
+        ```python
+        from agentbay import AgentBay
+        from agentbay.exceptions import ClearanceTimeoutError
+
+        agent_bay = AgentBay(api_key="your_api_key")
+
+        def clear_context_example():
+            try:
+                # Get or create a context
+                result = agent_bay.context.get(name="my-context", create=True)
+                if result.success:
+                    context = result.context
+                    print(f"Context ID: {context.id}")
+                    # Output: Context ID: ctx-04bdwfj7u22a1s30g
+
+                    # Clear the context data synchronously
+                    # This will wait for the clearing to complete
+                    clear_result = agent_bay.context.clear(
+                        context.id,
+                        timeout=60,
+                        poll_interval=2.0
+                    )
+
+                    if clear_result.success:
+                        print("Context cleared successfully")
+                        # Output: Context cleared successfully
+                        print(f"Final status: {clear_result.status}")
+                        # Output: Final status: available
+                        print(f"Request ID: {clear_result.request_id}")
+                        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+                    else:
+                        print(f"Failed to clear context: {clear_result.error_message}")
+                else:
+                    print(f"Failed to get context: {result.error_message}")
+
+            except ClearanceTimeoutError as e:
+                print(f"Clearing timed out: {e}")
+            except Exception as e:
+                print(f"Error: {e}")
+
+        clear_context_example()
+        ```
         """
         # 1. Asynchronously start the clearing task
         start_result = self.clear_async(context_id)

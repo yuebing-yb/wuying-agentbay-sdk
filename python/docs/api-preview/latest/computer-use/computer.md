@@ -113,13 +113,6 @@ class InstalledApp()
 
 Represents an installed application.
 
-#### from\_dict
-
-```python
-@classmethod
-def from_dict(cls, data: Dict[str, Any]) -> "InstalledApp"
-```
-
 ## Process Objects
 
 ```python
@@ -128,13 +121,6 @@ class Process()
 
 Represents a running process.
 
-#### from\_dict
-
-```python
-@classmethod
-def from_dict(cls, data: Dict[str, Any]) -> "Process"
-```
-
 ## Window Objects
 
 ```python
@@ -142,13 +128,6 @@ class Window()
 ```
 
 Represents a window in the system.
-
-#### from\_dict
-
-```python
-@classmethod
-def from_dict(cls, data: Dict[str, Any]) -> "Window"
-```
 
 ## InstalledAppListResult Objects
 
