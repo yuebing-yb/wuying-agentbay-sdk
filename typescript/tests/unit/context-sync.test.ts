@@ -10,7 +10,9 @@ import {
   RecyclePolicy,
   UploadStrategy,
   DownloadStrategy,
-  Lifecycle
+  Lifecycle,
+  MappingPolicy,
+  newMappingPolicy
 } from "../../src/context-sync";
 import { log } from "../../src/utils/logger";
 
@@ -221,6 +223,105 @@ describe("ContextSync Unit Tests", () => {
       expect(() => {
         new ContextSync("test-context", "/test/path", syncPolicyWithInvalidPath);
       }).toThrow("Wildcard patterns are not supported in path. Got: /path/with/*. Please use exact directory paths instead.");
+    });
+  });
+
+  describe("MappingPolicy Tests", () => {
+    it("should create default MappingPolicy", () => {
+      const mappingPolicy = newMappingPolicy();
+
+      expect(mappingPolicy).toBeDefined();
+      expect(mappingPolicy.path).toBe("");
+    });
+
+    it("should create MappingPolicy with Windows path", () => {
+      const windowsPath = "c:\\Users\\Administrator\\Downloads";
+      const mappingPolicy: MappingPolicy = {
+        path: windowsPath
+      };
+
+      expect(mappingPolicy).toBeDefined();
+      expect(mappingPolicy.path).toBe(windowsPath);
+    });
+
+    it("should serialize MappingPolicy correctly", () => {
+      const windowsPath = "c:\\Users\\Administrator\\Downloads";
+      const mappingPolicy: MappingPolicy = {
+        path: windowsPath
+      };
+
+      const jsonString = JSON.stringify(mappingPolicy);
+      const jsonObject = JSON.parse(jsonString);
+
+      expect(jsonObject.path).toBe(windowsPath);
+    });
+  });
+
+  describe("SyncPolicy with MappingPolicy Tests", () => {
+    it("should create SyncPolicy with MappingPolicy", () => {
+      const windowsPath = "c:\\Users\\Administrator\\Downloads";
+      const mappingPolicy: MappingPolicy = {
+        path: windowsPath
+      };
+
+      const syncPolicy: SyncPolicy = {
+        uploadPolicy: newUploadPolicy(),
+        downloadPolicy: newDownloadPolicy(),
+        deletePolicy: newDeletePolicy(),
+        extractPolicy: newExtractPolicy(),
+        mappingPolicy: mappingPolicy
+      };
+
+      expect(syncPolicy).toBeDefined();
+      expect(syncPolicy.mappingPolicy).toBeDefined();
+      expect(syncPolicy.mappingPolicy?.path).toBe(windowsPath);
+    });
+
+    it("should serialize SyncPolicy with MappingPolicy correctly", () => {
+      const windowsPath = "c:\\Users\\Administrator\\Downloads";
+      const mappingPolicy: MappingPolicy = {
+        path: windowsPath
+      };
+
+      const syncPolicy: SyncPolicy = {
+        uploadPolicy: newUploadPolicy(),
+        mappingPolicy: mappingPolicy
+      };
+
+      const jsonString = JSON.stringify(syncPolicy);
+      const jsonObject = JSON.parse(jsonString);
+
+      expect(jsonObject.mappingPolicy).toBeDefined();
+      expect(jsonObject.mappingPolicy.path).toBe(windowsPath);
+    });
+  });
+
+  describe("ContextSync with MappingPolicy Tests", () => {
+    it("should create ContextSync with MappingPolicy", () => {
+      const contextId = "ctx-12345";
+      const linuxPath = "/home/wuying/下载";
+      const windowsPath = "c:\\Users\\Administrator\\Downloads";
+
+      const mappingPolicy: MappingPolicy = {
+        path: windowsPath
+      };
+
+      const syncPolicy: SyncPolicy = {
+        uploadPolicy: newUploadPolicy(),
+        downloadPolicy: newDownloadPolicy(),
+        deletePolicy: newDeletePolicy(),
+        extractPolicy: newExtractPolicy(),
+        mappingPolicy: mappingPolicy
+      };
+
+      const contextSync = new ContextSync(contextId, linuxPath, syncPolicy);
+
+      expect(contextSync).toBeDefined();
+      expect(contextSync.contextId).toBe(contextId);
+      expect(contextSync.path).toBe(linuxPath);
+      expect(contextSync.policy).toBeDefined();
+      expect(contextSync.policy?.mappingPolicy).toBeDefined();
+      expect(contextSync.policy?.mappingPolicy?.path).toBe(windowsPath);
     });
   });
 });

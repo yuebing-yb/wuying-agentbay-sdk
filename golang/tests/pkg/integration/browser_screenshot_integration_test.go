@@ -82,7 +82,7 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		err = page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
-			State: playwright.WaitUntilStateDOMContentLoad,
+			State: playwright.LoadStateDomcontentloaded,
 		})
 		require.NoError(t, err)
 
@@ -121,7 +121,7 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		err = page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
-			State: playwright.WaitUntilStateDOMContentLoad,
+			State: playwright.LoadStateDomcontentloaded,
 		})
 		require.NoError(t, err)
 
@@ -163,7 +163,7 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		err = page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
-			State: playwright.WaitUntilStateDOMContentLoad,
+			State: playwright.LoadStateDomcontentloaded,
 		})
 		require.NoError(t, err)
 
@@ -244,7 +244,7 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 			require.NoError(t, err)
 
 			err = page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
-				State: playwright.WaitUntilStateDOMContentLoad,
+				State: playwright.LoadStateDomcontentloaded,
 			})
 			require.NoError(t, err)
 
@@ -290,7 +290,7 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		err = page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
-			State: playwright.WaitUntilStateDOMContentLoad,
+			State: playwright.LoadStateDomcontentloaded,
 		})
 		require.NoError(t, err)
 

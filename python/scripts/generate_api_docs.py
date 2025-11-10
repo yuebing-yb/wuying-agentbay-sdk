@@ -37,6 +37,7 @@ DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("common-features/basics/context.md", "Context", ("agentbay.context",)),
     DocMapping("common-features/basics/context-manager.md", "Context Manager", ("agentbay.context_manager",)),
     DocMapping("common-features/basics/filesystem.md", "File System", ("agentbay.filesystem.filesystem",)),
+    DocMapping("common-features/basics/context-sync.md", "Context Sync", ("agentbay.context_sync",)),
     DocMapping("common-features/basics/logging.md", "Logging", ("agentbay.logger",)),
     DocMapping("common-features/advanced/agent.md", "Agent", ("agentbay.agent.agent",)),
     DocMapping("common-features/advanced/oss.md", "OSS", ("agentbay.oss.oss",)),

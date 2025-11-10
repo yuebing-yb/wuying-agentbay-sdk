@@ -9,6 +9,10 @@ This directory contains practical use cases and examples for the AgentBay SDK. E
 - **[Session Information Use Cases](session-info-use-cases.md)** - Practical examples for using session information, including browser access, Android SDK integration, and session health monitoring
 - **[Session Link Use Cases](session-link-use-cases.md)** - Practical examples for connecting external tools to cloud sessions, including browser automation, web application access, and custom service connections
 
+### Data Persistence
+
+- **[Cross-Platform Data Persistence](cross-platform-persistence.md)** - Enable context data created on one OS to be accessible on another using MappingPolicy
+
 ## How to Use This Directory
 
 Each use case document follows a consistent structure:

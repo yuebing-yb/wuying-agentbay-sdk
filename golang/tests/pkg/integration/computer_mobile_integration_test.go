@@ -40,13 +40,11 @@ func TestSession_ComputerMobileIntegration(t *testing.T) {
 
 	// Test that existing modules are still available
 	t.Run("Existing modules compatibility", func(t *testing.T) {
-		assert.NotNil(t, session.UI, "UI module should still be available")
-		assert.NotNil(t, session.Application, "Application module should still be available")
-		assert.NotNil(t, session.Window, "Window module should still be available")
 		assert.NotNil(t, session.FileSystem, "FileSystem module should still be available")
 		assert.NotNil(t, session.Command, "Command module should still be available")
 		assert.NotNil(t, session.Code, "Code module should still be available")
 		assert.NotNil(t, session.Agent, "Agent module should still be available")
+		assert.NotNil(t, session.Browser, "Browser module should still be available")
 	})
 }
 

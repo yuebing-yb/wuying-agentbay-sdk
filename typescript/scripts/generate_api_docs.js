@@ -31,6 +31,11 @@ const docMappings = [
   { target: 'common-features/basics/context-manager.md', symbol: 'ContextManager', identifiers: ['Class ContextManager', 'ContextManager'] },
   { target: 'common-features/basics/filesystem.md', symbol: 'FileSystem', identifiers: ['Class FileSystem', 'FileSystem'] },
   {
+    target: 'common-features/basics/context-sync.md',
+    symbol: 'ContextSync',
+    identifiers: ['Interface ContextSync', 'ContextSync', 'SyncPolicy', 'UploadPolicy', 'DownloadPolicy', 'DeletePolicy', 'ExtractPolicy', 'RecyclePolicy', 'WhiteList', 'BWList', 'MappingPolicy'],
+  },
+  {
     target: 'common-features/basics/logging.md',
     symbol: 'logger',
     identifiers: ['logger', 'log'],

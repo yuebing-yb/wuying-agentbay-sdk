@@ -127,6 +127,11 @@ export interface BWList {
   whiteLists?: WhiteList[];
 }
 
+// MappingPolicy defines the mapping policy for cross-platform context synchronization
+export interface MappingPolicy {
+  path: string;
+}
+
 // SyncPolicy defines the synchronization policy
 export interface SyncPolicy {
   uploadPolicy?: UploadPolicy;
@@ -135,6 +140,7 @@ export interface SyncPolicy {
   extractPolicy?: ExtractPolicy;
   recyclePolicy?: RecyclePolicy;
   bwList?: BWList;
+  mappingPolicy?: MappingPolicy;
 }
 
 // SyncPolicyImpl provides a class-based implementation with default value handling
@@ -260,6 +266,13 @@ export function newRecyclePolicy(): RecyclePolicy {
   return {
     lifecycle: Lifecycle.Lifecycle_Forever,
     paths: [""],
+  };
+}
+
+// NewMappingPolicy creates a new mapping policy with default values
+export function newMappingPolicy(): MappingPolicy {
+  return {
+    path: "",
   };
 }
 

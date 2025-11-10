@@ -15,6 +15,7 @@ These documents are generated automatically using TypeDoc. Run `npm run docs:gen
   - agentbay.md
   - command.md
   - context-manager.md
+  - context-sync.md
   - context.md
   - filesystem.md
   - logging.md
