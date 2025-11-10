@@ -6,8 +6,6 @@
 
 
 
-## Session Objects
-
 ```python
 class Session()
 ```

@@ -5,7 +5,7 @@ from agentbay.logger import get_logger
 import time, json
 
 # Initialize logger for this module
-logger = get_logger("agent")
+_logger = get_logger("agent")
 
 
 class QueryResult(ApiResponse):
@@ -173,7 +173,7 @@ class Agent(BaseService):
                     task_status="running",
                 )
             else:
-                logger.error("task execute failed")
+                _logger.error("task execute failed")
                 return ExecutionResult(
                     request_id=result.request_id,
                     success=False,
@@ -278,12 +278,12 @@ class Agent(BaseService):
                             task_id=task_id,
                             task_status=query.task_status,
                         )
-                    logger.info(f"⏳ Task {task_id} running 🚀: {query.task_action}.")
+                    _logger.info(f"⏳ Task {task_id} running 🚀: {query.task_action}.")
                     # keep waiting unit timeout if the status is running
                     # task_status {running, finished, failed, unsupported}
                     time.sleep(3)
                     tried_time += 1
-                logger.warning("⚠️ task execution timeout!")
+                _logger.warning("⚠️ task execution timeout!")
                 return ExecutionResult(
                     request_id=result.request_id,
                     success=False,
@@ -293,7 +293,7 @@ class Agent(BaseService):
                     task_result="Task timeout.",
                 )
             else:
-                logger.error("❌ Task execution failed")
+                _logger.error("❌ Task execution failed")
                 return ExecutionResult(
                     request_id=result.request_id,
                     success=False,
@@ -462,7 +462,7 @@ class Agent(BaseService):
             terminate_agent_task()
             ```
         """
-        logger.info("Terminating task")
+        _logger.info("Terminating task")
         try:
             args = {"task_id": task_id}
 

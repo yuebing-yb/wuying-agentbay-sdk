@@ -8,7 +8,7 @@ import threading
 import asyncio
 
 # Initialize logger for this module
-logger = get_logger("context_manager")
+_logger = get_logger("context_manager")
 
 
 class ContextStatusData:
@@ -197,7 +197,7 @@ class ContextManager:
             "GetContextInfo",
             f"SessionId={self.session.get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}",
         )
-        response = self.session.get_client().get_context_info(request)
+        response = self.session._get_client().get_context_info(request)
 
         # Extract request ID
         request_id = extract_request_id(response)
@@ -246,9 +246,9 @@ class ContextManager:
                                     ContextStatusData.from_dict(data_item)
                                 )
                 except json.JSONDecodeError as e:
-                    logger.error(f"❌ Error parsing context status: {e}")
+                    _logger.error(f"❌ Error parsing context status: {e}")
                 except Exception as e:
-                    logger.error(f"❌ Unexpected error parsing context status: {e}")
+                    _logger.error(f"❌ Unexpected error parsing context status: {e}")
 
         # Log successful context info retrieval
         log_api_response_with_details(
@@ -388,7 +388,7 @@ class ContextManager:
             "SyncContext",
             f"SessionId={self.session.get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}",
         )
-        response = self.session.get_client().sync_context(request)
+        response = self.session._get_client().sync_context(request)
 
         # Extract request ID
         request_id = extract_request_id(response)
@@ -498,7 +498,7 @@ class ContextManager:
                         continue
 
                     has_sync_tasks = True
-                    logger.info(
+                    _logger.info(
                         f"🔄 Sync task {item.context_id} status: {item.status}, path: {item.path}"
                     )
 
@@ -508,20 +508,20 @@ class ContextManager:
 
                     if item.status == "Failed":
                         has_failure = True
-                        logger.error(
+                        _logger.error(
                             f"❌ Sync failed for context {item.context_id}: {item.error_message}"
                         )
 
                 if all_completed or not has_sync_tasks:
                     # All tasks completed or no sync tasks found
                     if has_failure:
-                        logger.warning("Context sync completed with failures")
+                        _logger.warning("Context sync completed with failures")
                         callback(False)
                     elif has_sync_tasks:
-                        logger.info("✅ Context sync completed successfully")
+                        _logger.info("✅ Context sync completed successfully")
                         callback(True)
                     else:
-                        logger.info("ℹ️  No sync tasks found")
+                        _logger.info("ℹ️  No sync tasks found")
                         callback(True)
                     break
 
@@ -531,14 +531,14 @@ class ContextManager:
                 time.sleep(retry_interval / 1000.0)
 
             except Exception as e:
-                logger.error(
+                _logger.error(
                     f"❌ Error checking context status on attempt {retry+1}: {e}"
                 )
                 time.sleep(retry_interval / 1000.0)
 
         # If we've exhausted all retries, call callback with failure
         if retry == max_retries - 1:
-            logger.error(
+            _logger.error(
                 f"❌ Context sync polling timed out after {max_retries} attempts"
             )
             callback(False)
@@ -578,7 +578,7 @@ class ContextManager:
                         continue
 
                     has_sync_tasks = True
-                    logger.info(
+                    _logger.info(
                         f"🔄 Sync task {item.context_id} status: {item.status}, path: {item.path}"
                     )
 
@@ -588,20 +588,20 @@ class ContextManager:
 
                     if item.status == "Failed":
                         has_failure = True
-                        logger.error(
+                        _logger.error(
                             f"❌ Sync failed for context {item.context_id}: {item.error_message}"
                         )
 
                 if all_completed or not has_sync_tasks:
                     # All tasks completed or no sync tasks found
                     if has_failure:
-                        logger.warning("Context sync completed with failures")
+                        _logger.warning("Context sync completed with failures")
                         return False
                     elif has_sync_tasks:
-                        logger.info("✅ Context sync completed successfully")
+                        _logger.info("✅ Context sync completed successfully")
                         return True
                     else:
-                        logger.info("ℹ️  No sync tasks found")
+                        _logger.info("ℹ️  No sync tasks found")
                         return True
 
                 logger.info(
@@ -610,11 +610,11 @@ class ContextManager:
                 await asyncio.sleep(retry_interval / 1000.0)
 
             except Exception as e:
-                logger.error(
+                _logger.error(
                     f"❌ Error checking context status on attempt {retry+1}: {e}"
                 )
                 await asyncio.sleep(retry_interval / 1000.0)
 
         # If we've exhausted all retries, return failure
-        logger.error(f"❌ Context sync polling timed out after {max_retries} attempts")
+        _logger.error(f"❌ Context sync polling timed out after {max_retries} attempts")
         return False

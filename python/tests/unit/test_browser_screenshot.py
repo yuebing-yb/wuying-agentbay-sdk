@@ -14,9 +14,9 @@ class TestBrowserScreenshot(unittest.TestCase):
         self.browser = Browser(self.mock_session)
         
         # Mock the session methods that would be called
-        self.mock_session.get_client().init_browser_async = AsyncMock()
-        self.mock_session.get_client().init_browser_async.return_value = MagicMock()
-        self.mock_session.get_client().init_browser_async.return_value.to_map.return_value = {
+        self.mock_session._get_client().init_browser_async = AsyncMock()
+        self.mock_session._get_client().init_browser_async.return_value = MagicMock()
+        self.mock_session._get_client().init_browser_async.return_value.to_map.return_value = {
             "body": {"Data": {"Port": 9333}}
         }
         

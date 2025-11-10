@@ -14,7 +14,7 @@ from agentbay.exceptions import AgentBayError, FileError
 from agentbay.model import ApiResponse, BoolResult
 
 # Initialize logger for this module
-logger = get_logger("filesystem")
+_logger = get_logger("filesystem")
 
 
 # Result structures
@@ -940,7 +940,7 @@ class FileSystem(BaseService):
         args = {"path": path}
         try:
             result = self.session.call_mcp_tool("create_directory", args)
-            logger.debug(f"📥 create_directory response: {result}")
+            _logger.debug(f"📥 create_directory response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -1018,7 +1018,7 @@ class FileSystem(BaseService):
         args = {"path": path, "edits": edits, "dryRun": dry_run}
         try:
             result = self.session.call_mcp_tool("edit_file", args)
-            logger.debug(f"📥 edit_file response: {result}")
+            _logger.debug(f"📥 edit_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -1124,7 +1124,7 @@ class FileSystem(BaseService):
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
             if result.success:
                 file_info = parse_file_info(result.data)
                 return FileInfoResult(
@@ -1274,7 +1274,7 @@ class FileSystem(BaseService):
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
             if result.success:
                 entries = parse_directory_listing(result.data)
                 return DirectoryListResult(
@@ -1343,7 +1343,7 @@ class FileSystem(BaseService):
         args = {"source": source, "destination": destination}
         try:
             result = self.session.call_mcp_tool("move_file", args)
-            logger.debug(f"📥 move_file response: {result}")
+            _logger.debug(f"📥 move_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -1390,7 +1390,7 @@ class FileSystem(BaseService):
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
             if result.success:
                 return FileContentResult(
                     request_id=result.request_id,
@@ -1519,7 +1519,7 @@ class FileSystem(BaseService):
                 )
                 log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
 
             if result.success:
                 files_content = parse_multiple_files_response(result.data)
@@ -1609,7 +1609,7 @@ class FileSystem(BaseService):
 
         try:
             result = self.session.call_mcp_tool("search_files", args)
-            logger.debug(f"📥 search_files response: {result}")
+            _logger.debug(f"📥 search_files response: {result}")
 
             if result.success:
                 matching_files = result.data.strip().split("\n") if result.data else []
@@ -1667,7 +1667,7 @@ class FileSystem(BaseService):
         args = {"path": path, "content": content, "mode": mode}
         try:
             result = self.session.call_mcp_tool("write_file", args)
-            logger.debug(f"📥 write_file response: {result}")
+            _logger.debug(f"📥 write_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -2014,9 +2014,9 @@ class FileSystem(BaseService):
                         # Delete the uploaded file from OSS
                         delete_result = self.session.agent_bay.context.delete_file(context_id, remote_path)
                         if not delete_result.success:
-                            logger.warning(f"Failed to delete uploaded file from OSS: {delete_result.error_message}")
+                            _logger.warning(f"Failed to delete uploaded file from OSS: {delete_result.error_message}")
                     except Exception as delete_error:
-                        logger.warning(f"Error deleting uploaded file from OSS: {delete_error}")
+                        _logger.warning(f"Error deleting uploaded file from OSS: {delete_error}")
             return result
         except Exception as e:
             return UploadResult(
@@ -2126,9 +2126,9 @@ class FileSystem(BaseService):
                         # Delete the downloaded file from OSS
                         delete_result = self.session.agent_bay.context.delete_file(context_id, remote_path)
                         if not delete_result.success:
-                            logger.warning(f"Failed to delete downloaded file from OSS: {delete_result.error_message}")
+                            _logger.warning(f"Failed to delete downloaded file from OSS: {delete_result.error_message}")
                     except Exception as delete_error:
-                        logger.warning(f"Error deleting downloaded file from OSS: {delete_error}")
+                        _logger.warning(f"Error deleting downloaded file from OSS: {delete_error}")
             return result
         except Exception as e:
             return DownloadResult(

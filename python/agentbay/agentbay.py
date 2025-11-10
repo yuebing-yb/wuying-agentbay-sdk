@@ -42,7 +42,7 @@ from .logger import (
 )
 
 # Initialize logger for this module
-logger = get_logger("agentbay")
+_logger = get_logger("agentbay")
 from typing import Optional
 from agentbay.context_sync import ContextSync
 from agentbay.config import BROWSER_DATA_PATH
@@ -183,8 +183,8 @@ class AgentBay:
 
         resource_url = response_data.get("ResourceUrl", "")
 
-        logger.info(f"🆔 Session created: {session_id}")
-        logger.debug(f"🔗 Resource URL: {resource_url}")
+        __logger.info(f"🆔 Session created: {session_id}")
+        __logger.debug(f"🔗 Resource URL: {resource_url}")
 
         # Create Session object
         from agentbay.session import Session
@@ -273,7 +273,7 @@ class AgentBay:
             has_failure = False
 
             for item in info_result.context_status_data:
-                logger.info(
+                __logger.info(
                     f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
                 )
 
@@ -283,7 +283,7 @@ class AgentBay:
 
                 if item.status == "Failed":
                     has_failure = True
-                    logger.error(
+                    __logger.error(
                         f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
                     )
 
@@ -294,7 +294,7 @@ class AgentBay:
                     log_operation_success("Context synchronization")
                 break
 
-            logger.debug(
+            __logger.debug(
                 f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}"
             )
             time.sleep(retry_interval)
@@ -317,9 +317,9 @@ class AgentBay:
                 else:
                     req_map["Authorization"] = auth[:2] + "****" + auth[-2:]
             request_body = json.dumps(req_map, ensure_ascii=False, indent=2)
-            logger.debug(f"📤 CreateMcpSessionRequest body:\n{request_body}")
+            __logger.debug(f"📤 CreateMcpSessionRequest body:\n{request_body}")
         except Exception:
-            logger.debug(f"📤 CreateMcpSessionRequest: {request}")
+            __logger.debug(f"📤 CreateMcpSessionRequest: {request}")
 
     def _update_browser_replay_context(
         self, response_data: dict, record_context_id: str
@@ -339,7 +339,7 @@ class AgentBay:
             # Extract AppInstanceId from response data
             app_instance_id = response_data.get("AppInstanceId")
             if not app_instance_id:
-                logger.warning(
+                _logger.warning(
                     "AppInstanceId not found in response data, skipping browser replay context update"
                 )
                 return
@@ -353,22 +353,22 @@ class AgentBay:
             context_obj = Context(id=record_context_id, name=context_name)
 
             # Call context.update interface
-            logger.info(
+            _logger.info(
                 f"Updating browser replay context: {context_name} -> {record_context_id}"
             )
             update_result = self.context.update(context_obj)
 
             if update_result.success:
-                logger.info(
+                _logger.info(
                     f"✅ Successfully updated browser replay context: {context_name}"
                 )
             else:
-                logger.warning(
+                _logger.warning(
                     f"⚠️ Failed to update browser replay context: {update_result.error_message}"
                 )
 
         except Exception as e:
-            logger.error(f"❌ Error updating browser replay context: {e}")
+            _logger.error(f"❌ Error updating browser replay context: {e}")
             # Continue execution even if context update fails
 
     def create(self, params: Optional[CreateSessionParams] = None) -> SessionResult:
@@ -468,7 +468,7 @@ class AgentBay:
                 )
                 if not hasattr(params, "context_syncs") or params.context_syncs is None:
                     params.context_syncs = []
-                logger.info(
+                _logger.info(
                     f"Adding context sync for file transfer operations: {file_transfer_context_sync}"
                 )
                 params.context_syncs.append(file_transfer_context_sync)
@@ -570,14 +570,14 @@ class AgentBay:
                 ):
                     request.persistence_data_list = []
                 request.persistence_data_list.append(browser_context_sync)
-                logger.info(
+                _logger.info(
                     f"📋 Added browser context to persistence_data_list. Total items: {len(request.persistence_data_list)}"
                 )
                 for i, item in enumerate(request.persistence_data_list):
-                    logger.info(
+                    _logger.info(
                         f"📋 persistence_data_list[{i}]: context_id={item.context_id}, path={item.path}, policy_length={len(item.policy) if item.policy else 0}"
                     )
-                    logger.info(
+                    _logger.info(
                         f"📋 persistence_data_list[{i}] policy content: {item.policy}"
                     )
 
@@ -1239,7 +1239,7 @@ class AgentBay:
                 )
 
             except Exception as e:
-                logger.exception(f"Failed to parse response: {str(e)}")
+                _logger.exception(f"Failed to parse response: {str(e)}")
                 return GetSessionResult(
                     request_id=request_id,
                     success=False,
@@ -1252,7 +1252,7 @@ class AgentBay:
                 # This is an expected error - session doesn't exist
                 # Use info level logging without stack trace, but with red color for visibility
                 log_info_with_color(f"Session not found: {session_id}")
-                logger.debug(f"GetSession error details: {error_str}")
+                _logger.debug(f"GetSession error details: {error_str}")
                 return GetSessionResult(
                     request_id="",
                     success=False,
@@ -1260,7 +1260,7 @@ class AgentBay:
                 )
             else:
                 # This is an unexpected error - log with stack trace
-                logger.error(f"Error calling GetSession: {e}")
+                _logger.error(f"Error calling GetSession: {e}")
                 return GetSessionResult(
                     request_id="",
                     success=False,
@@ -1268,7 +1268,7 @@ class AgentBay:
                 )
         except Exception as e:
             # Unexpected system error - log with stack trace
-            logger.exception(f"Unexpected error calling GetSession: {e}")
+            _logger.exception(f"Unexpected error calling GetSession: {e}")
             return GetSessionResult(
                 request_id="",
                 success=False,
@@ -1376,11 +1376,11 @@ class AgentBay:
         context_result = self.context.get(context_name, create=True)
         if context_result.success and context_result.context:
             session.file_transfer_context_id = context_result.context.id
-            logger.info(
+            _logger.info(
                 f"📁 Created file transfer context for recovered session: {context_result.context.id}"
             )
         else:
-            logger.warning(
+            _logger.warning(
                 f"⚠️  Failed to create file transfer context for recovered session: {context_result.error_message if hasattr(context_result, 'error_message') else 'Unknown error'}"
             )
 

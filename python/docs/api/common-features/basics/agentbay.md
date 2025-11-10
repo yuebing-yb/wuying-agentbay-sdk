@@ -6,8 +6,6 @@
 
 
 
-## Config Objects
-
 ```python
 class Config()
 ```

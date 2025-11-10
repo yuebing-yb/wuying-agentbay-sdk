@@ -6,8 +6,6 @@
 
 
 
-## UploadResult Objects
-
 ```python
 @dataclass
 class UploadResult()

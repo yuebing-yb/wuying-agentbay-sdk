@@ -202,7 +202,7 @@ class BaseService:
                 args=args_json,
                 auto_gen_session=auto_gen_session,
             )
-            response = self.session.get_client().call_mcp_tool(
+            response = self.session._get_client().call_mcp_tool(
                 request, read_timeout=read_timeout, connect_timeout=connect_timeout
             )
 

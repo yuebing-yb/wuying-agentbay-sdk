@@ -36,9 +36,9 @@ class TestBrowser(unittest.TestCase):
         """Set up test browser."""
         self.mock_session = MagicMock()
         # Configure async mock for init_browser_async
-        self.mock_session.get_client().init_browser_async = AsyncMock()
-        self.mock_session.get_client().init_browser_async.return_value = MagicMock()
-        self.mock_session.get_client().init_browser_async.return_value.to_map.return_value = {
+        self.mock_session._get_client().init_browser_async = AsyncMock()
+        self.mock_session._get_client().init_browser_async.return_value = MagicMock()
+        self.mock_session._get_client().init_browser_async.return_value.to_map.return_value = {
             "body": {"Data": {"Port": 9333}}
         }
         self.browser = Browser(self.mock_session)

@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 from agentbay.browser import Browser
 
 # Initialize logger for this module
-logger = get_logger("session")
+_logger = get_logger("session")
 
 
 class SessionInfo:
@@ -116,51 +116,8 @@ class Session:
         """Internal method to get the API key for this session."""
         return self.agent_bay.api_key
 
-    def get_client(self):
-        """
-        Return the HTTP client for this session.
-
-        Returns:
-            Client: The HTTP client instance used for API calls
-
-        Example:
-            ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def check_client():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Get the HTTP client
-                        client = session.get_client()
-                        print(f"Client type: {type(client).__name__}")
-                        # Output: Client type: Client
-
-                        # Client is used internally for API calls
-                        # You typically don't need to use it directly
-                        print("HTTP client is available for advanced usage")
-                        # Output: HTTP client is available for advanced usage
-
-                        # Clean up
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            check_client()
-            ```
-
-        Note:
-            This method is primarily for internal use by the SDK.
-            Most users should use the high-level session methods instead.
-
-        See Also:
-            Session.get_api_key, Session.call_mcp_tool
-        """
+    def _get_client(self):
+        """Internal method to get the HTTP client for this session."""
         return self.agent_bay.client
 
     def get_session_id(self) -> str:
@@ -566,15 +523,15 @@ class Session:
             if sync_context:
                 # User explicitly requested sync - sync all contexts
                 should_sync = True
-                logger.info("🔄 User requested context synchronization")
+                _logger.info("🔄 User requested context synchronization")
             elif hasattr(self, "enableBrowserReplay") and self.enableBrowserReplay:
                 # Browser replay enabled but no explicit sync - sync only browser recording context
                 if hasattr(self, "record_context_id") and self.record_context_id:
                     should_sync = True
                     sync_context_id = self.record_context_id
-                    logger.info(f"🎥 Browser replay enabled - syncing recording context: {sync_context_id}")
+                    _logger.info(f"🎥 Browser replay enabled - syncing recording context: {sync_context_id}")
                 else:
-                    logger.warning("⚠️  Browser replay enabled but no record_context_id found")
+                    _logger.warning("⚠️  Browser replay enabled but no record_context_id found")
 
             # Perform context synchronization if needed
             if should_sync:
@@ -592,29 +549,29 @@ class Session:
                     if sync_context_id:
                         # Sync specific context (browser recording)
                         sync_result = asyncio.run(self.context.sync(context_id=sync_context_id))
-                        logger.info(f"🎥 Synced browser recording context: {sync_context_id}")
+                        _logger.info(f"🎥 Synced browser recording context: {sync_context_id}")
                     else:
                         # Sync all contexts
                         sync_result = asyncio.run(self.context.sync())
-                        logger.info("🔄 Synced all contexts")
+                        _logger.info("🔄 Synced all contexts")
 
                     sync_duration = time.time() - sync_start_time
 
                     if sync_result.success:
                         log_operation_success("Context sync")
-                        logger.info(
+                        _logger.info(
                             f"⏱️  Context sync completed in {sync_duration:.2f} seconds"
                         )
                     else:
                         log_warning("Context sync completed with failures")
-                        logger.warning(
+                        _logger.warning(
                             f"⏱️  Context sync failed after {sync_duration:.2f} seconds"
                         )
 
                 except Exception as e:
                     sync_duration = time.time() - sync_start_time
                     log_warning(f"Failed to trigger context sync: {e}")
-                    logger.warning(
+                    _logger.warning(
                         f"⏱️  Context sync failed after {sync_duration:.2f} seconds"
                     )
                     # Continue with deletion even if sync fails
@@ -624,7 +581,7 @@ class Session:
                 authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
             )
-            response = self.get_client().release_mcp_session(request)
+            response = self._get_client().release_mcp_session(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -775,7 +732,7 @@ class Session:
                 labels=labels_json,
             )
 
-            response = self.get_client().set_label(request)
+            response = self._get_client().set_label(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -794,7 +751,7 @@ class Session:
             return OperationResult(request_id=request_id, success=True)
 
         except Exception as e:
-            logger.exception(f"❌ Failed to set labels for session {self.session_id}")
+            _logger.exception(f"❌ Failed to set labels for session {self.session_id}")
             raise SessionError(
                 f"Failed to set labels for session {self.session_id}: {e}"
             )
@@ -829,7 +786,7 @@ class Session:
                 session_id=self.session_id,
             )
 
-            response = self.get_client().get_label(request)
+            response = self._get_client().get_label(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -857,7 +814,7 @@ class Session:
             return OperationResult(request_id=request_id, success=True, data=labels)
 
         except Exception as e:
-            logger.exception(f"❌ Failed to get labels for session {self.session_id}")
+            _logger.exception(f"❌ Failed to get labels for session {self.session_id}")
             raise SessionError(
                 f"Failed to get labels for session {self.session_id}: {e}"
             )
@@ -945,7 +902,7 @@ class Session:
 
             log_api_call("GetMcpResource", f"SessionId={self.session_id}")
 
-            response = self.get_client().get_mcp_resource(request)
+            response = self._get_client().get_mcp_resource(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -1011,7 +968,7 @@ class Session:
                 # Use info level logging without stack trace, but with red color for visibility
                 from agentbay.logger import log_info_with_color
                 log_info_with_color(f"Session not found: {self.session_id}")
-                logger.debug(f"GetMcpResource error details: {error_str}")
+                _logger.debug(f"GetMcpResource error details: {error_str}")
                 return OperationResult(
                     request_id="",
                     success=False,
@@ -1019,7 +976,7 @@ class Session:
                 )
             else:
                 # This is an unexpected error - log with full error
-                logger.exception(f"❌ Failed to get session info for session {self.session_id}")
+                _logger.exception(f"❌ Failed to get session info for session {self.session_id}")
                 raise SessionError(
                     f"Failed to get session info for session {self.session_id}: {e}"
                 )
@@ -1127,7 +1084,7 @@ class Session:
                 )
 
             data = body.get("Data", {})
-            logger.debug(f"📊 Data: {data}")
+            _logger.debug(f"📊 Data: {data}")
 
             if not isinstance(data, dict):
                 try:
@@ -1155,7 +1112,7 @@ class Session:
         except SessionError:
             raise
         except Exception as e:
-            logger.error(f"❌ Failed to get link for session {self.session_id}: {e}")
+            _logger.error(f"❌ Failed to get link for session {self.session_id}: {e}")
             raise SessionError(f"Failed to get link: {e}")
 
     async def get_link_async(
@@ -1222,7 +1179,7 @@ class Session:
                 )
 
             data = body.get("Data", {})
-            logger.debug(f"📊 Data: {data}")
+            _logger.debug(f"📊 Data: {data}")
 
             if not isinstance(data, dict):
                 try:
@@ -1250,7 +1207,7 @@ class Session:
         except SessionError:
             raise
         except Exception as e:
-            logger.error(f"❌ Failed to get link asynchronously for session {self.session_id}: {e}")
+            _logger.error(f"❌ Failed to get link asynchronously for session {self.session_id}: {e}")
             raise SessionError(f"Failed to get link asynchronously: {e}")
 
     def list_mcp_tools(self, image_id: Optional[str] = None):
@@ -1317,13 +1274,13 @@ class Session:
 
         log_api_call("ListMcpTools", f"ImageId={image_id}")
 
-        response = self.get_client().list_mcp_tools(request)
+        response = self._get_client().list_mcp_tools(request)
 
         # Extract request ID
         request_id = extract_request_id(response)
 
         if response and response.body:
-            logger.debug(f"📥 Response from ListMcpTools: {response.body}")
+            _logger.debug(f"📥 Response from ListMcpTools: {response.body}")
 
         # Parse the response data
         tools = []
@@ -1341,7 +1298,7 @@ class Session:
                     )
                     tools.append(tool)
             except json.JSONDecodeError as e:
-                logger.error(f"❌ Error unmarshaling tools data: {e}")
+                _logger.error(f"❌ Error unmarshaling tools data: {e}")
 
         self.mcp_tools = tools  # Update the session's mcp_tools field
 
@@ -1431,7 +1388,7 @@ class Session:
                 tool_name, args_json, read_timeout, connect_timeout, auto_gen_session
             )
         except Exception as e:
-            logger.error(f"❌ Failed to call MCP tool {tool_name}: {e}")
+            _logger.error(f"❌ Failed to call MCP tool {tool_name}: {e}")
             return McpToolResult(
                 request_id="",
                 success=False,
@@ -1611,7 +1568,7 @@ class Session:
         )
 
         try:
-            response = self.get_client().call_mcp_tool(
+            response = self._get_client().call_mcp_tool(
                 request, read_timeout=read_timeout, connect_timeout=connect_timeout
             )
 

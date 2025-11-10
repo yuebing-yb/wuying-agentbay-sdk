@@ -81,9 +81,6 @@ class TestSession(unittest.TestCase):
         self.assertEqual(self.session.file_system.session, self.session)
         self.assertEqual(self.session.command.session, self.session)
 
-    def test_get_client(self):
-        self.assertEqual(self.session.get_client(), self.agent_bay.client)
-
     def test_get_session_id(self):
         self.assertEqual(self.session.get_session_id(), "test_session_id")
 

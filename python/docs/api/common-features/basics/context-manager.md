@@ -1,7 +1,5 @@
 # Context Manager API Reference
 
-## ContextStatusData Objects
-
 ```python
 class ContextStatusData()
 ```

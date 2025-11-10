@@ -6,8 +6,6 @@
 
 
 
-## QueryResult Objects
-
 ```python
 class QueryResult(ApiResponse)
 ```

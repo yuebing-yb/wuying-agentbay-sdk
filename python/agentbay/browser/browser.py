@@ -692,7 +692,7 @@ class Browser(BaseService):
                 persistent_path=BROWSER_DATA_PATH,
                 browser_option=browser_option_dict,
             )
-            response = self.session.get_client().init_browser(request)
+            response = self.session._get_client().init_browser(request)
 
             _logger.info(f"Response from init_browser: {response}")
             response_map = response.to_map()
@@ -776,7 +776,7 @@ class Browser(BaseService):
                 persistent_path=BROWSER_DATA_PATH,
                 browser_option=browser_option_dict,
             )
-            response = await self.session.get_client().init_browser_async(request)
+            response = await self.session._get_client().init_browser_async(request)
             _logger.debug(f"Response from init_browser: {response}")
             response_map = response.to_map()
             body = response_map.get("body", {})
