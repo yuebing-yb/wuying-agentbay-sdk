@@ -120,313 +120,28 @@ class Session:
         """Internal method to get the HTTP client for this session."""
         return self.agent_bay.client
 
-    def get_session_id(self) -> str:
-        """
-        Return the session_id for this session.
-
-        Returns:
-            str: The session ID
-
-        Example:
-            ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def get_session_details():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Get session ID using helper method
-                        session_id = session.get_session_id()
-                        print(f"Session ID: {session_id}")
-                        # Output: Session ID: session-04bdwfj7u22a1s30g
-
-                        # Use session ID in logging or tracking
-                        print(f"Working with session: {session_id}")
-                        # Output: Working with session: session-04bdwfj7u22a1s30g
-
-                        # Clean up
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            get_session_details()
-            ```
-
-        See Also:
-            Session.get_api_key, Session.info
-        """
+    def _get_session_id(self) -> str:
+        """Internal method to get the session ID."""
         return self.session_id
 
-    def is_vpc_enabled(self) -> bool:
-        """
-        Return whether this session uses VPC resources.
-
-        Returns:
-            bool: True if session uses VPC, False otherwise
-
-        Example:
-            ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def check_vpc_status():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Check if VPC is enabled
-                        if session.is_vpc_enabled():
-                            print("Session uses VPC resources")
-                            # Output: Session uses VPC resources
-
-                            # Get VPC network details
-                            ip = session.get_network_interface_ip()
-                            port = session.get_http_port()
-                            token = session.get_token()
-
-                            print(f"VPC IP: {ip}")
-                            # Output: VPC IP: 172.16.0.10
-                            print(f"VPC Port: {port}")
-                            # Output: VPC Port: 8080
-                            print(f"Token: {token[:10]}...")
-                            # Output: Token: abc123def4...
-                        else:
-                            print("Session uses standard (non-VPC) resources")
-                            # Output: Session uses standard (non-VPC) resources
-
-                        # Clean up
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            check_vpc_status()
-            ```
-
-        Note:
-            VPC sessions have enhanced network configuration and security features.
-            VPC-specific methods (`get_network_interface_ip`, `get_http_port`, `get_token`)
-            only return meaningful values when VPC is enabled.
-
-        See Also:
-            Session.get_network_interface_ip, Session.get_http_port, Session.get_token
-        """
+    def _is_vpc_enabled(self) -> bool:
+        """Internal method to check if this session uses VPC resources."""
         return self.is_vpc
 
-    def get_network_interface_ip(self) -> str:
-        """
-        Return the network interface IP for VPC sessions.
-
-        Returns:
-            str: The VPC network interface IP address
-
-        Example:
-            ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def check_network_ip():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Check if VPC is enabled
-                        if session.is_vpc_enabled():
-                            # Get network interface IP
-                            network_ip = session.get_network_interface_ip()
-                            print(f"VPC Network Interface IP: {network_ip}")
-                            # Output: VPC Network Interface IP: 172.16.0.10
-                        else:
-                            print("Session is not VPC-enabled")
-                            # Output: Session is not VPC-enabled
-                            network_ip = session.get_network_interface_ip()
-                            print(f"Network IP: {network_ip}")
-                            # Output: Network IP:
-
-                        # Clean up
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            check_network_ip()
-            ```
-
-        Note:
-            This method returns an empty string for non-VPC sessions.
-            Use `is_vpc_enabled()` to check if VPC is active.
-
-        See Also:
-            Session.is_vpc_enabled, Session.get_http_port
-        """
+    def _get_network_interface_ip(self) -> str:
+        """Internal method to get the network interface IP for VPC sessions."""
         return self.network_interface_ip
 
-    def get_http_port(self) -> str:
-        """
-        Return the HTTP port for VPC sessions.
-
-        Returns:
-            str: The VPC HTTP port number
-
-        Example:
-            ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def check_http_port():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Check if VPC is enabled
-                        if session.is_vpc_enabled():
-                            # Get HTTP port
-                            http_port = session.get_http_port()
-                            print(f"VPC HTTP Port: {http_port}")
-                            # Output: VPC HTTP Port: 8080
-                        else:
-                            print("Session is not VPC-enabled")
-                            # Output: Session is not VPC-enabled
-                            http_port = session.get_http_port()
-                            print(f"HTTP Port: {http_port}")
-                            # Output: HTTP Port:
-
-                        # Clean up
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            check_http_port()
-            ```
-
-        Note:
-            This method returns an empty string for non-VPC sessions.
-            Use `is_vpc_enabled()` to check if VPC is active.
-
-        See Also:
-            Session.is_vpc_enabled, Session.get_network_interface_ip
-        """
+    def _get_http_port(self) -> str:
+        """Internal method to get the HTTP port for VPC sessions."""
         return self.http_port
 
-    def get_token(self) -> str:
-        """
-        Return the token for VPC sessions.
-
-        Returns:
-            str: The VPC authentication token
-
-        Example:
-            ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def check_vpc_token():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Check if VPC is enabled
-                        if session.is_vpc_enabled():
-                            # Get VPC authentication token
-                            token = session.get_token()
-                            print(f"VPC Token: {token[:10]}...")
-                            # Output: VPC Token: abc123def4...
-                        else:
-                            print("Session is not VPC-enabled")
-                            # Output: Session is not VPC-enabled
-                            token = session.get_token()
-                            print(f"Token: {token}")
-                            # Output: Token:
-
-                        # Clean up
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            check_vpc_token()
-            ```
-
-        Note:
-            This method returns an empty string for non-VPC sessions.
-            Use `is_vpc_enabled()` to check if VPC is active.
-
-        See Also:
-            Session.is_vpc_enabled, Session.call_mcp_tool
-        """
+    def _get_token(self) -> str:
+        """Internal method to get the token for VPC sessions."""
         return self.token
 
-    def find_server_for_tool(self, tool_name: str) -> str:
-        """
-        Find the server that provides the given MCP tool.
-
-        Args:
-            tool_name (str): Name of the MCP tool to find
-
-        Returns:
-            str: The server name that provides the tool, or empty string if not found
-
-        Example:
-            ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def find_tool_server():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # List available tools first
-                        tools_result = session.list_mcp_tools()
-                        print(f"Found {len(tools_result.tools)} tools")
-                        # Output: Found 69 tools
-
-                        # Find server for a specific tool
-                        server = session.find_server_for_tool("shell")
-                        if server:
-                            print(f"The 'shell' tool is provided by: {server}")
-                            # Output: The 'shell' tool is provided by: mcp-server-system
-                        else:
-                            print("Tool 'shell' not found")
-
-                        # Find server for another tool
-                        file_server = session.find_server_for_tool("read_file")
-                        if file_server:
-                            print(f"The 'read_file' tool is provided by: {file_server}")
-                            # Output: The 'read_file' tool is provided by: mcp-server-filesystem
-
-                        # Clean up
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            find_tool_server()
-            ```
-
-        Note:
-            This method searches the session's cached mcp_tools list.
-            Call `list_mcp_tools()` first to populate the tool list.
-
-        See Also:
-            Session.list_mcp_tools, Session.call_mcp_tool
-        """
+    def _find_server_for_tool(self, tool_name: str) -> str:
+        """Internal method to find the server that provides the given MCP tool."""
         for tool in self.mcp_tools:
             if tool.name == tool_name:
                 return tool.server
@@ -1059,7 +774,7 @@ class Session:
 
             request = GetLinkRequest(
                 authorization=f"Bearer {self._get_api_key()}",
-                session_id=self.get_session_id(),
+                session_id=self._get_session_id(),
                 protocol_type=protocol_type,
                 port=port,
                 options=options,
@@ -1152,7 +867,7 @@ class Session:
 
             request = GetLinkRequest(
                 authorization=f"Bearer {self._get_api_key()}",
-                session_id=self.get_session_id(),
+                session_id=self._get_session_id(),
                 protocol_type=protocol_type,
                 port=port,
                 options=options,
@@ -1380,7 +1095,7 @@ class Session:
             args_json = json.dumps(args, ensure_ascii=False)
 
             # Check if this is a VPC session
-            if self.is_vpc_enabled():
+            if self._is_vpc_enabled():
                 return self._call_mcp_tool_vpc(tool_name, args_json)
 
             # Non-VPC mode: use traditional API call
@@ -1416,7 +1131,7 @@ class Session:
         log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
 
         # Find server for this tool
-        server = self.find_server_for_tool(tool_name)
+        server = self._find_server_for_tool(tool_name)
         if not server:
             log_operation_error(
                 "CallMcpTool(VPC)",
@@ -1431,21 +1146,21 @@ class Session:
             )
 
         # Check VPC network configuration
-        if not self.get_network_interface_ip() or not self.get_http_port():
+        if not self._get_network_interface_ip() or not self._get_http_port():
             log_operation_error(
                 "CallMcpTool(VPC)",
-                f"VPC network configuration incomplete: networkInterfaceIp={self.get_network_interface_ip()}, httpPort={self.get_http_port()}",
+                f"VPC network configuration incomplete: networkInterfaceIp={self._get_network_interface_ip()}, httpPort={self._get_http_port()}",
                 False,
             )
             return McpToolResult(
                 request_id="",
                 success=False,
                 data="",
-                error_message=f"VPC network configuration incomplete: networkInterfaceIp={self.get_network_interface_ip()}, httpPort={self.get_http_port()}",
+                error_message=f"VPC network configuration incomplete: networkInterfaceIp={self._get_network_interface_ip()}, httpPort={self._get_http_port()}",
             )
 
         # Construct VPC URL with query parameters
-        base_url = f"http://{self.get_network_interface_ip()}:{self.get_http_port()}/callTool"
+        base_url = f"http://{self._get_network_interface_ip()}:{self._get_http_port()}/callTool"
 
         # Prepare query parameters
         request_id = f"vpc-{int(time.time() * 1000)}-{''.join(random.choices(string.ascii_lowercase + string.digits, k=9))}"
@@ -1453,7 +1168,7 @@ class Session:
             "server": server,
             "tool": tool_name,
             "args": args_json,
-            "token": self.get_token(),
+            "token": self._get_token(),
             "requestId": request_id,
         }
 

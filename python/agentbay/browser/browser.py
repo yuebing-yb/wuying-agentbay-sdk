@@ -688,7 +688,7 @@ class Browser(BaseService):
 
             request = InitBrowserRequest(
                 authorization=f"Bearer {self.session._get_api_key()}",
-                session_id=self.session.get_session_id(),
+                session_id=self.session._get_session_id(),
                 persistent_path=BROWSER_DATA_PATH,
                 browser_option=browser_option_dict,
             )
@@ -772,7 +772,7 @@ class Browser(BaseService):
 
             request = InitBrowserRequest(
                 authorization=f"Bearer {self.session._get_api_key()}",
-                session_id=self.session.get_session_id(),
+                session_id=self.session._get_session_id(),
                 persistent_path=BROWSER_DATA_PATH,
                 browser_option=browser_option_dict,
             )

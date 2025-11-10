@@ -67,7 +67,7 @@ class BaseService:
         log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
 
         # Find server for this tool
-        server = self.session.find_server_for_tool(tool_name)
+        server = self.session._find_server_for_tool(tool_name)
         if not server:
             return OperationResult(
                 request_id="",
@@ -76,7 +76,7 @@ class BaseService:
             )
 
         # Construct VPC URL with query parameters
-        base_url = f"http://{self.session.get_network_interface_ip()}:{self.session.get_http_port()}/callTool"
+        base_url = f"http://{self.session._get_network_interface_ip()}:{self.session._get_http_port()}/callTool"
 
         # Prepare query parameters
         # Add requestId for debugging purposes
@@ -85,7 +85,7 @@ class BaseService:
             "server": server,
             "tool": tool_name,
             "args": args_json,
-            "token": self.session.get_token(),
+            "token": self.session._get_token(),
             "requestId": request_id,
         }
 
@@ -189,7 +189,7 @@ class BaseService:
             args_json = json.dumps(args, ensure_ascii=False)
 
             # Check if this is a VPC session
-            if self.session.is_vpc_enabled():
+            if self.session._is_vpc_enabled():
                 return self._call_mcp_tool_vpc(
                     name, args_json, f"Failed to call {name}"
                 )
@@ -197,7 +197,7 @@ class BaseService:
             # Non-VPC mode: use traditional API call
             request = CallMcpToolRequest(
                 authorization=f"Bearer {self.session._get_api_key()}",
-                session_id=self.session.get_session_id(),
+                session_id=self.session._get_session_id(),
                 name=name,
                 args=args_json,
                 auto_gen_session=auto_gen_session,

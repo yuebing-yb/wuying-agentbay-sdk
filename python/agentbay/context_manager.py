@@ -185,7 +185,7 @@ class ContextManager:
         """
         request = GetContextInfoRequest(
             authorization=f"Bearer {self.session._get_api_key()}",
-            session_id=self.session.get_session_id(),
+            session_id=self.session._get_session_id(),
         )
         if context_id:
             request.context_id = context_id
@@ -195,7 +195,7 @@ class ContextManager:
             request.task_type = task_type
         log_api_call(
             "GetContextInfo",
-            f"SessionId={self.session.get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}",
+            f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}",
         )
         response = self.session._get_client().get_context_info(request)
 
@@ -376,7 +376,7 @@ class ContextManager:
         """
         request = SyncContextRequest(
             authorization=f"Bearer {self.session._get_api_key()}",
-            session_id=self.session.get_session_id(),
+            session_id=self.session._get_session_id(),
         )
         if context_id:
             request.context_id = context_id
@@ -386,7 +386,7 @@ class ContextManager:
             request.mode = mode
         log_api_call(
             "SyncContext",
-            f"SessionId={self.session.get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}",
+            f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}",
         )
         response = self.session._get_client().sync_context(request)
 
