@@ -6,9 +6,9 @@
 
 | Language | Install Command | Documentation |
 |----------|----------------|---------------|
-| Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) \| [API Reference](python/docs/api/) |
-| TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) \| [API Reference](typescript/docs/api/) |
-| Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) \| [API Reference](golang/docs/api/) |
+| Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) |
+| TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) |
+| Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) |
 
 ## 🚀 Prerequisites
 
