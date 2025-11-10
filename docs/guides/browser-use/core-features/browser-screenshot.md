@@ -34,13 +34,12 @@ The Python SDK provides two screenshot methods:
    - Provides more control over the screenshot process
 
 #### Detailed Documentation
-- [Python Browser API Documentation](../../../python/docs/api/browser-use/browser.md#screenshotpage-full_page-bool--false-options---bytes)
-- [Python Browser Agent API Documentation](../../../python/docs/api/browser-use/browser.md#screenshotpage-full_page-bool--true-quality-int--80-clip-optionaldictstr-float--none-timeout-optionalint--none---str)
+- [Python Browser API Documentation](../../../../python/docs/api/browser-use/browser.md#screenshot)
 
 #### Example Usage
-- [Python Browser Screenshot Example](../../../python/docs/examples/browser-use/browser/browser_screenshot.py)
-- [Python Integration Tests](../../../python/tests/integration/test_browser_screenshot.py)
-- [Python Unit Tests](../../../python/tests/unit/test_browser_screenshot.py)
+- [Python Browser Screenshot Example](../../../../python/docs/examples/browser-use/browser/browser_screenshot.py)
+- [Python Integration Tests](../../../../python/tests/integration/test_browser_screenshot.py)
+- [Python Unit Tests](../../../../python/tests/unit/test_browser_screenshot.py)
 
 ### TypeScript Implementation
 
@@ -52,11 +51,11 @@ async screenshot(page: any, fullPage: boolean = false, options: Record<string, a
 ```
 
 #### Detailed Documentation
-- [TypeScript Browser Source Code](../../../typescript/src/browser/browser.ts) (Search for the `screenshot` method)
+- [TypeScript Browser Source Code](../../../../typescript/src/browser/browser.ts) (Search for the `screenshot` method)
 
 #### Example Usage
-- [TypeScript Browser Screenshot Test](../../../typescript/tests/unit/browser-screenshot.test.ts)
-- [TypeScript Integration Test](../../../typescript/tests/integration/browser-screenshot.integration.test.ts)
+- [TypeScript Browser Screenshot Test](../../../../typescript/tests/unit/browser-screenshot.test.ts)
+- [TypeScript Integration Test](../../../../typescript/tests/integration/browser-screenshot.integration.test.ts)
 
 ### Go Implementation
 
@@ -68,11 +67,11 @@ func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]by
 ```
 
 #### Detailed Documentation
-- [Go Browser Source Code](../../../golang/pkg/agentbay/browser/browser.go) (Search for the `Screenshot` method)
+- [Go Browser Source Code](../../../../golang/pkg/agentbay/browser/browser.go) (Search for the `Screenshot` method)
 
 #### Example Usage
-- [Go Browser Test](../../../golang/tests/pkg/unit/browser_test.go)
-- [Go Integration Test](../../../golang/tests/pkg/integration/browser_screenshot_integration_test.go)
+- [Go Browser Test](../../../../golang/tests/pkg/unit/browser_test.go)
+- [Go Integration Test](../../../../golang/tests/pkg/integration/browser_screenshot_integration_test.go)
 
 ## Cross-Language Consistency
 
@@ -209,4 +208,4 @@ All implementations provide consistent error handling:
 - [Browser Context Management](./browser-context.md)
 - [Browser Command Arguments](./browser-command-args.md)
 - [Browser Proxies](./browser-proxies.md)
-- [Stealth Mode](./stealth-mode.md)
+- [Stealth Mode](./browser-fingerprint.md#2-important-notice)

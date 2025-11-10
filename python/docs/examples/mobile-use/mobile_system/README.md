@@ -63,4 +63,4 @@ Mobile system features are particularly useful for:
 - Building mobile app automation tools
 - Implementing mobile device control applications
 
-For more details on mobile system features, see the [Application API Reference](../../../../../typescript/docs/api/computer-use/application.md) and [UI API Reference](../../../../../typescript/docs/api/computer-use/ui.md).
+For more details on mobile system features, see the [Application API Reference](../../../../docs/api/computer-use/computer.md) and [UI API Reference](../../../api/mobile-use/mobile.md).

@@ -2,7 +2,7 @@
 
 ## 🖥️ Related Tutorial
 
-- [Computer Use Guide](../../../../../docs/guides/computer-use/README.md) - Automate desktop applications
+- [Computer Use Guide](../../../../docs/guides/computer-use/README.md) - Automate desktop applications
 
 ## Overview
 

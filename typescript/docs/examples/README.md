@@ -58,7 +58,7 @@ This example demonstrates:
 
 ## 📚 Feature Categories
 
-### [Common Features](common-features/)
+### [Common Features](common-features/basics/command-example/README.md)
 
 Features available across all environment types (browser, computer, mobile, codespace).
 
@@ -74,7 +74,7 @@ Features available across all environment types (browser, computer, mobile, code
 - **VPC Sessions**: Secure isolated network environments
 - **Archive Upload**: Archive upload mode configuration
 
-### [Browser Use](browser-use/)
+### [Browser Use](browser-use/browser/README.md)
 
 Cloud-based browser automation with Playwright integration.
 
@@ -86,16 +86,8 @@ Cloud-based browser automation with Playwright integration.
 - Proxy configuration
 - Custom viewport and fingerprinting
 
-### [Computer Use](computer-use/)
 
-Windows desktop automation for application control and window management.
-
-**Key Features:**
-- UI automation
-- Desktop workflows
-- Screenshot capture
-
-### [Mobile Use](mobile-use/)
+### [Mobile Use](mobile-use/mobile-get-adb-url/README.md)
 
 Android mobile UI automation for app testing.
 
@@ -104,7 +96,7 @@ Android mobile UI automation for app testing.
 - Mobile device connection
 - Remote debugging
 
-### [CodeSpace](codespace/)
+### [CodeSpace](codespace/automation/)
 
 Cloud-based development environment for code execution.
 
@@ -240,7 +232,6 @@ await browser.close();
 1. Review [Common Features](common-features/) for SDK capabilities
 2. Jump to your specific environment:
    - [Browser Use](browser-use/) for web automation
-   - [Computer Use](computer-use/) for desktop automation
    - [Mobile Use](mobile-use/) for mobile automation
    - [CodeSpace](codespace/) for code execution
 3. Explore [Advanced Features](common-features/advanced/) for integrations

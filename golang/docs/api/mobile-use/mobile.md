@@ -2,7 +2,7 @@
 
 ## 📱 Related Tutorial
 
-- [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
+- [Mobile Use Guide](../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
 
 ## Overview
 
@@ -956,7 +956,7 @@ UIElementsResult represents the result containing UI elements
 
 ## Related Resources
 
-- [Session API Reference](../../common-features/basics/session.md)
+- [Session API Reference](../common-features/basics/session.md)
 
 ---
 
