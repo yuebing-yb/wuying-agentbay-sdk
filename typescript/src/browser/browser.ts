@@ -788,7 +788,7 @@ export class Browser {
 
     try {
       // Wait for page to load
-      await page.waitForLoadState("networkidle");
+      // await page.waitForLoadState("networkidle");
       await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
       await page.waitForLoadState("domcontentloaded");
 

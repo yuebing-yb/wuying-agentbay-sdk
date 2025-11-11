@@ -990,9 +990,9 @@ func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]by
 
 	try := func() ([]byte, error) {
 		// Wait for page to load
-		if err := playwrightPage.WaitForLoadState("networkidle"); err != nil {
-			return nil, err
-		}
+		// if err := playwrightPage.WaitForLoadState("networkidle"); err != nil {
+		// 	return nil, err
+		// }
 
 		if _, err := playwrightPage.Evaluate("window.scrollTo(0, document.body.scrollHeight)"); err != nil {
 			return nil, err

@@ -234,18 +234,26 @@ class TestBrowserScreenshotIntegration(unittest.TestCase):
         uninitialized_browser = Browser(self.session)
         
         async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
+            # Create a simple mock page object for testing
+            # We don't need to navigate to a real website for this test
+            # since we're only testing the browser initialization check
+            class MockPage:
+                pass
+            
+            mock_page = MockPage()
+            
             try:
                 # Attempt to take screenshot with uninitialized browser
                 with self.assertRaises(BrowserError) as context_manager:
-                    await uninitialized_browser.screenshot(page)
+                    await uninitialized_browser.screenshot(mock_page)
                     
                 # Verify the error message
                 self.assertIn("Browser must be initialized", str(context_manager.exception))
                 
                 print("✅ Uninitialized browser screenshot correctly raised BrowserError")
-            finally:
-                await self._close_page_and_browser(page)
+            except Exception as e:
+                print(f"⚠️ Test encountered an issue: {e}")
+                raise
         
         import asyncio
         asyncio.run(run_test())

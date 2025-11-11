@@ -672,7 +672,7 @@ class Browser(BaseService):
         
         try:          
             # Wait for page to load
-            await page.wait_for_load_state("networkidle")
+            # await page.wait_for_load_state("networkidle")
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             await page.wait_for_load_state("domcontentloaded", timeout=30000)
             # Scroll to load all content (especially for lazy-loaded elements)
