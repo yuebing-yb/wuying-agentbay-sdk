@@ -238,6 +238,19 @@ type BWList struct {
 	WhiteLists []*WhiteList `json:"whiteLists,omitempty"`
 }
 
+// MappingPolicy defines the mapping policy for cross-platform context synchronization
+type MappingPolicy struct {
+	// Path is the original path from a different OS that should be mapped to the current context path
+	Path string `json:"path"`
+}
+
+// NewMappingPolicy creates a new mapping policy with default values
+func NewMappingPolicy() *MappingPolicy {
+	return &MappingPolicy{
+		Path: "",
+	}
+}
+
 // SyncPolicy defines the synchronization policy
 type SyncPolicy struct {
 	// UploadPolicy defines the upload policy
@@ -252,6 +265,8 @@ type SyncPolicy struct {
 	RecyclePolicy *RecyclePolicy `json:"recyclePolicy,omitempty"`
 	// BWList defines the black and white list
 	BWList *BWList `json:"bwList,omitempty"`
+	// MappingPolicy defines the mapping policy for cross-platform context synchronization
+	MappingPolicy *MappingPolicy `json:"mappingPolicy,omitempty"`
 }
 
 // NewSyncPolicy creates a new sync policy with default values

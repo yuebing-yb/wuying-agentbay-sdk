@@ -12,7 +12,7 @@ from agentbay.config import BROWSER_DATA_PATH, BROWSER_FINGERPRINT_PERSIST_PATH
 from agentbay.logger import get_logger, log_api_response_with_details
 
 # Initialize logger for this module
-logger = get_logger("browser")
+_logger = get_logger("browser")
 
 if TYPE_CHECKING:
     from agentbay.session import Session
@@ -694,7 +694,7 @@ class Browser(BaseService):
             )
             response = self.session.get_client().init_browser(request)
 
-            logger.info(f"Response from init_browser: {response}")
+            _logger.info(f"Response from init_browser: {response}")
             response_map = response.to_map()
             body = response_map.get("body", {})
             data = body.get("Data", {})
@@ -710,11 +710,11 @@ class Browser(BaseService):
                         "status": "successfully initialized"
                     }
                 )
-                logger.info("Browser instance was successfully initialized.")
+                _logger.info("Browser instance was successfully initialized.")
 
             return success
         except Exception as e:
-            logger.exception(f"❌ Failed to initialize browser instance")
+            _logger.exception(f"❌ Failed to initialize browser instance")
             self._initialized = False
             self._endpoint_url = None
             self._option = None
@@ -777,7 +777,7 @@ class Browser(BaseService):
                 browser_option=browser_option_dict,
             )
             response = await self.session.get_client().init_browser_async(request)
-            logger.debug(f"Response from init_browser: {response}")
+            _logger.debug(f"Response from init_browser: {response}")
             response_map = response.to_map()
             body = response_map.get("body", {})
             data = body.get("Data", {})
@@ -794,10 +794,10 @@ class Browser(BaseService):
                         "status": "successfully initialized"
                     }
                 )
-                logger.info("Browser instance successfully initialized")
+                _logger.info("Browser instance successfully initialized")
             return success
         except Exception as e:
-            logger.exception(f"❌ Failed to initialize browser instance asynchronously")
+            _logger.exception(f"❌ Failed to initialize browser instance asynchronously")
             self._initialized = False
             self._endpoint_url = None
             self._option = None
@@ -921,7 +921,7 @@ class Browser(BaseService):
             
             # Take the screenshot
             screenshot_bytes = await page.screenshot(**enhanced_options)
-            logger.info("Screenshot captured successfully.")
+            _logger.info("Screenshot captured successfully.")
             return screenshot_bytes
             
         except Exception as e:
@@ -931,7 +931,7 @@ class Browser(BaseService):
             except:
                 error_str = "Unknown error occurred"
             error_msg = f"Failed to capture screenshot: {error_str}"
-            logger.error(error_msg)
+            _logger.error(error_msg)
             raise RuntimeError(error_msg) from e
 
     async def _scroll_to_load_all_content_async(self, page, max_scrolls: int = 8, delay_ms: int = 1200):
@@ -1003,7 +1003,7 @@ class Browser(BaseService):
             raise BrowserError("Browser is not initialized. Cannot access endpoint URL.")
         try:
             if self.session.is_vpc:
-                logger.debug(f"VPC mode, endpoint_router_port: {self.endpoint_router_port}")
+                _logger.debug(f"VPC mode, endpoint_router_port: {self.endpoint_router_port}")
                 self._endpoint_url = f"ws://{self.session.network_interface_ip}:{self.endpoint_router_port}"
             else:
                 cdp_url = self.session.get_link()

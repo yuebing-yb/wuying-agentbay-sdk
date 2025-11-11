@@ -16,8 +16,6 @@ It supports multiple programming languages including Python, JavaScript, and mor
 
 
 
-## CodeExecutionResult Objects
-
 ```python
 class CodeExecutionResult(ApiResponse)
 ```

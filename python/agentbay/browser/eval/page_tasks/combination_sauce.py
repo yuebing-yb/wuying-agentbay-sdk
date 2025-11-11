@@ -9,10 +9,10 @@ class LoginCredentials(BaseModel):
     password: str = Field(..., description="The password for all users.")
 
 
-async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     await agent.goto("https://www.saucedemo.com/")
 
-    logger.info("Extracting login credentials...")
+    _logger.info("Extracting login credentials...")
     extract_method = config.get("extract_method", "textExtract")
     use_text_extract = extract_method == "textExtract"
 
@@ -31,7 +31,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
     await agent.act(f"enter password {credentials.password}")
     await agent.act("click on 'login'")
 
-    logger.info("Observing for 'add to cart' buttons on the inventory page...")
+    _logger.info("Observing for 'add to cart' buttons on the inventory page...")
     observations = await agent.observe(
         instruction="find all the 'add to cart' buttons",
     )
@@ -58,5 +58,5 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
             "error": f"Observation validation failed. Expected 6 buttons, found {len(observations)}.",
         }
 
-    logger.info("✅ Validation passed for all steps in combination_sauce.")
+    _logger.info("✅ Validation passed for all steps in combination_sauce.")
     return {"_success": True}

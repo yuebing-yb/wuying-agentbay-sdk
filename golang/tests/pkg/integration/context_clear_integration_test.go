@@ -180,8 +180,8 @@ func TestContextClearFullLifecycle(t *testing.T) {
 	if err != nil {
 		t.Logf("Warning: Failed to get context: %v", err)
 	} else if getResult != nil && getResult.Context != nil {
-		t.Logf("✓ Context still exists - ID: %s, Name: %s, State: %s",
-			getResult.Context.ID, getResult.Context.Name, getResult.Context.State)
+		t.Logf("✓ Context still exists - ID: %s, Name: %s",
+			getResult.Context.ID, getResult.Context.Name)
 	}
 
 	// Clean up

@@ -19,6 +19,7 @@ This directory is generated. Run `python scripts/generate_api_docs.py` to refres
 - `common-features/basics/context.md` – Context
 - `common-features/basics/context-manager.md` – Context Manager
 - `common-features/basics/filesystem.md` – File System
+- `common-features/basics/context-sync.md` – Context Sync
 - `common-features/basics/logging.md` – Logging
 - `common-features/advanced/agent.md` – Agent
 - `common-features/advanced/oss.md` – OSS

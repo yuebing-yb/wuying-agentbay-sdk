@@ -21,7 +21,7 @@ type docMapping struct {
 	Target          string
 	Title           string
 	PackagePath     string
-	ModuleName      string   // Optional: module name for metadata lookup (defaults to extractModuleName(PackagePath))
+	ModuleName      string // Optional: module name for metadata lookup (defaults to extractModuleName(PackagePath))
 	TypeNames       []string
 	FuncNames       []string
 	ValueNames      []string
@@ -48,13 +48,13 @@ type GlobalConfig struct {
 }
 
 type AutoFilterRules struct {
-	ExcludeSimpleGetters         []string `yaml:"exclude_simple_getters"`
-	ExcludeVpcHelpers            []string `yaml:"exclude_vpc_helpers"`
-	ExcludeSerializationMethods  []string `yaml:"exclude_serialization_methods"`
-	ExcludeMarshalMethods        []string `yaml:"exclude_marshal_methods"`
-	ExcludeLowercaseMethods      bool     `yaml:"exclude_lowercase_methods"`
-	ExcludeValidationMethods     bool     `yaml:"exclude_validation_methods"`
-	ExcludeInternalHelpers       bool     `yaml:"exclude_internal_helpers"`
+	ExcludeSimpleGetters        []string `yaml:"exclude_simple_getters"`
+	ExcludeVpcHelpers           []string `yaml:"exclude_vpc_helpers"`
+	ExcludeSerializationMethods []string `yaml:"exclude_serialization_methods"`
+	ExcludeMarshalMethods       []string `yaml:"exclude_marshal_methods"`
+	ExcludeLowercaseMethods     bool     `yaml:"exclude_lowercase_methods"`
+	ExcludeValidationMethods    bool     `yaml:"exclude_validation_methods"`
+	ExcludeInternalHelpers      bool     `yaml:"exclude_internal_helpers"`
 }
 
 type ModuleConfig struct {
@@ -119,16 +119,6 @@ var mappings = []docMapping{
 			// MCP and Info types
 			"McpTool",
 			"SessionInfo",
-			// Policy types
-			"ContextSync",
-			"SyncPolicy",
-			"UploadPolicy",
-			"DownloadPolicy",
-			"DeletePolicy",
-			"ExtractPolicy",
-			"RecyclePolicy",
-			"WhiteList",
-			"BWList",
 		},
 		PriorityTypes: []string{
 			"Session",
@@ -137,15 +127,15 @@ var mappings = []docMapping{
 		// HiddenMethods now handled by auto-filter rules in metadata.yaml
 		// Only need to specify special cases not covered by auto-rules
 		HiddenMethods: []string{
-			"FindServerForTool",      // Internal MCP tool lookup helper
-			"callMcpToolAPI",         // Internal implementation
-			"callMcpToolVPC",         // Internal implementation
+			"FindServerForTool",              // Internal MCP tool lookup helper
+			"callMcpToolAPI",                 // Internal implementation
+			"callMcpToolVPC",                 // Internal implementation
 			"extractTextContentFromResponse", // Internal helper
-			"GetCommand",             // Internal accessor
-			"GetMcpTools",            // Internal accessor
-			"ensureDefaults",         // Internal helper
-			"CallMcpToolForBrowser",  // Duplicate interface method
-			"GetLinkForBrowser",      // Duplicate interface method
+			"GetCommand",                     // Internal accessor
+			"GetMcpTools",                    // Internal accessor
+			"ensureDefaults",                 // Internal helper
+			"CallMcpToolForBrowser",          // Duplicate interface method
+			"GetLinkForBrowser",              // Duplicate interface method
 		},
 		IncludeAllFuncs: true,
 	},
@@ -195,6 +185,28 @@ var mappings = []docMapping{
 		Title:           "File System",
 		PackagePath:     "pkg/agentbay/filesystem",
 		IncludeAllTypes: true,
+		IncludeAllFuncs: true,
+	},
+	{
+		Target:      "common-features/basics/context-sync.md",
+		Title:       "Context Sync",
+		PackagePath: "pkg/agentbay",
+		TypeNames: []string{
+			"ContextSync",
+			"SyncPolicy",
+			"UploadPolicy",
+			"DownloadPolicy",
+			"DeletePolicy",
+			"ExtractPolicy",
+			"RecyclePolicy",
+			"WhiteList",
+			"BWList",
+			"MappingPolicy",
+			"UploadStrategy",
+			"DownloadStrategy",
+			"UploadMode",
+			"Lifecycle",
+		},
 		IncludeAllFuncs: true,
 	},
 	{
@@ -821,8 +833,8 @@ func shouldSkipMethod(methodName string, methodDoc string, hiddenMethods []strin
 	// 6. Exclude validation methods (starting with Validate or containing validate)
 	if autoRules.ExcludeValidationMethods {
 		if strings.HasPrefix(lowerName, "validate") ||
-		   strings.Contains(lowerName, "_validate") ||
-		   strings.HasSuffix(lowerName, "validate") {
+			strings.Contains(lowerName, "_validate") ||
+			strings.HasSuffix(lowerName, "validate") {
 			return true
 		}
 	}

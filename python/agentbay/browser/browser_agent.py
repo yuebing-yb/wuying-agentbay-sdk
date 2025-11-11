@@ -5,7 +5,7 @@ from agentbay.api.base_service import BaseService, OperationResult
 from agentbay.exceptions import BrowserError, AgentBayError
 from agentbay.logger import get_logger
 
-logger = get_logger("browser_agent")
+_logger = get_logger("browser_agent")
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -330,7 +330,7 @@ class BrowserAgent(BaseService):
         clip: Optional[Dict[str, float]] = None,
         timeout: Optional[int] = None,
     ) -> str:
-        logger.debug(f"Screenshot page_id: {page_id}, context_id: {context_id}")
+        _logger.debug(f"Screenshot page_id: {page_id}, context_id: {context_id}")
         args = {
             "context_id": context_id,
             "page_id": page_id,
@@ -355,10 +355,10 @@ class BrowserAgent(BaseService):
         try:
             response = self._call_mcp_tool_timeout("page_use_close_session", args={})
             if response.success:
-                logger.info(f"Session close status: {response.data}")
+                _logger.info(f"Session close status: {response.data}")
                 return True
             else:
-                logger.warning(f"Failed to close session: {response.error_message}")
+                _logger.warning(f"Failed to close session: {response.error_message}")
                 return False
         except Exception as e:
             raise BrowserError(f"Failed to call close_async: {e}") from e
@@ -491,7 +491,7 @@ class BrowserAgent(BaseService):
         context_id: int,
         page_id: Optional[str],
     ) -> "ActResult":
-        logger.debug(f"Acting page_id: {page_id}, context_id: {context_id}")
+        _logger.debug(f"Acting page_id: {page_id}, context_id: {context_id}")
         args = {
             "context_id": context_id,
             "page_id": page_id,
@@ -520,7 +520,7 @@ class BrowserAgent(BaseService):
             args["action"] = json.dumps(action_dict)
             task_name = action_input.method
         args = {k: v for k, v in args.items() if v is not None}
-        logger.info(f"{task_name}")
+        _logger.info(f"{task_name}")
 
         response = self._call_mcp_tool_timeout("page_use_act", args)
         if response.success and response.data:
@@ -529,7 +529,7 @@ class BrowserAgent(BaseService):
                 if isinstance(response.data, str)
                 else json.dumps(response.data, ensure_ascii=False)
             )
-            logger.info(f"{task_name} response data: {data}")
+            _logger.info(f"{task_name} response data: {data}")
             return ActResult(success=True, message=data)
         else:
             return ActResult(success=False, message=response.error_message)
@@ -540,7 +540,7 @@ class BrowserAgent(BaseService):
         context_id: int,
         page_id: Optional[str],
     ) -> "ActResult":
-        logger.debug(f"Acting page_id: {page_id}, context_id: {context_id}")
+        _logger.debug(f"Acting page_id: {page_id}, context_id: {context_id}")
         args = {
             "context_id": context_id,
             "page_id": page_id,
@@ -569,7 +569,7 @@ class BrowserAgent(BaseService):
             args["action"] = json.dumps(action_dict)
             task_name = action_input.method
         args = {k: v for k, v in args.items() if v is not None}
-        logger.info(f"{task_name}")
+        _logger.info(f"{task_name}")
 
         response = self._call_mcp_tool_timeout("page_use_act_async", args)
         if not response.success:
@@ -607,7 +607,7 @@ class BrowserAgent(BaseService):
                         )
                     else:
                         task_status = no_action_msg
-                    logger.info(
+                    _logger.info(
                         f"Task {task_id}:{task_name} is done. Success: {success}. {task_status}"
                     )
                     return ActResult(success=success, message=task_status)
@@ -616,7 +616,7 @@ class BrowserAgent(BaseService):
                     if steps
                     else no_action_msg
                 )
-                logger.info(f"Task {task_id}:{task_name} in progress. {task_status}")
+                _logger.info(f"Task {task_id}:{task_name} in progress. {task_status}")
             max_retries -= 1
         raise BrowserError(f"Task {task_id}:{task_name} Act timed out")
 
@@ -768,7 +768,7 @@ class BrowserAgent(BaseService):
         context_id: int,
         page_id: Optional[str],
     ) -> Tuple[bool, List[ObserveResult]]:
-        logger.debug(f"Observing page_id: {page_id}, context_id: {context_id}")
+        _logger.debug(f"Observing page_id: {page_id}, context_id: {context_id}")
         args = {
             "context_id": context_id,
             "page_id": page_id,
@@ -782,7 +782,7 @@ class BrowserAgent(BaseService):
         response = self._call_mcp_tool_timeout("page_use_observe", args)
 
         if not response.success or not response.data:
-            logger.warning(f"Failed to execute observe: {response.error_message}")
+            _logger.warning(f"Failed to execute observe: {response.error_message}")
             return False, []
 
         data = (
@@ -790,7 +790,7 @@ class BrowserAgent(BaseService):
             if isinstance(response.data, str)
             else response.data
         )
-        logger.info(f"observe results: {data}")
+        _logger.info(f"observe results: {data}")
         results = []
         for item in data:
             selector = item.get("selector", "")
@@ -800,7 +800,7 @@ class BrowserAgent(BaseService):
             try:
                 arguments_dict = json.loads(arguments_str)
             except json.JSONDecodeError:
-                logger.warning(
+                _logger.warning(
                     f"Warning: Could not parse arguments as JSON: {arguments_str}"
                 )
                 arguments_dict = arguments_str
@@ -974,7 +974,7 @@ class BrowserAgent(BaseService):
             "dom_settle_timeout_ms": options.dom_settle_timeout_ms,
         }
         args = {k: v for k, v in args.items() if v is not None}
-        logger.debug(
+        _logger.debug(
             f"Extracting page_id: {page_id}, context_id: {context_id}, args: {args}"
         )
 
@@ -986,10 +986,10 @@ class BrowserAgent(BaseService):
                 if isinstance(response.data, str)
                 else response.data
             )
-            logger.info(f"extract result: {extract_result}")
+            _logger.info(f"extract result: {extract_result}")
             return True, options.schema.model_validate(extract_result)
         else:
-            logger.warning(f"Faild to execute extract: {response.error_message}")
+            _logger.warning(f"Faild to execute extract: {response.error_message}")
             return False, None
 
     async def _execute_extract_async(
@@ -1037,7 +1037,7 @@ class BrowserAgent(BaseService):
                 )
                 return True, options.schema.model_validate(extract_result)
             max_retries -= 1
-            logger.debug(
+            _logger.debug(
                 f"Task {task_id}: No extract result yet (attempt {20 - max_retries}/20)"
             )
 

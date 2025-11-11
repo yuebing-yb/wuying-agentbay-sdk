@@ -16,8 +16,6 @@ screenshot capture, and content extraction. It enables automated testing and web
 
 
 
-## BrowserFingerprintContext Objects
-
 ```python
 class BrowserFingerprintContext()
 ```
@@ -420,8 +418,6 @@ def check_browser_initialization():
 
 check_browser_initialization()
 ```
-
-#### logger
 
 #### T
 

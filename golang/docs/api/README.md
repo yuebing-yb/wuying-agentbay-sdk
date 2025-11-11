@@ -18,6 +18,7 @@ This directory is generated. Run `go run scripts/generate_api_docs.go` to refres
 - `common-features/basics/context.md` – Context
 - `common-features/basics/context-manager.md` – Context Manager
 - `common-features/basics/filesystem.md` – File System
+- `common-features/basics/context-sync.md` – Context Sync
 - `common-features/basics/logging.md` – Logging
 - `common-features/advanced/agent.md` – Agent
 - `common-features/advanced/oss.md` – OSS

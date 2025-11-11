@@ -4,8 +4,8 @@ from dataclasses import dataclass, asdict
 from playwright.async_api import async_playwright
 from agentbay.logger import get_logger
 
-# Global logger for this module
-logger = get_logger("fingerprint")
+# Global _logger for this module
+_logger = get_logger("fingerprint")
 
 
 @dataclass
@@ -215,7 +215,7 @@ class FingerprintFormat:
         try:
             video_card = VideoCard(**video_card_dict)
         except (TypeError, ValueError) as e:
-            logger.warning(f"Failed to create VideoCard: {e}, using defaults")
+            _logger.warning(f"Failed to create VideoCard: {e}, using defaults")
             video_card = VideoCard(renderer="Unknown", vendor="Unknown")
         
         # Create main Fingerprint
@@ -317,7 +317,7 @@ class BrowserFingerprintGenerator:
             Optional[FingerprintFormat]: FingerprintFormat object containing fingerprint and headers, or None if generation failed
         """
         try:
-            logger.info("Starting fingerprint generation")
+            _logger.info("Starting fingerprint generation")
             
             async with async_playwright() as p:
                 # Launch Chrome browser with specific options
@@ -336,7 +336,7 @@ class BrowserFingerprintGenerator:
                 # Navigate to a test page to ensure proper loading
                 await page.goto('about:blank')
                 
-                logger.info("Extracting comprehensive browser fingerprint...")
+                _logger.info("Extracting comprehensive browser fingerprint...")
                 
                 # Extract comprehensive fingerprint data
                 fingerprint_data = await self._extract_fingerprint_data(page)
@@ -352,11 +352,11 @@ class BrowserFingerprintGenerator:
                     "headers": headers_data
                 })
                 
-                logger.info("Fingerprint generation completed successfully!")
+                _logger.info("Fingerprint generation completed successfully!")
                 return fingerprint_format
                     
         except Exception as e:
-            logger.error(f"Error generating fingerprint: {e}")
+            _logger.error(f"Error generating fingerprint: {e}")
             return None
     
     async def generate_fingerprint_to_file(self, output_filename: str = "fingerprint_output.json") -> bool:
@@ -370,13 +370,13 @@ class BrowserFingerprintGenerator:
             bool: True if fingerprint generation and saving succeeded, False otherwise
         """
         try:
-            logger.info(f"Starting fingerprint generation, output file: {output_filename}")
+            _logger.info(f"Starting fingerprint generation, output file: {output_filename}")
             
             # Generate fingerprint data (FingerprintFormat object)
             fingerprint_format = await self.generate_fingerprint()
             
             if fingerprint_format is None:
-                logger.error("Failed to generate fingerprint data")
+                _logger.error("Failed to generate fingerprint data")
                 return False
             
             # Convert to JSON string and save to file
@@ -384,14 +384,14 @@ class BrowserFingerprintGenerator:
             success = await self._save_to_file(fingerprint_json, output_filename)
             
             if success:
-                logger.info(f"Fingerprint generation completed successfully! Saved to {output_filename}")
+                _logger.info(f"Fingerprint generation completed successfully! Saved to {output_filename}")
                 return True
             else:
-                logger.error("Failed to save fingerprint data")
+                _logger.error("Failed to save fingerprint data")
                 return False
                 
         except Exception as e:
-            logger.error(f"Error generating fingerprint to file: {e}")
+            _logger.error(f"Error generating fingerprint to file: {e}")
             return False
     
     async def _extract_fingerprint_data(self, page):
@@ -665,7 +665,7 @@ class BrowserFingerprintGenerator:
     async def _extract_headers_data(self, page):
         """Extract headers data from httpbin."""
         try:
-            logger.info("Getting request headers...")
+            _logger.info("Getting request headers...")
             await page.goto('https://httpbin.org/headers', wait_until='networkidle')
             
             # Extract headers from the response
@@ -712,7 +712,7 @@ class BrowserFingerprintGenerator:
             return headers_data
             
         except Exception as e:
-            logger.warning(f"Failed to extract headers: {e}")
+            _logger.warning(f"Failed to extract headers: {e}")
             return {}
 
     async def _save_to_file(self, json_data, filename):
@@ -720,8 +720,8 @@ class BrowserFingerprintGenerator:
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write(json_data)
-            logger.info(f"Fingerprint data saved to {filename}")
+            _logger.info(f"Fingerprint data saved to {filename}")
             return True
         except Exception as e:
-            logger.error(f"Failed to save fingerprint data: {e}")
+            _logger.error(f"Failed to save fingerprint data: {e}")
             return False

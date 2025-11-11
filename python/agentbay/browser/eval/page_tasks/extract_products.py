@@ -13,7 +13,7 @@ from agentbay.browser.browser_agent import ActOptions
 from agentbay.browser.eval.page_agent import PageAgent
 from agentbay.logger import get_logger
 
-logger = get_logger(__name__)
+_logger = get_logger(__name__)
 
 
 class ProductInfo(BaseModel):
@@ -67,7 +67,7 @@ def has_valid_products(products: List[ProductInfo], min_items: int = 2) -> bool:
 
 
 async def act(agent, instruction: str) -> bool:
-    logger.info(f"Acting: {instruction}")
+    _logger.info(f"Acting: {instruction}")
     ret = await agent.act(ActOptions(action=instruction))
     return bool(getattr(ret, "success", False))
 
@@ -81,7 +81,7 @@ async def take_and_save_screenshot(agent, base_url: str, out_dir: str):
         with open(screenshot_path, "wb") as f:
             f.write(base64.b64decode(base64_screenshot))
 
-        logger.info(f"{base_url} -> Screenshot saved via agent: {screenshot_path}")
+        _logger.info(f"{base_url} -> Screenshot saved via agent: {screenshot_path}")
 
 
 async def extract_products(agent, base_url: str) -> List[ProductInfo]:
@@ -128,7 +128,7 @@ async def ensure_listing_page(
             await act(agent, common_action)
             await asyncio.sleep(0.6)
 
-    logger.info(f"All {max_steps} extraction attempts failed for {base_url}.")
+    _logger.info(f"All {max_steps} extraction attempts failed for {base_url}.")
     return []
 
 
@@ -136,7 +136,7 @@ async def process_site(agent, url: str, out_dir: str = "/tmp") -> None:
     host = domain_of(url)
     await agent.navigate(url)
     if url in CAPTURE_DETECT_URL:
-        logger.info(f"CAPTCHA detected on {host}")
+        _logger.info(f"CAPTCHA detected on {host}")
         await asyncio.sleep(40)
 
     products_from_page = await ensure_listing_page(agent, url, out_dir, max_steps=3)
@@ -155,13 +155,13 @@ async def process_site(agent, url: str, out_dir: str = "/tmp") -> None:
                     indent=2,
                 )
             priced_cnt = sum(1 for p in products if p.price)
-            logger.info(
+            _logger.info(
                 f"{host} -> {len(products)} items (with price: {priced_cnt}) saved: {out_path}"
             )
         except Exception as e:
-            logger.info(f"{host} -> save failed: {e}")
+            _logger.info(f"{host} -> save failed: {e}")
     else:
-        logger.info(f"{host} -> no products found (name+link/price)")
+        _logger.info(f"{host} -> no products found (name+link/price)")
 
 
 SITES = [
@@ -181,7 +181,7 @@ CAPTURE_DETECT_URL = [
 ]
 
 
-async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     """
     Performs a paginated e-commerce site inspection.
     """
@@ -191,6 +191,6 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
         try:
             await process_site(agent, url, out_dir=f"./results_{date_str}")
         except Exception as e:
-            logger.info(f"[ERR] {domain_of(url)} -> {e}")
+            _logger.info(f"[ERR] {domain_of(url)} -> {e}")
 
     return {"_success": True}

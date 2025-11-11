@@ -44,7 +44,7 @@ class TestBrowserScreenshot(unittest.TestCase):
             
         self.assertIn("Page cannot be None", str(context.exception))
 
-    @patch('agentbay.browser.browser.logger')
+    @patch('agentbay.browser.browser._logger')
     def test_screenshot_async_success(self, mock_logger):
         """Test successful screenshot capture."""
         # Create a mock page with async methods
@@ -71,7 +71,7 @@ class TestBrowserScreenshot(unittest.TestCase):
         # Verify logging
         mock_logger.info.assert_called_with("Screenshot captured successfully.")
 
-    @patch('agentbay.browser.browser.logger')
+    @patch('agentbay.browser.browser._logger')
     def test_screenshot_async_with_full_page_option(self, mock_logger):
         """Test screenshot capture with full_page=True option."""
         # Create a mock page with async methods
@@ -105,7 +105,7 @@ class TestBrowserScreenshot(unittest.TestCase):
             type="png"
         )
 
-    @patch('agentbay.browser.browser.logger')
+    @patch('agentbay.browser.browser._logger')
     def test_screenshot_async_with_custom_options(self, mock_logger):
         """Test screenshot capture with custom options."""
         # Create a mock page with async methods
@@ -141,7 +141,7 @@ class TestBrowserScreenshot(unittest.TestCase):
             quality=80
         )
 
-    @patch('agentbay.browser.browser.logger')
+    @patch('agentbay.browser.browser._logger')
     def test_screenshot_async_handles_exception(self, mock_logger):
         """Test that screenshot_async handles exceptions properly."""
         # Create a mock page that raises an exception
@@ -164,7 +164,7 @@ class TestBrowserScreenshot(unittest.TestCase):
         # Verify logging
         mock_logger.error.assert_called()
 
-    @patch('agentbay.browser.browser.logger')
+    @patch('agentbay.browser.browser._logger')
     def test_screenshot_async_handles_coroutine_exception(self, mock_logger):
         """Test that screenshot_async handles exceptions that can't be converted to string."""
         # Create a mock page that raises an exception that can't be converted to string

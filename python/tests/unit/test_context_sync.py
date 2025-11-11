@@ -13,6 +13,8 @@ from agentbay.context_sync import (
     WhiteList,
     UploadStrategy,
     DownloadStrategy,
+    MappingPolicy,
+    ContextSync,
 )
 
 
@@ -114,6 +116,89 @@ class TestSyncPolicy(unittest.TestCase):
         self.assertEqual(len(result["bwList"]["whiteLists"]), 1)
         self.assertEqual(result["bwList"]["whiteLists"][0]["path"], "")
         self.assertEqual(result["bwList"]["whiteLists"][0]["excludePaths"], [])
+
+
+class TestMappingPolicy(unittest.TestCase):
+    """Test MappingPolicy class functionality."""
+
+    def test_mapping_policy_default(self):
+        """Test that MappingPolicy can be created with default values."""
+        mapping_policy = MappingPolicy()
+        self.assertEqual(mapping_policy.path, "")
+
+    def test_mapping_policy_with_path(self):
+        """Test that MappingPolicy can be created with a Windows path."""
+        windows_path = "c:\\Users\\Administrator\\Downloads"
+        mapping_policy = MappingPolicy(path=windows_path)
+        self.assertEqual(mapping_policy.path, windows_path)
+
+    def test_mapping_policy_serialization(self):
+        """Test that MappingPolicy serializes correctly."""
+        windows_path = "c:\\Users\\Administrator\\Downloads"
+        mapping_policy = MappingPolicy(path=windows_path)
+
+        result = mapping_policy.__dict__()
+        self.assertIn("path", result)
+        self.assertEqual(result["path"], windows_path)
+
+
+class TestSyncPolicyWithMappingPolicy(unittest.TestCase):
+    """Test SyncPolicy with MappingPolicy functionality."""
+
+    def test_sync_policy_with_mapping_policy(self):
+        """Test that SyncPolicy can include MappingPolicy."""
+        windows_path = "c:\\Users\\Administrator\\Downloads"
+        mapping_policy = MappingPolicy(path=windows_path)
+
+        sync_policy = SyncPolicy(
+            upload_policy=UploadPolicy(),
+            download_policy=DownloadPolicy(),
+            delete_policy=DeletePolicy(),
+            mapping_policy=mapping_policy
+        )
+
+        self.assertIsNotNone(sync_policy.mapping_policy)
+        self.assertEqual(sync_policy.mapping_policy.path, windows_path)
+
+    def test_sync_policy_serialization_with_mapping_policy(self):
+        """Test that SyncPolicy with MappingPolicy serializes correctly."""
+        windows_path = "c:\\Users\\Administrator\\Downloads"
+        mapping_policy = MappingPolicy(path=windows_path)
+
+        sync_policy = SyncPolicy(
+            upload_policy=UploadPolicy(),
+            mapping_policy=mapping_policy
+        )
+
+        result = sync_policy.__dict__()
+        self.assertIn("mappingPolicy", result)
+        self.assertEqual(result["mappingPolicy"]["path"], windows_path)
+
+
+class TestContextSyncWithMappingPolicy(unittest.TestCase):
+    """Test ContextSync with MappingPolicy functionality."""
+
+    def test_context_sync_with_mapping_policy(self):
+        """Test that ContextSync can be created with MappingPolicy."""
+        context_id = "ctx-12345"
+        linux_path = "/home/wuying/下载"
+        windows_path = "c:\\Users\\Administrator\\Downloads"
+
+        mapping_policy = MappingPolicy(path=windows_path)
+        sync_policy = SyncPolicy(
+            upload_policy=UploadPolicy(),
+            download_policy=DownloadPolicy(),
+            delete_policy=DeletePolicy(),
+            mapping_policy=mapping_policy
+        )
+
+        context_sync = ContextSync.new(context_id, linux_path, sync_policy)
+
+        self.assertEqual(context_sync.context_id, context_id)
+        self.assertEqual(context_sync.path, linux_path)
+        self.assertIsNotNone(context_sync.policy)
+        self.assertIsNotNone(context_sync.policy.mapping_policy)
+        self.assertEqual(context_sync.policy.mapping_policy.path, windows_path)
 
 
 if __name__ == "__main__":

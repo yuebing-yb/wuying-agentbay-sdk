@@ -4,8 +4,8 @@ from agentbay.config import BROWSER_FINGERPRINT_PERSIST_PATH
 from agentbay.logger import get_logger
 from agentbay.api.models._create_mcp_session_request import ExtraConfigs
 
-# Initialize logger for this module
-logger = get_logger("session_params")
+# Initialize _logger for this module
+_logger = get_logger("session_params")
 
 if TYPE_CHECKING:
     from agentbay.extension import ExtensionOption
@@ -312,12 +312,12 @@ class CreateSessionParams:
         # Add extension context syncs from browser_context if available
         if browser_context and browser_context.extension_context_syncs:
             all_context_syncs.extend(browser_context.extension_context_syncs)
-            logger.info(f"Added {len(browser_context.extension_context_syncs)} extension context sync(s) from BrowserContext")
+            _logger.info(f"Added {len(browser_context.extension_context_syncs)} extension context sync(s) from BrowserContext")
 
         # Add fingerprint context sync from browser_context if available
         if browser_context and browser_context.fingerprint_context_sync:
             all_context_syncs.append(browser_context.fingerprint_context_sync)
-            logger.info(f"Added fingerprint context sync from BrowserContext")
+            _logger.info(f"Added fingerprint context sync from BrowserContext")
 
         self.context_syncs = all_context_syncs
         self.browser_context = browser_context

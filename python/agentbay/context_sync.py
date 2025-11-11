@@ -267,6 +267,26 @@ class BWList:
 
 
 @dataclass
+class MappingPolicy:
+    """
+    Defines the mapping policy for cross-platform context synchronization
+
+    Attributes:
+        path: The original path from a different OS that should be mapped to the current context path
+    """
+
+    path: str = ""
+
+    @classmethod
+    def default(cls):
+        """Creates a new mapping policy with default values"""
+        return cls()
+
+    def __dict__(self):
+        return {"path": self.path}
+
+
+@dataclass
 class SyncPolicy:
     """
     Defines the synchronization policy
@@ -278,6 +298,7 @@ class SyncPolicy:
         extract_policy: Defines the extract policy
         recycle_policy: Defines the recycle policy
         bw_list: Defines the black and white list
+        mapping_policy: Defines the mapping policy for cross-platform context synchronization
     """
 
     upload_policy: Optional[UploadPolicy] = None
@@ -286,6 +307,7 @@ class SyncPolicy:
     extract_policy: Optional[ExtractPolicy] = None
     recycle_policy: Optional[RecyclePolicy] = None
     bw_list: Optional[BWList] = None
+    mapping_policy: Optional[MappingPolicy] = None
 
     def __post_init__(self):
         """Post-initialization to ensure all policies have default values if not provided"""
@@ -328,6 +350,8 @@ class SyncPolicy:
             result["recyclePolicy"] = self.recycle_policy.__dict__()
         if self.bw_list:
             result["bwList"] = self.bw_list.__dict__()
+        if self.mapping_policy:
+            result["mappingPolicy"] = self.mapping_policy.__dict__()
         return result
 
 
