@@ -61,7 +61,7 @@ jobs:
           python-version: '3.10'
       
       - id: emoji-anchor-check
-        continue-on-error: true
+        continue-on-error: false
         name: "VS Code Emoji Anchor Compatibility Check"
         when: "${{params.docs_check_enabled}}"
         run: |
@@ -70,7 +70,14 @@ jobs:
           # Check for emoji anchor compatibility issues
           python scripts/check_markdown_links.py \
             --warn-emoji-anchors \
-            --verbose
+            --verbose \
+            --strict
+          
+          # Check the exit code of the previous command
+          if [ $? -ne 0 ]; then
+            echo "❌ Found broken links! Failing the pipeline."
+            exit 1
+          fi
           
           echo "✅ Emoji anchor compatibility check completed"
 
