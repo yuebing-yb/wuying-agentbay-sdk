@@ -43,6 +43,7 @@ params:
 jobs:
   # Documentation quality check job
   docs-quality-check:
+    continue-on-error: false
     name: "Documentation Quality Check"
     when: "${{params.docs_check_enabled}}"
     runs-on:
@@ -61,7 +62,6 @@ jobs:
           python-version: '3.10'
       
       - id: emoji-anchor-check
-        continue-on-error: false
         name: "VS Code Emoji Anchor Compatibility Check"
         when: "${{params.docs_check_enabled}}"
         run: |
