@@ -68,46 +68,11 @@ func TestFileChangeEvent_String(t *testing.T) {
 	assert.Equal(t, expected, event.String())
 }
 
-func TestFileChangeEvent_ToDict(t *testing.T) {
-	event := &filesystem.FileChangeEvent{
-		EventType: "create",
-		Path:      "/tmp/new_file.txt",
-		PathType:  "file",
-	}
+// Tests for toDict() and fileChangeEventFromDict() removed - they are now private methods
+// The functionality is tested through public APIs like GetFileChange()
 
-	expected := map[string]string{
-		"eventType": "create",
-		"path":      "/tmp/new_file.txt",
-		"pathType":  "file",
-	}
-	assert.Equal(t, expected, event.ToDict())
-}
-
-func TestFileChangeEventFromDict(t *testing.T) {
-	data := map[string]interface{}{
-		"eventType": "delete",
-		"path":      "/tmp/deleted.txt",
-		"pathType":  "file",
-	}
-
-	event := filesystem.FileChangeEventFromDict(data)
-
-	assert.Equal(t, "delete", event.EventType)
-	assert.Equal(t, "/tmp/deleted.txt", event.Path)
-	assert.Equal(t, "file", event.PathType)
-}
-
-func TestFileChangeEventFromDict_MissingFields(t *testing.T) {
-	data := map[string]interface{}{
-		"eventType": "create",
-	}
-
-	event := filesystem.FileChangeEventFromDict(data)
-
-	assert.Equal(t, "create", event.EventType)
-	assert.Equal(t, "", event.Path)
-	assert.Equal(t, "", event.PathType)
-}
+// TestFileChangeEventFromDict_MissingFields removed - fileChangeEventFromDict is now private
+// The functionality is tested through GetFileChange()
 
 func TestFileChangeResult_HasChanges(t *testing.T) {
 	// Test with events

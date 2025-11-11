@@ -48,16 +48,6 @@ func (e *FileChangeEvent) String() string
 
 String returns string representation of FileChangeEvent
 
-### Related Functions
-
-#### FileChangeEventFromDict
-
-```go
-func FileChangeEventFromDict(data map[string]interface{}) *FileChangeEvent
-```
-
-FileChangeEventFromDict creates FileChangeEvent from map
-
 ## Type FileChangeResult
 
 ```go

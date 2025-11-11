@@ -2,7 +2,7 @@
 
 ## 💻 Related Tutorial
 
-- [Code Execution Guide](../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
+- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
 
 ## Overview
 
@@ -146,7 +146,7 @@ CodeResult represents the result of a code execution
 
 ## Related Resources
 
-- [Session API Reference](../../../docs/api/common-features/basics/session.md)
+- [Session API Reference](../../common-features/basics/session.md)
 
 ---
 

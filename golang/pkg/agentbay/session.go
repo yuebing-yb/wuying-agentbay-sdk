@@ -317,7 +317,7 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 		syncResult, err := s.Context.SyncWithCallback("", "", "", nil, 150, 1500)
 		if err != nil {
 			syncDuration := time.Since(syncStartTime)
-			LogOperationError("Delete", fmt.Sprintf("Failed to trigger context sync after %v: %v", syncDuration, err), false)
+			logOperationError("Delete", fmt.Sprintf("Failed to trigger context sync after %v: %v", syncDuration, err), false)
 			// Continue with deletion even if sync fails
 		} else {
 			syncDuration := time.Since(syncStartTime)
@@ -338,13 +338,13 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s", *releaseSessionRequest.SessionId)
-	LogAPICall("ReleaseMcpSession", requestParams)
+	logAPICall("ReleaseMcpSession", requestParams)
 
 	response, err := s.GetClient().ReleaseMcpSession(releaseSessionRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("ReleaseMcpSession", err.Error(), true)
+		logOperationError("ReleaseMcpSession", err.Error(), true)
 		return nil, err
 	}
 
@@ -360,7 +360,7 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 			} else if response.Body.Code != nil {
 				errorMsg = fmt.Sprintf("[%s] Failed to delete session", *response.Body.Code)
 			}
-			LogOperationError("ReleaseMcpSession", errorMsg, false)
+			logOperationError("ReleaseMcpSession", errorMsg, false)
 			return &DeleteResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -378,7 +378,7 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 		"session_id": s.SessionID,
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("ReleaseMcpSession", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("ReleaseMcpSession", requestID, true, keyFields, string(responseJSON))
 
 	return &DeleteResult{
 		ApiResponse: models.ApiResponse{
@@ -508,13 +508,13 @@ func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s, Labels=%s", *setLabelRequest.SessionId, *setLabelRequest.Labels)
-	LogAPICall("SetLabel", requestParams)
+	logAPICall("SetLabel", requestParams)
 
 	response, err := s.GetClient().SetLabel(setLabelRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("SetLabel", err.Error(), true)
+		logOperationError("SetLabel", err.Error(), true)
 		return nil, err
 	}
 
@@ -527,7 +527,7 @@ func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error) {
 		"labels_count": len(labels),
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("SetLabel", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("SetLabel", requestID, true, keyFields, string(responseJSON))
 
 	return &LabelResult{
 		ApiResponse: models.ApiResponse{
@@ -603,13 +603,13 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s", *getLabelRequest.SessionId)
-	LogAPICall("GetLabel", requestParams)
+	logAPICall("GetLabel", requestParams)
 
 	response, err := s.GetClient().GetLabel(getLabelRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("GetLabel", err.Error(), true)
+		logOperationError("GetLabel", err.Error(), true)
 		return nil, err
 	}
 
@@ -633,7 +633,7 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 		"labels_count": labelsCount,
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("GetLabel", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("GetLabel", requestID, true, keyFields, string(responseJSON))
 
 	return &LabelResult{
 		ApiResponse: models.ApiResponse{
@@ -735,13 +735,13 @@ func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*
 	if getLinkRequest.Option != nil {
 		requestParams += ", Options=provided"
 	}
-	LogAPICall("GetLink", requestParams)
+	logAPICall("GetLink", requestParams)
 
 	response, err := s.GetClient().GetLink(getLinkRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("GetLink", err.Error(), true)
+		logOperationError("GetLink", err.Error(), true)
 		return nil, err
 	}
 
@@ -768,7 +768,7 @@ func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*
 		keyFields["port"] = *getLinkRequest.Port
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("GetLink", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("GetLink", requestID, true, keyFields, string(responseJSON))
 
 	return &LinkResult{
 		ApiResponse: models.ApiResponse{
@@ -838,7 +838,7 @@ func (s *Session) Info() (*InfoResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s", *getMcpResourceRequest.SessionId)
-	LogAPICall("GetMcpResource", requestParams)
+	logAPICall("GetMcpResource", requestParams)
 
 	response, err := s.GetClient().GetMcpResource(getMcpResourceRequest)
 
@@ -856,7 +856,7 @@ func (s *Session) Info() (*InfoResult, error) {
 		if errorCode == "InvalidMcpSession.NotFound" {
 			// This is an expected error - session doesn't exist
 			// Use info level logging without stack trace, but with red color for visibility
-			LogInfoWithColor(fmt.Sprintf("Session not found: %s", s.SessionID))
+			logInfoWithColor(fmt.Sprintf("Session not found: %s", s.SessionID))
 			LogDebug(fmt.Sprintf("GetMcpResource error details: %s", errorStr))
 			return &InfoResult{
 				ApiResponse: models.ApiResponse{
@@ -867,7 +867,7 @@ func (s *Session) Info() (*InfoResult, error) {
 		}
 
 		// This is an unexpected error - log with full error
-		LogOperationError("GetMcpResource", err.Error(), true)
+		logOperationError("GetMcpResource", err.Error(), true)
 		return nil, err
 	}
 
@@ -929,7 +929,7 @@ func (s *Session) Info() (*InfoResult, error) {
 			keyFields["resource_id"] = sessionInfo.ResourceId
 		}
 		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("GetMcpResource", requestID, true, keyFields, string(responseJSON))
+		logAPIResponseWithDetails("GetMcpResource", requestID, true, keyFields, string(responseJSON))
 
 		return &InfoResult{
 			ApiResponse: models.ApiResponse{
@@ -1017,13 +1017,13 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("ImageId=%s", *listMcpToolsRequest.ImageId)
-	LogAPICall("ListMcpTools", requestParams)
+	logAPICall("ListMcpTools", requestParams)
 
 	response, err := s.GetClient().ListMcpTools(listMcpToolsRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("ListMcpTools", err.Error(), true)
+		logOperationError("ListMcpTools", err.Error(), true)
 		return nil, err
 	}
 
@@ -1036,7 +1036,7 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 		// The Data field is a JSON string, so we need to unmarshal it
 		var toolsData []map[string]interface{}
 		if err := json.Unmarshal([]byte(*response.Body.Data), &toolsData); err != nil {
-			LogOperationError("ListMcpTools", fmt.Sprintf("Error unmarshaling tools data: %v", err), false)
+			logOperationError("ListMcpTools", fmt.Sprintf("Error unmarshaling tools data: %v", err), false)
 			return &McpToolsResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -1075,7 +1075,7 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 		"tools_count": len(tools),
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("ListMcpTools", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("ListMcpTools", requestID, true, keyFields, string(responseJSON))
 
 	return &McpToolsResult{
 		ApiResponse: models.ApiResponse{
@@ -1136,10 +1136,10 @@ func (s *Session) FindServerForTool(toolName string) string {
 //
 // Returns:
 //   - *models.McpToolResult: Result containing:
-//     - Success: Whether the tool call was successful
-//     - Data: Tool output data (text content extracted from response)
-//     - ErrorMessage: Error message if the call failed
-//     - RequestID: Unique identifier for the API request
+//   - Success: Whether the tool call was successful
+//   - Data: Tool output data (text content extracted from response)
+//   - ErrorMessage: Error message if the call failed
+//   - RequestID: Unique identifier for the API request
 //   - error: Error if the call fails at the transport level
 //
 // Behavior:
@@ -1241,12 +1241,12 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession 
 func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResult, error) {
 	// VPC mode: Use HTTP request to the VPC endpoint
 	requestParams := fmt.Sprintf("Tool=%s, ArgsLength=%d", toolName, len(argsJSON))
-	LogAPICall("CallMcpTool(VPC)", requestParams)
+	logAPICall("CallMcpTool(VPC)", requestParams)
 
 	// Find server for this tool
 	server := s.FindServerForTool(toolName)
 	if server == "" {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("server not found for tool: %s", toolName), false)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("server not found for tool: %s", toolName), false)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1257,7 +1257,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 
 	// Check VPC network configuration
 	if s.NetworkInterfaceIp() == "" || s.HttpPort() == "" {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC network configuration incomplete: networkInterfaceIp=%s, httpPort=%s", s.NetworkInterfaceIp(), s.HttpPort()), false)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC network configuration incomplete: networkInterfaceIp=%s, httpPort=%s", s.NetworkInterfaceIp(), s.HttpPort()), false)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1282,7 +1282,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	// Send HTTP request
 	response, err := http.Get(fullURL)
 	if err != nil {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed: %v", err), true)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1293,7 +1293,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed with status: %d", response.StatusCode), false)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed with status: %d", response.StatusCode), false)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1305,7 +1305,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	// Parse response
 	var responseData interface{}
 	if err := json.NewDecoder(response.Body).Decode(&responseData); err != nil {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("Failed to parse VPC response: %v", err), true)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("Failed to parse VPC response: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1326,11 +1326,11 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 		"response_length": len(textContent),
 	}
 	responseJSON, _ := json.Marshal(responseData)
-	LogAPIResponseWithDetails("CallMcpTool(VPC)", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("CallMcpTool(VPC)", requestID, true, keyFields, string(responseJSON))
 
 	// For run_code tool, extract and log the actual code execution output
 	if toolName == "run_code" && textContent != "" {
-		LogCodeExecutionOutput(requestID, textContent)
+		logCodeExecutionOutput(requestID, textContent)
 	}
 
 	return &models.McpToolResult{
@@ -1359,13 +1359,13 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 
 	// Log API request
 	requestParams := fmt.Sprintf("Tool=%s, SessionId=%s, ArgsLength=%d", toolName, s.SessionID, len(argsJSON))
-	LogAPICall("CallMcpTool", requestParams)
+	logAPICall("CallMcpTool", requestParams)
 
 	response, err := s.GetClient().CallMcpTool(callToolRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("CallMcpTool", fmt.Sprintf("API request failed: %v", err), true)
+		logOperationError("CallMcpTool", fmt.Sprintf("API request failed: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1394,7 +1394,7 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 			"response_length": responseLength,
 		}
 		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("CallMcpTool", requestID, true, keyFields, string(responseJSON))
+		logAPIResponseWithDetails("CallMcpTool", requestID, true, keyFields, string(responseJSON))
 
 		// For run_code tool, extract and log the actual code execution output
 		if toolName == "run_code" && response.Body.Data != nil {
@@ -1405,7 +1405,7 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 				dataStr = string(dataBytes)
 			}
 			if dataStr != "" {
-				LogCodeExecutionOutput(requestID, dataStr)
+				logCodeExecutionOutput(requestID, dataStr)
 			}
 		}
 
@@ -1452,7 +1452,7 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 		}
 
 		if isError {
-			LogOperationError("CallMcpTool", fmt.Sprintf("Tool returned error: %s", textContent), false)
+			logOperationError("CallMcpTool", fmt.Sprintf("Tool returned error: %s", textContent), false)
 			return &models.McpToolResult{
 				Success:      false,
 				Data:         "",
@@ -1471,7 +1471,7 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 
 	// Handle empty or error response
 	errorMsg := "Empty response from CallMcpTool"
-	LogOperationError("CallMcpTool", errorMsg, false)
+	logOperationError("CallMcpTool", errorMsg, false)
 	return &models.McpToolResult{
 		Success:      false,
 		Data:         "",

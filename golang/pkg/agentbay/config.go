@@ -15,15 +15,15 @@ type Config struct {
 	TimeoutMs int    `json:"timeout_ms"`
 }
 
-// DefaultConfig returns the default configuration
-func DefaultConfig() Config {
+// defaultConfig returns the default configuration
+func defaultConfig() Config {
 	return Config{
 		Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
 		TimeoutMs: 60000,
 	}
 }
 
-// FindDotEnvFile searches for .env file upward from startPath.
+// findDotEnvFile searches for .env file upward from startPath.
 // Search order:
 // 1. Current working directory
 // 2. Parent directories (up to root)
@@ -36,7 +36,7 @@ func DefaultConfig() Config {
 // Returns:
 //
 //	Path to .env file if found, empty string otherwise
-func FindDotEnvFile(startPath string) string {
+func findDotEnvFile(startPath string) string {
 	if startPath == "" {
 		workingDir, err := os.Getwd()
 		if err != nil {
@@ -77,12 +77,12 @@ func FindDotEnvFile(startPath string) string {
 	return ""
 }
 
-// LoadDotEnvWithFallback loads .env file with improved search strategy.
+// loadDotEnvWithFallback loads .env file with improved search strategy.
 //
 // Args:
 //
 //	customEnvPath: Custom path to .env file (empty string means search upward)
-func LoadDotEnvWithFallback(customEnvPath string) {
+func loadDotEnvWithFallback(customEnvPath string) {
 	if customEnvPath != "" {
 		// Use custom path if provided
 		if _, err := os.Stat(customEnvPath); err == nil {
@@ -99,7 +99,7 @@ func LoadDotEnvWithFallback(customEnvPath string) {
 	}
 
 	// Find .env file using upward search
-	envFile := FindDotEnvFile("")
+	envFile := findDotEnvFile("")
 	if envFile != "" {
 		err := godotenv.Load(envFile)
 		if err != nil {
@@ -112,7 +112,7 @@ func LoadDotEnvWithFallback(customEnvPath string) {
 	}
 }
 
-// LoadConfig loads the configuration from file or environment variables.
+// loadConfig loads the configuration from file or environment variables.
 // The SDK uses the following precedence order for configuration (highest to lowest):
 // 1. Explicitly passed configuration in code.
 // 2. Environment variables.
@@ -123,7 +123,7 @@ func LoadDotEnvWithFallback(customEnvPath string) {
 //
 //	cfg: Configuration object (if provided, skips env loading)
 //	customEnvPath: Custom path to .env file (empty string means search upward)
-func LoadConfig(cfg *Config, customEnvPath string) Config {
+func loadConfig(cfg *Config, customEnvPath string) Config {
 	if cfg != nil {
 		// If config is explicitly provided, use it directly
 		return Config{
@@ -133,10 +133,10 @@ func LoadConfig(cfg *Config, customEnvPath string) Config {
 	}
 
 	// Load .env file with improved search
-	LoadDotEnvWithFallback(customEnvPath)
+	loadDotEnvWithFallback(customEnvPath)
 
 	// Use environment variables if set (highest priority)
-	config := DefaultConfig()
+	config := defaultConfig()
 
 	if endpoint := os.Getenv("AGENTBAY_ENDPOINT"); endpoint != "" {
 		config.Endpoint = endpoint
@@ -151,25 +151,25 @@ func LoadConfig(cfg *Config, customEnvPath string) Config {
 	return config
 }
 
-// LoadConfigCompat provides backward compatibility for existing code
-func LoadConfigCompat(cfg *Config) Config {
-	return LoadConfig(cfg, "")
+// loadConfigCompat provides backward compatibility for existing code
+func loadConfigCompat(cfg *Config) Config {
+	return loadConfig(cfg, "")
 }
 
-// ConfigInterface implementation for backward compatibility
-type ConfigManager struct{}
+// configManager implementation for backward compatibility
+type configManager struct{}
 
-// LoadConfig implements the ConfigInterface for backward compatibility
-func (c *ConfigManager) LoadConfig(cfg *Config) Config {
-	return LoadConfigCompat(cfg)
+// loadConfig implements the ConfigInterface for backward compatibility
+func (c *configManager) loadConfig(cfg *Config) Config {
+	return loadConfigCompat(cfg)
 }
 
-// DefaultConfig implements the ConfigInterface
-func (c *ConfigManager) DefaultConfig() Config {
-	return DefaultConfig()
+// defaultConfig implements the ConfigInterface
+func (c *configManager) defaultConfig() Config {
+	return defaultConfig()
 }
 
-// NewConfigManager creates a new ConfigManager instance
-func NewConfigManager() *ConfigManager {
-	return &ConfigManager{}
+// newConfigManager creates a new configManager instance
+func newConfigManager() *configManager {
+	return &configManager{}
 }

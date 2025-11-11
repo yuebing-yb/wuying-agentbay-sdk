@@ -2,7 +2,7 @@
 
 ## 🌐 Related Tutorial
 
-- [Browser Use Guide](../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
 
 ## Overview
 
@@ -783,7 +783,7 @@ SessionInterface defines the interface that Session must implement for Browser
 
 ## Related Resources
 
-- [Session API Reference](../../../docs/api/common-features/basics/session.md)
+- [Session API Reference](../../common-features/basics/session.md)
 
 ---
 

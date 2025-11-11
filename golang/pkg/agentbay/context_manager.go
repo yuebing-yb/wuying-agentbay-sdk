@@ -136,13 +136,13 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 	if request.TaskType != nil {
 		requestInfo += fmt.Sprintf(", TaskType=%s", *request.TaskType)
 	}
-	LogAPICall("GetContextInfo", requestInfo)
+	logAPICall("GetContextInfo", requestInfo)
 
 	response, err := cm.Session.GetClient().GetContextInfo(request)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("GetContextInfo", err.Error(), true)
+		logOperationError("GetContextInfo", err.Error(), true)
 		return nil, fmt.Errorf("failed to get context info: %w", err)
 	}
 
@@ -158,7 +158,7 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 				message = "Unknown error"
 			}
 			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-			LogAPIResponseWithDetails("GetContextInfo", requestID, false, nil, string(respJSON))
+			logAPIResponseWithDetails("GetContextInfo", requestID, false, nil, string(respJSON))
 			return &ContextInfoResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -211,7 +211,7 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 	}
 	if response != nil && response.Body != nil {
 		respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("GetContextInfo", requestID, true, keyFields, string(respJSON))
+		logAPIResponseWithDetails("GetContextInfo", requestID, true, keyFields, string(respJSON))
 	}
 
 	return &ContextInfoResult{
@@ -401,13 +401,13 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 	if request.Mode != nil {
 		requestInfo += fmt.Sprintf(", Mode=%s", *request.Mode)
 	}
-	LogAPICall("SyncContext", requestInfo)
+	logAPICall("SyncContext", requestInfo)
 
 	response, err := cm.Session.GetClient().SyncContext(request)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("SyncContext", err.Error(), true)
+		logOperationError("SyncContext", err.Error(), true)
 		return nil, fmt.Errorf("failed to sync context: %w", err)
 	}
 
@@ -423,7 +423,7 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 				message = "Unknown error"
 			}
 			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-			LogAPIResponseWithDetails("SyncContext", requestID, false, nil, string(respJSON))
+			logAPIResponseWithDetails("SyncContext", requestID, false, nil, string(respJSON))
 			return &ContextSyncResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -451,7 +451,7 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 	}
 	if response != nil && response.Body != nil {
 		respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("SyncContext", requestID, success, keyFields, string(respJSON))
+		logAPIResponseWithDetails("SyncContext", requestID, success, keyFields, string(respJSON))
 	}
 
 	return &ContextSyncResult{

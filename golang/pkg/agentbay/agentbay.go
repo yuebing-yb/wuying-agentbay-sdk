@@ -65,9 +65,9 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 		}
 	}
 
-	// Load configuration using LoadConfig function
+	// Load configuration using loadConfig function
 	// This will load from environment variables, .env file (searched upward), or use defaults
-	config := LoadConfig(config_option.cfg, config_option.envFile)
+	config := loadConfig(config_option.cfg, config_option.envFile)
 
 	// Create API client
 	apiConfig := &openapiutil.Config{
@@ -309,7 +309,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		requestParams += fmt.Sprintf(", ExtraConfigs=%s", extraConfigsStr)
 	}
 
-	LogAPICall("CreateMcpSession", requestParams)
+	logAPICall("CreateMcpSession", requestParams)
 
 	response, err := a.Client.CreateMcpSession(createSessionRequest)
 
@@ -318,7 +318,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 	// Log API response
 	if err != nil {
-		LogOperationError("CreateMcpSession", err.Error(), true)
+		logOperationError("CreateMcpSession", err.Error(), true)
 		return nil, err
 	}
 
@@ -334,7 +334,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			errMsg = *response.Body.Data.ErrMsg
 		}
 		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("CreateMcpSession", requestID, false, nil, string(responseJSON))
+		logAPIResponseWithDetails("CreateMcpSession", requestID, false, nil, string(responseJSON))
 		return nil, fmt.Errorf("%s", errMsg)
 	}
 
@@ -373,12 +373,12 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		"is_vpc":       params.IsVpc,
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("CreateMcpSession", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("CreateMcpSession", requestID, true, keyFields, string(responseJSON))
 
 	// Apply mobile configuration if provided
 	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil {
 		if err := session.Mobile.Configure(params.ExtraConfigs.Mobile); err != nil {
-			LogOperationError("ApplyMobileConfiguration", err.Error(), false)
+			logOperationError("ApplyMobileConfiguration", err.Error(), false)
 		}
 	}
 
@@ -386,7 +386,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if params.IsVpc {
 		toolsResult, err := session.ListMcpTools()
 		if err != nil {
-			LogOperationError("FetchMCPTools", err.Error(), false)
+			logOperationError("FetchMCPTools", err.Error(), false)
 		} else if len(toolsResult.Tools) > 0 {
 			fmt.Printf("✅ Successfully fetched %d MCP tools for VPC session (RequestID: %s)\n",
 				len(toolsResult.Tools), toolsResult.RequestID)
@@ -612,13 +612,13 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 	if listSessionRequest.NextToken != nil {
 		requestParams += fmt.Sprintf(", NextToken=%s", *listSessionRequest.NextToken)
 	}
-	LogAPICall("ListSession", requestParams)
+	logAPICall("ListSession", requestParams)
 
 	response, err := a.Client.ListSession(listSessionRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("ListSession", err.Error(), true)
+		logOperationError("ListSession", err.Error(), true)
 		return nil, err
 	}
 
@@ -637,7 +637,7 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 		} else if response.Body != nil && response.Body.Code != nil {
 			errorMsg = *response.Body.Code
 		}
-		LogOperationError("ListSession", fmt.Sprintf("failed to list sessions: %s", errorMsg), false)
+		logOperationError("ListSession", fmt.Sprintf("failed to list sessions: %s", errorMsg), false)
 		return &SessionListResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: requestID,
@@ -687,7 +687,7 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 		keyFields["next_token"] = nextTokenResult
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("ListSession", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("ListSession", requestID, true, keyFields, string(responseJSON))
 
 	return &SessionListResult{
 		ApiResponse: models.ApiResponse{
@@ -822,7 +822,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s", *getSessionRequest.SessionId)
-	LogAPICall("GetSession", requestParams)
+	logAPICall("GetSession", requestParams)
 
 	response, err := a.Client.GetSession(getSessionRequest)
 
@@ -833,7 +833,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 		if strings.Contains(errorStr, "InvalidMcpSession.NotFound") || strings.Contains(errorStr, "NotFound") {
 			// This is an expected error - session doesn't exist
 			// Use info level logging without stack trace, but with red color for visibility
-			LogInfoWithColor(fmt.Sprintf("Session not found: %s", sessionID))
+			logInfoWithColor(fmt.Sprintf("Session not found: %s", sessionID))
 			LogDebug(fmt.Sprintf("GetSession error details: %s", errorStr))
 			return &GetSessionResult{
 				ApiResponse: models.ApiResponse{
@@ -846,7 +846,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 			}, nil
 		} else {
 			// This is an unexpected error - log with stack trace
-			LogOperationError("GetSession", err.Error(), true)
+			logOperationError("GetSession", err.Error(), true)
 			return nil, err
 		}
 	}
@@ -879,7 +879,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 				message = "Unknown error"
 			}
 			result.ErrorMessage = fmt.Sprintf("[%s] %s", code, message)
-			LogOperationError("GetSession", result.ErrorMessage, false)
+			logOperationError("GetSession", result.ErrorMessage, false)
 			return result, nil
 		}
 
@@ -929,7 +929,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 				keyFields["network_interface_ip"] = data.NetworkInterfaceIP
 			}
 			responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-			LogAPIResponseWithDetails("GetSession", requestID, true, keyFields, string(responseJSON))
+			logAPIResponseWithDetails("GetSession", requestID, true, keyFields, string(responseJSON))
 		}
 
 		result.ErrorMessage = ""
@@ -1002,7 +1002,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 //	}
 func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	if sessionID == "" {
-		LogOperationError("Get", "session_id is required", false)
+		logOperationError("Get", "session_id is required", false)
 		return &SessionResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
@@ -1016,7 +1016,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	getResult, err := a.GetSession(sessionID)
 	if err != nil {
 		errorMsg := fmt.Sprintf("failed to get session %s: %v", sessionID, err)
-		LogOperationError("Get", errorMsg, true)
+		logOperationError("Get", errorMsg, true)
 		return &SessionResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
@@ -1033,7 +1033,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 			errorMsg = "Session not found"
 		}
 		fullErrorMsg := fmt.Sprintf("failed to get session %s: %s", sessionID, errorMsg)
-		LogOperationError("Get", fullErrorMsg, false)
+		logOperationError("Get", fullErrorMsg, false)
 		return &SessionResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: getResult.RequestID,
@@ -1085,7 +1085,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 			keyFields["resource_id"] = getResult.Data.ResourceID
 		}
 	}
-	LogAPIResponseWithDetails("Get", getResult.RequestID, true, keyFields, "")
+	logAPIResponseWithDetails("Get", getResult.RequestID, true, keyFields, "")
 
 	return &SessionResult{
 		ApiResponse: models.ApiResponse{

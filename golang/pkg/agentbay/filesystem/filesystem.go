@@ -25,8 +25,8 @@ func (e *FileChangeEvent) String() string {
 		e.EventType, e.Path, e.PathType)
 }
 
-// ToDict converts FileChangeEvent to map
-func (e *FileChangeEvent) ToDict() map[string]string {
+// toDict converts FileChangeEvent to map
+func (e *FileChangeEvent) toDict() map[string]string {
 	return map[string]string{
 		"eventType": e.EventType,
 		"path":      e.Path,
@@ -34,8 +34,8 @@ func (e *FileChangeEvent) ToDict() map[string]string {
 	}
 }
 
-// FileChangeEventFromDict creates FileChangeEvent from map
-func FileChangeEventFromDict(data map[string]interface{}) *FileChangeEvent {
+// fileChangeEventFromDict creates FileChangeEvent from map
+func fileChangeEventFromDict(data map[string]interface{}) *FileChangeEvent {
 	event := &FileChangeEvent{}
 	if eventType, ok := data["eventType"].(string); ok {
 		event.EventType = eventType
@@ -1204,7 +1204,7 @@ func parseFileChangeData(rawData string) ([]*FileChangeEvent, error) {
 			if len(eventDict) == 0 {
 				continue
 			}
-			event := FileChangeEventFromDict(eventDict)
+			event := fileChangeEventFromDict(eventDict)
 			// Only add valid events (with non-empty eventType or path)
 			if event.EventType != "" || event.Path != "" {
 				events = append(events, event)
@@ -1218,7 +1218,7 @@ func parseFileChangeData(rawData string) ([]*FileChangeEvent, error) {
 	if err := json.Unmarshal([]byte(rawData), &changeDataObj); err == nil {
 		// Check if it's a non-empty object with valid data
 		if len(changeDataObj) > 0 {
-			event := FileChangeEventFromDict(changeDataObj)
+			event := fileChangeEventFromDict(changeDataObj)
 			// Only add if it has meaningful data
 			if event.EventType != "" || event.Path != "" {
 				events = append(events, event)

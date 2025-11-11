@@ -84,8 +84,8 @@ func NewBrowserProxy(proxyType string, server, username, password, strategy *str
 	return proxy, nil
 }
 
-// ToMap converts BrowserProxy to map for API request
-func (p *BrowserProxy) ToMap() map[string]interface{} {
+// toMap converts BrowserProxy to map for API request
+func (p *BrowserProxy) toMap() map[string]interface{} {
 	proxyMap := map[string]interface{}{
 		"type": p.Type,
 	}
@@ -118,8 +118,8 @@ type BrowserViewport struct {
 	Height int `json:"height"` // Viewport height
 }
 
-// ToMap converts BrowserViewport to map for API request
-func (v *BrowserViewport) ToMap() map[string]interface{} {
+// toMap converts BrowserViewport to map for API request
+func (v *BrowserViewport) toMap() map[string]interface{} {
 	return map[string]interface{}{
 		"width":  v.Width,
 		"height": v.Height,
@@ -132,8 +132,8 @@ type BrowserScreen struct {
 	Height int `json:"height"` // Screen height
 }
 
-// ToMap converts BrowserScreen to map for API request
-func (s *BrowserScreen) ToMap() map[string]interface{} {
+// toMap converts BrowserScreen to map for API request
+func (s *BrowserScreen) toMap() map[string]interface{} {
 	return map[string]interface{}{
 		"width":  s.Width,
 		"height": s.Height,
@@ -183,8 +183,8 @@ func NewBrowserFingerprint(devices, operatingSystems, locales []string) (*Browse
 	}, nil
 }
 
-// ToMap converts BrowserFingerprint to map for API request
-func (f *BrowserFingerprint) ToMap() map[string]interface{} {
+// toMap converts BrowserFingerprint to map for API request
+func (f *BrowserFingerprint) toMap() map[string]interface{} {
 	fpMap := make(map[string]interface{})
 	if f.Devices != nil {
 		fpMap["devices"] = f.Devices
@@ -348,8 +348,8 @@ func (o *BrowserOption) Validate() error {
 	return nil
 }
 
-// ToMap converts BrowserOption to map for API request
-func (o *BrowserOption) ToMap() map[string]interface{} {
+// toMap converts BrowserOption to map for API request
+func (o *BrowserOption) toMap() map[string]interface{} {
 	optionMap := make(map[string]interface{})
 
 	// Check for AGENTBAY_BROWSER_BEHAVIOR_SIMULATE environment variable
@@ -364,15 +364,15 @@ func (o *BrowserOption) ToMap() map[string]interface{} {
 	}
 
 	if o.Viewport != nil {
-		optionMap["viewport"] = o.Viewport.ToMap()
+		optionMap["viewport"] = o.Viewport.toMap()
 	}
 
 	if o.Screen != nil {
-		optionMap["screen"] = o.Screen.ToMap()
+		optionMap["screen"] = o.Screen.toMap()
 	}
 
 	if o.Fingerprint != nil {
-		optionMap["fingerprint"] = o.Fingerprint.ToMap()
+		optionMap["fingerprint"] = o.Fingerprint.toMap()
 	}
 
 	optionMap["solveCaptchas"] = o.SolveCaptchas
@@ -380,7 +380,7 @@ func (o *BrowserOption) ToMap() map[string]interface{} {
 	if len(o.Proxies) > 0 {
 		proxies := make([]map[string]interface{}, len(o.Proxies))
 		for i, proxy := range o.Proxies {
-			proxies[i] = proxy.ToMap()
+			proxies[i] = proxy.toMap()
 		}
 		optionMap["proxies"] = proxies
 	}
@@ -700,7 +700,7 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	}
 
 	// Convert option to map
-	browserOptionMap := option.ToMap()
+	browserOptionMap := option.toMap()
 
 	// TODO: Enable record if session has enableBrowserReplay set to true
 	// This would require adding enableBrowserReplay to the session interface
