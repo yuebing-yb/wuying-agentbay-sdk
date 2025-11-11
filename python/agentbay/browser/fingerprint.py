@@ -116,16 +116,48 @@ class FingerprintFormat:
     fingerprint: Fingerprint
     headers: Dict[str, str]
     
-    def to_dict(self) -> Dict[str, Any]:
+    @classmethod
+    def load(cls, data: Union[dict, str]) -> 'FingerprintFormat':
+        """
+        Load fingerprint from dictionary or JSON string.
+        
+        This is the recommended public API for loading fingerprint data.
+        
+        Args:
+            data: Either a dictionary or JSON string containing fingerprint data
+            
+        Returns:
+            FingerprintFormat: Loaded fingerprint format object
+            
+        Raises:
+            ValueError: If data is invalid or cannot be parsed
+            
+        Example:
+            ```python
+            # From dictionary
+            fingerprint = FingerprintFormat.load({"fingerprint": {...}, "headers": {...}})
+            
+            # From JSON string
+            fingerprint = FingerprintFormat.load('{"fingerprint": {...}, "headers": {...}}')
+            ```
+        """
+        if isinstance(data, str):
+            return cls._from_json(data)
+        elif isinstance(data, dict):
+            return cls._from_dict(data)
+        else:
+            raise ValueError(f"Invalid data type: expected dict or str, got {type(data)}")
+    
+    def _to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary format."""
         return asdict(self)
     
-    def to_json(self, indent: int = 2, ensure_ascii: bool = False) -> str:
+    def _to_json(self, indent: int = 2, ensure_ascii: bool = False) -> str:
         """Convert to JSON string format."""
-        return json.dumps(self.to_dict(), indent=indent, ensure_ascii=ensure_ascii)
+        return json.dumps(self._to_dict(), indent=indent, ensure_ascii=ensure_ascii)
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'FingerprintFormat':
+    def _from_dict(cls, data: Dict[str, Any]) -> 'FingerprintFormat':
         """Create FingerprintFormat from dictionary data."""
         if not data or not isinstance(data, dict):
             raise ValueError("Invalid data: expected a dictionary")
@@ -236,10 +268,10 @@ class FingerprintFormat:
         return cls(fingerprint=fingerprint, headers=headers_dict)
     
     @classmethod
-    def from_json(cls, json_str: str) -> 'FingerprintFormat':
+    def _from_json(cls, json_str: str) -> 'FingerprintFormat':
         """Create FingerprintFormat from JSON string."""
         data = json.loads(json_str)
-        return cls.from_dict(data)
+        return cls._from_dict(data)
     
     @classmethod
     def create(
@@ -347,7 +379,7 @@ class BrowserFingerprintGenerator:
                 await browser.close()
                 
                 # Combine fingerprint and headers using FingerprintFormat
-                fingerprint_format = FingerprintFormat.from_dict({
+                fingerprint_format = FingerprintFormat._from_dict({
                     "fingerprint": fingerprint_data,
                     "headers": headers_data
                 })
@@ -380,7 +412,7 @@ class BrowserFingerprintGenerator:
                 return False
             
             # Convert to JSON string and save to file
-            fingerprint_json = fingerprint_format.to_json(indent=2, ensure_ascii=False)
+            fingerprint_json = fingerprint_format._to_json(indent=2, ensure_ascii=False)
             success = await self._save_to_file(fingerprint_json, output_filename)
             
             if success:

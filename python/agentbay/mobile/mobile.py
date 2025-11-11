@@ -457,7 +457,7 @@ class Mobile(BaseService):
                 installed_apps = []
 
                 for app_data in apps_json:
-                    app = InstalledApp.from_dict(app_data)
+                    app = InstalledApp._from_dict(app_data)
                     installed_apps.append(app)
 
                 return InstalledAppListResult(
@@ -522,7 +522,7 @@ class Mobile(BaseService):
                 processes = []
 
                 for process_data in processes_json:
-                    process = Process.from_dict(process_data)
+                    process = Process._from_dict(process_data)
                     processes.append(process)
 
                 return ProcessListResult(

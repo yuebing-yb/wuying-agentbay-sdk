@@ -386,7 +386,7 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             with open(example_file_path, "r") as f:
                 fingerprint_json = f.read()
             
-            fingerprint_format = FingerprintFormat.from_json(fingerprint_json)
+            fingerprint_format = FingerprintFormat.load(fingerprint_json)
             self.assertIsNotNone(fingerprint_format, "Fingerprint format should not be None")
             print("Fingerprint loaded from file successfully")
 

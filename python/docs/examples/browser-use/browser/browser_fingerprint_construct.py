@@ -25,7 +25,7 @@ from playwright.async_api import async_playwright
 async def generate_fingerprint_by_file() -> FingerprintFormat:
     """Generate fingerprint by file."""
     with open(os.path.join(os.path.dirname(__file__), "../../../../../resource/fingerprint.example.json"), "r") as f:
-        fingerprint_format = FingerprintFormat.from_json(f.read())
+        fingerprint_format = FingerprintFormat.load(f.read())
     return fingerprint_format
 
 async def main():

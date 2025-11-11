@@ -51,7 +51,7 @@ class TestFileChangeEvent(unittest.TestCase):
             "path": "/tmp/deleted.txt",
             "pathType": "file"
         }
-        self.assertEqual(event.to_dict(), expected_dict)
+        self.assertEqual(event._to_dict(), expected_dict)
 
     def test_file_change_event_from_dict(self):
         """Test FileChangeEvent from_dict class method."""
@@ -61,7 +61,7 @@ class TestFileChangeEvent(unittest.TestCase):
             "pathType": "file"
         }
         
-        event = FileChangeEvent.from_dict(data)
+        event = FileChangeEvent._from_dict(data)
         
         self.assertEqual(event.event_type, "modify")
         self.assertEqual(event.path, "/tmp/modified.txt")
@@ -71,7 +71,7 @@ class TestFileChangeEvent(unittest.TestCase):
         """Test FileChangeEvent from_dict with missing fields."""
         data = {"eventType": "create"}
         
-        event = FileChangeEvent.from_dict(data)
+        event = FileChangeEvent._from_dict(data)
         
         self.assertEqual(event.event_type, "create")
         self.assertEqual(event.path, "")

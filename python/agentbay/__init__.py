@@ -25,7 +25,7 @@ from .context_sync import (
 )
 from .context_manager import ContextManager, ContextInfoResult, ContextSyncResult
 from .extension import ExtensionsService, ExtensionOption, Extension
-from .logger import AgentBayLogger, get_logger, log, mask_sensitive_data, log_api_response_with_details
+from .logger import AgentBayLogger, get_logger, log
 __all__ = [
     "Config",
     "AgentBay",

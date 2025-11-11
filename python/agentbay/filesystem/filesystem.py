@@ -9,7 +9,7 @@ import httpx
 from dataclasses import dataclass
 
 from agentbay.api.base_service import BaseService
-from ..logger import get_logger, log_api_response, log_operation_start, log_operation_success
+from ..logger import get_logger, _log_api_response, _log_operation_start, _log_operation_success
 from agentbay.exceptions import AgentBayError, FileError
 from agentbay.model import ApiResponse, BoolResult
 
@@ -532,7 +532,7 @@ class FileChangeEvent:
     def __repr__(self):
         return f"FileChangeEvent(event_type='{self.event_type}', path='{self.path}', path_type='{self.path_type}')"
 
-    def to_dict(self) -> Dict[str, str]:
+    def _to_dict(self) -> Dict[str, str]:
         """Convert to dictionary representation."""
         return {
             "eventType": self.event_type,
@@ -541,7 +541,7 @@ class FileChangeEvent:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, str]) -> "FileChangeEvent":
+    def _from_dict(cls, data: Dict[str, str]) -> "FileChangeEvent":
         """Create FileChangeEvent from dictionary."""
         return cls(
             event_type=data.get("eventType", ""),
@@ -992,7 +992,7 @@ class FileSystem(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"📥 Response: {result}")
             if result.success:
@@ -1112,7 +1112,7 @@ class FileSystem(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"📥 Response: {result}")
             if result.success:
@@ -1206,7 +1206,7 @@ class FileSystem(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"📥 Response: {result}")
             if result.success:
@@ -1315,7 +1315,7 @@ class FileSystem(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"📥 Response: {result}")
 
@@ -1527,7 +1527,7 @@ class FileSystem(BaseService):
             while offset < file_size:
                 length = min(chunk_size, file_size - offset)
                 chunk_result = self._read_file_chunk(path, offset, length)
-                log_operation_start(
+                _log_operation_start(
                     f"ReadLargeFile chunk {chunk_count + 1}",
                     f"{length} bytes at offset {offset}/{file_size}"
                 )
@@ -1598,7 +1598,7 @@ class FileSystem(BaseService):
         # Use default chunk size
         chunk_size = self.DEFAULT_CHUNK_SIZE
         content_len = len(content)
-        log_operation_start(
+        _log_operation_start(
             f"WriteLargeFile to {path}",
             f"total size: {content_len} bytes, chunk size: {chunk_size} bytes"
         )
@@ -1817,7 +1817,7 @@ class FileSystem(BaseService):
                 if isinstance(change_data, list):
                     for event_dict in change_data:
                         if isinstance(event_dict, dict):
-                            event = FileChangeEvent.from_dict(event_dict)
+                            event = FileChangeEvent._from_dict(event_dict)
                             events.append(event)
                 else:
                     print(f"Warning: Expected list but got {type(change_data)}")

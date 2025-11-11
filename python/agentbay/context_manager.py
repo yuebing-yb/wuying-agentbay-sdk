@@ -1,7 +1,7 @@
 from typing import Optional, List, Dict, Any, Callable
 from agentbay.api.models import GetContextInfoRequest, SyncContextRequest
 from agentbay.model.response import ApiResponse, extract_request_id
-from .logger import get_logger, log_api_call, log_api_response, log_api_response_with_details
+from .logger import get_logger, _log_api_call, _log_api_response, _log_api_response_with_details
 import json
 import time
 import threading
@@ -122,7 +122,7 @@ class ContextManager:
             request.path = path
         if task_type:
             request.task_type = task_type
-        log_api_call(
+        _log_api_call(
             "GetContextInfo",
             f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}",
         )
@@ -145,7 +145,7 @@ class ContextManager:
             if not body.get("Success", True) and body.get("Code"):
                 code = body.get("Code", "Unknown")
                 message = body.get("Message", "Unknown error")
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="GetContextInfo",
                     request_id=request_id,
                     success=False,
@@ -180,7 +180,7 @@ class ContextManager:
                     _logger.error(f"❌ Unexpected error parsing context status: {e}")
 
         # Log successful context info retrieval
-        log_api_response_with_details(
+        _log_api_response_with_details(
             api_name="GetContextInfo",
             request_id=request_id,
             success=True,
@@ -313,7 +313,7 @@ class ContextManager:
             request.path = path
         if mode:
             request.mode = mode
-        log_api_call(
+        _log_api_call(
             "SyncContext",
             f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}",
         )
@@ -336,7 +336,7 @@ class ContextManager:
             if not body.get("Success", True) and body.get("Code"):
                 code = body.get("Code", "Unknown")
                 message = body.get("Message", "Unknown error")
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="SyncContext",
                     request_id=request_id,
                     success=False,
@@ -353,7 +353,7 @@ class ContextManager:
 
         # Log successful sync context call
         if success:
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="SyncContext",
                 request_id=request_id,
                 success=True,

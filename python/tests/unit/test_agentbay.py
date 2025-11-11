@@ -11,7 +11,7 @@ class TestAgentBay(unittest.TestCase):
     """Test the functionality of the main AgentBay class"""
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
     def test_initialization_with_env_var(self, mock_mcp_client, mock_load_config):
         """Test initializing AgentBay with an API key from environment variable"""
@@ -35,7 +35,7 @@ class TestAgentBay(unittest.TestCase):
         self.assertIsNotNone(agent_bay._lock)
         self.assertIsNotNone(agent_bay.context)
 
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
     def test_initialization_with_provided_key(self, mock_mcp_client, mock_load_config):
         """Test initializing AgentBay with a provided API key"""
@@ -56,7 +56,7 @@ class TestAgentBay(unittest.TestCase):
         self.assertEqual(agent_bay.api_key, "provided-api-key")
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     def test_initialization_without_api_key(self, mock_load_config):
         """Test initialization failure when no API key is available"""
         # Mock configuration
@@ -72,7 +72,7 @@ class TestAgentBay(unittest.TestCase):
         self.assertIn("API key is required", str(context.exception))
 
     @patch("agentbay.agentbay.extract_request_id")
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
     def test_create_session_success(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
@@ -117,7 +117,7 @@ class TestAgentBay(unittest.TestCase):
         self.assertIn("new-session-id", agent_bay._sessions)
         self.assertEqual(agent_bay._sessions["new-session-id"], result.session)
 
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
     def test_create_session_invalid_response(self, mock_mcp_client, mock_load_config):
         """Test handling invalid response when creating a session"""
@@ -148,7 +148,7 @@ class TestAgentBay(unittest.TestCase):
         self.assertIn("Invalid response format", result.error_message)
 
     @patch("agentbay.agentbay.extract_request_id")
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
     def test_list(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
@@ -201,7 +201,7 @@ class TestAgentBay(unittest.TestCase):
         self.assertEqual(len(result.session_ids), 3)
 
     @patch("agentbay.agentbay.extract_request_id")
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
     def test_list_pagination(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
@@ -260,7 +260,7 @@ class TestAgentBay(unittest.TestCase):
         self.assertEqual(result.session_ids[1], "session-4")
 
     @patch("agentbay.agentbay.extract_request_id")
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
     def test_create_session_with_policy_id(self, mock_mcp_client, mock_load_config, mock_extract_request_id):
         """Ensure policy_id is passed to create_mcp_session body"""
@@ -296,7 +296,7 @@ class TestAgentBay(unittest.TestCase):
         self.assertEqual(getattr(call_arg, "mcp_policy_id", None) or getattr(call_arg, "McpPolicyId", None), "policy-xyz")
         # Basic success assertion remains; deep body behavior is validated in client integration tests
 
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
     def test_create_with_mobile_extra_configs(self, mock_mcp_client, mock_load_config):
         """Test creating a session with mobile extra configurations"""
@@ -359,7 +359,7 @@ class TestAgentBay(unittest.TestCase):
         self.assertEqual(call_arg.extra_configs.mobile.app_manager_rule.rule_type, "White")
         self.assertEqual(len(call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list), 2)
 
-    @patch("agentbay.agentbay.load_config")
+    @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
     def test_create_with_mobile_blacklist_config(self, mock_mcp_client, mock_load_config):
         """Test creating a session with mobile blacklist configuration"""

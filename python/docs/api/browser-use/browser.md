@@ -313,7 +313,7 @@ class BrowserAgent(BaseService)
 
 BrowserAgent handles browser automation and agent logic.
 
-#### navigate_async
+#### navigate\_async
 
 ```python
 async def navigate_async(url: str) -> str

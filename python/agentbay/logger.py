@@ -14,13 +14,13 @@ import re
 
 
 # ANSI Color codes
-COLOR_RESET = "\033[0m"
-COLOR_GREEN = "\033[32m"
-COLOR_BLUE = "\033[34m"
-COLOR_CYAN = "\033[36m"
+_COLOR_RESET = "\033[0m"
+_COLOR_GREEN = "\033[32m"
+_COLOR_BLUE = "\033[34m"
+_COLOR_CYAN = "\033[36m"
 
 
-def colorize_log_message(record):
+def _colorize_log_message(record):
     """
     Colorize log messages based on content.
     API Calls are blue, Responses are green, Operations are cyan.
@@ -31,15 +31,15 @@ def colorize_log_message(record):
     # Check for API Call
     if "🔗 API Call" in message:
         # Wrap the entire message in blue
-        record["message"] = f"{COLOR_BLUE}{message}{COLOR_RESET}"
+        record["message"] = f"{_COLOR_BLUE}{message}{_COLOR_RESET}"
     # Check for API Response (success)
     elif "✅ API Response" in message or "✅ Completed" in message:
         # Wrap the entire message in green
-        record["message"] = f"{COLOR_GREEN}{message}{COLOR_RESET}"
+        record["message"] = f"{_COLOR_GREEN}{message}{_COLOR_RESET}"
     # Check for operations starting
     elif "🚀 Starting" in message:
         # Wrap in cyan
-        record["message"] = f"{COLOR_CYAN}{message}{COLOR_RESET}"
+        record["message"] = f"{_COLOR_CYAN}{message}{_COLOR_RESET}"
 
     # Return True to accept the record
     return True
@@ -204,7 +204,7 @@ class AgentBayLogger:
                 format=console_format,
                 level=cls._log_level,
                 colorize=should_colorize,
-                filter=colorize_log_message,
+                filter=_colorize_log_message,
                 backtrace=True,
                 diagnose=True
             )
@@ -327,7 +327,7 @@ log = get_logger("agentbay")
 
 
 # Sensitive field names for data masking
-SENSITIVE_FIELDS = [
+_SENSITIVE_FIELDS = [
     'api_key', 'apikey', 'api-key',
     'password', 'passwd', 'pwd',
     'token', 'access_token', 'auth_token',
@@ -336,7 +336,7 @@ SENSITIVE_FIELDS = [
 ]
 
 
-def mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
+def _mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
     """
     Mask sensitive information in data structures.
 
@@ -397,7 +397,7 @@ def mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
             # Output: [{'name': 'Alice', 'api_key': 'ke****23'}, {'name': 'Bob', 'api_key': 'ke****56'}]
     """
     if fields is None:
-        fields = SENSITIVE_FIELDS
+        fields = _SENSITIVE_FIELDS
 
     if isinstance(data, dict):
         masked = {}
@@ -408,10 +408,10 @@ def mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
                 else:
                     masked[key] = '****'
             else:
-                masked[key] = mask_sensitive_data(value, fields)
+                masked[key] = _mask_sensitive_data(value, fields)
         return masked
     elif isinstance(data, list):
-        return [mask_sensitive_data(item, fields) for item in data]
+        return [_mask_sensitive_data(item, fields) for item in data]
     elif isinstance(data, str):
         # Don't mask plain strings, only dict keys
         return data
@@ -420,14 +420,14 @@ def mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
 
 
 # Compatibility functions for common logging patterns
-def log_api_call(api_name: str, request_data: str = "") -> None:
+def _log_api_call(api_name: str, request_data: str = "") -> None:
     """Log API call with consistent formatting."""
     log.opt(depth=1).info(f"🔗 API Call: {api_name}")
     if request_data:
         log.opt(depth=1).info(f"  └─ {request_data}")
 
 
-def log_api_response(response_data: str, success: bool = True) -> None:
+def _log_api_response(response_data: str, success: bool = True) -> None:
     """Log API response with consistent formatting."""
     if success:
         log.opt(depth=1).info("✅ API Response received")
@@ -437,7 +437,7 @@ def log_api_response(response_data: str, success: bool = True) -> None:
         log.opt(depth=1).error(f"📥 Response: {response_data}")
 
 
-def log_api_response_with_details(
+def _log_api_response_with_details(
     api_name: str,
     request_id: str = "",
     success: bool = True,
@@ -465,7 +465,7 @@ def log_api_response_with_details(
         if key_fields:
             for key, value in key_fields.items():
                 # Add green color to parameter lines
-                param_line = f"{COLOR_GREEN}  └─ {key}={value}{COLOR_RESET}"
+                param_line = f"{_COLOR_GREEN}  └─ {key}={value}{_COLOR_RESET}"
                 log.opt(depth=1).info(param_line)
 
         if full_response:
@@ -476,7 +476,7 @@ def log_api_response_with_details(
             log.opt(depth=1).error(f"📥 Response: {full_response}")
 
 
-def log_code_execution_output(request_id: str, raw_output: str) -> None:
+def _log_code_execution_output(request_id: str, raw_output: str) -> None:
     """
     Extract and log the actual code execution output from run_code response.
     
@@ -504,14 +504,14 @@ def log_code_execution_output(request_id: str, raw_output: str) -> None:
         
         # Format the output with a clear separator
         header = f"📋 Code Execution Output (RequestID: {request_id}):"
-        colored_header = f"{COLOR_GREEN}{header}{COLOR_RESET}"
-        
+        colored_header = f"{_COLOR_GREEN}{header}{_COLOR_RESET}"
+
         log.opt(depth=1).info(colored_header)
-        
+
         # Print each line with indentation
         lines = actual_output.rstrip('\n').split('\n')
         for line in lines:
-            colored_line = f"{COLOR_GREEN}   {line}{COLOR_RESET}"
+            colored_line = f"{_COLOR_GREEN}   {line}{_COLOR_RESET}"
             log.opt(depth=1).info(colored_line)
             
     except (json.JSONDecodeError, KeyError, TypeError):
@@ -519,21 +519,21 @@ def log_code_execution_output(request_id: str, raw_output: str) -> None:
         pass
 
 
-def log_operation_start(operation: str, details: str = "") -> None:
+def _log_operation_start(operation: str, details: str = "") -> None:
     """Log the start of an operation."""
     log.opt(depth=1).info(f"🚀 Starting: {operation}")
     if details:
         log.opt(depth=1).debug(f"📋 Details: {details}")
 
 
-def log_operation_success(operation: str, result: str = "") -> None:
+def _log_operation_success(operation: str, result: str = "") -> None:
     """Log successful operation completion."""
     log.opt(depth=1).info(f"✅ Completed: {operation}")
     if result:
         log.opt(depth=1).debug(f"📊 Result: {result}")
 
 
-def log_operation_error(operation: str, error: str, exc_info: bool = False) -> None:
+def _log_operation_error(operation: str, error: str, exc_info: bool = False) -> None:
     """
     Log operation error with optional exception info.
 
@@ -549,14 +549,14 @@ def log_operation_error(operation: str, error: str, exc_info: bool = False) -> N
         log.opt(depth=1).error(f"💥 Error: {error}")
 
 
-def log_warning(message: str, details: str = "") -> None:
+def _log_warning(message: str, details: str = "") -> None:
     """Log warning with consistent formatting."""
     log.opt(depth=1).warning(f"⚠️  {message}")
     if details:
         log.opt(depth=1).warning(f"📝 Details: {details}")
 
 
-def log_info_with_color(message: str, color: str = "\033[31m") -> None:
+def _log_info_with_color(message: str, color: str = "\033[31m") -> None:
     """
     Log an INFO level message with custom color.
 
@@ -564,5 +564,5 @@ def log_info_with_color(message: str, color: str = "\033[31m") -> None:
         message: Message to log
         color: ANSI color code (default is red: \033[31m)
     """
-    colored_message = f"{color}{message}{COLOR_RESET}"
+    colored_message = f"{color}{message}{_COLOR_RESET}"
     log.opt(depth=1).info(colored_message)

@@ -8,8 +8,8 @@ from agentbay.api.models import InitBrowserRequest
 from agentbay.browser.browser_agent import BrowserAgent
 from agentbay.api.base_service import BaseService
 from agentbay.exceptions import BrowserError
-from agentbay.config import BROWSER_DATA_PATH, BROWSER_FINGERPRINT_PERSIST_PATH
-from agentbay.logger import get_logger, log_api_response_with_details
+from agentbay.config import _BROWSER_DATA_PATH, _BROWSER_FINGERPRINT_PERSIST_PATH
+from agentbay.logger import get_logger, _log_api_response_with_details
 
 # Initialize logger for this module
 _logger = get_logger("browser")
@@ -103,7 +103,7 @@ class BrowserProxy:
 
         if proxy_type == "wuying" and strategy == "polling" and pollsize <= 0:
             raise ValueError("pollsize must be greater than 0 for polling strategy")
-    def to_map(self):
+    def _to_map(self):
         """
         Convert BrowserProxy to dictionary format.
 
@@ -113,7 +113,7 @@ class BrowserProxy:
         Example:
             ```python
             proxy = BrowserProxy(proxy_type="custom", server="127.0.0.1:8080", username="user", password="pass")
-            proxy_dict = proxy.to_map()
+            proxy_dict = proxy._to_map()
             print(proxy_dict)
             ```
         """
@@ -136,7 +136,7 @@ class BrowserProxy:
         return proxy_map
 
     @classmethod
-    def from_map(cls, m: dict = None):
+    def _from_map(cls, m: dict = None):
         """
         Create BrowserProxy from dictionary format.
 
@@ -152,7 +152,7 @@ class BrowserProxy:
         Example:
             ```python
             proxy_dict = {"type": "custom", "server": "127.0.0.1:8080"}
-            proxy = BrowserProxy.from_map(proxy_dict)
+            proxy = BrowserProxy._from_map(proxy_dict)
             print(f"Proxy type: {proxy.type}, Server: {proxy.server}")
             ```
         """
@@ -187,7 +187,7 @@ class BrowserViewport:
         self.width = width
         self.height = height
 
-    def to_map(self):
+    def _to_map(self):
         """
         Convert BrowserViewport to dictionary format.
 
@@ -197,7 +197,7 @@ class BrowserViewport:
         Example:
             ```python
             viewport = BrowserViewport(width=1920, height=1080)
-            viewport_dict = viewport.to_map()
+            viewport_dict = viewport._to_map()
             print(viewport_dict)
             ```
         """
@@ -208,7 +208,7 @@ class BrowserViewport:
             viewport_map['height'] = self.height
         return viewport_map
 
-    def from_map(self, m: dict = None):
+    def _from_map(self, m: dict = None):
         """
         Update BrowserViewport from dictionary format.
 
@@ -221,7 +221,7 @@ class BrowserViewport:
         Example:
             ```python
             viewport = BrowserViewport()
-            viewport.from_map({"width": 1280, "height": 720})
+            viewport._from_map({"width": 1280, "height": 720})
             print(f"Viewport: {viewport.width}x{viewport.height}")
             ```
         """
@@ -240,7 +240,7 @@ class BrowserScreen:
         self.width = width
         self.height = height
 
-    def to_map(self):
+    def _to_map(self):
         """
         Convert BrowserScreen to dictionary format.
 
@@ -261,7 +261,7 @@ class BrowserScreen:
             screen_map['height'] = self.height
         return screen_map
 
-    def from_map(self, m: dict = None):
+    def _from_map(self, m: dict = None):
         """
         Update BrowserScreen from dictionary format.
 
@@ -274,7 +274,7 @@ class BrowserScreen:
         Example:
             ```python
             screen = BrowserScreen()
-            screen.from_map({"width": 2560, "height": 1440})
+            screen._from_map({"width": 2560, "height": 1440})
             print(f"Screen: {screen.width}x{screen.height}")
             ```
         """
@@ -317,7 +317,7 @@ class BrowserFingerprint:
                 if operating_system not in ["windows", "macos", "linux", "android", "ios"]:
                     raise ValueError("operating_system must be windows, macos, linux, android or ios")
 
-    def to_map(self):
+    def _to_map(self):
         fingerprint_map = dict()
         if self.devices is not None:
             fingerprint_map['devices'] = self.devices
@@ -327,7 +327,7 @@ class BrowserFingerprint:
             fingerprint_map['locales'] = self.locales
         return fingerprint_map
 
-    def from_map(self, m: dict = None):
+    def _from_map(self, m: dict = None):
         m = m or dict()
         if m.get('devices') is not None:
             self.devices = m.get('devices')
@@ -373,7 +373,7 @@ class BrowserOption:
         # Check fingerprint persistent if provided
         if fingerprint_persistent:
             # Currently only support persistent fingerprint in docker env
-            self.fingerprint_persist_path = os.path.join(BROWSER_FINGERPRINT_PERSIST_PATH, "fingerprint.json")
+            self.fingerprint_persist_path = os.path.join(_BROWSER_FINGERPRINT_PERSIST_PATH, "fingerprint.json")
         else:
             self.fingerprint_persist_path = None
 
@@ -399,7 +399,7 @@ class BrowserOption:
         if browser_type is not None and browser_type not in ["chrome", "chromium"]:
             raise ValueError("browser_type must be 'chrome' or 'chromium'")
 
-    def to_map(self):
+    def _to_map(self):
         option_map = dict()
         if behavior_simulate_env := os.getenv("AGENTBAY_BROWSER_BEHAVIOR_SIMULATE"):
             option_map['behaviorSimulate'] = behavior_simulate_env != "0"
@@ -408,21 +408,21 @@ class BrowserOption:
         if self.user_agent is not None:
             option_map['userAgent'] = self.user_agent
         if self.viewport is not None:
-            option_map['viewport'] = self.viewport.to_map()
+            option_map['viewport'] = self.viewport._to_map()
         if self.screen is not None:
-            option_map['screen'] = self.screen.to_map()
+            option_map['screen'] = self.screen._to_map()
         if self.fingerprint is not None:
-            option_map['fingerprint'] = self.fingerprint.to_map()
+            option_map['fingerprint'] = self.fingerprint._to_map()
         if self.fingerprint_format is not None:
             # Encode fingerprint format to base64 string
-            json_str = self.fingerprint_format.to_json()
+            json_str = self.fingerprint_format._to_json()
             option_map['fingerprintRawData'] = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
         if self.fingerprint_persist_path is not None:
             option_map['fingerprintPersistPath'] = self.fingerprint_persist_path
         if self.solve_captchas is not None:
             option_map['solveCaptchas'] = self.solve_captchas
         if self.proxies is not None:
-            option_map['proxies'] = [proxy.to_map() for proxy in self.proxies]
+            option_map['proxies'] = [proxy._to_map() for proxy in self.proxies]
         if self.extension_path is not None:
             option_map['extensionPath'] = self.extension_path
         if self.cmd_args is not None:
@@ -433,7 +433,7 @@ class BrowserOption:
             option_map['browserType'] = self.browser_type
         return option_map
 
-    def from_map(self, m: dict = None):
+    def _from_map(self, m: dict = None):
         m = m or dict()
         if m.get('useStealth') is not None:
             self.use_stealth = m.get('useStealth')
@@ -442,11 +442,11 @@ class BrowserOption:
         if m.get('userAgent') is not None:
             self.user_agent = m.get('userAgent')
         if m.get('viewport') is not None:
-            self.viewport = BrowserViewport.from_map(m.get('viewport'))
+            self.viewport = BrowserViewport()._from_map(m.get('viewport'))
         if m.get('screen') is not None:
-            self.screen = BrowserScreen.from_map(m.get('screen'))
+            self.screen = BrowserScreen()._from_map(m.get('screen'))
         if m.get('fingerprint') is not None:
-            self.fingerprint = BrowserFingerprint.from_map(m.get('fingerprint'))
+            self.fingerprint = BrowserFingerprint()._from_map(m.get('fingerprint'))
         if m.get('fingerprintRawData') is not None:
             import base64
             from agentbay.browser.fingerprint import FingerprintFormat
@@ -454,7 +454,7 @@ class BrowserOption:
             if isinstance(fingerprint_raw, str):
                 # Decode base64 encoded fingerprint data
                 fingerprint_json = base64.b64decode(fingerprint_raw.encode('utf-8')).decode('utf-8')
-                self.fingerprint_format = FingerprintFormat.from_json(fingerprint_json)
+                self.fingerprint_format = FingerprintFormat._from_json(fingerprint_json)
             else:
                 self.fingerprint_format = fingerprint_raw
         if m.get('fingerprintPersistPath') is not None:
@@ -467,7 +467,7 @@ class BrowserOption:
             proxy_list = m.get('proxies')
             if len(proxy_list) > 1:
                 raise ValueError("proxies list length must be limited to 1")
-            self.proxies = [BrowserProxy.from_map(proxy_data) for proxy_data in proxy_list]
+            self.proxies = [BrowserProxy._from_map(proxy_data) for proxy_data in proxy_list]
         if m.get('cmdArgs') is not None:
             self.cmd_args = m.get('cmdArgs')
         if m.get('defaultNavigateUrl') is not None:
@@ -511,7 +511,7 @@ class Browser(BaseService):
         if self.is_initialized():
             return True
         try:
-            browser_option_dict = option.to_map()
+            browser_option_dict = option._to_map()
 
             # Enable record if session.enableBrowserReplay is True
             if hasattr(self.session, 'enableBrowserReplay') and self.session.enableBrowserReplay:
@@ -520,7 +520,7 @@ class Browser(BaseService):
             request = InitBrowserRequest(
                 authorization=f"Bearer {self.session._get_api_key()}",
                 session_id=self.session._get_session_id(),
-                persistent_path=BROWSER_DATA_PATH,
+                persistent_path=_BROWSER_DATA_PATH,
                 browser_option=browser_option_dict,
             )
             response = self.session._get_client().init_browser(request)
@@ -533,7 +533,7 @@ class Browser(BaseService):
             if success:
                 self._initialized = True
                 self._option = option
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="InitBrowser",
                     success=True,
                     key_fields={
@@ -574,7 +574,7 @@ class Browser(BaseService):
         if self.is_initialized():
             return True
         try:
-            browser_option_dict = option.to_map()
+            browser_option_dict = option._to_map()
 
             # Enable record if session.enableBrowserReplay is True
             if hasattr(self.session, 'enableBrowserReplay') and self.session.enableBrowserReplay:
@@ -583,7 +583,7 @@ class Browser(BaseService):
             request = InitBrowserRequest(
                 authorization=f"Bearer {self.session._get_api_key()}",
                 session_id=self.session._get_session_id(),
-                persistent_path=BROWSER_DATA_PATH,
+                persistent_path=_BROWSER_DATA_PATH,
                 browser_option=browser_option_dict,
             )
             response = await self.session._get_client().init_browser_async(request)
@@ -596,7 +596,7 @@ class Browser(BaseService):
                 self.endpoint_router_port = data.get("Port")
                 self._initialized = True
                 self._option = option
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="InitBrowser (async)",
                     success=True,
                     key_fields={
