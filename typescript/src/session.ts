@@ -1157,14 +1157,14 @@ export class Session {
    * - Without port: Returns the default session access URL
    * - With port: Returns URL for accessing specific port-mapped service
    * - Port must be in range [30100, 30199] for port forwarding
-   * - For ADB connections, use `session.mobile.getAdbUrl()` instead
+   * - For ADB connections, use `session.mobile.getAdbUrl()` with appropriate ADB public key
    *
    * **Best Practices:**
    * - Use default link for general session access
    * - Use port-specific links when you've started services on specific ports
    * - Validate port range before calling to avoid errors
    *
-   * @see {@link info}, {@link Mobile.getAdbUrl}
+   * @see {@link info}
    */
   async getLink(
     protocolType?: string,

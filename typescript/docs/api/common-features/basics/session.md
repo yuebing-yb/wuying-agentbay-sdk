@@ -312,7 +312,7 @@ if (result.success) {
 - Without port: Returns the default session access URL
 - With port: Returns URL for accessing specific port-mapped service
 - Port must be in range [30100, 30199] for port forwarding
-- For ADB connections, use `session.mobile.getAdbUrl()` instead
+- For ADB connections, use `session.mobile.getAdbUrl()` with appropriate ADB public key
 
 **Best Practices:**
 - Use default link for general session access
@@ -321,7 +321,7 @@ if (result.success) {
 
 **`See`**
 
-[info](session.md#info), [Mobile.getAdbUrl](../../mobile-use/mobile.md#getadburl)
+[info](session.md#info)
 
 ___
 

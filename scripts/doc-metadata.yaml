@@ -270,7 +270,7 @@ modules:
     golang: pkg/agentbay/browser
 
     tutorial:
-      url: ../../../../../docs/guides/browser-use/README.md
+      url: ../../../../docs/guides/browser-use/README.md
       text: Browser Use Guide
       description: Complete guide to browser automation
 
@@ -322,7 +322,7 @@ modules:
     golang: pkg/agentbay/code
 
     tutorial:
-      url: ../../../../../docs/guides/codespace/code-execution.md
+      url: ../../../../docs/guides/codespace/code-execution.md
       text: Code Execution Guide
       description: Execute code in isolated environments
 
@@ -355,7 +355,7 @@ modules:
     golang: pkg/agentbay/computer
 
     tutorial:
-      url: ../../../../../docs/guides/computer-use/README.md
+      url: ../../../../docs/guides/computer-use/README.md
       text: Computer Use Guide
       description: Automate desktop applications
 
@@ -461,7 +461,7 @@ modules:
     golang: pkg/agentbay/mobile
 
     tutorial:
-      url: ../../../../../docs/guides/mobile-use/README.md
+      url: ../../../../docs/guides/mobile-use/README.md
       text: Mobile Use Guide
       description: Automate mobile applications
 
