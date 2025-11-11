@@ -75,61 +75,11 @@ class ContextManager:
 
     Example:
         ```python
-        import asyncio
-        from agentbay import AgentBay
-
-        agent_bay = AgentBay(api_key="your_api_key")
-
-        async def complete_context_manager_example():
-            try:
-                # Create a session
-                result = agent_bay.create()
-                if not result.success:
-                    print(f"Failed to create session: {result.error_message}")
-                    return
-
-                session = result.session
-                print(f"Session created: {session.get_session_id()}")
-
-                # Get or create a context
-                context_result = agent_bay.context.get('my-persistent-context', True)
-                if not context_result.context:
-                    print("Failed to get context")
-                    return
-
-                print(f"Context ID: {context_result.context_id}")
-
-                # Check initial context status
-                info_result = session.context.info()
-                print(f"Initial context status data count: {len(info_result.context_status_data)}")
-
-                # Synchronize context and wait for completion
-                sync_result = await session.context.sync(
-                    context_id=context_result.context_id,
-                    path="/mnt/persistent",
-                    mode="upload"
-                )
-
-                print(f"Sync completed - Success: {sync_result.success}")
-                print(f"Request ID: {sync_result.request_id}")
-
-                # Check final context status
-                final_info = session.context.info(
-                    context_id=context_result.context_id,
-                    path="/mnt/persistent"
-                )
-
-                print(f"Final context status data count: {len(final_info.context_status_data)}")
-                for item in final_info.context_status_data:
-                    print(f"  Context {item.context_id}: Status={item.status}, TaskType={item.task_type}")
-
-                # Cleanup
-                session.delete()
-                print("Session deleted")
-            except Exception as e:
-                print(f"Error: {e}")
-
-        asyncio.run(complete_context_manager_example())
+        result = agent_bay.create()
+        session = result.session
+        info_result = session.context.info()
+        print(f"Found {len(info_result.context_status_data)} context items")
+        session.delete()
         ```
     """
     def __init__(self, session):
@@ -154,33 +104,12 @@ class ContextManager:
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def get_context_info():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Get context synchronization information
-                        info_result = session.context.info()
-                        print(f"Request ID: {info_result.request_id}")
-                        print(f"Context status data count: {len(info_result.context_status_data)}")
-
-                        if info_result.context_status_data:
-                            for item in info_result.context_status_data:
-                                print(f"  Context {item.context_id}: Status={item.status}, "
-                                      f"Path={item.path}, TaskType={item.task_type}")
-                        else:
-                            print("No context synchronization tasks found")
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            get_context_info()
+            result = agent_bay.create()
+            session = result.session
+            info_result = session.context.info()
+            for item in info_result.context_status_data:
+                print(f"Context {item.context_id}: {item.status}")
+            session.delete()
             ```
         """
         request = GetContextInfoRequest(

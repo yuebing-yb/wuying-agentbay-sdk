@@ -256,12 +256,10 @@ class ContextService:
 
         Example:
             ```python
-                    result = agent_bay.context.list()
-
-                        result = agent_bay.context.list(params)
-
-                                next_result = agent_bay.context.list(next_params)
-```
+            result = agent_bay.context.list()
+            params = ContextListParams(max_results=20, next_token=result.next_token)
+            next_result = agent_bay.context.list(params)
+            ```
         """
         try:
             if params is None:
@@ -387,13 +385,9 @@ class ContextService:
         Example:
             ```python
             result = agent_bay.context.get(name="my-context")
-
             result = agent_bay.context.get(name="new-context", create=True)
-
             result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
-
-            result = agent_bay.context.get(name="nonexistent-context")
-```
+            ```
 
         Note:
             - Either name or context_id must be provided (not both)
@@ -525,8 +519,8 @@ class ContextService:
 
         Example:
             ```python
-                    result = agent_bay.context.create("my-new-context")
-```
+            result = agent_bay.context.create("my-new-context")
+            ```
         """
         return self.get(name, create=True)
 
@@ -550,13 +544,9 @@ class ContextService:
         Example:
             ```python
             result = agent_bay.context.get(name="old-name")
-
-                update_result = agent_bay.context.update(context)
-
-                verify_result = agent_bay.context.get(context_id=context.id)
-
-            result = agent_bay.context.update(invalid_context)
-```
+            result.context.name = "new-name"
+            update_result = agent_bay.context.update(result.context)
+            ```
 
         Note:
             - Currently only the context name can be updated
@@ -629,10 +619,9 @@ class ContextService:
 
         Example:
             ```python
-                    result = agent_bay.context.get(name="my-context")
-
-                        delete_result = agent_bay.context.delete(result.context)
-```
+            result = agent_bay.context.get(name="my-context")
+            delete_result = agent_bay.context.delete(result.context)
+            ```
         """
         try:
             log_api_call("DeleteContext", f"Id={context.id}")
@@ -695,10 +684,10 @@ class ContextService:
 
         Example:
             ```python
-                    ctx_result = agent_bay.context.get(name="my-context", create=True)
-
-                        url_result = agent_bay.context.get_file_download_url(
-```
+            ctx_result = agent_bay.context.get(name="my-context", create=True)
+            url_result = agent_bay.context.get_file_download_url(ctx_result.context_id, "/path/to/file.txt")
+            print(url_result.url)
+            ```
         """
         log_api_call(
             "GetContextFileDownloadUrl", f"ContextId={context_id}, FilePath={file_path}"
@@ -755,10 +744,10 @@ class ContextService:
 
         Example:
             ```python
-                    ctx_result = agent_bay.context.get(name="my-context", create=True)
-
-                        url_result = agent_bay.context.get_file_upload_url(
-```
+            ctx_result = agent_bay.context.get(name="my-context", create=True)
+            url_result = agent_bay.context.get_file_upload_url(ctx_result.context_id, "/path/to/file.txt")
+            print(url_result.url)
+            ```
         """
         log_api_call(
             "GetContextFileUploadUrl", f"ContextId={context_id}, FilePath={file_path}"
@@ -815,10 +804,9 @@ class ContextService:
 
         Example:
             ```python
-                    ctx_result = agent_bay.context.get(name="my-context", create=True)
-
-                        delete_result = agent_bay.context.delete_file(
-```
+            ctx_result = agent_bay.context.get(name="my-context", create=True)
+            delete_result = agent_bay.context.delete_file(ctx_result.context_id, "/path/to/file.txt")
+            ```
         """
         log_api_call(
             "DeleteContextFile", f"ContextId={context_id}, FilePath={file_path}"
@@ -875,10 +863,10 @@ class ContextService:
 
         Example:
             ```python
-                    ctx_result = agent_bay.context.get(name="my-context", create=True)
-
-                        files_result = agent_bay.context.list_files(
-```
+            ctx_result = agent_bay.context.get(name="my-context", create=True)
+            files_result = agent_bay.context.list_files(ctx_result.context_id, "/")
+            print(f"Found {len(files_result.entries)} files")
+            ```
         """
         log_api_call(
             "DescribeContextFiles",
@@ -943,10 +931,9 @@ class ContextService:
 
         Example:
             ```python
-                    result = agent_bay.context.get(name="my-context", create=True)
-
-                        clear_result = agent_bay.context.clear_async(context.id)
-```
+            result = agent_bay.context.get(name="my-context", create=True)
+            clear_result = agent_bay.context.clear_async(result.context_id)
+            ```
         """
         try:
             log_api_call("ClearContext", f"ContextId={context_id}")
@@ -1011,12 +998,11 @@ class ContextService:
 
         Example:
             ```python
-                    result = agent_bay.context.get(name="my-context", create=True)
-
-                        clear_result = agent_bay.context.clear_async(context.id)
-
-                                status_result = agent_bay.context.get_clear_status(context.id)
-```
+            result = agent_bay.context.get(name="my-context", create=True)
+            clear_result = agent_bay.context.clear_async(result.context_id)
+            status_result = agent_bay.context.get_clear_status(result.context_id)
+            print(status_result.status)
+            ```
         """
         try:
             log_api_call("GetContext", f"ContextId={context_id} (for clear status)")
@@ -1115,12 +1101,11 @@ class ContextService:
         ClearanceTimeoutError: If the task fails to complete within the timeout.
         AgentBayError: If an API or network error occurs during execution.
 
-    Example:
-        ```python
-                result = agent_bay.context.get(name="my-context", create=True)
-
-                    clear_result = agent_bay.context.clear(
-```
+        Example:
+            ```python
+            result = agent_bay.context.get(name="my-context", create=True)
+            clear_result = agent_bay.context.clear(result.context_id, timeout=60)
+            ```
         """
         # 1. Asynchronously start the clearing task
         start_result = self.clear_async(context_id)

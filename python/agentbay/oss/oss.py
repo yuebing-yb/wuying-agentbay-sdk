@@ -149,36 +149,12 @@ class Oss(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def initialize_oss_environment():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Initialize OSS environment
-                        oss_result = session.oss.env_init(
-                            access_key_id="your_access_key_id",
-                            access_key_secret="your_access_key_secret",
-                            securityToken="your_security_token",
-                            endpoint="oss-cn-hangzhou.aliyuncs.com",
-                            region="cn-hangzhou"
-                        )
-
-                        if oss_result.success:
-                            print(f"OSS environment initialized successfully")
-                            print(f"Request ID: {oss_result.request_id}")
-                        else:
-                            print(f"Failed to initialize OSS: {oss_result.error_message}")
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            initialize_oss_environment()
+            session = agent_bay.create().session
+            session.oss.env_init(
+                access_key_id="your_access_key_id",
+                access_key_secret="your_access_key_secret"
+            )
+            session.delete()
             ```
         """
         try:
@@ -251,42 +227,14 @@ class Oss(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def upload_file_to_oss():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Step 1: Initialize OSS environment
-                        session.oss.env_init(
-                            access_key_id="your_access_key_id",
-                            access_key_secret="your_access_key_secret",
-                            endpoint="oss-cn-hangzhou.aliyuncs.com",
-                            region="cn-hangzhou"
-                        )
-
-                        # Step 2: Upload file
-                        upload_result = session.oss.upload(
-                            bucket="my-bucket",
-                            object="my-object",
-                            path="/path/to/local/file"
-                        )
-
-                        if upload_result.success:
-                            print(f"File uploaded successfully")
-                            print(f"Content: {upload_result.content}")
-                        else:
-                            print(f"Upload failed: {upload_result.error_message}")
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            upload_file_to_oss()
+            session = agent_bay.create().session
+            session.oss.env_init(
+                access_key_id="your_access_key_id",
+                access_key_secret="your_access_key_secret"
+            )
+            result = session.oss.upload("my-bucket", "file.txt", "/local/path/file.txt")
+            print(f"Upload result: {result.content}")
+            session.delete()
             ```
         """
         try:
@@ -330,33 +278,13 @@ class Oss(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def upload_file_anonymously():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Upload file anonymously to a URL
-                        upload_result = session.oss.upload_anonymous(
-                            url="https://example.com/upload",
-                            path="/path/to/local/file"
-                        )
-
-                        if upload_result.success:
-                            print(f"File uploaded anonymously successfully")
-                            print(f"Content: {upload_result.content}")
-                        else:
-                            print(f"Upload failed: {upload_result.error_message}")
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            upload_file_anonymously()
+            session = agent_bay.create().session
+            result = session.oss.upload_anonymous(
+                "https://example.com/upload",
+                "/local/path/file.txt"
+            )
+            print(f"Upload result: {result.content}")
+            session.delete()
             ```
         """
         try:
@@ -405,42 +333,14 @@ class Oss(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def download_file_from_oss():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Step 1: Initialize OSS environment
-                        session.oss.env_init(
-                            access_key_id="your_access_key_id",
-                            access_key_secret="your_access_key_secret",
-                            endpoint="oss-cn-hangzhou.aliyuncs.com",
-                            region="cn-hangzhou"
-                        )
-
-                        # Step 2: Download file
-                        download_result = session.oss.download(
-                            bucket="my-bucket",
-                            object="my-object",
-                            path="/path/to/local/file"
-                        )
-
-                        if download_result.success:
-                            print(f"File downloaded successfully")
-                            print(f"Content: {download_result.content}")
-                        else:
-                            print(f"Download failed: {download_result.error_message}")
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            download_file_from_oss()
+            session = agent_bay.create().session
+            session.oss.env_init(
+                access_key_id="your_access_key_id",
+                access_key_secret="your_access_key_secret"
+            )
+            result = session.oss.download("my-bucket", "file.txt", "/local/path/file.txt")
+            print(f"Download result: {result.content}")
+            session.delete()
             ```
         """
         try:
@@ -484,33 +384,13 @@ class Oss(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def download_file_anonymously():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Download file anonymously from a URL
-                        download_result = session.oss.download_anonymous(
-                            url="https://example.com/file.txt",
-                            path="/path/to/local/file.txt"
-                        )
-
-                        if download_result.success:
-                            print(f"File downloaded anonymously successfully")
-                            print(f"Content: {download_result.content}")
-                        else:
-                            print(f"Download failed: {download_result.error_message}")
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            download_file_anonymously()
+            session = agent_bay.create().session
+            result = session.oss.download_anonymous(
+                "https://example.com/file.txt",
+                "/local/path/file.txt"
+            )
+            print(f"Download result: {result.content}")
+            session.delete()
             ```
         """
         try:

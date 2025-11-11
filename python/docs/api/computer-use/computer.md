@@ -224,37 +224,10 @@ Clicks the mouse at the specified screen coordinates.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.computer.computer import MouseButton
-
-# Initialize and create a session
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Single left click at coordinates
-    click_result = computer.click_mouse(100, 200)
-    if click_result.success:
-        print("Left click successful")
-        # Output: Left click successful
-
-    # Right click to open context menu
-    right_click_result = computer.click_mouse(300, 400, MouseButton.RIGHT)
-    if right_click_result.success:
-        print("Right click successful")
-        # Output: Right click successful
-
-    # Double click
-    double_click_result = computer.click_mouse(500, 600, MouseButton.DOUBLE_LEFT)
-    if double_click_result.success:
-        print("Double click successful")
-        # Output: Double click successful
-
-    # Clean up
-    session.delete()
+session = agent_bay.create().session
+session.computer.click_mouse(100, 200)
+session.computer.click_mouse(300, 400, MouseButton.RIGHT)
+session.delete()
 ```
   
 
@@ -292,22 +265,11 @@ Moves the mouse to the specified coordinates.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Move mouse to coordinates (300, 400)
-    move_result = computer.move_mouse(300, 400)
-    if move_result.success:
-        print("Mouse moved successfully")
-        # Output: Mouse moved successfully
-
-    session.delete()
+session = agent_bay.create().session
+session.computer.move_mouse(500, 300)
+position = session.computer.get_cursor_position()
+print(f"Cursor at: {position.data}")
+session.delete()
 ```
   
 
@@ -360,28 +322,10 @@ Drags the mouse from one point to another.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Drag from (100, 100) to (200, 200) with left button
-    drag_result = computer.drag_mouse(100, 100, 200, 200)
-    if drag_result.success:
-        print("Drag operation successful")
-        # Output: Drag operation successful
-
-    # Drag with right button
-    right_drag_result = computer.drag_mouse(300, 300, 400, 400, MouseButton.RIGHT)
-    if right_drag_result.success:
-        print("Right button drag successful")
-        # Output: Right button drag successful
-
-    session.delete()
+session = agent_bay.create().session
+session.computer.drag_mouse(100, 100, 300, 300)
+session.computer.drag_mouse(200, 200, 400, 400, MouseButton.RIGHT)
+session.delete()
 ```
   
 
@@ -431,35 +375,10 @@ Scrolls the mouse wheel at the specified coordinates.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.computer.computer import ScrollDirection
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Scroll down at coordinates (500, 500) by 3 units
-    scroll_result = computer.scroll(500, 500, ScrollDirection.DOWN, 3)
-    if scroll_result.success:
-        print("Scroll down successful")
-        # Output: Scroll down successful
-
-    # Scroll up (default direction) by 2 units
-    up_scroll_result = computer.scroll(500, 500, amount=2)
-    if up_scroll_result.success:
-        print("Scroll up successful")
-        # Output: Scroll up successful
-
-    # Scroll right
-    right_scroll_result = computer.scroll(500, 500, ScrollDirection.RIGHT, 1)
-    if right_scroll_result.success:
-        print("Scroll right successful")
-        # Output: Scroll right successful
-
-    session.delete()
+session = agent_bay.create().session
+session.computer.scroll(500, 500, ScrollDirection.DOWN, 3)
+session.computer.scroll(500, 500, ScrollDirection.UP, 2)
+session.delete()
 ```
   
 
@@ -492,24 +411,11 @@ Gets the current cursor position.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Get current cursor position
-    position_result = computer.get_cursor_position()
-    if position_result.success:
-        x = position_result.data["x"]
-        y = position_result.data["y"]
-        print(f"Cursor is at position ({x}, {y})")
-        # Output: Cursor is at position (512, 384)
-
-    session.delete()
+session = agent_bay.create().session
+session.computer.move_mouse(800, 600)
+position = session.computer.get_cursor_position()
+print(f"Cursor is at x={position.data['x']}, y={position.data['y']}")
+session.delete()
 ```
   
 
@@ -545,21 +451,10 @@ Types text into the currently focused input field.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Type text into focused field
-    input_result = computer.input_text("Hello, AgentBay!")
-    if input_result.success:
-        print("Text input successful")
-
-    session.delete()
+session = agent_bay.create().session
+session.computer.click_mouse(500, 300)
+session.computer.input_text("Hello, World!")
+session.delete()
 ```
   
 
@@ -596,31 +491,10 @@ Presses the specified keys.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Press Ctrl+A to select all
-    press_result = computer.press_keys(["Ctrl", "a"])
-    if press_result.success:
-        print("Keys pressed successfully")
-        # Output: Keys pressed successfully
-
-    # Hold Shift key for subsequent operations
-    hold_result = computer.press_keys(["Shift"], hold=True)
-    if hold_result.success:
-        print("Key held successfully")
-        # Output: Key held successfully
-
-    # Remember to release held keys
-    computer.release_keys(["Shift"])
-
-    session.delete()
+session = agent_bay.create().session
+session.computer.press_keys(["Ctrl", "c"])
+session.computer.press_keys(["Ctrl", "v"])
+session.delete()
 ```
   
 
@@ -657,25 +531,11 @@ Releases the specified keys.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Press and hold Shift key
-    computer.press_keys(["Shift"], hold=True)
-
-    # Release the Shift key
-    release_result = computer.release_keys(["Shift"])
-    if release_result.success:
-        print("Key released successfully")
-        # Output: Key released successfully
-
-    session.delete()
+session = agent_bay.create().session
+session.computer.press_keys(["Shift"], hold=True)
+session.computer.input_text("hello")
+session.computer.release_keys(["Shift"])
+session.delete()
 ```
   
 
@@ -708,25 +568,10 @@ Gets the screen size and DPI scaling factor.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Get screen size information
-    size_result = computer.get_screen_size()
-    if size_result.success:
-        width = size_result.data["width"]
-        height = size_result.data["height"]
-        dpi_scaling = size_result.data["dpiScalingFactor"]
-        print(f"Screen size: {width}x{height}, DPI scaling: {dpi_scaling}")
-        # Output: Screen size: 1024x768, DPI scaling: 1.0
-
-    session.delete()
+session = agent_bay.create().session
+size = session.computer.get_screen_size()
+print(f"Screen: {size.data['width']}x{size.data['height']}, DPI: {size.data['dpiScalingFactor']}")
+session.delete()
 ```
   
 
@@ -758,23 +603,10 @@ Takes a screenshot of the current screen.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Take a screenshot
-    screenshot_result = computer.screenshot()
-    if screenshot_result.success:
-        screenshot_url = screenshot_result.data
-        print(f"Screenshot saved to: {screenshot_url}")
-        # Output: Screenshot saved to: https://wuying-intelligence-service-cn-hangzhou.oss-cn-hangzhou.aliyuncs.com/...
-
-    session.delete()
+session = agent_bay.create().session
+screenshot = session.computer.screenshot()
+print(f"Screenshot URL: {screenshot.data}")
+session.delete()
 ```
   
 
@@ -811,33 +643,11 @@ Lists all root windows.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def list_windows_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # List all root windows
-            windows_result = session.computer.list_root_windows()
-            if windows_result.success:
-                print(f"Found {len(windows_result.windows)} root windows")
-                for window in windows_result.windows:
-                    print(f"Window: {window.title}, ID: {window.window_id}")
-            else:
-                print(f"Failed to list windows: {windows_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-list_windows_example()
+session = agent_bay.create().session
+windows = session.computer.list_root_windows()
+for window in windows.windows:
+    print(f"Window: {window.title}, ID: {window.window_id}")
+session.delete()
 ```
 
 #### get\_active\_window
@@ -861,35 +671,10 @@ Gets the currently active window.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def get_active_window_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Get the currently active window
-            window_result = session.computer.get_active_window()
-            if window_result.success:
-                window = window_result.window
-                print(f"Active window: {window.title}")
-                print(f"Window ID: {window.window_id}")
-                print(f"Position: ({window.absolute_upper_left_x}, {window.absolute_upper_left_y})")
-                print(f"Size: {window.width}x{window.height}")
-            else:
-                print(f"Failed to get active window: {window_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-get_active_window_example()
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+print(f"Active window: {active.window.title}")
+session.delete()
 ```
 
 #### activate\_window
@@ -913,36 +698,11 @@ Activates the specified window.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def activate_window_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # First, list all windows to get window IDs
-            windows_result = session.computer.list_root_windows()
-            if windows_result.success and len(windows_result.windows) > 0:
-                # Activate the first window
-                window_id = windows_result.windows[0].window_id
-                activate_result = session.computer.activate_window(window_id)
-                if activate_result.success:
-                    print(f"Window {window_id} activated successfully")
-                    # Output: Window 65938 activated successfully
-                else:
-                    print(f"Failed to activate window: {activate_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-activate_window_example()
+session = agent_bay.create().session
+windows = session.computer.list_root_windows()
+if windows.windows:
+    session.computer.activate_window(windows.windows[0].window_id)
+session.delete()
 ```
   
 
@@ -978,36 +738,11 @@ Closes the specified window.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def close_window_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # First, list all windows to get window IDs
-            windows_result = session.computer.list_root_windows()
-            if windows_result.success and len(windows_result.windows) > 0:
-                # Close the first window
-                window_id = windows_result.windows[0].window_id
-                close_result = session.computer.close_window(window_id)
-                if close_result.success:
-                    print(f"Window {window_id} closed successfully")
-                    # Output: Window 65938 closed successfully
-                else:
-                    print(f"Failed to close window: {close_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-close_window_example()
+session = agent_bay.create().session
+windows = session.computer.list_root_windows()
+if windows.windows:
+    session.computer.close_window(windows.windows[0].window_id)
+session.delete()
 ```
   
 
@@ -1043,36 +778,11 @@ Maximizes the specified window.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def maximize_window_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Get the active window
-            window_result = session.computer.get_active_window()
-            if window_result.success and window_result.window:
-                # Maximize the active window
-                window_id = window_result.window.window_id
-                maximize_result = session.computer.maximize_window(window_id)
-                if maximize_result.success:
-                    print(f"Window {window_id} maximized successfully")
-                    # Output: Window 65938 maximized successfully
-                else:
-                    print(f"Failed to maximize window: {maximize_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-maximize_window_example()
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    session.computer.maximize_window(active.window.window_id)
+session.delete()
 ```
   
 
@@ -1108,36 +818,11 @@ Minimizes the specified window.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def minimize_window_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Get the active window
-            window_result = session.computer.get_active_window()
-            if window_result.success and window_result.window:
-                # Minimize the active window
-                window_id = window_result.window.window_id
-                minimize_result = session.computer.minimize_window(window_id)
-                if minimize_result.success:
-                    print(f"Window {window_id} minimized successfully")
-                    # Output: Window 65938 minimized successfully
-                else:
-                    print(f"Failed to minimize window: {minimize_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-minimize_window_example()
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    session.computer.minimize_window(active.window.window_id)
+session.delete()
 ```
   
 
@@ -1173,40 +858,13 @@ Restores the specified window.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def restore_window_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Get the active window
-            window_result = session.computer.get_active_window()
-            if window_result.success and window_result.window:
-                window_id = window_result.window.window_id
-
-                # First minimize the window
-                session.computer.minimize_window(window_id)
-
-                # Then restore it
-                restore_result = session.computer.restore_window(window_id)
-                if restore_result.success:
-                    print(f"Window {window_id} restored successfully")
-                    # Output: Window 65938 restored successfully
-                else:
-                    print(f"Failed to restore window: {restore_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-restore_window_example()
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    wid = active.window.window_id
+    session.computer.minimize_window(wid)
+    session.computer.restore_window(wid)
+session.delete()
 ```
   
 
@@ -1244,36 +902,11 @@ Resizes the specified window.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def resize_window_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Get the active window
-            window_result = session.computer.get_active_window()
-            if window_result.success and window_result.window:
-                # Resize the active window to 800x600
-                window_id = window_result.window.window_id
-                resize_result = session.computer.resize_window(window_id, 800, 600)
-                if resize_result.success:
-                    print(f"Window {window_id} resized to 800x600 successfully")
-                    # Output: Window 65938 resized to 800x600 successfully
-                else:
-                    print(f"Failed to resize window: {resize_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-resize_window_example()
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    session.computer.resize_window(active.window.window_id, 800, 600)
+session.delete()
 ```
   
 
@@ -1309,36 +942,11 @@ Makes the specified window fullscreen.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def fullscreen_window_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Get the active window
-            window_result = session.computer.get_active_window()
-            if window_result.success and window_result.window:
-                # Make the active window fullscreen
-                window_id = window_result.window.window_id
-                fullscreen_result = session.computer.fullscreen_window(window_id)
-                if fullscreen_result.success:
-                    print(f"Window {window_id} set to fullscreen successfully")
-                    # Output: Window 65938 set to fullscreen successfully
-                else:
-                    print(f"Failed to fullscreen window: {fullscreen_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-fullscreen_window_example()
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    session.computer.fullscreen_window(active.window.window_id)
+session.delete()
 ```
   
 
@@ -1375,36 +983,10 @@ Toggles focus mode on or off.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def focus_mode_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Enable focus mode
-            enable_result = session.computer.focus_mode(True)
-            if enable_result.success:
-                print("Focus mode enabled successfully")
-                # Output: Focus mode enabled successfully
-
-            # Disable focus mode
-            disable_result = session.computer.focus_mode(False)
-            if disable_result.success:
-                print("Focus mode disabled successfully")
-                # Output: Focus mode disabled successfully
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-focus_mode_example()
+session = agent_bay.create().session
+session.computer.focus_mode(True)
+session.computer.focus_mode(False)
+session.delete()
 ```
   
 
@@ -1445,28 +1027,11 @@ Gets the list of installed applications.
 **Example**:
 
 ```python
-from agentbay import AgentBay, CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="windows_latest")
-result = agent_bay.create(params)
-
-if result.success:
-    session = result.session
-    computer = session.computer
-
-    # Get installed applications from start menu
-    apps_result = computer.get_installed_apps()
-    if apps_result.success:
-        for app in apps_result.data:
-            print(f"App: {app.name}, Command: {app.start_cmd}")
-
-    # Get all applications including desktop
-    all_apps_result = computer.get_installed_apps(start_menu=True, desktop=True)
-    if all_apps_result.success:
-        print(f"Total apps found: {len(all_apps_result.data)}")
-
-    session.delete()
+session = agent_bay.create().session
+apps = session.computer.get_installed_apps()
+for app in apps.data:
+    print(f"{app.name}: {app.start_cmd}")
+session.delete()
 ```
   
 
@@ -1507,33 +1072,10 @@ Starts the specified application.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def start_application_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Start Notepad application
-            start_result = session.computer.start_app("notepad.exe")
-            if start_result.success:
-                print(f"Started {len(start_result.data)} process(es)")
-                for process in start_result.data:
-                    print(f"Process: {process.pname}, PID: {process.pid}")
-            else:
-                print(f"Failed to start app: {start_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-start_application_example()
+session = agent_bay.create().session
+processes = session.computer.start_app("notepad.exe")
+print(f"Started {len(processes.data)} process(es)")
+session.delete()
 ```
   
 
@@ -1570,35 +1112,11 @@ This is useful for system monitoring and process management tasks.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def list_running_apps_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # List all applications with visible windows
-            apps_result = session.computer.list_visible_apps()
-            if apps_result.success:
-                print(f"Found {len(apps_result.data)} visible applications")
-                for process in apps_result.data:
-                    print(f"App: {process.pname}, PID: {process.pid}")
-                    if process.cmdline:
-                        print(f"  Command line: {process.cmdline}")
-            else:
-                print(f"Failed to list apps: {apps_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-list_running_apps_example()
+session = agent_bay.create().session
+apps = session.computer.list_visible_apps()
+for app in apps.data:
+    print(f"App: {app.pname}, PID: {app.pid}")
+session.delete()
 ```
   
 
@@ -1635,34 +1153,10 @@ Stops an application by process name.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def stop_application_by_name_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # First, start an application
-            session.computer.start_app("notepad.exe")
-
-            # Stop the application by process name
-            stop_result = session.computer.stop_app_by_pname("notepad.exe")
-            if stop_result.success:
-                print("Application stopped successfully")
-            else:
-                print(f"Failed to stop app: {stop_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-stop_application_by_name_example()
+session = agent_bay.create().session
+session.computer.start_app("notepad.exe")
+result = session.computer.stop_app_by_pname("notepad.exe")
+session.delete()
 ```
   
 
@@ -1699,38 +1193,11 @@ Stops an application by process ID.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def stop_application_by_pid_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # First, start an application
-            start_result = session.computer.start_app("notepad.exe")
-            if start_result.success and len(start_result.data) > 0:
-                # Get the PID of the started process
-                process_pid = start_result.data[0].pid
-                print(f"Started process with PID: {process_pid}")
-
-                # Stop the application by PID
-                stop_result = session.computer.stop_app_by_pid(process_pid)
-                if stop_result.success:
-                    print(f"Process {process_pid} stopped successfully")
-                else:
-                    print(f"Failed to stop process: {stop_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-stop_application_by_pid_example()
+session = agent_bay.create().session
+processes = session.computer.start_app("notepad.exe")
+pid = processes.data[0].pid
+result = session.computer.stop_app_by_pid(pid)
+session.delete()
 ```
   
 
@@ -1767,38 +1234,11 @@ Stops an application by stop command.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def stop_application_by_cmd_example():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # First, get installed apps to find stop command
-            apps_result = session.computer.get_installed_apps()
-            if apps_result.success and len(apps_result.data) > 0:
-                # Find an app with a stop command
-                for app in apps_result.data:
-                    if app.stop_cmd:
-                        print(f"Stopping {app.name} with command: {app.stop_cmd}")
-                        stop_result = session.computer.stop_app_by_cmd(app.stop_cmd)
-                        if stop_result.success:
-                            print("Application stopped successfully")
-                        else:
-                            print(f"Failed: {stop_result.error_message}")
-                        break
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-stop_application_by_cmd_example()
+session = agent_bay.create().session
+apps = session.computer.get_installed_apps()
+if apps.data and apps.data[0].stop_cmd:
+    result = session.computer.stop_app_by_cmd(apps.data[0].stop_cmd)
+session.delete()
 ```
   
 

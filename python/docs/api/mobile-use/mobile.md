@@ -105,21 +105,9 @@ Taps on the mobile screen at the specified coordinates.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    mobile = session.mobile
-
-    # Tap at coordinates
-    tap_result = mobile.tap(500, 1000)
-    if tap_result.success:
-        print("Tap successful")
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.tap(500, 800)
+session.delete()
 ```
   
 
@@ -157,21 +145,9 @@ Performs a swipe gesture from one point to another.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    mobile = session.mobile
-
-    # Swipe from one point to another
-    swipe_result = mobile.swipe(100, 500, 900, 500, duration_ms=300)
-    if swipe_result.success:
-        print("Swipe successful")
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.swipe(100, 1000, 100, 200, duration_ms=500)
+session.delete()
 ```
 
 #### input\_text
@@ -195,21 +171,9 @@ Inputs text into the active field.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    mobile = session.mobile
-
-    # Input text into active field
-    input_result = mobile.input_text("Hello World")
-    if input_result.success:
-        print("Text input successful")
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.input_text("Hello Mobile!")
+session.delete()
 ```
 
 #### send\_key
@@ -239,22 +203,9 @@ Sends a key press event.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.mobile.mobile import KeyCode
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    mobile = session.mobile
-
-    # Send HOME key
-    key_result = mobile.send_key(KeyCode.HOME)
-    if key_result.success:
-        print("Key press successful")
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.send_key(4)  # Press BACK button
+session.delete()
 ```
 
 #### get\_clickable\_ui\_elements
@@ -279,21 +230,10 @@ Retrieves all clickable UI elements within the specified timeout.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    mobile = session.mobile
-
-    # Get clickable UI elements
-    elements_result = mobile.get_clickable_ui_elements(timeout_ms=2000)
-    if elements_result.success:
-        print(f"Found {len(elements_result.elements)} clickable elements")
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+result = session.mobile.get_clickable_ui_elements()
+print(f"Found {len(result.elements)} clickable elements")
+session.delete()
 ```
 
 #### get\_all\_ui\_elements
@@ -318,21 +258,10 @@ Retrieves all UI elements within the specified timeout.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    mobile = session.mobile
-
-    # Get all UI elements
-    elements_result = mobile.get_all_ui_elements(timeout_ms=2000)
-    if elements_result.success:
-        print(f"Found {len(elements_result.elements)} total elements")
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+result = session.mobile.get_all_ui_elements()
+print(f"Found {len(result.elements)} UI elements")
+session.delete()
 ```
 
 #### get\_installed\_apps
@@ -360,38 +289,10 @@ Retrieves a list of installed applications.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def list_installed_apps():
-    try:
-        # Create a session with mobile_latest image
-        params = CreateSessionParams(image_id="mobile_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Get installed apps (excluding system apps)
-            apps_result = session.mobile.get_installed_apps(
-                start_menu=False,
-                desktop=False,
-                ignore_system_apps=True
-            )
-
-            if apps_result.success:
-                print(f"Found {len(apps_result.data)} installed apps")
-                for app in apps_result.data:
-                    print(f"App: {app.name}, Package: {app.start_cmd}")
-            else:
-                print(f"Failed to get apps: {apps_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-list_installed_apps()
+session = agent_bay.create(image="mobile_latest").session
+apps = session.mobile.get_installed_apps(True, False, True)
+print(f"Found {len(apps.data)} apps")
+session.delete()
 ```
 
 #### start\_app
@@ -421,37 +322,10 @@ optional activity.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def start_mobile_app():
-    try:
-        # Create a session with mobile_latest image
-        params = CreateSessionParams(image_id="mobile_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Start Settings app with activity
-            start_result = session.mobile.start_app(
-                start_cmd="com.android.settings",
-                activity=".Settings"
-            )
-
-            if start_result.success:
-                print(f"Started {len(start_result.data)} processes")
-                for process in start_result.data:
-                    print(f"Process: {process.name}, PID: {process.pid}")
-            else:
-                print(f"Failed to start app: {start_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-start_mobile_app()
+session = agent_bay.create(image="mobile_latest").session
+processes = session.mobile.start_app("com.android.settings")
+print(f"Started {len(processes.data)} process(es)")
+session.delete()
 ```
 
 #### stop\_app\_by\_cmd
@@ -475,32 +349,10 @@ Stops an application by stop command.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def stop_mobile_app():
-    try:
-        # Create a session with mobile_latest image
-        params = CreateSessionParams(image_id="mobile_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Stop an application using package name
-            stop_result = session.mobile.stop_app_by_cmd("com.android.settings")
-
-            if stop_result.success:
-                print("App stopped successfully")
-            else:
-                print(f"Failed to stop app: {stop_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-stop_mobile_app()
+session = agent_bay.create(image="mobile_latest").session
+result = session.mobile.stop_app_by_cmd("com.android.settings")
+print(f"Stop successful: {result.success}")
+session.delete()
 ```
 
 #### screenshot
@@ -520,21 +372,10 @@ Takes a screenshot of the current screen.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-    mobile = session.mobile
-
-    # Take a screenshot
-    screenshot_result = mobile.screenshot()
-    if screenshot_result.success:
-        print(f"Screenshot saved to: {screenshot_result.data}")
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+result = session.mobile.screenshot()
+print(f"Screenshot URL: {result.data}")
+session.delete()
 ```
 
 #### configure
@@ -561,77 +402,11 @@ manually to reconfigure mobile settings during a session.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import (
-    CreateSessionParams,
-    ExtraConfigs,
-    MobileExtraConfig,
-    AppManagerRule
-)
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def demonstrate_mobile_configuration():
-    try:
-        # Method 1: Configure mobile settings during session creation
-        app_rule = AppManagerRule(
-            rule_type="White",
-            app_package_name_list=[
-                "com.android.settings",
-                "com.android.chrome",
-                "com.example.myapp"
-            ]
-        )
-
-        mobile_config = MobileExtraConfig(
-            lock_resolution=True,
-            app_manager_rule=app_rule,
-            hide_navigation_bar=True,
-            uninstall_blacklist=[
-                "com.android.settings",
-                "com.example.important"
-            ]
-        )
-
-        extra_configs = ExtraConfigs(mobile=mobile_config)
-        params = CreateSessionParams(
-            image_id="mobile_latest",
-            extra_configs=extra_configs
-        )
-
-        # Mobile configuration is applied automatically during creation
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-            print("Mobile session created with configuration")
-            # Output: Mobile session created with configuration
-
-            # Method 2: Manually reconfigure mobile settings during session
-            new_app_rule = AppManagerRule(
-                rule_type="Black",
-                app_package_name_list=[
-                    "com.example.unwanted",
-                    "com.ads.provider"
-                ]
-            )
-
-            new_mobile_config = MobileExtraConfig(
-                lock_resolution=False,
-                app_manager_rule=new_app_rule,
-                hide_navigation_bar=False
-            )
-
-            # Apply new configuration
-            session.mobile.configure(new_mobile_config)
-            print("Mobile configuration updated")
-            # Output: Mobile configuration updated
-
-            session.delete()
-
-    except Exception as e:
-        print(f"Error: {e}")
-
-demonstrate_mobile_configuration()
+from agentbay import MobileExtraConfig
+session = agent_bay.create(image="mobile_latest").session
+mobile_config = MobileExtraConfig(lock_resolution=True)
+session.mobile.configure(mobile_config)
+session.delete()
 ```
   
 
@@ -665,21 +440,10 @@ Set display resolution lock for mobile devices.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-
-    # Enable resolution lock to prevent resolution changes
-    session.mobile.set_resolution_lock(True)
-
-    # Disable resolution lock to allow resolution changes
-    session.mobile.set_resolution_lock(False)
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.set_resolution_lock(True)
+session.mobile.set_resolution_lock(False)
+session.delete()
 ```
 
 #### set\_app\_whitelist
@@ -698,23 +462,10 @@ Set application whitelist.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-
-    # Set whitelist to only allow specific apps
-    whitelist = [
-        "com.android.settings",
-        "com.android.chrome",
-        "com.example.myapp"
-    ]
-    session.mobile.set_app_whitelist(whitelist)
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+whitelist = ["com.android.settings", "com.android.chrome"]
+session.mobile.set_app_whitelist(whitelist)
+session.delete()
 ```
   
 
@@ -740,22 +491,10 @@ Set application blacklist.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-
-    # Blacklist specific apps to prevent them from running
-    blacklist = [
-        "com.example.unwanted",
-        "com.ads.provider"
-    ]
-    session.mobile.set_app_blacklist(blacklist)
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+blacklist = ["com.example.app1", "com.example.app2"]
+session.mobile.set_app_blacklist(blacklist)
+session.delete()
 ```
   
 
@@ -780,21 +519,10 @@ Set navigation bar visibility for mobile devices.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-
-    # Hide the navigation bar for fullscreen experience
-    session.mobile.set_navigation_bar_visibility(hide=True)
-
-    # Show the navigation bar
-    session.mobile.set_navigation_bar_visibility(hide=False)
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.set_navigation_bar_visibility(hide=True)
+session.mobile.set_navigation_bar_visibility(hide=False)
+session.delete()
 ```
   
 
@@ -819,23 +547,10 @@ Set uninstall protection blacklist for mobile devices.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-
-if result.success:
-    session = result.session
-
-    # Protect critical apps from uninstallation
-    protected_apps = [
-        "com.android.settings",
-        "com.example.important",
-        "com.security.app"
-    ]
-    session.mobile.set_uninstall_blacklist(protected_apps)
-
-    session.delete()
+session = agent_bay.create(image="mobile_latest").session
+protected_apps = ["com.android.settings", "com.android.chrome"]
+session.mobile.set_uninstall_blacklist(protected_apps)
+session.delete()
 ```
   
 
@@ -877,34 +592,11 @@ the ADB connect URL.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def get_adb_connection():
-    try:
-        # Create a session with mobile_latest image
-        params = CreateSessionParams(image_id="mobile_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Get ADB URL with public key
-            adbkey_pub = "QAAAAM0muSn7yQCY...your_adb_public_key...EAAQAA="
-            adb_result = session.mobile.get_adb_url(adbkey_pub)
-
-            if adb_result.success:
-                print(f"ADB URL: {adb_result.data}")
-                print(f"Request ID: {adb_result.request_id}")
-            else:
-                print(f"Failed to get ADB URL: {adb_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-get_adb_connection()
+session = agent_bay.create(image="mobile_latest").session
+adbkey_pub = "your_adb_public_key"
+adb_result = session.mobile.get_adb_url(adbkey_pub)
+print(f"ADB URL: {adb_result.data}")
+session.delete()
 ```
 
 ## Best Practices

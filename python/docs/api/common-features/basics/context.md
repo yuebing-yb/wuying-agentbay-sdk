@@ -117,12 +117,10 @@ Lists all available contexts with pagination support.
 
 **Example**:
 
-            ```python
-                    result = agent_bay.context.list()
-
-                        result = agent_bay.context.list(params)
-
-                                next_result = agent_bay.context.list(next_params)
+```python
+result = agent_bay.context.list()
+params = ContextListParams(max_results=20, next_token=result.next_token)
+next_result = agent_bay.context.list(params)
 ```
 
 #### get
@@ -159,14 +157,10 @@ Gets a context by name or ID. Optionally creates it if it doesn't exist.
 
 **Example**:
 
-            ```python
-            result = agent_bay.context.get(name="my-context")
-
-            result = agent_bay.context.get(name="new-context", create=True)
-
-            result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
-
-            result = agent_bay.context.get(name="nonexistent-context")
+```python
+result = agent_bay.context.get(name="my-context")
+result = agent_bay.context.get(name="new-context", create=True)
+result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
 ```
   
 
@@ -202,8 +196,8 @@ Creates a new context with the given name.
 
 **Example**:
 
-            ```python
-                    result = agent_bay.context.create("my-new-context")
+```python
+result = agent_bay.context.create("my-new-context")
 ```
 
 #### update
@@ -235,14 +229,10 @@ Updates the specified context (currently only name can be updated).
 
 **Example**:
 
-            ```python
-            result = agent_bay.context.get(name="old-name")
-
-                update_result = agent_bay.context.update(context)
-
-                verify_result = agent_bay.context.get(context_id=context.id)
-
-            result = agent_bay.context.update(invalid_context)
+```python
+result = agent_bay.context.get(name="old-name")
+result.context.name = "new-name"
+update_result = agent_bay.context.update(result.context)
 ```
   
 
@@ -278,10 +268,9 @@ Deletes the specified context.
 
 **Example**:
 
-            ```python
-                    result = agent_bay.context.get(name="my-context")
-
-                        delete_result = agent_bay.context.delete(result.context)
+```python
+result = agent_bay.context.get(name="my-context")
+delete_result = agent_bay.context.delete(result.context)
 ```
 
 #### get\_file\_download\_url
@@ -305,10 +294,10 @@ Get a presigned download URL for a file in a context.
 
 **Example**:
 
-            ```python
-                    ctx_result = agent_bay.context.get(name="my-context", create=True)
-
-                        url_result = agent_bay.context.get_file_download_url(
+```python
+ctx_result = agent_bay.context.get(name="my-context", create=True)
+url_result = agent_bay.context.get_file_download_url(ctx_result.context_id, "/path/to/file.txt")
+print(url_result.url)
 ```
 
 #### get\_file\_upload\_url
@@ -332,10 +321,10 @@ Get a presigned upload URL for a file in a context.
 
 **Example**:
 
-            ```python
-                    ctx_result = agent_bay.context.get(name="my-context", create=True)
-
-                        url_result = agent_bay.context.get_file_upload_url(
+```python
+ctx_result = agent_bay.context.get(name="my-context", create=True)
+url_result = agent_bay.context.get_file_upload_url(ctx_result.context_id, "/path/to/file.txt")
+print(url_result.url)
 ```
 
 #### delete\_file
@@ -359,10 +348,9 @@ Delete a file in a context.
 
 **Example**:
 
-            ```python
-                    ctx_result = agent_bay.context.get(name="my-context", create=True)
-
-                        delete_result = agent_bay.context.delete_file(
+```python
+ctx_result = agent_bay.context.get(name="my-context", create=True)
+delete_result = agent_bay.context.delete_file(ctx_result.context_id, "/path/to/file.txt")
 ```
 
 #### list\_files
@@ -391,10 +379,10 @@ List files under a specific folder path in a context.
 
 **Example**:
 
-            ```python
-                    ctx_result = agent_bay.context.get(name="my-context", create=True)
-
-                        files_result = agent_bay.context.list_files(
+```python
+ctx_result = agent_bay.context.get(name="my-context", create=True)
+files_result = agent_bay.context.list_files(ctx_result.context_id, "/")
+print(f"Found {len(files_result.entries)} files")
 ```
 
 #### clear\_async
@@ -427,10 +415,9 @@ is in progress.
 
 **Example**:
 
-            ```python
-                    result = agent_bay.context.get(name="my-context", create=True)
-
-                        clear_result = agent_bay.context.clear_async(context.id)
+```python
+result = agent_bay.context.get(name="my-context", create=True)
+clear_result = agent_bay.context.clear_async(result.context_id)
 ```
 
 #### get\_clear\_status
@@ -456,12 +443,11 @@ the state field, which indicates the current clearing status.
 
 **Example**:
 
-            ```python
-                    result = agent_bay.context.get(name="my-context", create=True)
-
-                        clear_result = agent_bay.context.clear_async(context.id)
-
-                                status_result = agent_bay.context.get_clear_status(context.id)
+```python
+result = agent_bay.context.get(name="my-context", create=True)
+clear_result = agent_bay.context.clear_async(result.context_id)
+status_result = agent_bay.context.get_clear_status(result.context_id)
+print(status_result.status)
 ```
 
 #### clear
@@ -503,10 +489,9 @@ The clearing process transitions through the following states:
 **Example**:
 
         ```python
-                result = agent_bay.context.get(name="my-context", create=True)
-
-                    clear_result = agent_bay.context.clear(
-```
+        result = agent_bay.context.get(name="my-context", create=True)
+        clear_result = agent_bay.context.clear(result.context_id, timeout=60)
+        ```
 
 ## Related Resources
 

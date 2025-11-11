@@ -112,40 +112,9 @@ class BrowserProxy:
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserProxy
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def convert_proxy_to_map():
-                try:
-                    # Create custom proxy
-                    custom_proxy = BrowserProxy(
-                        proxy_type="custom",
-                        server="127.0.0.1:9090",
-                        username="user",
-                        password="pass"
-                    )
-
-                    # Convert to map
-                    proxy_map = custom_proxy.to_map()
-                    print(f"Custom proxy map: {proxy_map}")
-                    # Output: Custom proxy map: {'type': 'custom', 'server': '127.0.0.1:9090', 'username': 'user', 'password': 'pass'}
-
-                    # Create wuying proxy with polling strategy
-                    wuying_proxy = BrowserProxy(
-                        proxy_type="wuying",
-                        strategy="polling",
-                        pollsize=10
-                    )
-
-                    proxy_map = wuying_proxy.to_map()
-                    print(f"Wuying proxy map: {proxy_map}")
-                    # Output: Wuying proxy map: {'type': 'wuying', 'strategy': 'polling', 'pollsize': 10}
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            convert_proxy_to_map()
+            proxy = BrowserProxy(proxy_type="custom", server="127.0.0.1:8080", username="user", password="pass")
+            proxy_dict = proxy.to_map()
+            print(proxy_dict)
             ```
         """
         proxy_map = {
@@ -182,39 +151,9 @@ class BrowserProxy:
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserProxy
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def create_proxy_from_map():
-                try:
-                    # Create custom proxy from dictionary
-                    custom_proxy_dict = {
-                        "type": "custom",
-                        "server": "127.0.0.1:9090",
-                        "username": "user",
-                        "password": "pass"
-                    }
-
-                    custom_proxy = BrowserProxy.from_map(custom_proxy_dict)
-                    print(f"Created custom proxy: {custom_proxy.type} at {custom_proxy.server}")
-                    # Output: Created custom proxy: custom at 127.0.0.1:9090
-
-                    # Create wuying proxy from dictionary
-                    wuying_proxy_dict = {
-                        "type": "wuying",
-                        "strategy": "polling",
-                        "pollsize": 10
-                    }
-
-                    wuying_proxy = BrowserProxy.from_map(wuying_proxy_dict)
-                    print(f"Created wuying proxy: {wuying_proxy.type} with {wuying_proxy.strategy} strategy")
-                    # Output: Created wuying proxy: wuying with polling strategy
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            create_proxy_from_map()
+            proxy_dict = {"type": "custom", "server": "127.0.0.1:8080"}
+            proxy = BrowserProxy.from_map(proxy_dict)
+            print(f"Proxy type: {proxy.type}, Server: {proxy.server}")
             ```
         """
         if not m:
@@ -257,30 +196,9 @@ class BrowserViewport:
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserViewport
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def convert_viewport_to_map():
-                try:
-                    # Create viewport with custom size
-                    viewport = BrowserViewport(width=1920, height=1080)
-
-                    # Convert to map
-                    viewport_map = viewport.to_map()
-                    print(f"Viewport map: {viewport_map}")
-                    # Output: Viewport map: {'width': 1920, 'height': 1080}
-
-                    # Create viewport with mobile size
-                    mobile_viewport = BrowserViewport(width=375, height=812)
-                    mobile_map = mobile_viewport.to_map()
-                    print(f"Mobile viewport map: {mobile_map}")
-                    # Output: Mobile viewport map: {'width': 375, 'height': 812}
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            convert_viewport_to_map()
+            viewport = BrowserViewport(width=1920, height=1080)
+            viewport_dict = viewport.to_map()
+            print(viewport_dict)
             ```
         """
         viewport_map = dict()
@@ -302,27 +220,9 @@ class BrowserViewport:
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserViewport
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def create_viewport_from_map():
-                try:
-                    # Create a default viewport
-                    viewport = BrowserViewport()
-                    print(f"Default viewport: {viewport.width}x{viewport.height}")
-                    # Output: Default viewport: 1920x1080
-
-                    # Update viewport from dictionary
-                    viewport_dict = {"width": 1280, "height": 720}
-                    viewport.from_map(viewport_dict)
-                    print(f"Updated viewport: {viewport.width}x{viewport.height}")
-                    # Output: Updated viewport: 1280x720
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            create_viewport_from_map()
+            viewport = BrowserViewport()
+            viewport.from_map({"width": 1280, "height": 720})
+            print(f"Viewport: {viewport.width}x{viewport.height}")
             ```
         """
         m = m or dict()
@@ -349,30 +249,9 @@ class BrowserScreen:
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserScreen
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def convert_screen_to_map():
-                try:
-                    # Create screen with custom size
-                    screen = BrowserScreen(width=1920, height=1080)
-
-                    # Convert to map
-                    screen_map = screen.to_map()
-                    print(f"Screen map: {screen_map}")
-                    # Output: Screen map: {'width': 1920, 'height': 1080}
-
-                    # Create screen with 4K size
-                    screen_4k = BrowserScreen(width=3840, height=2160)
-                    screen_4k_map = screen_4k.to_map()
-                    print(f"4K screen map: {screen_4k_map}")
-                    # Output: 4K screen map: {'width': 3840, 'height': 2160}
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            convert_screen_to_map()
+            screen = BrowserScreen(width=1920, height=1080)
+            screen_dict = screen.to_map()
+            print(screen_dict)
             ```
         """
         screen_map = dict()
@@ -394,27 +273,9 @@ class BrowserScreen:
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserScreen
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def create_screen_from_map():
-                try:
-                    # Create a default screen
-                    screen = BrowserScreen()
-                    print(f"Default screen: {screen.width}x{screen.height}")
-                    # Output: Default screen: 1920x1080
-
-                    # Update screen from dictionary
-                    screen_dict = {"width": 2560, "height": 1440}
-                    screen.from_map(screen_dict)
-                    print(f"Updated screen: {screen.width}x{screen.height}")
-                    # Output: Updated screen: 2560x1440
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            create_screen_from_map()
+            screen = BrowserScreen()
+            screen.from_map({"width": 2560, "height": 1440})
+            print(f"Screen: {screen.width}x{screen.height}")
             ```
         """
         m = m or dict()
@@ -640,41 +501,11 @@ class Browser(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserOption, BrowserViewport
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def initialize_browser():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Initialize browser with default options
-                        browser_option = BrowserOption()
-                        success = session.browser.initialize(browser_option)
-                        if success:
-                            print("Browser initialized successfully")
-                            # Output: Browser initialized successfully
-                        else:
-                            print("Browser initialization failed")
-
-                        # Initialize with custom viewport
-                        browser_option = BrowserOption(
-                            use_stealth=True,
-                            viewport=BrowserViewport(width=1920, height=1080)
-                        )
-                        success = session.browser.initialize(browser_option)
-                        if success:
-                            print("Browser initialized with custom viewport")
-                            # Output: Browser initialized with custom viewport
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            initialize_browser()
+            session = agent_bay.create().session
+            browser_option = BrowserOption(use_stealth=True)
+            success = session.browser.initialize(browser_option)
+            print(f"Browser initialized: {success}")
+            session.delete()
             ```
         """
         if self.is_initialized():
@@ -733,32 +564,11 @@ class Browser(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserOption, BrowserViewport
-            import asyncio
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            async def initialize_browser_async():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Initialize browser asynchronously with default options
-                        browser_option = BrowserOption()
-                        success = await session.browser.initialize_async(browser_option)
-                        if success:
-                            print("Browser initialized successfully")
-                            # Output: Browser initialized successfully
-                        else:
-                            print("Browser initialization failed")
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            asyncio.run(initialize_browser_async())
+            session = agent_bay.create().session
+            browser_option = BrowserOption(use_stealth=True)
+            success = await session.browser.initialize_async(browser_option)
+            print(f"Browser initialized: {success}")
+            session.delete()
             ```
         """
         if self.is_initialized():
@@ -809,40 +619,11 @@ class Browser(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserOption
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def demonstrate_browser_destroy():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Initialize the browser
-                        browser_option = BrowserOption(use_stealth=True)
-                        success = session.browser.initialize(browser_option)
-
-                        if success:
-                            print("Browser initialized successfully")
-                            # Output: Browser initialized successfully
-
-                            # Check if browser is initialized
-                            if session.browser.is_initialized():
-                                print("Browser is active")
-                                # Output: Browser is active
-
-                            # Destroy the browser instance
-                            session.browser.destroy()
-                            print("Browser destroyed")
-                            # Output: Browser destroyed
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            demonstrate_browser_destroy()
+            session = agent_bay.create().session
+            browser_option = BrowserOption()
+            session.browser.initialize(browser_option)
+            session.browser.destroy()
+            session.delete()
             ```
         """
         self._stop_browser()
@@ -967,36 +748,12 @@ class Browser(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserOption
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def get_browser_endpoint():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Initialize the browser
-                        browser_option = BrowserOption()
-                        success = session.browser.initialize(browser_option)
-
-                        if success:
-                            # Get the browser endpoint URL
-                            endpoint_url = session.browser.get_endpoint_url()
-                            print(f"Browser endpoint URL: {endpoint_url}")
-                            # Output: Browser endpoint URL: ws://127.0.0.1:9222/devtools/browser/...
-
-                            # Use this URL to connect with Playwright or other automation tools
-                            print("You can now connect to this browser using Playwright")
-                            # Output: You can now connect to this browser using Playwright
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            get_browser_endpoint()
+            session = agent_bay.create().session
+            browser_option = BrowserOption()
+            session.browser.initialize(browser_option)
+            endpoint_url = session.browser.get_endpoint_url()
+            print(f"CDP Endpoint: {endpoint_url}")
+            session.delete()
             ```
         """
         if not self.is_initialized():
@@ -1021,43 +778,12 @@ class Browser(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserOption, BrowserViewport
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def get_browser_options():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Get options before initialization (should be None)
-                        options = session.browser.get_option()
-                        if options is None:
-                            print("No browser options set yet")
-                            # Output: No browser options set yet
-
-                        # Initialize with specific options
-                        browser_option = BrowserOption(
-                            use_stealth=True,
-                            viewport=BrowserViewport(width=1920, height=1080)
-                        )
-                        session.browser.initialize(browser_option)
-
-                        # Get options after initialization
-                        current_options = session.browser.get_option()
-                        if current_options:
-                            print(f"Browser initialized with stealth mode: {current_options.use_stealth}")
-                            # Output: Browser initialized with stealth mode: True
-                            print(f"Viewport size: {current_options.viewport.width}x{current_options.viewport.height}")
-                            # Output: Viewport size: 1920x1080
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            get_browser_options()
+            session = agent_bay.create().session
+            browser_option = BrowserOption(use_stealth=True)
+            session.browser.initialize(browser_option)
+            current_options = session.browser.get_option()
+            print(f"Stealth mode: {current_options.use_stealth}")
+            session.delete()
             ```
         """
         return self._option
@@ -1071,37 +797,12 @@ class Browser(BaseService):
 
         Example:
             ```python
-            from agentbay import AgentBay
-            from agentbay.browser.browser import BrowserOption
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def check_browser_initialization():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Check if browser is initialized before initialization
-                        if not session.browser.is_initialized():
-                            print("Browser not initialized yet")
-                            # Output: Browser not initialized yet
-
-                            # Initialize the browser
-                            browser_option = BrowserOption(use_stealth=True)
-                            success = session.browser.initialize(browser_option)
-
-                            if success:
-                                # Check again after initialization
-                                if session.browser.is_initialized():
-                                    print("Browser is now initialized")
-                                    # Output: Browser is now initialized
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            check_browser_initialization()
+            session = agent_bay.create().session
+            print(f"Initialized: {session.browser.is_initialized()}")
+            browser_option = BrowserOption()
+            session.browser.initialize(browser_option)
+            print(f"Initialized: {session.browser.is_initialized()}")
+            session.delete()
             ```
         """
         return self._initialized

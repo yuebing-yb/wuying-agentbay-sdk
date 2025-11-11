@@ -392,50 +392,11 @@ class AgentBay:
 
         Example:
             ```python
-            from agentbay import AgentBay, CreateSessionParams
-
-            # Initialize the SDK
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            # Create a session with default parameters
             result = agent_bay.create()
-            if result.success:
-                session = result.session
-                print(f"Session created: {session.session_id}")
-                # Output: Session created: session-04bdwfj7u22a1s30g
-                print(f"Request ID: {result.request_id}")
-                # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                # Use the session
-                info_result = session.info()
-                if info_result.success:
-                    print(f"Session status: {info_result.data['Status']}")
-                    # Output: Session status: Running
-
-                # Clean up
-                session.delete()
-
-            # Create a session with custom parameters
-            params = CreateSessionParams(
-                image_id="browser-chrome",
-                labels={"project": "demo", "env": "test"}
-            )
-            result = agent_bay.create(params)
-            if result.success:
-                print(f"Session created with labels: {result.session.session_id}")
-                result.session.delete()
-
-            # Create a browser session with browser replay enabled
-            browser_params = CreateSessionParams(
-                image_id="browser_latest",
-                enable_browser_replay=True  # Enable browser replay
-            )
-            browser_result = agent_bay.create(browser_params)
-            if browser_result.success:
-                browser_session = browser_result.session
-                print(f"Created browser session with replay: {browser_session.session_id}")
-                # Browser replay files are automatically generated for internal processing
-                browser_session.delete()
+            session = result.session
+            info_result = session.info()
+            print(f"Session ID: {info_result.session_id}")
+            session.delete()
             ```
 
         Note:
@@ -772,48 +733,11 @@ class AgentBay:
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            # Initialize the SDK
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            # Create some sessions with labels
-            for i in range(3):
-                params = CreateSessionParams(labels={"project": "demo", "index": str(i)})
-                result = agent_bay.create(params)
-                if result.success:
-                    print(f"Created session {i}: {result.session.session_id}")
-
-            # List all sessions
             result = agent_bay.list()
-            if result.success:
-                print(f"Total sessions: {result.total_count}")
-                # Output: Total sessions: 3
-                for session_id in result.session_ids:
-                    print(f"Session ID: {session_id}")
-                # Output: Session ID: session-04bdwfj7u22a1s30g
-                # Output: Session ID: session-04bdwfj7u22a1s30h
-                # Output: Session ID: session-04bdwfj7u22a1s30i
+            print(f"Total sessions: {result.total_count}")
 
-            # List sessions with specific labels
-            result = agent_bay.list(labels={"project": "demo"})
-            if result.success:
-                print(f"Sessions with project=demo: {len(result.session_ids)}")
-                # Output: Sessions with project=demo: 3
-
-            # List sessions with pagination
-            result = agent_bay.list(labels={"project": "demo"}, page=1, limit=2)
-            if result.success:
-                print(f"Page 1: {len(result.session_ids)} sessions")
-                # Output: Page 1: 2 sessions
-                print(f"Has more pages: {bool(result.next_token)}")
-                # Output: Has more pages: True
-
-            # Get next page
-            result = agent_bay.list(labels={"project": "demo"}, page=2, limit=2)
-            if result.success:
-                print(f"Page 2: {len(result.session_ids)} sessions")
-                # Output: Page 2: 1 sessions
+            result = agent_bay.list(labels={"project": "demo"}, page=1, limit=10)
+            print(f"Found {len(result.session_ids)} sessions")
             ```
 
         Note:
@@ -1010,51 +934,10 @@ class AgentBay:
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def demonstrate_delete():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-                        print(f"Created session: {session.session_id}")
-                        # Output: Created session: session-04bdwfj7u22a1s30g
-
-                        # Use the session
-                        info_result = session.info()
-                        if info_result.success:
-                            print(f"Session status: {info_result.data['Status']}")
-                            # Output: Session status: Running
-
-                        # Delete the session without syncing context
-                        delete_result = agent_bay.delete(session)
-                        if delete_result.success:
-                            print("Session deleted successfully")
-                            # Output: Session deleted successfully
-                            print(f"Request ID: {delete_result.request_id}")
-                            # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                    # Create another session and delete with context sync
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Write some files to the session
-                        session.file_system.write_file("/tmp/test.txt", "test content")
-
-                        # Delete with context sync (triggers file upload to OSS)
-                        delete_result = agent_bay.delete(session, sync_context=True)
-                        if delete_result.success:
-                            print("Session deleted with context sync")
-                            # Output: Session deleted with context sync
-
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            demonstrate_delete()
+            result = agent_bay.create()
+            session = result.session
+            delete_result = agent_bay.delete(session)
+            print(f"Delete success: {delete_result.success}")
             ```
 
         Note:
@@ -1112,50 +995,11 @@ class AgentBay:
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def demonstrate_get_session():
-                try:
-                    # Create a session first
-                    create_result = agent_bay.create()
-                    if create_result.success:
-                        session_id = create_result.session.session_id
-                        print(f"Created session: {session_id}")
-                        # Output: Created session: session-04bdwfj7u22a1s30g
-
-                        # Get session information
-                        get_result = agent_bay.get_session(session_id)
-                        if get_result.success:
-                            print("Session information retrieved:")
-                            # Output: Session information retrieved:
-                            print(f"  Session ID: {get_result.data.session_id}")
-                            # Output:   Session ID: session-04bdwfj7u22a1s30g
-                            print(f"  App Instance ID: {get_result.data.app_instance_id}")
-                            # Output:   App Instance ID: ai-12345678
-                            print(f"  Resource URL: {get_result.data.resource_url[:50]}...")
-                            # Output:   Resource URL: https://session.agentbay.com/...
-                            print(f"  VPC Resource: {get_result.data.vpc_resource}")
-                            # Output:   VPC Resource: False
-                            print(f"  Request ID: {get_result.request_id}")
-                            # Output:   Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-                        else:
-                            print(f"Failed to get session: {get_result.error_message}")
-
-                        # Clean up
-                        create_result.session.delete()
-
-                    # Try to get a non-existent session
-                    get_result = agent_bay.get_session("non-existent-session")
-                    if not get_result.success:
-                        print(f"Error: {get_result.error_message}")
-                        # Output: Error: Session non-existent-session not found
-
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            demonstrate_get_session()
+            create_result = agent_bay.create()
+            session_id = create_result.session.session_id
+            get_result = agent_bay.get_session(session_id)
+            print(f"Session ID: {get_result.data.session_id}")
+            create_result.session.delete()
             ```
 
         Note:
@@ -1294,41 +1138,12 @@ class AgentBay:
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            # Initialize the SDK
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            # Create a session first
             create_result = agent_bay.create()
-            if create_result.success:
-                session_id = create_result.session.session_id
-                print(f"Created session: {session_id}")
-                # Output: Created session: session-04bdwfj7u22a1s30g
-
-                # Get the session by ID
-                get_result = agent_bay.get(session_id)
-                if get_result.success:
-                    session = get_result.session
-                    print(f"Retrieved session: {session.session_id}")
-                    # Output: Retrieved session: session-04bdwfj7u22a1s30g
-                    print(f"Request ID: {get_result.request_id}")
-                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                    # Use the session
-                    info_result = session.info()
-                    if info_result.success:
-                        print(f"Session status: {info_result.data['Status']}")
-                        # Output: Session status: Running
-
-                    # Clean up
-                    session.delete()
-
-            # Handle session not found
-            result = agent_bay.get("non-existent-session")
-            if not result.success:
-                print(f"Error: {result.error_message}")
-                # Output: Error: Failed to get session non-existent-session: Session non-existent-session not found
+            session_id = create_result.session.session_id
+            get_result = agent_bay.get(session_id)
+            session = get_result.session
+            info_result = session.info()
+            session.delete()
             ```
 
         Note:

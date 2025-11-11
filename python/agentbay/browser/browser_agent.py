@@ -126,32 +126,9 @@ class BrowserAgent(BaseService):
         Example:
 
         ```python
-        from agentbay import AgentBay
-
-        # Initialize and create a session with browser
-        agent_bay = AgentBay(api_key="your_api_key")
-        result = agent_bay.create(enable_browser=True)
-
-        if result.success:
-            session = result.session
-            browser = session.browser
-
-            # Initialize the browser
-            browser.init()
-
-            # Navigate to a URL
-            import asyncio
-            nav_result = asyncio.run(browser.agent.navigate_async("https://www.example.com"))
-            print(nav_result)
-            # Output: Successfully navigated to https://www.example.com
-
-            # Take a screenshot to verify
-            screenshot_data = browser.agent.screenshot()
-            print(f"Screenshot captured: {len(screenshot_data)} characters")
-            # Output: Screenshot captured: 50000 characters
-
-            # Clean up
-            session.delete()
+        session = agent_bay.create(image="browser_latest").session
+        await session.browser.agent.navigate_async("https://example.com")
+        session.delete()
         ```
 
         Note:
@@ -216,53 +193,10 @@ class BrowserAgent(BaseService):
         Example:
 
         ```python
-        from agentbay import AgentBay
-        import base64
-        import asyncio
-
-        # Initialize and create a session with browser
-        agent_bay = AgentBay(api_key="your_api_key")
-        result = agent_bay.create(enable_browser=True)
-        
-        if result.success:
-            session = result.session
-            browser = session.browser
-            
-            # Initialize the browser
-            browser.init()
-            
-            # Navigate to a page
-            asyncio.run(browser.agent.navigate_async("https://www.example.com"))
-            
-            # Take a full-page screenshot
-            screenshot_data = browser.agent.screenshot(full_page=True, quality=90)
-            print(f"Full page screenshot: {len(screenshot_data)} characters")
-            # Output: Full page screenshot: 75000 characters
-            
-            # Save the screenshot to a file
-            if screenshot_data.startswith("data:image"):
-                # Extract base64 data
-                base64_data = screenshot_data.split(",")[1]
-                image_bytes = base64.b64decode(base64_data)
-                with open("screenshot.png", "wb") as f:
-                    f.write(image_bytes)
-                print("Screenshot saved to screenshot.png")
-                # Output: Screenshot saved to screenshot.png
-            
-            # Take a viewport-only screenshot with custom quality
-            viewport_screenshot = browser.agent.screenshot(full_page=False, quality=60)
-            print(f"Viewport screenshot: {len(viewport_screenshot)} characters")
-            # Output: Viewport screenshot: 30000 characters
-            
-            # Take a screenshot of a specific region
-            clipped_screenshot = browser.agent.screenshot(
-                clip={"x": 0, "y": 0, "width": 800, "height": 600}
-            )
-            print(f"Clipped screenshot: {len(clipped_screenshot)} characters")
-            # Output: Clipped screenshot: 25000 characters
-            
-            # Clean up
-            session.delete()
+        session = agent_bay.create(image="browser_latest").session
+        screenshot_data = session.browser.agent.screenshot()
+        print(f"Screenshot captured: {len(screenshot_data)} bytes")
+        session.delete()
         ```
 
         Note:
@@ -393,54 +327,13 @@ class BrowserAgent(BaseService):
             - Calls the MCP tool `page_use_act` to perform the action
 
         Example:
-
-        ```python
-        from agentbay import AgentBay
-        from agentbay.browser.browser_agent import ObserveOptions, ActOptions
-        import asyncio
-
-        # Initialize and create a session with browser
-        agent_bay = AgentBay(api_key="your_api_key")
-        result = agent_bay.create(enable_browser=True)
-        
-        if result.success:
-            session = result.session
-            browser = session.browser
-            
-            # Initialize the browser
-            browser.init()
-            
-            # Navigate to a page
-            asyncio.run(browser.agent.navigate_async("https://www.example.com"))
-            
-            # Method 1: Use observe + act (recommended)
-            # First, observe elements on the page
-            observe_options = ObserveOptions(
-                instruction="Find the search button"
-            )
-            success, observe_results = browser.agent.observe(observe_options)
-            
-            if success and observe_results:
-                # Act on the first observed element
-                act_result = browser.agent.act(observe_results[0])
-                print(f"Action result: {act_result.message}")
-                # Output: Action result: Successfully clicked element
-            
-            # Method 2: Use custom ActOptions
-            # Directly specify the action
-            act_options = ActOptions(
-                selector="#search-input",
-                description="Search input field",
-                method="fill",
-                arguments={"text": "AgentBay SDK"}
-            )
-            act_result = browser.agent.act(act_options)
-            print(f"Action result: {act_result.message}")
-            # Output: Action result: Successfully filled text
-            
-            # Clean up
+            ```python
+            from agentbay.browser.browser_agent import ActOptions
+            session = agent_bay.create(image="browser_latest").session
+            action = ActOptions(action="Click the login button")
+            result = session.browser.agent.act(action)
             session.delete()
-        ```
+            ```
 
         Note:
             - The browser must be initialized before calling this method
@@ -657,63 +550,13 @@ class BrowserAgent(BaseService):
             - Optionally uses vision-based detection for better accuracy
 
         Example:
-
-        ```python
-        from agentbay import AgentBay
-        from agentbay.browser.browser_agent import ObserveOptions
-        import asyncio
-
-        # Initialize and create a session with browser
-        agent_bay = AgentBay(api_key="your_api_key")
-        result = agent_bay.create(enable_browser=True)
-        
-        if result.success:
-            session = result.session
-            browser = session.browser
-            
-            # Initialize the browser
-            browser.init()
-            
-            # Navigate to a page
-            asyncio.run(browser.agent.navigate_async("https://www.example.com"))
-            
-            # Observe elements using natural language
-            observe_options = ObserveOptions(
-                instruction="Find all clickable buttons on the page"
-            )
-            success, results = browser.agent.observe(observe_options)
-            
-            if success:
-                print(f"Found {len(results)} elements")
-                # Output: Found 5 elements
-                
-                for i, result in enumerate(results):
-                    print(f"Element {i+1}:")
-                    print(f"  Selector: {result.selector}")
-                    print(f"  Description: {result.description}")
-                    print(f"  Suggested method: {result.method}")
-                    # Output:
-                    # Element 1:
-                    #   Selector: #submit-button
-                    #   Description: Submit button
-                    #   Suggested method: click
-            
-            # Observe with vision-based detection
-            observe_options_vision = ObserveOptions(
-                instruction="Find the login form",
-                use_vision=True
-            )
-            success, results = browser.agent.observe(observe_options_vision)
-            
-            if success and results:
-                # Use the observed element with act()
-                act_result = browser.agent.act(results[0])
-                print(f"Action: {act_result.message}")
-                # Output: Action: Successfully clicked element
-            
-            # Clean up
+            ```python
+            from agentbay.browser.browser_agent import ObserveOptions
+            session = agent_bay.create(image="browser_latest").session
+            options = ObserveOptions(instruction="Find the search input field")
+            success, results = session.browser.agent.observe(options)
             session.delete()
-        ```
+            ```
 
         Note:
             - The browser must be initialized before calling this method
@@ -837,77 +680,17 @@ class BrowserAgent(BaseService):
             - Handles complex nested data structures
 
         Example:
-
-        ```python
-        from agentbay import AgentBay
-        from agentbay.browser.browser_agent import ExtractOptions
-        from pydantic import BaseModel
-        from typing import List
-        import asyncio
-
-        # Define the data schema
-        class ProductInfo(BaseModel):
-            name: str
-            price: float
-            description: str
-            in_stock: bool
-
-        class ProductList(BaseModel):
-            products: List[ProductInfo]
-            total_count: int
-
-        # Initialize and create a session with browser
-        agent_bay = AgentBay(api_key="your_api_key")
-        result = agent_bay.create(enable_browser=True)
-        
-        if result.success:
-            session = result.session
-            browser = session.browser
-            
-            # Initialize the browser
-            browser.init()
-            
-            # Navigate to a product page
-            asyncio.run(browser.agent.navigate_async("https://www.example.com/products"))
-            
-            # Extract product information
-            extract_options = ExtractOptions(
-                schema=ProductList,
-                instruction="Extract all product information from the page"
-            )
-            success, data = browser.agent.extract(extract_options)
-            
-            if success and data:
-                print(f"Total products: {data.total_count}")
-                # Output: Total products: 10
-                
-                for product in data.products:
-                    print(f"Product: {product.name}")
-                    print(f"  Price: ${product.price}")
-                    print(f"  In stock: {product.in_stock}")
-                    # Output:
-                    # Product: AgentBay SDK
-                    #   Price: $99.99
-                    #   In stock: True
-            
-            # Extract with vision-based detection
-            extract_options_vision = ExtractOptions(
-                schema=ProductInfo,
-                instruction="Extract the featured product details",
-                use_vision=True
-            )
-            success, product_data = browser.agent.extract(extract_options_vision)
-            
-            if success and product_data:
-                print(f"Featured product: {product_data.name}")
-                print(f"Description: {product_data.description}")
-                # Output:
-                # Featured product: Premium Plan
-                # Description: Full access to all features
-            
-            # Clean up
+            ```python
+            from pydantic import BaseModel
+            from agentbay.browser.browser_agent import ExtractOptions
+            class ProductInfo(BaseModel):
+                name: str
+                price: float
+            session = agent_bay.create(image="browser_latest").session
+            options = ExtractOptions(instruction="Extract product details", schema=ProductInfo)
+            success, data = session.browser.agent.extract(options)
             session.delete()
-        ```
+            ```
 
         Note:
             - The browser must be initialized before calling this method

@@ -200,67 +200,14 @@ in a directory. It is typically returned by file monitoring operations.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-import time
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def analyze_file_changes():
-    try:
-        result = agent_bay.create()
-        if result.success:
-            session = result.session
-
-            # Create a test directory and some files
-            session.file_system.create_directory("/tmp/change_test")
-            session.file_system.write_file("/tmp/change_test/file1.txt", "original content")
-            session.file_system.write_file("/tmp/change_test/file2.txt", "original content")
-
-            # Wait a moment for changes to be detected
-            time.sleep(1)
-
-            # Make some changes
-            session.file_system.write_file("/tmp/change_test/file1.txt", "modified content")
-            session.file_system.write_file("/tmp/change_test/file3.txt", "new file")
-
-            time.sleep(1)
-
-            # Get file changes using the internal API
-            change_result = session.file_system._get_file_change("/tmp/change_test")
-
-            if change_result.success:
-                # Check if there are any changes
-                if change_result.has_changes():
-                    print(f"Detected {len(change_result.events)} change(s)")
-                    # Output: Detected 2 change(s)
-
-                    # Get modified files
-                    modified = change_result.get_modified_files()
-                    if modified:
-                        print(f"Modified files: {modified}")
-                        # Output: Modified files: ['/tmp/change_test/file1.txt']
-
-                    # Get created files
-                    created = change_result.get_created_files()
-                    if created:
-                        print(f"Created files: {created}")
-                        # Output: Created files: ['/tmp/change_test/file3.txt']
-
-                    # Get deleted files
-                    deleted = change_result.get_deleted_files()
-                    if deleted:
-                        print(f"Deleted files: {deleted}")
-                    else:
-                        print("No files were deleted")
-                        # Output: No files were deleted
-                else:
-                    print("No changes detected")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-analyze_file_changes()
+session = agent_bay.create().session
+session.file_system.create_directory("/tmp/change_test")
+session.file_system.write_file("/tmp/change_test/file1.txt", "original content")
+session.file_system.write_file("/tmp/change_test/file2.txt", "original content")
+session.file_system.write_file("/tmp/change_test/file1.txt", "modified content")
+session.file_system.write_file("/tmp/change_test/file3.txt", "new file")
+change_result = session.file_system._get_file_change("/tmp/change_test")
+session.delete()
 ```
 
 #### has\_changes
@@ -387,29 +334,10 @@ Create a new directory at the specified path.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-# Initialize and create session
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-if result.success:
-    session = result.session
-
-    # Create a directory
-    create_result = session.file_system.create_directory("/tmp/mydir")
-    if create_result.success:
-        print("Directory created successfully")
-        # Output: Directory created successfully
-        print(f"Request ID: {create_result.request_id}")
-        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-    # Create nested directories
-    nested_result = session.file_system.create_directory("/tmp/parent/child/grandchild")
-    if nested_result.success:
-        print("Nested directories created")
-
-    # Clean up
-    session.delete()
+session = agent_bay.create().session
+create_result = session.file_system.create_directory("/tmp/mydir")
+nested_result = session.file_system.create_directory("/tmp/parent/child/grandchild")
+session.delete()
 ```
 
 #### edit\_file
@@ -437,46 +365,14 @@ Edit a file by replacing occurrences of oldText with newText.
 
 **Example**:
 
-```python
-from agentbay import AgentBay
-
-# Initialize and create session
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-if result.success:
-    session = result.session
-
-    # Create a test file
-    session.file_system.write_file("/tmp/config.txt", "DEBUG=false\nLOG_LEVEL=info")
-
-    # Edit the file with single replacement
-    edits = [{"oldText": "DEBUG=false", "newText": "DEBUG=true"}]
-    edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
-    if edit_result.success:
-        print("File edited successfully")
-        # Output: File edited successfully
-
-    # Edit with multiple replacements
-    edits = [
-        {"oldText": "DEBUG=true", "newText": "DEBUG=false"},
-        {"oldText": "LOG_LEVEL=info", "newText": "LOG_LEVEL=debug"}
-    ]
-    multi_edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
-    if multi_edit_result.success:
-        print("Multiple edits applied")
-
-    # Preview changes with dry_run
-    dry_run_result = session.file_system.edit_file(
-        "/tmp/config.txt",
-        [{"oldText": "debug", "newText": "trace"}],
-        dry_run=True
-    )
-    if dry_run_result.success:
-        print("Dry run completed, no changes applied")
-
-    # Clean up
-    session.delete()
-```
+            ```python
+            session = agent_bay.create().session
+            session.file_system.write_file("/tmp/config.txt", "DEBUG=false
+LOG_LEVEL=info")
+            edits = [{"oldText": "false", "newText": "true"}]
+            edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
+            session.delete()
+            ```
 
 #### get\_file\_info
 
@@ -499,36 +395,11 @@ Get information about a file or directory.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-# Initialize and create session
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-if result.success:
-    session = result.session
-
-    # Create a test file
-    session.file_system.write_file("/tmp/test.txt", "Sample content")
-
-    # Get file information
-    info_result = session.file_system.get_file_info("/tmp/test.txt")
-    if info_result.success:
-        print(f"File info: {info_result.file_info}")
-        # Output: File info: {'size': 14, 'isDirectory': False, ...}
-        print(f"Size: {info_result.file_info.get('size')} bytes")
-        # Output: Size: 14 bytes
-        print(f"Is directory: {info_result.file_info.get('isDirectory')}")
-        # Output: Is directory: False
-
-    # Get directory information
-    session.file_system.create_directory("/tmp/mydir")
-    dir_info = session.file_system.get_file_info("/tmp/mydir")
-    if dir_info.success:
-        print(f"Is directory: {dir_info.file_info.get('isDirectory')}")
-        # Output: Is directory: True
-
-    # Clean up
-    session.delete()
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/test.txt", "Sample content")
+info_result = session.file_system.get_file_info("/tmp/test.txt")
+print(info_result.file_info)
+session.delete()
 ```
 
 #### list\_directory
@@ -564,42 +435,12 @@ List the contents of a directory.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-# Initialize and create session
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-if result.success:
-    session = result.session
-
-    # Create some test files and directories
-    session.file_system.create_directory("/tmp/testdir")
-    session.file_system.write_file("/tmp/testdir/file1.txt", "Content 1")
-    session.file_system.write_file("/tmp/testdir/file2.txt", "Content 2")
-    session.file_system.create_directory("/tmp/testdir/subdir")
-
-    # List the directory
-    list_result = session.file_system.list_directory("/tmp/testdir")
-    if list_result.success:
-        print(f"Found {len(list_result.entries)} entries")
-        # Output: Found 3 entries
-        for entry in list_result.entries:
-            entry_type = "DIR" if entry["isDirectory"] else "FILE"
-            print(f"[{entry_type}] {entry['name']}")
-        # Output: [FILE] file1.txt
-        # Output: [FILE] file2.txt
-        # Output: [DIR] subdir
-        print(f"Request ID: {list_result.request_id}")
-        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-    # Handle directory not found
-    result = session.file_system.list_directory("/tmp/nonexistent")
-    if not result.success:
-        print(f"Error: {result.error_message}")
-        # Output: Error: Failed to list directory
-
-    # Clean up
-    session.delete()
+session = agent_bay.create().session
+session.file_system.create_directory("/tmp/testdir")
+session.file_system.write_file("/tmp/testdir/file1.txt", "Content 1")
+list_result = session.file_system.list_directory("/tmp/testdir")
+print(f"Found {len(list_result.entries)} entries")
+session.delete()
 ```
   
 
@@ -637,33 +478,11 @@ Move a file or directory from source path to destination path.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-# Initialize and create session
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-if result.success:
-    session = result.session
-
-    # Create a test file
-    session.file_system.write_file("/tmp/original.txt", "Test content")
-
-    # Move the file to a new location
-    move_result = session.file_system.move_file("/tmp/original.txt", "/tmp/moved.txt")
-    if move_result.success:
-        print("File moved successfully")
-        # Output: File moved successfully
-        print(f"Request ID: {move_result.request_id}")
-        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-    # Verify the move
-    read_result = session.file_system.read_file("/tmp/moved.txt")
-    if read_result.success:
-        print(f"Content at new location: {read_result.content}")
-        # Output: Content at new location: Test content
-
-    # Clean up
-    session.delete()
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/original.txt", "Test content")
+move_result = session.file_system.move_file("/tmp/original.txt", "/tmp/moved.txt")
+read_result = session.file_system.read_file("/tmp/moved.txt")
+session.delete()
 ```
 
 #### read\_multiple\_files
@@ -689,33 +508,13 @@ Read the contents of multiple files at once.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-# Initialize and create session
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-if result.success:
-    session = result.session
-
-    # Create multiple test files
-    session.file_system.write_file("/tmp/file1.txt", "Content of file 1")
-    session.file_system.write_file("/tmp/file2.txt", "Content of file 2")
-    session.file_system.write_file("/tmp/file3.txt", "Content of file 3")
-
-    # Read multiple files at once
-    paths = ["/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt"]
-    read_result = session.file_system.read_multiple_files(paths)
-    if read_result.success:
-        print(f"Read {len(read_result.contents)} files")
-        # Output: Read 3 files
-        for path, content in read_result.contents.items():
-            print(f"{path}: {content}")
-        # Output: /tmp/file1.txt: Content of file 1
-        # Output: /tmp/file2.txt: Content of file 2
-        # Output: /tmp/file3.txt: Content of file 3
-
-    # Clean up
-    session.delete()
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/file1.txt", "Content of file 1")
+session.file_system.write_file("/tmp/file2.txt", "Content of file 2")
+session.file_system.write_file("/tmp/file3.txt", "Content of file 3")
+paths = ["/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt"]
+read_result = session.file_system.read_multiple_files(paths)
+session.delete()
 ```
 
 #### search\_files
@@ -732,7 +531,7 @@ Search for files in the specified path using a pattern.
 **Arguments**:
 
     path: The base directory path to search in.
-    pattern: The glob pattern to search for.
+    pattern: The pattern string to match against file names (substring match).
     exclude_patterns: Optional list of patterns to exclude from the search.
   
 
@@ -745,41 +544,12 @@ Search for files in the specified path using a pattern.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-# Initialize and create session
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-if result.success:
-    session = result.session
-
-    # Create test files
-    session.file_system.write_file("/tmp/test/file1.py", "print('hello')")
-    session.file_system.write_file("/tmp/test/file2.py", "print('world')")
-    session.file_system.write_file("/tmp/test/file3.txt", "text content")
-
-    # Search for Python files (using partial name matching, NOT wildcards)
-    search_result = session.file_system.search_files("/tmp/test", ".py")
-    if search_result.success:
-        print(f"Found {len(search_result.matches)} Python files:")
-        # Output: Found 2 Python files:
-        for match in search_result.matches:
-            print(f"  - {match}")
-        # Output:   - /tmp/test/file1.py
-        # Output:   - /tmp/test/file2.py
-
-    # Search with exclusion pattern (exclude files containing ".txt")
-    search_result = session.file_system.search_files(
-        "/tmp/test",
-        "file",
-        exclude_patterns=[".txt"]
-    )
-    if search_result.success:
-        print(f"Found {len(search_result.matches)} files (excluding .txt)")
-        # Output: Found 2 files (excluding .txt)
-
-    # Clean up
-    session.delete()
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/test/test_file1.py", "print('hello')")
+session.file_system.write_file("/tmp/test/test_file2.py", "print('world')")
+session.file_system.write_file("/tmp/test/other.txt", "text content")
+search_result = session.file_system.search_files("/tmp/test", "test_")
+session.delete()
 ```
 
 #### read\_file
@@ -812,35 +582,11 @@ Read the contents of a file. Automatically handles large files by chunking.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-
-# Initialize and create session
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create()
-if result.success:
-    session = result.session
-
-    # Write a file first
-    write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
-    if write_result.success:
-        print("File written successfully")
-
-    # Read the file
-    read_result = session.file_system.read_file("/tmp/test.txt")
-    if read_result.success:
-        print(f"File content: {read_result.content}")
-        # Output: File content: Hello, World!
-        print(f"Request ID: {read_result.request_id}")
-        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-    # Handle file not found
-    result = session.file_system.read_file("/tmp/nonexistent.txt")
-    if not result.success:
-        print(f"Error: {result.error_message}")
-        # Output: Error: Path does not exist or is a directory: /tmp/nonexistent.txt
-
-    # Clean up
-    session.delete()
+session = agent_bay.create().session
+write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
+read_result = session.file_system.read_file("/tmp/test.txt")
+print(read_result.content)
+session.delete()
 ```
   
 
@@ -889,41 +635,12 @@ Write content to a file. Automatically handles large files by chunking.
 **Example**:
 
             ```python
-            from agentbay import AgentBay
-
-            # Initialize and create session
-            agent_bay = AgentBay(api_key="your_api_key")
-            result = agent_bay.create()
-            if result.success:
-                session = result.session
-
-                # Write a new file (overwrite mode)
-                write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
-                if write_result.success:
-                    print("File written successfully")
-                    # Output: File written successfully
-                    print(f"Request ID: {write_result.request_id}")
-                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                # Append to existing file
-                append_result = session.file_system.write_file(
-                    "/tmp/test.txt",
-                    "
-Appended content",
-                    mode="append"
-                )
-                if append_result.success:
-                    print("Content appended successfully")
-
-                # Verify the content
-                read_result = session.file_system.read_file("/tmp/test.txt")
-                if read_result.success:
-                    print(f"File content: {read_result.content}")
-                    # Output: File content: Hello, World!
-                    # Appended content
-
-                # Clean up
-                session.delete()
+            session = agent_bay.create().session
+            write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
+            append_result = session.file_system.write_file("/tmp/test.txt", "
+New line", mode="append")
+            read_result = session.file_system.read_file("/tmp/test.txt")
+            session.delete()
             ```
   
 
@@ -976,45 +693,10 @@ This is a synchronous wrapper around the async FileTransfer.upload method.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, ContextSync
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def upload_file_example():
-    try:
-        # Create a session with context sync configuration
-        context_sync = ContextSync(
-            context_id="your_context_id",
-            path="/workspace"
-        )
-        params = CreateSessionParams(context_syncs=[context_sync])
-        result = agent_bay.create(params)
-
-        if result.success:
-            session = result.session
-
-            # Upload a local file to remote path
-            upload_result = session.file_system.upload_file(
-                local_path="/local/path/to/file.txt",
-                remote_path="/workspace/file.txt",
-                content_type="text/plain",
-                wait=True,
-                wait_timeout=30.0
-            )
-
-            if upload_result.success:
-                print(f"File uploaded successfully: {upload_result.path}")
-                print(f"Bytes sent: {upload_result.bytes_sent}")
-                print(f"HTTP status: {upload_result.http_status}")
-            else:
-                print(f"Upload failed: {upload_result.error}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-upload_file_example()
+params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
+session = agent_bay.create(params).session
+upload_result = session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
+session.delete()
 ```
 
 #### download\_file
@@ -1054,45 +736,10 @@ This is a synchronous wrapper around the async FileTransfer.download method.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, ContextSync
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def download_file_example():
-    try:
-        # Create a session with context sync configuration
-        context_sync = ContextSync(
-            context_id="your_context_id",
-            path="/workspace"
-        )
-        params = CreateSessionParams(context_syncs=[context_sync])
-        result = agent_bay.create(params)
-
-        if result.success:
-            session = result.session
-
-            # Download a remote file to local path
-            download_result = session.file_system.download_file(
-                remote_path="/workspace/file.txt",
-                local_path="/local/path/to/file.txt",
-                overwrite=True,
-                wait=True,
-                wait_timeout=30.0
-            )
-
-            if download_result.success:
-                print(f"File downloaded successfully: {download_result.local_path}")
-                print(f"Bytes received: {download_result.bytes_received}")
-                print(f"HTTP status: {download_result.http_status}")
-            else:
-                print(f"Download failed: {download_result.error}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-download_file_example()
+params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
+session = agent_bay.create(params).session
+download_result = session.file_system.download_file("/workspace/file.txt", "/local/file.txt")
+session.delete()
 ```
 
 #### watch\_directory
@@ -1126,48 +773,15 @@ Watch a directory for file changes and call the callback function when changes o
 **Example**:
 
 ```python
-from agentbay import AgentBay
-import time
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def demonstrate_watch_directory():
-    try:
-        result = agent_bay.create()
-        if result.success:
-            session = result.session
-
-            # Create a test directory
-            session.file_system.create_directory("/tmp/watch_test")
-
-            # Define callback function
-            def on_file_change(events):
-                for event in events:
-                    print(f"{event.event_type}: {event.path} ({event.path_type})")
-
-            # Start monitoring
-            monitor_thread = session.file_system.watch_directory(
-                path="/tmp/watch_test",
-                callback=on_file_change,
-                interval=0.5
-            )
-            monitor_thread.start()
-
-            # Create some test files to trigger events
-            session.file_system.write_file("/tmp/watch_test/test1.txt", "content 1")
-            time.sleep(1)
-            session.file_system.write_file("/tmp/watch_test/test2.txt", "content 2")
-            time.sleep(1)
-
-            # Stop monitoring
-            monitor_thread.stop_event.set()
-            monitor_thread.join()
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-demonstrate_watch_directory()
+def on_changes(events):
+    print(f"Detected {len(events)} changes")
+session = agent_bay.create().session
+session.file_system.create_directory("/tmp/watch_test")
+monitor_thread = session.file_system.watch_directory("/tmp/watch_test", on_changes)
+monitor_thread.start()
+session.file_system.write_file("/tmp/watch_test/test1.txt", "content 1")
+session.file_system.write_file("/tmp/watch_test/test2.txt", "content 2")
+session.delete()
 ```
 
 ## Related Resources

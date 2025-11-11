@@ -94,41 +94,11 @@ Returns True if successful, False otherwise.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserOption, BrowserViewport
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def initialize_browser():
-    try:
-        result = agent_bay.create()
-        if result.success:
-            session = result.session
-
-            # Initialize browser with default options
-            browser_option = BrowserOption()
-            success = session.browser.initialize(browser_option)
-            if success:
-                print("Browser initialized successfully")
-                # Output: Browser initialized successfully
-            else:
-                print("Browser initialization failed")
-
-            # Initialize with custom viewport
-            browser_option = BrowserOption(
-                use_stealth=True,
-                viewport=BrowserViewport(width=1920, height=1080)
-            )
-            success = session.browser.initialize(browser_option)
-            if success:
-                print("Browser initialized with custom viewport")
-                # Output: Browser initialized with custom viewport
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-initialize_browser()
+session = agent_bay.create().session
+browser_option = BrowserOption(use_stealth=True)
+success = session.browser.initialize(browser_option)
+print(f"Browser initialized: {success}")
+session.delete()
 ```
 
 #### initialize\_async
@@ -153,32 +123,11 @@ Returns True if successful, False otherwise.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserOption, BrowserViewport
-import asyncio
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-async def initialize_browser_async():
-    try:
-        result = agent_bay.create()
-        if result.success:
-            session = result.session
-
-            # Initialize browser asynchronously with default options
-            browser_option = BrowserOption()
-            success = await session.browser.initialize_async(browser_option)
-            if success:
-                print("Browser initialized successfully")
-                # Output: Browser initialized successfully
-            else:
-                print("Browser initialization failed")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-asyncio.run(initialize_browser_async())
+session = agent_bay.create().session
+browser_option = BrowserOption(use_stealth=True)
+success = await session.browser.initialize_async(browser_option)
+print(f"Browser initialized: {success}")
+session.delete()
 ```
 
 #### destroy
@@ -192,40 +141,11 @@ Destroy the browser instance.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserOption
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def demonstrate_browser_destroy():
-    try:
-        result = agent_bay.create()
-        if result.success:
-            session = result.session
-
-            # Initialize the browser
-            browser_option = BrowserOption(use_stealth=True)
-            success = session.browser.initialize(browser_option)
-
-            if success:
-                print("Browser initialized successfully")
-                # Output: Browser initialized successfully
-
-                # Check if browser is initialized
-                if session.browser.is_initialized():
-                    print("Browser is active")
-                    # Output: Browser is active
-
-                # Destroy the browser instance
-                session.browser.destroy()
-                print("Browser destroyed")
-                # Output: Browser destroyed
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-demonstrate_browser_destroy()
+session = agent_bay.create().session
+browser_option = BrowserOption()
+session.browser.initialize(browser_option)
+session.browser.destroy()
+session.delete()
 ```
 
 #### screenshot
@@ -283,36 +203,12 @@ When initialized, always fetches the latest CDP url from session.get_link().
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserOption
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def get_browser_endpoint():
-    try:
-        result = agent_bay.create()
-        if result.success:
-            session = result.session
-
-            # Initialize the browser
-            browser_option = BrowserOption()
-            success = session.browser.initialize(browser_option)
-
-            if success:
-                # Get the browser endpoint URL
-                endpoint_url = session.browser.get_endpoint_url()
-                print(f"Browser endpoint URL: {endpoint_url}")
-                # Output: Browser endpoint URL: ws://127.0.0.1:9222/devtools/browser/...
-
-                # Use this URL to connect with Playwright or other automation tools
-                print("You can now connect to this browser using Playwright")
-                # Output: You can now connect to this browser using Playwright
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-get_browser_endpoint()
+session = agent_bay.create().session
+browser_option = BrowserOption()
+session.browser.initialize(browser_option)
+endpoint_url = session.browser.get_endpoint_url()
+print(f"CDP Endpoint: {endpoint_url}")
+session.delete()
 ```
 
 #### get\_option
@@ -331,43 +227,12 @@ Returns the current BrowserOption used to initialize the browser, or None if not
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserOption, BrowserViewport
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def get_browser_options():
-    try:
-        result = agent_bay.create()
-        if result.success:
-            session = result.session
-
-            # Get options before initialization (should be None)
-            options = session.browser.get_option()
-            if options is None:
-                print("No browser options set yet")
-                # Output: No browser options set yet
-
-            # Initialize with specific options
-            browser_option = BrowserOption(
-                use_stealth=True,
-                viewport=BrowserViewport(width=1920, height=1080)
-            )
-            session.browser.initialize(browser_option)
-
-            # Get options after initialization
-            current_options = session.browser.get_option()
-            if current_options:
-                print(f"Browser initialized with stealth mode: {current_options.use_stealth}")
-                # Output: Browser initialized with stealth mode: True
-                print(f"Viewport size: {current_options.viewport.width}x{current_options.viewport.height}")
-                # Output: Viewport size: 1920x1080
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-get_browser_options()
+session = agent_bay.create().session
+browser_option = BrowserOption(use_stealth=True)
+session.browser.initialize(browser_option)
+current_options = session.browser.get_option()
+print(f"Stealth mode: {current_options.use_stealth}")
+session.delete()
 ```
 
 #### is\_initialized
@@ -386,37 +251,12 @@ Returns True if the browser was initialized, False otherwise.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.browser.browser import BrowserOption
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def check_browser_initialization():
-    try:
-        result = agent_bay.create()
-        if result.success:
-            session = result.session
-
-            # Check if browser is initialized before initialization
-            if not session.browser.is_initialized():
-                print("Browser not initialized yet")
-                # Output: Browser not initialized yet
-
-                # Initialize the browser
-                browser_option = BrowserOption(use_stealth=True)
-                success = session.browser.initialize(browser_option)
-
-                if success:
-                    # Check again after initialization
-                    if session.browser.is_initialized():
-                        print("Browser is now initialized")
-                        # Output: Browser is now initialized
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-check_browser_initialization()
+session = agent_bay.create().session
+print(f"Initialized: {session.browser.is_initialized()}")
+browser_option = BrowserOption()
+session.browser.initialize(browser_option)
+print(f"Initialized: {session.browser.is_initialized()}")
+session.delete()
 ```
 
 #### T
@@ -505,32 +345,9 @@ Navigates the browser to the specified URL.
 
   
 ```python
-from agentbay import AgentBay
-
-# Initialize and create a session with browser
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create(enable_browser=True)
-
-if result.success:
-    session = result.session
-    browser = session.browser
-
-    # Initialize the browser
-    browser.init()
-
-    # Navigate to a URL
-    import asyncio
-    nav_result = asyncio.run(browser.agent.navigate_async("https://www.example.com"))
-    print(nav_result)
-    # Output: Successfully navigated to https://www.example.com
-
-    # Take a screenshot to verify
-    screenshot_data = browser.agent.screenshot()
-    print(f"Screenshot captured: {len(screenshot_data)} characters")
-    # Output: Screenshot captured: 50000 characters
-
-    # Clean up
-    session.delete()
+session = agent_bay.create(image="browser_latest").session
+await session.browser.agent.navigate_async("https://example.com")
+session.delete()
 ```
   
 
@@ -593,53 +410,10 @@ Captures a screenshot of the current browser page.
 
   
 ```python
-from agentbay import AgentBay
-import base64
-import asyncio
-
-# Initialize and create a session with browser
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create(enable_browser=True)
-
-if result.success:
-    session = result.session
-    browser = session.browser
-
-    # Initialize the browser
-    browser.init()
-
-    # Navigate to a page
-    asyncio.run(browser.agent.navigate_async("https://www.example.com"))
-
-    # Take a full-page screenshot
-    screenshot_data = browser.agent.screenshot(full_page=True, quality=90)
-    print(f"Full page screenshot: {len(screenshot_data)} characters")
-    # Output: Full page screenshot: 75000 characters
-
-    # Save the screenshot to a file
-    if screenshot_data.startswith("data:image"):
-        # Extract base64 data
-        base64_data = screenshot_data.split(",")[1]
-        image_bytes = base64.b64decode(base64_data)
-        with open("screenshot.png", "wb") as f:
-            f.write(image_bytes)
-        print("Screenshot saved to screenshot.png")
-        # Output: Screenshot saved to screenshot.png
-
-    # Take a viewport-only screenshot with custom quality
-    viewport_screenshot = browser.agent.screenshot(full_page=False, quality=60)
-    print(f"Viewport screenshot: {len(viewport_screenshot)} characters")
-    # Output: Viewport screenshot: 30000 characters
-
-    # Take a screenshot of a specific region
-    clipped_screenshot = browser.agent.screenshot(
-        clip={"x": 0, "y": 0, "width": 800, "height": 600}
-    )
-    print(f"Clipped screenshot: {len(clipped_screenshot)} characters")
-    # Output: Clipped screenshot: 25000 characters
-
-    # Clean up
-    session.delete()
+session = agent_bay.create(image="browser_latest").session
+screenshot_data = session.browser.agent.screenshot()
+print(f"Screenshot captured: {len(screenshot_data)} bytes")
+session.delete()
 ```
   
 
@@ -729,53 +503,12 @@ Performs an action on a web page element (click, type, select, etc.).
 
 **Example**:
 
-  
 ```python
-from agentbay import AgentBay
-from agentbay.browser.browser_agent import ObserveOptions, ActOptions
-import asyncio
-
-# Initialize and create a session with browser
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create(enable_browser=True)
-
-if result.success:
-    session = result.session
-    browser = session.browser
-
-    # Initialize the browser
-    browser.init()
-
-    # Navigate to a page
-    asyncio.run(browser.agent.navigate_async("https://www.example.com"))
-
-    # Method 1: Use observe + act (recommended)
-    # First, observe elements on the page
-    observe_options = ObserveOptions(
-        instruction="Find the search button"
-    )
-    success, observe_results = browser.agent.observe(observe_options)
-
-    if success and observe_results:
-        # Act on the first observed element
-        act_result = browser.agent.act(observe_results[0])
-        print(f"Action result: {act_result.message}")
-        # Output: Action result: Successfully clicked element
-
-    # Method 2: Use custom ActOptions
-    # Directly specify the action
-    act_options = ActOptions(
-        selector="`search`-input",
-        description="Search input field",
-        method="fill",
-        arguments={"text": "AgentBay SDK"}
-    )
-    act_result = browser.agent.act(act_options)
-    print(f"Action result: {act_result.message}")
-    # Output: Action result: Successfully filled text
-
-    # Clean up
-    session.delete()
+from agentbay.browser.browser_agent import ActOptions
+session = agent_bay.create(image="browser_latest").session
+action = ActOptions(action="Click the login button")
+result = session.browser.agent.act(action)
+session.delete()
 ```
   
 
@@ -856,62 +589,12 @@ Observes and identifies interactive elements on a web page using natural languag
 
 **Example**:
 
-  
 ```python
-from agentbay import AgentBay
 from agentbay.browser.browser_agent import ObserveOptions
-import asyncio
-
-# Initialize and create a session with browser
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create(enable_browser=True)
-
-if result.success:
-    session = result.session
-    browser = session.browser
-
-    # Initialize the browser
-    browser.init()
-
-    # Navigate to a page
-    asyncio.run(browser.agent.navigate_async("https://www.example.com"))
-
-    # Observe elements using natural language
-    observe_options = ObserveOptions(
-        instruction="Find all clickable buttons on the page"
-    )
-    success, results = browser.agent.observe(observe_options)
-
-    if success:
-        print(f"Found {len(results)} elements")
-        # Output: Found 5 elements
-
-        for i, result in enumerate(results):
-            print(f"Element {i+1}:")
-            print(f"  Selector: {result.selector}")
-            print(f"  Description: {result.description}")
-            print(f"  Suggested method: {result.method}")
-            # Output:
-            # Element 1:
-            #   Selector: `submit`-button
-            #   Description: Submit button
-            #   Suggested method: click
-
-    # Observe with vision-based detection
-    observe_options_vision = ObserveOptions(
-        instruction="Find the login form",
-        use_vision=True
-    )
-    success, results = browser.agent.observe(observe_options_vision)
-
-    if success and results:
-        # Use the observed element with act()
-        act_result = browser.agent.act(results[0])
-        print(f"Action: {act_result.message}")
-        # Output: Action: Successfully clicked element
-
-    # Clean up
-    session.delete()
+session = agent_bay.create(image="browser_latest").session
+options = ObserveOptions(instruction="Find the search input field")
+success, results = session.browser.agent.observe(options)
+session.delete()
 ```
   
 
@@ -989,76 +672,16 @@ Extracts structured data from a web page using a Pydantic schema.
 
 **Example**:
 
-  
 ```python
-from agentbay import AgentBay
-from agentbay.browser.browser_agent import ExtractOptions
 from pydantic import BaseModel
-from typing import List
-import asyncio
-
-# Define the data schema
+from agentbay.browser.browser_agent import ExtractOptions
 class ProductInfo(BaseModel):
     name: str
     price: float
-    description: str
-    in_stock: bool
-
-class ProductList(BaseModel):
-    products: List[ProductInfo]
-    total_count: int
-
-# Initialize and create a session with browser
-agent_bay = AgentBay(api_key="your_api_key")
-result = agent_bay.create(enable_browser=True)
-
-if result.success:
-    session = result.session
-    browser = session.browser
-
-    # Initialize the browser
-    browser.init()
-
-    # Navigate to a product page
-    asyncio.run(browser.agent.navigate_async("https://www.example.com/products"))
-
-    # Extract product information
-    extract_options = ExtractOptions(
-        schema=ProductList,
-        instruction="Extract all product information from the page"
-    )
-    success, data = browser.agent.extract(extract_options)
-
-    if success and data:
-        print(f"Total products: {data.total_count}")
-        # Output: Total products: 10
-
-        for product in data.products:
-            print(f"Product: {product.name}")
-            print(f"  Price: ${product.price}")
-            print(f"  In stock: {product.in_stock}")
-            # Output:
-            # Product: AgentBay SDK
-            #   Price: $99.99
-            #   In stock: True
-
-    # Extract with vision-based detection
-    extract_options_vision = ExtractOptions(
-        schema=ProductInfo,
-        instruction="Extract the featured product details",
-        use_vision=True
-    )
-    success, product_data = browser.agent.extract(extract_options_vision)
-
-    if success and product_data:
-        print(f"Featured product: {product_data.name}")
-        print(f"Description: {product_data.description}")
-        # Output:
-        # Featured product: Premium Plan
-        # Description: Full access to all features
-
-    # Clean up
-    session.delete()
+session = agent_bay.create(image="browser_latest").session
+options = ExtractOptions(instruction="Extract product details", schema=ProductInfo)
+success, data = session.browser.agent.extract(options)
+session.delete()
 ```
   
 

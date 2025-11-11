@@ -55,51 +55,12 @@ get_task_status and the max_try_times.
 **Example**:
 
 ```python
-import time
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def async_execute_agent_task():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Execute a task asynchronously
-            task_description = "Open calculator and compute 123 + 456"
-            execution_result = session.agent.async_execute_task(task_description)
-
-            if execution_result.success:
-                # Poll for task status
-                max_retry_times = 50
-                retry_times = 0
-                while retry_times < max_retry_times:
-                    query_result = session.agent.get_task_status(
-                        execution_result.task_id
-                    )
-                    print(f"Task {query_result.task_id} running: {query_result.task_action}")
-
-                    if query_result.task_status == "finished":
-                        print(f"Task completed with result: {query_result.task_product}")
-                        break
-
-                    retry_times += 1
-                    time.sleep(3)
-
-                if retry_times >= max_retry_times:
-                    print("Task execution timeout!")
-            else:
-                print(f"Task failed: {execution_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-async_execute_agent_task()
+session = agent_bay.create().session
+result = session.agent.async_execute_task("Open Chrome browser")
+print(f"Task ID: {result.task_id}, Status: {result.task_status}")
+status = session.agent.get_task_status(result.task_id)
+print(f"Task status: {status.task_status}")
+session.delete()
 ```
 
 #### execute\_task
@@ -129,38 +90,10 @@ so set a proper max_try_times according to your task complexity.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def execute_agent_task():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # Execute a task using the Agent
-            task_description = "Open notepad and type 'Hello World'"
-            execution_result = session.agent.execute_task(
-                task=task_description,
-                max_try_times=20
-            )
-
-            if execution_result.success:
-                print(f"Task completed successfully")
-                print(f"Task status: {execution_result.task_status}")
-                print(f"Task result: {execution_result.task_result}")
-            else:
-                print(f"Task failed: {execution_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-execute_agent_task()
+session = agent_bay.create().session
+result = session.agent.execute_task("Open Chrome browser", max_try_times=20)
+print(f"Task result: {result.task_result}")
+session.delete()
 ```
 
 #### get\_task\_status
@@ -185,42 +118,11 @@ Get the status of the task with the given task ID.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def query_agent_task_status():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # First, execute a task asynchronously
-            execution_result = session.agent.async_execute_task(
-                "Open notepad"
-            )
-
-            if execution_result.success:
-                task_id = execution_result.task_id
-
-                # Get the status of the task
-                status_result = session.agent.get_task_status(task_id)
-
-                if status_result.success:
-                    print(f"Task status: {status_result.task_status}")
-                    print(f"Task action: {status_result.task_action}")
-                    print(f"Task product: {status_result.task_product}")
-                else:
-                    print(f"Failed to get status: {status_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-query_agent_task_status()
+session = agent_bay.create().session
+result = session.agent.async_execute_task("Open Chrome browser")
+status = session.agent.get_task_status(result.task_id)
+print(f"Status: {status.task_status}, Action: {status.task_action}")
+session.delete()
 ```
 
 #### terminate\_task
@@ -245,42 +147,11 @@ Terminate a task with a specified task ID.
 **Example**:
 
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-
-def terminate_agent_task():
-    try:
-        # Create a session with windows_latest image
-        params = CreateSessionParams(image_id="windows_latest")
-        result = agent_bay.create(params)
-        if result.success:
-            session = result.session
-
-            # First, execute a task asynchronously
-            execution_result = session.agent.async_execute_task(
-                "Search for Python tutorials online"
-            )
-
-            if execution_result.success:
-                task_id = execution_result.task_id
-                print(f"Task {task_id} started")
-
-                # Terminate the running task
-                terminate_result = session.agent.terminate_task(task_id)
-
-                if terminate_result.success:
-                    print(f"Task terminated successfully")
-                    print(f"Task status: {terminate_result.task_status}")
-                else:
-                    print(f"Failed to terminate: {terminate_result.error_message}")
-
-            session.delete()
-    except Exception as e:
-        print(f"Error: {e}")
-
-terminate_agent_task()
+session = agent_bay.create().session
+result = session.agent.async_execute_task("Open Chrome browser")
+terminate_result = session.agent.terminate_task(result.task_id)
+print(f"Terminated: {terminate_result.success}")
+session.delete()
 ```
 
 ## Related Resources

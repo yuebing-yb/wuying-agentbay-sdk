@@ -178,46 +178,9 @@ class Session:
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            # Initialize the SDK
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            # Create a session
-            result = agent_bay.create()
-            if result.success:
-                session = result.session
-                print(f"Session ID: {session.session_id}")
-                # Output: Session ID: session-04bdwfj7u22a1s30g
-
-                # Use the session for some work
-                cmd_result = session.command.run("echo 'Hello World'")
-                print(f"Command output: {cmd_result.data}")
-                # Output: Command output: Hello World
-
-                # Delete the session (without context sync)
-                delete_result = session.delete()
-                if delete_result.success:
-                    print("Session deleted successfully")
-                    # Output: Session deleted successfully
-                    print(f"Request ID: {delete_result.request_id}")
-                    # Output: Request ID: 7C1B2D7A-0E5F-5D8C-9A3B-4F6E8D2C1A9B
-                else:
-                    print(f"Failed to delete: {delete_result.error_message}")
-
-                # Example with context synchronization
-                result2 = agent_bay.create()
-                if result2.success:
-                    session2 = result2.session
-
-                    # Create a file in the session
-                    session2.file_system.write_file("/tmp/data.txt", "Important data")
-
-                    # Delete with context sync (uploads the file first)
-                    delete_result2 = session2.delete(sync_context=True)
-                    if delete_result2.success:
-                        print("Session deleted with context synced")
-                        # Output: Session deleted with context synced
+            session = agent_bay.create().session
+            session.command.run("echo 'Hello World'")
+            session.delete()
             ```
 
         Note:
@@ -416,20 +379,8 @@ class Session:
 
         Example:
             ```python
-            # Set session labels
-            labels = {
-                "project": "demo",
-                "environment": "testing",
-                "version": "1.0.0"
-            }
-            result = session.set_labels(labels)
-            if result.success:
-                print("Labels set successfully")
-                # Output: Labels set successfully
-                print(f"Request ID: {result.request_id}")
-                # Output: Request ID: B1F98082-52F0-17F7-A149-7722D6205AD6
-            else:
-                print(f"Failed to set labels: {result.error_message}")
+            labels = {"environment": "production", "version": "1.0"}
+            session.set_labels(labels)
             ```
         """
         try:
@@ -483,16 +434,8 @@ class Session:
 
         Example:
             ```python
-            # Get session labels
-            try:
-                result = session.get_labels()
-                if result.success:
-                    print(f"Session labels: {result.data}")
-                    # Output: Session labels: {'environment': 'testing', 'project': 'demo', 'version': '1.0.0'}
-                else:
-                    print(f"Failed to get labels: {result.error_message}")
-            except AgentBayError as e:
-                print(f"Failed to get labels: {e}")
+            result = session.get_labels()
+            print(result.data)
             ```
         """
         try:
@@ -565,39 +508,9 @@ class Session:
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            # Initialize the SDK
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            # Create a session
-            result = agent_bay.create()
-            if result.success:
-                session = result.session
-
-                # Get session information
-                info_result = session.info()
-                if info_result.success:
-                    info = info_result.data
-                    print(f"Session ID: {info.session_id}")
-                    # Output: Session ID: session-04bdwfj7u22a1s30g
-
-                    print(f"Resource URL: {info.resource_url}")
-                    # Output: Resource URL: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
-
-                    print(f"Resource Type: {info.resource_type}")
-                    # Output: Resource Type: Desktop
-
-                    print(f"Request ID: {info_result.request_id}")
-                    # Output: Request ID: 8D2C3E4F-1A5B-6C7D-8E9F-0A1B2C3D4E5F
-
-                    # Use resource_url for external access
-                    if info.resource_url:
-                        print(f"Access session at: {info.resource_url}")
-                        # Output: Access session at: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
-
-                # Clean up
-                session.delete()
+            session = agent_bay.create().session
+            info_result = session.info()
+            print(info_result.data.session_id)
             ```
 
         Note:
@@ -721,32 +634,9 @@ class Session:
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            # Initialize the SDK
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            # Create a session
-            result = agent_bay.create()
-            if result.success:
-                session = result.session
-
-                # Get default link
-                link_result = session.get_link()
-                if link_result.success:
-                    print(f"Session link: {link_result.data}")
-                    # Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
-                    print(f"Request ID: {link_result.request_id}")
-                    # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                # Get link with specific port
-                port_link_result = session.get_link(port=30150)
-                if port_link_result.success:
-                    print(f"Link with port: {port_link_result.data}")
-                    # Output: Link with port: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com:30150
-
-                # Clean up
-                session.delete()
+            session = agent_bay.create().session
+            link_result = session.get_link()
+            port_link_result = session.get_link(port=30150)
             ```
 
         Note:
@@ -937,41 +827,9 @@ class Session:
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            def demonstrate_list_mcp_tools():
-                try:
-                    # Create a session
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-                        print(f"Session created: {session.session_id}")
-                        # Output: Session created: session-04bdwfj7u22a1s30g
-
-                        # List all available MCP tools
-                        tools_result = session.list_mcp_tools()
-                        print(f"Found {len(tools_result.tools)} MCP tools")
-                        # Output: Found 69 MCP tools
-                        print(f"Request ID: {tools_result.request_id}")
-                        # Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-
-                        # Display first 3 tools
-                        for tool in tools_result.tools[:3]:
-                            print(f"Tool: {tool.name}")
-                            # Output: Tool: shell
-                            print(f"  Description: {tool.description}")
-                            # Output:   Description: Execute shell commands in the cloud environment
-                            print(f"  Server: {tool.server}")
-                            # Output:   Server: mcp-server-system
-
-                        # Clean up
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            demonstrate_list_mcp_tools()
+            session = agent_bay.create().session
+            tools_result = session.list_mcp_tools()
+            print(f"Available tools: {len(tools_result.tools)}")
             ```
         """
         from agentbay.api.models import ListMcpToolsRequest
@@ -1056,35 +914,9 @@ class Session:
 
         Example:
             ```python
-            # Call the shell tool to execute a command
-            result = session.call_mcp_tool("shell", {
-                "command": "echo 'Hello World'",
-                "timeout_ms": 1000
-            })
-
-            if result.success:
-                print(f"Output: {result.data}")
-                # Output: Hello World
-                print(f"Request ID: {result.request_id}")
-            else:
-                print(f"Error: {result.error_message}")
-
-            # Call with custom timeouts
-            result = session.call_mcp_tool(
-                "shell",
-                {"command": "pwd", "timeout_ms": 1000},
-                read_timeout=30,
-                connect_timeout=10
-            )
-
-            # Example with error handling
-            result = session.call_mcp_tool("shell", {
-                "command": "invalid_command_12345",
-                "timeout_ms": 1000
-            })
-            if not result.success:
-                print(f"Command failed: {result.error_message}")
-                # Output: Command failed: sh: 1: invalid_command_12345: not found
+            result = session.call_mcp_tool("shell", {"command": "echo 'Hello World'", "timeout_ms": 1000})
+            result = session.call_mcp_tool("shell", {"command": "pwd", "timeout_ms": 1000}, read_timeout=30, connect_timeout=10)
+            result = session.call_mcp_tool("shell", {"command": "invalid_command_12345", "timeout_ms": 1000})
             ```
         """
         from agentbay.model import McpToolResult
