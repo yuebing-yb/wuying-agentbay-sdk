@@ -1,8 +1,10 @@
 import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecyclePolicy, WhiteList, BWList, newDeletePolicy } from "./context-sync";
-import { BROWSER_FINGERPRINT_PERSIST_PATH } from "./config";
 import { ExtensionOption } from "./extension";
 import { BrowserFingerprintContext } from "./browser";
 import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
+
+// Browser fingerprint persistent path constant (moved from config.ts)
+const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
 import {
   log,
   logError,
@@ -416,7 +418,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    * GetLabelsJSON returns the labels as a JSON string.
    * Returns an object with success status and result/error message to match Go version behavior.
    */
-  getLabelsJSON(): { result: string; error?: string } {
+  private getLabelsJSON(): { result: string; error?: string } {
     if (Object.keys(this.labels).length === 0) {
       return { result: "" };
     }
@@ -436,7 +438,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    * GetExtraConfigsJSON returns the extra configs as a JSON string.
    * Returns an object with result and optional error message to match Go version behavior.
    */
-  getExtraConfigsJSON(): { result: string; error?: string } {
+  private getExtraConfigsJSON(): { result: string; error?: string } {
     if (!this.extraConfigs) {
       return { result: "" };
     }

@@ -1,10 +1,13 @@
 import { $OpenApiUtil } from "@alicloud/openapi-core";
 import "dotenv/config";
+import * as fs from "fs";
+import * as path from "path";
+import * as dotenv from "dotenv";
 import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
 import { Client } from "./api/client";
 
-import { loadConfig, loadDotEnvWithFallback, Config, BROWSER_DATA_PATH } from "./config";
+import { Config } from "./config";
 import { ContextService } from "./context";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
@@ -36,6 +39,113 @@ import {
   logInfoWithColor,
 } from "./utils/logger";
 import { VERSION, IS_RELEASE } from "./version";
+
+// Browser data path constant (moved from config.ts)
+const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
+
+/**
+ * Returns the default configuration
+ */
+function defaultConfig(): Config {
+  return {
+    endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+    timeout_ms: 60000,
+  };
+}
+
+/**
+ * Find .env file by searching upward from start_path.
+ */
+function findDotEnvFile(startPath?: string): string | null {
+  const currentPath = startPath ? path.resolve(startPath) : process.cwd();
+  let searchPath = currentPath;
+
+  while (searchPath !== path.dirname(searchPath)) {
+    const envFile = path.join(searchPath, ".env");
+    if (fs.existsSync(envFile)) {
+      return envFile;
+    }
+
+    const gitDir = path.join(searchPath, ".git");
+    if (fs.existsSync(gitDir)) {
+      // Found git root, continue searching
+    }
+
+    searchPath = path.dirname(searchPath);
+  }
+
+  const rootEnv = path.join(searchPath, ".env");
+  if (fs.existsSync(rootEnv)) {
+    return rootEnv;
+  }
+
+  return null;
+}
+
+/**
+ * Load .env file with improved search strategy.
+ */
+function loadDotEnvWithFallback(customEnvPath?: string): void {
+  if (customEnvPath) {
+    if (fs.existsSync(customEnvPath)) {
+      try {
+        const envConfig = dotenv.parse(fs.readFileSync(customEnvPath));
+        for (const k in envConfig) {
+          if (!process.env.hasOwnProperty(k)) {
+            process.env[k] = envConfig[k];
+          }
+        }
+        return;
+      } catch (error) {
+        // Silently fail - .env loading is optional
+      }
+    }
+  }
+
+  const envFile = findDotEnvFile();
+  if (envFile) {
+    try {
+      const envConfig = dotenv.parse(fs.readFileSync(envFile));
+      for (const k in envConfig) {
+        if (!process.env.hasOwnProperty(k)) {
+          process.env[k] = envConfig[k];
+        }
+      }
+    } catch (error) {
+      // Silently fail - .env loading is optional
+    }
+  }
+}
+
+/**
+ * Load configuration with improved .env file search.
+ */
+function loadConfig(customConfig?: Config, customEnvPath?: string): Config {
+  if (customConfig) {
+    return customConfig;
+  }
+
+  const config = defaultConfig();
+
+  try {
+    loadDotEnvWithFallback(customEnvPath);
+  } catch (error) {
+    // Silently fail - .env loading is optional
+  }
+
+  if (process.env.AGENTBAY_ENDPOINT) {
+    config.endpoint = process.env.AGENTBAY_ENDPOINT;
+  }
+
+  if (process.env.AGENTBAY_TIMEOUT_MS) {
+    const timeout = parseInt(process.env.AGENTBAY_TIMEOUT_MS, 10);
+    if (!isNaN(timeout) && timeout > 0) {
+      config.timeout_ms = timeout;
+    }
+  }
+
+  return config;
+}
 
 /**
  * Generate a random context name using alphanumeric characters with timestamp.

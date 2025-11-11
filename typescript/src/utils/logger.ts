@@ -761,7 +761,7 @@ export function logOperationStart(operation: string, details?: string): void {
  * @param operation Name of the operation
  * @param result Optional operation result
  */
-export function logOperationSuccess(operation: string, result?: string): void {
+export function logOperationSuccess(operation: string, result?: string): void{
   if (!shouldLog('INFO')) return;
   const message = `✅ Completed: ${operation}`;
   logInfo(message);

@@ -1,5 +1,6 @@
-// @ts-nocheck - Suppress TypeScript errors for browser globals in page.evaluate contexts
-import { chromium, Browser, BrowserContext, Page } from 'playwright';
+import { chromium, Page } from 'playwright';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Screen fingerprint data structure.
@@ -123,7 +124,34 @@ export class FingerprintFormat {
   }
 
   /**
+   * Load fingerprint format from dict or JSON string.
+   *
+   * @param data - Dictionary or JSON string containing fingerprint data
+   * @returns FingerprintFormat instance
+   *
+   * @example
+   * ```typescript
+   * // From dict
+   * const fp = FingerprintFormat.load({fingerprint: {...}, headers: {...}});
+   *
+   * // From JSON string
+   * const fp = FingerprintFormat.load('{"fingerprint": {...}}');
+   *
+   * // From file
+   * const data = fs.readFileSync('fingerprint.json', 'utf8');
+   * const fp = FingerprintFormat.load(data);
+   * ```
+   */
+  static load(data: string | Record<string, any>): FingerprintFormat {
+    if (typeof data === 'string') {
+      return this.fromJson(data);
+    }
+    return this.fromDict(data);
+  }
+
+  /**
    * Convert to dictionary format.
+   * Note: Used internally by SDK modules.
    */
   toDict(): Record<string, any> {
     return {
@@ -134,13 +162,15 @@ export class FingerprintFormat {
 
   /**
    * Convert to JSON string format.
+   * Note: Used internally by SDK modules.
    */
-  toJson(indent: number = 2): string {
+  toJson(indent = 2): string {
     return JSON.stringify(this.toDict(), null, indent);
   }
 
   /**
    * Create FingerprintFormat from dictionary data.
+   * Note: Used internally by SDK modules.
    */
   static fromDict(data: Record<string, any>): FingerprintFormat {
     if (!data || typeof data !== 'object') {
@@ -297,7 +327,7 @@ export class FingerprintFormat {
     battery?: Record<string, string>,
     multimediaDevices?: string[],
     fonts?: string[],
-    mockWebRTC: boolean = false,
+    mockWebRTC = false,
     slim?: boolean
   ): FingerprintFormat {
     const fingerprint: Fingerprint = {
@@ -381,7 +411,7 @@ export class BrowserFingerprintGenerator {
   /**
    * Extract comprehensive browser fingerprint and save to file.
    */
-  async generateFingerprintToFile(outputFilename: string = 'fingerprint_output.json'): Promise<boolean> {
+  async generateFingerprintToFile(outputFilename = 'fingerprint_output.json'): Promise<boolean> {
     try {
       console.log(`Starting fingerprint generation, output file: ${outputFilename}`);
 
@@ -693,6 +723,7 @@ export class BrowserFingerprintGenerator {
       // Extract headers from the response
       const allHeaders = await page.evaluate(() => {
         try {
+          // @ts-expect-error - document is available in browser context
           const preElement = document.querySelector('pre');
           if (preElement) {
             const data = JSON.parse(preElement.textContent || '{}');
@@ -749,6 +780,7 @@ export class BrowserFingerprintGenerator {
     try {
       // In Node.js environment
       if (typeof require !== 'undefined') {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const fs = require('fs');
         fs.writeFileSync(filename, jsonData, 'utf8');
         console.log(`Fingerprint data saved to ${filename}`);

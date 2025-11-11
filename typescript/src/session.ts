@@ -239,6 +239,7 @@ export class Session {
 
   /**
    * Return the API key for this session.
+   * Note: This method is used internally by SDK modules (Code, Computer, Mobile, Agent).
    *
    * @returns The API key string
    *
@@ -311,6 +312,7 @@ export class Session {
 
   /**
    * Return the session_id for this session.
+   * Note: This method is used internally by SDK modules. Users should prefer using the `sessionId` property.
    *
    * @returns The session ID string
    *
@@ -375,7 +377,7 @@ export class Session {
    * demonstrateIsVpcEnabled().catch(console.error);
    * ```
    */
-  isVpcEnabled(): boolean {
+  private isVpcEnabled(): boolean {
     return this.isVpc;
   }
 
@@ -411,7 +413,7 @@ export class Session {
    * demonstrateGetNetworkInterfaceIp().catch(console.error);
    * ```
    */
-  getNetworkInterfaceIp(): string {
+  private getNetworkInterfaceIp(): string {
     return this.networkInterfaceIp;
   }
 
@@ -447,7 +449,7 @@ export class Session {
    * demonstrateGetHttpPort().catch(console.error);
    * ```
    */
-  getHttpPort(): string {
+  private getHttpPort(): string {
     return this.httpPort;
   }
 
@@ -483,7 +485,7 @@ export class Session {
    * demonstrateGetToken().catch(console.error);
    * ```
    */
-  getToken(): string {
+  private getToken(): string {
     return this.token;
   }
 
@@ -523,7 +525,7 @@ export class Session {
    * demonstrateFindServerForTool().catch(console.error);
    * ```
    */
-  findServerForTool(toolName: string): string {
+  private findServerForTool(toolName: string): string {
     for (const tool of this.mcpTools) {
       if (tool.name === toolName) {
         return tool.server;

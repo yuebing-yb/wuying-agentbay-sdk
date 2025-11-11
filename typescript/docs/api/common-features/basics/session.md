@@ -16,12 +16,10 @@ Represents a session in the AgentBay cloud environment.
 
 - [callMcpTool](session.md#callmcptool)
 - [delete](session.md#delete)
-- [findServerForTool](session.md#findserverfortool)
 - [getLabels](session.md#getlabels)
 - [getLink](session.md#getlink)
 - [getLinkAsync](session.md#getlinkasync)
 - [info](session.md#info)
-- [isVpcEnabled](session.md#isvpcenabled)
 - [listMcpTools](session.md#listmcptools)
 - [setLabels](session.md#setlabels)
 
@@ -195,57 +193,6 @@ if (result2.success) {
 
 [info](session.md#info), [ContextManager.sync](context-manager.md#sync)
 
-___
-
-### findServerForTool
-
-▸ **findServerForTool**(`toolName`): `string`
-
-Find the server that provides the given tool.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `toolName` | `string` | Name of the tool to find |
-
-#### Returns
-
-`string`
-
-The server name that provides the tool, or empty string if not found
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function demonstrateFindServerForTool() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // List available MCP tools first
-      await session.listMcpTools();
-
-      // Find the server that provides the 'shell' tool
-      const server = session.findServerForTool('shell');
-      console.log(`Server for 'shell' tool: ${server}`);
-      // Output: Server for 'shell' tool: cli_server
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateFindServerForTool().catch(console.error);
-```
-
 ### getLabels
 
 ▸ **getLabels**(): `Promise`\<`OperationResult`\>
@@ -374,7 +321,7 @@ if (result.success) {
 
 **`See`**
 
-[info](session.md#info)
+[info](session.md#info), [Mobile.getAdbUrl](../../mobile-use/mobile.md#getadburl)
 
 ___
 
@@ -525,47 +472,6 @@ if (result.success) {
 **`See`**
 
 [delete](session.md#delete), [getLink](session.md#getlink)
-
-___
-
-### isVpcEnabled
-
-▸ **isVpcEnabled**(): `boolean`
-
-Return whether this session uses VPC resources.
-
-#### Returns
-
-`boolean`
-
-boolean indicating if VPC is enabled for this session
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });\n *
-async function demonstrateIsVpcEnabled() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Check if VPC is enabled
-      const isVpc = session.isVpcEnabled();
-      console.log(`VPC enabled: ${isVpc}`);
-      // Output: VPC enabled: false
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-demonstrateIsVpcEnabled().catch(console.error);
-```
 
 ___
 

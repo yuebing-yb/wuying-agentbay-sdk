@@ -25,7 +25,7 @@ async function generateFingerprintByFile(): Promise<FingerprintFormat> {
    */
   const fingerprintPath = path.join(__dirname, "../../../../../resource/fingerprint.example.json");
   const fingerprintData = fs.readFileSync(fingerprintPath, 'utf8');
-  return FingerprintFormat.fromJson(fingerprintData);
+  return FingerprintFormat.load(fingerprintData);
 }
 
 async function main(): Promise<void> {

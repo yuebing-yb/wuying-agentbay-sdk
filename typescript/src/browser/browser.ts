@@ -1,9 +1,13 @@
 import { Session } from '../session';
 import { BrowserAgent } from './browser_agent';
 import { BrowserError } from '../exceptions';
-import { BROWSER_DATA_PATH, BROWSER_FINGERPRINT_PERSIST_PATH } from '../config';
 import { InitBrowserRequest } from '../api/models/InitBrowserRequest';
 import { FingerprintFormat } from './fingerprint';
+
+// Browser data path constant (moved from config.ts)
+const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
+// Browser fingerprint persistent path constant (moved from config.ts)
+const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
 import {
   log,
   logError,
