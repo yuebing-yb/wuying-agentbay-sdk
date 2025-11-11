@@ -956,7 +956,7 @@ UIElementsResult represents the result containing UI elements
 
 ## Related Resources
 
-- [Session API Reference](../../common-features/basics/session.md)
+- [Session API Reference](../common-features/basics/session.md)
 
 ---
 

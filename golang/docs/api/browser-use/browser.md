@@ -783,7 +783,7 @@ SessionInterface defines the interface that Session must implement for Browser
 
 ## Related Resources
 
-- [Session API Reference](../../common-features/basics/session.md)
+- [Session API Reference](../common-features/basics/session.md)
 
 ---
 

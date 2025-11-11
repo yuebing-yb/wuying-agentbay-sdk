@@ -365,9 +365,9 @@ func calculateResourcePath(resource ResourceConfig, moduleConfig ModuleConfig) s
 	case "browser-use", "codespace", "computer-use", "mobile-use":
 		switch targetCategory {
 		case "common-features/basics":
-			return fmt.Sprintf("../../common-features/basics/%s.md", module)
+			return fmt.Sprintf("../common-features/basics/%s.md", module)
 		case "common-features/advanced":
-			return fmt.Sprintf("../../common-features/advanced/%s.md", module)
+			return fmt.Sprintf("../common-features/advanced/%s.md", module)
 		case "browser-use":
 			return fmt.Sprintf("../%s.md", module)
 		case "codespace":

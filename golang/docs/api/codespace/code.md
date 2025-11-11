@@ -146,7 +146,7 @@ CodeResult represents the result of a code execution
 
 ## Related Resources
 
-- [Session API Reference](../../common-features/basics/session.md)
+- [Session API Reference](../common-features/basics/session.md)
 
 ---
 
