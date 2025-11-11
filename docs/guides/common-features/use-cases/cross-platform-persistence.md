@@ -221,7 +221,6 @@ Target:   /home/wuying/下载
 
 ## Related Resources
 
-- [Context Synchronization](../basics/context-manager.md)
-- [Session Parameters](../basics/session.md)
-- [Context Management](../basics/context.md)
+- [Data Persistence Guide](../basics/data-persistence.md)
+- [Session Management](../basics/session-management.md)
 
