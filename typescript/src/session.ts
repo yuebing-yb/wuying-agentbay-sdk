@@ -1709,7 +1709,7 @@ export class Session {
    * @param pollInterval - Interval in seconds between status polls. Defaults to 2.0 seconds.
    * @returns SessionPauseResult indicating success or failure and request ID
    */
-  async pause_async(timeout: number = 600, pollInterval: number = 2.0): Promise<SessionPauseResult> {
+  async pauseAsync(timeout = 600, pollInterval = 2.0): Promise<SessionPauseResult> {
     try {
       const request = new $_client.PauseSessionAsyncRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
@@ -1840,7 +1840,7 @@ export class Session {
    * @param pollInterval - Interval in seconds between status polls. Defaults to 2.0 seconds.
    * @returns SessionResumeResult indicating success or failure and request ID
    */
-  async resume_async(timeout: number = 600, pollInterval: number = 2.0): Promise<SessionResumeResult> {
+  async resumeAsync(timeout = 600, pollInterval = 2.0): Promise<SessionResumeResult> {
     try {
       const request = new $_client.ResumeSessionAsyncRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
