@@ -52,6 +52,7 @@ to override existing configuration.
 
 Configure logging for different scenarios
 
+```python
 from agentbay.logger import AgentBayLogger, get_logger
 
 # Basic setup with debug level
@@ -93,6 +94,7 @@ logger = get_logger("debug")
 logger.debug("This only appears in the log file")
 # No console output, but written to /tmp/debug.log
 
+```
 ### get\_logger
 
 ```python
@@ -129,6 +131,7 @@ Set the logging level.
 
 Change log level during runtime
 
+```python
 from agentbay.logger import AgentBayLogger, get_logger
 
 # Start with INFO level
@@ -152,6 +155,7 @@ logger.info("This won't appear anymore")
 logger.warning("But warnings still appear")
 # Output: But warnings still appear
 
+```
 ### get\_logger
 
 ```python

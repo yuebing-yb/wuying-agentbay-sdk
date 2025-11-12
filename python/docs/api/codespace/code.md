@@ -73,6 +73,7 @@ Execute code in the specified language with a timeout.
 
 Execute Python code in a code execution environment
 
+```python
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
 
@@ -81,6 +82,7 @@ result = agent_bay.create(CreateSessionParams(image_id="code_latest"))
 code_result = result.session.code.run_code("print('Hello')", "python")
 print(code_result.result)
 result.session.delete()
+```
 
 ## Best Practices
 

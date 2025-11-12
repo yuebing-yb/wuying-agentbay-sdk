@@ -533,9 +533,52 @@ def fix_example_with_descriptions(content: str) -> str:
 
                 # Handle indented description lines (2 spaces)
                 if current.startswith('  ') and not current.strip().startswith('```'):
-                    # Remove 2-space indentation from description
-                    fixed_lines.append(current[2:])
-                    i += 1
+                    # Check if this is an RST code block marker (ends with ::)
+                    if current.strip().endswith('::'):
+                        # Remove :: and the 2-space indentation from description
+                        description = current[2:].rstrip(':').rstrip()
+                        if description:
+                            fixed_lines.append(description)
+                        i += 1
+
+                        # Skip empty lines after ::
+                        while i < len(lines) and lines[i].strip() in ('', '  '):
+                            i += 1
+
+                        # Add code fence for the following indented code block
+                        if i < len(lines) and lines[i].startswith('  '):
+                            fixed_lines.append('')
+                            fixed_lines.append('```python')
+
+                            # Process all indented code lines (2 spaces)
+                            while i < len(lines):
+                                code_line = lines[i]
+
+                                # Stop at section headers or unindented content
+                                if code_line.startswith('###') or code_line.startswith('##') or code_line.strip() == '---':
+                                    break
+
+                                # Empty line - keep it
+                                if not code_line.strip():
+                                    fixed_lines.append('')
+                                    i += 1
+                                    continue
+
+                                # Indented line (part of code block)
+                                if code_line.startswith('  '):
+                                    # Remove 2-space indentation, preserving any additional indentation
+                                    fixed_lines.append(code_line[2:])
+                                    i += 1
+                                else:
+                                    # Unindented line - end of code block
+                                    break
+
+                            # Close code fence
+                            fixed_lines.append('```')
+                    else:
+                        # Regular description line - remove 2-space indentation
+                        fixed_lines.append(current[2:])
+                        i += 1
                 # Handle indented code blocks (4 spaces before ```)
                 elif current.strip().startswith('```'):
                     # Check if it has leading spaces
