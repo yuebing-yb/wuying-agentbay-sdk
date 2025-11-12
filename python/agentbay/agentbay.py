@@ -653,14 +653,13 @@ class AgentBay:
 
             # Log API response with key details
             resource_url = data.get("ResourceUrl", "")
-            truncated_url = resource_url[:50] + "..." if len(resource_url) > 50 else resource_url
             _log_api_response_with_details(
                 api_name="CreateSession",
                 request_id=request_id,
                 success=True,
                 key_fields={
                     "session_id": session_id,
-                    "resource_url": truncated_url
+                    "resource_url": resource_url
                 },
                 full_response=response_body
             )

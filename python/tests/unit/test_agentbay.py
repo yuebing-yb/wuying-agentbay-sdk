@@ -406,17 +406,78 @@ class TestAgentBay(unittest.TestCase):
         self.assertIsNotNone(result.session)
         if result.session:
             self.assertEqual(result.session.session_id, "secure-session-id")
-        
+
         # Verify the client was called with blacklist extra configs
         mock_client.create_mcp_session.assert_called_once()
         call_arg = mock_client.create_mcp_session.call_args[0][0]
-        
+
         # Check that extra_configs with blacklist is present in the request
         self.assertIsNotNone(call_arg.extra_configs)
         self.assertIsNotNone(call_arg.extra_configs.mobile)
         self.assertFalse(call_arg.extra_configs.mobile.lock_resolution)
         self.assertEqual(call_arg.extra_configs.mobile.app_manager_rule.rule_type, "Black")
         self.assertIn("com.malware.app", call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list)
+
+    @patch("agentbay.agentbay.extract_request_id")
+    @patch("agentbay.agentbay._load_config")
+    @patch("agentbay.agentbay.mcp_client")
+    @patch("agentbay.agentbay._log_api_response_with_details")
+    def test_create_session_logs_full_resource_url(
+        self, mock_log_api_response, mock_mcp_client, mock_load_config, mock_extract_request_id
+    ):
+        """Test that resource_url is logged in full without truncation"""
+        # Mock configuration and request ID
+        mock_load_config.return_value = {
+            "endpoint": "test.endpoint.com",
+            "timeout_ms": 30000,
+        }
+        mock_extract_request_id.return_value = "create-request-id"
+
+        # Create a very long resource URL (more than 50 characters)
+        long_url = "https://pre-myspace-wuying.aliyun.com/app/InnoArch/instance/s-04bdw8oc5n0ftg4kl/dashboard?token=verylongtokenstring123456789abcdefghijklmnopqrstuvwxyz"
+
+        # Mock client and response
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "Data": {
+                    "SessionId": "new-session-id",
+                    "ResourceUrl": long_url,
+                }
+            }
+        }
+        mock_client.create_mcp_session.return_value = mock_response
+        mock_mcp_client.return_value = mock_client
+
+        # Create AgentBay instance
+        agent_bay = AgentBay(api_key="test-key")
+        params = CreateSessionParams()
+
+        # Test creating a session
+        result = agent_bay.create(params)
+
+        # Verify results
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.session)
+        self.assertEqual(result.session.resource_url, long_url)
+
+        # Verify that the logging function was called with the full URL
+        mock_log_api_response.assert_called_once()
+        call_kwargs = mock_log_api_response.call_args[1]
+
+        # Check that the resource_url in key_fields is the full URL, not truncated
+        self.assertIn("key_fields", call_kwargs)
+        key_fields = call_kwargs["key_fields"]
+        self.assertIn("resource_url", key_fields)
+        logged_url = key_fields["resource_url"]
+
+        # Verify the URL is not truncated (should not end with "...")
+        self.assertNotIn("...", logged_url)
+        # Verify it's the full URL
+        self.assertEqual(logged_url, long_url)
+        # Verify the URL length is greater than 50 characters
+        self.assertGreater(len(logged_url), 50)
 
 
 if __name__ == "__main__":
