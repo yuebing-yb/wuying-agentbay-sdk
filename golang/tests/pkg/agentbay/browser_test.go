@@ -12,7 +12,7 @@ import (
 func TestSession_BrowserIntegration(t *testing.T) {
 	// Create a mock AgentBay instance
 	apiKey := "test-api-key"
-	
+
 	ab, err := agentbay.NewAgentBay(apiKey)
 	require.NoError(t, err)
 	require.NotNil(t, ab)
@@ -31,7 +31,7 @@ func TestSession_BrowserIntegration(t *testing.T) {
 		// These methods should be accessible through the session
 		apiKey := session.GetAPIKey()
 		sessionID := session.GetSessionID()
-		
+
 		assert.Equal(t, "test-api-key", apiKey)
 		assert.Equal(t, "test-session-123", sessionID)
 	})
@@ -39,28 +39,28 @@ func TestSession_BrowserIntegration(t *testing.T) {
 
 func TestBrowserOption_BrowserType(t *testing.T) {
 	tests := []struct {
-		name         string
-		browserType  string
+		name          string
+		browserType   string
 		shouldBeValid bool
 	}{
 		{
-			name:         "chromium",
-			browserType:  "chromium",
+			name:          "chromium",
+			browserType:   "chromium",
 			shouldBeValid: true,
 		},
 		{
-			name:         "chrome",
-			browserType:  "chrome",
+			name:          "chrome",
+			browserType:   "chrome",
 			shouldBeValid: true,
 		},
 		{
-			name:         "firefox (invalid)",
-			browserType:  "firefox",
+			name:          "firefox (invalid)",
+			browserType:   "firefox",
 			shouldBeValid: false,
 		},
 		{
-			name:         "edge (invalid)",
-			browserType:  "edge",
+			name:          "edge (invalid)",
+			browserType:   "edge",
 			shouldBeValid: false,
 		},
 	}
@@ -125,20 +125,20 @@ func TestBrowserOption_ToMapWithBrowserType(t *testing.T) {
 				Height: 1080,
 			},
 		}
-		
+
 		optionMap := option.ToMap()
-		
+
 		assert.Equal(t, true, optionMap["useStealth"])
 		assert.Equal(t, "chrome", optionMap["browserType"])
 		assert.Equal(t, true, optionMap["solveCaptchas"])
 		assert.Equal(t, userAgent, optionMap["userAgent"])
 		assert.Equal(t, extPath, optionMap["extensionPath"])
-		
+
 		viewport, ok := optionMap["viewport"].(map[string]interface{})
 		assert.True(t, ok)
 		assert.Equal(t, 1920, viewport["width"])
 		assert.Equal(t, 1080, viewport["height"])
-		
+
 		screen, ok := optionMap["screen"].(map[string]interface{})
 		assert.True(t, ok)
 		assert.Equal(t, 1920, screen["width"])
@@ -151,7 +151,7 @@ func TestBrowserProxy_ToMap(t *testing.T) {
 		server := "127.0.0.1:8080"
 		username := "user"
 		password := "pass"
-		
+
 		proxy, err := browser.NewBrowserProxy(
 			"custom",
 			&server,
@@ -160,12 +160,12 @@ func TestBrowserProxy_ToMap(t *testing.T) {
 			nil,
 			nil,
 		)
-		
+
 		require.NoError(t, err)
 		require.NotNil(t, proxy)
-		
+
 		proxyMap := proxy.ToMap()
-		
+
 		assert.Equal(t, "custom", proxyMap["type"])
 		assert.Equal(t, server, proxyMap["server"])
 		assert.Equal(t, username, proxyMap["username"])
@@ -174,7 +174,7 @@ func TestBrowserProxy_ToMap(t *testing.T) {
 
 	t.Run("Wuying proxy with restricted strategy", func(t *testing.T) {
 		strategy := "restricted"
-		
+
 		proxy, err := browser.NewBrowserProxy(
 			"wuying",
 			nil,
@@ -183,12 +183,12 @@ func TestBrowserProxy_ToMap(t *testing.T) {
 			&strategy,
 			nil,
 		)
-		
+
 		require.NoError(t, err)
 		require.NotNil(t, proxy)
-		
+
 		proxyMap := proxy.ToMap()
-		
+
 		assert.Equal(t, "wuying", proxyMap["type"])
 		assert.Equal(t, "restricted", proxyMap["strategy"])
 	})
@@ -196,7 +196,7 @@ func TestBrowserProxy_ToMap(t *testing.T) {
 	t.Run("Wuying proxy with polling strategy", func(t *testing.T) {
 		strategy := "polling"
 		pollSize := 10
-		
+
 		proxy, err := browser.NewBrowserProxy(
 			"wuying",
 			nil,
@@ -205,12 +205,12 @@ func TestBrowserProxy_ToMap(t *testing.T) {
 			&strategy,
 			&pollSize,
 		)
-		
+
 		require.NoError(t, err)
 		require.NotNil(t, proxy)
-		
+
 		proxyMap := proxy.ToMap()
-		
+
 		assert.Equal(t, "wuying", proxyMap["type"])
 		assert.Equal(t, "polling", proxyMap["strategy"])
 		assert.Equal(t, 10, proxyMap["pollsize"])
@@ -224,23 +224,23 @@ func TestBrowserFingerprint_ToMap(t *testing.T) {
 			[]string{"windows", "macos", "linux"},
 			[]string{"en-US", "zh-CN"},
 		)
-		
+
 		require.NoError(t, err)
 		require.NotNil(t, fingerprint)
-		
+
 		fpMap := fingerprint.ToMap()
-		
+
 		devices, ok := fpMap["devices"].([]string)
 		assert.True(t, ok)
 		assert.Contains(t, devices, "desktop")
 		assert.Contains(t, devices, "mobile")
-		
+
 		os, ok := fpMap["operatingSystems"].([]string)
 		assert.True(t, ok)
 		assert.Contains(t, os, "windows")
 		assert.Contains(t, os, "macos")
 		assert.Contains(t, os, "linux")
-		
+
 		locales, ok := fpMap["locales"].([]string)
 		assert.True(t, ok)
 		assert.Contains(t, locales, "en-US")
@@ -253,20 +253,20 @@ func TestBrowserFingerprint_ToMap(t *testing.T) {
 			nil,
 			nil,
 		)
-		
+
 		require.NoError(t, err)
 		require.NotNil(t, fingerprint)
-		
+
 		fpMap := fingerprint.ToMap()
-		
+
 		devices, ok := fpMap["devices"].([]string)
 		assert.True(t, ok)
 		assert.Contains(t, devices, "desktop")
-		
+
 		// operatingSystems and locales should not be in map if nil
 		_, hasOS := fpMap["operatingSystems"]
 		assert.False(t, hasOS)
-		
+
 		_, hasLocales := fpMap["locales"]
 		assert.False(t, hasLocales)
 	})
@@ -278,9 +278,9 @@ func TestBrowserViewportAndScreen_ToMap(t *testing.T) {
 			Width:  1366,
 			Height: 768,
 		}
-		
+
 		vpMap := viewport.ToMap()
-		
+
 		assert.Equal(t, 1366, vpMap["width"])
 		assert.Equal(t, 768, vpMap["height"])
 	})
@@ -290,9 +290,9 @@ func TestBrowserViewportAndScreen_ToMap(t *testing.T) {
 			Width:  1920,
 			Height: 1080,
 		}
-		
+
 		screenMap := screen.ToMap()
-		
+
 		assert.Equal(t, 1920, screenMap["width"])
 		assert.Equal(t, 1080, screenMap["height"])
 	})
@@ -337,4 +337,3 @@ func TestBrowserOption_WithProxies(t *testing.T) {
 		assert.Contains(t, err.Error(), "proxies list length must be limited to 1")
 	})
 }
-
