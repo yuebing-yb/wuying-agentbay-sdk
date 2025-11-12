@@ -1104,22 +1104,42 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 //
 // Parameters:
 //   - session: The session to pause.
+//   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+//   - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
 //
 // Returns:
 //   - *models.SessionPauseResult: A result object containing success status, request ID, and error message if any.
-func (ab *AgentBay) Pause(session *Session) (*models.SessionPauseResult, error) {
-	// Call session's PauseAsync method with default parameters
-	return session.PauseAsync(600, 2.0)
+func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
+	// Use default values if not provided
+	if timeout <= 0 {
+		timeout = 600
+	}
+	if pollInterval <= 0 {
+		pollInterval = 2.0
+	}
+
+	// Call session's PauseAsync method with provided parameters
+	return session.PauseAsync(timeout, pollInterval)
 }
 
 // Resume synchronously resumes a session from a paused state to continue work.
 //
 // Parameters:
 //   - session: The session to resume.
+//   - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+//   - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
 //
 // Returns:
 //   - *models.SessionResumeResult: A result object containing success status, request ID, and error message if any.
-func (ab *AgentBay) Resume(session *Session) (*models.SessionResumeResult, error) {
-	// Call session's ResumeAsync method with default parameters
-	return session.ResumeAsync(600, 2.0)
+func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
+	// Use default values if not provided
+	if timeout <= 0 {
+		timeout = 600
+	}
+	if pollInterval <= 0 {
+		pollInterval = 2.0
+	}
+
+	// Call session's ResumeAsync method with provided parameters
+	return session.ResumeAsync(timeout, pollInterval)
 }

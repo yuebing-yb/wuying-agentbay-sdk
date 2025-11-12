@@ -355,6 +355,41 @@ if err == nil {
 }
 ```
 
+#### Pause
+
+```go
+func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+```
+
+Pause synchronously pauses a session, putting it into a dormant state to reduce resource usage and
+costs.
+
+Parameters:
+  - session: The session to pause.
+  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionPauseResult: A result object containing success status, request ID, and error
+    message if any.
+
+#### Resume
+
+```go
+func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+```
+
+Resume synchronously resumes a session from a paused state to continue work.
+
+Parameters:
+  - session: The session to resume.
+  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionResumeResult: A result object containing success status, request ID, and error
+    message if any.
+
 ### Related Functions
 
 #### NewAgentBay
