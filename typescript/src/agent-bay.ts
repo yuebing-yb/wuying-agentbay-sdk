@@ -1110,6 +1110,7 @@ export class AgentBay {
           token: body.data.token || "",
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
+          status: body.data.status || "",
         };
 
         logAPIResponseWithDetails(

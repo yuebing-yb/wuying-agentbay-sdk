@@ -53,7 +53,7 @@ export interface GetSessionData {
   /** Resource URL for accessing the session */
   resourceUrl: string;
   /** Current status of the session */
-  status?: string;
+  status: string;
 }
 
 /**
