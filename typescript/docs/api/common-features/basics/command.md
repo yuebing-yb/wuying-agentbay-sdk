@@ -9,11 +9,6 @@
 The Command module provides methods for executing shell commands within a session in the AgentBay cloud environment.
 It supports both synchronous command execution with configurable timeouts.
 
-
-## Requirements
-
-- Any session image (browser_latest, code_latest, windows_latest, mobile_latest)
-
 Handles command execution operations in the AgentBay cloud environment.
 
 ## Table of contents

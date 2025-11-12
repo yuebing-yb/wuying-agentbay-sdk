@@ -24,10 +24,6 @@ Parameter conventions:
 - Include descriptive parameter names (e.g., lock_switch, package_list)
 - Document expected parameter types and values
 
-## Requirements
-
-- Any session image (browser_latest, code_latest, windows_latest, mobile_latest)
-
 ## Type Command
 
 ```go

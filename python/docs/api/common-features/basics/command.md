@@ -10,10 +10,6 @@ The Command module provides methods for executing shell commands within a sessio
 It supports both synchronous command execution with configurable timeouts.
 
 
-## Requirements
-
-- Any session image (browser_latest, code_latest, windows_latest, mobile_latest)
-
 
 
 ## CommandResult
