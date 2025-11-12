@@ -2,13 +2,13 @@ import json
 from typing import TYPE_CHECKING, Any, Dict, Optional
 from .logger import (
     get_logger,
-    log_api_call,
-    log_api_response,
-    log_api_response_with_details,
-    log_operation_start,
-    log_operation_success,
-    log_operation_error,
-    log_warning,
+    _log_api_call,
+    _log_api_response,
+    _log_api_response_with_details,
+    _log_operation_start,
+    _log_operation_success,
+    _log_operation_error,
+    _log_warning,
 )
 
 from agentbay.api.models import (
@@ -19,7 +19,6 @@ from agentbay.api.models import (
     ReleaseMcpSessionRequest,
     SetLabelRequest,
 )
-from agentbay.application import ApplicationManager
 from agentbay.code import Code
 from agentbay.command import Command
 from agentbay.computer import Computer
@@ -29,9 +28,7 @@ from agentbay.mobile import Mobile
 from agentbay.model import DeleteResult, OperationResult, extract_request_id
 from agentbay.model import SessionPauseResult, SessionResumeResult
 from agentbay.oss import Oss
-from agentbay.ui import UI
 from agentbay.agent import Agent
-from agentbay.window import WindowManager
 from agentbay.context_manager import ContextManager
 
 if TYPE_CHECKING:
@@ -40,7 +37,7 @@ if TYPE_CHECKING:
 from agentbay.browser import Browser
 
 # Initialize logger for this module
-logger = get_logger("session")
+_logger = get_logger("session")
 
 
 class SessionInfo:
@@ -107,50 +104,45 @@ class Session:
         self.code = Code(self)
         self.oss = Oss(self)
 
-        # Initialize application and window managers
-        self.application = ApplicationManager(self)
-        self.window = WindowManager(self)
-
         # Initialize Computer and Mobile modules
         self.computer = Computer(self)
         self.mobile = Mobile(self)
 
-        self.ui = UI(self)
         self.context = ContextManager(self)
         self.browser = Browser(self)
 
         self.agent = Agent(self)
 
-    def get_api_key(self) -> str:
-        """Return the API key for this session."""
+    def _get_api_key(self) -> str:
+        """Internal method to get the API key for this session."""
         return self.agent_bay.api_key
 
-    def get_client(self):
-        """Return the HTTP client for this session."""
+    def _get_client(self):
+        """Internal method to get the HTTP client for this session."""
         return self.agent_bay.client
 
-    def get_session_id(self) -> str:
-        """Return the session_id for this session."""
+    def _get_session_id(self) -> str:
+        """Internal method to get the session ID."""
         return self.session_id
 
-    def is_vpc_enabled(self) -> bool:
-        """Return whether this session uses VPC resources."""
+    def _is_vpc_enabled(self) -> bool:
+        """Internal method to check if this session uses VPC resources."""
         return self.is_vpc
 
-    def get_network_interface_ip(self) -> str:
-        """Return the network interface IP for VPC sessions."""
+    def _get_network_interface_ip(self) -> str:
+        """Internal method to get the network interface IP for VPC sessions."""
         return self.network_interface_ip
 
-    def get_http_port(self) -> str:
-        """Return the HTTP port for VPC sessions."""
+    def _get_http_port(self) -> str:
+        """Internal method to get the HTTP port for VPC sessions."""
         return self.http_port
 
-    def get_token(self) -> str:
-        """Return the token for VPC sessions."""
+    def _get_token(self) -> str:
+        """Internal method to get the token for VPC sessions."""
         return self.token
 
-    def find_server_for_tool(self, tool_name: str) -> str:
-        """Find the server that provides the given tool."""
+    def _find_server_for_tool(self, tool_name: str) -> str:
+        """Internal method to find the server that provides the given MCP tool."""
         for tool in self.mcp_tools:
             if tool.name == tool_name:
                 return tool.server
@@ -158,14 +150,49 @@ class Session:
 
     def delete(self, sync_context: bool = False) -> DeleteResult:
         """
-        Delete this session.
+        Delete this session and release all associated resources.
 
         Args:
-            sync_context (bool): Whether to sync context data (trigger file uploads)
+            sync_context (bool, optional): Whether to sync context data (trigger file uploads)
                 before deleting the session. Defaults to False.
 
         Returns:
-            DeleteResult: Result indicating success or failure and request ID.
+            DeleteResult: Result indicating success or failure with request ID.
+                - success (bool): True if deletion succeeded
+                - error_message (str): Error details if deletion failed
+                - request_id (str): Unique identifier for this API request
+
+        Raises:
+            SessionError: If the deletion request fails or the response is invalid.
+
+        Behavior:
+            The deletion process follows these steps:
+            1. If sync_context=True, synchronizes all context data before deletion
+            2. If browser replay is enabled, automatically syncs recording context
+            3. Calls the ReleaseMcpSession API to delete the session
+            4. Returns success/failure status with request ID
+
+            Context Synchronization:
+            - When sync_context=True: Uploads all modified files in all contexts
+            - When browser replay enabled: Uploads browser recording data
+            - Synchronization failures do not prevent session deletion
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.command.run("echo 'Hello World'")
+            session.delete()
+            ```
+
+        Note:
+            - Always delete sessions when done to avoid resource leaks
+            - Use sync_context=True if you need to preserve modified files
+            - Browser replay data is automatically synced if enabled
+            - The session object becomes invalid after deletion
+            - Deletion is idempotent - deleting an already deleted session succeeds
+
+        See Also:
+            AgentBay.create, AgentBay.delete, ContextManager.sync
         """
         try:
             # Determine sync behavior based on enableBrowserReplay and sync_context
@@ -175,19 +202,19 @@ class Session:
             if sync_context:
                 # User explicitly requested sync - sync all contexts
                 should_sync = True
-                logger.info("🔄 User requested context synchronization")
+                _logger.info("🔄 User requested context synchronization")
             elif hasattr(self, "enableBrowserReplay") and self.enableBrowserReplay:
                 # Browser replay enabled but no explicit sync - sync only browser recording context
                 if hasattr(self, "record_context_id") and self.record_context_id:
                     should_sync = True
                     sync_context_id = self.record_context_id
-                    logger.info(f"🎥 Browser replay enabled - syncing recording context: {sync_context_id}")
+                    _logger.info(f"🎥 Browser replay enabled - syncing recording context: {sync_context_id}")
                 else:
-                    logger.warning("⚠️  Browser replay enabled but no record_context_id found")
+                    _logger.warning("⚠️  Browser replay enabled but no record_context_id found")
 
             # Perform context synchronization if needed
             if should_sync:
-                log_operation_start(
+                _log_operation_start(
                     "Context synchronization", "Before session deletion"
                 )
                 import time
@@ -201,39 +228,39 @@ class Session:
                     if sync_context_id:
                         # Sync specific context (browser recording)
                         sync_result = asyncio.run(self.context.sync(context_id=sync_context_id))
-                        logger.info(f"🎥 Synced browser recording context: {sync_context_id}")
+                        _logger.info(f"🎥 Synced browser recording context: {sync_context_id}")
                     else:
                         # Sync all contexts
                         sync_result = asyncio.run(self.context.sync())
-                        logger.info("🔄 Synced all contexts")
+                        _logger.info("🔄 Synced all contexts")
 
                     sync_duration = time.time() - sync_start_time
 
                     if sync_result.success:
-                        log_operation_success("Context sync")
-                        logger.info(
+                        _log_operation_success("Context sync")
+                        _logger.info(
                             f"⏱️  Context sync completed in {sync_duration:.2f} seconds"
                         )
                     else:
-                        log_warning("Context sync completed with failures")
-                        logger.warning(
+                        _log_warning("Context sync completed with failures")
+                        _logger.warning(
                             f"⏱️  Context sync failed after {sync_duration:.2f} seconds"
                         )
 
                 except Exception as e:
                     sync_duration = time.time() - sync_start_time
-                    log_warning(f"Failed to trigger context sync: {e}")
-                    logger.warning(
+                    _log_warning(f"Failed to trigger context sync: {e}")
+                    _logger.warning(
                         f"⏱️  Context sync failed after {sync_duration:.2f} seconds"
                     )
                     # Continue with deletion even if sync fails
 
             # Proceed with session deletion
             request = ReleaseMcpSessionRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
             )
-            response = self.get_client().release_mcp_session(request)
+            response = self._get_client().release_mcp_session(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -245,7 +272,7 @@ class Session:
 
             if not success:
                 error_message = f"[{body.get('Code', 'Unknown')}] {body.get('Message', 'Failed to delete session')}"
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="ReleaseMcpSession",
                     request_id=request_id,
                     success=False,
@@ -258,7 +285,7 @@ class Session:
                 )
 
             # Log successful deletion
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="ReleaseMcpSession",
                 request_id=request_id,
                 success=True,
@@ -269,7 +296,7 @@ class Session:
             return DeleteResult(request_id=request_id, success=True)
 
         except Exception as e:
-            log_operation_error("release_mcp_session", str(e), exc_info=True)
+            _log_operation_error("release_mcp_session", str(e), exc_info=True)
             # In case of error, return failure result with error message
             return DeleteResult(
                 success=False,
@@ -350,6 +377,12 @@ class Session:
 
         Raises:
             SessionError: If the operation fails.
+
+        Example:
+            ```python
+            labels = {"environment": "production", "version": "1.0"}
+            session.set_labels(labels)
+            ```
         """
         try:
             # Validate labels using the extracted validation function
@@ -361,18 +394,18 @@ class Session:
             labels_json = json.dumps(labels)
 
             request = SetLabelRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
                 labels=labels_json,
             )
 
-            response = self.get_client().set_label(request)
+            response = self._get_client().set_label(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
 
             # Log successful label setting
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="SetLabel",
                 request_id=request_id,
                 success=True,
@@ -385,7 +418,7 @@ class Session:
             return OperationResult(request_id=request_id, success=True)
 
         except Exception as e:
-            logger.exception(f"❌ Failed to set labels for session {self.session_id}")
+            _logger.exception(f"❌ Failed to set labels for session {self.session_id}")
             raise SessionError(
                 f"Failed to set labels for session {self.session_id}: {e}"
             )
@@ -399,14 +432,20 @@ class Session:
 
         Raises:
             SessionError: If the operation fails.
+
+        Example:
+            ```python
+            result = session.get_labels()
+            print(result.data)
+            ```
         """
         try:
             request = GetLabelRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
             )
 
-            response = self.get_client().get_label(request)
+            response = self._get_client().get_label(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -421,7 +460,7 @@ class Session:
                 labels = json.loads(labels_json)
 
             # Log successful label retrieval
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="GetLabel",
                 request_id=request_id,
                 success=True,
@@ -434,31 +473,65 @@ class Session:
             return OperationResult(request_id=request_id, success=True, data=labels)
 
         except Exception as e:
-            logger.exception(f"❌ Failed to get labels for session {self.session_id}")
+            _logger.exception(f"❌ Failed to get labels for session {self.session_id}")
             raise SessionError(
                 f"Failed to get labels for session {self.session_id}: {e}"
             )
 
     def info(self) -> OperationResult:
         """
-        Gets information about this session.
+        Get detailed information about this session.
 
         Returns:
-            OperationResult: Result containing the session information as data and
-                request ID.
+            OperationResult: Result containing SessionInfo object and request ID.
+                - success (bool): Always True if no exception
+                - data (SessionInfo): Session information object with fields:
+                    - session_id (str): The session identifier
+                    - resource_url (str): URL for accessing the session
+                    - app_id (str): Application ID (for desktop sessions)
+                    - auth_code (str): Authentication code
+                    - connection_properties (str): Connection configuration
+                    - resource_id (str): Resource identifier
+                    - resource_type (str): Type of resource (e.g., "Desktop")
+                    - ticket (str): Access ticket
+                - request_id (str): Unique identifier for this API request
 
         Raises:
-            SessionError: If the operation fails.
+            SessionError: If the API request fails or response is invalid.
+
+        Behavior:
+            This method calls the GetMcpResource API to retrieve session metadata.
+            The returned SessionInfo contains:
+            - session_id: The session identifier
+            - resource_url: URL for accessing the session
+            - Desktop-specific fields (app_id, auth_code, connection_properties, etc.)
+              are populated from the DesktopInfo section of the API response
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            info_result = session.info()
+            print(info_result.data.session_id)
+            ```
+
+        Note:
+            - Session info is retrieved from the AgentBay API in real-time
+            - The resource_url can be used for browser-based access
+            - Desktop-specific fields (app_id, auth_code) are only populated for desktop sessions
+            - This method does not modify the session state
+
+        See Also:
+            AgentBay.create, Session.delete, Session.get_link
         """
         try:
             request = GetMcpResourceRequest(
-                authorization=f"Bearer {self.get_api_key()}",
+                authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
             )
 
-            log_api_call("GetMcpResource", f"SessionId={self.session_id}")
+            _log_api_call("GetMcpResource", f"SessionId={self.session_id}")
 
-            response = self.get_client().get_mcp_resource(request)
+            response = self._get_client().get_mcp_resource(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -493,7 +566,7 @@ class Session:
                     session_info.ticket = desktop_info["Ticket"]
 
             # Log successful session info retrieval
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="GetMcpResource",
                 request_id=request_id,
                 success=True,
@@ -509,30 +582,71 @@ class Session:
             )
 
         except Exception as e:
-            logger.exception(f"❌ Failed to get session info for session {self.session_id}")
-            raise SessionError(
-                f"Failed to get session info for session {self.session_id}: {e}"
-            )
+            # Check if this is an expected business error (e.g., session not found)
+            error_str = str(e)
+            error_code = ""
+
+            # Try to extract error code from the exception
+            if hasattr(e, 'data') and hasattr(e.data, 'get'):
+                error_code = e.data.get('Code', '')
+            elif 'InvalidMcpSession.NotFound' in error_str or 'NotFound' in error_str:
+                error_code = 'InvalidMcpSession.NotFound'
+
+            if error_code == 'InvalidMcpSession.NotFound':
+                # This is an expected error - session doesn't exist
+                # Use info level logging without stack trace, but with red color for visibility
+                from agentbay.logger import _log_info_with_color
+                _log_info_with_color(f"Session not found: {self.session_id}")
+                _logger.debug(f"GetMcpResource error details: {error_str}")
+                return OperationResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Session {self.session_id} not found"
+                )
+            else:
+                # This is an unexpected error - log with full error
+                _logger.exception(f"❌ Failed to get session info for session {self.session_id}")
+                raise SessionError(
+                    f"Failed to get session info for session {self.session_id}: {e}"
+                )
 
     def get_link(
         self, protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None
     ) -> OperationResult:
         """
-        Get a link associated with the current session.
+        Get an access link for this session.
 
         Args:
-            protocol_type (Optional[str], optional): The protocol type to use for the
-                link. Defaults to None.
-            port (Optional[int], optional): The port to use for the link. Must be an integer in the range [30100, 30199].
+            protocol_type (Optional[str], optional): The protocol type for the link.
+                Defaults to None (uses session default).
+            port (Optional[int], optional): The port number to expose. Must be in range [30100, 30199].
                 Defaults to None.
-            options (Optional[str], optional): Additional options as a JSON string (e.g., for adb configuration).
+            options (Optional[str], optional): Additional configuration as JSON string.
                 Defaults to None.
 
         Returns:
-            OperationResult: Result containing the link as data and request ID.
+            OperationResult: Result containing the access URL and request ID.
+                - success (bool): True if the operation succeeded
+                - data (str): The access URL
+                - request_id (str): Unique identifier for this API request
 
         Raises:
-            SessionError: If the request fails or the response is invalid.
+            SessionError: If port is out of valid range [30100, 30199] or the API request fails.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            link_result = session.get_link()
+            port_link_result = session.get_link(port=30150)
+            ```
+
+        Note:
+            - Port must be in range [30100, 30199] if specified
+            - The returned URL format depends on the session configuration
+            - For mobile ADB connections, use session.mobile.get_adb_url() instead
+
+        See Also:
+            Session.info, Session.get_link_async, Mobile.get_adb_url
         """
         try:
             # Validate port range if port is provided
@@ -543,15 +657,15 @@ class Session:
                     )
 
             # Log API call with parameters
-            log_api_call(
+            _log_api_call(
                 "GetLink",
                 f"SessionId={self.session_id}, ProtocolType={protocol_type or 'default'}, "
                 f"Port={port or 'default'}, Options={'provided' if options else 'none'}"
             )
 
             request = GetLinkRequest(
-                authorization=f"Bearer {self.get_api_key()}",
-                session_id=self.get_session_id(),
+                authorization=f"Bearer {self._get_api_key()}",
+                session_id=self._get_session_id(),
                 protocol_type=protocol_type,
                 port=port,
                 options=options,
@@ -576,7 +690,7 @@ class Session:
                 )
 
             data = body.get("Data", {})
-            logger.debug(f"📊 Data: {data}")
+            _logger.debug(f"📊 Data: {data}")
 
             if not isinstance(data, dict):
                 try:
@@ -587,7 +701,7 @@ class Session:
             url = data.get("Url", "")
 
             # Log successful link retrieval
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="GetLink",
                 request_id=request_id,
                 success=True,
@@ -604,7 +718,7 @@ class Session:
         except SessionError:
             raise
         except Exception as e:
-            logger.error(f"❌ Failed to get link for session {self.session_id}: {e}")
+            _logger.error(f"❌ Failed to get link for session {self.session_id}: {e}")
             raise SessionError(f"Failed to get link: {e}")
 
     async def get_link_async(
@@ -636,15 +750,15 @@ class Session:
                     )
 
             # Log API call with parameters
-            log_api_call(
+            _log_api_call(
                 "GetLink (async)",
                 f"SessionId={self.session_id}, ProtocolType={protocol_type or 'default'}, "
                 f"Port={port or 'default'}, Options={'provided' if options else 'none'}"
             )
 
             request = GetLinkRequest(
-                authorization=f"Bearer {self.get_api_key()}",
-                session_id=self.get_session_id(),
+                authorization=f"Bearer {self._get_api_key()}",
+                session_id=self._get_session_id(),
                 protocol_type=protocol_type,
                 port=port,
                 options=options,
@@ -671,7 +785,7 @@ class Session:
                 )
 
             data = body.get("Data", {})
-            logger.debug(f"📊 Data: {data}")
+            _logger.debug(f"📊 Data: {data}")
 
             if not isinstance(data, dict):
                 try:
@@ -682,7 +796,7 @@ class Session:
             url = data.get("Url", "")
 
             # Log successful link retrieval
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="GetLink (async)",
                 request_id=request_id,
                 success=True,
@@ -699,7 +813,7 @@ class Session:
         except SessionError:
             raise
         except Exception as e:
-            logger.error(f"❌ Failed to get link asynchronously for session {self.session_id}: {e}")
+            _logger.error(f"❌ Failed to get link asynchronously for session {self.session_id}: {e}")
             raise SessionError(f"Failed to get link asynchronously: {e}")
 
     def list_mcp_tools(self, image_id: Optional[str] = None):
@@ -711,6 +825,13 @@ class Session:
 
         Returns:
             Result containing tools list and request ID
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            tools_result = session.list_mcp_tools()
+            print(f"Available tools: {len(tools_result.tools)}")
+            ```
         """
         from agentbay.api.models import ListMcpToolsRequest
         from agentbay.model.response import McpToolsResult
@@ -722,18 +843,18 @@ class Session:
             image_id = getattr(self, "image_id", "") or "linux_latest"
 
         request = ListMcpToolsRequest(
-            authorization=f"Bearer {self.get_api_key()}", image_id=image_id
+            authorization=f"Bearer {self._get_api_key()}", image_id=image_id
         )
 
-        log_api_call("ListMcpTools", f"ImageId={image_id}")
+        _log_api_call("ListMcpTools", f"ImageId={image_id}")
 
-        response = self.get_client().list_mcp_tools(request)
+        response = self._get_client().list_mcp_tools(request)
 
         # Extract request ID
         request_id = extract_request_id(response)
 
         if response and response.body:
-            logger.debug(f"📥 Response from ListMcpTools: {response.body}")
+            _logger.debug(f"📥 Response from ListMcpTools: {response.body}")
 
         # Parse the response data
         tools = []
@@ -751,12 +872,12 @@ class Session:
                     )
                     tools.append(tool)
             except json.JSONDecodeError as e:
-                logger.error(f"❌ Error unmarshaling tools data: {e}")
+                _logger.error(f"❌ Error unmarshaling tools data: {e}")
 
         self.mcp_tools = tools  # Update the session's mcp_tools field
 
         # Log successful tools retrieval
-        log_api_response_with_details(
+        _log_api_response_with_details(
             api_name="ListMcpTools",
             request_id=request_id,
             success=True,
@@ -793,9 +914,11 @@ class Session:
             McpToolResult: Result containing success status, data, and error message
 
         Example:
-            >>> result = session.call_mcp_tool("shell", {"command": "ls", "timeout_ms": 1000})
-            >>> if result.success:
-            >>>     print(result.data)
+            ```python
+            result = session.call_mcp_tool("shell", {"command": "echo 'Hello World'", "timeout_ms": 1000})
+            result = session.call_mcp_tool("shell", {"command": "pwd", "timeout_ms": 1000}, read_timeout=30, connect_timeout=10)
+            result = session.call_mcp_tool("shell", {"command": "invalid_command_12345", "timeout_ms": 1000})
+            ```
         """
         from agentbay.model import McpToolResult
         from agentbay.api.models import CallMcpToolRequest
@@ -805,7 +928,7 @@ class Session:
             args_json = json.dumps(args, ensure_ascii=False)
 
             # Check if this is a VPC session
-            if self.is_vpc_enabled():
+            if self._is_vpc_enabled():
                 return self._call_mcp_tool_vpc(tool_name, args_json)
 
             # Non-VPC mode: use traditional API call
@@ -813,7 +936,7 @@ class Session:
                 tool_name, args_json, read_timeout, connect_timeout, auto_gen_session
             )
         except Exception as e:
-            logger.error(f"❌ Failed to call MCP tool {tool_name}: {e}")
+            _logger.error(f"❌ Failed to call MCP tool {tool_name}: {e}")
             return McpToolResult(
                 request_id="",
                 success=False,
@@ -838,12 +961,12 @@ class Session:
         import random
         import string
 
-        log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
+        _log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
 
         # Find server for this tool
-        server = self.find_server_for_tool(tool_name)
+        server = self._find_server_for_tool(tool_name)
         if not server:
-            log_operation_error(
+            _log_operation_error(
                 "CallMcpTool(VPC)",
                 f"server not found for tool: {tool_name}",
                 False,
@@ -856,21 +979,21 @@ class Session:
             )
 
         # Check VPC network configuration
-        if not self.get_network_interface_ip() or not self.get_http_port():
-            log_operation_error(
+        if not self._get_network_interface_ip() or not self._get_http_port():
+            _log_operation_error(
                 "CallMcpTool(VPC)",
-                f"VPC network configuration incomplete: networkInterfaceIp={self.get_network_interface_ip()}, httpPort={self.get_http_port()}",
+                f"VPC network configuration incomplete: networkInterfaceIp={self._get_network_interface_ip()}, httpPort={self._get_http_port()}",
                 False,
             )
             return McpToolResult(
                 request_id="",
                 success=False,
                 data="",
-                error_message=f"VPC network configuration incomplete: networkInterfaceIp={self.get_network_interface_ip()}, httpPort={self.get_http_port()}",
+                error_message=f"VPC network configuration incomplete: networkInterfaceIp={self._get_network_interface_ip()}, httpPort={self._get_http_port()}",
             )
 
         # Construct VPC URL with query parameters
-        base_url = f"http://{self.get_network_interface_ip()}:{self.get_http_port()}/callTool"
+        base_url = f"http://{self._get_network_interface_ip()}:{self._get_http_port()}/callTool"
 
         # Prepare query parameters
         request_id = f"vpc-{int(time.time() * 1000)}-{''.join(random.choices(string.ascii_lowercase + string.digits, k=9))}"
@@ -878,7 +1001,7 @@ class Session:
             "server": server,
             "tool": tool_name,
             "args": args_json,
-            "token": self.get_token(),
+            "token": self._get_token(),
             "requestId": request_id,
         }
 
@@ -907,7 +1030,7 @@ class Session:
                     text_content = first_content.get("text", "")
 
             if is_error:
-                log_operation_error(
+                _log_operation_error(
                     "CallMcpTool(VPC)",
                     f"Tool returned error: {text_content}",
                     False,
@@ -919,7 +1042,7 @@ class Session:
                     error_message=text_content,
                 )
 
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 "CallMcpTool(VPC)",
                 request_id,
                 True,
@@ -935,7 +1058,7 @@ class Session:
             )
 
         except requests.exceptions.RequestException as e:
-            log_operation_error(
+            _log_operation_error(
                 "CallMcpTool(VPC)", f"HTTP request failed: {e}", True
             )
             return McpToolResult(
@@ -945,7 +1068,7 @@ class Session:
                 error_message=f"HTTP request failed: {e}",
             )
         except Exception as e:
-            log_operation_error(
+            _log_operation_error(
                 "CallMcpTool(VPC)", f"Unexpected error: {e}", True
             )
             return McpToolResult(
@@ -979,13 +1102,13 @@ class Session:
         from agentbay.model import McpToolResult
         from agentbay.api.models import CallMcpToolRequest
 
-        log_api_call(
+        _log_api_call(
             "CallMcpTool",
             f"Tool={tool_name}, SessionId={self.session_id}, ArgsLength={len(args_json)}",
         )
 
         request = CallMcpToolRequest(
-            authorization=f"Bearer {self.get_api_key()}",
+            authorization=f"Bearer {self._get_api_key()}",
             session_id=self.session_id,
             name=tool_name,
             args=args_json,
@@ -993,7 +1116,7 @@ class Session:
         )
 
         try:
-            response = self.get_client().call_mcp_tool(
+            response = self._get_client().call_mcp_tool(
                 request, read_timeout=read_timeout, connect_timeout=connect_timeout
             )
 
@@ -1056,7 +1179,7 @@ class Session:
                     text_content = first_content.get("text", "")
 
             if is_error:
-                log_operation_error(
+                _log_operation_error(
                     "CallMcpTool", f"Tool returned error: {text_content}", False
                 )
                 return McpToolResult(
@@ -1066,7 +1189,7 @@ class Session:
                     error_message=text_content,
                 )
 
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 "CallMcpTool",
                 request_id,
                 True,
@@ -1082,7 +1205,7 @@ class Session:
             )
 
         except Exception as e:
-            log_operation_error("CallMcpTool", f"API request failed: {e}", True)
+            _log_operation_error("CallMcpTool", f"API request failed: {e}", True)
             return McpToolResult(
                 request_id="",
                 success=False,

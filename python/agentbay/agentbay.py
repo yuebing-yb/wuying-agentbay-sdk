@@ -15,7 +15,7 @@ from agentbay.api.models import (
     GetSessionRequest,
     ListSessionRequest,
 )
-from agentbay.config import load_config
+from agentbay.config import _load_config
 from agentbay.context import ContextService
 from agentbay.model import (
     DeleteResult,
@@ -29,43 +29,49 @@ from agentbay.model import (
 )
 from agentbay.session import Session
 from agentbay.session_params import CreateSessionParams, ListSessionParams
-from agentbay.deprecation import deprecated
 from agentbay.version import __version__, __is_release__
 from .logger import (
     get_logger,
-    log_api_call,
-    log_api_response,
-    log_api_response_with_details,
-    log_operation_start,
-    log_operation_success,
-    log_operation_error,
-    log_warning,
-    mask_sensitive_data,
+    _log_api_call,
+    _log_api_response,
+    _log_api_response_with_details,
+    _log_operation_start,
+    _log_operation_success,
+    _log_operation_error,
+    _log_warning,
+    _mask_sensitive_data,
+    _log_info_with_color,
 )
 
 # Initialize logger for this module
-logger = get_logger("agentbay")
+_logger = get_logger("agentbay")
 from typing import Optional
 from agentbay.context_sync import ContextSync
-from agentbay.config import BROWSER_DATA_PATH
+from agentbay.config import _BROWSER_DATA_PATH
 
 
-def generate_random_context_name(
+def _generate_random_context_name(
     length: int = 8, include_timestamp: bool = True
 ) -> str:
     """
     Generate a random context name string using alphanumeric characters with optional timestamp.
 
+    This is an internal helper function used by the SDK to generate unique context names.
+
     Args:
-        length (int): Length of the random part. Defaults to 16.
-        include_timestamp (bool): Whether to include timestamp. Defaults to True.
+        length (int): Length of the random part. Defaults to 8.
+        include_timestamp (bool): Whether to include timestamp prefix. Defaults to True.
 
     Returns:
-        str: Random alphanumeric string with optional timestamp prefix
+        str: Random alphanumeric string with optional timestamp prefix in format:
+            - With timestamp: "YYYYMMDDHHMMSS_<random>" (e.g., "20250112143025_kG8hN2pQ")
+            - Without timestamp: "<random>" (e.g., "kG8hN2pQ")
 
-    Examples:
-        generate_random_context_name()  # Returns: "20250912143025_kG8hN2pQ7mX9vZ1L"
-        generate_random_context_name(8, False)  # Returns: "kG8hN2pQ"
+    Note:
+        - This is a private function for internal SDK use only
+        - Characters are randomly selected from a-zA-Z0-9
+        - Timestamp format is YYYYMMDDHHMMSS (local time)
+        - Useful for creating unique context names that can be sorted chronologically
     """
     import time
 
@@ -116,7 +122,7 @@ class AgentBay:
                 )
 
         # Load configuration with optional custom env file path
-        config_data = load_config(cfg, env_file)
+        config_data = _load_config(cfg, env_file)
 
         self.api_key = api_key
 
@@ -179,8 +185,8 @@ class AgentBay:
 
         resource_url = response_data.get("ResourceUrl", "")
 
-        logger.info(f"🆔 Session created: {session_id}")
-        logger.debug(f"🔗 Resource URL: {resource_url}")
+        _logger.info(f"🆔 Session created: {session_id}")
+        _logger.debug(f"🔗 Resource URL: {resource_url}")
 
         # Create Session object
         from agentbay.session import Session
@@ -234,15 +240,15 @@ class AgentBay:
         Args:
             session: The session to fetch MCP tools for
         """
-        log_operation_start("Fetching MCP tools", "VPC session detected")
+        _log_operation_start("Fetching MCP tools", "VPC session detected")
         try:
             tools_result = session.list_mcp_tools()
-            log_operation_success(
+            _log_operation_success(
                 f"Fetched {len(tools_result.tools)} MCP tools",
                 f"RequestID: {tools_result.request_id}",
             )
         except Exception as e:
-            log_warning(f"Failed to fetch MCP tools for VPC session: {e}")
+            _log_warning(f"Failed to fetch MCP tools for VPC session: {e}")
             # Continue with session creation even if tools fetch fails
 
     def _wait_for_context_synchronization(self, session: Session) -> None:
@@ -252,7 +258,7 @@ class AgentBay:
         Args:
             session: The session to wait for context synchronization
         """
-        log_operation_start("Context synchronization", "Waiting for completion")
+        _log_operation_start("Context synchronization", "Waiting for completion")
 
         # Wait for context synchronization to complete
         max_retries = 150  # Maximum number of retries
@@ -269,7 +275,7 @@ class AgentBay:
             has_failure = False
 
             for item in info_result.context_status_data:
-                logger.info(
+                _logger.info(
                     f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
                 )
 
@@ -279,18 +285,18 @@ class AgentBay:
 
                 if item.status == "Failed":
                     has_failure = True
-                    logger.error(
+                    _logger.error(
                         f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
                     )
 
             if all_completed or not info_result.context_status_data:
                 if has_failure:
-                    log_warning("Context synchronization completed with failures")
+                    _log_warning("Context synchronization completed with failures")
                 else:
-                    log_operation_success("Context synchronization")
+                    _log_operation_success("Context synchronization")
                 break
 
-            logger.debug(
+            _logger.debug(
                 f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}"
             )
             time.sleep(retry_interval)
@@ -313,9 +319,9 @@ class AgentBay:
                 else:
                     req_map["Authorization"] = auth[:2] + "****" + auth[-2:]
             request_body = json.dumps(req_map, ensure_ascii=False, indent=2)
-            logger.debug(f"📤 CreateMcpSessionRequest body:\n{request_body}")
+            _logger.debug(f"📤 CreateMcpSessionRequest body:\n{request_body}")
         except Exception:
-            logger.debug(f"📤 CreateMcpSessionRequest: {request}")
+            _logger.debug(f"📤 CreateMcpSessionRequest: {request}")
 
     def _update_browser_replay_context(
         self, response_data: dict, record_context_id: str
@@ -335,7 +341,7 @@ class AgentBay:
             # Extract AppInstanceId from response data
             app_instance_id = response_data.get("AppInstanceId")
             if not app_instance_id:
-                logger.warning(
+                _logger.warning(
                     "AppInstanceId not found in response data, skipping browser replay context update"
                 )
                 return
@@ -349,22 +355,22 @@ class AgentBay:
             context_obj = Context(id=record_context_id, name=context_name)
 
             # Call context.update interface
-            logger.info(
+            _logger.info(
                 f"Updating browser replay context: {context_name} -> {record_context_id}"
             )
             update_result = self.context.update(context_obj)
 
             if update_result.success:
-                logger.info(
+                _logger.info(
                     f"✅ Successfully updated browser replay context: {context_name}"
                 )
             else:
-                logger.warning(
+                _logger.warning(
                     f"⚠️ Failed to update browser replay context: {update_result.error_message}"
                 )
 
         except Exception as e:
-            logger.error(f"❌ Error updating browser replay context: {e}")
+            _logger.error(f"❌ Error updating browser replay context: {e}")
             # Continue execution even if context update fails
 
     def create(self, params: Optional[CreateSessionParams] = None) -> SessionResult:
@@ -372,11 +378,37 @@ class AgentBay:
         Create a new session in the AgentBay cloud environment.
 
         Args:
-            params (Optional[CreateSessionParams], optional): Parameters for
-              creating the session.Defaults to None.
+            params (Optional[CreateSessionParams], optional): Parameters for creating the session.
+                Defaults to None (uses default configuration).
 
         Returns:
             SessionResult: Result containing the created session and request ID.
+                - success (bool): True if the operation succeeded
+                - session (Session): The created session object (if success is True)
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            ValueError: If API key is not provided and AGENTBAY_API_KEY environment variable is not set.
+            ClientException: If the API request fails due to network or authentication issues.
+
+        Example:
+            ```python
+            result = agent_bay.create()
+            session = result.session
+            info_result = session.info()
+            print(f"Session ID: {info_result.session_id}")
+            session.delete()
+            ```
+
+        Note:
+            - A default file transfer context is automatically created for each session
+            - For VPC sessions, MCP tools information is automatically fetched
+            - If context_syncs are provided, the method waits for synchronization to complete
+            - Session is automatically cached in the AgentBay instance
+
+        See Also:
+            AgentBay.get, AgentBay.list, Session.delete, CreateSessionParams
         """
         try:
             if params is None:
@@ -399,7 +431,7 @@ class AgentBay:
                 )
                 if not hasattr(params, "context_syncs") or params.context_syncs is None:
                     params.context_syncs = []
-                logger.info(
+                _logger.info(
                     f"Adding context sync for file transfer operations: {file_transfer_context_sync}"
                 )
                 params.context_syncs.append(file_transfer_context_sync)
@@ -490,7 +522,7 @@ class AgentBay:
                 # Create browser context sync item
                 browser_context_sync = CreateMcpSessionRequestPersistenceDataList(
                     context_id=params.browser_context.context_id,
-                    path=BROWSER_DATA_PATH,  # Using a constant path for browser data
+                    path=_BROWSER_DATA_PATH,  # Using a constant path for browser data
                     policy=policy_json,
                 )
 
@@ -501,14 +533,14 @@ class AgentBay:
                 ):
                     request.persistence_data_list = []
                 request.persistence_data_list.append(browser_context_sync)
-                logger.info(
+                _logger.info(
                     f"📋 Added browser context to persistence_data_list. Total items: {len(request.persistence_data_list)}"
                 )
                 for i, item in enumerate(request.persistence_data_list):
-                    logger.info(
+                    _logger.info(
                         f"📋 persistence_data_list[{i}]: context_id={item.context_id}, path={item.path}, policy_length={len(item.policy) if item.policy else 0}"
                     )
-                    logger.info(
+                    _logger.info(
                         f"📋 persistence_data_list[{i}] policy content: {item.policy}"
                     )
 
@@ -534,7 +566,7 @@ class AgentBay:
 
                 # Create browser recording persistence configuration
                 record_path = "/home/guest/record"
-                record_context_name = generate_random_context_name()
+                record_context_name = _generate_random_context_name()
                 result = self.context.get(record_context_name, True)
                 record_context_id = result.context_id if result.success else ""
                 record_persistence = CreateMcpSessionRequestPersistenceDataList(
@@ -624,7 +656,7 @@ class AgentBay:
             # Log API response with key details
             resource_url = data.get("ResourceUrl", "")
             truncated_url = resource_url[:50] + "..." if len(resource_url) > 50 else resource_url
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="CreateSession",
                 request_id=request_id,
                 success=True,
@@ -657,158 +689,19 @@ class AgentBay:
             return SessionResult(request_id=request_id, success=True, session=session)
 
         except ClientException as e:
-            log_operation_error("create_mcp_session - ClientException", str(e), exc_info=True)
+            _log_operation_error("create_mcp_session - ClientException", str(e), exc_info=True)
             return SessionResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to create session: {e}",
             )
         except Exception as e:
-            log_operation_error("create_mcp_session", str(e), exc_info=True)
+            _log_operation_error("create_mcp_session", str(e), exc_info=True)
             return SessionResult(
                 request_id="",
                 success=False,
-                error_message=f"Unexpected error creating session: {e}",
-            )
-
-    @deprecated(
-        reason="This method is deprecated and will be removed in a future version.",
-        replacement="list()",
-    )
-    def list_by_labels(
-        self, params: Optional[Union[ListSessionParams, Dict[str, str]]] = None
-    ) -> SessionListResult:
-        """
-        Lists sessions filtered by the provided labels with pagination support.
-        It returns sessions that match all the specified labels.
-
-        Args:
-            params (Optional[Union[ListSessionParams, Dict[str, str]]], optional):
-                Parameters for listing sessions or a dictionary of labels.
-                Defaults to None.
-
-        Returns:
-            SessionListResult: Result containing a list of sessions and pagination
-            information.
-        """
-        try:
-            # Use default params if none provided
-            if params is None:
-                params = ListSessionParams()
-            # Convert dict to ListSessionParams if needed
-            elif isinstance(params, dict):
-                params = ListSessionParams(labels=params)
-
-            # Convert labels to JSON
-            labels_json = json.dumps(params.labels)
-
-            # Create request with pagination parameters
-            request = ListSessionRequest(
-                authorization=f"Bearer {self.api_key}",
-                labels=labels_json,
-                max_results=params.max_results,
-            )
-
-            # Add next_token if provided
-            if params.next_token:
-                request.next_token = params.next_token
-
-            request_details = f"Labels={labels_json}, MaxResults={params.max_results}"
-            if request.next_token:
-                request_details += f", NextToken={request.next_token}"
-            log_api_call("list_session", request_details)
-
-            # Make the API call
-            response = self.client.list_session(request)
-
-            # Extract request ID
-            request_id = extract_request_id(response)
-
-            response_map = response.to_map()
-            body = response_map.get("body", {})
-
-            # Check for errors in the response
-            if isinstance(body, dict) and body.get("Success") is False:
-                # Extract error code and message
-                code = body.get("Code", "Unknown")
-                message = body.get("Message", "Unknown error")
-                return SessionListResult(
-                    request_id=request_id,
-                    success=False,
-                    error_message=f"[{code}] {message}",
-                    session_ids=[],
-                    next_token="",
-                    max_results=params.max_results,
-                    total_count=0,
-                )
-
-            session_ids = []
-            next_token = ""
-            max_results = params.max_results  # Use the requested max_results
-            total_count = 0
-
-            try:
-                response_body = json.dumps(body, ensure_ascii=False, indent=2)
-            except Exception:
-                response_body = str(body)
-
-            # Extract pagination information
-            if isinstance(body, dict):
-                next_token = body.get("NextToken", "")
-                # Use API response MaxResults if present, otherwise use requested value
-                max_results = int(body.get("MaxResults", params.max_results))
-                total_count = int(body.get("TotalCount", 0))
-
-            # Extract session data
-            response_data = body.get("Data")
-
-            # Handle both list and dict responses
-            if isinstance(response_data, list):
-                # Data is a list of session objects
-                for session_data in response_data:
-                    if isinstance(session_data, dict):
-                        session_id = session_data.get("SessionId")
-                        if session_id:
-                            # Check if we already have this session in our cache
-                            with self._lock:
-                                if session_id not in self._sessions:
-                                    # Create a new session object
-                                    session = Session(self, session_id)
-                                    self._sessions[session_id] = session
-
-                                session_ids.append(session_id)
-
-            # Log API response with key details
-            log_api_response_with_details(
-                api_name="ListSession",
-                request_id=request_id,
-                success=True,
-                key_fields={
-                    "total_count": total_count,
-                    "returned_count": len(session_ids),
-                    "has_more": "yes" if next_token else "no"
-                },
-                full_response=response_body
-            )
-
-            # Return SessionListResult with request ID and pagination info
-            return SessionListResult(
-                request_id=request_id,
-                success=True,
-                session_ids=session_ids,
-                next_token=next_token,
-                max_results=max_results,
-                total_count=total_count,
-            )
-
-        except Exception as e:
-            log_operation_error("list_session", str(e), exc_info=True)
-            return SessionListResult(
-                request_id="",
-                success=False,
-                session_ids=[],
-                error_message=f"Failed to list sessions by labels: {e}",
-            )
+            error_message=f"Unexpected error creating session: {e}",
+        )
 
     def list(
         self,
@@ -821,37 +714,42 @@ class AgentBay:
 
         Args:
             labels (Optional[Dict[str, str]], optional): Labels to filter sessions.
-                Defaults to None (empty dict).
+                Defaults to None (returns all sessions).
             page (Optional[int], optional): Page number for pagination (starting from 1).
                 Defaults to None (returns first page).
             limit (Optional[int], optional): Maximum number of items per page.
                 Defaults to None (uses default of 10).
 
         Returns:
-            SessionListResult: Paginated list of session IDs that match the labels,
-                including request_id, success status, and pagination information.
+            SessionListResult: Paginated list of session IDs that match the labels.
+                - success (bool): True if the operation succeeded
+                - session_ids (List[str]): List of session IDs
+                - request_id (str): Unique identifier for this API request
+                - next_token (str): Token for fetching the next page (empty if no more pages)
+                - max_results (int): Maximum number of results per page
+                - total_count (int): Total number of sessions matching the filter
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            ClientException: If the API request fails due to network or authentication issues.
 
         Example:
             ```python
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            # List all sessions
             result = agent_bay.list()
+            print(f"Total sessions: {result.total_count}")
 
-            # List sessions with specific labels
-            result = agent_bay.list(labels={"project": "demo"})
-
-            # List sessions with pagination
-            result = agent_bay.list(labels={"my-label": "my-value"}, page=2, limit=10)
-
-            if result.success:
-                for session_id in result.session_ids:
-                    print(f"Session ID: {session_id}")
-                print(f"Total count: {result.total_count}")
-                print(f"Request ID: {result.request_id}")
+            result = agent_bay.list(labels={"project": "demo"}, page=1, limit=10)
+            print(f"Found {len(result.session_ids)} sessions")
             ```
+
+        Note:
+            - Page numbers start from 1
+            - Returns error if page number is less than 1
+            - Returns error if requested page exceeds available pages
+            - Empty labels dict returns all sessions
+
+        See Also:
+            AgentBay.create, AgentBay.get, Session.info
         """
         try:
             # Set default values
@@ -936,7 +834,7 @@ class AgentBay:
             request_details = f"Labels={labels_json}, MaxResults={limit}"
             if request.next_token:
                 request_details += f", NextToken={request.next_token}"
-            log_api_call("list_session", request_details)
+            _log_api_call("list_session", request_details)
 
             # Make the API call
             response = self.client.list_session(request)
@@ -990,7 +888,7 @@ class AgentBay:
                             session_ids.append(session_id)
 
             # Log API response with key details
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="ListSession",
                 request_id=request_id,
                 success=True,
@@ -1013,7 +911,7 @@ class AgentBay:
             )
 
         except Exception as e:
-            log_operation_error("list_session", str(e), exc_info=True)
+            _log_operation_error("list_session", str(e), exc_info=True)
             return SessionListResult(
                 request_id="",
                 success=False,
@@ -1032,6 +930,25 @@ class AgentBay:
 
         Returns:
             DeleteResult: Result indicating success or failure and request ID.
+                - success (bool): True if deletion succeeded
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Example:
+            ```python
+            result = agent_bay.create()
+            session = result.session
+            delete_result = agent_bay.delete(session)
+            print(f"Delete success: {delete_result.success}")
+            ```
+
+        Note:
+            - After deletion, the session object is removed from the AgentBay cache
+            - If sync_context=True, context data is uploaded to OSS before deletion
+            - Session cannot be used after deletion
+
+        See Also:
+            Session.delete, AgentBay.create, AgentBay.get
         """
         try:
             # Delete the session and get the result
@@ -1044,7 +961,7 @@ class AgentBay:
             return delete_result
 
         except Exception as e:
-            log_operation_error("delete_session", str(e), exc_info=True)
+            _log_operation_error("delete_session", str(e), exc_info=True)
             return DeleteResult(
                 request_id="",
                 success=False,
@@ -1055,14 +972,48 @@ class AgentBay:
         """
         Get session information by session ID.
 
+        This method retrieves detailed session metadata from the API. Unlike `get()`,
+        this returns raw session data without creating a Session object.
+
         Args:
             session_id (str): The ID of the session to retrieve.
 
         Returns:
             GetSessionResult: Result containing session information.
+                - success (bool): True if the operation succeeded
+                - data (GetSessionData): Session information object with fields:
+                    - session_id (str): Session ID
+                    - app_instance_id (str): Application instance ID
+                    - resource_id (str): Resource ID
+                    - resource_url (str): Resource URL for accessing the session
+                    - vpc_resource (bool): Whether this is a VPC resource
+                    - network_interface_ip (str): Network interface IP (for VPC sessions)
+                    - http_port (str): HTTP port (for VPC sessions)
+                    - token (str): Authentication token (for VPC sessions)
+                - request_id (str): Unique identifier for this API request
+                - http_status_code (int): HTTP status code
+                - code (str): API response code
+                - error_message (str): Error description (if success is False)
+
+        Example:
+            ```python
+            create_result = agent_bay.create()
+            session_id = create_result.session.session_id
+            get_result = agent_bay.get_session(session_id)
+            print(f"Session ID: {get_result.data.session_id}")
+            create_result.session.delete()
+            ```
+
+        Note:
+            - Returns session metadata without creating a Session object
+            - Use `get()` instead if you need a Session object for API calls
+            - Returns error if session does not exist or is no longer valid
+
+        See Also:
+            AgentBay.get, AgentBay.create, Session.info
         """
         try:
-            log_api_call("GetSession", f"SessionId={session_id}")
+            _log_api_call("GetSession", f"SessionId={session_id}")
             request = GetSessionRequest(
                 authorization=f"Bearer {self.api_key}", session_id=session_id
             )
@@ -1117,7 +1068,7 @@ class AgentBay:
                 if data:
                     key_fields["session_id"] = data.session_id
                     key_fields["vpc_resource"] = "yes" if data.vpc_resource else "no"
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="GetSession",
                     request_id=request_id,
                     success=success,
@@ -1135,14 +1086,36 @@ class AgentBay:
                 )
 
             except Exception as e:
-                logger.exception(f"Failed to parse response: {str(e)}")
+                _logger.exception(f"Failed to parse response: {str(e)}")
                 return GetSessionResult(
                     request_id=request_id,
                     success=False,
                     error_message=f"Failed to parse response: {str(e)}",
                 )
+        except ClientException as e:
+            # Check if this is an expected business error (e.g., session not found)
+            error_str = str(e)
+            if "InvalidMcpSession.NotFound" in error_str or "NotFound" in error_str:
+                # This is an expected error - session doesn't exist
+                # Use info level logging without stack trace, but with red color for visibility
+                _log_info_with_color(f"Session not found: {session_id}")
+                _logger.debug(f"GetSession error details: {error_str}")
+                return GetSessionResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Session {session_id} not found",
+                )
+            else:
+                # This is an unexpected error - log with stack trace
+                _logger.error(f"Error calling GetSession: {e}")
+                return GetSessionResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Failed to get session {session_id}: {e}",
+                )
         except Exception as e:
-            logger.exception(f"Error calling GetSession: {e}")
+            # Unexpected system error - log with stack trace
+            _logger.exception(f"Unexpected error calling GetSession: {e}")
             return GetSessionResult(
                 request_id="",
                 success=False,
@@ -1153,20 +1126,36 @@ class AgentBay:
         """
         Get a session by its ID.
 
-        This method retrieves a session by calling the GetSession API
-        and returns a SessionResult containing the Session object and request ID.
-
         Args:
-            session_id (str): The ID of the session to retrieve.
+            session_id (str): The ID of the session to retrieve. Must be a non-empty string.
 
         Returns:
             SessionResult: Result containing the Session instance, request ID, and success status.
+                - success (bool): True if the operation succeeded
+                - session (Session): The session object (if success is True)
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            ClientException: If the API request fails due to network or authentication issues.
 
         Example:
-            >>> result = agentbay.get("my-session-id")
-            >>> if result.success:
-            >>>     print(result.session.session_id)
-            >>>     print(result.request_id)
+            ```python
+            create_result = agent_bay.create()
+            session_id = create_result.session.session_id
+            get_result = agent_bay.get(session_id)
+            session = get_result.session
+            info_result = session.info()
+            session.delete()
+            ```
+
+        Note:
+            - A default file transfer context is automatically created for the retrieved session
+            - VPC-related information (network_interface_ip, http_port, token) is populated from the API response
+            - Returns an error if session_id is empty or the session does not exist
+
+        See Also:
+            AgentBay.create, AgentBay.list, Session.info
         """
         # Validate input
         if not session_id or (isinstance(session_id, str) and not session_id.strip()):
@@ -1205,11 +1194,11 @@ class AgentBay:
         context_result = self.context.get(context_name, create=True)
         if context_result.success and context_result.context:
             session.file_transfer_context_id = context_result.context.id
-            logger.info(
+            _logger.info(
                 f"📁 Created file transfer context for recovered session: {context_result.context.id}"
             )
         else:
-            logger.warning(
+            _logger.warning(
                 f"⚠️  Failed to create file transfer context for recovered session: {context_result.error_message if hasattr(context_result, 'error_message') else 'Unknown error'}"
             )
 

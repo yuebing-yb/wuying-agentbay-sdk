@@ -45,8 +45,8 @@ func TestContextSessionManagement(t *testing.T) {
 	}
 
 	context := getResult.Context
-	t.Logf("Context created successfully - ID: %s, Name: %s, State: %s, OSType: %s (RequestID: %s)",
-		context.ID, context.Name, context.State, context.OSType, createResult.RequestID)
+	t.Logf("Context created successfully - ID: %s, Name: %s (RequestID: %s)",
+		context.ID, context.Name, createResult.RequestID)
 
 	// Ensure cleanup of the context at the end of the test
 	defer func() {
@@ -80,7 +80,7 @@ func TestContextSessionManagement(t *testing.T) {
 	// Ensure cleanup of the session if it's not released during the test
 	defer func() {
 		// Check if the session still exists before trying to delete it
-		listResult, listErr := agentBay.ListByLabels(agentbay.NewListSessionParams())
+		listResult, listErr := agentBay.List(nil, nil, nil)
 		if listErr != nil {
 			t.Logf("Warning: Error listing sessions: %v", listErr)
 			return
@@ -133,14 +133,8 @@ func TestContextSessionManagement(t *testing.T) {
 	}
 
 	updatedContext := updatedGetResult.Context
-	t.Logf("Retrieved context - ID: %s, Name: %s, State: %s (RequestID: %s)",
-		updatedContext.ID, updatedContext.Name, updatedContext.State, updatedGetResult.RequestID)
-
-	if updatedContext.State != "available" {
-		t.Errorf("Expected context state to be 'available', got '%s'", updatedContext.State)
-	} else {
-		t.Logf("Context state is correctly set to 'available'")
-	}
+	t.Logf("Retrieved context - ID: %s, Name: %s (RequestID: %s)",
+		updatedContext.ID, updatedContext.Name, updatedGetResult.RequestID)
 
 	// Step 5: Create another session with the same context_id (expect success)
 	t.Log("Step 5: Creating a new session with the same context ID...")
@@ -224,8 +218,8 @@ func TestContextLifecycle(t *testing.T) {
 	t.Logf("Found %d initial contexts (RequestID: %s)",
 		len(initialContexts), initialContextsResult.RequestID)
 	for i, ctx := range initialContexts {
-		t.Logf("Context %d: ID=%s, Name=%s, State=%s",
-			i+1, ctx.ID, ctx.Name, ctx.State)
+		t.Logf("Context %d: ID=%s, Name=%s",
+			i+1, ctx.ID, ctx.Name)
 	}
 
 	// Step 2: Create a new context
@@ -263,8 +257,8 @@ func TestContextLifecycle(t *testing.T) {
 	for _, ctx := range updatedContexts {
 		if ctx.Name == contextName {
 			contextFound = true
-			t.Logf("Found our context in the list: ID=%s, Name=%s, State=%s",
-				ctx.ID, ctx.Name, ctx.State)
+			t.Logf("Found our context in the list: ID=%s, Name=%s",
+				ctx.ID, ctx.Name)
 			break
 		}
 	}
@@ -285,8 +279,8 @@ func TestContextLifecycle(t *testing.T) {
 		t.Fatalf("Context not found by name")
 	}
 
-	t.Logf("Retrieved context - ID: %s, Name: %s, State: %s (RequestID: %s)",
-		retrievedContext.ID, retrievedContext.Name, retrievedContext.State, getContextResult.RequestID)
+	t.Logf("Retrieved context - ID: %s, Name: %s (RequestID: %s)",
+		retrievedContext.ID, retrievedContext.Name, getContextResult.RequestID)
 
 	// Step 5: Delete the context
 	t.Log("Step 5: Deleting the context...")

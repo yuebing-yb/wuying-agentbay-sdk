@@ -1,733 +1,1029 @@
-# Computer Module
+# Computer API Reference
 
-The Computer module provides comprehensive desktop UI automation capabilities for Windows environments in the AgentBay cloud platform. It enables mouse operations, keyboard input, screen capture, and window management.
+## 🖥️ Related Tutorial
 
-## 📖 Related Tutorials
-
-- [Computer UI Automation Guide](../../../../docs/guides/computer-use/computer-ui-automation.md) - Detailed tutorial on desktop UI automation
-- [Window Management Guide](../../../../docs/guides/computer-use/window-management.md) - Tutorial on managing application windows
+- [Computer Use Guide](../../../../docs/guides/computer-use/README.md) - Automate desktop applications
 
 ## Overview
 
-The Computer module is designed for automating Windows desktop applications. It provides low-level input control, screen operations, and window management capabilities that are essential for desktop automation tasks.
+The Computer module provides comprehensive desktop automation capabilities including mouse operations,
+keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
 
-**Requirements:**
-- Session must be created with `windows_latest` image
-- All methods use MCP (Model Context Protocol) tools under the hood
+## Requirements
+
+- Requires `windows_latest` image for computer use features
 
 ## Data Types
 
 ### MouseButton
 
-Represents mouse button types for click operations.
-
-```go
-type MouseButton string
-
-const (
-    MouseButtonLeft       MouseButton = "left"       // Left mouse button
-    MouseButtonRight      MouseButton = "right"      // Right mouse button
-    MouseButtonMiddle     MouseButton = "middle"     // Middle mouse button
-    MouseButtonDoubleLeft MouseButton = "double_left" // Double click with left button
-)
-```
+Mouse button constants: Left, Right, Middle
 
 ### ScrollDirection
 
-Represents scroll directions for mouse wheel operations.
+Scroll direction constants: Up, Down, Left, Right
 
-```go
-type ScrollDirection string
+### KeyModifier
 
-const (
-    ScrollDirectionUp    ScrollDirection = "up"     // Scroll up
-    ScrollDirectionDown  ScrollDirection = "down"   // Scroll down
-    ScrollDirectionLeft  ScrollDirection = "left"   // Scroll left
-    ScrollDirectionRight ScrollDirection = "right"  // Scroll right
-)
-```
+Keyboard modifier keys: Ctrl, Alt, Shift, Win
 
-### CursorPosition
+## Important Notes
 
-Represents the cursor position on screen.
+- Key names in PressKeys and ReleaseKeys are case-sensitive
+- Coordinate validation: x and y must be non-negative integers
+- Drag operation requires valid start and end coordinates
+- Screenshot operations may have size limitations
 
-```go
-type CursorPosition struct {
-    models.ApiResponse
-    X            int    // X coordinate
-    Y            int    // Y coordinate
-    ErrorMessage string // Error message if operation failed
-}
-```
-
-### ScreenSize
-
-Represents the screen dimensions.
-
-```go
-type ScreenSize struct {
-    models.ApiResponse
-    Width            int     // Screen width in pixels
-    Height           int     // Screen height in pixels
-    DpiScalingFactor float64 // DPI scaling factor
-    ErrorMessage     string  // Error message if operation failed
-}
-```
-
-### ScreenshotResult
-
-Represents the result of a screenshot operation.
-
-```go
-type ScreenshotResult struct {
-    models.ApiResponse
-    Data         string // Screenshot URL or base64 data
-    ErrorMessage string // Error message if operation failed
-}
-```
-
-### BoolResult
-
-Represents a boolean operation result.
+## Type BoolResult
 
 ```go
 type BoolResult struct {
-    models.ApiResponse
-    Success      bool   // Whether the operation succeeded
-    ErrorMessage string // Error message if operation failed
+	models.ApiResponse
+	Success		bool	`json:"success"`
+	ErrorMessage	string	`json:"error_message"`
 }
 ```
 
-## Methods
+BoolResult represents a boolean operation result
 
-### Mouse Operations
+## Type Computer
+
+```go
+type Computer struct {
+	Session interface {
+		GetAPIKey() string
+		GetClient() *mcp.Client
+		GetSessionId() string
+		IsVpc() bool
+		NetworkInterfaceIp() string
+		HttpPort() string
+		FindServerForTool(toolName string) string
+		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	}
+}
+```
+
+Computer handles computer UI automation operations in the AgentBay cloud environment. Provides
+comprehensive desktop automation capabilities including mouse, keyboard, window management,
+application management, and screen operations.
+
+### Methods
+
+#### ActivateWindow
+
+```go
+func (c *Computer) ActivateWindow(windowID int) (*WindowResult, error)
+```
+
+ActivateWindow activates the specified window
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List all root windows
+
+	windowList, err := session.Computer.ListRootWindows()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if len(windowList.Windows) > 0 {
+		targetWindow := windowList.Windows[0]
+		fmt.Printf("Activating window: %s (ID: %d)\n", targetWindow.Title, targetWindow.WindowID)
+
+		// Activate the first window
+
+		activateResult, err := session.Computer.ActivateWindow(targetWindow.WindowID)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		if activateResult.Success {
+			fmt.Println("Window activated successfully")
+		}
+	}
+	session.Delete()
+}
+```
 
 #### ClickMouse
-
-Clicks the mouse at the specified coordinates with the given button.
 
 ```go
 func (c *Computer) ClickMouse(x, y int, button MouseButton) *BoolResult
 ```
 
-**Parameters:**
-- `x` (int): X coordinate for the click
-- `y` (int): Y coordinate for the click
-- `button` (MouseButton): Mouse button to click (left, right, middle, double_left)
-
-**Returns:**
-- `*BoolResult`: Result indicating success or failure
-
-**Validation:**
-- Valid buttons: `left`, `right`, `middle`, `double_left`
-- Invalid button values will return an error result
+ClickMouse clicks the mouse at the specified coordinates
 
 **Example:**
-```go
-// Left click at coordinates (100, 100)
-// Verified: ✓ API response: "Mouse clicked at (100, 100) with left button successfully"
-result := session.Computer.ClickMouse(100, 100, computer.MouseButtonLeft)
-if result.Success {
-    fmt.Println("Mouse clicked successfully")
-}
-
-// Right click at coordinates (200, 200)
-// Verified: ✓ API response: "Mouse clicked at (200, 200) with right button successfully"
-result = session.Computer.ClickMouse(200, 200, computer.MouseButtonRight)
-```
-
----
-
-#### MoveMouse
-
-Moves the mouse cursor to specific coordinates.
 
 ```go
-func (c *Computer) MoveMouse(x, y int) *BoolResult
-```
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
 
-**Parameters:**
-- `x` (int): Target X coordinate
-- `y` (int): Target Y coordinate
+	// Click at coordinates (500, 300) with left mouse button
 
-**Returns:**
-- `*BoolResult`: Result indicating success or failure
+	clickResult := session.Computer.ClickMouse(500, 300, computer.MouseButtonLeft)
+	if clickResult.Success {
+		fmt.Println("Mouse clicked successfully")
+	} else {
+		fmt.Printf("Error: %s\n", clickResult.ErrorMessage)
+	}
 
-**Example:**
-```go
-// Move mouse to coordinates (100, 100)
-// Verified: ✓ API response: "Mouse moved to (100, 100) successfully"
-result := session.Computer.MoveMouse(100, 100)
-if result.Success {
-    fmt.Println("Mouse moved successfully")
+	// Double click
+
+	doubleClickResult := session.Computer.ClickMouse(500, 300, computer.MouseButtonDoubleLeft)
+	if doubleClickResult.Success {
+		fmt.Println("Double click successful")
+	}
+	session.Delete()
 }
 ```
 
----
+#### CloseWindow
+
+```go
+func (c *Computer) CloseWindow(windowID int) (*WindowResult, error)
+```
+
+CloseWindow closes the specified window
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List all root windows
+
+	windowList, err := session.Computer.ListRootWindows()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if len(windowList.Windows) > 0 {
+		targetWindow := windowList.Windows[0]
+		fmt.Printf("Closing window: %s (ID: %d)\n", targetWindow.Title, targetWindow.WindowID)
+
+		// Close the window
+
+		closeResult, err := session.Computer.CloseWindow(targetWindow.WindowID)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		if closeResult.Success {
+			fmt.Println("Window closed successfully")
+		}
+	}
+	session.Delete()
+}
+```
 
 #### DragMouse
-
-Drags the mouse from one point to another while holding a mouse button.
 
 ```go
 func (c *Computer) DragMouse(fromX, fromY, toX, toY int, button MouseButton) *BoolResult
 ```
 
-**Parameters:**
-- `fromX` (int): Starting X coordinate
-- `fromY` (int): Starting Y coordinate
-- `toX` (int): Ending X coordinate
-- `toY` (int): Ending Y coordinate
-- `button` (MouseButton): Mouse button to hold during drag (left, right, middle)
-
-**Returns:**
-- `*BoolResult`: Result indicating success or failure
-
-**Validation:**
-- Valid buttons for drag: `left`, `right`, `middle` (double_left is not valid for drag)
-- Invalid button values will return an error result
+DragMouse drags the mouse from one point to another
 
 **Example:**
+
 ```go
-// Drag from (100, 100) to (200, 200) with left button
-// Verified: ✓ API response: "Mouse dragged from (100, 100) to (200, 200) with left button successfully"
-result := session.Computer.DragMouse(100, 100, 200, 200, computer.MouseButtonLeft)
-if result.Success {
-    fmt.Println("Drag operation completed")
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Drag from (100, 100) to (300, 300) with left button
+
+	dragResult := session.Computer.DragMouse(100, 100, 300, 300, computer.MouseButtonLeft)
+	if dragResult.Success {
+		fmt.Println("Drag operation successful")
+	} else {
+		fmt.Printf("Error: %s\n", dragResult.ErrorMessage)
+	}
+	session.Delete()
 }
 ```
 
----
-
-#### Scroll
-
-Scrolls the mouse wheel at specific coordinates.
+#### FocusMode
 
 ```go
-func (c *Computer) Scroll(x, y int, direction ScrollDirection, amount int) *BoolResult
+func (c *Computer) FocusMode(on bool) (*WindowResult, error)
 ```
 
-**Parameters:**
-- `x` (int): X coordinate where to scroll
-- `y` (int): Y coordinate where to scroll
-- `direction` (ScrollDirection): Scroll direction (up, down, left, right)
-- `amount` (int): Amount to scroll
-
-**Returns:**
-- `*BoolResult`: Result indicating success or failure
-
-**Validation:**
-- Valid directions: `up`, `down`, `left`, `right`
-- Invalid direction values will return an error result
+FocusMode toggles focus mode on or off
 
 **Example:**
+
 ```go
-// Scroll down 5 units at coordinates (500, 500)
-// Verified: ✓ API response: "Mouse scrolled at (500, 500) direction: down amount: 5 successfully"
-result := session.Computer.Scroll(500, 500, computer.ScrollDirectionDown, 5)
-if result.Success {
-    fmt.Println("Scrolled successfully")
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Enable focus mode
+
+	focusResult, err := session.Computer.FocusMode(true)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if focusResult.Success {
+		fmt.Println("Focus mode enabled")
+	}
+
+	// Disable focus mode
+
+	unfocusResult, err := session.Computer.FocusMode(false)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if unfocusResult.Success {
+		fmt.Println("Focus mode disabled")
+	}
+	session.Delete()
 }
 ```
 
----
+#### FullscreenWindow
+
+```go
+func (c *Computer) FullscreenWindow(windowID int) (*WindowResult, error)
+```
+
+FullscreenWindow makes the specified window fullscreen
+
+#### GetActiveWindow
+
+```go
+func (c *Computer) GetActiveWindow(timeoutMs ...int) (*WindowDetailResult, error)
+```
+
+GetActiveWindow gets the currently active window
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Get the currently active window
+
+	windowResult, err := session.Computer.GetActiveWindow()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if windowResult.Window != nil {
+		fmt.Printf("Active Window ID: %d\n", windowResult.Window.WindowID)
+		fmt.Printf("Window Title: %s\n", windowResult.Window.Title)
+		fmt.Printf("Process Name: %s\n", windowResult.Window.PName)
+	}
+	session.Delete()
+}
+```
 
 #### GetCursorPosition
-
-Gets the current cursor position on the screen.
 
 ```go
 func (c *Computer) GetCursorPosition() *CursorPosition
 ```
 
-**Returns:**
-- `*CursorPosition`: Current cursor position with X and Y coordinates
+GetCursorPosition gets the current cursor position
 
 **Example:**
+
 ```go
-// Get current cursor position
-// Verified: ✓ Returns actual coordinates {"x":512,"y":384}
-position := session.Computer.GetCursorPosition()
-if position.ErrorMessage == "" {
-    fmt.Printf("Cursor at: (%d, %d)\n", position.X, position.Y)
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Get the current cursor position
+
+	position := session.Computer.GetCursorPosition()
+	if position.ErrorMessage == "" {
+		fmt.Printf("Cursor position: (%d, %d)\n", position.X, position.Y)
+	} else {
+		fmt.Printf("Error: %s\n", position.ErrorMessage)
+	}
+	session.Delete()
 }
 ```
-
----
-
-### Keyboard Operations
-
-#### InputText
-
-Inputs text into the active field.
-
-```go
-func (c *Computer) InputText(text string) *BoolResult
-```
-
-**Parameters:**
-- `text` (string): Text to input
-
-**Returns:**
-- `*BoolResult`: Result indicating success or failure
-
-**Example:**
-```go
-// Type text into the currently focused field
-// Verified: ✓ API response: "Text sent successfully. Characters: 14"
-result := session.Computer.InputText("Hello AgentBay")
-if result.Success {
-    fmt.Println("Text input successfully")
-}
-```
-
----
-
-#### PressKeys
-
-Presses multiple keyboard keys simultaneously.
-
-```go
-func (c *Computer) PressKeys(keys []string, hold bool) *BoolResult
-```
-
-**Parameters:**
-- `keys` ([]string): Array of key names to press (e.g., ["Ctrl", "C"])
-- `hold` (bool): Whether to hold the keys (true) or press and release (false)
-
-**Returns:**
-- `*BoolResult`: Result indicating success or failure
-
-**Important Notes:**
-- Key names are **case-sensitive** and must use proper capitalization
-- Common keys: `Ctrl`, `Alt`, `Shift`, `Enter`, `Escape`, `Tab`, `Backspace`, `Delete`
-- Letter keys: use lowercase like `a`, `b`, `c`
-- Function keys: `F1`, `F2`, etc.
-- **Incorrect**: `ctrl`, `shift`, `alt` (lowercase will fail)
-- **Correct**: `Ctrl`, `Shift`, `Alt` (proper capitalization)
-
-**Example:**
-```go
-// Press Ctrl+C (copy)
-// IMPORTANT: Use "Ctrl" not "ctrl"
-// Verified: ✓ API response: "Keys pressed and released successfully"
-result := session.Computer.PressKeys([]string{"Ctrl", "c"}, false)
-if result.Success {
-    fmt.Println("Ctrl+C pressed")
-}
-
-// Press Alt+F4 (close window)
-result = session.Computer.PressKeys([]string{"Alt", "F4"}, false)
-
-// Hold Shift key
-result = session.Computer.PressKeys([]string{"Shift"}, true)
-```
-
----
-
-#### ReleaseKeys
-
-Releases multiple keyboard keys that were previously held.
-
-```go
-func (c *Computer) ReleaseKeys(keys []string) *BoolResult
-```
-
-**Parameters:**
-- `keys` ([]string): Array of key names to release
-
-**Returns:**
-- `*BoolResult`: Result indicating success or failure
-
-**Example:**
-```go
-// Release Shift key after holding
-// Verified: ✓ API response: "Keys released successfully"
-result := session.Computer.ReleaseKeys([]string{"Shift"})
-if result.Success {
-    fmt.Println("Keys released")
-}
-```
-
----
-
-### Screen Operations
 
 #### GetScreenSize
-
-Gets the size of the primary screen.
 
 ```go
 func (c *Computer) GetScreenSize() *ScreenSize
 ```
 
-**Returns:**
-- `*ScreenSize`: Screen dimensions including width, height, and DPI scaling factor
+GetScreenSize gets the size of the primary screen
 
 **Example:**
+
 ```go
-// Get screen size information
-// Verified: ✓ Returns {"dpiScalingFactor":1.0,"height":768,"width":1024}
-size := session.Computer.GetScreenSize()
-if size.ErrorMessage == "" {
-    fmt.Printf("Screen: %dx%d, DPI: %.2f\n",
-        size.Width, size.Height, size.DpiScalingFactor)
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Get the screen size
+
+	screenSize := session.Computer.GetScreenSize()
+	if screenSize.ErrorMessage == "" {
+		fmt.Printf("Screen size: %dx%d\n", screenSize.Width, screenSize.Height)
+		fmt.Printf("DPI scaling factor: %.2f\n", screenSize.DpiScalingFactor)
+	} else {
+		fmt.Printf("Error: %s\n", screenSize.ErrorMessage)
+	}
+	session.Delete()
 }
 ```
 
----
+#### InputText
+
+```go
+func (c *Computer) InputText(text string) *BoolResult
+```
+
+InputText inputs text into the active field
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Input text into the active field
+
+	inputResult := session.Computer.InputText("Hello World")
+	if inputResult.Success {
+		fmt.Println("Text input successful")
+	} else {
+		fmt.Printf("Error: %s\n", inputResult.ErrorMessage)
+	}
+	session.Delete()
+}
+```
+
+#### ListRootWindows
+
+```go
+func (c *Computer) ListRootWindows(timeoutMs ...int) (*WindowListResult, error)
+```
+
+ListRootWindows lists all root windows
+
+#### MaximizeWindow
+
+```go
+func (c *Computer) MaximizeWindow(windowID int) (*WindowResult, error)
+```
+
+MaximizeWindow maximizes the specified window
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List all root windows
+
+	windowList, err := session.Computer.ListRootWindows()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if len(windowList.Windows) > 0 {
+		targetWindow := windowList.Windows[0]
+		fmt.Printf("Maximizing window: %s (ID: %d)\n", targetWindow.Title, targetWindow.WindowID)
+
+		// Maximize the window
+
+		maxResult, err := session.Computer.MaximizeWindow(targetWindow.WindowID)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		if maxResult.Success {
+			fmt.Println("Window maximized successfully")
+		}
+	}
+	session.Delete()
+}
+```
+
+#### MinimizeWindow
+
+```go
+func (c *Computer) MinimizeWindow(windowID int) (*WindowResult, error)
+```
+
+MinimizeWindow minimizes the specified window
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// List all root windows
+
+	windowList, err := session.Computer.ListRootWindows()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	if len(windowList.Windows) > 0 {
+		targetWindow := windowList.Windows[0]
+		fmt.Printf("Minimizing window: %s (ID: %d)\n", targetWindow.Title, targetWindow.WindowID)
+
+		// Minimize the window
+
+		minResult, err := session.Computer.MinimizeWindow(targetWindow.WindowID)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		if minResult.Success {
+			fmt.Println("Window minimized successfully")
+		}
+	}
+	session.Delete()
+}
+```
+
+#### MoveMouse
+
+```go
+func (c *Computer) MoveMouse(x, y int) *BoolResult
+```
+
+MoveMouse moves the mouse cursor to specific coordinates
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Move mouse to coordinates (300, 200)
+
+	moveResult := session.Computer.MoveMouse(300, 200)
+	if moveResult.Success {
+		fmt.Println("Mouse moved successfully")
+	} else {
+		fmt.Printf("Error: %s\n", moveResult.ErrorMessage)
+	}
+	session.Delete()
+}
+```
+
+#### PressKeys
+
+```go
+func (c *Computer) PressKeys(keys []string, hold bool) *BoolResult
+```
+
+PressKeys presses multiple keyboard keys simultaneously
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Press Ctrl+C (copy)
+
+	pressResult := session.Computer.PressKeys([]string{"Ctrl", "c"}, false)
+	if pressResult.Success {
+		fmt.Println("Keys pressed successfully")
+	} else {
+		fmt.Printf("Error: %s\n", pressResult.ErrorMessage)
+	}
+	session.Delete()
+}
+```
+
+#### ReleaseKeys
+
+```go
+func (c *Computer) ReleaseKeys(keys []string) *BoolResult
+```
+
+ReleaseKeys releases multiple keyboard keys
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Hold Shift key first
+
+	session.Computer.PressKeys([]string{"Shift"}, true)
+
+	// Release Shift key
+
+	releaseResult := session.Computer.ReleaseKeys([]string{"Shift"})
+	if releaseResult.Success {
+		fmt.Println("Keys released successfully")
+	} else {
+		fmt.Printf("Error: %s\n", releaseResult.ErrorMessage)
+	}
+	session.Delete()
+}
+```
+
+#### ResizeWindow
+
+```go
+func (c *Computer) ResizeWindow(windowID int, width int, height int) (*WindowResult, error)
+```
+
+ResizeWindow resizes the specified window
+
+#### RestoreWindow
+
+```go
+func (c *Computer) RestoreWindow(windowID int) (*WindowResult, error)
+```
+
+RestoreWindow restores the specified window
 
 #### Screenshot
-
-Takes a screenshot of the current screen.
 
 ```go
 func (c *Computer) Screenshot() *ScreenshotResult
 ```
 
-**Returns:**
-- `*ScreenshotResult`: Screenshot data (typically a URL to the image)
+Screenshot takes a screenshot of the current screen
 
 **Example:**
-```go
-// Capture screenshot
-// Verified: ✓ Returns OSS URL to screenshot image (1035 bytes URL)
-// Example: https://wuying-intelligence-service-cn-hangzhou.oss-cn-hangzhou.aliyuncs.com/mcp/...
-screenshot := session.Computer.Screenshot()
-if screenshot.ErrorMessage == "" {
-    fmt.Printf("Screenshot URL: %s\n", screenshot.Data)
-    // screenshot.Data contains a URL to download the image
-}
-```
-
----
-
-### Window Management
-
-The Computer module provides convenient wrapper methods for window operations. These methods internally use the WindowManager.
-
-#### ListRootWindows
-
-Lists all root windows.
-
-```go
-func (c *Computer) ListRootWindows(timeoutMs ...int) (*window.WindowListResult, error)
-```
-
-**Parameters:**
-- `timeoutMs` (int, optional): Timeout in milliseconds
-
-**Returns:**
-- `*window.WindowListResult`: List of root windows
-- `error`: Error if operation fails
-
-**Example:**
-```go
-// List all root windows
-// Verified: ✓ Returns [{"pid":7488,"pname":"explorer.exe","window_id":65906,"window_title":"Program Manager"}]
-result, err := session.Computer.ListRootWindows()
-if err == nil {
-    for _, win := range result.Windows {
-        fmt.Printf("Window: %s (ID: %d, PID: %d)\n",
-            win.Title, win.WindowID, win.PID)
-    }
-}
-```
-
----
-
-#### GetActiveWindow
-
-Gets the currently active window.
-
-```go
-func (c *Computer) GetActiveWindow(timeoutMs ...int) (*window.WindowDetailResult, error)
-```
-
-**Parameters:**
-- `timeoutMs` (int, optional): Timeout in milliseconds
-
-**Returns:**
-- `*window.WindowDetailResult`: Details of the active window
-- `error`: Error if operation fails
-
-**Example:**
-```go
-// Get the active window
-// Verified: ✓ Returns {"pid":7488,"pname":"explorer.exe","window_id":65906,"window_title":"Program Manager"}
-result, err := session.Computer.GetActiveWindow()
-if err == nil && result.Window != nil {
-    fmt.Printf("Active: %s (ID: %d)\n",
-        result.Window.Title, result.Window.WindowID)
-}
-```
-
----
-
-#### ActivateWindow
-
-Activates the specified window.
-
-```go
-func (c *Computer) ActivateWindow(windowID int) (*window.WindowResult, error)
-```
-
-**Parameters:**
-- `windowID` (int): ID of the window to activate
-
-**Returns:**
-- `*window.WindowResult`: Result of the activation operation
-- `error`: Error if operation fails
-
-**Example:**
-```go
-// Activate window with ID 65906 (from ListRootWindows)
-result, err := session.Computer.ActivateWindow(65906)
-if err == nil {
-    fmt.Println("Window activated")
-}
-```
-
----
-
-#### CloseWindow
-
-Closes the specified window.
-
-```go
-func (c *Computer) CloseWindow(windowID int) (*window.WindowResult, error)
-```
-
-**Parameters:**
-- `windowID` (int): ID of the window to close
-
-**Returns:**
-- `*window.WindowResult`: Result of the close operation
-- `error`: Error if operation fails
-
-**Example:**
-```go
-// Close window with ID 65906 (from ListRootWindows)
-result, err := session.Computer.CloseWindow(65906)
-if err == nil {
-    fmt.Println("Window closed")
-}
-```
-
----
-
-#### MaximizeWindow
-
-Maximizes the specified window.
-
-```go
-func (c *Computer) MaximizeWindow(windowID int) (*window.WindowResult, error)
-```
-
-**Parameters:**
-- `windowID` (int): ID of the window to maximize
-
-**Returns:**
-- `*window.WindowResult`: Result of the maximize operation
-- `error`: Error if operation fails
-
----
-
-#### MinimizeWindow
-
-Minimizes the specified window.
-
-```go
-func (c *Computer) MinimizeWindow(windowID int) (*window.WindowResult, error)
-```
-
-**Parameters:**
-- `windowID` (int): ID of the window to minimize
-
-**Returns:**
-- `*window.WindowResult`: Result of the minimize operation
-- `error`: Error if operation fails
-
----
-
-#### RestoreWindow
-
-Restores the specified window.
-
-```go
-func (c *Computer) RestoreWindow(windowID int) (*window.WindowResult, error)
-```
-
-**Parameters:**
-- `windowID` (int): ID of the window to restore
-
-**Returns:**
-- `*window.WindowResult`: Result of the restore operation
-- `error`: Error if operation fails
-
----
-
-#### ResizeWindow
-
-Resizes the specified window.
-
-```go
-func (c *Computer) ResizeWindow(windowID int, width int, height int) (*window.WindowResult, error)
-```
-
-**Parameters:**
-- `windowID` (int): ID of the window to resize
-- `width` (int): New width in pixels
-- `height` (int): New height in pixels
-
-**Returns:**
-- `*window.WindowResult`: Result of the resize operation
-- `error`: Error if operation fails
-
-**Example:**
-```go
-// Resize window to 800x600 (use window ID from ListRootWindows)
-result, err := session.Computer.ResizeWindow(65906, 800, 600)
-```
-
----
-
-#### FullscreenWindow
-
-Makes the specified window fullscreen.
-
-```go
-func (c *Computer) FullscreenWindow(windowID int) (*window.WindowResult, error)
-```
-
-**Parameters:**
-- `windowID` (int): ID of the window to make fullscreen
-
-**Returns:**
-- `*window.WindowResult`: Result of the fullscreen operation
-- `error`: Error if operation fails
-
----
-
-#### FocusMode
-
-Toggles focus mode on or off.
-
-```go
-func (c *Computer) FocusMode(on bool) (*window.WindowResult, error)
-```
-
-**Parameters:**
-- `on` (bool): true to enable focus mode, false to disable
-
-**Returns:**
-- `*window.WindowResult`: Result of the operation
-- `error`: Error if operation fails
-
----
-
-## Complete Usage Example
-
-This example demonstrates a complete workflow of computer automation:
 
 ```go
 package main
-
 import (
-    "fmt"
-    "os"
-
-    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-    // Initialize client
-    client, err := agentbay.NewAgentBay("", nil)
-    if err != nil {
-        fmt.Printf("Error: %v\n", err)
-        os.Exit(1)
-    }
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
 
-    // Create Windows session
-    // Verified: ✓ Session ID example: session-04bdw8o39qewm36xz
-    params := agentbay.NewCreateSessionParams().
-        WithImageId("windows_latest")
+	// Take a screenshot of the current screen
 
-    result, err := client.Create(params)
-    if err != nil {
-        fmt.Printf("Error: %v\n", err)
-        os.Exit(1)
-    }
-
-    session := result.Session
-    fmt.Printf("Session created: %s\n", session.SessionID)
-
-    defer client.Delete(session)
-
-    // Get screen information
-    // Verified: ✓ Returns {"dpiScalingFactor":1.0,"height":768,"width":1024}
-    size := session.Computer.GetScreenSize()
-    fmt.Printf("Screen: %dx%d, DPI: %.2f\n",
-        size.Width, size.Height, size.DpiScalingFactor)
-
-    // Capture initial screenshot
-    // Verified: ✓ Returns OSS URL (1035 bytes)
-    screenshot := session.Computer.Screenshot()
-    if screenshot.ErrorMessage == "" {
-        fmt.Println("Screenshot captured:", screenshot.Data)
-    }
-
-    // Get cursor position
-    // Verified: ✓ Returns {"x":512,"y":384}
-    cursor := session.Computer.GetCursorPosition()
-    fmt.Printf("Cursor at: (%d, %d)\n", cursor.X, cursor.Y)
-
-    // Move mouse
-    // Verified: ✓ API response: "Mouse moved to (100, 100) successfully"
-    session.Computer.MoveMouse(100, 100)
-
-    // Click at position
-    // Verified: ✓ API response: "Mouse clicked at (100, 100) with left button successfully"
-    session.Computer.ClickMouse(100, 100, "left")
-
-    // Input text
-    // Verified: ✓ API response: "Text sent successfully. Characters: 14"
-    session.Computer.InputText("Hello AgentBay")
-
-    // Press Ctrl+C
-    // Verified: ✓ API response: "Keys pressed and released successfully"
-    session.Computer.PressKeys([]string{"Ctrl", "c"}, false)
-
-    // List windows
-    // Verified: ✓ Returns [{"pid":7488,"pname":"explorer.exe","window_id":65906,"window_title":"Program Manager"}]
-    windows, err := session.Computer.ListRootWindows()
-    if err == nil {
-        fmt.Printf("Found %d windows\n", len(windows.Windows))
-        for _, win := range windows.Windows {
-            fmt.Printf("  - %s (ID: %d)\n", win.Title, win.WindowID)
-        }
-    }
-
-    // Get active window
-    // Verified: ✓ Returns {"pid":7488,"pname":"explorer.exe","window_id":65906,"window_title":"Program Manager"}
-    activeWin, err := session.Computer.GetActiveWindow()
-    if err == nil && activeWin.Window != nil {
-        fmt.Printf("Active window: %s\n", activeWin.Window.Title)
-    }
+	screenshot := session.Computer.Screenshot()
+	if screenshot.ErrorMessage == "" {
+		fmt.Printf("Screenshot URL: %s\n", screenshot.Data)
+	} else {
+		fmt.Printf("Error: %s\n", screenshot.ErrorMessage)
+	}
+	session.Delete()
 }
 ```
 
+#### Scroll
+
+```go
+func (c *Computer) Scroll(x, y int, direction ScrollDirection, amount int) *BoolResult
+```
+
+Scroll scrolls the mouse wheel at specific coordinates
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	params := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+	result, err := client.Create(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+
+	// Scroll down 5 units at coordinates (400, 300)
+
+	scrollResult := session.Computer.Scroll(400, 300, computer.ScrollDirectionDown, 5)
+	if scrollResult.Success {
+		fmt.Println("Scroll operation successful")
+	} else {
+		fmt.Printf("Error: %s\n", scrollResult.ErrorMessage)
+	}
+	session.Delete()
+}
+```
+
+### Related Functions
+
+#### NewComputer
+
+```go
+func NewComputer(session interface {
+	GetAPIKey() string
+	GetClient() *mcp.Client
+	GetSessionId() string
+	IsVpc() bool
+	NetworkInterfaceIp() string
+	HttpPort() string
+	FindServerForTool(toolName string) string
+	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+}) *Computer
+```
+
+NewComputer creates a new Computer instance
+
+## Type CursorPosition
+
+```go
+type CursorPosition struct {
+	models.ApiResponse
+	X		int	`json:"x"`
+	Y		int	`json:"y"`
+	ErrorMessage	string	`json:"error_message"`
+}
+```
+
+CursorPosition represents the cursor position on screen
+
+## Type MouseButton
+
+```go
+type MouseButton string
+```
+
+MouseButton represents mouse button types
+
+## Type ScreenSize
+
+```go
+type ScreenSize struct {
+	models.ApiResponse
+	Width			int	`json:"width"`
+	Height			int	`json:"height"`
+	DpiScalingFactor	float64	`json:"dpiScalingFactor"`
+	ErrorMessage		string	`json:"error_message"`
+}
+```
+
+ScreenSize represents the screen dimensions
+
+## Type ScreenshotResult
+
+```go
+type ScreenshotResult struct {
+	models.ApiResponse
+	Data		string	`json:"data"`
+	ErrorMessage	string	`json:"error_message"`
+}
+```
+
+ScreenshotResult represents the result of a screenshot operation
+
+## Type ScrollDirection
+
+```go
+type ScrollDirection string
+```
+
+ScrollDirection represents scroll directions
+
+## Type Window
+
+```go
+type Window struct {
+	WindowID		int		`json:"window_id"`
+	Title			string		`json:"title"`
+	AbsoluteUpperLeftX	int		`json:"absolute_upper_left_x,omitempty"`
+	AbsoluteUpperLeftY	int		`json:"absolute_upper_left_y,omitempty"`
+	Width			int		`json:"width,omitempty"`
+	Height			int		`json:"height,omitempty"`
+	PID			int		`json:"pid,omitempty"`
+	PName			string		`json:"pname,omitempty"`
+	ChildWindows		[]Window	`json:"child_windows,omitempty"`
+}
+```
+
+Window represents a window in the system
+
+## Type WindowDetailResult
+
+```go
+type WindowDetailResult struct {
+	models.ApiResponse
+	Window	*Window
+}
+```
+
+WindowDetailResult represents the result of getting window details
+
+## Type WindowInfo
+
+```go
+type WindowInfo struct {
+	WindowID	int	`json:"window_id"`
+	Title		string	`json:"title"`
+	PID		int	`json:"pid"`
+	PName		string	`json:"pname"`
+}
+```
+
+WindowInfo represents window information
+
+## Type WindowListResult
+
+```go
+type WindowListResult struct {
+	models.ApiResponse
+	Windows	[]*WindowInfo
+}
+```
+
+WindowListResult represents the result of listing windows
+
+## Type WindowResult
+
+```go
+type WindowResult struct {
+	models.ApiResponse
+	Success	bool
+}
+```
+
+WindowResult represents the result of a window action
+
 ## Best Practices
 
-1. **Session Image**: This module has been verified with the `windows_latest` image
-2. **Error Checking**: Check `ErrorMessage` field for operation results
-3. **Coordinates**: Ensure coordinates are within screen bounds (use `GetScreenSize()` to check)
-4. **Key Names**: Use proper capitalization for key names (`Ctrl` not `ctrl`)
-5. **Window IDs**: Use `ListRootWindows()` or `GetActiveWindow()` to get valid window IDs
-6. **Screenshot Data**: The screenshot data is typically a URL that can be downloaded
+1. Verify screen coordinates before mouse operations
+2. Use appropriate delays between UI interactions
+3. Handle window focus changes properly
+4. Take screenshots for verification and debugging
+5. Use keyboard shortcuts for efficient automation
+6. Clean up windows and applications after automation
 
-## Related Resources
+---
 
-- [Session API Reference](../common-features/basics/session.md)
-- [Window API Reference](window.md)
-- [UI API Reference](ui.md)
+*Documentation generated automatically from Go source code.*

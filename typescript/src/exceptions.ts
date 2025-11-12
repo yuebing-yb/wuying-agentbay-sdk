@@ -60,20 +60,6 @@ export class FileError extends AgentBayError {
 }
 
 /**
- * Raised for errors related to command execution.
- */
-export class CommandError extends AgentBayError {
-  constructor(
-    message = "Command execution error",
-    extra: Record<string, any> = {}
-  ) {
-    super(message, extra);
-    this.name = "CommandError";
-    Object.setPrototypeOf(this, CommandError.prototype);
-  }
-}
-
-/**
  * Raised for errors related to session operations.
  */
 export class SessionError extends AgentBayError {
@@ -95,31 +81,6 @@ export class OssError extends AgentBayError {
     super(message, extra);
     this.name = "OssError";
     Object.setPrototypeOf(this, OssError.prototype);
-  }
-}
-
-/**
- * Raised for errors related to application operations.
- */
-export class ApplicationError extends AgentBayError {
-  constructor(
-    message = "Application operation error",
-    extra: Record<string, any> = {}
-  ) {
-    super(message, extra);
-    this.name = "ApplicationError";
-    Object.setPrototypeOf(this, ApplicationError.prototype);
-  }
-}
-
-/**
- * Raised for errors related to UI operations.
- */
-export class UIError extends AgentBayError {
-  constructor(message = "UI operation error", extra: Record<string, any> = {}) {
-    super(message, extra);
-    this.name = "UIError";
-    Object.setPrototypeOf(this, UIError.prototype);
   }
 }
 

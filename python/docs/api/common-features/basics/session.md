@@ -1,382 +1,335 @@
-# Session Class
+# Session API Reference
 
-The `Session` class represents a session in the AgentBay cloud environment. It provides methods for managing file systems, executing commands, and more.
-
-## 📖 Related Tutorial
+## 🔧 Related Tutorial
 
 - [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
-## Properties
+
 
 ```python
-agent_bay  # The AgentBay instance that created this session
-session_id  # The ID of this session
-file_system  # The FileSystem instance for this session
-command  # The Command instance for this session
-code  # The Code instance for this session
-oss  # The Oss instance for this session
-application  # The ApplicationManager instance for this session
-window  # The WindowManager instance for this session
-computer  # The Computer instance for this session
-mobile  # The Mobile instance for this session
-ui  # The UI instance for this session
-context  # The ContextManager instance for this session
-browser  # The Browser instance for this session
-agent  # The Agent instance for this session
-is_vpc  # Whether this session uses VPC resources
-network_interface_ip  # Network interface IP for VPC sessions
-http_port  # HTTP port for VPC sessions
-token  # Token for VPC sessions
-resource_url  # Resource URL for accessing the session
-mcp_tools  # MCP tools available for this session
-image_id  # The image ID used for this session
+class Session()
 ```
 
-## Methods
+Session represents a session in the AgentBay cloud environment.
 
-### delete
-
-Deletes this session.
+#### delete
 
 ```python
-delete(sync_context: bool = False) -> DeleteResult
+def delete(sync_context: bool = False) -> DeleteResult
 ```
 
-**Parameters:**
-- `sync_context` (bool, optional): If True, the API will trigger a file upload via `self.context.sync` before actually releasing the session. Default is False.
+Delete this session and release all associated resources.
 
-**Returns:**
-- `DeleteResult`: A result object containing success status, request ID, and error message if any.
+**Arguments**:
 
-**Behavior:**
-- When `sync_context` is True, the API will first call `context.sync` to trigger file upload.
-- It will then retrieve ContextStatusData via `context.info` and monitor only upload task items' Status.
-- The API waits until all upload tasks show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
-- Any "Failed" status upload tasks will have their error messages printed.
-- The session deletion only proceeds after context sync status checking for upload tasks completes.
+- `sync_context` _bool, optional_ - Whether to sync context data (trigger file uploads)
+  before deleting the session. Defaults to False.
+  
 
-**Example:**
-```python
-from agentbay import AgentBay
+**Returns**:
 
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+    DeleteResult: Result indicating success or failure with request ID.
+  - success (bool): True if deletion succeeded
+  - error_message (str): Error details if deletion failed
+  - request_id (str): Unique identifier for this API request
+  
 
-# Create a session
-result = agent_bay.create()
-if result.success:
-    session = result.session
-    print(f"Session created with ID: {session.session_id}")
-    # Output: Session created with ID: session-04bdwfj7u22a1s30g
+**Raises**:
 
-    # Use the session...
+    SessionError: If the deletion request fails or the response is invalid.
+  
+  Behavior:
+  The deletion process follows these steps:
+  1. If sync_context=True, synchronizes all context data before deletion
+  2. If browser replay is enabled, automatically syncs recording context
+  3. Calls the ReleaseMcpSession API to delete the session
+  4. Returns success/failure status with request ID
+  
+  Context Synchronization:
+  - When sync_context=True: Uploads all modified files in all contexts
+  - When browser replay enabled: Uploads browser recording data
+  - Synchronization failures do not prevent session deletion
+  
 
-    # Delete the session with context synchronization
-    delete_result = session.delete(sync_context=True)
-    if delete_result.success:
-        print(f"Session deleted successfully with synchronized context")
-        # Output: Session deleted successfully with synchronized context
-        print(f"Request ID: {delete_result.request_id}")
-        # Output: Request ID: D9E69976-9DE0-107D-8047-EE4B4D63AA5D
-    else:
-        print(f"Failed to delete session: {delete_result.error_message}")
-```
-
-### set_labels
-
-Sets labels for this session.
+**Example**:
 
 ```python
-set_labels(labels: Dict[str, str]) -> OperationResult
+session = agent_bay.create().session
+session.command.run("echo 'Hello World'")
+session.delete()
 ```
+  
 
-**Parameters:**
-- `labels` (Dict[str, str]): Key-value pairs representing the labels to set.
+**Notes**:
 
-**Returns:**
-- `OperationResult`: A result object containing success status, request ID, and error message if any.
+  - Always delete sessions when done to avoid resource leaks
+  - Use sync_context=True if you need to preserve modified files
+  - Browser replay data is automatically synced if enabled
+  - The session object becomes invalid after deletion
+  - Deletion is idempotent - deleting an already deleted session succeeds
+  
 
-**Raises:**
-- `AgentBayError`: If setting labels fails due to API errors or other issues.
+**See Also**:
 
-**Example:**
+  AgentBay.create, AgentBay.delete, ContextManager.sync
+
+#### set\_labels
+
 ```python
-# Set session labels
-labels = {
-    "project": "demo",
-    "environment": "testing",
-    "version": "1.0.0"
-}
-result = session.set_labels(labels)
-if result.success:
-    print("Labels set successfully")
-    # Output: Labels set successfully
-    print(f"Request ID: {result.request_id}")
-    # Output: Request ID: B1F98082-52F0-17F7-A149-7722D6205AD6
-else:
-    print(f"Failed to set labels: {result.error_message}")
+def set_labels(labels: Dict[str, str]) -> OperationResult
 ```
 
-### get_labels
+Sets the labels for this session.
+
+**Arguments**:
+
+- `labels` _Dict[str, str]_ - The labels to set for the session.
+  
+
+**Returns**:
+
+    OperationResult: Result indicating success or failure with request ID.
+  
+
+**Raises**:
+
+    SessionError: If the operation fails.
+  
+
+**Example**:
+
+```python
+labels = {"environment": "production", "version": "1.0"}
+session.set_labels(labels)
+```
+
+#### get\_labels
+
+```python
+def get_labels() -> OperationResult
+```
 
 Gets the labels for this session.
 
-```python
-get_labels() -> OperationResult
-```
+**Returns**:
 
-**Returns:**
-- `OperationResult`: A result object containing success status, request ID, and error message if any, and the labels data.
+    OperationResult: Result containing the labels as data and request ID.
+  
 
-**Raises:**
-- `AgentBayError`: If getting labels fails due to API errors or other issues.
+**Raises**:
 
-**Example:**
-```python
-# Get session labels
-try:
-    result = session.get_labels()
-    if result.success:
-        print(f"Session labels: {result.data}")
-        # Output: Session labels: {'environment': 'testing', 'project': 'demo', 'version': '1.0.0'}
-    else:
-        print(f"Failed to get labels: {result.error_message}")
-except AgentBayError as e:
-    print(f"Failed to get labels: {e}")
-```
+    SessionError: If the operation fails.
+  
 
-### info
-
-Gets information about this session.
+**Example**:
 
 ```python
-info() -> OperationResult
+result = session.get_labels()
+print(result.data)
 ```
 
-**Returns:**
-- `OperationResult`: A result object containing success status, request ID, and the session information as data.
-
-**Raises:**
-- `AgentBayError`: If getting session information fails due to API errors or other issues.
-
-**Example:**
-```python
-# Get session information
-try:
-    result = session.info()
-    if result.success:
-        info = result.data
-        print(f"Session ID: {info.session_id}")
-        # Output: Session ID: session-04bdwfj7u22a1s30k
-        print(f"Resource URL: {info.resource_url[:80]}...")
-        # Output: Resource URL: https://pre-myspace-wuying.aliyun.com/app/InnoArchClub/mcp_container/mcp.html?au...
-        print(f"App ID: {info.app_id}")
-        # Output: App ID: mcp-server-ubuntu
-    else:
-        print(f"Failed to get session info: {result.error_message}")
-except AgentBayError as e:
-    print(f"Failed to get session info: {e}")
-```
-
-### get_link
-
-Gets a link for this session.
+#### info
 
 ```python
-get_link(protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None) -> OperationResult
+def info() -> OperationResult
 ```
 
-**Parameters:**
-- `protocol_type` (str, optional): The protocol type for the link.
-- `port` (int, optional): The port for the link. Must be an integer in the range [30100, 30199]. If not specified, the default port will be used.
-- `options` (str, optional): Additional options as a JSON string (e.g., for adb configuration). Defaults to None.
+Get detailed information about this session.
 
-**Returns:**
-- `OperationResult`: A result object containing success status, request ID, and the link URL as data.
+**Returns**:
 
-**Raises:**
-- `SessionError`: If the port value is invalid (not an integer or outside the valid range [30100, 30199]).
-- `AgentBayError`: If getting the link fails due to API errors or other issues.
+    OperationResult: Result containing SessionInfo object and request ID.
+  - success (bool): Always True if no exception
+  - data (SessionInfo): Session information object with fields:
+  - session_id (str): The session identifier
+  - resource_url (str): URL for accessing the session
+  - app_id (str): Application ID (for desktop sessions)
+  - auth_code (str): Authentication code
+  - connection_properties (str): Connection configuration
+  - resource_id (str): Resource identifier
+  - resource_type (str): Type of resource (e.g., "Desktop")
+  - ticket (str): Access ticket
+  - request_id (str): Unique identifier for this API request
+  
 
-**Example:**
-```python
-# Get link with specific protocol and valid port
-# Note: For ComputerUse images, port must be explicitly specified
-try:
-    result = session.get_link("https", 30150)
-    if result.success:
-        link = result.data
-        print(f"Session link: {link[:80]}...")
-        # Output: Session link: https://gw-cn-hangzhou-i-ai-test0-linux.wuyinggw.com:8008/request_ai/00Lw4a5HtJ9...
-        print(f"Request ID: {result.request_id}")
-        # Output: Request ID: 5CA891B8-1E45-13B0-9975-0258228008CB
-    else:
-        print(f"Failed to get link: {result.error_message}")
+**Raises**:
 
-    # Example with invalid port (will raise SessionError)
-    try:
-        invalid_result = session.get_link(port=8080)  # Invalid: outside [30100, 30199]
-    except SessionError as e:
-        print(f"Port validation error: {e}")
-        # Output: Port validation error: Invalid port value: 8080. Port must be an integer in the range [30100, 30199].
+    SessionError: If the API request fails or response is invalid.
+  
+  Behavior:
+  This method calls the GetMcpResource API to retrieve session metadata.
+  The returned SessionInfo contains:
+  - session_id: The session identifier
+  - resource_url: URL for accessing the session
+  - Desktop-specific fields (app_id, auth_code, connection_properties, etc.)
+  are populated from the DesktopInfo section of the API response
+  
 
-except AgentBayError as e:
-    print(f"Failed to get link: {e}")
-```
-
-### get_link_async
-
-Asynchronously gets a link for this session.
+**Example**:
 
 ```python
-async get_link_async(protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None) -> OperationResult
+session = agent_bay.create().session
+info_result = session.info()
+print(info_result.data.session_id)
 ```
+  
 
-**Parameters:**
-- `protocol_type` (str, optional): The protocol type for the link.
-- `port` (int, optional): The port for the link. Must be an integer in the range [30100, 30199]. If not specified, the default port will be used.
-- `options` (str, optional): Additional options as a JSON string (e.g., for adb configuration). Defaults to None.
+**Notes**:
 
-**Returns:**
-- `OperationResult`: A result object containing success status, request ID, and the link URL as data.
+  - Session info is retrieved from the AgentBay API in real-time
+  - The resource_url can be used for browser-based access
+  - Desktop-specific fields (app_id, auth_code) are only populated for desktop sessions
+  - This method does not modify the session state
+  
 
-**Raises:**
-- `SessionError`: If the port value is invalid (not an integer or outside the valid range [30100, 30199]).
-- `AgentBayError`: If getting the link fails due to API errors or other issues.
+**See Also**:
 
-**Example:**
-```python
-import asyncio
+  AgentBay.create, Session.delete, Session.get_link
 
-async def get_session_link():
-    try:
-        # Get session link with default settings
-        result = await session.get_link_async()
-        if result.success:
-            link = result.data
-            print(f"Session link: {link}")
-        else:
-            print(f"Failed to get link: {result.error_message}")
-
-        # Get link with specific protocol and valid port
-        custom_result = await session.get_link_async("wss", 30199)
-        if custom_result.success:
-            custom_link = custom_result.data
-            print(f"Custom WebSocket link: {custom_link}")
-        else:
-            print(f"Failed to get custom link: {custom_result.error_message}")
-
-    except SessionError as e:
-        print(f"Port validation error: {e}")
-    except AgentBayError as e:
-        print(f"Failed to get link: {e}")
-
-# Run the async function
-asyncio.run(get_session_link())
-```
-
-### list_mcp_tools
-
-Lists MCP tools available for this session.
+#### get\_link
 
 ```python
-list_mcp_tools(image_id: Optional[str] = None) -> McpToolsResult
+def get_link(protocol_type: Optional[str] = None,
+             port: Optional[int] = None,
+             options: Optional[str] = None) -> OperationResult
 ```
 
-**Parameters:**
-- `image_id` (str, optional): The image ID to list tools for. Defaults to the session's image_id or "linux_latest".
+Get an access link for this session.
 
-**Returns:**
-- `McpToolsResult`: A result object containing success status, request ID, and the list of MCP tools.
+**Arguments**:
 
-**Raises:**
-- `AgentBayError`: If listing MCP tools fails due to API errors or other issues.
+- `protocol_type` _Optional[str], optional_ - The protocol type for the link.
+  Defaults to None (uses session default).
+- `port` _Optional[int], optional_ - The port number to expose. Must be in range [30100, 30199].
+  Defaults to None.
+- `options` _Optional[str], optional_ - Additional configuration as JSON string.
+  Defaults to None.
+  
 
-**Example:**
+**Returns**:
+
+    OperationResult: Result containing the access URL and request ID.
+  - success (bool): True if the operation succeeded
+  - data (str): The access URL
+  - request_id (str): Unique identifier for this API request
+  
+
+**Raises**:
+
+    SessionError: If port is out of valid range [30100, 30199] or the API request fails.
+  
+
+**Example**:
+
 ```python
-# List all available MCP tools
-result = session.list_mcp_tools()
-print(f"Found {len(result.tools)} MCP tools")
-# Output: Found 69 MCP tools
-
-# Display first 3 tools
-for tool in result.tools[:3]:
-    print(f"Tool: {tool.name}")
-    print(f"  Description: {tool.description}")
-    print(f"  Server: {tool.server}")
+session = agent_bay.create().session
+link_result = session.get_link()
+port_link_result = session.get_link(port=30150)
 ```
+  
 
-### call_mcp_tool
+**Notes**:
 
-Call an MCP tool directly. This is the unified public API for calling MCP tools. All feature modules (Command, Code, Agent, etc.) use this method internally.
+  - Port must be in range [30100, 30199] if specified
+  - The returned URL format depends on the session configuration
+  - For mobile ADB connections, use session.mobile.get_adb_url() instead
+  
+
+**See Also**:
+
+  Session.info, Session.get_link_async, Mobile.get_adb_url
+
+#### get\_link\_async
 
 ```python
-call_mcp_tool(
-    tool_name: str,
-    args: Dict[str, Any],
-    read_timeout: Optional[int] = None,
-    connect_timeout: Optional[int] = None
-) -> McpToolResult
+async def get_link_async(protocol_type: Optional[str] = None,
+                         port: Optional[int] = None,
+                         options: Optional[str] = None) -> OperationResult
 ```
 
-**Parameters:**
-- `tool_name` (str): Name of the MCP tool to call
-- `args` (Dict[str, Any]): Arguments to pass to the tool as a dictionary
-- `read_timeout` (int, optional): Read timeout in seconds
-- `connect_timeout` (int, optional): Connection timeout in seconds
+Asynchronously get a link associated with the current session.
 
-**Returns:**
-- `McpToolResult`: Result containing:
-  - `success` (bool): Whether the tool call was successful
-  - `data` (str): Tool output data
-  - `error_message` (str): Error message if the call failed
-  - `request_id` (str): Unique identifier for the API request
+**Arguments**:
 
-**Raises:**
-- `AgentBayError`: If calling the MCP tool fails due to API errors or other issues.
+- `protocol_type` _Optional[str], optional_ - The protocol type to use for the
+  link. Defaults to None.
+- `port` _Optional[int], optional_ - The port to use for the link. Must be an integer in the range [30100, 30199].
+  Defaults to None.
+- `options` _Optional[str], optional_ - Additional options as a JSON string (e.g., for adb configuration).
+  Defaults to None.
+  
 
-**Behavior:**
-- Automatically detects VPC vs non-VPC mode
-- In VPC mode, uses HTTP requests to the VPC endpoint
-- In non-VPC mode, uses traditional API calls
-- Parses response data to extract text content
-- Handles both successful results and error responses
+**Returns**:
 
-**Example:**
+    OperationResult: Result containing the link as data and request ID.
+  
+
+**Raises**:
+
+    SessionError: If the request fails or the response is invalid.
+
+#### list\_mcp\_tools
+
 ```python
-# Call the shell tool to execute a command
-result = session.call_mcp_tool("shell", {
-    "command": "echo 'Hello World'",
-    "timeout_ms": 1000
-})
-
-if result.success:
-    print(f"Output: {result.data}")
-    # Output: Hello World
-    print(f"Request ID: {result.request_id}")
-else:
-    print(f"Error: {result.error_message}")
-
-# Call with custom timeouts
-result = session.call_mcp_tool(
-    "shell",
-    {"command": "pwd", "timeout_ms": 1000},
-    read_timeout=30,
-    connect_timeout=10
-)
-
-# Example with error handling
-result = session.call_mcp_tool("shell", {
-    "command": "invalid_command_12345",
-    "timeout_ms": 1000
-})
-if not result.success:
-    print(f"Command failed: {result.error_message}")
-    # Output: Command failed: sh: 1: invalid_command_12345: not found
+def list_mcp_tools(image_id: Optional[str] = None)
 ```
 
-**See Also:**
-- For a complete example, see [MCP Tool Direct Call Example](../../../../examples/common-features/basics/mcp_tool_direct_call/README.md)
+List MCP tools available for this session.
+
+**Arguments**:
+
+    image_id: Optional image ID, defaults to session's image_id or "linux_latest"
+  
+
+**Returns**:
+
+  Result containing tools list and request ID
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+tools_result = session.list_mcp_tools()
+print(f"Available tools: {len(tools_result.tools)}")
+```
+
+#### call\_mcp\_tool
+
+```python
+def call_mcp_tool(tool_name: str,
+                  args: Dict[str, Any],
+                  read_timeout: Optional[int] = None,
+                  connect_timeout: Optional[int] = None,
+                  auto_gen_session: bool = False)
+```
+
+Call an MCP tool directly.
+
+This is the unified public API for calling MCP tools. All feature modules
+(Command, Code, Agent, etc.) use this method internally.
+
+**Arguments**:
+
+    tool_name: Name of the MCP tool to call
+    args: Arguments to pass to the tool as a dictionary
+    read_timeout: Optional read timeout in seconds
+    connect_timeout: Optional connection timeout in seconds
+    auto_gen_session: Whether to automatically generate session if not exists (default: False)
+  
+
+**Returns**:
+
+    McpToolResult: Result containing success status, data, and error message
+  
+
+**Example**:
+
+```python
+result = session.call_mcp_tool("shell", {"command": "echo 'Hello World'", "timeout_ms": 1000})
+result = session.call_mcp_tool("shell", {"command": "pwd", "timeout_ms": 1000}, read_timeout=30, connect_timeout=10)
+result = session.call_mcp_tool("shell", {"command": "invalid_command_12345", "timeout_ms": 1000})
+```
 
 ### pause
 
@@ -590,8 +543,10 @@ asyncio.run(resume_session_example())
 
 - [FileSystem API Reference](filesystem.md)
 - [Command API Reference](command.md)
-- [UI API Reference](../../computer-use/ui.md)
-- [Window API Reference](../../computer-use/window.md)
-- [OSS API Reference](../advanced/oss.md)
-- [Application API Reference](../../computer-use/application.md)
-- [Context API Reference](context-manager.md)
+- [Context API Reference](context.md)
+- [Context Manager API Reference](context-manager.md)
+- [OSS API Reference](../../common-features/advanced/oss.md)
+
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*

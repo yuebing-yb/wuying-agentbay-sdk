@@ -39,7 +39,7 @@ class PaperDetails(BaseModel):
     # )
 
 
-async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     """
     Tests a complex workflow: search, extract links, loop through links,
     and perform detailed extraction on each sub-page.
@@ -69,7 +69,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
     processed_papers = []
     for paper_link in link_results.papers:
         if not paper_link.link:
-            logger.warning(f"Skipping paper '{paper_link.title}' due to missing link.")
+            _logger.warning(f"Skipping paper '{paper_link.title}' due to missing link.")
             continue
 
         await agent.goto(url=str(paper_link.link))
@@ -86,22 +86,22 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
         combined_data = {**paper_link_dict, **details_dict}
         processed_papers.append(combined_data)
 
-    logger.info(
+    _logger.info(
         f"Finished processing. Validating {len(processed_papers)} extracted papers."
     )
 
     if len(processed_papers) != 2:
         error_msg = f"Validation Failed: Expected to process 2 papers, but ended up with {len(processed_papers)}."
-        logger.error(error_msg)
+        _logger.error(error_msg)
         return {"_success": False, "error": error_msg}
 
     for paper in processed_papers:
         if not paper.get("problem") or not paper.get("methodology"):
             error_msg = f"Validation Failed: Paper '{paper.get('title')}' is missing a 'problem' or 'methodology' summary."
-            logger.error(error_msg)
+            _logger.error(error_msg)
             return {"_success": False, "error": error_msg}
 
-    logger.info(
+    _logger.info(
         "✅ Validation Passed: Successfully extracted and processed 2 papers with full details."
     )
     return {"_success": True, "data": processed_papers}

@@ -13,6 +13,37 @@ export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 
 /**
  * Logger configuration options
+ *
+ * @example
+ * ```typescript
+ * import { AgentBay, setupLogger } from 'wuying-agentbay-sdk';
+ *
+ * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+ *
+ * async function demonstrateLogging() {
+ *     try {
+ *         // Configure logging with file output
+ *         setupLogger({
+ *             level: 'DEBUG',
+ *             logFile: '/var/log/agentbay.log',
+ *             maxFileSize: '100 MB',
+ *             enableConsole: true
+ *         });
+ *
+ *         // Create a session - logs will be written to both console and file
+ *         const result = await agentBay.create();
+ *         if (result.success) {
+ *             const session = result.session;
+ *             console.log(`Session created: ${session.sessionId}`);
+ *             await session.delete();
+ *         }
+ *     } catch (error) {
+ *         console.error('Error:', error);
+ *     }
+ * }
+ *
+ * demonstrateLogging().catch(console.error);
+ * ```
  */
 export interface LoggerConfig {
   level?: LogLevel;
@@ -329,6 +360,37 @@ function writeToFile(message: string): void {
 /**
  * Setup logger configuration
  * @param config Logger configuration options
+ *
+ * @example
+ * ```typescript
+ * import { AgentBay, setupLogger } from 'wuying-agentbay-sdk';
+ *
+ * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+ *
+ * async function demonstrateLogging() {
+ *     try {
+ *         // Configure logging to file only
+ *         setupLogger({
+ *             level: 'DEBUG',
+ *             logFile: '/var/log/myapp.log',
+ *             maxFileSize: '100 MB',
+ *             enableConsole: false
+ *         });
+ *
+ *         // Create a session - logs will only be written to file
+ *         const result = await agentBay.create({ imageId: 'browser_latest' });
+ *         if (result.success) {
+ *             const session = result.session;
+ *             // All operations will be logged to file
+ *             await session.delete();
+ *         }
+ *     } catch (error) {
+ *         console.error('Error:', error);
+ *     }
+ * }
+ *
+ * demonstrateLogging().catch(console.error);
+ * ```
  */
 export function setupLogger(config: LoggerConfig): void {
   if (config.level) {
@@ -699,7 +761,7 @@ export function logOperationStart(operation: string, details?: string): void {
  * @param operation Name of the operation
  * @param result Optional operation result
  */
-export function logOperationSuccess(operation: string, result?: string): void {
+export function logOperationSuccess(operation: string, result?: string): void{
   if (!shouldLog('INFO')) return;
   const message = `✅ Completed: ${operation}`;
   logInfo(message);
@@ -734,4 +796,29 @@ export function logOperationError(
   } else {
     logError(message, String(error));
   }
+}
+
+/**
+ * Log an info level message with custom color
+ * @param message The message to log
+ * @param color ANSI color code (defaults to red)
+ */
+export function logInfoWithColor(message: string, color: string = ANSI_RED): void {
+  if (!shouldLog('INFO')) return;
+
+  const emoji = 'ℹ️  INFO';
+  const fullMessage = `${emoji}: ${message}`;
+
+  if (useColors) {
+    if (consoleLoggingEnabled) {
+      process.stdout.write(`${color}${fullMessage}${ANSI_RESET}\n`);
+    }
+  } else {
+    if (consoleLoggingEnabled) {
+      process.stdout.write(fullMessage + "\n");
+    }
+  }
+
+  // Write to file without colors
+  writeToFile(fullMessage);
 }

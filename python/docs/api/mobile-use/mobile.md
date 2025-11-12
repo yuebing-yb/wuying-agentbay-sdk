@@ -1,480 +1,617 @@
-# Mobile Class API Reference
+# Mobile API Reference
 
-The `Mobile` class provides comprehensive mobile device UI automation operations in the AgentBay cloud environment. It offers touch operations, UI element interactions, application management, and screenshot capabilities for Android mobile device automation.
+## 📱 Related Tutorial
 
-## 📖 Related Tutorials
-
-- [Mobile UI Automation Guide](../../../../docs/guides/mobile-use/mobile-ui-automation.md) - Detailed tutorial on mobile UI automation
-- [Mobile Application Management Guide](../../../../docs/guides/mobile-use/mobile-application-management.md) - Tutorial on managing mobile applications
+- [Mobile Use Guide](../../../../docs/guides/mobile-use/README.md) - Automate mobile applications
 
 ## Overview
 
-The `Mobile` class is available through `session.mobile` and is designed for use with Android mobile environments (use a mobile environment image such as `mobile_latest` when creating sessions).
+The Mobile module provides mobile device automation capabilities including touch gestures,
+text input, app management, and screenshot capture. It supports Android device automation.
 
-## Constructor
 
-The `Mobile` class is automatically instantiated when creating a session. Access it via:
+## Requirements
+
+- Requires `mobile_latest` image for mobile automation features
+
+
+
+Mobile module for mobile device UI automation and configuration.
+Handles touch operations, UI element interactions, application management, screenshot capabilities,
+and mobile environment configuration operations.
+
+## UIElementListResult Objects
 
 ```python
-session.mobile
+class UIElementListResult(ApiResponse)
 ```
 
-## KeyCode Class
+Result of UI element listing operations.
+
+## KeyCode Objects
+
+```python
+class KeyCode()
+```
 
 Key codes for mobile device input.
 
-```python
-from agentbay.mobile.mobile import KeyCode
-
-KeyCode.HOME        # 3  - Home button
-KeyCode.BACK        # 4  - Back button
-KeyCode.VOLUME_UP   # 24 - Volume up button
-KeyCode.VOLUME_DOWN # 25 - Volume down button
-KeyCode.POWER       # 26 - Power button
-KeyCode.MENU        # 82 - Menu button
-```
-
-## Touch Operations
-
-### tap()
-
-Taps on the screen at the specified coordinates.
+#### HOME
 
 ```python
-tap(x: int, y: int) -> BoolResult
+HOME = 3
 ```
 
-**Parameters:**
-- `x` (int): X coordinate
-- `y` (int): Y coordinate
+#### BACK
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
-
-**Example:**
 ```python
-from agentbay import AgentBay, CreateSessionParams
-
-# Create session with mobile image
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="mobile_latest")
-session_result = agent_bay.create(params)
-session = session_result.session
-
-# Tap at coordinates (500, 500)
-result = session.mobile.tap(500, 500)
-# Verified: success=True
-
-agent_bay.delete(session)
+BACK = 4
 ```
 
-### swipe()
+#### VOLUME\_UP
+
+```python
+VOLUME_UP = 24
+```
+
+#### VOLUME\_DOWN
+
+```python
+VOLUME_DOWN = 25
+```
+
+#### POWER
+
+```python
+POWER = 26
+```
+
+#### MENU
+
+```python
+MENU = 82
+```
+
+## Mobile Objects
+
+```python
+class Mobile(BaseService)
+```
+
+Handles mobile UI automation operations and configuration in the AgentBay cloud environment.
+Provides comprehensive mobile automation capabilities including touch operations,
+UI element interactions, application management, screenshot capabilities,
+and mobile environment configuration operations.
+
+#### tap
+
+```python
+def tap(x: int, y: int) -> BoolResult
+```
+
+Taps on the mobile screen at the specified coordinates.
+
+**Arguments**:
+
+- `x` _int_ - X coordinate in pixels.
+- `y` _int_ - Y coordinate in pixels.
+  
+
+**Returns**:
+
+    BoolResult: Object with success status and error message if any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.tap(500, 800)
+session.delete()
+```
+  
+
+**See Also**:
+
+  swipe, long_press
+
+#### swipe
+
+```python
+def swipe(start_x: int,
+          start_y: int,
+          end_x: int,
+          end_y: int,
+          duration_ms: int = 300) -> BoolResult
+```
 
 Performs a swipe gesture from one point to another.
 
+**Arguments**:
+
+- `start_x` _int_ - Starting X coordinate.
+- `start_y` _int_ - Starting Y coordinate.
+- `end_x` _int_ - Ending X coordinate.
+- `end_y` _int_ - Ending Y coordinate.
+- `duration_ms` _int, optional_ - Duration of the swipe in milliseconds.
+  Defaults to 300.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-swipe(start_x: int, start_y: int, end_x: int, end_y: int, duration_ms: int = 300) -> BoolResult
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.swipe(100, 1000, 100, 200, duration_ms=500)
+session.delete()
 ```
 
-**Parameters:**
-- `start_x` (int): Starting X coordinate
-- `start_y` (int): Starting Y coordinate
-- `end_x` (int): Ending X coordinate
-- `end_y` (int): Ending Y coordinate
-- `duration_ms` (int, optional): Duration of the swipe in milliseconds. Defaults to 300.
+#### input\_text
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
-
-**Example:**
 ```python
-# Swipe up (from bottom to top)
-result = session.mobile.swipe(540, 1500, 540, 500, duration_ms=300)
-# Verified: success=True
-
-# Swipe left (from right to left)
-result = session.mobile.swipe(900, 500, 100, 500, duration_ms=200)
-# Verified: success=True
-
-# Swipe right (from left to right)
-result = session.mobile.swipe(100, 500, 900, 500, duration_ms=200)
-# Verified: success=True
+def input_text(text: str) -> BoolResult
 ```
-
-### input_text()
 
 Inputs text into the active field.
 
+**Arguments**:
+
+- `text` _str_ - The text to input.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-input_text(text: str) -> BoolResult
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.input_text("Hello Mobile!")
+session.delete()
 ```
 
-**Parameters:**
-- `text` (str): The text to input
+#### send\_key
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
-
-**Example:**
 ```python
-# Type text into active field
-result = session.mobile.input_text("Hello Mobile")
-# Verified: success=True
+def send_key(key: int) -> BoolResult
 ```
-
-### send_key()
 
 Sends a key press event.
 
-```python
-send_key(key: int) -> BoolResult
-```
+**Arguments**:
 
-**Parameters:**
-- `key` (int): The key code to send. Supported key codes:
-  - 3  : HOME
-  - 4  : BACK
+- `key` _int_ - The key code to send. Supported key codes are:
+  - 3 : HOME
+  - 4 : BACK
   - 24 : VOLUME UP
   - 25 : VOLUME DOWN
   - 26 : POWER
   - 82 : MENU
+  
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+**Returns**:
 
-**Example:**
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-from agentbay.mobile.mobile import KeyCode
-
-# Press HOME button
-result = session.mobile.send_key(KeyCode.HOME)
-# Verified: success=True
-
-# Press BACK button
-result = session.mobile.send_key(KeyCode.BACK)
-# Verified: success=True
-
-# Press MENU button
-result = session.mobile.send_key(KeyCode.MENU)
-# Verified: success=True
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.send_key(4)  # Press BACK button
+session.delete()
 ```
 
-## UI Element Operations
+#### get\_clickable\_ui\_elements
 
-### get_clickable_ui_elements()
+```python
+def get_clickable_ui_elements(timeout_ms: int = 2000) -> UIElementListResult
+```
 
 Retrieves all clickable UI elements within the specified timeout.
 
+**Arguments**:
+
+- `timeout_ms` _int, optional_ - Timeout in milliseconds. Defaults to 2000.
+  
+
+**Returns**:
+
+    UIElementListResult: Result object containing clickable UI elements and
+  error message if any.
+  
+
+**Example**:
+
 ```python
-get_clickable_ui_elements(timeout_ms: int = 2000) -> UIElementListResult
+session = agent_bay.create(image="mobile_latest").session
+result = session.mobile.get_clickable_ui_elements()
+print(f"Found {len(result.elements)} clickable elements")
+session.delete()
 ```
 
-**Parameters:**
-- `timeout_ms` (int, optional): Timeout in milliseconds. Defaults to 2000.
+#### get\_all\_ui\_elements
 
-**Returns:**
-- `UIElementListResult`: Result object containing clickable UI elements and error message if any.
-
-**Example:**
 ```python
-# Get all clickable elements
-result = session.mobile.get_clickable_ui_elements(timeout_ms=2000)
-# Verified: success=True, returns list of clickable elements
-
-if result.success:
-    print(f"Found {len(result.elements)} clickable elements")
-    for element in result.elements:
-        print(f"Element: {element}")
+def get_all_ui_elements(timeout_ms: int = 2000) -> UIElementListResult
 ```
-
-### get_all_ui_elements()
 
 Retrieves all UI elements within the specified timeout.
 
+**Arguments**:
+
+- `timeout_ms` _int, optional_ - Timeout in milliseconds. Defaults to 2000.
+  
+
+**Returns**:
+
+    UIElementListResult: Result object containing UI elements and error
+  message if any.
+  
+
+**Example**:
+
 ```python
-get_all_ui_elements(timeout_ms: int = 2000) -> UIElementListResult
+session = agent_bay.create(image="mobile_latest").session
+result = session.mobile.get_all_ui_elements()
+print(f"Found {len(result.elements)} UI elements")
+session.delete()
 ```
 
-**Parameters:**
-- `timeout_ms` (int, optional): Timeout in milliseconds. Defaults to 2000.
+#### get\_installed\_apps
 
-**Returns:**
-- `UIElementListResult`: Result object containing all UI elements and error message if any.
-
-**Example:**
 ```python
-# Get all UI elements
-result = session.mobile.get_all_ui_elements(timeout_ms=2000)
-# Verified: success=True, returns list of all UI elements
-
-if result.success:
-    print(f"Found {len(result.elements)} total elements")
-    for element in result.elements:
-        print(f"Element: {element}")
+def get_installed_apps(start_menu: bool, desktop: bool,
+                       ignore_system_apps: bool) -> InstalledAppListResult
 ```
-
-## Application Management Operations
-
-### get_installed_apps()
 
 Retrieves a list of installed applications.
 
-```python
-get_installed_apps(start_menu: bool, desktop: bool, ignore_system_apps: bool) -> InstalledAppListResult
-```
+**Arguments**:
 
-**Parameters:**
-- `start_menu` (bool): Whether to include start menu applications
-- `desktop` (bool): Whether to include desktop applications
-- `ignore_system_apps` (bool): Whether to ignore system applications
+- `start_menu` _bool_ - Whether to include start menu applications.
+- `desktop` _bool_ - Whether to include desktop applications.
+- `ignore_system_apps` _bool_ - Whether to ignore system applications.
+  
 
-**Returns:**
-- `InstalledAppListResult`: The result containing the list of installed applications.
+**Returns**:
 
-**Example:**
-```python
-# Get installed apps (excluding system apps)
-result = session.mobile.get_installed_apps(
-    start_menu=False,
-    desktop=False,
-    ignore_system_apps=True
-)
-# Verified: success=True, returns list of installed apps
+    InstalledAppListResult: The result containing the list of installed
+  applications.
+  
 
-if result.success:
-    for app in result.data:
-        print(f"App: {app.name}, Command: {app.start_cmd}")
-```
-
-### start_app()
-
-Starts an application with the given command, optional working directory and optional activity.
+**Example**:
 
 ```python
-start_app(start_cmd: str, work_directory: str = "", activity: str = "") -> ProcessListResult
+session = agent_bay.create(image="mobile_latest").session
+apps = session.mobile.get_installed_apps(True, False, True)
+print(f"Found {len(apps.data)} apps")
+session.delete()
 ```
 
-**Parameters:**
-- `start_cmd` (str): The command to start the application. For Android apps, this should be in the format required by the system (e.g., using monkey command).
-- `work_directory` (str, optional): The working directory for the application. Defaults to "".
-- `activity` (str, optional): Activity name to launch (e.g., ".SettingsActivity" or "com.package/.Activity"). Defaults to "".
+#### start\_app
 
-**Returns:**
-- `ProcessListResult`: The result containing the list of processes started.
-
-**Example:**
 ```python
-# Start Settings app
-# Note: start_cmd format is specific to the mobile automation system
-result = session.mobile.start_app(
-    "com.android.settings",
-    activity=".Settings"
-)
-# Note: Requires specific command format. Check with system documentation.
-
-if result.success:
-    print(f"Started {len(result.data)} processes")
+def start_app(start_cmd: str,
+              work_directory: str = "",
+              activity: str = "") -> ProcessListResult
 ```
 
-### stop_app_by_cmd()
+Starts an application with the given command, optional working directory and
+optional activity.
+
+**Arguments**:
+
+- `start_cmd` _str_ - The command to start the application.
+- `work_directory` _str, optional_ - The working directory for the application.
+- `activity` _str, optional_ - Activity name to launch (e.g. ".SettingsActivity"
+  or "com.package/.Activity"). Defaults to "".
+  
+
+**Returns**:
+
+    ProcessListResult: The result containing the list of processes started.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create(image="mobile_latest").session
+processes = session.mobile.start_app("com.android.settings")
+print(f"Started {len(processes.data)} process(es)")
+session.delete()
+```
+
+#### stop\_app\_by\_cmd
+
+```python
+def stop_app_by_cmd(stop_cmd: str) -> AppOperationResult
+```
 
 Stops an application by stop command.
 
+**Arguments**:
+
+- `stop_cmd` _str_ - The command to stop the application.
+  
+
+**Returns**:
+
+    AppOperationResult: The result of the operation.
+  
+
+**Example**:
+
 ```python
-stop_app_by_cmd(stop_cmd: str) -> AppOperationResult
+session = agent_bay.create(image="mobile_latest").session
+result = session.mobile.stop_app_by_cmd("com.android.settings")
+print(f"Stop successful: {result.success}")
+session.delete()
 ```
 
-**Parameters:**
-- `stop_cmd` (str): The command to stop the application
+#### screenshot
 
-**Returns:**
-- `AppOperationResult`: The result of the operation.
-
-**Example:**
 ```python
-# Stop an application
-result = session.mobile.stop_app_by_cmd("am force-stop com.example.app")
-
-if result.success:
-    print("App stopped successfully")
+def screenshot() -> OperationResult
 ```
-
-## Screenshot Operations
-
-### screenshot()
 
 Takes a screenshot of the current screen.
 
-```python
-screenshot() -> OperationResult
-```
+**Returns**:
 
-**Returns:**
-- `OperationResult`: Result object containing the screenshot URL and error message if any.
+    OperationResult: Result object containing the path to the screenshot
+  and error message if any.
+  
 
-**Example:**
+**Example**:
+
 ```python
-# Take a screenshot
+session = agent_bay.create(image="mobile_latest").session
 result = session.mobile.screenshot()
-# Verified: success=True, returns OSS URL to screenshot image
-
-if result.success:
-    print(f"Screenshot URL: {result.data}")
+print(f"Screenshot URL: {result.data}")
+session.delete()
 ```
 
-## Complete Example
+#### configure
 
 ```python
-from agentbay import AgentBay, CreateSessionParams
-from agentbay.mobile.mobile import KeyCode
-import os
-
-# Initialize SDK
-api_key = os.getenv("AGENTBAY_API_KEY")
-agent_bay = AgentBay(api_key=api_key)
-
-# Create mobile session
-params = CreateSessionParams(image_id="mobile_latest")
-session_result = agent_bay.create(params)
-
-if session_result.success:
-    session = session_result.session
-    
-    # Touch operations
-    session.mobile.tap(500, 500)
-    # Verified: success=True
-    
-    session.mobile.swipe(540, 1500, 540, 500, duration_ms=300)
-    # Verified: success=True
-    
-    session.mobile.input_text("Hello Mobile")
-    # Verified: success=True
-    
-    # Key operations
-    session.mobile.send_key(KeyCode.HOME)
-    # Verified: success=True
-    
-    session.mobile.send_key(KeyCode.BACK)
-    # Verified: success=True
-    
-    # Get UI elements
-    clickable_elements = session.mobile.get_clickable_ui_elements(timeout_ms=2000)
-    # Verified: success=True
-    
-    if clickable_elements.success:
-        print(f"Found {len(clickable_elements.elements)} clickable elements")
-    
-    all_elements = session.mobile.get_all_ui_elements(timeout_ms=2000)
-    # Verified: success=True
-    
-    if all_elements.success:
-        print(f"Found {len(all_elements.elements)} total elements")
-    
-    # Get installed apps
-    apps = session.mobile.get_installed_apps(
-        start_menu=False,
-        desktop=False,
-        ignore_system_apps=True
-    )
-    # Verified: success=True
-    
-    if apps.success:
-        print(f"Installed apps: {len(apps.data)}")
-    
-    # Take screenshot
-    screenshot = session.mobile.screenshot()
-    # Verified: success=True, returns screenshot URL
-    
-    if screenshot.success:
-        print(f"Screenshot: {screenshot.data}")
-    
-    # Clean up
-    agent_bay.delete(session)
-
+def configure(mobile_config)
 ```
 
-## Mobile Configuration and Connectivity
+Configure mobile settings from MobileExtraConfig.
 
-### get_adb_url()
+This method is typically called automatically during session creation when
+MobileExtraConfig is provided in CreateSessionParams. It can also be called
+manually to reconfigure mobile settings during a session.
 
-Retrieves the ADB connection URL for the mobile environment. This method is only supported in mobile environments.
+**Arguments**:
 
-The method requires an ADB public key for authentication and returns the ADB connection URL that can be used with the `adb connect` command.
+- `mobile_config` _MobileExtraConfig_ - Mobile configuration object with settings for:
+  - lock_resolution (bool): Whether to lock device resolution
+  - app_manager_rule (AppManagerRule): App whitelist/blacklist rules
+  - hide_navigation_bar (bool): Whether to hide navigation bar
+  - uninstall_blacklist (List[str]): Apps protected from uninstallation
+  
+
+**Example**:
 
 ```python
-get_adb_url(adbkey_pub: str) -> AdbUrlResult
+from agentbay import MobileExtraConfig
+session = agent_bay.create(image="mobile_latest").session
+mobile_config = MobileExtraConfig(lock_resolution=True)
+session.mobile.configure(mobile_config)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `adbkey_pub` (str): The ADB public key for connection authentication. This is typically a base64-encoded string obtained from your ADB setup.
+**Notes**:
 
-**Returns:**
-- `AdbUrlResult`: Result object containing:
-  - `success` (bool): Whether the operation was successful
-  - `data` (str): The ADB connection URL in format "adb connect <IP>:<Port>" on success, None on failure
-  - `request_id` (str): Unique identifier for the API request
-  - `error_message` (str): Error message if the operation failed
+  - This method is called automatically during session creation if MobileExtraConfig is provided
+  - Configuration changes are applied immediately
+  - Resolution lock prevents resolution changes
+  - App whitelist/blacklist affects app launching permissions
+  - Uninstall blacklist protects apps from being uninstalled
+  
 
-**Raises:**
-- `SessionError`: May be raised for unexpected errors during the operation
+**See Also**:
 
-**Environment Requirements:**
-- This method **only works** with mobile environment images
-- Calling on other environments (e.g., browser or Linux environments) will return an error
+  set_resolution_lock, set_app_whitelist, set_app_blacklist,
+  set_navigation_bar_visibility, set_uninstall_blacklist
 
-**Example:**
+#### set\_resolution\_lock
+
 ```python
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-
-# Create a mobile session
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="mobile_latest")
-session_result = agent_bay.create(params)
-session = session_result.session
-
-# Get ADB URL with public key
-adbkey_pub = "QAAAAM0muSn7yQCY...your_adb_public_key...EAAQAA="
-
-result = session.mobile.get_adb_url(adbkey_pub)
-# Verified: success=True, returns ADB connection URL
-
-if result.success:
-    print(f"ADB URL: {result.data}")
-    # Example output: "adb connect xx.xx.xx.xx:xxxxx"
-    print(f"Request ID: {result.request_id}")
-else:
-    print(f"Error: {result.error_message}")
-
-# Clean up
-agent_bay.delete(session)
+def set_resolution_lock(enable: bool)
 ```
 
-**Notes:**
-1. The `adbkey_pub` parameter should be a valid ADB public key from your setup
-2. The returned URL can be used directly with the `adb connect` command
-3. This method is exclusive to mobile environments; using other images will result in an error
-4. Each call includes a `request_id` for tracking and debugging purposes
+Set display resolution lock for mobile devices.
 
-## Usage Notes
+**Arguments**:
 
-1. **Session Image**: Always use a mobile environment image (e.g., `mobile_latest`) when creating sessions for mobile automation.
+- `enable` _bool_ - True to enable, False to disable.
+  
 
-2. **Coordinates**: Mobile screen coordinates typically range based on the device resolution. Common Android emulator resolutions:
-   - 1080x1920 (Full HD)
-   - 720x1280 (HD)
-   - Check screen size using UI elements or emulator settings.
+**Example**:
 
-3. **Swipe Duration**: The `duration_ms` parameter in `swipe()` affects the speed of the gesture. Shorter durations (100-200ms) create faster swipes, while longer durations (500-1000ms) create slower, more deliberate gestures.
+```python
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.set_resolution_lock(True)
+session.mobile.set_resolution_lock(False)
+session.delete()
+```
 
-4. **Key Codes**: Only the predefined key codes in the `KeyCode` class are supported. Custom key codes may not work as expected.
+#### set\_app\_whitelist
 
-5. **App Management**: The `start_app()` command format is specific to the mobile automation system. Verify the correct format with system documentation.
+```python
+def set_app_whitelist(package_names: List[str])
+```
 
-6. **UI Elements**: UI element detection may take time. Adjust the `timeout_ms` parameter based on your application's loading speed.
+Set application whitelist.
 
-## Related Documentation
+**Arguments**:
 
-- [Application Management API](../computer-use/application.md) - Detailed application management operations
-- [UI Automation API](../computer-use/ui.md) - UI automation operations
-- [Session API](../common-features/basics/session.md) - Session management
+- `package_names` _List[str]_ - List of Android package names to whitelist.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create(image="mobile_latest").session
+whitelist = ["com.android.settings", "com.android.chrome"]
+session.mobile.set_app_whitelist(whitelist)
+session.delete()
+```
+  
+
+**Notes**:
+
+  - Only apps in the whitelist will be allowed to run
+  - System apps may be affected depending on the configuration
+  - Whitelist takes precedence over blacklist if both are set
+
+#### set\_app\_blacklist
+
+```python
+def set_app_blacklist(package_names: List[str])
+```
+
+Set application blacklist.
+
+**Arguments**:
+
+- `package_names` _List[str]_ - List of Android package names to blacklist.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create(image="mobile_latest").session
+blacklist = ["com.example.app1", "com.example.app2"]
+session.mobile.set_app_blacklist(blacklist)
+session.delete()
+```
+  
+
+**Notes**:
+
+  - Apps in the blacklist will be blocked from running
+  - Whitelist takes precedence over blacklist if both are set
+
+#### set\_navigation\_bar\_visibility
+
+```python
+def set_navigation_bar_visibility(hide: bool)
+```
+
+Set navigation bar visibility for mobile devices.
+
+**Arguments**:
+
+- `hide` _bool_ - True to hide navigation bar, False to show navigation bar.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create(image="mobile_latest").session
+session.mobile.set_navigation_bar_visibility(hide=True)
+session.mobile.set_navigation_bar_visibility(hide=False)
+session.delete()
+```
+  
+
+**Notes**:
+
+  - Hiding the navigation bar provides a fullscreen experience
+  - The navigation bar can still be accessed by swiping from the edge
+
+#### set\_uninstall\_blacklist
+
+```python
+def set_uninstall_blacklist(package_names: List[str])
+```
+
+Set uninstall protection blacklist for mobile devices.
+
+**Arguments**:
+
+- `package_names` _List[str]_ - List of Android package names to protect from uninstallation.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create(image="mobile_latest").session
+protected_apps = ["com.android.settings", "com.android.chrome"]
+session.mobile.set_uninstall_blacklist(protected_apps)
+session.delete()
+```
+  
+
+**Notes**:
+
+  - Apps in the uninstall blacklist cannot be uninstalled
+  - This is useful for protecting critical applications
+  - The protection persists for the session lifetime
+
+#### get\_adb\_url
+
+```python
+def get_adb_url(adbkey_pub: str) -> AdbUrlResult
+```
+
+Retrieves the ADB connection URL for the mobile environment.
+
+This method is only supported in mobile environments (mobile_latest image).
+It uses the provided ADB public key to establish the connection and returns
+the ADB connect URL.
+
+**Arguments**:
+
+- `adbkey_pub` _str_ - The ADB public key for connection authentication.
+  
+
+**Returns**:
+
+    AdbUrlResult: Result object containing the ADB connection URL
+    (format: "adb connect <IP>:<Port>") and request ID.
+  Returns error if not in mobile environment.
+  
+
+**Raises**:
+
+    SessionError: If the session is not in mobile environment.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create(image="mobile_latest").session
+adbkey_pub = "your_adb_public_key"
+adb_result = session.mobile.get_adb_url(adbkey_pub)
+print(f"ADB URL: {adb_result.data}")
+session.delete()
+```
+
+## Best Practices
+
+1. Verify element coordinates before tap operations
+2. Use appropriate swipe durations for smooth gestures
+3. Wait for UI elements to load before interaction
+4. Take screenshots for verification and debugging
+5. Handle app installation and uninstallation properly
+6. Configure app whitelists/blacklists for security
+
+## Related Resources
+
+- [Session API Reference](../common-features/basics/session.md)
+
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*

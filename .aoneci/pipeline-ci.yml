@@ -27,6 +27,10 @@ params:
     name: Enable Golang Testing
     type: boolean
     default: true
+  docs_check_enabled:
+    name: Enable Documentation Quality Check
+    type: boolean
+    default: true
   runs_on_resources:
     name: Resource Specification
     description: "Runtime container resource specification"
@@ -37,6 +41,46 @@ params:
       - "16-64Gi"
 
 jobs:
+  # Documentation quality check job
+  docs-quality-check:
+    continue-on-error: false
+    name: "Documentation Quality Check"
+    when: "${{params.docs_check_enabled}}"
+    runs-on:
+      - "${{params.runs_on_resources}}"
+    image: alios-8u
+    timeout: 30m
+    retry:
+      max: 2
+      when:
+        - runner_system_failure
+        - stuck_or_timeout_failure
+    steps:
+      - uses: checkout
+      - uses: setup-env
+        inputs:
+          python-version: '3.10'
+      
+      - id: emoji-anchor-check
+        name: "VS Code Emoji Anchor Compatibility Check"
+        when: "${{params.docs_check_enabled}}"
+        run: |
+          echo "🔍 Checking emoji anchor compatibility for VS Code..."
+          
+          # Check for emoji anchor compatibility issues
+          python scripts/check_markdown_links.py \
+            --warn-emoji-anchors \
+            --verbose \
+            --strict
+          
+          # Check the exit code of the previous command
+          if [ $? -ne 0 ]; then
+            echo "❌ Found broken links! Failing the pipeline."
+            exit 1
+          fi
+          
+          echo "✅ Emoji anchor compatibility check completed"
+
   # Python testing job
   python-lint-test:
     name: "Python Code Quality Check"
@@ -105,11 +149,12 @@ jobs:
                       "loguru>=0.7.0"
           # Install test dependencies
           pip install pytest pytest-cov pytest-asyncio
+          # Install documentation generation dependencies
+          pip install pydoc-markdown
           # Add current directory to PYTHONPATH so tests can import agentbay
           export PYTHONPATH="${PYTHONPATH}:$(pwd)"
           # Run tests
           pytest tests/unit -v
-
 
   # TypeScript testing job
   typescript-lint-test:
@@ -149,7 +194,12 @@ jobs:
         name: "TypeScript Unit Tests"
         run: |
           cd typescript
-          # Reuse installed dependencies to avoid duplicate installation
+          # Set npm timeout and retry strategy
+          npm config set fetch-timeout 300000
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          # Ensure dependencies are installed (in case lint step failed)
+          npm ci --prefer-offline --no-audit
           npm run build
           npm run test:unit
 
@@ -219,7 +269,7 @@ jobs:
 
   summary:
     name: "Multi-Language Quality Check Summary"
-    needs: ["python-lint-test", "typescript-lint-test", "golang-lint-test"]
+    needs: ["docs-quality-check", "python-lint-test", "typescript-lint-test", "golang-lint-test"]
     runs-on:
       - "4-16Gi"
     steps:
@@ -230,6 +280,7 @@ jobs:
           echo ""
           echo "All prerequisite jobs have completed successfully!"
           echo ""
+          echo "✅ Documentation Quality Check: PASSED"
           echo "✅ Python Lint & Unit Tests: PASSED"
           echo "✅ TypeScript Lint & Unit Tests: PASSED"
           echo "✅ Golang Lint & Unit Tests: PASSED"

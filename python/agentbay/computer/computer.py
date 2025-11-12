@@ -9,9 +9,8 @@ from typing import List, Optional, Dict, Any, Union
 
 from agentbay.api.base_service import BaseService
 from agentbay.exceptions import AgentBayError
-from agentbay.model import BoolResult, OperationResult
-from agentbay.application.application import InstalledAppListResult, InstalledApp, ProcessListResult, AppOperationResult
-from agentbay.window.window import WindowListResult, WindowInfoResult
+from agentbay.model import BoolResult, OperationResult, ApiResponse
+import json
 
 
 class MouseButton(str, Enum):
@@ -28,6 +27,157 @@ class ScrollDirection(str, Enum):
     DOWN = "down"
     LEFT = "left"
     RIGHT = "right"
+
+
+class InstalledApp:
+    """Represents an installed application."""
+    def __init__(self, name: str, start_cmd: str, stop_cmd: Optional[str] = None, work_directory: Optional[str] = None):
+        self.name = name
+        self.start_cmd = start_cmd
+        self.stop_cmd = stop_cmd
+        self.work_directory = work_directory
+
+    @classmethod
+    def _from_dict(cls, data: Dict[str, Any]) -> "InstalledApp":
+        return cls(
+            name=data.get("name", ""),
+            start_cmd=data.get("start_cmd", ""),
+            stop_cmd=data.get("stop_cmd"),
+            work_directory=data.get("work_directory"),
+        )
+
+
+class Process:
+    """Represents a running process."""
+    def __init__(self, pname: str, pid: int, cmdline: Optional[str] = None):
+        self.pname = pname
+        self.pid = pid
+        self.cmdline = cmdline
+
+    @classmethod
+    def _from_dict(cls, data: Dict[str, Any]) -> "Process":
+        return cls(
+            pname=data.get("pname", ""),
+            pid=data.get("pid", 0),
+            cmdline=data.get("cmdline"),
+        )
+
+
+class Window:
+    """Represents a window in the system."""
+    def __init__(
+        self,
+        window_id: int,
+        title: str,
+        absolute_upper_left_x: Optional[int] = None,
+        absolute_upper_left_y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        pid: Optional[int] = None,
+        pname: Optional[str] = None,
+        child_windows: Optional[List["Window"]] = None,
+    ):
+        self.window_id = window_id
+        self.title = title
+        self.absolute_upper_left_x = absolute_upper_left_x
+        self.absolute_upper_left_y = absolute_upper_left_y
+        self.width = width
+        self.height = height
+        self.pid = pid
+        self.pname = pname
+        self.child_windows = child_windows or []
+
+    @classmethod
+    def _from_dict(cls, data: Dict[str, Any]) -> "Window":
+        child_windows = []
+        if "child_windows" in data and data["child_windows"]:
+            child_windows = [cls._from_dict(child) for child in data["child_windows"]]
+        return cls(
+            window_id=data.get("window_id", 0),
+            title=data.get("title", ""),
+            absolute_upper_left_x=data.get("absolute_upper_left_x"),
+            absolute_upper_left_y=data.get("absolute_upper_left_y"),
+            width=data.get("width"),
+            height=data.get("height"),
+            pid=data.get("pid"),
+            pname=data.get("pname"),
+            child_windows=child_windows,
+        )
+
+
+class InstalledAppListResult(ApiResponse):
+    """Result of operations returning a list of InstalledApps."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        data: Optional[List[InstalledApp]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.data = data if data is not None else []
+        self.error_message = error_message
+
+
+class ProcessListResult(ApiResponse):
+    """Result of operations returning a list of Processes."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        data: Optional[List[Process]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.data = data if data is not None else []
+        self.error_message = error_message
+
+
+class AppOperationResult(ApiResponse):
+    """Result of application operations like start/stop."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message
+
+
+class WindowListResult(ApiResponse):
+    """Result of window listing operations."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        windows: Optional[List[Any]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.windows = windows or []
+        self.error_message = error_message
+
+
+class WindowInfoResult(ApiResponse):
+    """Result of window info operations."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        window: Any = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.window = window
+        self.error_message = error_message
+
+
 class Computer(BaseService):
     """
     Handles computer UI automation operations in the AgentBay cloud environment.
@@ -47,20 +197,49 @@ class Computer(BaseService):
     # Mouse Operations
     def click_mouse(self, x: int, y: int, button: Union[MouseButton, str] = MouseButton.LEFT) -> BoolResult:
         """
-        Clicks the mouse at the specified coordinates.
+        Clicks the mouse at the specified screen coordinates.
 
         Args:
-            x (int): X coordinate.
-            y (int): Y coordinate.
-            button (Union[MouseButton, str], optional): Button type. Can be MouseButton enum or string.
-                Valid values: MouseButton.LEFT, MouseButton.RIGHT, MouseButton.MIDDLE, MouseButton.DOUBLE_LEFT
-                or their string equivalents. Defaults to MouseButton.LEFT.
+            x (int): X coordinate in pixels (0 is left edge of screen).
+            y (int): Y coordinate in pixels (0 is top edge of screen).
+            button (Union[MouseButton, str], optional): Mouse button to click. Options:
+                - MouseButton.LEFT or "left": Single left click
+                - MouseButton.RIGHT or "right": Right click (context menu)
+                - MouseButton.MIDDLE or "middle": Middle click (scroll wheel)
+                - MouseButton.DOUBLE_LEFT or "double_left": Double left click
+                Defaults to MouseButton.LEFT.
 
         Returns:
-            BoolResult: Result object containing success status and error message if any.
+            BoolResult: Object containing:
+                - success (bool): Whether the click succeeded
+                - data (bool): True if successful, None otherwise
+                - error_message (str): Error description if failed
 
         Raises:
-            ValueError: If button is not a valid option.
+            ValueError: If button is not one of the valid options.
+
+        Behavior:
+            - Clicks at the exact pixel coordinates provided
+            - Does not move the mouse cursor before clicking
+            - For double-click, use MouseButton.DOUBLE_LEFT
+            - Right-click typically opens context menus
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.click_mouse(100, 200)
+            session.computer.click_mouse(300, 400, MouseButton.RIGHT)
+            session.delete()
+            ```
+
+        Note:
+            - Coordinates are absolute screen positions, not relative to windows
+            - Use `get_screen_size()` to determine valid coordinate ranges
+            - Consider using `move_mouse()` first if you need to see cursor movement
+            - For UI automation, consider using higher-level methods from `ui` module
+
+        See Also:
+            move_mouse, drag_mouse, get_cursor_position, get_screen_size
         """
         button_str = button.value if isinstance(button, MouseButton) else button
         valid_buttons = [b.value for b in MouseButton]
@@ -103,6 +282,23 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.move_mouse(500, 300)
+            position = session.computer.get_cursor_position()
+            print(f"Cursor at: {position.data}")
+            session.delete()
+            ```
+
+        Note:
+            - Moves the cursor smoothly to the target position
+            - Does not click after moving
+            - Use get_cursor_position() to verify the new position
+
+        See Also:
+            click_mouse, drag_mouse, get_cursor_position
         """
         args = {"x": x, "y": y}
         try:
@@ -151,6 +347,23 @@ class Computer(BaseService):
 
         Raises:
             ValueError: If button is not a valid option.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.drag_mouse(100, 100, 300, 300)
+            session.computer.drag_mouse(200, 200, 400, 400, MouseButton.RIGHT)
+            session.delete()
+            ```
+
+        Note:
+            - Performs a click-and-drag operation from start to end coordinates
+            - Useful for selecting text, moving windows, or drawing
+            - DOUBLE_LEFT button is not supported for drag operations
+            - Use LEFT, RIGHT, or MIDDLE button only
+
+        See Also:
+            click_mouse, move_mouse
         """
         button_str = button.value if isinstance(button, MouseButton) else button
         valid_buttons = ["left", "right", "middle"]
@@ -208,6 +421,23 @@ class Computer(BaseService):
 
         Raises:
             ValueError: If direction is not a valid option.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.scroll(500, 500, ScrollDirection.DOWN, 3)
+            session.computer.scroll(500, 500, ScrollDirection.UP, 2)
+            session.delete()
+            ```
+
+        Note:
+            - Scroll operations are performed at the specified coordinates
+            - The amount parameter controls how many scroll units to move
+            - Larger amounts result in faster scrolling
+            - Useful for navigating long documents or web pages
+
+        See Also:
+            click_mouse, move_mouse
         """
         direction_str = direction.value if isinstance(direction, ScrollDirection) else direction
         valid_directions = [d.value for d in ScrollDirection]
@@ -247,6 +477,23 @@ class Computer(BaseService):
         Returns:
             OperationResult: Result object containing cursor position data
                 with keys 'x' and 'y', and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.move_mouse(800, 600)
+            position = session.computer.get_cursor_position()
+            print(f"Cursor is at x={position.data['x']}, y={position.data['y']}")
+            session.delete()
+            ```
+
+        Note:
+            - Returns the absolute screen coordinates
+            - Useful for verifying mouse movements
+            - Position is in pixels from top-left corner (0, 0)
+
+        See Also:
+            move_mouse, click_mouse, get_screen_size
         """
         args = {}
         try:
@@ -277,13 +524,29 @@ class Computer(BaseService):
     # Keyboard Operations
     def input_text(self, text: str) -> BoolResult:
         """
-        Inputs text into the active field.
+        Types text into the currently focused input field.
 
         Args:
-            text (str): The text to input.
+            text (str): The text to input. Supports Unicode characters.
 
         Returns:
-            BoolResult: Result object containing success status and error message if any.
+            BoolResult: Object with success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.click_mouse(500, 300)
+            session.computer.input_text("Hello, World!")
+            session.delete()
+            ```
+
+        Note:
+            - Requires an input field to be focused first
+            - Use click_mouse() or UI automation to focus the field
+            - Supports special characters and Unicode
+
+        See Also:
+            press_keys, click_mouse
         """
         args = {"text": text}
         try:
@@ -321,6 +584,23 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.press_keys(["Ctrl", "c"])
+            session.computer.press_keys(["Ctrl", "v"])
+            session.delete()
+            ```
+
+        Note:
+            - Key names are case-sensitive
+            - When hold=True, remember to call release_keys() afterwards
+            - Supports modifier keys like Ctrl, Alt, Shift
+            - Can press multiple keys simultaneously for shortcuts
+
+        See Also:
+            release_keys, input_text
         """
         args = {"keys": keys, "hold": hold}
         try:
@@ -357,6 +637,23 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.press_keys(["Shift"], hold=True)
+            session.computer.input_text("hello")
+            session.computer.release_keys(["Shift"])
+            session.delete()
+            ```
+
+        Note:
+            - Should be used after press_keys() with hold=True
+            - Key names are case-sensitive
+            - Releases all keys specified in the list
+
+        See Also:
+            press_keys, input_text
         """
         args = {"keys": keys}
         try:
@@ -393,6 +690,22 @@ class Computer(BaseService):
             OperationResult: Result object containing screen size data
                 with keys 'width', 'height', and 'dpiScalingFactor',
                 and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            size = session.computer.get_screen_size()
+            print(f"Screen: {size.data['width']}x{size.data['height']}, DPI: {size.data['dpiScalingFactor']}")
+            session.delete()
+            ```
+
+        Note:
+            - Returns the full screen dimensions in pixels
+            - DPI scaling factor affects coordinate calculations on high-DPI displays
+            - Use this to determine valid coordinate ranges for mouse operations
+
+        See Also:
+            click_mouse, move_mouse, screenshot
         """
         args = {}
         try:
@@ -427,6 +740,23 @@ class Computer(BaseService):
         Returns:
             OperationResult: Result object containing the path to the screenshot
                 and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            screenshot = session.computer.screenshot()
+            print(f"Screenshot URL: {screenshot.data}")
+            session.delete()
+            ```
+
+        Note:
+            - Returns an OSS URL to the screenshot image
+            - Screenshot captures the entire screen
+            - Useful for debugging and verification
+            - Image format is typically PNG
+
+        See Also:
+            get_screen_size
         """
         args = {}
         try:
@@ -454,19 +784,66 @@ class Computer(BaseService):
                 error_message=f"Failed to take screenshot: {str(e)}",
             )
 
-    # Window Management Operations (delegated to existing window module)
+    # Window Management Operations
     def list_root_windows(self, timeout_ms: int = 3000) -> WindowListResult:
         """
         Lists all root windows.
 
         Args:
             timeout_ms (int, optional): Timeout in milliseconds. Defaults to 3000.
+
         Returns:
             WindowListResult: Result object containing list of windows and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            windows = session.computer.list_root_windows()
+            for window in windows.windows:
+                print(f"Window: {window.title}, ID: {window.window_id}")
+            session.delete()
+            ```
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.list_root_windows(timeout_ms)
+        try:
+            args = {"timeout_ms": timeout_ms}
+            result = self.session.call_mcp_tool("list_root_windows", args)
+
+            if not result.success:
+                return WindowListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    windows=[],
+                    error_message=result.error_message,
+                )
+
+            # Parse the windows data
+            windows = []
+            if result.data:
+                try:
+                    windows_data = json.loads(result.data)
+                    for window_data in windows_data:
+                        windows.append(Window._from_dict(window_data))
+                except json.JSONDecodeError as e:
+                    return WindowListResult(
+                        request_id=result.request_id,
+                        success=False,
+                        windows=[],
+                        error_message=f"Failed to parse windows JSON: {e}",
+                    )
+
+            return WindowListResult(
+                request_id=result.request_id,
+                success=True,
+                windows=windows,
+                error_message="",
+            )
+        except Exception as e:
+            return WindowListResult(
+                request_id="",
+                success=False,
+                windows=[],
+                error_message=f"Failed to list root windows: {str(e)}",
+            )
 
     def get_active_window(self, timeout_ms: int = 3000) -> WindowInfoResult:
         """
@@ -474,12 +851,57 @@ class Computer(BaseService):
 
         Args:
             timeout_ms (int, optional): Timeout in milliseconds. Defaults to 3000.
+
         Returns:
             WindowInfoResult: Result object containing active window info and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            active = session.computer.get_active_window()
+            print(f"Active window: {active.window.title}")
+            session.delete()
+            ```
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.get_active_window(timeout_ms)
+        try:
+            args = {"timeout_ms": timeout_ms}
+            result = self.session.call_mcp_tool("get_active_window", args)
+
+            if not result.success:
+                return WindowInfoResult(
+                    request_id=result.request_id,
+                    success=False,
+                    window=None,
+                    error_message=result.error_message,
+                )
+
+            # Parse the window data
+            window = None
+            if result.data:
+                try:
+                    window_data = json.loads(result.data)
+                    window = Window._from_dict(window_data)
+                except json.JSONDecodeError as e:
+                    return WindowInfoResult(
+                        request_id=result.request_id,
+                        success=False,
+                        window=None,
+                        error_message=f"Failed to parse window JSON: {e}",
+                    )
+
+            return WindowInfoResult(
+                request_id=result.request_id,
+                success=True,
+                window=window,
+                error_message="",
+            )
+        except Exception as e:
+            return WindowInfoResult(
+                request_id="",
+                success=False,
+                window=None,
+                error_message=f"Failed to get active window: {str(e)}",
+            )
 
     def activate_window(self, window_id: int) -> BoolResult:
         """
@@ -490,10 +912,49 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            windows = session.computer.list_root_windows()
+            if windows.windows:
+                session.computer.activate_window(windows.windows[0].window_id)
+            session.delete()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Use list_root_windows() to get available window IDs
+            - Activating a window brings it to the foreground
+
+        See Also:
+            list_root_windows, get_active_window, close_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.activate_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("activate_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to activate window: {str(e)}",
+            )
 
     def close_window(self, window_id: int) -> BoolResult:
         """
@@ -504,10 +965,49 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            windows = session.computer.list_root_windows()
+            if windows.windows:
+                session.computer.close_window(windows.windows[0].window_id)
+            session.delete()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Use list_root_windows() to get available window IDs
+            - Closing a window terminates it permanently
+
+        See Also:
+            list_root_windows, activate_window, minimize_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.close_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("close_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to close window: {str(e)}",
+            )
 
     def maximize_window(self, window_id: int) -> BoolResult:
         """
@@ -518,10 +1018,49 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            active = session.computer.get_active_window()
+            if active.window:
+                session.computer.maximize_window(active.window.window_id)
+            session.delete()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Maximizing expands the window to fill the screen
+            - Use restore_window() to return to previous size
+
+        See Also:
+            minimize_window, restore_window, fullscreen_window, resize_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.maximize_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("maximize_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to maximize window: {str(e)}",
+            )
 
     def minimize_window(self, window_id: int) -> BoolResult:
         """
@@ -532,10 +1071,49 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            active = session.computer.get_active_window()
+            if active.window:
+                session.computer.minimize_window(active.window.window_id)
+            session.delete()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Minimizing hides the window in the taskbar
+            - Use restore_window() or activate_window() to bring it back
+
+        See Also:
+            maximize_window, restore_window, activate_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.minimize_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("minimize_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to minimize window: {str(e)}",
+            )
 
     def restore_window(self, window_id: int) -> BoolResult:
         """
@@ -546,10 +1124,51 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            active = session.computer.get_active_window()
+            if active.window:
+                wid = active.window.window_id
+                session.computer.minimize_window(wid)
+                session.computer.restore_window(wid)
+            session.delete()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Restoring returns a minimized or maximized window to its normal state
+            - Works for windows that were previously minimized or maximized
+
+        See Also:
+            minimize_window, maximize_window, activate_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.restore_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("restore_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to restore window: {str(e)}",
+            )
 
     def resize_window(self, window_id: int, width: int, height: int) -> BoolResult:
         """
@@ -562,10 +1181,49 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            active = session.computer.get_active_window()
+            if active.window:
+                session.computer.resize_window(active.window.window_id, 800, 600)
+            session.delete()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Width and height are in pixels
+            - Some windows may have minimum or maximum size constraints
+
+        See Also:
+            maximize_window, restore_window, get_screen_size
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.resize_window(window_id, width, height)
+        try:
+            args = {"window_id": window_id, "width": width, "height": height}
+            result = self.session.call_mcp_tool("resize_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to resize window: {str(e)}",
+            )
 
     def fullscreen_window(self, window_id: int) -> BoolResult:
         """
@@ -576,10 +1234,50 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            active = session.computer.get_active_window()
+            if active.window:
+                session.computer.fullscreen_window(active.window.window_id)
+            session.delete()
+            ```
+
+        Note:
+            - The window must exist in the system
+            - Fullscreen mode hides window borders and taskbar
+            - Different from maximize_window() which keeps window borders
+            - Press F11 or ESC to exit fullscreen in most applications
+
+        See Also:
+            maximize_window, restore_window
         """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.fullscreen_window(window_id)
+        try:
+            args = {"window_id": window_id}
+            result = self.session.call_mcp_tool("fullscreen_window", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to fullscreen window: {str(e)}",
+            )
 
     def focus_mode(self, on: bool) -> BoolResult:
         """
@@ -590,12 +1288,50 @@ class Computer(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
-        """
-        from agentbay.window import WindowManager
-        window_manager = WindowManager(self.session)
-        return window_manager.focus_mode(on)
 
-    # Application Management Operations (delegated to existing application module)
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.focus_mode(True)
+            session.computer.focus_mode(False)
+            session.delete()
+            ```
+
+        Note:
+            - Focus mode helps reduce distractions by managing window focus
+            - When enabled, may prevent background windows from stealing focus
+            - Behavior depends on the window manager and OS settings
+
+        See Also:
+            activate_window, get_active_window
+        """
+        try:
+            args = {"on": on}
+            result = self.session.call_mcp_tool("focus_mode", args)
+
+            if not result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    data=None,
+                    error_message=result.error_message,
+                )
+
+            return BoolResult(
+                request_id=result.request_id,
+                success=True,
+                data=True,
+                error_message="",
+            )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=f"Failed to toggle focus mode: {str(e)}",
+            )
+
+    # Application Management Operations
     def get_installed_apps(
         self, start_menu: bool = True, desktop: bool = False, ignore_system_apps: bool = True
     ) -> InstalledAppListResult:
@@ -609,10 +1345,64 @@ class Computer(BaseService):
 
         Returns:
             InstalledAppListResult: Result object containing list of installed apps and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            apps = session.computer.get_installed_apps()
+            for app in apps.data:
+                print(f"{app.name}: {app.start_cmd}")
+            session.delete()
+            ```
+
+        Note:
+            - start_menu parameter includes applications from Windows Start Menu
+            - desktop parameter includes shortcuts from Desktop
+            - ignore_system_apps parameter filters out system applications
+            - Each app object contains name, start_cmd, stop_cmd, and work_directory
+
+        See Also:
+            start_app, list_visible_apps, stop_app_by_pname
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.get_installed_apps(start_menu, desktop, ignore_system_apps)
+        try:
+            args = {
+                "start_menu": start_menu,
+                "desktop": desktop,
+                "ignore_system_apps": ignore_system_apps,
+            }
+
+            result = self.session.call_mcp_tool("get_installed_apps", args)
+
+            if not result.success:
+                return InstalledAppListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message,
+                )
+
+            try:
+                apps_json = json.loads(result.data)
+                installed_apps = []
+
+                for app_data in apps_json:
+                    app = InstalledApp._from_dict(app_data)
+                    installed_apps.append(app)
+
+                return InstalledAppListResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=installed_apps,
+                )
+            except json.JSONDecodeError as e:
+                return InstalledAppListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=f"Failed to parse applications JSON: {e}",
+                )
+        except Exception as e:
+            return InstalledAppListResult(
+                success=False, error_message=str(e)
+            )
 
     def start_app(self, start_cmd: str, work_directory: str = "", activity: str = "") -> ProcessListResult:
         """
@@ -625,21 +1415,119 @@ class Computer(BaseService):
 
         Returns:
             ProcessListResult: Result object containing list of processes started and error message if any.
-        """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.start_app(start_cmd, work_directory, activity)
 
-    def list_visible_apps(self):
+        Example:
+            ```python
+            session = agent_bay.create().session
+            processes = session.computer.start_app("notepad.exe")
+            print(f"Started {len(processes.data)} process(es)")
+            session.delete()
+            ```
+
+        Note:
+            - The start_cmd can be an executable name or full path
+            - work_directory is optional and defaults to the system default
+            - activity parameter is for mobile apps (Android)
+            - Returns process information for all started processes
+
+        See Also:
+            get_installed_apps, stop_app_by_pname, list_visible_apps
         """
-        Lists all visible applications.
+        try:
+            args = {"start_cmd": start_cmd}
+            if work_directory:
+                args["work_directory"] = work_directory
+            if activity:
+                args["activity"] = activity
+
+            result = self.session.call_mcp_tool("start_app", args)
+
+            if not result.success:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message,
+                )
+
+            try:
+                processes_json = json.loads(result.data)
+                processes = []
+
+                for process_data in processes_json:
+                    process = Process._from_dict(process_data)
+                    processes.append(process)
+
+                return ProcessListResult(
+                    request_id=result.request_id, success=True, data=processes
+                )
+            except json.JSONDecodeError as e:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=f"Failed to parse processes JSON: {e}",
+                )
+        except Exception as e:
+            return ProcessListResult(success=False, error_message=str(e))
+
+    def list_visible_apps(self) -> ProcessListResult:
+        """
+        Lists all applications with visible windows.
+
+        Returns detailed process information for applications that have visible windows,
+        including process ID, name, command line, and other system information.
+        This is useful for system monitoring and process management tasks.
 
         Returns:
-            Result object containing list of visible apps and error message if any.
+            ProcessListResult: Result object containing list of visible applications
+                with detailed process information.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            apps = session.computer.list_visible_apps()
+            for app in apps.data:
+                print(f"App: {app.pname}, PID: {app.pid}")
+            session.delete()
+            ```
+
+        Note:
+            - Only returns applications with visible windows
+            - Hidden or minimized windows may not appear
+            - Useful for monitoring currently active applications
+            - Process information includes PID, name, and command line
+
+        See Also:
+            get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.list_visible_apps()
+        try:
+            result = self.session.call_mcp_tool("list_visible_apps", {})
+
+            if not result.success:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message,
+                )
+
+            try:
+                processes_json = json.loads(result.data)
+                processes = []
+
+                for process_data in processes_json:
+                    process = Process._from_dict(process_data)
+                    processes.append(process)
+
+                return ProcessListResult(
+                    request_id=result.request_id, success=True, data=processes
+                )
+            except json.JSONDecodeError as e:
+                return ProcessListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=f"Failed to parse processes JSON: {e}",
+                )
+        except Exception as e:
+            return ProcessListResult(success=False, error_message=str(e))
 
     def stop_app_by_pname(self, pname: str) -> AppOperationResult:
         """
@@ -650,10 +1538,35 @@ class Computer(BaseService):
 
         Returns:
             AppOperationResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.computer.start_app("notepad.exe")
+            result = session.computer.stop_app_by_pname("notepad.exe")
+            session.delete()
+            ```
+
+        Note:
+            - The process name should match exactly (case-sensitive on some systems)
+            - This will stop all processes matching the given name
+            - If multiple instances are running, all will be terminated
+            - The .exe extension may be required on Windows
+
+        See Also:
+            start_app, stop_app_by_pid, stop_app_by_cmd, list_visible_apps
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.stop_app_by_pname(pname)
+        try:
+            args = {"pname": pname}
+            result = self.session.call_mcp_tool("stop_app_by_pname", args)
+
+            return AppOperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                error_message=result.error_message,
+            )
+        except Exception as e:
+            return AppOperationResult(success=False, error_message=str(e))
 
     def stop_app_by_pid(self, pid: int) -> AppOperationResult:
         """
@@ -664,10 +1577,36 @@ class Computer(BaseService):
 
         Returns:
             AppOperationResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            processes = session.computer.start_app("notepad.exe")
+            pid = processes.data[0].pid
+            result = session.computer.stop_app_by_pid(pid)
+            session.delete()
+            ```
+
+        Note:
+            - PID must be a valid process ID
+            - More precise than stopping by name (only stops specific process)
+            - The process must be owned by the session or have appropriate permissions
+            - PID can be obtained from start_app() or list_visible_apps()
+
+        See Also:
+            start_app, stop_app_by_pname, stop_app_by_cmd, list_visible_apps
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.stop_app_by_pid(pid)
+        try:
+            args = {"pid": pid}
+            result = self.session.call_mcp_tool("stop_app_by_pid", args)
+
+            return AppOperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                error_message=result.error_message,
+            )
+        except Exception as e:
+            return AppOperationResult(success=False, error_message=str(e))
 
     def stop_app_by_cmd(self, stop_cmd: str) -> AppOperationResult:
         """
@@ -678,23 +1617,33 @@ class Computer(BaseService):
 
         Returns:
             AppOperationResult: Result object containing success status and error message if any.
-        """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.stop_app_by_cmd(stop_cmd)
 
-    def list_visible_apps(self) -> ProcessListResult:
-        """
-        Lists all applications with visible windows.
-        
-        Returns detailed process information for applications that have visible windows,
-        including process ID, name, command line, and other system information.
-        This is useful for system monitoring and process management tasks.
+        Example:
+            ```python
+            session = agent_bay.create().session
+            apps = session.computer.get_installed_apps()
+            if apps.data and apps.data[0].stop_cmd:
+                result = session.computer.stop_app_by_cmd(apps.data[0].stop_cmd)
+            session.delete()
+            ```
 
-        Returns:
-            ProcessListResult: Result object containing list of visible applications
-                with detailed process information.
+        Note:
+            - The stop_cmd should be the command registered to stop the application
+            - Typically obtained from get_installed_apps() which returns app metadata
+            - Some applications may not have a stop command defined
+            - The command is executed as-is without shell interpretation
+
+        See Also:
+            get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
         """
-        from agentbay.application import ApplicationManager
-        app_manager = ApplicationManager(self.session)
-        return app_manager.list_visible_apps() 
+        try:
+            args = {"stop_cmd": stop_cmd}
+            result = self.session.call_mcp_tool("stop_app_by_cmd", args)
+
+            return AppOperationResult(
+                request_id=result.request_id,
+                success=result.success,
+                error_message=result.error_message,
+            )
+        except Exception as e:
+            return AppOperationResult(success=False, error_message=str(e))

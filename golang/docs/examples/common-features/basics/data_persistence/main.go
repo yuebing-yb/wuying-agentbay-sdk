@@ -60,7 +60,6 @@ func dataPersistenceDemo(agentBay *agentbay.AgentBay) error {
 	context := contextResult.Context
 	fmt.Printf("✅ Context created successfully: %s\n", context.ID)
 	fmt.Printf("   Name: %s\n", context.Name)
-	fmt.Printf("   State: %s\n", context.State)
 
 	// Step 2: Create first session with context sync
 	fmt.Println("\n🔧 Step 2: Creating first session with context synchronization...")

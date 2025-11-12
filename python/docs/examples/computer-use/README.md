@@ -141,7 +141,7 @@ click_result = session.ui.click(x=100, y=200)
 type_result = session.ui.type("Hello, World!")
 
 # Send key
-from agentbay.ui import KeyCode
+from agentbay.mobile import KeyCode
 key_result = session.ui.key(KeyCode.ENTER)
 ```
 

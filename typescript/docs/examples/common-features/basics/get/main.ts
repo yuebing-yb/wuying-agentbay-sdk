@@ -6,6 +6,7 @@
  * 2. Retrieving the session using the Get API
  * 3. Using the session for operations
  * 4. Cleaning up resources
+ * 5. Attempting to get a deleted session (error handling demonstration)
  */
 
 import { AgentBay } from "wuying-agentbay-sdk";
@@ -57,6 +58,17 @@ async function main() {
     console.log(`Session ${sessionId} deleted successfully`);
   } else {
     console.log(`Failed to delete session ${sessionId}`);
+  }
+
+  // Try to get the session again after deletion (should fail)
+  console.log("\nAttempting to get the deleted session...");
+  const getAfterDeleteResult = await agentBay.get(sessionId);
+
+  if (!getAfterDeleteResult.success) {
+    console.log("Expected behavior: Cannot retrieve deleted session");
+    console.log(`Error message: ${getAfterDeleteResult.errorMessage}`);
+  } else {
+    console.log("Unexpected: Session still exists after deletion");
   }
 }
 

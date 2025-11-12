@@ -1,5 +1,5 @@
 // IMPORTANT: Load config first to ensure .env file is loaded before logger initialization
-export { loadConfig, loadDotEnv, type Config } from "./config";
+export { type Config } from "./config";
 
 // Export version information
 export { VERSION, IS_RELEASE } from "./version";
@@ -8,21 +8,22 @@ export { VERSION, IS_RELEASE } from "./version";
 export { AgentBay, type CreateSessionParams} from "./agent-bay";
 export * from "./agent";
 export * from "./api";
-export * from "./application";
 export * from "./browser";
+export { Code } from "./code";
 export * from "./command";
 export { Context, ContextService } from "./context";
+export { Computer } from "./computer";
 export * from "./exceptions";
 export * from "./extension";
 export * from "./filesystem";
 export * from "./oss";
+export { Mobile } from "./mobile";
 export { Session } from "./session";
 export { type ListSessionParams } from "./types";
 export * from "./types";
-export * from "./ui";
-export * from './context-sync'
-export * from './context-manager'
-export * from './session-params'
+export * from "./context-sync";
+export * from "./context-manager";
+export * from "./session-params";
 // Export utility functions
 export {
   log,
@@ -32,7 +33,6 @@ export {
   logError,
   setLogLevel,
   getLogLevel,
-  maskSensitiveData,
   setupLogger,
   type LogLevel,
   type LoggerConfig

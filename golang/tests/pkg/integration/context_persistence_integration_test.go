@@ -38,8 +38,8 @@ func TestContextPersistence(t *testing.T) {
 		t.Logf("Found %d existing contexts before creation (RequestID: %s)",
 			len(existingContexts), listResult.RequestID)
 		for i, ctx := range existingContexts {
-			t.Logf("Existing context %d: ID=%s, Name=%s, State=%s, OSType=%s",
-				i+1, ctx.ID, ctx.Name, ctx.State, ctx.OSType)
+			t.Logf("Existing context %d: ID=%s, Name=%s",
+				i+1, ctx.ID, ctx.Name)
 		}
 	}
 
@@ -55,8 +55,8 @@ func TestContextPersistence(t *testing.T) {
 	}
 
 	context := getResult.Context
-	t.Logf("Context created successfully - ID: %s, Name: %s, State: %s, OSType: %s (RequestID: %s)",
-		context.ID, context.Name, context.State, context.OSType, createResult.RequestID)
+	t.Logf("Context created successfully - ID: %s, Name: %s (RequestID: %s)",
+		context.ID, context.Name, createResult.RequestID)
 
 	// Create a unique filename for testing in the home directory
 	testFilePath := fmt.Sprintf("~/test-file-%d.txt", time.Now().Unix())
@@ -74,7 +74,7 @@ func TestContextPersistence(t *testing.T) {
 	params.ImageId = "linux_latest"
 
 	// List active sessions before creation
-	listSessionResult, err := agentBay.ListByLabels(agentbay.NewListSessionParams())
+	listSessionResult, err := agentBay.List(nil, nil, nil)
 	if err != nil {
 		t.Logf("Warning: Failed to list active sessions: %v", err)
 	} else {
@@ -169,7 +169,7 @@ func TestContextPersistence(t *testing.T) {
 	params.ImageId = "linux_latest"
 
 	// List active sessions before creating second session
-	listSessionResult, err = agentBay.ListByLabels(agentbay.NewListSessionParams())
+	listSessionResult, err = agentBay.List(nil, nil, nil)
 	if err != nil {
 		t.Logf("Warning: Failed to list active sessions before second session creation: %v", err)
 	} else {
@@ -187,8 +187,8 @@ func TestContextPersistence(t *testing.T) {
 		t.Logf("Warning: Failed to get context before second session creation: %v", err)
 	} else if contextBeforeResult != nil {
 		contextBefore := contextBeforeResult.Context
-		t.Logf("Context state before second session: ID=%s, Name=%s, State=%s, OSType=%s (RequestID: %s)",
-			contextBefore.ID, contextBefore.Name, contextBefore.State, contextBefore.OSType,
+		t.Logf("Context state before second session: ID=%s, Name=%s (RequestID: %s)",
+			contextBefore.ID, contextBefore.Name,
 			contextBeforeResult.RequestID)
 	}
 
@@ -239,7 +239,7 @@ func TestContextPersistence(t *testing.T) {
 	t.Log("Creating third session without context sync...")
 
 	// List active sessions before creating third session
-	listSessionResult, err = agentBay.ListByLabels(agentbay.NewListSessionParams())
+	listSessionResult, err = agentBay.List(nil, nil, nil)
 	if err != nil {
 		t.Logf("Warning: Failed to list active sessions before third session creation: %v", err)
 	} else {

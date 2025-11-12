@@ -1,180 +1,163 @@
-# Agent Class API Reference
+# Agent API Reference
 
-The `Agent` class provides AI-powered capabilities for executing tasks, checking task status, and terminating tasks within a session. It enables natural language task execution and monitoring.
+## 🤖 Related Tutorial
 
-**⚠️ Important Note**: The Agent functionality is verified on the `windows_latest` system image.
+- [Agent Modules Guide](../../../../../docs/guides/common-features/advanced/agent-modules.md) - Learn about agent modules and custom agents
 
-## 📖 Related Tutorial
 
-- [Agent Modules Guide](../../../../../docs/guides/common-features/advanced/agent-modules.md) - Detailed tutorial on AI-powered automation with Agent modules
-
-## Constructor
-
-### Agent
 
 ```python
-Agent(session)
+class QueryResult(ApiResponse)
 ```
 
-**Parameters:**
-- `session` (Session): The Session instance that this Agent belongs to.
+Result of query operations.
 
-## Methods
-
-### execute_task
-
-Executes a specific task described in human language.
-This is a synchronous interface that blocks until the task is completed or an error occurs, or timeout happens.
-There is a timeout mechanism to prevent infinite loops by setting the `max_try_times` parameter. The default polling interval is 3 seconds, so set a proper `max_try_times` according to your task complexity.
+## ExecutionResult Objects
 
 ```python
-execute_task(task: str, max_try_times: int) -> ExecutionResult
+class ExecutionResult(ApiResponse)
 ```
 
-**Parameters:**
-- `task` (str): Task description in human language.
-- `max_try_times` (int): Maximum number of retry attempts.
+Result of task execution.
 
-**Returns:**
-- `ExecutionResult`: Result object containing success status, task ID, task status, and error message if any.
-
-**Example:**
-```python
-from agentbay import AgentBay
-
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
-
-# Create a session with windows_latest image
-from agentbay.session_params import CreateSessionParams
-params = CreateSessionParams(image_id="windows_latest")
-session_result = agent_bay.create(params)
-if session_result.success:
-    session = session_result.session
-    
-    # Execute a task using the Agent
-    task_description = "Find the current weather in New York City"
-    execution_result = session.agent.execute_task(task_description, max_try_times=10)
-    
-    if execution_result.success:
-        print(f"Task completed successfully with status: {execution_result.task_status}")
-        print(f"Task completed successfully with result: {execution_result.task_result}")
-        print(f"Task ID: {execution_result.task_id}")
-    else:
-        print(f"Task failed: {execution_result.error_message}")
-```
-
-### async_execute_task
-
-Executes a specific task described in human language.
-This is a asynchronous interface that returns immediately with a task ID. Call `get_task_status` to check the task status.
-You can control the timeout of the task execution in your own code by setting the frequence of calling get_task_status and the max_try_times.
+## Agent Objects
 
 ```python
-async_execute_task(task: str) -> ExecutionResult
+class Agent(BaseService)
 ```
 
-**Parameters:**
-- `task` (str): Task description in human language.
+An Agent to manipulate applications to complete specific tasks.
 
-**Returns:**
-- `ExecutionResult`: Result object containing success status, task ID, task status, and error message if any.
-
-**Example:**
-```python
-import time
-from agentbay import AgentBay
-
-
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
-
-# Create a session with windows_latest image
-from agentbay.session_params import CreateSessionParams
-params = CreateSessionParams(image_id="windows_latest")
-session_result = agent_bay.create(params)
-if session_result.success:
-    session = session_result.session
-    
-    # Execute a task using the Agent
-    task_description = "Find the current weather in New York City"
-    execution_result = session.agent.async_execute_task(task_description)
-    max_retry_times = 50  # Set your own max retry times
-    if execution_result.success:
-        retry_times = 0
-        while retry_times < max_retry_times:
-            query_result = session.agent.get_task_status(execution_result.task_id)
-            print(
-                f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}."
-            )
-            if query_result.task_status == "finished":
-                break
-            retry_times += 1
-            time.sleep(3)
-        # Check if task completed within max retry times
-        if retry_times < max_retry_times:
-            print(
-                f"Task completed successfully with status: {query_result.task_status}"
-            )
-            print(
-                f"Task completed successfully with result: {query_result.task_result}"
-            )
-        else:
-            print(f"Task execution timeout!")
-    else:
-        print(f"Task failed: {execution_result.error_message}")
-```
-
-### get_task_status
-
-Gets the status of the task with the given task ID.
+#### async\_execute\_task
 
 ```python
-get_task_status(task_id: str) -> QueryResult
+def async_execute_task(task: str) -> ExecutionResult
 ```
 
-**Parameters:**
-- `task_id` (str): Task ID
+Execute a specific task described in human language asynchronously.
 
-**Returns:**
-- `QueryResult`: Result object containing success status, output, and error message if any.
+This is an asynchronous interface that returns immediately with a task ID.
+Call get_task_status to check the task status. You can control the timeout
+of the task execution in your own code by setting the frequency of calling
+get_task_status and the max_try_times.
 
-**Example:**
-```python
-# Get the status of a specific task
-task_id = "task_12345"
-status_result = session.agent.get_task_status(task_id)
+**Arguments**:
 
-if status_result.success:
-    print(f"Task output: {status_result.task_status}")
-    print(f"Task output: {status_result.task_product}")
-    print(f"Task output: {status_result.task_action}")
-else:
-    print(f"Failed to get task status: {status_result.error_message}")
-```
+    task: Task description in human language.
+  
 
-### terminate_task
+**Returns**:
 
-Terminates a task with a specified task ID.
+    ExecutionResult: Result object containing success status, task ID,
+  task status, and error message if any.
+  
+
+**Example**:
 
 ```python
-terminate_task(task_id: str) -> ExecutionResult
+session = agent_bay.create().session
+result = session.agent.async_execute_task("Open Chrome browser")
+print(f"Task ID: {result.task_id}, Status: {result.task_status}")
+status = session.agent.get_task_status(result.task_id)
+print(f"Task status: {status.task_status}")
+session.delete()
 ```
 
-**Parameters:**
-- `task_id` (str): The ID of the running task.
+#### execute\_task
 
-**Returns:**
-- `ExecutionResult`: Result object containing success status, task ID, task status, and error message if any.
-
-**Example:**
 ```python
-# Terminate a running task
-task_id = "task_12345"
-terminate_result = session.agent.terminate_task(task_id)
-
-if terminate_result.success:
-    print(f"Task terminated successfully with status: {terminate_result.task_status}")
-else:
-    print(f"Failed to terminate task: {terminate_result.error_message}")
+def execute_task(task: str, max_try_times: int) -> ExecutionResult
 ```
+
+Execute a specific task described in human language synchronously.
+
+This is a synchronous interface that blocks until the task is completed or
+an error occurs, or timeout happens. The default polling interval is 3 seconds,
+so set a proper max_try_times according to your task complexity.
+
+**Arguments**:
+
+    task: Task description in human language.
+    max_try_times: Maximum number of retries.
+  
+
+**Returns**:
+
+    ExecutionResult: Result object containing success status, task ID,
+  task status, and error message if any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+result = session.agent.execute_task("Open Chrome browser", max_try_times=20)
+print(f"Task result: {result.task_result}")
+session.delete()
+```
+
+#### get\_task\_status
+
+```python
+def get_task_status(task_id: str) -> QueryResult
+```
+
+Get the status of the task with the given task ID.
+
+**Arguments**:
+
+    task_id: The ID of the task to query.
+  
+
+**Returns**:
+
+    QueryResult: Result object containing success status, task status,
+  task action, task product, and error message if any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+result = session.agent.async_execute_task("Open Chrome browser")
+status = session.agent.get_task_status(result.task_id)
+print(f"Status: {status.task_status}, Action: {status.task_action}")
+session.delete()
+```
+
+#### terminate\_task
+
+```python
+def terminate_task(task_id: str) -> ExecutionResult
+```
+
+Terminate a task with a specified task ID.
+
+**Arguments**:
+
+    task_id: The ID of the running task to terminate.
+  
+
+**Returns**:
+
+    ExecutionResult: Result object containing success status, task ID,
+  task status, and error message if any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+result = session.agent.async_execute_task("Open Chrome browser")
+terminate_result = session.agent.terminate_task(result.task_id)
+print(f"Terminated: {terminate_result.success}")
+session.delete()
+```
+
+## Related Resources
+
+- [Session API Reference](../../common-features/basics/session.md)
+
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*

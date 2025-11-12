@@ -219,3 +219,93 @@ func TestDefaultSyncPolicyMatchesRequirements(t *testing.T) {
 	_, syncPathsExists := jsonMap["syncPaths"]
 	assert.False(t, syncPathsExists, "syncPaths should not exist in JSON")
 }
+
+func TestNewMappingPolicy(t *testing.T) {
+	policy := agentbay.NewMappingPolicy()
+
+	assert.NotNil(t, policy)
+	assert.Equal(t, "", policy.Path)
+}
+
+func TestMappingPolicyWithPath(t *testing.T) {
+	windowsPath := "c:\\Users\\Administrator\\Downloads"
+	policy := &agentbay.MappingPolicy{
+		Path: windowsPath,
+	}
+
+	assert.NotNil(t, policy)
+	assert.Equal(t, windowsPath, policy.Path)
+}
+
+func TestSyncPolicyWithMappingPolicy(t *testing.T) {
+	windowsPath := "c:\\Users\\Administrator\\Downloads"
+	mappingPolicy := &agentbay.MappingPolicy{
+		Path: windowsPath,
+	}
+
+	syncPolicy := &agentbay.SyncPolicy{
+		UploadPolicy:   agentbay.NewUploadPolicy(),
+		DownloadPolicy: agentbay.NewDownloadPolicy(),
+		DeletePolicy:   agentbay.NewDeletePolicy(),
+		ExtractPolicy:  agentbay.NewExtractPolicy(),
+		MappingPolicy:  mappingPolicy,
+	}
+
+	assert.NotNil(t, syncPolicy)
+	assert.NotNil(t, syncPolicy.MappingPolicy)
+	assert.Equal(t, windowsPath, syncPolicy.MappingPolicy.Path)
+}
+
+func TestContextSyncWithMappingPolicy(t *testing.T) {
+	contextID := "ctx-12345"
+	linuxPath := "/home/wuying/下载"
+	windowsPath := "c:\\Users\\Administrator\\Downloads"
+
+	mappingPolicy := &agentbay.MappingPolicy{
+		Path: windowsPath,
+	}
+
+	syncPolicy := &agentbay.SyncPolicy{
+		UploadPolicy:   agentbay.NewUploadPolicy(),
+		DownloadPolicy: agentbay.NewDownloadPolicy(),
+		DeletePolicy:   agentbay.NewDeletePolicy(),
+		ExtractPolicy:  agentbay.NewExtractPolicy(),
+		MappingPolicy:  mappingPolicy,
+	}
+
+	sync, err := agentbay.NewContextSync(contextID, linuxPath, syncPolicy)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, sync)
+	assert.Equal(t, contextID, sync.ContextID)
+	assert.Equal(t, linuxPath, sync.Path)
+	assert.NotNil(t, sync.Policy)
+	assert.NotNil(t, sync.Policy.MappingPolicy)
+	assert.Equal(t, windowsPath, sync.Policy.MappingPolicy.Path)
+}
+
+func TestMappingPolicyJSONMarshaling(t *testing.T) {
+	windowsPath := "c:\\Users\\Administrator\\Downloads"
+	mappingPolicy := &agentbay.MappingPolicy{
+		Path: windowsPath,
+	}
+
+	syncPolicy := &agentbay.SyncPolicy{
+		UploadPolicy:   agentbay.NewUploadPolicy(),
+		DownloadPolicy: agentbay.NewDownloadPolicy(),
+		DeletePolicy:   agentbay.NewDeletePolicy(),
+		ExtractPolicy:  agentbay.NewExtractPolicy(),
+		MappingPolicy:  mappingPolicy,
+	}
+
+	jsonData, err := json.Marshal(syncPolicy)
+	assert.NoError(t, err)
+
+	var jsonMap map[string]interface{}
+	err = json.Unmarshal(jsonData, &jsonMap)
+	assert.NoError(t, err)
+
+	mappingPolicyJSON, exists := jsonMap["mappingPolicy"].(map[string]interface{})
+	assert.True(t, exists, "mappingPolicy should exist in JSON")
+	assert.Equal(t, windowsPath, mappingPolicyJSON["path"], "JSON mappingPolicy.path should match")
+}

@@ -1,134 +1,112 @@
-# AgentBay Class API Reference
+# AgentBay API Reference
 
-The `AgentBay` class is the main entry point for interacting with the AgentBay cloud environment. It provides methods for creating, retrieving, listing, and deleting sessions.
+## 🚀 Related Tutorial
 
-## 📖 Related Tutorials
+- [First Session Tutorial](../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
 
-- [SDK Configuration Guide](../../../../../docs/guides/common-features/configuration/sdk-configuration.md) - Detailed tutorial on configuring the SDK
-- [VPC Sessions Guide](../../../../../docs/guides/common-features/advanced/vpc-sessions.md) - Tutorial on creating sessions in VPC environments
-- [Session Link Access Guide](../../../../../docs/guides/common-features/advanced/session-link-access.md) - Tutorial on accessing sessions via links
-
-## Constructor
-
-### NewAgentBay
+## Type AgentBayConfig
 
 ```go
-func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error)
+type AgentBayConfig struct {
+	cfg	*Config
+	envFile	string
+}
 ```
 
-**Parameters:**
-- `apiKey` (string): The API key for authentication. If empty, the SDK will look for the `AGENTBAY_API_KEY` environment variable.
-- `opts` (...Option, optional): Optional configuration options. Use `WithConfig(*Config)` to provide custom configuration containing RegionID, Endpoint, and TimeoutMs. If not provided, default configuration is used.
+AgentBayConfig holds optional configuration for the AgentBay client.
 
-**Returns:**
-- `*AgentBay`: A new AgentBay instance.
-- `error`: An error if initialization fails.
-
-**Raises:**
-- `error`: If no API key is provided and `AGENTBAY_API_KEY` environment variable is not set.
-
-## Properties
-
-### Context
-
-The `Context` field provides access to a `ContextService` instance for managing persistent contexts. See the [Context API Reference](context.md) for more details.
-
-## Methods
-
-
-Creates a new session in the AgentBay cloud environment.
-
+## Type AgentBay
 
 ```go
-Create(params *CreateSessionParams) (*SessionResult, error)
+type AgentBay struct {
+	APIKey		string
+	Client		*mcp.Client
+	Sessions	sync.Map
+	Context		*ContextService
+}
 ```
 
-**Parameters:**
-- `params` (*CreateSessionParams, optional): Parameters for session creation. If nil, default parameters will be used.
+AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
 
-**Returns:**
-- `*SessionResult`: A result object containing the new Session instance and RequestID.
-- `error`: An error if the session creation fails.
+### Methods
 
-**Behavior:**
-- When `params` includes valid `PersistenceDataList`, after creating the session, the API will check `session.Context.Info()` to retrieve ContextStatusData.
-- It will continuously monitor all data items' Status in ContextStatusData until all items show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
-- Any "Failed" status items will have their error messages printed.
-- The Create operation only returns after context status checking completes.
+#### Create
+
+```go
+func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error)
+```
+
+Create creates a new session in the AgentBay cloud environment. If params is nil, default parameters
+will be used. Create creates a new AgentBay session with specified configuration.
+
+Parameters:
+  - params: Configuration parameters for the session (optional)
+  - Labels: Key-value pairs for session metadata
+  - ImageId: Custom image ID for the session environment
+  - IsVpc: Whether to create a VPC session
+  - PolicyId: Security policy ID
+  - ExtraConfigs: Additional configuration options
+
+Returns:
+  - *SessionResult: Result containing Session object and request ID
+  - error: Error if the operation fails
+
+Behavior:
+
+- Creates a new isolated cloud runtime environment - Waits for session to be ready before returning
+- For VPC sessions, includes VPC-specific configuration
 
 **Example:**
+
 ```go
 package main
-
 import (
 	"fmt"
-	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-	// Initialize the SDK with default configuration
-	client, err := agentbay.NewAgentBay("")
+	client, err := agentbay.NewAgentBay("your_api_key")
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-	// Result: Success: Created client with default config
 
-	// Or initialize with custom configuration
-	config := &agentbay.Config{
-		RegionID:  "cn-hangzhou",
-		Endpoint:  "",
-		TimeoutMs: 30000,
-	}
-	clientWithConfig, err := agentbay.NewAgentBay("", agentbay.WithConfig(config))
+	// Create session with default parameters
+
+	result, err := client.Create(nil)
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-	// Result: Success: Created client with custom config (RegionID: cn-hangzhou)
+	session := result.Session
+	fmt.Printf("Session ID: %s\n", session.SessionID)
 
-	// Create a session with default parameters
-	defaultResult, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error creating session: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Created session with ID: %s\n", defaultResult.Session.SessionID)
-	// Result: Success: Created session with ID: session-xxxxxxxxxxxxxxx
-	// Result: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+	// Output: Session ID: session-04bdwfj7u22a1s30g
 
-	// Create a session with custom parameters
-	labels := map[string]string{
-		"project":     "demo",
-		"environment": "testing",
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "windows_latest",
-		Labels:  labels,
-	}
+	// Create session with custom parameters
+
+	params := agentbay.NewCreateSessionParams()
+	params.Labels = map[string]string{"project": "demo"}
+	params.IsVpc = true
 	customResult, err := client.Create(params)
 	if err != nil {
-		fmt.Printf("Error creating custom session: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-	fmt.Printf("Created custom session with ID: %s\n", customResult.Session.SessionID)
-	// Result: Success: Created custom session with ID: session-xxxxxxxxxxxxxxx
-	// Result: Image ID: windows_latest
-	// Result: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+	fmt.Println("VPC session created")
+
+	// Output: VPC session created
 
 	// RECOMMENDED: Create a session with context synchronization
+
 	// First, create a context
-	contextResult, err := client.Context.Create("my-context")
+
+	contextResult, err := client.Context.Get("my-context", true)
 	if err != nil {
-		fmt.Printf("Error creating context: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-	// Result: Success: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
+
+	// Result: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
 
 	contextSync := &agentbay.ContextSync{
-		ContextID: contextResult.ContextID,
+		ContextID: contextResult.Context.ID,
 		Path:      "/home/wuying",
 		Policy:    agentbay.NewSyncPolicy(),
 	}
@@ -138,136 +116,186 @@ func main() {
 	}
 	syncResult, err := client.Create(syncParams)
 	if err != nil {
-		fmt.Printf("Error creating session with context sync: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Printf("Created session with context sync: %s\n", syncResult.Session.SessionID)
+
 	// Result: Waiting for context synchronization to complete...
+
 	// Result: Context SdkCtx-xxxxxxxxxxxxxxx status: Preparing, path: /home/wuying
+
 	// Result: Context SdkCtx-xxxxxxxxxxxxxxx status: Success, path: /home/wuying
+
 	// Result: Context synchronization completed successfully
-	// Result: Success: Created session with context sync: session-xxxxxxxxxxxxxxx
 
-	// Create a mobile session with extra configurations
-	appRule := &models.AppManagerRule{
-		RuleType: "White",
-		AppPackageNameList: []string{
-			"com.android.settings",
-			"com.example.trusted.app",
-			"com.system.essential.service",
-		},
-	}
-	mobileConfig := &models.MobileExtraConfig{
-		LockResolution:      true,  // Lock screen resolution for consistent testing
-		AppManagerRule:      appRule,
-		HideNavigationBar:   true,  // Hide navigation bar for immersive experience
-		UninstallBlacklist: []string{  // Protect critical apps from uninstallation
-			"com.android.systemui",
-			"com.android.settings",
-			"com.google.android.gms",
-		},
-	}
-	extraConfigs := &models.ExtraConfigs{Mobile: mobileConfig}
-	mobileParams := &agentbay.CreateSessionParams{
-		ImageId:      "mobile_latest",
-		Labels:       map[string]string{"project": "mobile-testing", "config_type": "whitelist"},
-		ExtraConfigs: extraConfigs,
-	}
-	mobileResult, err := client.Create(mobileParams)
-	if err != nil {
-		fmt.Printf("Error creating mobile session: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Created mobile session with whitelist: %s\n", mobileResult.Session.SessionID)
+	// Result: Created session with context sync: session-xxxxxxxxxxxxxxx
 
-	// Create a mobile session with blacklist configuration
-	appBlacklistRule := &models.AppManagerRule{
-		RuleType: "Black",
-		AppPackageNameList: []string{
-			"com.malware.suspicious",
-			"com.unwanted.adware",
-			"com.social.distraction",
-		},
-	}
-	mobileSecurityConfig := &models.MobileExtraConfig{
-		LockResolution:      false,  // Allow adaptive resolution
-		AppManagerRule:      appBlacklistRule,
-		HideNavigationBar:   false,  // Show navigation bar (default behavior)
-		UninstallBlacklist: []string{"com.android.systemui"},  // Protect system UI from uninstallation
-	}
-	securityExtraConfigs := &models.ExtraConfigs{Mobile: mobileSecurityConfig}
-	mobileSecurityParams := &agentbay.CreateSessionParams{
-		ImageId:      "mobile_latest",
-		Labels:       map[string]string{"project": "mobile-security", "config_type": "blacklist", "security": "enabled"},
-		ExtraConfigs: securityExtraConfigs,
-	}
-	securityResult, err := client.Create(mobileSecurityParams)
-	if err != nil {
-		fmt.Printf("Error creating secure mobile session: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Created secure mobile session with blacklist: %s\n", securityResult.Session.SessionID)
+	session.Delete()
+	customResult.Session.Delete()
+	syncResult.Session.Delete()
 }
 ```
 
-### Get
-
-Retrieves a session by its ID.
+#### Delete
 
 ```go
-Get(sessionID string) (*SessionResult, error)
+func (a *AgentBay) Delete(session *Session, syncContext ...bool) (*DeleteResult, error)
 ```
 
-**Parameters:**
-- `sessionID` (string): The ID of the session to retrieve.
+Delete deletes a session from the AgentBay cloud environment.
 
-**Returns:**
-- `*SessionResult`: A result object containing the Session instance, request ID, success status, and error message if any.
-- `error`: Always returns nil. Errors are indicated via SessionResult.Success and SessionResult.ErrorMessage fields.
+Parameters:
+  - session: The session to delete
+  - syncContext: Optional boolean to synchronize context data before deletion. If true, uploads all
+    context data to OSS. Defaults to false.
+
+Returns:
+  - *DeleteResult: Result containing success status and request ID
+  - error: Error if the operation fails
+
+Behavior:
+
+- If syncContext is true: Uploads all context data to OSS before deletion - If syncContext is false:
+Deletes immediately without sync - Continues with deletion even if context sync fails - Releases all
+associated resources
 
 **Example:**
+
 ```go
 package main
-
 import (
 	"fmt"
-	"log"
-
+	"os"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-	client, err := agentbay.NewAgentBay("")
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 	if err != nil {
-		log.Fatalf("Failed to initialize AgentBay client: %v", err)
+		fmt.Printf(\"Error initializing AgentBay client: %v\\n\", err)
+		os.Exit(1)
 	}
 
+	// Create a context first
+
+	contextResult, err := client.Context.Create(\"test-context\")
+	if err != nil {
+		fmt.Printf(\"Error creating context: %v\\n\", err)
+		os.Exit(1)
+	}
+
+	// Output: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
+
+	// Create a session with context synchronization
+
+	contextSync := &agentbay.ContextSync{
+		ContextID: contextResult.ContextID,
+		Path:      \"/home/wuying\",
+		Policy:    agentbay.NewSyncPolicy(),
+	}
+	params := &agentbay.CreateSessionParams{
+		ImageId:     \"windows_latest\",
+		ContextSync: []*agentbay.ContextSync{contextSync},
+	}
+	createResult, err := client.Create(params)
+	if err != nil {
+		fmt.Printf(\"Error creating session: %v\\n\", err)
+		os.Exit(1)
+	}
+	session := createResult.Session
+	fmt.Printf(\"Created session with ID: %s\\n\", session.SessionID)
+
+	// Output: Created session with ID: session-xxxxxxxxxxxxxxx
+
+	// Use the session for operations...
+
+	// Delete the session with context synchronization
+
+	deleteResult, err := client.Delete(session, true)
+	if err != nil {
+		fmt.Printf(\"Error deleting session: %v\\n\", err)
+		os.Exit(1)
+	}
+	if deleteResult.Success {
+		fmt.Println(\"Session deleted successfully with synchronized context\")
+
+		// Output: Session deleted successfully with synchronized context
+
+	}
+	fmt.Printf(\"Request ID: %s\\n\", deleteResult.RequestID)
+
+	// Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+
+}
+```
+
+#### Get
+
+```go
+func (a *AgentBay) Get(sessionID string) (*SessionResult, error)
+```
+
+Get retrieves a session by its ID. This method calls the GetSession API and returns a SessionResult
+containing the Session object and request ID.
+
+Parameters:
+  - sessionID: The ID of the session to retrieve
+
+Returns:
+  - *SessionResult: Result containing the Session instance, request ID, and success status
+  - error: An error if the operation fails
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
 	createResult, err := client.Create(nil)
 	if err != nil {
-		log.Fatalf("Failed to create session: %v", err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	sessionID := createResult.Session.SessionID
 	fmt.Printf("Created session with ID: %s\n", sessionID)
+
 	// Output: Created session with ID: session-xxxxxxxxxxxxxx
 
 	result, err := client.Get(sessionID)
 	if err != nil {
-		log.Fatalf("Failed to get session: %v", err)
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
-	
 	if result.Success {
 		fmt.Printf("Successfully retrieved session: %s\n", result.Session.SessionID)
+
 		// Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
+
 		fmt.Printf("Request ID: %s\n", result.RequestID)
+
 		// Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-		
+
 		deleteResult, err := result.Session.Delete()
 		if err != nil {
-			log.Fatalf("Failed to delete session: %v", err)
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
 		}
 		if deleteResult.Success {
 			fmt.Printf("Session %s deleted successfully\n", sessionID)
+
 			// Output: Session session-xxxxxxxxxxxxxx deleted successfully
+
 		}
 	} else {
 		fmt.Printf("Failed to get session: %s\n", result.ErrorMessage)
@@ -275,232 +303,145 @@ func main() {
 }
 ```
 
-
-Lists all available sessions cached in the current client instance.
-
-
-
-
-Lists sessions filtered by the provided labels. It returns sessions that match all the specified labels. This method supports pagination to handle large result sets efficiently.
-
+#### GetSession
 
 ```go
-ListByLabels(params *ListSessionParams) (*SessionListResult, error)
+func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error)
 ```
 
-**Parameters:**
-- `params` (*ListSessionParams, optional): Parameters for filtering sessions by labels. If nil, all sessions will be returned.
+GetSession retrieves session information by session ID
 
-**Returns:**
-- `*SessionListResult`: A result object containing the filtered sessions, pagination information, and RequestID.
-- `error`: An error if the session listing fails.
+#### List
+
+```go
+func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error)
+```
+
+List returns paginated list of session IDs filtered by labels.
+
+Parameters:
+  - labels: Optional labels to filter sessions (can be nil for no filtering)
+  - page: Optional page number for pagination (starting from 1, nil or 0 for first page)
+  - limit: Optional maximum number of items per page (nil or 0 uses default of 10)
+
+Returns:
+  - *SessionListResult: Paginated list of session IDs that match the labels
+  - error: An error if the operation fails
 
 **Example:**
+
 ```go
-package main
+agentBay, _ := agentbay.NewAgentBay("your_api_key")
 
-import (
-	"fmt"
-	"os"
+// List all sessions
 
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
+result, err := agentBay.List(nil, nil, nil)
 
-func main() {
-	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
-	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
-	}
+// List sessions with specific labels
 
-	// Create pagination parameters
-	labels := map[string]string{
-		"environment": "production",
-		"project":     "demo",
-	}
-	params := &agentbay.ListSessionParams{
-		MaxResults: 10,
-		NextToken:  "",
-		Labels:     labels,
-	}
+result, err := agentBay.List(map[string]string{"project": "demo"}, nil, nil)
 
-	// Get the first page of results
-	result, err := client.ListByLabels(params)
-	if err != nil {
-		fmt.Printf("Error listing sessions by labels: %v\n", err)
-		os.Exit(1)
-	}
-	// Result: API Call: ListSession
-	// Result: Request: Labels={"environment":"production","project":"demo"}, MaxResults=10
+// List sessions with pagination
 
-	// Process the results
-	fmt.Printf("Found %d sessions:\n", len(result.Sessions))
-	for _, session := range result.Sessions {
-		fmt.Printf("Session ID: %s\n", session.SessionID)
-	}
-	// Result: Found N sessions (depends on actual sessions matching the labels)
-
-	// Print pagination information
-	fmt.Printf("Total count: %d\n", result.TotalCount)
-	fmt.Printf("Max results per page: %d\n", result.MaxResults)
-	fmt.Printf("Next token: %s\n", result.NextToken)
-	// Result: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-
-	// If there is a next page, retrieve it
-	if result.NextToken != "" {
-		params.NextToken = result.NextToken
-		nextPageResult, err := client.ListByLabels(params)
-		if err != nil {
-			fmt.Printf("Error retrieving next page: %v\n", err)
-			os.Exit(1)
-		}
-		// Process the next page...
-	}
+page := 2
+limit := int32(10)
+result, err := agentBay.List(map[string]string{"my-label": "my-value"}, &page, &limit)
+if err == nil {
+    for _, sessionId := range result.SessionIds {
+        fmt.Printf("Session ID: %s\n", sessionId)
+    }
+    fmt.Printf("Total count: %d\n", result.TotalCount)
+    fmt.Printf("Request ID: %s\n", result.RequestID)
 }
 ```
 
-### List
+### Related Functions
 
-Returns paginated list of Sessions filtered by labels.
-
-```go
-List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error)
-```
-
-**Parameters:**
-- `labels` (map[string]string, optional): Labels to filter Sessions. Can be nil for no filtering (returns all sessions).
-- `page` (*int, optional): Page number for pagination (starting from 1). nil or 0 returns the first page.
-- `limit` (*int32, optional): Maximum number of items per page. nil or 0 uses default of 10.
-
-**Returns:**
-- `*SessionListResult`: Paginated list of session IDs that match the labels, including RequestID and pagination information.
-- `error`: An error if the operation fails.
-
-**Key Features:**
-- **Simple Interface**: Pass labels directly as a map parameter
-- **Pagination Support**: Use `page` and `limit` parameters for easy pagination
-- **Request ID**: All responses include a RequestID for tracking and debugging
-- **Flexible Filtering**: Filter by any combination of labels or list all sessions
-
-**Example:**
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-
-func main() {
-	client, _ := agentbay.NewAgentBay("your_api_key", nil)
-
-	// List all sessions
-	result, err := client.List(nil, nil, nil)
-
-	// List sessions with specific labels
-	result, err = client.List(map[string]string{"project": "demo"}, nil, nil)
-
-	// List sessions with pagination (page 2, 10 items per page)
-	page := 2
-	limit := int32(10)
-	result, err = client.List(map[string]string{"my-label": "my-value"}, &page, &limit)
-
-	if err == nil {
-		for _, sessionId := range result.SessionIds {
-			fmt.Printf("Session ID: %s\n", sessionId)
-		}
-		fmt.Printf("Total count: %d\n", result.TotalCount)
-		fmt.Printf("Request ID: %s\n", result.RequestID)
-	}
-}
-```
-
-### Delete
-
-Deletes a session from the AgentBay cloud environment.
+#### NewAgentBay
 
 ```go
-Delete(session *Session, syncContext ...bool) (*DeleteResult, error)
+func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error)
 ```
 
-**Parameters:**
-- `session` (*Session): The session to delete.
-- `syncContext` (bool, optional): If true, the API will trigger a file upload via `session.Context.Sync()` before actually releasing the session. Default is false.
+NewAgentBay creates a new AgentBay client. If apiKey is empty, it will look for the AGENTBAY_API_KEY
+environment variable.
 
-**Returns:**
-- `*DeleteResult`: A result object containing success status and RequestID.
-- `error`: An error if the session deletion fails.
+#### NewAgentBayWithDefaults
 
-**Behavior:**
-- When `syncContext` is true, the API will first call `session.Context.Sync()` to trigger file upload.
-- It will then check `session.Context.Info()` to retrieve ContextStatusData and monitor all data items' Status.
-- The API waits until all items show either "Success" or "Failed" status, or until the maximum retry limit (150 times with 2-second intervals) is reached.
-- Any "Failed" status items will have their error messages printed.
-- The session deletion only proceeds after context sync status checking completes.
-
-**Example:**
 ```go
-package main
-
-import (
-	"fmt"
-	"os"
-
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-
-func main() {
-	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
-	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Create a context first
-	contextResult, err := client.Context.Create("test-context")
-	if err != nil {
-		fmt.Printf("Error creating context: %v\n", err)
-		os.Exit(1)
-	}
-	// Result: Success: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
-
-	// Create a session with context synchronization
-	contextSync := &agentbay.ContextSync{
-		ContextID: contextResult.ContextID,
-		Path:      "/home/wuying",
-		Policy:    agentbay.NewSyncPolicy(),
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId:     "windows_latest",
-		ContextSync: []*agentbay.ContextSync{contextSync},
-	}
-
-	createResult, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error creating session: %v\n", err)
-		os.Exit(1)
-	}
-
-	session := createResult.Session
-	fmt.Printf("Created session with ID: %s\n", session.SessionID)
-	// Result: Created session with context sync: session-xxxxxxxxxxxxxxx
-
-	// Use the session for operations...
-
-	// Delete the session with context synchronization
-	deleteResult, err := client.Delete(session, true)
-	if err != nil {
-		fmt.Printf("Error deleting session: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println("Session deleted successfully with synchronized context")
-	fmt.Printf("Request ID: %s\n", deleteResult.RequestID)
-	// Result: Triggering context synchronization before session deletion...
-	// Result: Context sync completed successfully
-	// Result: Success: Session deleted successfully with synchronized context
-	// Result: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-}
+func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error)
 ```
+
+NewAgentBayWithDefaults creates a new AgentBay client using default configuration. This is a
+convenience function that allows calling NewAgentBay without a config parameter.
+
+## Type Option
+
+```go
+type Option func(*AgentBayConfig)
+```
+
+Option is a function that sets optional parameters for AgentBay client.
+
+### Related Functions
+
+#### WithConfig
+
+```go
+func WithConfig(cfg *Config) Option
+```
+
+WithConfig returns an Option that sets the configuration for the AgentBay client.
+
+#### WithEnvFile
+
+```go
+func WithEnvFile(envFile string) Option
+```
+
+WithEnvFile returns an Option that sets a custom .env file path for the AgentBay client.
+
+## Functions
+
+### NewAgentBay
+
+```go
+func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error)
+```
+
+NewAgentBay creates a new AgentBay client. If apiKey is empty, it will look for the AGENTBAY_API_KEY
+environment variable.
+
+### NewAgentBayWithDefaults
+
+```go
+func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error)
+```
+
+NewAgentBayWithDefaults creates a new AgentBay client using default configuration. This is a
+convenience function that allows calling NewAgentBay without a config parameter.
+
+### WithConfig
+
+```go
+func WithConfig(cfg *Config) Option
+```
+
+WithConfig returns an Option that sets the configuration for the AgentBay client.
+
+### WithEnvFile
+
+```go
+func WithEnvFile(envFile string) Option
+```
+
+WithEnvFile returns an Option that sets a custom .env file path for the AgentBay client.
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Context API Reference](context.md)
+
+---
+
+*Documentation generated automatically from Go source code.*

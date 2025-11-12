@@ -1,353 +1,794 @@
-# FileSystem Class API Reference
+# File System API Reference
 
-The `FileSystem` class provides methods for file operations within a session in the AgentBay cloud environment. This includes reading, writing, editing, and searching files, as well as directory operations, real-time directory monitoring, and file transfer capabilities.
+## 📁 Related Tutorial
 
-## 📖 Related Tutorial
+- [File Operations Guide](../../../../../docs/guides/common-features/basics/file-operations.md) - Complete guide to file system operations
 
-- [Complete Guide to File Operations](../../../../../docs/guides/common-features/basics/file-operations.md) - Detailed tutorial covering all file operation features
-
-## Methods
-
-### create_directory / createDirectory / CreateDirectory
-
-Creates a new directory at the specified path.
 
 
 ```python
-create_directory(path: str) -> BoolResult
+@dataclass
+class UploadResult()
 ```
-
-**Parameters:**
-- `path` (str): The path of the directory to create.
-
-**Returns:**
-- `BoolResult`: A result object containing success status, boolean data (True if successful), request ID, and error message if any.
-
-**Note:**
-The return type has been updated from boolean to a structured `BoolResult` object, which provides more detailed information about the operation result.
-
-### edit_file
-
-Edits a file by replacing occurrences of oldText with newText.
-
-
-```python
-edit_file(path: str, edits: List[Dict[str, str]], dry_run: bool = False) -> BoolResult
-```
-
-**Parameters:**
-- `path` (str): The path of the file to edit.
-- `edits` (List[Dict[str, str]]): List of edit operations, each containing oldText and newText.
-- `dry_run` (bool, optional): If true, preview changes without applying them. Default is False.
-
-**Returns:**
-- `BoolResult`: A result object containing success status, boolean data (True if successful), request ID, and error message if any.
-
-### get_file_info
-
-Gets information about a file or directory.
-
-```python
-get_file_info(path: str) -> FileInfoResult
-```
-
-**Parameters:**
-- `path` (str): The path of the file or directory to inspect.
-
-**Returns:**
-- `FileInfoResult`: A result object containing file information, success status, request ID, and error message if any.
-
-### list_directory
-
-Lists the contents of a directory.
-
-```python
-list_directory(path: str) -> DirectoryListResult
-```
-
-**Parameters:**
-- `path` (str): The path of the directory to list.
-
-**Returns:**
-- `DirectoryListResult`: A result object containing a list of directory entries, success status, request ID, and error message if any.
-
-### move_file
-
-Moves a file or directory from source to destination.
-
-
-```python
-move_file(source: str, destination: str) -> BoolResult
-```
-
-**Parameters:**
-- `source` (str): The path of the source file or directory.
-- `destination` (str): The path of the destination file or directory.
-
-**Returns:**
-- `BoolResult`: A result object containing success status, boolean data (True if successful), request ID, and error message if any.
-
-### read_file
-
-Reads the contents of a file. Automatically handles large files by chunking.
-
-
-```python
-read_file(path: str) -> FileContentResult
-```
-
-**Parameters:**
-- `path` (str): The path of the file to read.
-
-**Returns:**
-- `FileContentResult`: A result object containing file content, success status, request ID, and error message if any.
-
-**Note:**
-This method automatically handles both small and large files. For large files, it uses internal chunking with a default chunk size of 50KB to overcome API size limitations. No manual chunk size configuration is needed.
-
-### read_multiple_files
-
-```python
-read_multiple_files(paths: List[str]) -> MultipleFileContentResult
-```
-
-**Parameters:**
-- `paths` (List[str]): List of file paths to read.
-
-**Returns:**
-- `MultipleFileContentResult`: A result object containing a dictionary mapping file paths to their contents, success status, request ID, and error message if any.
-
-### search_files
-
-Searches for files matching a pattern in a directory.
-
-
-```python
-search_files(path: str, pattern: str, exclude_patterns: Optional[List[str]] = None) -> FileSearchResult
-```
-
-**Parameters:**
-- `path` (str): The path of the directory to start the search.
-- `pattern` (str): The pattern to match.
-- `exclude_patterns` (List[str], optional): Patterns to exclude. Default is None.
-
-**Returns:**
-- `FileSearchResult`: A result object containing search results (in the `matches` attribute), success status, request ID, and error message if any.
-
-### write_file
-
-Writes content to a file. Automatically handles large files by chunking.
-
-
-```python
-write_file(path: str, content: str, mode: str = "overwrite") -> BoolResult
-```
-
-**Parameters:**
-- `path` (str): The path of the file to write.
-- `content` (str): Content to write to the file.
-- `mode` (str, optional): "overwrite" (default) or "append".
-
-**Returns:**
-- `BoolResult`: A result object containing success status, boolean data (True if successful), request ID, and error message if any.
-
-**Note:**
-This method automatically handles both small and large content. For large content, it uses internal chunking with a default chunk size of 50KB to overcome API size limitations. No manual chunk size configuration is needed.
-
-### upload_file
-
-Uploads a file from local storage to the cloud environment.
-
-```python
-upload_file(
-    local_path: str,
-    remote_path: str,
-    *,
-    content_type: Optional[str] = None,
-    wait: bool = True,
-    wait_timeout: float = 30.0,
-    poll_interval: float = 1.5,
-    progress_cb: Optional[Callable[[int], None]] = None
-) -> UploadResult
-```
-
-**Parameters:**
-- `local_path` (str): Path to the local file to upload
-- `remote_path` (str): Path where the file should be stored in the cloud
-- `content_type` (str, optional): Content-Type header for the upload
-- `wait` (bool, optional): Whether to wait for synchronization to complete (default: True)
-- `wait_timeout` (float, optional): Maximum time to wait for synchronization (default: 30.0 seconds)
-- `poll_interval` (float, optional): Interval between synchronization status checks (default: 1.5 seconds)
-- `progress_cb` (Callable, optional): Callback function to track upload progress
-
-**Returns:**
-- `UploadResult`: Result object containing upload status and metadata
-
-**Example:**
-```python
-# Upload a file
-upload_result = session.file_system.upload_file(
-    local_path="/path/to/local/file.txt",
-    remote_path="/remote/path/file.txt"
-)
-
-if upload_result.success:
-    print(f"Uploaded {upload_result.bytes_sent} bytes")
-else:
-    print(f"Upload failed: {upload_result.error}")
-```
-
-### download_file
-
-Downloads a file from the cloud environment to local storage.
-
-```python
-download_file(
-    remote_path: str,
-    local_path: str,
-    *,
-    overwrite: bool = True,
-    wait: bool = True,
-    wait_timeout: float = 300.0,
-    poll_interval: float = 1.5,
-    progress_cb: Optional[Callable[[int], None]] = None
-) -> DownloadResult
-```
-
-**Parameters:**
-- `remote_path` (str): Path to the file in the cloud environment
-- `local_path` (str): Path where the file should be saved locally
-- `overwrite` (bool, optional): Whether to overwrite existing local files (default: True)
-- `wait` (bool, optional): Whether to wait for synchronization to complete (default: True)
-- `wait_timeout` (float, optional): Maximum time to wait for synchronization (default: 300.0 seconds)
-- `poll_interval` (float, optional): Interval between synchronization status checks (default: 1.5 seconds)
-- `progress_cb` (Callable, optional): Callback function to track download progress
-
-**Returns:**
-- `DownloadResult`: Result object containing download status and metadata
-
-**Example:**
-```python
-# Download a file
-download_result = session.file_system.download_file(
-    remote_path="/remote/path/file.txt",
-    local_path="/path/to/local/file.txt"
-)
-
-if download_result.success:
-    print(f"Downloaded {download_result.bytes_received} bytes")
-else:
-    print(f"Download failed: {download_result.error}")
-```
-
-## Directory Monitoring
-
-### watch_directory
-
-Watches a directory for file changes and calls a callback function when changes occur.
-
-```python
-watch_directory(
-    path: str,
-    callback: Callable[[List[FileChangeEvent]], None],
-    interval: float = 0.5,
-    stop_event: Optional[threading.Event] = None
-) -> threading.Thread
-```
-
-**Parameters:**
-- `path` (str): The directory path to monitor for file changes.
-- `callback` (Callable): Callback function that will be called with a list of FileChangeEvent objects when changes are detected.
-- `interval` (float, optional): Polling interval in seconds. Default is 0.5.
-- `stop_event` (threading.Event, optional): Optional threading.Event to stop the monitoring. If not provided, a new Event will be created and attached to the returned thread.
-
-**Returns:**
-- `threading.Thread`: The monitoring thread. Call `thread.start()` to begin monitoring. Use `thread.stop_event.set()` to stop monitoring.
-
-**Example:**
-```python
-import threading
-import time
-
-def on_file_change(events):
-    for event in events:
-        print(f"{event.event_type}: {event.path} ({event.path_type})")
-
-# Start monitoring
-monitor_thread = session.file_system.watch_directory(
-    path="/tmp/my_directory",
-    callback=on_file_change,
-    interval=0.5  # Check every 0.5 seconds
-)
-monitor_thread.start()
-
-# Do some work...
-time.sleep(10)
-
-# Stop monitoring
-monitor_thread.stop_event.set()
-monitor_thread.join()
-```
-
-### FileChangeEvent
-
-Represents a single file change event.
-
-**Attributes:**
-- `event_type` (str): Type of the file change event ("create", "modify", "delete").
-- `path` (str): Path of the file or directory that changed.
-- `path_type` (str): Type of the path ("file" or "directory").
-
-**Methods:**
-- `to_dict()`: Convert to dictionary representation.
-- `from_dict(data)`: Create FileChangeEvent from dictionary (class method).
-
-### FileChangeResult
-
-Result of file change detection operations.
-
-**Attributes:**
-- `success` (bool): Whether the operation was successful.
-- `events` (List[FileChangeEvent]): List of file change events.
-- `raw_data` (str): Raw response data for debugging.
-- `error_message` (str): Error message if the operation failed.
-
-**Methods:**
-- `has_changes()`: Check if there are any file changes.
-- `get_modified_files()`: Get list of modified file paths.
-- `get_created_files()`: Get list of created file paths.
-- `get_deleted_files()`: Get list of deleted file paths.
-
-## File Transfer Result Classes
-
-### UploadResult
 
 Result structure for file upload operations.
 
-**Properties:**
+#### success: `bool`
+
 ```python
-success: bool                    # Whether the upload was successful
-request_id_upload_url: str       # Request ID for the upload URL
-request_id_sync: str             # Request ID for the synchronization
-http_status: int                 # HTTP status code from the upload
-etag: str                        # ETag of the uploaded file
-bytes_sent: int                  # Number of bytes sent
-path: str                        # Remote path of the file
-error: str                       # Error message if upload failed
+success = None
 ```
 
-### DownloadResult
+#### request\_id\_upload\_url: `Optional[str]`
+
+```python
+request_id_upload_url = None
+```
+
+#### request\_id\_sync: `Optional[str]`
+
+```python
+request_id_sync = None
+```
+
+#### http\_status: `Optional[int]`
+
+```python
+http_status = None
+```
+
+#### etag: `Optional[str]`
+
+```python
+etag = None
+```
+
+#### bytes\_sent: `int`
+
+```python
+bytes_sent = None
+```
+
+#### path: `str`
+
+```python
+path = None
+```
+
+#### error: `Optional[str]`
+
+```python
+error = None
+```
+
+## DownloadResult Objects
+
+```python
+@dataclass
+class DownloadResult()
+```
 
 Result structure for file download operations.
 
-**Properties:**
+#### success: `bool`
+
 ```python
-success: bool                    # Whether the download was successful
-request_id_download_url: str     # Request ID for the download URL
-request_id_sync: str             # Request ID for the synchronization
-http_status: int                 # HTTP status code from the download
-bytes_received: int              # Number of bytes received
-path: str                        # Remote path of the file
-local_path: str                  # Local path where file was saved
-error: str                       # Error message if download failed
+success = None
 ```
+
+#### request\_id\_download\_url: `Optional[str]`
+
+```python
+request_id_download_url = None
+```
+
+#### request\_id\_sync: `Optional[str]`
+
+```python
+request_id_sync = None
+```
+
+#### http\_status: `Optional[int]`
+
+```python
+http_status = None
+```
+
+#### bytes\_received: `int`
+
+```python
+bytes_received = None
+```
+
+#### path: `str`
+
+```python
+path = None
+```
+
+#### local\_path: `str`
+
+```python
+local_path = None
+```
+
+#### error: `Optional[str]`
+
+```python
+error = None
+```
+
+## FileTransfer Objects
+
+```python
+class FileTransfer()
+```
+
+FileTransfer provides pre-signed URL upload/download functionality between local and OSS,
+with integration to Session Context synchronization.
+
+Prerequisites and Constraints:
+- Session must be associated with the corresponding context_id and path through 
+  CreateSessionParams.context_syncs, and remote_path should fall within that 
+  synchronization path (or conform to backend path rules).
+- Requires available AgentBay context service (agent_bay.context) and session context.
+
+#### upload
+
+```python
+async def upload(
+        local_path: str,
+        remote_path: str,
+        *,
+        content_type: Optional[str] = None,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None) -> UploadResult
+```
+
+Upload workflow:
+1) Get OSS pre-signed URL via context.get_file_upload_url
+2) Upload local file to OSS using the URL (HTTP PUT)
+3) Trigger session.context.sync(mode="upload") to sync OSS objects to cloud disk
+4) If wait=True, poll session.context.info until upload task reaches completion or timeout
+
+Returns UploadResult containing request_ids, HTTP status, ETag and other information.
+
+#### download
+
+```python
+async def download(
+        remote_path: str,
+        local_path: str,
+        *,
+        overwrite: bool = True,
+        wait: bool = True,
+        wait_timeout: float = 300.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None) -> DownloadResult
+```
+
+Download workflow:
+1) Trigger session.context.sync(mode="upload") to sync cloud disk data to OSS
+2) Get pre-signed download URL via context.get_file_download_url
+3) Download the file and save to local local_path
+4) If wait=True, wait for download task to reach completion after step 1 
+   (ensuring backend has prepared the download object)
+
+Returns DownloadResult containing sync and download request_ids, HTTP status, byte count, etc.
+
+## FileChangeEvent Objects
+
+```python
+class FileChangeEvent()
+```
+
+Represents a single file change event.
+
+## FileChangeResult Objects
+
+```python
+class FileChangeResult(ApiResponse)
+```
+
+Result of file change detection operations.
+
+This class provides methods to check and filter file change events detected
+in a directory. It is typically returned by file monitoring operations.
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+session.file_system.create_directory("/tmp/change_test")
+session.file_system.write_file("/tmp/change_test/file1.txt", "original content")
+session.file_system.write_file("/tmp/change_test/file2.txt", "original content")
+session.file_system.write_file("/tmp/change_test/file1.txt", "modified content")
+session.file_system.write_file("/tmp/change_test/file3.txt", "new file")
+change_result = session.file_system._get_file_change("/tmp/change_test")
+session.delete()
+```
+
+#### has\_changes
+
+```python
+def has_changes() -> bool
+```
+
+Check if there are any file changes.
+
+**Returns**:
+
+    bool: True if there are any file change events, False otherwise.
+
+#### get\_modified\_files
+
+```python
+def get_modified_files() -> List[str]
+```
+
+Get list of modified file paths.
+
+**Returns**:
+
+    List[str]: List of file paths that were modified.
+
+#### get\_created\_files
+
+```python
+def get_created_files() -> List[str]
+```
+
+Get list of created file paths.
+
+**Returns**:
+
+    List[str]: List of file paths that were created.
+
+#### get\_deleted\_files
+
+```python
+def get_deleted_files() -> List[str]
+```
+
+Get list of deleted file paths.
+
+**Returns**:
+
+    List[str]: List of file paths that were deleted.
+
+## FileInfoResult Objects
+
+```python
+class FileInfoResult(ApiResponse)
+```
+
+Result of file info operations.
+
+## DirectoryListResult Objects
+
+```python
+class DirectoryListResult(ApiResponse)
+```
+
+Result of directory listing operations.
+
+## FileContentResult Objects
+
+```python
+class FileContentResult(ApiResponse)
+```
+
+Result of file read operations.
+
+## MultipleFileContentResult Objects
+
+```python
+class MultipleFileContentResult(ApiResponse)
+```
+
+Result of multiple file read operations.
+
+## FileSearchResult Objects
+
+```python
+class FileSearchResult(ApiResponse)
+```
+
+Result of file search operations.
+
+## FileSystem Objects
+
+```python
+class FileSystem(BaseService)
+```
+
+Handles file operations in the AgentBay cloud environment.
+
+#### DEFAULT\_CHUNK\_SIZE
+
+```python
+DEFAULT_CHUNK_SIZE = 50 * 1024
+```
+
+#### create\_directory
+
+```python
+def create_directory(path: str) -> BoolResult
+```
+
+Create a new directory at the specified path.
+
+**Arguments**:
+
+    path: The path of the directory to create.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if
+  any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+create_result = session.file_system.create_directory("/tmp/mydir")
+nested_result = session.file_system.create_directory("/tmp/parent/child/grandchild")
+session.delete()
+```
+
+#### edit\_file
+
+```python
+def edit_file(path: str,
+              edits: List[Dict[str, str]],
+              dry_run: bool = False) -> BoolResult
+```
+
+Edit a file by replacing occurrences of oldText with newText.
+
+**Arguments**:
+
+    path: The path of the file to edit.
+    edits: A list of dictionaries specifying oldText and newText.
+    dry_run: If True, preview changes without applying them.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if
+  any.
+  
+
+**Example**:
+
+            ```python
+            session = agent_bay.create().session
+            session.file_system.write_file("/tmp/config.txt", "DEBUG=false
+LOG_LEVEL=info")
+            edits = [{"oldText": "false", "newText": "true"}]
+            edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
+            session.delete()
+            ```
+
+#### get\_file\_info
+
+```python
+def get_file_info(path: str) -> FileInfoResult
+```
+
+Get information about a file or directory.
+
+**Arguments**:
+
+    path: The path of the file or directory to inspect.
+  
+
+**Returns**:
+
+    FileInfoResult: Result object containing file info and error message if any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/test.txt", "Sample content")
+info_result = session.file_system.get_file_info("/tmp/test.txt")
+print(info_result.file_info)
+session.delete()
+```
+
+#### list\_directory
+
+```python
+def list_directory(path: str) -> DirectoryListResult
+```
+
+List the contents of a directory.
+
+**Arguments**:
+
+- `path` _str_ - The path of the directory to list.
+  
+
+**Returns**:
+
+    DirectoryListResult: Result object containing directory entries and error message if any.
+  - success (bool): True if the operation succeeded
+  - entries (List[Dict[str, Union[str, bool]]]): List of directory entries (if success is True)
+  Each entry contains:
+  - name (str): Name of the file or directory
+  - isDirectory (bool): True if entry is a directory, False if file
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Raises**:
+
+    FileError: If the directory does not exist or cannot be accessed.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+session.file_system.create_directory("/tmp/testdir")
+session.file_system.write_file("/tmp/testdir/file1.txt", "Content 1")
+list_result = session.file_system.list_directory("/tmp/testdir")
+print(f"Found {len(list_result.entries)} entries")
+session.delete()
+```
+  
+
+**Notes**:
+
+  - Returns empty list for empty directories
+  - Each entry includes name and isDirectory flag
+  - Does not recursively list subdirectories
+  
+
+**See Also**:
+
+  FileSystem.create_directory, FileSystem.get_file_info, FileSystem.read_file
+
+#### move\_file
+
+```python
+def move_file(source: str, destination: str) -> BoolResult
+```
+
+Move a file or directory from source path to destination path.
+
+**Arguments**:
+
+    source: The source path of the file or directory.
+    destination: The destination path.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if
+  any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/original.txt", "Test content")
+move_result = session.file_system.move_file("/tmp/original.txt", "/tmp/moved.txt")
+read_result = session.file_system.read_file("/tmp/moved.txt")
+session.delete()
+```
+
+#### read\_multiple\_files
+
+```python
+def read_multiple_files(paths: List[str]) -> MultipleFileContentResult
+```
+
+Read the contents of multiple files at once.
+
+**Arguments**:
+
+    paths: A list of file paths to read.
+  
+
+**Returns**:
+
+    MultipleFileContentResult: Result object containing a dictionary mapping
+  file paths to contents,
+  and error message if any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/file1.txt", "Content of file 1")
+session.file_system.write_file("/tmp/file2.txt", "Content of file 2")
+session.file_system.write_file("/tmp/file3.txt", "Content of file 3")
+paths = ["/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt"]
+read_result = session.file_system.read_multiple_files(paths)
+session.delete()
+```
+
+#### search\_files
+
+```python
+def search_files(
+        path: str,
+        pattern: str,
+        exclude_patterns: Optional[List[str]] = None) -> FileSearchResult
+```
+
+Search for files in the specified path using a pattern.
+
+**Arguments**:
+
+    path: The base directory path to search in.
+    pattern: The pattern string to match against file names (substring match).
+    exclude_patterns: Optional list of patterns to exclude from the search.
+  
+
+**Returns**:
+
+    FileSearchResult: Result object containing matching file paths and error
+  message if any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/test/test_file1.py", "print('hello')")
+session.file_system.write_file("/tmp/test/test_file2.py", "print('world')")
+session.file_system.write_file("/tmp/test/other.txt", "text content")
+search_result = session.file_system.search_files("/tmp/test", "test_")
+session.delete()
+```
+
+#### read\_file
+
+```python
+def read_file(path: str) -> FileContentResult
+```
+
+Read the contents of a file. Automatically handles large files by chunking.
+
+**Arguments**:
+
+- `path` _str_ - The path of the file to read.
+  
+
+**Returns**:
+
+    FileContentResult: Result object containing file content and error message if any.
+  - success (bool): True if the operation succeeded
+  - content (str): The file content (if success is True)
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Raises**:
+
+    FileError: If the file does not exist or is a directory.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
+read_result = session.file_system.read_file("/tmp/test.txt")
+print(read_result.content)
+session.delete()
+```
+  
+
+**Notes**:
+
+  - Automatically handles large files by reading in chunks (default 50KB per chunk)
+  - Returns empty string for empty files
+  - Returns error if path is a directory
+  
+
+**See Also**:
+
+  FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
+
+#### write\_file
+
+```python
+def write_file(path: str, content: str, mode: str = "overwrite") -> BoolResult
+```
+
+Write content to a file. Automatically handles large files by chunking.
+
+**Arguments**:
+
+- `path` _str_ - The path of the file to write.
+- `content` _str_ - The content to write to the file.
+- `mode` _str, optional_ - The write mode. Defaults to "overwrite".
+  - "overwrite": Replace file content
+  - "append": Append to existing content
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  - success (bool): True if the operation succeeded
+  - data (bool): True if the file was written successfully
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Raises**:
+
+    FileError: If the write operation fails.
+  
+
+**Example**:
+
+            ```python
+            session = agent_bay.create().session
+            write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
+            append_result = session.file_system.write_file("/tmp/test.txt", "
+New line", mode="append")
+            read_result = session.file_system.read_file("/tmp/test.txt")
+            session.delete()
+            ```
+  
+
+**Notes**:
+
+  - Automatically handles large files by writing in chunks (default 50KB per chunk)
+  - Creates parent directories if they don't exist
+  - In "overwrite" mode, replaces the entire file content
+  - In "append" mode, adds content to the end of the file
+  
+
+**See Also**:
+
+  FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
+
+#### upload\_file
+
+```python
+def upload_file(
+        local_path: str,
+        remote_path: str,
+        *,
+        content_type: Optional[str] = None,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None) -> UploadResult
+```
+
+Upload a file from local to remote path using pre-signed URLs.
+
+This is a synchronous wrapper around the async FileTransfer.upload method.
+
+**Arguments**:
+
+    local_path: Local file path to upload
+    remote_path: Remote file path to upload to
+    content_type: Optional content type for the file
+    wait: Whether to wait for the sync operation to complete
+    wait_timeout: Timeout for waiting for sync completion
+    poll_interval: Interval between polling for sync completion
+    progress_cb: Callback for upload progress updates
+  
+
+**Returns**:
+
+    UploadResult: Result of the upload operation
+  
+
+**Example**:
+
+```python
+params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
+session = agent_bay.create(params).session
+upload_result = session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
+session.delete()
+```
+
+#### download\_file
+
+```python
+def download_file(
+        remote_path: str,
+        local_path: str,
+        *,
+        overwrite: bool = True,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None) -> DownloadResult
+```
+
+Download a file from remote path to local path using pre-signed URLs.
+
+This is a synchronous wrapper around the async FileTransfer.download method.
+
+**Arguments**:
+
+    remote_path: Remote file path to download from
+    local_path: Local file path to download to
+    overwrite: Whether to overwrite existing local file
+    wait: Whether to wait for the sync operation to complete
+    wait_timeout: Timeout for waiting for sync completion
+    poll_interval: Interval between polling for sync completion
+    progress_cb: Callback for download progress updates
+  
+
+**Returns**:
+
+    DownloadResult: Result of the download operation
+  
+
+**Example**:
+
+```python
+params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
+session = agent_bay.create(params).session
+download_result = session.file_system.download_file("/workspace/file.txt", "/local/file.txt")
+session.delete()
+```
+
+#### watch\_directory
+
+```python
+def watch_directory(
+        path: str,
+        callback: Callable[[List[FileChangeEvent]], None],
+        interval: float = 0.5,
+        stop_event: Optional[threading.Event] = None) -> threading.Thread
+```
+
+Watch a directory for file changes and call the callback function when changes occur.
+
+**Arguments**:
+
+    path: The directory path to monitor for file changes.
+    callback: Callback function that will be called with a list of FileChangeEvent
+  objects when changes are detected.
+    interval: Polling interval in seconds. Defaults to 0.5.
+    stop_event: Optional threading.Event to stop the monitoring. If not provided,
+  a new Event will be created and returned via the thread object.
+  
+
+**Returns**:
+
+    threading.Thread: The monitoring thread. Call thread.start() to begin monitoring.
+  Use the thread's stop_event attribute to stop monitoring.
+  
+
+**Example**:
+
+```python
+def on_changes(events):
+    print(f"Detected {len(events)} changes")
+session = agent_bay.create().session
+session.file_system.create_directory("/tmp/watch_test")
+monitor_thread = session.file_system.watch_directory("/tmp/watch_test", on_changes)
+monitor_thread.start()
+session.file_system.write_file("/tmp/watch_test/test1.txt", "content 1")
+session.file_system.write_file("/tmp/watch_test/test2.txt", "content 2")
+session.delete()
+```
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Command API Reference](command.md)
+
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*

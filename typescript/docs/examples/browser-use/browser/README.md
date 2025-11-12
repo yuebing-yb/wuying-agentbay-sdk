@@ -62,22 +62,16 @@ ts-node browser-viewport.ts
 - Screen dimensions
 - Configuration verification
 
-### 3. browser-stealth.ts
+### 3. browser-fingerprint-xxx.ts
 
-Shows how to use stealth mode for anti-detection:
-- Enabling stealth mode
-- Bypassing bot detection
-- Accessing protected content
+Shows how to configure browser fingerprinting:
+- Three construction methods: random generation, custom configuration, and local fingerprint sync
+- Fingerprint persistence capabilities across sessions
 
 **Run:**
 ```bash
-ts-node browser-stealth.ts
+ts-node browser-fingerprint-xxx.ts
 ```
-
-**Key Features:**
-- Stealth mode configuration
-- Anti-detection measures
-- Protected content access
 
 ### 4. browser-proxies.ts
 
@@ -157,6 +151,37 @@ ts-node browser-type-example.ts --type-safe
 ```bash
 ts-node run-2048.ts
 ts-node run-sudoku.ts
+```
+
+### 8. screenshot-example.ts
+
+An example demonstrating screenshot capabilities:
+- Creating a browser session with AgentBay
+- Using Playwright to connect to the browser instance
+- Taking screenshots using direct Playwright integration (Uint8Array data)
+- Saving screenshots to local files
+- Customizing screenshot options (full page, image format, quality)
+
+**Run:**
+```bash
+ts-node screenshot-example.ts
+```
+
+**Expected Output:**
+```
+📸 AgentBay Browser Screenshot Demo (TypeScript)
+==================================================
+Initializing AgentBay client...
+Creating a new session...
+Session created with ID: sess-xxxxx
+Browser initialized successfully
+Endpoint URL: ws://...
+📸 Taking screenshot...
+ℹ️  Note: Screenshot functionality requires Playwright TypeScript integration
+✅ Browser screenshot demo completed
+
+🧹 Cleaning up session sess-xxxxx...
+✅ Session deleted successfully
 ```
 
 ## Browser Type Selection
@@ -318,15 +343,6 @@ Connecting to browser...
 Page title: Example Domain
 Browser automation completed
 Session deleted
-```
-
-### With Stealth Mode
-
-```
-Creating session with stealth mode...
-Browser initialized with stealth enabled
-Bypassing bot detection...
-Successfully accessed protected content
 ```
 
 ### With Custom Configuration

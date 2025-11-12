@@ -5,14 +5,11 @@ import (
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/application"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
 	interfaces "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/interface"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/ui"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/window"
 )
 
 // TestInterfaceCompliance ensures that actual implementation classes implement their respective interfaces
@@ -38,24 +35,9 @@ func TestInterfaceCompliance(t *testing.T) {
 		var _ interfaces.CommandInterface = (*command.Command)(nil)
 	})
 
-	// Test that ApplicationManager implements ApplicationInterface
-	t.Run("ApplicationManager implements ApplicationInterface", func(t *testing.T) {
-		var _ interfaces.ApplicationInterface = (*application.ApplicationManager)(nil)
-	})
-
 	// Test that OSSManager implements OSSInterface
 	t.Run("OSSManager implements OSSInterface", func(t *testing.T) {
 		var _ interfaces.OSSInterface = (*oss.OSSManager)(nil)
-	})
-
-	// Test that UIManager implements UIInterface
-	t.Run("UIManager implements UIInterface", func(t *testing.T) {
-		var _ interfaces.UIInterface = (*ui.UIManager)(nil)
-	})
-
-	// Test that WindowManager implements WindowInterface
-	t.Run("WindowManager implements WindowInterface", func(t *testing.T) {
-		var _ interfaces.WindowInterface = (*window.WindowManager)(nil)
 	})
 
 	// Test that ContextService implements ContextInterface
@@ -104,18 +86,6 @@ func TestConcreteInterfaceUsage(t *testing.T) {
 		_ = cmdInterface
 	})
 
-	t.Run("ApplicationManager can be used through interface", func(t *testing.T) {
-		mockSession := &MockSessionForCompliance{
-			apiKey:    "test-api-key",
-			sessionID: "test-session-id",
-			client:    nil,
-		}
-
-		app := application.NewApplicationManager(mockSession)
-		var appInterface interfaces.ApplicationInterface = app
-		_ = appInterface
-	})
-
 	t.Run("OSSManager can be used through interface", func(t *testing.T) {
 		mockSession := &MockSessionForCompliance{
 			apiKey:    "test-api-key",
@@ -126,30 +96,6 @@ func TestConcreteInterfaceUsage(t *testing.T) {
 		ossManager := oss.NewOss(mockSession)
 		var ossInterface interfaces.OSSInterface = ossManager
 		_ = ossInterface
-	})
-
-	t.Run("UIManager can be used through interface", func(t *testing.T) {
-		mockSession := &MockSessionForCompliance{
-			apiKey:    "test-api-key",
-			sessionID: "test-session-id",
-			client:    nil,
-		}
-
-		uiManager := ui.NewUI(mockSession)
-		var uiInterface interfaces.UIInterface = uiManager
-		_ = uiInterface
-	})
-
-	t.Run("WindowManager can be used through interface", func(t *testing.T) {
-		mockSession := &MockSessionForCompliance{
-			apiKey:    "test-api-key",
-			sessionID: "test-session-id",
-			client:    nil,
-		}
-
-		winManager := window.NewWindowManager(mockSession)
-		var winInterface interfaces.WindowInterface = winManager
-		_ = winInterface
 	})
 }
 

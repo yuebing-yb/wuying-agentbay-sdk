@@ -108,10 +108,11 @@ if err != nil {
   - 📱 [Mobile Automation](docs/guides/mobile-use/README.md) - Android UI testing and gesture automation
   - 💻 [CodeSpace](docs/guides/codespace/README.md) - Cloud-based code execution environments
 - [Feature Guides](docs/guides/README.md) - Complete feature introduction
-- API Reference - Core API quick lookup
-  - [Python API Reference](python/docs/api/README.md)
-  - [TypeScript API Reference](typescript/docs/api/README.md)
-  - [Golang API Reference](golang/docs/api/README.md)
+- **API Reference** - Comprehensive API documentation with examples
+  - [Python API Reference](python/docs/api/) - Auto-generated from source code
+  - [TypeScript API Reference](typescript/docs/api/) - Auto-generated from source code
+  - [Golang API Reference](golang/docs/api/) - Auto-generated from source code
+  - 📝 All API docs include complete runnable examples and actual output
 - [Cookbook](cookbook/README.md) - Real-world examples and recipes
 
 ## 🔧 Core Features

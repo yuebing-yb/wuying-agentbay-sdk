@@ -1,605 +1,1268 @@
-# Computer Class API Reference
+# Computer API Reference
 
-The `Computer` class provides comprehensive desktop UI automation operations in the AgentBay cloud environment. It offers mouse operations, keyboard operations, window management, application management, and screen operations for Windows desktop automation.
+## 🖥️ Related Tutorial
 
-## 📖 Related Tutorials
-
-- [Computer UI Automation Guide](../../../../docs/guides/computer-use/computer-ui-automation.md) - Detailed tutorial on desktop UI automation
-- [Window Management Guide](../../../../docs/guides/computer-use/window-management.md) - Tutorial on managing application windows
+- [Computer Use Guide](../../../../docs/guides/computer-use/README.md) - Automate desktop applications
 
 ## Overview
 
-The `Computer` class is available through `session.computer` and is designed for use with Windows desktop environments (use `image_id="windows_latest"` when creating sessions).
+The Computer module provides comprehensive desktop automation capabilities including mouse operations,
+keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
 
-## Constructor
 
-The `Computer` class is automatically instantiated when creating a session. Access it via:
+## Requirements
 
-```python
-session.computer
-```
+- Requires `windows_latest` image for computer use features
 
-## Enum Types
+## Data Types
 
 ### MouseButton
 
-Mouse button types for click and drag operations.
-
-```python
-from agentbay.computer import MouseButton
-
-MouseButton.LEFT         # Left mouse button
-MouseButton.RIGHT        # Right mouse button
-MouseButton.MIDDLE       # Middle mouse button
-MouseButton.DOUBLE_LEFT  # Double-click with left button
-```
+Mouse button constants: Left, Right, Middle
 
 ### ScrollDirection
 
+Scroll direction constants: Up, Down, Left, Right
+
+### KeyModifier
+
+Keyboard modifier keys: Ctrl, Alt, Shift, Win
+
+## Important Notes
+
+- Key names in PressKeys and ReleaseKeys are case-sensitive
+- Coordinate validation: x and y must be non-negative integers
+- Drag operation requires valid start and end coordinates
+- Screenshot operations may have size limitations
+
+
+
+Computer module for desktop UI automation.
+Handles mouse operations, keyboard operations, window management, 
+application management, and screen operations.
+
+## MouseButton Objects
+
+```python
+class MouseButton(str, Enum)
+```
+
+Mouse button types for click and drag operations.
+
+#### LEFT
+
+```python
+LEFT = "left"
+```
+
+#### RIGHT
+
+```python
+RIGHT = "right"
+```
+
+#### MIDDLE
+
+```python
+MIDDLE = "middle"
+```
+
+#### DOUBLE\_LEFT
+
+```python
+DOUBLE_LEFT = "double_left"
+```
+
+## ScrollDirection Objects
+
+```python
+class ScrollDirection(str, Enum)
+```
+
 Scroll direction for scroll operations.
 
-```python
-from agentbay.computer import ScrollDirection
-
-ScrollDirection.UP     # Scroll up
-ScrollDirection.DOWN   # Scroll down
-ScrollDirection.LEFT   # Scroll left
-ScrollDirection.RIGHT  # Scroll right
-```
-
-## Mouse Operations
-
-### click_mouse()
-
-Clicks the mouse at the specified coordinates.
+#### UP
 
 ```python
-click_mouse(x: int, y: int, button: Union[MouseButton, str] = MouseButton.LEFT) -> BoolResult
+UP = "up"
 ```
 
-**Parameters:**
-- `x` (int): X coordinate
-- `y` (int): Y coordinate
-- `button` (Union[MouseButton, str], optional): Button type. Can be `MouseButton` enum or string ("left", "right", "middle", "double_left"). Defaults to `MouseButton.LEFT`.
+#### DOWN
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
-
-**Raises:**
-- `ValueError`: If button is not a valid option.
-
-**Example:**
 ```python
-from agentbay import AgentBay, CreateSessionParams
-
-# Create session with Windows image
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="windows_latest")
-session_result = agent_bay.create(params)
-session = session_result.session
-
-# Click at coordinates (100, 200)
-result = session.computer.click_mouse(100, 200)
-# Verified: ✓ success=True, default LEFT button works
-
-# Right-click
-from agentbay.computer import MouseButton
-result = session.computer.click_mouse(100, 200, MouseButton.RIGHT)
-# Verified: ✓ success=True, RIGHT button works
-
-# Double-click
-result = session.computer.click_mouse(100, 200, MouseButton.DOUBLE_LEFT)
-# Verified: ✓ success=True, DOUBLE_LEFT button works
-
-agent_bay.delete(session)
+DOWN = "down"
 ```
 
-### move_mouse()
+#### LEFT
+
+```python
+LEFT = "left"
+```
+
+#### RIGHT
+
+```python
+RIGHT = "right"
+```
+
+## InstalledApp Objects
+
+```python
+class InstalledApp()
+```
+
+Represents an installed application.
+
+## Process Objects
+
+```python
+class Process()
+```
+
+Represents a running process.
+
+## Window Objects
+
+```python
+class Window()
+```
+
+Represents a window in the system.
+
+## InstalledAppListResult Objects
+
+```python
+class InstalledAppListResult(ApiResponse)
+```
+
+Result of operations returning a list of InstalledApps.
+
+## ProcessListResult Objects
+
+```python
+class ProcessListResult(ApiResponse)
+```
+
+Result of operations returning a list of Processes.
+
+## AppOperationResult Objects
+
+```python
+class AppOperationResult(ApiResponse)
+```
+
+Result of application operations like start/stop.
+
+## WindowListResult Objects
+
+```python
+class WindowListResult(ApiResponse)
+```
+
+Result of window listing operations.
+
+## WindowInfoResult Objects
+
+```python
+class WindowInfoResult(ApiResponse)
+```
+
+Result of window info operations.
+
+## Computer Objects
+
+```python
+class Computer(BaseService)
+```
+
+Handles computer UI automation operations in the AgentBay cloud environment.
+Provides comprehensive desktop automation capabilities including mouse, keyboard,
+window management, application management, and screen operations.
+
+#### click\_mouse
+
+```python
+def click_mouse(
+        x: int,
+        y: int,
+        button: Union[MouseButton, str] = MouseButton.LEFT) -> BoolResult
+```
+
+Clicks the mouse at the specified screen coordinates.
+
+**Arguments**:
+
+- `x` _int_ - X coordinate in pixels (0 is left edge of screen).
+- `y` _int_ - Y coordinate in pixels (0 is top edge of screen).
+- `button` _Union[MouseButton, str], optional_ - Mouse button to click. Options:
+  - MouseButton.LEFT or "left": Single left click
+  - MouseButton.RIGHT or "right": Right click (context menu)
+  - MouseButton.MIDDLE or "middle": Middle click (scroll wheel)
+  - MouseButton.DOUBLE_LEFT or "double_left": Double left click
+  Defaults to MouseButton.LEFT.
+  
+
+**Returns**:
+
+    BoolResult: Object containing:
+  - success (bool): Whether the click succeeded
+  - data (bool): True if successful, None otherwise
+  - error_message (str): Error description if failed
+  
+
+**Raises**:
+
+    ValueError: If button is not one of the valid options.
+  
+  Behavior:
+  - Clicks at the exact pixel coordinates provided
+  - Does not move the mouse cursor before clicking
+  - For double-click, use MouseButton.DOUBLE_LEFT
+  - Right-click typically opens context menus
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+session.computer.click_mouse(100, 200)
+session.computer.click_mouse(300, 400, MouseButton.RIGHT)
+session.delete()
+```
+  
+
+**Notes**:
+
+  - Coordinates are absolute screen positions, not relative to windows
+  - Use `get_screen_size()` to determine valid coordinate ranges
+  - Consider using `move_mouse()` first if you need to see cursor movement
+  - For UI automation, consider using higher-level methods from `ui` module
+  
+
+**See Also**:
+
+  move_mouse, drag_mouse, get_cursor_position, get_screen_size
+
+#### move\_mouse
+
+```python
+def move_mouse(x: int, y: int) -> BoolResult
+```
 
 Moves the mouse to the specified coordinates.
 
+**Arguments**:
+
+- `x` _int_ - X coordinate.
+- `y` _int_ - Y coordinate.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-move_mouse(x: int, y: int) -> BoolResult
+session = agent_bay.create().session
+session.computer.move_mouse(500, 300)
+position = session.computer.get_cursor_position()
+print(f"Cursor at: {position.data}")
+session.delete()
 ```
+  
 
-**Parameters:**
-- `x` (int): X coordinate
-- `y` (int): Y coordinate
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - Moves the cursor smoothly to the target position
+  - Does not click after moving
+  - Use get_cursor_position() to verify the new position
+  
 
-**Example:**
+**See Also**:
+
+  click_mouse, drag_mouse, get_cursor_position
+
+#### drag\_mouse
+
 ```python
-# Move mouse to (300, 400)
-result = session.computer.move_mouse(300, 400)
-# Verified: ✓ success=True
+def drag_mouse(
+        from_x: int,
+        from_y: int,
+        to_x: int,
+        to_y: int,
+        button: Union[MouseButton, str] = MouseButton.LEFT) -> BoolResult
 ```
-
-### drag_mouse()
 
 Drags the mouse from one point to another.
 
+**Arguments**:
+
+- `from_x` _int_ - Starting X coordinate.
+- `from_y` _int_ - Starting Y coordinate.
+- `to_x` _int_ - Ending X coordinate.
+- `to_y` _int_ - Ending Y coordinate.
+- `button` _Union[MouseButton, str], optional_ - Button type. Can be MouseButton enum or string.
+  Valid values: MouseButton.LEFT, MouseButton.RIGHT, MouseButton.MIDDLE
+  or their string equivalents. Defaults to MouseButton.LEFT.
+    Note: DOUBLE_LEFT is not supported for drag operations.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Raises**:
+
+    ValueError: If button is not a valid option.
+  
+
+**Example**:
+
 ```python
-drag_mouse(from_x: int, from_y: int, to_x: int, to_y: int, button: Union[MouseButton, str] = MouseButton.LEFT) -> BoolResult
+session = agent_bay.create().session
+session.computer.drag_mouse(100, 100, 300, 300)
+session.computer.drag_mouse(200, 200, 400, 400, MouseButton.RIGHT)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `from_x` (int): Starting X coordinate
-- `from_y` (int): Starting Y coordinate
-- `to_x` (int): Ending X coordinate
-- `to_y` (int): Ending Y coordinate
-- `button` (Union[MouseButton, str], optional): Button type ("left", "right", "middle"). Defaults to `MouseButton.LEFT`. Note: DOUBLE_LEFT is not supported for drag operations.
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - Performs a click-and-drag operation from start to end coordinates
+  - Useful for selecting text, moving windows, or drawing
+  - DOUBLE_LEFT button is not supported for drag operations
+  - Use LEFT, RIGHT, or MIDDLE button only
+  
 
-**Raises:**
-- `ValueError`: If button is not a valid option.
+**See Also**:
 
-**Example:**
+  click_mouse, move_mouse
+
+#### scroll
+
 ```python
-# Drag from (100, 100) to (200, 200)
-result = session.computer.drag_mouse(100, 100, 200, 200)
-# Verified: ✓ success=True, default LEFT button works for drag
+def scroll(x: int,
+           y: int,
+           direction: Union[ScrollDirection, str] = ScrollDirection.UP,
+           amount: int = 1) -> BoolResult
 ```
-
-### scroll()
 
 Scrolls the mouse wheel at the specified coordinates.
 
+**Arguments**:
+
+- `x` _int_ - X coordinate.
+- `y` _int_ - Y coordinate.
+- `direction` _Union[ScrollDirection, str], optional_ - Scroll direction. Can be ScrollDirection enum or string.
+  Valid values: ScrollDirection.UP, ScrollDirection.DOWN, ScrollDirection.LEFT, ScrollDirection.RIGHT
+  or their string equivalents. Defaults to ScrollDirection.UP.
+- `amount` _int, optional_ - Scroll amount. Defaults to 1.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Raises**:
+
+    ValueError: If direction is not a valid option.
+  
+
+**Example**:
+
 ```python
-scroll(x: int, y: int, direction: Union[ScrollDirection, str] = ScrollDirection.UP, amount: int = 1) -> BoolResult
+session = agent_bay.create().session
+session.computer.scroll(500, 500, ScrollDirection.DOWN, 3)
+session.computer.scroll(500, 500, ScrollDirection.UP, 2)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `x` (int): X coordinate
-- `y` (int): Y coordinate
-- `direction` (Union[ScrollDirection, str], optional): Scroll direction. Can be `ScrollDirection` enum or string ("up", "down", "left", "right"). Defaults to `ScrollDirection.UP`.
-- `amount` (int, optional): Scroll amount. Defaults to 1.
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - Scroll operations are performed at the specified coordinates
+  - The amount parameter controls how many scroll units to move
+  - Larger amounts result in faster scrolling
+  - Useful for navigating long documents or web pages
+  
 
-**Raises:**
-- `ValueError`: If direction is not a valid option.
+**See Also**:
 
-**Example:**
+  click_mouse, move_mouse
+
+#### get\_cursor\_position
+
 ```python
-from agentbay.computer import ScrollDirection
-
-# Scroll down at (500, 500)
-result = session.computer.scroll(500, 500, ScrollDirection.DOWN, 3)
-# Verified: ✓ success=True, DOWN direction works
-
-# Scroll up (default direction)
-result = session.computer.scroll(500, 500, amount=2)
-# Verified: ✓ success=True, default UP direction works
+def get_cursor_position() -> OperationResult
 ```
-
-### get_cursor_position()
 
 Gets the current cursor position.
 
-```python
-get_cursor_position() -> OperationResult
-```
+**Returns**:
 
-**Returns:**
-- `OperationResult`: Result object containing cursor position data with keys `x` and `y`, and error message if any.
+    OperationResult: Result object containing cursor position data
+  with keys 'x' and 'y', and error message if any.
+  
 
-**Example:**
-```python
-# Get current cursor position
-result = session.computer.get_cursor_position()
-# Verified: ✓ success=True, data={"x":512,"y":384}
-
-if result.success:
-    print(f"Cursor at ({result.data['x']}, {result.data['y']})")
-```
-
-## Keyboard Operations
-
-### input_text()
-
-Inputs text into the active field.
+**Example**:
 
 ```python
-input_text(text: str) -> BoolResult
+session = agent_bay.create().session
+session.computer.move_mouse(800, 600)
+position = session.computer.get_cursor_position()
+print(f"Cursor is at x={position.data['x']}, y={position.data['y']}")
+session.delete()
 ```
+  
 
-**Parameters:**
-- `text` (str): The text to input
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - Returns the absolute screen coordinates
+  - Useful for verifying mouse movements
+  - Position is in pixels from top-left corner (0, 0)
+  
 
-**Example:**
+**See Also**:
+
+  move_mouse, click_mouse, get_screen_size
+
+#### input\_text
+
 ```python
-# Type text
-result = session.computer.input_text("Hello World")
-# Verified: ✓ success=True
+def input_text(text: str) -> BoolResult
 ```
 
-### press_keys()
+Types text into the currently focused input field.
+
+**Arguments**:
+
+- `text` _str_ - The text to input. Supports Unicode characters.
+  
+
+**Returns**:
+
+    BoolResult: Object with success status and error message if any.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+session.computer.click_mouse(500, 300)
+session.computer.input_text("Hello, World!")
+session.delete()
+```
+  
+
+**Notes**:
+
+  - Requires an input field to be focused first
+  - Use click_mouse() or UI automation to focus the field
+  - Supports special characters and Unicode
+  
+
+**See Also**:
+
+  press_keys, click_mouse
+
+#### press\_keys
+
+```python
+def press_keys(keys: List[str], hold: bool = False) -> BoolResult
+```
 
 Presses the specified keys.
 
+**Arguments**:
+
+- `keys` _List[str]_ - List of keys to press (e.g., ["Ctrl", "a"]).
+- `hold` _bool, optional_ - Whether to hold the keys. Defaults to False.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-press_keys(keys: List[str], hold: bool = False) -> BoolResult
+session = agent_bay.create().session
+session.computer.press_keys(["Ctrl", "c"])
+session.computer.press_keys(["Ctrl", "v"])
+session.delete()
 ```
+  
 
-**Parameters:**
-- `keys` (List[str]): List of keys to press (e.g., ["Ctrl", "a"])
-- `hold` (bool, optional): Whether to hold the keys. Defaults to False.
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - Key names are case-sensitive
+  - When hold=True, remember to call release_keys() afterwards
+  - Supports modifier keys like Ctrl, Alt, Shift
+  - Can press multiple keys simultaneously for shortcuts
+  
 
-**Example:**
+**See Also**:
+
+  release_keys, input_text
+
+#### release\_keys
+
 ```python
-# Press Ctrl+A to select all
-result = session.computer.press_keys(["Ctrl", "a"])
-# Verified: ✓ success=True
-
-# Press and hold Shift
-result = session.computer.press_keys(["Shift"], hold=True)
-# Verified: ✓ success=True, hold parameter works
+def release_keys(keys: List[str]) -> BoolResult
 ```
-
-### release_keys()
 
 Releases the specified keys.
 
+**Arguments**:
+
+- `keys` _List[str]_ - List of keys to release (e.g., ["Ctrl", "a"]).
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-release_keys(keys: List[str]) -> BoolResult
+session = agent_bay.create().session
+session.computer.press_keys(["Shift"], hold=True)
+session.computer.input_text("hello")
+session.computer.release_keys(["Shift"])
+session.delete()
 ```
+  
 
-**Parameters:**
-- `keys` (List[str]): List of keys to release (e.g., ["Ctrl", "a"])
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - Should be used after press_keys() with hold=True
+  - Key names are case-sensitive
+  - Releases all keys specified in the list
+  
 
-**Example:**
+**See Also**:
+
+  press_keys, input_text
+
+#### get\_screen\_size
+
 ```python
-# Release Shift key
-result = session.computer.release_keys(["Shift"])
-# Verified: ✓ success=True
+def get_screen_size() -> OperationResult
 ```
-
-## Screen Operations
-
-### get_screen_size()
 
 Gets the screen size and DPI scaling factor.
 
+**Returns**:
+
+    OperationResult: Result object containing screen size data
+  with keys 'width', 'height', and 'dpiScalingFactor',
+  and error message if any.
+  
+
+**Example**:
+
 ```python
-get_screen_size() -> OperationResult
+session = agent_bay.create().session
+size = session.computer.get_screen_size()
+print(f"Screen: {size.data['width']}x{size.data['height']}, DPI: {size.data['dpiScalingFactor']}")
+session.delete()
 ```
+  
 
-**Returns:**
-- `OperationResult`: Result object containing screen size data with keys `width`, `height`, and `dpiScalingFactor`, and error message if any.
+**Notes**:
 
-**Example:**
+  - Returns the full screen dimensions in pixels
+  - DPI scaling factor affects coordinate calculations on high-DPI displays
+  - Use this to determine valid coordinate ranges for mouse operations
+  
+
+**See Also**:
+
+  click_mouse, move_mouse, screenshot
+
+#### screenshot
+
 ```python
-# Get screen information
-result = session.computer.get_screen_size()
-# Verified: ✓ success=True, data={"dpiScalingFactor":1.0,"height":768,"width":1024}
-
-if result.success:
-    screen_info = result.data
-    print(f"Screen: {screen_info['width']}x{screen_info['height']}")
-    print(f"DPI Scaling: {screen_info['dpiScalingFactor']}")
+def screenshot() -> OperationResult
 ```
-
-### screenshot()
 
 Takes a screenshot of the current screen.
 
+**Returns**:
+
+    OperationResult: Result object containing the path to the screenshot
+  and error message if any.
+  
+
+**Example**:
+
 ```python
-screenshot() -> OperationResult
+session = agent_bay.create().session
+screenshot = session.computer.screenshot()
+print(f"Screenshot URL: {screenshot.data}")
+session.delete()
 ```
+  
 
-**Returns:**
-- `OperationResult`: Result object containing the screenshot URL and error message if any.
+**Notes**:
 
-**Example:**
+  - Returns an OSS URL to the screenshot image
+  - Screenshot captures the entire screen
+  - Useful for debugging and verification
+  - Image format is typically PNG
+  
+
+**See Also**:
+
+  get_screen_size
+
+#### list\_root\_windows
+
 ```python
-# Take a screenshot
-result = session.computer.screenshot()
-# Verified: ✓ success=True, returns OSS URL (1039 bytes)
-# Example URL: https://wuying-intelligence-service-cn-hangzhou.oss-cn-hangzhou.aliyuncs.com/...
-
-if result.success:
-    print(f"Screenshot URL: {result.data}")
+def list_root_windows(timeout_ms: int = 3000) -> WindowListResult
 ```
-
-## Window Management Operations
-
-The `Computer` class provides window management operations by delegating to the `WindowManager` class.
-
-### list_root_windows()
 
 Lists all root windows.
 
+**Arguments**:
+
+- `timeout_ms` _int, optional_ - Timeout in milliseconds. Defaults to 3000.
+  
+
+**Returns**:
+
+    WindowListResult: Result object containing list of windows and error message if any.
+  
+
+**Example**:
+
 ```python
-list_root_windows(timeout_ms: int = 3000) -> WindowListResult
+session = agent_bay.create().session
+windows = session.computer.list_root_windows()
+for window in windows.windows:
+    print(f"Window: {window.title}, ID: {window.window_id}")
+session.delete()
 ```
 
-**Parameters:**
-- `timeout_ms` (int, optional): Timeout in milliseconds. Defaults to 3000.
+#### get\_active\_window
 
-**Returns:**
-- `WindowListResult`: Result object containing list of windows and error message if any.
-
-### get_active_window()
+```python
+def get_active_window(timeout_ms: int = 3000) -> WindowInfoResult
+```
 
 Gets the currently active window.
 
+**Arguments**:
+
+- `timeout_ms` _int, optional_ - Timeout in milliseconds. Defaults to 3000.
+  
+
+**Returns**:
+
+    WindowInfoResult: Result object containing active window info and error message if any.
+  
+
+**Example**:
+
 ```python
-get_active_window(timeout_ms: int = 3000) -> WindowInfoResult
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+print(f"Active window: {active.window.title}")
+session.delete()
 ```
 
-**Parameters:**
-- `timeout_ms` (int, optional): Timeout in milliseconds. Defaults to 3000.
+#### activate\_window
 
-**Returns:**
-- `WindowInfoResult`: Result object containing active window info and error message if any.
-
-### activate_window()
+```python
+def activate_window(window_id: int) -> BoolResult
+```
 
 Activates the specified window.
 
+**Arguments**:
+
+- `window_id` _int_ - The ID of the window to activate.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-activate_window(window_id: int) -> BoolResult
+session = agent_bay.create().session
+windows = session.computer.list_root_windows()
+if windows.windows:
+    session.computer.activate_window(windows.windows[0].window_id)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `window_id` (int): The ID of the window to activate
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - The window must exist in the system
+  - Use list_root_windows() to get available window IDs
+  - Activating a window brings it to the foreground
+  
 
-### close_window()
+**See Also**:
+
+  list_root_windows, get_active_window, close_window
+
+#### close\_window
+
+```python
+def close_window(window_id: int) -> BoolResult
+```
 
 Closes the specified window.
 
+**Arguments**:
+
+- `window_id` _int_ - The ID of the window to close.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-close_window(window_id: int) -> BoolResult
+session = agent_bay.create().session
+windows = session.computer.list_root_windows()
+if windows.windows:
+    session.computer.close_window(windows.windows[0].window_id)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `window_id` (int): The ID of the window to close
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - The window must exist in the system
+  - Use list_root_windows() to get available window IDs
+  - Closing a window terminates it permanently
+  
 
-### maximize_window()
+**See Also**:
+
+  list_root_windows, activate_window, minimize_window
+
+#### maximize\_window
+
+```python
+def maximize_window(window_id: int) -> BoolResult
+```
 
 Maximizes the specified window.
 
+**Arguments**:
+
+- `window_id` _int_ - The ID of the window to maximize.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-maximize_window(window_id: int) -> BoolResult
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    session.computer.maximize_window(active.window.window_id)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `window_id` (int): The ID of the window to maximize
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - The window must exist in the system
+  - Maximizing expands the window to fill the screen
+  - Use restore_window() to return to previous size
+  
 
-### minimize_window()
+**See Also**:
+
+  minimize_window, restore_window, fullscreen_window, resize_window
+
+#### minimize\_window
+
+```python
+def minimize_window(window_id: int) -> BoolResult
+```
 
 Minimizes the specified window.
 
+**Arguments**:
+
+- `window_id` _int_ - The ID of the window to minimize.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-minimize_window(window_id: int) -> BoolResult
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    session.computer.minimize_window(active.window.window_id)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `window_id` (int): The ID of the window to minimize
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - The window must exist in the system
+  - Minimizing hides the window in the taskbar
+  - Use restore_window() or activate_window() to bring it back
+  
 
-### restore_window()
+**See Also**:
+
+  maximize_window, restore_window, activate_window
+
+#### restore\_window
+
+```python
+def restore_window(window_id: int) -> BoolResult
+```
 
 Restores the specified window.
 
+**Arguments**:
+
+- `window_id` _int_ - The ID of the window to restore.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-restore_window(window_id: int) -> BoolResult
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    wid = active.window.window_id
+    session.computer.minimize_window(wid)
+    session.computer.restore_window(wid)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `window_id` (int): The ID of the window to restore
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - The window must exist in the system
+  - Restoring returns a minimized or maximized window to its normal state
+  - Works for windows that were previously minimized or maximized
+  
 
-### resize_window()
+**See Also**:
+
+  minimize_window, maximize_window, activate_window
+
+#### resize\_window
+
+```python
+def resize_window(window_id: int, width: int, height: int) -> BoolResult
+```
 
 Resizes the specified window.
 
+**Arguments**:
+
+- `window_id` _int_ - The ID of the window to resize.
+- `width` _int_ - New width of the window.
+- `height` _int_ - New height of the window.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-resize_window(window_id: int, width: int, height: int) -> BoolResult
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    session.computer.resize_window(active.window.window_id, 800, 600)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `window_id` (int): The ID of the window to resize
-- `width` (int): New width of the window
-- `height` (int): New height of the window
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - The window must exist in the system
+  - Width and height are in pixels
+  - Some windows may have minimum or maximum size constraints
+  
 
-### fullscreen_window()
+**See Also**:
+
+  maximize_window, restore_window, get_screen_size
+
+#### fullscreen\_window
+
+```python
+def fullscreen_window(window_id: int) -> BoolResult
+```
 
 Makes the specified window fullscreen.
 
+**Arguments**:
+
+- `window_id` _int_ - The ID of the window to make fullscreen.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-fullscreen_window(window_id: int) -> BoolResult
+session = agent_bay.create().session
+active = session.computer.get_active_window()
+if active.window:
+    session.computer.fullscreen_window(active.window.window_id)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `window_id` (int): The ID of the window to make fullscreen
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - The window must exist in the system
+  - Fullscreen mode hides window borders and taskbar
+  - Different from maximize_window() which keeps window borders
+  - Press F11 or ESC to exit fullscreen in most applications
+  
 
-### focus_mode()
+**See Also**:
+
+  maximize_window, restore_window
+
+#### focus\_mode
+
+```python
+def focus_mode(on: bool) -> BoolResult
+```
 
 Toggles focus mode on or off.
 
+**Arguments**:
+
+- `on` _bool_ - True to enable focus mode, False to disable it.
+  
+
+**Returns**:
+
+    BoolResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-focus_mode(on: bool) -> BoolResult
+session = agent_bay.create().session
+session.computer.focus_mode(True)
+session.computer.focus_mode(False)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `on` (bool): True to enable focus mode, False to disable it
+**Notes**:
 
-**Returns:**
-- `BoolResult`: Result object containing success status and error message if any.
+  - Focus mode helps reduce distractions by managing window focus
+  - When enabled, may prevent background windows from stealing focus
+  - Behavior depends on the window manager and OS settings
+  
 
-## Application Management Operations
+**See Also**:
 
-The `Computer` class provides application management operations by delegating to the `ApplicationManager` class.
+  activate_window, get_active_window
 
-### get_installed_apps()
+#### get\_installed\_apps
+
+```python
+def get_installed_apps(
+        start_menu: bool = True,
+        desktop: bool = False,
+        ignore_system_apps: bool = True) -> InstalledAppListResult
+```
 
 Gets the list of installed applications.
 
+**Arguments**:
+
+- `start_menu` _bool, optional_ - Whether to include start menu applications. Defaults to True.
+- `desktop` _bool, optional_ - Whether to include desktop applications. Defaults to False.
+- `ignore_system_apps` _bool, optional_ - Whether to ignore system applications. Defaults to True.
+  
+
+**Returns**:
+
+    InstalledAppListResult: Result object containing list of installed apps and error message if any.
+  
+
+**Example**:
+
 ```python
-get_installed_apps(start_menu: bool = True, desktop: bool = False, ignore_system_apps: bool = True) -> InstalledAppListResult
+session = agent_bay.create().session
+apps = session.computer.get_installed_apps()
+for app in apps.data:
+    print(f"{app.name}: {app.start_cmd}")
+session.delete()
 ```
+  
 
-**Parameters:**
-- `start_menu` (bool, optional): Whether to include start menu applications. Defaults to True.
-- `desktop` (bool, optional): Whether to include desktop applications. Defaults to False.
-- `ignore_system_apps` (bool, optional): Whether to ignore system applications. Defaults to True.
+**Notes**:
 
-**Returns:**
-- `InstalledAppListResult`: Result object containing list of installed apps and error message if any.
+  - start_menu parameter includes applications from Windows Start Menu
+  - desktop parameter includes shortcuts from Desktop
+  - ignore_system_apps parameter filters out system applications
+  - Each app object contains name, start_cmd, stop_cmd, and work_directory
+  
 
-### start_app()
+**See Also**:
+
+  start_app, list_visible_apps, stop_app_by_pname
+
+#### start\_app
+
+```python
+def start_app(start_cmd: str,
+              work_directory: str = "",
+              activity: str = "") -> ProcessListResult
+```
 
 Starts the specified application.
 
+**Arguments**:
+
+- `start_cmd` _str_ - The command to start the application.
+- `work_directory` _str, optional_ - Working directory for the application. Defaults to "".
+- `activity` _str, optional_ - Activity name to launch (for mobile apps). Defaults to "".
+  
+
+**Returns**:
+
+    ProcessListResult: Result object containing list of processes started and error message if any.
+  
+
+**Example**:
+
 ```python
-start_app(start_cmd: str, work_directory: str = "", activity: str = "") -> ProcessListResult
+session = agent_bay.create().session
+processes = session.computer.start_app("notepad.exe")
+print(f"Started {len(processes.data)} process(es)")
+session.delete()
 ```
+  
 
-**Parameters:**
-- `start_cmd` (str): The command to start the application
-- `work_directory` (str, optional): Working directory for the application. Defaults to ""
-- `activity` (str, optional): Activity name to launch (for mobile apps). Defaults to ""
+**Notes**:
 
-**Returns:**
-- `ProcessListResult`: Result object containing list of processes started and error message if any.
+  - The start_cmd can be an executable name or full path
+  - work_directory is optional and defaults to the system default
+  - activity parameter is for mobile apps (Android)
+  - Returns process information for all started processes
+  
 
-### list_visible_apps()
+**See Also**:
+
+  get_installed_apps, stop_app_by_pname, list_visible_apps
+
+#### list\_visible\_apps
+
+```python
+def list_visible_apps() -> ProcessListResult
+```
 
 Lists all applications with visible windows.
 
+Returns detailed process information for applications that have visible windows,
+including process ID, name, command line, and other system information.
+This is useful for system monitoring and process management tasks.
+
+**Returns**:
+
+    ProcessListResult: Result object containing list of visible applications
+  with detailed process information.
+  
+
+**Example**:
+
 ```python
-list_visible_apps() -> ProcessListResult
+session = agent_bay.create().session
+apps = session.computer.list_visible_apps()
+for app in apps.data:
+    print(f"App: {app.pname}, PID: {app.pid}")
+session.delete()
 ```
+  
 
-**Returns:**
-- `ProcessListResult`: Result object containing list of visible applications with detailed process information.
+**Notes**:
 
-### stop_app_by_pname()
+  - Only returns applications with visible windows
+  - Hidden or minimized windows may not appear
+  - Useful for monitoring currently active applications
+  - Process information includes PID, name, and command line
+  
+
+**See Also**:
+
+  get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
+
+#### stop\_app\_by\_pname
+
+```python
+def stop_app_by_pname(pname: str) -> AppOperationResult
+```
 
 Stops an application by process name.
 
+**Arguments**:
+
+- `pname` _str_ - The process name of the application to stop.
+  
+
+**Returns**:
+
+    AppOperationResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-stop_app_by_pname(pname: str) -> AppOperationResult
+session = agent_bay.create().session
+session.computer.start_app("notepad.exe")
+result = session.computer.stop_app_by_pname("notepad.exe")
+session.delete()
 ```
+  
 
-**Parameters:**
-- `pname` (str): The process name of the application to stop
+**Notes**:
 
-**Returns:**
-- `AppOperationResult`: Result object containing success status and error message if any.
+  - The process name should match exactly (case-sensitive on some systems)
+  - This will stop all processes matching the given name
+  - If multiple instances are running, all will be terminated
+  - The .exe extension may be required on Windows
+  
 
-### stop_app_by_pid()
+**See Also**:
+
+  start_app, stop_app_by_pid, stop_app_by_cmd, list_visible_apps
+
+#### stop\_app\_by\_pid
+
+```python
+def stop_app_by_pid(pid: int) -> AppOperationResult
+```
 
 Stops an application by process ID.
 
+**Arguments**:
+
+- `pid` _int_ - The process ID of the application to stop.
+  
+
+**Returns**:
+
+    AppOperationResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-stop_app_by_pid(pid: int) -> AppOperationResult
+session = agent_bay.create().session
+processes = session.computer.start_app("notepad.exe")
+pid = processes.data[0].pid
+result = session.computer.stop_app_by_pid(pid)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `pid` (int): The process ID of the application to stop
+**Notes**:
 
-**Returns:**
-- `AppOperationResult`: Result object containing success status and error message if any.
+  - PID must be a valid process ID
+  - More precise than stopping by name (only stops specific process)
+  - The process must be owned by the session or have appropriate permissions
+  - PID can be obtained from start_app() or list_visible_apps()
+  
 
-### stop_app_by_cmd()
+**See Also**:
+
+  start_app, stop_app_by_pname, stop_app_by_cmd, list_visible_apps
+
+#### stop\_app\_by\_cmd
+
+```python
+def stop_app_by_cmd(stop_cmd: str) -> AppOperationResult
+```
 
 Stops an application by stop command.
 
+**Arguments**:
+
+- `stop_cmd` _str_ - The command to stop the application.
+  
+
+**Returns**:
+
+    AppOperationResult: Result object containing success status and error message if any.
+  
+
+**Example**:
+
 ```python
-stop_app_by_cmd(stop_cmd: str) -> AppOperationResult
+session = agent_bay.create().session
+apps = session.computer.get_installed_apps()
+if apps.data and apps.data[0].stop_cmd:
+    result = session.computer.stop_app_by_cmd(apps.data[0].stop_cmd)
+session.delete()
 ```
+  
 
-**Parameters:**
-- `stop_cmd` (str): The command to stop the application
+**Notes**:
 
-**Returns:**
-- `AppOperationResult`: Result object containing success status and error message if any.
+  - The stop_cmd should be the command registered to stop the application
+  - Typically obtained from get_installed_apps() which returns app metadata
+  - Some applications may not have a stop command defined
+  - The command is executed as-is without shell interpretation
+  
 
-## Complete Example
+**See Also**:
 
-```python
-from agentbay import AgentBay, CreateSessionParams
-from agentbay.computer import MouseButton, ScrollDirection
-import os
+  get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
-# Initialize SDK
-api_key = os.getenv("AGENTBAY_API_KEY")
-agent_bay = AgentBay(api_key=api_key)
+## Best Practices
 
-# Create Windows session
-params = CreateSessionParams(image_id="windows_latest")
-session_result = agent_bay.create(params)
+1. Verify screen coordinates before mouse operations
+2. Use appropriate delays between UI interactions
+3. Handle window focus changes properly
+4. Take screenshots for verification and debugging
+5. Use keyboard shortcuts for efficient automation
+6. Clean up windows and applications after automation
 
-if session_result.success:
-    session = session_result.session
-    
-    # Get screen size
-    screen_info = session.computer.get_screen_size()
-    # Verified: ✓ Returns {"dpiScalingFactor":1.0,"height":768,"width":1024}
-    
-    # Mouse operations
-    session.computer.click_mouse(100, 200)
-    # Verified: ✓ Left click works
-    
-    session.computer.move_mouse(300, 400)
-    # Verified: ✓ Move mouse works
-    
-    session.computer.scroll(500, 500, ScrollDirection.DOWN, 3)
-    # Verified: ✓ Scroll works
-    
-    # Keyboard operations
-    session.computer.input_text("Hello World")
-    # Verified: ✓ Text input works
-    
-    session.computer.press_keys(["Ctrl", "a"])
-    # Verified: ✓ Key press works
-    
-    # Take screenshot
-    screenshot = session.computer.screenshot()
-    # Verified: ✓ Returns OSS URL (1039 bytes)
-    
-    # Clean up
-    agent_bay.delete(session)
+---
 
-```
-
-## Related Documentation
-
-- [Window Management API](./window.md) - Detailed window management operations
-- [Application Management API](./application.md) - Detailed application management operations
-- [Session API](../common-features/basics/session.md) - Session management
+*Documentation generated automatically from source code using pydoc-markdown.*

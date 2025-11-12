@@ -233,6 +233,43 @@ export class FileSystem {
    *
    * @param path - Path to the directory to create.
    * @returns BoolResult with creation result and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateCreateDirectory() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create a directory
+   *       const createResult = await session.fileSystem.createDirectory('/tmp/mydir');
+   *       if (createResult.success) {
+   *         console.log('Directory created successfully');
+   *         // Output: Directory created successfully
+   *         console.log(`Request ID: ${createResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       }
+   *
+   *       // Create nested directories
+   *       const nestedResult = await session.fileSystem.createDirectory('/tmp/parent/child/grandchild');
+   *       if (nestedResult.success) {
+   *         console.log('Nested directories created');
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateCreateDirectory().catch(console.error);
+   * ```
    */
   async createDirectory(path: string): Promise<BoolResult> {
     try {
@@ -275,6 +312,59 @@ export class FileSystem {
    * @param edits - Array of edit operations, each containing oldText and newText.
    * @param dryRun - Optional: If true, preview changes without applying them.
    * @returns BoolResult with edit result and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateEditFile() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create a test file
+   *       await session.fileSystem.writeFile('/tmp/config.txt', 'DEBUG=false\\nLOG_LEVEL=info');
+   *
+   *       // Edit the file with single replacement
+   *       const edits = [{ oldText: 'DEBUG=false', newText: 'DEBUG=true' }];
+   *       const editResult = await session.fileSystem.editFile('/tmp/config.txt', edits);
+   *       if (editResult.success) {
+   *         console.log('File edited successfully');
+   *         // Output: File edited successfully
+   *       }
+   *
+   *       // Edit with multiple replacements
+   *       const multiEdits = [
+   *         { oldText: 'DEBUG=true', newText: 'DEBUG=false' },
+   *         { oldText: 'LOG_LEVEL=info', newText: 'LOG_LEVEL=debug' }
+   *       ];
+   *       const multiEditResult = await session.fileSystem.editFile('/tmp/config.txt', multiEdits);
+   *       if (multiEditResult.success) {
+   *         console.log('Multiple edits applied');
+   *       }
+   *
+   *       // Preview changes with dry_run
+   *       const dryRunResult = await session.fileSystem.editFile(
+   *         '/tmp/config.txt',
+   *         [{ oldText: 'debug', newText: 'trace' }],
+   *         true
+   *       );
+   *       if (dryRunResult.success) {
+   *         console.log('Dry run completed, no changes applied');
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateEditFile().catch(console.error);
+   * ```
    */
   async editFile(
     path: string,
@@ -321,6 +411,50 @@ export class FileSystem {
    *
    * @param path - Path to the file or directory to inspect.
    * @returns FileInfoResult with file info and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetFileInfo() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create a test file
+   *       await session.fileSystem.writeFile('/tmp/test.txt', 'Sample content');
+   *
+   *       // Get file information
+   *       const infoResult = await session.fileSystem.getFileInfo('/tmp/test.txt');
+   *       if (infoResult.success) {
+   *         console.log(`File info: ${JSON.stringify(infoResult.fileInfo)}`);
+   *         // Output: File info: {"size": 14, "isDirectory": false, ...}
+   *         console.log(`Size: ${infoResult.fileInfo.size} bytes`);
+   *         // Output: Size: 14 bytes
+   *         console.log(`Is directory: ${infoResult.fileInfo.isDirectory}`);
+   *         // Output: Is directory: false
+   *       }
+   *
+   *       // Get directory information
+   *       await session.fileSystem.createDirectory('/tmp/mydir');
+   *       const dirInfo = await session.fileSystem.getFileInfo('/tmp/mydir');
+   *       if (dirInfo.success) {
+   *         console.log(`Is directory: ${dirInfo.fileInfo.isDirectory}`);
+   *         // Output: Is directory: true
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetFileInfo().catch(console.error);
+   * ```
    */
   async getFileInfo(path: string): Promise<FileInfoResult> {
     try {
@@ -375,6 +509,38 @@ export class FileSystem {
    * @param path - Path to the directory to list.
    * @returns DirectoryListResult with directory entries and requestId
    */
+  /**
+   * Lists the contents of a directory.
+   *
+   * @param path - Absolute path to the directory to list.
+   *
+   * @returns Promise resolving to DirectoryListResult containing array of entries.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   *
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // List directory contents
+   *   const listResult = await session.fileSystem.listDirectory('/tmp');
+   *   if (listResult.success) {
+   *     console.log(`Found ${listResult.entries.length} entries`);
+   *     for (const entry of listResult.entries) {
+   *       console.log(`${entry.name} (${entry.isDirectory ? 'dir' : 'file'})`);
+   *     }
+   *   }
+   *
+   *   await session.delete();
+   * }
+   * ```
+   *
+   * @see {@link readFile}, {@link writeFile}
+   */
   async listDirectory(path: string): Promise<DirectoryListResult> {
     try {
       const args = {
@@ -422,6 +588,47 @@ export class FileSystem {
    * @param source - Path to the source file or directory.
    * @param destination - Path to the destination file or directory.
    * @returns BoolResult with move result and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateMoveFile() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create a test file
+   *       await session.fileSystem.writeFile('/tmp/original.txt', 'Test content');
+   *
+   *       // Move the file to a new location
+   *       const moveResult = await session.fileSystem.moveFile('/tmp/original.txt', '/tmp/moved.txt');
+   *       if (moveResult.success) {
+   *         console.log('File moved successfully');
+   *         // Output: File moved successfully
+   *         console.log(`Request ID: ${moveResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       }
+   *
+   *       // Verify the move
+   *       const readResult = await session.fileSystem.readFile('/tmp/moved.txt');
+   *       if (readResult.success) {
+   *         console.log(`Content at new location: ${readResult.content}`);
+   *         // Output: Content at new location: Test content
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateMoveFile().catch(console.error);
+   * ```
    */
   async moveFile(source: string, destination: string): Promise<BoolResult> {
     try {
@@ -518,6 +725,47 @@ export class FileSystem {
    *
    * @param paths - Array of file paths to read.
    * @returns MultipleFileContentResult with file contents and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateReadMultipleFiles() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create multiple test files
+   *       await session.fileSystem.writeFile('/tmp/file1.txt', 'Content of file 1');
+   *       await session.fileSystem.writeFile('/tmp/file2.txt', 'Content of file 2');
+   *       await session.fileSystem.writeFile('/tmp/file3.txt', 'Content of file 3');
+   *
+   *       // Read multiple files at once
+   *       const paths = ['/tmp/file1.txt', '/tmp/file2.txt', '/tmp/file3.txt'];
+   *       const readResult = await session.fileSystem.readMultipleFiles(paths);
+   *       if (readResult.success) {
+   *         console.log(`Read ${Object.keys(readResult.contents).length} files`);
+   *         // Output: Read 3 files
+   *         for (const [path, content] of Object.entries(readResult.contents)) {
+   *           console.log(`${path}: ${content}`);
+   *         }
+   *         // Output: /tmp/file1.txt: Content of file 1
+   *         // Output: /tmp/file2.txt: Content of file 2
+   *         // Output: /tmp/file3.txt: Content of file 3
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateReadMultipleFiles().catch(console.error);
+   * ```
    */
   async readMultipleFiles(paths: string[]): Promise<MultipleFileContentResult> {
     try {
@@ -615,6 +863,56 @@ export class FileSystem {
    * @param pattern - Pattern to search for. Supports glob patterns.
    * @param excludePatterns - Optional: Array of patterns to exclude.
    * @returns FileSearchResult with search results and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateSearchFiles() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create test files
+   *       await session.fileSystem.createDirectory('/tmp/test');
+   *       await session.fileSystem.writeFile('/tmp/test/file1.py', "print('hello')");
+   *       await session.fileSystem.writeFile('/tmp/test/file2.py', "print('world')");
+   *       await session.fileSystem.writeFile('/tmp/test/file3.txt', 'text content');
+   *
+   *       // Search for Python files (using partial name matching, NOT wildcards)
+   *       const searchResult = await session.fileSystem.searchFiles('/tmp/test', '.py');
+   *       if (searchResult.success) {
+   *         console.log(`Found ${searchResult.matches.length} Python files:`);
+   *         // Output: Found 2 Python files:
+   *         for (const match of searchResult.matches) {
+   *           console.log(`  - ${match}`);
+   *         }
+   *         // Output:   - /tmp/test/file1.py
+   *         // Output:   - /tmp/test/file2.py
+   *       }
+   *
+   *       // Search with exclusion pattern (exclude files containing ".txt")
+   *       const excludeResult = await session.fileSystem.searchFiles(
+   *         '/tmp/test',
+   *         'file',
+   *         ['.txt']
+   *       );
+   *       if (excludeResult.success) {
+   *         console.log(`Found ${excludeResult.matches.length} files (excluding .txt)`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateSearchFiles().catch(console.error);
+   * ```
    */
   async searchFiles(
     path: string,
@@ -735,6 +1033,49 @@ export class FileSystem {
    * @param path - Path to the file to read.
    * @returns FileContentResult with complete file content and requestId
    */
+  /**
+   * Reads the entire content of a file.
+   *
+   * @param path - Absolute path to the file to read.
+   *
+   * @returns Promise resolving to FileContentResult containing:
+   *          - success: Whether the read operation succeeded
+   *          - content: String content of the file
+   *          - requestId: Unique identifier for this API request
+   *          - errorMessage: Error description if read failed
+   *
+   * @throws Error if the API call fails.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   *
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // Read a text file
+   *   const fileResult = await session.fileSystem.readFile('/etc/hostname');
+   *   if (fileResult.success) {
+   *     console.log(`Content: ${fileResult.content}`);
+   *     // Output: Content: agentbay-session-xyz
+   *   }
+   *
+   *   await session.delete();
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - Automatically handles large files by reading in 60KB chunks
+   * - Returns empty string for empty files
+   * - Fails if path is a directory or doesn't exist
+   * - Content is returned as UTF-8 string
+   *
+   * @see {@link writeFile}, {@link listDirectory}
+   */
   async readFile(
     path: string
   ): Promise<FileContentResult> {
@@ -832,6 +1173,54 @@ export class FileSystem {
    * @param mode - Optional: Write mode. One of "overwrite", "append", or "create_new". Default is "overwrite".
    * @returns BoolResult indicating success or failure with requestId
    */
+  /**
+   * Writes content to a file.
+   *
+   * @param path - Absolute path to the file to write.
+   * @param content - String content to write to the file.
+   * @param mode - Write mode: "overwrite" (default) or "append".
+   *
+   * @returns Promise resolving to BoolResult with success status.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   *
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // Write to a file (overwrite mode)
+   *   const writeResult = await session.fileSystem.writeFile(
+   *     '/tmp/test.txt',
+   *     'Hello, AgentBay!'
+   *   );
+   *   if (writeResult.success) {
+   *     console.log('File written successfully');
+   *   }
+   *
+   *   // Append to a file
+   *   const appendResult = await session.fileSystem.writeFile(
+   *     '/tmp/test.txt',
+   *     '\nNew line',
+   *     'append'
+   *   );
+   *
+   *   await session.delete();
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - Automatically handles large files by writing in 60KB chunks
+   * - Creates parent directories if they don't exist
+   * - "overwrite" mode replaces existing file content
+   * - "append" mode adds content to the end of the file
+   *
+   * @see {@link readFile}, {@link listDirectory}
+   */
   async writeFile(
     path: string,
     content: string,
@@ -894,6 +1283,50 @@ export class FileSystem {
 
   /**
    * Get file change information for the specified directory path
+   *
+   * @param path - Directory path to monitor
+   * @returns Promise resolving to result containing detected file changes
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetFileChange() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create test directory
+   *       await session.fileSystem.createDirectory('/tmp/watch_dir');
+   *
+   *       // Check for file changes
+   *       const changeResult = await session.fileSystem.getFileChange('/tmp/watch_dir');
+   *       if (changeResult.success) {
+   *         console.log(`Detected ${changeResult.events.length} changes`);
+   *         // Output: Detected 0 changes
+   *
+   *         if (changeResult.events.length > 0) {
+   *           changeResult.events.forEach(event => {
+   *             console.log(`- ${event.eventType}: ${event.path} (${event.pathType})`);
+   *           });
+   *         } else {
+   *           console.log('No changes detected');
+   *           // Output: No changes detected
+   *         }
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetFileChange().catch(console.error);
+   * ```
    */
   async getFileChange(path: string): Promise<FileChangeResult> {
     try {
@@ -955,6 +1388,74 @@ export class FileSystem {
 
   /**
    * Watch a directory for file changes and call the callback function when changes occur
+   *
+   * @param path - Directory path to monitor
+   * @param callback - Function called when changes are detected
+   * @param interval - Polling interval in milliseconds (default: 500, minimum: 100)
+   * @param signal - Signal to abort the monitoring
+   * @returns Promise that resolves when monitoring stops
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateWatchDirectory() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create test directory
+   *       const testDir = '/tmp/agentbay_watch_test';
+   *       await session.fileSystem.createDirectory(testDir);
+   *
+   *       // Set up callback function
+   *       const callback = (events) => {
+   *         console.log(`Detected ${events.length} file changes:`);
+   *         events.forEach(event => {
+   *           console.log(`- ${event.eventType}: ${event.path} (${event.pathType})`);
+   *         });
+   *       };
+   *
+   *       // Create AbortController for stopping the watch
+   *       const controller = new AbortController();
+   *
+   *       // Start monitoring
+   *       const watchPromise = session.fileSystem.watchDirectory(
+   *         testDir,
+   *         callback,
+   *         1000, // 1 second interval
+   *         controller.signal
+   *       );
+   *
+   *       // Simulate file operations after a delay
+   *       setTimeout(async () => {
+   *         // Create a file
+   *         const testFile = `${testDir}/test.txt`;
+   *         await session.fileSystem.writeFile(testFile, 'Hello, AgentBay!');
+   *
+   *         // Stop monitoring after another delay
+   *         setTimeout(() => {
+   *           controller.abort();
+   *         }, 2000);
+   *       }, 2000);
+   *
+   *       // Wait for monitoring to complete
+   *       await watchPromise;
+   *       console.log('Monitoring stopped');
+   *       // Output: Monitoring stopped
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateWatchDirectory().catch(console.error);
+   * ```
    */
   async watchDirectory(
     path: string,
@@ -1013,6 +1514,59 @@ export class FileSystem {
    * @param remotePath - Remote file path to upload to
    * @param options - Optional parameters
    * @returns UploadResult with upload result and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   * import * as fs from 'fs';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateUploadFile() {
+   *   try {
+   *     // Create session with context sync for file transfer
+   *     const result = await agentBay.create({
+   *       imageId: 'code_latest'
+   *     });
+   *
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create a local test file
+   *       const localPath = '/tmp/local_upload_test.txt';
+   *       fs.writeFileSync(localPath, 'Test upload content');
+   *
+   *       // Upload the file
+   *       const uploadResult = await session.fileSystem.uploadFile(
+   *         localPath,
+   *         '/workspace/uploaded_file.txt'
+   *       );
+   *
+   *       if (uploadResult.success) {
+   *         console.log('File uploaded successfully');
+   *         // Output: File uploaded successfully
+   *         console.log(`Bytes sent: ${uploadResult.bytesSent}`);
+   *         console.log(`Request ID (upload URL): ${uploadResult.requestIdUploadUrl}`);
+   *         console.log(`Request ID (sync): ${uploadResult.requestIdSync}`);
+   *       } else {
+   *         console.error(`Upload failed: ${uploadResult.error}`);
+   *       }
+   *
+   *       // Verify the uploaded file exists in the session
+   *       const readResult = await session.fileSystem.readFile('/workspace/uploaded_file.txt');
+   *       if (readResult.success) {
+   *         console.log(`File content in session: ${readResult.content}`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateUploadFile().catch(console.error);
+   * ```
    */
   async uploadFile(
     localPath: string,
@@ -1067,6 +1621,61 @@ export class FileSystem {
    * @param localPath - Local file path to download to
    * @param options - Optional parameters
    * @returns DownloadResult with download result and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   * import * as fs from 'fs';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateDownloadFile() {
+   *   try {
+   *     // Create session
+   *     const result = await agentBay.create({
+   *       imageId: 'code_latest'
+   *     });
+   *
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Create a file in the session
+   *       await session.fileSystem.writeFile(
+   *         '/workspace/remote_file.txt',
+   *         'Content to download'
+   *       );
+   *
+   *       // Download the file
+   *       const localPath = '/tmp/downloaded_file.txt';
+   *       const downloadResult = await session.fileSystem.downloadFile(
+   *         '/workspace/remote_file.txt',
+   *         localPath
+   *       );
+   *
+   *       if (downloadResult.success) {
+   *         console.log('File downloaded successfully');
+   *         // Output: File downloaded successfully
+   *         console.log(`Bytes received: ${downloadResult.bytesReceived}`);
+   *         console.log(`Request ID (download URL): ${downloadResult.requestIdDownloadUrl}`);
+   *         console.log(`Request ID (sync): ${downloadResult.requestIdSync}`);
+   *
+   *         // Verify the downloaded file
+   *         const content = fs.readFileSync(localPath, 'utf8');
+   *         console.log(`Downloaded content: ${content}`);
+   *         // Output: Downloaded content: Content to download
+   *       } else {
+   *         console.error(`Download failed: ${downloadResult.error}`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateDownloadFile().catch(console.error);
+   * ```
    */
   async downloadFile(
     remotePath: string,

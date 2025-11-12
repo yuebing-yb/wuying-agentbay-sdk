@@ -10,7 +10,7 @@ class RecipeDetails(BaseModel):
     total_ratings: int | None
 
 
-async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     await agent.goto("https://www.allrecipes.com/")
     await agent.act('Type "chocolate chip cookies" in the search bar')
     await agent.act("press enter")
@@ -26,10 +26,10 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
 
     if not extracted_data:
         error_msg = "Extraction failed: could not extract any recipe details."
-        logger.error(error_msg)
+        _logger.error(error_msg)
         return {"_success": False, "error": error_msg}
 
-    logger.info(f"Successfully extracted data: {extracted_data.model_dump_json()}")
+    _logger.info(f"Successfully extracted data: {extracted_data.model_dump_json()}")
 
     expected_title = "Best Chocolate Chip Cookies"
     expected_ratings = 19164
@@ -55,7 +55,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
 
     if is_title_match and is_ratings_within_range:
         success_msg = "✅ Validation Passed: Extracted title and ratings are correct."
-        logger.info(success_msg)
+        _logger.info(success_msg)
         return {
             "_success": True,
             "data": {
@@ -75,7 +75,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
             )
 
         error_summary = "Validation Failed: " + " | ".join(errors)
-        logger.error(error_summary)
+        _logger.error(error_summary)
 
         return {
             "_success": False,

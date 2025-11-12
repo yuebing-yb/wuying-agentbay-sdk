@@ -137,6 +137,6 @@ This direct MCP tool calling approach is useful when you need to:
 
 ## Related Documentation
 
-- [Session API Reference](../../../../api/common-features/basics/session.md#call_mcp_tool)
+- [Session API Reference](../../../../api/common-features/basics/session.md)
 - [Common Features Guide](../../../../../../docs/guides/common-features/README.md)
 

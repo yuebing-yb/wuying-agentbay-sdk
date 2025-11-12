@@ -1,399 +1,503 @@
 # Context API Reference
 
-The Context API provides functionality for managing persistent storage contexts in the AgentBay cloud environment. Contexts allow you to persist data across sessions and reuse it in future sessions.
+## 💾 Related Tutorial
 
-## Context Class
+- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md) - Learn about context management and data persistence
 
-The `Context` class represents a persistent storage context in the AgentBay cloud environment.
 
-### Properties
 
 ```python
-id  # The unique identifier of the context
-name  # The name of the context
-created_at  # Date and time when the Context was created
-last_used_at  # Date and time when the Context was last used
+class Context()
 ```
 
-## ContextService Class
+Represents a persistent storage context in the AgentBay cloud environment.
 
-The `ContextService` class provides methods for managing persistent contexts in the AgentBay cloud environment.
+**Attributes**:
 
-### list
+- `id` _str_ - The unique identifier of the context.
+- `name` _str_ - The name of the context.
+- `created_at` _str_ - Date and time when the Context was created.
+- `last_used_at` _str_ - Date and time when the Context was last used.
+
+## ContextResult Objects
+
+```python
+class ContextResult(ApiResponse)
+```
+
+Result of operations returning a Context.
+
+## ContextListResult Objects
+
+```python
+class ContextListResult(ApiResponse)
+```
+
+Result of operations returning a list of Contexts.
+
+## ContextFileEntry Objects
+
+```python
+class ContextFileEntry()
+```
+
+Represents a file item in a context.
+
+## FileUrlResult Objects
+
+```python
+class FileUrlResult(ApiResponse)
+```
+
+Result of a presigned URL request.
+
+## ContextFileListResult Objects
+
+```python
+class ContextFileListResult(ApiResponse)
+```
+
+Result of file listing operation.
+
+## ClearContextResult Objects
+
+```python
+class ClearContextResult(OperationResult)
+```
+
+Result of context clear operations, including the real-time status.
+
+**Attributes**:
+
+- `request_id` _str_ - Unique identifier for the API request.
+- `success` _bool_ - Whether the operation was successful.
+- `error_message` _str_ - Error message if the operation failed.
+- `status` _Optional[str]_ - Current status of the clearing task. This corresponds to the
+  context's state field. Possible values:
+  - "clearing": Context data is being cleared (in progress)
+  - "available": Clearing completed successfully
+  - Other values may indicate the context state after clearing
+- `context_id` _Optional[str]_ - The unique identifier of the context being cleared.
+
+## ContextListParams Objects
+
+```python
+class ContextListParams()
+```
+
+Parameters for listing contexts with pagination support.
+
+## ContextService Objects
+
+```python
+class ContextService()
+```
+
+Provides methods to manage persistent contexts in the AgentBay cloud environment.
+
+#### list
+
+```python
+def list(params: Optional[ContextListParams] = None) -> ContextListResult
+```
 
 Lists all available contexts with pagination support.
 
+**Arguments**:
+
+- `params` _Optional[ContextListParams], optional_ - Parameters for listing contexts.
+  If None, defaults will be used.
+  
+
+**Returns**:
+
+    ContextListResult: A result object containing the list of Context objects,
+  pagination information, and request ID.
+  
+
+**Example**:
+
 ```python
-list(params: Optional[ContextListParams] = None) -> ContextListResult
-```
-
-**Parameters:**
-- `params` (ContextListParams, optional): Pagination parameters. If None, default values are used (max_results=10).
-
-**Returns:**
-- `ContextListResult`: A result object containing the list of Context objects, pagination info, and request ID.
-
-**Example:**
-```python
-from agentbay import AgentBay
-
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
-
-# List all contexts (using default pagination)
 result = agent_bay.context.list()
-if result.success:
-    print(f"Found {len(result.contexts)} contexts:")
-    # Expected: Found X contexts (where X is the number of contexts, max 10 by default)
-    print(f"Request ID: {result.request_id}")
-    # Expected: A valid UUID-format request ID
-    for i, context in enumerate(result.contexts):
-        if i < 3:  # Show first 3 contexts
-            print(f"Context ID: {context.id}, Name: {context.name}")
-            # Expected output: Context ID: SdkCtx-xxx, Name: xxx
-else:
-    print("Failed to list contexts")
+params = ContextListParams(max_results=20, next_token=result.next_token)
+next_result = agent_bay.context.list(params)
 ```
 
-### get
-
-Gets a context by name. Optionally creates it if it doesn't exist.
+#### get
 
 ```python
-get(name: str, create: bool = False) -> ContextResult
+def get(name: Optional[str] = None,
+        create: bool = False,
+        context_id: Optional[str] = None) -> ContextResult
 ```
 
-**Parameters:**
-- `name` (str): The name of the context to get.
-- `create` (bool, optional): Whether to create the context if it doesn't exist. Defaults to False.
+Gets a context by name or ID. Optionally creates it if it doesn't exist.
 
-**Returns:**
-- `ContextResult`: A result object containing the Context object and request ID.
+**Arguments**:
 
-**Example:**
+- `name` _Optional[str], optional_ - The name of the context to get. Defaults to None.
+- `create` _bool, optional_ - Whether to create the context if it doesn't exist. Defaults to False.
+- `context_id` _Optional[str], optional_ - The ID of the context to get. Defaults to None.
+  
+
+**Returns**:
+
+    ContextResult: The ContextResult object containing the Context and request ID.
+  - success (bool): True if the operation succeeded
+  - context (Context): The context object (if success is True)
+  - context_id (str): The ID of the context
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
+
+**Raises**:
+
+    AgentBayError: If neither name nor context_id is provided, or if create=True with context_id.
+  
+
+**Example**:
+
 ```python
-from agentbay import AgentBay
+result = agent_bay.context.get(name="my-context")
+result = agent_bay.context.get(name="new-context", create=True)
+result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
+```
+  
 
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+**Notes**:
 
-# Get a context, creating it if it doesn't exist
-result = agent_bay.context.get("my-persistent-context", create=True)
-if result.success:
-    context = result.context
-    print(f"Context ID: {context.id}, Name: {context.name}")
-    # Expected output: Context ID: SdkCtx-xxx, Name: my-persistent-context
-    print(f"Request ID: {result.request_id}")
-    # Expected: A valid UUID-format request ID
-else:
-    print(f"Failed to get context: {result.error_message}")
+  - Either name or context_id must be provided (not both)
+  - When create=True, only name parameter is allowed
+  - Created contexts are persistent and can be shared across sessions
+  - Context names must be unique within your account
+  
+
+**See Also**:
+
+  ContextService.list, ContextService.update, ContextService.delete
+
+#### create
+
+```python
+def create(name: str) -> ContextResult
 ```
 
-### create
+Creates a new context with the given name.
 
-Creates a new context.
+**Arguments**:
+
+- `name` _str_ - The name for the new context.
+  
+
+**Returns**:
+
+    ContextResult: The created ContextResult object with request ID.
+  
+
+**Example**:
 
 ```python
-create(name: str) -> ContextResult
-```
-
-**Parameters:**
-- `name` (str): The name of the context to create.
-
-**Returns:**
-- `ContextResult`: A result object containing the created Context object and request ID.
-
-**Example:**
-```python
-from agentbay import AgentBay
-
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
-
-# Create a new context
 result = agent_bay.context.create("my-new-context")
-if result.success:
-    context = result.context
-    print(f"Created context with ID: {context.id}, Name: {context.name}")
-    # Expected output: Created context with ID: SdkCtx-xxx, Name: my-new-context
-    print(f"Request ID: {result.request_id}")
-    # Expected: A valid UUID-format request ID
-else:
-    print(f"Failed to create context: {result.error_message}")
 ```
 
-### delete
-
-Deletes a context.
+#### update
 
 ```python
-delete(context: Context) -> OperationResult
+def update(context: Context) -> OperationResult
 ```
 
-**Parameters:**
-- `context` (Context): The Context object to delete.
+Updates the specified context (currently only name can be updated).
 
-**Returns:**
-- `OperationResult`: A result object containing success status and request ID.
+**Arguments**:
 
-**Example:**
-```python
-from agentbay import AgentBay
+- `context` _Context_ - The Context object to update. Must have id and name attributes.
+  
 
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+**Returns**:
 
-# Get a context first
-result = agent_bay.context.get("my-context")
-if result.success and result.context:
-    # Delete the context
-    delete_result = agent_bay.context.delete(result.context)
-    if delete_result.success:
-        print(f"Context deleted successfully, Success: {delete_result.success}")
-        # Expected output: Context deleted successfully, Success: True
-        print(f"Request ID: {delete_result.request_id}")
-        # Expected: A valid UUID-format request ID
-    else:
-        print(f"Failed to delete context: {delete_result.error_message}")
-else:
-    print(f"Failed to get context: {result.error_message}")
-```
+    OperationResult: Result object containing success status and request ID.
+  - success (bool): True if the operation succeeded
+  - data (str): Success message (if success is True)
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  
 
-### update
+**Raises**:
 
-Updates a context's properties.
+    AgentBayError: If the context update fails.
+  
+
+**Example**:
 
 ```python
-update(context: Context) -> OperationResult
+result = agent_bay.context.get(name="old-name")
+result.context.name = "new-name"
+update_result = agent_bay.context.update(result.context)
 ```
+  
 
-**Parameters:**
-- `context` (Context): The Context object with updated properties.
+**Notes**:
 
-**Returns:**
-- `OperationResult`: A result object containing success status and request ID.
+  - Currently only the context name can be updated
+  - Context ID cannot be changed
+  - The context must exist before it can be updated
+  - Updated name must be unique within your account
+  
 
-**Example:**
-```python
-from agentbay import AgentBay
+**See Also**:
 
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+  ContextService.get, ContextService.list, ContextService.delete
 
-# Get a context first
-result = agent_bay.context.get("my-context")
-if result.success and result.context:
-    # Update the context name
-    context = result.context
-    context.name = "my-renamed-context"
-
-    # Save the changes
-    update_result = agent_bay.context.update(context)
-    if update_result.success:
-        print(f"Context updated successfully, Success: {update_result.success}")
-        # Expected output: Context updated successfully, Success: True
-        print(f"Request ID: {update_result.request_id}")
-        # Expected: A valid UUID-format request ID
-    else:
-        print(f"Failed to update context: {update_result.error_message}")
-else:
-    print(f"Failed to get context: {result.error_message}")
-```
-
-### get_file_download_url
-
-Gets a presigned download URL for a file in a context.
+#### delete
 
 ```python
-get_file_download_url(context_id: str, file_path: str) -> FileUrlResult
+def delete(context: Context) -> OperationResult
 ```
 
-**Parameters:**
-- `context_id` (str): The ID of the context.
-- `file_path` (str): The path to the file in the context.
+Deletes the specified context.
 
-**Returns:**
-- `FileUrlResult`: A result object containing the presigned URL, expire time, and request ID.
+**Arguments**:
 
-### get_file_upload_url
+- `context` _Context_ - The Context object to delete.
+  
 
-Gets a presigned upload URL for a file in a context.
+**Returns**:
+
+    OperationResult: Result object containing success status and request ID.
+  
+
+**Example**:
 
 ```python
-get_file_upload_url(context_id: str, file_path: str) -> FileUrlResult
+result = agent_bay.context.get(name="my-context")
+delete_result = agent_bay.context.delete(result.context)
 ```
 
-**Parameters:**
-- `context_id` (str): The ID of the context.
-- `file_path` (str): The path to the file in the context.
-
-**Returns:**
-- `FileUrlResult`: A result object containing the presigned URL, expire time, and request ID.
-
-### list_files
-
-Lists files under a specific folder path in a context.
+#### get\_file\_download\_url
 
 ```python
-list_files(context_id: str, parent_folder_path: str, page_number: int, page_size: int) -> FileListResult
+def get_file_download_url(context_id: str, file_path: str) -> FileUrlResult
 ```
 
-**Parameters:**
-- `context_id` (str): The ID of the context.
-- `parent_folder_path` (str): The parent folder path to list files from.
-- `page_number` (int): The page number for pagination.
-- `page_size` (int): The number of items per page.
+Get a presigned download URL for a file in a context.
 
-**Returns:**
-- `FileListResult`: A result object containing the list of files and request ID.
+**Arguments**:
 
-### delete_file
+- `context_id` _str_ - The ID of the context.
+- `file_path` _str_ - The path to the file in the context.
+  
 
-Deletes a file in a context.
+**Returns**:
+
+    FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
+  
+
+**Example**:
 
 ```python
-delete_file(context_id: str, file_path: str) -> OperationResult
+ctx_result = agent_bay.context.get(name="my-context", create=True)
+url_result = agent_bay.context.get_file_download_url(ctx_result.context_id, "/path/to/file.txt")
+print(url_result.url)
 ```
 
-**Parameters:**
-- `context_id` (str): The ID of the context.
-- `file_path` (str): The path to the file to delete.
-
-**Returns:**
-- `OperationResult`: A result object containing success status and request ID.
-
-### clear
-
-Clears the context's persistent data.
+#### get\_file\_upload\_url
 
 ```python
-clear(context_id: str, timeout: int = 60, poll_interval: float = 2.0) -> ClearContextResult
+def get_file_upload_url(context_id: str, file_path: str) -> FileUrlResult
 ```
 
-**Parameters:**
-- `context_id` (str): The unique identifier of the context to clear.
-- `timeout` (int, optional): Timeout in seconds to wait for task completion. Default is 60 seconds.
-- `poll_interval` (float, optional): Interval in seconds between status polls. Default is 2.0 seconds.
+Get a presigned upload URL for a file in a context.
 
-**Returns:**
-- `ClearContextResult`: A result object containing the final task result. The status field will be "available" on success.
+**Arguments**:
 
-**State Transitions:**
+- `context_id` _str_ - The ID of the context.
+- `file_path` _str_ - The path to the file in the context.
+  
+
+**Returns**:
+
+    FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
+  
+
+**Example**:
+
+```python
+ctx_result = agent_bay.context.get(name="my-context", create=True)
+url_result = agent_bay.context.get_file_upload_url(ctx_result.context_id, "/path/to/file.txt")
+print(url_result.url)
+```
+
+#### delete\_file
+
+```python
+def delete_file(context_id: str, file_path: str) -> OperationResult
+```
+
+Delete a file in a context.
+
+**Arguments**:
+
+- `context_id` _str_ - The ID of the context.
+- `file_path` _str_ - The path to the file to delete.
+  
+
+**Returns**:
+
+    OperationResult: A result object containing success status and request ID.
+  
+
+**Example**:
+
+```python
+ctx_result = agent_bay.context.get(name="my-context", create=True)
+delete_result = agent_bay.context.delete_file(ctx_result.context_id, "/path/to/file.txt")
+```
+
+#### list\_files
+
+```python
+def list_files(context_id: str,
+               parent_folder_path: str,
+               page_number: int = 1,
+               page_size: int = 50) -> ContextFileListResult
+```
+
+List files under a specific folder path in a context.
+
+**Arguments**:
+
+- `context_id` _str_ - The ID of the context.
+- `parent_folder_path` _str_ - The parent folder path to list files from.
+- `page_number` _int_ - The page number for pagination. Default is 1.
+- `page_size` _int_ - The number of items per page. Default is 50.
+  
+
+**Returns**:
+
+    ContextFileListResult: A result object containing the list of files and request ID.
+  
+
+**Example**:
+
+```python
+ctx_result = agent_bay.context.get(name="my-context", create=True)
+files_result = agent_bay.context.list_files(ctx_result.context_id, "/")
+print(f"Found {len(files_result.entries)} files")
+```
+
+#### clear\_async
+
+```python
+def clear_async(context_id: str) -> ClearContextResult
+```
+
+Asynchronously initiate a task to clear the context's persistent data.
+
+This is a non-blocking method that returns immediately after initiating the clearing task
+on the backend. The context's state will transition to "clearing" while the operation
+is in progress.
+
+**Arguments**:
+
+    context_id: Unique ID of the context to clear.
+  
+
+**Returns**:
+
+  A ClearContextResult object indicating the task has been successfully started,
+  with status field set to "clearing".
+  
+
+**Raises**:
+
+    AgentBayError: If the backend API rejects the clearing request (e.g., invalid ID).
+  
+
+**Example**:
+
+```python
+result = agent_bay.context.get(name="my-context", create=True)
+clear_result = agent_bay.context.clear_async(result.context_id)
+```
+
+#### get\_clear\_status
+
+```python
+def get_clear_status(context_id: str) -> ClearContextResult
+```
+
+Query the status of the clearing task.
+
+This method calls GetContext API directly and parses the raw response to extract
+the state field, which indicates the current clearing status.
+
+**Arguments**:
+
+    context_id: ID of the context.
+  
+
+**Returns**:
+
+  ClearContextResult object containing the current task status.
+  
+
+**Example**:
+
+```python
+result = agent_bay.context.get(name="my-context", create=True)
+clear_result = agent_bay.context.clear_async(result.context_id)
+status_result = agent_bay.context.get_clear_status(result.context_id)
+print(status_result.status)
+```
+
+#### clear
+
+```python
+def clear(context_id: str,
+          timeout: int = 60,
+          poll_interval: float = 2.0) -> ClearContextResult
+```
+
+Synchronously clear the context's persistent data and wait for the final result.
+
+This method wraps the `clear_async` and `_get_clear_status` polling logic,
+providing the simplest and most direct way to handle clearing tasks.
+
+The clearing process transitions through the following states:
 - "clearing": Data clearing is in progress
 - "available": Clearing completed successfully (final success state)
-- "in-use": Context is being used
-- "pre-available": Context is being prepared
 
-**Example:**
-```python
-from agentbay import AgentBay
+**Arguments**:
 
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+    context_id: Unique ID of the context to clear.
+    timeout: Timeout in seconds to wait for task completion. Defaults to 60.
+    poll_interval: Interval in seconds between status polls. Defaults to 2.0.
+  
 
-# Get a context first
-result = agent_bay.context.get("my-context")
-if result.success and result.context:
-    context = result.context
+**Returns**:
 
-    # Clear context data synchronously (wait for completion)
-    clear_result = agent_bay.context.clear(context.id)
-    if clear_result.success:
-        print(f"Context data cleared successfully")
-        print(f"Final Status: {clear_result.status}")
-        # Expected output: Final Status: available
-        print(f"Request ID: {clear_result.request_id}")
-        # Expected: A valid UUID-format request ID
-    else:
-        print(f"Failed to clear context: {clear_result.error_message}")
-else:
-    print(f"Failed to get context: {result.error_message}")
-```
+  ClearContextResult object containing the final task result.
+  The status field will be "available" on success.
+  
 
-### clear_async
+**Raises**:
 
-Asynchronously initiates a task to clear the context's persistent data.
+    ClearanceTimeoutError: If the task fails to complete within the timeout.
+    AgentBayError: If an API or network error occurs during execution.
+  
 
-```python
-clear_async(context_id: str) -> ClearContextResult
-```
+**Example**:
 
-**Parameters:**
-- `context_id` (str): The unique identifier of the context to clear.
-
-**Returns:**
-- `ClearContextResult`: A result object indicating the task has been successfully started, with status field set to "clearing".
-
-**Example:**
-```python
-from agentbay import AgentBay
-
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
-
-# Get a context first
-result = agent_bay.context.get("my-context")
-if result.success and result.context:
-    context = result.context
-
-    # Start clearing context data asynchronously (non-blocking)
-    clear_result = agent_bay.context.clear_async(context.id)
-    if clear_result.success:
-        print(f"Clear task started: Success={clear_result.success}, Status={clear_result.status}")
-        # Expected output: Clear task started: Success=True, Status=clearing
-        print(f"Request ID: {clear_result.request_id}")
-        # Expected: A valid UUID-format request ID
-    else:
-        print(f"Failed to start clear: {clear_result.error_message}")
-else:
-    print(f"Failed to get context: {result.error_message}")
-```
-
-### get_clear_status
-
-Queries the status of the clearing task.
-
-```python
-get_clear_status(context_id: str) -> ClearContextResult
-```
-
-**Parameters:**
-- `context_id` (str): The unique identifier of the context to check.
-
-**Returns:**
-- `ClearContextResult`: A result object containing the current task status.
-
-**State Transitions:**
-- "clearing": Data clearing is in progress
-- "available": Clearing completed successfully (final success state)
-- "in-use": Context is being used
-- "pre-available": Context is being prepared
-
-**Example:**
-```python
-from agentbay import AgentBay
-
-# Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
-
-# Get a context first
-result = agent_bay.context.get("my-context")
-if result.success and result.context:
-    context = result.context
-
-    # Check clearing status
-    status_result = agent_bay.context.get_clear_status(context.id)
-    if status_result.success:
-        print(f"Current status: {status_result.status}")
-        print(f"Request ID: {status_result.request_id}")
-        # Expected: Current status: clearing/available/in-use/pre-available
-    else:
-        print(f"Failed to get status: {status_result.error_message}")
-else:
-    print(f"Failed to get context: {result.error_message}")
-```
+        ```python
+        result = agent_bay.context.get(name="my-context", create=True)
+        clear_result = agent_bay.context.clear(result.context_id, timeout=60)
+        ```
 
 ## Related Resources
 
 - [Session API Reference](session.md)
-- [ContextManager API Reference](context-manager.md)
+- [Context Manager API Reference](context-manager.md)
+
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*

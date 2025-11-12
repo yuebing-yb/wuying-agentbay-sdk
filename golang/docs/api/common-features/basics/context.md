@@ -1,52 +1,696 @@
 # Context API Reference
 
-The Context API provides functionality for managing persistent storage contexts in the AgentBay cloud environment. Contexts allow you to persist data across sessions and reuse it in future sessions.
+## 🚀 Related Tutorial
 
-## Context Struct
+- [First Session Tutorial](../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
 
-The `Context` struct represents a persistent storage context in the AgentBay cloud environment.
-
-### Properties
+## Type Context
 
 ```go
-ID  // The unique identifier of the context
-Name  // The name of the context
-CreatedAt  // Date and time when the Context was created
-LastUsedAt  // Date and time when the Context was last used
+type Context struct {
+	// ID is the unique identifier of the context.
+	ID	string
+
+	// Name is the name of the context.
+	Name	string
+
+	// CreatedAt is the date and time when the Context was created.
+	CreatedAt	string
+
+	// LastUsedAt is the date and time when the Context was last used.
+	LastUsedAt	string
+}
 ```
 
-## ContextService Struct
+Context represents a persistent storage context in the AgentBay cloud environment.
 
-The `ContextService` struct provides methods for managing persistent contexts in the AgentBay cloud environment.
-
-### List
-
-Lists all available contexts with pagination support.
+## Type ContextResult
 
 ```go
-List(params *ContextListParams) (*ContextListResult, error)
+type ContextResult struct {
+	models.ApiResponse
+	Success		bool
+	ContextID	string
+	Context		*Context
+	ErrorMessage	string
+}
 ```
 
-**Parameters:**
-- `params` (*ContextListParams, optional): Pagination parameters. If nil, default values are used (MaxResults=10).
+ContextResult wraps context operation result and RequestID
 
-**Returns:**
-- `*ContextListResult`: A result object containing the list of Context objects, pagination info, and RequestID.
-- `error`: An error if the operation fails.
+## Type ContextListResult
+
+```go
+type ContextListResult struct {
+	models.ApiResponse
+	Success		bool
+	Contexts	[]*Context
+	NextToken	string
+	MaxResults	int32
+	TotalCount	int32
+	ErrorMessage	string
+}
+```
+
+ContextListResult wraps context list and RequestID
+
+## Type ContextCreateResult
+
+```go
+type ContextCreateResult struct {
+	models.ApiResponse
+	ContextID	string
+}
+```
+
+ContextCreateResult wraps context creation result and RequestID
+
+## Type ContextModifyResult
+
+```go
+type ContextModifyResult struct {
+	models.ApiResponse
+	Success		bool
+	ErrorMessage	string
+}
+```
+
+ContextModifyResult wraps context modification result and RequestID
+
+## Type ContextDeleteResult
+
+```go
+type ContextDeleteResult struct {
+	models.ApiResponse
+	Success		bool
+	ErrorMessage	string
+}
+```
+
+ContextDeleteResult wraps context deletion result and RequestID
+
+## Type ContextClearResult
+
+```go
+type ContextClearResult struct {
+	models.ApiResponse
+	Success		bool
+	Status		string	// Current status of the clearing task ("clearing", "available", etc.)
+	ContextID	string
+	ErrorMessage	string
+}
+```
+
+ContextClearResult wraps context clear operation result and RequestID
+
+## Type ContextService
+
+```go
+type ContextService struct {
+	// AgentBay is the AgentBay instance.
+	AgentBay *AgentBay
+}
+```
+
+ContextService provides methods to manage persistent contexts in the AgentBay cloud environment.
+
+### Methods
+
+#### Clear
+
+```go
+func (cs *ContextService) Clear(contextID string, timeoutSeconds int, pollIntervalSeconds float64) (*ContextClearResult, error)
+```
+
+Clear synchronously clears the context's persistent data and waits for the final result. This method
+wraps the ClearAsync and GetClearStatus polling logic.
+
+The clearing process transitions through the following states: - "clearing": Data clearing is in
+progress - "available": Clearing completed successfully (final success state)
+
+Parameters:
+  - contextID: Unique ID of the context to clear
+  - timeout: Timeout in seconds to wait for task completion (default: 60)
+  - pollInterval: Interval in seconds between status polls (default: 2)
+
+Returns a ContextClearResult object containing the final task result. The status field will be
+"available" on success, or other states if interrupted.
+
+#### ClearAsync
+
+```go
+func (cs *ContextService) ClearAsync(contextID string) (*ContextClearResult, error)
+```
+
+ClearAsync asynchronously initiates a task to clear the context's persistent data. This is a
+non-blocking method that returns immediately after initiating the clearing task. The context's state
+will transition to "clearing" while the operation is in progress.
+
+Parameters:
+  - contextID: Unique ID of the context to clear
+
+Returns:
+  - *ContextClearResult: Result containing task status and request ID
+  - error: Error if the operation fails
 
 **Example:**
+
 ```go
 package main
-
 import (
 	"fmt"
 	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
+
 	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get an existing context
+
+	contextResult, err := client.Context.Get("my-context", false)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+	context := contextResult.Context
+
+	// Start clearing context data asynchronously
+
+	clearResult, err := client.Context.ClearAsync(context.ID)
+	if err != nil {
+		fmt.Printf("Error starting context clear: %v\n", err)
+		os.Exit(1)
+	}
+	if clearResult.Success {
+		fmt.Printf("Clear task started: Status=%s\n", clearResult.Status)
+
+		// Output: Clear task started: Status=clearing
+
+	}
+	fmt.Printf("Request ID: %s\n", clearResult.RequestID)
+
+	// Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+}
+```
+
+#### Create
+
+```go
+func (cs *ContextService) Create(name string) (*ContextCreateResult, error)
+```
+
+Create creates a new context with the given name.
+
+Parameters:
+  - name: The name for the new context.
+
+Returns:
+  - *ContextCreateResult: A result object containing the created context ID and request ID.
+  - error: An error if the operation fails.
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Create a new context
+
+	result, err := client.Context.Create("my-new-context")
+	if err != nil {
+		fmt.Printf("Error creating context: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Context created successfully")
+
+	// Output: Context created successfully
+
+	fmt.Printf("Context ID: %s\n", result.ContextID)
+
+	// Output: Context ID: ctx-04bdwfj7u22a1s30g
+
+	fmt.Printf("Request ID: %s\n", result.RequestID)
+
+	// Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+}
+```
+
+#### Delete
+
+```go
+func (cs *ContextService) Delete(context *Context) (*ContextDeleteResult, error)
+```
+
+Delete deletes the specified context.
+
+Parameters:
+  - context: The context object to delete
+
+Returns:
+  - *ContextDeleteResult: Result containing success status and request ID
+  - error: Error if the operation fails
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get an existing context
+
+	contextResult, err := client.Context.Get("my-context", false)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+	context := contextResult.Context
+
+	// Delete the context
+
+	deleteResult, err := client.Context.Delete(context)
+	if err != nil {
+		fmt.Printf("Error deleting context: %v\n", err)
+		os.Exit(1)
+	}
+	if deleteResult.Success {
+		fmt.Println("Context deleted successfully")
+
+		// Output: Context deleted successfully
+
+	}
+	fmt.Printf("Request ID: %s\n", deleteResult.RequestID)
+
+	// Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+}
+```
+
+#### DeleteFile
+
+```go
+func (cs *ContextService) DeleteFile(contextID string, filePath string) (*ContextFileDeleteResult, error)
+```
+
+DeleteFile deletes a file in a context.
+
+Parameters:
+  - contextID: The ID of the context
+  - filePath: The path to the file to delete
+
+Returns:
+  - *ContextFileDeleteResult: Result containing success status and request ID
+  - error: Error if the operation fails
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get a context
+
+	contextResult, err := client.Context.Get("my-context", true)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Delete a file from the context
+
+	deleteResult, err := client.Context.DeleteFile(contextResult.Context.ID, "/path/to/file.txt")
+	if err != nil {
+		fmt.Printf("Error deleting file: %v\n", err)
+		os.Exit(1)
+	}
+	if deleteResult.Success {
+		fmt.Println("File deleted successfully")
+
+		// Output: File deleted successfully
+
+	}
+	fmt.Printf("Request ID: %s\n", deleteResult.RequestID)
+
+	// Output: Request ID: 1A2B3C4D-5E6F-7G8H-9I0J-1K2L3M4N5O6P
+
+}
+```
+
+#### Get
+
+```go
+func (cs *ContextService) Get(name string, create bool) (*ContextResult, error)
+```
+
+Get gets a context by name. Optionally creates it if it doesn't exist. Get retrieves an existing
+context or creates a new one.
+
+Parameters:
+  - name: The name of the context to retrieve or create
+  - create: If true, creates the context if it doesn't exist
+
+Returns:
+  - *ContextResult: Result containing Context object and request ID
+  - error: Error if the operation fails
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+	client, err := agentbay.NewAgentBay("your_api_key")
+	if err != nil {
+		panic(err)
+	}
+
+	// Get existing context or create if not exists
+
+	contextResult, err := client.Context.Get("my-context", true)
+	if err != nil {
+		panic(err)
+	}
+	context := contextResult.Context
+	fmt.Printf("Context ID: %s\n", context.ID)
+	fmt.Printf("Context Name: %s\n", context.Name)
+
+	// Output:
+
+	// Context ID: ctx-abc123
+
+	// Context Name: my-context
+
+}
+```
+
+#### GetClearStatus
+
+```go
+func (cs *ContextService) GetClearStatus(contextID string) (*ContextClearResult, error)
+```
+
+GetClearStatus queries the status of the clearing task. This method calls GetContext API directly
+with contextID and parses the raw response to extract the state field, which indicates the current
+clearing status.
+
+Parameters:
+  - contextID: Unique ID of the context to check
+
+Returns:
+  - *ContextClearResult: Result containing current task status and request ID
+  - error: Error if the operation fails
+
+State Transitions:
+  - "clearing": Data clearing is in progress
+  - "available": Clearing completed successfully (final success state)
+  - "in-use": Context is being used
+  - "pre-available": Context is being prepared
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get an existing context
+
+	contextResult, err := client.Context.Get("my-context", false)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+	context := contextResult.Context
+
+	// Check clearing status
+
+	statusResult, err := client.Context.GetClearStatus(context.ID)
+	if err != nil {
+		fmt.Printf("Error getting clear status: %v\n", err)
+		os.Exit(1)
+	}
+	if statusResult.Success {
+		fmt.Printf("Current status: %s\n", statusResult.Status)
+
+		// Output: Current status: clearing (or available/in-use/pre-available)
+
+	}
+	fmt.Printf("Request ID: %s\n", statusResult.RequestID)
+
+	// Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+
+}
+```
+
+#### GetFileDownloadUrl
+
+```go
+func (cs *ContextService) GetFileDownloadUrl(contextID string, filePath string) (*ContextFileUrlResult, error)
+```
+
+GetFileDownloadUrl gets a presigned download URL for a file in a context.
+
+Parameters:
+  - contextID: The ID of the context
+  - filePath: The path to the file in the context
+
+Returns:
+  - *ContextFileUrlResult: Result containing the presigned URL, expire time, and request ID
+  - error: Error if the operation fails
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"io"
+	"net/http"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get a context
+
+	contextResult, err := client.Context.Get("my-context", true)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get download URL
+
+	urlResult, err := client.Context.GetFileDownloadUrl(contextResult.Context.ID, "/data/file.txt")
+	if err != nil {
+		fmt.Printf("Error getting download URL: %v\n", err)
+		os.Exit(1)
+	}
+	if urlResult.Success {
+		fmt.Println("Download URL obtained successfully")
+
+		// Output: Download URL obtained successfully
+
+		fmt.Printf("URL length: %d\n", len(urlResult.Url))
+
+		// Output: URL length: 256
+
+		// Use the URL to download file content
+
+		resp, err := http.Get(urlResult.Url)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			defer resp.Body.Close()
+			content, _ := io.ReadAll(resp.Body)
+			fmt.Printf("Downloaded %d bytes\n", len(content))
+
+			// Output: Downloaded 16 bytes
+
+		}
+	}
+	fmt.Printf("Request ID: %s\n", urlResult.RequestID)
+
+	// Output: Request ID: 2B3C4D5E-6F7G-8H9I-0J1K-2L3M4N5O6P7Q
+
+}
+```
+
+#### GetFileUploadUrl
+
+```go
+func (cs *ContextService) GetFileUploadUrl(contextID string, filePath string) (*ContextFileUrlResult, error)
+```
+
+GetFileUploadUrl gets a presigned upload URL for a file in a context.
+
+Parameters:
+  - contextID: The ID of the context
+  - filePath: The path to the file in the context
+
+Returns:
+  - *ContextFileUrlResult: Result containing the presigned URL, expire time, and request ID
+  - error: Error if the operation fails
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"net/http"
+	"bytes"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Initialize the SDK
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get a context
+
+	contextResult, err := client.Context.Get("my-context", true)
+	if err != nil {
+		fmt.Printf("Error getting context: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get upload URL
+
+	urlResult, err := client.Context.GetFileUploadUrl(contextResult.Context.ID, "/data/upload.txt")
+	if err != nil {
+		fmt.Printf("Error getting upload URL: %v\n", err)
+		os.Exit(1)
+	}
+	if urlResult.Success {
+		fmt.Println("Upload URL obtained successfully")
+
+		// Output: Upload URL obtained successfully
+
+		fmt.Printf("URL length: %d\n", len(urlResult.Url))
+
+		// Output: URL length: 256
+
+		// Use the URL to upload file content
+
+		content := []byte("Hello, AgentBay!")
+		req, _ := http.NewRequest("PUT", urlResult.Url, bytes.NewReader(content))
+		req.Header.Set("Content-Type", "text/plain")
+		resp, err := http.DefaultClient.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			fmt.Println("File uploaded successfully")
+
+			// Output: File uploaded successfully
+
+		}
+	}
+}
+```
+
+#### List
+
+```go
+func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, error)
+```
+
+List lists all available contexts with pagination support.
+
+Parameters:
+  - params: *ContextListParams (optional) - Pagination parameters. If nil, default values are used
+    (MaxResults=10).
+
+Returns:
+  - *ContextListResult: A result object containing the list of Context objects, pagination info,
+    and RequestID.
+  - error: An error if the operation fails.
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Initialize the SDK
+
 	client, err := agentbay.NewAgentBay("your_api_key", nil)
 	if err != nil {
 		fmt.Printf("Error initializing AgentBay client: %v\n", err)
@@ -54,451 +698,464 @@ func main() {
 	}
 
 	// List all contexts (using default pagination)
+
 	result, err := client.Context.List(nil)
 	if err != nil {
 		fmt.Printf("Error listing contexts: %v\n", err)
 		os.Exit(1)
 	}
-
 	fmt.Printf("Found %d contexts:\n", len(result.Contexts))
+
 	// Expected: Found X contexts (where X is the number of contexts, max 10 by default)
+
 	fmt.Printf("Request ID: %s\n", result.RequestID)
+
 	// Expected: A valid UUID-format request ID
+
 	for i, context := range result.Contexts {
 		if i < 3 { // Show first 3 contexts
 			fmt.Printf("Context ID: %s, Name: %s\n", context.ID, context.Name)
+
 			// Expected output: Context ID: SdkCtx-xxx, Name: xxx
+
 		}
 	}
 }
 ```
 
-### Get
-
-Gets a context by name. Optionally creates it if it doesn't exist.
+#### ListFiles
 
 ```go
-Get(name string, create bool) (*ContextResult, error)
+func (cs *ContextService) ListFiles(contextID string, parentFolderPath string, pageNumber int32, pageSize int32) (*ContextFileListResult, error)
 ```
 
-**Parameters:**
-- `name` (string): The name of the context to get.
-- `create` (bool): Whether to create the context if it doesn't exist.
+ListFiles lists files under a specific folder path in a context.
 
-**Returns:**
-- `*ContextResult`: A result object containing the Context object and RequestID.
-- `error`: An error if the operation fails.
+Parameters:
+  - contextID: The ID of the context
+  - parentFolderPath: The parent folder path to list files from
+  - pageNumber: The page number for pagination
+  - pageSize: The number of items per page
+
+Returns:
+  - *ContextFileListResult: Result containing the list of files and request ID
+  - error: Error if the operation fails
 
 **Example:**
+
 ```go
 package main
-
 import (
 	"fmt"
 	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
+
 	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
+
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 	if err != nil {
 		fmt.Printf("Error initializing AgentBay client: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Get a context, creating it if it doesn't exist
-	result, err := client.Context.Get("my-persistent-context", true)
+	// Get a context
+
+	contextResult, err := client.Context.Get("my-context", true)
 	if err != nil {
 		fmt.Printf("Error getting context: %v\n", err)
 		os.Exit(1)
 	}
 
-	context := result.Context
-	fmt.Printf("Context ID: %s, Name: %s\n", context.ID, context.Name)
-	// Expected output: Context ID: SdkCtx-xxx, Name: my-persistent-context
-	fmt.Printf("Request ID: %s\n", result.RequestID)
-	// Expected: A valid UUID-format request ID
+	// List files in the context
+
+	listResult, err := client.Context.ListFiles(contextResult.Context.ID, "/data", 1, 10)
+	if err != nil {
+		fmt.Printf("Error listing files: %v\n", err)
+		os.Exit(1)
+	}
+	if listResult.Success {
+		fmt.Printf("Found %d files\n", len(listResult.Entries))
+
+		// Output: Found 3 files
+
+		for i, entry := range listResult.Entries {
+			if i < 3 {
+				fmt.Printf("File: %s (%s)\n", entry.FileName, entry.FileType)
+
+				// Output: File: data.txt (file)
+
+			}
+		}
+	}
+	fmt.Printf("Request ID: %s\n", listResult.RequestID)
+
+	// Output: Request ID: 3C4D5E6F-7G8H-9I0J-1K2L-3M4N5O6P7Q8R
+
 }
 ```
 
-### Create
-
-Creates a new context.
+#### Update
 
 ```go
-Create(name string) (*ContextCreateResult, error)
+func (cs *ContextService) Update(context *Context) (*ContextModifyResult, error)
 ```
 
-**Parameters:**
-- `name` (string): The name of the context to create.
+Update updates the specified context. Returns a result with success status. Update modifies an
+existing context's properties.
 
-**Returns:**
-- `*ContextCreateResult`: A result object containing the created Context ID and RequestID.
-- `error`: An error if the operation fails.
+Parameters:
+  - context: Context object with updated properties
+
+Returns:
+  - *ContextModifyResult: Result containing success status and request ID
+  - error: Error if the operation fails
 
 **Example:**
+
 ```go
 package main
-
 import (
 	"fmt"
-	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
+	client, err := agentbay.NewAgentBay("your_api_key")
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
-	// Create a new context
-	result, err := client.Context.Create("my-new-context")
+	// Get context
+
+	contextResult, err := client.Context.Get("my-context", true)
 	if err != nil {
-		fmt.Printf("Error creating context: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
-	fmt.Printf("Created context with ID: %s\n", result.ContextID)
-	// Expected output: Created context with ID: SdkCtx-xxx
-	fmt.Printf("Request ID: %s\n", result.RequestID)
-	// Expected: A valid UUID-format request ID
-}
-```
+	// Update context name
 
-### Update
-
-Updates an existing context.
-
-```go
-Update(context *Context) (*ContextModifyResult, error)
-```
-
-**Parameters:**
-- `context` (*Context): The context object to update.
-
-**Returns:**
-- `*ContextModifyResult`: A result object containing success status and RequestID.
-- `error`: An error if the operation fails.
-
-**Example:**
-```go
-package main
-
-import (
-	"fmt"
-	"os"
-
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-
-func main() {
-	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
-	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Get an existing context
-	result, err := client.Context.Get("my-context", false)
-	if err != nil {
-		fmt.Printf("Error getting context: %v\n", err)
-		os.Exit(1)
-	}
-
-	context := result.Context
-
-	// Update the context name
-	context.Name = "my-updated-context"
-
-	// Save the changes
+	context := contextResult.Context
+	context.Name = "my-renamed-context"
 	updateResult, err := client.Context.Update(context)
 	if err != nil {
-		fmt.Printf("Error updating context: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
+	if updateResult.Success {
+		fmt.Println("Context updated successfully")
 
-	fmt.Printf("Context updated successfully, Success: %v\n", updateResult.Success)
-	// Expected output: Context updated successfully, Success: true
-	fmt.Printf("Request ID: %s\n", updateResult.RequestID)
-	// Expected: A valid UUID-format request ID
+		// Output: Context updated successfully
+
+	}
 }
 ```
 
-### Delete
-
-Deletes a context.
+## Type ContextListParams
 
 ```go
-Delete(context *Context) (*ContextDeleteResult, error)
+type ContextListParams struct {
+	MaxResults	int32	// Number of results per page
+	NextToken	string	// Token for the next page
+}
 ```
 
-**Parameters:**
-- `context` (*Context): The context object to delete.
+ContextListParams contains parameters for listing contexts
 
-**Returns:**
-- `*ContextDeleteResult`: A result object containing success status and RequestID.
-- `error`: An error if the operation fails.
+### Related Functions
+
+#### NewContextListParams
+
+```go
+func NewContextListParams() *ContextListParams
+```
+
+NewContextListParams creates a new ContextListParams with default values
+
+## Type ContextFileUrlResult
+
+```go
+type ContextFileUrlResult struct {
+	models.ApiResponse
+	Success		bool
+	Url		string
+	ExpireTime	*int64
+	ErrorMessage	string
+}
+```
+
+ContextFileUrlResult represents a presigned URL operation result.
+
+## Type ContextFileEntry
+
+```go
+type ContextFileEntry struct {
+	FileID		string
+	FileName	string
+	FilePath	string
+	FileType	string
+	GmtCreate	string
+	GmtModified	string
+	Size		int64
+	Status		string
+}
+```
+
+ContextFileEntry represents a file item in a context.
+
+## Type ContextFileListResult
+
+```go
+type ContextFileListResult struct {
+	models.ApiResponse
+	Success		bool
+	Entries		[]*ContextFileEntry
+	Count		*int32
+	ErrorMessage	string
+}
+```
+
+ContextFileListResult represents the result of listing files under a context path.
+
+## Type ContextFileDeleteResult
+
+```go
+type ContextFileDeleteResult struct {
+	models.ApiResponse
+	Success		bool
+	ErrorMessage	string
+}
+```
+
+ContextFileDeleteResult represents the result of deleting a file in a context.
+
+## Functions
+
+### Deprecated
+
+```go
+func Deprecated(reason, replacement, version string)
+```
+
+Deprecated marks a function or method as deprecated and emits a warning
+
+### GetLogLevel
+
+```go
+func GetLogLevel() int
+```
+
+GetLogLevel returns the current global log level
 
 **Example:**
+
 ```go
 package main
+import (
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
 
+	// Set log level to DEBUG
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+
+	// Check current level
+
+	currentLevel := agentbay.GetLogLevel()
+	fmt.Printf("Current log level: %d\n", currentLevel)
+}
+```
+
+### LogDebug
+
+```go
+func LogDebug(message string)
+```
+
+LogDebug logs a debug message
+
+**Example:**
+
+```go
+package main
 import (
 	"fmt"
 	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
+
+	// Set log level to DEBUG to see debug messages
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
-
-	// Get an existing context
-	result, err := client.Context.Get("my-context", false)
+	result, err := client.Create(nil)
 	if err != nil {
-		fmt.Printf("Error getting context: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
+	session := result.Session
+	defer session.Delete()
 
-	context := result.Context
+	// Log debug messages
 
-	// Delete the context
-	deleteResult, err := client.Context.Delete(context)
-	if err != nil {
-		fmt.Printf("Error deleting context: %v\n", err)
-		os.Exit(1)
-	}
+	agentbay.LogDebug("Debugging session creation process")
 
-	fmt.Printf("Context deleted successfully, Success: %v\n", deleteResult.Success)
-	// Expected output: Context deleted successfully, Success: true
-	fmt.Printf("Request ID: %s\n", deleteResult.RequestID)
-	// Expected: A valid UUID-format request ID
+	// Output: 🐛 Debugging session creation process
+
 }
 ```
 
-### GetFileDownloadUrl
-
-Gets a presigned download URL for a file in a context.
+### LogInfo
 
 ```go
-GetFileDownloadUrl(contextID string, filePath string) (*ContextFileUrlResult, error)
+func LogInfo(message string)
 ```
 
-**Parameters:**
-- `contextID` (string): The ID of the context.
-- `filePath` (string): The path to the file in the context.
-
-**Returns:**
-- `*ContextFileUrlResult`: A result object containing the presigned URL, expire time, and RequestID.
-- `error`: An error if the operation fails.
-
-### GetFileUploadUrl
-
-Gets a presigned upload URL for a file in a context.
-
-```go
-GetFileUploadUrl(contextID string, filePath string) (*ContextFileUrlResult, error)
-```
-
-**Parameters:**
-- `contextID` (string): The ID of the context.
-- `filePath` (string): The path to the file in the context.
-
-**Returns:**
-- `*ContextFileUrlResult`: A result object containing the presigned URL, expire time, and RequestID.
-- `error`: An error if the operation fails.
-
-### ListFiles
-
-Lists files under a specific folder path in a context.
-
-```go
-ListFiles(contextID string, parentFolderPath string, pageNumber int32, pageSize int32) (*ContextFileListResult, error)
-```
-
-**Parameters:**
-- `contextID` (string): The ID of the context.
-- `parentFolderPath` (string): The parent folder path to list files from.
-- `pageNumber` (int32): The page number for pagination.
-- `pageSize` (int32): The number of items per page.
-
-**Returns:**
-- `*ContextFileListResult`: A result object containing the list of files and RequestID.
-- `error`: An error if the operation fails.
-
-### ClearAsync
-
-Asynchronously initiates a task to clear the context's persistent data.
-
-```go
-ClearAsync(contextID string) (*ContextClearResult, error)
-```
-
-**Parameters:**
-- `contextID` (string): The unique identifier of the context to clear.
-
-**Returns:**
-- `*ContextClearResult`: A result object indicating the task has been successfully started, with status field set to "clearing".
-- `error`: An error if the operation fails.
+LogInfo logs an informational message
 
 **Example:**
+
 ```go
 package main
-
 import (
 	"fmt"
 	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
+
+	// Set log level to INFO or DEBUG to see info messages
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
-
-	// Get an existing context
-	result, err := client.Context.Get("my-context", false)
+	result, err := client.Create(nil)
 	if err != nil {
-		fmt.Printf("Error getting context: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
+	session := result.Session
+	defer session.Delete()
 
-	context := result.Context
+	// Log informational messages
 
-	// Start clearing context data asynchronously
-	clearResult, err := client.Context.ClearAsync(context.ID)
-	if err != nil {
-		fmt.Printf("Error starting context clear: %v\n", err)
-		os.Exit(1)
-	}
+	agentbay.LogInfo("Session created successfully")
 
-	fmt.Printf("Clear task started: Success=%t, Status=%s\n",
-		clearResult.Success, clearResult.Status)
-	// Expected output: Clear task started: Success=true, Status=clearing
-	fmt.Printf("Request ID: %s\n", clearResult.RequestID)
-	// Expected: A valid UUID-format request ID
+	// Output: ℹ️  Session created successfully
+
 }
 ```
 
-### GetClearStatus
-
-Queries the status of the clearing task.
+### SetDeprecationConfig
 
 ```go
-GetClearStatus(contextID string) (*ContextClearResult, error)
+func SetDeprecationConfig(config *DeprecationConfig)
 ```
 
-**Parameters:**
-- `contextID` (string): The unique identifier of the context to check.
+SetDeprecationConfig sets the global deprecation configuration
 
-**Returns:**
-- `*ContextClearResult`: A result object containing the current task status.
-- `error`: An error if the operation fails.
+### SetLogLevel
 
-**State Transitions:**
-- "clearing": Data clearing is in progress
-- "available": Clearing completed successfully (final success state)
-- "in-use": Context is being used
-- "pre-available": Context is being prepared
+```go
+func SetLogLevel(level int)
+```
+
+SetLogLevel sets the global log level
 
 **Example:**
+
 ```go
 package main
-
 import (
 	"fmt"
 	"os"
-
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-	// Initialize the SDK
-	client, err := agentbay.NewAgentBay("your_api_key", nil)
+
+	// Set log level to DEBUG to see all messages
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 	if err != nil {
-		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
-
-	// Get an existing context
-	result, err := client.Context.Get("my-context", false)
+	result, err := client.Create(nil)
 	if err != nil {
-		fmt.Printf("Error getting context: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
+	session := result.Session
+	defer session.Delete()
 
-	context := result.Context
+	// Change to INFO level to reduce verbosity
 
-	// Check clearing status
-	statusResult, err := client.Context.GetClearStatus(context.ID)
-	if err != nil {
-		fmt.Printf("Error getting clear status: %v\n", err)
-		os.Exit(1)
-	}
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
 
-	fmt.Printf("Current status: %s\n", statusResult.Status)
-	fmt.Printf("Request ID: %s\n", statusResult.RequestID)
-	// Expected: Current status: clearing/available/in-use/pre-available
+	// Continue with your operations
+
 }
 ```
 
-### Clear
-
-Synchronously clears the context's persistent data and waits for the final result.
+### SetupLogger
 
 ```go
-Clear(contextID string, timeoutSeconds int, pollIntervalSeconds float64) (*ContextClearResult, error)
+func SetupLogger(config LoggerConfig)
 ```
 
-**Parameters:**
-- `contextID` (string): The unique identifier of the context to clear.
-- `timeoutSeconds` (int, optional): Timeout in seconds to wait for task completion, default is 60 seconds.
-- `pollIntervalSeconds` (float64, optional): Interval in seconds between status polls, default is 2.0 seconds.
+SetupLogger configures the logger with file logging support
 
-**Returns:**
-- `*ContextClearResult`: A result object containing the final task result. The status field will be "available" on success.
-- `error`: An error if the task fails to complete within the specified timeout.
-
-**State Transitions:**
-- "clearing": Data clearing is in progress
-- "available": Clearing completed successfully (final success state)
-- "in-use": Context is being used
-- "pre-available": Context is being prepared
-
-
-### DeleteFile
-
-Deletes a file in a context.
+**Example:**
 
 ```go
-DeleteFile(contextID string, filePath string) (*ContextFileDeleteResult, error)
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Configure file logging with rotation
+
+	agentbay.SetupLogger(agentbay.LoggerConfig{
+		Level:       "DEBUG",
+		LogFile:     "/tmp/agentbay.log",
+		MaxFileSize: "100 MB",
+	})
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// All logs will be written to both console and file
+
+}
 ```
-
-**Parameters:**
-- `contextID` (string): The ID of the context.
-- `filePath` (string): The path to the file to delete.
-
-**Returns:**
-- `*ContextFileDeleteResult`: A result object containing success status and RequestID.
-- `error`: An error if the operation fails.
 
 ## Related Resources
 
 - [Session API Reference](session.md)
-- [ContextManager API Reference](context-manager.md)
+- [Context API Reference](context.md)
+
+---
+
+*Documentation generated automatically from Go source code.*

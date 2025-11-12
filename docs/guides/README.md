@@ -28,7 +28,7 @@ Features available across all environments:
 
 **[Browser Use](browser-use/README.md)**
 - [Core Features](browser-use/core-features.md) - Basic browser automation features
-  - [Stealth Mode](browser-use/core-features/stealth-mode.md) - Avoid detection
+  - [Browser Fingerprint](browser-use/core-features/browser-fingerprint.md) - Simulate browser fingerprint
   - [Browser Context](browser-use/core-features/browser-context.md) - Isolated browser contexts
   - [Browser Proxies](browser-use/core-features/browser-proxies.md) - Proxy configuration
   - [CAPTCHA Handling](browser-use/core-features/captcha.md) - CAPTCHA solving strategies

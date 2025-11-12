@@ -2,12 +2,12 @@ import json
 from typing import Any, Dict, Optional
 
 from agentbay.api.base_service import BaseService
-from ..logger import get_logger, log_api_response
+from ..logger import get_logger, _log_api_response
 from agentbay.exceptions import AgentBayError, OssError
 from agentbay.model import ApiResponse
 
 # Initialize logger for this module
-logger = get_logger("oss")
+_logger = get_logger("oss")
 
 
 class OSSClientResult(ApiResponse):
@@ -146,6 +146,16 @@ class Oss(BaseService):
         Returns:
             OSSClientResult: Result object containing client configuration and error
                 message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.oss.env_init(
+                access_key_id="your_access_key_id",
+                access_key_secret="your_access_key_secret"
+            )
+            session.delete()
+            ```
         """
         try:
             args = {
@@ -165,9 +175,9 @@ class Oss(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
 
             if result.success:
                 try:
@@ -203,6 +213,9 @@ class Oss(BaseService):
         """
         Upload a local file or directory to OSS.
 
+        Note: Before calling this API, you must first call env_init to initialize
+            the OSS environment.
+
         Args:
             bucket: OSS bucket name.
             object: Object key in OSS.
@@ -211,12 +224,24 @@ class Oss(BaseService):
         Returns:
             OSSUploadResult: Result object containing upload result and error message
                 if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.oss.env_init(
+                access_key_id="your_access_key_id",
+                access_key_secret="your_access_key_secret"
+            )
+            result = session.oss.upload("my-bucket", "file.txt", "/local/path/file.txt")
+            print(f"Upload result: {result.content}")
+            session.delete()
+            ```
         """
         try:
             args = {"bucket": bucket, "object": object, "path": path}
 
             result = self.session.call_mcp_tool("oss_upload", args)
-            logger.debug(f"📥 OSS Response: {result}")
+            _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
                 return OSSUploadResult(
@@ -250,12 +275,23 @@ class Oss(BaseService):
         Returns:
             OSSUploadResult: Result object containing upload result and error message
                 if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            result = session.oss.upload_anonymous(
+                "https://example.com/upload",
+                "/local/path/file.txt"
+            )
+            print(f"Upload result: {result.content}")
+            session.delete()
+            ```
         """
         try:
             args = {"url": url, "path": path}
 
             result = self.session.call_mcp_tool("oss_upload_annon", args)
-            logger.debug(f"📥 OSS Response: {result}")
+            _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
                 return OSSUploadResult(
@@ -283,6 +319,9 @@ class Oss(BaseService):
         """
         Download an object from OSS to a local file or directory.
 
+        Note: Before calling this API, you must first call env_init to initialize
+            the OSS environment.
+
         Args:
             bucket: OSS bucket name.
             object: Object key in OSS.
@@ -291,12 +330,24 @@ class Oss(BaseService):
         Returns:
             OSSDownloadResult: Result object containing download status and error
                 message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.oss.env_init(
+                access_key_id="your_access_key_id",
+                access_key_secret="your_access_key_secret"
+            )
+            result = session.oss.download("my-bucket", "file.txt", "/local/path/file.txt")
+            print(f"Download result: {result.content}")
+            session.delete()
+            ```
         """
         try:
             args = {"bucket": bucket, "object": object, "path": path}
 
             result = self.session.call_mcp_tool("oss_download", args)
-            logger.debug(f"📥 OSS Response: {result}")
+            _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
                 return OSSDownloadResult(
@@ -330,12 +381,23 @@ class Oss(BaseService):
         Returns:
             OSSDownloadResult: Result object containing download status and error
                 message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            result = session.oss.download_anonymous(
+                "https://example.com/file.txt",
+                "/local/path/file.txt"
+            )
+            print(f"Download result: {result.content}")
+            session.delete()
+            ```
         """
         try:
             args = {"url": url, "path": path}
 
             result = self.session.call_mcp_tool("oss_download_annon", args)
-            logger.debug(f"📥 OSS Response: {result}")
+            _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
                 return OSSDownloadResult(

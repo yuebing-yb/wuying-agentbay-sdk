@@ -8,9 +8,9 @@
 
 - [Extension Management](core-features/extension.md) - Upload, manage, and synchronize browser extensions with your browser sessions for automated testing and web scraping
 
-## Stealth Mode
+## Fingerprint
 
-- [StealthMode](core-features/stealth-mode.md) - Using stealth-mode to make the browser harder to detect by the anti-bot system
+- [Browser Fingerprint](core-features/browser-fingerprint.md) - Using browser fingerprinting to make the browser harder to detect by the anti-bot system
 
 ## IPProxy
 - [Browser Proxy](core-features/browser-proxies.md) - Configure proxy servers to route browser traffic for IP rotation and geographical distribution

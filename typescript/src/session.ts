@@ -11,7 +11,6 @@ import {
   ReleaseMcpSessionRequest,
   SetLabelRequest,
 } from "./api/models/model";
-import { Application } from "./application";
 import { Browser } from "./browser";
 import { Code } from "./code";
 import { Command } from "./command";
@@ -27,7 +26,6 @@ import {
   SessionPauseResult,
   SessionResumeResult,
 } from "./types/api-response";
-import { UI } from "./ui";
 import {
   log,
   logError,
@@ -37,10 +35,10 @@ import {
   logAPICall,
   logAPIResponseWithDetails,
   logCodeExecutionOutput,
+  logInfoWithColor,
   setRequestId,
   getRequestId,
 } from "./utils/logger";
-import { WindowManager } from "./window";
 
 /**
  * Represents an MCP tool with complete information.
@@ -161,11 +159,6 @@ export class Session {
   public code: Code;
   public oss: Oss;
 
-  // Application, window, and UI management (matching Python naming)
-  public application: Application; // application in Python (ApplicationManager)
-  public window: WindowManager;
-  public ui: UI;
-
   // Computer and Mobile automation (new modules)
   public computer: Computer;
   public mobile: Mobile;
@@ -198,11 +191,6 @@ export class Session {
     this.code = new Code(this);
     this.oss = new Oss(this);
 
-    // Initialize application and window managers (matching Python naming)
-    this.application = new Application(this);
-    this.window = new WindowManager(this);
-    this.ui = new UI(this);
-
     // Initialize Computer and Mobile modules
     this.computer = new Computer(this);
     this.mobile = new Mobile(this);
@@ -219,6 +207,35 @@ export class Session {
 
   /**
    * Return the AgentBay instance that created this session.
+   *
+   * @returns The AgentBay client instance
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetAgentBay() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get the AgentBay instance from session
+   *       const agentBayInstance = session.getAgentBay();
+   *       console.log('AgentBay instance retrieved');
+   *       // Output: AgentBay instance retrieved
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetAgentBay().catch(console.error);
+   * ```
    */
   getAgentBay(): AgentBay {
     return this.agentBay;
@@ -226,6 +243,36 @@ export class Session {
 
   /**
    * Return the API key for this session.
+   * Note: This method is used internally by SDK modules (Code, Computer, Mobile, Agent).
+   *
+   * @returns The API key string
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetAPIKey() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get the API key
+   *       const apiKey = session.getAPIKey();
+   *       console.log('API key length:', apiKey.length);
+   *       // Output: API key length: 32
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetAPIKey().catch(console.error);
+   * ```
    */
   getAPIKey(): string {
     return this.agentBay.getAPIKey();
@@ -233,6 +280,35 @@ export class Session {
 
   /**
    * Return the HTTP client for this session.
+   *
+   * @returns The Client instance used for API communication
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetClient() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get the internal client
+   *       const client = session.getClient();
+   *       console.log('Client retrieved successfully');
+   *       // Output: Client retrieved successfully
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetClient().catch(console.error);
+   * ```
    */
   getClient(): Client {
     return this.agentBay.getClient();
@@ -240,6 +316,35 @@ export class Session {
 
   /**
    * Return the session_id for this session.
+   * Note: This method is used internally by SDK modules. Users should prefer using the `sessionId` property.
+   *
+   * @returns The session ID string
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetSessionId() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get the session ID
+   *       const sessionId = session.getSessionId();
+   *       console.log(`Session ID: ${sessionId}`);\n       // Output: Session ID: session-04bdwfj7u22a1s30g
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetSessionId().catch(console.error);
+   * ```
    */
   getSessionId(): string {
     return this.sessionId;
@@ -247,36 +352,184 @@ export class Session {
 
   /**
    * Return whether this session uses VPC resources.
+   *
+   * @returns boolean indicating if VPC is enabled for this session
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });\n *
+   * async function demonstrateIsVpcEnabled() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Check if VPC is enabled
+   *       const isVpc = session.isVpcEnabled();
+   *       console.log(`VPC enabled: ${isVpc}`);
+   *       // Output: VPC enabled: false
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateIsVpcEnabled().catch(console.error);
+   * ```
    */
-  isVpcEnabled(): boolean {
+  private isVpcEnabled(): boolean {
     return this.isVpc;
   }
 
   /**
    * Return the network interface IP for VPC sessions.
+   *
+   * @returns The network interface IP string for VPC sessions
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetNetworkInterfaceIp() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get the network interface IP for VPC sessions
+   *       const networkIp = session.getNetworkInterfaceIp();
+   *       console.log(`Network Interface IP: ${networkIp}`);
+   *       // Output: Network Interface IP: 192.168.1.100
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetNetworkInterfaceIp().catch(console.error);
+   * ```
    */
-  getNetworkInterfaceIp(): string {
+  private getNetworkInterfaceIp(): string {
     return this.networkInterfaceIp;
   }
 
   /**
    * Return the HTTP port for VPC sessions.
+   *
+   * @returns The HTTP port string for VPC sessions
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetHttpPort() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get the HTTP port for VPC sessions
+   *       const httpPort = session.getHttpPort();
+   *       console.log(`HTTP Port: ${httpPort}`);
+   *       // Output: HTTP Port: 8080
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetHttpPort().catch(console.error);
+   * ```
    */
-  getHttpPort(): string {
+  private getHttpPort(): string {
     return this.httpPort;
   }
 
   /**
    * Return the token for VPC sessions.
+   *
+   * @returns The token string for VPC sessions
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetToken() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get the token for VPC sessions
+   *       const token = session.getToken();
+   *       console.log('Token length:', token.length);
+   *       // Output: Token length: 64
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetToken().catch(console.error);
+   * ```
    */
-  getToken(): string {
+  private getToken(): string {
     return this.token;
   }
 
   /**
    * Find the server that provides the given tool.
+   *
+   * @param toolName - Name of the tool to find
+   * @returns The server name that provides the tool, or empty string if not found
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateFindServerForTool() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // List available MCP tools first
+   *       await session.listMcpTools();
+   *
+   *       // Find the server that provides the 'shell' tool
+   *       const server = session.findServerForTool('shell');
+   *       console.log(`Server for 'shell' tool: ${server}`);
+   *       // Output: Server for 'shell' tool: cli_server
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateFindServerForTool().catch(console.error);
+   * ```
    */
-  findServerForTool(toolName: string): string {
+  private findServerForTool(toolName: string): string {
     for (const tool of this.mcpTools) {
       if (tool.name === toolName) {
         return tool.server;
@@ -290,6 +543,76 @@ export class Session {
    *
    * @param syncContext - Whether to sync context data (trigger file uploads) before deleting the session. Defaults to false.
    * @returns DeleteResult indicating success or failure and request ID
+   */
+  /**
+   * Deletes the session and releases all associated resources.
+   *
+   * @param syncContext - Whether to synchronize context data before deletion.
+   *                      If true, uploads all context data to OSS.
+   *                      If false but browser replay is enabled, syncs only the recording context.
+   *                      Defaults to false.
+   *
+   * @returns Promise resolving to DeleteResult containing:
+   *          - success: Whether deletion succeeded
+   *          - requestId: Unique identifier for this API request
+   *          - errorMessage: Error description if deletion failed
+   *
+   * @throws Error if the API call fails or network issues occur.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * // Initialize the SDK
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * // Create a session
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const session = result.session;
+   *   console.log(`Session ID: ${session.sessionId}`);
+   *   // Output: Session ID: session-04bdwfj7u22a1s30g
+   *
+   *   // Delete session without context sync
+   *   const deleteResult = await session.delete();
+   *   if (deleteResult.success) {
+   *     console.log('Session deleted successfully');
+   *     // Output: Session deleted successfully
+   *   }
+   * }
+   *
+   * // Example with context synchronization
+   * const result2 = await agentBay.create();
+   * if (result2.success) {
+   *   const session = result2.session;
+   *
+   *   // Perform operations that modify context
+   *   await session.filesystem.writeFile('/tmp/data.txt', 'Important data');
+   *
+   *   // Delete with context sync to preserve data
+   *   const deleteResult = await session.delete(true);
+   *   if (deleteResult.success) {
+   *     console.log('Session deleted and context synced');
+   *     // Output: Session deleted and context synced
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - If `syncContext=true`: Uploads all context data to OSS before deletion
+   * - If `syncContext=false` but browser replay enabled: Syncs only recording context
+   * - If `syncContext=false` and no browser replay: Deletes immediately without sync
+   * - Continues with deletion even if context sync fails
+   * - Releases all associated resources (browser, computer, mobile, etc.)
+   *
+   * **Best Practices:**
+   * - Use `syncContext=true` when you need to preserve context data for later retrieval
+   * - For temporary sessions, use `syncContext=false` for faster cleanup
+   * - Always call `delete()` when done to avoid resource leaks
+   * - Handle deletion errors gracefully in production code
+   *
+   * @see {@link info}, {@link ContextManager.sync}
    */
   async delete(syncContext = false): Promise<DeleteResult> {
     try {
@@ -457,6 +780,42 @@ export class Session {
    * @param labels - The labels to set for the session.
    * @returns OperationResult indicating success or failure with request ID
    * @throws Error if the operation fails (matching Python SessionError)
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function setSessionLabels() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Set labels for the session
+   *       const setResult = await session.setLabels({
+   *         project: 'demo',
+   *         environment: 'testing',
+   *         version: '1.0.0'
+   *       });
+   *
+   *       if (setResult.success) {
+   *         console.log('Labels set successfully');
+   *         // Output: Labels set successfully
+   *         console.log(`Request ID: ${setResult.requestId}`);
+   *         // Output: Request ID: 8D2C3E4F-1A5B-6C7D-8E9F-0A1B2C3D4E5F
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * setSessionLabels().catch(console.error);
+   * ```
    */
   async setLabels(labels: Record<string, string>): Promise<OperationResult> {
     try {
@@ -497,6 +856,43 @@ export class Session {
    *
    * @returns OperationResult containing the labels as data and request ID
    * @throws Error if the operation fails (matching Python SessionError)
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function getSessionLabels() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Set some labels first
+   *       await session.setLabels({
+   *         project: 'demo',
+   *         environment: 'testing'
+   *       });
+   *
+   *       // Get labels for the session
+   *       const getResult = await session.getLabels();
+   *       if (getResult.success) {
+   *         console.log(`Labels: ${JSON.stringify(getResult.data)}`);
+   *         // Output: Labels: {"project":"demo","environment":"testing"}
+   *         console.log(`Request ID: ${getResult.requestId}`);
+   *         // Output: Request ID: 8D2C3E4F-1A5B-6C7D-8E9F-0A1B2C3D4E5F
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * getSessionLabels().catch(console.error);
+   * ```
    */
   async getLabels(): Promise<OperationResult> {
     try {
@@ -534,10 +930,78 @@ export class Session {
   }
 
   /**
-   * Gets information about this session.
+   * Retrieves detailed information about the current session.
    *
-   * @returns OperationResult containing the session information as data and request ID
-   * @throws Error if the operation fails (matching Python SessionError)
+   * @returns Promise resolving to OperationResult containing:
+   *          - success: Whether the operation succeeded (always true if no exception)
+   *          - data: SessionInfo object with the following fields:
+   *            - sessionId (string): The session identifier
+   *            - resourceUrl (string): URL for accessing the session
+   *            - appId (string): Application ID (for desktop sessions)
+   *            - authCode (string): Authentication code
+   *            - connectionProperties (string): Connection configuration
+   *            - resourceId (string): Resource identifier
+   *            - resourceType (string): Type of resource (e.g., "Desktop")
+   *            - ticket (string): Access ticket
+   *          - requestId: Unique identifier for this API request
+   *          - errorMessage: Error description if operation failed
+   *
+   * @throws Error if the API request fails or response is invalid.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * // Initialize the SDK
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * // Create a session
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // Get session information
+   *   const infoResult = await session.info();
+   *   if (infoResult.success) {
+   *     const info = infoResult.data;
+   *     console.log(`Session ID: ${info.sessionId}`);
+   *     // Output: Session ID: session-04bdwfj7u22a1s30g
+   *
+   *     console.log(`Resource URL: ${info.resourceUrl}`);
+   *     // Output: Resource URL: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
+   *
+   *     console.log(`Resource Type: ${info.resourceType}`);
+   *     // Output: Resource Type: Desktop
+   *
+   *     console.log(`Request ID: ${infoResult.requestId}`);
+   *     // Output: Request ID: 8D2C3E4F-1A5B-6C7D-8E9F-0A1B2C3D4E5F
+   *
+   *     // Use resource_url for external access
+   *     if (info.resourceUrl) {
+   *       console.log(`Access session at: ${info.resourceUrl}`);
+   *       // Output: Access session at: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
+   *     }
+   *   }
+   *
+   *   // Clean up
+   *   await session.delete();
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - This method calls the GetMcpResource API to retrieve session metadata
+   * - The returned SessionInfo contains:
+   *   - sessionId: The session identifier
+   *   - resourceUrl: URL for accessing the session
+   *   - Desktop-specific fields (appId, authCode, connectionProperties, etc.)
+   *     are populated from the DesktopInfo section of the API response
+   * - Session info is retrieved from the AgentBay API in real-time
+   * - The resourceUrl can be used for browser-based access
+   * - Desktop-specific fields (appId, authCode) are only populated for desktop sessions
+   * - This method does not modify the session state
+   *
+   * @see {@link delete}, {@link getLink}
    */
   async info(): Promise<OperationResult> {
     try {
@@ -624,21 +1088,87 @@ export class Session {
         success: true,
         data: sessionInfo,
       };
-    } catch (error) {
-      logError("Error calling GetMcpResource:", error);
-      throw new Error(
-        `Failed to get session info for session ${this.sessionId}: ${error}`
-      );
+    } catch (error: any) {
+      // Check if this is an expected business error (e.g., session not found)
+      const errorStr = String(error);
+      const errorCode = error?.data?.Code || error?.code || "";
+
+      if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
+        // This is an expected error - session doesn't exist
+        // Use info level logging without stack trace, but with red color for visibility
+        logInfoWithColor(`Session not found: ${this.sessionId}`);
+        logDebug(`GetMcpResource error details: ${errorStr}`);
+        return {
+          requestId: "",
+          success: false,
+          errorMessage: `Session ${this.sessionId} not found`
+        };
+      } else {
+        // This is an unexpected error - log with full error
+        logError(`❌ Failed to get session info for session ${this.sessionId}`, error);
+        throw new Error(
+          `Failed to get session info for session ${this.sessionId}: ${error}`
+        );
+      }
     }
   }
 
   /**
-   * Get a link associated with the current session.
+   * Retrieves an access link for the session.
    *
-   * @param protocolType - Optional protocol type to use for the link
-   * @param port - Optional port to use for the link (must be in range [30100, 30199])
-   * @returns OperationResult containing the link as data and request ID
-   * @throws Error if the operation fails (matching Python SessionError)
+   * @param protocolType - Protocol type for the link (optional, reserved for future use)
+   * @param port - Specific port number to access (must be in range [30100, 30199]).
+   *               If not specified, returns the default session link.
+   *
+   * @returns Promise resolving to OperationResult containing:
+   *          - success: Whether the operation succeeded
+   *          - data: String URL for accessing the session
+   *          - requestId: Unique identifier for this API request
+   *          - errorMessage: Error description if operation failed
+   *
+   * @throws Error if the API call fails or port is out of valid range.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   *
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // Get default session link
+   *   const linkResult = await session.getLink();
+   *   if (linkResult.success) {
+   *     console.log(`Session link: ${linkResult.data}`);
+   *     // Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
+   *   }
+   *
+   *   // Get link for specific port
+   *   const portLinkResult = await session.getLink(undefined, 30150);
+   *   if (portLinkResult.success) {
+   *     console.log(`Port 30150 link: ${portLinkResult.data}`);
+   *     // Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
+   *   }
+   *
+   *   await session.delete();
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - Without port: Returns the default session access URL
+   * - With port: Returns URL for accessing specific port-mapped service
+   * - Port must be in range [30100, 30199] for port forwarding
+   * - For ADB connections, use `session.mobile.getAdbUrl()` with appropriate ADB public key
+   *
+   * **Best Practices:**
+   * - Use default link for general session access
+   * - Use port-specific links when you've started services on specific ports
+   * - Validate port range before calling to avoid errors
+   *
+   * @see {@link info}
    */
   async getLink(
     protocolType?: string,
@@ -684,7 +1214,7 @@ export class Session {
       }
 
       let data = responseBody.data || {}; // Capital D to match Python
-      logDebug(`Data: ${JSON.stringify(data)}`);;
+      logDebug(`Data: ${JSON.stringify(data)}`);
 
       if (typeof data !== "object") {
         try {
@@ -726,6 +1256,42 @@ export class Session {
    * @param port - Optional port to use for the link (must be in range [30100, 30199])
    * @returns OperationResult containing the link as data and request ID
    * @throws Error if the operation fails (matching Python SessionError)
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function getSessionLinkAsync() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Get default session link asynchronously
+   *       const linkResult = await session.getLinkAsync();
+   *       if (linkResult.success) {
+   *         console.log(`Session link: ${linkResult.data}`);
+   *         // Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
+   *       }
+   *
+   *       // Get link for specific port
+   *       const portLinkResult = await session.getLinkAsync(undefined, 30150);
+   *       if (portLinkResult.success) {
+   *         console.log(`Port 30150 link: ${portLinkResult.data}`);
+   *         // Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * getSessionLinkAsync().catch(console.error);
+   * ```
    */
   async getLinkAsync(
     protocolType?: string,
@@ -772,7 +1338,7 @@ export class Session {
       }
 
       let data = responseBody?.data || {}; // Capital D to match Python
-      logDebug(`Data: ${JSON.stringify(data)}`);;
+      logDebug(`Data: ${JSON.stringify(data)}`);
 
       if (typeof data !== "object") {
         try {
@@ -812,6 +1378,41 @@ export class Session {
    *
    * @param imageId Optional image ID, defaults to session's imageId or "linux_latest"
    * @returns McpToolsResult containing tools list and request ID
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function listAvailableMcpTools() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // List MCP tools for the session
+   *       const toolsResult = await session.listMcpTools();
+   *       if (toolsResult.success) {
+   *         console.log(`Found ${toolsResult.tools.length} MCP tools`);
+   *         // Output: Found 15 MCP tools
+   *
+   *         for (const tool of toolsResult.tools) {
+   *           console.log(`Tool: ${tool.name} - ${tool.description}`);
+   *           // Output: Tool: shell - Execute shell commands
+   *           // Output: Tool: read_file - Read file contents
+   *         }
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * listAvailableMcpTools().catch(console.error);
+   * ```
    */
   async listMcpTools(imageId?: string): Promise<McpToolsResult> {
     // Use provided imageId, session's imageId, or default
@@ -889,8 +1490,44 @@ export class Session {
    * @param args - Arguments to pass to the tool
    * @param autoGenSession - Whether to automatically generate session if not exists (default: false)
    * @returns McpToolResult containing the response data
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function callMcpToolExample() {
+   *   try {
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *
+   *       // Call the shell tool to execute a command
+   *       const shellResult = await session.callMcpTool('shell', {
+   *         command: "echo 'Hello World'",
+   *         timeout_ms: 1000
+   *       });
+   *
+   *       if (shellResult.success) {
+   *         console.log(`Output: ${shellResult.data}`);
+   *         // Output: Output: Hello World
+   *         console.log(`Request ID: ${shellResult.requestId}`);
+   *       } else {
+   *         console.error(`Error: ${shellResult.errorMessage}`);
+   *       }
+   *
+   *       await session.delete();
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * callMcpToolExample().catch(console.error);
+   * ```
    */
-  async callMcpTool(toolName: string, args: any, autoGenSession: boolean = false): Promise<import("./agent/agent").McpToolResult> {
+  async callMcpTool(toolName: string, args: any, autoGenSession = false): Promise<import("./agent/agent").McpToolResult> {
     try {
       const argsJSON = JSON.stringify(args);
 

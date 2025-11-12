@@ -1,0 +1,115 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+	"github.com/playwright-community/playwright-go"
+)
+
+func main() {
+	// Get API key from environment variable
+	apiKey := os.Getenv("AGENTBAY_API_KEY")
+	if apiKey == "" {
+		log.Fatal("Error: AGENTBAY_API_KEY environment variable not set")
+	}
+
+	// Initialize AgentBay client
+	fmt.Println("Initializing AgentBay client...")
+	client := agentbay.NewAgentBay(apiKey)
+
+	// Create a session
+	fmt.Println("Creating a new session...")
+	params := &agentbay.CreateSessionParams{
+		ImageId: "browser_latest",
+	}
+	sessionResult, err := client.Create(params)
+	if err != nil {
+		log.Fatalf("Failed to create session: %v", err)
+	}
+
+	if !sessionResult.Success {
+		log.Fatalf("Failed to create session: %s", sessionResult.ErrorMessage)
+	}
+
+	session := sessionResult.Session
+	fmt.Printf("Session created with ID: %s\n", session.GetSessionId())
+
+	defer func() {
+		// Clean up: delete the session
+		fmt.Printf("\n🧹 Cleaning up session %s...\n", session.GetSessionId())
+		err := client.Delete(session)
+		if err != nil {
+			log.Printf("⚠️  Warning: Error during cleanup: %v", err)
+		} else {
+			fmt.Println("✅ Session deleted successfully")
+		}
+	}()
+
+	// Initialize the browser
+	browserOption := browser.NewBrowserOption()
+	success, err := session.Browser.Initialize(browserOption)
+	if err != nil || !success {
+		log.Fatalf("Failed to initialize browser: %v", err)
+	}
+
+	fmt.Println("Browser initialized successfully")
+
+	// Get the browser endpoint and connect with Playwright
+	endpointURL, err := session.Browser.GetEndpointURL()
+	if err != nil {
+		log.Fatalf("Failed to get endpoint URL: %v", err)
+	}
+	fmt.Printf("Endpoint URL: %s\n", endpointURL)
+
+	// Connect with Playwright
+	pw, err := playwright.Run()
+	if err != nil {
+		log.Fatalf("Failed to start Playwright: %v", err)
+	}
+	defer pw.Stop()
+
+	browserInstance, err := pw.Chromium.ConnectOverCDP(endpointURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to browser: %v", err)
+	}
+	defer browserInstance.Close()
+
+	context := browserInstance.Contexts()[0]
+	page, err := context.NewPage()
+	if err != nil {
+		log.Fatalf("Failed to create page: %v", err)
+	}
+
+	// Navigate to a website
+	_, err = page.Goto("https://www.aliyun.com")
+	if err != nil {
+		log.Fatalf("Failed to navigate: %v", err)
+	}
+	fmt.Println("✅ Navigated to website")
+
+	// Take a simple screenshot (returns bytes data)
+	// Note: In the current implementation, the Screenshot method is a placeholder
+	// In a real implementation, this would capture the actual screenshot
+	fmt.Println("📸 Taking screenshot...")
+
+	// This is a placeholder - in a real implementation, this would return actual screenshot data
+	// screenshotData, err := session.Browser.Screenshot(page, nil)
+	// if err != nil {
+	// 	log.Fatalf("Failed to take screenshot: %v", err)
+	// }
+	// fmt.Printf("✅ Browser screenshot captured (%d bytes)\n", len(screenshotData))
+
+	// Save the screenshot to a file
+	// err = ioutil.WriteFile("browser_screenshot.png", screenshotData, 0644)
+	// if err != nil {
+	// 	log.Fatalf("Failed to save screenshot: %v", err)
+	// }
+	// fmt.Println("✅ Browser screenshot saved as browser_screenshot.png")
+
+	fmt.Println("ℹ️  Note: Screenshot functionality requires Playwright Go integration")
+	fmt.Println("✅ Browser screenshot demo completed")
+}

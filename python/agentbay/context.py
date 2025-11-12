@@ -13,12 +13,12 @@ from agentbay.api.models import (
 )
 from agentbay.exceptions import AgentBayError, ClearanceTimeoutError
 from agentbay.model.response import ApiResponse, OperationResult, extract_request_id
-from .logger import get_logger, log_api_call, log_api_response, log_api_response_with_details, log_operation_error
+from .logger import get_logger, _log_api_call, _log_api_response, _log_api_response_with_details, _log_operation_error
 import json
 import time
 
 # Initialize logger for this module
-logger = get_logger("context")
+_logger = get_logger("context")
 
 if TYPE_CHECKING:
     from agentbay.agentbay import AgentBay
@@ -31,20 +31,16 @@ class Context:
     Attributes:
         id (str): The unique identifier of the context.
         name (str): The name of the context.
-        state (str): **Deprecated.** This field is no longer used and will be removed in a future version.
         created_at (str): Date and time when the Context was created.
         last_used_at (str): Date and time when the Context was last used.
-        os_type (str): **Deprecated.** This field is no longer used and will be removed in a future version.
     """
 
     def __init__(
         self,
         id: str,
         name: str,
-        state: str = "available",
         created_at: Optional[str] = None,
         last_used_at: Optional[str] = None,
-        os_type: Optional[str] = None,
     ):
         """
         Initialize a Context object.
@@ -52,19 +48,15 @@ class Context:
         Args:
             id (str): The unique identifier of the context.
             name (str): The name of the context.
-            state (str, optional): **Deprecated.** This parameter is no longer used.
             created_at (Optional[str], optional): Date and time when the Context was
                 created. Defaults to None.
             last_used_at (Optional[str], optional): Date and time when the Context was
                 last used. Defaults to None.
-            os_type (Optional[str], optional): **Deprecated.** This parameter is no longer used.
         """
         self.id = id
         self.name = name
-        self.state = state
         self.created_at = created_at
         self.last_used_at = last_used_at
-        self.os_type = os_type
 
 
 class ContextResult(ApiResponse):
@@ -261,6 +253,13 @@ class ContextService:
         Returns:
             ContextListResult: A result object containing the list of Context objects,
                 pagination information, and request ID.
+
+        Example:
+            ```python
+            result = agent_bay.context.list()
+            params = ContextListParams(max_results=20, next_token=result.next_token)
+            next_result = agent_bay.context.list(params)
+            ```
         """
         try:
             if params is None:
@@ -269,7 +268,7 @@ class ContextService:
             request_details = f"MaxResults={max_results}"
             if params.next_token:
                 request_details += f", NextToken={params.next_token}"
-            log_api_call("ListContexts", request_details)
+            _log_api_call("ListContexts", request_details)
             request = ListContextsRequest(
                 authorization=f"Bearer {self.agent_bay.api_key}",
                 max_results=max_results,
@@ -281,9 +280,9 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
             try:
                 response_map = response.to_map()
@@ -322,10 +321,8 @@ class ContextService:
                             context = Context(
                                 id=context_data.get("Id", ""),
                                 name=context_data.get("Name", ""),
-                                state=context_data.get("State", ""),
                                 created_at=context_data.get("CreateTime"),
                                 last_used_at=context_data.get("LastUsedTime"),
-                                os_type=context_data.get("OsType"),
                             )
                             contexts.append(context)
                 next_token = body.get("NextToken")
@@ -341,7 +338,7 @@ class ContextService:
                     error_message="",
                 )
             except Exception as e:
-                log_operation_error("parse ListContexts response", str(e))
+                _log_operation_error("parse ListContexts response", str(e))
                 return ContextListResult(
                     request_id=request_id,
                     success=False,
@@ -349,7 +346,7 @@ class ContextService:
                     error_message=f"Failed to parse response: {e}",
                 )
         except Exception as e:
-            log_operation_error("ListContexts", str(e))
+            _log_operation_error("ListContexts", str(e))
             return ContextListResult(
                 request_id="",
                 success=False,
@@ -370,17 +367,36 @@ class ContextService:
         Gets a context by name or ID. Optionally creates it if it doesn't exist.
 
         Args:
-            name (Optional[str]): The name of the context to get.
-            create (bool, optional): Whether to create the context if it doesn't exist.
-            context_id (Optional[str]): The ID of the context to get.
+            name (Optional[str], optional): The name of the context to get. Defaults to None.
+            create (bool, optional): Whether to create the context if it doesn't exist. Defaults to False.
+            context_id (Optional[str], optional): The ID of the context to get. Defaults to None.
 
         Returns:
-            ContextResult: The ContextResult object containing the Context and request
-                ID.
+            ContextResult: The ContextResult object containing the Context and request ID.
+                - success (bool): True if the operation succeeded
+                - context (Context): The context object (if success is True)
+                - context_id (str): The ID of the context
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            AgentBayError: If neither name nor context_id is provided, or if create=True with context_id.
+
+        Example:
+            ```python
+            result = agent_bay.context.get(name="my-context")
+            result = agent_bay.context.get(name="new-context", create=True)
+            result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
+            ```
 
         Note:
-            Validation of parameter combinations is done by the server. If both name and
-            context_id are provided, the request will be forwarded to the server for validation.
+            - Either name or context_id must be provided (not both)
+            - When create=True, only name parameter is allowed
+            - Created contexts are persistent and can be shared across sessions
+            - Context names must be unique within your account
+
+        See Also:
+            ContextService.list, ContextService.update, ContextService.delete
         """
         # Validate parameters
         if name is None and context_id is None:
@@ -397,7 +413,7 @@ class ContextService:
             if context_id is not None:
                 log_details += f", Id={context_id}"
 
-            log_api_call("GetContext", log_details)
+            _log_api_call("GetContext", log_details)
 
             request = GetContextRequest(
                 name=name,
@@ -410,9 +426,9 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
             try:
                 response_map = response.to_map()
@@ -461,10 +477,8 @@ class ContextService:
                 context = Context(
                     id=context_id,
                     name=context_name,
-                    state=data.get("State", "") or "available",
                     created_at=data.get("CreateTime"),
                     last_used_at=data.get("LastUsedTime"),
-                    os_type=data.get("OsType"),
                 )
                 return ContextResult(
                     request_id=request_id,
@@ -474,7 +488,7 @@ class ContextService:
                     error_message="",
                 )
             except Exception as e:
-                log_operation_error("parse GetContext response", str(e))
+                _log_operation_error("parse GetContext response", str(e))
                 return ContextResult(
                     request_id=request_id,
                     success=False,
@@ -483,7 +497,7 @@ class ContextService:
                     error_message=f"Failed to parse response: {e}",
                 )
         except Exception as e:
-            log_operation_error("GetContext", str(e))
+            _log_operation_error("GetContext", str(e))
             identifier = name if name is not None else context_id
             return ContextResult(
                 request_id="",
@@ -502,21 +516,49 @@ class ContextService:
 
         Returns:
             ContextResult: The created ContextResult object with request ID.
+
+        Example:
+            ```python
+            result = agent_bay.context.create("my-new-context")
+            ```
         """
         return self.get(name, create=True)
 
     def update(self, context: Context) -> OperationResult:
         """
-        Updates the specified context.
+        Updates the specified context (currently only name can be updated).
 
         Args:
-            context (Context): The Context object to update.
+            context (Context): The Context object to update. Must have id and name attributes.
 
         Returns:
             OperationResult: Result object containing success status and request ID.
+                - success (bool): True if the operation succeeded
+                - data (str): Success message (if success is True)
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            AgentBayError: If the context update fails.
+
+        Example:
+            ```python
+            result = agent_bay.context.get(name="old-name")
+            result.context.name = "new-name"
+            update_result = agent_bay.context.update(result.context)
+            ```
+
+        Note:
+            - Currently only the context name can be updated
+            - Context ID cannot be changed
+            - The context must exist before it can be updated
+            - Updated name must be unique within your account
+
+        See Also:
+            ContextService.get, ContextService.list, ContextService.delete
         """
         try:
-            log_api_call("ModifyContext", f"Id={context.id}, Name={context.name}")
+            _log_api_call("ModifyContext", f"Id={context.id}, Name={context.name}")
             request = ModifyContextRequest(
                 id=context.id,
                 name=context.name,
@@ -527,9 +569,9 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
             try:
                 response_map = response.to_map() if hasattr(response, "to_map") else {}
@@ -555,14 +597,14 @@ class ContextService:
                     error_message=error_message,
                 )
             except Exception as e:
-                logger.exception(f"Error parsing ModifyContext response: {e}")
+                _logger.exception(f"Error parsing ModifyContext response: {e}")
                 return OperationResult(
                     request_id=request_id,
                     success=False,
                     error_message=f"Failed to parse response: {str(e)}",
                 )
         except Exception as e:
-            logger.exception(f"Error calling ModifyContext: {e}")
+            _logger.exception(f"Error calling ModifyContext: {e}")
             raise AgentBayError(f"Failed to update context {context.id}: {e}")
 
     def delete(self, context: Context) -> OperationResult:
@@ -574,9 +616,15 @@ class ContextService:
 
         Returns:
             OperationResult: Result object containing success status and request ID.
+
+        Example:
+            ```python
+            result = agent_bay.context.get(name="my-context")
+            delete_result = agent_bay.context.delete(result.context)
+            ```
         """
         try:
-            log_api_call("DeleteContext", f"Id={context.id}")
+            _log_api_call("DeleteContext", f"Id={context.id}")
             request = DeleteContextRequest(
                 id=context.id, authorization=f"Bearer {self.agent_bay.api_key}"
             )
@@ -585,9 +633,9 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
             try:
                 response_map = response.to_map() if hasattr(response, "to_map") else {}
@@ -613,19 +661,35 @@ class ContextService:
                     error_message=error_message,
                 )
             except Exception as e:
-                logger.exception(f"Error parsing DeleteContext response: {e}")
+                _logger.exception(f"Error parsing DeleteContext response: {e}")
                 return OperationResult(
                     request_id=request_id,
                     success=False,
                     error_message=f"Failed to parse response: {str(e)}",
                 )
         except Exception as e:
-            logger.exception(f"Error calling DeleteContext: {e}")
+            _logger.exception(f"Error calling DeleteContext: {e}")
             raise AgentBayError(f"Failed to delete context {context.id}: {e}")
 
     def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
-        """Get a presigned download URL for a file in a context."""
-        log_api_call(
+        """
+        Get a presigned download URL for a file in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            file_path (str): The path to the file in the context.
+
+        Returns:
+            FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
+
+        Example:
+            ```python
+            ctx_result = agent_bay.context.get(name="my-context", create=True)
+            url_result = agent_bay.context.get_file_download_url(ctx_result.context_id, "/path/to/file.txt")
+            print(url_result.url)
+            ```
+        """
+        _log_api_call(
             "GetContextFileDownloadUrl", f"ContextId={context_id}, FilePath={file_path}"
         )
         req = GetContextFileDownloadUrlRequest(
@@ -638,9 +702,9 @@ class ContextService:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
             )
-            log_api_response(response_body)
+            _log_api_response(response_body)
         except Exception:
-            logger.debug(f"Response: {resp}")
+            _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
 
@@ -668,8 +732,24 @@ class ContextService:
         )
 
     def get_file_upload_url(self, context_id: str, file_path: str) -> FileUrlResult:
-        """Get a presigned upload URL for a file in a context."""
-        log_api_call(
+        """
+        Get a presigned upload URL for a file in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            file_path (str): The path to the file in the context.
+
+        Returns:
+            FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
+
+        Example:
+            ```python
+            ctx_result = agent_bay.context.get(name="my-context", create=True)
+            url_result = agent_bay.context.get_file_upload_url(ctx_result.context_id, "/path/to/file.txt")
+            print(url_result.url)
+            ```
+        """
+        _log_api_call(
             "GetContextFileUploadUrl", f"ContextId={context_id}, FilePath={file_path}"
         )
         req = GetContextFileUploadUrlRequest(
@@ -682,9 +762,9 @@ class ContextService:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
             )
-            log_api_response(response_body)
+            _log_api_response(response_body)
         except Exception:
-            logger.debug(f"Response: {resp}")
+            _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
 
@@ -712,8 +792,23 @@ class ContextService:
         )
 
     def delete_file(self, context_id: str, file_path: str) -> OperationResult:
-        """Delete a file in a context."""
-        log_api_call(
+        """
+        Delete a file in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            file_path (str): The path to the file to delete.
+
+        Returns:
+            OperationResult: A result object containing success status and request ID.
+
+        Example:
+            ```python
+            ctx_result = agent_bay.context.get(name="my-context", create=True)
+            delete_result = agent_bay.context.delete_file(ctx_result.context_id, "/path/to/file.txt")
+            ```
+        """
+        _log_api_call(
             "DeleteContextFile", f"ContextId={context_id}, FilePath={file_path}"
         )
         req = DeleteContextFileRequest(
@@ -726,9 +821,9 @@ class ContextService:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
             )
-            log_api_response(response_body)
+            _log_api_response(response_body)
         except Exception:
-            logger.debug(f"Response: {resp}")
+            _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
         success = bool(body and getattr(body, "success", False))
@@ -754,8 +849,26 @@ class ContextService:
         page_number: int = 1,
         page_size: int = 50,
     ) -> ContextFileListResult:
-        """List files under a specific folder path in a context."""
-        log_api_call(
+        """
+        List files under a specific folder path in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            parent_folder_path (str): The parent folder path to list files from.
+            page_number (int): The page number for pagination. Default is 1.
+            page_size (int): The number of items per page. Default is 50.
+
+        Returns:
+            ContextFileListResult: A result object containing the list of files and request ID.
+
+        Example:
+            ```python
+            ctx_result = agent_bay.context.get(name="my-context", create=True)
+            files_result = agent_bay.context.list_files(ctx_result.context_id, "/")
+            print(f"Found {len(files_result.entries)} files")
+            ```
+        """
+        _log_api_call(
             "DescribeContextFiles",
             f"ContextId={context_id}, ParentFolderPath={parent_folder_path}, "
             f"PageNumber={page_number}, PageSize={page_size}",
@@ -772,9 +885,9 @@ class ContextService:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
             )
-            log_api_response(response_body)
+            _log_api_response(response_body)
         except Exception:
-            logger.debug(f"Response: {resp}")
+            _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
         body = getattr(resp, "body", None)
         raw_list = getattr(body, "data", None) or []
@@ -806,13 +919,24 @@ class ContextService:
         on the backend. The context's state will transition to "clearing" while the operation
         is in progress.
 
-        :param context_id: Unique ID of the context to clear.
-        :return: A ClearContextResult object indicating the task has been successfully started,
-                 with status field set to "clearing".
-        :raises AgentBayError: If the backend API rejects the clearing request (e.g., invalid ID).
+        Args:
+            context_id: Unique ID of the context to clear.
+
+        Returns:
+            A ClearContextResult object indicating the task has been successfully started,
+            with status field set to "clearing".
+
+        Raises:
+            AgentBayError: If the backend API rejects the clearing request (e.g., invalid ID).
+
+        Example:
+            ```python
+            result = agent_bay.context.get(name="my-context", create=True)
+            clear_result = agent_bay.context.clear_async(result.context_id)
+            ```
         """
         try:
-            log_api_call("ClearContext", f"ContextId={context_id}")
+            _log_api_call("ClearContext", f"ContextId={context_id}")
             request = ClearContextRequest(
                 authorization=f"Bearer {self.agent_bay.api_key}",
                 id=context_id,
@@ -822,9 +946,9 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
 
             request_id = extract_request_id(response)
 
@@ -856,7 +980,7 @@ class ContextService:
                 error_message="",
             )
         except Exception as e:
-            log_operation_error("ClearContext", str(e))
+            _log_operation_error("ClearContext", str(e))
             raise AgentBayError(f"Failed to start context clearing for {context_id}: {e}")
 
     def get_clear_status(self, context_id: str) -> ClearContextResult:
@@ -866,11 +990,22 @@ class ContextService:
         This method calls GetContext API directly and parses the raw response to extract
         the state field, which indicates the current clearing status.
 
-        :param context_id: ID of the context.
-        :return: ClearContextResult object containing the current task status.
+        Args:
+            context_id: ID of the context.
+
+        Returns:
+            ClearContextResult object containing the current task status.
+
+        Example:
+            ```python
+            result = agent_bay.context.get(name="my-context", create=True)
+            clear_result = agent_bay.context.clear_async(result.context_id)
+            status_result = agent_bay.context.get_clear_status(result.context_id)
+            print(status_result.status)
+            ```
         """
         try:
-            log_api_call("GetContext", f"ContextId={context_id} (for clear status)")
+            _log_api_call("GetContext", f"ContextId={context_id} (for clear status)")
             request = GetContextRequest(
                 authorization=f"Bearer {self.agent_bay.api_key}",
                 context_id=context_id,
@@ -881,9 +1016,9 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"Response: {response}")
+                _logger.debug(f"Response: {response}")
 
             request_id = extract_request_id(response)
 
@@ -933,7 +1068,7 @@ class ContextService:
                 error_message=error_message,
             )
         except Exception as e:
-            log_operation_error("GetContext (for clear status)", str(e))
+            _log_operation_error("GetContext (for clear status)", str(e))
             return ClearContextResult(
                 request_id="",
                 success=False,
@@ -953,20 +1088,31 @@ class ContextService:
         - "clearing": Data clearing is in progress
         - "available": Clearing completed successfully (final success state)
 
-        :param context_id: Unique ID of the context to clear.
-        :param timeout: (Optional) Timeout in seconds to wait for task completion, default is 60 seconds.
-        :param poll_interval: (Optional) Interval in seconds between status polls, default is 2 seconds.
-        :return: A ClearContextResult object containing the final task result.
-                 The status field will be "available" on success, or other states if interrupted.
-        :raises ClearanceTimeoutError: If the task fails to complete within the specified timeout.
-        :raises AgentBayError: If an API or network error occurs during execution.
+        Args:
+        context_id: Unique ID of the context to clear.
+        timeout: Timeout in seconds to wait for task completion. Defaults to 60.
+        poll_interval: Interval in seconds between status polls. Defaults to 2.0.
+
+    Returns:
+        ClearContextResult object containing the final task result.
+        The status field will be "available" on success.
+
+    Raises:
+        ClearanceTimeoutError: If the task fails to complete within the timeout.
+        AgentBayError: If an API or network error occurs during execution.
+
+        Example:
+            ```python
+            result = agent_bay.context.get(name="my-context", create=True)
+            clear_result = agent_bay.context.clear(result.context_id, timeout=60)
+            ```
         """
         # 1. Asynchronously start the clearing task
         start_result = self.clear_async(context_id)
         if not start_result.success:
             return start_result
 
-        logger.info(f"Started context clearing task for: {context_id}")
+        _logger.info(f"Started context clearing task for: {context_id}")
 
         # 2. Poll task status until completion or timeout
         start_time = time.time()
@@ -982,13 +1128,13 @@ class ContextService:
             status_result = self.get_clear_status(context_id)
 
             if not status_result.success:
-                logger.error(
+                _logger.error(
                     f"Failed to get clear status: {status_result.error_message}"
                 )
                 return status_result
 
             status = status_result.status
-            logger.info(
+            _logger.debug(
                 f"Clear task status: {status} (attempt {attempt}/{max_attempts})"
             )
 
@@ -996,9 +1142,9 @@ class ContextService:
             # When clearing is complete, the state changes from "clearing" to "available"
             if status == "available":
                 elapsed = time.time() - start_time
-                logger.info(f"Context cleared successfully in {elapsed:.2f} seconds")
+                _logger.info(f"Context cleared successfully in {elapsed:.2f} seconds")
                 return ClearContextResult(
-                    request_id=status_result.request_id,
+                    request_id=start_result.request_id,
                     success=True,
                     context_id=status_result.context_id,
                     status=status,
@@ -1008,7 +1154,7 @@ class ContextService:
                 # If status is not "clearing" or "pre-available", and not "available",
                 # treat it as a potential error or unexpected state
                 elapsed = time.time() - start_time
-                logger.warning(
+                _logger.warning(
                     f"Context in unexpected state after {elapsed:.2f} seconds: {status}"
                 )
                 # Continue polling as the state might transition to "available"
@@ -1016,5 +1162,5 @@ class ContextService:
         # Timeout
         elapsed = time.time() - start_time
         error_msg = f"Context clearing timed out after {elapsed:.2f} seconds"
-        logger.error(f"{error_msg}")
+        _logger.error(f"{error_msg}")
         raise ClearanceTimeoutError(error_msg)

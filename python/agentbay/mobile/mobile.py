@@ -8,10 +8,9 @@ from typing import List, Optional, Dict, Any
 
 from agentbay.api.base_service import BaseService
 from agentbay.exceptions import AgentBayError, SessionError
-from agentbay.model import BoolResult, OperationResult
+from agentbay.model import BoolResult, OperationResult, ApiResponse
 from agentbay.model.response import AdbUrlResult
-from agentbay.ui.ui import UIElementListResult
-from agentbay.application.application import (
+from agentbay.computer.computer import (
     InstalledAppListResult,
     ProcessListResult,
     AppOperationResult,
@@ -22,7 +21,22 @@ from agentbay.logger import get_logger
 from agentbay.command import MOBILE_COMMAND_TEMPLATES
 
 # Initialize logger for this module
-logger = get_logger("mobile")
+_logger = get_logger("mobile")
+
+
+class UIElementListResult(ApiResponse):
+    """Result of UI element listing operations."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        elements: Optional[List[Dict[str, Any]]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.elements = elements or []
+        self.error_message = error_message
 
 
 class KeyCode:
@@ -58,14 +72,24 @@ class Mobile(BaseService):
     # Touch Operations
     def tap(self, x: int, y: int) -> BoolResult:
         """
-        Taps on the screen at the specified coordinates.
+        Taps on the mobile screen at the specified coordinates.
 
         Args:
-            x (int): X coordinate.
-            y (int): Y coordinate.
+            x (int): X coordinate in pixels.
+            y (int): Y coordinate in pixels.
 
         Returns:
-            BoolResult: Result object containing success status and error message if any.
+            BoolResult: Object with success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            session.mobile.tap(500, 800)
+            session.delete()
+            ```
+
+        See Also:
+            swipe, long_press
         """
         args = {"x": x, "y": y}
         try:
@@ -114,6 +138,13 @@ class Mobile(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            session.mobile.swipe(100, 1000, 100, 200, duration_ms=500)
+            session.delete()
+            ```
         """
         args = {
             "start_x": start_x,
@@ -156,6 +187,13 @@ class Mobile(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            session.mobile.input_text("Hello Mobile!")
+            session.delete()
+            ```
         """
         args = {"text": text}
         try:
@@ -198,6 +236,13 @@ class Mobile(BaseService):
 
         Returns:
             BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            session.mobile.send_key(4)  # Press BACK button
+            session.delete()
+            ```
         """
         args = {"key": key}
         try:
@@ -236,6 +281,14 @@ class Mobile(BaseService):
         Returns:
             UIElementListResult: Result object containing clickable UI elements and
                 error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            result = session.mobile.get_clickable_ui_elements()
+            print(f"Found {len(result.elements)} clickable elements")
+            session.delete()
+            ```
         """
         args = {"timeout_ms": timeout_ms}
         try:
@@ -284,6 +337,14 @@ class Mobile(BaseService):
         Returns:
             UIElementListResult: Result object containing UI elements and error
                 message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            result = session.mobile.get_all_ui_elements()
+            print(f"Found {len(result.elements)} UI elements")
+            session.delete()
+            ```
         """
         args = {"timeout_ms": timeout_ms}
 
@@ -365,6 +426,14 @@ class Mobile(BaseService):
         Returns:
             InstalledAppListResult: The result containing the list of installed
                 applications.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            apps = session.mobile.get_installed_apps(True, False, True)
+            print(f"Found {len(apps.data)} apps")
+            session.delete()
+            ```
         """
         try:
             args = {
@@ -388,7 +457,7 @@ class Mobile(BaseService):
                 installed_apps = []
 
                 for app_data in apps_json:
-                    app = InstalledApp.from_dict(app_data)
+                    app = InstalledApp._from_dict(app_data)
                     installed_apps.append(app)
 
                 return InstalledAppListResult(
@@ -422,6 +491,14 @@ class Mobile(BaseService):
 
         Returns:
             ProcessListResult: The result containing the list of processes started.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            processes = session.mobile.start_app("com.android.settings")
+            print(f"Started {len(processes.data)} process(es)")
+            session.delete()
+            ```
         """
         try:
             args = {"start_cmd": start_cmd}
@@ -445,7 +522,7 @@ class Mobile(BaseService):
                 processes = []
 
                 for process_data in processes_json:
-                    process = Process.from_dict(process_data)
+                    process = Process._from_dict(process_data)
                     processes.append(process)
 
                 return ProcessListResult(
@@ -469,6 +546,14 @@ class Mobile(BaseService):
 
         Returns:
             AppOperationResult: The result of the operation.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            result = session.mobile.stop_app_by_cmd("com.android.settings")
+            print(f"Stop successful: {result.success}")
+            session.delete()
+            ```
         """
         try:
             args = {"stop_cmd": stop_cmd}
@@ -490,6 +575,14 @@ class Mobile(BaseService):
         Returns:
             OperationResult: Result object containing the path to the screenshot
                 and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            result = session.mobile.screenshot()
+            print(f"Screenshot URL: {result.data}")
+            session.delete()
+            ```
         """
         args = {}
         try:
@@ -521,12 +614,40 @@ class Mobile(BaseService):
     def configure(self, mobile_config):
         """
         Configure mobile settings from MobileExtraConfig.
-        
+
+        This method is typically called automatically during session creation when
+        MobileExtraConfig is provided in CreateSessionParams. It can also be called
+        manually to reconfigure mobile settings during a session.
+
         Args:
-            mobile_config: MobileExtraConfig object containing mobile configuration.
+            mobile_config (MobileExtraConfig): Mobile configuration object with settings for:
+                - lock_resolution (bool): Whether to lock device resolution
+                - app_manager_rule (AppManagerRule): App whitelist/blacklist rules
+                - hide_navigation_bar (bool): Whether to hide navigation bar
+                - uninstall_blacklist (List[str]): Apps protected from uninstallation
+
+        Example:
+            ```python
+            from agentbay import MobileExtraConfig
+            session = agent_bay.create(image="mobile_latest").session
+            mobile_config = MobileExtraConfig(lock_resolution=True)
+            session.mobile.configure(mobile_config)
+            session.delete()
+            ```
+
+        Note:
+            - This method is called automatically during session creation if MobileExtraConfig is provided
+            - Configuration changes are applied immediately
+            - Resolution lock prevents resolution changes
+            - App whitelist/blacklist affects app launching permissions
+            - Uninstall blacklist protects apps from being uninstalled
+
+        See Also:
+            set_resolution_lock, set_app_whitelist, set_app_blacklist,
+            set_navigation_bar_visibility, set_uninstall_blacklist
         """
         if not mobile_config:
-            logger.warning("No mobile configuration provided")
+            _logger.warning("No mobile configuration provided")
             return
         
         # Configure resolution lock
@@ -544,7 +665,7 @@ class Mobile(BaseService):
                 else:
                     self._set_app_blacklist(package_names)
             elif not package_names:
-                logger.warning(f"No package names provided for {app_rule.rule_type} list")
+                _logger.warning(f"No package names provided for {app_rule.rule_type} list")
         
         # Configure navigation bar visibility
         if mobile_config.hide_navigation_bar is not None:
@@ -557,54 +678,112 @@ class Mobile(BaseService):
     def set_resolution_lock(self, enable: bool):
         """
         Set display resolution lock for mobile devices.
-        
+
         Args:
             enable (bool): True to enable, False to disable.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            session.mobile.set_resolution_lock(True)
+            session.mobile.set_resolution_lock(False)
+            session.delete()
+            ```
         """
         self._set_resolution_lock(enable)
 
     def set_app_whitelist(self, package_names: List[str]):
         """
         Set application whitelist.
-        
+
         Args:
             package_names (List[str]): List of Android package names to whitelist.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            whitelist = ["com.android.settings", "com.android.chrome"]
+            session.mobile.set_app_whitelist(whitelist)
+            session.delete()
+            ```
+
+        Notes:
+            - Only apps in the whitelist will be allowed to run
+            - System apps may be affected depending on the configuration
+            - Whitelist takes precedence over blacklist if both are set
         """
         if not package_names:
-            logger.warning("Empty package names list for whitelist")
+            _logger.warning("Empty package names list for whitelist")
             return
         self._set_app_whitelist(package_names)
 
     def set_app_blacklist(self, package_names: List[str]):
         """
         Set application blacklist.
-        
+
         Args:
             package_names (List[str]): List of Android package names to blacklist.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            blacklist = ["com.example.app1", "com.example.app2"]
+            session.mobile.set_app_blacklist(blacklist)
+            session.delete()
+            ```
+
+        Notes:
+            - Apps in the blacklist will be blocked from running
+            - Whitelist takes precedence over blacklist if both are set
         """
         if not package_names:
-            logger.warning("Empty package names list for blacklist")
+            _logger.warning("Empty package names list for blacklist")
             return
         self._set_app_blacklist(package_names)
 
     def set_navigation_bar_visibility(self, hide: bool):
         """
         Set navigation bar visibility for mobile devices.
-        
+
         Args:
             hide (bool): True to hide navigation bar, False to show navigation bar.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            session.mobile.set_navigation_bar_visibility(hide=True)
+            session.mobile.set_navigation_bar_visibility(hide=False)
+            session.delete()
+            ```
+
+        Notes:
+            - Hiding the navigation bar provides a fullscreen experience
+            - The navigation bar can still be accessed by swiping from the edge
         """
         self._set_navigation_bar_visibility(hide)
 
     def set_uninstall_blacklist(self, package_names: List[str]):
         """
         Set uninstall protection blacklist for mobile devices.
-        
+
         Args:
             package_names (List[str]): List of Android package names to protect from uninstallation.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            protected_apps = ["com.android.settings", "com.android.chrome"]
+            session.mobile.set_uninstall_blacklist(protected_apps)
+            session.delete()
+            ```
+
+        Notes:
+            - Apps in the uninstall blacklist cannot be uninstalled
+            - This is useful for protecting critical applications
+            - The protection persists for the session lifetime
         """
         if not package_names:
-            logger.warning("Empty package names list for uninstall blacklist")
+            _logger.warning("Empty package names list for uninstall blacklist")
             return
         self._set_uninstall_blacklist(package_names)
 
@@ -626,6 +805,15 @@ class Mobile(BaseService):
 
         Raises:
             SessionError: If the session is not in mobile environment.
+
+        Example:
+            ```python
+            session = agent_bay.create(image="mobile_latest").session
+            adbkey_pub = "your_adb_public_key"
+            adb_result = session.mobile.get_adb_url(adbkey_pub)
+            print(f"ADB URL: {adb_result.data}")
+            session.delete()
+            ```
         """
         try:
             # Build options JSON with adbkey_pub
@@ -636,7 +824,7 @@ class Mobile(BaseService):
             result = self.session.get_link(protocol_type="adb", options=options_json)
 
             # Log the operation
-            logger.info(f"✅ get_adb_url completed successfully. RequestID: {result.request_id}")
+            _logger.info(f"✅ get_adb_url completed successfully. RequestID: {result.request_id}")
 
             # Return wrapped in AdbUrlResult
             return AdbUrlResult(
@@ -648,7 +836,7 @@ class Mobile(BaseService):
 
         except Exception as e:
             error_msg = f"Failed to get ADB URL: {str(e)}"
-            logger.error(f"❌ {error_msg}")
+            _logger.error(f"❌ {error_msg}")
             return AdbUrlResult(
                 request_id="",
                 success=False,
@@ -660,18 +848,18 @@ class Mobile(BaseService):
         """Execute a command using template and parameters."""
         template = MOBILE_COMMAND_TEMPLATES.get(template_name)
         if not template:
-            logger.error(f"Template '{template_name}' not found")
+            _logger.error(f"Template '{template_name}' not found")
             return
             
         command = template.format(**params)
-        
-        logger.info(f"Executing {operation_name}")
+
+        _logger.info(f"Executing {operation_name}")
         result = self.session.command.execute_command(command)
         
         if result.success:
-            logger.info(f"✅ {operation_name} completed successfully")
+            _logger.info(f"✅ {operation_name} completed successfully")
         else:
-            logger.error(f"❌ {operation_name} failed: {result.error_message}")
+            _logger.error(f"❌ {operation_name} failed: {result.error_message}")
 
     def _set_resolution_lock(self, enable: bool):
         """Execute resolution lock command."""

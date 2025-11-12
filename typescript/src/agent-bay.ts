@@ -1,10 +1,13 @@
 import { $OpenApiUtil } from "@alicloud/openapi-core";
 import "dotenv/config";
+import * as fs from "fs";
+import * as path from "path";
+import * as dotenv from "dotenv";
 import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
 import { Client } from "./api/client";
 
-import { loadConfig, loadDotEnvWithFallback, Config, BROWSER_DATA_PATH } from "./config";
+import { Config } from "./config";
 import { ContextService } from "./context";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
@@ -17,8 +20,6 @@ import {
   DeleteResult,
   extractRequestId,
   GetSessionResult as $GetSessionResult,
-  SessionPauseResult,
-  SessionResumeResult,
   SessionResult,
 } from "./types/api-response";
 import {
@@ -35,8 +36,116 @@ import {
   maskSensitiveData,
   setRequestId,
   getRequestId,
+  logInfoWithColor,
 } from "./utils/logger";
 import { VERSION, IS_RELEASE } from "./version";
+
+// Browser data path constant (moved from config.ts)
+const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
+
+/**
+ * Returns the default configuration
+ */
+function defaultConfig(): Config {
+  return {
+    endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+    timeout_ms: 60000,
+  };
+}
+
+/**
+ * Find .env file by searching upward from start_path.
+ */
+function findDotEnvFile(startPath?: string): string | null {
+  const currentPath = startPath ? path.resolve(startPath) : process.cwd();
+  let searchPath = currentPath;
+
+  while (searchPath !== path.dirname(searchPath)) {
+    const envFile = path.join(searchPath, ".env");
+    if (fs.existsSync(envFile)) {
+      return envFile;
+    }
+
+    const gitDir = path.join(searchPath, ".git");
+    if (fs.existsSync(gitDir)) {
+      // Found git root, continue searching
+    }
+
+    searchPath = path.dirname(searchPath);
+  }
+
+  const rootEnv = path.join(searchPath, ".env");
+  if (fs.existsSync(rootEnv)) {
+    return rootEnv;
+  }
+
+  return null;
+}
+
+/**
+ * Load .env file with improved search strategy.
+ */
+function loadDotEnvWithFallback(customEnvPath?: string): void {
+  if (customEnvPath) {
+    if (fs.existsSync(customEnvPath)) {
+      try {
+        const envConfig = dotenv.parse(fs.readFileSync(customEnvPath));
+        for (const k in envConfig) {
+          if (!process.env.hasOwnProperty(k)) {
+            process.env[k] = envConfig[k];
+          }
+        }
+        return;
+      } catch (error) {
+        // Silently fail - .env loading is optional
+      }
+    }
+  }
+
+  const envFile = findDotEnvFile();
+  if (envFile) {
+    try {
+      const envConfig = dotenv.parse(fs.readFileSync(envFile));
+      for (const k in envConfig) {
+        if (!process.env.hasOwnProperty(k)) {
+          process.env[k] = envConfig[k];
+        }
+      }
+    } catch (error) {
+      // Silently fail - .env loading is optional
+    }
+  }
+}
+
+/**
+ * Load configuration with improved .env file search.
+ */
+function loadConfig(customConfig?: Config, customEnvPath?: string): Config {
+  if (customConfig) {
+    return customConfig;
+  }
+
+  const config = defaultConfig();
+
+  try {
+    loadDotEnvWithFallback(customEnvPath);
+  } catch (error) {
+    // Silently fail - .env loading is optional
+  }
+
+  if (process.env.AGENTBAY_ENDPOINT) {
+    config.endpoint = process.env.AGENTBAY_ENDPOINT;
+  }
+
+  if (process.env.AGENTBAY_TIMEOUT_MS) {
+    const timeout = parseInt(process.env.AGENTBAY_TIMEOUT_MS, 10);
+    if (!isNaN(timeout) && timeout > 0) {
+      config.timeout_ms = timeout;
+    }
+  }
+
+  return config;
+}
 
 /**
  * Generate a random context name using alphanumeric characters with timestamp.
@@ -180,8 +289,94 @@ export class AgentBay {
    * @param params - Optional parameters for creating the session
    * @returns SessionResult containing the created session and request ID
    */
+  /**
+   * Creates a new AgentBay session with specified configuration.
+   *
+   * @param params - Configuration parameters for the session:
+   *                 - labels: Key-value pairs for session metadata
+   *                 - imageId: Custom image ID for the session environment
+   *                 - contextSync: Array of context synchronization configurations
+   *                 - browserContext: Browser-specific context configuration
+   *                 - isVpc: Whether to create a VPC session
+   *                 - policyId: Security policy ID
+   *                 - enableBrowserReplay: Enable browser session recording
+   *                 - extraConfigs: Additional configuration options
+   *                 - framework: Framework identifier for tracking
+   *
+   * @returns Promise resolving to SessionResult containing:
+   *          - success: Whether session creation succeeded
+   *          - session: Session object for interacting with the environment
+   *          - requestId: Unique identifier for this API request
+   *          - errorMessage: Error description if creation failed
+   *
+   * @throws Error if API call fails or authentication is invalid.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * // Create session with default parameters
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const session = result.session;
+   *   console.log(`Session ID: ${session.sessionId}`);
+   *   // Output: Session ID: session-04bdwfj7u22a1s30g
+   *
+   *   // Use the session
+   *   const fileResult = await session.filesystem.readFile('/etc/hostname');
+   *   console.log(`Hostname: ${fileResult.data}`);
+   *
+   *   // Clean up
+   *   await session.delete();
+   * }
+   *
+   * // Create session with custom parameters
+   * const customResult = await agentBay.create({
+   *   labels: { project: 'demo', env: 'test' },
+   *   imageId: 'custom-image-v1',
+   *   isVpc: true
+   * });
+   * if (customResult.success) {
+   *   console.log('VPC session created');
+   *   await customResult.session.delete();
+   * }
+   *
+   * // RECOMMENDED: Create a session with context synchronization
+   * const contextResult = await agentBay.context.get('my-context', true);
+   * if (contextResult.success && contextResult.context) {
+   *   const contextSync = new ContextSync({
+   *     contextId: contextResult.context.id,
+   *     path: '/mnt/persistent',
+   *     policy: SyncPolicy.default()
+   *   });
+   *
+   *   const syncResult = await agentBay.create({
+   *     imageId: 'linux_latest',
+   *     contextSync: [contextSync]
+   *   });
+   *
+   *   if (syncResult.success) {
+   *     console.log(`Created session with context sync: ${syncResult.session.sessionId}`);
+   *     await syncResult.session.delete();
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - Creates a new isolated cloud runtime environment
+   * - Automatically creates file transfer context if not provided
+   * - Waits for context synchronization if contextSync is specified
+   * - For VPC sessions, includes VPC-specific configuration
+   * - Browser replay creates a separate recording context
+   *
+   * @see {@link get}, {@link list}, {@link Session.delete}
+   */
   async create(params: CreateSessionParams = {}): Promise<SessionResult> {
     try {
+      logDebug(`default context syncs length: ${params.contextSync?.length}`);
       // Create a default context for file transfer operations if none provided
       // and no context_syncs are specified
       const contextName = `file-transfer-context-${Date.now()}`;
@@ -551,116 +746,6 @@ export class AgentBay {
 
 
   /**
-   * List sessions filtered by the provided labels with pagination support.
-   * It returns sessions that match all the specified labels.
-   *
-   * @deprecated This method is deprecated and will be removed in a future version. Use list() instead.
-   *
-   * **Breaking Change**: This method currently only accepts ListSessionParams parameters，
-   *
-   * @param params - Parameters including labels and pagination options (required)
-   * @returns API response with sessions list and pagination info
-   */
-  async listByLabels(params?: ListSessionParams): Promise<SessionListResult> {
-    if (!params) {
-      params = {
-        maxResults: 10,
-        labels: {},
-      };
-    }
-
-    try {
-      // Convert labels to JSON
-      const labelsJSON = JSON.stringify(params.labels);
-
-      //Build request object with support for pagination parameters
-      const listSessionRequest = new ListSessionRequest({
-        authorization: `Bearer ${this.apiKey}`,
-        labels: labelsJSON,
-        maxResults: params.maxResults || 10,
-        ...(params.nextToken && { nextToken: params.nextToken }),
-      });
-
-      logAPICall("ListSession");
-      logDebug(
-          `Request: Labels=${labelsJSON}, MaxResults=${params.maxResults || 10}${
-          params.nextToken ? `, NextToken=${params.nextToken}` : ""
-        }`
-      );
-
-      const response = await this.client.listSession(listSessionRequest);
-      const body = response.body;
-      const requestId = extractRequestId(body?.requestId) || "";
-
-      // Check for errors in the response
-      if (
-        body?.data &&
-        typeof body.data === "object" &&
-        body.success &&
-        body.success !== true
-      ) {
-        return {
-          requestId,
-          success: false,
-          errorMessage: "Failed to list sessions by labels",
-          sessionIds: [],
-          nextToken: "",
-          maxResults: params.maxResults || 10,
-          totalCount: 0,
-        };
-      }
-
-      const sessionIds: string[] = [];
-      let nextToken = "";
-      let maxResults = params.maxResults || 10;
-      let totalCount = 0;
-
-      logDebug("body =", body);
-
-      // Extract pagination information
-      if (body && typeof body === "object") {
-        nextToken = body.nextToken || "";
-        maxResults = parseInt(String(body.maxResults || 0)) || maxResults;
-        totalCount = parseInt(String(body.totalCount || 0));
-      }
-
-      // Extract session data
-      const responseData = body?.data;
-
-      // Handle both list and dict responses
-      if (Array.isArray(responseData)) {
-        // Data is a list of session objects
-        for (const sessionData of responseData) {
-          if (sessionData && typeof sessionData === "object") {
-            const sessionId = (sessionData as any).sessionId; // Capital S and I to match Python
-            if (sessionId) {
-              sessionIds.push(sessionId);
-            }
-          }
-        }
-      }
-
-      // Return SessionListResult with request ID and pagination info
-      return {
-        requestId,
-        success: true,
-        sessionIds,
-        nextToken,
-        maxResults,
-        totalCount,
-      };
-    } catch (error) {
-      logError("Error calling list_session:", error);
-      return {
-        requestId: "",
-        success: false,
-        sessionIds: [],
-        errorMessage: `Failed to list sessions by labels: ${error}`,
-      };
-    }
-  }
-
-  /**
    * Returns paginated list of session IDs filtered by labels.
    *
    * @param labels - Optional labels to filter sessions (defaults to empty object)
@@ -693,7 +778,7 @@ export class AgentBay {
   async list(
     labels: Record<string, string> = {},
     page?: number,
-    limit: number = 10
+    limit = 10
   ): Promise<SessionListResult> {
     try {
       // Validate page number
@@ -855,6 +940,38 @@ export class AgentBay {
    * @param session - The session to delete.
    * @param syncContext - Whether to sync context data (trigger file uploads) before deleting the session. Defaults to false.
    * @returns DeleteResult indicating success or failure and request ID
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function createAndDeleteSession() {
+   *   try {
+   *     // Create a session
+   *     const createResult = await agentBay.create();
+   *     if (createResult.success) {
+   *       const session = createResult.session;
+   *       console.log(`Created session with ID: ${session.sessionId}`);
+   *
+   *       // Use the session for operations...
+   *
+   *       // Delete the session when done
+   *       const deleteResult = await agentBay.delete(session);
+   *       if (deleteResult.success) {
+   *         console.log('Session deleted successfully');
+   *       } else {
+   *         console.log(`Failed to delete session: ${deleteResult.errorMessage}`);
+   *       }
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * createAndDeleteSession().catch(console.error);
+   * ```
    */
   async delete(session: Session, syncContext = false): Promise<DeleteResult> {
     try {
@@ -884,8 +1001,51 @@ export class AgentBay {
   }
 
   /**
+   * Remove a session from the internal session cache.
    *
-   * @param sessionId - The ID of the session to remove.
+   * This is an internal utility method that removes a session reference from the AgentBay client's
+   * session cache without actually deleting the session from the cloud. Use this when you need to
+   * clean up local references to a session that was deleted externally or no longer needed.
+   *
+   * @param sessionId - The ID of the session to remove from the cache.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateRemoveSession() {
+   *   try {
+   *     // Create a session
+   *     const result = await agentBay.create();
+   *     if (result.success) {
+   *       const session = result.session;
+   *       console.log(`Created session with ID: ${session.sessionId}`);
+   *       // Output: Created session with ID: session-xxxxxxxxxxxxxx
+   *
+   *       // Delete the session from cloud
+   *       await session.delete();
+   *
+   *       // Remove the session reference from local cache
+   *       agentBay.removeSession(session.sessionId);
+   *       console.log('Session removed from cache');
+   *       // Output: Session removed from cache
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateRemoveSession().catch(console.error);
+   * ```
+   *
+   * @remarks
+   * **Note:** This method only removes the session from the local cache. It does not delete the
+   * session from the cloud. To delete a session from the cloud, use {@link delete} or
+   * {@link Session.delete}.
+   *
+   * @see {@link delete}, {@link Session.delete}
    */
   public removeSession(sessionId: string): void {
     this.sessions.delete(sessionId);
@@ -950,7 +1110,6 @@ export class AgentBay {
           token: body.data.token || "",
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
-          status: body.data.status || "",
         };
 
         logAPIResponseWithDetails(
@@ -966,15 +1125,34 @@ export class AgentBay {
       }
 
       return result;
-    } catch (error) {
-      logError("Error calling GetSession:", error);
-      return {
-        requestId: "",
-        httpStatusCode: 0,
-        code: "",
-        success: false,
-        errorMessage: `Failed to get session ${sessionId}: ${error}`,
-      };
+    } catch (error: any) {
+      // Check if this is an expected business error (e.g., session not found)
+      const errorStr = String(error);
+      const errorCode = error?.data?.Code || error?.code || "";
+
+      if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
+        // This is an expected error - session doesn't exist
+        // Use info level logging without stack trace, but with red color for visibility
+        logInfoWithColor(`Session not found: ${sessionId}`);
+        logDebug(`GetSession error details: ${errorStr}`);
+        return {
+          requestId: "",
+          httpStatusCode: 400,
+          code: "InvalidMcpSession.NotFound",
+          success: false,
+          errorMessage: `Session ${sessionId} not found`,
+        };
+      } else {
+        // This is an unexpected error - log with full error
+        logError("Error calling GetSession:", error);
+        return {
+          requestId: "",
+          httpStatusCode: 0,
+          code: "",
+          success: false,
+          errorMessage: `Failed to get session ${sessionId}: ${error}`,
+        };
+      }
     }
   }
 
@@ -989,11 +1167,52 @@ export class AgentBay {
    *
    * @example
    * ```typescript
-   * const result = await agentBay.get("my-session-id");
-   * if (result.success) {
-   *   console.log(result.session.sessionId);
-   *   console.log(result.requestId);
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function getSessionExample() {
+   *   try {
+   *     // First, create a session
+   *     const createResult = await agentBay.create();
+   *     if (!createResult.success) {
+   *       console.error(`Failed to create session: ${createResult.errorMessage}`);
+   *       return;
+   *     }
+   *
+   *     const sessionId = createResult.session.sessionId;
+   *     console.log(`Created session with ID: ${sessionId}`);
+   *     // Output: Created session with ID: session-xxxxxxxxxxxxxx
+   *
+   *     // Retrieve the session by its ID
+   *     const result = await agentBay.get(sessionId);
+   *     if (result.success) {
+   *       console.log(`Successfully retrieved session: ${result.session.sessionId}`);
+   *       // Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
+   *       console.log(`Request ID: ${result.requestId}`);
+   *       // Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+   *
+   *       // Use the retrieved session
+   *       const fileResult = await result.session.fileSystem.readFile('/etc/hostname');
+   *       if (fileResult.success) {
+   *         console.log(`Hostname: ${fileResult.content}`);
+   *       }
+   *
+   *       // Clean up
+   *       const deleteResult = await result.session.delete();
+   *       if (deleteResult.success) {
+   *         console.log(`Session ${sessionId} deleted successfully`);
+   *         // Output: Session session-xxxxxxxxxxxxxx deleted successfully
+   *       }
+   *     } else {
+   *       console.error(`Failed to get session: ${result.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
    * }
+   *
+   * getSessionExample().catch(console.error);
    * ```
    */
   async get(sessionId: string): Promise<SessionResult> {
@@ -1052,50 +1271,75 @@ export class AgentBay {
   }
 
   /**
-   * Asynchronously pause a session, putting it into a dormant state.
+   * Get the internal HTTP client instance.
    *
-   * @param session - The session to pause.
-   * @returns SessionPauseResult indicating success or failure and request ID
-   */
-  async pause(session: Session): Promise<SessionPauseResult> {
-    try {
-      // Call session's pause_async method
-      return await session.pause_async();
-    } catch (error) {
-      logError("pause_session_async", error);
-      return {
-        requestId: "",
-        success: false,
-        errorMessage: `Failed to pause session ${session.sessionId}: ${error}`,
-      };
-    }
-  }
-
-  /**
-   * Asynchronously resume a session from a paused state.
+   * This is primarily for internal use and advanced scenarios where you need direct access
+   * to the underlying API client.
    *
-   * @param session - The session to resume.
-   * @returns SessionResumeResult indicating success or failure and request ID
+   * @returns The Client instance used for API communication
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetClient() {
+   *   try {
+   *     // Get the internal client
+   *     const client = agentBay.getClient();
+   *     console.log('Client retrieved successfully');
+   *     // Output: Client retrieved successfully
+   *
+   *     // The client is used internally by the SDK for API calls
+   *     // Most users don't need to interact with it directly
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetClient().catch(console.error);
+   * ```
+   *
+   * @remarks
+   * **Note:** This method is primarily for internal use. Most users should interact
+   * with the SDK through higher-level methods like `create()`, `get()`, and `list()`.
    */
-  async resume(session: Session): Promise<SessionResumeResult> {
-    try {
-      // Call session's resume_async method
-      return await session.resume_async();
-    } catch (error) {
-      logError("resume_session_async", error);
-      return {
-        requestId: "",
-        success: false,
-        errorMessage: `Failed to resume session ${session.sessionId}: ${error}`,
-      };
-    }
-  }
-
-  // For internal use by the Session class
   getClient(): Client {
     return this.client;
   }
 
+  /**
+   * Get the API key used for authentication.
+   *
+   * @returns The API key string
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function demonstrateGetAPIKey() {
+   *   try {
+   *     // Get the API key
+   *     const apiKey = agentBay.getAPIKey();
+   *     console.log('API key length:', apiKey.length);
+   *     // Output: API key length: 32
+   *     console.log('API key retrieved successfully');
+   *     // Output: API key retrieved successfully
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * demonstrateGetAPIKey().catch(console.error);
+   * ```
+   *
+   * @remarks
+   * **Security Note:** Be careful when logging or exposing API keys. Always keep them secure
+   * and never commit them to version control.
+   */
   getAPIKey(): string {
     return this.apiKey;
   }

@@ -48,7 +48,6 @@ describe("AgentBay", () => {
   let createMcpSessionStub: sinon.SinonStub;
   let listSessionStub: sinon.SinonStub;
   let releaseMcpSessionStub: sinon.SinonStub;
-  let loadConfigStub: sinon.SinonStub;
   let clientConstructorStub: sinon.SinonStub;
   let contextServiceConstructorStub: sinon.SinonStub;
 
@@ -65,10 +64,9 @@ describe("AgentBay", () => {
     listSessionStub = mockClient.listSession;
     releaseMcpSessionStub = mockClient.releaseMcpSession;
 
-    // Mock loadConfig function
-    loadConfigStub = sinon
-      .stub(require("../../src/config"), "loadConfig")
-      .returns(mockConfigData);
+    // Set environment variables for config instead of stubbing loadConfig
+    process.env.AGENTBAY_ENDPOINT = mockConfigData.endpoint;
+    process.env.AGENTBAY_TIMEOUT_MS = String(mockConfigData.timeout_ms);
 
     // Mock Client constructor
     clientConstructorStub = sinon.stub().returns(mockClient);
@@ -91,8 +89,7 @@ describe("AgentBay", () => {
     // Mock AgentBay's getClient method to return our mock client
     sinon.stub(AgentBay.prototype, "getClient").returns(mockClient);
 
-    // Mock Session's getAPIKey method to avoid real API key issues
-    sinon.stub(Session.prototype, "getAPIKey").returns("mock-api-key");
+    // getAPIKey is now private, no need to mock it
 
     log("Mock client setup complete");
   });
@@ -109,8 +106,7 @@ describe("AgentBay", () => {
 
       expect(agentBay.getAPIKey()).toBe(apiKey);
 
-      // Verify that loadConfig was called
-      expect(loadConfigStub.calledOnce).toBe(true);
+      // loadConfig is now internal, no need to verify
 
       // Verify that Client was constructed with correct config
       expect(clientConstructorStub.calledOnce).toBe(true);
@@ -133,7 +129,6 @@ describe("AgentBay", () => {
         expect(agentBay.getAPIKey()).toBe("env_api_key");
 
         // Verify dependencies were called
-        expect(loadConfigStub.called).toBe(true);
         expect(clientConstructorStub.called).toBe(true);
         expect(contextServiceConstructorStub.called).toBe(true);
       } finally {
@@ -221,11 +216,8 @@ describe("AgentBay", () => {
       // Ensure session ID matches mock data
       expect(session.sessionId).toBe(mockSessionData.sessionId);
 
-      // Verify session uses mock client
-      expect(session.getClient()).toBe(mockClient);
-      log(
-        `Session client is mockClient: ${session.getClient() === mockClient}`
-      );
+      // Client is now private, cannot verify directly
+      // The session should work correctly if properly initialized
 
 
       // Delete the session
@@ -259,342 +251,9 @@ describe("AgentBay", () => {
 
       const deleteCallArgs = releaseMcpSessionStub.getCall(0).args[0];
       expect(deleteCallArgs.sessionId).toBe(mockSessionData.sessionId);
-      expect(deleteCallArgs.authorization).toBe("Bearer mock-api-key");
+      expect(deleteCallArgs.authorization).toBe("Bearer test-api-key");
 
       log("All mock verifications passed successfully");
-    });
-  });
-
-  describe("listByLabels", () => {
-    let agentBay: AgentBay;
-    let sessionA: Session;
-    let sessionB: Session;
-
-    beforeEach(async () => {
-      const apiKey = "test-api-key";
-      agentBay = new AgentBay({ apiKey });
-
-      // Setup mock responses for creating sessions
-      const createMockResponseA = {
-        statusCode: 200,
-        body: {
-          data: mockSessionAData,
-          requestId: "mock-request-id-create-a",
-        },
-      };
-
-      const createMockResponseB = {
-        statusCode: 200,
-        body: {
-          data: mockSessionBData,
-          requestId: "mock-request-id-create-b",
-        },
-      };
-
-      createMcpSessionStub.onFirstCall().resolves(createMockResponseA);
-      createMcpSessionStub.onSecondCall().resolves(createMockResponseB);
-
-      const labelsA = {
-        environment: "development",
-        owner: "team-a",
-        project: "project-x",
-      };
-
-      const labelsB = {
-        environment: "testing",
-        owner: "team-b",
-        project: "project-y",
-      };
-
-      // Create session with labels A
-      log("Creating session with labels A...");
-      const createResponseA = await agentBay.create({ labels: labelsA });
-      sessionA = createResponseA.session!; // Use session field instead of data
-      log(`Session created with ID: ${sessionA.sessionId}`);
-      log(
-        `Create Session A RequestId: ${
-          createResponseA.requestId || "undefined"
-        }`
-      );
-
-      // Create session with labels B
-      const createResponseB = await agentBay.create({ labels: labelsB });
-      sessionB = createResponseB.session!; // Use session field instead of data
-      log(`Session created with ID: ${sessionB.sessionId}`);
-      log(
-        `Create Session B RequestId: ${
-          createResponseB.requestId || "undefined"
-        }`
-      );
-    });
-
-    afterEach(async () => {
-      // Clean up sessions
-      log("Cleaning up sessions...");
-
-      // Setup mock responses for delete operations
-      const deleteMockResponseA = {
-        statusCode: 200,
-        body: { requestId: "mock-request-id-delete-a" },
-      };
-
-      const deleteMockResponseB = {
-        statusCode: 200,
-        body: { requestId: "mock-request-id-delete-b" },
-      };
-
-      // Reset the stub to handle multiple calls
-      releaseMcpSessionStub.reset();
-      releaseMcpSessionStub.onFirstCall().resolves(deleteMockResponseA);
-      releaseMcpSessionStub.onSecondCall().resolves(deleteMockResponseB);
-
-      if (sessionA) {
-        try {
-          const deleteResponseA = await agentBay.delete(sessionA);
-          log(
-            `Delete Session A RequestId: ${
-              deleteResponseA.requestId || "undefined"
-            }`
-          );
-        } catch (error) {
-          log(`Warning: Error deleting session A: ${error}`);
-        }
-      }
-
-      if (sessionB) {
-        try {
-          const deleteResponseB = await agentBay.delete(sessionB);
-          log(
-            `Delete Session B RequestId: ${
-              deleteResponseB.requestId || "undefined"
-            }`
-          );
-        } catch (error) {
-          log(`Warning: Error deleting session B: ${error}`);
-        }
-      }
-    });
-
-    it("should list sessions by labels with requestId", async () => {
-
-      // Test 2: List sessions by environment=development label using new API
-      const devSessionsResponse = {
-        statusCode: 200,
-        body: {
-          data: [mockSessionAData],
-          maxResults: 5,
-          totalCount: 1,
-          requestId: "mock-request-id-list-dev",
-        },
-      };
-
-      listSessionStub.resolves(devSessionsResponse);
-
-      const devSessionsParams: ListSessionParams = {
-        labels: { environment: "development" },
-        maxResults: 5,
-      };
-      const devSessions = await agentBay.listByLabels(devSessionsParams);
-      log(
-        `List Sessions by environment=development RequestId: ${
-          devSessions.requestId || "undefined"
-        }`
-      );
-      log(
-        `Total count: ${devSessions.totalCount}, Max results: ${devSessions.maxResults}`
-      );
-
-      // Verify that the response contains requestId
-      expect(devSessions.requestId).toBeDefined();
-      expect(typeof devSessions.requestId).toBe("string");
-      expect(devSessions.requestId).toBe("mock-request-id-list-dev");
-
-      // Verify that session A is in the results
-      expect(devSessions.sessionIds.length).toBe(1);
-      expect(devSessions.sessionIds[0]).toBe(mockSessionAData.sessionId);
-
-      // Verify API call parameters
-      expect(listSessionStub.calledOnce).toBe(true);
-      const listCallArgs = listSessionStub.getCall(0).args[0];
-      expect(listCallArgs.authorization).toBe("Bearer test-api-key");
-      expect(JSON.parse(listCallArgs.labels)).toEqual({
-        environment: "development",
-      });
-      expect(listCallArgs.maxResults).toBe(5);
-
-      // Test 3: List sessions by owner=team-b label
-      const teamBSessionsResponse = {
-        statusCode: 200,
-        body: {
-          data: [mockSessionBData],
-          requestId: "mock-request-id-list-team-b",
-          maxResults: 5,
-          totalCount: 1,
-        },
-      };
-
-      listSessionStub.reset();
-      listSessionStub.resolves(teamBSessionsResponse);
-
-      const teamBSessionsParams: ListSessionParams = {
-        labels: { owner: "team-b" },
-        maxResults: 5,
-      };
-      const teamBSessions = await agentBay.listByLabels(teamBSessionsParams);
-      log(
-        `List Sessions by owner=team-b RequestId: ${
-          teamBSessions.requestId || "undefined"
-        }`
-      );
-      log(
-        `Total count: ${teamBSessions.totalCount}, Max results: ${teamBSessions.maxResults}`
-      );
-
-      // Verify that the response contains requestId
-      expect(teamBSessions.requestId).toBeDefined();
-      expect(teamBSessions.requestId).toBe("mock-request-id-list-team-b");
-
-      // Verify that session B is in the results
-      expect(teamBSessions.sessionIds.length).toBe(1);
-      expect(teamBSessions.sessionIds[0]).toBe(mockSessionBData.sessionId);
-
-      // Test 4: List sessions with multiple labels
-      const multiLabelSessionsResponse = {
-        statusCode: 200,
-        body: {
-          data: [mockSessionBData],
-          requestId: "mock-request-id-list-multi",
-          maxResults: 5,
-          totalCount: 1,
-          nextToken: "mock-next-token",
-        },
-      };
-
-      listSessionStub.reset();
-      listSessionStub.resolves(multiLabelSessionsResponse);
-
-      const multiLabelSessionsParams: ListSessionParams = {
-        labels: {
-          environment: "testing",
-          project: "project-y",
-        },
-        maxResults: 5,
-      };
-      const multiLabelSessions = await agentBay.listByLabels(
-        multiLabelSessionsParams
-      );
-      log(
-        `Found ${multiLabelSessions.sessionIds.length} sessions with environment=testing AND project=project-y`
-      );
-      log(
-        `List Sessions by multiple labels RequestId: ${
-          multiLabelSessions.requestId || "undefined"
-        }`
-      );
-      log(
-        `Total count: ${multiLabelSessions.totalCount}, Max results: ${multiLabelSessions.maxResults}`
-      );
-
-      // Verify that the response contains requestId
-      expect(multiLabelSessions.requestId).toBeDefined();
-      expect(multiLabelSessions.requestId).toBe("mock-request-id-list-multi");
-
-      // Verify that only session B is in the results
-      expect(multiLabelSessions.sessionIds.length).toBe(1);
-      expect(multiLabelSessions.sessionIds[0]).toBe(
-        mockSessionBData.sessionId
-      );
-
-      // Test pagination if there's a next token
-      if (multiLabelSessions.nextToken) {
-        log("\nTesting pagination with nextToken...");
-
-        const nextPageResponse = {
-          statusCode: 200,
-          body: {
-            data: [mockSessionAData],
-            requestId: "mock-request-id-list-next-page",
-            maxResults: 5,
-            totalCount: 1,
-          },
-        };
-
-        listSessionStub.reset();
-        listSessionStub.resolves(nextPageResponse);
-
-        const nextPageParams: ListSessionParams = {
-          ...multiLabelSessionsParams,
-          nextToken: multiLabelSessions.nextToken,
-        };
-        const nextPageSessions = await agentBay.listByLabels(nextPageParams);
-        log(`Next page sessions count: ${nextPageSessions.sessionIds.length}`);
-        log(`Next page RequestId: ${nextPageSessions.requestId}`);
-
-        // Verify next page response
-        expect(nextPageSessions.requestId).toBeDefined();
-        expect(nextPageSessions.requestId).toBe(
-          "mock-request-id-list-next-page"
-        );
-        expect(nextPageSessions.sessionIds.length).toBe(1);
-        expect(nextPageSessions.sessionIds[0]).toBe(
-          mockSessionAData.sessionId
-        );
-
-        // Verify API call parameters for next page
-        const nextPageCallArgs = listSessionStub.getCall(0).args[0];
-        expect(nextPageCallArgs.authorization).toBe("Bearer test-api-key");
-        expect(JSON.parse(nextPageCallArgs.labels)).toEqual({
-          environment: "testing",
-          project: "project-y",
-        });
-        expect(nextPageCallArgs.maxResults).toBe(5);
-        expect(nextPageCallArgs.nextToken).toBe("mock-next-token");
-      }
-
-      // Test 5: List sessions with non-existent label
-      const nonExistentSessionsResponse = {
-        statusCode: 200,
-        body: {
-          data: [],
-          requestId: "mock-request-id-list-empty",
-          maxResults: 5,
-          totalCount: 0,
-        },
-      };
-
-      listSessionStub.reset();
-      listSessionStub.resolves(nonExistentSessionsResponse);
-
-      const nonExistentSessionsParams: ListSessionParams = {
-        labels: { "non-existent": "value" },
-        maxResults: 5,
-      };
-      const nonExistentSessions = await agentBay.listByLabels(
-        nonExistentSessionsParams
-      );
-      log(
-        `Found ${nonExistentSessions.sessionIds.length} sessions with non-existent label`
-      );
-      log(
-        `List Sessions by non-existent label RequestId: ${
-          nonExistentSessions.requestId || "undefined"
-        }`
-      );
-      log(
-        `Total count: ${nonExistentSessions.totalCount}, Max results: ${nonExistentSessions.maxResults}`
-      );
-
-      // Verify that the response contains requestId even for empty results
-      expect(nonExistentSessions.requestId).toBeDefined();
-      expect(nonExistentSessions.requestId).toBe("mock-request-id-list-empty");
-
-      // Verify empty results
-      expect(nonExistentSessions.sessionIds.length).toBe(0);
-
-      // Verify API calls were made with correct parameters
-      expect(listSessionStub.called).toBe(true);
-
-      log("Test completed successfully");
     });
   });
 

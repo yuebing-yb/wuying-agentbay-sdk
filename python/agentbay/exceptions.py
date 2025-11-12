@@ -51,24 +51,12 @@ class OssError(AgentBayError):
         super().__init__(message, *args, **kwargs)
 
 
-class ApplicationError(AgentBayError):
-    """Raised for errors related to application operations."""
-
-    def __init__(self, message="Application operation error", *args, **kwargs):
-        super().__init__(message, *args, **kwargs)
-
-
-class UIError(AgentBayError):
-    """Raised for errors related to UI operations."""
-
-    def __init__(self, message="UI operation error", *args, **kwargs):
-        super().__init__(message, *args, **kwargs)
-
 class BrowserError(AgentBayError):
     """Raised when there is an error with the browser."""
 
     def __init__(self, message="Browser error", *args, **kwargs):
         super().__init__(message, *args, **kwargs)
+
 
 class AgentError(AgentBayError):
     """Raised for errors related to Agent actions."""

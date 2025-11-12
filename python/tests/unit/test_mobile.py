@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 
 from agentbay.mobile import Mobile
 from agentbay.model import BoolResult, OperationResult
-from agentbay.application.application import ProcessListResult, AppOperationResult
+from agentbay.computer import ProcessListResult, AppOperationResult
 from agentbay.exceptions import AgentBayError
 
 

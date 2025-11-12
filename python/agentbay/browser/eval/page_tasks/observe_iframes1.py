@@ -3,10 +3,10 @@ from typing import Dict, Any
 from mcp_server.page_agent import PageAgent
 
 
-async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     await agent.goto("https://tucowsdomains.com/abuse-form/phishing/")
 
-    logger.info("Observing for the main header of the page...")
+    _logger.info("Observing for the main header of the page...")
     observations = await agent.observe(
         instruction="find the main header of the page",
     )
@@ -18,7 +18,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
         page = await agent.get_current_page()
     except AttributeError:
         error_msg = "Agent is missing the 'get_playwright_page' method required for this test's validation."
-        logger.error(error_msg)
+        _logger.error(error_msg)
         return {"_success": False, "error": error_msg}
 
     possible_locators = [
@@ -33,7 +33,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
             if handle:
                 candidate_handles.append({"selector": selector, "handle": handle})
         except Exception:
-            logger.warning(f"Ground truth selector not found: {selector}")
+            _logger.warning(f"Ground truth selector not found: {selector}")
 
     found_match = False
     matched_locator = None
@@ -55,7 +55,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
                     matched_locator = candidate["selector"]
                     break
         except Exception as e:
-            logger.warning(
+            _logger.warning(
                 f"Could not validate observation with selector '{observation.selector}': {e}"
             )
 
@@ -63,11 +63,11 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
             break
 
     if found_match:
-        logger.info(
+        _logger.info(
             f"✅ Validation passed: Agent's observation matched ground truth locator '{matched_locator}'."
         )
     else:
-        logger.error(
+        _logger.error(
             "Validation failed: None of the agent's observations matched the expected elements."
         )
 

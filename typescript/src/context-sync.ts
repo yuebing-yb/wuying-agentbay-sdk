@@ -61,11 +61,11 @@ export interface RecyclePolicy {
 
 // ExtractPolicyClass provides a class-based implementation with default values
 export class ExtractPolicyClass implements ExtractPolicy {
-  extract: boolean = true;
-  deleteSrcFile: boolean = true;
-  extractToCurrentFolder: boolean = false;
+  extract = true;
+  deleteSrcFile = true;
+  extractToCurrentFolder = false;
 
-  constructor(extract: boolean = true, deleteSrcFile: boolean = true, extractToCurrentFolder: boolean = false) {
+  constructor(extract = true, deleteSrcFile = true, extractToCurrentFolder = false) {
     this.extract = extract;
     this.deleteSrcFile = deleteSrcFile;
     this.extractToCurrentFolder = extractToCurrentFolder;
@@ -127,6 +127,11 @@ export interface BWList {
   whiteLists?: WhiteList[];
 }
 
+// MappingPolicy defines the mapping policy for cross-platform context synchronization
+export interface MappingPolicy {
+  path: string;
+}
+
 // SyncPolicy defines the synchronization policy
 export interface SyncPolicy {
   uploadPolicy?: UploadPolicy;
@@ -135,6 +140,7 @@ export interface SyncPolicy {
   extractPolicy?: ExtractPolicy;
   recyclePolicy?: RecyclePolicy;
   bwList?: BWList;
+  mappingPolicy?: MappingPolicy;
 }
 
 // SyncPolicyImpl provides a class-based implementation with default value handling
@@ -263,6 +269,13 @@ export function newRecyclePolicy(): RecyclePolicy {
   };
 }
 
+// NewMappingPolicy creates a new mapping policy with default values
+export function newMappingPolicy(): MappingPolicy {
+  return {
+    path: "",
+  };
+}
+
 // NewSyncPolicy creates a new sync policy with default values
 export function newSyncPolicy(): SyncPolicy {
   return {
@@ -292,7 +305,7 @@ function isValidUploadMode(uploadMode: UploadMode): boolean {
   return uploadMode === UploadMode.File || uploadMode === UploadMode.Archive;
 }
 
-export function validateSyncPolicy(policy?: SyncPolicy): void {
+function validateSyncPolicy(policy?: SyncPolicy): void {
   if (policy?.bwList?.whiteLists) {
     for (const whitelist of policy.bwList.whiteLists) {
       WhiteListValidator.validate(whitelist);

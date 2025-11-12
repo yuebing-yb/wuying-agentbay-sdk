@@ -15,8 +15,8 @@ from agentbay.browser.browser_agent import ActOptions, ExtractOptions, ObserveOp
 from agentbay.browser.eval.local_page_agent import LocalSession
 from agentbay.logger import get_logger
 
-# Initialize logger for this module
-logger = get_logger("page_agent")
+# Initialize _logger for this module
+_logger = get_logger("page_agent")
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -40,7 +40,7 @@ class PageAgent:
         api_key = os.environ.get("AGENTBAY_API_KEY")
         if not api_key:
             api_key = "akm-xxx"  # Replace with your test API key
-            logger.warning(
+            _logger.warning(
                 "Using default API key. Set AGENTBAY_API_KEY environment variable for testing."
             )
         return api_key
@@ -51,11 +51,11 @@ class PageAgent:
             result = SessionResult(success=False)
             if not run_local:
                 api_key = self.get_test_api_key()
-                logger.info(f"api_key = {api_key}")
+                _logger.info(f"api_key = {api_key}")
                 self.agent_bay = AgentBay(api_key=api_key)
 
                 # Create a session
-                logger.info("Creating a new session for browser agent testing...")
+                _logger.info("Creating a new session for browser agent testing...")
                 params = CreateSessionParams(
                     image_id="browser_latest",  # Specify the image ID
                 )
@@ -66,28 +66,28 @@ class PageAgent:
 
             if result.success and result.session is not None:
                 self.session = result.session
-                logger.info(f"Session created with ID: {self.session.session_id}")
+                _logger.info(f"Session created with ID: {self.session.session_id}")
                 if await self.session.browser.initialize_async(BrowserOption()):
-                    logger.info("Browser initialized successfully")
+                    _logger.info("Browser initialized successfully")
                     endpoint_url = self.session.browser.get_endpoint_url()
-                    logger.info(f"endpoint_url = {endpoint_url}")
+                    _logger.info(f"endpoint_url = {endpoint_url}")
                     if (self._worker_thread is None):
                         promise: concurrent.futures.Future[bool] = concurrent.futures.Future()
                         def thread_target():
                             async def _connect_browser():
                                 success = False
-                                logger.info("Start connect to browser")
+                                _logger.info("Start connect to browser")
                                 try:
                                     async with async_playwright() as p:
                                         self._task_queue = asyncio.Queue()
                                         self._loop = asyncio.get_running_loop()
                                         self.browser = await p.chromium.connect_over_cdp(endpoint_url)
-                                        logger.info("Browser connected successfully")
+                                        _logger.info("Browser connected successfully")
                                         success = True
                                         promise.set_result(success)
                                         await self._playwright_interactive_loop()
                                 except Exception as e:
-                                    logger.error(f"Failed to connect to browser: {e}")
+                                    _logger.error(f"Failed to connect to browser: {e}")
                                     success = False
                                     promise.set_result(success)
                             asyncio.run(_connect_browser())
@@ -105,17 +105,17 @@ class PageAgent:
                             with open(f"{pwd}/page_tasks/{file}", "w") as f:
                                 f.write(content)
 
-                    logger.info("Import page_tasks successfully")
+                    _logger.info("Import page_tasks successfully")
                 else:
-                    logger.error("Failed to initialize browser")
+                    _logger.error("Failed to initialize browser")
                     raise RuntimeError("Failed to initialize browser")
             else:
-                logger.error("Failed to create session")
+                _logger.error("Failed to create session")
                 raise RuntimeError("Failed to create session")
         except Exception as e:
-            logger.error(f"Error in initialize: {e}", exc_info=True)
+            _logger.error(f"Error in initialize: {e}", exc_info=True)
             raise
-        logger.info("Initialize browser agent successfully")
+        _logger.info("Initialize browser agent successfully")
 
     async def _playwright_interactive_loop(self) -> None:
             """Run interactive loop."""
@@ -124,10 +124,10 @@ class PageAgent:
                     try:
                         task_name, arguments, future = await asyncio.wait_for(self._task_queue.get(), timeout=1.0)
                         try:
-                            logger.debug(f"Execute task {task_name} with arguments {arguments}")
+                            _logger.debug(f"Execute task {task_name} with arguments {arguments}")
                             if task_name == "run_task":
                                 task_module = arguments["task"]
-                                task_logger = arguments["logger"]
+                                task_logger = arguments["_logger"]
                                 config = arguments["config"]
                                 ret = await task_module.run(self, task_logger, config)
                             else:
@@ -155,10 +155,10 @@ class PageAgent:
                 try:
                     tool_name, arguments, future = await asyncio.wait_for(self._tool_call_queue.get(), timeout=1.0)
                     try:
-                        logger.debug(f"Call tool {tool_name} with arguments {arguments}")
+                        _logger.debug(f"Call tool {tool_name} with arguments {arguments}")
                         if self.session is not None:
                             response = await self.session.call_tool(tool_name, arguments)
-                            logger.debug(f"MCP tool response: {response}")
+                            _logger.debug(f"MCP tool response: {response}")
 
                             # Extract text content from response
                             if hasattr(response, 'content') and response.content:
@@ -196,16 +196,16 @@ class PageAgent:
         cdp_session = None
         try:
             cdp_session = await self.current_page.context.new_cdp_session(self.current_page)
-            #logger.info(f"get_current_page: {self.current_page}")
+            #_logger.info(f"get_current_page: {self.current_page}")
         finally:
             if cdp_session:
                 await cdp_session.detach()
         return self.current_page
 
-    async def run_task(self, task: ModuleType, logger: logging.Logger, config: Dict[str, Any]) -> Any:
+    async def run_task(self, task: ModuleType, _logger: logging.Logger, config: Dict[str, Any]) -> Any:
         arguments = {
             "task": task,
-            "logger": logger,
+            "_logger": _logger,
             "config": config,
         }
         return await self._post_task_to_pr_loop("run_task", arguments)
@@ -236,7 +236,7 @@ class PageAgent:
         ] = "load",
         timeout_ms: Optional[int] = 180000) -> str:
         """Navigates the browser to the specified URL."""
-        logger.info(f"goto {url}")
+        _logger.info(f"goto {url}")
         try:
             if self.browser is None:
                 raise RuntimeError("Browser is not initialized. Call initialize() first.")
@@ -245,14 +245,14 @@ class PageAgent:
             await self.current_page.goto(url, wait_until=wait_until, timeout=timeout_ms)
             return f"Successfully navigated to {url}"
         except Exception as e:
-            logger.error(f"Error in goto: {e}", exc_info=True)
+            _logger.error(f"Error in goto: {e}", exc_info=True)
             return f"goto {url} failed: {str(e)}"
 
     async def navigate(
         self,
         url: str) -> str:
         """Navigates the browser to the specified URL."""
-        logger.info(f"navigate {url}")
+        _logger.info(f"navigate {url}")
         try:
             if self.session is None:
                 raise RuntimeError("Session is not initialized. Call initialize() first.")
@@ -260,7 +260,7 @@ class PageAgent:
             await self.session.browser.agent.navigate_async(url)
             return f"Successfully navigated to {url}"
         except Exception as e:
-            logger.error(f"Error in navigate: {e}", exc_info=True)
+            _logger.error(f"Error in navigate: {e}", exc_info=True)
             return f"navigate {url} failed: {str(e)}"
 
     async def screenshot(
@@ -272,18 +272,18 @@ class PageAgent:
             
             data_url_or_error = await self.session.browser.agent.screenshot_async()
             if data_url_or_error.startswith("screenshot failed:"):
-                logger.error(data_url_or_error)
+                _logger.error(data_url_or_error)
                 return data_url_or_error
             if not data_url_or_error.startswith("data:image/png;base64,"):
                 error_msg = f"screenshot failed: Unexpected format from SDK: {data_url_or_error[:100]}"
-                logger.error(error_msg)
+                _logger.error(error_msg)
                 return error_msg
                 
             base64_data = data_url_or_error.split(',', 1)[1]
             return base64_data
 
         except Exception as e:
-            logger.error(f"Error in screenshot: {e}", exc_info=True)
+            _logger.error(f"Error in screenshot: {e}", exc_info=True)
             return f"screenshot failed: {str(e)}"
 
     async def extract(self, instruction: str, schema: Type[T], use_text_extract: Optional[bool] = False, dom_settle_timeout_ms: Optional[int] = 5000, use_vision: Optional[bool] = False, selector: Optional[str] = None) -> T:
@@ -319,7 +319,7 @@ class PageAgent:
                 raise RuntimeError("Failed to extract data from the page")
             return extracted_data
         except Exception as e:
-            logger.error(f"Error in extract: {e}", exc_info=True)
+            _logger.error(f"Error in extract: {e}", exc_info=True)
             raise
 
     async def observe(self, instruction: str, dom_settle_timeout_ms: Optional[int] = None, use_vision: bool = False) -> List[ObserveResult]:
@@ -338,7 +338,7 @@ class PageAgent:
             if self.session is None:
                 raise RuntimeError("Session is not initialized. Call initialize() first.")
             
-            logger.info("Starting observation...")
+            _logger.info("Starting observation...")
             options = ObserveOptions(
                 instruction=instruction,
                 dom_settle_timeout_ms=dom_settle_timeout_ms,
@@ -347,7 +347,7 @@ class PageAgent:
             success, observed_elements = await self.session.browser.agent.observe_async(options=options, page=self.current_page)
             return observed_elements
         except Exception as e:
-            logger.error(f"Error in observe: {e}", exc_info=True)
+            _logger.error(f"Error in observe: {e}", exc_info=True)
             raise
 
     async def act(self, action_input: Union[str, ActOptions, ObserveResult], use_vision: bool = False) -> ActResult:
@@ -369,7 +369,7 @@ class PageAgent:
             if self.session is None:
                 raise RuntimeError("Session is not initialized. Call initialize() first.")
             
-            logger.info(f"Attempting to execute action: {action_input}")
+            _logger.info(f"Attempting to execute action: {action_input}")
             if isinstance(action_input, str):
                 options = ActOptions(
                     action=action_input,
@@ -379,9 +379,9 @@ class PageAgent:
             else:
                 return await self.session.browser.agent.act_async(action_input=action_input, page=self.current_page)
         except Exception as e:
-            logger.error(f"Error in act: {e}", exc_info=True)
+            _logger.error(f"Error in act: {e}", exc_info=True)
             raise
 
     async def close(self) -> None:
         """Closes the browser session if it exists."""
-        logger.info("PageAgent session closed and instance state reset.")
+        _logger.info("PageAgent session closed and instance state reset.")

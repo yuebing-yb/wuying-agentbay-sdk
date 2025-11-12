@@ -1,174 +1,188 @@
-# Python Logging Configuration
+# Logging API Reference
 
-## Overview
+Unified logging configuration for AgentBay SDK using loguru.
 
-The Python SDK uses `loguru` for comprehensive logging with support for console output, file logging, and automatic sensitive data masking.
+This module provides a centralized logging configuration with beautiful formatting
+and structured output for different log levels.
 
-## Setting Log Level
+## AgentBayLogger Objects
 
-### Priority System (Highest to Lowest)
+```python
+class AgentBayLogger()
+```
 
-1. **setup() method** - Most reliable way to set log level
-2. **Environment variables** - `AGENTBAY_LOG_LEVEL`
-3. **.env file** - Automatically loaded from current directory or parent directories
-4. **Default values** - INFO level
+AgentBay SDK Logger with beautiful formatting.
 
-### Method 1: Using setup() (Recommended)
+#### setup
 
-Use the `setup()` method to configure logging:
+```python
+@classmethod
+def setup(cls,
+          level: str = "INFO",
+          log_file: Optional[Union[str, Path]] = None,
+          enable_console: bool = True,
+          enable_file: bool = True,
+          rotation: Optional[str] = None,
+          retention: str = "30 days",
+          max_file_size: Optional[str] = None,
+          colorize: Optional[bool] = None,
+          force_reinit: bool = True) -> None
+```
+
+Setup the logger with custom configuration.
+
+This method should be called early in your application, before any logging occurs.
+By default, it will not reinitialize if already configured. Use force_reinit=True
+to override existing configuration.
+
+**Arguments**:
+
+    level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    log_file: Path to log file (optional)
+    enable_console: Whether to enable console logging
+    enable_file: Whether to enable file logging
+    rotation: Log file rotation size (deprecated, use max_file_size)
+    retention: Log file retention period
+    max_file_size: Maximum log file size before rotation (e.g., "10 MB", "100 MB")
+    colorize: Whether to use colors in console output (None = auto-detect)
+    force_reinit: Force reinitialization even if already initialized (default: False)
+  
+
+**Example**:
+
+  Configure logging for different scenarios
+  
 
 ```python
 from agentbay.logger import AgentBayLogger, get_logger
 
-# Configure logging level
+# Basic setup with debug level
 AgentBayLogger.setup(level="DEBUG")
+logger = get_logger("app")
+logger.debug("Debug mode enabled")
+# Output: Debug mode enabled
 
-logger = get_logger("my_app")
-logger.debug("Now in debug mode")  # This will appear
+# Setup with custom log file and rotation
+AgentBayLogger.setup(
+level="INFO",
+log_file="/var/log/agentbay/app.log",
+max_file_size="50 MB",
+retention="7 days"
+)
+logger = get_logger("app")
+logger.info("Application started with file logging")
+# Output: Application started with file logging
+# Also written to /var/log/agentbay/app.log
+
+# Console-only logging without colors (for CI/CD)
+AgentBayLogger.setup(
+level="WARNING",
+enable_file=False,
+colorize=False
+)
+logger = get_logger("ci")
+logger.warning("This is a warning in CI environment")
+# Output: This is a warning in CI environment (no colors)
+
+# File-only logging (no console output)
+AgentBayLogger.setup(
+level="DEBUG",
+log_file="/tmp/debug.log",
+enable_console=False,
+enable_file=True
+)
+logger = get_logger("debug")
+logger.debug("This only appears in the log file")
+# No console output, but written to /tmp/debug.log
+
 ```
 
-### Method 2: Environment Variable
-
-**Option A: Using .env File (Recommended)**
-
-Create a `.env` file in your project root:
-
-```
-# .env file
-AGENTBAY_LOG_LEVEL=DEBUG
-```
-
-The SDK automatically searches for and loads `.env` files from:
-- Current working directory
-- Parent directories (recursive search up to root)
-- Git repository root (if found)
-
-**Option B: Command Line Environment Variable**
-
-Set before running your script:
-
-```bash
-export AGENTBAY_LOG_LEVEL=DEBUG
-python your_script.py
-```
-
-### Method 3: Change Level During Runtime
-
-Use `set_level()` to change level while program is running:
+#### get\_logger
 
 ```python
-from agentbay.logger import AgentBayLogger
+@classmethod
+def get_logger(cls, name: Optional[str] = None)
+```
 
-# Change level at runtime
+Get a logger instance.
+
+**Arguments**:
+
+    name: Logger name (optional)
+  
+
+**Returns**:
+
+  Configured logger instance
+
+#### set\_level
+
+```python
+@classmethod
+def set_level(cls, level: str) -> None
+```
+
+Set the logging level.
+
+**Arguments**:
+
+    level: New log level
+  
+
+**Example**:
+
+  Change log level during runtime
+  
+
+```python
+from agentbay.logger import AgentBayLogger, get_logger
+
+# Start with INFO level
+AgentBayLogger.setup(level="INFO")
+logger = get_logger("app")
+
+logger.info("This will appear")
+# Output: This will appear
+logger.debug("This won't appear")
+# No output (DEBUG < INFO)
+
+# Change to DEBUG level at runtime
+AgentBayLogger.set_level("DEBUG")
+logger.debug("Now debug messages appear")
+# Output: Now debug messages appear
+
+# Change to WARNING level
 AgentBayLogger.set_level("WARNING")
-```
-
-**Note**: `set_level()` automatically reinitializes the logger with the new level.
-
-## Log Levels
-
-| Level | Use Case |
-|-------|----------|
-| **DEBUG** | Development - see everything |
-| **INFO** | Default - important events |
-| **WARNING** | Issues but not failures |
-| **ERROR** | Only failures |
-
-Filter rule: **Only logs at your level or HIGHER severity are shown**.
-
-## File Logging
-
-Python SDK logs to a file by default.
-
-### Default Log File
+logger.info("This won't appear anymore")
+# No output (INFO < WARNING)
+logger.warning("But warnings still appear")
+# Output: But warnings still appear
 
 ```
-python/agentbay.log
-```
 
-### Custom Log File Location
+#### get\_logger
 
 ```python
-from agentbay.logger import AgentBayLogger, get_logger
-
-# Configure custom log file location
-AgentBayLogger.setup(
-    level="DEBUG",
-    log_file="/custom/path/app.log"
-)
-
-logger = get_logger("app")
+def get_logger(name: str = "agentbay")
 ```
 
-### File Rotation and Retention
+Convenience function to get a named logger.
 
-Configure automatic log file rotation:
+**Arguments**:
+
+    name: Logger name (defaults to "agentbay")
+  
+
+**Returns**:
+
+  Named logger instance
+
+#### log
 
 ```python
-from agentbay.logger import AgentBayLogger
-
-AgentBayLogger.setup(
-    level="DEBUG",
-    log_file="/var/log/myapp.log",
-    rotation="100 MB",     # Rotate when file reaches 100 MB
-    retention="30 days"    # Keep logs for 30 days
-)
+log = get_logger("agentbay")
 ```
 
-## Sensitive Data Masking
+---
 
-The SDK automatically masks sensitive information:
-
-```python
-from agentbay.logger import mask_sensitive_data
-
-data = {
-    "api_key": "sk_live_1234567890",
-    "password": "secret123",
-    "auth_token": "Bearer xyz"
-}
-
-masked = mask_sensitive_data(data)
-# Result: api_key masked, password masked, auth_token masked
-```
-
-Automatically masked fields:
-- api_key, apikey, api-key
-- password, passwd, pwd
-- token, access_token, auth_token
-- secret, private_key
-- authorization
-
-Custom fields can also be masked by passing them as parameters.
-
-## Quick Reference
-
-**Development (see everything)**:
-```bash
-export AGENTBAY_LOG_LEVEL=DEBUG
-python main.py
-```
-
-**Testing (important events only)**:
-```bash
-python test_suite.py
-# Uses default INFO level
-```
-
-**Production (problems only)**:
-```bash
-export AGENTBAY_LOG_LEVEL=WARNING
-python app.py
-```
-
-**Debugging with file output**:
-```python
-from agentbay.logger import AgentBayLogger, get_logger
-
-AgentBayLogger.setup(
-    level="DEBUG",
-    log_file="/var/log/debug.log",
-    enable_console=False
-)
-logger = get_logger("app")
-```
+*Documentation generated automatically from source code using pydoc-markdown.*

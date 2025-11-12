@@ -4,6 +4,6 @@ Provides touch operations, UI element interactions, application management, scre
 and mobile environment configuration operations.
 """
 
-from .mobile import Mobile, KeyCode
+from .mobile import Mobile, KeyCode, UIElementListResult
 
-__all__ = ["Mobile", "KeyCode"]
+__all__ = ["Mobile", "KeyCode", "UIElementListResult"]

@@ -88,15 +88,6 @@ Cloud-based browser automation with Playwright integration.
 - Browser type selection
 - Stealth mode and fingerprinting
 
-### [Computer Use](computer-use/)
-
-Windows desktop automation for application control and window management.
-
-**Key Features:**
-- Application management (start, stop, list)
-- Window operations (maximize, minimize, resize, close)
-- UI automation
-- Desktop workflows
 
 ### [Mobile Use](mobile-use/)
 
@@ -225,7 +216,6 @@ if err == nil {
 1. Review [Common Features](common-features/) for SDK capabilities
 2. Jump to your specific environment:
    - [Browser Use](browser-use/) for web automation
-   - [Computer Use](computer-use/) for desktop automation
    - [Mobile Use](mobile-use/) for mobile automation
    - [CodeSpace](codespace/) for code execution
 3. Explore [Advanced Features](common-features/advanced/) for integrations

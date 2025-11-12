@@ -10,18 +10,14 @@ class TestContext(unittest.TestCase):
         context = Context(
             id="test-id",
             name="test-context",
-            state="available",
             created_at="2025-05-29T12:00:00Z",
             last_used_at="2025-05-29T12:30:00Z",
-            os_type="linux",
         )
 
         self.assertEqual(context.id, "test-id")
         self.assertEqual(context.name, "test-context")
-        self.assertEqual(context.state, "available")
         self.assertEqual(context.created_at, "2025-05-29T12:00:00Z")
         self.assertEqual(context.last_used_at, "2025-05-29T12:30:00Z")
-        self.assertEqual(context.os_type, "linux")
 
 
 class TestContextService(unittest.TestCase):
@@ -67,10 +63,8 @@ class TestContextService(unittest.TestCase):
         self.assertEqual(len(result.contexts), 2)
         self.assertEqual(result.contexts[0].id, "context-1")
         self.assertEqual(result.contexts[0].name, "context-1-name")
-        self.assertEqual(result.contexts[0].state, "available")
         self.assertEqual(result.contexts[1].id, "context-2")
         self.assertEqual(result.contexts[1].name, "context-2-name")
-        self.assertEqual(result.contexts[1].state, "in-use")
 
     def test_get_context(self):
         """Test getting a context."""
@@ -105,7 +99,6 @@ class TestContextService(unittest.TestCase):
         self.assertEqual(result.context_id, "context-1")
         self.assertEqual(result.context.id, "context-1")
         self.assertEqual(result.context.name, "test-context")
-        self.assertEqual(result.context.state, "available")
 
     def test_create_context(self):
         """Test creating a context."""
@@ -142,13 +135,12 @@ class TestContextService(unittest.TestCase):
         self.assertEqual(result.context_id, "new-context-id")
         self.assertEqual(result.context.id, "new-context-id")
         self.assertEqual(result.context.name, "new-context")
-        self.assertEqual(result.context.state, "available")
 
     def test_update_context(self):
         """Test updating a context."""
         # Create a context to update
         context = Context(
-            id="context-to-update", name="updated-name", state="available"
+            id="context-to-update", name="updated-name"
         )
 
         # Mock the API response
@@ -176,7 +168,7 @@ class TestContextService(unittest.TestCase):
         """Test deleting a context."""
         # Create a context to delete
         context = Context(
-            id="context-to-delete", name="context-name", state="available"
+            id="context-to-delete", name="context-name"
         )
 
         # Mock the API response

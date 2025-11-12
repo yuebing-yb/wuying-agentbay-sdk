@@ -54,15 +54,40 @@ class Command(BaseService):
 
     def execute_command(self, command: str, timeout_ms: int = 1000) -> CommandResult:
         """
-        Execute a command in the cloud environment with a specified timeout.
+        Execute a shell command in the cloud environment with a specified timeout.
 
         Args:
-            command: The command to execute.
-            timeout_ms: The timeout for the command execution in milliseconds.
+            command (str): The shell command to execute.
+            timeout_ms (int, optional): The timeout for the command execution in milliseconds.
+                Defaults to 1000 (1 second).
 
         Returns:
-            CommandResult: Result object containing success status, command output,
-                and error message if any.
+            CommandResult: Result object containing success status, command output, and error message if any.
+                - success (bool): True if the operation succeeded
+                - output (str): The command output (stdout and stderr combined)
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            CommandError: If the command execution fails.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            cmd_result = session.command.execute_command("echo 'Hello, World!'")
+            print(cmd_result.output)
+            cmd_result = session.command.execute_command("sleep 2 && echo 'Done'", timeout_ms=5000)
+            session.delete()
+            ```
+
+        Note:
+            - Commands are executed in a Linux shell environment
+            - Default timeout is 1 second (1000ms)
+            - Output includes both stdout and stderr
+            - Long-running commands may timeout if timeout_ms is too small
+
+        See Also:
+            Command.execute_command_async
         """
         try:
             args = {"command": command, "timeout_ms": timeout_ms}

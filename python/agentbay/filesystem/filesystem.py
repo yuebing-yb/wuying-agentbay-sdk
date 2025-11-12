@@ -9,12 +9,12 @@ import httpx
 from dataclasses import dataclass
 
 from agentbay.api.base_service import BaseService
-from ..logger import get_logger, log_api_response, log_operation_start, log_operation_success
+from ..logger import get_logger, _log_api_response, _log_operation_start, _log_operation_success
 from agentbay.exceptions import AgentBayError, FileError
 from agentbay.model import ApiResponse, BoolResult
 
 # Initialize logger for this module
-logger = get_logger("filesystem")
+_logger = get_logger("filesystem")
 
 
 # Result structures
@@ -532,7 +532,7 @@ class FileChangeEvent:
     def __repr__(self):
         return f"FileChangeEvent(event_type='{self.event_type}', path='{self.path}', path_type='{self.path_type}')"
 
-    def to_dict(self) -> Dict[str, str]:
+    def _to_dict(self) -> Dict[str, str]:
         """Convert to dictionary representation."""
         return {
             "eventType": self.event_type,
@@ -541,7 +541,7 @@ class FileChangeEvent:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, str]) -> "FileChangeEvent":
+    def _from_dict(cls, data: Dict[str, str]) -> "FileChangeEvent":
         """Create FileChangeEvent from dictionary."""
         return cls(
             event_type=data.get("eventType", ""),
@@ -551,7 +551,24 @@ class FileChangeEvent:
 
 
 class FileChangeResult(ApiResponse):
-    """Result of file change detection operations."""
+    """
+    Result of file change detection operations.
+
+    This class provides methods to check and filter file change events detected
+    in a directory. It is typically returned by file monitoring operations.
+
+    Example:
+        ```python
+        session = agent_bay.create().session
+        session.file_system.create_directory("/tmp/change_test")
+        session.file_system.write_file("/tmp/change_test/file1.txt", "original content")
+        session.file_system.write_file("/tmp/change_test/file2.txt", "original content")
+        session.file_system.write_file("/tmp/change_test/file1.txt", "modified content")
+        session.file_system.write_file("/tmp/change_test/file3.txt", "new file")
+        change_result = session.file_system._get_file_change("/tmp/change_test")
+        session.delete()
+        ```
+    """
 
     def __init__(
         self,
@@ -582,11 +599,21 @@ class FileChangeResult(ApiResponse):
         self.error_message = error_message
 
     def has_changes(self) -> bool:
-        """Check if there are any file changes."""
+        """
+        Check if there are any file changes.
+
+        Returns:
+            bool: True if there are any file change events, False otherwise.
+        """
         return len(self.events) > 0
 
     def get_modified_files(self) -> List[str]:
-        """Get list of modified file paths."""
+        """
+        Get list of modified file paths.
+
+        Returns:
+            List[str]: List of file paths that were modified.
+        """
         return [
             event.path
             for event in self.events
@@ -594,7 +621,12 @@ class FileChangeResult(ApiResponse):
         ]
 
     def get_created_files(self) -> List[str]:
-        """Get list of created file paths."""
+        """
+        Get list of created file paths.
+
+        Returns:
+            List[str]: List of file paths that were created.
+        """
         return [
             event.path
             for event in self.events
@@ -602,7 +634,12 @@ class FileChangeResult(ApiResponse):
         ]
 
     def get_deleted_files(self) -> List[str]:
-        """Get list of deleted file paths."""
+        """
+        Get list of deleted file paths.
+
+        Returns:
+            List[str]: List of file paths that were deleted.
+        """
         return [
             event.path
             for event in self.events
@@ -819,11 +856,19 @@ class FileSystem(BaseService):
         Returns:
             BoolResult: Result object containing success status and error message if
                 any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            create_result = session.file_system.create_directory("/tmp/mydir")
+            nested_result = session.file_system.create_directory("/tmp/parent/child/grandchild")
+            session.delete()
+            ```
         """
         args = {"path": path}
         try:
             result = self.session.call_mcp_tool("create_directory", args)
-            logger.debug(f"📥 create_directory response: {result}")
+            _logger.debug(f"📥 create_directory response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -855,11 +900,20 @@ class FileSystem(BaseService):
         Returns:
             BoolResult: Result object containing success status and error message if
                 any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.file_system.write_file("/tmp/config.txt", "DEBUG=false\nLOG_LEVEL=info")
+            edits = [{"oldText": "false", "newText": "true"}]
+            edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
+            session.delete()
+            ```
         """
         args = {"path": path, "edits": edits, "dryRun": dry_run}
         try:
             result = self.session.call_mcp_tool("edit_file", args)
-            logger.debug(f"📥 edit_file response: {result}")
+            _logger.debug(f"📥 edit_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -886,6 +940,15 @@ class FileSystem(BaseService):
 
         Returns:
             FileInfoResult: Result object containing file info and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.file_system.write_file("/tmp/test.txt", "Sample content")
+            info_result = session.file_system.get_file_info("/tmp/test.txt")
+            print(info_result.file_info)
+            session.delete()
+            ```
         """
 
         def parse_file_info(file_info_str: str) -> dict:
@@ -929,9 +992,9 @@ class FileSystem(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
             if result.success:
                 file_info = parse_file_info(result.data)
                 return FileInfoResult(
@@ -959,11 +1022,38 @@ class FileSystem(BaseService):
         List the contents of a directory.
 
         Args:
-            path: The path of the directory to list.
+            path (str): The path of the directory to list.
 
         Returns:
-            DirectoryListResult: Result object containing directory entries and error
-                message if any.
+            DirectoryListResult: Result object containing directory entries and error message if any.
+                - success (bool): True if the operation succeeded
+                - entries (List[Dict[str, Union[str, bool]]]): List of directory entries (if success is True)
+                    Each entry contains:
+                    - name (str): Name of the file or directory
+                    - isDirectory (bool): True if entry is a directory, False if file
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            FileError: If the directory does not exist or cannot be accessed.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.file_system.create_directory("/tmp/testdir")
+            session.file_system.write_file("/tmp/testdir/file1.txt", "Content 1")
+            list_result = session.file_system.list_directory("/tmp/testdir")
+            print(f"Found {len(list_result.entries)} entries")
+            session.delete()
+            ```
+
+        Note:
+            - Returns empty list for empty directories
+            - Each entry includes name and isDirectory flag
+            - Does not recursively list subdirectories
+
+        See Also:
+            FileSystem.create_directory, FileSystem.get_file_info, FileSystem.read_file
         """
 
         def parse_directory_listing(text) -> List[Dict[str, Union[str, bool]]]:
@@ -1022,9 +1112,9 @@ class FileSystem(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
             if result.success:
                 entries = parse_directory_listing(result.data)
                 return DirectoryListResult(
@@ -1058,11 +1148,20 @@ class FileSystem(BaseService):
         Returns:
             BoolResult: Result object containing success status and error message if
                 any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.file_system.write_file("/tmp/original.txt", "Test content")
+            move_result = session.file_system.move_file("/tmp/original.txt", "/tmp/moved.txt")
+            read_result = session.file_system.read_file("/tmp/moved.txt")
+            session.delete()
+            ```
         """
         args = {"source": source, "destination": destination}
         try:
             result = self.session.call_mcp_tool("move_file", args)
-            logger.debug(f"📥 move_file response: {result}")
+            _logger.debug(f"📥 move_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -1107,9 +1206,9 @@ class FileSystem(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
             if result.success:
                 return FileContentResult(
                     request_id=result.request_id,
@@ -1142,6 +1241,17 @@ class FileSystem(BaseService):
             MultipleFileContentResult: Result object containing a dictionary mapping
                 file paths to contents,
             and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.file_system.write_file("/tmp/file1.txt", "Content of file 1")
+            session.file_system.write_file("/tmp/file2.txt", "Content of file 2")
+            session.file_system.write_file("/tmp/file3.txt", "Content of file 3")
+            paths = ["/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt"]
+            read_result = session.file_system.read_multiple_files(paths)
+            session.delete()
+            ```
         """
 
         def parse_multiple_files_response(text: str) -> Dict[str, str]:
@@ -1205,9 +1315,9 @@ class FileSystem(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
-                logger.debug(f"📥 Response: {result}")
+                _logger.debug(f"📥 Response: {result}")
 
             if result.success:
                 files_content = parse_multiple_files_response(result.data)
@@ -1245,12 +1355,22 @@ class FileSystem(BaseService):
 
         Args:
             path: The base directory path to search in.
-            pattern: The glob pattern to search for.
+            pattern: The pattern string to match against file names (substring match).
             exclude_patterns: Optional list of patterns to exclude from the search.
 
         Returns:
             FileSearchResult: Result object containing matching file paths and error
                 message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            session.file_system.write_file("/tmp/test/test_file1.py", "print('hello')")
+            session.file_system.write_file("/tmp/test/test_file2.py", "print('world')")
+            session.file_system.write_file("/tmp/test/other.txt", "text content")
+            search_result = session.file_system.search_files("/tmp/test", "test_")
+            session.delete()
+            ```
         """
         args = {"path": path, "pattern": pattern}
         if exclude_patterns:
@@ -1258,7 +1378,7 @@ class FileSystem(BaseService):
 
         try:
             result = self.session.call_mcp_tool("search_files", args)
-            logger.debug(f"📥 search_files response: {result}")
+            _logger.debug(f"📥 search_files response: {result}")
 
             if result.success:
                 matching_files = result.data.strip().split("\n") if result.data else []
@@ -1316,7 +1436,7 @@ class FileSystem(BaseService):
         args = {"path": path, "content": content, "mode": mode}
         try:
             result = self.session.call_mcp_tool("write_file", args)
-            logger.debug(f"📥 write_file response: {result}")
+            _logger.debug(f"📥 write_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -1339,11 +1459,34 @@ class FileSystem(BaseService):
         Read the contents of a file. Automatically handles large files by chunking.
 
         Args:
-            path: The path of the file to read.
+            path (str): The path of the file to read.
 
         Returns:
-            FileContentResult: Result object containing file content and error message
-                if any.
+            FileContentResult: Result object containing file content and error message if any.
+                - success (bool): True if the operation succeeded
+                - content (str): The file content (if success is True)
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            FileError: If the file does not exist or is a directory.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
+            read_result = session.file_system.read_file("/tmp/test.txt")
+            print(read_result.content)
+            session.delete()
+            ```
+
+        Note:
+            - Automatically handles large files by reading in chunks (default 50KB per chunk)
+            - Returns empty string for empty files
+            - Returns error if path is a directory
+
+        See Also:
+            FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
         """
         # Use default chunk size
         chunk_size = self.DEFAULT_CHUNK_SIZE
@@ -1384,7 +1527,7 @@ class FileSystem(BaseService):
             while offset < file_size:
                 length = min(chunk_size, file_size - offset)
                 chunk_result = self._read_file_chunk(path, offset, length)
-                log_operation_start(
+                _log_operation_start(
                     f"ReadLargeFile chunk {chunk_count + 1}",
                     f"{length} bytes at offset {offset}/{file_size}"
                 )
@@ -1418,18 +1561,44 @@ class FileSystem(BaseService):
         Write content to a file. Automatically handles large files by chunking.
 
         Args:
-            path: The path of the file to write.
-            content: The content to write to the file.
-            mode: The write mode ("overwrite" or "append").
+            path (str): The path of the file to write.
+            content (str): The content to write to the file.
+            mode (str, optional): The write mode. Defaults to "overwrite".
+                - "overwrite": Replace file content
+                - "append": Append to existing content
 
         Returns:
-            BoolResult: Result object containing success status and error message if
-                any.
+            BoolResult: Result object containing success status and error message if any.
+                - success (bool): True if the operation succeeded
+                - data (bool): True if the file was written successfully
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+
+        Raises:
+            FileError: If the write operation fails.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
+            append_result = session.file_system.write_file("/tmp/test.txt", "\nNew line", mode="append")
+            read_result = session.file_system.read_file("/tmp/test.txt")
+            session.delete()
+            ```
+
+        Note:
+            - Automatically handles large files by writing in chunks (default 50KB per chunk)
+            - Creates parent directories if they don't exist
+            - In "overwrite" mode, replaces the entire file content
+            - In "append" mode, adds content to the end of the file
+
+        See Also:
+            FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
         """
         # Use default chunk size
         chunk_size = self.DEFAULT_CHUNK_SIZE
         content_len = len(content)
-        log_operation_start(
+        _log_operation_start(
             f"WriteLargeFile to {path}",
             f"total size: {content_len} bytes, chunk size: {chunk_size} bytes"
         )
@@ -1479,9 +1648,9 @@ class FileSystem(BaseService):
     ) -> UploadResult:
         """
         Upload a file from local to remote path using pre-signed URLs.
-        
+
         This is a synchronous wrapper around the async FileTransfer.upload method.
-        
+
         Args:
             local_path: Local file path to upload
             remote_path: Remote file path to upload to
@@ -1490,9 +1659,17 @@ class FileSystem(BaseService):
             wait_timeout: Timeout for waiting for sync completion
             poll_interval: Interval between polling for sync completion
             progress_cb: Callback for upload progress updates
-            
+
         Returns:
             UploadResult: Result of the upload operation
+
+        Example:
+            ```python
+            params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
+            session = agent_bay.create(params).session
+            upload_result = session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
+            session.delete()
+            ```
         """ 
         try:
             file_transfer = self._ensure_file_transfer()
@@ -1518,9 +1695,9 @@ class FileSystem(BaseService):
                         # Delete the uploaded file from OSS
                         delete_result = self.session.agent_bay.context.delete_file(context_id, remote_path)
                         if not delete_result.success:
-                            logger.warning(f"Failed to delete uploaded file from OSS: {delete_result.error_message}")
+                            _logger.warning(f"Failed to delete uploaded file from OSS: {delete_result.error_message}")
                     except Exception as delete_error:
-                        logger.warning(f"Error deleting uploaded file from OSS: {delete_error}")
+                        _logger.warning(f"Error deleting uploaded file from OSS: {delete_error}")
             return result
         except Exception as e:
             return UploadResult(
@@ -1547,9 +1724,9 @@ class FileSystem(BaseService):
     ) -> DownloadResult:
         """
         Download a file from remote path to local path using pre-signed URLs.
-        
+
         This is a synchronous wrapper around the async FileTransfer.download method.
-        
+
         Args:
             remote_path: Remote file path to download from
             local_path: Local file path to download to
@@ -1558,9 +1735,17 @@ class FileSystem(BaseService):
             wait_timeout: Timeout for waiting for sync completion
             poll_interval: Interval between polling for sync completion
             progress_cb: Callback for download progress updates
-            
+
         Returns:
             DownloadResult: Result of the download operation
+
+        Example:
+            ```python
+            params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
+            session = agent_bay.create(params).session
+            download_result = session.file_system.download_file("/workspace/file.txt", "/local/file.txt")
+            session.delete()
+            ```
         """
             
         try:
@@ -1587,9 +1772,9 @@ class FileSystem(BaseService):
                         # Delete the downloaded file from OSS
                         delete_result = self.session.agent_bay.context.delete_file(context_id, remote_path)
                         if not delete_result.success:
-                            logger.warning(f"Failed to delete downloaded file from OSS: {delete_result.error_message}")
+                            _logger.warning(f"Failed to delete downloaded file from OSS: {delete_result.error_message}")
                     except Exception as delete_error:
-                        logger.warning(f"Error deleting downloaded file from OSS: {delete_error}")
+                        _logger.warning(f"Error deleting downloaded file from OSS: {delete_error}")
             return result
         except Exception as e:
             return DownloadResult(
@@ -1632,7 +1817,7 @@ class FileSystem(BaseService):
                 if isinstance(change_data, list):
                     for event_dict in change_data:
                         if isinstance(event_dict, dict):
-                            event = FileChangeEvent.from_dict(event_dict)
+                            event = FileChangeEvent._from_dict(event_dict)
                             events.append(event)
                 else:
                     print(f"Warning: Expected list but got {type(change_data)}")
@@ -1701,6 +1886,19 @@ class FileSystem(BaseService):
         Returns:
             threading.Thread: The monitoring thread. Call thread.start() to begin monitoring.
                 Use the thread's stop_event attribute to stop monitoring.
+
+        Example:
+            ```python
+            def on_changes(events):
+                print(f"Detected {len(events)} changes")
+            session = agent_bay.create().session
+            session.file_system.create_directory("/tmp/watch_test")
+            monitor_thread = session.file_system.watch_directory("/tmp/watch_test", on_changes)
+            monitor_thread.start()
+            session.file_system.write_file("/tmp/watch_test/test1.txt", "content 1")
+            session.file_system.write_file("/tmp/watch_test/test2.txt", "content 2")
+            session.delete()
+            ```
         """
 
         def _monitor_directory():

@@ -1,217 +1,249 @@
-# Go Logging Configuration
+# Logging API Reference
 
-## Overview
+## 🚀 Related Tutorial
 
-The Go SDK provides simple and efficient logging with support for multiple log levels, automatic sensitive data masking, and color detection for terminal output.
+- [First Session Tutorial](../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
 
-## Setting Log Level
-
-### Priority System (Highest to Lowest)
-
-1. **Code-level setup** - `agentbay.SetLogLevel()` can be called at any time
-2. **Environment variables** - `AGENTBAY_LOG_LEVEL`
-3. **.env file** - Automatically loaded from current directory or parent directories
-4. **Default values** - INFO level
-
-### Method 1: Environment Variable
-
-**Option A: Using .env File (Recommended)**
-
-Create a `.env` file in your project root:
-
-```
-# .env file
-AGENTBAY_LOG_LEVEL=DEBUG
-```
-
-The SDK automatically searches for and loads `.env` files from:
-- Current working directory
-- Parent directories (recursive search up to root)
-- Git repository root (if found)
-
-**Option B: Command Line Environment Variable**
-
-Set before running your program:
-
-```bash
-export AGENTBAY_LOG_LEVEL=DEBUG
-go run main.go
-```
-
-### Method 2: Code-Level Setup (Can be done anytime)
-
-Set in your code - this overrides environment variables:
+## Type LoggerConfig
 
 ```go
-import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
-// Set in your code - has priority over environment variable
-agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-
-// Check current level
-currentLevel := agentbay.GetLogLevel()
+type LoggerConfig struct {
+	Level		string
+	LogFile		string
+	MaxFileSize	string
+	EnableConsole	*bool
+}
 ```
 
-**Important**: `SetLogLevel()` can be called at any time and will take priority over environment variables.
+LoggerConfig holds configuration for file logging
 
-## Log Levels
-
-| Constant | Level | Use Case |
-|----------|-------|----------|
-| **LOG_DEBUG** | 0 | Development - see everything |
-| **LOG_INFO** | 1 | Default - important events |
-| **LOG_WARN** | 2 | Issues but not failures |
-| **LOG_ERROR** | 3 | Only failures |
-
-Filter rule: **Only logs at your level or HIGHER severity are shown**.
-
-## API Reference
+## Functions
 
 ### SetLogLevel
 
 ```go
-agentbay.SetLogLevel(level int)
+func SetLogLevel(level int)
 ```
 
-Set the global log level. Valid levels: LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR.
+SetLogLevel sets the global log level
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see all messages
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Change to INFO level to reduce verbosity
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+
+	// Continue with your operations
+
+}
+```
 
 ### GetLogLevel
 
 ```go
-level := agentbay.GetLogLevel() // Returns int
+func GetLogLevel() int
 ```
 
-Get the current log level.
+GetLogLevel returns the current global log level
 
-## File Logging
+**Example:**
 
-The Go SDK supports logging to files with automatic rotation.
-
-### Basic File Logging
-
-```go
-import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
-// Configure file logging
-agentbay.SetupLogger(agentbay.LoggerConfig{
-    Level:   "DEBUG",
-    LogFile: "/path/to/app.log",
-})
-```
-
-### File Rotation
-
-Configure automatic log file rotation when the file reaches a certain size:
-
-```go
-import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
-agentbay.SetupLogger(agentbay.LoggerConfig{
-    Level:       "DEBUG",
-    LogFile:     "/var/log/myapp.log",
-    MaxFileSize: "100 MB",  // Rotate when file reaches 100 MB
-})
-```
-
-Supported size units:
-- `KB` - Kilobytes
-- `MB` - Megabytes (default)
-- `GB` - Gigabytes
-
-Default max file size is 10 MB if not specified. When rotation occurs, the current log file is renamed to `<filename>.1`.
-
-### Console and File Logging
-
-You can control whether logs are written to console and/or file:
-
-```go
-import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
-func boolPtr(b bool) *bool {
-    return &b
-}
-
-// Log to file only (disable console output)
-agentbay.SetupLogger(agentbay.LoggerConfig{
-    Level:         "DEBUG",
-    LogFile:       "/var/log/app.log",
-    EnableConsole: boolPtr(false),
-})
-
-// Log to both console and file (default)
-agentbay.SetupLogger(agentbay.LoggerConfig{
-    Level:         "DEBUG",
-    LogFile:       "/var/log/app.log",
-    EnableConsole: boolPtr(true),
-})
-```
-
-### LoggerConfig Options
-
-```go
-type LoggerConfig struct {
-    Level         string  // Log level: "DEBUG", "INFO", "WARN", "ERROR"
-    LogFile       string  // Path to log file (empty = no file logging)
-    MaxFileSize   string  // Max file size before rotation (e.g., "10 MB", "100 MB", "1 GB")
-    EnableConsole *bool   // Enable/disable console output (nil = use default true)
-}
-```
-
-## Sensitive Data Masking
-
-The SDK automatically masks sensitive information:
-
-```go
-data := map[string]interface{}{
-    "api_key": "sk_live_1234567890",
-    "password": "secret123",
-    "auth_token": "Bearer xyz",
-}
-
-masked := agentbay.MaskSensitiveData(data)
-// Result: api_key masked, password masked, auth_token masked
-```
-
-Automatically masked fields:
-- api_key, apikey, api-key
-- password, passwd, pwd
-- token, access_token, auth_token
-- secret, private_key
-- authorization
-
-## Quick Reference
-
-**Development (see everything)**:
-```bash
-export AGENTBAY_LOG_LEVEL=DEBUG
-go run main.go
-```
-
-**Testing (important events only)**:
-```bash
-go run main.go
-# Uses default INFO level
-```
-
-**Production (problems only)**:
-```bash
-export AGENTBAY_LOG_LEVEL=WARN
-go run main.go
-```
-
-**Runtime control**:
 ```go
 package main
-
 import (
-    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"fmt"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-    // Set to DEBUG initially
-    agentbay.SetLogLevel(agentbay.LOG_DEBUG)
 
-    // Later in the program
-    agentbay.SetLogLevel(agentbay.LOG_WARN)
+	// Set log level to DEBUG
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+
+	// Check current level
+
+	currentLevel := agentbay.GetLogLevel()
+	fmt.Printf("Current log level: %d\n", currentLevel)
 }
 ```
+
+### SetupLogger
+
+```go
+func SetupLogger(config LoggerConfig)
+```
+
+SetupLogger configures the logger with file logging support
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Configure file logging with rotation
+
+	agentbay.SetupLogger(agentbay.LoggerConfig{
+		Level:       "DEBUG",
+		LogFile:     "/tmp/agentbay.log",
+		MaxFileSize: "100 MB",
+	})
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// All logs will be written to both console and file
+
+}
+```
+
+### LogDebug
+
+```go
+func LogDebug(message string)
+```
+
+LogDebug logs a debug message
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to DEBUG to see debug messages
+
+	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Log debug messages
+
+	agentbay.LogDebug("Debugging session creation process")
+
+	// Output: 🐛 Debugging session creation process
+
+}
+```
+
+### LogInfo
+
+```go
+func LogInfo(message string)
+```
+
+LogInfo logs an informational message
+
+**Example:**
+
+```go
+package main
+import (
+	"fmt"
+	"os"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+func main() {
+
+	// Set log level to INFO or DEBUG to see info messages
+
+	agentbay.SetLogLevel(agentbay.LOG_INFO)
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := client.Create(nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	session := result.Session
+	defer session.Delete()
+
+	// Log informational messages
+
+	agentbay.LogInfo("Session created successfully")
+
+	// Output: ℹ️  Session created successfully
+
+}
+```
+
+## Constants and Variables
+
+### LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR
+
+```go
+const (
+	LOG_DEBUG	= iota
+	LOG_INFO
+	LOG_WARN
+	LOG_ERROR
+)
+```
+
+Log level constants
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [Context API Reference](context.md)
+
+---
+
+*Documentation generated automatically from Go source code.*

@@ -87,6 +87,10 @@ Session is ready for use
 
 Cleaning up...
 Session session-xxxxxxxxxxxxx deleted successfully
+
+Attempting to get the deleted session...
+Expected behavior: Cannot retrieve deleted session
+Error message: Failed to get session: session not found or has been deleted
 ```
 
 ## Notes
@@ -95,6 +99,7 @@ Session session-xxxxxxxxxxxxx deleted successfully
 - The get API internally calls the GetSession API endpoint
 - The returned session object can be used for all session operations (commands, files, etc.)
 - Always clean up sessions when done to avoid resource waste
+- Attempting to get a deleted session will return an error, demonstrating proper lifecycle management
 
 ## Error Handling
 
@@ -112,5 +117,14 @@ The `get` method returns a `SessionResult` object with error information:
    result = agentbay.get("non-existent-session-id")
    if not result.success:
        print(f"Error: {result.error_message}")  # "Failed to get session..."
+   ```
+
+3. **Deleted session**: Result will have `success=False`
+   ```python
+   # After deleting a session
+   session.delete()
+   result = agentbay.get(session_id)
+   if not result.success:
+       print(f"Error: {result.error_message}")  # "Failed to get session: session not found or has been deleted"
    ```
 

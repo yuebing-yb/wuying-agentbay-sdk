@@ -6,7 +6,7 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import patch, mock_open
 
-from agentbay.config import load_config, default_config
+from agentbay.config import _load_config, _default_config
 from agentbay import Config
 from pathlib import Path
 
@@ -27,7 +27,7 @@ class LoadConfigTestCase(unittest.TestCase):
             endpoint="custom-endpoint",
             timeout_ms=5000,
         )
-        result = load_config(custom_cfg)
+        result = _load_config(custom_cfg)
 
         self.assertEqual(result["endpoint"], "custom-endpoint")
         self.assertEqual(result["timeout_ms"], 5000)
@@ -47,7 +47,7 @@ class LoadConfigTestCase(unittest.TestCase):
         os.environ.pop("AGENTBAY_TIMEOUT_MS", None)
 
         os.chdir(self.test_dir.name)
-        result = load_config(None)
+        result = _load_config(None)
 
         self.assertEqual(result["endpoint"], "env-endpoint")
         self.assertEqual(result["timeout_ms"], 10000)
@@ -59,22 +59,22 @@ class LoadConfigTestCase(unittest.TestCase):
         os.environ["AGENTBAY_ENDPOINT"] = "sys-endpoint"
         os.environ["AGENTBAY_TIMEOUT_MS"] = "15000"
 
-        result = load_config(None)
+        result = _load_config(None)
 
         self.assertEqual(result["endpoint"], "sys-endpoint")
         self.assertEqual(result["timeout_ms"], 15000)
 
     @patch("pathlib.Path.is_file", return_value=False)
-    def test_use_default_config_when_no_source_provided(self, mock_is_file):
+    def test_use__default_config_when_no_source_provided(self, mock_is_file):
         """Test using default values when no configuration source is provided"""
         # Clear all related environment variables
         os.chdir(self.test_dir.name)
         os.environ.pop("AGENTBAY_ENDPOINT", None)
         os.environ.pop("AGENTBAY_TIMEOUT_MS", None)
 
-        result = load_config(None)
+        result = _load_config(None)
 
-        default = default_config()
+        default = _default_config()
         self.assertEqual(result["endpoint"], default["endpoint"])
         self.assertEqual(result["timeout_ms"], default["timeout_ms"])
 
@@ -94,26 +94,26 @@ class LoadConfigTestCase(unittest.TestCase):
         os.environ["AGENTBAY_TIMEOUT_MS"] = "15000"
 
         # Default configuration
-        default = default_config()
+        default = _default_config()
 
         # 1. Test that explicitly passed configuration has highest priority
         custom_cfg = Config(
             endpoint="explicit-endpoint",
             timeout_ms=2000,
         )
-        result = load_config(custom_cfg)
+        result = _load_config(custom_cfg)
         self.assertEqual(result["endpoint"], "explicit-endpoint")
         self.assertEqual(result["timeout_ms"], 2000)
 
         # 2. When explicit configuration is None, should use environment variables
-        result = load_config(None)
+        result = _load_config(None)
         self.assertEqual(result["endpoint"], "sys-endpoint")
         self.assertEqual(result["timeout_ms"], 15000)
 
         # 3. After clearing environment variables, should use .env file
         os.environ.pop("AGENTBAY_ENDPOINT")
         os.environ.pop("AGENTBAY_TIMEOUT_MS")
-        result = load_config(None)
+        result = _load_config(None)
         self.assertEqual(result["endpoint"], "env-endpoint")
         self.assertEqual(result["timeout_ms"], 10000)
 

@@ -3,8 +3,8 @@ from agentbay.exceptions import AgentBayError, CommandError
 from agentbay.model import ApiResponse
 from agentbay.logger import get_logger
 
-# Initialize logger for this module
-logger = get_logger("code")
+# Initialize _logger for this module
+_logger = get_logger("code")
 
 
 class CodeExecutionResult(ApiResponse):
@@ -73,6 +73,41 @@ class Code(BaseService):
         Raises:
             CommandError: If the code execution fails or if an unsupported language is
                 specified.
+
+        Important:
+            The `run_code` method requires a session created with the `code_latest`
+            image to function properly. If you encounter errors indicating that the
+            tool is not found, make sure to create your session with
+            `image_id="code_latest"` in the `CreateSessionParams`.
+
+        Example:
+            Execute Python and JavaScript code in a code execution environment::
+
+                from agentbay import AgentBay
+                from agentbay.session_params import CreateSessionParams
+
+                agent_bay = AgentBay(api_key="your_api_key")
+
+                def execute_python_code():
+                    try:
+                        # Create a session with code_latest image
+                        params = CreateSessionParams(image_id="code_latest")
+                        result = agent_bay.create(params)
+                        if result.success:
+                            session = result.session
+
+                            # Execute Python code
+                            python_code = "print('Hello from Python!')\nresult = 2 + 3\nprint(f'Result: {result}')"
+
+                            code_result = session.code.run_code(python_code, "python")
+                            if code_result.success:
+                                print(f"Python code output: {code_result.result}")
+
+                            session.delete()
+                    except Exception as e:
+                        print(f"Error: {e}")
+
+                execute_python_code()
         """
         try:
             # Validate language
@@ -86,7 +121,7 @@ class Code(BaseService):
 
             args = {"code": code, "language": language, "timeout_s": timeout_s}
             result = self.session.call_mcp_tool("run_code", args)
-            logger.debug(f"Run code response: {result}")
+            _logger.debug(f"Run code response: {result}")
 
             if result.success:
                 return CodeExecutionResult(

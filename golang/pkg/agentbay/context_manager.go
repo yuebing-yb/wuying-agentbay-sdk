@@ -66,6 +66,43 @@ func NewContextManager(session interface {
 }
 
 // Info retrieves context information for the current session.
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Get context synchronization information
+//		infoResult, err := session.Context.Info()
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Printf("Context status data count: %d\n", len(infoResult.ContextStatusData))
+//		for _, item := range infoResult.ContextStatusData {
+//			fmt.Printf("Context %s: Status=%s, Path=%s\n", item.ContextId, item.Status, item.Path)
+//		}
+//
+//		// Output: Context status data count: 0
+//
+//		session.Delete()
+//	}
 func (cm *ContextManager) Info() (*ContextInfoResult, error) {
 	return cm.InfoWithParams("", "", "")
 }
@@ -99,13 +136,13 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 	if request.TaskType != nil {
 		requestInfo += fmt.Sprintf(", TaskType=%s", *request.TaskType)
 	}
-	LogAPICall("GetContextInfo", requestInfo)
+	logAPICall("GetContextInfo", requestInfo)
 
 	response, err := cm.Session.GetClient().GetContextInfo(request)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("GetContextInfo", err.Error(), true)
+		logOperationError("GetContextInfo", err.Error(), true)
 		return nil, fmt.Errorf("failed to get context info: %w", err)
 	}
 
@@ -121,7 +158,7 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 				message = "Unknown error"
 			}
 			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-			LogAPIResponseWithDetails("GetContextInfo", requestID, false, nil, string(respJSON))
+			logAPIResponseWithDetails("GetContextInfo", requestID, false, nil, string(respJSON))
 			return &ContextInfoResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -174,7 +211,7 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 	}
 	if response != nil && response.Body != nil {
 		respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("GetContextInfo", requestID, true, keyFields, string(respJSON))
+		logAPIResponseWithDetails("GetContextInfo", requestID, true, keyFields, string(respJSON))
 	}
 
 	return &ContextInfoResult{
@@ -195,6 +232,114 @@ func (cm *ContextManager) Sync() (*ContextSyncResult, error) {
 // SyncWithCallback synchronizes the context with callback support (dual-mode).
 // If callback is provided, it runs in background and calls callback when complete.
 // If callback is nil, it waits for completion before returning.
+//
+// Example (Synchronous mode - waits for completion):
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Get or create a context
+//		contextResult, err := client.Context.Get("my-context", true)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Synchronous mode: callback is nil, so it waits for completion
+//		syncResult, err := session.Context.SyncWithCallback(
+//			contextResult.ContextID,
+//			"/mnt/persistent",
+//			"upload",
+//			nil,  // No callback - synchronous mode
+//			10,   // maxRetries
+//			1000, // retryInterval in milliseconds
+//		)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Printf("Sync completed - Success: %v\n", syncResult.Success)
+//
+//		// Output: No sync tasks found
+//		// Output: Sync completed - Success: true
+//
+//		session.Delete()
+//	}
+//
+// Example (Asynchronous mode - with callback):
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"time"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Get or create a context
+//		contextResult, err := client.Context.Get("my-context", true)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Asynchronous mode: with callback, returns immediately
+//		syncResult, err := session.Context.SyncWithCallback(
+//			contextResult.ContextID,
+//			"/mnt/persistent",
+//			"upload",
+//			func(success bool) {
+//				if success {
+//					fmt.Println("Context sync completed successfully")
+//				} else {
+//					fmt.Println("Context sync failed or timed out")
+//				}
+//			},
+//			150,  // maxRetries
+//			1500, // retryInterval in milliseconds
+//		)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Printf("Sync triggered - Success: %v\n", syncResult.Success)
+//
+//		// Wait for callback to complete
+//		time.Sleep(5 * time.Second)
+//
+//		// Output: Sync triggered - Success: true
+//		// Output: Context sync completed successfully
+//
+//		session.Delete()
+//	}
 func (cm *ContextManager) SyncWithCallback(contextId, path, mode string, callback SyncCallback, maxRetries int, retryInterval int) (*ContextSyncResult, error) {
 	// First, trigger the sync operation
 	syncResult, err := cm.SyncWithParams(contextId, path, mode)
@@ -256,13 +401,13 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 	if request.Mode != nil {
 		requestInfo += fmt.Sprintf(", Mode=%s", *request.Mode)
 	}
-	LogAPICall("SyncContext", requestInfo)
+	logAPICall("SyncContext", requestInfo)
 
 	response, err := cm.Session.GetClient().SyncContext(request)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("SyncContext", err.Error(), true)
+		logOperationError("SyncContext", err.Error(), true)
 		return nil, fmt.Errorf("failed to sync context: %w", err)
 	}
 
@@ -278,7 +423,7 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 				message = "Unknown error"
 			}
 			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-			LogAPIResponseWithDetails("SyncContext", requestID, false, nil, string(respJSON))
+			logAPIResponseWithDetails("SyncContext", requestID, false, nil, string(respJSON))
 			return &ContextSyncResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -306,7 +451,7 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 	}
 	if response != nil && response.Body != nil {
 		respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("SyncContext", requestID, success, keyFields, string(respJSON))
+		logAPIResponseWithDetails("SyncContext", requestID, success, keyFields, string(respJSON))
 	}
 
 	return &ContextSyncResult{

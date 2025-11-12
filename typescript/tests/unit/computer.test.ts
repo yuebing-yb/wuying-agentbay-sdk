@@ -353,86 +353,130 @@ describe('Computer', () => {
   });
 
   describe('Application Management Operations', () => {
-    test('getInstalledApps should delegate to Application module', async () => {
+    test('getInstalledApps should call MCP tool', async () => {
       // Arrange
       const mockResult = {
         success: true,
         requestId: 'test-123',
-        data: [
+        data: JSON.stringify([
           { name: 'App1', start_cmd: 'app1.exe' },
           { name: 'App2', start_cmd: 'app2.exe' }
-        ]
+        ])
       };
 
-      // Mock dynamic import
-      jest.mock('../../src/application/application', () => ({
-        Application: class MockApplication {
-          getInstalledApps() {
-            return Promise.resolve(mockResult);
-          }
-        }
-      }), { virtual: true });
+      mockSession.callMcpTool = jest.fn().mockResolvedValue(mockResult);
 
       // Act
       const result = await computer.getInstalledApps();
 
       // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_installed_apps', {
+        start_menu: true,
+        desktop: false,
+        ignore_system_apps: true
+      });
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(2);
       expect(result.data[0].name).toBe('App1');
     });
 
-    test('startApp should delegate to Application module', async () => {
+    test('startApp should call MCP tool', async () => {
       // Arrange
       const mockResult = {
         success: true,
         requestId: 'test-123',
-        data: [{ pname: 'app1', pid: 1234 }]
+        data: JSON.stringify([{ pname: 'app1', pid: 1234 }])
       };
 
-      // Act - Create a mock and test
-      // Since we're delegating to Application, we verify the method exists and is callable
-      expect(typeof computer.startApp).toBe('function');
+      mockSession.callMcpTool = jest.fn().mockResolvedValue(mockResult);
+
+      // Act
+      const result = await computer.startApp('app1.exe');
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('start_app', {
+        start_cmd: 'app1.exe'
+      });
+      expect(result.success).toBe(true);
     });
 
-    test('stopAppByPName should delegate to Application module', async () => {
-      // Arrange - verify method exists
-      expect(typeof computer.stopAppByPName).toBe('function');
+    test('stopAppByPName should call MCP tool', async () => {
+      // Arrange
+      const mockResult = {
+        success: true,
+        requestId: 'test-123',
+        data: JSON.stringify({ success: true })
+      };
 
-      // Act & Assert
-      // The method delegates to Application module, so we verify it's callable with correct signature
-      const testFn = computer.stopAppByPName.bind(computer);
-      expect(testFn).toBeDefined();
+      mockSession.callMcpTool = jest.fn().mockResolvedValue(mockResult);
+
+      // Act
+      const result = await computer.stopAppByPName('app1');
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('stop_app_by_pname', {
+        pname: 'app1'
+      });
+      expect(result.success).toBe(true);
     });
 
-    test('stopAppByPID should delegate to Application module', async () => {
-      // Arrange - verify method exists
-      expect(typeof computer.stopAppByPID).toBe('function');
+    test('stopAppByPID should call MCP tool', async () => {
+      // Arrange
+      const mockResult = {
+        success: true,
+        requestId: 'test-123',
+        data: JSON.stringify({ success: true })
+      };
 
-      // Act & Assert
-      // The method delegates to Application module, so we verify it's callable
-      const testFn = computer.stopAppByPID.bind(computer);
-      expect(testFn).toBeDefined();
+      mockSession.callMcpTool = jest.fn().mockResolvedValue(mockResult);
+
+      // Act
+      const result = await computer.stopAppByPID(1234);
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('stop_app_by_pid', {
+        pid: 1234
+      });
+      expect(result.success).toBe(true);
     });
 
-    test('stopAppByCmd should delegate to Application module', async () => {
-      // Arrange - verify method exists
-      expect(typeof computer.stopAppByCmd).toBe('function');
+    test('stopAppByCmd should call MCP tool', async () => {
+      // Arrange
+      const mockResult = {
+        success: true,
+        requestId: 'test-123',
+        data: JSON.stringify({ success: true })
+      };
 
-      // Act & Assert
-      // The method delegates to Application module, so we verify it's callable
-      const testFn = computer.stopAppByCmd.bind(computer);
-      expect(testFn).toBeDefined();
+      mockSession.callMcpTool = jest.fn().mockResolvedValue(mockResult);
+
+      // Act
+      const result = await computer.stopAppByCmd('app1.exe');
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('stop_app_by_cmd', {
+        stop_cmd: 'app1.exe'
+      });
+      expect(result.success).toBe(true);
     });
 
-    test('listVisibleApps should delegate to Application module', async () => {
-      // Arrange - verify method exists
-      expect(typeof computer.listVisibleApps).toBe('function');
+    test('listVisibleApps should call MCP tool', async () => {
+      // Arrange
+      const mockResult = {
+        success: true,
+        requestId: 'test-123',
+        data: JSON.stringify([{ pname: 'app1', pid: 1234 }])
+      };
 
-      // Act & Assert
-      // The method delegates to Application module, so we verify it's callable
-      const testFn = computer.listVisibleApps.bind(computer);
-      expect(testFn).toBeDefined();
+      mockSession.callMcpTool = jest.fn().mockResolvedValue(mockResult);
+
+      // Act
+      const result = await computer.listVisibleApps();
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('list_visible_apps', {});
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
     });
 
     test('application management methods should have correct signatures', async () => {

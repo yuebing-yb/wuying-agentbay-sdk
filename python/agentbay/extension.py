@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from agentbay.context import ContextService
 
 # Initialize logger for this module
-logger = get_logger("extension")
+_logger = get_logger("extension")
 
 # ==============================================================================
 # Constants
@@ -76,9 +76,16 @@ class ExtensionOption:
     def validate(self) -> bool:
         """
         Validate the extension option configuration.
-        
+
         Returns:
             bool: True if configuration is valid, False otherwise.
+
+        Example:
+            ```python
+            ext_option = ExtensionOption("ctx-123", ["ext1.zip", "ext2.zip"])
+            is_valid = ext_option.validate()
+            print(f"Valid: {is_valid}")
+            ```
         """
         try:
             # Check context_id
@@ -165,7 +172,7 @@ class ExtensionsService:
         if not context_id or context_id.strip() == "":
             import time
             context_id = f"extensions-{int(time.time())}"
-            logger.info(f"Generated default context name: {context_id}")
+            _logger.info(f"Generated default context name: {context_id}")
         
         # Context doesn't exist, create it
         context_result = self.context_service.get(context_id, create=True)
@@ -211,6 +218,19 @@ class ExtensionsService:
         """
         Lists all available browser extensions within this context from the cloud.
         Uses the context service to list files under the extensions directory.
+
+        Returns:
+            List[Extension]: List of all extensions in the context.
+
+        Raises:
+            AgentBayError: If listing fails.
+
+        Example:
+            ```python
+            extensions_service = ExtensionsService(agent_bay, "my-extensions")
+            extensions = extensions_service.list()
+            print(f"Found {len(extensions)} extensions")
+            ```
         """
         try:
             # Use context service to list files in the extensions directory
@@ -238,7 +258,27 @@ class ExtensionsService:
             raise AgentBayError(f"An error occurred while listing browser extensions: {e}") from e
 
     def create(self, local_path: str) -> Extension:
-        """Uploads a new browser extension from a local path into the current context."""
+        """
+        Uploads a new browser extension from a local path into the current context.
+
+        Args:
+            local_path (str): Path to the local extension ZIP file.
+
+        Returns:
+            Extension: Extension object with generated ID and metadata.
+
+        Raises:
+            FileNotFoundError: If the local file doesn't exist.
+            ValueError: If the file format is not supported (only ZIP files allowed).
+            AgentBayError: If upload fails.
+
+        Example:
+            ```python
+            extensions_service = ExtensionsService(agent_bay, "my-extensions")
+            extension = extensions_service.create("/path/to/extension.zip")
+            print(f"Created extension: {extension.id}")
+            ```
+        """
         if not os.path.exists(local_path):
             raise FileNotFoundError(f"The specified local file was not found: {local_path}")
         
@@ -259,7 +299,28 @@ class ExtensionsService:
         return Extension(id=extension_id, name=extension_name)
 
     def update(self, extension_id: str, new_local_path: str) -> Extension:
-        """Updates an existing browser extension in the current context with a new file."""
+        """
+        Updates an existing browser extension in the current context with a new file.
+
+        Args:
+            extension_id (str): ID of the extension to update.
+            new_local_path (str): Path to the new extension ZIP file.
+
+        Returns:
+            Extension: Updated extension object.
+
+        Raises:
+            FileNotFoundError: If the new local file doesn't exist.
+            ValueError: If the extension ID doesn't exist in the context.
+            AgentBayError: If update fails.
+
+        Example:
+            ```python
+            extensions_service = ExtensionsService(agent_bay, "my-extensions")
+            updated = extensions_service.update("ext_abc123.zip", "/path/to/new_version.zip")
+            print(f"Updated extension: {updated.id}")
+            ```
+        """
         if not os.path.exists(new_local_path):
             raise FileNotFoundError(f"The specified new local file was not found: {new_local_path}")
 
@@ -292,19 +353,26 @@ class ExtensionsService:
                     return ext
             return None
         except Exception as e:
-            logger.error(f"An error occurred while getting extension info for '{extension_id}': {e}")
+            _logger.error(f"An error occurred while getting extension info for '{extension_id}': {e}")
             return None
 
     def cleanup(self) -> bool:
         """
         Cleans up the auto-created context if it was created by this service.
-        
+
         Returns:
             bool: True if cleanup was successful or not needed, False if cleanup failed.
-            
+
         Note:
             This method only works if the context was auto-created by this service.
             For existing contexts, no cleanup is performed.
+
+        Example:
+            ```python
+            extensions_service = ExtensionsService(agent_bay)
+            success = extensions_service.cleanup()
+            print(f"Cleanup success: {success}")
+            ```
         """
         if not self.auto_created:
             # Context was not auto-created by this service, no cleanup needed
@@ -313,17 +381,32 @@ class ExtensionsService:
         try:
             delete_result = self.context_service.delete(self.extension_context)
             if delete_result:
-                logger.info(f"Extension context deleted: {self.context_name} (ID: {self.context_id})")
+                _logger.info(f"Extension context deleted: {self.context_name} (ID: {self.context_id})")
                 return True
             else:
-                logger.warning(f"Failed to delete extension context: {self.context_name}")
+                _logger.warning(f"Failed to delete extension context: {self.context_name}")
                 return False
         except Exception as e:
-            logger.warning(f"Failed to delete extension context: {e}")
+            _logger.warning(f"Failed to delete extension context: {e}")
             return False
 
     def delete(self, extension_id: str) -> bool:
-        """Deletes a browser extension from the current context."""
+        """
+        Deletes a browser extension from the current context.
+
+        Args:
+            extension_id (str): ID of the extension to delete.
+
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+
+        Example:
+            ```python
+            extensions_service = ExtensionsService(agent_bay, "my-extensions")
+            success = extensions_service.delete("ext_abc123.zip")
+            print(f"Delete success: {success}")
+            ```
+        """
         remote_path = f"{EXTENSIONS_BASE_PATH}/{extension_id}"
         try:
             # Use context service to delete the file
@@ -331,7 +414,7 @@ class ExtensionsService:
             
             return delete_result.success
         except Exception as e:
-            logger.error(f"An error occurred while deleting browser extension '{extension_id}': {e}")
+            _logger.error(f"An error occurred while deleting browser extension '{extension_id}': {e}")
             return False
     
     def create_extension_option(self, extension_ids: List[str]) -> ExtensionOption:
@@ -351,23 +434,12 @@ class ExtensionsService:
         
         Raises:
             ValueError: If extension_ids is empty or invalid.
-            
+
         Example:
             ```python
-            # Create extensions
-            ext1 = extensions_service.create("/path/to/ext1.zip")
-            ext2 = extensions_service.create("/path/to/ext2.zip")
-            
-            # Create extension option for browser integration
-            ext_option = extensions_service.create_extension_option([ext1.id, ext2.id])
-            
-            # Use with BrowserContext
-            browser_context = BrowserContext(
-                context_id="browser_session",
-                auto_upload=True,
-                extension_context_id=ext_option.context_id,
-                extension_ids=ext_option.extension_ids
-            )
+            extensions_service = ExtensionsService(agent_bay, "my-extensions")
+            ext_option = extensions_service.create_extension_option(["ext1.zip", "ext2.zip"])
+            print(f"Extension option: {ext_option}")
             ```
         """
         return ExtensionOption(

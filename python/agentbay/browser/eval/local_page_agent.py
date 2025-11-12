@@ -11,8 +11,8 @@ from agentbay.api.base_service import OperationResult
 from agentbay.browser.browser_agent import BrowserAgent
 from agentbay.logger import get_logger
 
-# Use the AgentBay logger instead of the standard logger
-logger = get_logger("local_page_agent")
+# Use the AgentBay _logger instead of the standard _logger
+_logger = get_logger("local_page_agent")
 
 class LocalMCPClient:
     def __init__(self, server: str, command: str, args: list[str])-> None:
@@ -30,9 +30,9 @@ class LocalMCPClient:
             def thread_target() -> None:
                 async def _connect_and_list_tools() -> None:
                     success = False
-                    logger.info("Start connect to mcp server")
+                    _logger.info("Start connect to mcp server")
                     try:
-                        logger.debug(f"command = {self.command}, args = {self.args}")
+                        _logger.debug(f"command = {self.command}, args = {self.args}")
                         server_params = StdioServerParameters(command=self.command, args=self.args)
                         async with stdio_client(server_params) as (read_stream, write_stream):
                             async with ClientSession(read_stream, write_stream) as session:
@@ -41,16 +41,16 @@ class LocalMCPClient:
                                 self._loop = asyncio.get_running_loop()
 
                                 self.session = session
-                                logger.info("Initialize MCP client session")
+                                _logger.info("Initialize MCP client session")
                                 await self.session.initialize()
-                                logger.info("Client initialized. Listing available tools...")
+                                _logger.info("Client initialized. Listing available tools...")
                                 tools = await self.session.list_tools()
-                                logger.info(f"Tools: {tools}")
+                                _logger.info(f"Tools: {tools}")
                                 success = True
                                 promise.set_result(success)
                                 await self._interactive_loop()
                     except Exception as e:
-                        logger.error(f"Failed to connect to MCP server: {e}")
+                        _logger.error(f"Failed to connect to MCP server: {e}")
                         success = False
                         promise.set_result(success)
                 asyncio.run(_connect_and_list_tools())
@@ -72,7 +72,7 @@ class LocalMCPClient:
                 try:
                     tool_name, arguments, future = await asyncio.wait_for(self._tool_call_queue.get(), timeout=1.0)
                     try:
-                        logger.info(f"Call tool {tool_name} with arguments {arguments}")
+                        _logger.info(f"Call tool {tool_name} with arguments {arguments}")
                         if self.session is not None:
                             response = await self.session.call_tool(tool_name, arguments)
                             is_successful = not response.isError
@@ -91,10 +91,10 @@ class LocalMCPClient:
                                         break
                                 if is_successful:
                                     mcp_response.data = text_content
-                                    logger.info(f"MCP tool text response (data): {str(text_content)[:2000]}")
+                                    _logger.info(f"MCP tool text response (data): {str(text_content)[:2000]}")
                                 else:
                                     mcp_response.error_message = text_content
-                                    logger.info(f"MCP tool text response (error): {str(text_content)[:2000]}")
+                                    _logger.info(f"MCP tool text response (error): {str(text_content)[:2000]}")
 
                             if asyncio.isfuture(future):
                                 fut_loop = future.get_loop()
@@ -164,7 +164,7 @@ class LocalBrowser(Browser):
             def thread_target() -> None:
                 async def _launch_local_browser() -> None:
                     success = False
-                    logger.info("Start launching local browser")
+                    _logger.info("Start launching local browser")
                     try:
                         async with async_playwright() as p:
                             # Define CDP port
@@ -186,12 +186,12 @@ class LocalBrowser(Browser):
                                 ],
                                 user_data_dir="/tmp/browser_user_data")
 
-                            logger.info("Local browser launched successfully:")
+                            _logger.info("Local browser launched successfully:")
                             success = True
                             promise.set_result(success)
                             await self._playwright_interactive_loop()
                     except Exception as e:
-                        logger.error(f"Failed to connect to browser: {e}")
+                        _logger.error(f"Failed to connect to browser: {e}")
                         success = False
                         promise.set_result(success)
                 asyncio.run(_launch_local_browser())

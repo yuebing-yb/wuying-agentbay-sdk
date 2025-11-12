@@ -346,7 +346,7 @@ main().catch(console.error);
 
 - [Browser Proxy Configuration](browser-proxies.md) - Configure proxy settings for browser sessions
 - [Browser Context](browser-context.md) - Browser context management for cookies and sessions
-- [Stealth Mode](stealth-mode.md) - Anti-detection techniques for web automation
+- [Browser Fingerprint](browser-fingerprint.md) - Simulate browser fingerprint feature
 - [Browser Use Overview](../README.md) - Complete browser automation features
 - [Session Management](../../common-features/basics/session-management.md) - Session lifecycle and configuration
 

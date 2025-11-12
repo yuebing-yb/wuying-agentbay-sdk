@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock
 import json
 
-from agentbay.config import BROWSER_DATA_PATH
+from agentbay.config import _BROWSER_DATA_PATH
 from agentbay.session_params import CreateSessionParams, BrowserContext
 from agentbay.agentbay import AgentBay
 
@@ -11,10 +11,10 @@ class TestBrowserContextConfig(unittest.TestCase):
     """Test browser context configuration and constant usage."""
 
     def test_browser_data_path_constant(self):
-        """Test that BROWSER_DATA_PATH constant is correctly defined."""
-        self.assertEqual(BROWSER_DATA_PATH, "/tmp/agentbay_browser")
-        self.assertIsInstance(BROWSER_DATA_PATH, str)
-        self.assertTrue(BROWSER_DATA_PATH.startswith("/"))
+        """Test that _BROWSER_DATA_PATH constant is correctly defined."""
+        self.assertEqual(_BROWSER_DATA_PATH, "/tmp/agentbay_browser")
+        self.assertIsInstance(_BROWSER_DATA_PATH, str)
+        self.assertTrue(_BROWSER_DATA_PATH.startswith("/"))
 
     def test_browser_context_creation(self):
         """Test BrowserContext creation with correct attributes."""
@@ -47,7 +47,7 @@ class TestBrowserContextConfig(unittest.TestCase):
         self.assertFalse(params.browser_context.auto_upload)
 
     def test_agentbay_create_with_browser_context_uses_constant(self):
-        """Test that AgentBay.create uses BROWSER_DATA_PATH constant when creating browser context sync."""
+        """Test that AgentBay.create uses _BROWSER_DATA_PATH constant when creating browser context sync."""
 
         agent_bay = AgentBay(api_key="test-api-key")
         

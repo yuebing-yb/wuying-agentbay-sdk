@@ -5,7 +5,7 @@ from agentbay.logger import get_logger
 import time, json
 
 # Initialize logger for this module
-logger = get_logger("agent")
+_logger = get_logger("agent")
 
 
 class QueryResult(ApiResponse):
@@ -96,14 +96,29 @@ class Agent(BaseService):
 
     def async_execute_task(self, task: str) -> ExecutionResult:
         """
-        To execute a specific task described in the humman language asynchronously.
+        Execute a specific task described in human language asynchronously.
+
+        This is an asynchronous interface that returns immediately with a task ID.
+        Call get_task_status to check the task status. You can control the timeout
+        of the task execution in your own code by setting the frequency of calling
+        get_task_status and the max_try_times.
 
         Args:
             task: Task description in human language.
 
         Returns:
-            ExecutionResult: Result object containing success status, task output,
-            and error message if any.
+            ExecutionResult: Result object containing success status, task ID,
+                task status, and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            result = session.agent.async_execute_task("Open Chrome browser")
+            print(f"Task ID: {result.task_id}, Status: {result.task_status}")
+            status = session.agent.get_task_status(result.task_id)
+            print(f"Task status: {status.task_status}")
+            session.delete()
+            ```
         """
         try:
             args = {"task": task}
@@ -119,7 +134,7 @@ class Agent(BaseService):
                     task_status="running",
                 )
             else:
-                logger.error("task execute failed")
+                _logger.error("task execute failed")
                 return ExecutionResult(
                     request_id=result.request_id,
                     success=False,
@@ -140,16 +155,27 @@ class Agent(BaseService):
 
     def execute_task(self, task: str, max_try_times: int) -> ExecutionResult:
         """
-        To execute a specific task described in the humman language syncchronously.
-        Tasks will be executed asynchronously, we need to poll the task status until it is finished or failed.
-        The frequecy of polling is 3 seconds, and the maximum polling times is max_try_times.
+        Execute a specific task described in human language synchronously.
+
+        This is a synchronous interface that blocks until the task is completed or
+        an error occurs, or timeout happens. The default polling interval is 3 seconds,
+        so set a proper max_try_times according to your task complexity.
+
         Args:
             task: Task description in human language.
             max_try_times: Maximum number of retries.
 
         Returns:
-            ExecutionResult: Result object containing success status, task output,
-            and error message if any.
+            ExecutionResult: Result object containing success status, task ID,
+                task status, and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            result = session.agent.execute_task("Open Chrome browser", max_try_times=20)
+            print(f"Task result: {result.task_result}")
+            session.delete()
+            ```
         """
         try:
             args = {"task": task}
@@ -185,12 +211,12 @@ class Agent(BaseService):
                             task_id=task_id,
                             task_status=query.task_status,
                         )
-                    logger.info(f"⏳ Task {task_id} running 🚀: {query.task_action}.")
+                    _logger.info(f"⏳ Task {task_id} running 🚀: {query.task_action}.")
                     # keep waiting unit timeout if the status is running
                     # task_status {running, finished, failed, unsupported}
                     time.sleep(3)
                     tried_time += 1
-                logger.warning("⚠️ task execution timeout!")
+                _logger.warning("⚠️ task execution timeout!")
                 return ExecutionResult(
                     request_id=result.request_id,
                     success=False,
@@ -200,7 +226,7 @@ class Agent(BaseService):
                     task_result="Task timeout.",
                 )
             else:
-                logger.error("❌ Task execution failed")
+                _logger.error("❌ Task execution failed")
                 return ExecutionResult(
                     request_id=result.request_id,
                     success=False,
@@ -230,12 +256,23 @@ class Agent(BaseService):
 
     def get_task_status(self, task_id: str) -> QueryResult:
         """
-        Get the status of the task with the given task_id.
+        Get the status of the task with the given task ID.
+
         Args:
-            task_id (str): task_id
+            task_id: The ID of the task to query.
 
         Returns:
-            QueryResult: _description_
+            QueryResult: Result object containing success status, task status,
+                task action, task product, and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            result = session.agent.async_execute_task("Open Chrome browser")
+            status = session.agent.get_task_status(result.task_id)
+            print(f"Status: {status.task_status}, Action: {status.task_action}")
+            session.delete()
+            ```
         """
         try:
             args = {"task_id": task_id}
@@ -278,16 +315,25 @@ class Agent(BaseService):
 
     def terminate_task(self, task_id: str) -> ExecutionResult:
         """
-        Terminate a task  with a specified task_id.
+        Terminate a task with a specified task ID.
 
         Args:
-            task_id: The id of the runnning task.
+            task_id: The ID of the running task to terminate.
 
         Returns:
-            ExecutionResult: Result object containing success status, task output,
-            and error message if any.
+            ExecutionResult: Result object containing success status, task ID,
+                task status, and error message if any.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            result = session.agent.async_execute_task("Open Chrome browser")
+            terminate_result = session.agent.terminate_task(result.task_id)
+            print(f"Terminated: {terminate_result.success}")
+            session.delete()
+            ```
         """
-        logger.info("Terminating task")
+        _logger.info("Terminating task")
         try:
             args = {"task_id": task_id}
 

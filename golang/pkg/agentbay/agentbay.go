@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -64,9 +65,9 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 		}
 	}
 
-	// Load configuration using LoadConfig function
+	// Load configuration using loadConfig function
 	// This will load from environment variables, .env file (searched upward), or use defaults
-	config := LoadConfig(config_option.cfg, config_option.envFile)
+	config := loadConfig(config_option.cfg, config_option.envFile)
 
 	// Create API client
 	apiConfig := &openapiutil.Config{
@@ -102,6 +103,95 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 
 // Create creates a new session in the AgentBay cloud environment.
 // If params is nil, default parameters will be used.
+// Create creates a new AgentBay session with specified configuration.
+//
+// Parameters:
+//   - params: Configuration parameters for the session (optional)
+//   - Labels: Key-value pairs for session metadata
+//   - ImageId: Custom image ID for the session environment
+//   - IsVpc: Whether to create a VPC session
+//   - PolicyId: Security policy ID
+//   - ExtraConfigs: Additional configuration options
+//
+// Returns:
+//   - *SessionResult: Result containing Session object and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Creates a new isolated cloud runtime environment
+// - Waits for session to be ready before returning
+// - For VPC sessions, includes VPC-specific configuration
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay("your_api_key")
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// Create session with default parameters
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		session := result.Session
+//		fmt.Printf("Session ID: %s\n", session.SessionID)
+//		// Output: Session ID: session-04bdwfj7u22a1s30g
+//
+//		// Create session with custom parameters
+//		params := agentbay.NewCreateSessionParams()
+//		params.Labels = map[string]string{"project": "demo"}
+//		params.IsVpc = true
+//
+//		customResult, err := client.Create(params)
+//		if err != nil {
+//			panic(err)
+//		}
+//		fmt.Println("VPC session created")
+//		// Output: VPC session created
+//
+//		// RECOMMENDED: Create a session with context synchronization
+//		// First, create a context
+//		contextResult, err := client.Context.Get("my-context", true)
+//		if err != nil {
+//			panic(err)
+//		}
+//		// Result: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
+//
+//		contextSync := &agentbay.ContextSync{
+//			ContextID: contextResult.Context.ID,
+//			Path:      "/home/wuying",
+//			Policy:    agentbay.NewSyncPolicy(),
+//		}
+//		syncParams := &agentbay.CreateSessionParams{
+//			ImageId:     "windows_latest",
+//			ContextSync: []*agentbay.ContextSync{contextSync},
+//		}
+//		syncResult, err := client.Create(syncParams)
+//		if err != nil {
+//			panic(err)
+//		}
+//		fmt.Printf("Created session with context sync: %s\n", syncResult.Session.SessionID)
+//		// Result: Waiting for context synchronization to complete...
+//		// Result: Context SdkCtx-xxxxxxxxxxxxxxx status: Preparing, path: /home/wuying
+//		// Result: Context SdkCtx-xxxxxxxxxxxxxxx status: Success, path: /home/wuying
+//		// Result: Context synchronization completed successfully
+//		// Result: Created session with context sync: session-xxxxxxxxxxxxxxx
+//
+//		session.Delete()
+//		customResult.Session.Delete()
+//		syncResult.Session.Delete()
+//	}
 func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if params == nil {
 		params = NewCreateSessionParams()
@@ -219,7 +309,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		requestParams += fmt.Sprintf(", ExtraConfigs=%s", extraConfigsStr)
 	}
 
-	LogAPICall("CreateMcpSession", requestParams)
+	logAPICall("CreateMcpSession", requestParams)
 
 	response, err := a.Client.CreateMcpSession(createSessionRequest)
 
@@ -228,7 +318,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 	// Log API response
 	if err != nil {
-		LogOperationError("CreateMcpSession", err.Error(), true)
+		logOperationError("CreateMcpSession", err.Error(), true)
 		return nil, err
 	}
 
@@ -244,7 +334,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			errMsg = *response.Body.Data.ErrMsg
 		}
 		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("CreateMcpSession", requestID, false, nil, string(responseJSON))
+		logAPIResponseWithDetails("CreateMcpSession", requestID, false, nil, string(responseJSON))
 		return nil, fmt.Errorf("%s", errMsg)
 	}
 
@@ -283,12 +373,12 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		"is_vpc":       params.IsVpc,
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("CreateMcpSession", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("CreateMcpSession", requestID, true, keyFields, string(responseJSON))
 
 	// Apply mobile configuration if provided
 	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil {
 		if err := session.Mobile.Configure(params.ExtraConfigs.Mobile); err != nil {
-			LogOperationError("ApplyMobileConfiguration", err.Error(), false)
+			logOperationError("ApplyMobileConfiguration", err.Error(), false)
 		}
 	}
 
@@ -296,7 +386,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if params.IsVpc {
 		toolsResult, err := session.ListMcpTools()
 		if err != nil {
-			LogOperationError("FetchMCPTools", err.Error(), false)
+			logOperationError("FetchMCPTools", err.Error(), false)
 		} else if len(toolsResult.Tools) > 0 {
 			fmt.Printf("✅ Successfully fetched %d MCP tools for VPC session (RequestID: %s)\n",
 				len(toolsResult.Tools), toolsResult.RequestID)
@@ -375,109 +465,6 @@ func NewListSessionParams() *ListSessionParams {
 		NextToken:  "",
 		Labels:     make(map[string]string),
 	}
-}
-
-// ListByLabels lists sessions filtered by the provided labels with pagination support.
-// It returns sessions that match all the specified labels.
-//
-// Deprecated: This method is deprecated and will be removed in a future version. Use List() instead.
-func (a *AgentBay) ListByLabels(params *ListSessionParams) (*SessionListResult, error) {
-	if params == nil {
-		params = NewListSessionParams()
-	}
-
-	// Convert labels to JSON
-	labelsJSON, err := json.Marshal(params.Labels)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal labels to JSON: %v", err)
-	}
-
-	listSessionRequest := &mcp.ListSessionRequest{
-		Authorization: tea.String("Bearer " + a.APIKey),
-		Labels:        tea.String(string(labelsJSON)),
-		MaxResults:    tea.Int32(params.MaxResults),
-	}
-
-	// Add NextToken if provided
-	if params.NextToken != "" {
-		listSessionRequest.NextToken = tea.String(params.NextToken)
-	}
-
-	// Log API request
-	requestParams := fmt.Sprintf("Labels=%s, MaxResults=%d", *listSessionRequest.Labels, *listSessionRequest.MaxResults)
-	if listSessionRequest.NextToken != nil {
-		requestParams += fmt.Sprintf(", NextToken=%s", *listSessionRequest.NextToken)
-	}
-	LogAPICall("ListSession", requestParams)
-
-	response, err := a.Client.ListSession(listSessionRequest)
-
-	// Log API response
-	if err != nil {
-		LogOperationError("ListSession", err.Error(), true)
-		return nil, err
-	}
-
-	// Extract RequestID
-	requestID := models.ExtractRequestID(response)
-
-	var sessions []Session
-	var sessionIds []string
-	var nextToken string
-	var maxResults int32 = params.MaxResults // Use the requested MaxResults
-	var totalCount int32
-
-	if response.Body != nil {
-		// Extract pagination information
-		if response.Body.NextToken != nil {
-			nextToken = *response.Body.NextToken
-		}
-		// Use API response MaxResults if present, otherwise use requested value
-		if response.Body.MaxResults != nil {
-			maxResults = *response.Body.MaxResults
-		}
-		if response.Body.TotalCount != nil {
-			totalCount = *response.Body.TotalCount
-		}
-
-		// Extract session data
-		if response.Body.Data != nil {
-			for _, sessionData := range response.Body.Data {
-				if sessionData.SessionId != nil {
-					sessionIds = append(sessionIds, *sessionData.SessionId)
-					session := NewSession(a, *sessionData.SessionId)
-					// Use default ImageId for sessions retrieved from API
-					session.ImageId = "linux_latest"
-					sessions = append(sessions, *session)
-					// Also store in the local cache
-					a.Sessions.Store(*sessionData.SessionId, *session)
-				}
-			}
-		}
-	}
-
-	// Log successful response
-	keyFields := map[string]interface{}{
-		"session_count": len(sessionIds),
-		"total_count":   totalCount,
-		"max_results":   maxResults,
-		"has_next_page": nextToken != "",
-	}
-	if nextToken != "" {
-		keyFields["next_token"] = nextToken
-	}
-	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("ListSession", requestID, true, keyFields, string(responseJSON))
-
-	return &SessionListResult{
-		ApiResponse: models.ApiResponse{
-			RequestID: requestID,
-		},
-		SessionIds: sessionIds,
-		NextToken:  nextToken,
-		MaxResults: maxResults,
-		TotalCount: totalCount,
-	}, nil
 }
 
 // List returns paginated list of session IDs filtered by labels.
@@ -625,13 +612,13 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 	if listSessionRequest.NextToken != nil {
 		requestParams += fmt.Sprintf(", NextToken=%s", *listSessionRequest.NextToken)
 	}
-	LogAPICall("ListSession", requestParams)
+	logAPICall("ListSession", requestParams)
 
 	response, err := a.Client.ListSession(listSessionRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("ListSession", err.Error(), true)
+		logOperationError("ListSession", err.Error(), true)
 		return nil, err
 	}
 
@@ -650,7 +637,7 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 		} else if response.Body != nil && response.Body.Code != nil {
 			errorMsg = *response.Body.Code
 		}
-		LogOperationError("ListSession", fmt.Sprintf("failed to list sessions: %s", errorMsg), false)
+		logOperationError("ListSession", fmt.Sprintf("failed to list sessions: %s", errorMsg), false)
 		return &SessionListResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: requestID,
@@ -700,7 +687,7 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 		keyFields["next_token"] = nextTokenResult
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("ListSession", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("ListSession", requestID, true, keyFields, string(responseJSON))
 
 	return &SessionListResult{
 		ApiResponse: models.ApiResponse{
@@ -713,7 +700,88 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 	}, nil
 }
 
-// Delete deletes a session by ID.
+// Delete deletes a session from the AgentBay cloud environment.
+//
+// Parameters:
+//   - session: The session to delete
+//   - syncContext: Optional boolean to synchronize context data before deletion.
+//     If true, uploads all context data to OSS. Defaults to false.
+//
+// Returns:
+//   - *DeleteResult: Result containing success status and request ID
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - If syncContext is true: Uploads all context data to OSS before deletion
+// - If syncContext is false: Deletes immediately without sync
+// - Continues with deletion even if context sync fails
+// - Releases all associated resources
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Initialize the SDK
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf(\"Error initializing AgentBay client: %v\\n\", err)
+//			os.Exit(1)
+//		}
+//
+//		// Create a context first
+//		contextResult, err := client.Context.Create(\"test-context\")
+//		if err != nil {
+//			fmt.Printf(\"Error creating context: %v\\n\", err)
+//			os.Exit(1)
+//		}
+//		// Output: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
+//
+//		// Create a session with context synchronization
+//		contextSync := &agentbay.ContextSync{
+//			ContextID: contextResult.ContextID,
+//			Path:      \"/home/wuying\",
+//			Policy:    agentbay.NewSyncPolicy(),
+//		}
+//		params := &agentbay.CreateSessionParams{
+//			ImageId:     \"windows_latest\",
+//			ContextSync: []*agentbay.ContextSync{contextSync},
+//		}
+//
+//		createResult, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf(\"Error creating session: %v\\n\", err)
+//			os.Exit(1)
+//		}
+//
+//		session := createResult.Session
+//		fmt.Printf(\"Created session with ID: %s\\n\", session.SessionID)
+//		// Output: Created session with ID: session-xxxxxxxxxxxxxxx
+//
+//		// Use the session for operations...
+//
+//		// Delete the session with context synchronization
+//		deleteResult, err := client.Delete(session, true)
+//		if err != nil {
+//			fmt.Printf(\"Error deleting session: %v\\n\", err)
+//			os.Exit(1)
+//		}
+//
+//		if deleteResult.Success {
+//			fmt.Println(\"Session deleted successfully with synchronized context\")
+//			// Output: Session deleted successfully with synchronized context
+//		}
+//		fmt.Printf(\"Request ID: %s\\n\", deleteResult.RequestID)
+//		// Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+//	}
 func (a *AgentBay) Delete(session *Session, syncContext ...bool) (*DeleteResult, error) {
 	result, err := session.Delete(syncContext...)
 	if err == nil {
@@ -755,14 +823,33 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s", *getSessionRequest.SessionId)
-	LogAPICall("GetSession", requestParams)
+	logAPICall("GetSession", requestParams)
 
 	response, err := a.Client.GetSession(getSessionRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("GetSession", err.Error(), true)
-		return nil, err
+		// Check if this is an expected business error (e.g., session not found)
+		errorStr := err.Error()
+		if strings.Contains(errorStr, "InvalidMcpSession.NotFound") || strings.Contains(errorStr, "NotFound") {
+			// This is an expected error - session doesn't exist
+			// Use info level logging without stack trace, but with red color for visibility
+			logInfoWithColor(fmt.Sprintf("Session not found: %s", sessionID))
+			LogDebug(fmt.Sprintf("GetSession error details: %s", errorStr))
+			return &GetSessionResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				HttpStatusCode: 400,
+				Code:           "InvalidMcpSession.NotFound",
+				Success:        false,
+				ErrorMessage:   fmt.Sprintf("Session %s not found", sessionID),
+			}, nil
+		} else {
+			// This is an unexpected error - log with stack trace
+			logOperationError("GetSession", err.Error(), true)
+			return nil, err
+		}
 	}
 
 	// Extract RequestID
@@ -793,7 +880,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 				message = "Unknown error"
 			}
 			result.ErrorMessage = fmt.Sprintf("[%s] %s", code, message)
-			LogOperationError("GetSession", result.ErrorMessage, false)
+			logOperationError("GetSession", result.ErrorMessage, false)
 			return result, nil
 		}
 
@@ -846,7 +933,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 				keyFields["network_interface_ip"] = data.NetworkInterfaceIP
 			}
 			responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-			LogAPIResponseWithDetails("GetSession", requestID, true, keyFields, string(responseJSON))
+			logAPIResponseWithDetails("GetSession", requestID, true, keyFields, string(responseJSON))
 		}
 
 		result.ErrorMessage = ""
@@ -867,17 +954,59 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 //
 // Example:
 //
-//	result, err := agentBay.Get("my-session-id")
-//	if err != nil {
-//	    log.Fatal(err)
-//	}
-//	if result.Success {
-//	    fmt.Printf("Session ID: %s\n", result.Session.SessionID)
-//	    fmt.Printf("Request ID: %s\n", result.RequestID)
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		createResult, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		sessionID := createResult.Session.SessionID
+//		fmt.Printf("Created session with ID: %s\n", sessionID)
+//		// Output: Created session with ID: session-xxxxxxxxxxxxxx
+//
+//		result, err := client.Get(sessionID)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		if result.Success {
+//			fmt.Printf("Successfully retrieved session: %s\n", result.Session.SessionID)
+//			// Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
+//			fmt.Printf("Request ID: %s\n", result.RequestID)
+//			// Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+//
+//			deleteResult, err := result.Session.Delete()
+//			if err != nil {
+//				fmt.Printf("Error: %v\n", err)
+//				os.Exit(1)
+//			}
+//			if deleteResult.Success {
+//				fmt.Printf("Session %s deleted successfully\n", sessionID)
+//				// Output: Session session-xxxxxxxxxxxxxx deleted successfully
+//			}
+//		} else {
+//			fmt.Printf("Failed to get session: %s\n", result.ErrorMessage)
+//		}
 //	}
 func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	if sessionID == "" {
-		LogOperationError("Get", "session_id is required", false)
+		logOperationError("Get", "session_id is required", false)
 		return &SessionResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
@@ -891,7 +1020,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	getResult, err := a.GetSession(sessionID)
 	if err != nil {
 		errorMsg := fmt.Sprintf("failed to get session %s: %v", sessionID, err)
-		LogOperationError("Get", errorMsg, true)
+		logOperationError("Get", errorMsg, true)
 		return &SessionResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
@@ -908,7 +1037,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 			errorMsg = "Session not found"
 		}
 		fullErrorMsg := fmt.Sprintf("failed to get session %s: %s", sessionID, errorMsg)
-		LogOperationError("Get", fullErrorMsg, false)
+		logOperationError("Get", fullErrorMsg, false)
 		return &SessionResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: getResult.RequestID,
@@ -960,7 +1089,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 			keyFields["resource_id"] = getResult.Data.ResourceID
 		}
 	}
-	LogAPIResponseWithDetails("Get", getResult.RequestID, true, keyFields, "")
+	logAPIResponseWithDetails("Get", getResult.RequestID, true, keyFields, "")
 
 	return &SessionResult{
 		ApiResponse: models.ApiResponse{

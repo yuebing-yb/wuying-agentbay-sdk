@@ -1,6 +1,21 @@
 import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecyclePolicy, WhiteList, BWList, newDeletePolicy } from "./context-sync";
 import { ExtensionOption } from "./extension";
+import { BrowserFingerprintContext } from "./browser";
 import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
+
+// Browser fingerprint persistent path constant (moved from config.ts)
+const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
+import {
+  log,
+  logError,
+  logInfo,
+  logDebug,
+  logAPICall,
+  logAPIResponseWithDetails,
+  maskSensitiveData,
+  setRequestId,
+  getRequestId,
+} from "./utils/logger";
 
 /**
  * Browser context configuration for session with optional extension support.
@@ -11,6 +26,7 @@ import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
  * Key Features:
  * - Browser context binding for sessions
  * - Automatic browser data upload on session end
+ * - Optional browser fingerprint integration with automatic context sync generation
  * - Optional extension integration with automatic context sync generation
  * - Clean API with ExtensionOption encapsulation
  *
@@ -22,16 +38,22 @@ import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
  * ```typescript
  * // With extensions using ExtensionOption
  * import { ExtensionOption } from "./extension";
+ * import { BrowserFingerprintContext } from "./browser";
  *
  * const extOption = new ExtensionOption(
  *   "my_extensions",
  *   ["ext1", "ext2"]
  * );
  *
+ * const fingerprintContext = new BrowserFingerprintContext(
+ *   "my_fingerprint_context"
+ * );
+ *
  * const browserContext = new BrowserContext(
  *   "browser_session",
  *   true,
- *   extOption
+ *   extOption,
+ *   fingerprintContext
  * );
  *
  * // Without extensions (minimal configuration)
@@ -39,7 +61,15 @@ import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
  *   "browser_session",
  *   true
  * );
- * // extensionContextSyncs will be undefined
+ * // extensionContextSyncs and fingerprintContextSync will be undefined
+ *
+ * // With fingerprint only
+ * const browserContextWithFingerprint = new BrowserContext(
+ *   "browser_session",
+ *   true,
+ *   undefined,
+ *   fingerprintContext
+ * );
  * ```
  */
 export class BrowserContext {
@@ -47,6 +77,12 @@ export class BrowserContext {
   contextId: string;
   /** Whether to automatically upload browser data when the session ends */
   autoUpload: boolean;
+  /** Optional browser fingerprint context configuration object containing fingerprintContextId */
+  fingerprintContext?: BrowserFingerprintContext;
+  /** ID of the fingerprint context for browser fingerprint. Set automatically from fingerprint_context. */
+  fingerprintContextId?: string;
+  /** Auto-generated context sync for fingerprint. None if no fingerprint configuration provided. */
+  fingerprintContextSync?: ContextSync;
   /** Optional extension configuration object containing context_id and extension_ids */
   extensionOption?: ExtensionOption;
   /** ID of the extension context for browser extensions. Set automatically from extension_option. */
@@ -57,7 +93,7 @@ export class BrowserContext {
   extensionContextSyncs?: ContextSync[];
 
   /**
-   * Initialize BrowserContextImpl with optional extension support.
+   * Initialize BrowserContextImpl with optional extension and fingerprint support.
    *
    * @param contextId - ID of the browser context to bind to the session.
    *                   This identifies the browser instance for the session.
@@ -67,24 +103,49 @@ export class BrowserContext {
    *                         contextId and extensionIds. This encapsulates
    *                         all extension-related configuration.
    *                         Defaults to undefined.
+   * @param fingerprintContext - Browser fingerprint context configuration object containing
+   *                            fingerprintContextId. This encapsulates
+   *                            all fingerprint-related configuration.
+   *                            Defaults to undefined.
    *
    * Extension Configuration:
    * - **ExtensionOption**: Use extensionOption parameter with an ExtensionOption object
    * - **No Extensions**: Don't provide extensionOption parameter
    *
+   * Fingerprint Configuration:
+   * - **BrowserFingerprintContext**: Use fingerprintContext parameter with a BrowserFingerprintContext object
+   * - **No Fingerprint**: Don't provide fingerprintContext parameter
+   *
    * Auto-generation:
    * - extensionContextSyncs is automatically generated when extensionOption is provided
    * - extensionContextSyncs will be undefined if no extensionOption is provided
    * - extensionContextSyncs will be a ContextSync[] if extensionOption is valid
+   * - fingerprintContextSync is automatically generated when fingerprintContext is provided
+   * - fingerprintContextSync will be undefined if no fingerprintContext is provided
+   * - fingerprintContextSync will be a ContextSync if fingerprintContext is valid
    */
   constructor(
     contextId: string,
-    autoUpload: boolean = true,
-    extensionOption?: ExtensionOption
+    autoUpload = true,
+    extensionOption?: ExtensionOption,
+    fingerprintContext?: BrowserFingerprintContext
   ) {
     this.contextId = contextId;
     this.autoUpload = autoUpload;
     this.extensionOption = extensionOption;
+    this.fingerprintContext = fingerprintContext;
+
+    // Handle fingerprint configuration from BrowserFingerprintContext
+    if (fingerprintContext) {
+      // Extract fingerprint information from BrowserFingerprintContext
+      this.fingerprintContextId = fingerprintContext.fingerprintContextId;
+      // Auto-generate fingerprint context sync
+      this.fingerprintContextSync = this._createFingerprintContextSync();
+    } else {
+      // No fingerprint configuration provided
+      this.fingerprintContextId = undefined;
+      this.fingerprintContextSync = undefined;
+    }
 
     // Handle extension configuration from ExtensionOption
     if (extensionOption) {
@@ -153,12 +214,67 @@ export class BrowserContext {
   }
 
   /**
-   * Get all context syncs including extension syncs.
+   * Create ContextSync configuration for browser fingerprint.
    *
-   * @returns ContextSync[] - All context sync configurations. Returns empty list if no extensions configured.
+   * This method is called only when fingerprintContext is provided and contains
+   * valid fingerprint configuration (fingerprintContextId).
+   *
+   * @returns ContextSync - Context sync configuration for fingerprint.
+   *                       Returns undefined if fingerprint configuration is invalid.
    */
-  getAllContextSyncs(): ContextSync[] {
+  private _createFingerprintContextSync(): ContextSync | undefined {
+    if (!this.fingerprintContextId || !this.fingerprintContextId.trim()) {
+      return undefined;
+    }
+
+    // Create sync policy for fingerprint
+    const syncPolicy: SyncPolicy = {
+      uploadPolicy: {
+        ...newUploadPolicy(),
+        autoUpload: false
+      },
+      extractPolicy: {
+        ...newExtractPolicy(),
+        extract: true,
+        deleteSrcFile: true
+      },
+      deletePolicy: {
+        ...newDeletePolicy(),
+        syncLocalFile: false
+      },
+      recyclePolicy: newRecyclePolicy(),
+      bwList: {
+        whiteLists: []
+      }
+    };
+
+    // Create context sync for fingerprint
+    const fingerprintSync = new ContextSync(
+      this.fingerprintContextId,
+      BROWSER_FINGERPRINT_PERSIST_PATH,
+      syncPolicy
+    );
+
+    return fingerprintSync;
+  }
+
+  /**
+   * Get context syncs for extensions.
+   *
+   * @returns ContextSync[] - Context sync configurations for extensions. Returns empty list if no extensions configured.
+   */
+  getExtensionContextSyncs(): ContextSync[] {
     return this.extensionContextSyncs || [];
+  }
+
+  /**
+   * Get context sync for fingerprint.
+   *
+   * @returns ContextSync - Context sync configuration for fingerprint.
+   *                       Returns undefined if fingerprint configuration is invalid.
+   */
+  getFingerprintContextSync(): ContextSync | undefined {
+    return this.fingerprintContextSync;
   }
 }
 
@@ -242,6 +358,20 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    */
   withBrowserContext(browserContext: BrowserContext): CreateSessionParams {
     this.browserContext = browserContext;
+    // Add extension and fingerprint context syncs if browser context has them
+    if (this.browserContext && 'getExtensionContextSyncs' in this.browserContext) {
+      const contextSyncs = this.browserContext.getExtensionContextSyncs();
+      this.contextSync.push(...contextSyncs);
+      logDebug(`Added ${contextSyncs.length} extension context syncs from browser context`);
+    }
+    // Add fingerprint context sync if browser context has it
+    if (this.browserContext && 'getFingerprintContextSync' in this.browserContext) {
+      const fingerprintContextSync = this.browserContext.getFingerprintContextSync();
+      if (fingerprintContextSync) {
+        this.contextSync.push(fingerprintContextSync);
+        logDebug(`Added fingerprint context sync from browser context`);
+      }
+    }
     return this;
   }
 
@@ -288,7 +418,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    * GetLabelsJSON returns the labels as a JSON string.
    * Returns an object with success status and result/error message to match Go version behavior.
    */
-  getLabelsJSON(): { result: string; error?: string } {
+  private getLabelsJSON(): { result: string; error?: string } {
     if (Object.keys(this.labels).length === 0) {
       return { result: "" };
     }
@@ -308,7 +438,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    * GetExtraConfigsJSON returns the extra configs as a JSON string.
    * Returns an object with result and optional error message to match Go version behavior.
    */
-  getExtraConfigsJSON(): { result: string; error?: string } {
+  private getExtraConfigsJSON(): { result: string; error?: string } {
     if (!this.extraConfigs) {
       return { result: "" };
     }
@@ -350,6 +480,20 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    */
   withContextSync(contextSyncs: ContextSync[]): CreateSessionParams {
     this.contextSync = contextSyncs;
+    // Add extension and fingerprint context syncs if browser context has them
+    if (this.browserContext && 'getExtensionContextSyncs' in this.browserContext) {
+      const contextSyncs = this.browserContext.getExtensionContextSyncs();
+      this.contextSync.push(...contextSyncs);
+      logDebug(`Added ${contextSyncs.length} extension context syncs from browser context`);
+    }
+    // Add fingerprint context sync if browser context has it
+    if (this.browserContext && 'getFingerprintContextSync' in this.browserContext) {
+      const fingerprintContextSync = this.browserContext.getFingerprintContextSync();
+      if (fingerprintContextSync) {
+        this.contextSync.push(fingerprintContextSync);
+        logDebug(`Added fingerprint context sync from browser context`);
+      }
+    }
     return this;
   }
 
@@ -361,9 +505,18 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
     let allContextSyncs = [...this.contextSync];
 
     // Add extension context syncs if browser context has them
-    if (this.browserContext && 'getAllContextSyncs' in this.browserContext) {
-      const extensionSyncs = this.browserContext.getAllContextSyncs();
+    if (this.browserContext && 'getExtensionContextSyncs' in this.browserContext) {
+      const extensionSyncs = this.browserContext.getExtensionContextSyncs();
       allContextSyncs = allContextSyncs.concat(extensionSyncs);
+      logDebug(`Added ${extensionSyncs.length} extension context syncs from browser context`);
+    }
+    // Add fingerprint context sync if browser context has it
+    if (this.browserContext && 'getFingerprintContextSync' in this.browserContext) {
+      const fingerprintContextSync = this.browserContext.getFingerprintContextSync();
+      if (fingerprintContextSync) {
+        allContextSyncs.push(fingerprintContextSync);
+        logDebug(`Added fingerprint context sync from browser context`);
+      }
     }
 
     return {
@@ -398,7 +551,8 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
         params.browserContext = new BrowserContext(
           bc.contextId,
           bc.autoUpload,
-          bc.extensionOption
+          bc.extensionOption,
+          bc.fingerprintContext
         );
       }
     }

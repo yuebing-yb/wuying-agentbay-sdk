@@ -11,6 +11,35 @@ import (
 // BrowserProxy represents browser proxy configuration.
 // Supports two types of proxy: custom proxy and wuying proxy.
 // Wuying proxy supports two strategies: restricted and polling.
+//
+// Example:
+//
+//	// Custom proxy
+//	server := "proxy.example.com:8080"
+//	username := "user"
+//	password := "pass"
+//	customProxy := &browser.BrowserProxy{
+//	    Type:     "custom",
+//	    Server:   &server,
+//	    Username: &username,
+//	    Password: &password,
+//	}
+//
+//	// WuYing proxy with restricted strategy
+//	strategy := "restricted"
+//	wuyingProxy := &browser.BrowserProxy{
+//	    Type:     "wuying",
+//	    Strategy: &strategy,
+//	}
+//
+//	// WuYing proxy with polling strategy
+//	pollingStrategy := "polling"
+//	pollSize := 10
+//	pollingProxy := &browser.BrowserProxy{
+//	    Type:     "wuying",
+//	    Strategy: &pollingStrategy,
+//	    PollSize: &pollSize,
+//	}
 type BrowserProxy struct {
 	Type     string  `json:"type"`               // Type of proxy - "custom" or "wuying"
 	Server   *string `json:"server,omitempty"`   // Proxy server address (required for custom type)
@@ -55,8 +84,8 @@ func NewBrowserProxy(proxyType string, server, username, password, strategy *str
 	return proxy, nil
 }
 
-// ToMap converts BrowserProxy to map for API request
-func (p *BrowserProxy) ToMap() map[string]interface{} {
+// toMap converts BrowserProxy to map for API request
+func (p *BrowserProxy) toMap() map[string]interface{} {
 	proxyMap := map[string]interface{}{
 		"type": p.Type,
 	}
@@ -89,8 +118,8 @@ type BrowserViewport struct {
 	Height int `json:"height"` // Viewport height
 }
 
-// ToMap converts BrowserViewport to map for API request
-func (v *BrowserViewport) ToMap() map[string]interface{} {
+// toMap converts BrowserViewport to map for API request
+func (v *BrowserViewport) toMap() map[string]interface{} {
 	return map[string]interface{}{
 		"width":  v.Width,
 		"height": v.Height,
@@ -103,8 +132,8 @@ type BrowserScreen struct {
 	Height int `json:"height"` // Screen height
 }
 
-// ToMap converts BrowserScreen to map for API request
-func (s *BrowserScreen) ToMap() map[string]interface{} {
+// toMap converts BrowserScreen to map for API request
+func (s *BrowserScreen) toMap() map[string]interface{} {
 	return map[string]interface{}{
 		"width":  s.Width,
 		"height": s.Height,
@@ -112,6 +141,14 @@ func (s *BrowserScreen) ToMap() map[string]interface{} {
 }
 
 // BrowserFingerprint represents browser fingerprint options
+//
+// Example:
+//
+//	fingerprint := &browser.BrowserFingerprint{
+//	    Devices:          []string{"desktop"},
+//	    OperatingSystems: []string{"windows", "macos"},
+//	    Locales:          []string{"en-US", "en-GB"},
+//	}
 type BrowserFingerprint struct {
 	Devices          []string `json:"devices,omitempty"`          // Device types: "desktop" or "mobile"
 	OperatingSystems []string `json:"operatingSystems,omitempty"` // OS types: "windows", "macos", "linux", "android", "ios"
@@ -146,8 +183,8 @@ func NewBrowserFingerprint(devices, operatingSystems, locales []string) (*Browse
 	}, nil
 }
 
-// ToMap converts BrowserFingerprint to map for API request
-func (f *BrowserFingerprint) ToMap() map[string]interface{} {
+// toMap converts BrowserFingerprint to map for API request
+func (f *BrowserFingerprint) toMap() map[string]interface{} {
 	fpMap := make(map[string]interface{})
 	if f.Devices != nil {
 		fpMap["devices"] = f.Devices
@@ -162,6 +199,26 @@ func (f *BrowserFingerprint) ToMap() map[string]interface{} {
 }
 
 // BrowserOption represents browser initialization options
+//
+// Example:
+//
+//	option := browser.NewBrowserOption()
+//
+//	// Custom user agent
+//	ua := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+//	option.UserAgent = &ua
+//
+//	// Viewport and screen
+//	option.Viewport = &browser.BrowserViewport{Width: 1920, Height: 1080}
+//	option.Screen = &browser.BrowserScreen{Width: 1920, Height: 1080}
+//
+//	// Stealth mode
+//	option.UseStealth = true
+//
+//	// Validate configuration
+//	if err := option.Validate(); err != nil {
+//	    log.Fatalf("Invalid configuration: %v", err)
+//	}
 type BrowserOption struct {
 	UseStealth         bool                `json:"useStealth,omitempty"`         // Enable stealth mode
 	UserAgent          *string             `json:"userAgent,omitempty"`          // Custom user agent
@@ -177,6 +234,58 @@ type BrowserOption struct {
 }
 
 // NewBrowserOption creates a new BrowserOption with default values and validation
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Create browser option with default values
+//		option := browser.NewBrowserOption()
+//
+//		// Customize user agent
+//		customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+//		option.UserAgent = &customUA
+//
+//		// Set viewport
+//		option.Viewport = &browser.BrowserViewport{Width: 1920, Height: 1080}
+//
+//		// Enable stealth mode
+//		option.UseStealth = true
+//
+//		// Initialize browser with custom options
+//		success, err := session.Browser.Initialize(option)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		if !success {
+//			fmt.Println("Failed to initialize browser")
+//			os.Exit(1)
+//		}
+//		fmt.Println("Browser initialized with custom options")
+//
+//		// Output: Browser initialized with custom options
+//
+//		session.Delete()
+//	}
 func NewBrowserOption() *BrowserOption {
 	defaultExtPath := "/tmp/extensions/"
 	return &BrowserOption{
@@ -188,6 +297,32 @@ func NewBrowserOption() *BrowserOption {
 }
 
 // Validate validates the BrowserOption
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//	)
+//	func main() {
+//		option := browser.NewBrowserOption()
+//
+//		// Set custom configuration
+//		customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+//		option.UserAgent = &customUA
+//		option.UseStealth = true
+//
+//		// Validate before use
+//		if err := option.Validate(); err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Println("Browser option validated successfully")
+//
+//		// Output: Browser option validated successfully
+//	}
 func (o *BrowserOption) Validate() error {
 	// Validate proxies
 	if len(o.Proxies) > 1 {
@@ -213,8 +348,8 @@ func (o *BrowserOption) Validate() error {
 	return nil
 }
 
-// ToMap converts BrowserOption to map for API request
-func (o *BrowserOption) ToMap() map[string]interface{} {
+// toMap converts BrowserOption to map for API request
+func (o *BrowserOption) toMap() map[string]interface{} {
 	optionMap := make(map[string]interface{})
 
 	// Check for AGENTBAY_BROWSER_BEHAVIOR_SIMULATE environment variable
@@ -229,15 +364,15 @@ func (o *BrowserOption) ToMap() map[string]interface{} {
 	}
 
 	if o.Viewport != nil {
-		optionMap["viewport"] = o.Viewport.ToMap()
+		optionMap["viewport"] = o.Viewport.toMap()
 	}
 
 	if o.Screen != nil {
-		optionMap["screen"] = o.Screen.ToMap()
+		optionMap["screen"] = o.Screen.toMap()
 	}
 
 	if o.Fingerprint != nil {
-		optionMap["fingerprint"] = o.Fingerprint.ToMap()
+		optionMap["fingerprint"] = o.Fingerprint.toMap()
 	}
 
 	optionMap["solveCaptchas"] = o.SolveCaptchas
@@ -245,7 +380,7 @@ func (o *BrowserOption) ToMap() map[string]interface{} {
 	if len(o.Proxies) > 0 {
 		proxies := make([]map[string]interface{}, len(o.Proxies))
 		for i, proxy := range o.Proxies {
-			proxies[i] = proxy.ToMap()
+			proxies[i] = proxy.toMap()
 		}
 		optionMap["proxies"] = proxies
 	}
@@ -313,16 +448,201 @@ func NewBrowser(session SessionInterface) *Browser {
 }
 
 // IsInitialized returns true if the browser was initialized, false otherwise
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Check if browser is initialized before use
+//		if session.Browser.IsInitialized() {
+//			fmt.Println("Browser is already initialized")
+//		} else {
+//			fmt.Println("Browser is not initialized yet")
+//		}
+//
+//		// Output: Browser is not initialized yet
+//
+//		// Initialize browser
+//		option := browser.NewBrowserOption()
+//		success, err := session.Browser.Initialize(option)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		if !success {
+//			os.Exit(1)
+//		}
+//
+//		// Check again after initialization
+//		if session.Browser.IsInitialized() {
+//			fmt.Println("Browser is now initialized")
+//		}
+//
+//		// Output: Browser is now initialized
+//
+//		session.Delete()
+//	}
 func (b *Browser) IsInitialized() bool {
 	return b.initialized
 }
 
 // GetOption returns the current BrowserOption used to initialize the browser, or nil if not set
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Initialize browser with custom options
+//		option := browser.NewBrowserOption()
+//		customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+//		option.UserAgent = &customUA
+//		option.UseStealth = true
+//
+//		success, err := session.Browser.Initialize(option)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		if !success {
+//			os.Exit(1)
+//		}
+//
+//		// Get current browser option
+//		currentOption := session.Browser.GetOption()
+//		if currentOption != nil {
+//			fmt.Printf("Stealth mode: %v\n", currentOption.UseStealth)
+//			if currentOption.UserAgent != nil {
+//				fmt.Printf("User agent: %s\n", *currentOption.UserAgent)
+//			}
+//		}
+//
+//		// Output: Stealth mode: true
+//		// Output: User agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0
+//
+//		session.Delete()
+//	}
 func (b *Browser) GetOption() *BrowserOption {
 	return b.option
 }
 
 // GetEndpointURL returns the endpoint URL if the browser is initialized
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//		"github.com/playwright-community/playwright-go"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		params := agentbay.NewCreateSessionParams().WithImageId("browser_latest")
+//		result, err := client.Create(params)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Initialize browser
+//		option := browser.NewBrowserOption()
+//		success, err := session.Browser.Initialize(option)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		if !success {
+//			os.Exit(1)
+//		}
+//
+//		// Get CDP endpoint URL
+//		endpointURL, err := session.Browser.GetEndpointURL()
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Printf("CDP endpoint: %s\n", endpointURL)
+//
+//		// Connect with Playwright
+//		pw, err := playwright.Run()
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		defer pw.Stop()
+//		browserInstance, err := pw.Chromium.ConnectOverCDP(endpointURL)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		defer browserInstance.Close()
+//
+//		// Get or create page
+//		contexts := browserInstance.Contexts()
+//		if len(contexts) == 0 {
+//			fmt.Println("No browser contexts available")
+//			os.Exit(1)
+//		}
+//		page, err := contexts[0].NewPage()
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Navigate to a website
+//		_, err = page.Goto("https://example.com")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		title, _ := page.Title()
+//		fmt.Printf("Page title: %s\n", title)
+//
+//		session.Delete()
+//	}
 func (b *Browser) GetEndpointURL() (string, error) {
 	if !b.initialized {
 		return "", errors.New("browser is not initialized. Cannot access endpoint URL")
@@ -347,6 +667,28 @@ func (b *Browser) GetEndpointURL() (string, error) {
 
 // Initialize initializes the browser instance with the given options.
 // Returns true and nil error if successful, false and error otherwise.
+//
+// Example:
+//
+//	option := browser.NewBrowserOption()
+//
+//	// Add custom configuration
+//	customUA := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+//	option.UserAgent = &customUA
+//
+//	option.Viewport = &browser.BrowserViewport{
+//	    Width:  1920,
+//	    Height: 1080,
+//	}
+//
+//	// Initialize browser
+//	success, err := session.Browser.Initialize(option)
+//	if err != nil {
+//	    log.Fatalf("Failed to initialize browser: %v", err)
+//	}
+//	if !success {
+//	    log.Fatal("Browser initialization returned false")
+//	}
 func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	if b.initialized {
 		return true, nil
@@ -358,7 +700,7 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	}
 
 	// Convert option to map
-	browserOptionMap := option.ToMap()
+	browserOptionMap := option.toMap()
 
 	// TODO: Enable record if session has enableBrowserReplay set to true
 	// This would require adding enableBrowserReplay to the session interface
@@ -415,6 +757,58 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 }
 
 // Destroy the browser instance
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Initialize browser
+//		option := browser.NewBrowserOption()
+//		success, err := session.Browser.Initialize(option)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		if !success {
+//			fmt.Println("Failed to initialize browser")
+//			os.Exit(1)
+//		}
+//		fmt.Println("Browser initialized successfully")
+//
+//		// Output: Browser initialized successfully
+//
+//		// Use browser for automation tasks...
+//
+//		// Destroy browser instance
+//		err = session.Browser.Destroy()
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Println("Browser destroyed successfully")
+//
+//		// Output: Browser destroyed successfully
+//
+//		session.Delete()
+//	}
 func (b *Browser) Destroy() error {
 	if !b.initialized {
 		return errors.New("browser is not initialized. Cannot destroy browser")
@@ -427,4 +821,300 @@ func (b *Browser) Destroy() error {
 	}
 
 	return nil
+}
+
+// ScreenshotOptions represents options for taking screenshots
+type ScreenshotOptions struct {
+	FullPage bool
+	Type     string // "png" or "jpeg"
+	Quality  int    // 0-100 for jpeg
+	Timeout  int    // timeout in milliseconds
+}
+
+// Screenshot takes a screenshot of the specified page with enhanced options and error handling.
+// This method requires the caller to connect to the browser via Playwright or similar
+// and pass the page object to this method.
+//
+// Parameters:
+//   - page: The Playwright Page object to take a screenshot of. This is a required parameter.
+//   - options: Screenshot options including:
+//   - FullPage (bool): Whether to capture the full scrollable page. Defaults to false.
+//   - Type (string): Image type, either "png" or "jpeg". Defaults to "png".
+//   - Quality (int): Quality of the image, between 0-100 (jpeg only). Defaults to 0.
+//   - Timeout (int): Maximum time in milliseconds. Defaults to 60000.
+//
+// Returns:
+//   - []byte: Screenshot data as bytes.
+//   - error: Error if browser is not initialized or screenshot capture fails.
+//
+// Example:
+//
+//	package main
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+//		"github.com/playwright-community/playwright-go"
+//	)
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//
+//		// Initialize browser
+//		option := browser.NewBrowserOption()
+//		success, err := session.Browser.Initialize(option)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		if !success {
+//			os.Exit(1)
+//		}
+//
+//		// Get endpoint URL and connect with Playwright
+//		endpointURL, err := session.Browser.GetEndpointURL()
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Connect to browser via Playwright
+//		pw, err := playwright.Run()
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		defer pw.Stop()
+//
+//		browser, err := pw.Chromium.ConnectOverCDP(endpointURL)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		defer browser.Close()
+//
+//		// Get the page
+//		contexts := browser.Contexts()
+//		if len(contexts) == 0 {
+//			fmt.Println("No browser contexts available")
+//			os.Exit(1)
+//		}
+//		page, err := contexts[0].NewPage()
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Navigate to a URL
+//		_, err = page.Goto("https://example.com")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Take screenshot with custom options
+//		screenshotOptions := &browser.ScreenshotOptions{
+//			FullPage: true,
+//			Type:     "png",
+//			Timeout:  60000,
+//		}
+//		screenshotData, err := session.Browser.Screenshot(page, screenshotOptions)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		// Save screenshot to file
+//		err = os.WriteFile("/tmp/screenshot.png", screenshotData, 0644)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		fmt.Printf("Screenshot saved successfully (%d bytes)\n", len(screenshotData))
+//
+//		// Output: Screenshot saved successfully (12345 bytes)
+//
+//		session.Delete()
+//	}
+func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error) {
+	if !b.initialized {
+		return nil, errors.New("browser must be initialized before calling screenshot")
+	}
+
+	// Create default options if none provided
+	if options == nil {
+		options = &ScreenshotOptions{
+			FullPage: false,
+			Type:     "png",
+			Quality:  0,
+			Timeout:  60000,
+		}
+	}
+
+	// Set default enhanced options
+	enhancedOptions := map[string]interface{}{
+		"animations": "disabled",
+		"caret":      "hide",
+		"scale":      "css",
+		"timeout":    options.Timeout,
+		"fullPage":   options.FullPage,
+		"type":       options.Type,
+	}
+
+	// Add quality if type is jpeg
+	if options.Type == "jpeg" && options.Quality > 0 {
+		enhancedOptions["quality"] = options.Quality
+	}
+
+	// Type assert page to Playwright Page interface
+	playwrightPage, ok := page.(interface {
+		WaitForLoadState(state string, options ...interface{}) error
+		Evaluate(expression string, options ...interface{}) (interface{}, error)
+		WaitForTimeout(timeout int)
+		SetViewportSize(width, height int) error
+		Screenshot(options map[string]interface{}) ([]byte, error)
+	})
+	if !ok {
+		return nil, errors.New("page must be a Playwright Page object")
+	}
+
+	try := func() ([]byte, error) {
+		// Wait for page to load
+		// if err := playwrightPage.WaitForLoadState("networkidle"); err != nil {
+		// 	return nil, err
+		// }
+
+		if _, err := playwrightPage.Evaluate("window.scrollTo(0, document.body.scrollHeight)"); err != nil {
+			return nil, err
+		}
+
+		if err := playwrightPage.WaitForLoadState("domcontentloaded"); err != nil {
+			return nil, err
+		}
+
+		// Scroll to load all content (especially for lazy-loaded elements)
+		if err := b._scrollToLoadAllContent(playwrightPage, 8, 1200); err != nil {
+			return nil, err
+		}
+
+		// Ensure images with data-src attributes are loaded
+		_, err := playwrightPage.Evaluate(`
+			() => {
+				document.querySelectorAll('img[data-src]').forEach(img => {
+					if (!img.src && img.dataset.src) {
+						img.src = img.dataset.src;
+					}
+				});
+				// Also handle background-image[data-bg]
+				document.querySelectorAll('[data-bg]').forEach(el => {
+					if (!el.style.backgroundImage) {
+						el.style.backgroundImage = 'url(' + el.dataset.bg + ')';
+					}
+				});
+			}
+		`)
+		if err != nil {
+			return nil, err
+		}
+
+		// Wait a bit for images to load
+		playwrightPage.WaitForTimeout(1500)
+
+		finalHeightResult, err := playwrightPage.Evaluate("document.body.scrollHeight")
+		if err != nil {
+			return nil, err
+		}
+
+		finalHeight, ok := finalHeightResult.(int)
+		if !ok {
+			// Try to convert from float64 if that's what we got
+			if floatHeight, ok := finalHeightResult.(float64); ok {
+				finalHeight = int(floatHeight)
+			} else {
+				finalHeight = 10000
+			}
+		}
+
+		if err := playwrightPage.SetViewportSize(1920, min(finalHeight, 10000)); err != nil {
+			return nil, err
+		}
+
+		// Take the screenshot
+		screenshotBytes, err := playwrightPage.Screenshot(enhancedOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Println("Screenshot captured successfully.")
+		return screenshotBytes, nil
+	}
+
+	screenshotBytes, err := try()
+	if err != nil {
+		// Convert error to string safely to avoid comparison issues
+		errorStr := fmt.Sprintf("%v", err)
+		errorMsg := fmt.Sprintf("Failed to capture screenshot: %s", errorStr)
+		return nil, errors.New(errorMsg)
+	}
+
+	return screenshotBytes, nil
+}
+
+// _scrollToLoadAllContent scrolls the page to load all content (especially for lazy-loaded elements)
+func (b *Browser) _scrollToLoadAllContent(page interface {
+	Evaluate(expression string, options ...interface{}) (interface{}, error)
+	WaitForTimeout(timeout int)
+}, maxScrolls int, delayMs int) error {
+	if maxScrolls <= 0 {
+		maxScrolls = 8
+	}
+	if delayMs <= 0 {
+		delayMs = 1200
+	}
+
+	lastHeight := 0
+	for i := 0; i < maxScrolls; i++ {
+		_, err := page.Evaluate("window.scrollTo(0, document.body.scrollHeight)")
+		if err != nil {
+			return err
+		}
+
+		page.WaitForTimeout(delayMs)
+
+		newHeightResult, err := page.Evaluate("Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)")
+		if err != nil {
+			return err
+		}
+
+		newHeight := 0
+		if intHeight, ok := newHeightResult.(int); ok {
+			newHeight = intHeight
+		} else if floatHeight, ok := newHeightResult.(float64); ok {
+			newHeight = int(floatHeight)
+		}
+
+		if newHeight == lastHeight {
+			break
+		}
+		lastHeight = newHeight
+	}
+	return nil
+}
+
+// Helper function to find minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

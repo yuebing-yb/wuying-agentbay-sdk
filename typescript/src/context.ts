@@ -37,11 +37,6 @@ export class Context {
   name: string;
 
   /**
-   * @deprecated This field is no longer used and will be removed in a future version.
-   */
-  state: string;
-
-  /**
    * Date and time when the Context was created.
    */
   createdAt?: string;
@@ -52,34 +47,23 @@ export class Context {
   lastUsedAt?: string;
 
   /**
-   * @deprecated This field is no longer used and will be removed in a future version.
-   */
-  osType?: string;
-
-  /**
    * Initialize a Context object.
    *
    * @param id - The unique identifier of the context.
    * @param name - The name of the context.
-   * @param state - **Deprecated.** This parameter is no longer used.
    * @param createdAt - Date and time when the Context was created.
    * @param lastUsedAt - Date and time when the Context was last used.
-   * @param osType - **Deprecated.** This parameter is no longer used.
    */
   constructor(
     id: string,
     name: string,
-    state = "available",
     createdAt?: string,
-    lastUsedAt?: string,
-    osType?: string
+    lastUsedAt?: string
   ) {
     this.id = id;
     this.name = name;
-    this.state = state;
     this.createdAt = createdAt;
     this.lastUsedAt = lastUsedAt;
-    this.osType = osType;
   }
 }
 
@@ -120,6 +104,50 @@ export class ContextService {
    *
    * @param params - Optional parameters for listing contexts.
    * @returns ContextListResult with contexts list and pagination information
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function listContexts() {
+   *   try {
+   *     // List contexts with default pagination (max 10)
+   *     const result = await agentBay.context.list();
+   *     if (result.success) {
+   *       console.log(`Total contexts: ${result.totalCount}`);
+   *       // Output: Total contexts: 25
+   *       console.log(`Contexts in this page: ${result.contexts.length}`);
+   *       // Output: Contexts in this page: 10
+   *       for (const context of result.contexts) {
+   *         console.log(`  - ${context.name} (ID: ${context.id})`);
+   *         // Output:   - my-context-1 (ID: ctx-04bdwfj7u22a1s30g)
+   *       }
+   *
+   *       // List with custom pagination
+   *       const customResult = await agentBay.context.list({ maxResults: 5 });
+   *       if (customResult.success) {
+   *         console.log(`Got ${customResult.contexts.length} contexts`);
+   *         // Output: Got 5 contexts
+   *         if (customResult.nextToken) {
+   *           // Get next page
+   *           const nextResult = await agentBay.context.list({
+   *             maxResults: 5,
+   *             nextToken: customResult.nextToken
+   *           });
+   *           console.log(`Next page has ${nextResult.contexts.length} contexts`);
+   *           // Output: Next page has 5 contexts
+   *         }
+   *       }
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * listContexts().catch(console.error);
+   * ```
    */
   async list(params?: ContextListParams): Promise<ContextListResult> {
     try {
@@ -161,10 +189,8 @@ export class ContextService {
             new Context(
               contextData.id || "",
               contextData.name || "",
-              contextData.state || "available",
               contextData.createTime,
-              contextData.lastUsedTime,
-              contextData.osType
+              contextData.lastUsedTime
             )
           );
         }
@@ -201,12 +227,43 @@ export class ContextService {
   }
 
   /**
-   * Gets a context by name. Optionally creates it if it doesn't exist.
-   * Corresponds to Python's get() method
+   * Retrieves an existing context or creates a new one.
    *
-   * @param name - The name of the context to get.
-   * @param create - Whether to create the context if it doesn't exist.
-   * @returns ContextResult with context data and requestId
+   * @param name - The name of the context to retrieve or create.
+   * @param create - If true, creates the context if it doesn't exist. Defaults to false.
+   *
+   * @returns Promise resolving to ContextResult containing the Context object.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function getOrCreateContext() {
+   *   try {
+   *     // Get existing context or create if not exists
+   *     const result = await agentBay.context.get('my-context', true);
+   *     if (result.success) {
+   *       const context = result.context;
+   *       console.log(`Context ID: ${context.id}`);
+   *       // Output: Context ID: ctx-04bdwfj7u22a1s30g
+   *       console.log(`Context Name: ${context.name}`);
+   *       // Output: Context Name: my-context
+   *       console.log(`Request ID: ${result.requestId}`);
+   *       // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *     } else {
+   *       console.log(`Failed to get context: ${result.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * getOrCreateContext().catch(console.error);
+   * ```
+   *
+   * @see {@link update}, {@link list}
    */
   async get(name: string, create = false): Promise<ContextResult> {
     try {
@@ -307,17 +364,85 @@ export class ContextService {
    *
    * @param name - The name for the new context.
    * @returns ContextResult with created context data and requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function createContext() {
+   *   try {
+   *     // Create a new context
+   *     const result = await agentBay.context.create('my-new-context');
+   *     if (result.success) {
+   *       const context = result.context;
+   *       console.log('Context created successfully');
+   *       // Output: Context created successfully
+   *       console.log(`Context ID: ${context.id}`);
+   *       // Output: Context ID: ctx-04bdwfj7u22a1s30g
+   *       console.log(`Context Name: ${context.name}`);
+   *       // Output: Context Name: my-new-context
+   *       console.log(`Request ID: ${result.requestId}`);
+   *       // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *     } else {
+   *       console.log(`Failed to create context: ${result.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * createContext().catch(console.error);
+   * ```
    */
   async create(name: string): Promise<ContextResult> {
     return await this.get(name, true);
   }
 
   /**
-   * Updates the specified context.
-   * Corresponds to Python's update() method
+   * Updates a context's name.
    *
-   * @param context - The Context object to update.
-   * @returns OperationResult with updated context data and requestId
+   * @param context - The Context object with updated name.
+   *
+   * @returns Promise resolving to OperationResult with success status.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function updateContextName() {
+   *   try {
+   *     // Get an existing context
+   *     const getResult = await agentBay.context.get('old-name');
+   *     if (getResult.success && getResult.context) {
+   *       const context = getResult.context;
+   *       context.name = 'new-name';
+   *
+   *       // Update the context
+   *       const updateResult = await agentBay.context.update(context);
+   *       if (updateResult.success) {
+   *         console.log('Context name updated successfully');
+   *         // Output: Context name updated successfully
+   *         console.log(`Request ID: ${updateResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       } else {
+   *         console.log(`Failed to update context: ${updateResult.errorMessage}`);
+   *       }
+   *     } else {
+   *       console.log(`Failed to get context: ${getResult.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * updateContextName().catch(console.error);
+   * ```
+   *
+   * @see {@link get}, {@link list}
    */
   async update(context: Context): Promise<OperationResult> {
     try {
@@ -372,6 +497,40 @@ export class ContextService {
    *
    * @param context - The Context object to delete.
    * @returns OperationResult with requestId
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function deleteContext() {
+   *   try {
+   *     // Get an existing context
+   *     const getResult = await agentBay.context.get('my-context');
+   *     if (getResult.success && getResult.context) {
+   *       const context = getResult.context;
+   *
+   *       // Delete the context
+   *       const deleteResult = await agentBay.context.delete(context);
+   *       if (deleteResult.success) {
+   *         console.log('Context deleted successfully');
+   *         // Output: Context deleted successfully
+   *         console.log(`Request ID: ${deleteResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       } else {
+   *         console.log(`Failed to delete context: ${deleteResult.errorMessage}`);
+   *       }
+   *     } else {
+   *       console.log(`Failed to get context: ${getResult.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * deleteContext().catch(console.error);
+   * ```
    */
   async delete(context: Context): Promise<OperationResult> {
     try {
@@ -420,6 +579,56 @@ export class ContextService {
 
   /**
    * Get a presigned upload URL for a file in a context.
+   *
+   * @param contextId - The ID of the context.
+   * @param filePath - The path to the file in the context.
+   * @returns FileUrlResult with the presigned URL and expiration time.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   * import * as fs from 'fs';
+   * import axios from 'axios';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function uploadFileToContext() {
+   *   try {
+   *     // Get or create a context
+   *     const contextResult = await agentBay.context.get('my-context', true);
+   *     if (contextResult.success && contextResult.context) {
+   *       const context = contextResult.context;
+   *
+   *       // Get presigned upload URL
+   *       const urlResult = await agentBay.context.getFileUploadUrl(
+   *         context.id,
+   *         '/data/myfile.txt'
+   *       );
+   *
+   *       if (urlResult.success) {
+   *         console.log('Upload URL obtained successfully');
+   *         // Output: Upload URL obtained successfully
+   *         console.log(`URL expires at: ${urlResult.expireTime}`);
+   *         // Output: URL expires at: 2024-01-01T12:00:00Z
+   *
+   *         // Upload file using the presigned URL
+   *         const fileContent = fs.readFileSync('/local/path/file.txt');
+   *         await axios.put(urlResult.url, fileContent, {
+   *           headers: { 'Content-Type': 'text/plain' }
+   *         });
+   *         console.log('File uploaded successfully');
+   *         // Output: File uploaded successfully
+   *       } else {
+   *         console.error(`Failed to get upload URL: ${urlResult.errorMessage}`);
+   *       }
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * uploadFileToContext().catch(console.error);
+   * ```
    */
   async getFileUploadUrl(contextId: string, filePath: string): Promise<FileUrlResult> {
     logAPICall("GetContextFileUploadUrl");
@@ -472,6 +681,56 @@ export class ContextService {
 
   /**
    * Get a presigned download URL for a file in a context.
+   *
+   * @param contextId - The ID of the context.
+   * @param filePath - The path to the file in the context.
+   * @returns FileUrlResult with the presigned URL and expiration time.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   * import axios from 'axios';
+   * import * as fs from 'fs';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function downloadFileFromContext() {
+   *   try {
+   *     // Get an existing context
+   *     const contextResult = await agentBay.context.get('my-context');
+   *     if (contextResult.success && contextResult.context) {
+   *       const context = contextResult.context;
+   *
+   *       // Get presigned download URL
+   *       const urlResult = await agentBay.context.getFileDownloadUrl(
+   *         context.id,
+   *         '/data/myfile.txt'
+   *       );
+   *
+   *       if (urlResult.success) {
+   *         console.log('Download URL obtained successfully');
+   *         // Output: Download URL obtained successfully
+   *         console.log(`URL expires at: ${urlResult.expireTime}`);
+   *         // Output: URL expires at: 2024-01-01T12:00:00Z
+   *
+   *         // Download file using the presigned URL
+   *         const response = await axios.get(urlResult.url, {
+   *           responseType: 'arraybuffer'
+   *         });
+   *         fs.writeFileSync('/local/path/downloaded.txt', response.data);
+   *         console.log('File downloaded successfully');
+   *         // Output: File downloaded successfully
+   *       } else {
+   *         console.error(`Failed to get download URL: ${urlResult.errorMessage}`);
+   *       }
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * downloadFileFromContext().catch(console.error);
+   * ```
    */
   async getFileDownloadUrl(contextId: string, filePath: string): Promise<FileUrlResult> {
     logAPICall("GetContextFileDownloadUrl");
@@ -524,6 +783,46 @@ export class ContextService {
 
   /**
    * Delete a file in a context.
+   *
+   * @param contextId - The ID of the context.
+   * @param filePath - The path to the file to delete.
+   * @returns OperationResult indicating success or failure.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function deleteContextFile() {
+   *   try {
+   *     // Get an existing context
+   *     const contextResult = await agentBay.context.get('my-context');
+   *     if (contextResult.success && contextResult.context) {
+   *       const context = contextResult.context;
+   *
+   *       // Delete a file from the context
+   *       const deleteResult = await agentBay.context.deleteFile(
+   *         context.id,
+   *         '/data/myfile.txt'
+   *       );
+   *
+   *       if (deleteResult.success) {
+   *         console.log('File deleted successfully');
+   *         // Output: File deleted successfully
+   *         console.log(`Request ID: ${deleteResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       } else {
+   *         console.error(`Failed to delete file: ${deleteResult.errorMessage}`);
+   *       }
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * deleteContextFile().catch(console.error);
+   * ```
    */
   async deleteFile(contextId: string, filePath: string): Promise<OperationResult> {
     logAPICall("DeleteContextFile");
@@ -561,6 +860,56 @@ export class ContextService {
 
   /**
    * List files under a specific folder path in a context.
+   *
+   * @param contextId - The ID of the context.
+   * @param parentFolderPath - The parent folder path to list files from.
+   * @param pageNumber - Page number for pagination (default: 1).
+   * @param pageSize - Number of files per page (default: 50).
+   * @returns ContextFileListResult with file entries and total count.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function listContextFiles() {
+   *   try {
+   *     // Get an existing context
+   *     const contextResult = await agentBay.context.get('my-context');
+   *     if (contextResult.success && contextResult.context) {
+   *       const context = contextResult.context;
+   *
+   *       // List files in a folder
+   *       const listResult = await agentBay.context.listFiles(
+   *         context.id,
+   *         '/data'
+   *       );
+   *
+   *       if (listResult.success) {
+   *         console.log(`Found ${listResult.entries.length} files`);
+   *         // Output: Found 5 files
+   *         console.log(`Total count: ${listResult.count}`);
+   *         // Output: Total count: 5
+   *
+   *         for (const entry of listResult.entries) {
+   *           console.log(`  - ${entry.fileName} (${entry.size} bytes)`);
+   *           // Output:   - myfile.txt (1024 bytes)
+   *         }
+   *
+   *         console.log(`Request ID: ${listResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       } else {
+   *         console.error(`Failed to list files: ${listResult.errorMessage}`);
+   *       }
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * listContextFiles().catch(console.error);
+   * ```
    */
   async listFiles(
     contextId: string,
@@ -645,6 +994,42 @@ export class ContextService {
    * @returns A ClearContextResult object indicating the task has been successfully started,
    *          with status field set to "clearing".
    * @throws APIError - If the backend API rejects the clearing request (e.g., invalid ID).
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function clearContextAsync() {
+   *   try {
+   *     // Get an existing context
+   *     const getResult = await agentBay.context.get('my-context');
+   *     if (getResult.success && getResult.context) {
+   *       const context = getResult.context;
+   *
+   *       // Start clearing context data asynchronously (non-blocking)
+   *       const clearResult = await agentBay.context.clearAsync(context.id);
+   *       if (clearResult.success) {
+   *         console.log(`Clear task started successfully`);
+   *         // Output: Clear task started successfully
+   *         console.log(`Status: ${clearResult.status}`);
+   *         // Output: Status: clearing
+   *         console.log(`Request ID: ${clearResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       } else {
+   *         console.log(`Failed to start clear: ${clearResult.errorMessage}`);
+   *       }
+   *     } else {
+   *       console.log(`Failed to get context: ${getResult.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * clearContextAsync().catch(console.error);
+   * ```
    */
   async clearAsync(contextId: string): Promise<ClearContextResult> {
     try {
@@ -716,6 +1101,40 @@ export class ContextService {
    *
    * @param contextId - ID of the context.
    * @returns ClearContextResult object containing the current task status.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function checkClearStatus() {
+   *   try {
+   *     // Get an existing context
+   *     const getResult = await agentBay.context.get('my-context');
+   *     if (getResult.success && getResult.context) {
+   *       const context = getResult.context;
+   *
+   *       // Check clearing status
+   *       const statusResult = await agentBay.context.getClearStatus(context.id);
+   *       if (statusResult.success) {
+   *         console.log(`Current status: ${statusResult.status}`);
+   *         // Output: Current status: clearing (or available/in-use/pre-available)
+   *         console.log(`Request ID: ${statusResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       } else {
+   *         console.log(`Failed to get status: ${statusResult.errorMessage}`);
+   *       }
+   *     } else {
+   *       console.log(`Failed to get context: ${getResult.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * checkClearStatus().catch(console.error);
+   * ```
    */
   async getClearStatus(contextId: string): Promise<ClearContextResult> {
     try {
@@ -821,6 +1240,42 @@ export class ContextService {
    * @returns A ClearContextResult object containing the final task result.
    *          The status field will be "available" on success, or other states if interrupted.
    * @throws APIError - If the task fails to complete within the specified timeout.
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   *
+   * async function clearContext() {
+   *   try {
+   *     // Get an existing context
+   *     const getResult = await agentBay.context.get('my-context');
+   *     if (getResult.success && getResult.context) {
+   *       const context = getResult.context;
+   *
+   *       // Clear context data synchronously (wait for completion)
+   *       const clearResult = await agentBay.context.clear(context.id);
+   *       if (clearResult.success) {
+   *         console.log('Context data cleared successfully');
+   *         // Output: Context data cleared successfully
+   *         console.log(`Final Status: ${clearResult.status}`);
+   *         // Output: Final Status: available
+   *         console.log(`Request ID: ${clearResult.requestId}`);
+   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
+   *       } else {
+   *         console.log(`Failed to clear context: ${clearResult.errorMessage}`);
+   *       }
+   *     } else {
+   *       console.log(`Failed to get context: ${getResult.errorMessage}`);
+   *     }
+   *   } catch (error) {
+   *     console.error('Error:', error);
+   *   }
+   * }
+   *
+   * clearContext().catch(console.error);
+   * ```
    */
   async clear(contextId: string, timeout = 60, pollInterval = 2.0): Promise<ClearContextResult> {
     // 1. Asynchronously start the clearing task
@@ -858,7 +1313,7 @@ export class ContextService {
         const elapsed = (Date.now() - startTime) / 1000;
         logInfo(`Context cleared successfully in ${elapsed.toFixed(2)} seconds`);
         return {
-          requestId: statusResult.requestId,
+          requestId: startResult.requestId,
           success: true,
           contextId: statusResult.contextId,
           status,

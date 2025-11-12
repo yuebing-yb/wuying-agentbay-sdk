@@ -2,12 +2,11 @@ import os
 import unittest
 
 from agentbay import AgentBay
-from agentbay.application.application import InstalledAppListResult, ProcessListResult
+from agentbay.computer import InstalledAppListResult, ProcessListResult
 from agentbay.exceptions import AgentBayError
 from agentbay.model import BoolResult, OperationResult
 from agentbay.session_params import CreateSessionParams
-from agentbay.ui import KeyCode
-from agentbay.ui.ui import UIElementListResult
+from agentbay.mobile import KeyCode, UIElementListResult
 
 
 class TestMobileSystemIntegration(unittest.TestCase):

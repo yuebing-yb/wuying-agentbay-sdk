@@ -13,7 +13,7 @@ class CompanyList(BaseModel):
     batches: List[Batch]
 
 
-async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     await agent.goto(
         "https://browserbase.github.io/stagehand-eval-sites/sites/aigrant/"
     )
@@ -56,7 +56,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
 
     if len(batches) != expected_length:
         error_msg = f"Incorrect number of companies. Expected {expected_length}, got {len(batches)}"
-        logger.error(error_msg)
+        _logger.error(error_msg)
         return {"_success": False, "error": error_msg}
 
     for index in range(len(expected_companies)):
@@ -67,7 +67,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
             or len(extracted_item.companies) != expected_item["companies"]
         ):
             error_msg = f"First item mismatch. Expected {expected_item}, got {extracted_item.dict()}"
-            logger.error(error_msg)
+            _logger.error(error_msg)
             return {"_success": False, "error": error_msg}
 
     return {"_success": True}

@@ -1,14 +1,14 @@
 from typing import Optional, List, Dict, Any, Callable
 from agentbay.api.models import GetContextInfoRequest, SyncContextRequest
 from agentbay.model.response import ApiResponse, extract_request_id
-from .logger import get_logger, log_api_call, log_api_response, log_api_response_with_details
+from .logger import get_logger, _log_api_call, _log_api_response, _log_api_response_with_details
 import json
 import time
 import threading
 import asyncio
 
 # Initialize logger for this module
-logger = get_logger("context_manager")
+_logger = get_logger("context_manager")
 
 
 class ContextStatusData:
@@ -67,6 +67,21 @@ class ContextSyncResult(ApiResponse):
 
 
 class ContextManager:
+    """
+    Manages context operations within a session in the AgentBay cloud environment.
+
+    The ContextManager provides methods to get information about context synchronization
+    status and to synchronize contexts with the session.
+
+    Example:
+        ```python
+        result = agent_bay.create()
+        session = result.session
+        info_result = session.context.info()
+        print(f"Found {len(info_result.context_status_data)} context items")
+        session.delete()
+        ```
+    """
     def __init__(self, session):
         self.session = session
 
@@ -76,9 +91,30 @@ class ContextManager:
         path: Optional[str] = None,
         task_type: Optional[str] = None,
     ) -> ContextInfoResult:
+        """
+        Get information about context synchronization status.
+
+        Args:
+            context_id: Optional ID of the context to get information for
+            path: Optional path where the context is mounted
+            task_type: Optional type of task to get information for (e.g., "upload", "download")
+
+        Returns:
+            ContextInfoResult: Result object containing context status data and request ID
+
+        Example:
+            ```python
+            result = agent_bay.create()
+            session = result.session
+            info_result = session.context.info()
+            for item in info_result.context_status_data:
+                print(f"Context {item.context_id}: {item.status}")
+            session.delete()
+            ```
+        """
         request = GetContextInfoRequest(
-            authorization=f"Bearer {self.session.get_api_key()}",
-            session_id=self.session.get_session_id(),
+            authorization=f"Bearer {self.session._get_api_key()}",
+            session_id=self.session._get_session_id(),
         )
         if context_id:
             request.context_id = context_id
@@ -86,11 +122,11 @@ class ContextManager:
             request.path = path
         if task_type:
             request.task_type = task_type
-        log_api_call(
+        _log_api_call(
             "GetContextInfo",
-            f"SessionId={self.session.get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}",
+            f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}",
         )
-        response = self.session.get_client().get_context_info(request)
+        response = self.session._get_client().get_context_info(request)
 
         # Extract request ID
         request_id = extract_request_id(response)
@@ -109,7 +145,7 @@ class ContextManager:
             if not body.get("Success", True) and body.get("Code"):
                 code = body.get("Code", "Unknown")
                 message = body.get("Message", "Unknown error")
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="GetContextInfo",
                     request_id=request_id,
                     success=False,
@@ -139,12 +175,12 @@ class ContextManager:
                                     ContextStatusData.from_dict(data_item)
                                 )
                 except json.JSONDecodeError as e:
-                    logger.error(f"❌ Error parsing context status: {e}")
+                    _logger.error(f"❌ Error parsing context status: {e}")
                 except Exception as e:
-                    logger.error(f"❌ Unexpected error parsing context status: {e}")
+                    _logger.error(f"❌ Unexpected error parsing context status: {e}")
 
         # Log successful context info retrieval
-        log_api_response_with_details(
+        _log_api_response_with_details(
             api_name="GetContextInfo",
             request_id=request_id,
             success=True,
@@ -171,29 +207,105 @@ class ContextManager:
         retry_interval: int = 1500,
     ) -> ContextSyncResult:
         """
-        Synchronizes context with support for both async and sync calling patterns.
+        Synchronize a context with the session.
 
-        Usage:
-            # Async call - wait for completion
-            result = await session.context.sync()
-
-            # Sync call - immediate return with callback
-            session.context.sync(callback=lambda success: print(f"Done: {success}"))
+        This method supports two modes:
+        - Async mode (default): When called with await, it waits for the sync operation to complete
+        - Callback mode: When a callback is provided, it returns immediately and calls the callback when complete
 
         Args:
-            context_id: ID of the context to sync
-            path: Path to sync
-            mode: Sync mode
-            callback: Optional callback function that receives success status
-            max_retries: Maximum number of retries for polling (default: 150)
+            context_id: Optional ID of the context to synchronize
+            path: Optional path where the context should be mounted
+            mode: Optional synchronization mode (e.g., "upload", "download")
+            callback: Optional callback function that receives success status. If provided, the method
+                     runs in background and calls callback when complete
+            max_retries: Maximum number of retries for polling completion status (default: 150)
             retry_interval: Milliseconds to wait between retries (default: 1500)
 
         Returns:
-            ContextSyncResult: Result of the sync operation
+            ContextSyncResult: Result object containing success status and request ID
+
+        Example (Async mode - waits for completion):
+            ```python
+            import asyncio
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            async def sync_context_async():
+                try:
+                    result = agent_bay.create()
+                    if result.success:
+                        session = result.session
+
+                        # Get or create a context
+                        context_result = agent_bay.context.get('my-context', True)
+                        if context_result.context:
+                            # Trigger context synchronization and wait for completion
+                            sync_result = await session.context.sync(
+                                context_id=context_result.context_id,
+                                path="/mnt/persistent",
+                                mode="upload"
+                            )
+
+                            print(f"Sync completed - Success: {sync_result.success}")
+                            print(f"Request ID: {sync_result.request_id}")
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            asyncio.run(sync_context_async())
+            ```
+
+        Example (Callback mode - returns immediately):
+            ```python
+            import asyncio
+            from agentbay import AgentBay
+
+            agent_bay = AgentBay(api_key="your_api_key")
+
+            async def sync_context_with_callback():
+                try:
+                    result = agent_bay.create()
+                    if result.success:
+                        session = result.session
+
+                        context_result = agent_bay.context.get('my-context', True)
+
+                        # Define a callback function
+                        def on_sync_complete(success: bool):
+                            if success:
+                                print("Context sync completed successfully")
+                            else:
+                                print("Context sync failed or timed out")
+
+                        # Trigger sync with callback - returns immediately
+                        sync_result = await session.context.sync(
+                            context_id=context_result.context_id,
+                            path="/mnt/persistent",
+                            mode="upload",
+                            callback=on_sync_complete,
+                            max_retries=10,
+                            retry_interval=1000
+                        )
+
+                        print(f"Sync triggered - Success: {sync_result.success}")
+                        print(f"Request ID: {sync_result.request_id}")
+
+                        # Wait a bit for callback to be called
+                        await asyncio.sleep(3)
+
+                        session.delete()
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            asyncio.run(sync_context_with_callback())
+            ```
         """
         request = SyncContextRequest(
-            authorization=f"Bearer {self.session.get_api_key()}",
-            session_id=self.session.get_session_id(),
+            authorization=f"Bearer {self.session._get_api_key()}",
+            session_id=self.session._get_session_id(),
         )
         if context_id:
             request.context_id = context_id
@@ -201,15 +313,17 @@ class ContextManager:
             request.path = path
         if mode:
             request.mode = mode
-        log_api_call(
+        _log_api_call(
             "SyncContext",
-            f"SessionId={self.session.get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}",
+            f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}",
         )
-        response = self.session.get_client().sync_context(request)
+        response = self.session._get_client().sync_context(request)
 
         # Extract request ID
         request_id = extract_request_id(response)
         response_map = response.to_map()
+
+        success = False  # Initialize success variable
 
         if isinstance(response_map, dict):
             body = response_map.get("body", {})
@@ -222,7 +336,7 @@ class ContextManager:
             if not body.get("Success", True) and body.get("Code"):
                 code = body.get("Code", "Unknown")
                 message = body.get("Message", "Unknown error")
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="SyncContext",
                     request_id=request_id,
                     success=False,
@@ -239,7 +353,7 @@ class ContextManager:
 
         # Log successful sync context call
         if success:
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="SyncContext",
                 request_id=request_id,
                 success=True,
@@ -315,7 +429,7 @@ class ContextManager:
                         continue
 
                     has_sync_tasks = True
-                    logger.info(
+                    _logger.info(
                         f"🔄 Sync task {item.context_id} status: {item.status}, path: {item.path}"
                     )
 
@@ -325,37 +439,37 @@ class ContextManager:
 
                     if item.status == "Failed":
                         has_failure = True
-                        logger.error(
+                        _logger.error(
                             f"❌ Sync failed for context {item.context_id}: {item.error_message}"
                         )
 
                 if all_completed or not has_sync_tasks:
                     # All tasks completed or no sync tasks found
                     if has_failure:
-                        logger.warning("Context sync completed with failures")
+                        _logger.warning("Context sync completed with failures")
                         callback(False)
                     elif has_sync_tasks:
-                        logger.info("✅ Context sync completed successfully")
+                        _logger.info("✅ Context sync completed successfully")
                         callback(True)
                     else:
-                        logger.info("ℹ️  No sync tasks found")
+                        _logger.info("ℹ️  No sync tasks found")
                         callback(True)
                     break
 
-                logger.info(
+                _logger.info(
                     f"⏳ Waiting for context sync to complete, attempt {retry+1}/{max_retries}"
                 )
                 time.sleep(retry_interval / 1000.0)
 
             except Exception as e:
-                logger.error(
+                _logger.error(
                     f"❌ Error checking context status on attempt {retry+1}: {e}"
                 )
                 time.sleep(retry_interval / 1000.0)
 
         # If we've exhausted all retries, call callback with failure
         if retry == max_retries - 1:
-            logger.error(
+            _logger.error(
                 f"❌ Context sync polling timed out after {max_retries} attempts"
             )
             callback(False)
@@ -395,7 +509,7 @@ class ContextManager:
                         continue
 
                     has_sync_tasks = True
-                    logger.info(
+                    _logger.info(
                         f"🔄 Sync task {item.context_id} status: {item.status}, path: {item.path}"
                     )
 
@@ -405,33 +519,33 @@ class ContextManager:
 
                     if item.status == "Failed":
                         has_failure = True
-                        logger.error(
+                        _logger.error(
                             f"❌ Sync failed for context {item.context_id}: {item.error_message}"
                         )
 
                 if all_completed or not has_sync_tasks:
                     # All tasks completed or no sync tasks found
                     if has_failure:
-                        logger.warning("Context sync completed with failures")
+                        _logger.warning("Context sync completed with failures")
                         return False
                     elif has_sync_tasks:
-                        logger.info("✅ Context sync completed successfully")
+                        _logger.info("✅ Context sync completed successfully")
                         return True
                     else:
-                        logger.info("ℹ️  No sync tasks found")
+                        _logger.info("ℹ️  No sync tasks found")
                         return True
 
-                logger.info(
+                _logger.info(
                     f"⏳ Waiting for context sync to complete, attempt {retry+1}/{max_retries}"
                 )
                 await asyncio.sleep(retry_interval / 1000.0)
 
             except Exception as e:
-                logger.error(
+                _logger.error(
                     f"❌ Error checking context status on attempt {retry+1}: {e}"
                 )
                 await asyncio.sleep(retry_interval / 1000.0)
 
         # If we've exhausted all retries, return failure
-        logger.error(f"❌ Context sync polling timed out after {max_retries} attempts")
+        _logger.error(f"❌ Context sync polling timed out after {max_retries} attempts")
         return False

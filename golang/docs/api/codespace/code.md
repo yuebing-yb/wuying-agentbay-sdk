@@ -1,54 +1,69 @@
-# Code Module - Go
+# Code API Reference
 
-The Code module handles code execution operations in the AgentBay cloud environment.
+## 💻 Related Tutorial
 
-## 📖 Related Tutorial
+- [Code Execution Guide](../../../../docs/guides/codespace/code-execution.md) - Execute code in isolated environments
 
-- [Code Execution Guide](../../../../docs/guides/codespace/code-execution.md) - Detailed tutorial on executing code in cloud environments
+## Overview
 
-## Methods
+The Code module provides secure code execution capabilities in isolated environments.
+It supports multiple programming languages including Python, JavaScript, and more.
 
-### RunCode
+## Requirements
 
-Executes code in a specified programming language with a timeout.
+- Requires `code_latest` image for code execution features
+
+## Type Code
 
 ```go
-RunCode(code string, language string, timeoutS ...int) (*CodeResult, error)
+type Code struct {
+	Session interface {
+		GetAPIKey() string
+		GetClient() *mcp.Client
+		GetSessionId() string
+		IsVpc() bool
+		NetworkInterfaceIp() string
+		HttpPort() string
+		FindServerForTool(toolName string) string
+		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	}
+}
 ```
 
-**Parameters:**
-- `code` (string): The code to execute.
-- `language` (string): The programming language of the code. Must be either 'python' or 'javascript'.
-- `timeoutS` (int, optional): The timeout for the code execution in seconds. Default is 60s. Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+Code handles code execution operations in the AgentBay cloud environment.
 
-**Returns:**
-- `*CodeResult`: A result object containing the execution output and request ID.
-- `error`: An error object if the operation fails.
+### Methods
 
-**Important Note:**
-The `RunCode` method requires a session created with the `code_latest` image to function properly. If you encounter errors indicating that the tool is not found, make sure to create your session with `ImageId: "code_latest"` in the `CreateSessionParams`.
+#### RunCode
 
-**Usage Example:**
+```go
+func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResult, error)
+```
+
+RunCode executes code in the session environment. timeoutS: The timeout for the code execution in
+seconds. Default is 60s. Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+
+**Example:**
 
 ```go
 package main
-
 import (
     "fmt"
     "os"
-    
     "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
-
 func main() {
-    // Initialize AgentBay with API key
-    client, err := agentbay.NewAgentBay("your_api_key", nil)
+
+    // Initialize AgentBay with API key from environment variable
+
+    client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
     if err != nil {
         fmt.Printf("Error initializing AgentBay client: %v\n", err)
         os.Exit(1)
     }
 
     // Create a session with code_latest image
+
     params := &agentbay.CreateSessionParams{
         ImageId: "code_latest",
     }
@@ -60,6 +75,7 @@ func main() {
     session := sessionResult.Session
 
     // Execute Python code
+
     pythonCode := `
 print("Hello from Python!")
 result = 2 + 3
@@ -70,14 +86,11 @@ print(f"Result: {result}")
         fmt.Printf("Error executing Python code: %v\n", err)
     } else {
         fmt.Printf("Python code output:\n%s\n", codeResult.Output)
-        // Expected output:
-        // Hello from Python!
-        // Result: 5
         fmt.Printf("Request ID: %s\n", codeResult.RequestID)
-        // Expected: A valid UUID-format request ID
     }
 
     // Execute JavaScript code with custom timeout
+
     jsCode := `
 console.log("Hello from JavaScript!");
 const result = 2 + 3;
@@ -88,29 +101,53 @@ console.log("Result:", result);
         fmt.Printf("Error executing JavaScript code: %v\n", err)
     } else {
         fmt.Printf("JavaScript code output:\n%s\n", jsResult.Output)
-        // Expected output:
-        // Hello from JavaScript!
-        // Result: 5
         fmt.Printf("Request ID: %s\n", jsResult.RequestID)
-        // Expected: A valid UUID-format request ID
     }
 }
 ```
 
-## Error Handling
+### Related Functions
 
-The RunCode method returns an error if:
-- The specified language is not supported (only 'python' and 'javascript' are supported)
-- The code execution fails in the cloud environment
-- Network or API communication errors occur
+#### NewCode
 
-## Types
+```go
+func NewCode(session interface {
+	GetAPIKey() string
+	GetClient() *mcp.Client
+	GetSessionId() string
+	IsVpc() bool
+	NetworkInterfaceIp() string
+	HttpPort() string
+	FindServerForTool(toolName string) string
+	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+}) *Code
+```
 
-### CodeResult
+NewCode creates a new Code instance
+
+## Type CodeResult
 
 ```go
 type CodeResult struct {
-    ApiResponse  // Embedded ApiResponse containing RequestID
-    Output string // The execution output
+	models.ApiResponse	// Embedded ApiResponse
+	Output			string
 }
-``` 
+```
+
+CodeResult represents the result of a code execution
+
+## Best Practices
+
+1. Validate code syntax before execution
+2. Set appropriate execution timeouts
+3. Handle execution errors and exceptions
+4. Use proper resource limits to prevent resource exhaustion
+5. Clean up temporary files after code execution
+
+## Related Resources
+
+- [Session API Reference](../common-features/basics/session.md)
+
+---
+
+*Documentation generated automatically from Go source code.*

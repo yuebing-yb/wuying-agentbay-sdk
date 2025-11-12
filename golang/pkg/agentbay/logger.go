@@ -28,16 +28,16 @@ const (
 	ColorBlue   = "\033[34m"
 )
 
-// Global log level (default is LOG_INFO)
-var GlobalLogLevel = LOG_INFO
+// globalLogLevel (default is LOG_INFO)
+var globalLogLevel = LOG_INFO
 
 // File logging configuration
 var (
-	fileLoggingEnabled = false
-	logFilePath        string
-	logFileMaxSize     int64 = 10 * 1024 * 1024 // 10MB default
-	consoleLoggingEnabled     = true
-	logFile            *os.File
+	fileLoggingEnabled    = false
+	logFilePath           string
+	logFileMaxSize        int64 = 10 * 1024 * 1024 // 10MB default
+	consoleLoggingEnabled       = true
+	logFile               *os.File
 )
 
 // LoggerConfig holds configuration for file logging
@@ -48,8 +48,8 @@ type LoggerConfig struct {
 	EnableConsole *bool
 }
 
-// Sensitive field names for data masking
-var SENSITIVE_FIELDS = []string{
+// sensitiveFields names for data masking
+var sensitiveFields = []string{
 	"api_key", "apikey", "api-key",
 	"password", "passwd", "pwd",
 	"token", "access_token", "auth_token",
@@ -82,15 +82,67 @@ func parseLogLevel(levelStr string) int {
 }
 
 // SetLogLevel sets the global log level
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Set log level to DEBUG to see all messages
+//		agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+//
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// Change to INFO level to reduce verbosity
+//		agentbay.SetLogLevel(agentbay.LOG_INFO)
+//
+//		// Continue with your operations
+//	}
 func SetLogLevel(level int) {
 	if level >= LOG_DEBUG && level <= LOG_ERROR {
-		GlobalLogLevel = level
+		globalLogLevel = level
 	}
 }
 
 // GetLogLevel returns the current global log level
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Set log level to DEBUG
+//		agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+//
+//		// Check current level
+//		currentLevel := agentbay.GetLogLevel()
+//		fmt.Printf("Current log level: %d\n", currentLevel)
+//	}
 func GetLogLevel() int {
-	return GlobalLogLevel
+	return globalLogLevel
 }
 
 // parseFileSize parses size string like "10 MB" to bytes
@@ -157,6 +209,41 @@ func writeToFile(message string) {
 }
 
 // SetupLogger configures the logger with file logging support
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Configure file logging with rotation
+//		agentbay.SetupLogger(agentbay.LoggerConfig{
+//			Level:       "DEBUG",
+//			LogFile:     "/tmp/agentbay.log",
+//			MaxFileSize: "100 MB",
+//		})
+//
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// All logs will be written to both console and file
+//	}
 func SetupLogger(config LoggerConfig) {
 	if config.Level != "" {
 		level := parseLogLevel(config.Level)
@@ -249,9 +336,41 @@ func isIDEEnvironment() bool {
 	return false
 }
 
-// LogAPICall logs an API call with request parameters
-func LogAPICall(apiName, requestParams string) {
-	if GlobalLogLevel > LOG_INFO {
+// logAPICall logs an API call with request parameters
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Set log level to DEBUG to see API calls
+//		agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+//
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// API calls are automatically logged by the SDK
+//		// Output: 🔗 API Call: create_session
+//	}
+func logAPICall(apiName, requestParams string) {
+	if globalLogLevel > LOG_INFO {
 		return
 	}
 
@@ -264,7 +383,7 @@ func LogAPICall(apiName, requestParams string) {
 	}
 	writeToFile(plainMsg)
 
-	if requestParams != "" && GlobalLogLevel <= LOG_DEBUG {
+	if requestParams != "" && globalLogLevel <= LOG_DEBUG {
 		requestMsg := fmt.Sprintf("   Request: %s", requestParams)
 		if consoleLoggingEnabled {
 			fmt.Println(requestMsg)
@@ -273,9 +392,41 @@ func LogAPICall(apiName, requestParams string) {
 	}
 }
 
-// LogAPIResponseWithDetails logs a structured API response with key fields
-func LogAPIResponseWithDetails(apiName, requestID string, success bool, keyFields map[string]interface{}, fullResponse string) {
-	if GlobalLogLevel > LOG_INFO {
+// logAPIResponseWithDetails logs a structured API response with key fields
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Set log level to DEBUG to see detailed responses
+//		agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+//
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// API responses are automatically logged by the SDK
+//		// Output: ✅ API Response: create_session, RequestId=xxx
+//	}
+func logAPIResponseWithDetails(apiName, requestID string, success bool, keyFields map[string]interface{}, fullResponse string) {
+	if globalLogLevel > LOG_INFO {
 		return
 	}
 
@@ -307,7 +458,7 @@ func LogAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 			}
 		}
 
-		if fullResponse != "" && GlobalLogLevel <= LOG_DEBUG {
+		if fullResponse != "" && globalLogLevel <= LOG_DEBUG {
 			coloredResp := fmt.Sprintf("%s📥 Full Response: %s%s", blue, fullResponse, reset)
 			plainResp := fmt.Sprintf("📥 Full Response: %s", fullResponse)
 
@@ -330,7 +481,7 @@ func LogAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 		}
 		writeToFile(plainMsg)
 
-		if fullResponse != "" && GlobalLogLevel <= LOG_DEBUG {
+		if fullResponse != "" && globalLogLevel <= LOG_DEBUG {
 			coloredResp := fmt.Sprintf("%s📥 Response: %s%s", red, fullResponse, reset)
 			plainResp := fmt.Sprintf("📥 Response: %s", fullResponse)
 
@@ -342,9 +493,39 @@ func LogAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 	}
 }
 
-// LogOperationError logs an operation error with optional stack trace
-func LogOperationError(operation, errorMsg string, withStack bool) {
-	if GlobalLogLevel > LOG_ERROR {
+// logOperationError logs an operation error with optional stack trace
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			// Log operation errors
+//			agentbay.LogOperationError("Create Session", err.Error(), false)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// Output: ❌ Failed: Create Session
+//		// Output: 💥 Error: session creation failed
+//	}
+func logOperationError(operation, errorMsg string, withStack bool) {
+	if globalLogLevel > LOG_ERROR {
 		return
 	}
 
@@ -378,9 +559,49 @@ func LogOperationError(operation, errorMsg string, withStack bool) {
 	}
 }
 
-// LogCodeExecutionOutput extracts and logs the actual code execution output from run_code response
-func LogCodeExecutionOutput(requestID, rawOutput string) {
-	if GlobalLogLevel > LOG_INFO {
+// logCodeExecutionOutput extracts and logs the actual code execution output from run_code response
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Set log level to INFO to see code execution output
+//		agentbay.SetLogLevel(agentbay.LOG_INFO)
+//
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// Execute code in the session
+//		execResult, err := session.Code.RunCode("print('Hello from AgentBay')", "python")
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		fmt.Printf("Code execution completed: %v\n", execResult.Success)
+//		// Output: 📋 Code Execution Output (RequestID: xxx):
+//		// Output:    Hello from AgentBay
+//	}
+func logCodeExecutionOutput(requestID, rawOutput string) {
+	if globalLogLevel > LOG_INFO {
 		return
 	}
 
@@ -435,9 +656,33 @@ func LogCodeExecutionOutput(requestID, rawOutput string) {
 	}
 }
 
-// MaskSensitiveData recursively masks sensitive information in data structures
-func MaskSensitiveData(data interface{}) interface{} {
-	return maskSensitiveDataInternal(data, SENSITIVE_FIELDS)
+// maskSensitiveData recursively masks sensitive information in data structures
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Create data with sensitive information
+//		data := map[string]interface{}{
+//			"api_key":    "sk_live_1234567890",
+//			"password":   "secret123",
+//			"auth_token": "Bearer xyz",
+//			"username":   "john_doe",
+//		}
+//
+//		// Mask sensitive data
+//		masked := agentbay.maskSensitiveData(data)
+//		fmt.Printf("Masked data: %v\n", masked)
+//		// Output: Masked data: map[api_key:sk****90 auth_token:Be****yz password:se****23 username:john_doe]
+//	}
+func maskSensitiveData(data interface{}) interface{} {
+	return maskSensitiveDataInternal(data, sensitiveFields)
 }
 
 func maskSensitiveDataInternal(data interface{}, fields []string) interface{} {
@@ -492,7 +737,7 @@ func maskSensitiveDataString(jsonStr string) string {
 		return maskSensitiveDataWithRegex(jsonStr)
 	}
 
-	masked := MaskSensitiveData(data)
+	masked := maskSensitiveData(data)
 	if result, err := json.Marshal(masked); err == nil {
 		return string(result)
 	}
@@ -516,4 +761,154 @@ func maskSensitiveDataWithRegex(str string) string {
 	}
 
 	return result
+}
+
+// LogInfo logs an informational message
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Set log level to INFO or DEBUG to see info messages
+//		agentbay.SetLogLevel(agentbay.LOG_INFO)
+//
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// Log informational messages
+//		agentbay.LogInfo("Session created successfully")
+//
+//		// Output: ℹ️  Session created successfully
+//	}
+func LogInfo(message string) {
+	if globalLogLevel > LOG_INFO {
+		return
+	}
+
+	reset, _, _, _, blue := getColorCodes()
+	coloredMsg := fmt.Sprintf("%sℹ️  %s%s", blue, message, reset)
+	plainMsg := fmt.Sprintf("ℹ️  %s", message)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredMsg)
+	}
+	writeToFile(plainMsg)
+}
+
+// LogDebug logs a debug message
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Set log level to DEBUG to see debug messages
+//		agentbay.SetLogLevel(agentbay.LOG_DEBUG)
+//
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// Log debug messages
+//		agentbay.LogDebug("Debugging session creation process")
+//
+//		// Output: 🐛 Debugging session creation process
+//	}
+func LogDebug(message string) {
+	if globalLogLevel > LOG_DEBUG {
+		return
+	}
+
+	reset, _, _, _, _ := getColorCodes()
+	coloredMsg := fmt.Sprintf("%s🐛 %s%s", reset, message, reset)
+	plainMsg := fmt.Sprintf("🐛 %s", message)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredMsg)
+	}
+	writeToFile(plainMsg)
+}
+
+// logInfoWithColor logs an informational message with custom color
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		// Set log level to INFO or DEBUG to see colored messages
+//		agentbay.SetLogLevel(agentbay.LOG_INFO)
+//
+//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//
+//		result, err := client.Create(nil)
+//		if err != nil {
+//			fmt.Printf("Error: %v\n", err)
+//			os.Exit(1)
+//		}
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// Log informational messages with color emphasis
+//		agentbay.logInfoWithColor("Important: Session ready for use")
+//
+//		// Output: ℹ️  Important: Session ready for use
+//	}
+func logInfoWithColor(message string) {
+	if globalLogLevel > LOG_INFO {
+		return
+	}
+
+	reset, _, red, _, _ := getColorCodes()
+	coloredMsg := fmt.Sprintf("%sℹ️  %s%s", red, message, reset)
+	plainMsg := fmt.Sprintf("ℹ️  %s", message)
+
+	if consoleLoggingEnabled {
+		fmt.Println(coloredMsg)
+	}
+	writeToFile(plainMsg)
 }

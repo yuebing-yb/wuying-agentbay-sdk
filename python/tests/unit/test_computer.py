@@ -392,129 +392,98 @@ class TestComputer:
                 "button": "middle"
             }
         )
-    def test_list_visible_apps_success(self):
-        """Test list_visible_apps delegates to ApplicationManager."""
-        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
-            mock_instance = Mock()
-            mock_result = Mock(success=True, data=[Mock(pname="Calculator", pid=1234)])
-            mock_instance.list_visible_apps.return_value = mock_result
-            mock_app_manager.return_value = mock_instance
-            
-            result = self.computer.list_visible_apps()
-            
-            assert result.success is True
-            assert len(result.data) == 1
-            assert result.data[0].pname == "Calculator"
-            mock_instance.list_visible_apps.assert_called_once_with()
-
     # Application Management Operations Tests
+    def test_list_visible_apps_success(self):
+        """Test list_visible_apps success."""
+        self.mock_session.call_mcp_tool.return_value = Mock(
+            success=True,
+            request_id="test-request-id",
+            data='[{"pname":"Calculator","pid":1234}]'
+        )
+
+        result = self.computer.list_visible_apps()
+
+        assert result.success is True
+        assert len(result.data) == 1
+        assert result.data[0].pname == "Calculator"
+        self.mock_session.call_mcp_tool.assert_called_once_with(
+            "list_visible_apps", {}
+        )
+
     def test_get_installed_apps_success(self):
-        """Test get_installed_apps delegates to ApplicationManager."""
-        # Arrange
-        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
-            mock_instance = Mock()
-            # Configure mock objects with attributes
-            mock_app1 = Mock()
-            mock_app1.configure_mock(name='Notepad', start_cmd='notepad.exe')
-            mock_app2 = Mock()
-            mock_app2.configure_mock(name='Calculator', start_cmd='calc.exe')
-            mock_result = Mock(success=True, data=[mock_app1, mock_app2])
-            mock_instance.get_installed_apps.return_value = mock_result
-            mock_app_manager.return_value = mock_instance
+        """Test get_installed_apps success."""
+        self.mock_session.call_mcp_tool.return_value = Mock(
+            success=True,
+            request_id="test-request-id",
+            data='[{"name":"Notepad","start_cmd":"notepad.exe"},{"name":"Calculator","start_cmd":"calc.exe"}]'
+        )
 
-            # Act
-            result = self.computer.get_installed_apps()
+        result = self.computer.get_installed_apps()
 
-            # Assert
-            assert result.success is True
-            assert len(result.data) == 2
-            assert result.data[0].name == 'Notepad'
-            assert result.data[1].name == 'Calculator'
-            mock_instance.get_installed_apps.assert_called_once()
+        assert result.success is True
+        assert len(result.data) == 2
+        assert result.data[0].name == 'Notepad'
+        assert result.data[1].name == 'Calculator'
 
     def test_start_app_success(self):
-        """Test start_app delegates to ApplicationManager."""
-        # Arrange
-        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
-            mock_instance = Mock()
-            mock_process = Mock(pname='notepad', pid=1234)
-            mock_result = Mock(success=True, data=[mock_process])
-            mock_instance.start_app.return_value = mock_result
-            mock_app_manager.return_value = mock_instance
-            
-            # Act
-            result = self.computer.start_app('notepad.exe')
-            
-            # Assert
-            assert result.success is True
-            assert len(result.data) == 1
-            assert result.data[0].pname == 'notepad'
-            assert result.data[0].pid == 1234
-            mock_instance.start_app.assert_called_once_with('notepad.exe', '', '')
+        """Test start_app success."""
+        self.mock_session.call_mcp_tool.return_value = Mock(
+            success=True,
+            request_id="test-request-id",
+            data='[{"pname":"notepad","pid":1234}]'
+        )
+
+        result = self.computer.start_app('notepad.exe')
+
+        assert result.success is True
+        assert len(result.data) == 1
+        assert result.data[0].pname == 'notepad'
+        assert result.data[0].pid == 1234
 
     def test_start_app_with_working_directory(self):
         """Test start_app with working directory."""
-        # Arrange
-        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
-            mock_instance = Mock()
-            mock_result = Mock(success=True, data=[])
-            mock_instance.start_app.return_value = mock_result
-            mock_app_manager.return_value = mock_instance
-            
-            # Act
-            result = self.computer.start_app('notepad.exe', '/home/user/documents')
-            
-            # Assert
-            assert result.success is True
-            mock_instance.start_app.assert_called_once_with('notepad.exe', '/home/user/documents', '')
+        self.mock_session.call_mcp_tool.return_value = Mock(
+            success=True,
+            request_id="test-request-id",
+            data='[]'
+        )
+
+        result = self.computer.start_app('notepad.exe', '/home/user/documents')
+
+        assert result.success is True
 
     def test_stop_app_by_pname_success(self):
-        """Test stop_app_by_pname delegates to ApplicationManager."""
-        # Arrange
-        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
-            mock_instance = Mock()
-            mock_result = Mock(success=True)
-            mock_instance.stop_app_by_pname.return_value = mock_result
-            mock_app_manager.return_value = mock_instance
-            
-            # Act
-            result = self.computer.stop_app_by_pname('notepad')
-            
-            # Assert
-            assert result.success is True
-            mock_instance.stop_app_by_pname.assert_called_once_with('notepad')
+        """Test stop_app_by_pname success."""
+        self.mock_session.call_mcp_tool.return_value = Mock(
+            success=True,
+            request_id="test-request-id"
+        )
+
+        result = self.computer.stop_app_by_pname('notepad')
+
+        assert result.success is True
 
     def test_stop_app_by_pid_success(self):
-        """Test stop_app_by_pid delegates to ApplicationManager."""
-        # Arrange
-        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
-            mock_instance = Mock()
-            mock_result = Mock(success=True)
-            mock_instance.stop_app_by_pid.return_value = mock_result
-            mock_app_manager.return_value = mock_instance
-            
-            # Act
-            result = self.computer.stop_app_by_pid(1234)
-            
-            # Assert
-            assert result.success is True
-            mock_instance.stop_app_by_pid.assert_called_once_with(1234)
+        """Test stop_app_by_pid success."""
+        self.mock_session.call_mcp_tool.return_value = Mock(
+            success=True,
+            request_id="test-request-id"
+        )
+
+        result = self.computer.stop_app_by_pid(1234)
+
+        assert result.success is True
 
     def test_stop_app_by_cmd_success(self):
-        """Test stop_app_by_cmd delegates to ApplicationManager."""
-        # Arrange
-        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
-            mock_instance = Mock()
-            mock_result = Mock(success=True)
-            mock_instance.stop_app_by_cmd.return_value = mock_result
-            mock_app_manager.return_value = mock_instance
-            
-            # Act
-            result = self.computer.stop_app_by_cmd('pkill notepad')
-            
-            # Assert
-            assert result.success is True
-            mock_instance.stop_app_by_cmd.assert_called_once_with('pkill notepad')
+        """Test stop_app_by_cmd success."""
+        self.mock_session.call_mcp_tool.return_value = Mock(
+            success=True,
+            request_id="test-request-id"
+        )
+
+        result = self.computer.stop_app_by_cmd('pkill notepad')
+
+        assert result.success is True
 
     def test_application_management_methods_exist(self):
         """Test that all application management methods exist on Computer class."""
