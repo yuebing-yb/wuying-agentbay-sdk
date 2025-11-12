@@ -290,107 +290,69 @@ Lifecycle defines the lifecycle options for recycle policy
 
 ## Functions
 
-### Deprecated
+### NewContextSync
 
 ```go
-func Deprecated(reason, replacement, version string)
+func NewContextSync(contextID, path string, policy *SyncPolicy) (*ContextSync, error)
 ```
 
-Deprecated marks a function or method as deprecated and emits a warning
+NewContextSync creates a new context sync configuration
 
-### GetLogLevel
+### NewSyncPolicy
 
 ```go
-func GetLogLevel() int
+func NewSyncPolicy() *SyncPolicy
 ```
 
-GetLogLevel returns the current global log level
+NewSyncPolicy creates a new sync policy with default values
 
-**Example:**
+### NewUploadPolicy
 
 ```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-
-	// Check current level
-
-	currentLevel := agentbay.GetLogLevel()
-	fmt.Printf("Current log level: %d\n", currentLevel)
-}
+func NewUploadPolicy() *UploadPolicy
 ```
 
-### LogDebug
+NewUploadPolicy creates a new upload policy with default values
+
+### NewDownloadPolicy
 
 ```go
-func LogDebug(message string)
+func NewDownloadPolicy() *DownloadPolicy
 ```
 
-LogDebug logs a debug message
+NewDownloadPolicy creates a new download policy with default values
 
-**Example:**
+### NewDeletePolicy
 
 ```go
-agentbay.LogDebug("Processing request parameters")
+func NewDeletePolicy() *DeletePolicy
 ```
 
-### LogInfo
+NewDeletePolicy creates a new delete policy with default values
+
+### NewExtractPolicy
 
 ```go
-func LogInfo(message string)
+func NewExtractPolicy() *ExtractPolicy
 ```
 
-LogInfo logs an informational message
+NewExtractPolicy creates a new extract policy with default values
 
-**Example:**
+### NewRecyclePolicy
 
 ```go
-agentbay.LogInfo("Session created successfully")
+func NewRecyclePolicy() *RecyclePolicy
 ```
 
-### SetDeprecationConfig
+NewRecyclePolicy creates a new recycle policy with default values
+
+### NewMappingPolicy
 
 ```go
-func SetDeprecationConfig(config *DeprecationConfig)
+func NewMappingPolicy() *MappingPolicy
 ```
 
-SetDeprecationConfig sets the global deprecation configuration
-
-### SetLogLevel
-
-```go
-func SetLogLevel(level int)
-```
-
-SetLogLevel sets the global log level
-
-**Example:**
-
-```go
-agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-```
-
-### SetupLogger
-
-```go
-func SetupLogger(config LoggerConfig)
-```
-
-SetupLogger configures the logger with file logging support
-
-**Example:**
-
-```go
-config := agentbay.LoggerConfig{Level: "DEBUG", LogFile: "/tmp/agentbay.log"}
-agentbay.SetupLogger(config)
-```
+NewMappingPolicy creates a new mapping policy with default values
 
 ## Related Resources
 

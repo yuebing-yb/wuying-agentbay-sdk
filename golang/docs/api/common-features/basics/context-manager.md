@@ -340,107 +340,17 @@ NewContextManager creates a new ContextManager object.
 
 ## Functions
 
-### Deprecated
+### NewContextManager
 
 ```go
-func Deprecated(reason, replacement, version string)
+func NewContextManager(session interface {
+	GetAPIKey() string
+	GetClient() *mcp.Client
+	GetSessionId() string
+}) *ContextManager
 ```
 
-Deprecated marks a function or method as deprecated and emits a warning
-
-### GetLogLevel
-
-```go
-func GetLogLevel() int
-```
-
-GetLogLevel returns the current global log level
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-
-	// Check current level
-
-	currentLevel := agentbay.GetLogLevel()
-	fmt.Printf("Current log level: %d\n", currentLevel)
-}
-```
-
-### LogDebug
-
-```go
-func LogDebug(message string)
-```
-
-LogDebug logs a debug message
-
-**Example:**
-
-```go
-agentbay.LogDebug("Processing request parameters")
-```
-
-### LogInfo
-
-```go
-func LogInfo(message string)
-```
-
-LogInfo logs an informational message
-
-**Example:**
-
-```go
-agentbay.LogInfo("Session created successfully")
-```
-
-### SetDeprecationConfig
-
-```go
-func SetDeprecationConfig(config *DeprecationConfig)
-```
-
-SetDeprecationConfig sets the global deprecation configuration
-
-### SetLogLevel
-
-```go
-func SetLogLevel(level int)
-```
-
-SetLogLevel sets the global log level
-
-**Example:**
-
-```go
-agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-```
-
-### SetupLogger
-
-```go
-func SetupLogger(config LoggerConfig)
-```
-
-SetupLogger configures the logger with file logging support
-
-**Example:**
-
-```go
-config := agentbay.LoggerConfig{Level: "DEBUG", LogFile: "/tmp/agentbay.log"}
-agentbay.SetupLogger(config)
-```
+NewContextManager creates a new ContextManager object.
 
 ## Related Resources
 

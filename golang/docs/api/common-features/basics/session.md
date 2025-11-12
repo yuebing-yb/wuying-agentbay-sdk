@@ -503,107 +503,21 @@ SessionInfo contains information about a session.
 
 ## Functions
 
-### Deprecated
+### NewSession
 
 ```go
-func Deprecated(reason, replacement, version string)
+func NewSession(agentBay *AgentBay, sessionID string) *Session
 ```
 
-Deprecated marks a function or method as deprecated and emits a warning
+NewSession creates a new Session object.
 
-### GetLogLevel
+### NewCreateSessionParams
 
 ```go
-func GetLogLevel() int
+func NewCreateSessionParams() *CreateSessionParams
 ```
 
-GetLogLevel returns the current global log level
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-
-	// Check current level
-
-	currentLevel := agentbay.GetLogLevel()
-	fmt.Printf("Current log level: %d\n", currentLevel)
-}
-```
-
-### LogDebug
-
-```go
-func LogDebug(message string)
-```
-
-LogDebug logs a debug message
-
-**Example:**
-
-```go
-agentbay.LogDebug("Processing request parameters")
-```
-
-### LogInfo
-
-```go
-func LogInfo(message string)
-```
-
-LogInfo logs an informational message
-
-**Example:**
-
-```go
-agentbay.LogInfo("Session created successfully")
-```
-
-### SetDeprecationConfig
-
-```go
-func SetDeprecationConfig(config *DeprecationConfig)
-```
-
-SetDeprecationConfig sets the global deprecation configuration
-
-### SetLogLevel
-
-```go
-func SetLogLevel(level int)
-```
-
-SetLogLevel sets the global log level
-
-**Example:**
-
-```go
-agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-```
-
-### SetupLogger
-
-```go
-func SetupLogger(config LoggerConfig)
-```
-
-SetupLogger configures the logger with file logging support
-
-**Example:**
-
-```go
-config := agentbay.LoggerConfig{Level: "DEBUG", LogFile: "/tmp/agentbay.log"}
-agentbay.SetupLogger(config)
-```
+NewCreateSessionParams creates a new CreateSessionParams with default values.
 
 ## Related Resources
 

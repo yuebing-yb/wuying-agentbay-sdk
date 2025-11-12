@@ -137,7 +137,10 @@ var mappings = []docMapping{
 			"CallMcpToolForBrowser",          // Duplicate interface method
 			"GetLinkForBrowser",              // Duplicate interface method
 		},
-		IncludeAllFuncs: true,
+		FuncNames: []string{
+			"NewSession",
+			"NewCreateSessionParams",
+		},
 	},
 	{
 		Target:          "common-features/basics/command.md",
@@ -165,7 +168,9 @@ var mappings = []docMapping{
 			"ContextFileListResult",
 			"ContextFileDeleteResult",
 		},
-		IncludeAllFuncs: true,
+		FuncNames: []string{
+			"NewContextListParams",
+		},
 	},
 	{
 		Target:      "common-features/basics/context-manager.md",
@@ -178,7 +183,9 @@ var mappings = []docMapping{
 			"ContextSyncResult",
 			"ContextManager",
 		},
-		IncludeAllFuncs: true,
+		FuncNames: []string{
+			"NewContextManager",
+		},
 	},
 	{
 		Target:          "common-features/basics/filesystem.md",
@@ -207,7 +214,16 @@ var mappings = []docMapping{
 			"UploadMode",
 			"Lifecycle",
 		},
-		IncludeAllFuncs: true,
+		FuncNames: []string{
+			"NewContextSync",
+			"NewSyncPolicy",
+			"NewUploadPolicy",
+			"NewDownloadPolicy",
+			"NewDeletePolicy",
+			"NewExtractPolicy",
+			"NewRecyclePolicy",
+			"NewMappingPolicy",
+		},
 	},
 	{
 		Target:      "common-features/basics/logging.md",
