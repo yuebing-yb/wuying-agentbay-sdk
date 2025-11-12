@@ -225,82 +225,28 @@ class ContextManager:
         Returns:
             ContextSyncResult: Result object containing success status and request ID
 
-        Example (Async mode - waits for completion):
+        Example:
+            Async mode - waits for completion:
             ```python
-            import asyncio
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            async def sync_context_async():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Get or create a context
-                        context_result = agent_bay.context.get('my-context', True)
-                        if context_result.context:
-                            # Trigger context synchronization and wait for completion
-                            sync_result = await session.context.sync(
-                                context_id=context_result.context_id,
-                                path="/mnt/persistent",
-                                mode="upload"
-                            )
-
-                            print(f"Sync completed - Success: {sync_result.success}")
-                            print(f"Request ID: {sync_result.request_id}")
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            asyncio.run(sync_context_async())
+            result = agent_bay.create()
+            session = result.session
+            context = agent_bay.context.get('my-context', True).context
+            sync_result = await session.context.sync(context.id, "/mnt/data")
+            print(f"Sync success: {sync_result.success}")
+            session.delete()
             ```
 
-        Example (Callback mode - returns immediately):
+            Callback mode - returns immediately:
             ```python
-            import asyncio
-            from agentbay import AgentBay
+            result = agent_bay.create()
+            session = result.session
 
-            agent_bay = AgentBay(api_key="your_api_key")
+            def on_complete(success: bool):
+                print(f"Sync completed: {success}")
 
-            async def sync_context_with_callback():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        context_result = agent_bay.context.get('my-context', True)
-
-                        # Define a callback function
-                        def on_sync_complete(success: bool):
-                            if success:
-                                print("Context sync completed successfully")
-                            else:
-                                print("Context sync failed or timed out")
-
-                        # Trigger sync with callback - returns immediately
-                        sync_result = await session.context.sync(
-                            context_id=context_result.context_id,
-                            path="/mnt/persistent",
-                            mode="upload",
-                            callback=on_sync_complete,
-                            max_retries=10,
-                            retry_interval=1000
-                        )
-
-                        print(f"Sync triggered - Success: {sync_result.success}")
-                        print(f"Request ID: {sync_result.request_id}")
-
-                        # Wait a bit for callback to be called
-                        await asyncio.sleep(3)
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            asyncio.run(sync_context_with_callback())
+            context = agent_bay.context.get('my-context', True).context
+            await session.context.sync(context.id, "/mnt/data", callback=on_complete)
+            session.delete()
             ```
         """
         request = SyncContextRequest(
