@@ -23,6 +23,7 @@ from agentbay.model import (
     GetSessionResult,
     SessionListResult,
     SessionPauseResult,
+    SessionResumeResult,
     SessionResult,
     extract_request_id,
 )
@@ -1108,6 +1109,7 @@ class AgentBay:
                         token=data_dict.get("Token", ""),
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
+                        status=data_dict.get("Status", ""),
                     )
 
                 # Log API response with key details
@@ -1261,4 +1263,50 @@ class AgentBay:
                 request_id="",
                 success=False,
                 error_message=f"Failed to pause session {session.session_id}: {e}",
+            )
+
+    def resume(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
+        """
+        Synchronously resume a session from a paused state.
+
+        Args:
+            session (Session): The session to resume.
+            timeout (int, optional): Timeout in seconds to wait for the session to resume.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionResumeResult: Result containing the request ID, success status, and final session status.
+        """
+        try:
+            # Call session's resume method
+            return session.resume(timeout, poll_interval)
+        except Exception as e:
+            log_operation_error("resume_session", str(e), exc_info=True)
+            return SessionResumeResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to resume session {session.session_id}: {e}",
+            )
+
+    async def resume_async(self, session: Session) -> SessionResumeResult:
+        """
+        Asynchronously resume a session from a paused state.
+
+        Args:
+            session (Session): The session to resume.
+
+        Returns:
+            SessionResumeResult: Result containing the request ID and success status.
+        """
+        try:
+            # Call session's resume_async method
+            return await session.resume_async()
+        except Exception as e:
+            log_operation_error("resume_session_async", str(e), exc_info=True)
+            return SessionResumeResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to resume session {session.session_id}: {e}",
             )

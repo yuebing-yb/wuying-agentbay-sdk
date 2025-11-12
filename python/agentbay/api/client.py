@@ -664,70 +664,77 @@ class Client(OpenApiClient):
         return await self.get_label_with_options_async(request, runtime)
 
     def get_session_with_options(
-        self,
-        request: main_models.GetSessionRequest,
-        runtime: RuntimeOptions,
+            self,
+            request: main_models.GetSessionRequest,
+            runtime: RuntimeOptions,
     ) -> main_models.GetSessionResponse:
         request.validate()
         body = {}
         if not DaraCore.is_null(request.authorization):
-            body["Authorization"] = request.authorization
+            body['Authorization'] = request.authorization
         if not DaraCore.is_null(request.session_id):
-            body["SessionId"] = request.session_id
-        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
-        params = open_api_util_models.Params(
-            action="GetSession",
-            version="2025-05-06",
-            protocol="HTTPS",
-            pathname="/",
-            method="POST",
-            auth_type="Anonymous",
-            style="RPC",
-            req_body_type="formData",
-            body_type="json",
+            body['SessionId'] = request.session_id
+        req = open_api_util_models.OpenApiRequest(
+            body=Utils.parse_to_map(body)
         )
-        return DaraCore.from_map(
-            main_models.GetSessionResponse(), self.call_api(params, req, runtime)
-        )
-
-    async def get_session_with_options_async(
-        self,
-        request: main_models.GetSessionRequest,
-        runtime: RuntimeOptions,
-    ) -> main_models.GetSessionResponse:
-        request.validate()
-        body = {}
-        if not DaraCore.is_null(request.authorization):
-            body["Authorization"] = request.authorization
-        if not DaraCore.is_null(request.session_id):
-            body["SessionId"] = request.session_id
-        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
-            action="GetSession",
-            version="2025-05-06",
-            protocol="HTTPS",
-            pathname="/",
-            method="POST",
-            auth_type="Anonymous",
-            style="RPC",
-            req_body_type="formData",
-            body_type="json",
+            action='GetSession',
+            version='2025-05-06',
+            protocol='HTTPS',
+            pathname='/',
+            method='POST',
+            auth_type='Anonymous',
+            style='RPC',
+            req_body_type='formData',
+            body_type='json'
         )
         return DaraCore.from_map(
             main_models.GetSessionResponse(),
-            await self.call_api_async(params, req, runtime),
+            self.do_rpcrequest(params.action, params.version, params.protocol, params.method, params.auth_type,
+                               params.body_type, req, runtime)
+        )
+
+    async def get_session_with_options_async(
+            self,
+            request: main_models.GetSessionRequest,
+            runtime: RuntimeOptions,
+    ) -> main_models.GetSessionResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body['Authorization'] = request.authorization
+        if not DaraCore.is_null(request.session_id):
+            body['SessionId'] = request.session_id
+        req = open_api_util_models.OpenApiRequest(
+            body=Utils.parse_to_map(body)
+        )
+        params = open_api_util_models.Params(
+            action='GetSession',
+            version='2025-05-06',
+            protocol='HTTPS',
+            pathname='/',
+            method='POST',
+            auth_type='Anonymous',
+            style='RPC',
+            req_body_type='formData',
+            body_type='json'
+        )
+        return DaraCore.from_map(
+            main_models.GetSessionResponse(),
+            await self.do_rpcrequest_async(params.action, params.version, params.protocol, params.method,
+                                           params.auth_type, params.body_type, req, runtime)
         )
 
     def get_session(
-        self,
-        request: main_models.GetSessionRequest,
+            self,
+            request: main_models.GetSessionRequest,
     ) -> main_models.GetSessionResponse:
         runtime = RuntimeOptions()
         return self.get_session_with_options(request, runtime)
 
     async def get_session_async(
-        self,
-        request: main_models.GetSessionRequest,
+            self,
+            request: main_models.GetSessionRequest,
     ) -> main_models.GetSessionResponse:
         runtime = RuntimeOptions()
         return await self.get_session_with_options_async(request, runtime)
