@@ -172,13 +172,59 @@ print(f"Found context: {context.name}")
 ### Listing and Deleting Contexts
 
 ```python
-# List all contexts
+# List all contexts (default pagination)
 contexts_result = agent_bay.context.list()
 if contexts_result.success:
+    print(f"Total contexts: {contexts_result.total_count}")
     for context in contexts_result.contexts:
         print(f"Context: {context.name} (ID: {context.id})")
 else:
     print(f"Failed to list contexts: {contexts_result.error_message}")
+
+# List contexts with pagination
+from agentbay.context import ContextListParams
+
+params = ContextListParams(max_results=20)
+result = agent_bay.context.list(params)
+
+if result.success:
+    print(f"Total contexts: {result.total_count}")
+    print(f"Current page: {len(result.contexts)} contexts")
+    
+    # Iterate through all pages
+    while result.next_token:
+        params = ContextListParams(max_results=20, next_token=result.next_token)
+        result = agent_bay.context.list(params)
+        if result.success:
+            print(f"Next page: {len(result.contexts)} contexts")
+        else:
+            print(f"Failed to fetch next page: {result.error_message}")
+            break
+
+# Get context by name
+context_result = agent_bay.context.get(name="my-project", create=False)
+if context_result.success:
+    print(f"Found context: {context_result.context.name}")
+else:
+    print(f"Context not found: {context_result.error_message}")
+
+# Get context by ID
+context_result = agent_bay.context.get(context_id="SdkCtx-123abc456def")
+if context_result.success:
+    print(f"Found context: {context_result.context.name} (ID: {context_result.context.id})")
+else:
+    print(f"Context not found: {context_result.error_message}")
+
+# Update context name
+context_result = agent_bay.context.get(name="old-name", create=False)
+if context_result.success:
+    context = context_result.context
+    context.name = "new-name"
+    update_result = agent_bay.context.update(context)
+    if update_result.success:
+        print("Context name updated successfully")
+    else:
+        print(f"Failed to update context: {update_result.error_message}")
 
 # Delete context
 context_to_delete = agent_bay.context.get("my-project", create=False).context
@@ -188,6 +234,325 @@ if context_to_delete:
         print("Context deleted successfully")
     else:
         print(f"Failed to delete context: {delete_result.error_message}")
+```
+
+## 📁 Context File Operations
+
+Context file operations provide direct access to files stored in a context's OSS directory. These operations are useful when you need to manage files without creating a session, or when you want to integrate context data with external systems.
+
+### When to Use Direct File Operations
+
+**Use direct file operations when:**
+- You need to access files without creating a session
+- You want to integrate with external systems (webhooks, APIs)
+- You need to download/upload large files directly
+- You want to inspect context contents programmatically
+
+**Use session sync when:**
+- You need to work with files during session execution
+- You want automatic bidirectional synchronization
+- You're running code that expects local filesystem access
+
+### Getting Presigned URLs
+
+Presigned URLs allow you to upload or download files directly to/from the context's OSS storage without going through a session.
+
+```python
+from agentbay import AgentBay
+import requests
+
+agent_bay = AgentBay()
+
+# Create or get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# Get upload URL
+upload_result = agent_bay.context.get_file_upload_url(
+    context_id=context.id,
+    file_path="/data/report.txt"
+)
+
+if upload_result.success:
+    print(f"Upload URL: {upload_result.url}")
+    print(f"URL expires at: {upload_result.expire_time}")
+    
+    # Upload file using requests library
+    file_content = "This is my report content"
+    response = requests.put(upload_result.url, data=file_content.encode('utf-8'))
+    
+    if response.status_code == 200:
+        print("File uploaded successfully")
+    else:
+        print(f"Upload failed: {response.status_code}")
+else:
+    print(f"Failed to get upload URL: {upload_result.error_message}")
+
+# Get download URL
+download_result = agent_bay.context.get_file_download_url(
+    context_id=context.id,
+    file_path="/data/report.txt"
+)
+
+if download_result.success:
+    print(f"Download URL: {download_result.url}")
+    
+    # Download file using requests library
+    response = requests.get(download_result.url)
+    
+    if response.status_code == 200:
+        content = response.text
+        print(f"File content: {content}")
+    else:
+        print(f"Download failed: {response.status_code}")
+else:
+    print(f"Failed to get download URL: {download_result.error_message}")
+```
+
+### Listing Files
+
+List files in a context with pagination support:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
+
+# Get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# List files in root directory
+list_result = agent_bay.context.list_files(
+    context_id=context.id,
+    parent_folder_path="/",
+    page_number=1,
+    page_size=50
+)
+
+if list_result.success:
+    print(f"Found {len(list_result.entries)} files")
+    
+    for entry in list_result.entries:
+        print(f"File: {entry.file_name}")
+        print(f"  Path: {entry.file_path}")
+        print(f"  Size: {entry.size} bytes")
+        print(f"  Type: {entry.file_type}")
+        print(f"  Created: {entry.gmt_create}")
+        print(f"  Modified: {entry.gmt_modified}")
+else:
+    print(f"Failed to list files: {list_result.error_message}")
+
+# List files with pagination
+page_number = 1
+page_size = 10
+
+while True:
+    list_result = agent_bay.context.list_files(
+        context_id=context.id,
+        parent_folder_path="/data",
+        page_number=page_number,
+        page_size=page_size
+    )
+    
+    if not list_result.success:
+        print(f"Failed to list files: {list_result.error_message}")
+        break
+    
+    if not list_result.entries:
+        print("No more files")
+        break
+    
+    print(f"Page {page_number}: {len(list_result.entries)} files")
+    for entry in list_result.entries:
+        print(f"  - {entry.file_name} ({entry.size} bytes)")
+    
+    page_number += 1
+```
+
+### Deleting Files
+
+Delete specific files from a context:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
+
+# Get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# Delete a single file
+delete_result = agent_bay.context.delete_file(
+    context_id=context.id,
+    file_path="/data/old_report.txt"
+)
+
+if delete_result.success:
+    print("File deleted successfully")
+else:
+    print(f"Failed to delete file: {delete_result.error_message}")
+
+# Delete multiple files
+files_to_delete = ["/logs/debug.log", "/temp/cache.dat", "/old/data.json"]
+
+for file_path in files_to_delete:
+    delete_result = agent_bay.context.delete_file(
+        context_id=context.id,
+        file_path=file_path
+    )
+    
+    if delete_result.success:
+        print(f"Deleted: {file_path}")
+    else:
+        print(f"Failed to delete {file_path}: {delete_result.error_message}")
+```
+
+## 🗑️ Context Data Clearing
+
+Context clearing removes all files from a context while keeping the context itself intact. This is useful when you want to reset a context's data without deleting and recreating it.
+
+### Clear vs Delete
+
+| Operation | Context | Context ID | Files | Use Case |
+|-----------|---------|------------|-------|----------|
+| **Clear** | Preserved | Unchanged | Deleted | Reset data, keep configuration |
+| **Delete** | Removed | Lost | Deleted | Complete cleanup, remove context |
+
+**When to use Clear:**
+- Reset a context for a new workflow run
+- Clean up temporary data periodically
+- Prepare a context for fresh data
+- Keep context references in your code valid
+
+**When to use Delete:**
+- Remove a context completely
+- Clean up unused contexts
+- Context is no longer needed
+
+### Synchronous Clear (Recommended)
+
+The simplest way to clear a context is using the synchronous `clear()` method, which waits for the operation to complete:
+
+```python
+from agentbay import AgentBay
+from agentbay.exceptions import ClearanceTimeoutError
+
+agent_bay = AgentBay()
+
+# Get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# Clear context data (synchronous - waits for completion)
+try:
+    clear_result = agent_bay.context.clear(
+        context_id=context.id,
+        timeout=60,  # Wait up to 60 seconds
+        poll_interval=2.0  # Check status every 2 seconds
+    )
+    
+    if clear_result.success:
+        print(f"Context cleared successfully")
+        print(f"Final status: {clear_result.status}")  # Should be "available"
+    else:
+        print(f"Failed to clear context: {clear_result.error_message}")
+        
+except ClearanceTimeoutError as e:
+    print(f"Clearing timed out: {e}")
+    # Context may still be clearing in the background
+    # You can check status later using get_clear_status()
+```
+
+### Asynchronous Clear with Manual Polling
+
+For more control over the clearing process, you can use the asynchronous approach:
+
+```python
+from agentbay import AgentBay
+import time
+
+agent_bay = AgentBay()
+
+# Get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# Start clearing asynchronously
+clear_result = agent_bay.context.clear_async(context_id=context.id)
+
+if clear_result.success:
+    print(f"Clearing started, status: {clear_result.status}")  # Should be "clearing"
+    
+    # Poll for completion
+    max_attempts = 30
+    attempt = 0
+    
+    while attempt < max_attempts:
+        time.sleep(2)  # Wait 2 seconds between checks
+        attempt += 1
+        
+        # Check status
+        status_result = agent_bay.context.get_clear_status(context_id=context.id)
+        
+        if not status_result.success:
+            print(f"Failed to get status: {status_result.error_message}")
+            break
+        
+        print(f"Status: {status_result.status} (attempt {attempt}/{max_attempts})")
+        
+        if status_result.status == "available":
+            print("Context cleared successfully!")
+            break
+        elif status_result.status == "clearing":
+            print("Still clearing...")
+        else:
+            print(f"Unexpected status: {status_result.status}")
+    else:
+        print("Clearing timed out")
+else:
+    print(f"Failed to start clearing: {clear_result.error_message}")
+```
+
+### Clear Status States
+
+The clearing operation follows this state machine:
+
+| Status | Description | Next State |
+|--------|-------------|------------|
+| `clearing` | Data is being deleted | `available` |
+| `available` | Clearing completed successfully | - (final state) |
+
+### Error Handling
+
+```python
+from agentbay import AgentBay
+from agentbay.exceptions import ClearanceTimeoutError, AgentBayError
+
+agent_bay = AgentBay()
+
+context = agent_bay.context.get("my-project", create=True).context
+
+try:
+    # Try to clear with a short timeout
+    clear_result = agent_bay.context.clear(
+        context_id=context.id,
+        timeout=30,
+        poll_interval=1.0
+    )
+    
+    if clear_result.success:
+        print("Context cleared successfully")
+    else:
+        print(f"Clear failed: {clear_result.error_message}")
+        
+except ClearanceTimeoutError as e:
+    print(f"Timeout: {e}")
+    print("The context may still be clearing in the background")
+    
+    # Check current status
+    status_result = agent_bay.context.get_clear_status(context.id)
+    if status_result.success:
+        print(f"Current status: {status_result.status}")
+        
+except AgentBayError as e:
+    print(f"API error: {e}")
 ```
 
 ### Context with Sessions
