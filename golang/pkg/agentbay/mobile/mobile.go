@@ -845,26 +845,23 @@ func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult {
 		}
 	}
 
-	// Call GetLink API directly with protocol_type="adb" and options
-	protocolType := "adb"
+	// Call GetAdbLink API with authorization, session_id and options
 	optionsStr := string(optionsJSON)
 
-	getLinkRequest := &mcp.GetLinkRequest{
+	getAdbLinkRequest := &mcp.GetAdbLinkRequest{
 		Authorization: tea.String("Bearer " + m.Session.GetAPIKey()),
 		SessionId:     tea.String(m.Session.GetSessionId()),
-		ProtocolType:  tea.String(protocolType),
-		Port:          nil,
 		Option:        tea.String(optionsStr),
 	}
 
 	// Log the API call (blue color)
-	fmt.Printf("\033[34m🔗 API Call: GetLink\033[0m\n")
-	fmt.Printf("   └─ SessionId=%s, ProtocolType=%s, Options=provided\n", m.Session.GetSessionId(), protocolType)
+	fmt.Printf("\033[34m🔗 API Call: GetAdbLink\033[0m\n")
+	fmt.Printf("   └─ SessionId=%s, Options=provided\n", m.Session.GetSessionId())
 
-	response, err := m.Session.GetClient().GetLink(getLinkRequest)
+	response, err := m.Session.GetClient().GetAdbLink(getAdbLinkRequest)
 	if err != nil {
 		errorMsg := fmt.Sprintf("Failed to get ADB URL: %v", err)
-		fmt.Printf("\033[31m❌ API Response Failed: GetLink\033[0m\n")
+		fmt.Printf("\033[31m❌ API Response Failed: GetAdbLink\033[0m\n")
 		fmt.Printf("   └─ Error: %s\n", errorMsg)
 		return &AdbUrlResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -880,14 +877,29 @@ func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult {
 		requestID = tea.StringValue(response.Body.RequestId)
 	}
 
+	// Check if response is successful
+	if response.Body == nil || response.Body.Success == nil || !*response.Body.Success {
+		errorMsg := "Unknown error"
+		if response.Body != nil && response.Body.Message != nil {
+			errorMsg = *response.Body.Message
+		}
+		fmt.Printf("\033[31m❌ Failed to get ADB URL: %s\033[0m\n", errorMsg)
+		return &AdbUrlResult{
+			ApiResponse:  models.ApiResponse{RequestID: requestID},
+			URL:          "",
+			Success:      false,
+			ErrorMessage: errorMsg,
+		}
+	}
+
 	// Extract URL from response
 	url := ""
-	if response.Body != nil && response.Body.Data != nil && response.Body.Data.Url != nil {
+	if response.Body.Data != nil && response.Body.Data.Url != nil {
 		url = tea.StringValue(response.Body.Data.Url)
 	}
 
 	// Log the successful response (green color, no masking for user convenience)
-	fmt.Printf("\033[32m✅ API Response: GetLink, RequestId=%s\033[0m\n", requestID)
+	fmt.Printf("\033[32m✅ API Response: GetAdbLink, RequestId=%s\033[0m\n", requestID)
 	if url != "" {
 		fmt.Printf("\033[32m   └─ url=%s\033[0m\n", url)
 	}

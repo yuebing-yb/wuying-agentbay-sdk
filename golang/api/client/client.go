@@ -1645,3 +1645,135 @@ func (client *Client) InitBrowser(request *InitBrowserRequest) (_result *InitBro
 	_result = _body
 	return _result, _err
 }
+
+// Summary:
+//
+// # Get ADB Link
+//
+// @param request - GetAdbLinkRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return GetAdbLinkResponse
+func (client *Client) GetAdbLinkWithOptions(request *GetAdbLinkRequest, runtime *dara.RuntimeOptions) (_result *GetAdbLinkResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+
+	if !dara.IsNil(request.Option) {
+		body["Option"] = request.Option
+	}
+
+	if !dara.IsNil(request.SessionId) {
+		body["SessionId"] = request.SessionId
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("GetAdbLink"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &GetAdbLinkResponse{}
+	_body, _err := client.DoRPCRequest(params.Action, params.Version, params.Protocol, params.Method, params.AuthType, params.BodyType, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Get ADB Link
+//
+// @param request - GetAdbLinkRequest
+//
+// @return GetAdbLinkResponse
+func (client *Client) GetAdbLink(request *GetAdbLinkRequest) (_result *GetAdbLinkResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &GetAdbLinkResponse{}
+	_body, _err := client.GetAdbLinkWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// # Get CDP Link
+//
+// @param request - GetCdpLinkRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return GetCdpLinkResponse
+func (client *Client) GetCdpLinkWithOptions(request *GetCdpLinkRequest, runtime *dara.RuntimeOptions) (_result *GetCdpLinkResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+
+	if !dara.IsNil(request.SessionId) {
+		body["SessionId"] = request.SessionId
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("GetCdpLink"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &GetCdpLinkResponse{}
+	_body, _err := client.DoRPCRequest(params.Action, params.Version, params.Protocol, params.Method, params.AuthType, params.BodyType, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Get CDP Link
+//
+// @param request - GetCdpLinkRequest
+//
+// @return GetCdpLinkResponse
+func (client *Client) GetCdpLink(request *GetCdpLinkRequest) (_result *GetCdpLinkResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &GetCdpLinkResponse{}
+	_body, _err := client.GetCdpLinkWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}

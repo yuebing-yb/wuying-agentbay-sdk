@@ -1449,4 +1449,131 @@ export class Client extends OpenApi {
     const runtime = new $dara.RuntimeOptions({});
     return await this.getContextFileUploadUrlWithOptions(request, runtime);
   }
+
+  /**
+   * Get CDP link
+   *
+   * @param request - GetCdpLinkRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns GetCdpLinkResponse
+   */
+  async getCdpLinkWithOptions(
+    request: $_model.GetCdpLinkRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.GetCdpLinkResponse> {
+    request.validate();
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.sessionId)) {
+      body["SessionId"] = request.sessionId;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "GetCdpLink",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.GetCdpLinkResponse>(
+      await this.doRPCRequest(
+        params.action,
+        params.version,
+        params.protocol,
+        params.method,
+        params.authType,
+        params.bodyType,
+        req,
+        runtime
+      ),
+      new $_model.GetCdpLinkResponse({})
+    );
+  }
+
+  /**
+   * Get CDP link
+   *
+   * @param request - GetCdpLinkRequest
+   * @returns GetCdpLinkResponse
+   */
+  async getCdpLink(
+    request: $_model.GetCdpLinkRequest
+  ): Promise<$_model.GetCdpLinkResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.getCdpLinkWithOptions(request, runtime);
+  }
+
+  /**
+   * Get ADB link
+   *
+   * @param request - GetAdbLinkRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns GetAdbLinkResponse
+   */
+  async getAdbLinkWithOptions(
+    request: $_model.GetAdbLinkRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.GetAdbLinkResponse> {
+    request.validate();
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.option)) {
+      body["Option"] = request.option;
+    }
+    if (!$dara.isNull(request.sessionId)) {
+      body["SessionId"] = request.sessionId;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "GetAdbLink",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.GetAdbLinkResponse>(
+      await this.doRPCRequest(
+        params.action,
+        params.version,
+        params.protocol,
+        params.method,
+        params.authType,
+        params.bodyType,
+        req,
+        runtime
+      ),
+      new $_model.GetAdbLinkResponse({})
+    );
+  }
+
+  /**
+   * Get ADB link
+   *
+   * @param request - GetAdbLinkRequest
+   * @returns GetAdbLinkResponse
+   */
+  async getAdbLink(
+    request: $_model.GetAdbLinkRequest
+  ): Promise<$_model.GetAdbLinkResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.getAdbLinkWithOptions(request, runtime);
+  }
 }

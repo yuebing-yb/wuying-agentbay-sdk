@@ -384,6 +384,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			RequestID: requestID,
 		},
 		Session: session,
+		Success: true,
 	}, nil
 }
 

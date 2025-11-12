@@ -588,18 +588,43 @@ export class Mobile {
       // Build options JSON with adbkey_pub
       const optionsJson = JSON.stringify({ adbkey_pub: adbkeyPub });
 
-      // Call getLink with protocol_type="adb" and options
-      const result = await this.session.getLink('adb', undefined, optionsJson);
+      // Call get_adb_link API
+      const { GetAdbLinkRequest } = await import('../api/models/model');
+      const request = new GetAdbLinkRequest({
+        authorization: `Bearer ${this.session.getAPIKey()}`,
+        sessionId: this.session.sessionId,
+        option: optionsJson
+      });
 
-      return {
-        success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.data,
-        url: result.data
-      };
+      const response = await this.session.getAgentBay().getClient().getAdbLink(request);
+
+      // Check response
+      if (response.body && response.body.success && response.body.data) {
+        const adbUrl = response.body.data.url;
+        const requestId = response.body.requestId || '';
+        log(`✅ get_adb_url completed successfully. RequestID: ${requestId}`);
+        return {
+          success: true,
+          requestId: requestId,
+          errorMessage: '',
+          data: adbUrl,
+          url: adbUrl
+        };
+      } else {
+        const errorMsg = response.body?.message || 'Unknown error';
+        const requestId = response.body?.requestId || '';
+        logError(`❌ Failed to get ADB URL: ${errorMsg}`);
+        return {
+          success: false,
+          requestId: requestId,
+          errorMessage: errorMsg,
+          data: undefined,
+          url: undefined
+        };
+      }
     } catch (error) {
       const errorMsg = `Failed to get ADB URL: ${error instanceof Error ? error.message : String(error)}`;
+      logError(`❌ ${errorMsg}`);
       return {
         success: false,
         requestId: '',

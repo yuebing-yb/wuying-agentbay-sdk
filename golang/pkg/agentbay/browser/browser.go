@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/alibabacloud-go/tea/dara"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 )
 
@@ -443,14 +444,30 @@ func (b *Browser) GetEndpointURL() (string, error) {
 		return b.endpointURL, nil
 	}
 
-	// For non-VPC mode, fetch the CDP URL
-	result, err := b.session.GetLinkForBrowser(nil, nil, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to get endpoint URL from session: %w", err)
+	// For non-VPC mode, use GetCdpLink API
+	request := &client.GetCdpLinkRequest{
+		Authorization: dara.String(fmt.Sprintf("Bearer %s", b.session.GetAPIKey())),
+		SessionId:     dara.String(b.session.GetSessionID()),
 	}
 
-	// Extract the Link from the result
-	b.endpointURL = result.Link
+	response, err := b.session.GetClient().GetCdpLink(request)
+	if err != nil {
+		return "", fmt.Errorf("failed to get CDP link: %w", err)
+	}
+
+	if response.Body == nil || response.Body.Success == nil || !*response.Body.Success {
+		errorMsg := "Unknown error"
+		if response.Body != nil && response.Body.Message != nil {
+			errorMsg = *response.Body.Message
+		}
+		return "", fmt.Errorf("failed to get CDP link: %s", errorMsg)
+	}
+
+	if response.Body.Data == nil || response.Body.Data.Url == nil {
+		return "", errors.New("CDP link URL is empty in response")
+	}
+
+	b.endpointURL = *response.Body.Data.Url
 	return b.endpointURL, nil
 }
 

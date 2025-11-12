@@ -1783,3 +1783,183 @@ class Client(OpenApiClient):
     ) -> main_models.GetContextFileUploadUrlResponse:
         runtime = RuntimeOptions()
         return await self.get_context_file_upload_url_with_options_async(request, runtime)
+
+    def get_cdp_link_with_options(
+        self,
+        request: main_models.GetCdpLinkRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.GetCdpLinkResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="GetCdpLink",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.GetCdpLinkResponse(),
+            self.do_rpcrequest(
+                params.action,
+                params.version,
+                params.protocol,
+                params.method,
+                params.auth_type,
+                params.body_type,
+                req,
+                runtime,
+            ),
+        )
+
+    async def get_cdp_link_with_options_async(
+        self,
+        request: main_models.GetCdpLinkRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.GetCdpLinkResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="GetCdpLink",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.GetCdpLinkResponse(),
+            await self.do_rpcrequest_async(
+                params.action,
+                params.version,
+                params.protocol,
+                params.method,
+                params.auth_type,
+                params.body_type,
+                req,
+                runtime,
+            ),
+        )
+
+    def get_cdp_link(
+        self,
+        request: main_models.GetCdpLinkRequest,
+    ) -> main_models.GetCdpLinkResponse:
+        runtime = RuntimeOptions()
+        return self.get_cdp_link_with_options(request, runtime)
+
+    async def get_cdp_link_async(
+        self,
+        request: main_models.GetCdpLinkRequest,
+    ) -> main_models.GetCdpLinkResponse:
+        runtime = RuntimeOptions()
+        return await self.get_cdp_link_with_options_async(request, runtime)
+
+    def get_adb_link_with_options(
+        self,
+        request: main_models.GetAdbLinkRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.GetAdbLinkResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.option):
+            body["Option"] = request.option
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="GetAdbLink",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.GetAdbLinkResponse(),
+            self.do_rpcrequest(
+                params.action,
+                params.version,
+                params.protocol,
+                params.method,
+                params.auth_type,
+                params.body_type,
+                req,
+                runtime,
+            ),
+        )
+
+    async def get_adb_link_with_options_async(
+        self,
+        request: main_models.GetAdbLinkRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.GetAdbLinkResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.option):
+            body["Option"] = request.option
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="GetAdbLink",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.GetAdbLinkResponse(),
+            await self.do_rpcrequest_async(
+                params.action,
+                params.version,
+                params.protocol,
+                params.method,
+                params.auth_type,
+                params.body_type,
+                req,
+                runtime,
+            ),
+        )
+
+    def get_adb_link(
+        self,
+        request: main_models.GetAdbLinkRequest,
+    ) -> main_models.GetAdbLinkResponse:
+        runtime = RuntimeOptions()
+        return self.get_adb_link_with_options(request, runtime)
+
+    async def get_adb_link_async(
+        self,
+        request: main_models.GetAdbLinkRequest,
+    ) -> main_models.GetAdbLinkResponse:
+        runtime = RuntimeOptions()
+        return await self.get_adb_link_with_options_async(request, runtime)

@@ -333,6 +333,12 @@ result = session.call_mcp_tool("shell", {"command": "pwd", "timeout_ms": 1000}, 
 result = session.call_mcp_tool("shell", {"command": "invalid_command_12345", "timeout_ms": 1000})
 ```
 
+
+**Notes**:
+
+- For press_keys tool, key names are automatically normalized to correct case format
+- This improves case compatibility (e.g., "CTRL" -> "Ctrl", "tab" -> "Tab")
+
 ## Related Resources
 
 - [FileSystem API Reference](filesystem.md)
