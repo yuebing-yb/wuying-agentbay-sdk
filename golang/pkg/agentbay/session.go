@@ -1529,13 +1529,54 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 }
 
 // Pause synchronously pauses this session, putting it into a dormant state to reduce resource usage and costs.
+// Pause puts the session into a PAUSED state where computational resources are significantly reduced.
+// The session state is preserved and can be resumed later to continue work.
 //
 // Parameters:
 //   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
 //   - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
 //
 // Returns:
-//   - *models.SessionPauseResult: A result object containing success status, request ID, and error message if any.
+//   - *models.SessionPauseResult: Result containing success status, request ID, and error message if any.
+//   - error: Error if the operation fails at the transport level
+//
+// Behavior:
+//
+// - Initiates pause operation through the PauseSessionAsync API
+// - Polls session status until PAUSED state or timeout
+// - Returns detailed result with success status and request tracking
+//
+// Exceptions:
+//
+// - Returns error result (not Go error) for API-level errors like invalid session ID
+// - Returns error result for timeout conditions
+// - Returns Go error for transport-level failures
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//		result, _ := client.Create(nil)
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// Pause the session
+//		pauseResult, _ := session.Pause(300, 2.0)
+//		if pauseResult.Success {
+//			fmt.Printf("Session paused successfully (RequestID: %s)\n", pauseResult.RequestID)
+//			// Output: Session paused successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
+//		} else {
+//			fmt.Printf("Failed to pause session: %s\n", pauseResult.ErrorMessage)
+//		}
+//	}
 func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
 	// Set default values if not provided
 	if timeout <= 0 {
@@ -1656,13 +1697,57 @@ func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPause
 }
 
 // Resume synchronously resumes this session from a paused state to continue work.
+// Resume restores the session from PAUSED state back to RUNNING state.
+// All previous session state and data are preserved during resume operation.
 //
 // Parameters:
 //   - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
 //   - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
 //
 // Returns:
-//   - *models.SessionResumeResult: A result object containing success status, request ID, and error message if any.
+//   - *models.SessionResumeResult: Result containing success status, request ID, and error message if any.
+//   - error: Error if the operation fails at the transport level
+//
+// Behavior:
+//
+// - Initiates resume operation through the ResumeSessionAsync API
+// - Polls session status until RUNNING state or timeout
+// - Returns detailed result with success status and request tracking
+//
+// Exceptions:
+//
+// - Returns error result (not Go error) for API-level errors like invalid session ID
+// - Returns error result for timeout conditions
+// - Returns Go error for transport-level failures
+//
+// Example:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+//	)
+//
+//	func main() {
+//		client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//		result, _ := client.Create(nil)
+//		session := result.Session
+//		defer session.Delete()
+//
+//		// Pause the session first
+//		session.Pause(300, 2.0)
+//
+//		// Resume the session
+//		resumeResult, _ := session.Resume(300, 2.0)
+//		if resumeResult.Success {
+//			fmt.Printf("Session resumed successfully (RequestID: %s)\n", resumeResult.RequestID)
+//			// Output: Session resumed successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
+//		} else {
+//			fmt.Printf("Failed to resume session: %s\n", resumeResult.ErrorMessage)
+//		}
+//	}
 func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
 	// Set default values if not provided
 	if timeout <= 0 {
