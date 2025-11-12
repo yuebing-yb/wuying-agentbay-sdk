@@ -274,42 +274,10 @@ func NewFileSystem(session interface {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Create a directory
-//		createResult, err := session.FileSystem.CreateDirectory("/tmp/test_directory")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		if createResult.Success {
-//			fmt.Println("Directory created successfully")
-//			// Output: Directory created successfully
-//		}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    createResult, _ := result.Session.FileSystem.CreateDirectory("/tmp/test_directory")
 func (fs *FileSystem) CreateDirectory(path string) (*FileDirectoryResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -351,52 +319,12 @@ func (fs *FileSystem) CreateDirectory(path string) (*FileDirectoryResult, error)
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// First write a file
-//		_, err = session.FileSystem.WriteFile("/tmp/test.txt", "Hello, World!", "overwrite")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Edit the file
-//		edits := []map[string]string{
-//			{"oldText": "World", "newText": "AgentBay"},
-//		}
-//		editResult, err := session.FileSystem.EditFile("/tmp/test.txt", edits, false)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		if editResult.Success {
-//			fmt.Println("File edited successfully")
-//			// Output: File edited successfully
-//		}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello World", "overwrite")
+//    edits := []map[string]string{{"oldText": "Hello", "newText": "Hi"}}
+//    editResult, _ := result.Session.FileSystem.EditFile("/tmp/test.txt", edits, false)
 func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bool) (*FileWriteResult, error) {
 	args := map[string]interface{}{
 		"path":    path,
@@ -438,42 +366,10 @@ func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bo
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Get file information
-//		fileInfo, err := session.FileSystem.GetFileInfo("/etc/hostname")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("File size: %d bytes\n", fileInfo.FileInfo.Size)
-//		fmt.Printf("Is directory: %t\n", fileInfo.FileInfo.IsDirectory)
-//		// Output: File size: 16 bytes
-//		// Output: Is directory: false
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    fileInfo, _ := result.Session.FileSystem.GetFileInfo("/etc/hostname")
 func (fs *FileSystem) GetFileInfo(path string) (*FileInfoResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -523,47 +419,10 @@ func (fs *FileSystem) GetFileInfo(path string) (*FileInfoResult, error) {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// List directory contents
-//		listResult, err := session.FileSystem.ListDirectory("/tmp")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		for _, entry := range listResult.Entries {
-//			entryType := "file"
-//			if entry.IsDirectory {
-//				entryType = "directory"
-//			}
-//			fmt.Printf("%s (%s)\n", entry.Name, entryType)
-//		}
-//		// Output:
-//		// test.txt (file)
-//		// subdir (directory)
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    listResult, _ := result.Session.FileSystem.ListDirectory("/tmp")
 func (fs *FileSystem) ListDirectory(path string) (*DirectoryListResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -609,49 +468,11 @@ func (fs *FileSystem) ListDirectory(path string) (*DirectoryListResult, error) {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// First create a file
-//		_, err = session.FileSystem.WriteFile("/tmp/old_name.txt", "test content", "overwrite")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Move/rename the file
-//		moveResult, err := session.FileSystem.MoveFile("/tmp/old_name.txt", "/tmp/new_name.txt")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		if moveResult.Success {
-//			fmt.Println("File moved successfully")
-//			// Output: File moved successfully
-//		}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    result.Session.FileSystem.WriteFile("/tmp/old.txt", "content", "overwrite")
+//    moveResult, _ := result.Session.FileSystem.MoveFile("/tmp/old.txt", "/tmp/new.txt")
 func (fs *FileSystem) MoveFile(source, destination string) (*FileWriteResult, error) {
 	args := map[string]string{
 		"source":      source,
@@ -730,44 +551,11 @@ func (fs *FileSystem) readFileChunk(path string, optionalParams ...int) (*FileRe
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Read multiple files at once
-//		contents, err := session.FileSystem.ReadMultipleFiles([]string{
-//			"/etc/hostname",
-//			"/etc/os-release",
-//		})
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		for path, content := range contents {
-//			fmt.Printf("%s: %d bytes\n", path, len(content))
-//		}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    paths := []string{"/etc/hostname", "/etc/os-release"}
+//    contents, _ := result.Session.FileSystem.ReadMultipleFiles(paths)
 func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, error) {
 	args := map[string]interface{}{
 		"paths": paths,
@@ -834,46 +622,10 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, erro
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Search for all .txt files (using partial name matching, NOT wildcards)
-//		searchResult, err := session.FileSystem.SearchFiles(
-//			"/tmp",
-//			".txt",
-//			[]string{"node_modules"},
-//		)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("Found %d files\n", len(searchResult.Results))
-//		for _, file := range searchResult.Results {
-//			fmt.Println(file)
-//		}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", ".txt", []string{})
 func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (*SearchFilesResult, error) {
 	args := map[string]interface{}{
 		"path":             path,
@@ -960,39 +712,10 @@ const ChunkSize = 50 * 1024
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Read a text file
-//		fileResult, err := session.FileSystem.ReadFile("/etc/hostname")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		fmt.Printf("Content: %s\n", fileResult.Content)
-//		// Output: Content: agentbay-session-xyz
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    fileResult, _ := result.Session.FileSystem.ReadFile("/etc/hostname")
 func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error) {
 	chunkSize := ChunkSize
 
@@ -1076,45 +799,10 @@ func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error) {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Write to a file
-//		writeResult, err := session.FileSystem.WriteFile(
-//			"/tmp/test.txt",
-//			"Hello, AgentBay!",
-//			"overwrite",
-//		)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		if writeResult.Success {
-//			fmt.Println("File written successfully")
-//			// Output: File written successfully
-//		}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    writeResult, _ := result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello", "overwrite")
 func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteResult, error) {
 	chunkSize := ChunkSize
 	contentLen := len(content)
@@ -1248,69 +936,13 @@ func parseFileChangeData(rawData string) ([]*FileChangeEvent, error) {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"time"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Create a test directory
-//		_, err = session.FileSystem.CreateDirectory("/tmp/watch_test")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Initial check to establish baseline
-//		_, err = session.FileSystem.GetFileChange("/tmp/watch_test")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Create a new file
-//		_, err = session.FileSystem.WriteFile("/tmp/watch_test/test.txt", "content", "overwrite")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Wait a bit for changes to be detected
-//		time.Sleep(1 * time.Second)
-//
-//		// Check for changes
-//		changeResult, err := session.FileSystem.GetFileChange("/tmp/watch_test")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		if changeResult.HasChanges() {
-//			fmt.Printf("Detected %d changes\n", len(changeResult.Events))
-//			for _, event := range changeResult.Events {
-//				fmt.Println(event.String())
-//			}
-//		}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    result.Session.FileSystem.CreateDirectory("/tmp/watch_test")
+//    result.Session.FileSystem.GetFileChange("/tmp/watch_test")
+//    result.Session.FileSystem.WriteFile("/tmp/watch_test/file.txt", "content", "overwrite")
+//    changeResult, _ := result.Session.FileSystem.GetFileChange("/tmp/watch_test")
 func (fs *FileSystem) GetFileChange(path string) (*FileChangeResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -1378,70 +1010,14 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"time"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Create test directory
-//		_, err = session.FileSystem.CreateDirectory("/tmp/watch_demo")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Define callback function
-//		callback := func(events []*filesystem.FileChangeEvent) {
-//			fmt.Printf("Detected %d changes:\n", len(events))
-//			for _, event := range events {
-//				fmt.Println(event.String())
-//			}
-//		}
-//
-//		// Create stop channel
-//		stopCh := make(chan struct{})
-//
-//		// Start watching with 1 second interval
-//		wg := session.FileSystem.WatchDirectory(
-//			"/tmp/watch_demo",
-//			callback,
-//			1*time.Second,
-//			stopCh,
-//		)
-//
-//		// Simulate file operations
-//		time.Sleep(2 * time.Second)
-//		session.FileSystem.WriteFile("/tmp/watch_demo/test.txt", "content", "overwrite")
-//
-//		// Wait for changes to be detected
-//		time.Sleep(2 * time.Second)
-//
-//		// Stop monitoring
-//		close(stopCh)
-//		wg.Wait()
-//
-//		fmt.Println("Monitoring stopped")
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    result.Session.FileSystem.CreateDirectory("/tmp/watch")
+//    stopCh := make(chan struct{})
+//    wg := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+//    close(stopCh)
+//    wg.Wait()
 func (fs *FileSystem) WatchDirectory(
 	path string,
 	callback func([]*FileChangeEvent),

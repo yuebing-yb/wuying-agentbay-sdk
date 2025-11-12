@@ -77,47 +77,10 @@ associated resources (browser, computer, mobile, etc.)
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Initialize the SDK
-
-	client, err := agentbay.NewAgentBay("your_api_key")
-	if err != nil {
-		panic(err)
-	}
-
-	// Create a session
-
-	result, err := client.Create(nil)
-	if err != nil {
-		panic(err)
-	}
-	session := result.Session
-	fmt.Printf("Session ID: %s\n", session.SessionID)
-
-	// Output: Session ID: session-04bdwfj7u22a1s30g
-
-	// Delete session without context sync
-
-	deleteResult, err := session.Delete()
-	if err != nil {
-		panic(err)
-	}
-	if deleteResult.Success {
-		fmt.Println("Session deleted successfully")
-
-		// Output: Session deleted successfully
-
-	}
-}
-Note:
-- Use syncContext=true when you need to preserve context data - For temporary sessions, use
-syncContext=false for faster cleanup - Always call Delete() when done to avoid resource leaks
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+deleteResult, _ := result.Session.Delete()
 ```
 
 #### GetLabels
@@ -140,52 +103,10 @@ Can be used to identify and filter sessions
 **Example:**
 
 ```go
-package main
-import (
-	"encoding/json"
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay("your_api_key")
-	if err != nil {
-		panic(err)
-	}
-
-	// Create a session with labels
-
-	params := agentbay.NewCreateSessionParams()
-	params.Labels = map[string]string{
-		"project": "demo",
-		"env":     "production",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		panic(err)
-	}
-	session := result.Session
-
-	// Get labels from the session
-
-	labelResult, err := session.GetLabels()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Retrieved labels: %s\n", labelResult.Labels)
-
-	// Output: Retrieved labels: {"project":"demo","env":"production"}
-
-	// Parse the JSON to use the labels
-
-	var labels map[string]string
-	if err := json.Unmarshal([]byte(labelResult.Labels), &labels); err == nil {
-		fmt.Printf("Project: %s, Environment: %s\n", labels["project"], labels["env"])
-
-		// Output: Project: demo, Environment: production
-
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+labelResult, _ := result.Session.GetLabels()
 ```
 
 #### GetLink
@@ -213,48 +134,11 @@ specific port-mapped service - Port must be in range [30100, 30199] for port for
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay("your_api_key")
-	if err != nil {
-		panic(err)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		panic(err)
-	}
-	session := result.Session
-
-	// Get default session link
-
-	linkResult, err := session.GetLink(nil, nil, nil)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Session link: %s\n", linkResult.Link)
-
-	// Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
-
-	// Get link for specific port
-
-	port := int32(30150)
-	portLinkResult, err := session.GetLink(nil, &port, nil)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Port 30150 link: %s\n", portLinkResult.Link)
-
-	// Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
-
-	session.Delete()
-}
-Note:
-- Use default link for general session access - Use port-specific links for services on specific
-ports - Validate port range before calling to avoid errors
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+port := int32(30100)
+linkResult, _ := result.Session.GetLink(nil, &port, nil)
 ```
 
 #### GetToken
@@ -286,43 +170,10 @@ properties - Information is fetched in real-time from the API
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay("your_api_key")
-	if err != nil {
-		panic(err)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		panic(err)
-	}
-	session := result.Session
-
-	// Get session information
-
-	infoResult, err := session.Info()
-	if err != nil {
-		panic(err)
-	}
-	info := infoResult.Info
-	fmt.Printf("Session ID: %s\n", info.SessionId)
-	fmt.Printf("Resource URL: %s\n", info.ResourceUrl)
-	fmt.Printf("Resource Type: %s\n", info.ResourceType)
-
-	// Output:
-
-	// Session ID: session-04bdwfj7u22a1s30g
-
-	// Resource URL: https://...
-
-	// Resource Type: vpc
-
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+infoResult, _ := result.Session.Info()
 ```
 
 #### ListMcpTools
@@ -347,53 +198,10 @@ with the retrieved tools
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// List MCP tools available for this session
-
-	toolsResult, err := session.ListMcpTools()
-	if err != nil {
-		fmt.Printf("Error listing MCP tools: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Found %d MCP tools\n", len(toolsResult.Tools))
-
-	// Output: Found 27 MCP tools
-
-	// Display first few tools
-
-	for i, tool := range toolsResult.Tools {
-		if i < 3 {
-			fmt.Printf("Tool: %s - %s\n", tool.Name, tool.Description)
-		}
-	}
-
-	// Output: Tool: execute_command - Execute a command on the system
-
-	// Output: Tool: read_file - Read contents of a file
-
-	// Output: Tool: write_file - Write content to a file
-
-	fmt.Printf("Request ID: %s\n", toolsResult.RequestID)
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+toolsResult, _ := result.Session.ListMcpTools()
 ```
 
 #### SetLabels
@@ -420,51 +228,11 @@ organization
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay("your_api_key")
-	if err != nil {
-		panic(err)
-	}
-
-	// Create a session
-
-	result, err := client.Create(nil)
-	if err != nil {
-		panic(err)
-	}
-	session := result.Session
-
-	// Set labels for the session
-
-	labels := map[string]string{
-		"project": "demo",
-		"env":     "test",
-	}
-	labelResult, err := session.SetLabels(labels)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Labels set successfully (RequestID: %s)\n", labelResult.RequestID)
-
-	// Output: Labels set successfully (RequestID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B)
-
-	// Get labels back
-
-	getResult, err := session.GetLabels()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Retrieved labels: %s\n", getResult.Labels)
-
-	// Output: Retrieved labels: {"project":"demo","env":"test"}
-
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+labels := map[string]string{"env": "test"}
+labelResult, _ := result.Session.SetLabels(labels)
 ```
 
 ### Related Functions
@@ -783,37 +551,7 @@ LogDebug logs a debug message
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see debug messages
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Log debug messages
-
-	agentbay.LogDebug("Debugging session creation process")
-
-	// Output: 🐛 Debugging session creation process
-
-}
+agentbay.LogDebug("Processing request parameters")
 ```
 
 ### LogInfo
@@ -827,37 +565,7 @@ LogInfo logs an informational message
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to INFO or DEBUG to see info messages
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Log informational messages
-
-	agentbay.LogInfo("Session created successfully")
-
-	// Output: ℹ️  Session created successfully
-
-}
+agentbay.LogInfo("Session created successfully")
 ```
 
 ### SetDeprecationConfig
@@ -879,37 +587,7 @@ SetLogLevel sets the global log level
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see all messages
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Change to INFO level to reduce verbosity
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-
-	// Continue with your operations
-
-}
+agentbay.SetLogLevel(agentbay.LOG_DEBUG)
 ```
 
 ### SetupLogger
@@ -923,37 +601,8 @@ SetupLogger configures the logger with file logging support
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Configure file logging with rotation
-
-	agentbay.SetupLogger(agentbay.LoggerConfig{
-		Level:       "DEBUG",
-		LogFile:     "/tmp/agentbay.log",
-		MaxFileSize: "100 MB",
-	})
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// All logs will be written to both console and file
-
-}
+config := agentbay.LoggerConfig{Level: "DEBUG", LogFile: "/tmp/agentbay.log"}
+agentbay.SetupLogger(config)
 ```
 
 ## Related Resources

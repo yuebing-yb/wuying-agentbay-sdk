@@ -199,40 +199,10 @@ Behavior:
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Create a directory
-
-	createResult, err := session.FileSystem.CreateDirectory("/tmp/test_directory")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if createResult.Success {
-		fmt.Println("Directory created successfully")
-
-		// Output: Directory created successfully
-
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+createResult, _ := result.Session.FileSystem.CreateDirectory("/tmp/test_directory")
 ```
 
 #### EditFile
@@ -260,51 +230,12 @@ would be made without applying them - All edits are applied sequentially in the 
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// First write a file
-
-	_, err = session.FileSystem.WriteFile("/tmp/test.txt", "Hello, World!", "overwrite")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Edit the file
-
-	edits := []map[string]string{
-		{"oldText": "World", "newText": "AgentBay"},
-	}
-	editResult, err := session.FileSystem.EditFile("/tmp/test.txt", edits, false)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if editResult.Success {
-		fmt.Println("File edited successfully")
-
-		// Output: File edited successfully
-
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello World", "overwrite")
+edits := []map[string]string{{"oldText": "Hello", "newText": "Hi"}}
+editResult, _ := result.Session.FileSystem.EditFile("/tmp/test.txt", edits, false)
 ```
 
 #### GetFileChange
@@ -330,69 +261,13 @@ no changes detected - Automatically tracks the last checked state for the direct
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"time"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Create a test directory
-
-	_, err = session.FileSystem.CreateDirectory("/tmp/watch_test")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Initial check to establish baseline
-
-	_, err = session.FileSystem.GetFileChange("/tmp/watch_test")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Create a new file
-
-	_, err = session.FileSystem.WriteFile("/tmp/watch_test/test.txt", "content", "overwrite")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Wait a bit for changes to be detected
-
-	time.Sleep(1 * time.Second)
-
-	// Check for changes
-
-	changeResult, err := session.FileSystem.GetFileChange("/tmp/watch_test")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if changeResult.HasChanges() {
-		fmt.Printf("Detected %d changes\n", len(changeResult.Events))
-		for _, event := range changeResult.Events {
-			fmt.Println(event.String())
-		}
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+result.Session.FileSystem.CreateDirectory("/tmp/watch_test")
+result.Session.FileSystem.GetFileChange("/tmp/watch_test")
+result.Session.FileSystem.WriteFile("/tmp/watch_test/file.txt", "content", "overwrite")
+changeResult, _ := result.Session.FileSystem.GetFileChange("/tmp/watch_test")
 ```
 
 #### GetFileInfo
@@ -418,41 +293,10 @@ and directories - Fails if the path doesn't exist
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Get file information
-
-	fileInfo, err := session.FileSystem.GetFileInfo("/etc/hostname")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("File size: %d bytes\n", fileInfo.FileInfo.Size)
-	fmt.Printf("Is directory: %t\n", fileInfo.FileInfo.IsDirectory)
-
-	// Output: File size: 16 bytes
-
-	// Output: Is directory: false
-
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+fileInfo, _ := result.Session.FileSystem.GetFileInfo("/etc/hostname")
 ```
 
 #### ListDirectory
@@ -479,48 +323,10 @@ Behavior:
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// List directory contents
-
-	listResult, err := session.FileSystem.ListDirectory("/tmp")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	for _, entry := range listResult.Entries {
-		entryType := "file"
-		if entry.IsDirectory {
-			entryType = "directory"
-		}
-		fmt.Printf("%s (%s)\n", entry.Name, entryType)
-	}
-
-	// Output:
-
-	// test.txt (file)
-
-	// subdir (directory)
-
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+listResult, _ := result.Session.FileSystem.ListDirectory("/tmp")
 ```
 
 #### MoveFile
@@ -547,48 +353,11 @@ source doesn't exist or destination already exists
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// First create a file
-
-	_, err = session.FileSystem.WriteFile("/tmp/old_name.txt", "test content", "overwrite")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Move/rename the file
-
-	moveResult, err := session.FileSystem.MoveFile("/tmp/old_name.txt", "/tmp/new_name.txt")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if moveResult.Success {
-		fmt.Println("File moved successfully")
-
-		// Output: File moved successfully
-
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+result.Session.FileSystem.WriteFile("/tmp/old.txt", "content", "overwrite")
+moveResult, _ := result.Session.FileSystem.MoveFile("/tmp/old.txt", "/tmp/new.txt")
 ```
 
 #### ReadFile
@@ -615,38 +384,10 @@ Behavior:
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Read a text file
-
-	fileResult, err := session.FileSystem.ReadFile("/etc/hostname")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Content: %s\n", fileResult.Content)
-
-	// Output: Content: agentbay-session-xyz
-
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+fileResult, _ := result.Session.FileSystem.ReadFile("/etc/hostname")
 ```
 
 #### ReadMultipleFiles
@@ -672,40 +413,11 @@ values - Fails if any of the specified files don't exist
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Read multiple files at once
-
-	contents, err := session.FileSystem.ReadMultipleFiles([]string{
-		"/etc/hostname",
-		"/etc/os-release",
-	})
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	for path, content := range contents {
-		fmt.Printf("%s: %d bytes\n", path, len(content))
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+paths := []string{"/etc/hostname", "/etc/os-release"}
+contents, _ := result.Session.FileSystem.ReadMultipleFiles(paths)
 ```
 
 #### SearchFiles
@@ -733,42 +445,10 @@ Exclude patterns help filter out unwanted results
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Search for all .txt files (using partial name matching, NOT wildcards)
-
-	searchResult, err := session.FileSystem.SearchFiles(
-		"/tmp",
-		".txt",
-		[]string{"node_modules"},
-	)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Found %d files\n", len(searchResult.Results))
-	for _, file := range searchResult.Results {
-		fmt.Println(file)
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", ".txt", []string{})
 ```
 
 #### WatchDirectory
@@ -802,73 +482,14 @@ asynchronously when changes detected - Stops monitoring when stopCh is closed
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"time"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Create test directory
-
-	_, err = session.FileSystem.CreateDirectory("/tmp/watch_demo")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Define callback function
-
-	callback := func(events []*filesystem.FileChangeEvent) {
-		fmt.Printf("Detected %d changes:\n", len(events))
-		for _, event := range events {
-			fmt.Println(event.String())
-		}
-	}
-
-	// Create stop channel
-
-	stopCh := make(chan struct{})
-
-	// Start watching with 1 second interval
-
-	wg := session.FileSystem.WatchDirectory(
-		"/tmp/watch_demo",
-		callback,
-		1*time.Second,
-		stopCh,
-	)
-
-	// Simulate file operations
-
-	time.Sleep(2 * time.Second)
-	session.FileSystem.WriteFile("/tmp/watch_demo/test.txt", "content", "overwrite")
-
-	// Wait for changes to be detected
-
-	time.Sleep(2 * time.Second)
-
-	// Stop monitoring
-
-	close(stopCh)
-	wg.Wait()
-	fmt.Println("Monitoring stopped")
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+result.Session.FileSystem.CreateDirectory("/tmp/watch")
+stopCh := make(chan struct{})
+wg := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+close(stopCh)
+wg.Wait()
 ```
 
 #### WatchDirectoryWithDefaults
@@ -910,44 +531,10 @@ content
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Write to a file
-
-	writeResult, err := session.FileSystem.WriteFile(
-		"/tmp/test.txt",
-		"Hello, AgentBay!",
-		"overwrite",
-	)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if writeResult.Success {
-		fmt.Println("File written successfully")
-
-		// Output: File written successfully
-
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+writeResult, _ := result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello", "overwrite")
 ```
 
 ### Related Functions

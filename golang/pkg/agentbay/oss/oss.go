@@ -59,46 +59,10 @@ func NewOss(session interface {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		// Initialize the SDK
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error initializing AgentBay client: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Create a session first
-//		sessionResult, err := client.Create(agentbay.NewCreateSessionParams())
-//		if err != nil {
-//			fmt.Printf("Error creating session: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := sessionResult.Session
-//
-//		// Initialize OSS environment
-//		result, err := session.Oss.EnvInit(
-//			"your_access_key_id",
-//			"your_access_key_secret",
-//			"your_security_token",
-//			"oss-cn-hangzhou.aliyuncs.com",
-//			"cn-hangzhou",
-//		)
-//		if err != nil {
-//			fmt.Printf("Error initializing OSS environment: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("OSS environment initialized successfully, request ID: %s\n", result.RequestID)
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    ossResult, _ := result.Session.Oss.EnvInit("accessKeyId", "accessKeySecret", "token", "endpoint", "cn-hangzhou")
 func (o *OSSManager) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region string) (*EnvInitResult, error) {
 	// Build arguments map
 	args := map[string]interface{}{
@@ -134,53 +98,11 @@ func (o *OSSManager) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoi
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		// Initialize the SDK
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error initializing AgentBay client: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Create a session first
-//		sessionResult, err := client.Create(agentbay.NewCreateSessionParams())
-//		if err != nil {
-//			fmt.Printf("Error creating session: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := sessionResult.Session
-//
-//		// Step 1: Initialize OSS environment
-//		_, err = session.Oss.EnvInit(
-//			"your_access_key_id",
-//			"your_access_key_secret",
-//			"your_security_token",
-//			"oss-cn-hangzhou.aliyuncs.com",
-//			"cn-hangzhou",
-//		)
-//		if err != nil {
-//			fmt.Printf("Error initializing OSS environment: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Step 2: Upload file to OSS
-//		result, err := session.Oss.Upload("my-bucket", "my-object", "/path/to/local/file")
-//		if err != nil {
-//			fmt.Printf("Error uploading file: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("File uploaded successfully, URL: %s, request ID: %s\n", result.URL, result.RequestID)
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    result.Session.Oss.EnvInit("accessKeyId", "accessKeySecret", "token", "endpoint", "cn-hangzhou")
+//    uploadResult, _ := result.Session.Oss.Upload("my-bucket", "my-object", "/tmp/file.txt")
 func (o *OSSManager) Upload(bucket, object, path string) (*UploadResult, error) {
 	args := map[string]interface{}{
 		"bucket": bucket,
@@ -207,53 +129,11 @@ func (o *OSSManager) Upload(bucket, object, path string) (*UploadResult, error) 
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		// Initialize the SDK
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error initializing AgentBay client: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Create a session first
-//		sessionResult, err := client.Create(agentbay.NewCreateSessionParams())
-//		if err != nil {
-//			fmt.Printf("Error creating session: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := sessionResult.Session
-//
-//		// Step 1: Initialize OSS environment
-//		_, err = session.Oss.EnvInit(
-//			"your_access_key_id",
-//			"your_access_key_secret",
-//			"your_security_token",
-//			"oss-cn-hangzhou.aliyuncs.com",
-//			"cn-hangzhou",
-//		)
-//		if err != nil {
-//			fmt.Printf("Error initializing OSS environment: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Step 2: Upload file anonymously
-//		result, err := session.Oss.UploadAnonymous("https://example.com/upload", "/path/to/local/file")
-//		if err != nil {
-//			fmt.Printf("Error uploading file anonymously: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("File uploaded anonymously successfully, URL: %s, request ID: %s\n", result.URL, result.RequestID)
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    result.Session.Oss.EnvInit("accessKeyId", "accessKeySecret", "token", "endpoint", "cn-hangzhou")
+//    uploadResult, _ := result.Session.Oss.UploadAnonymous("https://example.com/upload", "/tmp/file.txt")
 func (o *OSSManager) UploadAnonymous(url, path string) (*UploadResult, error) {
 	args := map[string]interface{}{
 		"url":  url,
@@ -279,53 +159,11 @@ func (o *OSSManager) UploadAnonymous(url, path string) (*UploadResult, error) {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		// Initialize the SDK
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error initializing AgentBay client: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Create a session first
-//		sessionResult, err := client.Create(agentbay.NewCreateSessionParams())
-//		if err != nil {
-//			fmt.Printf("Error creating session: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := sessionResult.Session
-//
-//		// Step 1: Initialize OSS environment
-//		_, err = session.Oss.EnvInit(
-//			"your_access_key_id",
-//			"your_access_key_secret",
-//			"your_security_token",
-//			"oss-cn-hangzhou.aliyuncs.com",
-//			"cn-hangzhou",
-//		)
-//		if err != nil {
-//			fmt.Printf("Error initializing OSS environment: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Step 2: Download file from OSS
-//		result, err := session.Oss.Download("my-bucket", "my-object", "/path/to/local/file")
-//		if err != nil {
-//			fmt.Printf("Error downloading file: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("File downloaded successfully to: %s, request ID: %s\n", result.LocalPath, result.RequestID)
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    result.Session.Oss.EnvInit("accessKeyId", "accessKeySecret", "token", "endpoint", "cn-hangzhou")
+//    downloadResult, _ := result.Session.Oss.Download("my-bucket", "my-object", "/tmp/file.txt")
 func (o *OSSManager) Download(bucket, object, path string) (*DownloadResult, error) {
 	args := map[string]interface{}{
 		"bucket": bucket,
@@ -352,53 +190,11 @@ func (o *OSSManager) Download(bucket, object, path string) (*DownloadResult, err
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		// Initialize the SDK
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error initializing AgentBay client: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Create a session first
-//		sessionResult, err := client.Create(agentbay.NewCreateSessionParams())
-//		if err != nil {
-//			fmt.Printf("Error creating session: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := sessionResult.Session
-//
-//		// Step 1: Initialize OSS environment
-//		_, err = session.Oss.EnvInit(
-//			"your_access_key_id",
-//			"your_access_key_secret",
-//			"your_security_token",
-//			"oss-cn-hangzhou.aliyuncs.com",
-//			"cn-hangzhou",
-//		)
-//		if err != nil {
-//			fmt.Printf("Error initializing OSS environment: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		// Step 2: Download file anonymously
-//		result, err := session.Oss.DownloadAnonymous("https://example.com/file.txt", "/path/to/local/file.txt")
-//		if err != nil {
-//			fmt.Printf("Error downloading file anonymously: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("File downloaded anonymously successfully to: %s, request ID: %s\n", result.LocalPath, result.RequestID)
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    result.Session.Oss.EnvInit("accessKeyId", "accessKeySecret", "token", "endpoint", "cn-hangzhou")
+//    downloadResult, _ := result.Session.Oss.DownloadAnonymous("https://example.com/file.txt", "/tmp/file.txt")
 func (o *OSSManager) DownloadAnonymous(url, path string) (*DownloadResult, error) {
 	args := map[string]interface{}{
 		"url":  url,

@@ -83,41 +83,10 @@ Info retrieves context information for the current session.
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Get context synchronization information
-
-	infoResult, err := session.Context.Info()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Context status data count: %d\n", len(infoResult.ContextStatusData))
-	for _, item := range infoResult.ContextStatusData {
-		fmt.Printf("Context %s: Status=%s, Path=%s\n", item.ContextId, item.Status, item.Path)
-	}
-
-	// Output: Context status data count: 0
-
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+info, _ := result.Session.Context.Info()
 ```
 
 #### InfoWithParams
@@ -419,37 +388,7 @@ LogDebug logs a debug message
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see debug messages
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Log debug messages
-
-	agentbay.LogDebug("Debugging session creation process")
-
-	// Output: 🐛 Debugging session creation process
-
-}
+agentbay.LogDebug("Processing request parameters")
 ```
 
 ### LogInfo
@@ -463,37 +402,7 @@ LogInfo logs an informational message
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to INFO or DEBUG to see info messages
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Log informational messages
-
-	agentbay.LogInfo("Session created successfully")
-
-	// Output: ℹ️  Session created successfully
-
-}
+agentbay.LogInfo("Session created successfully")
 ```
 
 ### SetDeprecationConfig
@@ -515,37 +424,7 @@ SetLogLevel sets the global log level
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see all messages
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Change to INFO level to reduce verbosity
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-
-	// Continue with your operations
-
-}
+agentbay.SetLogLevel(agentbay.LOG_DEBUG)
 ```
 
 ### SetupLogger
@@ -559,37 +438,8 @@ SetupLogger configures the logger with file logging support
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Configure file logging with rotation
-
-	agentbay.SetupLogger(agentbay.LoggerConfig{
-		Level:       "DEBUG",
-		LogFile:     "/tmp/agentbay.log",
-		MaxFileSize: "100 MB",
-	})
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// All logs will be written to both console and file
-
-}
+config := agentbay.LoggerConfig{Level: "DEBUG", LogFile: "/tmp/agentbay.log"}
+agentbay.SetupLogger(config)
 ```
 
 ## Related Resources
