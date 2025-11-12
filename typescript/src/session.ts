@@ -14,7 +14,11 @@ import { Browser } from "./browser";
 import { Code } from "./code";
 import { Command } from "./command";
 import { Computer } from "./computer";
-import { ContextManager, ContextSyncResult, newContextManager } from "./context-manager";
+import {
+  ContextManager,
+  ContextSyncResult,
+  newContextManager,
+} from "./context-manager";
 import { FileSystem } from "./filesystem";
 import { Mobile } from "./mobile";
 import { Oss } from "./oss";
@@ -361,12 +365,16 @@ export class Session {
         // Browser replay enabled but no explicit sync - sync only browser recording context
         shouldSync = true;
         syncContextId = this.recordContextId;
-        logInfo(`🎥 Browser replay enabled - syncing recording context: ${syncContextId}`);
+        logInfo(
+          `🎥 Browser replay enabled - syncing recording context: ${syncContextId}`
+        );
       }
 
       // If syncContext is true, trigger file uploads first
       if (shouldSync) {
-        logDebug("Triggering context synchronization before session deletion...");
+        logDebug(
+          "Triggering context synchronization before session deletion..."
+        );
 
         // Use the new sync method without callback (sync mode)
         const syncStartTime = Date.now();
@@ -388,11 +396,16 @@ export class Session {
           if (syncResult.success) {
             logInfo(`Context sync completed in ${syncDuration}ms`);
           } else {
-            logInfo(`Context sync completed with failures after ${syncDuration}ms`);
+            logInfo(
+              `Context sync completed with failures after ${syncDuration}ms`
+            );
           }
         } catch (error) {
           const syncDuration = Date.now() - syncStartTime;
-          logError(`Failed to trigger context sync after ${syncDuration}ms:`, error);
+          logError(
+            `Failed to trigger context sync after ${syncDuration}ms:`,
+            error
+          );
           // Continue with deletion even if sync fails
         }
       }
@@ -404,7 +417,9 @@ export class Session {
       });
 
       const response = await this.getClient().releaseMcpSession(request);
-      logDebug(`Response from release_mcp_session: ${JSON.stringify(response)}`);
+      logDebug(
+        `Response from release_mcp_session: ${JSON.stringify(response)}`
+      );
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
@@ -414,7 +429,9 @@ export class Session {
       const success = responseBody?.success !== false; // Note: capital S to match Python
 
       if (!success) {
-        const errorMessage = `[${responseBody?.code || 'Unknown'}] ${responseBody?.message || 'Failed to delete session'}`;
+        const errorMessage = `[${responseBody?.code || "Unknown"}] ${
+          responseBody?.message || "Failed to delete session"
+        }`;
         return {
           requestId,
           success: false,
@@ -444,13 +461,16 @@ export class Session {
    * @param labels - The labels to validate
    * @returns null if validation passes, or OperationResult with error if validation fails
    */
-  private validateLabels(labels: Record<string, string>): OperationResult | null {
+  private validateLabels(
+    labels: Record<string, string>
+  ): OperationResult | null {
     // Check if labels is null, undefined, or invalid type
-    if (!labels || typeof labels !== 'object') {
+    if (!labels || typeof labels !== "object") {
       return {
         requestId: "",
         success: false,
-        errorMessage: "Labels cannot be null, undefined, or invalid type. Please provide a valid labels object.",
+        errorMessage:
+          "Labels cannot be null, undefined, or invalid type. Please provide a valid labels object.",
       };
     }
 
@@ -459,18 +479,27 @@ export class Session {
       return {
         requestId: "",
         success: false,
-        errorMessage: "Labels cannot be an array. Please provide a valid labels object.",
+        errorMessage:
+          "Labels cannot be an array. Please provide a valid labels object.",
       };
     }
 
     // Check if labels is a Date, RegExp, or other built-in object types
-    if (labels instanceof Date || labels instanceof RegExp || labels instanceof Error ||
-        labels instanceof Map || labels instanceof Set || labels instanceof WeakMap ||
-        labels instanceof WeakSet || labels instanceof Promise) {
+    if (
+      labels instanceof Date ||
+      labels instanceof RegExp ||
+      labels instanceof Error ||
+      labels instanceof Map ||
+      labels instanceof Set ||
+      labels instanceof WeakMap ||
+      labels instanceof WeakSet ||
+      labels instanceof Promise
+    ) {
       return {
         requestId: "",
         success: false,
-        errorMessage: "Labels must be a plain object. Built-in object types are not allowed.",
+        errorMessage:
+          "Labels must be a plain object. Built-in object types are not allowed.",
       };
     }
 
@@ -479,7 +508,8 @@ export class Session {
       return {
         requestId: "",
         success: false,
-        errorMessage: "Labels cannot be empty. Please provide at least one label.",
+        errorMessage:
+          "Labels cannot be empty. Please provide at least one label.",
       };
     }
 
@@ -498,7 +528,8 @@ export class Session {
         return {
           requestId: "",
           success: false,
-          errorMessage: "Label values cannot be empty Please provide valid values.",
+          errorMessage:
+            "Label values cannot be empty Please provide valid values.",
         };
       }
     }
@@ -675,9 +706,19 @@ export class Session {
 
       // Check for API-level errors
       if (response?.body?.success === false && response.body?.code) {
-        const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
-        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-        logAPIResponseWithDetails("GetMcpResource", requestId, false, undefined, fullResponse);
+        const errorMessage = `[${response.body.code}] ${
+          response.body.message || "Unknown error"
+        }`;
+        const fullResponse = response.body
+          ? JSON.stringify(response.body, null, 2)
+          : "";
+        logAPIResponseWithDetails(
+          "GetMcpResource",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -735,8 +776,16 @@ export class Session {
       if (sessionInfo.appId) {
         keyFields.app_id = sessionInfo.appId;
       }
-      const fullResponse = responseBody ? JSON.stringify(responseBody, null, 2) : "";
-      logAPIResponseWithDetails("GetMcpResource", requestId, true, keyFields, fullResponse);
+      const fullResponse = responseBody
+        ? JSON.stringify(responseBody, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "GetMcpResource",
+        requestId,
+        true,
+        keyFields,
+        fullResponse
+      );
 
       return {
         requestId,
@@ -748,7 +797,10 @@ export class Session {
       const errorStr = String(error);
       const errorCode = error?.data?.Code || error?.code || "";
 
-      if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
+      if (
+        errorCode === "InvalidMcpSession.NotFound" ||
+        errorStr.includes("NotFound")
+      ) {
         // This is an expected error - session doesn't exist
         // Use info level logging without stack trace, but with red color for visibility
         logInfoWithColor(`Session not found: ${this.sessionId}`);
@@ -756,11 +808,14 @@ export class Session {
         return {
           requestId: "",
           success: false,
-          errorMessage: `Session ${this.sessionId} not found`
+          errorMessage: `Session ${this.sessionId} not found`,
         };
       } else {
         // This is an unexpected error - log with full error
-        logError(`❌ Failed to get session info for session ${this.sessionId}`, error);
+        logError(
+          `❌ Failed to get session info for session ${this.sessionId}`,
+          error
+        );
         throw new Error(
           `Failed to get session info for session ${this.sessionId}: ${error}`
         );
@@ -824,11 +879,13 @@ export class Session {
       }
 
       // Log API call
-      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${protocolType || 'default'}, Port=${port || 'default'}`;
+      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${
+        protocolType || "default"
+      }, Port=${port || "default"}`;
       if (options) {
-        requestParams += ', Options=provided';
+        requestParams += ", Options=provided";
       }
-      logAPICall('GetLink', requestParams);
+      logAPICall("GetLink", requestParams);
 
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
@@ -869,7 +926,7 @@ export class Session {
       if (url) {
         keyFields.url = url;
       }
-      logAPIResponseWithDetails('GetLink', requestId, true, keyFields);
+      logAPIResponseWithDetails("GetLink", requestId, true, keyFields);
 
       return {
         requestId,
@@ -922,11 +979,13 @@ export class Session {
       }
 
       // Log API call
-      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${protocolType || 'default'}, Port=${port || 'default'}`;
+      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${
+        protocolType || "default"
+      }, Port=${port || "default"}`;
       if (options) {
-        requestParams += ', Options=provided';
+        requestParams += ", Options=provided";
       }
-      logAPICall('GetLink', requestParams);
+      logAPICall("GetLink", requestParams);
 
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
@@ -968,7 +1027,7 @@ export class Session {
       if (url) {
         keyFields.url = url;
       }
-      logAPIResponseWithDetails('GetLink', requestId, true, keyFields);
+      logAPIResponseWithDetails("GetLink", requestId, true, keyFields);
 
       return {
         requestId,
@@ -1024,9 +1083,19 @@ export class Session {
 
     // Check for API-level errors
     if (response?.body?.success === false && response.body?.code) {
-      const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
-      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-      logAPIResponseWithDetails("ListMcpTools", requestId, false, undefined, fullResponse);
+      const errorMessage = `[${response.body.code}] ${
+        response.body.message || "Unknown error"
+      }`;
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "ListMcpTools",
+        requestId,
+        false,
+        undefined,
+        fullResponse
+      );
       return {
         requestId,
         success: false,
@@ -1062,8 +1131,16 @@ export class Session {
       image_id: imageId,
       tool_count: tools.length,
     };
-    const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-    logAPIResponseWithDetails("ListMcpTools", requestId, true, keyFields, fullResponse);
+    const fullResponse = response.body
+      ? JSON.stringify(response.body, null, 2)
+      : "";
+    logAPIResponseWithDetails(
+      "ListMcpTools",
+      requestId,
+      true,
+      keyFields,
+      fullResponse
+    );
 
     return {
       requestId,
@@ -1090,9 +1167,25 @@ export class Session {
    *   await result.session.delete();
    * }
    * ```
+   *
+   * @remarks
+   * For press_keys tool, key names are automatically normalized to correct case format.
+   * This improves case compatibility (e.g., "CTRL" -> "Ctrl", "tab" -> "Tab").
    */
-  async callMcpTool(toolName: string, args: any, autoGenSession = false): Promise<import("./agent/agent").McpToolResult> {
+  async callMcpTool(
+    toolName: string,
+    args: any,
+    autoGenSession = false
+  ): Promise<import("./agent/agent").McpToolResult> {
     try {
+      // Normalize press_keys arguments for better case compatibility
+      if (toolName === "press_keys" && args && Array.isArray(args.keys)) {
+        const { normalizeKeys } = await import("./key-normalizer");
+        args = { ...args }; // Don't modify the original args
+        args.keys = normalizeKeys(args.keys);
+        logDebug(`Normalized press_keys arguments: ${JSON.stringify(args)}`);
+      }
+
       const argsJSON = JSON.stringify(args);
 
       // Check if this is a VPC session
@@ -1124,7 +1217,9 @@ export class Session {
         url.searchParams.append("args", argsJSON);
         url.searchParams.append("token", this.getToken());
         // Add requestId for debugging purposes
-        const requestId = `vpc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const requestId = `vpc-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
         url.searchParams.append("requestId", requestId);
 
         const response = await fetch(url.toString(), {
@@ -1143,35 +1238,42 @@ export class Session {
           };
         }
 
-                 const responseData = await response.json() as any;
+        const responseData = (await response.json()) as any;
 
-         // Extract the actual result from the nested VPC response structure
-         let actualResult: any = responseData;
-         if (typeof responseData.data === "string") {
-           try {
-             const dataMap = JSON.parse(responseData.data);
-             if (dataMap.result) {
-               actualResult = dataMap.result;
-             }
-           } catch (err) {
-             // Keep original response if parsing fails
-           }
-         } else if (responseData.data && responseData.data.result) {
-           actualResult = responseData.data.result;
-         }
+        // Extract the actual result from the nested VPC response structure
+        let actualResult: any = responseData;
+        if (typeof responseData.data === "string") {
+          try {
+            const dataMap = JSON.parse(responseData.data);
+            if (dataMap.result) {
+              actualResult = dataMap.result;
+            }
+          } catch (err) {
+            // Keep original response if parsing fails
+          }
+        } else if (responseData.data && responseData.data.result) {
+          actualResult = responseData.data.result;
+        }
 
-         // Extract text content from the result
-         let textContent = "";
-         if (actualResult.content && Array.isArray(actualResult.content) && actualResult.content.length > 0) {
-           const contentItem = actualResult.content[0];
-           if (contentItem && contentItem.text) {
-             textContent = contentItem.text;
-           }
-         }
+        // Extract text content from the result
+        let textContent = "";
+        if (
+          actualResult.content &&
+          Array.isArray(actualResult.content) &&
+          actualResult.content.length > 0
+        ) {
+          const contentItem = actualResult.content[0];
+          if (contentItem && contentItem.text) {
+            textContent = contentItem.text;
+          }
+        }
 
         // For run_code tool, extract and log the actual code execution output
         if (toolName === "run_code" && actualResult) {
-          const dataStr = typeof actualResult === 'string' ? actualResult : JSON.stringify(actualResult);
+          const dataStr =
+            typeof actualResult === "string"
+              ? actualResult
+              : JSON.stringify(actualResult);
           logCodeExecutionOutput(requestId, dataStr);
         }
 
@@ -1204,7 +1306,9 @@ export class Session {
 
         // Check for API-level errors before parsing Data
         if (response.body.success === false && response.body.code) {
-          const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+          const errorMessage = `[${response.body.code}] ${
+            response.body.message || "Unknown error"
+          }`;
           return {
             success: false,
             data: "",
@@ -1240,9 +1344,10 @@ export class Session {
         // For run_code tool, extract and log the actual code execution output
         const reqId = extractRequestId(response) || "";
         if (toolName === "run_code" && data) {
-          const dataStr = typeof response.body.data === 'string'
-            ? response.body.data
-            : JSON.stringify(response.body.data);
+          const dataStr =
+            typeof response.body.data === "string"
+              ? response.body.data
+              : JSON.stringify(response.body.data);
           logCodeExecutionOutput(reqId, dataStr);
         }
 

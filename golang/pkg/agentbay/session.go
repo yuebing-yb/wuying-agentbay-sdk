@@ -931,6 +931,39 @@ func (s *Session) FindServerForTool(toolName string) string {
 //    args := map[string]interface{}{"command": "ls -la"}
 //    toolResult, _ := result.Session.CallMcpTool("execute_command", args)
 func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+	// Normalize press_keys arguments for better case compatibility
+	if toolName == "press_keys" {
+		// Try to extract and normalize the keys field
+		if argsMap, ok := args.(map[string]interface{}); ok {
+			if keys, exists := argsMap["keys"]; exists {
+				if keysArray, isArray := keys.([]interface{}); isArray {
+					// Convert []interface{} to []string
+					keysStr := make([]string, 0, len(keysArray))
+					for _, k := range keysArray {
+						if keyStr, isString := k.(string); isString {
+							keysStr = append(keysStr, keyStr)
+						}
+					}
+					// Normalize keys
+					normalizedKeys := NormalizeKeys(keysStr)
+					// Convert back to []interface{}
+					normalizedKeysInterface := make([]interface{}, len(normalizedKeys))
+					for i, k := range normalizedKeys {
+						normalizedKeysInterface[i] = k
+					}
+					// Create a copy of args to avoid modifying the original
+					argsCopy := make(map[string]interface{})
+					for k, v := range argsMap {
+						argsCopy[k] = v
+					}
+					argsCopy["keys"] = normalizedKeysInterface
+					args = argsCopy
+					LogDebug(fmt.Sprintf("Normalized press_keys arguments: %v", argsCopy))
+				}
+			}
+		}
+	}
+
 	// Marshal arguments to JSON
 	argsJSON, err := json.Marshal(args)
 	if err != nil {
