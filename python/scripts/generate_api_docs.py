@@ -119,6 +119,29 @@ def should_exclude_method(method: docspec.Function, exclude_methods: list = None
     return False
 
 
+def is_dataclass_result_type(cls: docspec.Class) -> bool:
+    """
+    Check if a class is a dataclass result type that should have its fields hidden.
+
+    Args:
+        cls: The class to check
+
+    Returns:
+        bool: True if the class is a dataclass result type
+    """
+    # Check if class name ends with "Result"
+    if not cls.name.endswith("Result"):
+        return False
+
+    # Check if class has @dataclass decorator
+    if cls.decorations:
+        for decoration in cls.decorations:
+            if decoration.name == "dataclass":
+                return True
+
+    return False
+
+
 def prune_members(container, module_name: str, exclude_methods: list = None, global_rules: dict = None) -> None:
     """
     Prune members from the documentation tree using smart filtering rules.
@@ -146,6 +169,13 @@ def prune_members(container, module_name: str, exclude_methods: list = None, glo
         # Apply smart filtering for methods
         if isinstance(member, docspec.Function):
             if should_exclude_method(member, exclude_methods, global_rules):
+                continue
+
+        # Hide fields of dataclass result types (e.g., UploadResult, DownloadResult)
+        # These are internal data structures whose fields don't need detailed documentation
+        if isinstance(container, docspec.Class) and is_dataclass_result_type(container):
+            if isinstance(member, docspec.Variable):
+                # Skip all field variables in dataclass result types
                 continue
 
         prune_members(member, module_name, exclude_methods, global_rules)
@@ -179,6 +209,7 @@ def render_markdown(module_names: Iterable[str], exclude_methods: list = None, g
             render_typehint_in_data_header=True,
             data_code_block=True,
             insert_header_anchors=False,
+            header_level_by_type={'Module': 1, 'Class': 2, 'Method': 3, 'Function': 3, 'Variable': 4},
         ),
     )
 

@@ -40,7 +40,7 @@ FileChangeEvent represents a single file change event
 
 ### Methods
 
-#### String
+### String
 
 ```go
 func (e *FileChangeEvent) String() string
@@ -62,7 +62,7 @@ FileChangeResult wraps file change detection result
 
 ### Methods
 
-#### GetCreatedFiles
+### GetCreatedFiles
 
 ```go
 func (r *FileChangeResult) GetCreatedFiles() []string
@@ -70,7 +70,7 @@ func (r *FileChangeResult) GetCreatedFiles() []string
 
 GetCreatedFiles returns list of created file paths
 
-#### GetDeletedFiles
+### GetDeletedFiles
 
 ```go
 func (r *FileChangeResult) GetDeletedFiles() []string
@@ -78,7 +78,7 @@ func (r *FileChangeResult) GetDeletedFiles() []string
 
 GetDeletedFiles returns list of deleted file paths
 
-#### GetModifiedFiles
+### GetModifiedFiles
 
 ```go
 func (r *FileChangeResult) GetModifiedFiles() []string
@@ -86,7 +86,7 @@ func (r *FileChangeResult) GetModifiedFiles() []string
 
 GetModifiedFiles returns list of modified file paths
 
-#### HasChanges
+### HasChanges
 
 ```go
 func (r *FileChangeResult) HasChanges() bool
@@ -176,7 +176,7 @@ FileSystem handles file system operations in the AgentBay cloud environment.
 
 ### Methods
 
-#### CreateDirectory
+### CreateDirectory
 
 ```go
 func (fs *FileSystem) CreateDirectory(path string) (*FileDirectoryResult, error)
@@ -205,7 +205,7 @@ defer result.Session.Delete()
 createResult, _ := result.Session.FileSystem.CreateDirectory("/tmp/test_directory")
 ```
 
-#### EditFile
+### EditFile
 
 ```go
 func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bool) (*FileWriteResult, error)
@@ -238,7 +238,7 @@ edits := []map[string]string{{"oldText": "Hello", "newText": "Hi"}}
 editResult, _ := result.Session.FileSystem.EditFile("/tmp/test.txt", edits, false)
 ```
 
-#### GetFileChange
+### GetFileChange
 
 ```go
 func (fs *FileSystem) GetFileChange(path string) (*FileChangeResult, error)
@@ -270,7 +270,7 @@ result.Session.FileSystem.WriteFile("/tmp/watch_test/file.txt", "content", "over
 changeResult, _ := result.Session.FileSystem.GetFileChange("/tmp/watch_test")
 ```
 
-#### GetFileInfo
+### GetFileInfo
 
 ```go
 func (fs *FileSystem) GetFileInfo(path string) (*FileInfoResult, error)
@@ -299,7 +299,7 @@ defer result.Session.Delete()
 fileInfo, _ := result.Session.FileSystem.GetFileInfo("/etc/hostname")
 ```
 
-#### ListDirectory
+### ListDirectory
 
 ```go
 func (fs *FileSystem) ListDirectory(path string) (*DirectoryListResult, error)
@@ -329,7 +329,7 @@ defer result.Session.Delete()
 listResult, _ := result.Session.FileSystem.ListDirectory("/tmp")
 ```
 
-#### MoveFile
+### MoveFile
 
 ```go
 func (fs *FileSystem) MoveFile(source, destination string) (*FileWriteResult, error)
@@ -360,7 +360,7 @@ result.Session.FileSystem.WriteFile("/tmp/old.txt", "content", "overwrite")
 moveResult, _ := result.Session.FileSystem.MoveFile("/tmp/old.txt", "/tmp/new.txt")
 ```
 
-#### ReadFile
+### ReadFile
 
 ```go
 func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error)
@@ -390,7 +390,7 @@ defer result.Session.Delete()
 fileResult, _ := result.Session.FileSystem.ReadFile("/etc/hostname")
 ```
 
-#### ReadMultipleFiles
+### ReadMultipleFiles
 
 ```go
 func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, error)
@@ -420,7 +420,7 @@ paths := []string{"/etc/hostname", "/etc/os-release"}
 contents, _ := result.Session.FileSystem.ReadMultipleFiles(paths)
 ```
 
-#### SearchFiles
+### SearchFiles
 
 ```go
 func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (*SearchFilesResult, error)
@@ -451,7 +451,7 @@ defer result.Session.Delete()
 searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", ".txt", []string{})
 ```
 
-#### WatchDirectory
+### WatchDirectory
 
 ```go
 func (fs *FileSystem) WatchDirectory(
@@ -492,7 +492,7 @@ close(stopCh)
 wg.Wait()
 ```
 
-#### WatchDirectoryWithDefaults
+### WatchDirectoryWithDefaults
 
 ```go
 func (fs *FileSystem) WatchDirectoryWithDefaults(
@@ -504,7 +504,7 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 
 WatchDirectoryWithDefaults watches a directory for file changes with default 500ms polling interval
 
-#### WriteFile
+### WriteFile
 
 ```go
 func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteResult, error)
@@ -539,7 +539,7 @@ writeResult, _ := result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello", 
 
 ### Related Functions
 
-#### NewFileSystem
+### NewFileSystem
 
 ```go
 func NewFileSystem(session interface {

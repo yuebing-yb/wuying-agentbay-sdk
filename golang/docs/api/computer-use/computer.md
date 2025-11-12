@@ -69,7 +69,7 @@ application management, and screen operations.
 
 ### Methods
 
-#### ActivateWindow
+### ActivateWindow
 
 ```go
 func (c *Computer) ActivateWindow(windowID int) (*WindowResult, error)
@@ -87,7 +87,7 @@ windowList, _ := result.Session.Computer.ListRootWindows()
 activateResult, _ := result.Session.Computer.ActivateWindow(windowList.Windows[0].WindowID)
 ```
 
-#### ClickMouse
+### ClickMouse
 
 ```go
 func (c *Computer) ClickMouse(x, y int, button MouseButton) *BoolResult
@@ -104,7 +104,7 @@ defer result.Session.Delete()
 clickResult := result.Session.Computer.ClickMouse(500, 300, computer.MouseButtonLeft)
 ```
 
-#### CloseWindow
+### CloseWindow
 
 ```go
 func (c *Computer) CloseWindow(windowID int) (*WindowResult, error)
@@ -122,7 +122,7 @@ windowList, _ := result.Session.Computer.ListRootWindows()
 closeResult, _ := result.Session.Computer.CloseWindow(windowList.Windows[0].WindowID)
 ```
 
-#### DragMouse
+### DragMouse
 
 ```go
 func (c *Computer) DragMouse(fromX, fromY, toX, toY int, button MouseButton) *BoolResult
@@ -139,7 +139,7 @@ defer result.Session.Delete()
 dragResult := result.Session.Computer.DragMouse(100, 100, 300, 300, computer.MouseButtonLeft)
 ```
 
-#### FocusMode
+### FocusMode
 
 ```go
 func (c *Computer) FocusMode(on bool) (*WindowResult, error)
@@ -156,7 +156,7 @@ defer result.Session.Delete()
 focusResult, _ := result.Session.Computer.FocusMode(true)
 ```
 
-#### FullscreenWindow
+### FullscreenWindow
 
 ```go
 func (c *Computer) FullscreenWindow(windowID int) (*WindowResult, error)
@@ -164,7 +164,7 @@ func (c *Computer) FullscreenWindow(windowID int) (*WindowResult, error)
 
 FullscreenWindow makes the specified window fullscreen
 
-#### GetActiveWindow
+### GetActiveWindow
 
 ```go
 func (c *Computer) GetActiveWindow(timeoutMs ...int) (*WindowDetailResult, error)
@@ -181,7 +181,7 @@ defer result.Session.Delete()
 windowResult, _ := result.Session.Computer.GetActiveWindow()
 ```
 
-#### GetCursorPosition
+### GetCursorPosition
 
 ```go
 func (c *Computer) GetCursorPosition() *CursorPosition
@@ -198,7 +198,7 @@ defer result.Session.Delete()
 position := result.Session.Computer.GetCursorPosition()
 ```
 
-#### GetScreenSize
+### GetScreenSize
 
 ```go
 func (c *Computer) GetScreenSize() *ScreenSize
@@ -215,7 +215,7 @@ defer result.Session.Delete()
 screenSize := result.Session.Computer.GetScreenSize()
 ```
 
-#### InputText
+### InputText
 
 ```go
 func (c *Computer) InputText(text string) *BoolResult
@@ -232,7 +232,7 @@ defer result.Session.Delete()
 inputResult := result.Session.Computer.InputText("Hello World")
 ```
 
-#### ListRootWindows
+### ListRootWindows
 
 ```go
 func (c *Computer) ListRootWindows(timeoutMs ...int) (*WindowListResult, error)
@@ -240,7 +240,7 @@ func (c *Computer) ListRootWindows(timeoutMs ...int) (*WindowListResult, error)
 
 ListRootWindows lists all root windows
 
-#### MaximizeWindow
+### MaximizeWindow
 
 ```go
 func (c *Computer) MaximizeWindow(windowID int) (*WindowResult, error)
@@ -258,7 +258,7 @@ windowList, _ := result.Session.Computer.ListRootWindows()
 maxResult, _ := result.Session.Computer.MaximizeWindow(windowList.Windows[0].WindowID)
 ```
 
-#### MinimizeWindow
+### MinimizeWindow
 
 ```go
 func (c *Computer) MinimizeWindow(windowID int) (*WindowResult, error)
@@ -276,7 +276,7 @@ windowList, _ := result.Session.Computer.ListRootWindows()
 minResult, _ := result.Session.Computer.MinimizeWindow(windowList.Windows[0].WindowID)
 ```
 
-#### MoveMouse
+### MoveMouse
 
 ```go
 func (c *Computer) MoveMouse(x, y int) *BoolResult
@@ -293,7 +293,7 @@ defer result.Session.Delete()
 moveResult := result.Session.Computer.MoveMouse(300, 200)
 ```
 
-#### PressKeys
+### PressKeys
 
 ```go
 func (c *Computer) PressKeys(keys []string, hold bool) *BoolResult
@@ -310,7 +310,7 @@ defer result.Session.Delete()
 pressResult := result.Session.Computer.PressKeys([]string{"Ctrl", "c"}, false)
 ```
 
-#### ReleaseKeys
+### ReleaseKeys
 
 ```go
 func (c *Computer) ReleaseKeys(keys []string) *BoolResult
@@ -328,7 +328,7 @@ result.Session.Computer.PressKeys([]string{"Shift"}, true)
 releaseResult := result.Session.Computer.ReleaseKeys([]string{"Shift"})
 ```
 
-#### ResizeWindow
+### ResizeWindow
 
 ```go
 func (c *Computer) ResizeWindow(windowID int, width int, height int) (*WindowResult, error)
@@ -336,7 +336,7 @@ func (c *Computer) ResizeWindow(windowID int, width int, height int) (*WindowRes
 
 ResizeWindow resizes the specified window
 
-#### RestoreWindow
+### RestoreWindow
 
 ```go
 func (c *Computer) RestoreWindow(windowID int) (*WindowResult, error)
@@ -344,7 +344,7 @@ func (c *Computer) RestoreWindow(windowID int) (*WindowResult, error)
 
 RestoreWindow restores the specified window
 
-#### Screenshot
+### Screenshot
 
 ```go
 func (c *Computer) Screenshot() *ScreenshotResult
@@ -361,7 +361,7 @@ defer result.Session.Delete()
 screenshot := result.Session.Computer.Screenshot()
 ```
 
-#### Scroll
+### Scroll
 
 ```go
 func (c *Computer) Scroll(x, y int, direction ScrollDirection, amount int) *BoolResult
@@ -380,7 +380,7 @@ scrollResult := result.Session.Computer.Scroll(400, 300, computer.ScrollDirectio
 
 ### Related Functions
 
-#### NewComputer
+### NewComputer
 
 ```go
 func NewComputer(session interface {

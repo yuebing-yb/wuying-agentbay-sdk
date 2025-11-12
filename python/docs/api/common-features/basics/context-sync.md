@@ -147,7 +147,7 @@ upload_strategy = UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
 upload_mode = UploadMode.FILE
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -182,7 +182,7 @@ auto_download = True
 download_strategy = DownloadStrategy.DOWNLOAD_ASYNC
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -210,7 +210,7 @@ Defines the delete policy for context synchronization
 sync_local_file = True
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -251,7 +251,7 @@ delete_src_file = True
 extract_current_folder = False
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -303,7 +303,7 @@ lifecycle = Lifecycle.LIFECYCLE_FOREVER
 paths = field(default_factory=lambda: [""])
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -376,7 +376,7 @@ Defines the mapping policy for cross-platform context synchronization
 path = ""
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -446,7 +446,7 @@ bw_list = None
 mapping_policy = None
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -488,7 +488,7 @@ path = None
 policy = None
 ```
 
-#### new
+### new
 
 ```python
 @classmethod
@@ -497,7 +497,7 @@ def new(cls, context_id: str, path: str, policy: Optional[SyncPolicy] = None)
 
 Creates a new context sync configuration
 
-#### with\_policy
+### with\_policy
 
 ```python
 def with_policy(policy: SyncPolicy)

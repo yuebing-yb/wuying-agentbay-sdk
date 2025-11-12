@@ -36,7 +36,7 @@ class Oss(BaseService)
 
 Handles Object Storage Service operations in the AgentBay cloud environment.
 
-#### env\_init
+### env\_init
 
 ```python
 def env_init(access_key_id: str,
@@ -74,7 +74,7 @@ session.oss.env_init(
 session.delete()
 ```
 
-#### upload
+### upload
 
 ```python
 def upload(bucket: str, object: str, path: str) -> OSSUploadResult
@@ -111,7 +111,7 @@ print(f"Upload result: {result.content}")
 session.delete()
 ```
 
-#### upload\_anonymous
+### upload\_anonymous
 
 ```python
 def upload_anonymous(url: str, path: str) -> OSSUploadResult
@@ -143,7 +143,7 @@ print(f"Upload result: {result.content}")
 session.delete()
 ```
 
-#### download
+### download
 
 ```python
 def download(bucket: str, object: str, path: str) -> OSSDownloadResult
@@ -180,7 +180,7 @@ print(f"Download result: {result.content}")
 session.delete()
 ```
 
-#### download\_anonymous
+### download\_anonymous
 
 ```python
 def download_anonymous(url: str, path: str) -> OSSDownloadResult

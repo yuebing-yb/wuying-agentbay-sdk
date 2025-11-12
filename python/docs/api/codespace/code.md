@@ -30,7 +30,7 @@ class Code(BaseService)
 
 Handles code execution operations in the AgentBay cloud environment.
 
-#### run\_code
+### run\_code
 
 ```python
 def run_code(code: str,

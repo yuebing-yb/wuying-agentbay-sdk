@@ -37,7 +37,7 @@ print(f"Found {len(info_result.context_status_data)} context items")
 session.delete()
 ```
 
-#### info
+### info
 
 ```python
 def info(context_id: Optional[str] = None,
@@ -70,7 +70,7 @@ for item in info_result.context_status_data:
 session.delete()
 ```
 
-#### sync
+### sync
 
 ```python
 async def sync(context_id: Optional[str] = None,

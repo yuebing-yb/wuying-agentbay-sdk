@@ -72,7 +72,7 @@ class Browser(BaseService)
 
 Browser provides browser-related operations for the session.
 
-#### initialize
+### initialize
 
 ```python
 def initialize(option: "BrowserOption") -> bool
@@ -101,7 +101,7 @@ print(f"Browser initialized: {success}")
 session.delete()
 ```
 
-#### initialize\_async
+### initialize\_async
 
 ```python
 async def initialize_async(option: "BrowserOption") -> bool
@@ -130,7 +130,7 @@ print(f"Browser initialized: {success}")
 session.delete()
 ```
 
-#### destroy
+### destroy
 
 ```python
 def destroy()
@@ -148,7 +148,7 @@ session.browser.destroy()
 session.delete()
 ```
 
-#### screenshot
+### screenshot
 
 ```python
 async def screenshot(page, full_page: bool = False, **options) -> bytes
@@ -181,7 +181,7 @@ This is the async version of the screenshot method.
     BrowserError: If browser is not initialized.
     RuntimeError: If screenshot capture fails.
 
-#### get\_endpoint\_url
+### get\_endpoint\_url
 
 ```python
 def get_endpoint_url() -> str
@@ -211,7 +211,7 @@ print(f"CDP Endpoint: {endpoint_url}")
 session.delete()
 ```
 
-#### get\_option
+### get\_option
 
 ```python
 def get_option() -> Optional["BrowserOption"]
@@ -235,7 +235,7 @@ print(f"Stealth mode: {current_options.use_stealth}")
 session.delete()
 ```
 
-#### is\_initialized
+### is\_initialized
 
 ```python
 def is_initialized() -> bool
@@ -313,7 +313,7 @@ class BrowserAgent(BaseService)
 
 BrowserAgent handles browser automation and agent logic.
 
-#### navigate\_async
+### navigate\_async
 
 ```python
 async def navigate_async(url: str) -> str
@@ -362,7 +362,7 @@ session.delete()
 
   screenshot, act, observe
 
-#### screenshot
+### screenshot
 
 ```python
 def screenshot(page=None,
@@ -430,7 +430,7 @@ session.delete()
 
   navigate_async, act, observe
 
-#### screenshot\_async
+### screenshot\_async
 
 ```python
 async def screenshot_async(page=None,
@@ -456,7 +456,7 @@ Asynchronously takes a screenshot of the specified page.
 
     str: A base64 encoded data URL of the screenshot, or an error message.
 
-#### close\_async
+### close\_async
 
 ```python
 async def close_async() -> bool
@@ -465,7 +465,7 @@ async def close_async() -> bool
 Asynchronously closes the remote browser agent session.
 This will terminate the browser process managed by the agent.
 
-#### act
+### act
 
 ```python
 def act(action_input: Union[ObserveResult, ActOptions],
@@ -524,7 +524,7 @@ session.delete()
 
   observe, navigate_async, screenshot
 
-#### act\_async
+### act\_async
 
 ```python
 async def act_async(action_input: Union[ObserveResult, ActOptions],
@@ -544,7 +544,7 @@ Asynchronously perform an action on a web page.
 
     ActResult: The result of the action.
 
-#### observe
+### observe
 
 ```python
 def observe(options: ObserveOptions,
@@ -611,7 +611,7 @@ session.delete()
 
   act, extract, navigate_async
 
-#### observe\_async
+### observe\_async
 
 ```python
 async def observe_async(options: ObserveOptions,
@@ -632,7 +632,7 @@ Asynchronously observe elements or state on a web page.
   Tuple[bool, List[ObserveResult]]: A tuple containing a success boolean and a list
   of observation results.
 
-#### extract
+### extract
 
 ```python
 def extract(options: ExtractOptions, page=None) -> Tuple[bool, T]
@@ -698,7 +698,7 @@ session.delete()
 
   observe, act, navigate_async
 
-#### extract\_async
+### extract\_async
 
 ```python
 async def extract_async(options: ExtractOptions, page=None) -> Tuple[bool, T]

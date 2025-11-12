@@ -179,7 +179,7 @@ Handles computer UI automation operations in the AgentBay cloud environment.
 Provides comprehensive desktop automation capabilities including mouse, keyboard,
 window management, application management, and screen operations.
 
-#### click\_mouse
+### click\_mouse
 
 ```python
 def click_mouse(
@@ -243,7 +243,7 @@ session.delete()
 
   move_mouse, drag_mouse, get_cursor_position, get_screen_size
 
-#### move\_mouse
+### move\_mouse
 
 ```python
 def move_mouse(x: int, y: int) -> BoolResult
@@ -284,7 +284,7 @@ session.delete()
 
   click_mouse, drag_mouse, get_cursor_position
 
-#### drag\_mouse
+### drag\_mouse
 
 ```python
 def drag_mouse(
@@ -341,7 +341,7 @@ session.delete()
 
   click_mouse, move_mouse
 
-#### scroll
+### scroll
 
 ```python
 def scroll(x: int,
@@ -394,7 +394,7 @@ session.delete()
 
   click_mouse, move_mouse
 
-#### get\_cursor\_position
+### get\_cursor\_position
 
 ```python
 def get_cursor_position() -> OperationResult
@@ -430,7 +430,7 @@ session.delete()
 
   move_mouse, click_mouse, get_screen_size
 
-#### input\_text
+### input\_text
 
 ```python
 def input_text(text: str) -> BoolResult
@@ -469,7 +469,7 @@ session.delete()
 
   press_keys, click_mouse
 
-#### press\_keys
+### press\_keys
 
 ```python
 def press_keys(keys: List[str], hold: bool = False) -> BoolResult
@@ -510,7 +510,7 @@ session.delete()
 
   release_keys, input_text
 
-#### release\_keys
+### release\_keys
 
 ```python
 def release_keys(keys: List[str]) -> BoolResult
@@ -550,7 +550,7 @@ session.delete()
 
   press_keys, input_text
 
-#### get\_screen\_size
+### get\_screen\_size
 
 ```python
 def get_screen_size() -> OperationResult
@@ -586,7 +586,7 @@ session.delete()
 
   click_mouse, move_mouse, screenshot
 
-#### screenshot
+### screenshot
 
 ```python
 def screenshot() -> OperationResult
@@ -622,7 +622,7 @@ session.delete()
 
   get_screen_size
 
-#### list\_root\_windows
+### list\_root\_windows
 
 ```python
 def list_root_windows(timeout_ms: int = 3000) -> WindowListResult
@@ -650,7 +650,7 @@ for window in windows.windows:
 session.delete()
 ```
 
-#### get\_active\_window
+### get\_active\_window
 
 ```python
 def get_active_window(timeout_ms: int = 3000) -> WindowInfoResult
@@ -677,7 +677,7 @@ print(f"Active window: {active.window.title}")
 session.delete()
 ```
 
-#### activate\_window
+### activate\_window
 
 ```python
 def activate_window(window_id: int) -> BoolResult
@@ -717,7 +717,7 @@ session.delete()
 
   list_root_windows, get_active_window, close_window
 
-#### close\_window
+### close\_window
 
 ```python
 def close_window(window_id: int) -> BoolResult
@@ -757,7 +757,7 @@ session.delete()
 
   list_root_windows, activate_window, minimize_window
 
-#### maximize\_window
+### maximize\_window
 
 ```python
 def maximize_window(window_id: int) -> BoolResult
@@ -797,7 +797,7 @@ session.delete()
 
   minimize_window, restore_window, fullscreen_window, resize_window
 
-#### minimize\_window
+### minimize\_window
 
 ```python
 def minimize_window(window_id: int) -> BoolResult
@@ -837,7 +837,7 @@ session.delete()
 
   maximize_window, restore_window, activate_window
 
-#### restore\_window
+### restore\_window
 
 ```python
 def restore_window(window_id: int) -> BoolResult
@@ -879,7 +879,7 @@ session.delete()
 
   minimize_window, maximize_window, activate_window
 
-#### resize\_window
+### resize\_window
 
 ```python
 def resize_window(window_id: int, width: int, height: int) -> BoolResult
@@ -921,7 +921,7 @@ session.delete()
 
   maximize_window, restore_window, get_screen_size
 
-#### fullscreen\_window
+### fullscreen\_window
 
 ```python
 def fullscreen_window(window_id: int) -> BoolResult
@@ -962,7 +962,7 @@ session.delete()
 
   maximize_window, restore_window
 
-#### focus\_mode
+### focus\_mode
 
 ```python
 def focus_mode(on: bool) -> BoolResult
@@ -1001,7 +1001,7 @@ session.delete()
 
   activate_window, get_active_window
 
-#### get\_installed\_apps
+### get\_installed\_apps
 
 ```python
 def get_installed_apps(
@@ -1047,7 +1047,7 @@ session.delete()
 
   start_app, list_visible_apps, stop_app_by_pname
 
-#### start\_app
+### start\_app
 
 ```python
 def start_app(start_cmd: str,
@@ -1091,7 +1091,7 @@ session.delete()
 
   get_installed_apps, stop_app_by_pname, list_visible_apps
 
-#### list\_visible\_apps
+### list\_visible\_apps
 
 ```python
 def list_visible_apps() -> ProcessListResult
@@ -1132,7 +1132,7 @@ session.delete()
 
   get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
-#### stop\_app\_by\_pname
+### stop\_app\_by\_pname
 
 ```python
 def stop_app_by_pname(pname: str) -> AppOperationResult
@@ -1172,7 +1172,7 @@ session.delete()
 
   start_app, stop_app_by_pid, stop_app_by_cmd, list_visible_apps
 
-#### stop\_app\_by\_pid
+### stop\_app\_by\_pid
 
 ```python
 def stop_app_by_pid(pid: int) -> AppOperationResult
@@ -1213,7 +1213,7 @@ session.delete()
 
   start_app, stop_app_by_pname, stop_app_by_cmd, list_visible_apps
 
-#### stop\_app\_by\_cmd
+### stop\_app\_by\_cmd
 
 ```python
 def stop_app_by_cmd(stop_cmd: str) -> AppOperationResult

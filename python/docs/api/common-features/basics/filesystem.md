@@ -13,54 +13,6 @@ class UploadResult()
 
 Result structure for file upload operations.
 
-#### success: `bool`
-
-```python
-success = None
-```
-
-#### request\_id\_upload\_url: `Optional[str]`
-
-```python
-request_id_upload_url = None
-```
-
-#### request\_id\_sync: `Optional[str]`
-
-```python
-request_id_sync = None
-```
-
-#### http\_status: `Optional[int]`
-
-```python
-http_status = None
-```
-
-#### etag: `Optional[str]`
-
-```python
-etag = None
-```
-
-#### bytes\_sent: `int`
-
-```python
-bytes_sent = None
-```
-
-#### path: `str`
-
-```python
-path = None
-```
-
-#### error: `Optional[str]`
-
-```python
-error = None
-```
-
 ## DownloadResult Objects
 
 ```python
@@ -69,54 +21,6 @@ class DownloadResult()
 ```
 
 Result structure for file download operations.
-
-#### success: `bool`
-
-```python
-success = None
-```
-
-#### request\_id\_download\_url: `Optional[str]`
-
-```python
-request_id_download_url = None
-```
-
-#### request\_id\_sync: `Optional[str]`
-
-```python
-request_id_sync = None
-```
-
-#### http\_status: `Optional[int]`
-
-```python
-http_status = None
-```
-
-#### bytes\_received: `int`
-
-```python
-bytes_received = None
-```
-
-#### path: `str`
-
-```python
-path = None
-```
-
-#### local\_path: `str`
-
-```python
-local_path = None
-```
-
-#### error: `Optional[str]`
-
-```python
-error = None
-```
 
 ## FileTransfer Objects
 
@@ -133,7 +37,7 @@ Prerequisites and Constraints:
   synchronization path (or conform to backend path rules).
 - Requires available AgentBay context service (agent_bay.context) and session context.
 
-#### upload
+### upload
 
 ```python
 async def upload(
@@ -155,7 +59,7 @@ Upload workflow:
 
 Returns UploadResult containing request_ids, HTTP status, ETag and other information.
 
-#### download
+### download
 
 ```python
 async def download(
@@ -210,7 +114,7 @@ change_result = session.file_system._get_file_change("/tmp/change_test")
 session.delete()
 ```
 
-#### has\_changes
+### has\_changes
 
 ```python
 def has_changes() -> bool
@@ -222,7 +126,7 @@ Check if there are any file changes.
 
     bool: True if there are any file change events, False otherwise.
 
-#### get\_modified\_files
+### get\_modified\_files
 
 ```python
 def get_modified_files() -> List[str]
@@ -234,7 +138,7 @@ Get list of modified file paths.
 
     List[str]: List of file paths that were modified.
 
-#### get\_created\_files
+### get\_created\_files
 
 ```python
 def get_created_files() -> List[str]
@@ -246,7 +150,7 @@ Get list of created file paths.
 
     List[str]: List of file paths that were created.
 
-#### get\_deleted\_files
+### get\_deleted\_files
 
 ```python
 def get_deleted_files() -> List[str]
@@ -312,7 +216,7 @@ Handles file operations in the AgentBay cloud environment.
 DEFAULT_CHUNK_SIZE = 50 * 1024
 ```
 
-#### create\_directory
+### create\_directory
 
 ```python
 def create_directory(path: str) -> BoolResult
@@ -340,7 +244,7 @@ nested_result = session.file_system.create_directory("/tmp/parent/child/grandchi
 session.delete()
 ```
 
-#### edit\_file
+### edit\_file
 
 ```python
 def edit_file(path: str,
@@ -374,7 +278,7 @@ LOG_LEVEL=info")
             session.delete()
             ```
 
-#### get\_file\_info
+### get\_file\_info
 
 ```python
 def get_file_info(path: str) -> FileInfoResult
@@ -402,7 +306,7 @@ print(info_result.file_info)
 session.delete()
 ```
 
-#### list\_directory
+### list\_directory
 
 ```python
 def list_directory(path: str) -> DirectoryListResult
@@ -455,7 +359,7 @@ session.delete()
 
   FileSystem.create_directory, FileSystem.get_file_info, FileSystem.read_file
 
-#### move\_file
+### move\_file
 
 ```python
 def move_file(source: str, destination: str) -> BoolResult
@@ -485,7 +389,7 @@ read_result = session.file_system.read_file("/tmp/moved.txt")
 session.delete()
 ```
 
-#### read\_multiple\_files
+### read\_multiple\_files
 
 ```python
 def read_multiple_files(paths: List[str]) -> MultipleFileContentResult
@@ -517,7 +421,7 @@ read_result = session.file_system.read_multiple_files(paths)
 session.delete()
 ```
 
-#### search\_files
+### search\_files
 
 ```python
 def search_files(
@@ -552,7 +456,7 @@ search_result = session.file_system.search_files("/tmp/test", "test_")
 session.delete()
 ```
 
-#### read\_file
+### read\_file
 
 ```python
 def read_file(path: str) -> FileContentResult
@@ -601,7 +505,7 @@ session.delete()
 
   FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
 
-#### write\_file
+### write\_file
 
 ```python
 def write_file(path: str, content: str, mode: str = "overwrite") -> BoolResult
@@ -656,7 +560,7 @@ New line", mode="append")
 
   FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
 
-#### upload\_file
+### upload\_file
 
 ```python
 def upload_file(
@@ -699,7 +603,7 @@ upload_result = session.file_system.upload_file("/local/file.txt", "/workspace/f
 session.delete()
 ```
 
-#### download\_file
+### download\_file
 
 ```python
 def download_file(
@@ -742,7 +646,7 @@ download_result = session.file_system.download_file("/workspace/file.txt", "/loc
 session.delete()
 ```
 
-#### watch\_directory
+### watch\_directory
 
 ```python
 def watch_directory(

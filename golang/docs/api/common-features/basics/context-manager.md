@@ -72,7 +72,7 @@ ContextManager handles context operations for a specific session.
 
 ### Methods
 
-#### Info
+### Info
 
 ```go
 func (cm *ContextManager) Info() (*ContextInfoResult, error)
@@ -89,7 +89,7 @@ defer result.Session.Delete()
 info, _ := result.Session.Context.Info()
 ```
 
-#### InfoWithParams
+### InfoWithParams
 
 ```go
 func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*ContextInfoResult, error)
@@ -97,7 +97,7 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 
 InfoWithParams retrieves context information for the current session with optional parameters.
 
-#### Sync
+### Sync
 
 ```go
 func (cm *ContextManager) Sync() (*ContextSyncResult, error)
@@ -105,7 +105,7 @@ func (cm *ContextManager) Sync() (*ContextSyncResult, error)
 
 Sync synchronizes the context for the current session.
 
-#### SyncWithCallback
+### SyncWithCallback
 
 ```go
 func (cm *ContextManager) SyncWithCallback(contextId, path, mode string, callback SyncCallback, maxRetries int, retryInterval int) (*ContextSyncResult, error)
@@ -316,7 +316,7 @@ func main() {
 
 }
 
-#### SyncWithParams
+### SyncWithParams
 
 ```go
 func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*ContextSyncResult, error)
@@ -326,7 +326,7 @@ SyncWithParams synchronizes the context for the current session with optional pa
 
 ### Related Functions
 
-#### NewContextManager
+### NewContextManager
 
 ```go
 func NewContextManager(session interface {

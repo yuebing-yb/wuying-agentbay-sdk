@@ -116,7 +116,7 @@ ContextService provides methods to manage persistent contexts in the AgentBay cl
 
 ### Methods
 
-#### Clear
+### Clear
 
 ```go
 func (cs *ContextService) Clear(contextID string, timeoutSeconds int, pollIntervalSeconds float64) (*ContextClearResult, error)
@@ -136,7 +136,7 @@ Parameters:
 Returns a ContextClearResult object containing the final task result. The status field will be
 "available" on success, or other states if interrupted.
 
-#### ClearAsync
+### ClearAsync
 
 ```go
 func (cs *ContextService) ClearAsync(contextID string) (*ContextClearResult, error)
@@ -161,7 +161,7 @@ contextResult, _ := client.Context.Get("my-context", true)
 clearResult, _ := client.Context.ClearAsync(contextResult.ContextID)
 ```
 
-#### Create
+### Create
 
 ```go
 func (cs *ContextService) Create(name string) (*ContextCreateResult, error)
@@ -183,7 +183,7 @@ client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 createResult, _ := client.Context.Create("my-context")
 ```
 
-#### Delete
+### Delete
 
 ```go
 func (cs *ContextService) Delete(context *Context) (*ContextDeleteResult, error)
@@ -206,7 +206,7 @@ contextResult, _ := client.Context.Get("my-context", true)
 client.Context.Delete(contextResult.Context)
 ```
 
-#### DeleteFile
+### DeleteFile
 
 ```go
 func (cs *ContextService) DeleteFile(contextID string, filePath string) (*ContextFileDeleteResult, error)
@@ -230,7 +230,7 @@ contextResult, _ := client.Context.Get("my-context", true)
 client.Context.DeleteFile(contextResult.ContextID, "/data/file.txt")
 ```
 
-#### Get
+### Get
 
 ```go
 func (cs *ContextService) Get(name string, create bool) (*ContextResult, error)
@@ -254,7 +254,7 @@ client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 contextResult, _ := client.Context.Get("my-context", true)
 ```
 
-#### GetClearStatus
+### GetClearStatus
 
 ```go
 func (cs *ContextService) GetClearStatus(contextID string) (*ContextClearResult, error)
@@ -285,7 +285,7 @@ contextResult, _ := client.Context.Get("my-context", true)
 statusResult, _ := client.Context.GetClearStatus(contextResult.ContextID)
 ```
 
-#### GetFileDownloadUrl
+### GetFileDownloadUrl
 
 ```go
 func (cs *ContextService) GetFileDownloadUrl(contextID string, filePath string) (*ContextFileUrlResult, error)
@@ -309,7 +309,7 @@ contextResult, _ := client.Context.Get("my-context", true)
 urlResult, _ := client.Context.GetFileDownloadUrl(contextResult.ContextID, "/data/file.txt")
 ```
 
-#### GetFileUploadUrl
+### GetFileUploadUrl
 
 ```go
 func (cs *ContextService) GetFileUploadUrl(contextID string, filePath string) (*ContextFileUrlResult, error)
@@ -333,7 +333,7 @@ contextResult, _ := client.Context.Get("my-context", true)
 urlResult, _ := client.Context.GetFileUploadUrl(contextResult.ContextID, "/data/file.txt")
 ```
 
-#### List
+### List
 
 ```go
 func (cs *ContextService) List(params *ContextListParams) (*ContextListResult, error)
@@ -357,7 +357,7 @@ client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Context.List(nil)
 ```
 
-#### ListFiles
+### ListFiles
 
 ```go
 func (cs *ContextService) ListFiles(contextID string, parentFolderPath string, pageNumber int32, pageSize int32) (*ContextFileListResult, error)
@@ -383,7 +383,7 @@ contextResult, _ := client.Context.Get("my-context", true)
 fileList, _ := client.Context.ListFiles(contextResult.ContextID, "/", 1, 10)
 ```
 
-#### Update
+### Update
 
 ```go
 func (cs *ContextService) Update(context *Context) (*ContextModifyResult, error)
@@ -421,7 +421,7 @@ ContextListParams contains parameters for listing contexts
 
 ### Related Functions
 
-#### NewContextListParams
+### NewContextListParams
 
 ```go
 func NewContextListParams() *ContextListParams

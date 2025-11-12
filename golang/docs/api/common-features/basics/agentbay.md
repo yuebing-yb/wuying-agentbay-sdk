@@ -30,7 +30,7 @@ AgentBay represents the main client for interacting with the AgentBay cloud runt
 
 ### Methods
 
-#### Create
+### Create
 
 ```go
 func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error)
@@ -64,7 +64,7 @@ result, _ := client.Create(nil)
 defer result.Session.Delete()
 ```
 
-#### Delete
+### Delete
 
 ```go
 func (a *AgentBay) Delete(session *Session, syncContext ...bool) (*DeleteResult, error)
@@ -95,7 +95,7 @@ result, _ := client.Create(nil)
 client.Delete(result.Session, true)
 ```
 
-#### Get
+### Get
 
 ```go
 func (a *AgentBay) Get(sessionID string) (*SessionResult, error)
@@ -121,7 +121,7 @@ result, _ := client.Get(sessionID)
 defer result.Session.Delete()
 ```
 
-#### GetSession
+### GetSession
 
 ```go
 func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error)
@@ -129,7 +129,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error)
 
 GetSession retrieves session information by session ID
 
-#### List
+### List
 
 ```go
 func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error)
@@ -155,7 +155,7 @@ result, _ := client.List(nil, nil, nil)
 
 ### Related Functions
 
-#### NewAgentBay
+### NewAgentBay
 
 ```go
 func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error)
@@ -164,7 +164,7 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error)
 NewAgentBay creates a new AgentBay client. If apiKey is empty, it will look for the AGENTBAY_API_KEY
 environment variable.
 
-#### NewAgentBayWithDefaults
+### NewAgentBayWithDefaults
 
 ```go
 func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error)
@@ -183,7 +183,7 @@ Option is a function that sets optional parameters for AgentBay client.
 
 ### Related Functions
 
-#### WithConfig
+### WithConfig
 
 ```go
 func WithConfig(cfg *Config) Option
@@ -191,7 +191,7 @@ func WithConfig(cfg *Config) Option
 
 WithConfig returns an Option that sets the configuration for the AgentBay client.
 
-#### WithEnvFile
+### WithEnvFile
 
 ```go
 func WithEnvFile(envFile string) Option

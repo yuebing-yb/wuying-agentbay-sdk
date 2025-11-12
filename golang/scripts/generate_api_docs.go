@@ -885,7 +885,7 @@ func writeType(buf *bytes.Buffer, pkg *packageDoc, typ *doc.Type, mapping docMap
 		if len(visibleMethods) > 0 {
 			buf.WriteString("### Methods\n\n")
 			for _, method := range visibleMethods {
-				fmt.Fprintf(buf, "#### %s\n\n", method.Name)
+				fmt.Fprintf(buf, "### %s\n\n", method.Name)
 				buf.WriteString("```go\n")
 				buf.WriteString(formatNode(pkg.fset, method.Decl))
 				buf.WriteString("\n```\n\n")
@@ -910,7 +910,7 @@ func writeType(buf *bytes.Buffer, pkg *packageDoc, typ *doc.Type, mapping docMap
 		if len(visibleFuncs) > 0 {
 			buf.WriteString("### Related Functions\n\n")
 			for _, fn := range visibleFuncs {
-				fmt.Fprintf(buf, "#### %s\n\n", fn.Name)
+				fmt.Fprintf(buf, "### %s\n\n", fn.Name)
 				buf.WriteString("```go\n")
 				buf.WriteString(formatNode(pkg.fset, fn.Decl))
 				buf.WriteString("\n```\n\n")

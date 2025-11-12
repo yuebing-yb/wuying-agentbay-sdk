@@ -95,7 +95,7 @@ class ContextService()
 
 Provides methods to manage persistent contexts in the AgentBay cloud environment.
 
-#### list
+### list
 
 ```python
 def list(params: Optional[ContextListParams] = None) -> ContextListResult
@@ -123,7 +123,7 @@ params = ContextListParams(max_results=20, next_token=result.next_token)
 next_result = agent_bay.context.list(params)
 ```
 
-#### get
+### get
 
 ```python
 def get(name: Optional[str] = None,
@@ -176,7 +176,7 @@ result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
 
   ContextService.list, ContextService.update, ContextService.delete
 
-#### create
+### create
 
 ```python
 def create(name: str) -> ContextResult
@@ -200,7 +200,7 @@ Creates a new context with the given name.
 result = agent_bay.context.create("my-new-context")
 ```
 
-#### update
+### update
 
 ```python
 def update(context: Context) -> OperationResult
@@ -248,7 +248,7 @@ update_result = agent_bay.context.update(result.context)
 
   ContextService.get, ContextService.list, ContextService.delete
 
-#### delete
+### delete
 
 ```python
 def delete(context: Context) -> OperationResult
@@ -273,7 +273,7 @@ result = agent_bay.context.get(name="my-context")
 delete_result = agent_bay.context.delete(result.context)
 ```
 
-#### get\_file\_download\_url
+### get\_file\_download\_url
 
 ```python
 def get_file_download_url(context_id: str, file_path: str) -> FileUrlResult
@@ -300,7 +300,7 @@ url_result = agent_bay.context.get_file_download_url(ctx_result.context_id, "/pa
 print(url_result.url)
 ```
 
-#### get\_file\_upload\_url
+### get\_file\_upload\_url
 
 ```python
 def get_file_upload_url(context_id: str, file_path: str) -> FileUrlResult
@@ -327,7 +327,7 @@ url_result = agent_bay.context.get_file_upload_url(ctx_result.context_id, "/path
 print(url_result.url)
 ```
 
-#### delete\_file
+### delete\_file
 
 ```python
 def delete_file(context_id: str, file_path: str) -> OperationResult
@@ -353,7 +353,7 @@ ctx_result = agent_bay.context.get(name="my-context", create=True)
 delete_result = agent_bay.context.delete_file(ctx_result.context_id, "/path/to/file.txt")
 ```
 
-#### list\_files
+### list\_files
 
 ```python
 def list_files(context_id: str,
@@ -385,7 +385,7 @@ files_result = agent_bay.context.list_files(ctx_result.context_id, "/")
 print(f"Found {len(files_result.entries)} files")
 ```
 
-#### clear\_async
+### clear\_async
 
 ```python
 def clear_async(context_id: str) -> ClearContextResult
@@ -420,7 +420,7 @@ result = agent_bay.context.get(name="my-context", create=True)
 clear_result = agent_bay.context.clear_async(result.context_id)
 ```
 
-#### get\_clear\_status
+### get\_clear\_status
 
 ```python
 def get_clear_status(context_id: str) -> ClearContextResult
@@ -450,7 +450,7 @@ status_result = agent_bay.context.get_clear_status(result.context_id)
 print(status_result.status)
 ```
 
-#### clear
+### clear
 
 ```python
 def clear(context_id: str,

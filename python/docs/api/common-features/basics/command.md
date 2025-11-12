@@ -30,7 +30,7 @@ class Command(BaseService)
 
 Handles command execution operations in the AgentBay cloud environment.
 
-#### execute\_command
+### execute\_command
 
 ```python
 def execute_command(command: str, timeout_ms: int = 1000) -> CommandResult

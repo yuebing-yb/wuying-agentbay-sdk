@@ -49,7 +49,7 @@ Command handles command execution operations in the AgentBay cloud environment.
 
 ### Methods
 
-#### ExecuteCommand
+### ExecuteCommand
 
 ```go
 func (c *Command) ExecuteCommand(command string, timeoutMs ...int) (*CommandResult, error)
@@ -81,7 +81,7 @@ cmdResult, _ := result.Session.Command.ExecuteCommand("ls -la")
 
 ### Related Functions
 
-#### NewCommand
+### NewCommand
 
 ```go
 func NewCommand(session interface {

@@ -13,7 +13,7 @@ class AgentBayLogger()
 
 AgentBay SDK Logger with beautiful formatting.
 
-#### setup
+### setup
 
 ```python
 @classmethod
@@ -97,7 +97,7 @@ logger.debug("This only appears in the log file")
 
 ```
 
-#### get\_logger
+### get\_logger
 
 ```python
 @classmethod
@@ -115,7 +115,7 @@ Get a logger instance.
 
   Configured logger instance
 
-#### set\_level
+### set\_level
 
 ```python
 @classmethod
@@ -160,7 +160,7 @@ logger.warning("But warnings still appear")
 
 ```
 
-#### get\_logger
+### get\_logger
 
 ```python
 def get_logger(name: str = "agentbay")

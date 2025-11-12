@@ -88,7 +88,7 @@ and mobile environment configuration.
 
 ### Methods
 
-#### Configure
+### Configure
 
 ```go
 func (m *Mobile) Configure(mobileConfig *models.MobileExtraConfig) error
@@ -96,7 +96,7 @@ func (m *Mobile) Configure(mobileConfig *models.MobileExtraConfig) error
 
 Configure configures mobile settings from MobileExtraConfig
 
-#### GetAdbUrl
+### GetAdbUrl
 
 ```go
 func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult
@@ -116,7 +116,7 @@ adbPubKey, _ := os.ReadFile(os.Getenv("HOME") + "/.android/adbkey.pub")
 adbResult := result.Session.Mobile.GetAdbUrl(string(adbPubKey))
 ```
 
-#### GetAllUIElements
+### GetAllUIElements
 
 ```go
 func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult
@@ -133,7 +133,7 @@ defer result.Session.Delete()
 elementsResult := result.Session.Mobile.GetAllUIElements(5000)
 ```
 
-#### GetClickableUIElements
+### GetClickableUIElements
 
 ```go
 func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult
@@ -150,7 +150,7 @@ defer result.Session.Delete()
 elementsResult := result.Session.Mobile.GetClickableUIElements(5000)
 ```
 
-#### GetInstalledApps
+### GetInstalledApps
 
 ```go
 func (m *Mobile) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *InstalledAppListResult
@@ -167,7 +167,7 @@ defer result.Session.Delete()
 appsResult := result.Session.Mobile.GetInstalledApps(true, true, true)
 ```
 
-#### InputText
+### InputText
 
 ```go
 func (m *Mobile) InputText(text string) *BoolResult
@@ -184,7 +184,7 @@ defer result.Session.Delete()
 inputResult := result.Session.Mobile.InputText("Hello Mobile")
 ```
 
-#### Screenshot
+### Screenshot
 
 ```go
 func (m *Mobile) Screenshot() *ScreenshotResult
@@ -201,7 +201,7 @@ defer result.Session.Delete()
 screenshot := result.Session.Mobile.Screenshot()
 ```
 
-#### SendKey
+### SendKey
 
 ```go
 func (m *Mobile) SendKey(key int) *BoolResult
@@ -218,7 +218,7 @@ defer result.Session.Delete()
 keyResult := result.Session.Mobile.SendKey(4)
 ```
 
-#### SetAppBlacklist
+### SetAppBlacklist
 
 ```go
 func (m *Mobile) SetAppBlacklist(packageNames []string) error
@@ -236,7 +236,7 @@ blockedApps := []string{"com.example.blockedapp"}
 err := result.Session.Mobile.SetAppBlacklist(blockedApps)
 ```
 
-#### SetAppWhitelist
+### SetAppWhitelist
 
 ```go
 func (m *Mobile) SetAppWhitelist(packageNames []string) error
@@ -254,7 +254,7 @@ allowedApps := []string{"com.android.calculator2"}
 err := result.Session.Mobile.SetAppWhitelist(allowedApps)
 ```
 
-#### SetNavigationBarVisibility
+### SetNavigationBarVisibility
 
 ```go
 func (m *Mobile) SetNavigationBarVisibility(hide bool) error
@@ -271,7 +271,7 @@ defer result.Session.Delete()
 err := result.Session.Mobile.SetNavigationBarVisibility(true)
 ```
 
-#### SetResolutionLock
+### SetResolutionLock
 
 ```go
 func (m *Mobile) SetResolutionLock(enable bool) error
@@ -288,7 +288,7 @@ defer result.Session.Delete()
 err := result.Session.Mobile.SetResolutionLock(true)
 ```
 
-#### SetUninstallBlacklist
+### SetUninstallBlacklist
 
 ```go
 func (m *Mobile) SetUninstallBlacklist(packageNames []string) error
@@ -306,7 +306,7 @@ protectedApps := []string{"com.android.calculator2"}
 err := result.Session.Mobile.SetUninstallBlacklist(protectedApps)
 ```
 
-#### StartApp
+### StartApp
 
 ```go
 func (m *Mobile) StartApp(startCmd, workDirectory, activity string) *ProcessListResult
@@ -323,7 +323,7 @@ defer result.Session.Delete()
 processResult := result.Session.Mobile.StartApp("com.android.calculator2", "", "com.android.calculator2.Calculator")
 ```
 
-#### StopAppByCmd
+### StopAppByCmd
 
 ```go
 func (m *Mobile) StopAppByCmd(stopCmd string) *BoolResult
@@ -340,7 +340,7 @@ defer result.Session.Delete()
 stopResult := result.Session.Mobile.StopAppByCmd("com.android.calculator2")
 ```
 
-#### Swipe
+### Swipe
 
 ```go
 func (m *Mobile) Swipe(startX, startY, endX, endY, durationMs int) *BoolResult
@@ -357,7 +357,7 @@ defer result.Session.Delete()
 swipeResult := result.Session.Mobile.Swipe(100, 500, 900, 500, 300)
 ```
 
-#### Tap
+### Tap
 
 ```go
 func (m *Mobile) Tap(x, y int) *BoolResult
@@ -376,7 +376,7 @@ tapResult := result.Session.Mobile.Tap(500, 500)
 
 ### Related Functions
 
-#### NewMobile
+### NewMobile
 
 ```go
 func NewMobile(session interface {

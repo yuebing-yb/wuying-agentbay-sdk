@@ -21,7 +21,7 @@ ContextSync defines the context synchronization configuration
 
 ### Methods
 
-#### WithPolicy
+### WithPolicy
 
 ```go
 func (cs *ContextSync) WithPolicy(policy *SyncPolicy) (*ContextSync, error)
@@ -31,7 +31,7 @@ WithPolicy sets the policy and returns the context sync for chaining
 
 ### Related Functions
 
-#### NewContextSync
+### NewContextSync
 
 ```go
 func NewContextSync(contextID, path string, policy *SyncPolicy) (*ContextSync, error)
@@ -64,7 +64,7 @@ SyncPolicy defines the synchronization policy
 
 ### Related Functions
 
-#### NewSyncPolicy
+### NewSyncPolicy
 
 ```go
 func NewSyncPolicy() *SyncPolicy
@@ -89,7 +89,7 @@ UploadPolicy defines the upload policy for context synchronization
 
 ### Related Functions
 
-#### NewUploadPolicy
+### NewUploadPolicy
 
 ```go
 func NewUploadPolicy() *UploadPolicy
@@ -112,7 +112,7 @@ DownloadPolicy defines the download policy for context synchronization
 
 ### Related Functions
 
-#### NewDownloadPolicy
+### NewDownloadPolicy
 
 ```go
 func NewDownloadPolicy() *DownloadPolicy
@@ -133,7 +133,7 @@ DeletePolicy defines the delete policy for context synchronization
 
 ### Related Functions
 
-#### NewDeletePolicy
+### NewDeletePolicy
 
 ```go
 func NewDeletePolicy() *DeletePolicy
@@ -158,7 +158,7 @@ ExtractPolicy defines the extract policy for context synchronization
 
 ### Related Functions
 
-#### NewExtractPolicy
+### NewExtractPolicy
 
 ```go
 func NewExtractPolicy() *ExtractPolicy
@@ -203,7 +203,7 @@ Paths field specifies which directories or files should be subject to the recycl
 
 ### Related Functions
 
-#### NewRecyclePolicy
+### NewRecyclePolicy
 
 ```go
 func NewRecyclePolicy() *RecyclePolicy
@@ -248,7 +248,7 @@ MappingPolicy defines the mapping policy for cross-platform context synchronizat
 
 ### Related Functions
 
-#### NewMappingPolicy
+### NewMappingPolicy
 
 ```go
 func NewMappingPolicy() *MappingPolicy

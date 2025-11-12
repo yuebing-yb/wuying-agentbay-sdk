@@ -28,7 +28,7 @@ Browser provides browser-related operations for the session
 
 ### Methods
 
-#### Destroy
+### Destroy
 
 ```go
 func (b *Browser) Destroy() error
@@ -46,7 +46,7 @@ session.Browser.Initialize(browser.NewBrowserOption())
 session.Browser.Destroy()
 ```
 
-#### GetEndpointURL
+### GetEndpointURL
 
 ```go
 func (b *Browser) GetEndpointURL() (string, error)
@@ -64,7 +64,7 @@ session.Browser.Initialize(browser.NewBrowserOption())
 endpointURL, _ := session.Browser.GetEndpointURL()
 ```
 
-#### GetOption
+### GetOption
 
 ```go
 func (b *Browser) GetOption() *BrowserOption
@@ -83,7 +83,7 @@ if currentOption != nil && currentOption.UseStealth {
 }
 ```
 
-#### Initialize
+### Initialize
 
 ```go
 func (b *Browser) Initialize(option *BrowserOption) (bool, error)
@@ -100,7 +100,7 @@ option.UseStealth = true
 success, _ := session.Browser.Initialize(option)
 ```
 
-#### IsInitialized
+### IsInitialized
 
 ```go
 func (b *Browser) IsInitialized() bool
@@ -118,7 +118,7 @@ if session.Browser.IsInitialized() {
 }
 ```
 
-#### Screenshot
+### Screenshot
 
 ```go
 func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error)
@@ -156,7 +156,7 @@ screenshotData, _ := session.Browser.Screenshot(page, nil)
 
 ### Related Functions
 
-#### NewBrowser
+### NewBrowser
 
 ```go
 func NewBrowser(session SessionInterface) *Browser
@@ -188,7 +188,7 @@ fingerprint := &browser.BrowserFingerprint{
 
 ### Related Functions
 
-#### NewBrowserFingerprint
+### NewBrowserFingerprint
 
 ```go
 func NewBrowserFingerprint(devices, operatingSystems, locales []string) (*BrowserFingerprint, error)
@@ -244,7 +244,7 @@ if err := option.Validate(); err != nil {
 
 ### Related Functions
 
-#### NewBrowserOption
+### NewBrowserOption
 
 ```go
 func NewBrowserOption() *BrowserOption
@@ -311,7 +311,7 @@ pollingProxy := &browser.BrowserProxy{
 
 ### Related Functions
 
-#### NewBrowserProxy
+### NewBrowserProxy
 
 ```go
 func NewBrowserProxy(proxyType string, server, username, password, strategy *string, pollSize *int) (*BrowserProxy, error)

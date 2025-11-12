@@ -16,7 +16,7 @@ Agent represents an agent to manipulate applications to complete specific tasks
 
 ### Methods
 
-#### ExecuteTask
+### ExecuteTask
 
 ```go
 func (a *Agent) ExecuteTask(task string, maxTryTimes int) *ExecutionResult
@@ -33,7 +33,7 @@ defer sessionResult.Session.Delete()
 result := sessionResult.Session.Agent.ExecuteTask("Find weather in NYC", 10)
 ```
 
-#### GetTaskStatus
+### GetTaskStatus
 
 ```go
 func (a *Agent) GetTaskStatus(taskID string) *QueryResult
@@ -51,7 +51,7 @@ execResult := sessionResult.Session.Agent.ExecuteTask("Find weather in NYC", 10)
 statusResult := sessionResult.Session.Agent.GetTaskStatus(execResult.TaskID)
 ```
 
-#### TerminateTask
+### TerminateTask
 
 ```go
 func (a *Agent) TerminateTask(taskID string) *ExecutionResult
@@ -71,7 +71,7 @@ terminateResult := sessionResult.Session.Agent.TerminateTask(execResult.TaskID)
 
 ### Related Functions
 
-#### NewAgent
+### NewAgent
 
 ```go
 func NewAgent(session McpSession) *Agent

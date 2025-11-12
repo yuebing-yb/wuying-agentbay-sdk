@@ -19,7 +19,7 @@ class AgentBay()
 AgentBay represents the main client for interacting with the AgentBay cloud runtime
 environment.
 
-#### create
+### create
 
 ```python
 def create(params: Optional[CreateSessionParams] = None) -> SessionResult
@@ -71,7 +71,7 @@ session.delete()
 
   AgentBay.get, AgentBay.list, Session.delete, CreateSessionParams
 
-#### list
+### list
 
 ```python
 def list(labels: Optional[Dict[str, str]] = None,
@@ -131,7 +131,7 @@ print(f"Found {len(result.session_ids)} sessions")
 
   AgentBay.create, AgentBay.get, Session.info
 
-#### delete
+### delete
 
 ```python
 def delete(session: Session, sync_context: bool = False) -> DeleteResult
@@ -175,7 +175,7 @@ print(f"Delete success: {delete_result.success}")
 
   Session.delete, AgentBay.create, AgentBay.get
 
-#### get\_session
+### get\_session
 
 ```python
 def get_session(session_id: str) -> GetSessionResult
@@ -232,7 +232,7 @@ create_result.session.delete()
 
   AgentBay.get, AgentBay.create, Session.info
 
-#### get
+### get
 
 ```python
 def get(session_id: str) -> SessionResult

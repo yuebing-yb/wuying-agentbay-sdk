@@ -52,7 +52,7 @@ Session represents a session in the AgentBay cloud environment.
 
 ### Methods
 
-#### Delete
+### Delete
 
 ```go
 func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error)
@@ -83,7 +83,7 @@ defer result.Session.Delete()
 deleteResult, _ := result.Session.Delete()
 ```
 
-#### GetLabels
+### GetLabels
 
 ```go
 func (s *Session) GetLabels() (*LabelResult, error)
@@ -109,7 +109,7 @@ defer result.Session.Delete()
 labelResult, _ := result.Session.GetLabels()
 ```
 
-#### GetLink
+### GetLink
 
 ```go
 func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*LinkResult, error)
@@ -141,7 +141,7 @@ port := int32(30100)
 linkResult, _ := result.Session.GetLink(nil, &port, nil)
 ```
 
-#### GetToken
+### GetToken
 
 ```go
 func (s *Session) GetToken() string
@@ -149,7 +149,7 @@ func (s *Session) GetToken() string
 
 GetToken returns the token for VPC sessions
 
-#### Info
+### Info
 
 ```go
 func (s *Session) Info() (*InfoResult, error)
@@ -176,7 +176,7 @@ defer result.Session.Delete()
 infoResult, _ := result.Session.Info()
 ```
 
-#### ListMcpTools
+### ListMcpTools
 
 ```go
 func (s *Session) ListMcpTools() (*McpToolsResult, error)
@@ -204,7 +204,7 @@ defer result.Session.Delete()
 toolsResult, _ := result.Session.ListMcpTools()
 ```
 
-#### SetLabels
+### SetLabels
 
 ```go
 func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error)
@@ -237,7 +237,7 @@ labelResult, _ := result.Session.SetLabels(labels)
 
 ### Related Functions
 
-#### NewSession
+### NewSession
 
 ```go
 func NewSession(agentBay *AgentBay, sessionID string) *Session
@@ -278,7 +278,7 @@ AgentBay cloud environment.
 
 ### Methods
 
-#### AddContextSync
+### AddContextSync
 
 ```go
 func (p *CreateSessionParams) AddContextSync(contextID, path string, policy *SyncPolicy) *CreateSessionParams
@@ -286,7 +286,7 @@ func (p *CreateSessionParams) AddContextSync(contextID, path string, policy *Syn
 
 AddContextSync adds a context sync configuration to the session parameters.
 
-#### AddContextSyncConfig
+### AddContextSyncConfig
 
 ```go
 func (p *CreateSessionParams) AddContextSyncConfig(contextSync *ContextSync) *CreateSessionParams
@@ -294,7 +294,7 @@ func (p *CreateSessionParams) AddContextSyncConfig(contextSync *ContextSync) *Cr
 
 AddContextSyncConfig adds a pre-configured context sync to the session parameters.
 
-#### GetExtraConfigsJSON
+### GetExtraConfigsJSON
 
 ```go
 func (p *CreateSessionParams) GetExtraConfigsJSON() (string, error)
@@ -302,7 +302,7 @@ func (p *CreateSessionParams) GetExtraConfigsJSON() (string, error)
 
 GetExtraConfigsJSON returns the extra configs as a JSON string.
 
-#### GetLabelsJSON
+### GetLabelsJSON
 
 ```go
 func (p *CreateSessionParams) GetLabelsJSON() (string, error)
@@ -310,7 +310,7 @@ func (p *CreateSessionParams) GetLabelsJSON() (string, error)
 
 GetLabelsJSON returns the labels as a JSON string.
 
-#### WithContextSync
+### WithContextSync
 
 ```go
 func (p *CreateSessionParams) WithContextSync(contextSyncs []*ContextSync) *CreateSessionParams
@@ -318,7 +318,7 @@ func (p *CreateSessionParams) WithContextSync(contextSyncs []*ContextSync) *Crea
 
 WithContextSync sets the context sync configurations for the session parameters.
 
-#### WithExtraConfigs
+### WithExtraConfigs
 
 ```go
 func (p *CreateSessionParams) WithExtraConfigs(extraConfigs *models.ExtraConfigs) *CreateSessionParams
@@ -327,7 +327,7 @@ func (p *CreateSessionParams) WithExtraConfigs(extraConfigs *models.ExtraConfigs
 WithExtraConfigs sets the extra configurations for the session parameters and returns the updated
 parameters.
 
-#### WithImageId
+### WithImageId
 
 ```go
 func (p *CreateSessionParams) WithImageId(imageId string) *CreateSessionParams
@@ -335,7 +335,7 @@ func (p *CreateSessionParams) WithImageId(imageId string) *CreateSessionParams
 
 WithImageId sets the image ID for the session parameters and returns the updated parameters.
 
-#### WithIsVpc
+### WithIsVpc
 
 ```go
 func (p *CreateSessionParams) WithIsVpc(isVpc bool) *CreateSessionParams
@@ -343,7 +343,7 @@ func (p *CreateSessionParams) WithIsVpc(isVpc bool) *CreateSessionParams
 
 WithIsVpc sets the VPC flag for the session parameters and returns the updated parameters.
 
-#### WithLabels
+### WithLabels
 
 ```go
 func (p *CreateSessionParams) WithLabels(labels map[string]string) *CreateSessionParams
@@ -351,7 +351,7 @@ func (p *CreateSessionParams) WithLabels(labels map[string]string) *CreateSessio
 
 WithLabels sets the labels for the session parameters and returns the updated parameters.
 
-#### WithPolicyId
+### WithPolicyId
 
 ```go
 func (p *CreateSessionParams) WithPolicyId(policyId string) *CreateSessionParams
@@ -361,7 +361,7 @@ WithPolicyId sets the policy ID for the session parameters and returns the updat
 
 ### Related Functions
 
-#### NewCreateSessionParams
+### NewCreateSessionParams
 
 ```go
 func NewCreateSessionParams() *CreateSessionParams
@@ -468,7 +468,7 @@ McpTool represents an MCP tool with complete information
 
 ### Methods
 
-#### GetName
+### GetName
 
 ```go
 func (m *McpTool) GetName() string
@@ -476,7 +476,7 @@ func (m *McpTool) GetName() string
 
 GetName returns the tool name
 
-#### GetServer
+### GetServer
 
 ```go
 func (m *McpTool) GetServer() string

@@ -12,7 +12,7 @@ class Session()
 
 Session represents a session in the AgentBay cloud environment.
 
-#### delete
+### delete
 
 ```python
 def delete(sync_context: bool = False) -> DeleteResult
@@ -73,7 +73,7 @@ session.delete()
 
   AgentBay.create, AgentBay.delete, ContextManager.sync
 
-#### set\_labels
+### set\_labels
 
 ```python
 def set_labels(labels: Dict[str, str]) -> OperationResult
@@ -103,7 +103,7 @@ labels = {"environment": "production", "version": "1.0"}
 session.set_labels(labels)
 ```
 
-#### get\_labels
+### get\_labels
 
 ```python
 def get_labels() -> OperationResult
@@ -128,7 +128,7 @@ result = session.get_labels()
 print(result.data)
 ```
 
-#### info
+### info
 
 ```python
 def info() -> OperationResult
@@ -186,7 +186,7 @@ print(info_result.data.session_id)
 
   AgentBay.create, Session.delete, Session.get_link
 
-#### get\_link
+### get\_link
 
 ```python
 def get_link(protocol_type: Optional[str] = None,
@@ -239,7 +239,7 @@ port_link_result = session.get_link(port=30150)
 
   Session.info, Session.get_link_async, Mobile.get_adb_url
 
-#### get\_link\_async
+### get\_link\_async
 
 ```python
 async def get_link_async(protocol_type: Optional[str] = None,
@@ -268,7 +268,7 @@ Asynchronously get a link associated with the current session.
 
     SessionError: If the request fails or the response is invalid.
 
-#### list\_mcp\_tools
+### list\_mcp\_tools
 
 ```python
 def list_mcp_tools(image_id: Optional[str] = None)
@@ -294,7 +294,7 @@ tools_result = session.list_mcp_tools()
 print(f"Available tools: {len(tools_result.tools)}")
 ```
 
-#### call\_mcp\_tool
+### call\_mcp\_tool
 
 ```python
 def call_mcp_tool(tool_name: str,

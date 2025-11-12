@@ -34,7 +34,7 @@ Code handles code execution operations in the AgentBay cloud environment.
 
 ### Methods
 
-#### RunCode
+### RunCode
 
 ```go
 func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResult, error)
@@ -54,7 +54,7 @@ codeResult, _ := sessionResult.Session.Code.RunCode("print('Hello')", "python")
 
 ### Related Functions
 
-#### NewCode
+### NewCode
 
 ```go
 func NewCode(session interface {
