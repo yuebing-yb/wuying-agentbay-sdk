@@ -1,0 +1,412 @@
+# Class: Session
+
+## 🔧 Related Tutorial
+
+- [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
+
+Represents a session in the AgentBay cloud environment.
+
+## Table of contents
+
+
+### Properties
+
+
+### Methods
+
+- [callMcpTool](#callmcptool)
+- [delete](#delete)
+- [getLabels](#getlabels)
+- [getLink](#getlink)
+- [getLinkAsync](#getlinkasync)
+- [info](#info)
+- [listMcpTools](#listmcptools)
+- [setLabels](#setlabels)
+
+## Properties
+
+```typescript
+agent: [`Agent`](../advanced/agent.md)
+browser: [`Browser`](../../browser-use/browser.md)
+code: [`Code`](../../codespace/code.md)
+command: [`Command`](command.md)
+computer: [`Computer`](../../computer-use/computer.md)
+context: [`ContextManager`](context-manager.md)
+enableBrowserReplay: `boolean` = `false`
+fileSystem: [`FileSystem`](filesystem.md)
+fileTransferContextId: ``null`` | `string` = `null`
+httpPort: `string` = `""`
+isVpc: `boolean` = `false`
+mcpTools: `McpTool`[] = `[]`
+mobile: [`Mobile`](../../mobile-use/mobile.md)
+networkInterfaceIp: `string` = `""`
+oss: [`Oss`](../advanced/oss.md)
+recordContextId: ``null`` | `string` = `null`
+resourceUrl: `string` = `""`
+sessionId: `string`
+token: `string` = `""`
+```
+
+
+## Methods
+
+### callMcpTool
+
+▸ **callMcpTool**(`toolName`, `args`, `autoGenSession?`): `Promise`\<``McpToolResult``\>
+
+Call an MCP tool and return the result in a format compatible with Agent.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `toolName` | `string` | `undefined` | Name of the MCP tool to call |
+| `args` | `any` | `undefined` | Arguments to pass to the tool |
+| `autoGenSession` | `boolean` | `false` | Whether to automatically generate session if not exists (default: false) |
+
+#### Returns
+
+`Promise`\<``McpToolResult``\>
+
+McpToolResult containing the response data
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const shellResult = await result.session.callMcpTool('shell', { command: "echo 'Hello'" });
+  console.log(`Output: ${shellResult.data}`);
+  await result.session.delete();
+}
+```
+
+**`Remarks`**
+
+For press_keys tool, key names are automatically normalized to correct case format.
+This improves case compatibility (e.g., "CTRL" -> "Ctrl", "tab" -> "Tab").
+
+___
+
+### delete
+
+▸ **delete**(`syncContext?`): `Promise`\<``DeleteResult``\>
+
+Deletes the session and releases all associated resources.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `syncContext` | `boolean` | `false` | Whether to synchronize context data before deletion. If true, uploads all context data to OSS. If false but browser replay is enabled, syncs only the recording context. Defaults to false. |
+
+#### Returns
+
+`Promise`\<``DeleteResult``\>
+
+Promise resolving to DeleteResult containing:
+         - success: Whether deletion succeeded
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if deletion failed
+
+**`Throws`**
+
+Error if the API call fails or network issues occur.
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  await result.session.fileSystem.writeFile('/tmp/data.txt', 'data');
+  const deleteResult = await result.session.delete(true);
+  console.log('Session deleted:', deleteResult.success);
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- If `syncContext=true`: Uploads all context data to OSS before deletion
+- If `syncContext=false` but browser replay enabled: Syncs only recording context
+- If `syncContext=false` and no browser replay: Deletes immediately without sync
+- Continues with deletion even if context sync fails
+- Releases all associated resources (browser, computer, mobile, etc.)
+
+**Best Practices:**
+- Use `syncContext=true` when you need to preserve context data for later retrieval
+- For temporary sessions, use `syncContext=false` for faster cleanup
+- Always call `delete()` when done to avoid resource leaks
+- Handle deletion errors gracefully in production code
+
+**`See`**
+
+[info](#info), [ContextManager.sync](context-manager.md#sync)
+
+___
+
+### getLabels
+
+▸ **getLabels**(): `Promise`\<`OperationResult`\>
+
+Gets the labels for this session.
+
+#### Returns
+
+`Promise`\<`OperationResult`\>
+
+OperationResult containing the labels as data and request ID
+
+**`Throws`**
+
+Error if the operation fails (matching Python SessionError)
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  await result.session.setLabels({ project: 'demo', env: 'test' });
+  const getResult = await result.session.getLabels();
+  console.log('Labels:', JSON.stringify(getResult.data));
+  await result.session.delete();
+}
+```
+
+___
+
+### getLink
+
+▸ **getLink**(`protocolType?`, `port?`, `options?`): `Promise`\<`OperationResult`\>
+
+Retrieves an access link for the session.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `protocolType?` | `string` | Protocol type for the link (optional, reserved for future use) |
+| `port?` | `number` | Specific port number to access (must be in range [30100, 30199]). If not specified, returns the default session link. |
+| `options?` | `string` | - |
+
+#### Returns
+
+`Promise`\<`OperationResult`\>
+
+Promise resolving to OperationResult containing:
+         - success: Whether the operation succeeded
+         - data: String URL for accessing the session
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if operation failed
+
+**`Throws`**
+
+Error if the API call fails or port is out of valid range.
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const linkResult = await result.session.getLink();
+  console.log(`Session link: ${linkResult.data}`);
+  await result.session.delete();
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- Without port: Returns the default session access URL
+- With port: Returns URL for accessing specific port-mapped service
+- Port must be in range [30100, 30199] for port forwarding
+- For ADB connections, use `session.mobile.getAdbUrl()` with appropriate ADB public key
+
+**Best Practices:**
+- Use default link for general session access
+- Use port-specific links when you've started services on specific ports
+- Validate port range before calling to avoid errors
+
+**`See`**
+
+[info](#info)
+
+___
+
+### getLinkAsync
+
+▸ **getLinkAsync**(`protocolType?`, `port?`, `options?`): `Promise`\<`OperationResult`\>
+
+Asynchronously get a link associated with the current session.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `protocolType?` | `string` | Optional protocol type to use for the link |
+| `port?` | `number` | Optional port to use for the link (must be in range [30100, 30199]) |
+| `options?` | `string` | - |
+
+#### Returns
+
+`Promise`\<`OperationResult`\>
+
+OperationResult containing the link as data and request ID
+
+**`Throws`**
+
+Error if the operation fails (matching Python SessionError)
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const linkResult = await result.session.getLinkAsync(undefined, 30150);
+  console.log(`Port link: ${linkResult.data}`);
+  await result.session.delete();
+}
+```
+
+___
+
+### info
+
+▸ **info**(): `Promise`\<`OperationResult`\>
+
+Retrieves detailed information about the current session.
+
+#### Returns
+
+`Promise`\<`OperationResult`\>
+
+Promise resolving to OperationResult containing:
+         - success: Whether the operation succeeded (always true if no exception)
+         - data: SessionInfo object with the following fields:
+           - sessionId (string): The session identifier
+           - resourceUrl (string): URL for accessing the session
+           - appId (string): Application ID (for desktop sessions)
+           - authCode (string): Authentication code
+           - connectionProperties (string): Connection configuration
+           - resourceId (string): Resource identifier
+           - resourceType (string): Type of resource (e.g., "Desktop")
+           - ticket (string): Access ticket
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if operation failed
+
+**`Throws`**
+
+Error if the API request fails or response is invalid.
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const infoResult = await result.session.info();
+  console.log(`Session ID: ${infoResult.data.sessionId}`);
+  console.log(`Resource URL: ${infoResult.data.resourceUrl}`);
+  await result.session.delete();
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- This method calls the GetMcpResource API to retrieve session metadata
+- The returned SessionInfo contains:
+  - sessionId: The session identifier
+  - resourceUrl: URL for accessing the session
+  - Desktop-specific fields (appId, authCode, connectionProperties, etc.)
+    are populated from the DesktopInfo section of the API response
+- Session info is retrieved from the AgentBay API in real-time
+- The resourceUrl can be used for browser-based access
+- Desktop-specific fields (appId, authCode) are only populated for desktop sessions
+- This method does not modify the session state
+
+**`See`**
+
+[delete](#delete), [getLink](#getlink)
+
+___
+
+### listMcpTools
+
+▸ **listMcpTools**(`imageId?`): `Promise`\<`McpToolsResult`\>
+
+List MCP tools available for this session.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `imageId?` | `string` | Optional image ID, defaults to session's imageId or "linux_latest" |
+
+#### Returns
+
+`Promise`\<`McpToolsResult`\>
+
+McpToolsResult containing tools list and request ID
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const toolsResult = await result.session.listMcpTools();
+  console.log(`Found ${toolsResult.tools.length} MCP tools`);
+  await result.session.delete();
+}
+```
+
+___
+
+### setLabels
+
+▸ **setLabels**(`labels`): `Promise`\<`OperationResult`\>
+
+Sets the labels for this session.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `labels` | `Record`\<`string`, `string`\> | The labels to set for the session. |
+
+#### Returns
+
+`Promise`\<`OperationResult`\>
+
+OperationResult indicating success or failure with request ID
+
+**`Throws`**
+
+Error if the operation fails (matching Python SessionError)
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const setResult = await result.session.setLabels({ project: 'demo', env: 'test' });
+  console.log('Labels set:', setResult.success);
+  await result.session.delete();
+}
+```
+
+## Related Resources
+
+- [FileSystem API Reference](filesystem.md)
+- [Command API Reference](command.md)
+- [Context API Reference](context.md)
+- [Context Manager API Reference](context-manager.md)
+- [OSS API Reference](../../common-features/advanced/oss.md)
+

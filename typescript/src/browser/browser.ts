@@ -606,8 +606,8 @@ export class Browser {
 
     try {
       if (this.session.isVpc) {
-        logDebug(`VPC mode, endpoint_router_port: ${this._endpointRouterPort}`);
-        this._endpointUrl = `ws://${this.session.networkInterfaceIp}:${this._endpointRouterPort}`;
+        logDebug(`VPC mode, endpoint_router_port: ${this.session.httpPort}`);
+        this._endpointUrl = `ws://${this.session.networkInterfaceIp}:${this.session.httpPort}`;
       } else {
         const { GetCdpLinkRequest } = await import('../api/models/model');
         const request = new GetCdpLinkRequest({

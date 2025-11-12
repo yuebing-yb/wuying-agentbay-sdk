@@ -334,6 +334,7 @@ describe('Mobile', () => {
       };
       const mockSessionWithImage = {
         ...mockSession,
+        sessionId: 'test-session-123',
         imageId: 'mobile_latest',
         getAPIKey: jest.fn().mockReturnValue('test-api-key'),
         getAgentBay: jest.fn().mockReturnValue(mockAgentBay)

@@ -62,6 +62,7 @@ interface MobileSession {
   callMcpTool(toolName: string, args: Record<string, any>): Promise<any>;
   sessionId: string;
   getAPIKey(): string;
+  getAgentBay(): any;
   imageId?: string;
   getLink(protocolType?: string, port?: number, options?: string): Promise<any>;
 }

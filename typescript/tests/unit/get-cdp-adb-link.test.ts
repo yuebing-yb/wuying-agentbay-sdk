@@ -2,12 +2,8 @@ import { Client } from "../../src/api/client";
 import {
   GetCdpLinkRequest,
   GetCdpLinkResponse,
-  GetCdpLinkResponseBody,
-  GetCdpLinkResponseBodyData,
   GetAdbLinkRequest,
   GetAdbLinkResponse,
-  GetAdbLinkResponseBody,
-  GetAdbLinkResponseBodyData,
 } from "../../src/api/models/model";
 import * as $dara from "@darabonba/typescript";
 import { $OpenApiUtil } from "@alicloud/openapi-core";
@@ -33,18 +29,16 @@ describe("GetCdpLink and GetAdbLink API", () => {
 
   describe("getCdpLink", () => {
     it("should successfully get CDP link", async () => {
-      const mockResponseData = new GetCdpLinkResponseBodyData({
-        url: "ws://test.cdp.link",
-      });
-      const mockResponseBody = new GetCdpLinkResponseBody({
-        success: true,
-        data: mockResponseData,
-        requestId: "req123",
-      });
       const mockResponse = {
         headers: {},
         statusCode: 200,
-        body: mockResponseBody,
+        body: {
+          Success: true,
+          Data: {
+            Url: "ws://test.cdp.link",
+          },
+          RequestId: "req123",
+        },
       };
 
       mockDoRPCRequest.mockResolvedValue(mockResponse);
@@ -64,17 +58,15 @@ describe("GetCdpLink and GetAdbLink API", () => {
     });
 
     it("should call getCdpLinkWithOptions with runtime", async () => {
-      const mockResponseData = new GetCdpLinkResponseBodyData({
-        url: "ws://test.cdp.link",
-      });
-      const mockResponseBody = new GetCdpLinkResponseBody({
-        success: true,
-        data: mockResponseData,
-      });
       const mockResponse = {
         headers: {},
         statusCode: 200,
-        body: mockResponseBody,
+        body: {
+          Success: true,
+          Data: {
+            Url: "ws://test.cdp.link",
+          },
+        },
       };
 
       mockDoRPCRequest.mockResolvedValue(mockResponse);
@@ -108,18 +100,16 @@ describe("GetCdpLink and GetAdbLink API", () => {
 
   describe("getAdbLink", () => {
     it("should successfully get ADB link", async () => {
-      const mockResponseData = new GetAdbLinkResponseBodyData({
-        url: "adb://test.adb.link:5555",
-      });
-      const mockResponseBody = new GetAdbLinkResponseBody({
-        success: true,
-        data: mockResponseData,
-        requestId: "req456",
-      });
       const mockResponse = {
         headers: {},
         statusCode: 200,
-        body: mockResponseBody,
+        body: {
+          Success: true,
+          Data: {
+            Url: "adb://test.adb.link:5555",
+          },
+          RequestId: "req456",
+        },
       };
 
       mockDoRPCRequest.mockResolvedValue(mockResponse);
@@ -140,17 +130,15 @@ describe("GetCdpLink and GetAdbLink API", () => {
     });
 
     it("should call getAdbLinkWithOptions with runtime", async () => {
-      const mockResponseData = new GetAdbLinkResponseBodyData({
-        url: "adb://test.adb.link:5555",
-      });
-      const mockResponseBody = new GetAdbLinkResponseBody({
-        success: true,
-        data: mockResponseData,
-      });
       const mockResponse = {
         headers: {},
         statusCode: 200,
-        body: mockResponseBody,
+        body: {
+          Success: true,
+          Data: {
+            Url: "adb://test.adb.link:5555",
+          },
+        },
       };
 
       mockDoRPCRequest.mockResolvedValue(mockResponse);
