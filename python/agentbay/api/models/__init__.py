@@ -36,6 +36,9 @@ from ._get_context_info_response import GetContextInfoResponse
 from ._get_label_request import GetLabelRequest
 from ._get_label_response_body import GetLabelResponseBody
 from ._get_label_response import GetLabelResponse
+from ._get_session_request import GetSessionRequest
+from ._get_session_response_body import GetSessionResponseBody
+from ._get_session_response import GetSessionResponse
 from ._get_link_request import GetLinkRequest
 from ._get_link_response_body import GetLinkResponseBody
 from ._get_link_response import GetLinkResponse
@@ -76,6 +79,9 @@ from ._sync_context_request import SyncContextRequest
 from ._sync_context_response_body import SyncContextResponseBody
 from ._sync_context_response import SyncContextResponse
 from ._create_mcp_session_request import CreateMcpSessionRequestPersistenceDataList
+from ._create_mcp_session_request import AppManagerRule
+from ._create_mcp_session_request import MobileExtraConfig
+from ._create_mcp_session_request import ExtraConfigs
 from ._create_mcp_session_response_body import CreateMcpSessionResponseBodyData
 from ._describe_context_files_response_body import DescribeContextFilesResponseBodyData
 from ._get_context_response_body import GetContextResponseBodyData
@@ -90,6 +96,27 @@ from ._get_session_response_body import GetSessionResponseBodyData
 from ._init_browser_response_body import InitBrowserResponseBodyData
 from ._list_contexts_response_body import ListContextsResponseBodyData
 from ._list_session_response_body import ListSessionResponseBodyData
+
+# New context file operations
+from ._delete_context_file_request import DeleteContextFileRequest
+from ._delete_context_file_response_body import DeleteContextFileResponseBody
+from ._delete_context_file_response import DeleteContextFileResponse
+from ._describe_context_files_request import DescribeContextFilesRequest
+from ._describe_context_files_response_body import DescribeContextFilesResponseBody
+from ._describe_context_files_response import DescribeContextFilesResponse
+from ._get_context_file_download_url_request import GetContextFileDownloadUrlRequest
+from ._get_context_file_download_url_response_body import GetContextFileDownloadUrlResponseBody
+from ._get_context_file_download_url_response import GetContextFileDownloadUrlResponse
+from ._get_context_file_upload_url_request import GetContextFileUploadUrlRequest
+from ._get_context_file_upload_url_response_body import GetContextFileUploadUrlResponseBody
+from ._get_context_file_upload_url_response import GetContextFileUploadUrlResponse
+from ._describe_context_files_response_body import DescribeContextFilesResponseBodyData
+from ._get_context_file_download_url_response_body import GetContextFileDownloadUrlResponseBodyData
+from ._get_context_file_upload_url_response_body import GetContextFileUploadUrlResponseBodyData
+
+# Add these lines at the appropriate place
+from ._list_session_response import ListSessionResponse
+from ._list_session_response_body import ListSessionResponseBody
 
 __all__ = [
     CallMcpToolRequest,
@@ -166,6 +193,9 @@ __all__ = [
     SyncContextResponseBody,
     SyncContextResponse,
     CreateMcpSessionRequestPersistenceDataList,
+    AppManagerRule,
+    MobileExtraConfig,
+    ExtraConfigs,
     CreateMcpSessionResponseBodyData,
     DescribeContextFilesResponseBodyData,
     GetContextResponseBodyData,
@@ -179,5 +209,24 @@ __all__ = [
     GetSessionResponseBodyData,
     InitBrowserResponseBodyData,
     ListContextsResponseBodyData,
-    ListSessionResponseBodyData
+    ListSessionResponseBodyData,
+    # New context file operations
+    DeleteContextFileRequest,
+    DeleteContextFileResponseBody,
+    DeleteContextFileResponse,
+    DescribeContextFilesRequest,
+    DescribeContextFilesResponseBody,
+    DescribeContextFilesResponse,
+    GetContextFileDownloadUrlRequest,
+    GetContextFileDownloadUrlResponseBody,
+    GetContextFileDownloadUrlResponse,
+    GetContextFileUploadUrlRequest,
+    GetContextFileUploadUrlResponseBody,
+    GetContextFileUploadUrlResponse,
+    DescribeContextFilesResponseBodyData,
+    GetContextFileDownloadUrlResponseBodyData,
+    GetContextFileUploadUrlResponseBodyData,
+    # Add these lines at the appropriate place
+    ListSessionResponse,
+    ListSessionResponseBody,
 ]
