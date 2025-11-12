@@ -6,11 +6,13 @@
 
 
 
+#### EXTENSIONS\_BASE\_PATH
+
 ```python
 EXTENSIONS_BASE_PATH = "/tmp/extensions"
 ```
 
-## Extension Objects
+## Extension
 
 ```python
 class Extension()
@@ -18,7 +20,7 @@ class Extension()
 
 Represents a browser extension as a cloud resource.
 
-## ExtensionOption Objects
+## ExtensionOption
 
 ```python
 class ExtensionOption()
@@ -55,7 +57,7 @@ is_valid = ext_option.validate()
 print(f"Valid: {is_valid}")
 ```
 
-## ExtensionsService Objects
+## ExtensionsService
 
 ```python
 class ExtensionsService()

@@ -16,13 +16,15 @@ It supports both synchronous command execution with configurable timeouts.
 
 
 
+## CommandResult
+
 ```python
 class CommandResult(ApiResponse)
 ```
 
 Result of command execution operations.
 
-## Command Objects
+## Command
 
 ```python
 class Command(BaseService)
@@ -68,19 +70,19 @@ print(cmd_result.output)
 cmd_result = session.command.execute_command("sleep 2 && echo 'Done'", timeout_ms=5000)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Commands are executed in a Linux shell environment
-  - Default timeout is 1 second (1000ms)
-  - Output includes both stdout and stderr
-  - Long-running commands may timeout if timeout_ms is too small
-  
+- Commands are executed in a Linux shell environment
+- Default timeout is 1 second (1000ms)
+- Output includes both stdout and stderr
+- Long-running commands may timeout if timeout_ms is too small
+
 
 **See Also**:
 
-  Command.execute_command_async
+Command.execute_command_async
 
 ## Best Practices
 

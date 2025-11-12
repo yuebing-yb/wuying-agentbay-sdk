@@ -16,13 +16,15 @@ screenshot capture, and content extraction. It enables automated testing and web
 
 
 
+## BrowserFingerprintContext
+
 ```python
 class BrowserFingerprintContext()
 ```
 
 Browser fingerprint context configuration.
 
-## BrowserProxy Objects
+## BrowserProxy
 
 ```python
 class BrowserProxy()
@@ -32,7 +34,7 @@ Browser proxy configuration.
 Supports two types of proxy: custom proxy, wuying proxy.
 wuying proxy support two strategies: restricted and polling.
 
-## BrowserViewport Objects
+## BrowserViewport
 
 ```python
 class BrowserViewport()
@@ -40,7 +42,7 @@ class BrowserViewport()
 
 Browser viewport options.
 
-## BrowserScreen Objects
+## BrowserScreen
 
 ```python
 class BrowserScreen()
@@ -48,7 +50,7 @@ class BrowserScreen()
 
 Browser screen options.
 
-## BrowserFingerprint Objects
+## BrowserFingerprint
 
 ```python
 class BrowserFingerprint()
@@ -56,7 +58,7 @@ class BrowserFingerprint()
 
 Browser fingerprint options.
 
-## BrowserOption Objects
+## BrowserOption
 
 ```python
 class BrowserOption()
@@ -64,7 +66,7 @@ class BrowserOption()
 
 browser initialization options.
 
-## Browser Objects
+## Browser
 
 ```python
 class Browser(BaseService)
@@ -265,7 +267,7 @@ session.delete()
 T = TypeVar("T", bound=BaseModel)
 ```
 
-## ActOptions Objects
+## ActOptions
 
 ```python
 class ActOptions()
@@ -273,7 +275,7 @@ class ActOptions()
 
 Options for configuring the behavior of the act method.
 
-## ActResult Objects
+## ActResult
 
 ```python
 class ActResult()
@@ -281,7 +283,7 @@ class ActResult()
 
 Result of the act method.
 
-## ObserveOptions Objects
+## ObserveOptions
 
 ```python
 class ObserveOptions()
@@ -289,7 +291,7 @@ class ObserveOptions()
 
 Options for configuring the behavior of the observe method.
 
-## ObserveResult Objects
+## ObserveResult
 
 ```python
 class ObserveResult()
@@ -297,7 +299,7 @@ class ObserveResult()
 
 Result of the observe method.
 
-## ExtractOptions Objects
+## ExtractOptions
 
 ```python
 class ExtractOptions(Generic[T])
@@ -305,7 +307,7 @@ class ExtractOptions(Generic[T])
 
 Options for configuring the behavior of the extract method.
 
-## BrowserAgent Objects
+## BrowserAgent
 
 ```python
 class BrowserAgent(BaseService)
@@ -343,24 +345,24 @@ Navigates the browser to the specified URL.
 
 **Example**:
 
-  
+
 ```python
 session = agent_bay.create(image="browser_latest").session
 await session.browser.agent.navigate_async("https://example.com")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The browser must be initialized before calling this method
-  - This is an async method and must be awaited or run with `asyncio.run()`
-  - For synchronous usage, consider using browser automation frameworks directly
-  
+- The browser must be initialized before calling this method
+- This is an async method and must be awaited or run with `asyncio.run()`
+- For synchronous usage, consider using browser automation frameworks directly
+
 
 **See Also**:
 
-  screenshot, act, observe
+screenshot, act, observe
 
 ### screenshot
 
@@ -408,27 +410,27 @@ Captures a screenshot of the current browser page.
 
 **Example**:
 
-  
+
 ```python
 session = agent_bay.create(image="browser_latest").session
 screenshot_data = session.browser.agent.screenshot()
 print(f"Screenshot captured: {len(screenshot_data)} bytes")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The browser must be initialized before calling this method
-  - Full-page screenshots may take longer for very long pages
-  - Higher quality values result in larger data sizes
-  - The returned data URL can be directly used in HTML `<img>` tags
-  - For large screenshots, consider using `clip` to capture specific regions
-  
+- The browser must be initialized before calling this method
+- Full-page screenshots may take longer for very long pages
+- Higher quality values result in larger data sizes
+- The returned data URL can be directly used in HTML `<img>` tags
+- For large screenshots, consider using `clip` to capture specific regions
+
 
 **See Also**:
 
-  navigate_async, act, observe
+navigate_async, act, observe
 
 ### screenshot\_async
 
@@ -510,19 +512,19 @@ action = ActOptions(action="Click the login button")
 result = session.browser.agent.act(action)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The browser must be initialized before calling this method
-  - Using `observe()` + `act()` is recommended for reliable element interaction
-  - Custom ActOptions requires knowledge of element selectors
-  - Actions are performed with automatic retry and waiting for elements
-  
+- The browser must be initialized before calling this method
+- Using `observe()` + `act()` is recommended for reliable element interaction
+- Custom ActOptions requires knowledge of element selectors
+- Actions are performed with automatic retry and waiting for elements
+
 
 **See Also**:
 
-  observe, navigate_async, screenshot
+observe, navigate_async, screenshot
 
 ### act\_async
 
@@ -596,20 +598,20 @@ options = ObserveOptions(instruction="Find the search input field")
 success, results = session.browser.agent.observe(options)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The browser must be initialized before calling this method
-  - Natural language instructions should be clear and specific
-  - Vision-based detection (`use_vision=True`) provides better accuracy but is slower
-  - Results can be directly passed to `act()` method
-  - Empty results list indicates no matching elements found
-  
+- The browser must be initialized before calling this method
+- Natural language instructions should be clear and specific
+- Vision-based detection (`use_vision=True`) provides better accuracy but is slower
+- Results can be directly passed to `act()` method
+- Empty results list indicates no matching elements found
+
 
 **See Also**:
 
-  act, extract, navigate_async
+act, extract, navigate_async
 
 ### observe\_async
 
@@ -676,27 +678,27 @@ Extracts structured data from a web page using a Pydantic schema.
 from pydantic import BaseModel
 from agentbay.browser.browser_agent import ExtractOptions
 class ProductInfo(BaseModel):
-    name: str
-    price: float
+  name: str
+  price: float
 session = agent_bay.create(image="browser_latest").session
 options = ExtractOptions(instruction="Extract product details", schema=ProductInfo)
 success, data = session.browser.agent.extract(options)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The browser must be initialized before calling this method
-  - The Pydantic schema must accurately represent the data structure
-  - Vision-based extraction (`use_vision=True`) provides better accuracy
-  - Complex nested schemas are supported
-  - Extraction may fail if the page structure doesn't match the schema
-  
+- The browser must be initialized before calling this method
+- The Pydantic schema must accurately represent the data structure
+- Vision-based extraction (`use_vision=True`) provides better accuracy
+- Complex nested schemas are supported
+- Extraction may fail if the page structure doesn't match the schema
+
 
 **See Also**:
 
-  observe, act, navigate_async
+observe, act, navigate_async
 
 ### extract\_async
 

@@ -6,11 +6,13 @@
 
 
 
+## Config
+
 ```python
 class Config()
 ```
 
-## AgentBay Objects
+## AgentBay
 
 ```python
 class AgentBay()
@@ -57,19 +59,19 @@ info_result = session.info()
 print(f"Session ID: {info_result.session_id}")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - A default file transfer context is automatically created for each session
-  - For VPC sessions, MCP tools information is automatically fetched
-  - If context_syncs are provided, the method waits for synchronization to complete
-  - Session is automatically cached in the AgentBay instance
-  
+- A default file transfer context is automatically created for each session
+- For VPC sessions, MCP tools information is automatically fetched
+- If context_syncs are provided, the method waits for synchronization to complete
+- Session is automatically cached in the AgentBay instance
+
 
 **See Also**:
 
-  AgentBay.get, AgentBay.list, Session.delete, CreateSessionParams
+AgentBay.get, AgentBay.list, Session.delete, CreateSessionParams
 
 ### list
 
@@ -117,19 +119,19 @@ print(f"Total sessions: {result.total_count}")
 result = agent_bay.list(labels={"project": "demo"}, page=1, limit=10)
 print(f"Found {len(result.session_ids)} sessions")
 ```
-  
+
 
 **Notes**:
 
-  - Page numbers start from 1
-  - Returns error if page number is less than 1
-  - Returns error if requested page exceeds available pages
-  - Empty labels dict returns all sessions
-  
+- Page numbers start from 1
+- Returns error if page number is less than 1
+- Returns error if requested page exceeds available pages
+- Empty labels dict returns all sessions
+
 
 **See Also**:
 
-  AgentBay.create, AgentBay.get, Session.info
+AgentBay.create, AgentBay.get, Session.info
 
 ### delete
 
@@ -162,18 +164,18 @@ session = result.session
 delete_result = agent_bay.delete(session)
 print(f"Delete success: {delete_result.success}")
 ```
-  
+
 
 **Notes**:
 
-  - After deletion, the session object is removed from the AgentBay cache
-  - If sync_context=True, context data is uploaded to OSS before deletion
-  - Session cannot be used after deletion
-  
+- After deletion, the session object is removed from the AgentBay cache
+- If sync_context=True, context data is uploaded to OSS before deletion
+- Session cannot be used after deletion
+
 
 **See Also**:
 
-  Session.delete, AgentBay.create, AgentBay.get
+Session.delete, AgentBay.create, AgentBay.get
 
 ### get\_session
 
@@ -219,18 +221,18 @@ get_result = agent_bay.get_session(session_id)
 print(f"Session ID: {get_result.data.session_id}")
 create_result.session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Returns session metadata without creating a Session object
-  - Use `get()` instead if you need a Session object for API calls
-  - Returns error if session does not exist or is no longer valid
-  
+- Returns session metadata without creating a Session object
+- Use `get()` instead if you need a Session object for API calls
+- Returns error if session does not exist or is no longer valid
+
 
 **See Also**:
 
-  AgentBay.get, AgentBay.create, Session.info
+AgentBay.get, AgentBay.create, Session.info
 
 ### get
 
@@ -269,18 +271,18 @@ session = get_result.session
 info_result = session.info()
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - A default file transfer context is automatically created for the retrieved session
-  - VPC-related information (network_interface_ip, http_port, token) is populated from the API response
-  - Returns an error if session_id is empty or the session does not exist
-  
+- A default file transfer context is automatically created for the retrieved session
+- VPC-related information (network_interface_ip, http_port, token) is populated from the API response
+- Returns an error if session_id is empty or the session does not exist
+
 
 **See Also**:
 
-  AgentBay.create, AgentBay.list, Session.info
+AgentBay.create, AgentBay.list, Session.info
 
 ## Related Resources
 

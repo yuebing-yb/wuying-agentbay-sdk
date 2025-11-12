@@ -6,6 +6,8 @@
 
 
 
+## Session
+
 ```python
 class Session()
 ```
@@ -58,20 +60,20 @@ session = agent_bay.create().session
 session.command.run("echo 'Hello World'")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Always delete sessions when done to avoid resource leaks
-  - Use sync_context=True if you need to preserve modified files
-  - Browser replay data is automatically synced if enabled
-  - The session object becomes invalid after deletion
-  - Deletion is idempotent - deleting an already deleted session succeeds
-  
+- Always delete sessions when done to avoid resource leaks
+- Use sync_context=True if you need to preserve modified files
+- Browser replay data is automatically synced if enabled
+- The session object becomes invalid after deletion
+- Deletion is idempotent - deleting an already deleted session succeeds
+
 
 **See Also**:
 
-  AgentBay.create, AgentBay.delete, ContextManager.sync
+AgentBay.create, AgentBay.delete, ContextManager.sync
 
 ### set\_labels
 
@@ -172,19 +174,19 @@ session = agent_bay.create().session
 info_result = session.info()
 print(info_result.data.session_id)
 ```
-  
+
 
 **Notes**:
 
-  - Session info is retrieved from the AgentBay API in real-time
-  - The resource_url can be used for browser-based access
-  - Desktop-specific fields (app_id, auth_code) are only populated for desktop sessions
-  - This method does not modify the session state
-  
+- Session info is retrieved from the AgentBay API in real-time
+- The resource_url can be used for browser-based access
+- Desktop-specific fields (app_id, auth_code) are only populated for desktop sessions
+- This method does not modify the session state
+
 
 **See Also**:
 
-  AgentBay.create, Session.delete, Session.get_link
+AgentBay.create, Session.delete, Session.get_link
 
 ### get\_link
 
@@ -226,18 +228,18 @@ session = agent_bay.create().session
 link_result = session.get_link()
 port_link_result = session.get_link(port=30150)
 ```
-  
+
 
 **Notes**:
 
-  - Port must be in range [30100, 30199] if specified
-  - The returned URL format depends on the session configuration
-  - For mobile ADB connections, use session.mobile.get_adb_url() instead
-  
+- Port must be in range [30100, 30199] if specified
+- The returned URL format depends on the session configuration
+- For mobile ADB connections, use session.mobile.get_adb_url() instead
+
 
 **See Also**:
 
-  Session.info, Session.get_link_async, Mobile.get_adb_url
+Session.info, Session.get_link_async, Mobile.get_adb_url
 
 ### get\_link\_async
 

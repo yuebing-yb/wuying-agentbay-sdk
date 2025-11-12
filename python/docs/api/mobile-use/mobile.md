@@ -20,7 +20,7 @@ Mobile module for mobile device UI automation and configuration.
 Handles touch operations, UI element interactions, application management, screenshot capabilities,
 and mobile environment configuration operations.
 
-## UIElementListResult Objects
+## UIElementListResult
 
 ```python
 class UIElementListResult(ApiResponse)
@@ -28,7 +28,7 @@ class UIElementListResult(ApiResponse)
 
 Result of UI element listing operations.
 
-## KeyCode Objects
+## KeyCode
 
 ```python
 class KeyCode()
@@ -72,7 +72,7 @@ POWER = 26
 MENU = 82
 ```
 
-## Mobile Objects
+## Mobile
 
 ```python
 class Mobile(BaseService)
@@ -109,11 +109,11 @@ session = agent_bay.create(image="mobile_latest").session
 session.mobile.tap(500, 800)
 session.delete()
 ```
-  
+
 
 **See Also**:
 
-  swipe, long_press
+swipe, long_press
 
 ### swipe
 
@@ -408,21 +408,21 @@ mobile_config = MobileExtraConfig(lock_resolution=True)
 session.mobile.configure(mobile_config)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - This method is called automatically during session creation if MobileExtraConfig is provided
-  - Configuration changes are applied immediately
-  - Resolution lock prevents resolution changes
-  - App whitelist/blacklist affects app launching permissions
-  - Uninstall blacklist protects apps from being uninstalled
-  
+- This method is called automatically during session creation if MobileExtraConfig is provided
+- Configuration changes are applied immediately
+- Resolution lock prevents resolution changes
+- App whitelist/blacklist affects app launching permissions
+- Uninstall blacklist protects apps from being uninstalled
+
 
 **See Also**:
 
-  set_resolution_lock, set_app_whitelist, set_app_blacklist,
-  set_navigation_bar_visibility, set_uninstall_blacklist
+set_resolution_lock, set_app_whitelist, set_app_blacklist,
+set_navigation_bar_visibility, set_uninstall_blacklist
 
 ### set\_resolution\_lock
 
@@ -467,13 +467,13 @@ whitelist = ["com.android.settings", "com.android.chrome"]
 session.mobile.set_app_whitelist(whitelist)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Only apps in the whitelist will be allowed to run
-  - System apps may be affected depending on the configuration
-  - Whitelist takes precedence over blacklist if both are set
+- Only apps in the whitelist will be allowed to run
+- System apps may be affected depending on the configuration
+- Whitelist takes precedence over blacklist if both are set
 
 ### set\_app\_blacklist
 
@@ -496,12 +496,12 @@ blacklist = ["com.example.app1", "com.example.app2"]
 session.mobile.set_app_blacklist(blacklist)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Apps in the blacklist will be blocked from running
-  - Whitelist takes precedence over blacklist if both are set
+- Apps in the blacklist will be blocked from running
+- Whitelist takes precedence over blacklist if both are set
 
 ### set\_navigation\_bar\_visibility
 
@@ -524,12 +524,12 @@ session.mobile.set_navigation_bar_visibility(hide=True)
 session.mobile.set_navigation_bar_visibility(hide=False)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Hiding the navigation bar provides a fullscreen experience
-  - The navigation bar can still be accessed by swiping from the edge
+- Hiding the navigation bar provides a fullscreen experience
+- The navigation bar can still be accessed by swiping from the edge
 
 ### set\_uninstall\_blacklist
 
@@ -552,13 +552,13 @@ protected_apps = ["com.android.settings", "com.android.chrome"]
 session.mobile.set_uninstall_blacklist(protected_apps)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Apps in the uninstall blacklist cannot be uninstalled
-  - This is useful for protecting critical applications
-  - The protection persists for the session lifetime
+- Apps in the uninstall blacklist cannot be uninstalled
+- This is useful for protecting critical applications
+- The protection persists for the session lifetime
 
 ### get\_adb\_url
 

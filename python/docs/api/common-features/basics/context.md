@@ -6,6 +6,8 @@
 
 
 
+## Context
+
 ```python
 class Context()
 ```
@@ -19,7 +21,7 @@ Represents a persistent storage context in the AgentBay cloud environment.
 - `created_at` _str_ - Date and time when the Context was created.
 - `last_used_at` _str_ - Date and time when the Context was last used.
 
-## ContextResult Objects
+## ContextResult
 
 ```python
 class ContextResult(ApiResponse)
@@ -27,7 +29,7 @@ class ContextResult(ApiResponse)
 
 Result of operations returning a Context.
 
-## ContextListResult Objects
+## ContextListResult
 
 ```python
 class ContextListResult(ApiResponse)
@@ -35,7 +37,7 @@ class ContextListResult(ApiResponse)
 
 Result of operations returning a list of Contexts.
 
-## ContextFileEntry Objects
+## ContextFileEntry
 
 ```python
 class ContextFileEntry()
@@ -43,7 +45,7 @@ class ContextFileEntry()
 
 Represents a file item in a context.
 
-## FileUrlResult Objects
+## FileUrlResult
 
 ```python
 class FileUrlResult(ApiResponse)
@@ -51,7 +53,7 @@ class FileUrlResult(ApiResponse)
 
 Result of a presigned URL request.
 
-## ContextFileListResult Objects
+## ContextFileListResult
 
 ```python
 class ContextFileListResult(ApiResponse)
@@ -59,7 +61,7 @@ class ContextFileListResult(ApiResponse)
 
 Result of file listing operation.
 
-## ClearContextResult Objects
+## ClearContextResult
 
 ```python
 class ClearContextResult(OperationResult)
@@ -79,7 +81,7 @@ Result of context clear operations, including the real-time status.
   - Other values may indicate the context state after clearing
 - `context_id` _Optional[str]_ - The unique identifier of the context being cleared.
 
-## ContextListParams Objects
+## ContextListParams
 
 ```python
 class ContextListParams()
@@ -87,7 +89,7 @@ class ContextListParams()
 
 Parameters for listing contexts with pagination support.
 
-## ContextService Objects
+## ContextService
 
 ```python
 class ContextService()
@@ -162,19 +164,19 @@ result = agent_bay.context.get(name="my-context")
 result = agent_bay.context.get(name="new-context", create=True)
 result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
 ```
-  
+
 
 **Notes**:
 
-  - Either name or context_id must be provided (not both)
-  - When create=True, only name parameter is allowed
-  - Created contexts are persistent and can be shared across sessions
-  - Context names must be unique within your account
-  
+- Either name or context_id must be provided (not both)
+- When create=True, only name parameter is allowed
+- Created contexts are persistent and can be shared across sessions
+- Context names must be unique within your account
+
 
 **See Also**:
 
-  ContextService.list, ContextService.update, ContextService.delete
+ContextService.list, ContextService.update, ContextService.delete
 
 ### create
 
@@ -234,19 +236,19 @@ result = agent_bay.context.get(name="old-name")
 result.context.name = "new-name"
 update_result = agent_bay.context.update(result.context)
 ```
-  
+
 
 **Notes**:
 
-  - Currently only the context name can be updated
-  - Context ID cannot be changed
-  - The context must exist before it can be updated
-  - Updated name must be unique within your account
-  
+- Currently only the context name can be updated
+- Context ID cannot be changed
+- The context must exist before it can be updated
+- Updated name must be unique within your account
+
 
 **See Also**:
 
-  ContextService.get, ContextService.list, ContextService.delete
+ContextService.get, ContextService.list, ContextService.delete
 
 ### delete
 
@@ -488,10 +490,10 @@ The clearing process transitions through the following states:
 
 **Example**:
 
-        ```python
-        result = agent_bay.context.get(name="my-context", create=True)
-        clear_result = agent_bay.context.clear(result.context_id, timeout=60)
-        ```
+```python
+result = agent_bay.context.get(name="my-context", create=True)
+clear_result = agent_bay.context.clear(result.context_id, timeout=60)
+```
 
 ## Related Resources
 

@@ -41,7 +41,7 @@ Computer module for desktop UI automation.
 Handles mouse operations, keyboard operations, window management, 
 application management, and screen operations.
 
-## MouseButton Objects
+## MouseButton
 
 ```python
 class MouseButton(str, Enum)
@@ -73,7 +73,7 @@ MIDDLE = "middle"
 DOUBLE_LEFT = "double_left"
 ```
 
-## ScrollDirection Objects
+## ScrollDirection
 
 ```python
 class ScrollDirection(str, Enum)
@@ -105,7 +105,7 @@ LEFT = "left"
 RIGHT = "right"
 ```
 
-## InstalledApp Objects
+## InstalledApp
 
 ```python
 class InstalledApp()
@@ -113,7 +113,7 @@ class InstalledApp()
 
 Represents an installed application.
 
-## Process Objects
+## Process
 
 ```python
 class Process()
@@ -121,7 +121,7 @@ class Process()
 
 Represents a running process.
 
-## Window Objects
+## Window
 
 ```python
 class Window()
@@ -129,7 +129,7 @@ class Window()
 
 Represents a window in the system.
 
-## InstalledAppListResult Objects
+## InstalledAppListResult
 
 ```python
 class InstalledAppListResult(ApiResponse)
@@ -137,7 +137,7 @@ class InstalledAppListResult(ApiResponse)
 
 Result of operations returning a list of InstalledApps.
 
-## ProcessListResult Objects
+## ProcessListResult
 
 ```python
 class ProcessListResult(ApiResponse)
@@ -145,7 +145,7 @@ class ProcessListResult(ApiResponse)
 
 Result of operations returning a list of Processes.
 
-## AppOperationResult Objects
+## AppOperationResult
 
 ```python
 class AppOperationResult(ApiResponse)
@@ -153,7 +153,7 @@ class AppOperationResult(ApiResponse)
 
 Result of application operations like start/stop.
 
-## WindowListResult Objects
+## WindowListResult
 
 ```python
 class WindowListResult(ApiResponse)
@@ -161,7 +161,7 @@ class WindowListResult(ApiResponse)
 
 Result of window listing operations.
 
-## WindowInfoResult Objects
+## WindowInfoResult
 
 ```python
 class WindowInfoResult(ApiResponse)
@@ -169,7 +169,7 @@ class WindowInfoResult(ApiResponse)
 
 Result of window info operations.
 
-## Computer Objects
+## Computer
 
 ```python
 class Computer(BaseService)
@@ -229,19 +229,19 @@ session.computer.click_mouse(100, 200)
 session.computer.click_mouse(300, 400, MouseButton.RIGHT)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Coordinates are absolute screen positions, not relative to windows
-  - Use `get_screen_size()` to determine valid coordinate ranges
-  - Consider using `move_mouse()` first if you need to see cursor movement
-  - For UI automation, consider using higher-level methods from `ui` module
-  
+- Coordinates are absolute screen positions, not relative to windows
+- Use `get_screen_size()` to determine valid coordinate ranges
+- Consider using `move_mouse()` first if you need to see cursor movement
+- For UI automation, consider using higher-level methods from `ui` module
+
 
 **See Also**:
 
-  move_mouse, drag_mouse, get_cursor_position, get_screen_size
+move_mouse, drag_mouse, get_cursor_position, get_screen_size
 
 ### move\_mouse
 
@@ -271,18 +271,18 @@ position = session.computer.get_cursor_position()
 print(f"Cursor at: {position.data}")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Moves the cursor smoothly to the target position
-  - Does not click after moving
-  - Use get_cursor_position() to verify the new position
-  
+- Moves the cursor smoothly to the target position
+- Does not click after moving
+- Use get_cursor_position() to verify the new position
+
 
 **See Also**:
 
-  click_mouse, drag_mouse, get_cursor_position
+click_mouse, drag_mouse, get_cursor_position
 
 ### drag\_mouse
 
@@ -327,19 +327,19 @@ session.computer.drag_mouse(100, 100, 300, 300)
 session.computer.drag_mouse(200, 200, 400, 400, MouseButton.RIGHT)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Performs a click-and-drag operation from start to end coordinates
-  - Useful for selecting text, moving windows, or drawing
-  - DOUBLE_LEFT button is not supported for drag operations
-  - Use LEFT, RIGHT, or MIDDLE button only
-  
+- Performs a click-and-drag operation from start to end coordinates
+- Useful for selecting text, moving windows, or drawing
+- DOUBLE_LEFT button is not supported for drag operations
+- Use LEFT, RIGHT, or MIDDLE button only
+
 
 **See Also**:
 
-  click_mouse, move_mouse
+click_mouse, move_mouse
 
 ### scroll
 
@@ -380,19 +380,19 @@ session.computer.scroll(500, 500, ScrollDirection.DOWN, 3)
 session.computer.scroll(500, 500, ScrollDirection.UP, 2)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Scroll operations are performed at the specified coordinates
-  - The amount parameter controls how many scroll units to move
-  - Larger amounts result in faster scrolling
-  - Useful for navigating long documents or web pages
-  
+- Scroll operations are performed at the specified coordinates
+- The amount parameter controls how many scroll units to move
+- Larger amounts result in faster scrolling
+- Useful for navigating long documents or web pages
+
 
 **See Also**:
 
-  click_mouse, move_mouse
+click_mouse, move_mouse
 
 ### get\_cursor\_position
 
@@ -417,18 +417,18 @@ position = session.computer.get_cursor_position()
 print(f"Cursor is at x={position.data['x']}, y={position.data['y']}")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Returns the absolute screen coordinates
-  - Useful for verifying mouse movements
-  - Position is in pixels from top-left corner (0, 0)
-  
+- Returns the absolute screen coordinates
+- Useful for verifying mouse movements
+- Position is in pixels from top-left corner (0, 0)
+
 
 **See Also**:
 
-  move_mouse, click_mouse, get_screen_size
+move_mouse, click_mouse, get_screen_size
 
 ### input\_text
 
@@ -456,18 +456,18 @@ session.computer.click_mouse(500, 300)
 session.computer.input_text("Hello, World!")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Requires an input field to be focused first
-  - Use click_mouse() or UI automation to focus the field
-  - Supports special characters and Unicode
-  
+- Requires an input field to be focused first
+- Use click_mouse() or UI automation to focus the field
+- Supports special characters and Unicode
+
 
 **See Also**:
 
-  press_keys, click_mouse
+press_keys, click_mouse
 
 ### press\_keys
 
@@ -496,19 +496,19 @@ session.computer.press_keys(["Ctrl", "c"])
 session.computer.press_keys(["Ctrl", "v"])
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Key names are case-sensitive
-  - When hold=True, remember to call release_keys() afterwards
-  - Supports modifier keys like Ctrl, Alt, Shift
-  - Can press multiple keys simultaneously for shortcuts
-  
+- Key names are case-sensitive
+- When hold=True, remember to call release_keys() afterwards
+- Supports modifier keys like Ctrl, Alt, Shift
+- Can press multiple keys simultaneously for shortcuts
+
 
 **See Also**:
 
-  release_keys, input_text
+release_keys, input_text
 
 ### release\_keys
 
@@ -537,18 +537,18 @@ session.computer.input_text("hello")
 session.computer.release_keys(["Shift"])
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Should be used after press_keys() with hold=True
-  - Key names are case-sensitive
-  - Releases all keys specified in the list
-  
+- Should be used after press_keys() with hold=True
+- Key names are case-sensitive
+- Releases all keys specified in the list
+
 
 **See Also**:
 
-  press_keys, input_text
+press_keys, input_text
 
 ### get\_screen\_size
 
@@ -573,18 +573,18 @@ size = session.computer.get_screen_size()
 print(f"Screen: {size.data['width']}x{size.data['height']}, DPI: {size.data['dpiScalingFactor']}")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Returns the full screen dimensions in pixels
-  - DPI scaling factor affects coordinate calculations on high-DPI displays
-  - Use this to determine valid coordinate ranges for mouse operations
-  
+- Returns the full screen dimensions in pixels
+- DPI scaling factor affects coordinate calculations on high-DPI displays
+- Use this to determine valid coordinate ranges for mouse operations
+
 
 **See Also**:
 
-  click_mouse, move_mouse, screenshot
+click_mouse, move_mouse, screenshot
 
 ### screenshot
 
@@ -608,19 +608,19 @@ screenshot = session.computer.screenshot()
 print(f"Screenshot URL: {screenshot.data}")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Returns an OSS URL to the screenshot image
-  - Screenshot captures the entire screen
-  - Useful for debugging and verification
-  - Image format is typically PNG
-  
+- Returns an OSS URL to the screenshot image
+- Screenshot captures the entire screen
+- Useful for debugging and verification
+- Image format is typically PNG
+
 
 **See Also**:
 
-  get_screen_size
+get_screen_size
 
 ### list\_root\_windows
 
@@ -646,7 +646,7 @@ Lists all root windows.
 session = agent_bay.create().session
 windows = session.computer.list_root_windows()
 for window in windows.windows:
-    print(f"Window: {window.title}, ID: {window.window_id}")
+  print(f"Window: {window.title}, ID: {window.window_id}")
 session.delete()
 ```
 
@@ -701,21 +701,21 @@ Activates the specified window.
 session = agent_bay.create().session
 windows = session.computer.list_root_windows()
 if windows.windows:
-    session.computer.activate_window(windows.windows[0].window_id)
+  session.computer.activate_window(windows.windows[0].window_id)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The window must exist in the system
-  - Use list_root_windows() to get available window IDs
-  - Activating a window brings it to the foreground
-  
+- The window must exist in the system
+- Use list_root_windows() to get available window IDs
+- Activating a window brings it to the foreground
+
 
 **See Also**:
 
-  list_root_windows, get_active_window, close_window
+list_root_windows, get_active_window, close_window
 
 ### close\_window
 
@@ -741,21 +741,21 @@ Closes the specified window.
 session = agent_bay.create().session
 windows = session.computer.list_root_windows()
 if windows.windows:
-    session.computer.close_window(windows.windows[0].window_id)
+  session.computer.close_window(windows.windows[0].window_id)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The window must exist in the system
-  - Use list_root_windows() to get available window IDs
-  - Closing a window terminates it permanently
-  
+- The window must exist in the system
+- Use list_root_windows() to get available window IDs
+- Closing a window terminates it permanently
+
 
 **See Also**:
 
-  list_root_windows, activate_window, minimize_window
+list_root_windows, activate_window, minimize_window
 
 ### maximize\_window
 
@@ -781,21 +781,21 @@ Maximizes the specified window.
 session = agent_bay.create().session
 active = session.computer.get_active_window()
 if active.window:
-    session.computer.maximize_window(active.window.window_id)
+  session.computer.maximize_window(active.window.window_id)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The window must exist in the system
-  - Maximizing expands the window to fill the screen
-  - Use restore_window() to return to previous size
-  
+- The window must exist in the system
+- Maximizing expands the window to fill the screen
+- Use restore_window() to return to previous size
+
 
 **See Also**:
 
-  minimize_window, restore_window, fullscreen_window, resize_window
+minimize_window, restore_window, fullscreen_window, resize_window
 
 ### minimize\_window
 
@@ -821,21 +821,21 @@ Minimizes the specified window.
 session = agent_bay.create().session
 active = session.computer.get_active_window()
 if active.window:
-    session.computer.minimize_window(active.window.window_id)
+  session.computer.minimize_window(active.window.window_id)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The window must exist in the system
-  - Minimizing hides the window in the taskbar
-  - Use restore_window() or activate_window() to bring it back
-  
+- The window must exist in the system
+- Minimizing hides the window in the taskbar
+- Use restore_window() or activate_window() to bring it back
+
 
 **See Also**:
 
-  maximize_window, restore_window, activate_window
+maximize_window, restore_window, activate_window
 
 ### restore\_window
 
@@ -861,23 +861,23 @@ Restores the specified window.
 session = agent_bay.create().session
 active = session.computer.get_active_window()
 if active.window:
-    wid = active.window.window_id
-    session.computer.minimize_window(wid)
-    session.computer.restore_window(wid)
+  wid = active.window.window_id
+  session.computer.minimize_window(wid)
+  session.computer.restore_window(wid)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The window must exist in the system
-  - Restoring returns a minimized or maximized window to its normal state
-  - Works for windows that were previously minimized or maximized
-  
+- The window must exist in the system
+- Restoring returns a minimized or maximized window to its normal state
+- Works for windows that were previously minimized or maximized
+
 
 **See Also**:
 
-  minimize_window, maximize_window, activate_window
+minimize_window, maximize_window, activate_window
 
 ### resize\_window
 
@@ -905,21 +905,21 @@ Resizes the specified window.
 session = agent_bay.create().session
 active = session.computer.get_active_window()
 if active.window:
-    session.computer.resize_window(active.window.window_id, 800, 600)
+  session.computer.resize_window(active.window.window_id, 800, 600)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The window must exist in the system
-  - Width and height are in pixels
-  - Some windows may have minimum or maximum size constraints
-  
+- The window must exist in the system
+- Width and height are in pixels
+- Some windows may have minimum or maximum size constraints
+
 
 **See Also**:
 
-  maximize_window, restore_window, get_screen_size
+maximize_window, restore_window, get_screen_size
 
 ### fullscreen\_window
 
@@ -945,22 +945,22 @@ Makes the specified window fullscreen.
 session = agent_bay.create().session
 active = session.computer.get_active_window()
 if active.window:
-    session.computer.fullscreen_window(active.window.window_id)
+  session.computer.fullscreen_window(active.window.window_id)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The window must exist in the system
-  - Fullscreen mode hides window borders and taskbar
-  - Different from maximize_window() which keeps window borders
-  - Press F11 or ESC to exit fullscreen in most applications
-  
+- The window must exist in the system
+- Fullscreen mode hides window borders and taskbar
+- Different from maximize_window() which keeps window borders
+- Press F11 or ESC to exit fullscreen in most applications
+
 
 **See Also**:
 
-  maximize_window, restore_window
+maximize_window, restore_window
 
 ### focus\_mode
 
@@ -988,18 +988,18 @@ session.computer.focus_mode(True)
 session.computer.focus_mode(False)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Focus mode helps reduce distractions by managing window focus
-  - When enabled, may prevent background windows from stealing focus
-  - Behavior depends on the window manager and OS settings
-  
+- Focus mode helps reduce distractions by managing window focus
+- When enabled, may prevent background windows from stealing focus
+- Behavior depends on the window manager and OS settings
+
 
 **See Also**:
 
-  activate_window, get_active_window
+activate_window, get_active_window
 
 ### get\_installed\_apps
 
@@ -1030,22 +1030,22 @@ Gets the list of installed applications.
 session = agent_bay.create().session
 apps = session.computer.get_installed_apps()
 for app in apps.data:
-    print(f"{app.name}: {app.start_cmd}")
+  print(f"{app.name}: {app.start_cmd}")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - start_menu parameter includes applications from Windows Start Menu
-  - desktop parameter includes shortcuts from Desktop
-  - ignore_system_apps parameter filters out system applications
-  - Each app object contains name, start_cmd, stop_cmd, and work_directory
-  
+- start_menu parameter includes applications from Windows Start Menu
+- desktop parameter includes shortcuts from Desktop
+- ignore_system_apps parameter filters out system applications
+- Each app object contains name, start_cmd, stop_cmd, and work_directory
+
 
 **See Also**:
 
-  start_app, list_visible_apps, stop_app_by_pname
+start_app, list_visible_apps, stop_app_by_pname
 
 ### start\_app
 
@@ -1077,19 +1077,19 @@ processes = session.computer.start_app("notepad.exe")
 print(f"Started {len(processes.data)} process(es)")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The start_cmd can be an executable name or full path
-  - work_directory is optional and defaults to the system default
-  - activity parameter is for mobile apps (Android)
-  - Returns process information for all started processes
-  
+- The start_cmd can be an executable name or full path
+- work_directory is optional and defaults to the system default
+- activity parameter is for mobile apps (Android)
+- Returns process information for all started processes
+
 
 **See Also**:
 
-  get_installed_apps, stop_app_by_pname, list_visible_apps
+get_installed_apps, stop_app_by_pname, list_visible_apps
 
 ### list\_visible\_apps
 
@@ -1115,22 +1115,22 @@ This is useful for system monitoring and process management tasks.
 session = agent_bay.create().session
 apps = session.computer.list_visible_apps()
 for app in apps.data:
-    print(f"App: {app.pname}, PID: {app.pid}")
+  print(f"App: {app.pname}, PID: {app.pid}")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Only returns applications with visible windows
-  - Hidden or minimized windows may not appear
-  - Useful for monitoring currently active applications
-  - Process information includes PID, name, and command line
-  
+- Only returns applications with visible windows
+- Hidden or minimized windows may not appear
+- Useful for monitoring currently active applications
+- Process information includes PID, name, and command line
+
 
 **See Also**:
 
-  get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
+get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
 ### stop\_app\_by\_pname
 
@@ -1158,19 +1158,19 @@ session.computer.start_app("notepad.exe")
 result = session.computer.stop_app_by_pname("notepad.exe")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The process name should match exactly (case-sensitive on some systems)
-  - This will stop all processes matching the given name
-  - If multiple instances are running, all will be terminated
-  - The .exe extension may be required on Windows
-  
+- The process name should match exactly (case-sensitive on some systems)
+- This will stop all processes matching the given name
+- If multiple instances are running, all will be terminated
+- The .exe extension may be required on Windows
+
 
 **See Also**:
 
-  start_app, stop_app_by_pid, stop_app_by_cmd, list_visible_apps
+start_app, stop_app_by_pid, stop_app_by_cmd, list_visible_apps
 
 ### stop\_app\_by\_pid
 
@@ -1199,19 +1199,19 @@ pid = processes.data[0].pid
 result = session.computer.stop_app_by_pid(pid)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - PID must be a valid process ID
-  - More precise than stopping by name (only stops specific process)
-  - The process must be owned by the session or have appropriate permissions
-  - PID can be obtained from start_app() or list_visible_apps()
-  
+- PID must be a valid process ID
+- More precise than stopping by name (only stops specific process)
+- The process must be owned by the session or have appropriate permissions
+- PID can be obtained from start_app() or list_visible_apps()
+
 
 **See Also**:
 
-  start_app, stop_app_by_pname, stop_app_by_cmd, list_visible_apps
+start_app, stop_app_by_pname, stop_app_by_cmd, list_visible_apps
 
 ### stop\_app\_by\_cmd
 
@@ -1237,22 +1237,22 @@ Stops an application by stop command.
 session = agent_bay.create().session
 apps = session.computer.get_installed_apps()
 if apps.data and apps.data[0].stop_cmd:
-    result = session.computer.stop_app_by_cmd(apps.data[0].stop_cmd)
+  result = session.computer.stop_app_by_cmd(apps.data[0].stop_cmd)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The stop_cmd should be the command registered to stop the application
-  - Typically obtained from get_installed_apps() which returns app metadata
-  - Some applications may not have a stop command defined
-  - The command is executed as-is without shell interpretation
-  
+- The stop_cmd should be the command registered to stop the application
+- Typically obtained from get_installed_apps() which returns app metadata
+- Some applications may not have a stop command defined
+- The command is executed as-is without shell interpretation
+
 
 **See Also**:
 
-  get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
+get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
 ## Best Practices
 

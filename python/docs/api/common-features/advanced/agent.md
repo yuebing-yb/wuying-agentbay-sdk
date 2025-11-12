@@ -6,13 +6,15 @@
 
 
 
+## QueryResult
+
 ```python
 class QueryResult(ApiResponse)
 ```
 
 Result of query operations.
 
-## ExecutionResult Objects
+## ExecutionResult
 
 ```python
 class ExecutionResult(ApiResponse)
@@ -20,7 +22,7 @@ class ExecutionResult(ApiResponse)
 
 Result of task execution.
 
-## Agent Objects
+## Agent
 
 ```python
 class Agent(BaseService)

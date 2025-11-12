@@ -6,13 +6,15 @@
 
 
 
+## OSSClientResult
+
 ```python
 class OSSClientResult(ApiResponse)
 ```
 
 Result of OSS client creation operations.
 
-## OSSUploadResult Objects
+## OSSUploadResult
 
 ```python
 class OSSUploadResult(ApiResponse)
@@ -20,7 +22,7 @@ class OSSUploadResult(ApiResponse)
 
 Result of OSS upload operations.
 
-## OSSDownloadResult Objects
+## OSSDownloadResult
 
 ```python
 class OSSDownloadResult(ApiResponse)
@@ -28,7 +30,7 @@ class OSSDownloadResult(ApiResponse)
 
 Result of OSS download operations.
 
-## Oss Objects
+## Oss
 
 ```python
 class Oss(BaseService)
@@ -68,8 +70,8 @@ Create an OSS client with the provided credentials.
 ```python
 session = agent_bay.create().session
 session.oss.env_init(
-    access_key_id="your_access_key_id",
-    access_key_secret="your_access_key_secret"
+  access_key_id="your_access_key_id",
+  access_key_secret="your_access_key_secret"
 )
 session.delete()
 ```
@@ -103,8 +105,8 @@ the OSS environment.
 ```python
 session = agent_bay.create().session
 session.oss.env_init(
-    access_key_id="your_access_key_id",
-    access_key_secret="your_access_key_secret"
+  access_key_id="your_access_key_id",
+  access_key_secret="your_access_key_secret"
 )
 result = session.oss.upload("my-bucket", "file.txt", "/local/path/file.txt")
 print(f"Upload result: {result.content}")
@@ -136,8 +138,8 @@ Upload a local file or directory to a URL anonymously.
 ```python
 session = agent_bay.create().session
 result = session.oss.upload_anonymous(
-    "https://example.com/upload",
-    "/local/path/file.txt"
+  "https://example.com/upload",
+  "/local/path/file.txt"
 )
 print(f"Upload result: {result.content}")
 session.delete()
@@ -172,8 +174,8 @@ the OSS environment.
 ```python
 session = agent_bay.create().session
 session.oss.env_init(
-    access_key_id="your_access_key_id",
-    access_key_secret="your_access_key_secret"
+  access_key_id="your_access_key_id",
+  access_key_secret="your_access_key_secret"
 )
 result = session.oss.download("my-bucket", "file.txt", "/local/path/file.txt")
 print(f"Download result: {result.content}")
@@ -205,8 +207,8 @@ Download a file from a URL anonymously to a local file path.
 ```python
 session = agent_bay.create().session
 result = session.oss.download_anonymous(
-    "https://example.com/file.txt",
-    "/local/path/file.txt"
+  "https://example.com/file.txt",
+  "/local/path/file.txt"
 )
 print(f"Download result: {result.content}")
 session.delete()

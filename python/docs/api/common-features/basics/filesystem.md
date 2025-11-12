@@ -6,6 +6,8 @@
 
 
 
+## UploadResult
+
 ```python
 @dataclass
 class UploadResult()
@@ -13,7 +15,7 @@ class UploadResult()
 
 Result structure for file upload operations.
 
-## DownloadResult Objects
+## DownloadResult
 
 ```python
 @dataclass
@@ -22,7 +24,7 @@ class DownloadResult()
 
 Result structure for file download operations.
 
-## FileTransfer Objects
+## FileTransfer
 
 ```python
 class FileTransfer()
@@ -82,7 +84,7 @@ Download workflow:
 
 Returns DownloadResult containing sync and download request_ids, HTTP status, byte count, etc.
 
-## FileChangeEvent Objects
+## FileChangeEvent
 
 ```python
 class FileChangeEvent()
@@ -90,7 +92,7 @@ class FileChangeEvent()
 
 Represents a single file change event.
 
-## FileChangeResult Objects
+## FileChangeResult
 
 ```python
 class FileChangeResult(ApiResponse)
@@ -162,7 +164,7 @@ Get list of deleted file paths.
 
     List[str]: List of file paths that were deleted.
 
-## FileInfoResult Objects
+## FileInfoResult
 
 ```python
 class FileInfoResult(ApiResponse)
@@ -170,7 +172,7 @@ class FileInfoResult(ApiResponse)
 
 Result of file info operations.
 
-## DirectoryListResult Objects
+## DirectoryListResult
 
 ```python
 class DirectoryListResult(ApiResponse)
@@ -178,7 +180,7 @@ class DirectoryListResult(ApiResponse)
 
 Result of directory listing operations.
 
-## FileContentResult Objects
+## FileContentResult
 
 ```python
 class FileContentResult(ApiResponse)
@@ -186,7 +188,7 @@ class FileContentResult(ApiResponse)
 
 Result of file read operations.
 
-## MultipleFileContentResult Objects
+## MultipleFileContentResult
 
 ```python
 class MultipleFileContentResult(ApiResponse)
@@ -194,7 +196,7 @@ class MultipleFileContentResult(ApiResponse)
 
 Result of multiple file read operations.
 
-## FileSearchResult Objects
+## FileSearchResult
 
 ```python
 class FileSearchResult(ApiResponse)
@@ -202,7 +204,7 @@ class FileSearchResult(ApiResponse)
 
 Result of file search operations.
 
-## FileSystem Objects
+## FileSystem
 
 ```python
 class FileSystem(BaseService)
@@ -269,14 +271,14 @@ Edit a file by replacing occurrences of oldText with newText.
 
 **Example**:
 
-            ```python
-            session = agent_bay.create().session
-            session.file_system.write_file("/tmp/config.txt", "DEBUG=false
+```python
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/config.txt", "DEBUG=false
 LOG_LEVEL=info")
-            edits = [{"oldText": "false", "newText": "true"}]
-            edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
-            session.delete()
-            ```
+edits = [{"oldText": "false", "newText": "true"}]
+edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
+session.delete()
+```
 
 ### get\_file\_info
 
@@ -346,18 +348,18 @@ list_result = session.file_system.list_directory("/tmp/testdir")
 print(f"Found {len(list_result.entries)} entries")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Returns empty list for empty directories
-  - Each entry includes name and isDirectory flag
-  - Does not recursively list subdirectories
-  
+- Returns empty list for empty directories
+- Each entry includes name and isDirectory flag
+- Does not recursively list subdirectories
+
 
 **See Also**:
 
-  FileSystem.create_directory, FileSystem.get_file_info, FileSystem.read_file
+FileSystem.create_directory, FileSystem.get_file_info, FileSystem.read_file
 
 ### move\_file
 
@@ -492,18 +494,18 @@ read_result = session.file_system.read_file("/tmp/test.txt")
 print(read_result.content)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Automatically handles large files by reading in chunks (default 50KB per chunk)
-  - Returns empty string for empty files
-  - Returns error if path is a directory
-  
+- Automatically handles large files by reading in chunks (default 50KB per chunk)
+- Returns empty string for empty files
+- Returns error if path is a directory
+
 
 **See Also**:
 
-  FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
+FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
 
 ### write\_file
 
@@ -538,27 +540,27 @@ Write content to a file. Automatically handles large files by chunking.
 
 **Example**:
 
-            ```python
-            session = agent_bay.create().session
-            write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
-            append_result = session.file_system.write_file("/tmp/test.txt", "
+```python
+session = agent_bay.create().session
+write_result = session.file_system.write_file("/tmp/test.txt", "Hello, World!")
+append_result = session.file_system.write_file("/tmp/test.txt", "
 New line", mode="append")
-            read_result = session.file_system.read_file("/tmp/test.txt")
-            session.delete()
-            ```
-  
+read_result = session.file_system.read_file("/tmp/test.txt")
+session.delete()
+```
+
 
 **Notes**:
 
-  - Automatically handles large files by writing in chunks (default 50KB per chunk)
-  - Creates parent directories if they don't exist
-  - In "overwrite" mode, replaces the entire file content
-  - In "append" mode, adds content to the end of the file
-  
+- Automatically handles large files by writing in chunks (default 50KB per chunk)
+- Creates parent directories if they don't exist
+- In "overwrite" mode, replaces the entire file content
+- In "append" mode, adds content to the end of the file
+
 
 **See Also**:
 
-  FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
+FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
 
 ### upload\_file
 
@@ -678,7 +680,7 @@ Watch a directory for file changes and call the callback function when changes o
 
 ```python
 def on_changes(events):
-    print(f"Detected {len(events)} changes")
+  print(f"Detected {len(events)} changes")
 session = agent_bay.create().session
 session.file_system.create_directory("/tmp/watch_test")
 monitor_thread = session.file_system.watch_directory("/tmp/watch_test", on_changes)
