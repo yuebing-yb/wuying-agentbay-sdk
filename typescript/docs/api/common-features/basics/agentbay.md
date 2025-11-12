@@ -18,7 +18,9 @@ Main class for interacting with the AgentBay cloud runtime environment.
 - [delete](agentbay.md#delete)
 - [get](agentbay.md#get)
 - [list](agentbay.md#list)
+- [pauseAsync](agentbay.md#pauseasync)
 - [removeSession](agentbay.md#removesession)
+- [resumeAsync](agentbay.md#resumeasync)
 
 ## Properties
 
@@ -295,6 +297,76 @@ if (result.success) {
 
 ___
 
+### pauseAsync
+
+▸ **pauseAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionPauseResult`\>
+
+Asynchronously pause a session, putting it into a dormant state.
+
+This method directly calls the PauseSessionAsync API without waiting for the session
+to reach the PAUSED state.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `session` | [`Session`](session.md) | `undefined` | The session to pause. |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to pause. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionPauseResult`\>
+
+SessionPauseResult indicating success or failure and request ID
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function pauseSessionAsyncExample() {
+  try {
+    // Create a session
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Pause the session asynchronously
+      const pauseResult = await agentBay.pauseAsync(session);
+      if (pauseResult.success) {
+        console.log("Session pause request submitted successfully");
+        // Output: Session pause request submitted successfully
+      } else {
+        console.log(`Failed to pause session: ${pauseResult.errorMessage}`);
+      }
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+pauseSessionAsyncExample().catch(console.error);
+```
+
+**`Remarks`**
+
+**Behavior:**
+- This method does not wait for the session to reach the PAUSED state
+- It only submits the pause request to the API
+- The session state transitions from RUNNING -> PAUSING -> PAUSED
+- Paused sessions consume fewer resources but maintain their state
+
+**`See`**
+
+[resumeAsync](agentbay.md#resumeasync), [Session.pauseAsync](session.md#pauseasync)
+
+___
+
 ### removeSession
 
 ▸ **removeSession**(`sessionId`): `void`
@@ -356,6 +428,79 @@ session from the cloud. To delete a session from the cloud, use [delete](agentba
 **`See`**
 
 [delete](agentbay.md#delete), [Session.delete](session.md#delete)
+
+___
+
+### resumeAsync
+
+▸ **resumeAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionResumeResult`\>
+
+Asynchronously resume a session from a paused state.
+
+This method directly calls the ResumeSessionAsync API without waiting for the session
+to reach the RUNNING state.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `session` | [`Session`](session.md) | `undefined` | The session to resume. |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to resume. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionResumeResult`\>
+
+SessionResumeResult indicating success or failure and request ID
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+
+async function resumeSessionAsyncExample() {
+  try {
+    // Create a session
+    const result = await agentBay.create();
+    if (result.success) {
+      const session = result.session;
+
+      // Pause the session first
+      await agentBay.pauseAsync(session);
+
+      // Resume the session asynchronously
+      const resumeResult = await agentBay.resumeAsync(session);
+      if (resumeResult.success) {
+        console.log("Session resume request submitted successfully");
+        // Output: Session resume request submitted successfully
+      } else {
+        console.log(`Failed to resume session: ${resumeResult.errorMessage}`);
+      }
+
+      await session.delete();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+resumeSessionAsyncExample().catch(console.error);
+```
+
+**`Remarks`**
+
+**Behavior:**
+- This method does not wait for the session to reach the RUNNING state
+- It only submits the resume request to the API
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
+
+**`See`**
+
+[pauseAsync](agentbay.md#pauseasync), [Session.resumeAsync](session.md#resumeasync)
 
 ## Related Resources
 
