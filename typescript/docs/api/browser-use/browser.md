@@ -88,34 +88,13 @@ Promise resolving to true if successful, false otherwise
 **`Example`**
 
 ```typescript
-import { AgentBay, BrowserOptionClass } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function initializeBrowser() {
-    try {
-        const result = await agentBay.create({ imageId: 'browser_latest' });
-        if (result.success && result.session) {
-            const session = result.session;
-
-            // Initialize browser with basic options
-            const option = new BrowserOptionClass();
-            const success = await session.browser.initializeAsync(option);
-
-            if (success) {
-                console.log('Browser initialized successfully');
-
-                // Use the browser...
-
-                await session.delete();
-            }
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
+const result = await agentBay.create({ imageId: 'browser_latest' });
+if (result.success) {
+  const success = await result.session.browser.initializeAsync(new BrowserOptionClass());
+  console.log('Browser initialized:', success);
+  await result.session.delete();
 }
-
-initializeBrowser().catch(console.error);
 ```
 
 ___
@@ -169,60 +148,18 @@ Error If screenshot capture fails.
 **`Example`**
 
 ```typescript
-import { AgentBay, BrowserOptionClass } from 'wuying-agentbay-sdk';
-import { chromium } from 'playwright';
-import { writeFile } from 'fs/promises';
-
 const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function demonstrateScreenshot() {
-    try {
-        const result = await agentBay.create({ imageId: 'browser_latest' });
-        if (result.success && result.session) {
-            const session = result.session;
-
-            // Initialize browser
-            const option = new BrowserOptionClass();
-            await session.browser.initializeAsync(option);
-
-            // Get CDP endpoint and connect with Playwright
-            const endpointUrl = await session.browser.getEndpointUrl();
-            const browser = await chromium.connectOverCDP(endpointUrl);
-            const context = browser.contexts()[0];
-            const page = await context.newPage();
-
-            // Navigate to a page
-            await page.goto('https://example.com');
-
-            // Take a simple screenshot (viewport only)
-            const screenshotData = await session.browser.screenshot(page);
-            await writeFile('screenshot.png', Buffer.from(screenshotData));
-
-            // Take a full page screenshot
-            const fullPageData = await session.browser.screenshot(page, true);
-            await writeFile('full_page.png', Buffer.from(fullPageData));
-
-            // Take a screenshot with custom options
-            const customScreenshot = await session.browser.screenshot(
-                page,
-                false,
-                {
-                    type: 'jpeg',
-                    quality: 80,
-                    timeout: 30000
-                }
-            );
-            await writeFile('custom_screenshot.jpg', Buffer.from(customScreenshot));
-
-            await browser.close();
-            await session.delete();
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
+const result = await agentBay.create({ imageId: 'browser_latest' });
+if (result.success) {
+  await result.session.browser.initializeAsync(new BrowserOptionClass());
+  const browser = await chromium.connectOverCDP(await result.session.browser.getEndpointUrl());
+  const page = await browser.contexts()[0].newPage();
+  await page.goto('https://example.com');
+  const screenshot = await result.session.browser.screenshot(page);
+  await writeFile('screenshot.png', Buffer.from(screenshot));
+  await browser.close();
+  await result.session.delete();
 }
-
-demonstrateScreenshot().catch(console.error);
 ```
 
 ## Best Practices

@@ -133,13 +133,9 @@ export class FingerprintFormat {
    * ```typescript
    * // From dict
    * const fp = FingerprintFormat.load({fingerprint: {...}, headers: {...}});
-   *
-   * // From JSON string
-   * const fp = FingerprintFormat.load('{"fingerprint": {...}}');
-   *
-   * // From file
+   * // From JSON file
    * const data = fs.readFileSync('fingerprint.json', 'utf8');
-   * const fp = FingerprintFormat.load(data);
+   * const fp2 = FingerprintFormat.load(data);
    * ```
    */
   static load(data: string | Record<string, any>): FingerprintFormat {
