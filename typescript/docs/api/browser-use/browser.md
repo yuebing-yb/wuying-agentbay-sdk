@@ -22,11 +22,11 @@ screenshot capture, and content extraction. It enables automated testing and web
 
 ### Methods
 
-- [destroy](browser.md#destroy)
-- [initialize](browser.md#initialize)
-- [initializeAsync](browser.md#initializeasync)
-- [isInitialized](browser.md#isinitialized)
-- [screenshot](browser.md#screenshot)
+- [destroy](#destroy)
+- [initialize](#initialize)
+- [initializeAsync](#initializeasync)
+- [isInitialized](#isinitialized)
+- [screenshot](#screenshot)
 
 ## Properties
 

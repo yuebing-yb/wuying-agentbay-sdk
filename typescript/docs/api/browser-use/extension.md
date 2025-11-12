@@ -49,12 +49,12 @@ const browserContext = new BrowserContext({
 
 ### Methods
 
-- [cleanup](extension.md#cleanup)
-- [create](extension.md#create)
-- [createExtensionOption](extension.md#createextensionoption)
-- [delete](extension.md#delete)
-- [list](extension.md#list)
-- [update](extension.md#update)
+- [cleanup](#cleanup)
+- [create](#create)
+- [createExtensionOption](#createextensionoption)
+- [delete](#delete)
+- [list](#list)
+- [update](#update)
 
 ## Methods
 

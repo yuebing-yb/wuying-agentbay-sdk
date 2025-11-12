@@ -21,7 +21,7 @@ Handles command execution operations in the AgentBay cloud environment.
 
 ### Methods
 
-- [executeCommand](command.md#executecommand)
+- [executeCommand](#executecommand)
 
 ## Methods
 

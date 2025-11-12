@@ -14,14 +14,14 @@ Represents a session in the AgentBay cloud environment.
 
 ### Methods
 
-- [callMcpTool](session.md#callmcptool)
-- [delete](session.md#delete)
-- [getLabels](session.md#getlabels)
-- [getLink](session.md#getlink)
-- [getLinkAsync](session.md#getlinkasync)
-- [info](session.md#info)
-- [listMcpTools](session.md#listmcptools)
-- [setLabels](session.md#setlabels)
+- [callMcpTool](#callmcptool)
+- [delete](#delete)
+- [getLabels](#getlabels)
+- [getLink](#getlink)
+- [getLinkAsync](#getlinkasync)
+- [info](#info)
+- [listMcpTools](#listmcptools)
+- [setLabels](#setlabels)
 
 ## Properties
 
@@ -138,7 +138,7 @@ if (result.success) {
 
 **`See`**
 
-[info](session.md#info), [ContextManager.sync](context-manager.md#sync)
+[info](#info), [ContextManager.sync](context-manager.md#sync)
 
 ___
 
@@ -228,7 +228,7 @@ if (result.success) {
 
 **`See`**
 
-[info](session.md#info)
+[info](#info)
 
 ___
 
@@ -327,7 +327,7 @@ if (result.success) {
 
 **`See`**
 
-[delete](session.md#delete), [getLink](session.md#getlink)
+[delete](#delete), [getLink](#getlink)
 
 ___
 

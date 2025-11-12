@@ -11,15 +11,15 @@ Provides methods to manage persistent contexts in the AgentBay cloud environment
 
 ### Methods
 
-- [clear](context.md#clear)
-- [clearAsync](context.md#clearasync)
-- [create](context.md#create)
-- [delete](context.md#delete)
-- [deleteFile](context.md#deletefile)
-- [get](context.md#get)
-- [list](context.md#list)
-- [listFiles](context.md#listfiles)
-- [update](context.md#update)
+- [clear](#clear)
+- [clearAsync](#clearasync)
+- [create](#create)
+- [delete](#delete)
+- [deleteFile](#deletefile)
+- [get](#get)
+- [list](#list)
+- [listFiles](#listfiles)
+- [update](#update)
 
 ## Methods
 
@@ -238,7 +238,7 @@ if (result.success) {
 
 **`See`**
 
-[update](context.md#update), [list](context.md#list)
+[update](#update), [list](#list)
 
 ### list
 
@@ -339,7 +339,7 @@ if (getResult.success && getResult.context) {
 
 **`See`**
 
-[get](context.md#get), [list](context.md#list)
+[get](#get), [list](#list)
 
 ## Related Resources
 

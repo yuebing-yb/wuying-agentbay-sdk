@@ -11,11 +11,11 @@ Handles OSS operations in the AgentBay cloud environment.
 
 ### Methods
 
-- [download](oss.md#download)
-- [downloadAnonymous](oss.md#downloadanonymous)
-- [envInit](oss.md#envinit)
-- [upload](oss.md#upload)
-- [uploadAnonymous](oss.md#uploadanonymous)
+- [download](#download)
+- [downloadAnonymous](#downloadanonymous)
+- [envInit](#envinit)
+- [upload](#upload)
+- [uploadAnonymous](#uploadanonymous)
 
 ## Methods
 

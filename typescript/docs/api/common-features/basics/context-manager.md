@@ -9,9 +9,9 @@
 
 ### Methods
 
-- [info](context-manager.md#info)
-- [infoWithParams](context-manager.md#infowithparams)
-- [sync](context-manager.md#sync)
+- [info](#info)
+- [infoWithParams](#infowithparams)
+- [sync](#sync)
 
 ## Methods
 

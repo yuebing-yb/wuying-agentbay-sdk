@@ -19,19 +19,19 @@ text input, app management, and screenshot capture. It supports Android device a
 
 ### Methods
 
-- [configure](mobile.md#configure)
-- [inputText](mobile.md#inputtext)
-- [screenshot](mobile.md#screenshot)
-- [sendKey](mobile.md#sendkey)
-- [setAppBlacklist](mobile.md#setappblacklist)
-- [setAppWhitelist](mobile.md#setappwhitelist)
-- [setNavigationBarVisibility](mobile.md#setnavigationbarvisibility)
-- [setResolutionLock](mobile.md#setresolutionlock)
-- [setUninstallBlacklist](mobile.md#setuninstallblacklist)
-- [startApp](mobile.md#startapp)
-- [stopAppByCmd](mobile.md#stopappbycmd)
-- [swipe](mobile.md#swipe)
-- [tap](mobile.md#tap)
+- [configure](#configure)
+- [inputText](#inputtext)
+- [screenshot](#screenshot)
+- [sendKey](#sendkey)
+- [setAppBlacklist](#setappblacklist)
+- [setAppWhitelist](#setappwhitelist)
+- [setNavigationBarVisibility](#setnavigationbarvisibility)
+- [setResolutionLock](#setresolutionlock)
+- [setUninstallBlacklist](#setuninstallblacklist)
+- [startApp](#startapp)
+- [stopAppByCmd](#stopappbycmd)
+- [swipe](#swipe)
+- [tap](#tap)
 
 ## Methods
 

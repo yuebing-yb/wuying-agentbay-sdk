@@ -11,17 +11,17 @@ Handles file operations in the AgentBay cloud environment.
 
 ### Methods
 
-- [createDirectory](filesystem.md#createdirectory)
-- [downloadFile](filesystem.md#downloadfile)
-- [editFile](filesystem.md#editfile)
-- [listDirectory](filesystem.md#listdirectory)
-- [moveFile](filesystem.md#movefile)
-- [readFile](filesystem.md#readfile)
-- [readMultipleFiles](filesystem.md#readmultiplefiles)
-- [searchFiles](filesystem.md#searchfiles)
-- [uploadFile](filesystem.md#uploadfile)
-- [watchDirectory](filesystem.md#watchdirectory)
-- [writeFile](filesystem.md#writefile)
+- [createDirectory](#createdirectory)
+- [downloadFile](#downloadfile)
+- [editFile](#editfile)
+- [listDirectory](#listdirectory)
+- [moveFile](#movefile)
+- [readFile](#readfile)
+- [readMultipleFiles](#readmultiplefiles)
+- [searchFiles](#searchfiles)
+- [uploadFile](#uploadfile)
+- [watchDirectory](#watchdirectory)
+- [writeFile](#writefile)
 
 ## Methods
 
@@ -178,7 +178,7 @@ if (result.success) {
 
 **`See`**
 
-[readFile](filesystem.md#readfile), [writeFile](filesystem.md#writefile)
+[readFile](#readfile), [writeFile](#writefile)
 
 ___
 
@@ -275,7 +275,7 @@ if (result.success) {
 
 **`See`**
 
-[writeFile](filesystem.md#writefile), [listDirectory](filesystem.md#listdirectory)
+[writeFile](#writefile), [listDirectory](#listdirectory)
 
 ___
 
@@ -490,7 +490,7 @@ if (result.success) {
 
 **`See`**
 
-[readFile](filesystem.md#readfile), [listDirectory](filesystem.md#listdirectory)
+[readFile](#readfile), [listDirectory](#listdirectory)
 
 ## Related Resources
 

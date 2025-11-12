@@ -14,10 +14,10 @@ Main class for interacting with the AgentBay cloud runtime environment.
 
 ### Methods
 
-- [create](agentbay.md#create)
-- [delete](agentbay.md#delete)
-- [get](agentbay.md#get)
-- [list](agentbay.md#list)
+- [create](#create)
+- [delete](#delete)
+- [get](#get)
+- [list](#list)
 
 ## Properties
 
@@ -76,7 +76,7 @@ if (result.success) {
 
 **`See`**
 
-[get](agentbay.md#get), [list](agentbay.md#list), [Session.delete](session.md#delete)
+[get](#get), [list](#list), [Session.delete](session.md#delete)
 
 ___
 

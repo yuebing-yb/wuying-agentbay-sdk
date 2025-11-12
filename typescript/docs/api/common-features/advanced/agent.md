@@ -11,8 +11,8 @@ An Agent to manipulate applications to complete specific tasks.
 
 ### Methods
 
-- [executeTask](agent.md#executetask)
-- [terminateTask](agent.md#terminatetask)
+- [executeTask](#executetask)
+- [terminateTask](#terminatetask)
 
 ## Methods
 

@@ -21,7 +21,7 @@ Handles code execution operations in the AgentBay cloud environment.
 
 ### Methods
 
-- [runCode](code.md#runcode)
+- [runCode](#runcode)
 
 ## Methods
 
