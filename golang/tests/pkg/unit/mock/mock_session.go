@@ -213,34 +213,34 @@ func (mr *MockSessionInterfaceMockRecorder) NetworkInterfaceIp() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NetworkInterfaceIp", reflect.TypeOf((*MockSessionInterface)(nil).NetworkInterfaceIp))
 }
 
-// PauseAsync mocks base method.
-func (m *MockSessionInterface) PauseAsync(arg0 int, arg1 float64) (*models.SessionPauseResult, error) {
+// Pause mocks base method.
+func (m *MockSessionInterface) Pause(arg0 int, arg1 float64) (*models.SessionPauseResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PauseAsync", arg0, arg1)
+	ret := m.ctrl.Call(m, "Pause", arg0, arg1)
 	ret0, _ := ret[0].(*models.SessionPauseResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// PauseAsync indicates an expected call of PauseAsync.
-func (mr *MockSessionInterfaceMockRecorder) PauseAsync(arg0, arg1 interface{}) *gomock.Call {
+// Pause indicates an expected call of Pause.
+func (mr *MockSessionInterfaceMockRecorder) Pause(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseAsync", reflect.TypeOf((*MockSessionInterface)(nil).PauseAsync), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pause", reflect.TypeOf((*MockSessionInterface)(nil).Pause), arg0, arg1)
 }
 
-// ResumeAsync mocks base method.
-func (m *MockSessionInterface) ResumeAsync(arg0 int, arg1 float64) (*models.SessionResumeResult, error) {
+// Resume mocks base method.
+func (m *MockSessionInterface) Resume(arg0 int, arg1 float64) (*models.SessionResumeResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResumeAsync", arg0, arg1)
+	ret := m.ctrl.Call(m, "Resume", arg0, arg1)
 	ret0, _ := ret[0].(*models.SessionResumeResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ResumeAsync indicates an expected call of ResumeAsync.
-func (mr *MockSessionInterfaceMockRecorder) ResumeAsync(arg0, arg1 interface{}) *gomock.Call {
+// Resume indicates an expected call of Resume.
+func (mr *MockSessionInterfaceMockRecorder) Resume(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeAsync", reflect.TypeOf((*MockSessionInterface)(nil).ResumeAsync), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resume", reflect.TypeOf((*MockSessionInterface)(nil).Resume), arg0, arg1)
 }
 
 // SetLabels mocks base method.

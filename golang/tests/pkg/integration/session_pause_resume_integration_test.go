@@ -132,8 +132,8 @@ func TestSessionPauseResumeIntegration(t *testing.T) {
 	t.Logf("✓ Session is RUNNING after resume: %s", sessionId)
 }
 
-// TestSessionResumeAsyncIntegration tests successful async resume operation on a session
-func TestSessionResumeAsyncIntegration(t *testing.T) {
+// TestSessionResumeIntegration tests successful resume operation on a session
+func TestSessionResumeIntegration(t *testing.T) {
 	apiKey := os.Getenv("AGENTBAY_API_KEY")
 	if apiKey == "" {
 		t.Fatal("AGENTBAY_API_KEY environment variable is not set")
@@ -198,9 +198,9 @@ func TestSessionResumeAsyncIntegration(t *testing.T) {
 	}
 	t.Logf("✓ Session status: %s", getResult.Data.Status)
 
-	// Resume the session (asynchronous)
-	fmt.Println("Step 3: Resuming session asynchronously...")
-	resumeResult, err := createdSession.ResumeAsync(600, 2.0)
+	// Resume the session (synchronous)
+	fmt.Println("Step 3: Resuming session...")
+	resumeResult, err := createdSession.Resume(600, 2.0)
 	if err != nil {
 		t.Fatalf("Failed to async resume session: %v", err)
 	}
@@ -210,7 +210,7 @@ func TestSessionResumeAsyncIntegration(t *testing.T) {
 	if !resumeResult.Success {
 		t.Fatalf("Async resume failed: %s", resumeResult.ErrorMessage)
 	}
-	t.Logf("✓ Session resume initiated successfully")
+	t.Logf("✓ Session resume completed successfully")
 	t.Logf("  Request ID: %s", resumeResult.RequestID)
 
 	// Wait a bit for resume to complete
@@ -228,11 +228,11 @@ func TestSessionResumeAsyncIntegration(t *testing.T) {
 	if getResult.Data == nil {
 		t.Fatal("Get session returned nil data")
 	}
-	// Session should be RUNNING or still RESUMING
-	if getResult.Data.Status != "RUNNING" && getResult.Data.Status != "RESUMING" {
-		t.Fatalf("Expected session status RUNNING or RESUMING, got %s", getResult.Data.Status)
+	// Session should be RUNNING
+	if getResult.Data.Status != "RUNNING" {
+		t.Fatalf("Expected session status RUNNING, got %s", getResult.Data.Status)
 	}
-	t.Logf("✓ Session status after async resume: %s", getResult.Data.Status)
+	t.Logf("✓ Session status after resume: %s", getResult.Data.Status)
 }
 
 // TestSessionPauseNonExistent tests pause operation on non-existent session
@@ -495,7 +495,7 @@ func TestSessionPauseResumeWithCustomParameters(t *testing.T) {
 
 	// Pause with custom parameters (using agent_bay method)
 	fmt.Println("Step 1: Pausing session with custom parameters...")
-	pauseResult, err := client.Pause(createdSession, 300, 3.0)
+	pauseResult, err := client.Pause(createdSession, 5, 0.5)
 	if err != nil {
 		t.Fatalf("Failed to pause session with custom params: %v", err)
 	}

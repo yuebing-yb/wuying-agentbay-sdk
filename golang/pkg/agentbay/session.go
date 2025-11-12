@@ -1528,7 +1528,7 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 	return ""
 }
 
-// PauseAsync asynchronously pauses this session, putting it into a dormant state to reduce resource usage and costs.
+// Pause synchronously pauses this session, putting it into a dormant state to reduce resource usage and costs.
 //
 // Parameters:
 //   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
@@ -1536,7 +1536,7 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 //
 // Returns:
 //   - *models.SessionPauseResult: A result object containing success status, request ID, and error message if any.
-func (s *Session) PauseAsync(timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
+func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
 	// Set default values if not provided
 	if timeout <= 0 {
 		timeout = 600
@@ -1655,7 +1655,7 @@ func (s *Session) PauseAsync(timeout int, pollInterval float64) (*models.Session
 	}, nil
 }
 
-// ResumeAsync asynchronously resumes this session from a paused state to continue work.
+// Resume synchronously resumes this session from a paused state to continue work.
 //
 // Parameters:
 //   - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
@@ -1663,7 +1663,7 @@ func (s *Session) PauseAsync(timeout int, pollInterval float64) (*models.Session
 //
 // Returns:
 //   - *models.SessionResumeResult: A result object containing success status, request ID, and error message if any.
-func (s *Session) ResumeAsync(timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
+func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
 	// Set default values if not provided
 	if timeout <= 0 {
 		timeout = 600

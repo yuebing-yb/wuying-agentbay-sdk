@@ -1118,8 +1118,8 @@ func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (
 		pollInterval = 2.0
 	}
 
-	// Call session's PauseAsync method with provided parameters
-	return session.PauseAsync(timeout, pollInterval)
+	// Call session's Pause method with provided parameters
+	return session.Pause(timeout, pollInterval)
 }
 
 // Resume synchronously resumes a session from a paused state to continue work.
@@ -1140,6 +1140,6 @@ func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) 
 		pollInterval = 2.0
 	}
 
-	// Call session's ResumeAsync method with provided parameters
-	return session.ResumeAsync(timeout, pollInterval)
+	// Call session's Resume method with provided parameters
+	return session.Resume(timeout, pollInterval)
 }

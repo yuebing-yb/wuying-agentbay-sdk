@@ -49,9 +49,9 @@ type SessionInterface interface {
 	// FindServerForTool searches for the server that provides the given tool
 	FindServerForTool(toolName string) string
 
-	// PauseAsync asynchronously pauses this session
-	PauseAsync(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+	// Pause synchronously pauses this session
+	Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
 
-	// ResumeAsync asynchronously resumes this session
-	ResumeAsync(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+	// Resume synchronously resumes this session
+	Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
 }
