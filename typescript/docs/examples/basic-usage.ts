@@ -1,4 +1,4 @@
-import { AgentBay, logError, log } from 'wuying-agentbay-sdk';
+import { AgentBay, logError, log } from '../../src/index';
 
 async function main() {
   try {
@@ -40,24 +40,15 @@ async function main() {
       log(`Note: Failed to get session link: ${error}`);
     }
 
-    // Use the UI module to take a screenshot
-    log('\nTaking a screenshot...');
-    try {
-      const screenshotResponse = await session.ui.screenshot();
-      log(`Screenshot data length: ${screenshotResponse.data.length} characters`);
-      log(`Screenshot RequestId: ${screenshotResponse.requestId}`);
-    } catch (error) {
-      log(`Note: Failed to take screenshot: ${error}`);
-    }
+    // Note: Screenshot functionality is available via session.mobile.screenshot() or session.computer.screenshot()
+    // depending on the session type (mobile or computer). Browser sessions don't have a direct screenshot API
+    // at the session level - use browser automation tools like Playwright for browser screenshots.
 
-    // List all sessions by labels using new API
+    // List all sessions by labels
     log('\nListing sessions...');
     try {
-      // List sessions with labels
-      const listResponse: any = await agentBay.listByLabels({
-        labels: { test: 'basic-usage' },
-        maxResults: 5
-      });
+      // List sessions with labels (page 1, limit 5)
+      const listResponse = await agentBay.list({ test: 'basic-usage' }, 1, 5);
       log(`Available sessions count: ${listResponse.sessionIds.length}`);
       if (listResponse.totalCount !== undefined) {
         log(`Total count: ${listResponse.totalCount}`);
@@ -71,11 +62,7 @@ async function main() {
       // Demonstrate pagination if there's a next token
       if (listResponse.nextToken) {
         log('\nFetching next page...');
-        const nextPageResponse: any = await agentBay.listByLabels({
-          labels: { test: 'basic-usage' },
-          maxResults: 5,
-          nextToken: listResponse.nextToken
-        });
+        const nextPageResponse = await agentBay.list({ test: 'basic-usage' }, 2, 5);
         log(`Next page sessions count: ${nextPageResponse.sessionIds.length}`);
         log(`Next page RequestId: ${nextPageResponse.requestId}`);
       }
