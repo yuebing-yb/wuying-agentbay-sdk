@@ -13,7 +13,7 @@ from agentbay.api.models import (
 )
 from agentbay.exceptions import AgentBayError, ClearanceTimeoutError
 from agentbay.model.response import ApiResponse, OperationResult, extract_request_id
-from .logger import get_logger, log_api_call, log_api_response, log_api_response_with_details, log_operation_error
+from .logger import get_logger, _log_api_call, _log_api_response, _log_api_response_with_details, _log_operation_error
 import json
 import time
 
@@ -268,7 +268,7 @@ class ContextService:
             request_details = f"MaxResults={max_results}"
             if params.next_token:
                 request_details += f", NextToken={params.next_token}"
-            log_api_call("ListContexts", request_details)
+            _log_api_call("ListContexts", request_details)
             request = ListContextsRequest(
                 authorization=f"Bearer {self.agent_bay.api_key}",
                 max_results=max_results,
@@ -280,7 +280,7 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
@@ -338,7 +338,7 @@ class ContextService:
                     error_message="",
                 )
             except Exception as e:
-                log_operation_error("parse ListContexts response", str(e))
+                _log_operation_error("parse ListContexts response", str(e))
                 return ContextListResult(
                     request_id=request_id,
                     success=False,
@@ -346,7 +346,7 @@ class ContextService:
                     error_message=f"Failed to parse response: {e}",
                 )
         except Exception as e:
-            log_operation_error("ListContexts", str(e))
+            _log_operation_error("ListContexts", str(e))
             return ContextListResult(
                 request_id="",
                 success=False,
@@ -413,7 +413,7 @@ class ContextService:
             if context_id is not None:
                 log_details += f", Id={context_id}"
 
-            log_api_call("GetContext", log_details)
+            _log_api_call("GetContext", log_details)
 
             request = GetContextRequest(
                 name=name,
@@ -426,7 +426,7 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
@@ -488,7 +488,7 @@ class ContextService:
                     error_message="",
                 )
             except Exception as e:
-                log_operation_error("parse GetContext response", str(e))
+                _log_operation_error("parse GetContext response", str(e))
                 return ContextResult(
                     request_id=request_id,
                     success=False,
@@ -497,7 +497,7 @@ class ContextService:
                     error_message=f"Failed to parse response: {e}",
                 )
         except Exception as e:
-            log_operation_error("GetContext", str(e))
+            _log_operation_error("GetContext", str(e))
             identifier = name if name is not None else context_id
             return ContextResult(
                 request_id="",
@@ -558,7 +558,7 @@ class ContextService:
             ContextService.get, ContextService.list, ContextService.delete
         """
         try:
-            log_api_call("ModifyContext", f"Id={context.id}, Name={context.name}")
+            _log_api_call("ModifyContext", f"Id={context.id}, Name={context.name}")
             request = ModifyContextRequest(
                 id=context.id,
                 name=context.name,
@@ -569,7 +569,7 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
@@ -624,7 +624,7 @@ class ContextService:
             ```
         """
         try:
-            log_api_call("DeleteContext", f"Id={context.id}")
+            _log_api_call("DeleteContext", f"Id={context.id}")
             request = DeleteContextRequest(
                 id=context.id, authorization=f"Bearer {self.agent_bay.api_key}"
             )
@@ -633,7 +633,7 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"Response: {response}")
             request_id = extract_request_id(response)
@@ -689,7 +689,7 @@ class ContextService:
             print(url_result.url)
             ```
         """
-        log_api_call(
+        _log_api_call(
             "GetContextFileDownloadUrl", f"ContextId={context_id}, FilePath={file_path}"
         )
         req = GetContextFileDownloadUrlRequest(
@@ -702,7 +702,7 @@ class ContextService:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
             )
-            log_api_response(response_body)
+            _log_api_response(response_body)
         except Exception:
             _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
@@ -749,7 +749,7 @@ class ContextService:
             print(url_result.url)
             ```
         """
-        log_api_call(
+        _log_api_call(
             "GetContextFileUploadUrl", f"ContextId={context_id}, FilePath={file_path}"
         )
         req = GetContextFileUploadUrlRequest(
@@ -762,7 +762,7 @@ class ContextService:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
             )
-            log_api_response(response_body)
+            _log_api_response(response_body)
         except Exception:
             _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
@@ -808,7 +808,7 @@ class ContextService:
             delete_result = agent_bay.context.delete_file(ctx_result.context_id, "/path/to/file.txt")
             ```
         """
-        log_api_call(
+        _log_api_call(
             "DeleteContextFile", f"ContextId={context_id}, FilePath={file_path}"
         )
         req = DeleteContextFileRequest(
@@ -821,7 +821,7 @@ class ContextService:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
             )
-            log_api_response(response_body)
+            _log_api_response(response_body)
         except Exception:
             _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
@@ -868,7 +868,7 @@ class ContextService:
             print(f"Found {len(files_result.entries)} files")
             ```
         """
-        log_api_call(
+        _log_api_call(
             "DescribeContextFiles",
             f"ContextId={context_id}, ParentFolderPath={parent_folder_path}, "
             f"PageNumber={page_number}, PageSize={page_size}",
@@ -885,7 +885,7 @@ class ContextService:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
             )
-            log_api_response(response_body)
+            _log_api_response(response_body)
         except Exception:
             _logger.debug(f"Response: {resp}")
         request_id = extract_request_id(resp)
@@ -936,7 +936,7 @@ class ContextService:
             ```
         """
         try:
-            log_api_call("ClearContext", f"ContextId={context_id}")
+            _log_api_call("ClearContext", f"ContextId={context_id}")
             request = ClearContextRequest(
                 authorization=f"Bearer {self.agent_bay.api_key}",
                 id=context_id,
@@ -946,7 +946,7 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"Response: {response}")
 
@@ -980,7 +980,7 @@ class ContextService:
                 error_message="",
             )
         except Exception as e:
-            log_operation_error("ClearContext", str(e))
+            _log_operation_error("ClearContext", str(e))
             raise AgentBayError(f"Failed to start context clearing for {context_id}: {e}")
 
     def get_clear_status(self, context_id: str) -> ClearContextResult:
@@ -1005,7 +1005,7 @@ class ContextService:
             ```
         """
         try:
-            log_api_call("GetContext", f"ContextId={context_id} (for clear status)")
+            _log_api_call("GetContext", f"ContextId={context_id} (for clear status)")
             request = GetContextRequest(
                 authorization=f"Bearer {self.agent_bay.api_key}",
                 context_id=context_id,
@@ -1016,7 +1016,7 @@ class ContextService:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"Response: {response}")
 
@@ -1068,7 +1068,7 @@ class ContextService:
                 error_message=error_message,
             )
         except Exception as e:
-            log_operation_error("GetContext (for clear status)", str(e))
+            _log_operation_error("GetContext (for clear status)", str(e))
             return ClearContextResult(
                 request_id="",
                 success=False,

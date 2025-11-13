@@ -12,18 +12,12 @@ import (
 // Helper function to get test API key from environment
 func getTestAPIKey() string {
 	apiKey := os.Getenv("AGENTBAY_API_KEY")
-	if apiKey == "" {
-		apiKey = "akm-2a57ce50-6aeb-4bfe-b4cb-3089d551a317" // Fallback for testing
-	}
 	return apiKey
 }
 
 // Helper function to get test endpoint from environment
 func getTestEndpoint() string {
 	endpoint := os.Getenv("AGENTBAY_ENDPOINT")
-	if endpoint == "" {
-		endpoint = "wuyingai-pre.cn-hangzhou.aliyuncs.com" // Fallback for testing
-	}
 	return endpoint
 }
 

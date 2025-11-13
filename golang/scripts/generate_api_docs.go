@@ -137,7 +137,10 @@ var mappings = []docMapping{
 			"CallMcpToolForBrowser",          // Duplicate interface method
 			"GetLinkForBrowser",              // Duplicate interface method
 		},
-		IncludeAllFuncs: true,
+		FuncNames: []string{
+			"NewSession",
+			"NewCreateSessionParams",
+		},
 	},
 	{
 		Target:          "common-features/basics/command.md",
@@ -165,7 +168,9 @@ var mappings = []docMapping{
 			"ContextFileListResult",
 			"ContextFileDeleteResult",
 		},
-		IncludeAllFuncs: true,
+		FuncNames: []string{
+			"NewContextListParams",
+		},
 	},
 	{
 		Target:      "common-features/basics/context-manager.md",
@@ -178,7 +183,9 @@ var mappings = []docMapping{
 			"ContextSyncResult",
 			"ContextManager",
 		},
-		IncludeAllFuncs: true,
+		FuncNames: []string{
+			"NewContextManager",
+		},
 	},
 	{
 		Target:          "common-features/basics/filesystem.md",
@@ -207,7 +214,16 @@ var mappings = []docMapping{
 			"UploadMode",
 			"Lifecycle",
 		},
-		IncludeAllFuncs: true,
+		FuncNames: []string{
+			"NewContextSync",
+			"NewSyncPolicy",
+			"NewUploadPolicy",
+			"NewDownloadPolicy",
+			"NewDeletePolicy",
+			"NewExtractPolicy",
+			"NewRecyclePolicy",
+			"NewMappingPolicy",
+		},
 	},
 	{
 		Target:      "common-features/basics/logging.md",
@@ -220,12 +236,8 @@ var mappings = []docMapping{
 			"SetupLogger",
 			"LogDebug",
 			"LogInfo",
-			"LogInfoWithColor",
-			"LogOperationError",
-			"LogAPICall",
-			"LogAPIResponseWithDetails",
-			"LogCodeExecutionOutput",
-			"MaskSensitiveData",
+			// Private functions removed: logInfoWithColor, logOperationError, logAPICall,
+			// logAPIResponseWithDetails, logCodeExecutionOutput, maskSensitiveData
 		},
 		ValueNames: []string{"LOG_DEBUG", "LOG_INFO", "LOG_WARN", "LOG_ERROR"},
 	},
@@ -369,9 +381,9 @@ func calculateResourcePath(resource ResourceConfig, moduleConfig ModuleConfig) s
 	case "browser-use", "codespace", "computer-use", "mobile-use":
 		switch targetCategory {
 		case "common-features/basics":
-			return fmt.Sprintf("../../common-features/basics/%s.md", module)
+			return fmt.Sprintf("../common-features/basics/%s.md", module)
 		case "common-features/advanced":
-			return fmt.Sprintf("../../common-features/advanced/%s.md", module)
+			return fmt.Sprintf("../common-features/advanced/%s.md", module)
 		case "browser-use":
 			return fmt.Sprintf("../%s.md", module)
 		case "codespace":
@@ -873,7 +885,7 @@ func writeType(buf *bytes.Buffer, pkg *packageDoc, typ *doc.Type, mapping docMap
 		if len(visibleMethods) > 0 {
 			buf.WriteString("### Methods\n\n")
 			for _, method := range visibleMethods {
-				fmt.Fprintf(buf, "#### %s\n\n", method.Name)
+				fmt.Fprintf(buf, "### %s\n\n", method.Name)
 				buf.WriteString("```go\n")
 				buf.WriteString(formatNode(pkg.fset, method.Decl))
 				buf.WriteString("\n```\n\n")
@@ -898,7 +910,7 @@ func writeType(buf *bytes.Buffer, pkg *packageDoc, typ *doc.Type, mapping docMap
 		if len(visibleFuncs) > 0 {
 			buf.WriteString("### Related Functions\n\n")
 			for _, fn := range visibleFuncs {
-				fmt.Fprintf(buf, "#### %s\n\n", fn.Name)
+				fmt.Fprintf(buf, "### %s\n\n", fn.Name)
 				buf.WriteString("```go\n")
 				buf.WriteString(formatNode(pkg.fset, fn.Decl))
 				buf.WriteString("\n```\n\n")

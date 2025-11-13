@@ -1,7 +1,7 @@
 from typing import Optional, List, Dict, Any, Callable
 from agentbay.api.models import GetContextInfoRequest, SyncContextRequest
 from agentbay.model.response import ApiResponse, extract_request_id
-from .logger import get_logger, log_api_call, log_api_response, log_api_response_with_details
+from .logger import get_logger, _log_api_call, _log_api_response, _log_api_response_with_details
 import json
 import time
 import threading
@@ -122,7 +122,7 @@ class ContextManager:
             request.path = path
         if task_type:
             request.task_type = task_type
-        log_api_call(
+        _log_api_call(
             "GetContextInfo",
             f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}",
         )
@@ -145,7 +145,7 @@ class ContextManager:
             if not body.get("Success", True) and body.get("Code"):
                 code = body.get("Code", "Unknown")
                 message = body.get("Message", "Unknown error")
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="GetContextInfo",
                     request_id=request_id,
                     success=False,
@@ -180,7 +180,7 @@ class ContextManager:
                     _logger.error(f"❌ Unexpected error parsing context status: {e}")
 
         # Log successful context info retrieval
-        log_api_response_with_details(
+        _log_api_response_with_details(
             api_name="GetContextInfo",
             request_id=request_id,
             success=True,
@@ -225,82 +225,28 @@ class ContextManager:
         Returns:
             ContextSyncResult: Result object containing success status and request ID
 
-        Example (Async mode - waits for completion):
+        Example:
+            Async mode - waits for completion:
             ```python
-            import asyncio
-            from agentbay import AgentBay
-
-            agent_bay = AgentBay(api_key="your_api_key")
-
-            async def sync_context_async():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        # Get or create a context
-                        context_result = agent_bay.context.get('my-context', True)
-                        if context_result.context:
-                            # Trigger context synchronization and wait for completion
-                            sync_result = await session.context.sync(
-                                context_id=context_result.context_id,
-                                path="/mnt/persistent",
-                                mode="upload"
-                            )
-
-                            print(f"Sync completed - Success: {sync_result.success}")
-                            print(f"Request ID: {sync_result.request_id}")
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            asyncio.run(sync_context_async())
+            result = agent_bay.create()
+            session = result.session
+            context = agent_bay.context.get('my-context', True).context
+            sync_result = await session.context.sync(context.id, "/mnt/data")
+            print(f"Sync success: {sync_result.success}")
+            session.delete()
             ```
 
-        Example (Callback mode - returns immediately):
+            Callback mode - returns immediately:
             ```python
-            import asyncio
-            from agentbay import AgentBay
+            result = agent_bay.create()
+            session = result.session
 
-            agent_bay = AgentBay(api_key="your_api_key")
+            def on_complete(success: bool):
+                print(f"Sync completed: {success}")
 
-            async def sync_context_with_callback():
-                try:
-                    result = agent_bay.create()
-                    if result.success:
-                        session = result.session
-
-                        context_result = agent_bay.context.get('my-context', True)
-
-                        # Define a callback function
-                        def on_sync_complete(success: bool):
-                            if success:
-                                print("Context sync completed successfully")
-                            else:
-                                print("Context sync failed or timed out")
-
-                        # Trigger sync with callback - returns immediately
-                        sync_result = await session.context.sync(
-                            context_id=context_result.context_id,
-                            path="/mnt/persistent",
-                            mode="upload",
-                            callback=on_sync_complete,
-                            max_retries=10,
-                            retry_interval=1000
-                        )
-
-                        print(f"Sync triggered - Success: {sync_result.success}")
-                        print(f"Request ID: {sync_result.request_id}")
-
-                        # Wait a bit for callback to be called
-                        await asyncio.sleep(3)
-
-                        session.delete()
-                except Exception as e:
-                    print(f"Error: {e}")
-
-            asyncio.run(sync_context_with_callback())
+            context = agent_bay.context.get('my-context', True).context
+            await session.context.sync(context.id, "/mnt/data", callback=on_complete)
+            session.delete()
             ```
         """
         request = SyncContextRequest(
@@ -313,7 +259,7 @@ class ContextManager:
             request.path = path
         if mode:
             request.mode = mode
-        log_api_call(
+        _log_api_call(
             "SyncContext",
             f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}",
         )
@@ -336,7 +282,7 @@ class ContextManager:
             if not body.get("Success", True) and body.get("Code"):
                 code = body.get("Code", "Unknown")
                 message = body.get("Message", "Unknown error")
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="SyncContext",
                     request_id=request_id,
                     success=False,
@@ -353,7 +299,7 @@ class ContextManager:
 
         # Log successful sync context call
         if success:
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="SyncContext",
                 request_id=request_id,
                 success=True,

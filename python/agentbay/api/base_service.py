@@ -10,11 +10,11 @@ from agentbay.exceptions import AgentBayError
 from agentbay.model import OperationResult, extract_request_id
 from agentbay.logger import (
     get_logger,
-    log_api_call,
-    log_api_response,
-    log_api_response_with_details,
-    log_operation_error,
-    log_code_execution_output,
+    _log_api_call,
+    _log_api_response,
+    _log_api_response_with_details,
+    _log_operation_error,
+    _log_code_execution_output,
 )
 
 # Initialize _logger for this module
@@ -64,7 +64,7 @@ class BaseService:
         Returns:
             OperationResult: The response from the tool
         """
-        log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
+        _log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
 
         # Find server for this tool
         server = self.session._find_server_for_tool(tool_name)
@@ -110,15 +110,15 @@ class BaseService:
                     try:
                         data_map = json.loads(response_data["data"])
                         if "result" in data_map:
-                            log_code_execution_output(request_id, json.dumps(data_map["result"]))
+                            _log_code_execution_output(request_id, json.dumps(data_map["result"]))
                     except json.JSONDecodeError:
                         pass
                 elif isinstance(response_data["data"], dict):
                     if "result" in response_data["data"]:
-                        log_code_execution_output(request_id, json.dumps(response_data["data"]["result"]))
+                        _log_code_execution_output(request_id, json.dumps(response_data["data"]["result"]))
 
             # Log API response with key details
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name=f"CallMcpTool (VPC) - {tool_name}",
                 request_id=request_id,
                 success=True,
@@ -159,7 +159,7 @@ class BaseService:
 
         except requests.RequestException as e:
             sanitized_error = self._sanitize_error(str(e))
-            log_operation_error(f"CallMcpTool (VPC) - {tool_name}", sanitized_error, exc_info=True)
+            _log_operation_error(f"CallMcpTool (VPC) - {tool_name}", sanitized_error, exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -243,12 +243,12 @@ class BaseService:
             # But only if it's not an error response
             if name == "run_code" and body.get("Data") and not body.get("Data", {}).get("isError", False):
                 data_str = json.dumps(body["Data"], ensure_ascii=False)
-                log_code_execution_output(request_id, data_str)
+                _log_code_execution_output(request_id, data_str)
 
             result = self._parse_response_body(body)
 
             # Log API response with key details
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name=f"CallMcpTool - {name}",
                 request_id=request_id,
                 success=True,

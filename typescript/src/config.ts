@@ -10,17 +10,17 @@ interface Config {
 /**
  * Browser data path constant
  */
-export const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
+const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 
 /**
  * Browser fingerprint persistent path constant
  */
-export const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
+const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
 
 /**
  * Returns the default configuration
  */
-export function defaultConfig(): Config {
+function defaultConfig(): Config {
   return {
     endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
     timeout_ms: 60000,
@@ -38,7 +38,7 @@ export function defaultConfig(): Config {
  * @param startPath Starting directory for search (defaults to current working directory)
  * @returns Path to .env file if found, null otherwise
  */
-export function findDotEnvFile(startPath?: string): string | null {
+function findDotEnvFile(startPath?: string): string | null {
   const currentPath = startPath ? path.resolve(startPath) : process.cwd();
   let searchPath = currentPath;
 
@@ -72,7 +72,7 @@ export function findDotEnvFile(startPath?: string): string | null {
  * 
  * @param customEnvPath Custom path to .env file (optional)
  */
-export function loadDotEnvWithFallback(customEnvPath?: string): void {
+function loadDotEnvWithFallback(customEnvPath?: string): void {
   if (customEnvPath) {
     // Use custom path if provided
     if (fs.existsSync(customEnvPath)) {
@@ -111,20 +111,6 @@ export function loadDotEnvWithFallback(customEnvPath?: string): void {
 // Track if .env file has been loaded to avoid duplicate loading
 let dotEnvLoaded = false;
 
-/**
- * Load .env file into process.env if it exists
- * This function should be called early to ensure .env variables are available
- * @deprecated Use loadDotEnvWithFallback instead
- */
-export function loadDotEnv(): void {
-  if (dotEnvLoaded) {
-    return; // Already loaded, skip
-  }
-
-  loadDotEnvWithFallback();
-  dotEnvLoaded = true;
-}
-
 // Auto-load .env file on module initialization
 // This ensures environment variables are available before logger module is loaded
 if (!dotEnvLoaded) {
@@ -150,7 +136,7 @@ if (!dotEnvLoaded) {
  * @param customEnvPath Custom path to .env file (optional)
  * @returns Configuration object
  */
-export function loadConfig(customConfig?: Config, customEnvPath?: string): Config {
+function loadConfig(customConfig?: Config, customEnvPath?: string): Config {
   // If custom config is provided, use it directly
   if (customConfig) {
     return customConfig;

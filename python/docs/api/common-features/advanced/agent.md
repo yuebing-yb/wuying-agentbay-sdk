@@ -6,13 +6,15 @@
 
 
 
+## QueryResult
+
 ```python
 class QueryResult(ApiResponse)
 ```
 
 Result of query operations.
 
-## ExecutionResult Objects
+## ExecutionResult
 
 ```python
 class ExecutionResult(ApiResponse)
@@ -20,7 +22,7 @@ class ExecutionResult(ApiResponse)
 
 Result of task execution.
 
-## Agent Objects
+## Agent
 
 ```python
 class Agent(BaseService)
@@ -28,7 +30,7 @@ class Agent(BaseService)
 
 An Agent to manipulate applications to complete specific tasks.
 
-#### async\_execute\_task
+### async\_execute\_task
 
 ```python
 def async_execute_task(task: str) -> ExecutionResult
@@ -63,7 +65,7 @@ print(f"Task status: {status.task_status}")
 session.delete()
 ```
 
-#### execute\_task
+### execute\_task
 
 ```python
 def execute_task(task: str, max_try_times: int) -> ExecutionResult
@@ -96,7 +98,7 @@ print(f"Task result: {result.task_result}")
 session.delete()
 ```
 
-#### get\_task\_status
+### get\_task\_status
 
 ```python
 def get_task_status(task_id: str) -> QueryResult
@@ -125,7 +127,7 @@ print(f"Status: {status.task_status}, Action: {status.task_action}")
 session.delete()
 ```
 
-#### terminate\_task
+### terminate\_task
 
 ```python
 def terminate_task(task_id: str) -> ExecutionResult

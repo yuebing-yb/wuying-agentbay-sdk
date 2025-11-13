@@ -6,13 +6,15 @@
 
 
 
+## OSSClientResult
+
 ```python
 class OSSClientResult(ApiResponse)
 ```
 
 Result of OSS client creation operations.
 
-## OSSUploadResult Objects
+## OSSUploadResult
 
 ```python
 class OSSUploadResult(ApiResponse)
@@ -20,7 +22,7 @@ class OSSUploadResult(ApiResponse)
 
 Result of OSS upload operations.
 
-## OSSDownloadResult Objects
+## OSSDownloadResult
 
 ```python
 class OSSDownloadResult(ApiResponse)
@@ -28,7 +30,7 @@ class OSSDownloadResult(ApiResponse)
 
 Result of OSS download operations.
 
-## Oss Objects
+## Oss
 
 ```python
 class Oss(BaseService)
@@ -36,7 +38,7 @@ class Oss(BaseService)
 
 Handles Object Storage Service operations in the AgentBay cloud environment.
 
-#### env\_init
+### env\_init
 
 ```python
 def env_init(access_key_id: str,
@@ -68,13 +70,13 @@ Create an OSS client with the provided credentials.
 ```python
 session = agent_bay.create().session
 session.oss.env_init(
-    access_key_id="your_access_key_id",
-    access_key_secret="your_access_key_secret"
+  access_key_id="your_access_key_id",
+  access_key_secret="your_access_key_secret"
 )
 session.delete()
 ```
 
-#### upload
+### upload
 
 ```python
 def upload(bucket: str, object: str, path: str) -> OSSUploadResult
@@ -103,15 +105,15 @@ the OSS environment.
 ```python
 session = agent_bay.create().session
 session.oss.env_init(
-    access_key_id="your_access_key_id",
-    access_key_secret="your_access_key_secret"
+  access_key_id="your_access_key_id",
+  access_key_secret="your_access_key_secret"
 )
 result = session.oss.upload("my-bucket", "file.txt", "/local/path/file.txt")
 print(f"Upload result: {result.content}")
 session.delete()
 ```
 
-#### upload\_anonymous
+### upload\_anonymous
 
 ```python
 def upload_anonymous(url: str, path: str) -> OSSUploadResult
@@ -136,14 +138,14 @@ Upload a local file or directory to a URL anonymously.
 ```python
 session = agent_bay.create().session
 result = session.oss.upload_anonymous(
-    "https://example.com/upload",
-    "/local/path/file.txt"
+  "https://example.com/upload",
+  "/local/path/file.txt"
 )
 print(f"Upload result: {result.content}")
 session.delete()
 ```
 
-#### download
+### download
 
 ```python
 def download(bucket: str, object: str, path: str) -> OSSDownloadResult
@@ -172,15 +174,15 @@ the OSS environment.
 ```python
 session = agent_bay.create().session
 session.oss.env_init(
-    access_key_id="your_access_key_id",
-    access_key_secret="your_access_key_secret"
+  access_key_id="your_access_key_id",
+  access_key_secret="your_access_key_secret"
 )
 result = session.oss.download("my-bucket", "file.txt", "/local/path/file.txt")
 print(f"Download result: {result.content}")
 session.delete()
 ```
 
-#### download\_anonymous
+### download\_anonymous
 
 ```python
 def download_anonymous(url: str, path: str) -> OSSDownloadResult
@@ -205,8 +207,8 @@ Download a file from a URL anonymously to a local file path.
 ```python
 session = agent_bay.create().session
 result = session.oss.download_anonymous(
-    "https://example.com/file.txt",
-    "/local/path/file.txt"
+  "https://example.com/file.txt",
+  "/local/path/file.txt"
 )
 print(f"Download result: {result.content}")
 session.delete()

@@ -266,46 +266,10 @@ func (s *Session) GetCommand() *command.Command {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		// Initialize the SDK
-//		client, err := agentbay.NewAgentBay("your_api_key")
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		// Create a session
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		session := result.Session
-//		fmt.Printf("Session ID: %s\n", session.SessionID)
-//		// Output: Session ID: session-04bdwfj7u22a1s30g
-//
-//		// Delete session without context sync
-//		deleteResult, err := session.Delete()
-//		if err != nil {
-//			panic(err)
-//		}
-//		if deleteResult.Success {
-//			fmt.Println("Session deleted successfully")
-//			// Output: Session deleted successfully
-//		}
-//	}
-//
-// Note:
-//
-// - Use syncContext=true when you need to preserve context data
-// - For temporary sessions, use syncContext=false for faster cleanup
-// - Always call Delete() when done to avoid resource leaks
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    deleteResult, _ := result.Session.Delete()
 func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 	shouldSync := len(syncContext) > 0 && syncContext[0]
 
@@ -317,7 +281,7 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 		syncResult, err := s.Context.SyncWithCallback("", "", "", nil, 150, 1500)
 		if err != nil {
 			syncDuration := time.Since(syncStartTime)
-			LogOperationError("Delete", fmt.Sprintf("Failed to trigger context sync after %v: %v", syncDuration, err), false)
+			logOperationError("Delete", fmt.Sprintf("Failed to trigger context sync after %v: %v", syncDuration, err), false)
 			// Continue with deletion even if sync fails
 		} else {
 			syncDuration := time.Since(syncStartTime)
@@ -338,13 +302,13 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s", *releaseSessionRequest.SessionId)
-	LogAPICall("ReleaseMcpSession", requestParams)
+	logAPICall("ReleaseMcpSession", requestParams)
 
 	response, err := s.GetClient().ReleaseMcpSession(releaseSessionRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("ReleaseMcpSession", err.Error(), true)
+		logOperationError("ReleaseMcpSession", err.Error(), true)
 		return nil, err
 	}
 
@@ -360,7 +324,7 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 			} else if response.Body.Code != nil {
 				errorMsg = fmt.Sprintf("[%s] Failed to delete session", *response.Body.Code)
 			}
-			LogOperationError("ReleaseMcpSession", errorMsg, false)
+			logOperationError("ReleaseMcpSession", errorMsg, false)
 			return &DeleteResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -378,7 +342,7 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 		"session_id": s.SessionID,
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("ReleaseMcpSession", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("ReleaseMcpSession", requestID, true, keyFields, string(responseJSON))
 
 	return &DeleteResult{
 		ApiResponse: models.ApiResponse{
@@ -435,49 +399,11 @@ func (s *Session) ValidateLabels(labels map[string]string) string {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay("your_api_key")
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		// Create a session
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		session := result.Session
-//
-//		// Set labels for the session
-//		labels := map[string]string{
-//			"project": "demo",
-//			"env":     "test",
-//		}
-//		labelResult, err := session.SetLabels(labels)
-//		if err != nil {
-//			panic(err)
-//		}
-//		fmt.Printf("Labels set successfully (RequestID: %s)\n", labelResult.RequestID)
-//		// Output: Labels set successfully (RequestID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B)
-//
-//		// Get labels back
-//		getResult, err := session.GetLabels()
-//		if err != nil {
-//			panic(err)
-//		}
-//		fmt.Printf("Retrieved labels: %s\n", getResult.Labels)
-//		// Output: Retrieved labels: {"project":"demo","env":"test"}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    labels := map[string]string{"env": "test"}
+//    labelResult, _ := result.Session.SetLabels(labels)
 func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error) {
 	// Validate labels using the validation function
 	if validationError := s.ValidateLabels(labels); validationError != "" {
@@ -508,13 +434,13 @@ func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s, Labels=%s", *setLabelRequest.SessionId, *setLabelRequest.Labels)
-	LogAPICall("SetLabel", requestParams)
+	logAPICall("SetLabel", requestParams)
 
 	response, err := s.GetClient().SetLabel(setLabelRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("SetLabel", err.Error(), true)
+		logOperationError("SetLabel", err.Error(), true)
 		return nil, err
 	}
 
@@ -527,7 +453,7 @@ func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error) {
 		"labels_count": len(labels),
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("SetLabel", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("SetLabel", requestID, true, keyFields, string(responseJSON))
 
 	return &LabelResult{
 		ApiResponse: models.ApiResponse{
@@ -551,50 +477,10 @@ func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error) {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"encoding/json"
-//		"fmt"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay("your_api_key")
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		// Create a session with labels
-//		params := agentbay.NewCreateSessionParams()
-//		params.Labels = map[string]string{
-//			"project": "demo",
-//			"env":     "production",
-//		}
-//		result, err := client.Create(params)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		session := result.Session
-//
-//		// Get labels from the session
-//		labelResult, err := session.GetLabels()
-//		if err != nil {
-//			panic(err)
-//		}
-//		fmt.Printf("Retrieved labels: %s\n", labelResult.Labels)
-//		// Output: Retrieved labels: {"project":"demo","env":"production"}
-//
-//		// Parse the JSON to use the labels
-//		var labels map[string]string
-//		if err := json.Unmarshal([]byte(labelResult.Labels), &labels); err == nil {
-//			fmt.Printf("Project: %s, Environment: %s\n", labels["project"], labels["env"])
-//			// Output: Project: demo, Environment: production
-//		}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    labelResult, _ := result.Session.GetLabels()
 func (s *Session) GetLabels() (*LabelResult, error) {
 	getLabelRequest := &mcp.GetLabelRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
@@ -603,13 +489,13 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s", *getLabelRequest.SessionId)
-	LogAPICall("GetLabel", requestParams)
+	logAPICall("GetLabel", requestParams)
 
 	response, err := s.GetClient().GetLabel(getLabelRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("GetLabel", err.Error(), true)
+		logOperationError("GetLabel", err.Error(), true)
 		return nil, err
 	}
 
@@ -633,7 +519,7 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 		"labels_count": labelsCount,
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("GetLabel", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("GetLabel", requestID, true, keyFields, string(responseJSON))
 
 	return &LabelResult{
 		ApiResponse: models.ApiResponse{
@@ -663,51 +549,11 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay("your_api_key")
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		session := result.Session
-//
-//		// Get default session link
-//		linkResult, err := session.GetLink(nil, nil, nil)
-//		if err != nil {
-//			panic(err)
-//		}
-//		fmt.Printf("Session link: %s\n", linkResult.Link)
-//		// Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
-//
-//		// Get link for specific port
-//		port := int32(30150)
-//		portLinkResult, err := session.GetLink(nil, &port, nil)
-//		if err != nil {
-//			panic(err)
-//		}
-//		fmt.Printf("Port 30150 link: %s\n", portLinkResult.Link)
-//		// Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
-//
-//		session.Delete()
-//	}
-//
-// Note:
-//
-// - Use default link for general session access
-// - Use port-specific links for services on specific ports
-// - Validate port range before calling to avoid errors
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    port := int32(30100)
+//    linkResult, _ := result.Session.GetLink(nil, &port, nil)
 func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*LinkResult, error) {
 	// Validate port range if port is provided
 	if port != nil {
@@ -735,13 +581,13 @@ func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*
 	if getLinkRequest.Option != nil {
 		requestParams += ", Options=provided"
 	}
-	LogAPICall("GetLink", requestParams)
+	logAPICall("GetLink", requestParams)
 
 	response, err := s.GetClient().GetLink(getLinkRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("GetLink", err.Error(), true)
+		logOperationError("GetLink", err.Error(), true)
 		return nil, err
 	}
 
@@ -768,7 +614,7 @@ func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*
 		keyFields["port"] = *getLinkRequest.Port
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("GetLink", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("GetLink", requestID, true, keyFields, string(responseJSON))
 
 	return &LinkResult{
 		ApiResponse: models.ApiResponse{
@@ -793,43 +639,10 @@ func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay("your_api_key")
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		session := result.Session
-//
-//		// Get session information
-//		infoResult, err := session.Info()
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		info := infoResult.Info
-//		fmt.Printf("Session ID: %s\n", info.SessionId)
-//		fmt.Printf("Resource URL: %s\n", info.ResourceUrl)
-//		fmt.Printf("Resource Type: %s\n", info.ResourceType)
-//		// Output:
-//		// Session ID: session-04bdwfj7u22a1s30g
-//		// Resource URL: https://...
-//		// Resource Type: vpc
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    infoResult, _ := result.Session.Info()
 func (s *Session) Info() (*InfoResult, error) {
 	getMcpResourceRequest := &mcp.GetMcpResourceRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
@@ -838,7 +651,7 @@ func (s *Session) Info() (*InfoResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("SessionId=%s", *getMcpResourceRequest.SessionId)
-	LogAPICall("GetMcpResource", requestParams)
+	logAPICall("GetMcpResource", requestParams)
 
 	response, err := s.GetClient().GetMcpResource(getMcpResourceRequest)
 
@@ -856,7 +669,7 @@ func (s *Session) Info() (*InfoResult, error) {
 		if errorCode == "InvalidMcpSession.NotFound" {
 			// This is an expected error - session doesn't exist
 			// Use info level logging without stack trace, but with red color for visibility
-			LogInfoWithColor(fmt.Sprintf("Session not found: %s", s.SessionID))
+			logInfoWithColor(fmt.Sprintf("Session not found: %s", s.SessionID))
 			LogDebug(fmt.Sprintf("GetMcpResource error details: %s", errorStr))
 			return &InfoResult{
 				ApiResponse: models.ApiResponse{
@@ -867,7 +680,7 @@ func (s *Session) Info() (*InfoResult, error) {
 		}
 
 		// This is an unexpected error - log with full error
-		LogOperationError("GetMcpResource", err.Error(), true)
+		logOperationError("GetMcpResource", err.Error(), true)
 		return nil, err
 	}
 
@@ -929,7 +742,7 @@ func (s *Session) Info() (*InfoResult, error) {
 			keyFields["resource_id"] = sessionInfo.ResourceId
 		}
 		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("GetMcpResource", requestID, true, keyFields, string(responseJSON))
+		logAPIResponseWithDetails("GetMcpResource", requestID, true, keyFields, string(responseJSON))
 
 		return &InfoResult{
 			ApiResponse: models.ApiResponse{
@@ -958,51 +771,10 @@ func (s *Session) Info() (*InfoResult, error) {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// List MCP tools available for this session
-//		toolsResult, err := session.ListMcpTools()
-//		if err != nil {
-//			fmt.Printf("Error listing MCP tools: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("Found %d MCP tools\n", len(toolsResult.Tools))
-//		// Output: Found 27 MCP tools
-//
-//		// Display first few tools
-//		for i, tool := range toolsResult.Tools {
-//			if i < 3 {
-//				fmt.Printf("Tool: %s - %s\n", tool.Name, tool.Description)
-//			}
-//		}
-//		// Output: Tool: execute_command - Execute a command on the system
-//		// Output: Tool: read_file - Read contents of a file
-//		// Output: Tool: write_file - Write content to a file
-//
-//		fmt.Printf("Request ID: %s\n", toolsResult.RequestID)
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    toolsResult, _ := result.Session.ListMcpTools()
 func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 	// Use session's ImageId, or default to "linux_latest" if empty
 	imageId := s.ImageId
@@ -1017,13 +789,13 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 
 	// Log API request
 	requestParams := fmt.Sprintf("ImageId=%s", *listMcpToolsRequest.ImageId)
-	LogAPICall("ListMcpTools", requestParams)
+	logAPICall("ListMcpTools", requestParams)
 
 	response, err := s.GetClient().ListMcpTools(listMcpToolsRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("ListMcpTools", err.Error(), true)
+		logOperationError("ListMcpTools", err.Error(), true)
 		return nil, err
 	}
 
@@ -1036,7 +808,7 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 		// The Data field is a JSON string, so we need to unmarshal it
 		var toolsData []map[string]interface{}
 		if err := json.Unmarshal([]byte(*response.Body.Data), &toolsData); err != nil {
-			LogOperationError("ListMcpTools", fmt.Sprintf("Error unmarshaling tools data: %v", err), false)
+			logOperationError("ListMcpTools", fmt.Sprintf("Error unmarshaling tools data: %v", err), false)
 			return &McpToolsResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: requestID,
@@ -1075,7 +847,7 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 		"tools_count": len(tools),
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-	LogAPIResponseWithDetails("ListMcpTools", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("ListMcpTools", requestID, true, keyFields, string(responseJSON))
 
 	return &McpToolsResult{
 		ApiResponse: models.ApiResponse{
@@ -1136,10 +908,10 @@ func (s *Session) FindServerForTool(toolName string) string {
 //
 // Returns:
 //   - *models.McpToolResult: Result containing:
-//     - Success: Whether the tool call was successful
-//     - Data: Tool output data (text content extracted from response)
-//     - ErrorMessage: Error message if the call failed
-//     - RequestID: Unique identifier for the API request
+//   - Success: Whether the tool call was successful
+//   - Data: Tool output data (text content extracted from response)
+//   - ErrorMessage: Error message if the call failed
+//   - RequestID: Unique identifier for the API request
 //   - error: Error if the call fails at the transport level
 //
 // Behavior:
@@ -1153,64 +925,45 @@ func (s *Session) FindServerForTool(toolName string) string {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Call the shell tool to execute a command
-//		toolResult, err := session.CallMcpTool("shell", map[string]interface{}{
-//			"command":    "echo 'Hello World'",
-//			"timeout_ms": 1000,
-//		})
-//		if err != nil {
-//			fmt.Printf("Error calling tool: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		if toolResult.Success {
-//			fmt.Printf("Output: %s\n", toolResult.Data)
-//			// Output: Hello World
-//			fmt.Printf("Request ID: %s\n", toolResult.RequestID)
-//		} else {
-//			fmt.Printf("Error: %s\n", toolResult.ErrorMessage)
-//		}
-//
-//		// Example with error handling
-//		toolResult2, err := session.CallMcpTool("shell", map[string]interface{}{
-//			"command":    "invalid_command_12345",
-//			"timeout_ms": 1000,
-//		})
-//		if err != nil {
-//			fmt.Printf("Error calling tool: %v\n", err)
-//			os.Exit(1)
-//		}
-//
-//		if !toolResult2.Success {
-//			fmt.Printf("Command failed: %s\n", toolResult2.ErrorMessage)
-//			// Output: Command failed: sh: 1: invalid_command_12345: not found
-//		}
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    args := map[string]interface{}{"command": "ls -la"}
+//    toolResult, _ := result.Session.CallMcpTool("execute_command", args)
 func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+	// Normalize press_keys arguments for better case compatibility
+	if toolName == "press_keys" {
+		// Try to extract and normalize the keys field
+		if argsMap, ok := args.(map[string]interface{}); ok {
+			if keys, exists := argsMap["keys"]; exists {
+				if keysArray, isArray := keys.([]interface{}); isArray {
+					// Convert []interface{} to []string
+					keysStr := make([]string, 0, len(keysArray))
+					for _, k := range keysArray {
+						if keyStr, isString := k.(string); isString {
+							keysStr = append(keysStr, keyStr)
+						}
+					}
+					// Normalize keys
+					normalizedKeys := NormalizeKeys(keysStr)
+					// Convert back to []interface{}
+					normalizedKeysInterface := make([]interface{}, len(normalizedKeys))
+					for i, k := range normalizedKeys {
+						normalizedKeysInterface[i] = k
+					}
+					// Create a copy of args to avoid modifying the original
+					argsCopy := make(map[string]interface{})
+					for k, v := range argsMap {
+						argsCopy[k] = v
+					}
+					argsCopy["keys"] = normalizedKeysInterface
+					args = argsCopy
+					LogDebug(fmt.Sprintf("Normalized press_keys arguments: %v", argsCopy))
+				}
+			}
+		}
+	}
+
 	// Marshal arguments to JSON
 	argsJSON, err := json.Marshal(args)
 	if err != nil {
@@ -1241,12 +994,12 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession 
 func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResult, error) {
 	// VPC mode: Use HTTP request to the VPC endpoint
 	requestParams := fmt.Sprintf("Tool=%s, ArgsLength=%d", toolName, len(argsJSON))
-	LogAPICall("CallMcpTool(VPC)", requestParams)
+	logAPICall("CallMcpTool(VPC)", requestParams)
 
 	// Find server for this tool
 	server := s.FindServerForTool(toolName)
 	if server == "" {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("server not found for tool: %s", toolName), false)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("server not found for tool: %s", toolName), false)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1257,7 +1010,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 
 	// Check VPC network configuration
 	if s.NetworkInterfaceIp() == "" || s.HttpPort() == "" {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC network configuration incomplete: networkInterfaceIp=%s, httpPort=%s", s.NetworkInterfaceIp(), s.HttpPort()), false)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC network configuration incomplete: networkInterfaceIp=%s, httpPort=%s", s.NetworkInterfaceIp(), s.HttpPort()), false)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1282,7 +1035,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	// Send HTTP request
 	response, err := http.Get(fullURL)
 	if err != nil {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed: %v", err), true)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1293,7 +1046,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed with status: %d", response.StatusCode), false)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed with status: %d", response.StatusCode), false)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1305,7 +1058,7 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 	// Parse response
 	var responseData interface{}
 	if err := json.NewDecoder(response.Body).Decode(&responseData); err != nil {
-		LogOperationError("CallMcpTool(VPC)", fmt.Sprintf("Failed to parse VPC response: %v", err), true)
+		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("Failed to parse VPC response: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1326,11 +1079,11 @@ func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResu
 		"response_length": len(textContent),
 	}
 	responseJSON, _ := json.Marshal(responseData)
-	LogAPIResponseWithDetails("CallMcpTool(VPC)", requestID, true, keyFields, string(responseJSON))
+	logAPIResponseWithDetails("CallMcpTool(VPC)", requestID, true, keyFields, string(responseJSON))
 
 	// For run_code tool, extract and log the actual code execution output
 	if toolName == "run_code" && textContent != "" {
-		LogCodeExecutionOutput(requestID, textContent)
+		logCodeExecutionOutput(requestID, textContent)
 	}
 
 	return &models.McpToolResult{
@@ -1359,13 +1112,13 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 
 	// Log API request
 	requestParams := fmt.Sprintf("Tool=%s, SessionId=%s, ArgsLength=%d", toolName, s.SessionID, len(argsJSON))
-	LogAPICall("CallMcpTool", requestParams)
+	logAPICall("CallMcpTool", requestParams)
 
 	response, err := s.GetClient().CallMcpTool(callToolRequest)
 
 	// Log API response
 	if err != nil {
-		LogOperationError("CallMcpTool", fmt.Sprintf("API request failed: %v", err), true)
+		logOperationError("CallMcpTool", fmt.Sprintf("API request failed: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1394,7 +1147,7 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 			"response_length": responseLength,
 		}
 		responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
-		LogAPIResponseWithDetails("CallMcpTool", requestID, true, keyFields, string(responseJSON))
+		logAPIResponseWithDetails("CallMcpTool", requestID, true, keyFields, string(responseJSON))
 
 		// For run_code tool, extract and log the actual code execution output
 		if toolName == "run_code" && response.Body.Data != nil {
@@ -1405,7 +1158,7 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 				dataStr = string(dataBytes)
 			}
 			if dataStr != "" {
-				LogCodeExecutionOutput(requestID, dataStr)
+				logCodeExecutionOutput(requestID, dataStr)
 			}
 		}
 
@@ -1452,7 +1205,7 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 		}
 
 		if isError {
-			LogOperationError("CallMcpTool", fmt.Sprintf("Tool returned error: %s", textContent), false)
+			logOperationError("CallMcpTool", fmt.Sprintf("Tool returned error: %s", textContent), false)
 			return &models.McpToolResult{
 				Success:      false,
 				Data:         "",
@@ -1471,7 +1224,7 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 
 	// Handle empty or error response
 	errorMsg := "Empty response from CallMcpTool"
-	LogOperationError("CallMcpTool", errorMsg, false)
+	logOperationError("CallMcpTool", errorMsg, false)
 	return &models.McpToolResult{
 		Success:      false,
 		Data:         "",

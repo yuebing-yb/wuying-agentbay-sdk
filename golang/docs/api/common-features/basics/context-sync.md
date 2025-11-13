@@ -21,7 +21,7 @@ ContextSync defines the context synchronization configuration
 
 ### Methods
 
-#### WithPolicy
+### WithPolicy
 
 ```go
 func (cs *ContextSync) WithPolicy(policy *SyncPolicy) (*ContextSync, error)
@@ -31,7 +31,7 @@ WithPolicy sets the policy and returns the context sync for chaining
 
 ### Related Functions
 
-#### NewContextSync
+### NewContextSync
 
 ```go
 func NewContextSync(contextID, path string, policy *SyncPolicy) (*ContextSync, error)
@@ -64,7 +64,7 @@ SyncPolicy defines the synchronization policy
 
 ### Related Functions
 
-#### NewSyncPolicy
+### NewSyncPolicy
 
 ```go
 func NewSyncPolicy() *SyncPolicy
@@ -89,7 +89,7 @@ UploadPolicy defines the upload policy for context synchronization
 
 ### Related Functions
 
-#### NewUploadPolicy
+### NewUploadPolicy
 
 ```go
 func NewUploadPolicy() *UploadPolicy
@@ -112,7 +112,7 @@ DownloadPolicy defines the download policy for context synchronization
 
 ### Related Functions
 
-#### NewDownloadPolicy
+### NewDownloadPolicy
 
 ```go
 func NewDownloadPolicy() *DownloadPolicy
@@ -133,7 +133,7 @@ DeletePolicy defines the delete policy for context synchronization
 
 ### Related Functions
 
-#### NewDeletePolicy
+### NewDeletePolicy
 
 ```go
 func NewDeletePolicy() *DeletePolicy
@@ -158,7 +158,7 @@ ExtractPolicy defines the extract policy for context synchronization
 
 ### Related Functions
 
-#### NewExtractPolicy
+### NewExtractPolicy
 
 ```go
 func NewExtractPolicy() *ExtractPolicy
@@ -203,7 +203,7 @@ Paths field specifies which directories or files should be subject to the recycl
 
 ### Related Functions
 
-#### NewRecyclePolicy
+### NewRecyclePolicy
 
 ```go
 func NewRecyclePolicy() *RecyclePolicy
@@ -248,7 +248,7 @@ MappingPolicy defines the mapping policy for cross-platform context synchronizat
 
 ### Related Functions
 
-#### NewMappingPolicy
+### NewMappingPolicy
 
 ```go
 func NewMappingPolicy() *MappingPolicy
@@ -290,515 +290,69 @@ Lifecycle defines the lifecycle options for recycle policy
 
 ## Functions
 
-### Deprecated
+### NewContextSync
 
 ```go
-func Deprecated(reason, replacement, version string)
+func NewContextSync(contextID, path string, policy *SyncPolicy) (*ContextSync, error)
 ```
 
-Deprecated marks a function or method as deprecated and emits a warning
+NewContextSync creates a new context sync configuration
 
-### FindDotEnvFile
+### NewSyncPolicy
 
 ```go
-func FindDotEnvFile(startPath string) string
+func NewSyncPolicy() *SyncPolicy
 ```
 
-FindDotEnvFile searches for .env file upward from startPath. Search order: 1. Current working
-directory 2. Parent directories (up to root) 3. Git repository root (if found)
+NewSyncPolicy creates a new sync policy with default values
 
-Args:
-
-
-startPath: Starting directory for search (empty string means current directory)
-
-Returns:
-
-
-Path to .env file if found, empty string otherwise
-
-### GetLogLevel
+### NewUploadPolicy
 
 ```go
-func GetLogLevel() int
+func NewUploadPolicy() *UploadPolicy
 ```
 
-GetLogLevel returns the current global log level
+NewUploadPolicy creates a new upload policy with default values
 
-**Example:**
+### NewDownloadPolicy
 
 ```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-
-	// Check current level
-
-	currentLevel := agentbay.GetLogLevel()
-	fmt.Printf("Current log level: %d\n", currentLevel)
-}
+func NewDownloadPolicy() *DownloadPolicy
 ```
 
-### LoadDotEnvWithFallback
+NewDownloadPolicy creates a new download policy with default values
+
+### NewDeletePolicy
 
 ```go
-func LoadDotEnvWithFallback(customEnvPath string)
+func NewDeletePolicy() *DeletePolicy
 ```
 
-LoadDotEnvWithFallback loads .env file with improved search strategy.
+NewDeletePolicy creates a new delete policy with default values
 
-Args:
-
-
-customEnvPath: Custom path to .env file (empty string means search upward)
-
-### LogAPICall
+### NewExtractPolicy
 
 ```go
-func LogAPICall(apiName, requestParams string)
+func NewExtractPolicy() *ExtractPolicy
 ```
 
-LogAPICall logs an API call with request parameters
+NewExtractPolicy creates a new extract policy with default values
 
-**Example:**
+### NewRecyclePolicy
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see API calls
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// API calls are automatically logged by the SDK
-
-	// Output: 🔗 API Call: create_session
-
-}
+func NewRecyclePolicy() *RecyclePolicy
 ```
 
-### LogAPIResponseWithDetails
+NewRecyclePolicy creates a new recycle policy with default values
+
+### NewMappingPolicy
 
 ```go
-func LogAPIResponseWithDetails(apiName, requestID string, success bool, keyFields map[string]interface{}, fullResponse string)
+func NewMappingPolicy() *MappingPolicy
 ```
 
-LogAPIResponseWithDetails logs a structured API response with key fields
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see detailed responses
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// API responses are automatically logged by the SDK
-
-	// Output: ✅ API Response: create_session, RequestId=xxx
-
-}
-```
-
-### LogCodeExecutionOutput
-
-```go
-func LogCodeExecutionOutput(requestID, rawOutput string)
-```
-
-LogCodeExecutionOutput extracts and logs the actual code execution output from run_code response
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to INFO to see code execution output
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Execute code in the session
-
-	execResult, err := session.Code.RunCode("print('Hello from AgentBay')", "python")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Code execution completed: %v\n", execResult.Success)
-
-	// Output: 📋 Code Execution Output (RequestID: xxx):
-
-	// Output:    Hello from AgentBay
-
-}
-```
-
-### LogDebug
-
-```go
-func LogDebug(message string)
-```
-
-LogDebug logs a debug message
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see debug messages
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Log debug messages
-
-	agentbay.LogDebug("Debugging session creation process")
-
-	// Output: 🐛 Debugging session creation process
-
-}
-```
-
-### LogInfo
-
-```go
-func LogInfo(message string)
-```
-
-LogInfo logs an informational message
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to INFO or DEBUG to see info messages
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Log informational messages
-
-	agentbay.LogInfo("Session created successfully")
-
-	// Output: ℹ️  Session created successfully
-
-}
-```
-
-### LogInfoWithColor
-
-```go
-func LogInfoWithColor(message string)
-```
-
-LogInfoWithColor logs an informational message with custom color
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to INFO or DEBUG to see colored messages
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Log informational messages with color emphasis
-
-	agentbay.LogInfoWithColor("Important: Session ready for use")
-
-	// Output: ℹ️  Important: Session ready for use
-
-}
-```
-
-### LogOperationError
-
-```go
-func LogOperationError(operation, errorMsg string, withStack bool)
-```
-
-LogOperationError logs an operation error with optional stack trace
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-
-		// Log operation errors
-
-		agentbay.LogOperationError("Create Session", err.Error(), false)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Output: ❌ Failed: Create Session
-
-	// Output: 💥 Error: session creation failed
-
-}
-```
-
-### MaskSensitiveData
-
-```go
-func MaskSensitiveData(data interface{}) interface{}
-```
-
-MaskSensitiveData recursively masks sensitive information in data structures
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Create data with sensitive information
-
-	data := map[string]interface{}{
-		"api_key":    "sk_live_1234567890",
-		"password":   "secret123",
-		"auth_token": "Bearer xyz",
-		"username":   "john_doe",
-	}
-
-	// Mask sensitive data
-
-	masked := agentbay.MaskSensitiveData(data)
-	fmt.Printf("Masked data: %v\n", masked)
-
-	// Output: Masked data: map[api_key:sk****90 auth_token:Be****yz password:se****23 username:john_doe]
-
-}
-```
-
-### SetDeprecationConfig
-
-```go
-func SetDeprecationConfig(config *DeprecationConfig)
-```
-
-SetDeprecationConfig sets the global deprecation configuration
-
-### SetLogLevel
-
-```go
-func SetLogLevel(level int)
-```
-
-SetLogLevel sets the global log level
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see all messages
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Change to INFO level to reduce verbosity
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-
-	// Continue with your operations
-
-}
-```
-
-### SetupLogger
-
-```go
-func SetupLogger(config LoggerConfig)
-```
-
-SetupLogger configures the logger with file logging support
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Configure file logging with rotation
-
-	agentbay.SetupLogger(agentbay.LoggerConfig{
-		Level:       "DEBUG",
-		LogFile:     "/tmp/agentbay.log",
-		MaxFileSize: "100 MB",
-	})
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// All logs will be written to both console and file
-
-}
-```
+NewMappingPolicy creates a new mapping policy with default values
 
 ## Related Resources
 

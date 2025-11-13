@@ -339,12 +339,16 @@ class TestMobile:
         """Test get_adb_url returns AdbUrlResult with valid adbkey_pub in mobile environment."""
         # Arrange
         self.mock_session.image_id = "mobile_latest"
-        mock_result = Mock()
-        mock_result.success = True
-        mock_result.request_id = "adb-request-123"
-        mock_result.data = "adb connect 47.99.76.99:54848"
-
-        self.mobile.session.get_link = Mock(return_value=mock_result)
+        
+        # Mock get_adb_link response
+        mock_response = Mock()
+        mock_response.body = Mock()
+        mock_response.body.success = True
+        mock_response.body.request_id = "adb-request-123"
+        mock_response.body.data = Mock()
+        mock_response.body.data.url = "adb connect 47.99.76.99:54848"
+        
+        self.mobile.session.agent_bay.client.get_adb_link = Mock(return_value=mock_response)
 
         # Act
         adbkey_pub = "test_adb_key..."
@@ -362,13 +366,17 @@ class TestMobile:
         # Arrange
         self.mock_session.image_id = "browser_latest"
 
-        # Mock get_link to raise SessionError (simulating backend error)
-        from agentbay.exceptions import SessionError
+        # Mock get_adb_link to return error response
         from agentbay.model.response import AdbUrlResult
-
-        self.mock_session.get_link.side_effect = SessionError(
-            "Failed to get link: Error: ImageTypeNotMatched code: 400, Expected: MobileUse, Actual: BrowserUse"
-        )
+        
+        mock_response = Mock()
+        mock_response.body = Mock()
+        mock_response.body.success = False
+        mock_response.body.request_id = "adb-request-error"
+        mock_response.body.message = "ImageTypeNotMatched: Expected: MobileUse, Actual: BrowserUse"
+        mock_response.body.data = None
+        
+        self.mobile.session.agent_bay.client.get_adb_link = Mock(return_value=mock_response)
 
         # Act
         adbkey_pub = "test_adb_key..."
@@ -377,34 +385,38 @@ class TestMobile:
         # Assert - Should return AdbUrlResult with success=False
         assert isinstance(result, AdbUrlResult)
         assert result.success is False
-        assert "failed to get adb url" in result.error_message.lower()
+        assert "imagetypenotmatched" in result.error_message.lower() or "failed" in result.error_message.lower()
 
     def test_get_adb_url_calls_get_link_with_correct_params(self):
-        """Test get_adb_url calls session.get_link with correct parameters."""
+        """Test get_adb_url calls client.get_adb_link with correct parameters."""
         # Arrange
         self.mock_session.image_id = "mobile_latest"
-        mock_result = Mock()
-        mock_result.success = True
-        mock_result.request_id = "adb-request-456"
-        mock_result.data = "adb connect 192.168.1.1:5555"
+        
+        mock_response = Mock()
+        mock_response.body = Mock()
+        mock_response.body.success = True
+        mock_response.body.request_id = "adb-request-456"
+        mock_response.body.data = Mock()
+        mock_response.body.data.url = "adb connect 192.168.1.1:5555"
 
-        self.mobile.session.get_link = Mock(return_value=mock_result)
+        self.mobile.session.agent_bay.client.get_adb_link = Mock(return_value=mock_response)
 
         # Act
         adbkey_pub = "test_key_123"
         result = self.mobile.get_adb_url(adbkey_pub)
 
         # Assert
-        self.mobile.session.get_link.assert_called_once()
-        call_args = self.mobile.session.get_link.call_args
+        self.mobile.session.agent_bay.client.get_adb_link.assert_called_once()
+        call_args = self.mobile.session.agent_bay.client.get_adb_link.call_args
         
-        # Verify protocol_type is "adb"
-        assert call_args[1]["protocol_type"] == "adb"
+        # Verify the request object
+        request = call_args[0][0]
+        assert request.authorization == f"Bearer {self.mock_session.agent_bay.api_key}"
+        assert request.session_id == self.mock_session.session_id
         
         # Verify options contains adbkey_pub
         import json
-        options_str = call_args[1]["options"]
-        options_dict = json.loads(options_str)
+        options_dict = json.loads(request.option)
         assert options_dict["adbkey_pub"] == adbkey_pub
 
     def test_get_adb_url_returns_correct_structure(self):

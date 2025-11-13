@@ -30,7 +30,7 @@ AgentBay represents the main client for interacting with the AgentBay cloud runt
 
 ### Methods
 
-#### Create
+### Create
 
 ```go
 func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error)
@@ -59,84 +59,12 @@ Behavior:
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay("your_api_key")
-	if err != nil {
-		panic(err)
-	}
-
-	// Create session with default parameters
-
-	result, err := client.Create(nil)
-	if err != nil {
-		panic(err)
-	}
-	session := result.Session
-	fmt.Printf("Session ID: %s\n", session.SessionID)
-
-	// Output: Session ID: session-04bdwfj7u22a1s30g
-
-	// Create session with custom parameters
-
-	params := agentbay.NewCreateSessionParams()
-	params.Labels = map[string]string{"project": "demo"}
-	params.IsVpc = true
-	customResult, err := client.Create(params)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("VPC session created")
-
-	// Output: VPC session created
-
-	// RECOMMENDED: Create a session with context synchronization
-
-	// First, create a context
-
-	contextResult, err := client.Context.Get("my-context", true)
-	if err != nil {
-		panic(err)
-	}
-
-	// Result: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
-
-	contextSync := &agentbay.ContextSync{
-		ContextID: contextResult.Context.ID,
-		Path:      "/home/wuying",
-		Policy:    agentbay.NewSyncPolicy(),
-	}
-	syncParams := &agentbay.CreateSessionParams{
-		ImageId:     "windows_latest",
-		ContextSync: []*agentbay.ContextSync{contextSync},
-	}
-	syncResult, err := client.Create(syncParams)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Created session with context sync: %s\n", syncResult.Session.SessionID)
-
-	// Result: Waiting for context synchronization to complete...
-
-	// Result: Context SdkCtx-xxxxxxxxxxxxxxx status: Preparing, path: /home/wuying
-
-	// Result: Context SdkCtx-xxxxxxxxxxxxxxx status: Success, path: /home/wuying
-
-	// Result: Context synchronization completed successfully
-
-	// Result: Created session with context sync: session-xxxxxxxxxxxxxxx
-
-	session.Delete()
-	customResult.Session.Delete()
-	syncResult.Session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
 ```
 
-#### Delete
+### Delete
 
 ```go
 func (a *AgentBay) Delete(session *Session, syncContext ...bool) (*DeleteResult, error)
@@ -162,76 +90,12 @@ associated resources
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Initialize the SDK
-
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf(\"Error initializing AgentBay client: %v\\n\", err)
-		os.Exit(1)
-	}
-
-	// Create a context first
-
-	contextResult, err := client.Context.Create(\"test-context\")
-	if err != nil {
-		fmt.Printf(\"Error creating context: %v\\n\", err)
-		os.Exit(1)
-	}
-
-	// Output: Created context with ID: SdkCtx-xxxxxxxxxxxxxxx
-
-	// Create a session with context synchronization
-
-	contextSync := &agentbay.ContextSync{
-		ContextID: contextResult.ContextID,
-		Path:      \"/home/wuying\",
-		Policy:    agentbay.NewSyncPolicy(),
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId:     \"windows_latest\",
-		ContextSync: []*agentbay.ContextSync{contextSync},
-	}
-	createResult, err := client.Create(params)
-	if err != nil {
-		fmt.Printf(\"Error creating session: %v\\n\", err)
-		os.Exit(1)
-	}
-	session := createResult.Session
-	fmt.Printf(\"Created session with ID: %s\\n\", session.SessionID)
-
-	// Output: Created session with ID: session-xxxxxxxxxxxxxxx
-
-	// Use the session for operations...
-
-	// Delete the session with context synchronization
-
-	deleteResult, err := client.Delete(session, true)
-	if err != nil {
-		fmt.Printf(\"Error deleting session: %v\\n\", err)
-		os.Exit(1)
-	}
-	if deleteResult.Success {
-		fmt.Println(\"Session deleted successfully with synchronized context\")
-
-		// Output: Session deleted successfully with synchronized context
-
-	}
-	fmt.Printf(\"Request ID: %s\\n\", deleteResult.RequestID)
-
-	// Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+client.Delete(result.Session, true)
 ```
 
-#### Get
+### Get
 
 ```go
 func (a *AgentBay) Get(sessionID string) (*SessionResult, error)
@@ -250,60 +114,14 @@ Returns:
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	createResult, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	sessionID := createResult.Session.SessionID
-	fmt.Printf("Created session with ID: %s\n", sessionID)
-
-	// Output: Created session with ID: session-xxxxxxxxxxxxxx
-
-	result, err := client.Get(sessionID)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if result.Success {
-		fmt.Printf("Successfully retrieved session: %s\n", result.Session.SessionID)
-
-		// Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
-
-		fmt.Printf("Request ID: %s\n", result.RequestID)
-
-		// Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-
-		deleteResult, err := result.Session.Delete()
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			os.Exit(1)
-		}
-		if deleteResult.Success {
-			fmt.Printf("Session %s deleted successfully\n", sessionID)
-
-			// Output: Session session-xxxxxxxxxxxxxx deleted successfully
-
-		}
-	} else {
-		fmt.Printf("Failed to get session: %s\n", result.ErrorMessage)
-	}
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+createResult, _ := client.Create(nil)
+sessionID := createResult.Session.SessionID
+result, _ := client.Get(sessionID)
+defer result.Session.Delete()
 ```
 
-#### GetSession
+### GetSession
 
 ```go
 func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error)
@@ -311,7 +129,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error)
 
 GetSession retrieves session information by session ID
 
-#### List
+### List
 
 ```go
 func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error)
@@ -331,33 +149,13 @@ Returns:
 **Example:**
 
 ```go
-agentBay, _ := agentbay.NewAgentBay("your_api_key")
-
-// List all sessions
-
-result, err := agentBay.List(nil, nil, nil)
-
-// List sessions with specific labels
-
-result, err := agentBay.List(map[string]string{"project": "demo"}, nil, nil)
-
-// List sessions with pagination
-
-page := 2
-limit := int32(10)
-result, err := agentBay.List(map[string]string{"my-label": "my-value"}, &page, &limit)
-if err == nil {
-    for _, sessionId := range result.SessionIds {
-        fmt.Printf("Session ID: %s\n", sessionId)
-    }
-    fmt.Printf("Total count: %d\n", result.TotalCount)
-    fmt.Printf("Request ID: %s\n", result.RequestID)
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.List(nil, nil, nil)
 ```
 
 ### Related Functions
 
-#### NewAgentBay
+### NewAgentBay
 
 ```go
 func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error)
@@ -366,7 +164,7 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error)
 NewAgentBay creates a new AgentBay client. If apiKey is empty, it will look for the AGENTBAY_API_KEY
 environment variable.
 
-#### NewAgentBayWithDefaults
+### NewAgentBayWithDefaults
 
 ```go
 func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error)
@@ -385,7 +183,7 @@ Option is a function that sets optional parameters for AgentBay client.
 
 ### Related Functions
 
-#### WithConfig
+### WithConfig
 
 ```go
 func WithConfig(cfg *Config) Option
@@ -393,7 +191,7 @@ func WithConfig(cfg *Config) Option
 
 WithConfig returns an Option that sets the configuration for the AgentBay client.
 
-#### WithEnvFile
+### WithEnvFile
 
 ```go
 func WithEnvFile(envFile string) Option

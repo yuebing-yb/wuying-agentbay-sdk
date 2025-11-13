@@ -5,41 +5,7 @@ Unified logging configuration for AgentBay SDK using loguru.
 This module provides a centralized logging configuration with beautiful formatting
 and structured output for different log levels.
 
-#### COLOR\_RESET
-
-```python
-COLOR_RESET = "\033[0m"
-```
-
-#### COLOR\_GREEN
-
-```python
-COLOR_GREEN = "\033[32m"
-```
-
-#### COLOR\_BLUE
-
-```python
-COLOR_BLUE = "\033[34m"
-```
-
-#### COLOR\_CYAN
-
-```python
-COLOR_CYAN = "\033[36m"
-```
-
-#### colorize\_log\_message
-
-```python
-def colorize_log_message(record)
-```
-
-Colorize log messages based on content.
-API Calls are blue, Responses are green, Operations are cyan.
-This filter modifies the message in the record and returns True to accept it.
-
-## AgentBayLogger Objects
+## AgentBayLogger
 
 ```python
 class AgentBayLogger()
@@ -47,7 +13,7 @@ class AgentBayLogger()
 
 AgentBay SDK Logger with beautiful formatting.
 
-#### setup
+### setup
 
 ```python
 @classmethod
@@ -84,8 +50,7 @@ to override existing configuration.
 
 **Example**:
 
-  Configure logging for different scenarios
-  
+Configure logging for different scenarios
 
 ```python
 from agentbay.logger import AgentBayLogger, get_logger
@@ -130,8 +95,7 @@ logger.debug("This only appears in the log file")
 # No console output, but written to /tmp/debug.log
 
 ```
-
-#### get\_logger
+### get\_logger
 
 ```python
 @classmethod
@@ -149,7 +113,7 @@ Get a logger instance.
 
   Configured logger instance
 
-#### set\_level
+### set\_level
 
 ```python
 @classmethod
@@ -165,8 +129,7 @@ Set the logging level.
 
 **Example**:
 
-  Change log level during runtime
-  
+Change log level during runtime
 
 ```python
 from agentbay.logger import AgentBayLogger, get_logger
@@ -193,8 +156,7 @@ logger.warning("But warnings still appear")
 # Output: But warnings still appear
 
 ```
-
-#### get\_logger
+### get\_logger
 
 ```python
 def get_logger(name: str = "agentbay")
@@ -216,193 +178,6 @@ Convenience function to get a named logger.
 ```python
 log = get_logger("agentbay")
 ```
-
-#### SENSITIVE\_FIELDS
-
-```python
-SENSITIVE_FIELDS = [
-    'api_key',
-    'apikey',
-    'api-key',
-    'password',
-    'passwd',
-    ' ...
-```
-
-#### mask\_sensitive\_data
-
-```python
-def mask_sensitive_data(data: Any, fields: List[str] = None) -> Any
-```
-
-Mask sensitive information in data structures.
-
-**Arguments**:
-
-    data: Data to mask (dict, str, list, etc.)
-    fields: Additional sensitive field names
-  
-
-**Returns**:
-
-  Masked data (deep copy)
-  
-
-**Example**:
-
-  Mask sensitive information in various data structures
-  
-
-```python
-from agentbay.logger import mask_sensitive_data
-
-# Mask API keys and passwords in a dictionary
-user_data = {
-  "username": "john_doe",
-  "password": "secret123",
-  "api_key": "sk_live_1234567890abcdef",
-  "email": "john@example.com"
-}
-masked = mask_sensitive_data(user_data)
-print(masked)
-# Output: {'username': 'john_doe', 'password': '****', 'api_key': 'sk****ef', 'email': 'john@example.com'}
-
-# Mask nested dictionaries
-config = {
-  "database": {
-  "host": "localhost",
-  "password": "db_password_123"
-},
-  "auth": {
-  "token": "Bearer xyz123abc456"
-}
-}
-masked_config = mask_sensitive_data(config)
-print(masked_config)
-# Output: {'database': {'host': 'localhost', 'password': '****'}, 'auth': {'token': 'Be****56'}}
-
-# Mask with custom field names
-custom_data = {
-  "user_id": "12345",
-  "credit_card": "1234-5678-9012-3456",
-  "ssn": "123-45-6789"
-}
-masked_custom = mask_sensitive_data(custom_data, fields=['credit_card', 'ssn'])
-print(masked_custom)
-# Output: {'user_id': '12345', 'credit_card': '12****56', 'ssn': '12****89'}
-
-# Mask lists containing sensitive data
-user_list = [
-  {"name": "Alice", "api_key": "key_alice_123"},
-  {"name": "Bob", "api_key": "key_bob_456"}
-]
-masked_list = mask_sensitive_data(user_list)
-print(masked_list)
-# Output: [{'name': 'Alice', 'api_key': 'ke****23'}, {'name': 'Bob', 'api_key': 'ke****56'}]
-
-```
-
-#### log\_api\_call
-
-```python
-def log_api_call(api_name: str, request_data: str = "") -> None
-```
-
-Log API call with consistent formatting.
-
-#### log\_api\_response
-
-```python
-def log_api_response(response_data: str, success: bool = True) -> None
-```
-
-Log API response with consistent formatting.
-
-#### log\_api\_response\_with\_details
-
-```python
-def log_api_response_with_details(api_name: str,
-                                  request_id: str = "",
-                                  success: bool = True,
-                                  key_fields: Dict[str, Any] = None,
-                                  full_response: str = "") -> None
-```
-
-Log API response with key details at INFO level.
-
-**Arguments**:
-
-    api_name: Name of the API being called
-    request_id: Request ID from the response
-    success: Whether the API call was successful
-    key_fields: Dictionary of key business fields to log
-    full_response: Full response body (logged at DEBUG level)
-
-#### log\_code\_execution\_output
-
-```python
-def log_code_execution_output(request_id: str, raw_output: str) -> None
-```
-
-Extract and log the actual code execution output from run_code response.
-
-**Arguments**:
-
-    request_id: Request ID from the API response
-    raw_output: Raw JSON output from the MCP tool
-
-#### log\_operation\_start
-
-```python
-def log_operation_start(operation: str, details: str = "") -> None
-```
-
-Log the start of an operation.
-
-#### log\_operation\_success
-
-```python
-def log_operation_success(operation: str, result: str = "") -> None
-```
-
-Log successful operation completion.
-
-#### log\_operation\_error
-
-```python
-def log_operation_error(operation: str,
-                        error: str,
-                        exc_info: bool = False) -> None
-```
-
-Log operation error with optional exception info.
-
-**Arguments**:
-
-    operation: Name of the operation that failed
-    error: Error message
-    exc_info: Whether to include exception traceback
-
-#### log\_warning
-
-```python
-def log_warning(message: str, details: str = "") -> None
-```
-
-Log warning with consistent formatting.
-
-#### log\_info\_with\_color
-
-```python
-def log_info_with_color(message: str, color: str = "\033[31m") -> None
-```
-
-Log an INFO level message with custom color.
-
-**Arguments**:
-
-    message: Message to log
-    color: ANSI color code (default is red: [31m)
 
 ---
 

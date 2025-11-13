@@ -71,7 +71,7 @@ class TestBrowser(unittest.TestCase):
             pollsize=15
         )
 
-        fingerprint_format = FingerprintFormat.from_json(open(os.path.join(os.path.dirname(__file__), "../../../resource/fingerprint.example.json"), "r").read())
+        fingerprint_format = FingerprintFormat.load(open(os.path.join(os.path.dirname(__file__), "../../../resource/fingerprint.example.json"), "r").read())
         browser_option = BrowserOption(
             use_stealth=True,
             user_agent="User-Agent(By Mock)",
@@ -153,14 +153,14 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(restricted_proxy_result.strategy, "restricted")
         
         # Test proxy serialization/deserialization
-        proxy_map = custom_proxy.to_map()
+        proxy_map = custom_proxy._to_map()
         self.assertEqual(proxy_map["type"], "custom")
         self.assertEqual(proxy_map["server"], "http://proxy.example.com:8080")
         self.assertEqual(proxy_map["username"], "testuser")
         self.assertEqual(proxy_map["password"], "testpass")
         
         # Test from_map
-        restored_proxy = BrowserProxy.from_map(proxy_map)
+        restored_proxy = BrowserProxy._from_map(proxy_map)
         self.assertEqual(restored_proxy.type, "custom")
         self.assertEqual(restored_proxy.server, "http://proxy.example.com:8080")
         self.assertEqual(restored_proxy.username, "testuser")
@@ -209,7 +209,7 @@ class TestBrowser(unittest.TestCase):
     def test_fingerprint_format(self):
         """Test fingerprint format."""
         # Test fingerprint format from JSON
-        fingerprint_format = FingerprintFormat.from_json(open(os.path.join(os.path.dirname(__file__), "../../../resource/fingerprint.example.json"), "r").read())
+        fingerprint_format = FingerprintFormat.load(open(os.path.join(os.path.dirname(__file__), "../../../resource/fingerprint.example.json"), "r").read())
         self.assertIsNotNone(fingerprint_format)
         self.assertIsNotNone(fingerprint_format.fingerprint)
         self.assertIsNotNone(fingerprint_format.headers)
@@ -245,7 +245,7 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(fingerprint_format.fingerprint.navigator.webdriver, False)
 
         # Test fingerprint format to JSON
-        json_str = fingerprint_format.to_json()
+        json_str = fingerprint_format._to_json()
         self.assertIsNotNone(json_str)
         self.assertIsInstance(json_str, str)
         json_dict = json.loads(json_str)

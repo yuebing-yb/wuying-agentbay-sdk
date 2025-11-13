@@ -9,9 +9,9 @@
 
 ### Methods
 
-- [info](context-manager.md#info)
-- [infoWithParams](context-manager.md#infowithparams)
-- [sync](context-manager.md#sync)
+- [info](#info)
+- [infoWithParams](#infowithparams)
+- [sync](#sync)
 
 ## Methods
 
@@ -34,37 +34,13 @@ Error if the API call fails
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function getContextInfo() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get context synchronization information
-      const infoResult = await session.context.info();
-      console.log(`Request ID: ${infoResult.requestId}`);
-      // Output: Request ID: 41FC3D61-4AFB-1D2E-A08E-5737B2313234
-      console.log(`Context status data count: ${infoResult.contextStatusData.length}`);
-      // Output: Context status data count: 0
-
-      if (infoResult.contextStatusData.length > 0) {
-        infoResult.contextStatusData.forEach(item => {
-          console.log(`Context ${item.contextId}: Status=${item.status}, Path=${item.path}`);
-        });
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create();
+if (result.success) {
+  const info = await result.session.context.info();
+  console.log(`Context count: ${info.contextStatusData.length}`);
+  await result.session.delete();
 }
-
-getContextInfo().catch(console.error);
 ```
 
 ___
@@ -96,36 +72,13 @@ Error if the API call fails
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function getContextInfoWithParams() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get info for a specific context and path
-      const infoResult = await session.context.infoWithParams(
-        'SdkCtx-04bdw8o39bq47rv1t',
-        '/mnt/persistent'
-      );
-
-      console.log(`Request ID: ${infoResult.requestId}`);
-      // Output: Request ID: EB18A2D5-3C51-1F50-9FF1-8543CA328772
-      infoResult.contextStatusData.forEach(item => {
-        console.log(`Context ${item.contextId}: Status=${item.status}`);
-      });
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create();
+if (result.success) {
+  const info = await result.session.context.infoWithParams('SdkCtx-xxx', '/mnt/persistent');
+  console.log(`Context status: ${info.contextStatusData[0]?.status}`);
+  await result.session.delete();
 }
-
-getContextInfoWithParams().catch(console.error);
 ```
 
 ___
@@ -160,60 +113,14 @@ Error if the API call fails
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function syncContext() {
-  try {
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Get or create a context
-      const contextResult = await agentBay.context.get('my-context', true);
-      if (contextResult.context) {
-        // Sync mode: wait for completion
-        const syncResult = await session.context.sync(
-          contextResult.context.id,
-          '/mnt/persistent',
-          'upload'
-        );
-
-        console.log(`Sync completed - Success: ${syncResult.success}`);
-        // Output: Sync completed - Success: true
-        console.log(`Request ID: ${syncResult.requestId}`);
-        // Output: Request ID: 39B00280-B9DA-17D1-BCBB-9C577E057F0A
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create();
+if (result.success) {
+  const ctxResult = await agentBay.context.get('my-context', true);
+  const syncResult = await result.session.context.sync(ctxResult.context!.id, '/mnt/persistent', 'upload');
+  console.log(`Sync: ${syncResult.success}`);
+  await result.session.delete();
 }
-
-syncContext().catch(console.error);
-```
-
-**`Example`**
-
-```typescript
-// Callback mode: returns immediately
-const syncResult = await session.context.sync(
-  contextId,
-  '/mnt/persistent',
-  'upload',
-  (success: boolean) => {
-    if (success) {
-      console.log('Context sync completed successfully');
-    } else {
-      console.log('Context sync failed or timed out');
-    }
-  }
-);
-console.log(`Sync triggered - Success: ${syncResult.success}`);
-// Output: Sync triggered - Success: true
 ```
 
 ## Related Resources

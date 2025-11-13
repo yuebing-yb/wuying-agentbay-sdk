@@ -48,7 +48,6 @@ describe("AgentBay", () => {
   let createMcpSessionStub: sinon.SinonStub;
   let listSessionStub: sinon.SinonStub;
   let releaseMcpSessionStub: sinon.SinonStub;
-  let loadConfigStub: sinon.SinonStub;
   let clientConstructorStub: sinon.SinonStub;
   let contextServiceConstructorStub: sinon.SinonStub;
 
@@ -65,10 +64,9 @@ describe("AgentBay", () => {
     listSessionStub = mockClient.listSession;
     releaseMcpSessionStub = mockClient.releaseMcpSession;
 
-    // Mock loadConfig function
-    loadConfigStub = sinon
-      .stub(require("../../src/config"), "loadConfig")
-      .returns(mockConfigData);
+    // Set environment variables for config instead of stubbing loadConfig
+    process.env.AGENTBAY_ENDPOINT = mockConfigData.endpoint;
+    process.env.AGENTBAY_TIMEOUT_MS = String(mockConfigData.timeout_ms);
 
     // Mock Client constructor
     clientConstructorStub = sinon.stub().returns(mockClient);
@@ -91,8 +89,7 @@ describe("AgentBay", () => {
     // Mock AgentBay's getClient method to return our mock client
     sinon.stub(AgentBay.prototype, "getClient").returns(mockClient);
 
-    // Mock Session's getAPIKey method to avoid real API key issues
-    sinon.stub(Session.prototype, "getAPIKey").returns("mock-api-key");
+    // getAPIKey is now private, no need to mock it
 
     log("Mock client setup complete");
   });
@@ -109,8 +106,7 @@ describe("AgentBay", () => {
 
       expect(agentBay.getAPIKey()).toBe(apiKey);
 
-      // Verify that loadConfig was called
-      expect(loadConfigStub.calledOnce).toBe(true);
+      // loadConfig is now internal, no need to verify
 
       // Verify that Client was constructed with correct config
       expect(clientConstructorStub.calledOnce).toBe(true);
@@ -133,7 +129,6 @@ describe("AgentBay", () => {
         expect(agentBay.getAPIKey()).toBe("env_api_key");
 
         // Verify dependencies were called
-        expect(loadConfigStub.called).toBe(true);
         expect(clientConstructorStub.called).toBe(true);
         expect(contextServiceConstructorStub.called).toBe(true);
       } finally {
@@ -221,11 +216,8 @@ describe("AgentBay", () => {
       // Ensure session ID matches mock data
       expect(session.sessionId).toBe(mockSessionData.sessionId);
 
-      // Verify session uses mock client
-      expect(session.getClient()).toBe(mockClient);
-      log(
-        `Session client is mockClient: ${session.getClient() === mockClient}`
-      );
+      // Client is now private, cannot verify directly
+      // The session should work correctly if properly initialized
 
 
       // Delete the session
@@ -259,7 +251,7 @@ describe("AgentBay", () => {
 
       const deleteCallArgs = releaseMcpSessionStub.getCall(0).args[0];
       expect(deleteCallArgs.sessionId).toBe(mockSessionData.sessionId);
-      expect(deleteCallArgs.authorization).toBe("Bearer mock-api-key");
+      expect(deleteCallArgs.authorization).toBe("Bearer test-api-key");
 
       log("All mock verifications passed successfully");
     });

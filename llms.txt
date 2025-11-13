@@ -205,6 +205,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - [Logging Configuration Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/common-features/configuration/logging.md)
 - [SDK Configuration Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/common-features/configuration/sdk-configuration.md)
 - [Use Cases](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/common-features/use-cases/README.md)
+- [Cross-Platform Data Persistence](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/common-features/use-cases/cross-platform-persistence.md)
 - [Session Information Use Cases](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/common-features/use-cases/session-info-use-cases.md)
 - [Session Link Use Cases](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/common-features/use-cases/session-link-use-cases.md)
 - [Computer Use Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/computer-use/README.md)

@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, Optional
 
 from agentbay.api.base_service import BaseService
-from ..logger import get_logger, log_api_response
+from ..logger import get_logger, _log_api_response
 from agentbay.exceptions import AgentBayError, OssError
 from agentbay.model import ApiResponse
 
@@ -175,7 +175,7 @@ class Oss(BaseService):
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
-                log_api_response(response_body)
+                _log_api_response(response_body)
             except Exception:
                 _logger.debug(f"📥 Response: {result}")
 

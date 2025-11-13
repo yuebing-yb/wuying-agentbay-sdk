@@ -4,7 +4,6 @@ import * as sinon from "sinon";
 describe("CreateMcpSession policyId", () => {
   let mockClient: any;
   let createMcpSessionStub: sinon.SinonStub;
-  let loadConfigStub: sinon.SinonStub;
   let clientConstructorStub: sinon.SinonStub;
   let contextServiceConstructorStub: sinon.SinonStub;
 
@@ -19,9 +18,9 @@ describe("CreateMcpSession policyId", () => {
     };
     createMcpSessionStub = mockClient.createMcpSession;
 
-    loadConfigStub = sinon
-      .stub(require("../../src/config"), "loadConfig")
-      .returns(mockConfigData);
+    // Set environment variables for config instead of stubbing loadConfig
+    process.env.AGENTBAY_ENDPOINT = mockConfigData.endpoint;
+    process.env.AGENTBAY_TIMEOUT_MS = String(mockConfigData.timeout_ms);
 
     clientConstructorStub = sinon.stub().returns(mockClient);
     sinon.stub(require("../../src/api/client"), "Client").callsFake(clientConstructorStub);

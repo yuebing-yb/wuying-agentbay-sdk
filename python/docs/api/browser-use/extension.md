@@ -6,11 +6,13 @@
 
 
 
+#### EXTENSIONS\_BASE\_PATH
+
 ```python
 EXTENSIONS_BASE_PATH = "/tmp/extensions"
 ```
 
-## Extension Objects
+## Extension
 
 ```python
 class Extension()
@@ -18,7 +20,7 @@ class Extension()
 
 Represents a browser extension as a cloud resource.
 
-## ExtensionOption Objects
+## ExtensionOption
 
 ```python
 class ExtensionOption()
@@ -34,7 +36,7 @@ browser extension synchronization and context management.
 - `context_id` _str_ - ID of the extension context for browser extensions
 - `extension_ids` _List[str]_ - List of extension IDs to be loaded/synchronized
 
-#### validate
+### validate
 
 ```python
 def validate() -> bool
@@ -55,7 +57,7 @@ is_valid = ext_option.validate()
 print(f"Valid: {is_valid}")
 ```
 
-## ExtensionsService Objects
+## ExtensionsService
 
 ```python
 class ExtensionsService()
@@ -100,7 +102,7 @@ browser_context = BrowserContext(
 - If context_id empty or not provided: Generates default name and creates context
 - No need to manually manage context creation
 
-#### list
+### list
 
 ```python
 def list() -> List[Extension]
@@ -127,7 +129,7 @@ extensions = extensions_service.list()
 print(f"Found {len(extensions)} extensions")
 ```
 
-#### create
+### create
 
 ```python
 def create(local_path: str) -> Extension
@@ -160,7 +162,7 @@ extension = extensions_service.create("/path/to/extension.zip")
 print(f"Created extension: {extension.id}")
 ```
 
-#### update
+### update
 
 ```python
 def update(extension_id: str, new_local_path: str) -> Extension
@@ -194,7 +196,7 @@ updated = extensions_service.update("ext_abc123.zip", "/path/to/new_version.zip"
 print(f"Updated extension: {updated.id}")
 ```
 
-#### cleanup
+### cleanup
 
 ```python
 def cleanup() -> bool
@@ -221,7 +223,7 @@ success = extensions_service.cleanup()
 print(f"Cleanup success: {success}")
 ```
 
-#### delete
+### delete
 
 ```python
 def delete(extension_id: str) -> bool
@@ -247,7 +249,7 @@ success = extensions_service.delete("ext_abc123.zip")
 print(f"Delete success: {success}")
 ```
 
-#### create\_extension\_option
+### create\_extension\_option
 
 ```python
 def create_extension_option(extension_ids: List[str]) -> ExtensionOption

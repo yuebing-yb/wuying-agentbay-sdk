@@ -63,7 +63,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
     def test_browser_type_to_map_chrome(self):
         """Test that browser_type 'chrome' is included in to_map()."""
         option = BrowserOption(browser_type="chrome")
-        option_map = option.to_map()
+        option_map = option._to_map()
         
         self.assertIn("browserType", option_map)
         self.assertEqual(option_map["browserType"], "chrome")
@@ -71,7 +71,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
     def test_browser_type_to_map_chromium(self):
         """Test that browser_type 'chromium' is included in to_map()."""
         option = BrowserOption(browser_type="chromium")
-        option_map = option.to_map()
+        option_map = option._to_map()
         
         self.assertIn("browserType", option_map)
         self.assertEqual(option_map["browserType"], "chromium")
@@ -79,7 +79,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
     def test_browser_type_to_map_default(self):
         """Test that browser_type is not included in to_map() when None."""
         option = BrowserOption()
-        option_map = option.to_map()
+        option_map = option._to_map()
         
         self.assertNotIn("browserType", option_map)
 
@@ -101,7 +101,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
         self.assertTrue(option.solve_captchas)
         
         # Verify to_map includes all options
-        option_map = option.to_map()
+        option_map = option._to_map()
         self.assertEqual(option_map["browserType"], "chrome")
         self.assertTrue(option_map["useStealth"])
         self.assertEqual(option_map["userAgent"], "Mozilla/5.0 (Test) AppleWebKit/537.36")
@@ -116,7 +116,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
         }
         
         option = BrowserOption()
-        option.from_map(option_map)
+        option._from_map(option_map)
         
         self.assertEqual(option.browser_type, "chrome")
         self.assertTrue(option.use_stealth)
@@ -131,7 +131,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
         }
         
         option = BrowserOption()
-        option.from_map(option_map)
+        option._from_map(option_map)
         
         self.assertEqual(option.browser_type, "chromium")
         self.assertFalse(option.use_stealth)
@@ -145,7 +145,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
         }
         
         option = BrowserOption()
-        option.from_map(option_map)
+        option._from_map(option_map)
         
         # Should remain None when not specified
         self.assertIsNone(option.browser_type)
@@ -203,7 +203,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
         self.assertEqual(option.screen.height, 1080)
         
         # Test to_map includes all options
-        option_map = option.to_map()
+        option_map = option._to_map()
         self.assertEqual(option_map["browserType"], "chrome")
         self.assertEqual(option_map["viewport"]["width"], 1920)
         self.assertEqual(option_map["viewport"]["height"], 1080)

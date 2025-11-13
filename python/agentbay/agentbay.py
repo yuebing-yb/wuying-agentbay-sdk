@@ -15,7 +15,7 @@ from agentbay.api.models import (
     GetSessionRequest,
     ListSessionRequest,
 )
-from agentbay.config import load_config
+from agentbay.config import _load_config
 from agentbay.context import ContextService
 from agentbay.model import (
     DeleteResult,
@@ -30,22 +30,22 @@ from agentbay.session_params import CreateSessionParams, ListSessionParams
 from agentbay.version import __version__, __is_release__
 from .logger import (
     get_logger,
-    log_api_call,
-    log_api_response,
-    log_api_response_with_details,
-    log_operation_start,
-    log_operation_success,
-    log_operation_error,
-    log_warning,
-    mask_sensitive_data,
-    log_info_with_color,
+    _log_api_call,
+    _log_api_response,
+    _log_api_response_with_details,
+    _log_operation_start,
+    _log_operation_success,
+    _log_operation_error,
+    _log_warning,
+    _mask_sensitive_data,
+    _log_info_with_color,
 )
 
 # Initialize logger for this module
 _logger = get_logger("agentbay")
 from typing import Optional
 from agentbay.context_sync import ContextSync
-from agentbay.config import BROWSER_DATA_PATH
+from agentbay.config import _BROWSER_DATA_PATH
 
 
 def _generate_random_context_name(
@@ -120,7 +120,7 @@ class AgentBay:
                 )
 
         # Load configuration with optional custom env file path
-        config_data = load_config(cfg, env_file)
+        config_data = _load_config(cfg, env_file)
 
         self.api_key = api_key
 
@@ -238,15 +238,15 @@ class AgentBay:
         Args:
             session: The session to fetch MCP tools for
         """
-        log_operation_start("Fetching MCP tools", "VPC session detected")
+        _log_operation_start("Fetching MCP tools", "VPC session detected")
         try:
             tools_result = session.list_mcp_tools()
-            log_operation_success(
+            _log_operation_success(
                 f"Fetched {len(tools_result.tools)} MCP tools",
                 f"RequestID: {tools_result.request_id}",
             )
         except Exception as e:
-            log_warning(f"Failed to fetch MCP tools for VPC session: {e}")
+            _log_warning(f"Failed to fetch MCP tools for VPC session: {e}")
             # Continue with session creation even if tools fetch fails
 
     def _wait_for_context_synchronization(self, session: Session) -> None:
@@ -256,7 +256,7 @@ class AgentBay:
         Args:
             session: The session to wait for context synchronization
         """
-        log_operation_start("Context synchronization", "Waiting for completion")
+        _log_operation_start("Context synchronization", "Waiting for completion")
 
         # Wait for context synchronization to complete
         max_retries = 150  # Maximum number of retries
@@ -289,9 +289,9 @@ class AgentBay:
 
             if all_completed or not info_result.context_status_data:
                 if has_failure:
-                    log_warning("Context synchronization completed with failures")
+                    _log_warning("Context synchronization completed with failures")
                 else:
-                    log_operation_success("Context synchronization")
+                    _log_operation_success("Context synchronization")
                 break
 
             _logger.debug(
@@ -520,7 +520,7 @@ class AgentBay:
                 # Create browser context sync item
                 browser_context_sync = CreateMcpSessionRequestPersistenceDataList(
                     context_id=params.browser_context.context_id,
-                    path=BROWSER_DATA_PATH,  # Using a constant path for browser data
+                    path=_BROWSER_DATA_PATH,  # Using a constant path for browser data
                     policy=policy_json,
                 )
 
@@ -653,14 +653,13 @@ class AgentBay:
 
             # Log API response with key details
             resource_url = data.get("ResourceUrl", "")
-            truncated_url = resource_url[:50] + "..." if len(resource_url) > 50 else resource_url
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="CreateSession",
                 request_id=request_id,
                 success=True,
                 key_fields={
                     "session_id": session_id,
-                    "resource_url": truncated_url
+                    "resource_url": resource_url
                 },
                 full_response=response_body
             )
@@ -687,14 +686,14 @@ class AgentBay:
             return SessionResult(request_id=request_id, success=True, session=session)
 
         except ClientException as e:
-            log_operation_error("create_mcp_session - ClientException", str(e), exc_info=True)
+            _log_operation_error("create_mcp_session - ClientException", str(e), exc_info=True)
             return SessionResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to create session: {e}",
             )
         except Exception as e:
-            log_operation_error("create_mcp_session", str(e), exc_info=True)
+            _log_operation_error("create_mcp_session", str(e), exc_info=True)
             return SessionResult(
                 request_id="",
                 success=False,
@@ -832,7 +831,7 @@ class AgentBay:
             request_details = f"Labels={labels_json}, MaxResults={limit}"
             if request.next_token:
                 request_details += f", NextToken={request.next_token}"
-            log_api_call("list_session", request_details)
+            _log_api_call("list_session", request_details)
 
             # Make the API call
             response = self.client.list_session(request)
@@ -886,7 +885,7 @@ class AgentBay:
                             session_ids.append(session_id)
 
             # Log API response with key details
-            log_api_response_with_details(
+            _log_api_response_with_details(
                 api_name="ListSession",
                 request_id=request_id,
                 success=True,
@@ -909,7 +908,7 @@ class AgentBay:
             )
 
         except Exception as e:
-            log_operation_error("list_session", str(e), exc_info=True)
+            _log_operation_error("list_session", str(e), exc_info=True)
             return SessionListResult(
                 request_id="",
                 success=False,
@@ -959,7 +958,7 @@ class AgentBay:
             return delete_result
 
         except Exception as e:
-            log_operation_error("delete_session", str(e), exc_info=True)
+            _log_operation_error("delete_session", str(e), exc_info=True)
             return DeleteResult(
                 request_id="",
                 success=False,
@@ -1011,7 +1010,7 @@ class AgentBay:
             AgentBay.get, AgentBay.create, Session.info
         """
         try:
-            log_api_call("GetSession", f"SessionId={session_id}")
+            _log_api_call("GetSession", f"SessionId={session_id}")
             request = GetSessionRequest(
                 authorization=f"Bearer {self.api_key}", session_id=session_id
             )
@@ -1065,7 +1064,7 @@ class AgentBay:
                 if data:
                     key_fields["session_id"] = data.session_id
                     key_fields["vpc_resource"] = "yes" if data.vpc_resource else "no"
-                log_api_response_with_details(
+                _log_api_response_with_details(
                     api_name="GetSession",
                     request_id=request_id,
                     success=success,
@@ -1095,7 +1094,7 @@ class AgentBay:
             if "InvalidMcpSession.NotFound" in error_str or "NotFound" in error_str:
                 # This is an expected error - session doesn't exist
                 # Use info level logging without stack trace, but with red color for visibility
-                log_info_with_color(f"Session not found: {session_id}")
+                _log_info_with_color(f"Session not found: {session_id}")
                 _logger.debug(f"GetSession error details: {error_str}")
                 return GetSessionResult(
                     request_id="",

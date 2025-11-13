@@ -6,13 +6,15 @@
 
 
 
+## Session
+
 ```python
 class Session()
 ```
 
 Session represents a session in the AgentBay cloud environment.
 
-#### delete
+### delete
 
 ```python
 def delete(sync_context: bool = False) -> DeleteResult
@@ -58,22 +60,22 @@ session = agent_bay.create().session
 session.command.run("echo 'Hello World'")
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Always delete sessions when done to avoid resource leaks
-  - Use sync_context=True if you need to preserve modified files
-  - Browser replay data is automatically synced if enabled
-  - The session object becomes invalid after deletion
-  - Deletion is idempotent - deleting an already deleted session succeeds
-  
+- Always delete sessions when done to avoid resource leaks
+- Use sync_context=True if you need to preserve modified files
+- Browser replay data is automatically synced if enabled
+- The session object becomes invalid after deletion
+- Deletion is idempotent - deleting an already deleted session succeeds
+
 
 **See Also**:
 
-  AgentBay.create, AgentBay.delete, ContextManager.sync
+AgentBay.create, AgentBay.delete, ContextManager.sync
 
-#### set\_labels
+### set\_labels
 
 ```python
 def set_labels(labels: Dict[str, str]) -> OperationResult
@@ -103,7 +105,7 @@ labels = {"environment": "production", "version": "1.0"}
 session.set_labels(labels)
 ```
 
-#### get\_labels
+### get\_labels
 
 ```python
 def get_labels() -> OperationResult
@@ -128,7 +130,7 @@ result = session.get_labels()
 print(result.data)
 ```
 
-#### info
+### info
 
 ```python
 def info() -> OperationResult
@@ -172,21 +174,21 @@ session = agent_bay.create().session
 info_result = session.info()
 print(info_result.data.session_id)
 ```
-  
+
 
 **Notes**:
 
-  - Session info is retrieved from the AgentBay API in real-time
-  - The resource_url can be used for browser-based access
-  - Desktop-specific fields (app_id, auth_code) are only populated for desktop sessions
-  - This method does not modify the session state
-  
+- Session info is retrieved from the AgentBay API in real-time
+- The resource_url can be used for browser-based access
+- Desktop-specific fields (app_id, auth_code) are only populated for desktop sessions
+- This method does not modify the session state
+
 
 **See Also**:
 
-  AgentBay.create, Session.delete, Session.get_link
+AgentBay.create, Session.delete, Session.get_link
 
-#### get\_link
+### get\_link
 
 ```python
 def get_link(protocol_type: Optional[str] = None,
@@ -226,20 +228,20 @@ session = agent_bay.create().session
 link_result = session.get_link()
 port_link_result = session.get_link(port=30150)
 ```
-  
+
 
 **Notes**:
 
-  - Port must be in range [30100, 30199] if specified
-  - The returned URL format depends on the session configuration
-  - For mobile ADB connections, use session.mobile.get_adb_url() instead
-  
+- Port must be in range [30100, 30199] if specified
+- The returned URL format depends on the session configuration
+- For mobile ADB connections, use session.mobile.get_adb_url() instead
+
 
 **See Also**:
 
-  Session.info, Session.get_link_async, Mobile.get_adb_url
+Session.info, Session.get_link_async, Mobile.get_adb_url
 
-#### get\_link\_async
+### get\_link\_async
 
 ```python
 async def get_link_async(protocol_type: Optional[str] = None,
@@ -268,7 +270,7 @@ Asynchronously get a link associated with the current session.
 
     SessionError: If the request fails or the response is invalid.
 
-#### list\_mcp\_tools
+### list\_mcp\_tools
 
 ```python
 def list_mcp_tools(image_id: Optional[str] = None)
@@ -294,7 +296,7 @@ tools_result = session.list_mcp_tools()
 print(f"Available tools: {len(tools_result.tools)}")
 ```
 
-#### call\_mcp\_tool
+### call\_mcp\_tool
 
 ```python
 def call_mcp_tool(tool_name: str,
@@ -330,6 +332,12 @@ result = session.call_mcp_tool("shell", {"command": "echo 'Hello World'", "timeo
 result = session.call_mcp_tool("shell", {"command": "pwd", "timeout_ms": 1000}, read_timeout=30, connect_timeout=10)
 result = session.call_mcp_tool("shell", {"command": "invalid_command_12345", "timeout_ms": 1000})
 ```
+
+
+**Notes**:
+
+- For press_keys tool, key names are automatically normalized to correct case format
+- This improves case compatibility (e.g., "CTRL" -> "Ctrl", "tab" -> "Tab")
 
 ## Related Resources
 

@@ -48,47 +48,13 @@ export class Code {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateCodeExecution() {
-   *     try {
-   *         // Create a session with code_latest image
-   *         const result = await agentBay.create({ imageId: "code_latest" });
-   *         if (result.success) {
-   *             const session = result.session;
-   *
-   *             // Execute Python code
-   *             const pythonCode = `
-   * print("Hello from Python!")
-   * result = 2 + 3
-   * print(f"Result: {result}")
-   * `;
-   *             const codeResult = await session.code.runCode(pythonCode, "python");
-   *             if (codeResult.success) {
-   *                 console.log(`Python output:\n${codeResult.result}`);
-   *             }
-   *
-   *             // Execute JavaScript code
-   *             const jsCode = `
-   * console.log("Hello from JavaScript!");
-   * const result = 2 + 3;
-   * console.log("Result:", result);
-   * `;
-   *             const jsResult = await session.code.runCode(jsCode, "javascript", 30);
-   *             if (jsResult.success) {
-   *                 console.log(`JavaScript output:\n${jsResult.result}`);
-   *             }
-   *
-   *             await session.delete();
-   *         }
-   *     } catch (error) {
-   *         console.error('Error:', error);
-   *     }
+   * const result = await agentBay.create({ imageId: "code_latest" });
+   * if (result.success) {
+   *   const codeResult = await result.session.code.runCode('print("Hello")', "python");
+   *   console.log(codeResult.result);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateCodeExecution().catch(console.error);
    * ```
    */
   async runCode(

@@ -38,7 +38,7 @@ class InstalledApp:
         self.work_directory = work_directory
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "InstalledApp":
+    def _from_dict(cls, data: Dict[str, Any]) -> "InstalledApp":
         return cls(
             name=data.get("name", ""),
             start_cmd=data.get("start_cmd", ""),
@@ -55,7 +55,7 @@ class Process:
         self.cmdline = cmdline
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Process":
+    def _from_dict(cls, data: Dict[str, Any]) -> "Process":
         return cls(
             pname=data.get("pname", ""),
             pid=data.get("pid", 0),
@@ -88,10 +88,10 @@ class Window:
         self.child_windows = child_windows or []
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Window":
+    def _from_dict(cls, data: Dict[str, Any]) -> "Window":
         child_windows = []
         if "child_windows" in data and data["child_windows"]:
-            child_windows = [cls.from_dict(child) for child in data["child_windows"]]
+            child_windows = [cls._from_dict(child) for child in data["child_windows"]]
         return cls(
             window_id=data.get("window_id", 0),
             title=data.get("title", ""),
@@ -822,7 +822,7 @@ class Computer(BaseService):
                 try:
                     windows_data = json.loads(result.data)
                     for window_data in windows_data:
-                        windows.append(Window.from_dict(window_data))
+                        windows.append(Window._from_dict(window_data))
                 except json.JSONDecodeError as e:
                     return WindowListResult(
                         request_id=result.request_id,
@@ -880,7 +880,7 @@ class Computer(BaseService):
             if result.data:
                 try:
                     window_data = json.loads(result.data)
-                    window = Window.from_dict(window_data)
+                    window = Window._from_dict(window_data)
                 except json.JSONDecodeError as e:
                     return WindowInfoResult(
                         request_id=result.request_id,
@@ -1385,7 +1385,7 @@ class Computer(BaseService):
                 installed_apps = []
 
                 for app_data in apps_json:
-                    app = InstalledApp.from_dict(app_data)
+                    app = InstalledApp._from_dict(app_data)
                     installed_apps.append(app)
 
                 return InstalledAppListResult(
@@ -1454,7 +1454,7 @@ class Computer(BaseService):
                 processes = []
 
                 for process_data in processes_json:
-                    process = Process.from_dict(process_data)
+                    process = Process._from_dict(process_data)
                     processes.append(process)
 
                 return ProcessListResult(
@@ -1514,7 +1514,7 @@ class Computer(BaseService):
                 processes = []
 
                 for process_data in processes_json:
-                    process = Process.from_dict(process_data)
+                    process = Process._from_dict(process_data)
                     processes.append(process)
 
                 return ProcessListResult(

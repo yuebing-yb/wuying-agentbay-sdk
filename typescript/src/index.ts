@@ -1,5 +1,5 @@
 // IMPORTANT: Load config first to ensure .env file is loaded before logger initialization
-export { loadConfig, loadDotEnv, type Config } from "./config";
+export { type Config } from "./config";
 
 // Export version information
 export { VERSION, IS_RELEASE } from "./version";
@@ -33,7 +33,6 @@ export {
   logError,
   setLogLevel,
   getLogLevel,
-  maskSensitiveData,
   setupLogger,
   type LogLevel,
   type LoggerConfig

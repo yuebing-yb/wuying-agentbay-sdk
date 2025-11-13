@@ -321,15 +321,23 @@ describe('Mobile', () => {
     test('getAdbUrl should succeed on mobile environment', async () => {
       // Arrange
       const expectedUrl = 'adb connect xx.xx.xx.xx:xxxxx';
-      const mockSessionWithImage = {
-        ...mockSession,
-        imageId: 'mobile_latest',
-        getLink: jest.fn().mockResolvedValue({
+      const mockGetAdbLink = jest.fn().mockResolvedValue({
+        body: {
           success: true,
           requestId: 'test-adb-123',
-          data: expectedUrl,
-          errorMessage: ''
-        })
+          data: { url: expectedUrl }
+        }
+      });
+      const mockClient = { getAdbLink: mockGetAdbLink };
+      const mockAgentBay = {
+        getClient: jest.fn().mockReturnValue(mockClient)
+      };
+      const mockSessionWithImage = {
+        ...mockSession,
+        sessionId: 'test-session-123',
+        imageId: 'mobile_latest',
+        getAPIKey: jest.fn().mockReturnValue('test-api-key'),
+        getAgentBay: jest.fn().mockReturnValue(mockAgentBay)
       };
       const mobileWithImage = new Mobile(mockSessionWithImage as any);
       const adbkeyPub = 'QAAAAM0muSn7yQCY...test_key...EAAQAA=';
@@ -338,10 +346,11 @@ describe('Mobile', () => {
       const result = await mobileWithImage.getAdbUrl(adbkeyPub);
 
       // Assert
-      const callArgs = mockSessionWithImage.getLink.mock.calls[0];
-      expect(callArgs[0]).toBe('adb');
-      expect(callArgs[1]).toBeUndefined();
-      expect(callArgs[2]).toContain('adbkey_pub');
+      expect(mockGetAdbLink).toHaveBeenCalledTimes(1);
+      const callArgs = mockGetAdbLink.mock.calls[0][0];
+      expect(callArgs.authorization).toBe('Bearer test-api-key');
+      expect(callArgs.sessionId).toBe('test-session-123');
+      expect(callArgs.option).toContain('adbkey_pub');
       expect(result.success).toBe(true);
       expect(result.data).toBe(expectedUrl);
       expect(result.url).toBe(expectedUrl);
@@ -350,10 +359,16 @@ describe('Mobile', () => {
 
     test('getAdbUrl should handle getLink errors', async () => {
       // Arrange
+      const mockGetAdbLink = jest.fn().mockRejectedValue(new Error('Network error'));
+      const mockClient = { getAdbLink: mockGetAdbLink };
+      const mockAgentBay = { 
+        getClient: jest.fn().mockReturnValue(mockClient)
+      };
       const mockSessionWithImage = {
         ...mockSession,
         imageId: 'mobile_latest',
-        getLink: jest.fn().mockRejectedValue(new Error('Network error'))
+        getAPIKey: jest.fn().mockReturnValue('test-api-key'),
+        getAgentBay: jest.fn().mockReturnValue(mockAgentBay)
       };
       const mobileWithImage = new Mobile(mockSessionWithImage as any);
       const adbkeyPub = 'test_key_456';

@@ -305,7 +305,7 @@ function isValidUploadMode(uploadMode: UploadMode): boolean {
   return uploadMode === UploadMode.File || uploadMode === UploadMode.Archive;
 }
 
-export function validateSyncPolicy(policy?: SyncPolicy): void {
+function validateSyncPolicy(policy?: SyncPolicy): void {
   if (policy?.bwList?.whiteLists) {
     for (const whitelist of policy.bwList.whiteLists) {
       WhiteListValidator.validate(whitelist);

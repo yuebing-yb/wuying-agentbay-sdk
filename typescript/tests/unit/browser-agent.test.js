@@ -20,6 +20,8 @@ describe('Browser Unit Tests', () => {
     mockSession = {
       getAPIKey: jest.fn().mockReturnValue('test-api-key'),
       getSessionId: jest.fn().mockReturnValue('test-session-id'),
+      sessionId: 'test-session-id',
+      isVpc: false,
       getClient: jest.fn().mockReturnValue({
         initBrowser: jest.fn().mockResolvedValue({
           body: {
@@ -28,6 +30,18 @@ describe('Browser Unit Tests', () => {
               endpoint: 'ws://localhost:9222'
             }
           }
+        })
+      }),
+      getAgentBay: jest.fn().mockReturnValue({
+        getClient: jest.fn().mockReturnValue({
+          getCdpLink: jest.fn().mockResolvedValue({
+            body: {
+              success: true,
+              data: {
+                url: 'ws://localhost:9222'
+              }
+            }
+          })
         })
       }),
       callMcpTool: jest.fn().mockResolvedValue({
@@ -70,10 +84,10 @@ describe('Browser Unit Tests', () => {
   test('should get endpoint URL when initialized', async () => {
     const option = { persistentPath: '/tmp/browser' };
     await browser.initializeAsync(option);
-    
+
     const endpointUrl = await browser.getEndpointUrl();
     expect(endpointUrl).toBe('ws://localhost:9222');
-    expect(mockSession.getLink).toHaveBeenCalled();
+    expect(mockSession.getAgentBay).toHaveBeenCalled();
   });
 
   test('should throw error when getting endpoint URL without initialization', async () => {

@@ -19,19 +19,19 @@ text input, app management, and screenshot capture. It supports Android device a
 
 ### Methods
 
-- [configure](mobile.md#configure)
-- [inputText](mobile.md#inputtext)
-- [screenshot](mobile.md#screenshot)
-- [sendKey](mobile.md#sendkey)
-- [setAppBlacklist](mobile.md#setappblacklist)
-- [setAppWhitelist](mobile.md#setappwhitelist)
-- [setNavigationBarVisibility](mobile.md#setnavigationbarvisibility)
-- [setResolutionLock](mobile.md#setresolutionlock)
-- [setUninstallBlacklist](mobile.md#setuninstallblacklist)
-- [startApp](mobile.md#startapp)
-- [stopAppByCmd](mobile.md#stopappbycmd)
-- [swipe](mobile.md#swipe)
-- [tap](mobile.md#tap)
+- [configure](#configure)
+- [inputText](#inputtext)
+- [screenshot](#screenshot)
+- [sendKey](#sendkey)
+- [setAppBlacklist](#setappblacklist)
+- [setAppWhitelist](#setappwhitelist)
+- [setNavigationBarVisibility](#setnavigationbarvisibility)
+- [setResolutionLock](#setresolutionlock)
+- [setUninstallBlacklist](#setuninstallblacklist)
+- [startApp](#startapp)
+- [stopAppByCmd](#stopappbycmd)
+- [swipe](#swipe)
+- [tap](#tap)
 
 ## Methods
 
@@ -76,30 +76,13 @@ Promise resolving to BoolResult with success status
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function demonstrateInputText() {
-  try {
-    const result = await agentBay.create({ imageId: 'mobile_latest' });
-    if (result.success && result.session) {
-      const session = result.session;
-
-      // Input text at current focus position
-      const inputResult = await session.mobile.inputText('Hello Mobile');
-      if (inputResult.success) {
-        console.log('Text input successfully');
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create({ imageId: 'mobile_latest' });
+if (result.success) {
+  const inputResult = await result.session.mobile.inputText('Hello Mobile');
+  console.log('Text input successfully:', inputResult.success);
+  await result.session.delete();
 }
-
-demonstrateInputText().catch(console.error);
 ```
 
 ___
@@ -119,31 +102,13 @@ Promise resolving to ScreenshotResult containing screenshot URL
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function demonstrateScreenshot() {
-  try {
-    const result = await agentBay.create({ imageId: 'mobile_latest' });
-    if (result.success && result.session) {
-      const session = result.session;
-
-      // Take a screenshot
-      const screenshotResult = await session.mobile.screenshot();
-      if (screenshotResult.success) {
-        console.log('Screenshot taken successfully');
-        console.log(`Screenshot URL: ${screenshotResult.data}`);
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create({ imageId: 'mobile_latest' });
+if (result.success) {
+  const screenshotResult = await result.session.mobile.screenshot();
+  console.log('Screenshot URL:', screenshotResult.data);
+  await result.session.delete();
 }
-
-demonstrateScreenshot().catch(console.error);
 ```
 
 ___
@@ -169,30 +134,13 @@ Promise resolving to BoolResult with success status
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function demonstrateSendKey() {
-  try {
-    const result = await agentBay.create({ imageId: 'mobile_latest' });
-    if (result.success && result.session) {
-      const session = result.session;
-
-      // Send BACK key (key code 4)
-      const keyResult = await session.mobile.sendKey(4);
-      if (keyResult.success) {
-        console.log('Key sent successfully');
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create({ imageId: 'mobile_latest' });
+if (result.success) {
+  const keyResult = await result.session.mobile.sendKey(4);
+  console.log('BACK key sent:', keyResult.success);
+  await result.session.delete();
 }
-
-demonstrateSendKey().catch(console.error);
 ```
 
 ___
@@ -320,31 +268,13 @@ Promise resolving to ProcessResult containing launched process information
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function demonstrateStartApp() {
-  try {
-    const result = await agentBay.create({ imageId: 'mobile_latest' });
-    if (result.success && result.session) {
-      const session = result.session;
-
-      // Start Settings app using monkey -p format
-      const startResult = await session.mobile.startApp('monkey -p com.android.settings');
-      if (startResult.success) {
-        console.log('App started successfully');
-        console.log('Processes:', startResult.processes);
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create({ imageId: 'mobile_latest' });
+if (result.success) {
+  const startResult = await result.session.mobile.startApp('monkey -p com.android.settings');
+  console.log('App started:', startResult.success);
+  await result.session.delete();
 }
-
-demonstrateStartApp().catch(console.error);
 ```
 
 ___
@@ -370,33 +300,14 @@ Promise resolving to BoolResult with success status
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function demonstrateStopApp() {
-  try {
-    const result = await agentBay.create({ imageId: 'mobile_latest' });
-    if (result.success && result.session) {
-      const session = result.session;
-
-      // Start an app first
-      await session.mobile.startApp('monkey -p com.android.settings');
-
-      // Stop the app by package name
-      const stopResult = await session.mobile.stopAppByCmd('com.android.settings');
-      if (stopResult.success) {
-        console.log('App stopped successfully');
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create({ imageId: 'mobile_latest' });
+if (result.success) {
+  await result.session.mobile.startApp('monkey -p com.android.settings');
+  const stopResult = await result.session.mobile.stopAppByCmd('com.android.settings');
+  console.log('App stopped:', stopResult.success);
+  await result.session.delete();
 }
-
-demonstrateStopApp().catch(console.error);
 ```
 
 ___
@@ -426,30 +337,13 @@ Promise resolving to BoolResult with success status
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function demonstrateSwipe() {
-  try {
-    const result = await agentBay.create({ imageId: 'mobile_latest' });
-    if (result.success && result.session) {
-      const session = result.session;
-
-      // Swipe up gesture from (200, 400) to (200, 100)
-      const swipeResult = await session.mobile.swipe(200, 400, 200, 100, 300);
-      if (swipeResult.success) {
-        console.log('Swipe gesture completed successfully');
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create({ imageId: 'mobile_latest' });
+if (result.success) {
+  const swipeResult = await result.session.mobile.swipe(200, 400, 200, 100, 300);
+  console.log('Swipe success:', swipeResult.success);
+  await result.session.delete();
 }
-
-demonstrateSwipe().catch(console.error);
 ```
 
 ___
@@ -476,32 +370,13 @@ Promise resolving to BoolResult with success status
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-
-async function demonstrateTap() {
-  try {
-    const result = await agentBay.create({ imageId: 'mobile_latest' });
-    if (result.success && result.session) {
-      const session = result.session;
-
-      // Tap at coordinates (100, 100)
-      const tapResult = await session.mobile.tap(100, 100);
-      if (tapResult.success) {
-        console.log('Tap executed successfully');
-      } else {
-        console.log(`Tap failed: ${tapResult.errorMessage}`);
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create({ imageId: 'mobile_latest' });
+if (result.success) {
+  const tapResult = await result.session.mobile.tap(100, 100);
+  console.log('Tap success:', tapResult.success);
+  await result.session.delete();
 }
-
-demonstrateTap().catch(console.error);
 ```
 
 ## Best Practices

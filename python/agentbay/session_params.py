@@ -1,6 +1,6 @@
 from typing import Dict, Optional, List, TYPE_CHECKING
 from agentbay.context_sync import ContextSync, DeletePolicy, SyncPolicy, UploadPolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList
-from agentbay.config import BROWSER_FINGERPRINT_PERSIST_PATH
+from agentbay.config import _BROWSER_FINGERPRINT_PERSIST_PATH
 from agentbay.logger import get_logger
 from agentbay.api.models._create_mcp_session_request import ExtraConfigs
 
@@ -222,7 +222,7 @@ class BrowserContext:
         # Create context sync for fingerprint
         fingerprint_sync = ContextSync(
             context_id=self.fingerprint_context_id,
-            path=BROWSER_FINGERPRINT_PERSIST_PATH,
+            path=_BROWSER_FINGERPRINT_PERSIST_PATH,
             policy=sync_policy
         )
 

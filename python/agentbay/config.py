@@ -9,7 +9,7 @@ from agentbay.logger import get_logger
 _logger = get_logger("config")
 
 
-def default_config() -> Dict[str, Any]:
+def _default_config() -> Dict[str, Any]:
     """Return the default configuration"""
     return {
         "endpoint": "wuyingai.cn-shanghai.aliyuncs.com",
@@ -18,12 +18,12 @@ def default_config() -> Dict[str, Any]:
 
 
 # Browser data path constant
-BROWSER_DATA_PATH = "/tmp/agentbay_browser"
+_BROWSER_DATA_PATH = "/tmp/agentbay_browser"
 # Browser fingerprint persistent path constant
-BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint"
+_BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint"
 
 
-def find_dotenv_file(start_path: Optional[Path] = None) -> Optional[Path]:
+def _find_dotenv_file(start_path: Optional[Path] = None) -> Optional[Path]:
     """
     Find .env file by searching upward from start_path.
     
@@ -66,7 +66,7 @@ def find_dotenv_file(start_path: Optional[Path] = None) -> Optional[Path]:
     return None
 
 
-def load_dotenv_with_fallback(custom_env_path: Optional[str] = None) -> None:
+def _load_dotenv_with_fallback(custom_env_path: Optional[str] = None) -> None:
     """
     Load .env file with improved search strategy.
     
@@ -84,7 +84,7 @@ def load_dotenv_with_fallback(custom_env_path: Optional[str] = None) -> None:
             _logger.warning(f"Custom .env file not found: {env_path}")
     
     # Find .env file using upward search
-    env_file = find_dotenv_file()
+    env_file = _find_dotenv_file()
     if env_file:
         try:
             dotenv.load_dotenv(env_file)
@@ -104,7 +104,7 @@ The SDK uses the following precedence order for configuration (highest to lowest
 """
 
 
-def load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
+def _load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Load configuration with improved .env file search.
     
@@ -121,11 +121,11 @@ def load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
             "timeout_ms": cfg.timeout_ms,
         }
     else:
-        config = default_config()
-        
+        config = _default_config()
+
         # Load .env file with improved search
         try:
-            load_dotenv_with_fallback(custom_env_path)
+            _load_dotenv_with_fallback(custom_env_path)
         except Exception as e:
             _logger.warning(f"Failed to load .env file: {e}")
         

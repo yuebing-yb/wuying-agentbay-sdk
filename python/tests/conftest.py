@@ -11,7 +11,7 @@ os.environ["PYTHONUNBUFFERED"] = "1"
 def pytest_configure(config):
     """Configure pytest to apply color formatting to logs"""
     # Import after environment variables are set
-    from agentbay.logger import colorize_log_message, AgentBayLogger
+    from agentbay.logger import _colorize_log_message, AgentBayLogger
     from loguru import logger
 
     # Reset the logger initialization flag
@@ -30,7 +30,7 @@ def pytest_configure(config):
                "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
                "<level>{message}</level>",
         level=os.getenv("AGENTBAY_LOG_LEVEL", "INFO"),
-        filter=colorize_log_message,
+        filter=_colorize_log_message,
         colorize=True,
         backtrace=True,
         diagnose=True

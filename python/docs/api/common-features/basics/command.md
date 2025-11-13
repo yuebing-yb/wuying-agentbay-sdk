@@ -10,11 +10,9 @@ The Command module provides methods for executing shell commands within a sessio
 It supports both synchronous command execution with configurable timeouts.
 
 
-## Requirements
-
-- Any session image (browser_latest, code_latest, windows_latest, mobile_latest)
 
 
+## CommandResult
 
 ```python
 class CommandResult(ApiResponse)
@@ -22,7 +20,7 @@ class CommandResult(ApiResponse)
 
 Result of command execution operations.
 
-## Command Objects
+## Command
 
 ```python
 class Command(BaseService)
@@ -30,7 +28,7 @@ class Command(BaseService)
 
 Handles command execution operations in the AgentBay cloud environment.
 
-#### execute\_command
+### execute\_command
 
 ```python
 def execute_command(command: str, timeout_ms: int = 1000) -> CommandResult
@@ -68,19 +66,19 @@ print(cmd_result.output)
 cmd_result = session.command.execute_command("sleep 2 && echo 'Done'", timeout_ms=5000)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Commands are executed in a Linux shell environment
-  - Default timeout is 1 second (1000ms)
-  - Output includes both stdout and stderr
-  - Long-running commands may timeout if timeout_ms is too small
-  
+- Commands are executed in a Linux shell environment
+- Default timeout is 1 second (1000ms)
+- Output includes both stdout and stderr
+- Long-running commands may timeout if timeout_ms is too small
+
 
 **See Also**:
 
-  Command.execute_command_async
+Command.execute_command_async
 
 ## Best Practices
 

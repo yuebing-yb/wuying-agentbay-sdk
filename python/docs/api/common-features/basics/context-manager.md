@@ -1,22 +1,24 @@
 # Context Manager API Reference
 
+## ContextStatusData
+
 ```python
 class ContextStatusData()
 ```
 
-## ContextInfoResult Objects
+## ContextInfoResult
 
 ```python
 class ContextInfoResult(ApiResponse)
 ```
 
-## ContextSyncResult Objects
+## ContextSyncResult
 
 ```python
 class ContextSyncResult(ApiResponse)
 ```
 
-## ContextManager Objects
+## ContextManager
 
 ```python
 class ContextManager()
@@ -37,7 +39,7 @@ print(f"Found {len(info_result.context_status_data)} context items")
 session.delete()
 ```
 
-#### info
+### info
 
 ```python
 def info(context_id: Optional[str] = None,
@@ -66,11 +68,11 @@ result = agent_bay.create()
 session = result.session
 info_result = session.context.info()
 for item in info_result.context_status_data:
-    print(f"Context {item.context_id}: {item.status}")
+  print(f"Context {item.context_id}: {item.status}")
 session.delete()
 ```
 
-#### sync
+### sync
 
 ```python
 async def sync(context_id: Optional[str] = None,
@@ -102,83 +104,31 @@ This method supports two modes:
 
     ContextSyncResult: Result object containing success status and request ID
   
-  Example (Async mode - waits for completion):
-    ```python
-    import asyncio
-    from agentbay import AgentBay
 
-    agent_bay = AgentBay(api_key="your_api_key")
+**Example**:
 
-    async def sync_context_async():
-        try:
-            result = agent_bay.create()
-            if result.success:
-                session = result.session
+Async mode - waits for completion:
+```python
+result = agent_bay.create()
+session = result.session
+context = agent_bay.context.get('my-context', True).context
+sync_result = await session.context.sync(context.id, "/mnt/data")
+print(f"Sync success: {sync_result.success}")
+session.delete()
+```
 
-                # Get or create a context
-                context_result = agent_bay.context.get('my-context', True)
-                if context_result.context:
-                    # Trigger context synchronization and wait for completion
-                    sync_result = await session.context.sync(
-                        context_id=context_result.context_id,
-                        path="/mnt/persistent",
-                        mode="upload"
-                    )
+Callback mode - returns immediately:
+```python
+result = agent_bay.create()
+session = result.session
 
-                    print(f"Sync completed - Success: {sync_result.success}")
-                    print(f"Request ID: {sync_result.request_id}")
+def on_complete(success: bool):
+    print(f"Sync completed: {success}")
 
-                session.delete()
-        except Exception as e:
-            print(f"Error: {e}")
-
-    asyncio.run(sync_context_async())
-    ```
-  
-  Example (Callback mode - returns immediately):
-    ```python
-    import asyncio
-    from agentbay import AgentBay
-
-    agent_bay = AgentBay(api_key="your_api_key")
-
-    async def sync_context_with_callback():
-        try:
-            result = agent_bay.create()
-            if result.success:
-                session = result.session
-
-                context_result = agent_bay.context.get('my-context', True)
-
-                # Define a callback function
-                def on_sync_complete(success: bool):
-                    if success:
-                        print("Context sync completed successfully")
-                    else:
-                        print("Context sync failed or timed out")
-
-                # Trigger sync with callback - returns immediately
-                sync_result = await session.context.sync(
-                    context_id=context_result.context_id,
-                    path="/mnt/persistent",
-                    mode="upload",
-                    callback=on_sync_complete,
-                    max_retries=10,
-                    retry_interval=1000
-                )
-
-                print(f"Sync triggered - Success: {sync_result.success}")
-                print(f"Request ID: {sync_result.request_id}")
-
-                # Wait a bit for callback to be called
-                await asyncio.sleep(3)
-
-                session.delete()
-        except Exception as e:
-            print(f"Error: {e}")
-
-    asyncio.run(sync_context_with_callback())
-    ```
+context = agent_bay.context.get('my-context', True).context
+await session.context.sync(context.id, "/mnt/data", callback=on_complete)
+session.delete()
+```
 
 ---
 

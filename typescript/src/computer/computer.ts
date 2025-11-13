@@ -65,34 +65,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateClickMouse() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Click at coordinates (100, 100) with left button
-   *       const clickResult = await session.computer.clickMouse(100, 100, 'left');
-   *       if (clickResult.success) {
-   *         console.log('Mouse clicked successfully');
-   *       } else {
-   *         console.log(`Click failed: ${clickResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const clickResult = await result.session.computer.clickMouse(100, 100, 'left');
+   *   console.log('Clicked:', clickResult.success);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateClickMouse().catch(console.error);
    * ```
    */
   async clickMouse(x: number, y: number, button: MouseButton | string = MouseButton.LEFT): Promise<BoolResult> {
@@ -130,38 +109,14 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateMoveMouse() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Move mouse to coordinates (300, 400)
-   *       const moveResult = await session.computer.moveMouse(300, 400);
-   *       if (moveResult.success) {
-   *         console.log('Mouse moved successfully');
-   *
-   *         // Verify new position
-   *         const pos = await session.computer.getCursorPosition();
-   *         console.log(`New position: (${pos.x}, ${pos.y})`);
-   *       } else {
-   *         console.log(`Move failed: ${moveResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.moveMouse(300, 400);
+   *   const pos = await result.session.computer.getCursorPosition();
+   *   console.log(`Position: (${pos.x}, ${pos.y})`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateMoveMouse().catch(console.error);
    * ```
    */
   async moveMouse(x: number, y: number): Promise<BoolResult> {
@@ -196,34 +151,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateDragMouse() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Drag from (100, 100) to (300, 300) with left button
-   *       const dragResult = await session.computer.dragMouse(100, 100, 300, 300, 'left');
-   *       if (dragResult.success) {
-   *         console.log('Drag operation completed successfully');
-   *       } else {
-   *         console.log(`Drag failed: ${dragResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const dragResult = await result.session.computer.dragMouse(100, 100, 300, 300, 'left');
+   *   console.log('Dragged:', dragResult.success);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateDragMouse().catch(console.error);
    * ```
    */
   async dragMouse(fromX: number, fromY: number, toX: number, toY: number, button: MouseButton | string = MouseButton.LEFT): Promise<BoolResult> {
@@ -263,34 +197,12 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateScroll() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Scroll up at center of screen, amount 3
-   *       const scrollResult = await session.computer.scroll(400, 300, 'up', 3);
-   *       if (scrollResult.success) {
-   *         console.log('Scroll completed successfully');
-   *       } else {
-   *         console.log(`Scroll failed: ${scrollResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.scroll(400, 300, 'up', 3);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateScroll().catch(console.error);
    * ```
    */
   async scroll(x: number, y: number, direction: ScrollDirection | string = ScrollDirection.UP, amount = 1): Promise<BoolResult> {
@@ -327,34 +239,12 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateInputText() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Input text at current cursor position
-   *       const inputResult = await session.computer.inputText('Hello AgentBay!');
-   *       if (inputResult.success) {
-   *         console.log('Text input successfully');
-   *       } else {
-   *         console.log(`Input failed: ${inputResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.inputText('Hello AgentBay!');
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateInputText().catch(console.error);
    * ```
    */
   async inputText(text: string): Promise<BoolResult> {
@@ -386,40 +276,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstratePressKeys() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Press Enter key
-   *       const enterResult = await session.computer.pressKeys(['Enter']);
-   *       if (enterResult.success) {
-   *         console.log('Enter key pressed successfully');
-   *       }
-   *
-   *       // Press Ctrl+C (hold the keys)
-   *       const ctrlCResult = await session.computer.pressKeys(['Ctrl', 'c'], true);
-   *       if (ctrlCResult.success) {
-   *         console.log('Ctrl+C pressed successfully');
-   *         // Remember to release the keys
-   *         await session.computer.releaseKeys(['Ctrl', 'c']);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.pressKeys(['Ctrl', 'c'], true);
+   *   await result.session.computer.releaseKeys(['Ctrl', 'c']);
+   *   await result.session.delete();
    * }
-   *
-   * demonstratePressKeys().catch(console.error);
    * ```
    */
   async pressKeys(keys: string[], hold = false): Promise<BoolResult> {
@@ -450,37 +313,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateReleaseKeys() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Press and hold Ctrl key
-   *       await session.computer.pressKeys(['Ctrl'], true);
-   *
-   *       // Release Ctrl key
-   *       const releaseResult = await session.computer.releaseKeys(['Ctrl']);
-   *       if (releaseResult.success) {
-   *         console.log('Ctrl key released successfully');
-   *       } else {
-   *         console.log(`Release failed: ${releaseResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.pressKeys(['Ctrl'], true);
+   *   await result.session.computer.releaseKeys(['Ctrl']);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateReleaseKeys().catch(console.error);
    * ```
    */
   async releaseKeys(keys: string[]): Promise<BoolResult> {
@@ -510,34 +349,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateGetCursorPosition() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Get current cursor position
-   *       const positionResult = await session.computer.getCursorPosition();
-   *       if (positionResult.success) {
-   *         console.log(`Cursor at: (${positionResult.x}, ${positionResult.y})`);
-   *       } else {
-   *         console.log(`Failed to get cursor position: ${positionResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const pos = await result.session.computer.getCursorPosition();
+   *   console.log(`Cursor: (${pos.x}, ${pos.y})`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateGetCursorPosition().catch(console.error);
    * ```
    */
   async getCursorPosition(): Promise<CursorPosition> {
@@ -602,34 +420,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateGetScreenSize() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Get screen size and DPI information
-   *       const sizeResult = await session.computer.getScreenSize();
-   *       if (sizeResult.success) {
-   *         console.log(`Screen: ${sizeResult.width}x${sizeResult.height}, DPI: ${sizeResult.dpiScalingFactor}`);
-   *       } else {
-   *         console.log(`Failed to get screen size: ${sizeResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const size = await result.session.computer.getScreenSize();
+   *   console.log(`Screen: ${size.width}x${size.height}`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateGetScreenSize().catch(console.error);
    * ```
    */
   async getScreenSize(): Promise<ScreenSize> {
@@ -699,35 +496,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateScreenshot() {
-   *     try {
-   *         const result = await agentBay.create({
-   *             imageId: 'windows_latest'
-   *         });
-   *         if (result.success && result.session) {
-   *             const session = result.session;
-   *
-   *             // Take a screenshot
-   *             const screenshotResult = await session.computer.screenshot();
-   *             if (screenshotResult.success) {
-   *                 console.log('Screenshot taken successfully');
-   *                 console.log(`Screenshot URL: ${screenshotResult.data}`);
-   *             } else {
-   *                 console.log(`Screenshot failed: ${screenshotResult.errorMessage}`);
-   *             }
-   *
-   *             await session.delete();
-   *         }
-   *     } catch (error) {
-   *         console.error('Error:', error);
-   *     }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const screenshot = await result.session.computer.screenshot();
+   *   console.log('Screenshot URL:', screenshot.data);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateScreenshot().catch(console.error);
    * ```
    */
   async screenshot(): Promise<ScreenshotResult> {
@@ -768,37 +543,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateListRootWindows() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // List all root windows
-   *       const windowsResult = await session.computer.listRootWindows();
-   *       if (windowsResult.success) {
-   *         console.log(`Found ${windowsResult.windows.length} root windows`);
-   *         windowsResult.windows.forEach(win => {
-   *           console.log(`  - Window ${win.id}: ${win.title}`);
-   *         });
-   *       } else {
-   *         console.log(`Failed to list windows: ${windowsResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const windows = await result.session.computer.listRootWindows();
+   *   console.log(`Found ${windows.windows.length} windows`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateListRootWindows().catch(console.error);
    * ```
    */
   async listRootWindows(timeoutMs = 3000): Promise<WindowListResult> {
@@ -839,35 +590,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateGetActiveWindow() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Get the currently active window
-   *       const activeWindowResult = await session.computer.getActiveWindow();
-   *       if (activeWindowResult.success && activeWindowResult.window) {
-   *         console.log(`Active window ID: ${activeWindowResult.window.id}`);
-   *         console.log(`Active window title: ${activeWindowResult.window.title}`);
-   *       } else {
-   *         console.log(`Failed to get active window: ${activeWindowResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const activeWindow = await result.session.computer.getActiveWindow();
+   *   console.log(`Active: ${activeWindow.window?.title}`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateGetActiveWindow().catch(console.error);
    * ```
    */
   async getActiveWindow(timeoutMs = 3000): Promise<WindowInfoResult> {
@@ -908,41 +637,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateActivateWindow() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // List all windows
-   *       const windows = await session.computer.listRootWindows();
-   *       if (windows.success && windows.windows.length > 0) {
-   *         const windowId = windows.windows[0].id;
-   *
-   *         // Activate the first window
-   *         const activateResult = await session.computer.activateWindow(windowId);
-   *         if (activateResult.success) {
-   *           console.log(`Window ${windowId} activated successfully`);
-   *           // Output: Window 12345 activated successfully
-   *         } else {
-   *           console.log(`Failed to activate window: ${activateResult.errorMessage}`);
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const windows = await result.session.computer.listRootWindows();
+   *   await result.session.computer.activateWindow(windows.windows[0].id);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateActivateWindow().catch(console.error);
    * ```
    */
   async activateWindow(windowId: number): Promise<WindowBoolResult> {
@@ -972,41 +673,14 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateCloseWindow() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Start an application
-   *       await session.computer.startApp('notepad.exe');
-   *
-   *       // Get the active window
-   *       const activeWindow = await session.computer.getActiveWindow();
-   *       if (activeWindow.success && activeWindow.window) {
-   *         // Close the window
-   *         const closeResult = await session.computer.closeWindow(activeWindow.window.id);
-   *         if (closeResult.success) {
-   *           console.log('Window closed successfully');
-   *         } else {
-   *           console.log(`Failed to close window: ${closeResult.errorMessage}`);
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.startApp('notepad.exe');
+   *   const win = await result.session.computer.getActiveWindow();
+   *   await result.session.computer.closeWindow(win.window!.id);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateCloseWindow().catch(console.error);
    * ```
    */
   async closeWindow(windowId: number): Promise<WindowBoolResult> {
@@ -1036,41 +710,14 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateMaximizeWindow() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Start an application
-   *       await session.computer.startApp('notepad.exe');
-   *
-   *       // Get the active window
-   *       const activeWindow = await session.computer.getActiveWindow();
-   *       if (activeWindow.success && activeWindow.window) {
-   *         // Maximize the window
-   *         const maxResult = await session.computer.maximizeWindow(activeWindow.window.id);
-   *         if (maxResult.success) {
-   *           console.log('Window maximized successfully');
-   *         } else {
-   *           console.log(`Failed to maximize window: ${maxResult.errorMessage}`);
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.startApp('notepad.exe');
+   *   const win = await result.session.computer.getActiveWindow();
+   *   await result.session.computer.maximizeWindow(win.window!.id);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateMaximizeWindow().catch(console.error);
    * ```
    */
   async maximizeWindow(windowId: number): Promise<WindowBoolResult> {
@@ -1100,41 +747,14 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateMinimizeWindow() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Start an application
-   *       await session.computer.startApp('notepad.exe');
-   *
-   *       // Get the active window
-   *       const activeWindow = await session.computer.getActiveWindow();
-   *       if (activeWindow.success && activeWindow.window) {
-   *         // Minimize the window
-   *         const minResult = await session.computer.minimizeWindow(activeWindow.window.id);
-   *         if (minResult.success) {
-   *           console.log('Window minimized successfully');
-   *         } else {
-   *           console.log(`Failed to minimize window: ${minResult.errorMessage}`);
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.startApp('notepad.exe');
+   *   const win = await result.session.computer.getActiveWindow();
+   *   await result.session.computer.minimizeWindow(win.window!.id);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateMinimizeWindow().catch(console.error);
    * ```
    */
   async minimizeWindow(windowId: number): Promise<WindowBoolResult> {
@@ -1164,41 +784,15 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateRestoreWindow() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Start an application and minimize it
-   *       await session.computer.startApp('notepad.exe');
-   *       const activeWindow = await session.computer.getActiveWindow();
-   *       if (activeWindow.success && activeWindow.window) {
-   *         await session.computer.minimizeWindow(activeWindow.window.id);
-   *
-   *         // Restore the window
-   *         const restoreResult = await session.computer.restoreWindow(activeWindow.window.id);
-   *         if (restoreResult.success) {
-   *           console.log('Window restored successfully');
-   *         } else {
-   *           console.log(`Failed to restore window: ${restoreResult.errorMessage}`);
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.startApp('notepad.exe');
+   *   const win = await result.session.computer.getActiveWindow();
+   *   await result.session.computer.minimizeWindow(win.window!.id);
+   *   await result.session.computer.restoreWindow(win.window!.id);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateRestoreWindow().catch(console.error);
    * ```
    */
   async restoreWindow(windowId: number): Promise<WindowBoolResult> {
@@ -1230,41 +824,14 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateResizeWindow() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Start an application
-   *       await session.computer.startApp('notepad.exe');
-   *
-   *       // Get the active window
-   *       const activeWindow = await session.computer.getActiveWindow();
-   *       if (activeWindow.success && activeWindow.window) {
-   *         // Resize the window to 800x600
-   *         const resizeResult = await session.computer.resizeWindow(activeWindow.window.id, 800, 600);
-   *         if (resizeResult.success) {
-   *           console.log('Window resized successfully to 800x600');
-   *         } else {
-   *           console.log(`Failed to resize window: ${resizeResult.errorMessage}`);
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.startApp('notepad.exe');
+   *   const win = await result.session.computer.getActiveWindow();
+   *   await result.session.computer.resizeWindow(win.window!.id, 800, 600);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateResizeWindow().catch(console.error);
    * ```
    */
   async resizeWindow(windowId: number, width: number, height: number): Promise<WindowBoolResult> {
@@ -1294,41 +861,14 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateFullscreenWindow() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Start an application
-   *       await session.computer.startApp('notepad.exe');
-   *
-   *       // Get the active window
-   *       const activeWindow = await session.computer.getActiveWindow();
-   *       if (activeWindow.success && activeWindow.window) {
-   *         // Make the window fullscreen
-   *         const fullscreenResult = await session.computer.fullscreenWindow(activeWindow.window.id);
-   *         if (fullscreenResult.success) {
-   *           console.log('Window set to fullscreen successfully');
-   *         } else {
-   *           console.log(`Failed to set window fullscreen: ${fullscreenResult.errorMessage}`);
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.startApp('notepad.exe');
+   *   const win = await result.session.computer.getActiveWindow();
+   *   await result.session.computer.fullscreenWindow(win.window!.id);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateFullscreenWindow().catch(console.error);
    * ```
    */
   async fullscreenWindow(windowId: number): Promise<WindowBoolResult> {
@@ -1358,40 +898,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   *
-   * async function demonstrateFocusMode() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success && result.session) {
-   *       const session = result.session;
-   *
-   *       // Enable focus mode
-   *       const enableResult = await session.computer.focusMode(true);
-   *       if (enableResult.success) {
-   *         console.log('Focus mode enabled');
-   *       }
-   *
-   *       // Do some work...
-   *
-   *       // Disable focus mode
-   *       const disableResult = await session.computer.focusMode(false);
-   *       if (disableResult.success) {
-   *         console.log('Focus mode disabled');
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.focusMode(true);
+   *   await result.session.computer.focusMode(false);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateFocusMode().catch(console.error);
    * ```
    */
   async focusMode(on: boolean): Promise<WindowBoolResult> {
@@ -1425,44 +938,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetInstalledApps() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Get installed applications from start menu
-   *       const appsResult = await session.computer.getInstalledApps();
-   *       if (appsResult.success) {
-   *         console.log(`Found ${appsResult.data.length} installed applications`);
-   *         // Output: Found 15 installed applications
-   *         appsResult.data.forEach(app => {
-   *           console.log(`  - ${app.name}: ${app.path}`);
-   *         });
-   *         // Output:   - Notepad: C:\Windows\System32\notepad.exe
-   *         // Output:   - Calculator: calculator:
-   *       }
-   *
-   *       // Get applications including desktop shortcuts
-   *       const desktopAppsResult = await session.computer.getInstalledApps(true, true, true);
-   *       if (desktopAppsResult.success) {
-   *         console.log(`Found ${desktopAppsResult.data.length} applications (including desktop)`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const apps = await result.session.computer.getInstalledApps();
+   *   console.log(`Found ${apps.data.length} apps`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateGetInstalledApps().catch(console.error);
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1511,39 +993,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateStartApp() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Start Notepad application
-   *       const startResult = await session.computer.startApp('notepad.exe');
-   *       if (startResult.success) {
-   *         console.log(`Started ${startResult.data.length} process(es)`);
-   *         // Output: Started 1 process(es)
-   *         startResult.data.forEach(proc => {
-   *           console.log(`  - PID ${proc.pid}: ${proc.name}`);
-   *         });
-   *         // Output:   - PID 1234: notepad.exe
-   *       } else {
-   *         console.log(`Failed to start app: ${startResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const startResult = await result.session.computer.startApp('notepad.exe');
+   *   console.log(`Started ${startResult.data.length} process(es)`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateStartApp().catch(console.error);
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1588,38 +1044,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateStopAppByPName() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Start an application first
-   *       await session.computer.startApp('notepad.exe');
-   *
-   *       // Stop the application by process name
-   *       const stopResult = await session.computer.stopAppByPName('notepad.exe');
-   *       if (stopResult.success) {
-   *         console.log('Application stopped successfully');
-   *         // Output: Application stopped successfully
-   *       } else {
-   *         console.log(`Failed to stop app: ${stopResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.startApp('notepad.exe');
+   *   await result.session.computer.stopAppByPName('notepad.exe');
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateStopAppByPName().catch(console.error);
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1650,42 +1081,14 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateStopAppByPID() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Start an application and get its PID
-   *       const startResult = await session.computer.startApp('notepad.exe');
-   *       if (startResult.success && startResult.data.length > 0) {
-   *         const pid = startResult.data[0].pid;
-   *         console.log(`Started application with PID: ${pid}`);
-   *
-   *         // Stop the application by PID
-   *         const stopResult = await session.computer.stopAppByPID(pid);
-   *         if (stopResult.success) {
-   *           console.log(`Application with PID ${pid} stopped successfully`);
-   *           // Output: Application with PID 1234 stopped successfully
-   *         } else {
-   *           console.log(`Failed to stop app: ${stopResult.errorMessage}`);
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const startResult = await result.session.computer.startApp('notepad.exe');
+   *   const pid = startResult.data[0].pid;
+   *   await result.session.computer.stopAppByPID(pid);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateStopAppByPID().catch(console.error);
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1716,38 +1119,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateStopAppByCmd() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Start an application first
-   *       await session.computer.startApp('notepad.exe');
-   *
-   *       // Stop the application using a command
-   *       const stopResult = await session.computer.stopAppByCmd('taskkill /IM notepad.exe /F');
-   *       if (stopResult.success) {
-   *         console.log('Application stopped successfully using command');
-   *         // Output: Application stopped successfully using command
-   *       } else {
-   *         console.log(`Failed to stop app: ${stopResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   await result.session.computer.startApp('notepad.exe');
+   *   await result.session.computer.stopAppByCmd('taskkill /IM notepad.exe /F');
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateStopAppByCmd().catch(console.error);
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1777,38 +1155,13 @@ export class Computer {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateListVisibleApps() {
-   *   try {
-   *     const result = await agentBay.create({
-   *       imageId: 'windows_latest'
-   *     });
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // List all visible applications
-   *       const appsResult = await session.computer.listVisibleApps();
-   *       if (appsResult.success) {
-   *         console.log(`Found ${appsResult.data.length} visible applications`);
-   *         // Output: Found 5 visible applications
-   *         appsResult.data.forEach(app => {
-   *           console.log(`  - PID ${app.pid}: ${app.name}`);
-   *         });
-   *         // Output:   - PID 1234: notepad.exe
-   *         // Output:   - PID 5678: chrome.exe
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'windows_latest' });
+   * if (result.success) {
+   *   const apps = await result.session.computer.listVisibleApps();
+   *   console.log(`Found ${apps.data.length} visible apps`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateListVisibleApps().catch(console.error);
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
