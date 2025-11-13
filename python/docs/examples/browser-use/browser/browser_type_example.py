@@ -43,7 +43,7 @@ async def test_browser_type(browser_type: str | None, description: str):
         raise RuntimeError(f"Failed to create session: {result.error_message}")
 
     session = result.session
-    print(f"   ✓ Session created: {session.get_session_id()}")
+    print(f"   ✓ Session created: {session.session_id}")
 
     try:
         # Initialize browser with specified type

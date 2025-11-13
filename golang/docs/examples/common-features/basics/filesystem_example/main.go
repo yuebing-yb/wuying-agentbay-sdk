@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
@@ -95,7 +93,6 @@ func main() {
 	}
 
 	fmt.Println("\n👁️  Starting directory monitoring...")
-	fmt.Println("   Press Ctrl+C to stop monitoring")
 
 	// Start monitoring
 	stopCh := make(chan struct{})
@@ -107,67 +104,58 @@ func main() {
 	)
 	fmt.Println("✅ Directory monitoring started")
 
-	// Set up signal handling for graceful shutdown
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	// Demonstrate file operations
+	time.Sleep(2 * time.Second) // Wait for monitoring to start
 
-	// Start a goroutine to demonstrate file operations
-	go func() {
-		time.Sleep(2 * time.Second) // Wait for monitoring to start
+	fmt.Println("\n🔨 Demonstrating file operations...")
 
-		fmt.Println("\n🔨 Demonstrating file operations...")
+	// Create some files
+	filesToCreate := []struct {
+		name    string
+		content string
+	}{
+		{"example1.txt", "Hello, World!"},
+		{"example2.txt", "This is a test file."},
+		{"config.json", `{"setting": "value"}`},
+	}
 
-		// Create some files
-		filesToCreate := []struct {
-			name    string
-			content string
-		}{
-			{"example1.txt", "Hello, World!"},
-			{"example2.txt", "This is a test file."},
-			{"config.json", `{"setting": "value"}`},
-		}
+	for _, file := range filesToCreate {
+		filepath := fmt.Sprintf("%s/%s", testDir, file.name)
+		fmt.Printf("   Creating: %s\n", file.name)
 
-		for _, file := range filesToCreate {
-			filepath := fmt.Sprintf("%s/%s", testDir, file.name)
-			fmt.Printf("   Creating: %s\n", file.name)
-
-			writeResult, err := session.FileSystem.WriteFile(filepath, file.content, "")
-			if err != nil {
-				fmt.Printf("   ❌ Failed to create %s: %v\n", file.name, err)
-			} else if writeResult.Success {
-				fmt.Printf("   ✅ Created: %s\n", file.name)
-			} else {
-				fmt.Printf("   ❌ Failed to create %s\n", file.name)
-			}
-
-			time.Sleep(1500 * time.Millisecond) // Give time for monitoring to detect changes
-		}
-
-		// Modify a file
-		fmt.Println("\n   Modifying example1.txt...")
-		modifyResult, err := session.FileSystem.WriteFile(
-			fmt.Sprintf("%s/example1.txt", testDir),
-			"Hello, World! - Modified content",
-			"",
-		)
+		writeResult, err := session.FileSystem.WriteFile(filepath, file.content, "")
 		if err != nil {
-			fmt.Printf("   ❌ Failed to modify file: %v\n", err)
-		} else if modifyResult.Success {
-			fmt.Println("   ✅ Modified example1.txt")
+			fmt.Printf("   ❌ Failed to create %s: %v\n", file.name, err)
+		} else if writeResult.Success {
+			fmt.Printf("   ✅ Created: %s\n", file.name)
 		} else {
-			fmt.Printf("   ❌ Failed to modify file\n")
+			fmt.Printf("   ❌ Failed to create %s\n", file.name)
 		}
 
-		// Wait a bit more to capture all events
-		fmt.Println("\n⏳ Waiting for final events...")
-		time.Sleep(3 * time.Second)
-	}()
+		time.Sleep(1500 * time.Millisecond) // Give time for monitoring to detect changes
+	}
 
-	// Wait for interrupt signal
-	<-sigCh
-	fmt.Println("\n\n🛑 Stopping directory monitoring...")
+	// Modify a file
+	fmt.Println("\n   Modifying example1.txt...")
+	modifyResult, err := session.FileSystem.WriteFile(
+		fmt.Sprintf("%s/example1.txt", testDir),
+		"Hello, World! - Modified content",
+		"",
+	)
+	if err != nil {
+		fmt.Printf("   ❌ Failed to modify file: %v\n", err)
+	} else if modifyResult.Success {
+		fmt.Println("   ✅ Modified example1.txt")
+	} else {
+		fmt.Printf("   ❌ Failed to modify file\n")
+	}
+
+	// Wait a bit more to capture all events
+	fmt.Println("\n⏳ Waiting for final events...")
+	time.Sleep(3 * time.Second)
 
 	// Stop monitoring
+	fmt.Println("\n🛑 Stopping directory monitoring...")
 	close(stopCh)
 	wg.Wait()
 	fmt.Println("✅ Directory monitoring stopped")
