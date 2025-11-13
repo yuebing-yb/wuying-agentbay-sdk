@@ -5,22 +5,25 @@ Object Storage Service (OSS) integration enables file upload and download operat
 ## Overview
 
 The OSS module provides:
-- **Authenticated Operations**: Upload/download files using OSS credentials
+- **Authenticated Operations**: Upload/download files using OSS STS temporary credentials
 - **Anonymous Operations**: Upload/download files using presigned URLs
 - **Session-scoped**: All OSS operations are executed within a cloud session environment
+- **Security-first**: Only STS temporary credentials are supported for authenticated operations
 
 ## Prerequisites
 
 Before using OSS operations, you need:
 1. An active AgentBay session (preferably `code_latest` image)
-2. Alibaba Cloud OSS credentials (Access Key ID and Secret)
+2. Alibaba Cloud OSS temporary credentials from STS (Access Key ID, Secret, and Security Token)
+   - See [Alibaba Cloud STS documentation](https://help.aliyun.com/zh/oss/developer-reference/use-temporary-access-credentials-provided-by-sts-to-access-oss) for obtaining temporary credentials
+   - **Security Note**: For security reasons, only STS temporary credentials are supported. Permanent credentials are not allowed.
 3. An OSS bucket (for authenticated operations)
 
 ## Basic Workflow
 
 ### 1. Initialize OSS Environment
 
-Before performing any OSS operations, you must initialize the OSS environment with your credentials:
+Before performing any OSS operations, you must initialize the OSS environment with your STS temporary credentials:
 
 ```python
 from agentbay import AgentBay
@@ -35,7 +38,7 @@ session = result.session
 init_result = session.oss.env_init(
     access_key_id="your-oss-access-key-id",
     access_key_secret="your-oss-access-key-secret",
-    securityToken="optional-security-token",  # Optional: for temporary credentials
+    securityToken="your-security-token",  # Required when using temporary credentials (STS)
     endpoint="https://oss-cn-hangzhou.aliyuncs.com",  # Optional: defaults to OSS endpoint
     region="cn-hangzhou"  # Optional: defaults to OSS region
 )
@@ -48,9 +51,9 @@ else:
 ```
 
 **Parameters:**
-- `access_key_id` (required): Your Alibaba Cloud Access Key ID
-- `access_key_secret` (required): Your Alibaba Cloud Access Key Secret
-- `securityToken` (optional): Security token for temporary credentials (STS)
+- `access_key_id` (required): Your Alibaba Cloud Access Key ID from STS
+- `access_key_secret` (required): Your Alibaba Cloud Access Key Secret from STS
+- `securityToken` (required): Security token from [STS temporary credentials](https://help.aliyun.com/zh/oss/developer-reference/use-temporary-access-credentials-provided-by-sts-to-access-oss). **For security reasons, only temporary credentials are supported.**
 - `endpoint` (optional): OSS service endpoint (e.g., `https://oss-cn-hangzhou.aliyuncs.com`)
 - `region` (optional): OSS region (e.g., `cn-hangzhou`)
 
@@ -193,9 +196,11 @@ if not result.success:
 session = result.session
 
 try:
+    # Initialize OSS with STS temporary credentials
     init_result = session.oss.env_init(
-        access_key_id="your-oss-access-key-id",
-        access_key_secret="your-oss-access-key-secret",
+        access_key_id="your-sts-access-key-id",
+        access_key_secret="your-sts-access-key-secret",
+        securityToken="your-sts-security-token",  # Required for STS credentials
         endpoint="https://oss-cn-hangzhou.aliyuncs.com",
         region="cn-hangzhou"
     )
@@ -339,27 +344,32 @@ session.command.execute_command("unzip /home/guest/dataset.zip -d /home/guest/da
 
 ## Best Practices
 
-1. **Always Initialize First**: Call `env_init()` before any other OSS operations
-2. **Handle Errors**: Check `success` field and handle `error_message` appropriately
-3. **Use Absolute Paths**: Use absolute paths for file operations (e.g., `/home/guest/file.txt`)
-4. **Secure Credentials**: Never hardcode credentials; use environment variables
-5. **Clean Up**: Delete sessions after completing OSS operations to avoid charges
-6. **Request IDs**: Log `request_id` from results for debugging and support
+1. **Use STS Temporary Credentials**: Always use STS temporary credentials with limited validity and minimal permissions
+2. **Always Initialize First**: Call `env_init()` with all three required credentials (`access_key_id`, `access_key_secret`, `securityToken`) before any other OSS operations
+3. **Handle Errors**: Check `success` field and handle `error_message` appropriately
+4. **Use Absolute Paths**: Use absolute paths for file operations (e.g., `/home/guest/file.txt`)
+5. **Secure Credentials**: Never hardcode credentials; use environment variables or secure vaults
+6. **Token Refresh**: Monitor STS token expiration and refresh tokens before they expire
+7. **Clean Up**: Delete sessions after completing OSS operations to avoid charges
+8. **Request IDs**: Log `request_id` from results for debugging and support
 
 ## Security Considerations
 
-- **Credential Management**: Store OSS credentials securely (environment variables, secrets manager)
-- **Temporary Credentials**: Use STS temporary credentials with `securityToken` when possible
-- **Bucket Permissions**: Grant minimal required permissions to OSS Access Keys
-- **Network Security**: Use HTTPS endpoints for OSS operations
-- **Session Cleanup**: Always delete sessions containing sensitive data
+- **Mandatory Temporary Credentials**: For security reasons, AgentBay OSS integration **only supports STS temporary credentials**. You must provide a valid `securityToken` when calling `env_init()`.
+- **Credential Management**: Store STS credentials securely (environment variables, secrets manager). Never hardcode credentials in source code.
+- **Credential Lifecycle**: STS tokens have limited validity. Ensure you obtain fresh temporary credentials before they expire. Refer to [Alibaba Cloud STS documentation](https://help.aliyun.com/zh/oss/developer-reference/use-temporary-access-credentials-provided-by-sts-to-access-oss) for details.
+- **Minimal Permissions**: Configure STS policies to grant only the minimum required OSS permissions (e.g., read-only for downloads, write-only for uploads)
+- **Bucket Permissions**: Use bucket policies to restrict access to specific resources
+- **Network Security**: Always use HTTPS endpoints for OSS operations
+- **Session Cleanup**: Delete sessions after completing operations to prevent credential leakage
 
 ## Limitations
 
 1. **Session Requirement**: OSS operations require an active session
-2. **Initialization Required**: `env_init()` must be called before upload/download operations
-3. **Path Restrictions**: File paths must be within the session filesystem
-4. **Image Compatibility**: Works best with `code_latest` image
+2. **STS Credentials Only**: Only STS temporary credentials are supported; permanent credentials are not allowed
+3. **Initialization Required**: `env_init()` must be called with `securityToken` before upload/download operations
+4. **Path Restrictions**: File paths must be within the session filesystem
+5. **Image Compatibility**: Works best with `code_latest` image
 
 ## Related Documentation
 
