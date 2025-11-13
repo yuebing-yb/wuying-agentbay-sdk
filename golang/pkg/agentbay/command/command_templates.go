@@ -60,11 +60,12 @@ const ShowNavigationBarTemplate = "setprop persist.wy.hasnavibar true; killall c
 // Parameters:
 //
 //	package_list (string): Newline-separated list of package names
+//	timestamp (string): Current timestamp for trigger property
 const UninstallBlacklistTemplate = `cat > /data/system/pm_lock.conf << 'EOF'
 {package_list}
 EOF
 chmod 644 /data/system/pm_lock.conf
-setprop persist.wy.pm_lock.trigger 1`
+setprop persist.wy.pm_lock.trigger {timestamp}`
 
 // MobileCommandTemplates contains mobile command templates for easy access
 var MobileCommandTemplates = map[string]string{

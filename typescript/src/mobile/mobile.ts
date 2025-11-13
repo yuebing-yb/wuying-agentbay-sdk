@@ -879,7 +879,11 @@ export class Mobile {
 
       // Use newline-separated format for uninstall blacklist file content
       const packageList = packageNames.join('\n');
-      const command = replaceTemplatePlaceholders(template, { package_list: packageList });
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const command = replaceTemplatePlaceholders(template, { 
+        package_list: packageList,
+        timestamp: timestamp
+      });
       
       const description = `Uninstall blacklist configuration (${packageNames.length} packages)`;
       return await this.executeCommand(command, description);
