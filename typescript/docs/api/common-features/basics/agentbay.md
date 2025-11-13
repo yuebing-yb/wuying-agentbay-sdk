@@ -19,7 +19,6 @@ Main class for interacting with the AgentBay cloud runtime environment.
 - [get](#get)
 - [list](#list)
 - [pauseAsync](#pauseasync)
-- [removeSession](#removesession)
 - [resumeAsync](#resumeasync)
 
 ## Properties
@@ -245,29 +244,32 @@ pauseSessionAsyncExample().catch(console.error);
 
 **`See`**
 
-[resumeAsync](agentbay.md#resumeasync), [Session.pauseAsync](session.md#pauseasync)
+[resumeAsync](#resumeasync), [Session.pauseAsync](session.md#pauseasync)
 
 ___
 
-### removeSession
+### resumeAsync
 
-▸ **removeSession**(`sessionId`): `void`
+▸ **resumeAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionResumeResult`\>
 
-Remove a session from the internal session cache.
+Asynchronously resume a session from a paused state.
 
-This is an internal utility method that removes a session reference from the AgentBay client's
-session cache without actually deleting the session from the cloud. Use this when you need to
-clean up local references to a session that was deleted externally or no longer needed.
+This method directly calls the ResumeSessionAsync API without waiting for the session
+to reach the RUNNING state.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `sessionId` | `string` | The ID of the session to remove from the cache. |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `session` | [`Session`](session.md) | `undefined` | The session to resume. |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to resume. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
 
 #### Returns
 
-`void`
+`Promise`\<`SessionResumeResult`\>
+
+SessionResumeResult indicating success or failure and request ID
 
 **`Example`**
 
@@ -276,40 +278,46 @@ import { AgentBay } from 'wuying-agentbay-sdk';
 
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 
-async function demonstrateRemoveSession() {
+async function resumeSessionAsyncExample() {
   try {
     // Create a session
     const result = await agentBay.create();
     if (result.success) {
       const session = result.session;
-      console.log(`Created session with ID: ${session.sessionId}`);
-      // Output: Created session with ID: session-xxxxxxxxxxxxxx
 
-      // Delete the session from cloud
+      // Pause the session first
+      await agentBay.pauseAsync(session);
+
+      // Resume the session asynchronously
+      const resumeResult = await agentBay.resumeAsync(session);
+      if (resumeResult.success) {
+        console.log("Session resume request submitted successfully");
+        // Output: Session resume request submitted successfully
+      } else {
+        console.log(`Failed to resume session: ${resumeResult.errorMessage}`);
+      }
+
       await session.delete();
-
-      // Remove the session reference from local cache
-      agentBay.removeSession(session.sessionId);
-      console.log('Session removed from cache');
-      // Output: Session removed from cache
     }
   } catch (error) {
     console.error('Error:', error);
   }
 }
 
-demonstrateRemoveSession().catch(console.error);
+resumeSessionAsyncExample().catch(console.error);
 ```
 
 **`Remarks`**
 
-**Note:** This method only removes the session from the local cache. It does not delete the
-session from the cloud. To delete a session from the cloud, use [delete](agentbay.md#delete) or
-[Session.delete](session.md#delete).
+**Behavior:**
+- This method does not wait for the session to reach the RUNNING state
+- It only submits the resume request to the API
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
 
 **`See`**
 
-[delete](agentbay.md#delete), [Session.delete](session.md#delete)
+[pauseAsync](#pauseasync), [Session.resumeAsync](session.md#resumeasync)
 
 ## Related Resources
 

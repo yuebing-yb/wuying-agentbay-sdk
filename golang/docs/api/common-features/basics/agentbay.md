@@ -153,7 +153,7 @@ client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.List(nil, nil, nil)
 ```
 
-#### Pause
+### Pause
 
 ```go
 func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
@@ -212,7 +212,7 @@ func main() {
 }
 ```
 
-#### Resume
+### Resume
 
 ```go
 func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)

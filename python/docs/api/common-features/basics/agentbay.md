@@ -284,7 +284,7 @@ session.delete()
 
 AgentBay.create, AgentBay.list, Session.info
 
-#### pause
+### pause
 
 ```python
 def pause(session: Session,
@@ -333,30 +333,30 @@ session = create_result.session
 # Pause the session
 pause_result = agent_bay.pause(session)
 if pause_result.success:
-    print(f"Session paused successfully with status: {pause_result.status}")
+  print(f"Session paused successfully with status: {pause_result.status}")
 else:
-    print(f"Failed to pause session: {pause_result.error_message}")
+  print(f"Failed to pause session: {pause_result.error_message}")
 
 # Resume the session when needed
 resume_result = agent_bay.resume(session)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The session state transitions from RUNNING -> PAUSING -> PAUSED
-  - Paused sessions consume fewer resources but maintain their state
-  - Use resume() or resume_async() to restore the session to RUNNING state
-  - The timeout parameter controls how long to wait for the PAUSED state
-  - If timeout is exceeded, the method returns with success=False
-  
+- The session state transitions from RUNNING -> PAUSING -> PAUSED
+- Paused sessions consume fewer resources but maintain their state
+- Use resume() or resume_async() to restore the session to RUNNING state
+- The timeout parameter controls how long to wait for the PAUSED state
+- If timeout is exceeded, the method returns with success=False
+
 
 **See Also**:
 
-  AgentBay.pause_async, AgentBay.resume, AgentBay.resume_async, Session.pause, Session.pause_async
+AgentBay.pause_async, AgentBay.resume, AgentBay.resume_async, Session.pause, Session.pause_async
 
-#### pause\_async
+### pause\_async
 
 ```python
 async def pause_async(session: Session) -> SessionPauseResult
@@ -400,38 +400,38 @@ session = create_result.session
 
 # Pause the session asynchronously
 async def pause_session():
-    pause_result = await agent_bay.pause_async(session)
-    if pause_result.success:
-        print("Session pause request submitted successfully")
-    else:
-        print(f"Failed to pause session: {pause_result.error_message}")
+  pause_result = await agent_bay.pause_async(session)
+  if pause_result.success:
+      print("Session pause request submitted successfully")
+  else:
+      print(f"Failed to pause session: {pause_result.error_message}")
 
-    # Wait for session to actually pause
-    import time
-    time.sleep(2)  # Wait for pause to complete
+  # Wait for session to actually pause
+  import time
+  time.sleep(2)  # Wait for pause to complete
 
-    # Resume the session
-    resume_result = await agent_bay.resume_async(session)
-    session.delete()
+  # Resume the session
+  resume_result = await agent_bay.resume_async(session)
+  session.delete()
 
 asyncio.run(pause_session())
 ```
-  
+
 
 **Notes**:
 
-  - This method does not wait for the session to reach the PAUSED state
-  - It only submits the pause request to the API
-  - Use pause() for synchronous behavior that waits for completion
-  - The session state transitions from RUNNING -> PAUSING -> PAUSED
-  - Paused sessions consume fewer resources but maintain their state
-  
+- This method does not wait for the session to reach the PAUSED state
+- It only submits the pause request to the API
+- Use pause() for synchronous behavior that waits for completion
+- The session state transitions from RUNNING -> PAUSING -> PAUSED
+- Paused sessions consume fewer resources but maintain their state
+
 
 **See Also**:
 
-  AgentBay.pause, AgentBay.resume, AgentBay.resume_async, Session.pause_async
+AgentBay.pause, AgentBay.resume, AgentBay.resume_async, Session.pause_async
 
-#### resume
+### resume
 
 ```python
 def resume(session: Session,
@@ -483,28 +483,28 @@ agent_bay.pause(session)
 # Resume the session
 resume_result = agent_bay.resume(session)
 if resume_result.success:
-    print(f"Session resumed successfully with status: {resume_result.status}")
+  print(f"Session resumed successfully with status: {resume_result.status}")
 else:
-    print(f"Failed to resume session: {resume_result.error_message}")
+  print(f"Failed to resume session: {resume_result.error_message}")
 
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - The session state transitions from PAUSED -> RESUMING -> RUNNING
-  - Only sessions in PAUSED state can be resumed
-  - Use pause() or pause_async() to put a session into PAUSED state
-  - The timeout parameter controls how long to wait for the RUNNING state
-  - If timeout is exceeded, the method returns with success=False
-  
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
+- Use pause() or pause_async() to put a session into PAUSED state
+- The timeout parameter controls how long to wait for the RUNNING state
+- If timeout is exceeded, the method returns with success=False
+
 
 **See Also**:
 
-  AgentBay.pause, AgentBay.pause_async, AgentBay.resume_async, Session.resume, Session.resume_async
+AgentBay.pause, AgentBay.pause_async, AgentBay.resume_async, Session.resume, Session.resume_async
 
-#### resume\_async
+### resume\_async
 
 ```python
 async def resume_async(session: Session) -> SessionResumeResult
@@ -551,34 +551,34 @@ agent_bay.pause(session)
 
 # Resume the session asynchronously
 async def resume_session():
-    resume_result = await agent_bay.resume_async(session)
-    if resume_result.success:
-        print("Session resume request submitted successfully")
-    else:
-        print(f"Failed to resume session: {resume_result.error_message}")
+  resume_result = await agent_bay.resume_async(session)
+  if resume_result.success:
+      print("Session resume request submitted successfully")
+  else:
+      print(f"Failed to resume session: {resume_result.error_message}")
 
-    # Wait for session to actually resume
-    import time
-    time.sleep(10)  # Wait for resume to complete
+  # Wait for session to actually resume
+  import time
+  time.sleep(10)  # Wait for resume to complete
 
-    session.delete()
+  session.delete()
 
 asyncio.run(resume_session())
 ```
-  
+
 
 **Notes**:
 
-  - This method does not wait for the session to reach the RUNNING state
-  - It only submits the resume request to the API
-  - Use resume() for synchronous behavior that waits for completion
-  - The session state transitions from PAUSED -> RESUMING -> RUNNING
-  - Only sessions in PAUSED state can be resumed
-  
+- This method does not wait for the session to reach the RUNNING state
+- It only submits the resume request to the API
+- Use resume() for synchronous behavior that waits for completion
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
+
 
 **See Also**:
 
-  AgentBay.pause, AgentBay.pause_async, AgentBay.resume, Session.resume_async
+AgentBay.pause, AgentBay.pause_async, AgentBay.resume, Session.resume_async
 
 ## Related Resources
 

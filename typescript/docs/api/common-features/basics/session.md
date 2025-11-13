@@ -21,9 +21,9 @@ Represents a session in the AgentBay cloud environment.
 - [getLinkAsync](#getlinkasync)
 - [info](#info)
 - [listMcpTools](#listmcptools)
-- [setLabels](#setlabels)
 - [pauseAsync](#pauseasync)
 - [resumeAsync](#resumeasync)
+- [setLabels](#setlabels)
 
 ## Properties
 
@@ -367,6 +367,54 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+___
+
+### pauseAsync
+
+▸ **pauseAsync**(`timeout?`, `pollInterval?`): `Promise`\<`SessionPauseResult`\>
+
+Asynchronously pause this session, putting it into a dormant state.
+
+This method directly calls the PauseSessionAsync API and then polls the GetSession API
+asynchronously to check the session status until it becomes PAUSED or until timeout.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to pause. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionPauseResult`\>
+
+SessionPauseResult indicating success or failure and request ID
+
+___
+
+### resumeAsync
+
+▸ **resumeAsync**(`timeout?`, `pollInterval?`): `Promise`\<`SessionResumeResult`\>
+
+Asynchronously resume this session from a paused state.
+
+This method directly calls the ResumeSessionAsync API and then polls the GetSession API
+asynchronously to check the session status until it becomes RUNNING or until timeout.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to resume. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionResumeResult`\>
+
+SessionResumeResult indicating success or failure and request ID
 
 ___
 

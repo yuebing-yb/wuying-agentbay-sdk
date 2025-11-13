@@ -204,7 +204,7 @@ defer result.Session.Delete()
 toolsResult, _ := result.Session.ListMcpTools()
 ```
 
-#### Pause
+### Pause
 
 ```go
 func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
@@ -262,7 +262,7 @@ func main() {
 }
 ```
 
-#### Resume
+### Resume
 
 ```go
 func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
@@ -324,7 +324,7 @@ func main() {
 }
 ```
 
-#### SetLabels
+### SetLabels
 
 ```go
 func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error)
@@ -588,7 +588,7 @@ McpTool represents an MCP tool with complete information
 
 ### Methods
 
-#### GetName
+### GetName
 
 ```go
 func (m *McpTool) GetName() string
@@ -596,7 +596,7 @@ func (m *McpTool) GetName() string
 
 GetName returns the tool name
 
-#### GetServer
+### GetServer
 
 ```go
 func (m *McpTool) GetServer() string
