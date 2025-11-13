@@ -39,28 +39,28 @@ func TestSession_BrowserIntegration(t *testing.T) {
 
 func TestBrowserOption_BrowserType(t *testing.T) {
 	tests := []struct {
-		name         string
-		browserType  string
+		name          string
+		browserType   string
 		shouldBeValid bool
 	}{
 		{
-			name:         "chromium",
-			browserType:  "chromium",
+			name:          "chromium",
+			browserType:   "chromium",
 			shouldBeValid: true,
 		},
 		{
-			name:         "chrome",
-			browserType:  "chrome",
+			name:          "chrome",
+			browserType:   "chrome",
 			shouldBeValid: true,
 		},
 		{
-			name:         "firefox (invalid)",
-			browserType:  "firefox",
+			name:          "firefox (invalid)",
+			browserType:   "firefox",
 			shouldBeValid: false,
 		},
 		{
-			name:         "edge (invalid)",
-			browserType:  "edge",
+			name:          "edge (invalid)",
+			browserType:   "edge",
 			shouldBeValid: false,
 		},
 	}
@@ -337,4 +337,3 @@ func TestBrowserOption_WithProxies(t *testing.T) {
 		assert.Contains(t, err.Error(), "proxies list length must be limited to 1")
 	})
 }
-
