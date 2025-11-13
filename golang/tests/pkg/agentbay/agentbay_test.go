@@ -420,7 +420,6 @@ func TestAgentBay_CreateSessionWithRecyclePolicy(t *testing.T) {
 
 	fmt.Println("Session with custom RecyclePolicy created and verified successfully")
 }
-
 // TestRecyclePolicy_InvalidPaths tests invalid paths with wildcards via NewContextSync
 func TestRecyclePolicy_InvalidPaths(t *testing.T) {
 	fmt.Println("Testing invalid paths with wildcards...")
@@ -517,12 +516,12 @@ func TestRecyclePolicy_CombinedInvalid(t *testing.T) {
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
 		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
-			func() bool {
-				for i := 0; i <= len(s)-len(substr); i++ {
-					if s[i:i+len(substr)] == substr {
-						return true
-					}
+		func() bool {
+			for i := 0; i <= len(s)-len(substr); i++ {
+				if s[i:i+len(substr)] == substr {
+					return true
 				}
-				return false
-			}())))
+			}
+			return false
+		}())))
 }

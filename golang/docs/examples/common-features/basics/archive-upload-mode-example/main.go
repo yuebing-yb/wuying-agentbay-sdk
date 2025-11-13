@@ -149,6 +149,8 @@ func archiveUploadModeExample(ab *agentbay.AgentBay, uniqueID string) error {
 	fmt.Printf("✅ File write successful!\n")
 	fmt.Printf("   Request ID: %s\n", writeResult.RequestID)
 
+
+
 	// Step 6: Test context sync functionality
 	fmt.Println("\n🔄 Step 6: Testing context sync functionality...")
 	syncResult, err := session.Context.Sync()

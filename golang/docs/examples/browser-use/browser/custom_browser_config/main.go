@@ -141,3 +141,4 @@ func main() {
 
 	fmt.Println("\nBrowser configuration verified successfully!")
 }
+
