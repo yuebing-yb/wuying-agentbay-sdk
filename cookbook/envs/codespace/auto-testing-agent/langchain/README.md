@@ -32,30 +32,26 @@ Session created with ID: session-xxxxxxxxxxxxxxxxx
 Uploaded calculator.py to AgentBay environment at calculator.py
 Executing test case test_calculator.py
 
-......................
+.......................
 ----------------------------------------------------------------------
-Ran 22 tests in 0.001s
+Ran 23 tests in 0.001s
 
 OK
 
-Executed 1 tests. 1 passed, 0 failed.
+Final result: The testing process for the Python project has been completed successfully:
 
-Test file: test_calculator.py
-Status: PASS
+1. **Project Scanning**: I scanned the project structure at the specified path and found a single Python file `calculator.py` containing:
+   - A `Calculator` class with methods: `add`, `subtract`, `multiply`, `divide`
+   - Standalone functions: `add`, `subtract`, `multiply`, `divide`, `is_even`
 
-The testing process for the Python project at `/path/to/sample_project` has been successfully completed. Here's a summary:
+2. **Test Generation**: Based on the project structure, I generated a test file `test_calculator.py` that covers all the functions and class methods.
 
-1. **Project Structure Scanned**: The project contains a single Python file, `calculator.py`, which includes:
-   - A `Calculator` class with methods: `add`, `subtract`, `multiply`, and `divide`.
-   - Standalone functions: `add`, `subtract`, `multiply`, `divide`, and `is_even`.
+3. **Test Execution**: All tests passed successfully:
+   - 23 tests were executed in 0.001 seconds
+   - All tests passed (1/1 test files passed)
+   - No failures or errors were detected
 
-2. **Test Cases Generated**: One test file, `test_calculator.py`, was generated to cover the functionality of the `calculator.py` module.
-
-3. **Tests Executed**: The test suite in `test_calculator.py` was executed.
-   - **Result**: All 22 tests passed.
-   - **Status**: ✅ PASS
-
-No failures were detected. The code appears to be functioning as expected based on the test coverage.
+The project's calculator functionality is working correctly according to the generated test cases.
 ```
 
 ## Setup
@@ -82,18 +78,9 @@ Install the required packages:
 ```bash
 # Upgrade pip
 pip install --upgrade pip
-
-# Install core dependencies
-pip install wuying-agentbay-sdk python-dotenv
-
-# Install LangChain dependencies
-pip install langchain langchain-openai
-
-# Install other dependencies
-pip install pytest
 ```
 
-Alternatively, you can install dependencies using the requirements file:
+You can install dependencies using the requirements file:
 
 ```bash
 pip install -r requirements.txt
@@ -110,8 +97,8 @@ AGENTBAY_API_KEY=your_actual_api_key_here
 # DashScope (Alibaba Cloud) API Key for Qwen LLM (required for LangChain orchestration)
 DASHSCOPE_API_KEY=your_qwen_api_key_here
 
-# Optional: specify which Qwen model to use (default: qwen-plus)
-DASHSCOPE_MODEL=qwen-plus
+# Optional: specify which Qwen model to use (default: qwen3-max)
+DASHSCOPE_MODEL=qwen3-max
 ```
 
 You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
@@ -126,15 +113,7 @@ For the DashScope API key, you need to register on the Alibaba Cloud DashScope p
 2. Sign up or log in to your account
 3. Navigate to the API Key management section
 4. Create a new API Key and copy it for use in your `.env` file
-
-### 4. Available Qwen Models
-
-The following Qwen models are available for use:
-- `qwen-turbo`: Fast and efficient model for simple tasks
-- `qwen-plus`: Balanced model for most use cases (default)
-- `qwen-max`: Most capable model for complex tasks
-
-You can specify which model to use by setting the `DASHSCOPE_MODEL` environment variable in your `.env` file.
+5. You can specify which model to use by setting the `DASHSCOPE_MODEL` environment variable in your `.env` file.
 
 ## Structure
 
@@ -183,22 +162,6 @@ This example script demonstrates:
 4. Executing the tests in AgentBay session
 5. Saving the results to a log file
 
-### Direct Usage
-
-You can also use the testing agent directly by instantiating the [LangChainTestingAgent](./src/auto_testing_agent.py) class and calling its methods.
-
-### Usage Example
-
-```python
-from auto_testing_agent import create_langchain_agent
-
-# Create the agent
-agent = create_langchain_agent()
-
-# Use the agent
-result = agent.invoke({
-    "input": "Test the Python project at path/to/your/project"
-})
 ```
 
 ## Troubleshooting

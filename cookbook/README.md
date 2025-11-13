@@ -2,14 +2,14 @@
 
 The AgentBay SDK Cookbook is a collection of practical examples and use cases demonstrating how to leverage the AgentBay SDK for various automation scenarios. Each cookbook showcases a specific application of the SDK, providing both basic implementations and integrations with popular frameworks like LangChain.
 
-## Sandbox Environments (envs)
+## Session Environments (envs)
 
-The `envs` directory contains examples organized by sandbox environments. A sandbox environment in AgentBay refers to an isolated cloud computing environment where specific types of operations can be performed safely and efficiently. Each environment provides specialized capabilities for different use cases.
+The `envs` directory contains examples organized by session environments. A session environment in AgentBay refers to an isolated cloud computing environment where specific types of operations can be performed safely and efficiently. Each environment provides specialized capabilities for different use cases.
 
-Currently, two distinct sandbox environments are implemented:
+Currently, two distinct session environments are implemented:
 
-1. **browser** - A web browser sandbox environment that provides capabilities for web automation, including form filling, web scraping, and UI interactions.
-2. **codespace** - A code execution sandbox environment that provides capabilities for running and testing code in isolated environments.
+1. **browser** - A web browser session environment that provides capabilities for web automation, including form filling, web scraping, and UI interactions.
+2. **codespace** - A code execution session environment that provides capabilities for running and testing code in isolated environments.
 
 ## Table of Contents
 
