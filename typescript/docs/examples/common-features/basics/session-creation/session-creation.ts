@@ -1,6 +1,5 @@
 
-import { AgentBay, log, logError, CreateSessionParams, ContextSync, newSyncPolicy, ContextStatusData, newCreateSessionParams } from '../../../../../src/index'
-import { MobileExtraConfig, AppManagerRule, ExtraConfigs } from '../../../../../src/index'
+import { AgentBay, log, logError, CreateSessionParams, ContextSync, newSyncPolicy, ContextStatusData, newCreateSessionParams, MobileExtraConfig, AppManagerRule, ExtraConfigs } from 'wuying-agentbay-sdk'
 
 
 

@@ -13,7 +13,7 @@
  *     npx ts-node main.ts
  */
 
-import { AgentBay, CreateSessionParams, Session } from "../../../../../src/index";
+import { AgentBay, CreateSessionParams, Session } from "wuying-agentbay-sdk";
 
 async function main() {
   // Get API key from environment variable

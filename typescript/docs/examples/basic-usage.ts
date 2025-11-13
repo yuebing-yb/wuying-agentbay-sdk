@@ -1,4 +1,4 @@
-import { AgentBay, logError, log } from '../../src/index';
+import { AgentBay, logError, log } from 'wuying-agentbay-sdk';
 
 async function main() {
   try {
