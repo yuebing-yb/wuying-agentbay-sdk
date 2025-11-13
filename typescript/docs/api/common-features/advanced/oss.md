@@ -99,18 +99,18 @@ ___
 
 ### envInit
 
-▸ **envInit**(`accessKeyId`, `accessKeySecret`, `securityToken?`, `endpoint?`, `region?`): `Promise`\<`OSSClientResult`\>
+▸ **envInit**(`accessKeyId`, `accessKeySecret`, `securityToken`, `endpoint?`, `region?`): `Promise`\<`OSSClientResult`\>
 
-Initialize OSS environment variables with the specified credentials.
+Initialize OSS environment variables with the specified STS temporary credentials.
 Corresponds to Python's env_init() method
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `accessKeyId` | `string` | The access key ID |
-| `accessKeySecret` | `string` | The access key secret |
-| `securityToken?` | `string` | The security token (optional) |
+| `accessKeyId` | `string` | The access key ID from STS temporary credentials |
+| `accessKeySecret` | `string` | The access key secret from STS temporary credentials |
+| `securityToken` | `string` | The security token from STS temporary credentials (required) |
 | `endpoint?` | `string` | The OSS endpoint (optional) |
 | `region?` | `string` | The OSS region (optional) |
 
@@ -130,7 +130,7 @@ APIError if the operation fails.
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const createResult = await agentBay.create();
 if (createResult.success) {
-  const result = await createResult.session.oss.envInit('key_id', 'key_secret', 'token', 'oss-cn-hangzhou.aliyuncs.com', 'cn-hangzhou');
+  const result = await createResult.session.oss.envInit('sts_key_id', 'sts_key_secret', 'sts_token', 'oss-cn-hangzhou.aliyuncs.com', 'cn-hangzhou');
   console.log('OSS initialized:', result.success);
   await createResult.session.delete();
 }
