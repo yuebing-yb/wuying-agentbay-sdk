@@ -9,8 +9,8 @@
  * - Context synchronization and file sharing
  */
 
-import type { CreateSessionParams } from 'wuying-agentbay-sdk';
-import { AgentBay, ContextSync, logError, newSyncPolicy } from 'wuying-agentbay-sdk';
+import type { CreateSessionParams } from '../../../../../src/index';
+import { AgentBay, ContextSync, logError, newSyncPolicy } from '../../../../../src/index';
 
 async function main(): Promise<void> {
     console.log('🗄️ AgentBay Data Persistence Example');
@@ -51,7 +51,6 @@ async function dataPersistenceDemo(agentBay: AgentBay): Promise<void> {
     const context = contextResult.context;
     console.log(`✅ Context created successfully: ${context.id}`);
     console.log(`   Name: ${context.name}`);
-    console.log(`   State: ${context.state}`);
     
     // Step 2: Create first session with context sync
     console.log('\n🔧 Step 2: Creating first session with context synchronization...');

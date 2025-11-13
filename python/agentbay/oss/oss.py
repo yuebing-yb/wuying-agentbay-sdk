@@ -129,17 +129,17 @@ class Oss(BaseService):
         self,
         access_key_id: str,
         access_key_secret: str,
-        securityToken: Optional[str] = None,
+        securityToken: str,
         endpoint: Optional[str] = None,
         region: Optional[str] = None,
     ) -> OSSClientResult:
         """
-        Create an OSS client with the provided credentials.
+        Create an OSS client with the provided STS temporary credentials.
 
         Args:
-            access_key_id: The Access Key ID for OSS authentication.
-            access_key_secret: The Access Key Secret for OSS authentication.
-            securityToken: Optional security token for temporary credentials.
+            access_key_id: The Access Key ID from STS temporary credentials.
+            access_key_secret: The Access Key Secret from STS temporary credentials.
+            securityToken: Security token from STS temporary credentials. Required for security.
             endpoint: The OSS service endpoint. If not specified, the default is used.
             region: The OSS region. If not specified, the default is used.
 
@@ -151,8 +151,9 @@ class Oss(BaseService):
             ```python
             session = agent_bay.create().session
             session.oss.env_init(
-                access_key_id="your_access_key_id",
-                access_key_secret="your_access_key_secret"
+                access_key_id="your_sts_access_key_id",
+                access_key_secret="your_sts_access_key_secret",
+                securityToken="your_sts_security_token"
             )
             session.delete()
             ```
