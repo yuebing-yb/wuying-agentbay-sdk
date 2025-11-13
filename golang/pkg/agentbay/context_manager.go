@@ -69,40 +69,10 @@ func NewContextManager(session interface {
 //
 // Example:
 //
-//	package main
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//	func main() {
-//		client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		result, err := client.Create(nil)
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		session := result.Session
-//
-//		// Get context synchronization information
-//		infoResult, err := session.Context.Info()
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//			os.Exit(1)
-//		}
-//		fmt.Printf("Context status data count: %d\n", len(infoResult.ContextStatusData))
-//		for _, item := range infoResult.ContextStatusData {
-//			fmt.Printf("Context %s: Status=%s, Path=%s\n", item.ContextId, item.Status, item.Path)
-//		}
-//
-//		// Output: Context status data count: 0
-//
-//		session.Delete()
-//	}
+//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//    result, _ := client.Create(nil)
+//    defer result.Session.Delete()
+//    info, _ := result.Session.Context.Info()
 func (cm *ContextManager) Info() (*ContextInfoResult, error) {
 	return cm.InfoWithParams("", "", "")
 }

@@ -81,33 +81,16 @@ class Code(BaseService):
             `image_id="code_latest"` in the `CreateSessionParams`.
 
         Example:
-            Execute Python and JavaScript code in a code execution environment::
+            Execute Python code in a code execution environment::
 
                 from agentbay import AgentBay
                 from agentbay.session_params import CreateSessionParams
 
                 agent_bay = AgentBay(api_key="your_api_key")
-
-                def execute_python_code():
-                    try:
-                        # Create a session with code_latest image
-                        params = CreateSessionParams(image_id="code_latest")
-                        result = agent_bay.create(params)
-                        if result.success:
-                            session = result.session
-
-                            # Execute Python code
-                            python_code = "print('Hello from Python!')\nresult = 2 + 3\nprint(f'Result: {result}')"
-
-                            code_result = session.code.run_code(python_code, "python")
-                            if code_result.success:
-                                print(f"Python code output: {code_result.result}")
-
-                            session.delete()
-                    except Exception as e:
-                        print(f"Error: {e}")
-
-                execute_python_code()
+                result = agent_bay.create(CreateSessionParams(image_id="code_latest"))
+                code_result = result.session.code.run_code("print('Hello')", "python")
+                print(code_result.result)
+                result.session.delete()
         """
         try:
             # Validate language
@@ -144,4 +127,4 @@ class Code(BaseService):
                 request_id="",
                 success=False,
                 error_message=f"Failed to run code: {e}",
-            ) 
+            )

@@ -28,7 +28,7 @@ Browser provides browser-related operations for the session
 
 ### Methods
 
-#### Destroy
+### Destroy
 
 ```go
 func (b *Browser) Destroy() error
@@ -39,60 +39,14 @@ Destroy the browser instance
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Initialize browser
-
-	option := browser.NewBrowserOption()
-	success, err := session.Browser.Initialize(option)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if !success {
-		fmt.Println("Failed to initialize browser")
-		os.Exit(1)
-	}
-	fmt.Println("Browser initialized successfully")
-
-	// Output: Browser initialized successfully
-
-	// Use browser for automation tasks...
-
-	// Destroy browser instance
-
-	err = session.Browser.Destroy()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Println("Browser destroyed successfully")
-
-	// Output: Browser destroyed successfully
-
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+session.Browser.Initialize(browser.NewBrowserOption())
+session.Browser.Destroy()
 ```
 
-#### GetEndpointURL
+### GetEndpointURL
 
 ```go
 func (b *Browser) GetEndpointURL() (string, error)
@@ -103,91 +57,14 @@ GetEndpointURL returns the endpoint URL if the browser is initialized
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
-	"github.com/playwright-community/playwright-go"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := agentbay.NewCreateSessionParams().WithImageId("browser_latest")
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Initialize browser
-
-	option := browser.NewBrowserOption()
-	success, err := session.Browser.Initialize(option)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if !success {
-		os.Exit(1)
-	}
-
-	// Get CDP endpoint URL
-
-	endpointURL, err := session.Browser.GetEndpointURL()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("CDP endpoint: %s\n", endpointURL)
-
-	// Connect with Playwright
-
-	pw, err := playwright.Run()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	defer pw.Stop()
-	browserInstance, err := pw.Chromium.ConnectOverCDP(endpointURL)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	defer browserInstance.Close()
-
-	// Get or create page
-
-	contexts := browserInstance.Contexts()
-	if len(contexts) == 0 {
-		fmt.Println("No browser contexts available")
-		os.Exit(1)
-	}
-	page, err := contexts[0].NewPage()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Navigate to a website
-
-	_, err = page.Goto("https://example.com")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	title, _ := page.Title()
-	fmt.Printf("Page title: %s\n", title)
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+defer result.Session.Delete()
+session.Browser.Initialize(browser.NewBrowserOption())
+endpointURL, _ := session.Browser.GetEndpointURL()
 ```
 
-#### GetOption
+### GetOption
 
 ```go
 func (b *Browser) GetOption() *BrowserOption
@@ -198,60 +75,15 @@ GetOption returns the current BrowserOption used to initialize the browser, or n
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
+currentOption := session.Browser.GetOption()
+if currentOption != nil && currentOption.UseStealth {
 
-	// Initialize browser with custom options
+    // Stealth mode is enabled
 
-	option := browser.NewBrowserOption()
-	customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
-	option.UserAgent = &customUA
-	option.UseStealth = true
-	success, err := session.Browser.Initialize(option)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if !success {
-		os.Exit(1)
-	}
-
-	// Get current browser option
-
-	currentOption := session.Browser.GetOption()
-	if currentOption != nil {
-		fmt.Printf("Stealth mode: %v\n", currentOption.UseStealth)
-		if currentOption.UserAgent != nil {
-			fmt.Printf("User agent: %s\n", *currentOption.UserAgent)
-		}
-	}
-
-	// Output: Stealth mode: true
-
-	// Output: User agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0
-
-	session.Delete()
 }
 ```
 
-#### Initialize
+### Initialize
 
 ```go
 func (b *Browser) Initialize(option *BrowserOption) (bool, error)
@@ -264,28 +96,11 @@ successful, false and error otherwise.
 
 ```go
 option := browser.NewBrowserOption()
-
-// Add custom configuration
-
-customUA := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
-option.UserAgent = &customUA
-option.Viewport = &browser.BrowserViewport{
-    Width:  1920,
-    Height: 1080,
-}
-
-// Initialize browser
-
-success, err := session.Browser.Initialize(option)
-if err != nil {
-    log.Fatalf("Failed to initialize browser: %v", err)
-}
-if !success {
-    log.Fatal("Browser initialization returned false")
-}
+option.UseStealth = true
+success, _ := session.Browser.Initialize(option)
 ```
 
-#### IsInitialized
+### IsInitialized
 
 ```go
 func (b *Browser) IsInitialized() bool
@@ -296,61 +111,14 @@ IsInitialized returns true if the browser was initialized, false otherwise
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
+if session.Browser.IsInitialized() {
 
-	// Check if browser is initialized before use
+    // Browser is ready
 
-	if session.Browser.IsInitialized() {
-		fmt.Println("Browser is already initialized")
-	} else {
-		fmt.Println("Browser is not initialized yet")
-	}
-
-	// Output: Browser is not initialized yet
-
-	// Initialize browser
-
-	option := browser.NewBrowserOption()
-	success, err := session.Browser.Initialize(option)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if !success {
-		os.Exit(1)
-	}
-
-	// Check again after initialization
-
-	if session.Browser.IsInitialized() {
-		fmt.Println("Browser is now initialized")
-	}
-
-	// Output: Browser is now initialized
-
-	session.Delete()
 }
 ```
 
-#### Screenshot
+### Screenshot
 
 ```go
 func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error)
@@ -375,114 +143,20 @@ Returns:
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
-	"github.com/playwright-community/playwright-go"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
+// Connect to browser using Playwright
 
-	// Initialize browser
+// pw, _ := playwright.Run()
 
-	option := browser.NewBrowserOption()
-	success, err := session.Browser.Initialize(option)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if !success {
-		os.Exit(1)
-	}
+// browser, _ := pw.Chromium.ConnectOverCDP(endpointURL)
 
-	// Get endpoint URL and connect with Playwright
+// page, _ := browser.NewPage()
 
-	endpointURL, err := session.Browser.GetEndpointURL()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Connect to browser via Playwright
-
-	pw, err := playwright.Run()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	defer pw.Stop()
-	browser, err := pw.Chromium.ConnectOverCDP(endpointURL)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	defer browser.Close()
-
-	// Get the page
-
-	contexts := browser.Contexts()
-	if len(contexts) == 0 {
-		fmt.Println("No browser contexts available")
-		os.Exit(1)
-	}
-	page, err := contexts[0].NewPage()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Navigate to a URL
-
-	_, err = page.Goto("https://example.com")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Take screenshot with custom options
-
-	screenshotOptions := &browser.ScreenshotOptions{
-		FullPage: true,
-		Type:     "png",
-		Timeout:  60000,
-	}
-	screenshotData, err := session.Browser.Screenshot(page, screenshotOptions)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Save screenshot to file
-
-	err = os.WriteFile("/tmp/screenshot.png", screenshotData, 0644)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Screenshot saved successfully (%d bytes)\n", len(screenshotData))
-
-	// Output: Screenshot saved successfully (12345 bytes)
-
-	session.Delete()
-}
+screenshotData, _ := session.Browser.Screenshot(page, nil)
 ```
 
 ### Related Functions
 
-#### NewBrowser
+### NewBrowser
 
 ```go
 func NewBrowser(session SessionInterface) *Browser
@@ -514,7 +188,7 @@ fingerprint := &browser.BrowserFingerprint{
 
 ### Related Functions
 
-#### NewBrowserFingerprint
+### NewBrowserFingerprint
 
 ```go
 func NewBrowserFingerprint(devices, operatingSystems, locales []string) (*BrowserFingerprint, error)
@@ -570,7 +244,7 @@ if err := option.Validate(); err != nil {
 
 ### Related Functions
 
-#### NewBrowserOption
+### NewBrowserOption
 
 ```go
 func NewBrowserOption() *BrowserOption
@@ -581,60 +255,8 @@ NewBrowserOption creates a new BrowserOption with default values and validation
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Create browser option with default values
-
-	option := browser.NewBrowserOption()
-
-	// Customize user agent
-
-	customUA := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
-	option.UserAgent = &customUA
-
-	// Set viewport
-
-	option.Viewport = &browser.BrowserViewport{Width: 1920, Height: 1080}
-
-	// Enable stealth mode
-
-	option.UseStealth = true
-
-	// Initialize browser with custom options
-
-	success, err := session.Browser.Initialize(option)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	if !success {
-		fmt.Println("Failed to initialize browser")
-		os.Exit(1)
-	}
-	fmt.Println("Browser initialized with custom options")
-
-	// Output: Browser initialized with custom options
-
-	session.Delete()
-}
+option := browser.NewBrowserOption()
+option.UseStealth = true
 ```
 
 ## Type BrowserProxy
@@ -689,7 +311,7 @@ pollingProxy := &browser.BrowserProxy{
 
 ### Related Functions
 
-#### NewBrowserProxy
+### NewBrowserProxy
 
 ```go
 func NewBrowserProxy(proxyType string, server, username, password, strategy *string, pollSize *int) (*BrowserProxy, error)

@@ -34,7 +34,7 @@ Code handles code execution operations in the AgentBay cloud environment.
 
 ### Methods
 
-#### RunCode
+### RunCode
 
 ```go
 func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResult, error)
@@ -46,69 +46,15 @@ seconds. Default is 60s. Note: Due to gateway limitations, each request cannot e
 **Example:**
 
 ```go
-package main
-import (
-    "fmt"
-    "os"
-    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-    // Initialize AgentBay with API key from environment variable
-
-    client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-    if err != nil {
-        fmt.Printf("Error initializing AgentBay client: %v\n", err)
-        os.Exit(1)
-    }
-
-    // Create a session with code_latest image
-
-    params := &agentbay.CreateSessionParams{
-        ImageId: "code_latest",
-    }
-    sessionResult, err := client.Create(params)
-    if err != nil {
-        fmt.Printf("Error creating session: %v\n", err)
-        os.Exit(1)
-    }
-    session := sessionResult.Session
-
-    // Execute Python code
-
-    pythonCode := `
-print("Hello from Python!")
-result = 2 + 3
-print(f"Result: {result}")
-`
-    codeResult, err := session.Code.RunCode(pythonCode, "python")
-    if err != nil {
-        fmt.Printf("Error executing Python code: %v\n", err)
-    } else {
-        fmt.Printf("Python code output:\n%s\n", codeResult.Output)
-        fmt.Printf("Request ID: %s\n", codeResult.RequestID)
-    }
-
-    // Execute JavaScript code with custom timeout
-
-    jsCode := `
-console.log("Hello from JavaScript!");
-const result = 2 + 3;
-console.log("Result:", result);
-`
-    jsResult, err := session.Code.RunCode(jsCode, "javascript", 30)
-    if err != nil {
-        fmt.Printf("Error executing JavaScript code: %v\n", err)
-    } else {
-        fmt.Printf("JavaScript code output:\n%s\n", jsResult.Output)
-        fmt.Printf("Request ID: %s\n", jsResult.RequestID)
-    }
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("code_latest"))
+defer sessionResult.Session.Delete()
+codeResult, _ := sessionResult.Session.Code.RunCode("print('Hello')", "python")
 ```
 
 ### Related Functions
 
-#### NewCode
+### NewCode
 
 ```go
 func NewCode(session interface {

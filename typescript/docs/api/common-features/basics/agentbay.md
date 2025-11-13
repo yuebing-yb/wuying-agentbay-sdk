@@ -14,13 +14,13 @@ Main class for interacting with the AgentBay cloud runtime environment.
 
 ### Methods
 
-- [create](agentbay.md#create)
-- [delete](agentbay.md#delete)
-- [get](agentbay.md#get)
-- [list](agentbay.md#list)
-- [pauseAsync](agentbay.md#pauseasync)
-- [removeSession](agentbay.md#removesession)
-- [resumeAsync](agentbay.md#resumeasync)
+- [create](#create)
+- [delete](#delete)
+- [get](#get)
+- [list](#list)
+- [pauseAsync](#pauseasync)
+- [removeSession](#removesession)
+- [resumeAsync](#resumeasync)
 
 ## Properties
 
@@ -60,54 +60,11 @@ Error if API call fails or authentication is invalid.
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-// Create session with default parameters
-const result = await agentBay.create();
+const result = await agentBay.create({ labels: { project: 'demo' } });
 if (result.success) {
-  const session = result.session;
-  console.log(`Session ID: ${session.sessionId}`);
-  // Output: Session ID: session-04bdwfj7u22a1s30g
-
-  // Use the session
-  const fileResult = await session.filesystem.readFile('/etc/hostname');
-  console.log(`Hostname: ${fileResult.data}`);
-
-  // Clean up
-  await session.delete();
-}
-
-// Create session with custom parameters
-const customResult = await agentBay.create({
-  labels: { project: 'demo', env: 'test' },
-  imageId: 'custom-image-v1',
-  isVpc: true
-});
-if (customResult.success) {
-  console.log('VPC session created');
-  await customResult.session.delete();
-}
-
-// RECOMMENDED: Create a session with context synchronization
-const contextResult = await agentBay.context.get('my-context', true);
-if (contextResult.success && contextResult.context) {
-  const contextSync = new ContextSync({
-    contextId: contextResult.context.id,
-    path: '/mnt/persistent',
-    policy: SyncPolicy.default()
-  });
-
-  const syncResult = await agentBay.create({
-    imageId: 'linux_latest',
-    contextSync: [contextSync]
-  });
-
-  if (syncResult.success) {
-    console.log(`Created session with context sync: ${syncResult.session.sessionId}`);
-    await syncResult.session.delete();
-  }
+  await result.session.filesystem.readFile('/etc/hostname');
+  await result.session.delete();
 }
 ```
 
@@ -122,7 +79,7 @@ if (contextResult.success && contextResult.context) {
 
 **`See`**
 
-[get](agentbay.md#get), [list](agentbay.md#list), [Session.delete](session.md#delete)
+[get](#get), [list](#list), [Session.delete](session.md#delete)
 
 ___
 
@@ -148,34 +105,11 @@ DeleteResult indicating success or failure and request ID
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function createAndDeleteSession() {
-  try {
-    // Create a session
-    const createResult = await agentBay.create();
-    if (createResult.success) {
-      const session = createResult.session;
-      console.log(`Created session with ID: ${session.sessionId}`);
-
-      // Use the session for operations...
-
-      // Delete the session when done
-      const deleteResult = await agentBay.delete(session);
-      if (deleteResult.success) {
-        console.log('Session deleted successfully');
-      } else {
-        console.log(`Failed to delete session: ${deleteResult.errorMessage}`);
-      }
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const result = await agentBay.create();
+if (result.success) {
+  await agentBay.delete(result.session);
 }
-
-createAndDeleteSession().catch(console.error);
 ```
 
 ___
@@ -204,52 +138,13 @@ Promise resolving to SessionResult with the Session instance, request ID, and su
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function getSessionExample() {
-  try {
-    // First, create a session
-    const createResult = await agentBay.create();
-    if (!createResult.success) {
-      console.error(`Failed to create session: ${createResult.errorMessage}`);
-      return;
-    }
-
-    const sessionId = createResult.session.sessionId;
-    console.log(`Created session with ID: ${sessionId}`);
-    // Output: Created session with ID: session-xxxxxxxxxxxxxx
-
-    // Retrieve the session by its ID
-    const result = await agentBay.get(sessionId);
-    if (result.success) {
-      console.log(`Successfully retrieved session: ${result.session.sessionId}`);
-      // Output: Successfully retrieved session: session-xxxxxxxxxxxxxx
-      console.log(`Request ID: ${result.requestId}`);
-      // Output: Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-
-      // Use the retrieved session
-      const fileResult = await result.session.fileSystem.readFile('/etc/hostname');
-      if (fileResult.success) {
-        console.log(`Hostname: ${fileResult.content}`);
-      }
-
-      // Clean up
-      const deleteResult = await result.session.delete();
-      if (deleteResult.success) {
-        console.log(`Session ${sessionId} deleted successfully`);
-        // Output: Session session-xxxxxxxxxxxxxx deleted successfully
-      }
-    } else {
-      console.error(`Failed to get session: ${result.errorMessage}`);
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const createResult = await agentBay.create();
+if (createResult.success) {
+  const result = await agentBay.get(createResult.session.sessionId);
+  await result.session?.filesystem.readFile('/etc/hostname');
+  await result.session?.delete();
 }
-
-getSessionExample().catch(console.error);
 ```
 
 ### list
@@ -276,22 +171,9 @@ SessionListResult - Paginated list of session IDs that match the labels
 
 ```typescript
 const agentBay = new AgentBay({ apiKey: "your_api_key" });
-
-// List all sessions
-const result = await agentBay.list();
-
-// List sessions with specific labels
-const result = await agentBay.list({ project: "demo" });
-
-// List sessions with pagination
-const result = await agentBay.list({ "my-label": "my-value" }, 2, 10);
-
+const result = await agentBay.list({ project: "demo" }, 1, 10);
 if (result.success) {
-  for (const sessionId of result.sessionIds) {
-    console.log(`Session ID: ${sessionId}`);
-  }
-  console.log(`Total count: ${result.totalCount}`);
-  console.log(`Request ID: ${result.requestId}`);
+  console.log(`Found ${result.sessionIds.length} sessions`);
 }
 ```
 
@@ -428,79 +310,6 @@ session from the cloud. To delete a session from the cloud, use [delete](agentba
 **`See`**
 
 [delete](agentbay.md#delete), [Session.delete](session.md#delete)
-
-___
-
-### resumeAsync
-
-▸ **resumeAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionResumeResult`\>
-
-Asynchronously resume a session from a paused state.
-
-This method directly calls the ResumeSessionAsync API without waiting for the session
-to reach the RUNNING state.
-
-#### Parameters
-
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `session` | [`Session`](session.md) | `undefined` | The session to resume. |
-| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to resume. Defaults to 600 seconds. |
-| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
-
-#### Returns
-
-`Promise`\<`SessionResumeResult`\>
-
-SessionResumeResult indicating success or failure and request ID
-
-**`Example`**
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function resumeSessionAsyncExample() {
-  try {
-    // Create a session
-    const result = await agentBay.create();
-    if (result.success) {
-      const session = result.session;
-
-      // Pause the session first
-      await agentBay.pauseAsync(session);
-
-      // Resume the session asynchronously
-      const resumeResult = await agentBay.resumeAsync(session);
-      if (resumeResult.success) {
-        console.log("Session resume request submitted successfully");
-        // Output: Session resume request submitted successfully
-      } else {
-        console.log(`Failed to resume session: ${resumeResult.errorMessage}`);
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-resumeSessionAsyncExample().catch(console.error);
-```
-
-**`Remarks`**
-
-**Behavior:**
-- This method does not wait for the session to reach the RUNNING state
-- It only submits the resume request to the API
-- The session state transitions from PAUSED -> RESUMING -> RUNNING
-- Only sessions in PAUSED state can be resumed
-
-**`See`**
-
-[pauseAsync](agentbay.md#pauseasync), [Session.resumeAsync](session.md#resumeasync)
 
 ## Related Resources
 

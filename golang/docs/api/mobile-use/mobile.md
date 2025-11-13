@@ -88,7 +88,7 @@ and mobile environment configuration.
 
 ### Methods
 
-#### Configure
+### Configure
 
 ```go
 func (m *Mobile) Configure(mobileConfig *models.MobileExtraConfig) error
@@ -96,7 +96,7 @@ func (m *Mobile) Configure(mobileConfig *models.MobileExtraConfig) error
 
 Configure configures mobile settings from MobileExtraConfig
 
-#### GetAdbUrl
+### GetAdbUrl
 
 ```go
 func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult
@@ -109,50 +109,14 @@ connection and returns the ADB connect URL.
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Read ADB public key from file (typically ~/.android/adbkey.pub)
-
-	adbPubKey, err := os.ReadFile(os.Getenv("HOME") + "/.android/adbkey.pub")
-	if err != nil {
-		fmt.Printf("Error reading ADB key: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Get ADB URL
-
-	adbResult := session.Mobile.GetAdbUrl(string(adbPubKey))
-	if adbResult.Success {
-		fmt.Printf("ADB URL: %s\n", adbResult.URL)
-
-		// Output: ADB URL: adb connect xx.xx.xx.xx:xxxxx
-
-	} else {
-		fmt.Printf("Error: %s\n", adbResult.ErrorMessage)
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+adbPubKey, _ := os.ReadFile(os.Getenv("HOME") + "/.android/adbkey.pub")
+adbResult := result.Session.Mobile.GetAdbUrl(string(adbPubKey))
 ```
 
-#### GetAllUIElements
+### GetAllUIElements
 
 ```go
 func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult
@@ -163,44 +127,13 @@ GetAllUIElements retrieves all UI elements within the specified timeout
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	elementsResult := session.Mobile.GetAllUIElements(5000)
-	if elementsResult.ErrorMessage == "" {
-		fmt.Printf("Found %d total elements\n", len(elementsResult.Elements))
-		for _, elem := range elementsResult.Elements {
-			if elem.Bounds != nil {
-				fmt.Printf("  - Element: %s at (%d, %d, %d, %d)\n",
-					elem.ClassName,
-					elem.Bounds.Left, elem.Bounds.Top,
-					elem.Bounds.Right, elem.Bounds.Bottom)
-			}
-		}
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+elementsResult := result.Session.Mobile.GetAllUIElements(5000)
 ```
 
-#### GetClickableUIElements
+### GetClickableUIElements
 
 ```go
 func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult
@@ -211,39 +144,13 @@ GetClickableUIElements retrieves all clickable UI elements within the specified 
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	elementsResult := session.Mobile.GetClickableUIElements(5000)
-	if elementsResult.ErrorMessage == "" {
-		fmt.Printf("Found %d clickable elements\n", len(elementsResult.Elements))
-		for _, elem := range elementsResult.Elements {
-			fmt.Printf("  - Text: %s, ResourceID: %s\n", elem.Text, elem.ResourceID)
-		}
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+elementsResult := result.Session.Mobile.GetClickableUIElements(5000)
 ```
 
-#### GetInstalledApps
+### GetInstalledApps
 
 ```go
 func (m *Mobile) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *InstalledAppListResult
@@ -254,42 +161,13 @@ GetInstalledApps retrieves a list of installed applications
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Get all user-installed apps (excluding system apps)
-
-	appsResult := session.Mobile.GetInstalledApps(true, true, true)
-	if appsResult.ErrorMessage == "" {
-		fmt.Printf("Found %d installed apps\n", len(appsResult.Apps))
-		for _, app := range appsResult.Apps {
-			fmt.Printf("  - %s: %s\n", app.Name, app.StartCmd)
-		}
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+appsResult := result.Session.Mobile.GetInstalledApps(true, true, true)
 ```
 
-#### InputText
+### InputText
 
 ```go
 func (m *Mobile) InputText(text string) *BoolResult
@@ -300,36 +178,13 @@ InputText inputs text into the active field
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	inputResult := session.Mobile.InputText("Hello Mobile")
-	if inputResult.Success {
-		fmt.Println("Text input successful")
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+inputResult := result.Session.Mobile.InputText("Hello Mobile")
 ```
 
-#### Screenshot
+### Screenshot
 
 ```go
 func (m *Mobile) Screenshot() *ScreenshotResult
@@ -340,36 +195,13 @@ Screenshot takes a screenshot of the current screen
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	screenshot := session.Mobile.Screenshot()
-	if screenshot.ErrorMessage == "" {
-		fmt.Printf("Screenshot URL: %s\n", screenshot.Data)
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+screenshot := result.Session.Mobile.Screenshot()
 ```
 
-#### SendKey
+### SendKey
 
 ```go
 func (m *Mobile) SendKey(key int) *BoolResult
@@ -380,39 +212,13 @@ SendKey sends a key press event
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Send BACK key (keycode 4)
-
-	keyResult := session.Mobile.SendKey(4)
-	if keyResult.Success {
-		fmt.Println("Key press successful")
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+keyResult := result.Session.Mobile.SendKey(4)
 ```
 
-#### SetAppBlacklist
+### SetAppBlacklist
 
 ```go
 func (m *Mobile) SetAppBlacklist(packageNames []string) error
@@ -423,44 +229,14 @@ SetAppBlacklist sets app blacklist for mobile devices
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Block specific apps from running
-
-	blockedApps := []string{
-		"com.facebook.katana",
-		"com.instagram.android",
-		"com.snapchat.android",
-	}
-	err = session.Mobile.SetAppBlacklist(blockedApps)
-	if err != nil {
-		fmt.Printf("Error setting app blacklist: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Blocked %d apps from running\n", len(blockedApps))
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+blockedApps := []string{"com.example.blockedapp"}
+err := result.Session.Mobile.SetAppBlacklist(blockedApps)
 ```
 
-#### SetAppWhitelist
+### SetAppWhitelist
 
 ```go
 func (m *Mobile) SetAppWhitelist(packageNames []string) error
@@ -471,43 +247,14 @@ SetAppWhitelist sets app whitelist for mobile devices
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Only allow specific apps to run (kiosk mode)
-
-	allowedApps := []string{
-		"com.example.kiosk",
-		"com.android.settings",
-	}
-	err = session.Mobile.SetAppWhitelist(allowedApps)
-	if err != nil {
-		fmt.Printf("Error setting app whitelist: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Restricted device to %d allowed apps\n", len(allowedApps))
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+allowedApps := []string{"com.android.calculator2"}
+err := result.Session.Mobile.SetAppWhitelist(allowedApps)
 ```
 
-#### SetNavigationBarVisibility
+### SetNavigationBarVisibility
 
 ```go
 func (m *Mobile) SetNavigationBarVisibility(hide bool) error
@@ -518,48 +265,13 @@ SetNavigationBarVisibility sets navigation bar visibility for mobile devices
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Hide navigation bar for full-screen experience
-
-	err = session.Mobile.SetNavigationBarVisibility(true)
-	if err != nil {
-		fmt.Printf("Error hiding navigation bar: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Println("Navigation bar hidden successfully")
-
-	// Show navigation bar again
-
-	err = session.Mobile.SetNavigationBarVisibility(false)
-	if err != nil {
-		fmt.Printf("Error showing navigation bar: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Println("Navigation bar shown successfully")
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+err := result.Session.Mobile.SetNavigationBarVisibility(true)
 ```
 
-#### SetResolutionLock
+### SetResolutionLock
 
 ```go
 func (m *Mobile) SetResolutionLock(enable bool) error
@@ -570,48 +282,13 @@ SetResolutionLock sets display resolution lock for mobile devices
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Enable resolution lock to prevent automatic resolution changes
-
-	err = session.Mobile.SetResolutionLock(true)
-	if err != nil {
-		fmt.Printf("Error setting resolution lock: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Println("Resolution lock enabled successfully")
-
-	// Disable resolution lock to allow automatic resolution changes
-
-	err = session.Mobile.SetResolutionLock(false)
-	if err != nil {
-		fmt.Printf("Error disabling resolution lock: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Println("Resolution lock disabled successfully")
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+err := result.Session.Mobile.SetResolutionLock(true)
 ```
 
-#### SetUninstallBlacklist
+### SetUninstallBlacklist
 
 ```go
 func (m *Mobile) SetUninstallBlacklist(packageNames []string) error
@@ -622,44 +299,14 @@ SetUninstallBlacklist sets uninstall protection blacklist for mobile devices
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Protect critical apps from being uninstalled
-
-	protectedApps := []string{
-		"com.android.chrome",
-		"com.google.android.gms",
-		"com.android.vending",
-	}
-	err = session.Mobile.SetUninstallBlacklist(protectedApps)
-	if err != nil {
-		fmt.Printf("Error setting uninstall blacklist: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("Protected %d apps from uninstallation\n", len(protectedApps))
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+protectedApps := []string{"com.android.calculator2"}
+err := result.Session.Mobile.SetUninstallBlacklist(protectedApps)
 ```
 
-#### StartApp
+### StartApp
 
 ```go
 func (m *Mobile) StartApp(startCmd, workDirectory, activity string) *ProcessListResult
@@ -670,42 +317,13 @@ StartApp starts a specified application
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Start an Android app (example: Calculator)
-
-	processResult := session.Mobile.StartApp("com.android.calculator2", "", "com.android.calculator2.Calculator")
-	if processResult.ErrorMessage == "" {
-		fmt.Printf("App started, %d processes found\n", len(processResult.Processes))
-		for _, proc := range processResult.Processes {
-			fmt.Printf("  - Process: %s (PID: %d)\n", proc.PName, proc.PID)
-		}
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+processResult := result.Session.Mobile.StartApp("com.android.calculator2", "", "com.android.calculator2.Calculator")
 ```
 
-#### StopAppByCmd
+### StopAppByCmd
 
 ```go
 func (m *Mobile) StopAppByCmd(stopCmd string) *BoolResult
@@ -716,39 +334,13 @@ StopAppByCmd stops an application using the provided stop command
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-
-	// Stop an Android app by package name
-
-	stopResult := session.Mobile.StopAppByCmd("com.android.calculator2")
-	if stopResult.Success {
-		fmt.Println("App stopped successfully")
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+stopResult := result.Session.Mobile.StopAppByCmd("com.android.calculator2")
 ```
 
-#### Swipe
+### Swipe
 
 ```go
 func (m *Mobile) Swipe(startX, startY, endX, endY, durationMs int) *BoolResult
@@ -759,36 +351,13 @@ Swipe performs a swipe gesture on the screen
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	swipeResult := session.Mobile.Swipe(100, 500, 900, 500, 300)
-	if swipeResult.Success {
-		fmt.Println("Swipe successful")
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+swipeResult := result.Session.Mobile.Swipe(100, 500, 900, 500, 300)
 ```
 
-#### Tap
+### Tap
 
 ```go
 func (m *Mobile) Tap(x, y int) *BoolResult
@@ -799,38 +368,15 @@ Tap taps on the screen at specific coordinates
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	params := &agentbay.CreateSessionParams{
-		ImageId: "mobile_latest",
-	}
-	result, err := client.Create(params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	tapResult := session.Mobile.Tap(500, 500)
-	if tapResult.Success {
-		fmt.Println("Tap successful")
-	}
-	session.Delete()
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+defer result.Session.Delete()
+tapResult := result.Session.Mobile.Tap(500, 500)
 ```
 
 ### Related Functions
 
-#### NewMobile
+### NewMobile
 
 ```go
 func NewMobile(session interface {

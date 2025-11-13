@@ -236,39 +236,13 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateCreateDirectory() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create a directory
-   *       const createResult = await session.fileSystem.createDirectory('/tmp/mydir');
-   *       if (createResult.success) {
-   *         console.log('Directory created successfully');
-   *         // Output: Directory created successfully
-   *         console.log(`Request ID: ${createResult.requestId}`);
-   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-   *       }
-   *
-   *       // Create nested directories
-   *       const nestedResult = await session.fileSystem.createDirectory('/tmp/parent/child/grandchild');
-   *       if (nestedResult.success) {
-   *         console.log('Nested directories created');
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const createResult = await result.session.fileSystem.createDirectory('/tmp/mydir');
+   *   console.log('Directory created:', createResult.success);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateCreateDirectory().catch(console.error);
    * ```
    */
   async createDirectory(path: string): Promise<BoolResult> {
@@ -315,55 +289,15 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateEditFile() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create a test file
-   *       await session.fileSystem.writeFile('/tmp/config.txt', 'DEBUG=false\\nLOG_LEVEL=info');
-   *
-   *       // Edit the file with single replacement
-   *       const edits = [{ oldText: 'DEBUG=false', newText: 'DEBUG=true' }];
-   *       const editResult = await session.fileSystem.editFile('/tmp/config.txt', edits);
-   *       if (editResult.success) {
-   *         console.log('File edited successfully');
-   *         // Output: File edited successfully
-   *       }
-   *
-   *       // Edit with multiple replacements
-   *       const multiEdits = [
-   *         { oldText: 'DEBUG=true', newText: 'DEBUG=false' },
-   *         { oldText: 'LOG_LEVEL=info', newText: 'LOG_LEVEL=debug' }
-   *       ];
-   *       const multiEditResult = await session.fileSystem.editFile('/tmp/config.txt', multiEdits);
-   *       if (multiEditResult.success) {
-   *         console.log('Multiple edits applied');
-   *       }
-   *
-   *       // Preview changes with dry_run
-   *       const dryRunResult = await session.fileSystem.editFile(
-   *         '/tmp/config.txt',
-   *         [{ oldText: 'debug', newText: 'trace' }],
-   *         true
-   *       );
-   *       if (dryRunResult.success) {
-   *         console.log('Dry run completed, no changes applied');
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.fileSystem.writeFile('/tmp/config.txt', 'DEBUG=false');
+   *   const edits = [{ oldText: 'DEBUG=false', newText: 'DEBUG=true' }];
+   *   const editResult = await result.session.fileSystem.editFile('/tmp/config.txt', edits);
+   *   console.log('File edited:', editResult.success);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateEditFile().catch(console.error);
    * ```
    */
   async editFile(
@@ -414,46 +348,14 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetFileInfo() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create a test file
-   *       await session.fileSystem.writeFile('/tmp/test.txt', 'Sample content');
-   *
-   *       // Get file information
-   *       const infoResult = await session.fileSystem.getFileInfo('/tmp/test.txt');
-   *       if (infoResult.success) {
-   *         console.log(`File info: ${JSON.stringify(infoResult.fileInfo)}`);
-   *         // Output: File info: {"size": 14, "isDirectory": false, ...}
-   *         console.log(`Size: ${infoResult.fileInfo.size} bytes`);
-   *         // Output: Size: 14 bytes
-   *         console.log(`Is directory: ${infoResult.fileInfo.isDirectory}`);
-   *         // Output: Is directory: false
-   *       }
-   *
-   *       // Get directory information
-   *       await session.fileSystem.createDirectory('/tmp/mydir');
-   *       const dirInfo = await session.fileSystem.getFileInfo('/tmp/mydir');
-   *       if (dirInfo.success) {
-   *         console.log(`Is directory: ${dirInfo.fileInfo.isDirectory}`);
-   *         // Output: Is directory: true
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.fileSystem.writeFile('/tmp/test.txt', 'Sample content');
+   *   const infoResult = await result.session.fileSystem.getFileInfo('/tmp/test.txt');
+   *   console.log(`Size: ${infoResult.fileInfo.size} bytes`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateGetFileInfo().catch(console.error);
    * ```
    */
   async getFileInfo(path: string): Promise<FileInfoResult> {
@@ -591,43 +493,14 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateMoveFile() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create a test file
-   *       await session.fileSystem.writeFile('/tmp/original.txt', 'Test content');
-   *
-   *       // Move the file to a new location
-   *       const moveResult = await session.fileSystem.moveFile('/tmp/original.txt', '/tmp/moved.txt');
-   *       if (moveResult.success) {
-   *         console.log('File moved successfully');
-   *         // Output: File moved successfully
-   *         console.log(`Request ID: ${moveResult.requestId}`);
-   *         // Output: Request ID: 9E3F4A5B-2C6D-7E8F-9A0B-1C2D3E4F5A6B
-   *       }
-   *
-   *       // Verify the move
-   *       const readResult = await session.fileSystem.readFile('/tmp/moved.txt');
-   *       if (readResult.success) {
-   *         console.log(`Content at new location: ${readResult.content}`);
-   *         // Output: Content at new location: Test content
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.fileSystem.writeFile('/tmp/original.txt', 'Test content');
+   *   const moveResult = await result.session.fileSystem.moveFile('/tmp/original.txt', '/tmp/moved.txt');
+   *   console.log('File moved:', moveResult.success);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateMoveFile().catch(console.error);
    * ```
    */
   async moveFile(source: string, destination: string): Promise<BoolResult> {
@@ -728,43 +601,15 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateReadMultipleFiles() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create multiple test files
-   *       await session.fileSystem.writeFile('/tmp/file1.txt', 'Content of file 1');
-   *       await session.fileSystem.writeFile('/tmp/file2.txt', 'Content of file 2');
-   *       await session.fileSystem.writeFile('/tmp/file3.txt', 'Content of file 3');
-   *
-   *       // Read multiple files at once
-   *       const paths = ['/tmp/file1.txt', '/tmp/file2.txt', '/tmp/file3.txt'];
-   *       const readResult = await session.fileSystem.readMultipleFiles(paths);
-   *       if (readResult.success) {
-   *         console.log(`Read ${Object.keys(readResult.contents).length} files`);
-   *         // Output: Read 3 files
-   *         for (const [path, content] of Object.entries(readResult.contents)) {
-   *           console.log(`${path}: ${content}`);
-   *         }
-   *         // Output: /tmp/file1.txt: Content of file 1
-   *         // Output: /tmp/file2.txt: Content of file 2
-   *         // Output: /tmp/file3.txt: Content of file 3
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.fileSystem.writeFile('/tmp/file1.txt', 'Content 1');
+   *   await result.session.fileSystem.writeFile('/tmp/file2.txt', 'Content 2');
+   *   const readResult = await result.session.fileSystem.readMultipleFiles(['/tmp/file1.txt', '/tmp/file2.txt']);
+   *   console.log(`Read ${Object.keys(readResult.contents).length} files`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateReadMultipleFiles().catch(console.error);
    * ```
    */
   async readMultipleFiles(paths: string[]): Promise<MultipleFileContentResult> {
@@ -866,52 +711,15 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateSearchFiles() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create test files
-   *       await session.fileSystem.createDirectory('/tmp/test');
-   *       await session.fileSystem.writeFile('/tmp/test/file1.py', "print('hello')");
-   *       await session.fileSystem.writeFile('/tmp/test/file2.py', "print('world')");
-   *       await session.fileSystem.writeFile('/tmp/test/file3.txt', 'text content');
-   *
-   *       // Search for Python files (using partial name matching, NOT wildcards)
-   *       const searchResult = await session.fileSystem.searchFiles('/tmp/test', '.py');
-   *       if (searchResult.success) {
-   *         console.log(`Found ${searchResult.matches.length} Python files:`);
-   *         // Output: Found 2 Python files:
-   *         for (const match of searchResult.matches) {
-   *           console.log(`  - ${match}`);
-   *         }
-   *         // Output:   - /tmp/test/file1.py
-   *         // Output:   - /tmp/test/file2.py
-   *       }
-   *
-   *       // Search with exclusion pattern (exclude files containing ".txt")
-   *       const excludeResult = await session.fileSystem.searchFiles(
-   *         '/tmp/test',
-   *         'file',
-   *         ['.txt']
-   *       );
-   *       if (excludeResult.success) {
-   *         console.log(`Found ${excludeResult.matches.length} files (excluding .txt)`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.fileSystem.createDirectory('/tmp/test');
+   *   await result.session.fileSystem.writeFile('/tmp/test/file1.py', "print('hello')");
+   *   const searchResult = await result.session.fileSystem.searchFiles('/tmp/test', '.py');
+   *   console.log(`Found ${searchResult.matches.length} Python files`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateSearchFiles().catch(console.error);
    * ```
    */
   async searchFiles(
@@ -1289,43 +1097,14 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetFileChange() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create test directory
-   *       await session.fileSystem.createDirectory('/tmp/watch_dir');
-   *
-   *       // Check for file changes
-   *       const changeResult = await session.fileSystem.getFileChange('/tmp/watch_dir');
-   *       if (changeResult.success) {
-   *         console.log(`Detected ${changeResult.events.length} changes`);
-   *         // Output: Detected 0 changes
-   *
-   *         if (changeResult.events.length > 0) {
-   *           changeResult.events.forEach(event => {
-   *             console.log(`- ${event.eventType}: ${event.path} (${event.pathType})`);
-   *           });
-   *         } else {
-   *           console.log('No changes detected');
-   *           // Output: No changes detected
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.fileSystem.createDirectory('/tmp/watch_dir');
+   *   const changeResult = await result.session.fileSystem.getFileChange('/tmp/watch_dir');
+   *   console.log(`Detected ${changeResult.events.length} changes`);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateGetFileChange().catch(console.error);
    * ```
    */
   async getFileChange(path: string): Promise<FileChangeResult> {
@@ -1397,64 +1176,16 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateWatchDirectory() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create test directory
-   *       const testDir = '/tmp/agentbay_watch_test';
-   *       await session.fileSystem.createDirectory(testDir);
-   *
-   *       // Set up callback function
-   *       const callback = (events) => {
-   *         console.log(`Detected ${events.length} file changes:`);
-   *         events.forEach(event => {
-   *           console.log(`- ${event.eventType}: ${event.path} (${event.pathType})`);
-   *         });
-   *       };
-   *
-   *       // Create AbortController for stopping the watch
-   *       const controller = new AbortController();
-   *
-   *       // Start monitoring
-   *       const watchPromise = session.fileSystem.watchDirectory(
-   *         testDir,
-   *         callback,
-   *         1000, // 1 second interval
-   *         controller.signal
-   *       );
-   *
-   *       // Simulate file operations after a delay
-   *       setTimeout(async () => {
-   *         // Create a file
-   *         const testFile = `${testDir}/test.txt`;
-   *         await session.fileSystem.writeFile(testFile, 'Hello, AgentBay!');
-   *
-   *         // Stop monitoring after another delay
-   *         setTimeout(() => {
-   *           controller.abort();
-   *         }, 2000);
-   *       }, 2000);
-   *
-   *       // Wait for monitoring to complete
-   *       await watchPromise;
-   *       console.log('Monitoring stopped');
-   *       // Output: Monitoring stopped
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const testDir = '/tmp/watch_test';
+   *   await result.session.fileSystem.createDirectory(testDir);
+   *   const controller = new AbortController();
+   *   const callback = (events) => console.log(`Detected ${events.length} changes`);
+   *   await result.session.fileSystem.watchDirectory(testDir, callback, 1000, controller.signal);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateWatchDirectory().catch(console.error);
    * ```
    */
   async watchDirectory(
@@ -1517,55 +1248,13 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   * import * as fs from 'fs';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateUploadFile() {
-   *   try {
-   *     // Create session with context sync for file transfer
-   *     const result = await agentBay.create({
-   *       imageId: 'code_latest'
-   *     });
-   *
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create a local test file
-   *       const localPath = '/tmp/local_upload_test.txt';
-   *       fs.writeFileSync(localPath, 'Test upload content');
-   *
-   *       // Upload the file
-   *       const uploadResult = await session.fileSystem.uploadFile(
-   *         localPath,
-   *         '/workspace/uploaded_file.txt'
-   *       );
-   *
-   *       if (uploadResult.success) {
-   *         console.log('File uploaded successfully');
-   *         // Output: File uploaded successfully
-   *         console.log(`Bytes sent: ${uploadResult.bytesSent}`);
-   *         console.log(`Request ID (upload URL): ${uploadResult.requestIdUploadUrl}`);
-   *         console.log(`Request ID (sync): ${uploadResult.requestIdSync}`);
-   *       } else {
-   *         console.error(`Upload failed: ${uploadResult.error}`);
-   *       }
-   *
-   *       // Verify the uploaded file exists in the session
-   *       const readResult = await session.fileSystem.readFile('/workspace/uploaded_file.txt');
-   *       if (readResult.success) {
-   *         console.log(`File content in session: ${readResult.content}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'code_latest' });
+   * if (result.success) {
+   *   const uploadResult = await result.session.fileSystem.uploadFile('/tmp/local.txt', '/workspace/remote.txt');
+   *   console.log('Upload success:', uploadResult.success);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateUploadFile().catch(console.error);
    * ```
    */
   async uploadFile(
@@ -1624,57 +1313,14 @@ export class FileSystem {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   * import * as fs from 'fs';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateDownloadFile() {
-   *   try {
-   *     // Create session
-   *     const result = await agentBay.create({
-   *       imageId: 'code_latest'
-   *     });
-   *
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Create a file in the session
-   *       await session.fileSystem.writeFile(
-   *         '/workspace/remote_file.txt',
-   *         'Content to download'
-   *       );
-   *
-   *       // Download the file
-   *       const localPath = '/tmp/downloaded_file.txt';
-   *       const downloadResult = await session.fileSystem.downloadFile(
-   *         '/workspace/remote_file.txt',
-   *         localPath
-   *       );
-   *
-   *       if (downloadResult.success) {
-   *         console.log('File downloaded successfully');
-   *         // Output: File downloaded successfully
-   *         console.log(`Bytes received: ${downloadResult.bytesReceived}`);
-   *         console.log(`Request ID (download URL): ${downloadResult.requestIdDownloadUrl}`);
-   *         console.log(`Request ID (sync): ${downloadResult.requestIdSync}`);
-   *
-   *         // Verify the downloaded file
-   *         const content = fs.readFileSync(localPath, 'utf8');
-   *         console.log(`Downloaded content: ${content}`);
-   *         // Output: Downloaded content: Content to download
-   *       } else {
-   *         console.error(`Download failed: ${downloadResult.error}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create({ imageId: 'code_latest' });
+   * if (result.success) {
+   *   await result.session.fileSystem.writeFile('/workspace/remote.txt', 'Content to download');
+   *   const downloadResult = await result.session.fileSystem.downloadFile('/workspace/remote.txt', '/tmp/local.txt');
+   *   console.log('Download success:', downloadResult.success);
+   *   await result.session.delete();
    * }
-   *
-   * demonstrateDownloadFile().catch(console.error);
    * ```
    */
   async downloadFile(

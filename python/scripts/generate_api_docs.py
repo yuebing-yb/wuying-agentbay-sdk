@@ -119,6 +119,29 @@ def should_exclude_method(method: docspec.Function, exclude_methods: list = None
     return False
 
 
+def is_dataclass_result_type(cls: docspec.Class) -> bool:
+    """
+    Check if a class is a dataclass result type that should have its fields hidden.
+
+    Args:
+        cls: The class to check
+
+    Returns:
+        bool: True if the class is a dataclass result type
+    """
+    # Check if class name ends with "Result"
+    if not cls.name.endswith("Result"):
+        return False
+
+    # Check if class has @dataclass decorator
+    if cls.decorations:
+        for decoration in cls.decorations:
+            if decoration.name == "dataclass":
+                return True
+
+    return False
+
+
 def prune_members(container, module_name: str, exclude_methods: list = None, global_rules: dict = None) -> None:
     """
     Prune members from the documentation tree using smart filtering rules.
@@ -146,6 +169,13 @@ def prune_members(container, module_name: str, exclude_methods: list = None, glo
         # Apply smart filtering for methods
         if isinstance(member, docspec.Function):
             if should_exclude_method(member, exclude_methods, global_rules):
+                continue
+
+        # Hide fields of dataclass result types (e.g., UploadResult, DownloadResult)
+        # These are internal data structures whose fields don't need detailed documentation
+        if isinstance(container, docspec.Class) and is_dataclass_result_type(container):
+            if isinstance(member, docspec.Variable):
+                # Skip all field variables in dataclass result types
                 continue
 
         prune_members(member, module_name, exclude_methods, global_rules)
@@ -179,6 +209,7 @@ def render_markdown(module_names: Iterable[str], exclude_methods: list = None, g
             render_typehint_in_data_header=True,
             data_code_block=True,
             insert_header_anchors=False,
+            header_level_by_type={'Module': 1, 'Class': 2, 'Method': 3, 'Function': 3, 'Variable': 4},
         ),
     )
 
@@ -453,6 +484,140 @@ def fix_code_block_indentation(content: str) -> str:
     return content
 
 
+def fix_example_with_descriptions(content: str) -> str:
+    """
+    Fix Example sections that have description lines followed by code blocks.
+
+    Pattern to fix:
+    **Example**:
+
+      Description line:
+        ```python
+        code
+        ```
+
+    This should become:
+    **Example**:
+
+    Description line:
+    ```python
+    code
+    ```
+    """
+    import re
+
+    lines = content.split('\n')
+    fixed_lines = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        # Detect Example section start
+        if line.strip() == '**Example**:':
+            fixed_lines.append(line)
+            i += 1
+
+            # Skip empty line after Example:
+            if i < len(lines) and not lines[i].strip():
+                fixed_lines.append(lines[i])
+                i += 1
+
+            # Process all content until next section (marked by ### or end of file)
+            while i < len(lines):
+                current = lines[i]
+
+                # Stop at next section header
+                if current.startswith('###') or current.startswith('##') or current.strip() == '---':
+                    break
+
+                # Handle indented description lines (2 spaces)
+                if current.startswith('  ') and not current.strip().startswith('```'):
+                    # Check if this is an RST code block marker (ends with ::)
+                    if current.strip().endswith('::'):
+                        # Remove :: and the 2-space indentation from description
+                        description = current[2:].rstrip(':').rstrip()
+                        if description:
+                            fixed_lines.append(description)
+                        i += 1
+
+                        # Skip empty lines after ::
+                        while i < len(lines) and lines[i].strip() in ('', '  '):
+                            i += 1
+
+                        # Add code fence for the following indented code block
+                        if i < len(lines) and lines[i].startswith('  '):
+                            fixed_lines.append('')
+                            fixed_lines.append('```python')
+
+                            # Process all indented code lines (2 spaces)
+                            while i < len(lines):
+                                code_line = lines[i]
+
+                                # Stop at section headers or unindented content
+                                if code_line.startswith('###') or code_line.startswith('##') or code_line.strip() == '---':
+                                    break
+
+                                # Empty line - keep it
+                                if not code_line.strip():
+                                    fixed_lines.append('')
+                                    i += 1
+                                    continue
+
+                                # Indented line (part of code block)
+                                if code_line.startswith('  '):
+                                    # Remove 2-space indentation, preserving any additional indentation
+                                    fixed_lines.append(code_line[2:])
+                                    i += 1
+                                else:
+                                    # Unindented line - end of code block
+                                    break
+
+                            # Close code fence
+                            fixed_lines.append('```')
+                    else:
+                        # Regular description line - remove 2-space indentation
+                        fixed_lines.append(current[2:])
+                        i += 1
+                # Handle indented code blocks (4 spaces before ```)
+                elif current.strip().startswith('```'):
+                    # Check if it has leading spaces
+                    leading_spaces = len(current) - len(current.lstrip())
+                    if leading_spaces > 0:
+                        # Remove all leading spaces from code fence
+                        fixed_lines.append(current.lstrip())
+                        i += 1
+
+                        # Process code block content
+                        while i < len(lines) and not lines[i].strip().startswith('```'):
+                            code_line = lines[i]
+                            # Remove the same amount of indentation from code lines
+                            if code_line.startswith(' ' * leading_spaces):
+                                fixed_lines.append(code_line[leading_spaces:])
+                            elif not code_line.strip():  # Empty line
+                                fixed_lines.append(code_line)
+                            else:
+                                fixed_lines.append(code_line)
+                            i += 1
+
+                        # Add closing fence (remove indentation)
+                        if i < len(lines):
+                            closing_fence = lines[i]
+                            fixed_lines.append(closing_fence.lstrip())
+                            i += 1
+                    else:
+                        fixed_lines.append(current)
+                        i += 1
+                else:
+                    fixed_lines.append(current)
+                    i += 1
+        else:
+            fixed_lines.append(line)
+            i += 1
+
+    return '\n'.join(fixed_lines)
+
+
 def fix_dict_formatting(content: str) -> str:
     """
     Fix dictionary formatting errors in code blocks.
@@ -567,6 +732,101 @@ def fix_restructuredtext_code_blocks(content: str) -> str:
     return '\n'.join(fixed_lines)
 
 
+def normalize_class_headers(content: str) -> str:
+    """
+    Normalize class header format to ensure consistent structure.
+
+    This function addresses two issues:
+    1. Classes without headers (just code block followed by description)
+    2. Classes with "## ClassName Objects" style headers
+
+    Both are normalized to "## ClassName" format for consistency.
+
+    Pattern 1 (no header):
+        ```python
+        class CommandResult(ApiResponse)
+        ```
+
+        Result of command execution operations.
+
+    Pattern 2 (with "Objects" suffix):
+        ## Command Objects
+
+        ```python
+        class Command(BaseService)
+        ```
+
+    Both become:
+        ## ClassName
+
+        ```python
+        class ClassName(...)
+        ```
+
+        Description text.
+    """
+    import re
+
+    lines = content.split('\n')
+    fixed_lines = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        # Pattern 2: Fix "## ClassName Objects" -> "## ClassName"
+        # This must be checked FIRST to avoid creating duplicate headers
+        class_objects_match = re.match(r'^##\s+(\w+)\s+Objects\s*$', line)
+        if class_objects_match:
+            class_name = class_objects_match.group(1)
+            fixed_lines.append(f'## {class_name}')
+            i += 1
+            continue
+
+        # Pattern 1: Detect class definition without header
+        # Look for: ```python\nclass ClassName(...)\n```
+        if line.strip() == '```python' and i + 1 < len(lines):
+            next_line = lines[i + 1]
+            class_match = re.match(r'^class\s+(\w+)\(', next_line)
+
+            if class_match:
+                class_name = class_match.group(1)
+
+                # Check if there's a header before this code block in the FIXED output
+                # Look back through recently added lines (not original lines)
+                has_header = False
+                for j in range(len(fixed_lines) - 1, max(-1, len(fixed_lines) - 6), -1):
+                    if j < 0:
+                        break
+                    prev_line_content = fixed_lines[j].strip()
+                    if not prev_line_content:
+                        continue
+                    # Check if it's a level-2 header matching this class name
+                    if re.match(r'^##\s+' + re.escape(class_name) + r'\s*$', prev_line_content):
+                        has_header = True
+                        break
+                    # If we hit a different ## header, stop looking but don't mark as having header
+                    if prev_line_content.startswith('##') and not prev_line_content.startswith('###'):
+                        break
+                    # Stop if we hit other content
+                    break
+
+                # If no header, add one
+                if not has_header:
+                    fixed_lines.append(f'## {class_name}')
+                    fixed_lines.append('')
+
+                # Add the code block
+                fixed_lines.append(line)
+                i += 1
+                continue
+
+        fixed_lines.append(line)
+        i += 1
+
+    return '\n'.join(fixed_lines)
+
+
 def format_markdown(raw_content: str, title: str, module_name: str, metadata: dict[str, Any]) -> str:
     """Enhanced markdown formatting with metadata injection."""
     content = raw_content.lstrip()
@@ -578,14 +838,21 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
     # Fix code block indentation in Example sections
     content = fix_code_block_indentation(content)
 
+    # Fix Example sections with description lines
+    content = fix_example_with_descriptions(content)
+
     # Fix dictionary formatting errors
     content = fix_dict_formatting(content)
 
     # Fix reStructuredText-style code blocks
     content = fix_restructuredtext_code_blocks(content)
 
+    # Normalize class headers to consistent format
+    content = normalize_class_headers(content)
+
     # 1. Add title
-    if content.startswith("#"):
+    # Only replace if the first line is a level-1 header (starts with "# " not "##")
+    if content.startswith("# ") and not content.startswith("## "):
         lines = content.splitlines()
         lines[0] = f"# {title} API Reference"
         content = "\n".join(lines)

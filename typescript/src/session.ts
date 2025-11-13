@@ -15,7 +15,11 @@ import { Browser } from "./browser";
 import { Code } from "./code";
 import { Command } from "./command";
 import { Computer } from "./computer";
-import { ContextManager, ContextSyncResult, newContextManager } from "./context-manager";
+import {
+  ContextManager,
+  ContextSyncResult,
+  newContextManager,
+} from "./context-manager";
 import { FileSystem } from "./filesystem";
 import { Mobile } from "./mobile";
 import { Oss } from "./oss";
@@ -209,33 +213,7 @@ export class Session {
    * Return the AgentBay instance that created this session.
    *
    * @returns The AgentBay client instance
-   *
-   * @example
-   * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetAgentBay() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Get the AgentBay instance from session
-   *       const agentBayInstance = session.getAgentBay();
-   *       console.log('AgentBay instance retrieved');
-   *       // Output: AgentBay instance retrieved
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * demonstrateGetAgentBay().catch(console.error);
-   * ```
+   * @internal
    */
   getAgentBay(): AgentBay {
     return this.agentBay;
@@ -246,33 +224,7 @@ export class Session {
    * Note: This method is used internally by SDK modules (Code, Computer, Mobile, Agent).
    *
    * @returns The API key string
-   *
-   * @example
-   * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetAPIKey() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Get the API key
-   *       const apiKey = session.getAPIKey();
-   *       console.log('API key length:', apiKey.length);
-   *       // Output: API key length: 32
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * demonstrateGetAPIKey().catch(console.error);
-   * ```
+   * @internal
    */
   getAPIKey(): string {
     return this.agentBay.getAPIKey();
@@ -282,33 +234,7 @@ export class Session {
    * Return the HTTP client for this session.
    *
    * @returns The Client instance used for API communication
-   *
-   * @example
-   * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetClient() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Get the internal client
-   *       const client = session.getClient();
-   *       console.log('Client retrieved successfully');
-   *       // Output: Client retrieved successfully
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * demonstrateGetClient().catch(console.error);
-   * ```
+   * @internal
    */
   getClient(): Client {
     return this.agentBay.getClient();
@@ -319,32 +245,7 @@ export class Session {
    * Note: This method is used internally by SDK modules. Users should prefer using the `sessionId` property.
    *
    * @returns The session ID string
-   *
-   * @example
-   * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetSessionId() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Get the session ID
-   *       const sessionId = session.getSessionId();
-   *       console.log(`Session ID: ${sessionId}`);\n       // Output: Session ID: session-04bdwfj7u22a1s30g
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * demonstrateGetSessionId().catch(console.error);
-   * ```
+   * @internal
    */
   getSessionId(): string {
     return this.sessionId;
@@ -354,32 +255,7 @@ export class Session {
    * Return whether this session uses VPC resources.
    *
    * @returns boolean indicating if VPC is enabled for this session
-   *
-   * @example
-   * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });\n *
-   * async function demonstrateIsVpcEnabled() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Check if VPC is enabled
-   *       const isVpc = session.isVpcEnabled();
-   *       console.log(`VPC enabled: ${isVpc}`);
-   *       // Output: VPC enabled: false
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * demonstrateIsVpcEnabled().catch(console.error);
-   * ```
+   * @internal
    */
   private isVpcEnabled(): boolean {
     return this.isVpc;
@@ -389,33 +265,7 @@ export class Session {
    * Return the network interface IP for VPC sessions.
    *
    * @returns The network interface IP string for VPC sessions
-   *
-   * @example
-   * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetNetworkInterfaceIp() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Get the network interface IP for VPC sessions
-   *       const networkIp = session.getNetworkInterfaceIp();
-   *       console.log(`Network Interface IP: ${networkIp}`);
-   *       // Output: Network Interface IP: 192.168.1.100
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * demonstrateGetNetworkInterfaceIp().catch(console.error);
-   * ```
+   * @internal
    */
   private getNetworkInterfaceIp(): string {
     return this.networkInterfaceIp;
@@ -425,33 +275,7 @@ export class Session {
    * Return the HTTP port for VPC sessions.
    *
    * @returns The HTTP port string for VPC sessions
-   *
-   * @example
-   * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetHttpPort() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Get the HTTP port for VPC sessions
-   *       const httpPort = session.getHttpPort();
-   *       console.log(`HTTP Port: ${httpPort}`);
-   *       // Output: HTTP Port: 8080
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * demonstrateGetHttpPort().catch(console.error);
-   * ```
+   * @internal
    */
   private getHttpPort(): string {
     return this.httpPort;
@@ -461,33 +285,7 @@ export class Session {
    * Return the token for VPC sessions.
    *
    * @returns The token string for VPC sessions
-   *
-   * @example
-   * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateGetToken() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Get the token for VPC sessions
-   *       const token = session.getToken();
-   *       console.log('Token length:', token.length);
-   *       // Output: Token length: 64
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * demonstrateGetToken().catch(console.error);
-   * ```
+   * @internal
    */
   private getToken(): string {
     return this.token;
@@ -498,36 +296,7 @@ export class Session {
    *
    * @param toolName - Name of the tool to find
    * @returns The server name that provides the tool, or empty string if not found
-   *
-   * @example
-   * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function demonstrateFindServerForTool() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // List available MCP tools first
-   *       await session.listMcpTools();
-   *
-   *       // Find the server that provides the 'shell' tool
-   *       const server = session.findServerForTool('shell');
-   *       console.log(`Server for 'shell' tool: ${server}`);
-   *       // Output: Server for 'shell' tool: cli_server
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * demonstrateFindServerForTool().catch(console.error);
-   * ```
+   * @internal
    */
   private findServerForTool(toolName: string): string {
     for (const tool of this.mcpTools) {
@@ -561,40 +330,12 @@ export class Session {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * // Initialize the SDK
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * // Create a session
    * const result = await agentBay.create();
    * if (result.success) {
-   *   const session = result.session;
-   *   console.log(`Session ID: ${session.sessionId}`);
-   *   // Output: Session ID: session-04bdwfj7u22a1s30g
-   *
-   *   // Delete session without context sync
-   *   const deleteResult = await session.delete();
-   *   if (deleteResult.success) {
-   *     console.log('Session deleted successfully');
-   *     // Output: Session deleted successfully
-   *   }
-   * }
-   *
-   * // Example with context synchronization
-   * const result2 = await agentBay.create();
-   * if (result2.success) {
-   *   const session = result2.session;
-   *
-   *   // Perform operations that modify context
-   *   await session.filesystem.writeFile('/tmp/data.txt', 'Important data');
-   *
-   *   // Delete with context sync to preserve data
-   *   const deleteResult = await session.delete(true);
-   *   if (deleteResult.success) {
-   *     console.log('Session deleted and context synced');
-   *     // Output: Session deleted and context synced
-   *   }
+   *   await result.session.fileSystem.writeFile('/tmp/data.txt', 'data');
+   *   const deleteResult = await result.session.delete(true);
+   *   console.log('Session deleted:', deleteResult.success);
    * }
    * ```
    *
@@ -628,12 +369,16 @@ export class Session {
         // Browser replay enabled but no explicit sync - sync only browser recording context
         shouldSync = true;
         syncContextId = this.recordContextId;
-        logInfo(`🎥 Browser replay enabled - syncing recording context: ${syncContextId}`);
+        logInfo(
+          `🎥 Browser replay enabled - syncing recording context: ${syncContextId}`
+        );
       }
 
       // If syncContext is true, trigger file uploads first
       if (shouldSync) {
-        logDebug("Triggering context synchronization before session deletion...");
+        logDebug(
+          "Triggering context synchronization before session deletion..."
+        );
 
         // Use the new sync method without callback (sync mode)
         const syncStartTime = Date.now();
@@ -655,11 +400,16 @@ export class Session {
           if (syncResult.success) {
             logInfo(`Context sync completed in ${syncDuration}ms`);
           } else {
-            logInfo(`Context sync completed with failures after ${syncDuration}ms`);
+            logInfo(
+              `Context sync completed with failures after ${syncDuration}ms`
+            );
           }
         } catch (error) {
           const syncDuration = Date.now() - syncStartTime;
-          logError(`Failed to trigger context sync after ${syncDuration}ms:`, error);
+          logError(
+            `Failed to trigger context sync after ${syncDuration}ms:`,
+            error
+          );
           // Continue with deletion even if sync fails
         }
       }
@@ -671,7 +421,9 @@ export class Session {
       });
 
       const response = await this.getClient().releaseMcpSession(request);
-      logDebug(`Response from release_mcp_session: ${JSON.stringify(response)}`);
+      logDebug(
+        `Response from release_mcp_session: ${JSON.stringify(response)}`
+      );
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
@@ -681,7 +433,9 @@ export class Session {
       const success = responseBody?.success !== false; // Note: capital S to match Python
 
       if (!success) {
-        const errorMessage = `[${responseBody?.code || 'Unknown'}] ${responseBody?.message || 'Failed to delete session'}`;
+        const errorMessage = `[${responseBody?.code || "Unknown"}] ${
+          responseBody?.message || "Failed to delete session"
+        }`;
         return {
           requestId,
           success: false,
@@ -711,13 +465,16 @@ export class Session {
    * @param labels - The labels to validate
    * @returns null if validation passes, or OperationResult with error if validation fails
    */
-  private validateLabels(labels: Record<string, string>): OperationResult | null {
+  private validateLabels(
+    labels: Record<string, string>
+  ): OperationResult | null {
     // Check if labels is null, undefined, or invalid type
-    if (!labels || typeof labels !== 'object') {
+    if (!labels || typeof labels !== "object") {
       return {
         requestId: "",
         success: false,
-        errorMessage: "Labels cannot be null, undefined, or invalid type. Please provide a valid labels object.",
+        errorMessage:
+          "Labels cannot be null, undefined, or invalid type. Please provide a valid labels object.",
       };
     }
 
@@ -726,18 +483,27 @@ export class Session {
       return {
         requestId: "",
         success: false,
-        errorMessage: "Labels cannot be an array. Please provide a valid labels object.",
+        errorMessage:
+          "Labels cannot be an array. Please provide a valid labels object.",
       };
     }
 
     // Check if labels is a Date, RegExp, or other built-in object types
-    if (labels instanceof Date || labels instanceof RegExp || labels instanceof Error ||
-        labels instanceof Map || labels instanceof Set || labels instanceof WeakMap ||
-        labels instanceof WeakSet || labels instanceof Promise) {
+    if (
+      labels instanceof Date ||
+      labels instanceof RegExp ||
+      labels instanceof Error ||
+      labels instanceof Map ||
+      labels instanceof Set ||
+      labels instanceof WeakMap ||
+      labels instanceof WeakSet ||
+      labels instanceof Promise
+    ) {
       return {
         requestId: "",
         success: false,
-        errorMessage: "Labels must be a plain object. Built-in object types are not allowed.",
+        errorMessage:
+          "Labels must be a plain object. Built-in object types are not allowed.",
       };
     }
 
@@ -746,7 +512,8 @@ export class Session {
       return {
         requestId: "",
         success: false,
-        errorMessage: "Labels cannot be empty. Please provide at least one label.",
+        errorMessage:
+          "Labels cannot be empty. Please provide at least one label.",
       };
     }
 
@@ -765,7 +532,8 @@ export class Session {
         return {
           requestId: "",
           success: false,
-          errorMessage: "Label values cannot be empty Please provide valid values.",
+          errorMessage:
+            "Label values cannot be empty Please provide valid values.",
         };
       }
     }
@@ -783,38 +551,13 @@ export class Session {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function setSessionLabels() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Set labels for the session
-   *       const setResult = await session.setLabels({
-   *         project: 'demo',
-   *         environment: 'testing',
-   *         version: '1.0.0'
-   *       });
-   *
-   *       if (setResult.success) {
-   *         console.log('Labels set successfully');
-   *         // Output: Labels set successfully
-   *         console.log(`Request ID: ${setResult.requestId}`);
-   *         // Output: Request ID: 8D2C3E4F-1A5B-6C7D-8E9F-0A1B2C3D4E5F
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const setResult = await result.session.setLabels({ project: 'demo', env: 'test' });
+   *   console.log('Labels set:', setResult.success);
+   *   await result.session.delete();
    * }
-   *
-   * setSessionLabels().catch(console.error);
    * ```
    */
   async setLabels(labels: Record<string, string>): Promise<OperationResult> {
@@ -859,39 +602,14 @@ export class Session {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function getSessionLabels() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Set some labels first
-   *       await session.setLabels({
-   *         project: 'demo',
-   *         environment: 'testing'
-   *       });
-   *
-   *       // Get labels for the session
-   *       const getResult = await session.getLabels();
-   *       if (getResult.success) {
-   *         console.log(`Labels: ${JSON.stringify(getResult.data)}`);
-   *         // Output: Labels: {"project":"demo","environment":"testing"}
-   *         console.log(`Request ID: ${getResult.requestId}`);
-   *         // Output: Request ID: 8D2C3E4F-1A5B-6C7D-8E9F-0A1B2C3D4E5F
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.setLabels({ project: 'demo', env: 'test' });
+   *   const getResult = await result.session.getLabels();
+   *   console.log('Labels:', JSON.stringify(getResult.data));
+   *   await result.session.delete();
    * }
-   *
-   * getSessionLabels().catch(console.error);
    * ```
    */
   async getLabels(): Promise<OperationResult> {
@@ -950,41 +668,13 @@ export class Session {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
-   * // Initialize the SDK
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * // Create a session
    * const result = await agentBay.create();
    * if (result.success) {
-   *   const session = result.session;
-   *
-   *   // Get session information
-   *   const infoResult = await session.info();
-   *   if (infoResult.success) {
-   *     const info = infoResult.data;
-   *     console.log(`Session ID: ${info.sessionId}`);
-   *     // Output: Session ID: session-04bdwfj7u22a1s30g
-   *
-   *     console.log(`Resource URL: ${info.resourceUrl}`);
-   *     // Output: Resource URL: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
-   *
-   *     console.log(`Resource Type: ${info.resourceType}`);
-   *     // Output: Resource Type: Desktop
-   *
-   *     console.log(`Request ID: ${infoResult.requestId}`);
-   *     // Output: Request ID: 8D2C3E4F-1A5B-6C7D-8E9F-0A1B2C3D4E5F
-   *
-   *     // Use resource_url for external access
-   *     if (info.resourceUrl) {
-   *       console.log(`Access session at: ${info.resourceUrl}`);
-   *       // Output: Access session at: https://session-04bdwfj7u22a1s30g.agentbay.aliyun.com
-   *     }
-   *   }
-   *
-   *   // Clean up
-   *   await session.delete();
+   *   const infoResult = await result.session.info();
+   *   console.log(`Session ID: ${infoResult.data.sessionId}`);
+   *   console.log(`Resource URL: ${infoResult.data.resourceUrl}`);
+   *   await result.session.delete();
    * }
    * ```
    *
@@ -1020,9 +710,19 @@ export class Session {
 
       // Check for API-level errors
       if (response?.body?.success === false && response.body?.code) {
-        const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
-        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-        logAPIResponseWithDetails("GetMcpResource", requestId, false, undefined, fullResponse);
+        const errorMessage = `[${response.body.code}] ${
+          response.body.message || "Unknown error"
+        }`;
+        const fullResponse = response.body
+          ? JSON.stringify(response.body, null, 2)
+          : "";
+        logAPIResponseWithDetails(
+          "GetMcpResource",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -1080,8 +780,16 @@ export class Session {
       if (sessionInfo.appId) {
         keyFields.app_id = sessionInfo.appId;
       }
-      const fullResponse = responseBody ? JSON.stringify(responseBody, null, 2) : "";
-      logAPIResponseWithDetails("GetMcpResource", requestId, true, keyFields, fullResponse);
+      const fullResponse = responseBody
+        ? JSON.stringify(responseBody, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "GetMcpResource",
+        requestId,
+        true,
+        keyFields,
+        fullResponse
+      );
 
       return {
         requestId,
@@ -1093,7 +801,10 @@ export class Session {
       const errorStr = String(error);
       const errorCode = error?.data?.Code || error?.code || "";
 
-      if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
+      if (
+        errorCode === "InvalidMcpSession.NotFound" ||
+        errorStr.includes("NotFound")
+      ) {
         // This is an expected error - session doesn't exist
         // Use info level logging without stack trace, but with red color for visibility
         logInfoWithColor(`Session not found: ${this.sessionId}`);
@@ -1101,11 +812,14 @@ export class Session {
         return {
           requestId: "",
           success: false,
-          errorMessage: `Session ${this.sessionId} not found`
+          errorMessage: `Session ${this.sessionId} not found`,
         };
       } else {
         // This is an unexpected error - log with full error
-        logError(`❌ Failed to get session info for session ${this.sessionId}`, error);
+        logError(
+          `❌ Failed to get session info for session ${this.sessionId}`,
+          error
+        );
         throw new Error(
           `Failed to get session info for session ${this.sessionId}: ${error}`
         );
@@ -1130,29 +844,12 @@ export class Session {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const result = await agentBay.create();
-   *
    * if (result.success) {
-   *   const session = result.session;
-   *
-   *   // Get default session link
-   *   const linkResult = await session.getLink();
-   *   if (linkResult.success) {
-   *     console.log(`Session link: ${linkResult.data}`);
-   *     // Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
-   *   }
-   *
-   *   // Get link for specific port
-   *   const portLinkResult = await session.getLink(undefined, 30150);
-   *   if (portLinkResult.success) {
-   *     console.log(`Port 30150 link: ${portLinkResult.data}`);
-   *     // Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
-   *   }
-   *
-   *   await session.delete();
+   *   const linkResult = await result.session.getLink();
+   *   console.log(`Session link: ${linkResult.data}`);
+   *   await result.session.delete();
    * }
    * ```
    *
@@ -1186,11 +883,13 @@ export class Session {
       }
 
       // Log API call
-      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${protocolType || 'default'}, Port=${port || 'default'}`;
+      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${
+        protocolType || "default"
+      }, Port=${port || "default"}`;
       if (options) {
-        requestParams += ', Options=provided';
+        requestParams += ", Options=provided";
       }
-      logAPICall('GetLink', requestParams);
+      logAPICall("GetLink", requestParams);
 
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
@@ -1231,7 +930,7 @@ export class Session {
       if (url) {
         keyFields.url = url;
       }
-      logAPIResponseWithDetails('GetLink', requestId, true, keyFields);
+      logAPIResponseWithDetails("GetLink", requestId, true, keyFields);
 
       return {
         requestId,
@@ -1259,38 +958,13 @@ export class Session {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function getSessionLinkAsync() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Get default session link asynchronously
-   *       const linkResult = await session.getLinkAsync();
-   *       if (linkResult.success) {
-   *         console.log(`Session link: ${linkResult.data}`);
-   *         // Output: Session link: https://session-04bdwfj7u22a1s30g.agentbay.com
-   *       }
-   *
-   *       // Get link for specific port
-   *       const portLinkResult = await session.getLinkAsync(undefined, 30150);
-   *       if (portLinkResult.success) {
-   *         console.log(`Port 30150 link: ${portLinkResult.data}`);
-   *         // Output: Port 30150 link: https://session-04bdwfj7u22a1s30g-30150.agentbay.com
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const linkResult = await result.session.getLinkAsync(undefined, 30150);
+   *   console.log(`Port link: ${linkResult.data}`);
+   *   await result.session.delete();
    * }
-   *
-   * getSessionLinkAsync().catch(console.error);
    * ```
    */
   async getLinkAsync(
@@ -1309,11 +983,13 @@ export class Session {
       }
 
       // Log API call
-      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${protocolType || 'default'}, Port=${port || 'default'}`;
+      let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${
+        protocolType || "default"
+      }, Port=${port || "default"}`;
       if (options) {
-        requestParams += ', Options=provided';
+        requestParams += ", Options=provided";
       }
-      logAPICall('GetLink', requestParams);
+      logAPICall("GetLink", requestParams);
 
       const request = new GetLinkRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
@@ -1355,7 +1031,7 @@ export class Session {
       if (url) {
         keyFields.url = url;
       }
-      logAPIResponseWithDetails('GetLink', requestId, true, keyFields);
+      logAPIResponseWithDetails("GetLink", requestId, true, keyFields);
 
       return {
         requestId,
@@ -1381,37 +1057,13 @@ export class Session {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function listAvailableMcpTools() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // List MCP tools for the session
-   *       const toolsResult = await session.listMcpTools();
-   *       if (toolsResult.success) {
-   *         console.log(`Found ${toolsResult.tools.length} MCP tools`);
-   *         // Output: Found 15 MCP tools
-   *
-   *         for (const tool of toolsResult.tools) {
-   *           console.log(`Tool: ${tool.name} - ${tool.description}`);
-   *           // Output: Tool: shell - Execute shell commands
-   *           // Output: Tool: read_file - Read file contents
-   *         }
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const toolsResult = await result.session.listMcpTools();
+   *   console.log(`Found ${toolsResult.tools.length} MCP tools`);
+   *   await result.session.delete();
    * }
-   *
-   * listAvailableMcpTools().catch(console.error);
    * ```
    */
   async listMcpTools(imageId?: string): Promise<McpToolsResult> {
@@ -1435,9 +1087,19 @@ export class Session {
 
     // Check for API-level errors
     if (response?.body?.success === false && response.body?.code) {
-      const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
-      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-      logAPIResponseWithDetails("ListMcpTools", requestId, false, undefined, fullResponse);
+      const errorMessage = `[${response.body.code}] ${
+        response.body.message || "Unknown error"
+      }`;
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "ListMcpTools",
+        requestId,
+        false,
+        undefined,
+        fullResponse
+      );
       return {
         requestId,
         success: false,
@@ -1473,8 +1135,16 @@ export class Session {
       image_id: imageId,
       tool_count: tools.length,
     };
-    const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-    logAPIResponseWithDetails("ListMcpTools", requestId, true, keyFields, fullResponse);
+    const fullResponse = response.body
+      ? JSON.stringify(response.body, null, 2)
+      : "";
+    logAPIResponseWithDetails(
+      "ListMcpTools",
+      requestId,
+      true,
+      keyFields,
+      fullResponse
+    );
 
     return {
       requestId,
@@ -1493,42 +1163,33 @@ export class Session {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function callMcpToolExample() {
-   *   try {
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Call the shell tool to execute a command
-   *       const shellResult = await session.callMcpTool('shell', {
-   *         command: "echo 'Hello World'",
-   *         timeout_ms: 1000
-   *       });
-   *
-   *       if (shellResult.success) {
-   *         console.log(`Output: ${shellResult.data}`);
-   *         // Output: Output: Hello World
-   *         console.log(`Request ID: ${shellResult.requestId}`);
-   *       } else {
-   *         console.error(`Error: ${shellResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const shellResult = await result.session.callMcpTool('shell', { command: "echo 'Hello'" });
+   *   console.log(`Output: ${shellResult.data}`);
+   *   await result.session.delete();
    * }
-   *
-   * callMcpToolExample().catch(console.error);
    * ```
+   *
+   * @remarks
+   * For press_keys tool, key names are automatically normalized to correct case format.
+   * This improves case compatibility (e.g., "CTRL" -> "Ctrl", "tab" -> "Tab").
    */
-  async callMcpTool(toolName: string, args: any, autoGenSession = false): Promise<import("./agent/agent").McpToolResult> {
+  async callMcpTool(
+    toolName: string,
+    args: any,
+    autoGenSession = false
+  ): Promise<import("./agent/agent").McpToolResult> {
     try {
+      // Normalize press_keys arguments for better case compatibility
+      if (toolName === "press_keys" && args && Array.isArray(args.keys)) {
+        const { normalizeKeys } = await import("./key-normalizer");
+        args = { ...args }; // Don't modify the original args
+        args.keys = normalizeKeys(args.keys);
+        logDebug(`Normalized press_keys arguments: ${JSON.stringify(args)}`);
+      }
+
       const argsJSON = JSON.stringify(args);
 
       // Check if this is a VPC session
@@ -1560,7 +1221,9 @@ export class Session {
         url.searchParams.append("args", argsJSON);
         url.searchParams.append("token", this.getToken());
         // Add requestId for debugging purposes
-        const requestId = `vpc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const requestId = `vpc-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
         url.searchParams.append("requestId", requestId);
 
         const response = await fetch(url.toString(), {
@@ -1579,35 +1242,42 @@ export class Session {
           };
         }
 
-                 const responseData = await response.json() as any;
+        const responseData = (await response.json()) as any;
 
-         // Extract the actual result from the nested VPC response structure
-         let actualResult: any = responseData;
-         if (typeof responseData.data === "string") {
-           try {
-             const dataMap = JSON.parse(responseData.data);
-             if (dataMap.result) {
-               actualResult = dataMap.result;
-             }
-           } catch (err) {
-             // Keep original response if parsing fails
-           }
-         } else if (responseData.data && responseData.data.result) {
-           actualResult = responseData.data.result;
-         }
+        // Extract the actual result from the nested VPC response structure
+        let actualResult: any = responseData;
+        if (typeof responseData.data === "string") {
+          try {
+            const dataMap = JSON.parse(responseData.data);
+            if (dataMap.result) {
+              actualResult = dataMap.result;
+            }
+          } catch (err) {
+            // Keep original response if parsing fails
+          }
+        } else if (responseData.data && responseData.data.result) {
+          actualResult = responseData.data.result;
+        }
 
-         // Extract text content from the result
-         let textContent = "";
-         if (actualResult.content && Array.isArray(actualResult.content) && actualResult.content.length > 0) {
-           const contentItem = actualResult.content[0];
-           if (contentItem && contentItem.text) {
-             textContent = contentItem.text;
-           }
-         }
+        // Extract text content from the result
+        let textContent = "";
+        if (
+          actualResult.content &&
+          Array.isArray(actualResult.content) &&
+          actualResult.content.length > 0
+        ) {
+          const contentItem = actualResult.content[0];
+          if (contentItem && contentItem.text) {
+            textContent = contentItem.text;
+          }
+        }
 
         // For run_code tool, extract and log the actual code execution output
         if (toolName === "run_code" && actualResult) {
-          const dataStr = typeof actualResult === 'string' ? actualResult : JSON.stringify(actualResult);
+          const dataStr =
+            typeof actualResult === "string"
+              ? actualResult
+              : JSON.stringify(actualResult);
           logCodeExecutionOutput(requestId, dataStr);
         }
 
@@ -1640,7 +1310,9 @@ export class Session {
 
         // Check for API-level errors before parsing Data
         if (response.body.success === false && response.body.code) {
-          const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
+          const errorMessage = `[${response.body.code}] ${
+            response.body.message || "Unknown error"
+          }`;
           return {
             success: false,
             data: "",
@@ -1676,9 +1348,10 @@ export class Session {
         // For run_code tool, extract and log the actual code execution output
         const reqId = extractRequestId(response) || "";
         if (toolName === "run_code" && data) {
-          const dataStr = typeof response.body.data === 'string'
-            ? response.body.data
-            : JSON.stringify(response.body.data);
+          const dataStr =
+            typeof response.body.data === "string"
+              ? response.body.data
+              : JSON.stringify(response.body.data);
           logCodeExecutionOutput(reqId, dataStr);
         }
 

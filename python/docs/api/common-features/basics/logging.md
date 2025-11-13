@@ -5,7 +5,7 @@ Unified logging configuration for AgentBay SDK using loguru.
 This module provides a centralized logging configuration with beautiful formatting
 and structured output for different log levels.
 
-## AgentBayLogger Objects
+## AgentBayLogger
 
 ```python
 class AgentBayLogger()
@@ -13,7 +13,7 @@ class AgentBayLogger()
 
 AgentBay SDK Logger with beautiful formatting.
 
-#### setup
+### setup
 
 ```python
 @classmethod
@@ -50,8 +50,7 @@ to override existing configuration.
 
 **Example**:
 
-  Configure logging for different scenarios
-  
+Configure logging for different scenarios
 
 ```python
 from agentbay.logger import AgentBayLogger, get_logger
@@ -96,8 +95,7 @@ logger.debug("This only appears in the log file")
 # No console output, but written to /tmp/debug.log
 
 ```
-
-#### get\_logger
+### get\_logger
 
 ```python
 @classmethod
@@ -115,7 +113,7 @@ Get a logger instance.
 
   Configured logger instance
 
-#### set\_level
+### set\_level
 
 ```python
 @classmethod
@@ -131,8 +129,7 @@ Set the logging level.
 
 **Example**:
 
-  Change log level during runtime
-  
+Change log level during runtime
 
 ```python
 from agentbay.logger import AgentBayLogger, get_logger
@@ -159,8 +156,7 @@ logger.warning("But warnings still appear")
 # Output: But warnings still appear
 
 ```
-
-#### get\_logger
+### get\_logger
 
 ```python
 def get_logger(name: str = "agentbay")

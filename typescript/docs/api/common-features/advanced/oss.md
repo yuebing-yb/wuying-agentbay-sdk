@@ -11,11 +11,11 @@ Handles OSS operations in the AgentBay cloud environment.
 
 ### Methods
 
-- [download](oss.md#download)
-- [downloadAnonymous](oss.md#downloadanonymous)
-- [envInit](oss.md#envinit)
-- [upload](oss.md#upload)
-- [uploadAnonymous](oss.md#uploadanonymous)
+- [download](#download)
+- [downloadAnonymous](#downloadanonymous)
+- [envInit](#envinit)
+- [upload](#upload)
+- [uploadAnonymous](#uploadanonymous)
 
 ## Methods
 
@@ -47,48 +47,14 @@ APIError if the operation fails.
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function downloadFileFromOss() {
-  try {
-    const createResult = await agentBay.create();
-    if (createResult.success) {
-      const session = createResult.session;
-
-      // First, initialize OSS environment
-      await session.oss.envInit(
-        'your_access_key_id',
-        'your_access_key_secret',
-        'your_security_token',
-        'oss-cn-hangzhou.aliyuncs.com',
-        'cn-hangzhou'
-      );
-
-      // Download a file from OSS
-      const result = await session.oss.download(
-        'my-bucket',
-        'my-folder/file.txt',
-        '/path/to/save/file.txt'
-      );
-
-      if (result.success) {
-        console.log('File downloaded successfully');
-        // Output: File downloaded successfully
-        console.log(`Request ID: ${result.requestId}`);
-      } else {
-        console.error(`Download failed: ${result.errorMessage}`);
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const createResult = await agentBay.create();
+if (createResult.success) {
+  await createResult.session.oss.envInit('key_id', 'key_secret', 'token', 'oss-cn-hangzhou.aliyuncs.com', 'cn-hangzhou');
+  const result = await createResult.session.oss.download('my-bucket', 'my-folder/file.txt', '/path/to/save/file.txt');
+  console.log('Download success:', result.success);
+  await createResult.session.delete();
 }
-
-downloadFileFromOss().catch(console.error);
 ```
 
 ___
@@ -120,38 +86,13 @@ APIError if the operation fails.
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function downloadFileAnonymously() {
-  try {
-    const createResult = await agentBay.create();
-    if (createResult.success) {
-      const session = createResult.session;
-
-      // Download file using an anonymous URL
-      const result = await session.oss.downloadAnonymous(
-        'https://example.com/file.txt',
-        '/path/to/save/file.txt'
-      );
-
-      if (result.success) {
-        console.log('File downloaded anonymously');
-        // Output: File downloaded anonymously
-        console.log(`Request ID: ${result.requestId}`);
-      } else {
-        console.error(`Download failed: ${result.errorMessage}`);
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const createResult = await agentBay.create();
+if (createResult.success) {
+  const result = await createResult.session.oss.downloadAnonymous('https://example.com/file.txt', '/path/to/save/file.txt');
+  console.log('Anonymous download success:', result.success);
+  await createResult.session.delete();
 }
-
-downloadFileAnonymously().catch(console.error);
 ```
 
 ___
@@ -186,40 +127,13 @@ APIError if the operation fails.
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function initializeOssEnvironment() {
-  try {
-    const createResult = await agentBay.create();
-    if (createResult.success) {
-      const session = createResult.session;
-
-      const result = await session.oss.envInit(
-        'your_access_key_id',
-        'your_access_key_secret',
-        'your_security_token',
-        'oss-cn-hangzhou.aliyuncs.com',
-        'cn-hangzhou'
-      );
-
-      if (result.success) {
-        console.log('OSS environment initialized successfully');
-        // Output: OSS environment initialized successfully
-        console.log(`Request ID: ${result.requestId}`);
-      } else {
-        console.error(`Failed to initialize OSS: ${result.errorMessage}`);
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const createResult = await agentBay.create();
+if (createResult.success) {
+  const result = await createResult.session.oss.envInit('key_id', 'key_secret', 'token', 'oss-cn-hangzhou.aliyuncs.com', 'cn-hangzhou');
+  console.log('OSS initialized:', result.success);
+  await createResult.session.delete();
 }
-
-initializeOssEnvironment().catch(console.error);
 ```
 
 ___
@@ -252,48 +166,14 @@ APIError if the operation fails.
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function uploadFileToOss() {
-  try {
-    const createResult = await agentBay.create();
-    if (createResult.success) {
-      const session = createResult.session;
-
-      // First, initialize OSS environment
-      await session.oss.envInit(
-        'your_access_key_id',
-        'your_access_key_secret',
-        'your_security_token',
-        'oss-cn-hangzhou.aliyuncs.com',
-        'cn-hangzhou'
-      );
-
-      // Upload a file to OSS
-      const result = await session.oss.upload(
-        'my-bucket',
-        'my-folder/file.txt',
-        '/path/to/local/file.txt'
-      );
-
-      if (result.success) {
-        console.log('File uploaded successfully');
-        // Output: File uploaded successfully
-        console.log(`Request ID: ${result.requestId}`);
-      } else {
-        console.error(`Upload failed: ${result.errorMessage}`);
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const createResult = await agentBay.create();
+if (createResult.success) {
+  await createResult.session.oss.envInit('key_id', 'key_secret', 'token', 'oss-cn-hangzhou.aliyuncs.com', 'cn-hangzhou');
+  const result = await createResult.session.oss.upload('my-bucket', 'my-folder/file.txt', '/path/to/local/file.txt');
+  console.log('Upload success:', result.success);
+  await createResult.session.delete();
 }
-
-uploadFileToOss().catch(console.error);
 ```
 
 ___
@@ -325,38 +205,13 @@ APIError if the operation fails.
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-async function uploadFileAnonymously() {
-  try {
-    const createResult = await agentBay.create();
-    if (createResult.success) {
-      const session = createResult.session;
-
-      // Upload file using an anonymous URL
-      const result = await session.oss.uploadAnonymous(
-        'https://example.com/upload',
-        '/path/to/local/file.txt'
-      );
-
-      if (result.success) {
-        console.log('File uploaded anonymously');
-        // Output: File uploaded anonymously
-        console.log(`Request ID: ${result.requestId}`);
-      } else {
-        console.error(`Upload failed: ${result.errorMessage}`);
-      }
-
-      await session.delete();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  }
+const createResult = await agentBay.create();
+if (createResult.success) {
+  const result = await createResult.session.oss.uploadAnonymous('https://example.com/upload', '/path/to/local/file.txt');
+  console.log('Anonymous upload success:', result.success);
+  await createResult.session.delete();
 }
-
-uploadFileAnonymously().catch(console.error);
 ```
 
 ## Related Resources

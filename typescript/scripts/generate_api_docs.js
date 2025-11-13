@@ -206,6 +206,7 @@ function normalizeContent(content, targetRelativePath) {
 
 function rewriteLinks(markdown, targetRelativePath) {
   const currentPath = path.join(docsDir, targetRelativePath)
+  const currentFileName = path.basename(targetRelativePath, '.md').toLowerCase()
 
   return markdown.replace(/\[([^\]]+)]\(([^)]+)\)/g, (match, label, link) => {
     if (link.startsWith('http') || link.startsWith('#')) {
@@ -222,6 +223,13 @@ function rewriteLinks(markdown, targetRelativePath) {
 
     if (!mappedTarget) {
       return `\`${label}\``
+    }
+
+    // Check if this is a same-file anchor link
+    const targetFileName = path.basename(mappedTarget, '.md').toLowerCase()
+    if (targetFileName === currentFileName && hash) {
+      // Convert to pure anchor link for same-file references
+      return `[${label}](#${hash})`
     }
 
     const toPath = path.join(docsDir, mappedTarget)

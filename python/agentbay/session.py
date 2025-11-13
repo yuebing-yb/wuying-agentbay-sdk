@@ -919,12 +919,23 @@ class Session:
             result = session.call_mcp_tool("shell", {"command": "pwd", "timeout_ms": 1000}, read_timeout=30, connect_timeout=10)
             result = session.call_mcp_tool("shell", {"command": "invalid_command_12345", "timeout_ms": 1000})
             ```
+
+        Note:
+            - For press_keys tool, key names are automatically normalized to correct case format
+            - This improves case compatibility (e.g., "CTRL" -> "Ctrl", "tab" -> "Tab")
         """
         from agentbay.model import McpToolResult
         from agentbay.api.models import CallMcpToolRequest
         import requests
 
         try:
+            # Normalize press_keys arguments for better case compatibility
+            if tool_name == "press_keys" and "keys" in args:
+                from agentbay.key_normalizer import normalize_keys
+                args = args.copy()  # Don't modify the original args
+                args["keys"] = normalize_keys(args["keys"])
+                _logger.debug(f"Normalized press_keys arguments: {args}")
+
             args_json = json.dumps(args, ensure_ascii=False)
 
             # Check if this is a VPC session

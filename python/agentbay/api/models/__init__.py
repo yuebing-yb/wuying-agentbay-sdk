@@ -118,6 +118,16 @@ from ._get_context_file_upload_url_response_body import GetContextFileUploadUrlR
 from ._list_session_response import ListSessionResponse
 from ._list_session_response_body import ListSessionResponseBody
 
+# GetCdpLink and GetAdbLink APIs
+from ._get_cdp_link_request import GetCdpLinkRequest
+from ._get_cdp_link_response_body import GetCdpLinkResponseBody
+from ._get_cdp_link_response_body import GetCdpLinkResponseBodyData
+from ._get_cdp_link_response import GetCdpLinkResponse
+from ._get_adb_link_request import GetAdbLinkRequest
+from ._get_adb_link_response_body import GetAdbLinkResponseBody
+from ._get_adb_link_response_body import GetAdbLinkResponseBodyData
+from ._get_adb_link_response import GetAdbLinkResponse
+
 __all__ = [
     CallMcpToolRequest,
     CallMcpToolResponseBody,
@@ -229,4 +239,13 @@ __all__ = [
     # Add these lines at the appropriate place
     ListSessionResponse,
     ListSessionResponseBody,
+    # GetCdpLink and GetAdbLink APIs
+    GetCdpLinkRequest,
+    GetCdpLinkResponseBody,
+    GetCdpLinkResponseBodyData,
+    GetCdpLinkResponse,
+    GetAdbLinkRequest,
+    GetAdbLinkResponseBody,
+    GetAdbLinkResponseBodyData,
+    GetAdbLinkResponse,
 ]

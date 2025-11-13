@@ -1,5 +1,7 @@
 # Context Sync API Reference
 
+## UploadStrategy
+
 ```python
 class UploadStrategy(Enum)
 ```
@@ -12,7 +14,7 @@ Upload strategy for context synchronization
 UPLOAD_BEFORE_RESOURCE_RELEASE = "UploadBeforeResourceRelease"
 ```
 
-## DownloadStrategy Objects
+## DownloadStrategy
 
 ```python
 class DownloadStrategy(Enum)
@@ -26,7 +28,7 @@ Download strategy for context synchronization
 DOWNLOAD_ASYNC = "DownloadAsync"
 ```
 
-## UploadMode Objects
+## UploadMode
 
 ```python
 class UploadMode(Enum)
@@ -46,7 +48,7 @@ FILE = "File"
 ARCHIVE = "Archive"
 ```
 
-## Lifecycle Objects
+## Lifecycle
 
 ```python
 class Lifecycle(Enum)
@@ -114,7 +116,7 @@ LIFECYCLE_360DAYS = "Lifecycle_360Days"
 LIFECYCLE_FOREVER = "Lifecycle_Forever"
 ```
 
-## UploadPolicy Objects
+## UploadPolicy
 
 ```python
 @dataclass
@@ -147,7 +149,7 @@ upload_strategy = UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
 upload_mode = UploadMode.FILE
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -156,7 +158,7 @@ def default(cls)
 
 Creates a new upload policy with default values
 
-## DownloadPolicy Objects
+## DownloadPolicy
 
 ```python
 @dataclass
@@ -182,7 +184,7 @@ auto_download = True
 download_strategy = DownloadStrategy.DOWNLOAD_ASYNC
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -191,7 +193,7 @@ def default(cls)
 
 Creates a new download policy with default values
 
-## DeletePolicy Objects
+## DeletePolicy
 
 ```python
 @dataclass
@@ -210,7 +212,7 @@ Defines the delete policy for context synchronization
 sync_local_file = True
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -219,7 +221,7 @@ def default(cls)
 
 Creates a new delete policy with default values
 
-## ExtractPolicy Objects
+## ExtractPolicy
 
 ```python
 @dataclass
@@ -251,7 +253,7 @@ delete_src_file = True
 extract_current_folder = False
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -260,7 +262,7 @@ def default(cls)
 
 Creates a new extract policy with default values
 
-## RecyclePolicy Objects
+## RecyclePolicy
 
 ```python
 @dataclass
@@ -303,7 +305,7 @@ lifecycle = Lifecycle.LIFECYCLE_FOREVER
 paths = field(default_factory=lambda: [""])
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -312,7 +314,7 @@ def default(cls)
 
 Creates a new recycle policy with default values
 
-## WhiteList Objects
+## WhiteList
 
 ```python
 @dataclass
@@ -338,7 +340,7 @@ path = ""
 exclude_paths = field(default_factory=list)
 ```
 
-## BWList Objects
+## BWList
 
 ```python
 @dataclass
@@ -357,7 +359,7 @@ Defines the black and white list configuration
 white_lists = field(default_factory=list)
 ```
 
-## MappingPolicy Objects
+## MappingPolicy
 
 ```python
 @dataclass
@@ -376,7 +378,7 @@ Defines the mapping policy for cross-platform context synchronization
 path = ""
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -385,7 +387,7 @@ def default(cls)
 
 Creates a new mapping policy with default values
 
-## SyncPolicy Objects
+## SyncPolicy
 
 ```python
 @dataclass
@@ -446,7 +448,7 @@ bw_list = None
 mapping_policy = None
 ```
 
-#### default
+### default
 
 ```python
 @classmethod
@@ -455,7 +457,7 @@ def default(cls)
 
 Creates a new sync policy with default values
 
-## ContextSync Objects
+## ContextSync
 
 ```python
 @dataclass
@@ -488,7 +490,7 @@ path = None
 policy = None
 ```
 
-#### new
+### new
 
 ```python
 @classmethod
@@ -497,7 +499,7 @@ def new(cls, context_id: str, path: str, policy: Optional[SyncPolicy] = None)
 
 Creates a new context sync configuration
 
-#### with\_policy
+### with\_policy
 
 ```python
 def with_policy(policy: SyncPolicy)

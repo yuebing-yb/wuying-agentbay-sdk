@@ -20,7 +20,7 @@ Mobile module for mobile device UI automation and configuration.
 Handles touch operations, UI element interactions, application management, screenshot capabilities,
 and mobile environment configuration operations.
 
-## UIElementListResult Objects
+## UIElementListResult
 
 ```python
 class UIElementListResult(ApiResponse)
@@ -28,7 +28,7 @@ class UIElementListResult(ApiResponse)
 
 Result of UI element listing operations.
 
-## KeyCode Objects
+## KeyCode
 
 ```python
 class KeyCode()
@@ -72,7 +72,7 @@ POWER = 26
 MENU = 82
 ```
 
-## Mobile Objects
+## Mobile
 
 ```python
 class Mobile(BaseService)
@@ -83,7 +83,7 @@ Provides comprehensive mobile automation capabilities including touch operations
 UI element interactions, application management, screenshot capabilities,
 and mobile environment configuration operations.
 
-#### tap
+### tap
 
 ```python
 def tap(x: int, y: int) -> BoolResult
@@ -109,13 +109,13 @@ session = agent_bay.create(image="mobile_latest").session
 session.mobile.tap(500, 800)
 session.delete()
 ```
-  
+
 
 **See Also**:
 
-  swipe, long_press
+swipe, long_press
 
-#### swipe
+### swipe
 
 ```python
 def swipe(start_x: int,
@@ -150,7 +150,7 @@ session.mobile.swipe(100, 1000, 100, 200, duration_ms=500)
 session.delete()
 ```
 
-#### input\_text
+### input\_text
 
 ```python
 def input_text(text: str) -> BoolResult
@@ -176,7 +176,7 @@ session.mobile.input_text("Hello Mobile!")
 session.delete()
 ```
 
-#### send\_key
+### send\_key
 
 ```python
 def send_key(key: int) -> BoolResult
@@ -208,7 +208,7 @@ session.mobile.send_key(4)  # Press BACK button
 session.delete()
 ```
 
-#### get\_clickable\_ui\_elements
+### get\_clickable\_ui\_elements
 
 ```python
 def get_clickable_ui_elements(timeout_ms: int = 2000) -> UIElementListResult
@@ -236,7 +236,7 @@ print(f"Found {len(result.elements)} clickable elements")
 session.delete()
 ```
 
-#### get\_all\_ui\_elements
+### get\_all\_ui\_elements
 
 ```python
 def get_all_ui_elements(timeout_ms: int = 2000) -> UIElementListResult
@@ -264,7 +264,7 @@ print(f"Found {len(result.elements)} UI elements")
 session.delete()
 ```
 
-#### get\_installed\_apps
+### get\_installed\_apps
 
 ```python
 def get_installed_apps(start_menu: bool, desktop: bool,
@@ -295,7 +295,7 @@ print(f"Found {len(apps.data)} apps")
 session.delete()
 ```
 
-#### start\_app
+### start\_app
 
 ```python
 def start_app(start_cmd: str,
@@ -328,7 +328,7 @@ print(f"Started {len(processes.data)} process(es)")
 session.delete()
 ```
 
-#### stop\_app\_by\_cmd
+### stop\_app\_by\_cmd
 
 ```python
 def stop_app_by_cmd(stop_cmd: str) -> AppOperationResult
@@ -355,7 +355,7 @@ print(f"Stop successful: {result.success}")
 session.delete()
 ```
 
-#### screenshot
+### screenshot
 
 ```python
 def screenshot() -> OperationResult
@@ -378,7 +378,7 @@ print(f"Screenshot URL: {result.data}")
 session.delete()
 ```
 
-#### configure
+### configure
 
 ```python
 def configure(mobile_config)
@@ -408,23 +408,23 @@ mobile_config = MobileExtraConfig(lock_resolution=True)
 session.mobile.configure(mobile_config)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - This method is called automatically during session creation if MobileExtraConfig is provided
-  - Configuration changes are applied immediately
-  - Resolution lock prevents resolution changes
-  - App whitelist/blacklist affects app launching permissions
-  - Uninstall blacklist protects apps from being uninstalled
-  
+- This method is called automatically during session creation if MobileExtraConfig is provided
+- Configuration changes are applied immediately
+- Resolution lock prevents resolution changes
+- App whitelist/blacklist affects app launching permissions
+- Uninstall blacklist protects apps from being uninstalled
+
 
 **See Also**:
 
-  set_resolution_lock, set_app_whitelist, set_app_blacklist,
-  set_navigation_bar_visibility, set_uninstall_blacklist
+set_resolution_lock, set_app_whitelist, set_app_blacklist,
+set_navigation_bar_visibility, set_uninstall_blacklist
 
-#### set\_resolution\_lock
+### set\_resolution\_lock
 
 ```python
 def set_resolution_lock(enable: bool)
@@ -446,7 +446,7 @@ session.mobile.set_resolution_lock(False)
 session.delete()
 ```
 
-#### set\_app\_whitelist
+### set\_app\_whitelist
 
 ```python
 def set_app_whitelist(package_names: List[str])
@@ -467,15 +467,15 @@ whitelist = ["com.android.settings", "com.android.chrome"]
 session.mobile.set_app_whitelist(whitelist)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Only apps in the whitelist will be allowed to run
-  - System apps may be affected depending on the configuration
-  - Whitelist takes precedence over blacklist if both are set
+- Only apps in the whitelist will be allowed to run
+- System apps may be affected depending on the configuration
+- Whitelist takes precedence over blacklist if both are set
 
-#### set\_app\_blacklist
+### set\_app\_blacklist
 
 ```python
 def set_app_blacklist(package_names: List[str])
@@ -496,14 +496,14 @@ blacklist = ["com.example.app1", "com.example.app2"]
 session.mobile.set_app_blacklist(blacklist)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Apps in the blacklist will be blocked from running
-  - Whitelist takes precedence over blacklist if both are set
+- Apps in the blacklist will be blocked from running
+- Whitelist takes precedence over blacklist if both are set
 
-#### set\_navigation\_bar\_visibility
+### set\_navigation\_bar\_visibility
 
 ```python
 def set_navigation_bar_visibility(hide: bool)
@@ -524,14 +524,14 @@ session.mobile.set_navigation_bar_visibility(hide=True)
 session.mobile.set_navigation_bar_visibility(hide=False)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Hiding the navigation bar provides a fullscreen experience
-  - The navigation bar can still be accessed by swiping from the edge
+- Hiding the navigation bar provides a fullscreen experience
+- The navigation bar can still be accessed by swiping from the edge
 
-#### set\_uninstall\_blacklist
+### set\_uninstall\_blacklist
 
 ```python
 def set_uninstall_blacklist(package_names: List[str])
@@ -552,15 +552,15 @@ protected_apps = ["com.android.settings", "com.android.chrome"]
 session.mobile.set_uninstall_blacklist(protected_apps)
 session.delete()
 ```
-  
+
 
 **Notes**:
 
-  - Apps in the uninstall blacklist cannot be uninstalled
-  - This is useful for protecting critical applications
-  - The protection persists for the session lifetime
+- Apps in the uninstall blacklist cannot be uninstalled
+- This is useful for protecting critical applications
+- The protection persists for the session lifetime
 
-#### get\_adb\_url
+### get\_adb\_url
 
 ```python
 def get_adb_url(adbkey_pub: str) -> AdbUrlResult

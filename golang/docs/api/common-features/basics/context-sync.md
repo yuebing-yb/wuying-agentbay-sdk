@@ -21,7 +21,7 @@ ContextSync defines the context synchronization configuration
 
 ### Methods
 
-#### WithPolicy
+### WithPolicy
 
 ```go
 func (cs *ContextSync) WithPolicy(policy *SyncPolicy) (*ContextSync, error)
@@ -31,7 +31,7 @@ WithPolicy sets the policy and returns the context sync for chaining
 
 ### Related Functions
 
-#### NewContextSync
+### NewContextSync
 
 ```go
 func NewContextSync(contextID, path string, policy *SyncPolicy) (*ContextSync, error)
@@ -64,7 +64,7 @@ SyncPolicy defines the synchronization policy
 
 ### Related Functions
 
-#### NewSyncPolicy
+### NewSyncPolicy
 
 ```go
 func NewSyncPolicy() *SyncPolicy
@@ -89,7 +89,7 @@ UploadPolicy defines the upload policy for context synchronization
 
 ### Related Functions
 
-#### NewUploadPolicy
+### NewUploadPolicy
 
 ```go
 func NewUploadPolicy() *UploadPolicy
@@ -112,7 +112,7 @@ DownloadPolicy defines the download policy for context synchronization
 
 ### Related Functions
 
-#### NewDownloadPolicy
+### NewDownloadPolicy
 
 ```go
 func NewDownloadPolicy() *DownloadPolicy
@@ -133,7 +133,7 @@ DeletePolicy defines the delete policy for context synchronization
 
 ### Related Functions
 
-#### NewDeletePolicy
+### NewDeletePolicy
 
 ```go
 func NewDeletePolicy() *DeletePolicy
@@ -158,7 +158,7 @@ ExtractPolicy defines the extract policy for context synchronization
 
 ### Related Functions
 
-#### NewExtractPolicy
+### NewExtractPolicy
 
 ```go
 func NewExtractPolicy() *ExtractPolicy
@@ -203,7 +203,7 @@ Paths field specifies which directories or files should be subject to the recycl
 
 ### Related Functions
 
-#### NewRecyclePolicy
+### NewRecyclePolicy
 
 ```go
 func NewRecyclePolicy() *RecyclePolicy
@@ -248,7 +248,7 @@ MappingPolicy defines the mapping policy for cross-platform context synchronizat
 
 ### Related Functions
 
-#### NewMappingPolicy
+### NewMappingPolicy
 
 ```go
 func NewMappingPolicy() *MappingPolicy
@@ -290,226 +290,69 @@ Lifecycle defines the lifecycle options for recycle policy
 
 ## Functions
 
-### Deprecated
+### NewContextSync
 
 ```go
-func Deprecated(reason, replacement, version string)
+func NewContextSync(contextID, path string, policy *SyncPolicy) (*ContextSync, error)
 ```
 
-Deprecated marks a function or method as deprecated and emits a warning
+NewContextSync creates a new context sync configuration
 
-### GetLogLevel
+### NewSyncPolicy
 
 ```go
-func GetLogLevel() int
+func NewSyncPolicy() *SyncPolicy
 ```
 
-GetLogLevel returns the current global log level
+NewSyncPolicy creates a new sync policy with default values
 
-**Example:**
+### NewUploadPolicy
 
 ```go
-package main
-import (
-	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-
-	// Check current level
-
-	currentLevel := agentbay.GetLogLevel()
-	fmt.Printf("Current log level: %d\n", currentLevel)
-}
+func NewUploadPolicy() *UploadPolicy
 ```
 
-### LogDebug
+NewUploadPolicy creates a new upload policy with default values
+
+### NewDownloadPolicy
 
 ```go
-func LogDebug(message string)
+func NewDownloadPolicy() *DownloadPolicy
 ```
 
-LogDebug logs a debug message
+NewDownloadPolicy creates a new download policy with default values
 
-**Example:**
+### NewDeletePolicy
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see debug messages
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Log debug messages
-
-	agentbay.LogDebug("Debugging session creation process")
-
-	// Output: 🐛 Debugging session creation process
-
-}
+func NewDeletePolicy() *DeletePolicy
 ```
 
-### LogInfo
+NewDeletePolicy creates a new delete policy with default values
+
+### NewExtractPolicy
 
 ```go
-func LogInfo(message string)
+func NewExtractPolicy() *ExtractPolicy
 ```
 
-LogInfo logs an informational message
+NewExtractPolicy creates a new extract policy with default values
 
-**Example:**
+### NewRecyclePolicy
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to INFO or DEBUG to see info messages
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Log informational messages
-
-	agentbay.LogInfo("Session created successfully")
-
-	// Output: ℹ️  Session created successfully
-
-}
+func NewRecyclePolicy() *RecyclePolicy
 ```
 
-### SetDeprecationConfig
+NewRecyclePolicy creates a new recycle policy with default values
+
+### NewMappingPolicy
 
 ```go
-func SetDeprecationConfig(config *DeprecationConfig)
+func NewMappingPolicy() *MappingPolicy
 ```
 
-SetDeprecationConfig sets the global deprecation configuration
-
-### SetLogLevel
-
-```go
-func SetLogLevel(level int)
-```
-
-SetLogLevel sets the global log level
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Set log level to DEBUG to see all messages
-
-	agentbay.SetLogLevel(agentbay.LOG_DEBUG)
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// Change to INFO level to reduce verbosity
-
-	agentbay.SetLogLevel(agentbay.LOG_INFO)
-
-	// Continue with your operations
-
-}
-```
-
-### SetupLogger
-
-```go
-func SetupLogger(config LoggerConfig)
-```
-
-SetupLogger configures the logger with file logging support
-
-**Example:**
-
-```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-
-	// Configure file logging with rotation
-
-	agentbay.SetupLogger(agentbay.LoggerConfig{
-		Level:       "DEBUG",
-		LogFile:     "/tmp/agentbay.log",
-		MaxFileSize: "100 MB",
-	})
-	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	result, err := client.Create(nil)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-	session := result.Session
-	defer session.Delete()
-
-	// All logs will be written to both console and file
-
-}
-```
+NewMappingPolicy creates a new mapping policy with default values
 
 ## Related Resources
 

@@ -16,13 +16,15 @@ It supports multiple programming languages including Python, JavaScript, and mor
 
 
 
+## CodeExecutionResult
+
 ```python
 class CodeExecutionResult(ApiResponse)
 ```
 
 Result of code execution operations.
 
-## Code Objects
+## Code
 
 ```python
 class Code(BaseService)
@@ -30,7 +32,7 @@ class Code(BaseService)
 
 Handles code execution operations in the AgentBay cloud environment.
 
-#### run\_code
+### run\_code
 
 ```python
 def run_code(code: str,
@@ -69,37 +71,17 @@ Execute code in the specified language with a timeout.
 
 **Example**:
 
-  Execute Python and JavaScript code in a code execution environment
-  
+Execute Python code in a code execution environment
 
 ```python
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your_api_key")
-
-def execute_python_code():
-try:
-# Create a session with code_latest image
-params = CreateSessionParams(image_id="code_latest")
-result = agent_bay.create(params)
-if result.success:
-session = result.session
-
-# Execute Python code
-python_code = "print('Hello from Python!')
-result = 2 + 3
-  print(f'Result: {result}')"
-
-code_result = session.code.run_code(python_code, "python")
-if code_result.success:
-print(f"Python code output: {code_result.result}")
-
-session.delete()
-except Exception as e:
-  print(f"Error: {e}")
-
-execute_python_code()
+result = agent_bay.create(CreateSessionParams(image_id="code_latest"))
+code_result = result.session.code.run_code("print('Hello')", "python")
+print(code_result.result)
+result.session.delete()
 ```
 
 ## Best Practices

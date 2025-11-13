@@ -9,11 +9,6 @@
 The Command module provides methods for executing shell commands within a session in the AgentBay cloud environment.
 It supports both synchronous command execution with configurable timeouts.
 
-
-## Requirements
-
-- Any session image (browser_latest, code_latest, windows_latest, mobile_latest)
-
 Handles command execution operations in the AgentBay cloud environment.
 
 ## Table of contents
@@ -21,7 +16,7 @@ Handles command execution operations in the AgentBay cloud environment.
 
 ### Methods
 
-- [executeCommand](command.md#executecommand)
+- [executeCommand](#executecommand)
 
 ## Methods
 
@@ -51,28 +46,12 @@ Promise resolving to CommandResult containing:
 **`Example`**
 
 ```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const result = await agentBay.create();
-
 if (result.success) {
-  const session = result.session;
-
-  // Execute a simple command
-  const cmdResult = await session.command.executeCommand('echo "Hello"');
-  if (cmdResult.success) {
-    console.log(`Output: ${cmdResult.output}`);
-    // Output: Output: Hello
-  }
-
-  // Execute with custom timeout
-  const longCmd = await session.command.executeCommand(
-    'sleep 2 && echo "Done"',
-    3000
-  );
-
-  await session.delete();
+  const cmdResult = await result.session.command.executeCommand('echo "Hello"', 3000);
+  console.log('Command output:', cmdResult.output);
+  await result.session.delete();
 }
 ```
 

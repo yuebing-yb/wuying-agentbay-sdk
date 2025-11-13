@@ -818,21 +818,38 @@ class Mobile(BaseService):
         try:
             # Build options JSON with adbkey_pub
             import json
+            from agentbay.api.models import GetAdbLinkRequest
             options_json = json.dumps({"adbkey_pub": adbkey_pub})
 
-            # Call get_link with protocol_type="adb" and options
-            result = self.session.get_link(protocol_type="adb", options=options_json)
-
-            # Log the operation
-            _logger.info(f"✅ get_adb_url completed successfully. RequestID: {result.request_id}")
-
-            # Return wrapped in AdbUrlResult
-            return AdbUrlResult(
-                request_id=result.request_id,
-                success=result.success,
-                data=result.data,
-                error_message=result.error_message if not result.success else "",
+            # Call get_adb_link API
+            request = GetAdbLinkRequest(
+                authorization=f"Bearer {self.session.agent_bay.api_key}",
+                session_id=self.session.session_id,
+                option=options_json
             )
+            response = self.session.agent_bay.client.get_adb_link(request)
+
+            # Check response
+            if response.body and response.body.success and response.body.data:
+                adb_url = response.body.data.url
+                request_id = response.body.request_id or ""
+                _logger.info(f"✅ get_adb_url completed successfully. RequestID: {request_id}")
+                return AdbUrlResult(
+                    request_id=request_id,
+                    success=True,
+                    data=adb_url,
+                    error_message="",
+                )
+            else:
+                error_msg = response.body.message if response.body else "Unknown error"
+                request_id = response.body.request_id if response.body else ""
+                _logger.error(f"❌ Failed to get ADB URL: {error_msg}")
+                return AdbUrlResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message=error_msg,
+                )
 
         except Exception as e:
             error_msg = f"Failed to get ADB URL: {str(e)}"
