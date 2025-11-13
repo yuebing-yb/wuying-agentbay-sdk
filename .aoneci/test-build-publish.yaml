@@ -41,8 +41,6 @@ jobs:
       string-output: ${{steps.modify-version.outputs.env}}
     steps:
       - uses: checkout
-        inputs:
-          ref: main
       - uses: setup-env
         inputs:
           python-version: ${{params.python-version}}
@@ -95,8 +93,6 @@ jobs:
       string-output: ${{steps.modify-version.outputs.env}}
     steps:
       - uses: checkout
-        inputs:
-          ref: main
       - uses: setup-env
         inputs:
           node-version: ${{params.node-version}}
@@ -195,8 +191,6 @@ jobs:
 
     steps:
       - uses: checkout
-        inputs:
-          ref: main
       - uses: setup-env
         inputs:
           go_version: "1.23.2"
