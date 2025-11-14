@@ -107,8 +107,13 @@ jobs:
       # 创建临时文档目录
       - id: setup-temp-docs
         name: "创建临时文档目录"
-        when: "${{env.CI_LOOP_DETECTED != 'true'}}"
         run: |
+          # 检查是否为 CI 机器人提交
+          if [ "$CI_LOOP_DETECTED" = "true" ]; then
+            echo "⚠️ 检测到 CI 机器人提交，跳过临时文档目录创建"
+            exit 0
+          fi
+          
           echo "📁 创建 CI/CD 临时文档目录..."
           
           # 使用工作区目录而不是 /tmp，确保 steps 之间共享
@@ -125,10 +130,16 @@ jobs:
       # 生成 Python API 文档
       - id: generate-python-docs
         name: "生成 Python API 文档"
-        when: "${{params.python_docs_enabled && env.CI_LOOP_DETECTED != 'true'}}"
+        when: ${{params.python_docs_enabled}}
         run: |
+          # 检查是否为 CI 机器人提交或 Python 文档生成被禁用
+          if [ "$CI_LOOP_DETECTED" = "true" ]; then
+            echo "⚠️ 检测到 CI 机器人提交，跳过 Python API 文档生成"
+            exit 0
+          fi
+          
           echo "🐍 开始生成 Python API 文档..."
-          echo "  - $CI_LOOP_DETECTED"
+          echo "  - CI_LOOP_DETECTED: ${CI_LOOP_DETECTED:-未设置}"
           cd python
           
           # 安装依赖
@@ -176,8 +187,14 @@ jobs:
       # 生成 TypeScript API 文档
       - id: generate-typescript-docs
         name: "生成 TypeScript API 文档"
-        when: "${{params.typescript_docs_enabled && env.CI_LOOP_DETECTED != 'true'}}"
+        when: ${{params.typescript_docs_enabled}}
         run: |
+          # 检查是否为 CI 机器人提交或 TypeScript 文档生成被禁用
+          if [ "$CI_LOOP_DETECTED" = "true" ]; then
+            echo "⚠️ 检测到 CI 机器人提交，跳过 TypeScript API 文档生成"
+            exit 0
+          fi
+          
           echo "📘 开始生成 TypeScript API 文档..."
           cd typescript
           
@@ -229,8 +246,14 @@ jobs:
       # 生成 AI 助手文档
       - id: generate-llms-docs
         name: "生成 AI 助手文档"
-        when: "${{params.llms_docs_enabled && env.CI_LOOP_DETECTED != 'true'}}"
+        when: ${{params.llms_docs_enabled}}
         run: |
+          # 检查是否为 CI 机器人提交或 AI 助手文档生成被禁用
+          if [ "$CI_LOOP_DETECTED" = "true" ]; then
+            echo "⚠️ 检测到 CI 机器人提交，跳过 AI 助手文档生成"
+            exit 0
+          fi
+          
           echo "🤖 开始生成 AI 助手文档..."
           
           # 安装必要的依赖
@@ -256,8 +279,14 @@ jobs:
       # 生成 Golang API 文档
       - id: generate-golang-docs
         name: "生成 Golang API 文档"
-        when: "${{params.golang_docs_enabled && env.CI_LOOP_DETECTED != 'true'}}"
+        when: ${{params.golang_docs_enabled}}
         run: |
+          # 检查是否为 CI 机器人提交或 Golang 文档生成被禁用
+          if [ "$CI_LOOP_DETECTED" = "true" ]; then
+            echo "⚠️ 检测到 CI 机器人提交，跳过 Golang API 文档生成"
+            exit 0
+          fi
+
           echo "🐹 开始生成 Golang API 文档..."
           cd golang
           
@@ -309,8 +338,13 @@ jobs:
       # 从临时目录复制文档到项目目录并添加到暂存区
       - id: copy-and-stage-docs
         name: "复制文档到项目并暂存"
-        when: "${{env.CI_LOOP_DETECTED != 'true'}}"
         run: |
+          # 检查是否为 CI 机器人提交
+          if [ "$CI_LOOP_DETECTED" == "true" ]; then
+            echo "⚠️ 检测到 CI 机器人提交，跳过文档复制和暂存"
+            exit 0
+          fi
+          
           echo "📋 从临时目录复制文档到项目目录并添加到暂存区..."
           
           # 检查临时目录是否存在文件
@@ -392,8 +426,19 @@ jobs:
       # 提交文档变更
       - id: commit-docs
         name: "提交文档变更"
-        when: "${{params.auto_commit_enabled && env.CI_LOOP_DETECTED != 'true'}}"
         run: |
+          # 检查是否为 CI 机器人提交或自动提交被禁用
+          if [ "$CI_LOOP_DETECTED" = true ]; then
+            echo "⚠️ 检测到 CI 机器人提交，跳过文档提交"
+            exit 0
+          fi
+          
+          # 检查自动提交是否启用（默认启用）
+          if [ "${{params.auto_commit_enabled}}" != "true" ]; then
+            echo "ℹ️ 自动提交已禁用，跳过"
+            exit 0
+          fi
+          
           tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
           echo "📤 开始检查并提交文档变更..."
           
