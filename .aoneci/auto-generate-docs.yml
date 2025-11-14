@@ -349,59 +349,59 @@ jobs:
           echo "📁 Temporary directory contents:"
           find "$TEMP_DOCS_DIR" -type f 2>/dev/null || echo "Temporary directory is empty"
           
-          # 复制并暂存 Python API 文档
+          # Copy and stage Python API documentation
           if [ -d "$TEMP_DOCS_DIR/python/api" ] && [ "$(find "$TEMP_DOCS_DIR/python/api" -type f 2>/dev/null)" ]; then
-            echo "📋 复制 Python API 文档到项目目录..."
+            echo "📋 Copying Python API documentation to project directory..."
             mkdir -p python/docs/api
             cp -r "$TEMP_DOCS_DIR/python/api"/* python/docs/api/ 2>/dev/null || true
             git add python/docs/api/
-            echo "✅ Python API 文档已复制并暂存"
+            echo "✅ Python API documentation copied and staged"
           fi
           
-          # 复制并暂存 TypeScript API 文档
+          # Copy and stage TypeScript API documentation
           if [ -d "$TEMP_DOCS_DIR/typescript/api" ] && [ "$(find "$TEMP_DOCS_DIR/typescript/api" -type f 2>/dev/null)" ]; then
-            echo "📋 复制 TypeScript API 文档到项目目录..."
+            echo "📋 Copying TypeScript API documentation to project directory..."
             mkdir -p typescript/docs/api
             cp -r "$TEMP_DOCS_DIR/typescript/api"/* typescript/docs/api/ 2>/dev/null || true
             git add typescript/docs/api/
-            echo "✅ TypeScript API 文档已复制并暂存"
+            echo "✅ TypeScript API documentation copied and staged"
           fi
           
-          # 复制并暂存 Golang API 文档
+          # Copy and stage Golang API documentation
           if [ -d "$TEMP_DOCS_DIR/golang/api" ] && [ "$(find "$TEMP_DOCS_DIR/golang/api" -type f 2>/dev/null)" ]; then
-            echo "📋 复制 Golang API 文档到项目目录..."
+            echo "📋 Copying Golang API documentation to project directory..."
             mkdir -p golang/docs/api
             cp -r "$TEMP_DOCS_DIR/golang/api"/* golang/docs/api/ 2>/dev/null || true
             git add golang/docs/api/
-            echo "✅ Golang API 文档已复制并暂存"
+            echo "✅ Golang API documentation copied and staged"
           fi
           
-          # 复制并暂存 AI 助手文档
+          # Copy and stage AI Assistant documentation
           if [ -d "$TEMP_DOCS_DIR/llms" ] && [ "$(find "$TEMP_DOCS_DIR/llms" -type f 2>/dev/null)" ]; then
-            echo "📋 复制 AI 助手文档到项目目录..."
+            echo "📋 Copying AI Assistant documentation to project directory..."
             cp "$TEMP_DOCS_DIR/llms"/* . 2>/dev/null || true
             git add llms.txt llms-full.txt 2>/dev/null || true
-            echo "✅ AI 助手文档已复制并暂存"
+            echo "✅ AI Assistant documentation copied and staged"
           fi
           
-          # 显示最终暂存区状态
+          # Display final staging area status
           STAGED_FILES=$(git diff --cached --name-only)
           if [ -n "$STAGED_FILES" ]; then
             echo ""
-            echo "📊 最终暂存区统计："
+            echo "📊 Final staging area statistics:"
             echo "$STAGED_FILES"
             
-            # 分类统计
+            # Categorized statistics
             PYTHON_COUNT=$(echo "$STAGED_FILES" | grep "python/docs/api" | wc -l || echo "0")
             TYPESCRIPT_COUNT=$(echo "$STAGED_FILES" | grep "typescript/docs/api/" | wc -l || echo "0")
             GOLANG_COUNT=$(echo "$STAGED_FILES" | grep "golang/docs/api/" | wc -l || echo "0")
             LLMS_COUNT=$(echo "$STAGED_FILES" | grep -E "(llms\.txt|llms-full\.txt)" | wc -l || echo "0")
             
-            echo "🐍 Python 文档: $PYTHON_COUNT 个文件"
-            echo "📘 TypeScript 文档: $TYPESCRIPT_COUNT 个文件"
-            echo "🐹 Golang 文档: $GOLANG_COUNT 个文件"
-            echo "🤖 AI 助手文档: $LLMS_COUNT 个文件"
-            echo "📁 最终生成的文档目录结构："
+            echo "🐍 Python documentation: $PYTHON_COUNT files"
+            echo "📘 TypeScript documentation: $TYPESCRIPT_COUNT files"
+            echo "🐹 Golang documentation: $GOLANG_COUNT files"
+            echo "🤖 AI Assistant documentation: $LLMS_COUNT files"
+            echo "📁 Final generated documentation directory structure:"
             for doc_dir in "python/docs/api" "typescript/docs/api" "golang/docs/api"; do
               if [ -d "$doc_dir" ]; then
                 echo "📂 $doc_dir:"
@@ -410,194 +410,194 @@ jobs:
             done
             for llms_file in "llms.txt" "llms-full.txt"; do
               if [ -f "$llms_file" ]; then
-                echo "📄 $llms_file: $(wc -l < "$llms_file") 行"
+                echo "📄 $llms_file: $(wc -l < "$llms_file") lines"
               fi
             done
           else
-            echo "⚠️ 没有文件被暂存"
+            echo "⚠️ No files were staged"
           fi
-      # 提交文档变更
+      # Commit documentation changes
       - id: commit-docs
-        name: "提交文档变更"
+        name: "Commit Documentation Changes"
         run: |
-          # 检查是否为 CI 机器人提交或自动提交被禁用
+          # Check if it's a CI bot commit or auto commit is disabled
           if [ "$CI_LOOP_DETECTED" = true ]; then
-            echo "⚠️ 检测到 CI 机器人提交，跳过文档提交"
+            echo "⚠️ Detected CI bot commit, skipping documentation commit"
             exit 0
           fi
           
-          # 检查自动提交是否启用（默认启用）
+          # Check if auto commit is enabled (enabled by default)
           if [ "${{params.auto_commit_enabled}}" != "true" ]; then
-            echo "ℹ️ 自动提交已禁用，跳过"
+            echo "ℹ️ Auto commit is disabled, skipping"
             exit 0
           fi
           
           tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
-          echo "📤 开始检查并提交文档变更..."
+          echo "📤 Starting to check and commit documentation changes..."
           
-          # 配置 Git 用户信息（checkout 组件已处理认证）
+          # Configure Git user information (authentication handled by checkout component)
           git config --global user.name "wuying-ai-team"
           git config --global user.email "wuying-ai-team@alibabacloud.com"
-          echo "✅ Git 用户配置完成"
+          echo "✅ Git user configuration completed"
           
-          # 检查暂存区是否有文件（从临时目录复制的文档已经添加到暂存区）
+          # Check if there are files in staging area (documentation copied from temporary directory has been added to staging area)
           STAGED_FILES=$(git diff --cached --name-only)
           
           if [ -z "$STAGED_FILES" ]; then
-            echo "ℹ️  暂存区没有文件，跳过提交步骤"
-            echo "📋 检查临时目录状态："
-            find "$TEMP_DOCS_DIR" -type f 2>/dev/null || echo "临时目录为空"
+            echo "ℹ️  No files in staging area, skipping commit step"
+            echo "📋 Checking temporary directory status:"
+            find "$TEMP_DOCS_DIR" -type f 2>/dev/null || echo "Temporary directory is empty"
             exit 0
           fi
           
-          echo "📋 暂存区中的文档文件："
+          echo "📋 Documentation files in staging area:"
           echo "$STAGED_FILES"
           
-          # 由于文件是从受控的临时目录复制的，应该都是文档相关文件
-          # 但仍然进行验证以确保安全
+          # Since files are copied from controlled temporary directory, they should all be documentation-related files
+          # But still perform validation to ensure safety
           NON_DOC_FILES=$(echo "$STAGED_FILES" | grep -v -E "(python/docs/api/|typescript/docs/api/|golang/docs/api/|llms\.txt|llms-full\.txt)" || true)
           if [ -n "$NON_DOC_FILES" ]; then
-            echo "⚠️  警告：发现非预期的文件类型："
+            echo "⚠️  Warning: Found unexpected file types:"
             echo "$NON_DOC_FILES"
-            echo "📋 这些文件将不会被提交"
+            echo "📋 These files will not be committed"
             
-            # 重置暂存区，只保留文档文件
+            # Reset staging area, keep only documentation files
             git reset HEAD
             DOC_FILES=$(echo "$STAGED_FILES" | grep -E "(python/docs/api/|typescript/docs/api/|golang/docs/api/|llms\.txt|llms-full\.txt)" || true)
             if [ -n "$DOC_FILES" ]; then
               echo "$DOC_FILES" | while read -r file; do
                 if [ -n "$file" ] && [ -f "$file" ]; then
-                  echo "➕ 重新暂存文档文件: $file"
+                  echo "➕ Re-staging documentation file: $file"
                   git add "$file"
                 fi
               done
             fi
             
-            # 重新检查暂存区
+            # Re-check staging area
             STAGED_FILES=$(git diff --cached --name-only)
             if [ -z "$STAGED_FILES" ]; then
-              echo "ℹ️  没有有效的文档文档可提交，跳过提交步骤"
+              echo "ℹ️  No valid documentation files to commit, skipping commit step"
               exit 0
             fi
           fi
           
-          echo "📝 准备提交以下文档文件："
+          echo "📝 Preparing to commit the following documentation files:"
           echo "$STAGED_FILES"
           
-          # 保存当前分支名和目标分支
+          # Save current branch name and target branch
           CURRENT_BRANCH=$(git branch --show-current)
           TARGET_BRANCH="${{git.merge_request.targetBranch}}"
           TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
           DOC_BRANCH="docs/auto-generate-${TIMESTAMP}"
           
-          echo "🌿 当前分支: $CURRENT_BRANCH"
-          echo "🎯 目标分支: $TARGET_BRANCH" 
-          echo "📄 文档分支: $DOC_BRANCH"
+          echo "🌿 Current branch: $CURRENT_BRANCH"
+          echo "🎯 Target branch: $TARGET_BRANCH" 
+          echo "📄 Documentation branch: $DOC_BRANCH"
           
-          # 创建干净的文档分支，基于目标分支
-          echo "🌿 创建干净的文档分支..."
-          git fetch origin "$TARGET_BRANCH" || echo "⚠️ 无法获取目标分支，使用当前状态"
+          # Create clean documentation branch based on target branch
+          echo "🌿 Creating clean documentation branch..."
+          git fetch origin "$TARGET_BRANCH" || echo "⚠️ Unable to fetch target branch, using current state"
           
-          # 基于目标分支创建新的文档分支
+          # Create new documentation branch based on target branch
           if git show-ref --verify --quiet "refs/remotes/origin/$TARGET_BRANCH"; then
-            echo "✅ 基于远程目标分支 origin/$TARGET_BRANCH 创建文档分支"
+            echo "✅ Creating documentation branch based on remote target branch origin/$TARGET_BRANCH"
             git checkout -b "$DOC_BRANCH" "origin/$TARGET_BRANCH"
           else
-            echo "⚠️ 远程目标分支不存在，基于当前 HEAD 创建文档分支"
+            echo "⚠️ Remote target branch does not exist, creating documentation branch based on current HEAD"
             git checkout -b "$DOC_BRANCH"
           fi
           
-          # 将文档文件复制到新分支
-          echo "📋 将文档文件应用到干净分支..."
+          # Copy documentation files to new branch
+          echo "📋 Applying documentation files to clean branch..."
           
-          # 重新复制文档文件到新分支
+          # Re-copy documentation files to new branch
           if [ -d "$TEMP_DOCS_DIR/python/api" ] && [ "$(find "$TEMP_DOCS_DIR/python/api" -type f 2>/dev/null)" ]; then
-            echo "📋 应用 Python API 文档..."
+            echo "📋 Applying Python API documentation..."
             mkdir -p python/docs/api
             cp -r "$TEMP_DOCS_DIR/python/api"/* python/docs/api/ 2>/dev/null || true
             git add python/docs/api/
           fi
           
           if [ -d "$TEMP_DOCS_DIR/typescript/api" ] && [ "$(find "$TEMP_DOCS_DIR/typescript/api" -type f 2>/dev/null)" ]; then
-            echo "📋 应用 TypeScript API 文档..."
+            echo "📋 Applying TypeScript API documentation..."
             mkdir -p typescript/docs/api
             cp -r "$TEMP_DOCS_DIR/typescript/api"/* typescript/docs/api/ 2>/dev/null || true
             git add typescript/docs/api/
           fi
           
           if [ -d "$TEMP_DOCS_DIR/golang/api" ] && [ "$(find "$TEMP_DOCS_DIR/golang/api" -type f 2>/dev/null)" ]; then
-            echo "📋 应用 Golang API 文档..."
+            echo "📋 Applying Golang API documentation..."
             mkdir -p golang/docs/api
             cp -r "$TEMP_DOCS_DIR/golang/api"/* golang/docs/api/ 2>/dev/null || true
             git add golang/docs/api/
           fi
           
           if [ -d "$TEMP_DOCS_DIR/llms" ] && [ "$(find "$TEMP_DOCS_DIR/llms" -type f 2>/dev/null)" ]; then
-            echo "📋 应用 AI 助手文档..."
+            echo "📋 Applying AI Assistant documentation..."
             cp "$TEMP_DOCS_DIR/llms"/* . 2>/dev/null || true
             git add llms.txt llms-full.txt 2>/dev/null || true
           fi
           
-          # 检查是否有文件需要提交
+          # Check if there are files to commit
           FINAL_STAGED_FILES=$(git diff --cached --name-only)
           if [ -z "$FINAL_STAGED_FILES" ]; then
-            echo "ℹ️  在干净分支上没有文档变更，跳过提交"
+            echo "ℹ️  No documentation changes on clean branch, skipping commit"
             git checkout "$CURRENT_BRANCH"
             git branch -D "$DOC_BRANCH"
             exit 0
           fi
           
-          echo "📝 在干净分支上准备提交以下文档文件："
+          echo "📝 Preparing to commit the following documentation files on clean branch:"
           echo "$FINAL_STAGED_FILES"
           
-          # 创建提交信息
-          COMMIT_MESSAGE="🤖 自动生成文档
+          # Create commit message
+          COMMIT_MESSAGE="🤖 Auto-generate documentation
 
-          - 更新 API 文档（基于源代码变更）
-          - 重新生成 AI 助手文档 (llms.txt, llms-full.txt)
-          - 同步文档与最新代码变更
+          - Update API documentation (based on source code changes)
+          - Regenerate AI Assistant documentation (llms.txt, llms-full.txt)
+          - Sync documentation with latest code changes
 
-          生成者: wuying-ai-team
-          触发分支: ${{git.branch}}
-          提交commit id: ${{git.commitId}}"
+          Generator: wuying-ai-team
+          Trigger branch: ${{git.branch}}
+          Commit ID: ${{git.commitId}}"
           
-          # 在干净分支上提交文档变更
+          # Commit documentation changes on clean branch
           git commit -m "$COMMIT_MESSAGE"
-          echo "✅ 在干净分支 $DOC_BRANCH 上提交文档变更完成"
+          echo "✅ Documentation changes committed on clean branch $DOC_BRANCH"
           
-          # 推送文档分支到远程并创建 CR 评审
+          # Push documentation branch to remote and create CR review
           git push origin "$DOC_BRANCH"
-          echo "✅ 推送文档分支到远程完成"
+          echo "✅ Documentation branch pushed to remote"
           
-          # 使用 git push 的 refs/for 语法创建 CR 评审
-          echo "🔄 推送到 CR 评审系统..."
+          # Use git push refs/for syntax to create CR review
+          echo "🔄 Pushing to CR review system..."
           git push origin "HEAD:refs/for/$TARGET_BRANCH" || {
-            echo "⚠️ 使用 refs/for 推送失败，尝试其他方式..."
+            echo "⚠️ Failed to push using refs/for, trying alternative methods..."
             
-            # 如果 refs/for 失败，尝试使用 git 命令创建 MR
+            # If refs/for fails, try using git command to create MR
             if command -v git-review >/dev/null 2>&1; then
-              echo "📋 使用 git-review 创建评审..."
-              git review -t "$CR_TITLE" -m "$CR_DESCRIPTION" || echo "⚠️ git-review 创建失败"
+              echo "📋 Using git-review to create review..."
+              git review -t "$CR_TITLE" -m "$CR_DESCRIPTION" || echo "⚠️ git-review creation failed"
             else
-              echo "📋 git-review 不可用，记录 CR 信息供后续处理..."
+              echo "📋 git-review not available, logging CR information for subsequent processing..."
             fi
           }
           
-          # 切换回原分支
+          # Switch back to original branch
           git checkout "$CURRENT_BRANCH"
-          echo "🔄 已切换回原分支: $CURRENT_BRANCH"
+          echo "🔄 Switched back to original branch: $CURRENT_BRANCH"
           
-          # 输出 CR 创建结果
+          # Output CR creation results
           echo ""
-          echo "✅ 文档分支和 CR 评审创建完成！"
-          echo "📋 CR 评审信息："
-          echo "  - 源分支: $DOC_BRANCH"
-          echo "  - 目标分支: $TARGET_BRANCH"
-          echo "  - 标题: $CR_TITLE"
-          echo "  - 包含文件: $(echo "$FINAL_STAGED_FILES" | wc -l) 个文档文件"
+          echo "✅ Documentation branch and CR review creation completed!"
+          echo "📋 CR review information:"
+          echo "  - Source branch: $DOC_BRANCH"
+          echo "  - Target branch: $TARGET_BRANCH"
+          echo "  - Title: $CR_TITLE"
+          echo "  - Included files: $(echo "$FINAL_STAGED_FILES" | wc -l) documentation files"
           echo ""
-          echo "🔍 请在代码评审系统中查看和处理此 CR："
-          echo "   - 检查文档内容的准确性"
-          echo "   - 确认 API 文档与代码同步"
-          echo "   - 验证 AI 助手文档的完整性"
-          echo "   - 批准后合并到 $TARGET_BRANCH 分支"
+          echo "🔍 Please review and process this CR in the code review system:"
+          echo "   - Check documentation content accuracy"
+          echo "   - Confirm API documentation is synchronized with code"
+          echo "   - Verify AI Assistant documentation completeness"
+          echo "   - Approve and merge to $TARGET_BRANCH branch after review"
