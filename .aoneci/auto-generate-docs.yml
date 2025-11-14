@@ -487,6 +487,13 @@ jobs:
           # Save current branch name and target branch
           CURRENT_BRANCH=$(git branch --show-current)
           TARGET_BRANCH="${{git.merge_request.targetBranch}}"
+          
+          # Handle manual trigger case where target branch is null/empty
+          if [ -z "$TARGET_BRANCH" ] || [ "$TARGET_BRANCH" = "null" ]; then
+            TARGET_BRANCH="main"
+            echo "⚠️ Target branch is null/empty (manual trigger), defaulting to main branch"
+          fi
+          
           TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
           DOC_BRANCH="docs/auto-generate-${TIMESTAMP}"
           
