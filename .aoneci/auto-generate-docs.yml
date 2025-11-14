@@ -88,7 +88,7 @@ jobs:
              [[ "$LATEST_COMMIT_AUTHOR" == "wuying-ai-team@alibabacloud.com" ]]; then
             echo "⚠️  检测到 CI 机器人提交，跳过文档生成以避免无限循环"
             echo "CI_LOOP_DETECTED=true" >> $AONE_CI_ENV
-            exit 0
+            exit 1
           else
             echo "✅ 非 CI 机器人提交，继续执行文档生成"
             echo "CI_LOOP_DETECTED=false" >> $AONE_CI_ENV
