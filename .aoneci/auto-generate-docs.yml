@@ -1,0 +1,467 @@
+# AgentBay SDK 文档自动生成流水线
+name: "AgentBay SDK Auto-generate Documentation"
+
+triggers:
+  merge_request:
+    types:
+      - opened
+      - reopened
+    target-branches:
+      - "**"
+
+# 策略配置防止作业被意外取消
+strategy:
+  fail-fast: false
+
+params:
+  auto_commit_enabled:
+    name: 启用自动提交文档
+    type: boolean
+    default: true
+    description: "是否自动将生成的文档提交到当前 MR 分支"
+  
+  python_docs_enabled:
+    name: 启用 Python 文档生成
+    type: boolean
+    default: true
+  
+  typescript_docs_enabled:
+    name: 启用 TypeScript 文档生成
+    type: boolean
+    default: true
+  
+  golang_docs_enabled:
+    name: 启用 Golang 文档生成
+    type: boolean
+    default: true
+  
+  llms_docs_enabled:
+    name: 启用 AI 助手文档生成
+    type: boolean
+    default: true
+    description: "生成 llms.txt 和 llms-full.txt 文件"
+  
+  runs_on_resources:
+    name: 资源规格
+    description: "运行时容器资源规格"
+    default: "4-16Gi"
+    options:
+      - "4-16Gi"
+      - "8-32Gi"
+      - "16-64Gi"
+
+jobs:
+  # 文档自动生成作业
+  auto-generate-docs:
+    continue-on-error: false
+    name: "自动生成文档"
+    runs-on:
+      - "${{params.runs_on_resources}}"
+    image: alios-8u
+    timeout: 45m
+    retry:
+      max: 2
+      when:
+        - runner_system_failure
+        - stuck_or_timeout_failure
+    
+    steps:
+      - uses: checkout
+        inputs:
+          fetch-depth: 0
+          username: 'wuying-ai-team'
+          # 使用 private-token 以支持 push 操作
+          token: ${{secrets.PRIVATE_TOKEN}}
+      
+      # 检查是否为 CI 机器人提交，避免无限循环
+      - id: check-ci-loop
+        name: "检查 CI 循环"
+        run: |
+          echo "🔍 检查是否为 CI 机器人提交..."
+          
+          # 获取最新提交信息
+          LATEST_COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" | cat)
+          LATEST_COMMIT_AUTHOR=$(git log -1 --pretty=format:"%ae" | cat)
+          
+          echo "最新提交信息: $LATEST_COMMIT_MESSAGE"
+          echo "最新提交作者: $LATEST_COMMIT_AUTHOR"
+          
+          # 检查是否为 CI 机器人提交
+          if [[ "$LATEST_COMMIT_MESSAGE" == *"🤖 自动生成文档"* ]] || \
+             [[ "$LATEST_COMMIT_AUTHOR" == "wuying-ai-team@alibabacloud.com" ]]; then
+            echo "⚠️  检测到 CI 机器人提交，跳过文档生成以避免无限循环"
+            echo "CI_LOOP_DETECTED=true" >> $AONE_CI_ENV
+            exit 0
+          else
+            echo "✅ 非 CI 机器人提交，继续执行文档生成"
+            echo "CI_LOOP_DETECTED=false" >> $AONE_CI_ENV
+          fi
+      
+      # 设置多语言环境
+      - uses: setup-env
+        inputs:
+          python-version: '3.11'
+          node-version: '18'
+          go-version: '1.24.3'
+          npm-cache: true
+          pip-cache: true
+          go-mod-cache: true
+          go-cache: true
+      
+      # 创建临时文档目录
+      - id: setup-temp-docs
+        name: "创建临时文档目录"
+        run: |
+          echo "📁 创建 CI/CD 临时文档目录..."
+          
+          # 使用工作区目录而不是 /tmp，确保 steps 之间共享
+          TEMP_DOCS_DIR="$PWD/.temp-docs"
+          mkdir -p "$TEMP_DOCS_DIR"/{python,typescript,golang,llms}
+          
+          echo "✅ 临时文档目录创建完成: $TEMP_DOCS_DIR"
+          echo "TEMP_DOCS_DIR=$TEMP_DOCS_DIR" >> $AONE_CI_ENV
+          
+          # 显示目录结构
+          echo "📋 临时目录结构："
+          tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
+      
+      # 生成 Python API 文档
+      - id: generate-python-docs
+        name: "生成 Python API 文档"
+        when: "${{params.python_docs_enabled && env.CI_LOOP_DETECTED != 'true'}}"
+        run: |
+          echo "🐍 开始生成 Python API 文档..."
+          cd python
+          
+          # 安装依赖
+          python -m pip config set global.timeout 300
+          python -m pip config set global.retries 3
+          python -m pip install --upgrade pip
+          # 安装文档生成所需的额外依赖
+          pip install docspec pyyaml pydoc-markdown
+          
+          # 生成文档
+          python scripts/generate_api_docs.py
+          
+          # 验证生成的文档
+          if [ -d "docs/api" ]; then
+            echo "📋 验证生成的 API 文档："
+            find docs/api -name "*.md" | head -5 | while read file; do
+              echo "  - $file"
+            done
+          else
+            echo "⚠️ 未找到生成的 API 文档目录: docs/api"
+          fi
+          
+          # 将生成的 Python API 文档复制到临时目录
+          cd ..
+          if [ -d "python/docs/api" ]; then
+            echo "📋 将生成的 Python API 文档复制到临时目录..."
+            # 确保临时目录存在
+            mkdir -p "$TEMP_DOCS_DIR/python"
+            cp -r python/docs/api "$TEMP_DOCS_DIR/python/" 2>/dev/null || true
+            
+            # 显示复制的文件
+            COPIED_FILES=$(find "$TEMP_DOCS_DIR/python" -type f 2>/dev/null || true)
+            if [ -n "$COPIED_FILES" ]; then
+              echo "✅ Python API 文档已复制到临时目录："
+              echo "$COPIED_FILES"
+            else
+              echo "⚠️ 没有 Python API 文档被复制"
+            fi
+          else
+            echo "⚠️ 未找到生成的 Python API 文档目录: python/docs/api"
+          fi
+          tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
+          echo "✅ Python API 文档生成完成并已暂存"
+      
+      # 生成 TypeScript API 文档
+      - id: generate-typescript-docs
+        name: "生成 TypeScript API 文档"
+        when: "${{params.typescript_docs_enabled && env.CI_LOOP_DETECTED != 'true'}}"
+        run: |
+          echo "📘 开始生成 TypeScript API 文档..."
+          cd typescript
+          
+          # 配置 npm 超时和重试策略
+          npm config set fetch-timeout 300000
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          
+          # 安装依赖
+          npm ci --prefer-offline --no-audit
+          
+          # 生成文档
+          npm run docs:generate
+          
+          # 验证生成的文档
+          if [ -d "docs/api" ]; then
+            echo "📋 验证生成的 API 文档："
+            find docs/api -name "*.md" | head -5 | while read file; do
+              echo "  - $file"
+            done
+          else
+            echo "⚠️ 未找到生成的 API 文档目录: docs/api"
+          fi
+          
+          # 将生成的 TypeScript API 文档复制到临时目录
+          cd ..
+          if [ -d "typescript/docs/api" ]; then
+            echo "📋 将生成的 TypeScript API 文档复制到临时目录..."
+            # 确保临时目录存在
+            mkdir -p "$TEMP_DOCS_DIR/typescript"
+            cp -r typescript/docs/api "$TEMP_DOCS_DIR/typescript/" 2>/dev/null || true
+            
+            # 显示复制的文件
+            COPIED_FILES=$(find "$TEMP_DOCS_DIR/typescript" -type f 2>/dev/null || true)
+            if [ -n "$COPIED_FILES" ]; then
+              echo "✅ TypeScript API 文档已复制到临时目录："
+              echo "$COPIED_FILES"
+            else
+              echo "⚠️ 没有 TypeScript API 文档被复制"
+            fi
+          else
+            echo "⚠️ 未找到生成的 TypeScript API 文档目录: typescript/docs/api"
+          fi
+          tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
+          echo "✅ TypeScript API 文档生成完成并已暂存"
+      
+      
+      
+      # 生成 AI 助手文档
+      - id: generate-llms-docs
+        name: "生成 AI 助手文档"
+        when: "${{params.llms_docs_enabled && env.CI_LOOP_DETECTED != 'true'}}"
+        run: |
+          echo "🤖 开始生成 AI 助手文档..."
+          
+          # 安装必要的依赖
+          pip install markdown beautifulsoup4 tiktoken pyyaml
+          
+          # 生成 llms.txt 和 llms-full.txt
+          python scripts/build_llms_txt.py
+          tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
+          # 将生成的 AI 助手文档复制到临时目录
+          for llms_file in "llms.txt" "llms-full.txt"; do
+            if [ -f "$llms_file" ]; then
+              echo "📋 复制 AI 助手文档到临时目录: $llms_file"
+              # 确保临时目录存在
+              mkdir -p "$TEMP_DOCS_DIR/llms"
+              cp "$llms_file" "$TEMP_DOCS_DIR/llms/"
+              echo "✅ 已复制 $llms_file"
+            fi
+          done
+          
+          echo "✅ AI 助手文档生成完成并已暂存"
+      
+
+      # 生成 Golang API 文档
+      - id: generate-golang-docs
+        name: "生成 Golang API 文档"
+        when: "${{params.golang_docs_enabled && env.CI_LOOP_DETECTED != 'true'}}"
+        run: |
+          echo "🐹 开始生成 Golang API 文档..."
+          cd golang
+          
+          # 配置 Go 环境
+          export GOPROXY=https://goproxy.cn,direct
+          export GOSUMDB=sum.golang.org
+          echo "✅ Go 环境配置完成: GOPROXY=$GOPROXY"
+          
+          # 下载依赖
+          go mod download
+          go mod verify
+          
+          # 生成文档
+          go run scripts/generate_api_docs.go
+          
+          # 验证生成的文档
+          if [ -d "docs/api" ]; then
+            echo "📋 验证生成的 API 文档："
+            find docs/api -name "*.md" | head -5 | while read file; do
+              echo "  - $file"
+            done
+          else
+            echo "⚠️ 未找到生成的 API 文档目录: docs/api"
+          fi
+          
+          # 将生成的 Golang API 文档复制到临时目录
+          cd ..
+          if [ -d "golang/docs/api" ]; then
+            echo "📋 将生成的 Golang API 文档复制到临时目录..."
+            # 确保临时目录存在
+            mkdir -p "$TEMP_DOCS_DIR/golang"
+            cp -r golang/docs/api "$TEMP_DOCS_DIR/golang/" 2>/dev/null || true
+            
+            # 显示复制的文件
+            COPIED_FILES=$(find "$TEMP_DOCS_DIR/golang" -type f 2>/dev/null || true)
+            if [ -n "$COPIED_FILES" ]; then
+              echo "✅ Golang API 文档已复制到临时目录："
+              echo "$COPIED_FILES"
+            else
+              echo "⚠️ 没有 Golang API 文档被复制"
+            fi
+          else
+            echo "⚠️ 未找到生成的 Golang API 文档目录: golang/docs/api"
+          fi
+          
+          tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
+          echo "✅ Golang API 文档生成完成并已暂存"
+      
+      # 从临时目录复制文档到项目目录并添加到暂存区
+      - id: copy-and-stage-docs
+        name: "复制文档到项目并暂存"
+        when: "${{env.CI_LOOP_DETECTED != 'true'}}"
+        run: |
+          echo "📋 从临时目录复制文档到项目目录并添加到暂存区..."
+          
+          # 检查临时目录是否存在文件
+          if [ ! -d "$TEMP_DOCS_DIR" ]; then
+            echo "⚠️ 临时文档目录不存在: $TEMP_DOCS_DIR"
+            exit 0
+          fi
+          
+          echo "📁 临时目录内容："
+          find "$TEMP_DOCS_DIR" -type f 2>/dev/null || echo "临时目录为空"
+          
+          # 复制并暂存 Python API 文档
+          if [ -d "$TEMP_DOCS_DIR/python/api" ] && [ "$(find "$TEMP_DOCS_DIR/python/api" -type f 2>/dev/null)" ]; then
+            echo "📋 复制 Python API 文档到项目目录..."
+            mkdir -p python/docs/api
+            cp -r "$TEMP_DOCS_DIR/python/api"/* python/docs/api/ 2>/dev/null || true
+            git add python/docs/api/
+            echo "✅ Python API 文档已复制并暂存"
+          fi
+          
+          # 复制并暂存 TypeScript API 文档
+          if [ -d "$TEMP_DOCS_DIR/typescript/api" ] && [ "$(find "$TEMP_DOCS_DIR/typescript/api" -type f 2>/dev/null)" ]; then
+            echo "📋 复制 TypeScript API 文档到项目目录..."
+            mkdir -p typescript/docs/api
+            cp -r "$TEMP_DOCS_DIR/typescript/api"/* typescript/docs/api/ 2>/dev/null || true
+            git add typescript/docs/api/
+            echo "✅ TypeScript API 文档已复制并暂存"
+          fi
+          
+          # 复制并暂存 Golang API 文档
+          if [ -d "$TEMP_DOCS_DIR/golang/api" ] && [ "$(find "$TEMP_DOCS_DIR/golang/api" -type f 2>/dev/null)" ]; then
+            echo "📋 复制 Golang API 文档到项目目录..."
+            mkdir -p golang/docs/api
+            cp -r "$TEMP_DOCS_DIR/golang/api"/* golang/docs/api/ 2>/dev/null || true
+            git add golang/docs/api/
+            echo "✅ Golang API 文档已复制并暂存"
+          fi
+          
+          # 复制并暂存 AI 助手文档
+          if [ -d "$TEMP_DOCS_DIR/llms" ] && [ "$(find "$TEMP_DOCS_DIR/llms" -type f 2>/dev/null)" ]; then
+            echo "📋 复制 AI 助手文档到项目目录..."
+            cp "$TEMP_DOCS_DIR/llms"/* . 2>/dev/null || true
+            git add llms.txt llms-full.txt 2>/dev/null || true
+            echo "✅ AI 助手文档已复制并暂存"
+          fi
+          
+          # 显示最终暂存区状态
+          STAGED_FILES=$(git diff --cached --name-only)
+          if [ -n "$STAGED_FILES" ]; then
+            echo ""
+            echo "📊 最终暂存区统计："
+            echo "$STAGED_FILES"
+            
+            # 分类统计
+            PYTHON_COUNT=$(echo "$STAGED_FILES" | grep "python/docs/api" | wc -l || echo "0")
+            TYPESCRIPT_COUNT=$(echo "$STAGED_FILES" | grep "typescript/docs/api/" | wc -l || echo "0")
+            GOLANG_COUNT=$(echo "$STAGED_FILES" | grep "golang/docs/api/" | wc -l || echo "0")
+            LLMS_COUNT=$(echo "$STAGED_FILES" | grep -E "(llms\.txt|llms-full\.txt)" | wc -l || echo "0")
+            
+            echo "🐍 Python 文档: $PYTHON_COUNT 个文件"
+            echo "📘 TypeScript 文档: $TYPESCRIPT_COUNT 个文件"
+            echo "🐹 Golang 文档: $GOLANG_COUNT 个文件"
+            echo "🤖 AI 助手文档: $LLMS_COUNT 个文件"
+            echo "📁 最终生成的文档目录结构："
+            for doc_dir in "python/docs/api" "typescript/docs/api" "golang/docs/api"; do
+              if [ -d "$doc_dir" ]; then
+                echo "📂 $doc_dir:"
+                find "$doc_dir" -type f -name "*.md" | head -10 | sed 's/^/  /'
+              fi
+            done
+            for llms_file in "llms.txt" "llms-full.txt"; do
+              if [ -f "$llms_file" ]; then
+                echo "📄 $llms_file: $(wc -l < "$llms_file") 行"
+              fi
+            done
+          else
+            echo "⚠️ 没有文件被暂存"
+          fi
+      # 提交文档变更
+      - id: commit-docs
+        name: "提交文档变更"
+        when: "${{params.auto_commit_enabled && env.CI_LOOP_DETECTED != 'true'}}"
+        run: |
+          tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
+          echo "📤 开始检查并提交文档变更..."
+          
+          # 配置 Git 用户信息（checkout 组件已处理认证）
+          git config --global user.name "wuying-ai-team"
+          git config --global user.email "wuying-ai-team@alibabacloud.com"
+          echo "✅ Git 用户配置完成"
+          
+          # 检查暂存区是否有文件（从临时目录复制的文档已经添加到暂存区）
+          STAGED_FILES=$(git diff --cached --name-only)
+          
+          if [ -z "$STAGED_FILES" ]; then
+            echo "ℹ️  暂存区没有文件，跳过提交步骤"
+            echo "📋 检查临时目录状态："
+            find "$TEMP_DOCS_DIR" -type f 2>/dev/null || echo "临时目录为空"
+            exit 0
+          fi
+          
+          echo "📋 暂存区中的文档文件："
+          echo "$STAGED_FILES"
+          
+          # 由于文件是从受控的临时目录复制的，应该都是文档相关文件
+          # 但仍然进行验证以确保安全
+          NON_DOC_FILES=$(echo "$STAGED_FILES" | grep -v -E "(python/docs/api/|typescript/docs/api/|golang/docs/api/|llms\.txt|llms-full\.txt)" || true)
+          if [ -n "$NON_DOC_FILES" ]; then
+            echo "⚠️  警告：发现非预期的文件类型："
+            echo "$NON_DOC_FILES"
+            echo "📋 这些文件将不会被提交"
+            
+            # 重置暂存区，只保留文档文件
+            git reset HEAD
+            DOC_FILES=$(echo "$STAGED_FILES" | grep -E "(python/docs/api/|typescript/docs/api/|golang/docs/api/|llms\.txt|llms-full\.txt)" || true)
+            if [ -n "$DOC_FILES" ]; then
+              echo "$DOC_FILES" | while read -r file; do
+                if [ -n "$file" ] && [ -f "$file" ]; then
+                  echo "➕ 重新暂存文档文件: $file"
+                  git add "$file"
+                fi
+              done
+            fi
+            
+            # 重新检查暂存区
+            STAGED_FILES=$(git diff --cached --name-only)
+            if [ -z "$STAGED_FILES" ]; then
+              echo "ℹ️  没有有效的文档文件可提交，跳过提交步骤"
+              exit 0
+            fi
+          fi
+          
+          echo "📝 准备提交以下文档文件："
+          echo "$STAGED_FILES"
+          
+          # 创建提交信息
+          COMMIT_MESSAGE="🤖 自动生成文档
+          
+          - 更新 API 文档（基于源代码变更）
+          - 重新生成 AI 助手文档 (llms.txt, llms-full.txt)
+          - 同步文档与最新代码变更
+          
+          生成者: 'wuying-ai-team'
+          触发分支: ${{git.branch}}
+          提交commit id: ${{git.commitId}}"
+          
+          # 提交变更
+          git commit -m "$COMMIT_MESSAGE"
+          
+          # 推送到当前 MR 分支
+          git push origin HEAD:refs/for/${{git.merge_request.targetBranch}}
+          echo "✅ 提交文档变更完成"
