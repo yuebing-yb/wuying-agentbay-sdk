@@ -42,23 +42,22 @@ async def main():
                 ActOptions(action="搜索框输入'AgentBay帮助文档'并回车"), page=page
             )
 
-            # Playwright 等待新页面打开
-            async with page.context.expect_page() as new_page_info:
-                # 在之前的页面上使用Agent
-                await agent.act_async(
-                    ActOptions(action="点击搜索结果中的第一项"),
-                    page=page,
-                )
-                new_page = await new_page_info.value
-                await new_page.wait_for_load_state("domcontentloaded")
+            # 等待搜索结果加载
+            await page.wait_for_timeout(2000)
 
-            # 方式一： 在新页面上继续用 Agent（传 page=new_page，确保焦点一致）
-            await agent.act_async(ActOptions(action="点击'帮助文档'"), page=new_page)
-            await agent.act_async(ActOptions(action="滚动页面到底部"), page=new_page)
+            # 点击搜索结果（在同一页面导航）
+            await agent.act_async(
+                ActOptions(action="点击搜索结果中的第一项"),
+                page=page,
+            )
 
-            # 方式二： 也可不传page参数， 因上一步动作由Agent发起，Agent默认将焦点切到新打开的页面
-            # await agent.act_async(ActOptions(action="点击'帮助文档'"))
-            # await agent.act_async(ActOptions(action="滚动页面到底部"))
+            # 等待页面导航完成
+            await page.wait_for_load_state("domcontentloaded", timeout=60000)
+
+            # 在当前页面上继续用 Agent
+            await agent.act_async(ActOptions(action="滚动页面到底部"), page=page)
+
+            print("Successfully completed browser automation with mixed Playwright and PageUse Agent")
 
             await playwright_browser.close()
     finally:

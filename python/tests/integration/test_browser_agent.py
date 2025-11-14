@@ -304,13 +304,13 @@ class TestBrowserAgentIntegration(unittest.TestCase):
         p = sync_playwright().start()
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
         self.assertTrue(playwright_browser is not None)
-        
+
         context = playwright_browser.contexts[0]
         page = context.new_page()
         page.goto("https://httpbin.org/ip")
-        
+
         try:
-            response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+            response = page.evaluate("() => JSON.parse(document.body.textContent)")
             original_ip = response.get("origin", "").strip()
             print(f"original IP: {original_ip}")
         except Exception as e:
@@ -355,13 +355,13 @@ class TestBrowserAgentIntegration(unittest.TestCase):
         p2 = sync_playwright().start()
         playwright_browser2 = p2.chromium.connect_over_cdp(endpoint_url)
         self.assertTrue(playwright_browser2 is not None)
-        
+
         context2 = playwright_browser2.contexts[0]
         page2 = context2.new_page()
         page2.goto("https://httpbin.org/ip")
-        
+
         try:
-            response2 = await page2.evaluate("() => JSON.parse(document.body.textContent)")
+            response2 = page2.evaluate("() => JSON.parse(document.body.textContent)")
             proxy_ip = response2.get("origin", "").strip()
             print(f"proxy IP: {proxy_ip}")
         except Exception as e:

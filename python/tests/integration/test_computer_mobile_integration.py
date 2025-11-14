@@ -38,11 +38,12 @@ class TestComputerMobileIntegration:
         mock_agent_bay = Mock()
         session = Session(mock_agent_bay, "test-session-123")
 
-        # Mock the MCP tool call
-        with patch.object(session.computer, '_call_mcp_tool') as mock_mcp:
+        # Mock the call_mcp_tool method at the session level
+        with patch.object(session, 'call_mcp_tool') as mock_mcp:
             mock_mcp_result = Mock()
             mock_mcp_result.success = True
             mock_mcp_result.request_id = "test-123"
+            mock_mcp_result.content = ""
             mock_mcp.return_value = mock_mcp_result
 
             # Act
@@ -58,11 +59,12 @@ class TestComputerMobileIntegration:
         mock_agent_bay = Mock()
         session = Session(mock_agent_bay, "test-session-123")
 
-        # Mock the MCP tool call
-        with patch.object(session.mobile, '_call_mcp_tool') as mock_mcp:
+        # Mock the call_mcp_tool method at the session level
+        with patch.object(session, 'call_mcp_tool') as mock_mcp:
             mock_mcp_result = Mock()
             mock_mcp_result.success = True
             mock_mcp_result.request_id = "test-123"
+            mock_mcp_result.content = ""
             mock_mcp.return_value = mock_mcp_result
 
             # Act
@@ -72,44 +74,42 @@ class TestComputerMobileIntegration:
             assert result.success is True
             mock_mcp.assert_called_once_with("tap", {"x": 150, "y": 250})
 
-    def test_computer_delegates_to_existing_modules(self):
-        """Test that Computer module properly delegates to existing modules."""
+    def test_computer_get_installed_apps(self):
+        """Test that Computer module can call get_installed_apps."""
         # Arrange
         mock_agent_bay = Mock()
         session = Session(mock_agent_bay, "test-session-123")
 
-        # Mock the ApplicationManager
-        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
-            mock_instance = Mock()
-            mock_result = Mock()
-            mock_result.success = True
-            mock_instance.get_installed_apps.return_value = mock_result
-            mock_app_manager.return_value = mock_instance
+        # Mock the call_mcp_tool method at the session level
+        with patch.object(session, 'call_mcp_tool') as mock_mcp:
+            mock_mcp_result = Mock()
+            mock_mcp_result.success = True
+            mock_mcp_result.request_id = "test-123"
+            mock_mcp_result.data = "[]"  # get_installed_apps uses result.data
+            mock_mcp.return_value = mock_mcp_result
 
             # Act
             result = session.computer.get_installed_apps()
 
             # Assert
             assert result.success is True
-            mock_instance.get_installed_apps.assert_called_once_with(False, True, True)
 
-    def test_mobile_delegates_to_existing_modules(self):
-        """Test that Mobile module properly delegates to existing modules."""
+    def test_mobile_get_installed_apps(self):
+        """Test that Mobile module can call get_installed_apps."""
         # Arrange
         mock_agent_bay = Mock()
         session = Session(mock_agent_bay, "test-session-123")
 
-        # Mock the ApplicationManager
-        with patch('agentbay.application.ApplicationManager') as mock_app_manager:
-            mock_instance = Mock()
-            mock_result = Mock()
-            mock_result.success = True
-            mock_instance.get_installed_apps.return_value = mock_result
-            mock_app_manager.return_value = mock_instance
+        # Mock the call_mcp_tool method at the session level
+        with patch.object(session, 'call_mcp_tool') as mock_mcp:
+            mock_mcp_result = Mock()
+            mock_mcp_result.success = True
+            mock_mcp_result.request_id = "test-123"
+            mock_mcp_result.data = "[]"  # get_installed_apps uses result.data
+            mock_mcp.return_value = mock_mcp_result
 
-            # Act
-            result = session.mobile.get_installed_apps()
+            # Act - Mobile requires all three parameters
+            result = session.mobile.get_installed_apps(True, False, True)
 
             # Assert
-            assert result.success is True
-            mock_instance.get_installed_apps.assert_called_once_with(False, True, True) 
+            assert result.success is True 

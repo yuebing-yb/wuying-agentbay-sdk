@@ -28,7 +28,7 @@ describe("AgentBay.get integration tests", () => {
     } catch (error) {
       log(`❌ Session creation error: ${error}`);
     }
-  }, 60000); // 60 second timeout for session creation
+  }); // 60 second timeout for session creation
 
   test("should retrieve session using Get API", async () => {
     if (!sessionCreated || !sessionId) {
@@ -50,7 +50,7 @@ describe("AgentBay.get integration tests", () => {
     }
     log(`  ✓ Request ID: ${result.requestId}`);
     log("  ✓ All assertions passed");
-  }, 30000); // 30 second timeout
+  }); // 30 second timeout
 
   test("should return error for non-existent session", async () => {
     log("📋 Test: Non-existent session error handling");
@@ -63,7 +63,7 @@ describe("AgentBay.get integration tests", () => {
     expect(result.errorMessage).toContain("Failed to get session");
 
     log(`  ✓ Error correctly received: ${result.errorMessage}`);
-  }, 30000); // 30 second timeout
+  }); // 30 second timeout
 
   test("should return error for empty session ID", async () => {
     log("📋 Test: Empty session ID error handling");
@@ -109,6 +109,6 @@ describe("AgentBay.get integration tests", () => {
     } catch (error) {
       log(`⚠️  Failed to clean up session: ${error}`);
     }
-  }, 30000); // 30 second timeout
+  }); // 30 second timeout
 });
 

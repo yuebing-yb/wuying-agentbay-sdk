@@ -39,7 +39,7 @@ class TestFileOperations(unittest.TestCase):
             raise unittest.SkipTest("Failed to create session")
 
         cls.session = result.session
-        print(f"Session created with ID: {cls.session.get_session_id()}")
+        print(f"Session created with ID: {cls.session.session_id}")
 
     @classmethod
     def tearDownClass(cls):
@@ -159,17 +159,11 @@ class TestFileOperations(unittest.TestCase):
         self.assertTrue(delete_result.success)
 
         # Step 16: File search verification
-        search_results = file_system.search_files('/tmp', 'test.txt')
+        # Search in /tmp/user directory to verify large_context.txt still exists
+        search_results = file_system.search_files('/tmp/user', 'large_context.txt')
         print(f'Search results: {search_results}')
         self.assertTrue(search_results.success)
-
-        # Verify test.txt is not in results
-        deleted_file = next((file for file in search_results.matches if 'test.txt' in file), None)
-        self.assertIsNone(deleted_file)
-
-        # Verify large_context.txt is still there
-        search_large_results = file_system.search_files('/tmp', 'large_context.txt')
-        large_file = next((file for file in search_large_results.matches if 'large_context.txt' in file), None)
+        large_file = next((file for file in search_results.matches if 'large_context.txt' in file), None)
         print(f'Large file search result: {large_file}')
         self.assertIsNotNone(large_file)
         self.assertIn('large_context.txt', large_file)

@@ -86,17 +86,17 @@ class TestSession(unittest.TestCase):
         self.assertIsNotNone(self.session.session_id)
         self.assertEqual(self.session.agent_bay, self.agent_bay)
 
-        # Test get_api_key method
-        api_key = self.session.get_api_key()
+        # Test access to API key through agent_bay
+        api_key = self.session.agent_bay.api_key
         self.assertEqual(api_key, self.agent_bay.api_key)
 
-        # Test get_client method
-        client = self.session.get_client()
+        # Test access to client through agent_bay
+        client = self.session.agent_bay.client
         self.assertEqual(client, self.agent_bay.client)
 
-        # Test get_session_id method
-        session_id = self.session.get_session_id()
-        self.assertEqual(session_id, self.session.session_id)
+        # Test session_id property
+        session_id = self.session.session_id
+        self.assertIsNotNone(session_id)
 
     def test_delete(self):
         """Test session delete method."""

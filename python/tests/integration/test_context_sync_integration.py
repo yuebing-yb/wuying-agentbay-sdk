@@ -8,6 +8,7 @@ import os
 import time
 import unittest
 import json
+import asyncio
 from unittest.mock import patch
 
 from agentbay import AgentBay
@@ -135,7 +136,7 @@ class TestContextSyncIntegration(unittest.TestCase):
             time.sleep(5)
 
             # Sync context
-            sync_result = session.context.sync()
+            sync_result = asyncio.run(session.context.sync())
 
             # Verify sync result
             self.assertTrue(sync_result.success)
@@ -318,7 +319,7 @@ class TestContextSyncIntegration(unittest.TestCase):
 
                 # 5. Sync to trigger file upload
                 print("Triggering context sync...")
-                sync_result = session1.context.sync()
+                sync_result = asyncio.run(session1.context.sync())
                 self.assertTrue(
                     sync_result.success, "Context sync should be successful"
                 )

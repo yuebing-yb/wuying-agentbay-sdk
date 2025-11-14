@@ -38,8 +38,8 @@ class TestOssIntegration(unittest.TestCase):
         )
         result = cls.agent_bay.create(params)
         cls.session = result.session
-        print(cls.session.get_session_id())
-        print(f"Session created with ID: {cls.session.get_session_id()}")
+        print(cls.session.session_id)
+        print(f"Session created with ID: {cls.session.session_id}")
 
     @classmethod
     def tearDownClass(cls):
