@@ -484,7 +484,7 @@ jobs:
             # 重新检查暂存区
             STAGED_FILES=$(git diff --cached --name-only)
             if [ -z "$STAGED_FILES" ]; then
-              echo "ℹ️  没有有效的文档文件可提交，跳过提交步骤"
+              echo "ℹ️  没有有效的文档文档可提交，跳过提交步骤"
               exit 0
             fi
           fi
@@ -492,20 +492,102 @@ jobs:
           echo "📝 准备提交以下文档文件："
           echo "$STAGED_FILES"
           
+          # 保存当前分支名和目标分支
+          CURRENT_BRANCH=$(git branch --show-current)
+          TARGET_BRANCH="${{git.merge_request.targetBranch}}"
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+          DOC_BRANCH="docs/auto-generate-${TIMESTAMP}"
+          
+          echo "🌿 当前分支: $CURRENT_BRANCH"
+          echo "🎯 目标分支: $TARGET_BRANCH" 
+          echo "📄 文档分支: $DOC_BRANCH"
+          
+          # 创建干净的文档分支，基于目标分支
+          echo "🌿 创建干净的文档分支..."
+          git fetch origin "$TARGET_BRANCH" || echo "⚠️ 无法获取目标分支，使用当前状态"
+          
+          # 基于目标分支创建新的文档分支
+          if git show-ref --verify --quiet "refs/remotes/origin/$TARGET_BRANCH"; then
+            echo "✅ 基于远程目标分支 origin/$TARGET_BRANCH 创建文档分支"
+            git checkout -b "$DOC_BRANCH" "origin/$TARGET_BRANCH"
+          else
+            echo "⚠️ 远程目标分支不存在，基于当前 HEAD 创建文档分支"
+            git checkout -b "$DOC_BRANCH"
+          fi
+          
+          # 将文档文件复制到新分支
+          echo "📋 将文档文件应用到干净分支..."
+          
+          # 重新复制文档文件到新分支
+          if [ -d "$TEMP_DOCS_DIR/python/api" ] && [ "$(find "$TEMP_DOCS_DIR/python/api" -type f 2>/dev/null)" ]; then
+            echo "📋 应用 Python API 文档..."
+            mkdir -p python/docs/api
+            cp -r "$TEMP_DOCS_DIR/python/api"/* python/docs/api/ 2>/dev/null || true
+            git add python/docs/api/
+          fi
+          
+          if [ -d "$TEMP_DOCS_DIR/typescript/api" ] && [ "$(find "$TEMP_DOCS_DIR/typescript/api" -type f 2>/dev/null)" ]; then
+            echo "📋 应用 TypeScript API 文档..."
+            mkdir -p typescript/docs/api
+            cp -r "$TEMP_DOCS_DIR/typescript/api"/* typescript/docs/api/ 2>/dev/null || true
+            git add typescript/docs/api/
+          fi
+          
+          if [ -d "$TEMP_DOCS_DIR/golang/api" ] && [ "$(find "$TEMP_DOCS_DIR/golang/api" -type f 2>/dev/null)" ]; then
+            echo "📋 应用 Golang API 文档..."
+            mkdir -p golang/docs/api
+            cp -r "$TEMP_DOCS_DIR/golang/api"/* golang/docs/api/ 2>/dev/null || true
+            git add golang/docs/api/
+          fi
+          
+          if [ -d "$TEMP_DOCS_DIR/llms" ] && [ "$(find "$TEMP_DOCS_DIR/llms" -type f 2>/dev/null)" ]; then
+            echo "📋 应用 AI 助手文档..."
+            cp "$TEMP_DOCS_DIR/llms"/* . 2>/dev/null || true
+            git add llms.txt llms-full.txt 2>/dev/null || true
+          fi
+          
+          # 检查是否有文件需要提交
+          FINAL_STAGED_FILES=$(git diff --cached --name-only)
+          if [ -z "$FINAL_STAGED_FILES" ]; then
+            echo "ℹ️  在干净分支上没有文档变更，跳过提交"
+            git checkout "$CURRENT_BRANCH"
+            git branch -D "$DOC_BRANCH"
+            exit 0
+          fi
+          
+          echo "📝 在干净分支上准备提交以下文档文件："
+          echo "$FINAL_STAGED_FILES"
+          
           # 创建提交信息
           COMMIT_MESSAGE="🤖 自动生成文档
-          
+
           - 更新 API 文档（基于源代码变更）
           - 重新生成 AI 助手文档 (llms.txt, llms-full.txt)
           - 同步文档与最新代码变更
-          
-          生成者: 'wuying-ai-team'
+
+          生成者: wuying-ai-team
           触发分支: ${{git.branch}}
           提交commit id: ${{git.commitId}}"
           
-          # 提交变更
+          # 在干净分支上提交文档变更
           git commit -m "$COMMIT_MESSAGE"
+          echo "✅ 在干净分支 $DOC_BRANCH 上提交文档变更完成"
           
-          # 推送到当前 MR 分支
-          git push origin HEAD:refs/for/${{git.merge_request.targetBranch}}
-          echo "✅ 提交文档变更完成"
+          # 推送文档分支到远程
+          git push origin "$DOC_BRANCH"
+          echo "✅ 推送文档分支到远程完成"
+          
+          # 切换回原分支
+          git checkout "$CURRENT_BRANCH"
+          echo "🔄 已切换回原分支: $CURRENT_BRANCH"
+          
+          # 创建 MR（如果支持的话）
+          echo "📋 文档分支信息："
+          echo "  - 分支名: $DOC_BRANCH"
+          echo "  - 基于: $TARGET_BRANCH"
+          echo "  - 包含文件: $(echo "$FINAL_STAGED_FILES" | wc -l) 个文档文件"
+          echo ""
+          echo "💡 请手动创建 Merge Request:"
+          echo "   源分支: $DOC_BRANCH"
+          echo "   目标分支: $TARGET_BRANCH"
+          echo "   标题: 🤖 自动生成文档更新"
