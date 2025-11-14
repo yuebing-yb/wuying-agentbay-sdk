@@ -1,6 +1,6 @@
 # Form-Filling Agent
 
-This project demonstrates how to create a form-filling agent using the Agent-Bay SDK. The agent can upload an HTML form to Agent-Bay, open it in a browser, and automatically fill it with data based on natural language instructions.
+This project demonstrates how to create a form-filling agent using the Agent-Bay SDK. The agent can automatically fill HTML forms with data based on natural language instructions.
 
 ## Features
 
@@ -21,37 +21,30 @@ This project follows a modular structure that separates core functionality from 
 
 ```
 ├── README.md            # Documentation
-├── .env                 # Environment variables
 ├── common/              # Public core functionality
-│   ├── src/             # Framework-agnostic code
-│   │   ├── form.html    # Sample HTML form
-│   │   └── form_filler.py # Core form filling functionality
-│   └── README.md        # Documentation
-├── langchain/           # LangChain integration
-│   ├── data/            # Data directory for outputs (screenshots, etc.)
-│   ├── src/             # LangChain-specific code
-│   │   ├── form_filling_agent.py       # LangChain-specific implementation
-│   │   └── form_filling_agent_example.py # Example script for LangChain orchestration
-│   └── requirements.txt # Python dependencies
+│   └── src/             # Framework-agnostic code
+│       └── __init__.py  # Python package initializer
+└── langchain/           # LangChain integration
+    ├── README.md        # LangChain integration documentation
+    ├── requirements.txt # Python dependencies
+    └── src/             # LangChain-specific code
+        ├── __init__.py                # Python package initializer
+        ├── browser_tools.py           # Browser automation tools
+        ├── form_filling_agent.py      # Main form filling agent implementation
+        └── form_filling_agent_example.py # Example usage script
 ```
 
 ### Common Module
 
-The [common](./common/) directory contains all the core functionality that can be used across different agent frameworks. This includes:
-
-- Session management with Agent-Bay
-- File upload operations
-- Browser initialization and control
-- Form filling operations
-- Resource cleanup
+The [common](./common/) directory is intended for all the core functionality that can be used across different agent frameworks.
 
 ### Framework Integration Modules
 
-Framework-specific directories (like [langchain](./langchain/)) contain the integration code that uses the core functionality from the common module and wraps it in framework-specific components.
+Framework-specific directories (like [langchain](./langchain/)) contain the integration code that implements form filling functionality using specific agent frameworks.
 
 ## Customization
 
-You can modify the [form.html](./common/src/form.html) file to use your own form, and update the instructions in the example script to match the fields in your form.
+You can customize the form filling behavior by modifying the implementation in the framework-specific directories and providing your own forms and instructions.
 
 ## Agent-Bay SDK Features Used
 

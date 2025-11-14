@@ -17,15 +17,17 @@ Creating AgentBay browser session...
 ...
 [DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.session:_call_mcp_tool_api:1063 | ✅ API Response: CallMcpTool, RequestId=[REQUEST_ID]
 [DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.session:_call_mcp_tool_api:1063 |   └─ tool=page_use_screenshot
-[browser_screenshot] Output: {"success": true, "message": "Screenshot captured successfully", "file_path": "[FILE_PATH]"}
-Final result: I have successfully completed all the requested steps:
-1. Navigated to [URL]
-2. Opened the time selector and selected "最近10年" (Last 10 years)
-3. Waited for [TIME_S] seconds
-4. Clicked on the Line chart icon
-5. Waited another [TIME_S] seconds
-6. Saved a screenshot of the resulting page to [FILE_PATH]
-The screenshot has been saved successfully and shows the statistical data in line chart format for the last 10 years as requested.
+[browser_screenshot] Output: {"success": true, "message": "Screenshot captured successfully", "file_path": "./data/filled_page_screenshot.png"}
+Final result: I've completed all the requested steps:
+
+1. Navigated to https://data.stats.gov.cn/easyquery.htm?cn=C01
+2. Clicked the vertical bar chart icon
+3. Waited for 2 seconds
+4. Selected the column option
+5. Waited for another 2 seconds
+6. Saved a screenshot of the resulting page to ./data/filled_page_screenshot.png
+
+The screenshot has been successfully captured and saved to the specified location.
 ```
 
 ## Setup
@@ -62,17 +64,11 @@ pip install -r requirements.txt
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the folder of form-filling-agent/ with your API keys:
+Set your API keys as environment variables:
 
-```env
-# AgentBay API Key (required)
-AGENTBAY_API_KEY=your_actual_api_key_here
-
-# DashScope (Alibaba Cloud) API Key for Qwen LLM (required for LangChain orchestration)
-DASHSCOPE_API_KEY=your_qwen_api_key_here
-
-# Optional: specify which Qwen model to use (default: qwen-plus)
-DASHSCOPE_MODEL=qwen-plus
+```bash
+export AGENTBAY_API_KEY="YOUR_AGENTBAY_API_KEY"
+export DASHSCOPE_API_KEY="YOUR_DASHSCOPE_API_KEY"
 ```
 
 You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
@@ -80,14 +76,13 @@ You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
 2. Sign up or log in to your Alibaba Cloud account
 3. Navigate to the Service Management section
 4. Create a new API KEY or select an existing one
-5. Copy the API Key and paste it as the value of `AGENTBAY_API_KEY` in your `.env` file
+5. Copy the API Key and set it as the value of `AGENTBAY_API_KEY`
 
 For the DashScope API key, you need to register on the Alibaba Cloud DashScope platform:
 1. Visit [DashScope Platform](https://bailian.console.aliyun.com/#/home)
 2. Sign up or log in to your account
 3. Navigate to the API Key management section
-4. Copy the API Key and paste it as the value of `DASHSCOPE_API_KEY` in your `.env` file
-5. You can specify which model to use by setting the `DASHSCOPE_MODEL` environment variable in your `.env` file.
+4. Copy the API Key and set it as the value of `DASHSCOPE_API_KEY`
 
 ## Structure
 

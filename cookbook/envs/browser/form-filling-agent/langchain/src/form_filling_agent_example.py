@@ -13,6 +13,11 @@ def main():
     """
     print("Creating LangChain form filling agent...")
     
+    # Create data directory if it doesn't exist
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
+    os.makedirs(data_dir, exist_ok=True)
+    print(f"Ensured data directory exists at: {os.path.abspath(data_dir)}")
+    
     # Import the agent creator function
     from form_filling_agent import create_langchain_form_filling_agent
     
@@ -21,6 +26,7 @@ def main():
         agent_dict = create_langchain_form_filling_agent()
         agent = agent_dict["agent"]
         
+
         # URL to navigate to
         url = "https://data.stats.gov.cn/easyquery.htm?cn=C01"
         
@@ -30,9 +36,9 @@ def main():
         print("\n=== Example: Using agent with custom instructions ===")
         # Execute the agent with context
         content = f"""
-            First navigate to the website at {url}, 
-            then open the time selector, select 最近10年，wait for 3 seconds,
-            then click Line chart icon，wait for 3 seconds, 
+            First navigate to the website at {url},
+            then click vertical bar chart icon，wait for 2 seconds, 
+            then select the column option，wait for 2 seconds, 
             save the snapshot to ./data/filled_page_screenshot.png
         """
         result = agent.invoke(

@@ -88,17 +88,11 @@ pip install -r requirements.txt
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the n the folder of auto-testing-agent/ with your API keys:
+Set your API keys as environment variables:
 
-```env
-# AgentBay API Key (required)
-AGENTBAY_API_KEY=your_actual_api_key_here
-
-# DashScope (Alibaba Cloud) API Key for Qwen LLM (required for LangChain orchestration)
-DASHSCOPE_API_KEY=your_qwen_api_key_here
-
-# Optional: specify which Qwen model to use (default: qwen3-max)
-DASHSCOPE_MODEL=qwen3-max
+```bash
+export AGENTBAY_API_KEY="YOUR_AGENTBAY_API_KEY"
+export DASHSCOPE_API_KEY="YOUR_DASHSCOPE_API_KEY"
 ```
 
 You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
@@ -106,14 +100,13 @@ You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
 2. Sign up or log in to your Alibaba Cloud account
 3. Navigate to the Service Management section
 4. Create a new API KEY or select an existing one
-5. Copy the API Key and paste it as the value of `AGENTBAY_API_KEY` in your `.env` file
+5. Copy the API Key and set it as the value of `AGENTBAY_API_KEY`
 
 For the DashScope API key, you need to register on the Alibaba Cloud DashScope platform:
 1. Visit [DashScope Platform](https://bailian.console.aliyun.com/#/home)
 2. Sign up or log in to your account
 3. Navigate to the API Key management section
-4. Create a new API Key and copy it for use in your `.env` file
-5. You can specify which model to use by setting the `DASHSCOPE_MODEL` environment variable in your `.env` file.
+4. Create a new API Key and copy it for use as `DASHSCOPE_API_KEY`
 
 ## Structure
 
