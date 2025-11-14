@@ -9,10 +9,6 @@ triggers:
     target-branches:
       - "**"
 
-# 策略配置防止作业被意外取消
-strategy:
-  fail-fast: false
-
 params:
   auto_commit_enabled:
     name: 启用自动提交文档
@@ -111,6 +107,7 @@ jobs:
       # 创建临时文档目录
       - id: setup-temp-docs
         name: "创建临时文档目录"
+        when: "${{env.CI_LOOP_DETECTED != 'true'}}"
         run: |
           echo "📁 创建 CI/CD 临时文档目录..."
           
@@ -131,6 +128,7 @@ jobs:
         when: "${{params.python_docs_enabled && env.CI_LOOP_DETECTED != 'true'}}"
         run: |
           echo "🐍 开始生成 Python API 文档..."
+          echo "  - $CI_LOOP_DETECTED"
           cd python
           
           # 安装依赖
