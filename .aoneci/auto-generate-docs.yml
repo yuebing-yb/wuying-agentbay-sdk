@@ -72,6 +72,7 @@ jobs:
       # 检查是否为 CI 机器人提交，避免无限循环
       - id: check-ci-loop
         name: "检查 CI 循环"
+        continue-on-error: false
         run: |
           echo "🔍 检查是否为 CI 机器人提交..."
           
