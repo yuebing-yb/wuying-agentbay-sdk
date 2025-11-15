@@ -1,0 +1,313 @@
+# OpenAI Integration for AgentBay Data Analysis
+
+This integration demonstrates how to use OpenAI's function calling feature with AgentBay to perform automated data analysis in cloud environments.
+
+## Overview
+
+This example shows how to:
+
+1. Create an AgentBay session with the `code_latest` image
+2. Upload datasets to the cloud environment
+3. Use OpenAI's function calling to generate Python code
+4. Execute the generated code in AgentBay
+5. Capture and download visualization results
+
+## Prerequisites
+
+- Python 3.8 or higher
+- AgentBay API key (get it from [AgentBay Console](https://agentbay.console.aliyun.com/service-management))
+- OpenAI API key
+
+## Installation
+
+1. **Set up a Python virtual environment** (recommended):
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. **Install dependencies**:
+
+```bash
+pip install -r requirements.txt
+```
+
+Or install manually:
+
+```bash
+pip install openai wuying-agentbay-sdk
+```
+
+**Note**: For local development, you can install the SDK from the local path:
+
+```bash
+pip install /path/to/wuying-agentbay-sdk/python
+```
+
+## Configuration
+
+1. **Copy the environment template**:
+
+```bash
+cd ..  # Go to openai-data-analysis directory
+cp .env.example .env
+```
+
+2. **Edit `.env` and add your API keys**:
+
+```bash
+AGENTBAY_API_KEY=your_agentbay_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_API_BASE=https://api.openai.com/v1
+```
+
+3. **Load environment variables**:
+
+```bash
+export $(cat .env | xargs)
+```
+
+Or source them in your shell:
+
+```bash
+source .env  # If your .env uses export statements
+```
+
+## Usage
+
+### 1. Generate Sample Data
+
+First, generate the synthetic e-commerce dataset:
+
+```bash
+cd ../common/src
+python generate_ecommerce_data.py
+```
+
+This will create `ecommerce_sales.csv` in the current directory with 5000 sample orders.
+
+### 2. Run the Analysis
+
+Execute the main analysis script:
+
+```bash
+cd ../../openai/src
+python agentbay_openai_sales_analysis.py
+```
+
+The script will:
+1. Initialize AgentBay and OpenAI clients
+2. Create a new AgentBay session with `code_latest` image
+3. Upload the dataset to the session
+4. Send an analysis request to OpenAI
+5. Execute the generated Python code in AgentBay
+6. Download and save the visualization as `sales_analysis.png`
+7. Clean up the session
+
+### Expected Output
+
+```
+================================================================================
+AgentBay + OpenAI Integration: E-commerce Sales Analysis
+================================================================================
+
+🚀 Initializing AgentBay client...
+📦 Creating AgentBay session with code_latest image...
+✓ Session created: sess_xxxxx
+
+📤 Uploading dataset to AgentBay session...
+✓ Uploaded to /home/user/ecommerce_sales.csv
+
+🔍 Validating dataset...
+✓ Dataset validation results:
+  Total rows: 5000
+  Total columns: 15
+  Date range: 2023-01-01 to 2024-12-31
+  Total revenue: $1,089,178.68
+  Categories: Electronics, Clothing, Home & Garden, Books, Sports, Toys
+
+🤖 Starting AI-powered sales analysis...
+================================================================================
+User Request: Analyze the e-commerce sales dataset...
+================================================================================
+
+Waiting for the LLM to respond...
+
+LLM Response: (tool call)
+
+Tool Used: execute_python
+Code to Execute:
+--------------------------------------------------------------------------------
+import pandas as pd
+import matplotlib.pyplot as plt
+...
+--------------------------------------------------------------------------------
+
+🔧 Executing Python code in AgentBay session...
+
+================================================================================
+Analysis Results:
+================================================================================
+✓ Visualization saved to sales_analysis.png
+
+Analysis Output:
+Total revenue: $1089178.68
+Total orders: 5000
+Average order value: $217.84
+...
+
+🧹 Cleaning up...
+✓ Session deleted
+
+✓ Demo completed successfully!
+```
+
+## Code Walkthrough
+
+### Main Components
+
+#### 1. System Prompt
+
+The system prompt provides context to the LLM about:
+- Its role as a data analyst
+- Dataset structure and columns
+- Execution environment (AgentBay with code_latest image)
+- Available packages (pandas, numpy, matplotlib, etc.)
+- Guidelines for code generation
+
+#### 2. Function Definition
+
+The `execute_python` function is defined in the OpenAI tools schema, allowing the LLM to generate code that will be executed remotely.
+
+#### 3. Code Execution
+
+The `execute_python_code()` function uses AgentBay's native `run_code` API:
+- Appends matplotlib save commands to the generated code
+- Executes code using `session.code.run_code()` API
+- Detects saved plots and downloads them using `session.file_system.download_file()`
+- Returns structured results (result, error, png_path)
+
+#### 4. Workflow
+
+```python
+# 1. Create session
+params = CreateSessionParams(image_id="code_latest")
+result = agentbay.create(params)
+session = result.session
+
+# 2. Upload dataset
+session.file_system.upload_file(local_path, remote_path)
+
+# 3. Call OpenAI with function calling
+completion = openai_client.chat.completions.create(
+    model=MODEL_NAME,
+    messages=[...],
+    tools=TOOLS,
+    tool_choice="auto"
+)
+
+# 4. Execute generated code using run_code API
+result = session.code.run_code(code_with_save, "python", timeout_s=60)
+
+# 5. Download visualization if generated
+if "PLOT_SAVED:" in result.result:
+    download_result = session.file_system.download_file(
+        '/tmp/output.png',
+        'sales_analysis.png'
+    )
+
+# 6. Cleanup
+session.delete()
+```
+
+## Customization
+
+### Modify Analysis Query
+
+You can change the analysis request in `agentbay_openai_sales_analysis.py`:
+
+```python
+analysis_request = (
+    'Your custom analysis request here...'
+)
+```
+
+### Change Dataset
+
+To use a different dataset:
+
+1. Modify `generate_ecommerce_data.py` to generate your desired data structure
+2. Update the system prompt to reflect the new dataset structure
+3. Regenerate the data and run the analysis
+
+### Adjust LLM Model
+
+Set the `LLM_MODEL` environment variable or modify the default in the script:
+
+```python
+MODEL_NAME = os.environ.get("LLM_MODEL", "gpt-4o")
+```
+
+## Troubleshooting
+
+### Issue: "Failed to create session"
+
+**Solution**: Check that your AGENTBAY_API_KEY is valid and you have sufficient quota.
+
+### Issue: "OpenAI API error"
+
+**Solution**: Verify your OPENAI_API_KEY and OPENAI_API_BASE are correctly set.
+
+### Issue: "Dataset file not found"
+
+**Solution**: Make sure you've run `generate_ecommerce_data.py` first to create the dataset.
+
+### Issue: "No visualization was generated"
+
+**Solution**: Check the code execution output for errors. Ensure the LLM-generated code includes matplotlib plotting commands.
+
+### Issue: "Code execution timeout"
+
+**Solution**: The script has a 60-second timeout. For larger datasets or complex analyses, you may need to increase the `timeout_s` parameter in `session.code.run_code()`.
+
+## Technical Details
+
+### Remote Code Execution
+
+The code execution mechanism uses AgentBay's native `run_code` API:
+
+1. Appends matplotlib save commands to the user's code
+2. Executes code using `session.code.run_code(code, "python", timeout_s=60)`
+3. Checks execution result for success/failure
+4. Detects saved plots by looking for "PLOT_SAVED:" marker in output
+5. Downloads visualization files using `session.file_system.download_file()`
+6. Returns structured output with result text, error (if any), and local PNG path
+
+### File Upload
+
+Files are uploaded using the AgentBay SDK's `file_system.upload_file()` method:
+
+```python
+result = session.file_system.upload_file(
+    local_path="./ecommerce_sales.csv",
+    remote_path="/home/user/ecommerce_sales.csv"
+)
+```
+
+### Session Management
+
+Sessions are automatically managed:
+- Created with specific image (`code_latest`)
+- Cleaned up in a `finally` block to ensure resource release
+- Isolated from other sessions for security
+
+## Learn More
+
+- [AgentBay SDK Documentation](https://help.aliyun.com/zh/agentbay/)
+- [OpenAI Function Calling Guide](https://platform.openai.com/docs/guides/function-calling)
+- [AgentBay Python SDK Reference](https://github.com/aliyun/alibabacloud-agentbay-sdk)
+
+## License
+
+This example is provided as-is for demonstration purposes.

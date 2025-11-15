@@ -15,6 +15,7 @@ Currently, two distinct session environments are implemented:
 
 1. [Form-Filling Agent](./envs/browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
 2. [Auto Testing Agent](./envs/codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
+3. [OpenAI Data Analysis](./envs/codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
 
 ## Overview
 
@@ -33,6 +34,15 @@ This cookbook demonstrates how to create a testing agent using LangChain and Age
 - Generate test cases using LLMs based on project structure
 - Execute tests in isolated AgentBay cloud sessions
 - Save test results to local log files
+
+### OpenAI Data Analysis
+This cookbook demonstrates how to integrate OpenAI with AgentBay for automated data analysis. The example shows:
+- Creating AgentBay sessions with `code_latest` image for Python code execution
+- Uploading datasets to cloud environments for remote analysis
+- Using OpenAI function calling to generate Python analytics code
+- Executing AI-generated code in isolated AgentBay sessions
+- Capturing matplotlib visualizations and analysis results
+- Performing comprehensive e-commerce analytics including metrics, trends, and customer segmentation
 
 ## Framework Integration
 
