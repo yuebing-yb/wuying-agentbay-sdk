@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <b>The Cloud Runtime Built for AI Agents</b>
+  <b>The Cloud Sandbox Built for AI Agents</b>
   <br>
   <a href="docs/guides/browser-use/README.md">Browser</a> ·
   <a href="docs/guides/computer-use/README.md">Desktop</a> ·
