@@ -1281,20 +1281,42 @@ class Session:
             # Use asyncio.run to call the async pause API and poll for status
             # This allows us to reuse the async implementation in a synchronous context
             import asyncio
-            
+            import threading
+
             # Create a new event loop if there isn't one already
             try:
                 loop = asyncio.get_running_loop()
-                # If we're already in an event loop, we need to run the async method differently
-                # This can happen in environments like Jupyter notebooks
-                result = asyncio.run_coroutine_threadsafe(
-                    self.pause_async(timeout, poll_interval), loop
-                ).result()
+                # If we're already in an event loop, run in a new thread with a new event loop
+                # This prevents deadlock when calling synchronous pause() from async context
+                result_container = []
+                exception_container = []
+
+                def run_in_thread():
+                    try:
+                        # Create a new event loop for this thread
+                        new_loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(new_loop)
+                        try:
+                            result = new_loop.run_until_complete(self.pause_async(timeout, poll_interval))
+                            result_container.append(result)
+                        finally:
+                            new_loop.close()
+                    except Exception as e:
+                        exception_container.append(e)
+
+                thread = threading.Thread(target=run_in_thread)
+                thread.start()
+                thread.join()
+
+                if exception_container:
+                    raise exception_container[0]
+                if result_container:
+                    return result_container[0]
+
             except RuntimeError:
                 # No event loop running, we can use asyncio.run
                 result = asyncio.run(self.pause_async(timeout, poll_interval))
-
-            return result
+                return result
         except Exception as e:
             _log_operation_error("PauseSession", str(e), exc_info=True)
             return SessionPauseResult(
@@ -1554,20 +1576,42 @@ class Session:
             # Use asyncio.run to call the async resume API and poll for status
             # This allows us to reuse the async implementation in a synchronous context
             import asyncio
-            
+            import threading
+
             # Create a new event loop if there isn't one already
             try:
                 loop = asyncio.get_running_loop()
-                # If we're already in an event loop, we need to run the async method differently
-                # This can happen in environments like Jupyter notebooks
-                result = asyncio.run_coroutine_threadsafe(
-                    self.resume_async(timeout, poll_interval), loop
-                ).result()
+                # If we're already in an event loop, run in a new thread with a new event loop
+                # This prevents deadlock when calling synchronous resume() from async context
+                result_container = []
+                exception_container = []
+
+                def run_in_thread():
+                    try:
+                        # Create a new event loop for this thread
+                        new_loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(new_loop)
+                        try:
+                            result = new_loop.run_until_complete(self.resume_async(timeout, poll_interval))
+                            result_container.append(result)
+                        finally:
+                            new_loop.close()
+                    except Exception as e:
+                        exception_container.append(e)
+
+                thread = threading.Thread(target=run_in_thread)
+                thread.start()
+                thread.join()
+
+                if exception_container:
+                    raise exception_container[0]
+                if result_container:
+                    return result_container[0]
+
             except RuntimeError:
                 # No event loop running, we can use asyncio.run
                 result = asyncio.run(self.resume_async(timeout, poll_interval))
-
-            return result
+                return result
         except Exception as e:
             _log_operation_error("ResumeSession", str(e), exc_info=True)
             return SessionResumeResult(
