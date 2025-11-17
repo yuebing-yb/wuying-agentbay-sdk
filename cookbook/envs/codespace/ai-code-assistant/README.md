@@ -2,21 +2,24 @@
 
 An intelligent web application that combines AI language models with cloud code execution, powered by **AgentBay** and **Alibaba Cloud Qwen**.
 
-![AI Code Assistant Demo](https://img.shields.io/badge/Status-Production%20Ready-green)
-![License](https://img.shields.io/badge/License-Apache%202.0-blue)
-
 ## 📸 Screenshots
 
 ### Welcome Screen
+
 ![AI Code Assistant Welcome](./assets/welcome.png)
+
 *Choose from multiple pre-built examples or type your own prompt*
 
 ### Code Execution in Progress
+
 ![Code Execution](./assets/processing.png)
+
 *Real-time execution logs show AgentBay cloud session creation and code execution*
 
 ### Dashboard Visualization Result
+
 ![Dashboard Example](./assets/dashboard.png)
+
 *AI-generated business dashboard with multiple chart types displayed inline*
 
 ## 🌟 Features
