@@ -16,6 +16,7 @@ Currently, two distinct session environments are implemented:
 1. [Form-Filling Agent](./envs/browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
 2. [Auto Testing Agent](./envs/codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
 3. [OpenAI Data Analysis](./envs/codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
+4. [AI Code Assistant](./envs/codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
 
 ## Overview
 
@@ -43,6 +44,15 @@ This cookbook demonstrates how to integrate OpenAI with AgentBay for automated d
 - Executing AI-generated code in isolated AgentBay sessions
 - Capturing matplotlib visualizations and analysis results
 - Performing comprehensive e-commerce analytics including metrics, trends, and customer segmentation
+
+### AI Code Assistant
+This cookbook demonstrates how to build an interactive web-based AI code assistant using Next.js, AgentBay SDK, and Alibaba Cloud Bailian (DashScope). The application provides:
+- Real-time AI chat interface with streaming responses
+- Secure Python code execution in cloud environments
+- Automatic chart generation and visualization display
+- Pre-installed data science packages (pandas, numpy, matplotlib, scikit-learn, seaborn)
+- Session persistence for continuous development workflow
+- Dark mode UI with responsive design
 
 ## Framework Integration
 
