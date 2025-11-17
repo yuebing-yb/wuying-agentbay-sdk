@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-AgentBay + OpenAI Integration: E-commerce Sales Analysis
+AgentBay + Alibaba Cloud Bailian Integration: E-commerce Sales Analysis
 
-This example demonstrates how to integrate AgentBay with OpenAI to perform
-automated data analysis on e-commerce sales data.
+This example demonstrates how to integrate AgentBay with Alibaba Cloud Bailian (DashScope)
+to perform automated data analysis on e-commerce sales data.
 
 Features:
-1. Creating an AgentBay session with code_latest image
+1. Creating an AgentBay CodeSpace environment
 2. Uploading a sales dataset to the session
-3. Using OpenAI function calling to generate Python code for data analysis
-4. Executing the code in the AgentBay session
+3. Using Bailian's function calling to generate Python code for data analysis
+4. Executing the code in the AgentBay CodeSpace
 5. Retrieving and saving visualization results
 """
 
@@ -21,7 +21,9 @@ from agentbay.session_params import CreateSessionParams
 
 
 # Configuration
-MODEL_NAME = os.environ.get("LLM_MODEL", "gpt-4o")
+# Alibaba Cloud DashScope (Bailian) models
+# Available models: qwen3-max, qwen-turbo, qwen-plus, etc.
+MODEL_NAME = os.environ.get("DASHSCOPE_MODEL", "qwen3-max")
 
 SYSTEM_PROMPT = """
 ## Role & Context
@@ -47,7 +49,7 @@ The sales dataset is located at `/home/user/ecommerce_sales.csv` with the follow
   * ShippingMethod: Delivery method (Standard, Express, Next Day)
 
 ## Execution Environment
-- Code runs in a secure AgentBay session with code_latest image
+- Code runs in a secure AgentBay CodeSpace environment
 - Pre-installed packages: pandas, numpy, matplotlib, seaborn, scikit-learn
 - Each execute_python call runs in an isolated execution context
 - Use matplotlib for visualizations (they will be captured automatically)
@@ -142,21 +144,21 @@ if plt.get_fignums():
 
 
 def process_tool_call(session, tool_call) -> dict:
-    """Process a tool call from OpenAI."""
+    """Process a tool call from Bailian LLM."""
     if tool_call.function.name == 'execute_python':
         tool_input = json.loads(tool_call.function.arguments)
         return execute_python_code(session, tool_input['code'])
     return {}
 
 
-def chat_with_llm(openai_client, session, user_message: str) -> dict:
-    """Send a message to OpenAI and execute any tool calls."""
+def chat_with_llm(llm_client, session, user_message: str) -> dict:
+    """Send a message to Bailian LLM and execute any tool calls."""
     print('\n' + '=' * 80)
     print(f'User Request: {user_message}')
     print('=' * 80)
 
     print('Waiting for the LLM to respond...')
-    completion = openai_client.chat.completions.create(
+    completion = llm_client.chat.completions.create(
         model=MODEL_NAME,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -232,22 +234,22 @@ print(f"Categories: {{', '.join(df['Category'].unique())}}")
 def main():
     """Main function to run the demo."""
     print("=" * 80)
-    print("AgentBay + OpenAI Integration: E-commerce Sales Analysis")
+    print("AgentBay + Alibaba Cloud Bailian Integration: E-commerce Sales Analysis")
     print("=" * 80)
     print()
 
-    # Initialize OpenAI client
-    openai_client = OpenAI(
-        base_url=os.environ.get("OPENAI_API_BASE"),
-        api_key=os.environ.get("OPENAI_API_KEY"),
+    # Initialize Bailian LLM client using OpenAI-compatible API
+    llm_client = OpenAI(
+        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        api_key=os.environ.get("DASHSCOPE_API_KEY"),
     )
 
     # Initialize AgentBay client
     print("🚀 Initializing AgentBay client...")
     agentbay = AgentBay(api_key=os.environ.get("AGENTBAY_API_KEY"))
 
-    # Create a code_latest session
-    print("📦 Creating AgentBay session with code_latest image...")
+    # Create a CodeSpace session
+    print("📦 Creating AgentBay CodeSpace environment...")
     params = CreateSessionParams(image_id="code_latest")
     result = agentbay.create(params)
 
@@ -283,7 +285,7 @@ def main():
             print('⚠️  Please run generate_ecommerce_data.py first or check file paths')
             return
 
-        # Execute analysis with OpenAI + AgentBay
+        # Execute analysis with Bailian + AgentBay
         print("\n🤖 Starting AI-powered sales analysis...")
 
         analysis_request = (
@@ -296,7 +298,7 @@ def main():
             'Write ALL code in ONE execute_python call.'
         )
 
-        code_result = chat_with_llm(openai_client, session, analysis_request)
+        code_result = chat_with_llm(llm_client, session, analysis_request)
 
         # Process results
         print('\n' + '=' * 80)

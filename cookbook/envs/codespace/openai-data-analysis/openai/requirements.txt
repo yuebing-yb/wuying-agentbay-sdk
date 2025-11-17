@@ -1,4 +1,4 @@
-# OpenAI SDK for function calling
+# OpenAI SDK for Bailian compatibility (uses OpenAI-compatible API)
 openai>=1.0.0
 
 # AgentBay SDK for cloud code execution
