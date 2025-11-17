@@ -1,3 +1,14 @@
+<div align="center">
+
+<a href="https://pypi.org/project/wuying-agentbay-sdk/"><img alt="Last 1 month downloads for the Python SDK" src="https://img.shields.io/pypi/dm/wuying-agentbay-sdk?label=PyPI%20Downloads&logo=python&logoColor=white"></a>
+<a href="https://www.npmjs.com/package/wuying-agentbay-sdk"><img alt="Last 1 month downloads for the JavaScript SDK" src="https://img.shields.io/npm/dm/wuying-agentbay-sdk?label=NPM%20Downloads&logo=npm"></a>
+<a href="https://goreportcard.com/report/github.com/aliyun/wuying-agentbay-sdk/golang"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/aliyun/wuying-agentbay-sdk/golang"></a>
+<a href="https://github.com/aliyun/wuying-agentbay-sdk/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue"></a>
+
+</div>
+
+&nbsp;
+
 # AgentBay SDK
 
 > The AgentBay SDK provides a comprehensive suite of tools for efficient interaction with AgentBay cloud environments, enabling you to create and manage cloud sessions, execute commands, operate files, and interact with user interfaces.
