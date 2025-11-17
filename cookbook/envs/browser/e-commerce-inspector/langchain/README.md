@@ -95,7 +95,7 @@ For the DashScope API key, you need to register on the Alibaba Cloud DashScope p
   - `inspector_tools.py`: Core inspection tools and utilities
   - `e_commerce_inspector.py`: Main inspector agent implementation
   - `e_commerce_inspector_example.py`: Example usage script
-- [data/](./data/): Output directory for inspection results (created automatically)
+- `data/`: Output directory for inspection results (created automatically)
 - [README.md](./README.md): This documentation file
 - [requirements.txt](./requirements.txt): Python dependencies
 
