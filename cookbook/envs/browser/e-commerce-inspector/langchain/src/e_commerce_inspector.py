@@ -14,7 +14,7 @@ from agentbay.session import Session
 from agentbay.session_params import CreateSessionParams
 from agentbay.browser.browser import BrowserOption, BrowserScreen
 
-from .inspector_tools import process_site
+from inspector_tools import process_site
 
 
 class ECommerceInspector:
