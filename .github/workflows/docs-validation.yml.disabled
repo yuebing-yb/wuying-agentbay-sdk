@@ -43,18 +43,19 @@ jobs:
         run: |
           cd python
           poetry run python scripts/generate_api_docs.py
-      
-      - name: Validate documentation quality
-        run: |
-          python scripts/validate_documentation_quality.py
-      
-      - name: Validate code examples
-        run: |
-          python scripts/validate_code_examples.py
-      
-      - name: Check documentation links
-        run: |
-          python scripts/check_doc_links.py
+
+      # TODO: Re-enable these validation steps once scripts are implemented
+      # - name: Validate documentation quality
+      #   run: |
+      #     python scripts/validate_documentation_quality.py
+      #
+      # - name: Validate code examples
+      #   run: |
+      #     python scripts/validate_code_examples.py
+      #
+      # - name: Check documentation links
+      #   run: |
+      #     python scripts/check_doc_links.py
 
   validate-typescript-docs:
     runs-on: ubuntu-latest
@@ -74,7 +75,7 @@ jobs:
       - name: Generate TypeScript documentation
         run: |
           cd typescript
-          npm run generate:docs
+          npm run docs:generate
       
       - name: Check for documentation changes
         run: |
