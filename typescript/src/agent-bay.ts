@@ -343,7 +343,7 @@ export class AgentBay {
         // Add the context to the session params for file transfer operations
         const fileTransferContextSync = new ContextSync(
           contextResult.context.id,
-          "/temp/file-transfer"
+          "/tmp/file-transfer"
         );
         if (!params.contextSync) {
           params.contextSync = [];

@@ -420,7 +420,7 @@ class AgentBay:
 
                 file_transfer_context_sync = ContextSync(
                     context_id=context_result.context.id,
-                    path="/temp/file-transfer",
+                    path="/tmp/file-transfer",
                 )
                 if not hasattr(params, "context_syncs") or params.context_syncs is None:
                     params.context_syncs = []
