@@ -101,49 +101,71 @@ def validate_cursor_position(cursor_result, screen_result, expected_x: int, expe
     return delta_x <= tolerance and delta_y <= tolerance
 
 
-def validate_screenshot_changed(url1: str, url2: str) -> bool:
+def validate_screenshot_changed(url1: str, url2: str) -> Tuple[bool, Optional[str]]:
     """
     Check if screenshot content actually changed by comparing image hashes.
-    
+
     Args:
         url1: First screenshot URL
         url2: Second screenshot URL
-        
+
     Returns:
-        bool: True if image content is different
+        Tuple of (changed: bool, error: Optional[str])
+        - changed: True if image content is different, False if identical
+        - error: Error message if comparison failed, None if successful
     """
     if not url1 or not url2:
-        return False
-    
+        return False, "Missing screenshot URL"
+
+    # If URLs are identical, screenshots are definitely the same
+    if url1 == url2:
+        return False, None
+
     try:
         import requests
         from PIL import Image
         import imagehash
         from io import BytesIO
-        
-        # Download images
-        response1 = requests.get(url1, timeout=10)
-        response1.raise_for_status()
-        img1 = Image.open(BytesIO(response1.content))
-        
-        response2 = requests.get(url2, timeout=10)
-        response2.raise_for_status()
-        img2 = Image.open(BytesIO(response2.content))
-        
+
+        # Download images with retry
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response1 = requests.get(url1, timeout=10)
+                response1.raise_for_status()
+                img1 = Image.open(BytesIO(response1.content))
+                break
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise
+                time.sleep(1)
+
+        for attempt in range(max_retries):
+            try:
+                response2 = requests.get(url2, timeout=10)
+                response2.raise_for_status()
+                img2 = Image.open(BytesIO(response2.content))
+                break
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise
+                time.sleep(1)
+
         # Calculate perceptual hashes (resistant to minor variations)
         hash1 = imagehash.average_hash(img1)
         hash2 = imagehash.average_hash(img2)
-        
+
         # Compare hashes (0 = identical, >0 = different)
         hash_diff = hash1 - hash2
-        
+
         # Consider images different if hash difference > 0
-        return hash_diff > 0
-        
+        return hash_diff > 0, None
+
     except Exception as e:
-        # If image comparison fails, log error and return False
-        print(f"Warning: Failed to compare screenshots: {e}")
-        return False
+        # If image comparison fails, return error message
+        error_msg = f"Failed to compare screenshots: {e}"
+        print(f"Warning: {error_msg}")
+        return False, error_msg
 
 
 def validate_screen_size(screen_result) -> bool:
