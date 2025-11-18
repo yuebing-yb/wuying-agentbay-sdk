@@ -1382,12 +1382,13 @@ class FileSystem(BaseService):
 
             if result.success:
                 matching_files = result.data.strip().split("\n") if result.data else []
+                # "No matches found" is a successful search with no results, not an error
                 if matching_files == ['No matches found']:
                     return FileSearchResult(
                         request_id=result.request_id,
-                        success=False,
+                        success=True,
                         matches=[],
-                        error_message="No matches found",
+                        error_message="",
                     )
                 return FileSearchResult(
                     request_id=result.request_id,
