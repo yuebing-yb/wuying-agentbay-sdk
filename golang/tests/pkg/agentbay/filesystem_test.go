@@ -548,8 +548,8 @@ func TestFileSystem_SearchFiles(t *testing.T) {
 		t.Logf("Search test file 3 created (RequestID: %s)", writeResult3.RequestID)
 
 		fmt.Println("Searching files in subdirectory...")
-		// Search for files with names containing the pattern
-		searchPattern := "SEARCHABLE_PATTERN"
+		// Search for files with names matching the wildcard pattern
+		searchPattern := "*SEARCHABLE_PATTERN*"
 		excludePatterns := []string{"ignored_pattern"}
 		searchResults, err := session.FileSystem.SearchFiles(testSubdirPath, searchPattern, excludePatterns)
 		if err != nil {

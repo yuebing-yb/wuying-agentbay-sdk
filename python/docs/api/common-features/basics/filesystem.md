@@ -432,13 +432,14 @@ def search_files(
         exclude_patterns: Optional[List[str]] = None) -> FileSearchResult
 ```
 
-Search for files in the specified path using a pattern.
+Search for files in the specified path using a wildcard pattern.
 
 **Arguments**:
 
     path: The base directory path to search in.
-    pattern: The pattern string to match against file names (substring match).
-    exclude_patterns: Optional list of patterns to exclude from the search.
+    pattern: Wildcard pattern to match against file names. Supports * (any characters)
+  and ? (single character). Examples: "*.py", "test_*", "*config*".
+    exclude_patterns: Optional list of wildcard patterns to exclude from the search.
   
 
 **Returns**:
@@ -454,7 +455,7 @@ session = agent_bay.create().session
 session.file_system.write_file("/tmp/test/test_file1.py", "print('hello')")
 session.file_system.write_file("/tmp/test/test_file2.py", "print('world')")
 session.file_system.write_file("/tmp/test/other.txt", "text content")
-search_result = session.file_system.search_files("/tmp/test", "test_")
+search_result = session.file_system.search_files("/tmp/test", "test_*")
 session.delete()
 ```
 

@@ -117,7 +117,7 @@ async function main() {
     // 7. Search files
     log(`\nSearching for files in ${TestPathPrefix} containing 'sample'`);
     try {
-      const searchResponse = await session.fileSystem.searchFiles(TestPathPrefix, "sample", undefined);
+      const searchResponse = await session.fileSystem.searchFiles(TestPathPrefix, "*sample*", undefined);
       log(`Search results: ${searchResponse.matches.length} files found`);
       searchResponse.matches.forEach((path: string) => {
         log(`- ${path}`);
