@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// TestLogAPICall verifies LogAPICall produces correct formatted output
+// TestLogAPICall verifies logAPICall produces correct formatted output
 func TestLogAPICall(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -28,7 +28,7 @@ func TestLogAPICall(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify it doesn't panic
-			LogAPICall(tt.apiName, tt.params)
+			logAPICall(tt.apiName, tt.params)
 		})
 	}
 }
@@ -50,7 +50,7 @@ func TestLogAPIResponseWithDetailsSuccess(t *testing.T) {
 	fullResponse, _ := json.Marshal(responseBody)
 
 	// Verify it doesn't panic with valid inputs
-	LogAPIResponseWithDetails("CreateSession", "req_12345", true, keyFields, string(fullResponse))
+	logAPIResponseWithDetails("CreateSession", "req_12345", true, keyFields, string(fullResponse))
 }
 
 // TestLogAPIResponseWithDetailsFailure verifies failed API response logging
@@ -63,19 +63,19 @@ func TestLogAPIResponseWithDetailsFailure(t *testing.T) {
 	fullResponse, _ := json.Marshal(responseBody)
 
 	// Verify it doesn't panic with error response
-	LogAPIResponseWithDetails("GetSession", "req_67890", false, nil, string(fullResponse))
+	logAPIResponseWithDetails("GetSession", "req_67890", false, nil, string(fullResponse))
 }
 
 // TestLogOperationErrorWithoutStack verifies error logging without stack trace
 func TestLogOperationErrorWithoutStack(t *testing.T) {
 	// Verify it doesn't panic
-	LogOperationError("CreateSession", "Network timeout", false)
+	logOperationError("CreateSession", "Network timeout", false)
 }
 
 // TestLogOperationErrorWithStack verifies error logging with stack trace
 func TestLogOperationErrorWithStack(t *testing.T) {
 	// Verify it doesn't panic
-	LogOperationError("DeleteSession", "Permission denied", true)
+	logOperationError("DeleteSession", "Permission denied", true)
 }
 
 // TestMaskSensitiveDataWithMapApiKey verifies API key masking in maps
@@ -85,7 +85,7 @@ func TestMaskSensitiveDataWithMapApiKey(t *testing.T) {
 		"user":    "john@example.com",
 	}
 
-	masked := MaskSensitiveData(data).(map[string]interface{})
+	masked := maskSensitiveData(data).(map[string]interface{})
 
 	// Verify API key is masked (first 2 + **** + last 2)
 	if masked["api_key"] != "sk****ef" {
@@ -105,7 +105,7 @@ func TestMaskSensitiveDataWithPassword(t *testing.T) {
 		"username": "admin",
 	}
 
-	masked := MaskSensitiveData(data).(map[string]interface{})
+	masked := maskSensitiveData(data).(map[string]interface{})
 
 	// Verify password is masked (first 2 + **** + last 2)
 	if masked["password"] != "my****23" {
@@ -125,7 +125,7 @@ func TestMaskSensitiveDataWithToken(t *testing.T) {
 		"user_id":      "user_12345",
 	}
 
-	masked := MaskSensitiveData(data).(map[string]interface{})
+	masked := maskSensitiveData(data).(map[string]interface{})
 
 	// Verify token is masked
 	if !strings.Contains(masked["access_token"].(string), "****") {
@@ -148,7 +148,7 @@ func TestMaskSensitiveDataWithNestedStructure(t *testing.T) {
 		"api_key": "key_abcdef123456",
 	}
 
-	masked := MaskSensitiveData(data).(map[string]interface{})
+	masked := maskSensitiveData(data).(map[string]interface{})
 	userMasked := masked["user"].(map[string]interface{})
 
 	// Verify nested password is masked (first 2 + **** + last 2)
@@ -180,7 +180,7 @@ func TestMaskSensitiveDataWithArray(t *testing.T) {
 		},
 	}
 
-	masked := MaskSensitiveData(data).([]interface{})
+	masked := maskSensitiveData(data).([]interface{})
 
 	// Verify first item's api_key is masked (first 2 + **** + last 2)
 	first := masked[0].(map[string]interface{})
@@ -202,7 +202,7 @@ func TestMaskSensitiveDataWithShortSecret(t *testing.T) {
 		"token":  "12345", // Exactly 5 chars
 	}
 
-	masked := MaskSensitiveData(data).(map[string]interface{})
+	masked := maskSensitiveData(data).(map[string]interface{})
 
 	// Verify short secret is masked completely
 	if masked["secret"] != "****" {
@@ -225,7 +225,7 @@ func TestMaskSensitiveDataPreservesNonSensitive(t *testing.T) {
 		"is_vpc":       true,
 	}
 
-	masked := MaskSensitiveData(data).(map[string]interface{})
+	masked := maskSensitiveData(data).(map[string]interface{})
 
 	// Verify all non-sensitive data is unchanged
 	tests := []struct {
@@ -267,8 +267,17 @@ func TestIsSensitiveField(t *testing.T) {
 		{"AUTHORIZATION", true},
 	}
 
+	// Create a test sensitive fields list
+	testSensitiveFields := []string{
+		"api_key", "apikey", "api-key",
+		"password", "passwd",
+		"token", "access_token",
+		"secret",
+		"authorization",
+	}
+
 	for _, tt := range tests {
-		result := isSensitiveField(tt.field, SENSITIVE_FIELDS)
+		result := isSensitiveField(tt.field, testSensitiveFields)
 		if result != tt.expected {
 			t.Errorf("isSensitiveField(%q) = %v, want %v", tt.field, result, tt.expected)
 		}
@@ -313,12 +322,12 @@ func TestLogLevelControl(t *testing.T) {
 	// Test 6: Reset to DEBUG and verify LogAPICall output
 	t.Log("\n--- Test 6: LogAPICall at DEBUG level (should print Request) ---")
 	SetLogLevel(LOG_DEBUG)
-	LogAPICall("TestAPI", `{"param":"value"}`)
+	logAPICall("TestAPI", `{"param":"value"}`)
 
-	// Test 7: Set to INFO and verify LogAPICall output
-	t.Log("\n--- Test 7: LogAPICall at INFO level (Request should not print) ---")
+	// Test 7: Set to INFO and verify logAPICall output
+	t.Log("\n--- Test 7: logAPICall at INFO level (Request should not print) ---")
 	SetLogLevel(LOG_INFO)
-	LogAPICall("TestAPI", `{"param":"value"}`)
+	logAPICall("TestAPI", `{"param":"value"}`)
 
 	// Test 8: LogAPIResponseWithDetails at DEBUG level
 	t.Log("\n--- Test 8: LogAPIResponseWithDetails at DEBUG level (Full Response should print) ---")
@@ -327,17 +336,17 @@ func TestLogLevelControl(t *testing.T) {
 		"session_id": "session-12345",
 		"status":     "running",
 	}
-	LogAPIResponseWithDetails("CreateSession", "req-123", true, keyFields, `{"status":200,"data":{"id":"123"}}`)
+	logAPIResponseWithDetails("CreateSession", "req-123", true, keyFields, `{"status":200,"data":{"id":"123"}}`)
 
-	// Test 9: LogAPIResponseWithDetails at INFO level
-	t.Log("\n--- Test 9: LogAPIResponseWithDetails at INFO level (Full Response should not print) ---")
+	// Test 9: logAPIResponseWithDetails at INFO level
+	t.Log("\n--- Test 9: logAPIResponseWithDetails at INFO level (Full Response should not print) ---")
 	SetLogLevel(LOG_INFO)
-	LogAPIResponseWithDetails("CreateSession", "req-123", true, keyFields, `{"status":200,"data":{"id":"123"}}`)
+	logAPIResponseWithDetails("CreateSession", "req-123", true, keyFields, `{"status":200,"data":{"id":"123"}}`)
 
-	// Test 10: LogAPIResponseWithDetails at WARN level (should not print anything)
-	t.Log("\n--- Test 10: LogAPIResponseWithDetails at WARN level (nothing should print) ---")
+	// Test 10: logAPIResponseWithDetails at WARN level (should not print anything)
+	t.Log("\n--- Test 10: logAPIResponseWithDetails at WARN level (nothing should print) ---")
 	SetLogLevel(LOG_WARN)
-	LogAPIResponseWithDetails("CreateSession", "req-123", true, keyFields, `{"status":200,"data":{"id":"123"}}`)
+	logAPIResponseWithDetails("CreateSession", "req-123", true, keyFields, `{"status":200,"data":{"id":"123"}}`)
 
 	t.Log("\n--- All log level control tests completed ---")
 }
