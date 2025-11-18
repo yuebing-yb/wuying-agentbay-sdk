@@ -41,7 +41,51 @@ https://waydoo.com/collections/all
     "price": "$1,499.00",
     "link": "/products/waydoo-flyer-evo-31-mast"
   },
-  ...
+  {
+    "name": "Evo 35\" Mast",
+    "price": "$799.00",
+    "link": "/products/waydoo-flyer-evo-35-mast"
+  },
+  {
+    "name": "Tactical Backpack",
+    "price": "$189.00",
+    "link": "/products/tactical-backpack"
+  },
+  {
+    "name": "Fireproof Safe Bag",
+    "price": "$79.90",
+    "link": "/products/fireproof-safe-bag"
+  },
+  {
+    "name": "Board Bag",
+    "price": "$149.00",
+    "link": "/products/board-bag"
+  },
+  {
+    "name": "Board Bag Pro",
+    "price": "$169.00",
+    "link": "/products/board-bag-pro"
+  },
+  {
+    "name": "Flyer ONE Plus",
+    "price": "$3,999.00",
+    "link": "/products/flyer-one-plus"
+  },
+  {
+    "name": "Flyer ONE",
+    "price": "$3,499.00",
+    "link": "/products/flyer-one"
+  },
+  {
+    "name": "Wing Set",
+    "price": "$899.00",
+    "link": "/products/wing-set"
+  },
+  {
+    "name": "Battery Charger",
+    "price": "$299.00",
+    "link": "/products/battery-charger"
+  }
 ]
 ```
 
