@@ -8531,10 +8531,10 @@ from agentbay import AgentBay
 
 session = agent_bay.create().session
 
-# Search for files with pattern (partial name matching, NOT wildcards)
-result = session.file_system.search_files("/tmp", "systemd")
+# Search for files with wildcard pattern
+result = session.file_system.search_files("/tmp", "*systemd*")
 if result.success:
-    print(f"Found {len(result.matches)} files containing 'test':")
+    print(f"Found {len(result.matches)} files matching pattern:")
     for match in result.matches:
         print(f"  - {match}")
 else:
@@ -8543,11 +8543,11 @@ else:
 # Search with exclusion patterns
 result = session.file_system.search_files(
     "/tmp",
-    "systemd",
-    exclude_patterns=["geoclue"]
+    "*config*",
+    exclude_patterns=["*backup*", "*temp*"]
 )
 if result.success:
-    print(f"Found {len(result.matches)} files containing 'config' (excluding 'backup' and 'temp'):")
+    print(f"Found {len(result.matches)} files matching '*config*' (excluding '*backup*' and '*temp*'):")
     for match in result.matches:
         print(f"  - {match}")
 ```
@@ -8555,8 +8555,7 @@ if result.success:
 #### ⚠️ Important: Search Rules and Limitations
 
 **Pattern Matching Rules:**
-- **NOT wildcard-based**: Patterns like `*.txt` or `test*` are NOT supported
-- **Partial name matching**: The pattern matches any part of the file/directory name
+- **Wildcard-based**: Supports `*` (any characters) and `?` (single character)
 - **Recursive search**: Searches through all subdirectories from the starting path
 - **Case sensitivity**:
   - **Windows**: Case-insensitive matching
@@ -8565,30 +8564,31 @@ if result.success:
 **Examples of Pattern Matching:**
 
 ```python
-# ✅ CORRECT: Partial name matching
-session.file_system.search_files("/tmp", "test")
-# Matches: test.txt, my_test_file.py, testing.log, etc.
+# ✅ CORRECT: Wildcard patterns
+session.file_system.search_files("/tmp", "*.txt")
+# Matches: test.txt, file.txt, etc.
 
-session.file_system.search_files("/tmp", "config")
-# Matches: config.json, app_config.xml, configuration.ini, etc.
+session.file_system.search_files("/tmp", "test_*")
+# Matches: test_file.py, test_data.json, etc.
 
-# ❌ INCORRECT: Wildcard patterns (NOT supported)
-session.file_system.search_files("/tmp", "*.txt")     # Won't work as expected
-session.file_system.search_files("/tmp", "test*")     # Won't work as expected
-session.file_system.search_files("/tmp", "?.log")     # Won't work as expected
+session.file_system.search_files("/tmp", "*config*")
+# Matches: config.json, app_config.xml, my_configuration.ini, etc.
+
+session.file_system.search_files("/tmp", "?.log")
+# Matches: a.log, 1.log, etc. (single character before .log)
 ```
 
 **Platform-Specific Behavior:**
 
 ```python
 # On Windows (case-insensitive)
-result = session.file_system.search_files("/tmp", "TEST")
-# Matches: TEST.txt, TEST.log, TEST.config, MyTEST.py
+result = session.file_system.search_files("/tmp", "*TEST*")
+# Matches: TEST.txt, test.log, MyTest.py, etc.
 
 # On Linux/Unix (case-sensitive)
-result = session.file_system.search_files("/tmp", "TEST")
-# Matches only: TEST.config, MyTEST.py (exact case match)
-result = session.file_system.search_files("/tmp", "test")
+result = session.file_system.search_files("/tmp", "*TEST*")
+# Matches only: TEST.txt, MyTEST.py (exact case match)
+result = session.file_system.search_files("/tmp", "*test*")
 # Matches only: test.txt, my_test.py (exact case match)
 ```
 
@@ -8930,7 +8930,7 @@ agent_bay.delete(session)
 | Upload file (local → cloud) | `upload_file()` | Supports all file types, with progress tracking |
 | Download file (cloud → local) | `download_file()` | Supports all file types, with progress tracking |
 | Find and replace text | `edit_file()` | **Text files only**, better than read-modify-write |
-| Search for files | `search_files()` | Partial name matching, NO wildcards |
+| Search for files | `search_files()` | Supports wildcard patterns (* and ?) |
 | Move/rename files | `move_file()` | Works for both text and binary files |
 | Get file metadata | `get_file_info()` | File size, type, timestamps |
 | List directory | `list_directory()` | Directory contents |
@@ -18632,13 +18632,14 @@ def search_files(
         exclude_patterns: Optional[List[str]] = None) -> FileSearchResult
 ```
 
-Search for files in the specified path using a pattern.
+Search for files in the specified path using a wildcard pattern.
 
 **Arguments**:
 
     path: The base directory path to search in.
-    pattern: The pattern string to match against file names (substring match).
-    exclude_patterns: Optional list of patterns to exclude from the search.
+    pattern: Wildcard pattern to match against file names. Supports * (any characters)
+  and ? (single character). Examples: "*.py", "test_*", "*config*".
+    exclude_patterns: Optional list of wildcard patterns to exclude from the search.
   
 
 **Returns**:
@@ -18654,7 +18655,7 @@ session = agent_bay.create().session
 session.file_system.write_file("/tmp/test/test_file1.py", "print('hello')")
 session.file_system.write_file("/tmp/test/test_file2.py", "print('world')")
 session.file_system.write_file("/tmp/test/other.txt", "text content")
-search_result = session.file_system.search_files("/tmp/test", "test_")
+search_result = session.file_system.search_files("/tmp/test", "test_*")
 session.delete()
 ```
 
@@ -27547,7 +27548,7 @@ ___
 
 ▸ **searchFiles**(`path`, `pattern`, `excludePatterns?`): `Promise`\<`FileSearchResult`\>
 
-Searches for files in a directory that match a pattern.
+Searches for files in a directory that match a wildcard pattern.
 Corresponds to Python's search_files() method
 
 #### Parameters
@@ -27555,8 +27556,8 @@ Corresponds to Python's search_files() method
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `path` | `string` | `undefined` | Path to the directory to search in. |
-| `pattern` | `string` | `undefined` | Pattern to search for. Supports glob patterns. |
-| `excludePatterns` | `string`[] | `[]` | Optional: Array of patterns to exclude. |
+| `pattern` | `string` | `undefined` | Wildcard pattern to match against file names. Supports * (any characters) and ? (single character). Examples: "*.py", "test_*", "*config*". |
+| `excludePatterns` | `string`[] | `[]` | Optional: Array of wildcard patterns to exclude. |
 
 #### Returns
 
@@ -27572,7 +27573,7 @@ const result = await agentBay.create();
 if (result.success) {
   await result.session.fileSystem.createDirectory('/tmp/test');
   await result.session.fileSystem.writeFile('/tmp/test/file1.py', "print('hello')");
-  const searchResult = await result.session.fileSystem.searchFiles('/tmp/test', '.py');
+  const searchResult = await result.session.fileSystem.searchFiles('/tmp/test', '*.py');
   console.log(`Found ${searchResult.matches.length} Python files`);
   await result.session.delete();
 }
@@ -34921,12 +34922,13 @@ contents, _ := result.Session.FileSystem.ReadMultipleFiles(paths)
 func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (*SearchFilesResult, error)
 ```
 
-SearchFiles searches for files matching a pattern.
+SearchFiles searches for files matching a wildcard pattern.
 
 Parameters:
   - path: Absolute path to the directory to search in
-  - pattern: Pattern to match (supports wildcards like *.txt)
-  - excludePatterns: Array of patterns to exclude from results
+  - pattern: Wildcard pattern to match against file names. Supports * (any characters) and ? (single
+    character). Examples: "*.txt", "test_*", "*config*"
+  - excludePatterns: Array of wildcard patterns to exclude from results
 
 Returns:
   - *SearchFilesResult: Result containing matching file paths and request ID
@@ -34934,7 +34936,7 @@ Returns:
 
 Behavior:
 
-- Recursively searches the directory and subdirectories - Supports glob patterns for matching -
+- Recursively searches the directory and subdirectories - Supports wildcard patterns for matching -
 Exclude patterns help filter out unwanted results
 
 **Example:**
@@ -34943,7 +34945,7 @@ Exclude patterns help filter out unwanted results
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Create(nil)
 defer result.Session.Delete()
-searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", ".txt", []string{})
+searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", "*.txt", []string{})
 ```
 
 ### WatchDirectory
