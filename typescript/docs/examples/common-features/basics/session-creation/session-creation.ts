@@ -1,6 +1,5 @@
 
-import { AgentBay, log, logError, CreateSessionParams, ContextSync, newSyncPolicy, ContextStatusData, newCreateSessionParams } from 'wuying-agentbay-sdk'
-import { MobileExtraConfig, AppManagerRule, ExtraConfigs } from 'wuying-agentbay-sdk'
+import { AgentBay, log, logError, CreateSessionParams, ContextSync, newSyncPolicy, ContextStatusData, newCreateSessionParams, MobileExtraConfig, AppManagerRule, ExtraConfigs } from 'wuying-agentbay-sdk'
 
 
 
@@ -224,7 +223,7 @@ async function createMobileSessionWithExtraConfigs() {
     };
 
     // Create session parameters with extra configurations
-    const params = new CreateSessionParams()
+    const params = newCreateSessionParams()
       .withImageId("mobile_latest")
       .withLabels({
         project: "mobile-testing",

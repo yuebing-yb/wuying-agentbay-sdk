@@ -9,11 +9,6 @@ import sys
 from typing import List
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.tools import Tool
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-
 # Add the current and common directories to sys.path to enable imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), '..', '..', 'common', 'src'))
@@ -41,7 +36,8 @@ def main():
 
     try:
         # Create Langchain agent
-        agent = create_langchain_agent(api_key=agentbay_api_key)
+        agent_dict = create_langchain_agent(api_key=agentbay_api_key)
+        agent = agent_dict["agent"]
         
         # Get current script path and construct sample project path
         current_script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -49,11 +45,22 @@ def main():
         
         # Run agent on sample project
         project_path = os.getenv("PROJECT_PATH", sample_project_path)
-        result = agent.invoke({
-            "input": f"Test the Python project at {project_path}. First scan the project structure, then generate tests, and finally execute them."
-        })
         
-        print("Final result:", result)
+        # Execute the agent with context
+        result = agent.invoke(
+            {"messages": [{"role": "user", "content": f"Test the Python project at {project_path}. First scan the project structure, then generate tests, and finally execute them."}]},
+            {"recursion_limit": 500}
+        )
+        
+        # Extract and print the final output
+        if "messages" in result and len(result["messages"]) > 0:
+            final_message = result["messages"][-1]
+            if hasattr(final_message, 'content') and final_message.content:
+                print("Final result:", final_message.content)
+            else:
+                print("Final result:", final_message)
+        else:
+            print("Final result:", result)
     except Exception as e:
         print(f"Error running auto tests: {e}")
         import traceback

@@ -45,7 +45,6 @@ def data_persistence_demo(agent_bay):
     context = context_result.context
     print(f"✅ Context created successfully: {context.id}")
     print(f"   Name: {context.name}")
-    print(f"   State: {context.state}")
     
     # Step 2: Create first session with context sync
     print("\n🔧 Step 2: Creating first session with context synchronization...")

@@ -877,9 +877,13 @@ export class Mobile {
         };
       }
 
-      // Use semicolon-separated format for uninstall blacklist property
-      const packageList = packageNames.join(';');
-      const command = replaceTemplatePlaceholders(template, { package_list: packageList });
+      // Use newline-separated format for uninstall blacklist file content
+      const packageList = packageNames.join('\n');
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const command = replaceTemplatePlaceholders(template, { 
+        package_list: packageList,
+        timestamp: timestamp
+      });
       
       const description = `Uninstall blacklist configuration (${packageNames.length} packages)`;
       return await this.executeCommand(command, description);

@@ -274,10 +274,10 @@ func NewFileSystem(session interface {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    createResult, _ := result.Session.FileSystem.CreateDirectory("/tmp/test_directory")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	createResult, _ := result.Session.FileSystem.CreateDirectory("/tmp/test_directory")
 func (fs *FileSystem) CreateDirectory(path string) (*FileDirectoryResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -319,12 +319,12 @@ func (fs *FileSystem) CreateDirectory(path string) (*FileDirectoryResult, error)
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello World", "overwrite")
-//    edits := []map[string]string{{"oldText": "Hello", "newText": "Hi"}}
-//    editResult, _ := result.Session.FileSystem.EditFile("/tmp/test.txt", edits, false)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello World", "overwrite")
+//	edits := []map[string]string{{"oldText": "Hello", "newText": "Hi"}}
+//	editResult, _ := result.Session.FileSystem.EditFile("/tmp/test.txt", edits, false)
 func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bool) (*FileWriteResult, error) {
 	args := map[string]interface{}{
 		"path":    path,
@@ -366,10 +366,10 @@ func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bo
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    fileInfo, _ := result.Session.FileSystem.GetFileInfo("/etc/hostname")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	fileInfo, _ := result.Session.FileSystem.GetFileInfo("/etc/hostname")
 func (fs *FileSystem) GetFileInfo(path string) (*FileInfoResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -419,10 +419,10 @@ func (fs *FileSystem) GetFileInfo(path string) (*FileInfoResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    listResult, _ := result.Session.FileSystem.ListDirectory("/tmp")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	listResult, _ := result.Session.FileSystem.ListDirectory("/tmp")
 func (fs *FileSystem) ListDirectory(path string) (*DirectoryListResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -468,11 +468,11 @@ func (fs *FileSystem) ListDirectory(path string) (*DirectoryListResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    result.Session.FileSystem.WriteFile("/tmp/old.txt", "content", "overwrite")
-//    moveResult, _ := result.Session.FileSystem.MoveFile("/tmp/old.txt", "/tmp/new.txt")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	result.Session.FileSystem.WriteFile("/tmp/old.txt", "content", "overwrite")
+//	moveResult, _ := result.Session.FileSystem.MoveFile("/tmp/old.txt", "/tmp/new.txt")
 func (fs *FileSystem) MoveFile(source, destination string) (*FileWriteResult, error) {
 	args := map[string]string{
 		"source":      source,
@@ -551,11 +551,11 @@ func (fs *FileSystem) readFileChunk(path string, optionalParams ...int) (*FileRe
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    paths := []string{"/etc/hostname", "/etc/os-release"}
-//    contents, _ := result.Session.FileSystem.ReadMultipleFiles(paths)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	paths := []string{"/etc/hostname", "/etc/os-release"}
+//	contents, _ := result.Session.FileSystem.ReadMultipleFiles(paths)
 func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, error) {
 	args := map[string]interface{}{
 		"paths": paths,
@@ -622,10 +622,10 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, erro
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", ".txt", []string{})
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", ".txt", []string{})
 func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (*SearchFilesResult, error) {
 	args := map[string]interface{}{
 		"path":             path,
@@ -712,10 +712,10 @@ const ChunkSize = 50 * 1024
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    fileResult, _ := result.Session.FileSystem.ReadFile("/etc/hostname")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	fileResult, _ := result.Session.FileSystem.ReadFile("/etc/hostname")
 func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error) {
 	chunkSize := ChunkSize
 
@@ -799,10 +799,10 @@ func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    writeResult, _ := result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello", "overwrite")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	writeResult, _ := result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello", "overwrite")
 func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteResult, error) {
 	chunkSize := ChunkSize
 	contentLen := len(content)
@@ -936,13 +936,13 @@ func parseFileChangeData(rawData string) ([]*FileChangeEvent, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    result.Session.FileSystem.CreateDirectory("/tmp/watch_test")
-//    result.Session.FileSystem.GetFileChange("/tmp/watch_test")
-//    result.Session.FileSystem.WriteFile("/tmp/watch_test/file.txt", "content", "overwrite")
-//    changeResult, _ := result.Session.FileSystem.GetFileChange("/tmp/watch_test")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	result.Session.FileSystem.CreateDirectory("/tmp/watch_test")
+//	result.Session.FileSystem.GetFileChange("/tmp/watch_test")
+//	result.Session.FileSystem.WriteFile("/tmp/watch_test/file.txt", "content", "overwrite")
+//	changeResult, _ := result.Session.FileSystem.GetFileChange("/tmp/watch_test")
 func (fs *FileSystem) GetFileChange(path string) (*FileChangeResult, error) {
 	args := map[string]string{
 		"path": path,
@@ -1010,14 +1010,14 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    result.Session.FileSystem.CreateDirectory("/tmp/watch")
-//    stopCh := make(chan struct{})
-//    wg := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
-//    close(stopCh)
-//    wg.Wait()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	result.Session.FileSystem.CreateDirectory("/tmp/watch")
+//	stopCh := make(chan struct{})
+//	wg := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+//	close(stopCh)
+//	wg.Wait()
 func (fs *FileSystem) WatchDirectory(
 	path string,
 	callback func([]*FileChangeEvent),
@@ -1043,6 +1043,11 @@ func (fs *FileSystem) WatchDirectory(
 			case <-ticker.C:
 				result, err := fs.GetFileChange(path)
 				if err != nil {
+					// Check if session has expired
+					if strings.Contains(err.Error(), "session not found or expired") {
+						fmt.Printf("Session expired, stopping directory monitoring: %s\n", path)
+						return
+					}
 					fmt.Printf("Error monitoring directory: %v\n", err)
 					continue
 				}

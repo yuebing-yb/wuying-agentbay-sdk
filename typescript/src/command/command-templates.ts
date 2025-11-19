@@ -65,9 +65,14 @@ export const SHOW_NAVIGATION_BAR_TEMPLATE = "setprop persist.wy.hasnavibar true;
 /**
  * Uninstall blacklist template
  * Parameters:
- *   package_list (string): Semicolon-separated list of package names
+ *   package_list (string): Newline-separated list of package names
+ *   timestamp (string): Current timestamp for trigger property
  */
-export const UNINSTALL_BLACKLIST_TEMPLATE = "setprop persist.wy.pm_lock \"{package_list}\"";
+export const UNINSTALL_BLACKLIST_TEMPLATE = `cat > /data/system/pm_lock.conf << 'EOF'
+{package_list}
+EOF
+chmod 644 /data/system/pm_lock.conf
+setprop persist.wy.pm_lock.trigger {timestamp}`;
 
 /**
  * Mobile command templates mapping for easy access

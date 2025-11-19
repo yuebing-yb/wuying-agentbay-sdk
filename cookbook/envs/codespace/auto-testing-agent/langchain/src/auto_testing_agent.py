@@ -14,7 +14,8 @@ import json
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import Tool
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import create_agent
+from langgraph.store.memory import InMemoryStore
 from dotenv import load_dotenv
 
 # Add the common directory to sys.path to enable imports
@@ -31,6 +32,14 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+# Session data class to store session information in the store
+class TestingSessionData:
+    """Data class to store testing session information."""
+    def __init__(self, agent=None, session_id=None):
+        self.agent = agent
+        self.session_id = session_id
 
 
 class LangChainTestingAgent(BaseTestingAgent):
@@ -53,7 +62,7 @@ class LangChainTestingAgent(BaseTestingAgent):
         llm = ChatOpenAI(
             api_key=os.getenv("DASHSCOPE_API_KEY"),
             base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-            model=os.getenv("DASHSCOPE_MODEL", "qwen-plus")
+            model=os.getenv("DASHSCOPE_MODEL", "qwen3-max")
         )
         
         # Format file contents for prompt
@@ -126,7 +135,7 @@ Format your response as separate test files like this:
         })
         
         # Parse the LLM response into separate test files using the base class method
-        test_cases = self.parse_test_response(response.content, project_structure["files"])
+        test_cases = self.parse_test_response(response.content if hasattr(response, 'content') else str(response), project_structure["files"])
         
         if not test_cases:
             raise Exception("Failed to generate test cases from LLM response")
@@ -363,15 +372,15 @@ def create_testing_tools(agent: LangChainTestingAgent) -> List[Tool]:
     ]
 
 
-def create_langchain_agent(api_key: Optional[str] = None) -> AgentExecutor:
+def create_langchain_agent(api_key: Optional[str] = None) -> dict:
     """
-    Create a Langchain agent for testing.
+    Create a Langchain agent for testing using the new LangChain v1.0 pattern.
     
     Args:
         api_key: AgentBay API key
         
     Returns:
-        Langchain AgentExecutor
+        Langchain agent dictionary with agent and store
     """
     # Create testing agent
     testing_agent = LangChainTestingAgent(api_key=api_key)
@@ -383,12 +392,20 @@ def create_langchain_agent(api_key: Optional[str] = None) -> AgentExecutor:
     llm = ChatOpenAI(
         api_key=os.getenv("DASHSCOPE_API_KEY"),
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        model=os.getenv("DASHSCOPE_MODEL", "qwen-plus")
+        model=os.getenv("DASHSCOPE_MODEL", "qwen3-max")
     )
     
-    # Create prompt
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are a testing expert that helps generate and execute tests for Python projects.
+    # Create memory store and put session in it
+    store = InMemoryStore()
+    session_data = TestingSessionData(agent=testing_agent, session_id=testing_agent.session_id if hasattr(testing_agent, 'session_id') else None)
+    store.put(("testing_session",), "default", session_data)
+    
+    # Create agent using the new create_agent method from LangChain v1.0
+    agent = create_agent(
+        llm,
+        tools=tools,
+        store=store,
+        system_prompt="""You are a testing expert that helps generate and execute tests for Python projects.
         
 Available tools:
 1. scan_project - Scan a project directory and return its structure. Takes project path as input.
@@ -400,13 +417,10 @@ Workflow:
 2. Then use generate_tests to create test cases based on the structure
 3. Finally use execute_tests to run the tests in AgentBay
 
-Each tool should be used in sequence, with the output of one tool potentially being used as input for the next tool."""),
-        ("human", "{input}"),
-        ("placeholder", "{agent_scratchpad}")
-    ])
+Each tool should be used in sequence, with the output of one tool potentially being used as input for the next tool."""
+    )
     
-    # Create agent
-    agent = create_tool_calling_agent(llm, tools, prompt)
-    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-    
-    return agent_executor
+    return {
+        "agent": agent,
+        "store": store
+    }

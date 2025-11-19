@@ -49,11 +49,10 @@ def test_get_non_existent_session(agentbay_client: AgentBay):
     print("Testing Get API with non-existent session ID...")
     non_existent_session_id = "session-nonexistent-12345"
 
-    with pytest.raises(RuntimeError) as exc_info:
-        agentbay_client.get(non_existent_session_id)
-
-    assert "Failed to get session" in str(exc_info.value)
-    print(f"Correctly received error for non-existent session: {exc_info.value}")
+    result = agentbay_client.get(non_existent_session_id)
+    assert not result.success, "Expected get() to fail for non-existent session"
+    assert "Failed to get session" in result.error_message
+    print(f"Correctly received error for non-existent session: {result.error_message}")
     print("Get API non-existent session test passed successfully")
 
 
@@ -61,11 +60,10 @@ def test_get_empty_session_id(agentbay_client: AgentBay):
     """Test Get API with empty session ID."""
     print("Testing Get API with empty session ID...")
 
-    with pytest.raises(ValueError) as exc_info:
-        agentbay_client.get("")
-
-    assert "session_id is required" in str(exc_info.value)
-    print(f"Correctly received error for empty session ID: {exc_info.value}")
+    result = agentbay_client.get("")
+    assert not result.success, "Expected get() to fail for empty session ID"
+    assert "session_id is required" in result.error_message
+    print(f"Correctly received error for empty session ID: {result.error_message}")
     print("Get API empty session ID test passed successfully")
 
 
@@ -73,10 +71,9 @@ def test_get_whitespace_session_id(agentbay_client: AgentBay):
     """Test Get API with whitespace-only session ID."""
     print("Testing Get API with whitespace session ID...")
 
-    with pytest.raises(ValueError) as exc_info:
-        agentbay_client.get("   ")
-
-    assert "session_id is required" in str(exc_info.value)
-    print(f"Correctly received error for whitespace session ID: {exc_info.value}")
+    result = agentbay_client.get("   ")
+    assert not result.success, "Expected get() to fail for whitespace session ID"
+    assert "session_id is required" in result.error_message
+    print(f"Correctly received error for whitespace session ID: {result.error_message}")
     print("Get API whitespace session ID test passed successfully")
 

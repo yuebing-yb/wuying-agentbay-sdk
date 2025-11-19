@@ -65,7 +65,7 @@ def file_transfer_example():
         return False
     
     session = session_result.session
-    print(f"✅ Session created: {session.get_session_id()}")
+    print(f"✅ Session created: {session.session_id}")
     
     # Initialize variables for cleanup
     local_file_path = None
@@ -226,7 +226,7 @@ def file_transfer_with_progress_example():
         return False
     
     session = session_result.session
-    print(f"✅ Session created: {session.get_session_id()}")
+    print(f"✅ Session created: {session.session_id}")
     
     # Initialize variables for cleanup
     local_file_path = None

@@ -88,13 +88,13 @@ describe("AgentBay.list() Integration Tests", () => {
     // Wait longer for sessions to be fully created and labels to propagate
     log("Waiting 5 seconds for labels to propagate...");
     await sleep(5000);
-  }, 60000);
+  });
 
   afterAll(async () => {
     log("Cleaning up: Deleting all test sessions...");
     for (const session of testSessions) {
       try {
-        const result = await agentBay.delete(session);
+        const result = await agentBay.delete(session, false);
         log(
           `Session ${session.sessionId} deleted. Success: ${result.success}, Request ID: ${result.requestId}`
         );
@@ -104,7 +104,7 @@ describe("AgentBay.list() Integration Tests", () => {
         );
       }
     }
-  }, 60000);
+  });
 
   test("should list all sessions without any label filter", async () => {
     log("\n=== Testing list() without labels ===");

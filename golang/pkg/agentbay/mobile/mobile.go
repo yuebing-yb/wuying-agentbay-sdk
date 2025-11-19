@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
@@ -204,10 +205,10 @@ func NewMobile(session interface {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    tapResult := result.Session.Mobile.Tap(500, 500)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	tapResult := result.Session.Mobile.Tap(500, 500)
 func (m *Mobile) Tap(x, y int) *BoolResult {
 	args := map[string]interface{}{
 		"x": x,
@@ -238,10 +239,10 @@ func (m *Mobile) Tap(x, y int) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    swipeResult := result.Session.Mobile.Swipe(100, 500, 900, 500, 300)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	swipeResult := result.Session.Mobile.Swipe(100, 500, 900, 500, 300)
 func (m *Mobile) Swipe(startX, startY, endX, endY, durationMs int) *BoolResult {
 	args := map[string]interface{}{
 		"start_x":     startX,
@@ -275,10 +276,10 @@ func (m *Mobile) Swipe(startX, startY, endX, endY, durationMs int) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    inputResult := result.Session.Mobile.InputText("Hello Mobile")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	inputResult := result.Session.Mobile.InputText("Hello Mobile")
 func (m *Mobile) InputText(text string) *BoolResult {
 	args := map[string]interface{}{
 		"text": text,
@@ -308,10 +309,10 @@ func (m *Mobile) InputText(text string) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    keyResult := result.Session.Mobile.SendKey(4)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	keyResult := result.Session.Mobile.SendKey(4)
 func (m *Mobile) SendKey(key int) *BoolResult {
 	args := map[string]interface{}{
 		"key": key,
@@ -341,10 +342,10 @@ func (m *Mobile) SendKey(key int) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    elementsResult := result.Session.Mobile.GetClickableUIElements(5000)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	elementsResult := result.Session.Mobile.GetClickableUIElements(5000)
 func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult {
 	args := map[string]interface{}{
 		"timeout_ms": timeoutMs,
@@ -393,10 +394,10 @@ func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    elementsResult := result.Session.Mobile.GetAllUIElements(5000)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	elementsResult := result.Session.Mobile.GetAllUIElements(5000)
 func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 	args := map[string]interface{}{
 		"timeout_ms": timeoutMs,
@@ -445,10 +446,10 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    appsResult := result.Session.Mobile.GetInstalledApps(true, true, true)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	appsResult := result.Session.Mobile.GetInstalledApps(true, true, true)
 func (m *Mobile) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *InstalledAppListResult {
 	args := map[string]interface{}{
 		"start_menu":         startMenu,
@@ -499,10 +500,10 @@ func (m *Mobile) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *In
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    processResult := result.Session.Mobile.StartApp("com.android.calculator2", "", "com.android.calculator2.Calculator")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	processResult := result.Session.Mobile.StartApp("com.android.calculator2", "", "com.android.calculator2.Calculator")
 func (m *Mobile) StartApp(startCmd, workDirectory, activity string) *ProcessListResult {
 	args := map[string]interface{}{
 		"start_cmd":      startCmd,
@@ -553,10 +554,10 @@ func (m *Mobile) StartApp(startCmd, workDirectory, activity string) *ProcessList
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    stopResult := result.Session.Mobile.StopAppByCmd("com.android.calculator2")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	stopResult := result.Session.Mobile.StopAppByCmd("com.android.calculator2")
 func (m *Mobile) StopAppByCmd(stopCmd string) *BoolResult {
 	args := map[string]interface{}{
 		"stop_cmd": stopCmd,
@@ -586,10 +587,10 @@ func (m *Mobile) StopAppByCmd(stopCmd string) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    screenshot := result.Session.Mobile.Screenshot()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	screenshot := result.Session.Mobile.Screenshot()
 func (m *Mobile) Screenshot() *ScreenshotResult {
 	args := map[string]interface{}{}
 
@@ -662,10 +663,10 @@ func (m *Mobile) Configure(mobileConfig *models.MobileExtraConfig) error {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    err := result.Session.Mobile.SetResolutionLock(true)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	err := result.Session.Mobile.SetResolutionLock(true)
 func (m *Mobile) SetResolutionLock(enable bool) error {
 	return m.setResolutionLock(enable)
 }
@@ -740,9 +741,13 @@ func (m *Mobile) setUninstallBlacklist(packageNames []string) error {
 		return fmt.Errorf("uninstall blacklist template not found")
 	}
 
-	// Replace placeholder with actual package names (semicolon-separated for property value)
-	packageList := strings.Join(packageNames, ";")
+	// Replace placeholder with actual package names (newline-separated for file content)
+	packageList := strings.Join(packageNames, "\n")
 	command := strings.ReplaceAll(template, "{package_list}", packageList)
+
+	// Replace timestamp placeholder with current timestamp
+	timestamp := fmt.Sprintf("%d", time.Now().Unix())
+	command = strings.ReplaceAll(command, "{timestamp}", timestamp)
 
 	description := fmt.Sprintf("Uninstall blacklist configuration (%d packages)", len(packageNames))
 	return m.executeTemplateCommand(command, description)
@@ -752,10 +757,10 @@ func (m *Mobile) setUninstallBlacklist(packageNames []string) error {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    err := result.Session.Mobile.SetNavigationBarVisibility(true)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	err := result.Session.Mobile.SetNavigationBarVisibility(true)
 func (m *Mobile) SetNavigationBarVisibility(hide bool) error {
 	return m.setNavigationBarVisibility(hide)
 }
@@ -764,11 +769,11 @@ func (m *Mobile) SetNavigationBarVisibility(hide bool) error {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    protectedApps := []string{"com.android.calculator2"}
-//    err := result.Session.Mobile.SetUninstallBlacklist(protectedApps)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	protectedApps := []string{"com.android.calculator2"}
+//	err := result.Session.Mobile.SetUninstallBlacklist(protectedApps)
 func (m *Mobile) SetUninstallBlacklist(packageNames []string) error {
 	return m.setUninstallBlacklist(packageNames)
 }
@@ -777,11 +782,11 @@ func (m *Mobile) SetUninstallBlacklist(packageNames []string) error {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    allowedApps := []string{"com.android.calculator2"}
-//    err := result.Session.Mobile.SetAppWhitelist(allowedApps)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	allowedApps := []string{"com.android.calculator2"}
+//	err := result.Session.Mobile.SetAppWhitelist(allowedApps)
 func (m *Mobile) SetAppWhitelist(packageNames []string) error {
 	return m.setAppWhitelist(packageNames)
 }
@@ -790,11 +795,11 @@ func (m *Mobile) SetAppWhitelist(packageNames []string) error {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    blockedApps := []string{"com.example.blockedapp"}
-//    err := result.Session.Mobile.SetAppBlacklist(blockedApps)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	blockedApps := []string{"com.example.blockedapp"}
+//	err := result.Session.Mobile.SetAppBlacklist(blockedApps)
 func (m *Mobile) SetAppBlacklist(packageNames []string) error {
 	return m.setAppBlacklist(packageNames)
 }
@@ -826,11 +831,11 @@ func (m *Mobile) executeTemplateCommand(commandTemplate, description string) err
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
-//    defer result.Session.Delete()
-//    adbPubKey, _ := os.ReadFile(os.Getenv("HOME") + "/.android/adbkey.pub")
-//    adbResult := result.Session.Mobile.GetAdbUrl(string(adbPubKey))
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
+//	defer result.Session.Delete()
+//	adbPubKey, _ := os.ReadFile(os.Getenv("HOME") + "/.android/adbkey.pub")
+//	adbResult := result.Session.Mobile.GetAdbUrl(string(adbPubKey))
 func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult {
 	// Build options JSON with adbkey_pub
 	optionsMap := map[string]string{"adbkey_pub": adbkeyPub}

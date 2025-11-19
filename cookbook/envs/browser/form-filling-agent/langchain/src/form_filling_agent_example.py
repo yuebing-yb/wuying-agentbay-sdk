@@ -1,23 +1,11 @@
-#!/usr/bin/env python3
-"""
-Example of using LangChain to orchestrate a form filling agent.
-This script demonstrates how to use the LangChain agent framework to orchestrate form filling tasks.
-"""
-
 import os
 import sys
-import asyncio
+import traceback
 
-# Add the project root and necessary paths
-project_root = os.path.join(os.path.dirname(__file__), '..', '..')
-sys.path.insert(0, project_root)
-sys.path.insert(0, os.path.join(project_root, 'common'))
-
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
+# Add the project root to the path so we can import from common
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+common_path = os.path.join(project_root, "common", "src")
+sys.path.insert(0, common_path)
 
 def main():
     """
@@ -25,27 +13,51 @@ def main():
     """
     print("Creating LangChain form filling agent...")
     
+    # Create data directory if it doesn't exist
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
+    os.makedirs(data_dir, exist_ok=True)
+    print(f"Ensured data directory exists at: {os.path.abspath(data_dir)}")
+    
     # Import the agent creator function
     from form_filling_agent import create_langchain_form_filling_agent
     
-    # Create the LangChain agent
-    agent = create_langchain_form_filling_agent()
-    
-    # Get the form file path - correctly pointing to common/src/form.html
-    form_path = os.path.join(project_root, "common", "src", "form.html")
-    
-    print(f"Form path: {form_path}")
-    
-    # Example Using the agent with custom instructions
-    print("\n=== Example: Using agent with custom instructions ===")
     try:
-        result = agent.invoke({
-            "input": f"First analyze the form at {form_path}, then fill it with custom data: John as first name, Smith as last name, john.smith@example.com as email, and finally execute the filling process"
-        })
-        print("Agent result:")
-        print(result)
+        # Create the LangChain agent
+        agent_dict = create_langchain_form_filling_agent()
+        agent = agent_dict["agent"]
+        
+
+        # URL to navigate to
+        url = "https://data.stats.gov.cn/easyquery.htm?cn=C01"
+        
+        print(f"Website URL: {url}")
+        
+        # Example Using the agent with custom instructions
+        print("\n=== Example: Using agent with custom instructions ===")
+        # Execute the agent with context
+        content = f"""
+            First navigate to the website at {url},
+            then click vertical bar chart icon，wait for 2 seconds, 
+            then select the column option，wait for 2 seconds, 
+            save the snapshot to ./data/filled_page_screenshot.png
+        """
+        result = agent.invoke(
+            {"messages": [{"role": "user", "content": content}]},
+            {"recursion_limit": 500}
+        )
+        
+        # Extract and print the final output
+        if "messages" in result and len(result["messages"]) > 0:
+            final_message = result["messages"][-1]
+            if hasattr(final_message, 'content') and final_message.content:
+                print("Final result:", final_message.content)
+            else:
+                print("Final result:", final_message)
+        else:
+            print("Final result:", result)
     except Exception as e:
         print(f"Error: {e}")
+        traceback.print_exc()
 
 
 if __name__ == "__main__":

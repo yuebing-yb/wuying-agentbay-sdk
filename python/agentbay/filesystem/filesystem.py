@@ -1908,6 +1908,12 @@ class FileSystem(BaseService):
             
             while not stop_event.is_set():
                 try:
+                    # Check if session is still valid
+                    if hasattr(self.session, '_is_expired') and self.session._is_expired():
+                        print(f"Session expired, stopping directory monitoring for: {path}")
+                        stop_event.set()
+                        break
+                    
                     # Get current file changes
                     result = self._get_file_change(path)
                     
@@ -1926,6 +1932,12 @@ class FileSystem(BaseService):
                                 print(f"Error in callback function: {e}")
                     
                     else:
+                        # Check if error is due to session expiry
+                        error_msg = result.error_message or ""
+                        if "session" in error_msg.lower() and ("expired" in error_msg.lower() or "invalid" in error_msg.lower()):
+                            print(f"Session expired, stopping directory monitoring for: {path}")
+                            stop_event.set()
+                            break
                         print(f"Error monitoring directory: {result.error_message}")
                     
                     # Wait for the next poll
@@ -1933,6 +1945,12 @@ class FileSystem(BaseService):
                     
                 except Exception as e:
                     print(f"Unexpected error in directory monitoring: {e}")
+                    # Check if exception indicates session expiry
+                    error_str = str(e).lower()
+                    if "session" in error_str and ("expired" in error_str or "invalid" in error_str):
+                        print(f"Session expired, stopping directory monitoring for: {path}")
+                        stop_event.set()
+                        break
                     stop_event.wait(interval)
             
             print(f"Stopped monitoring directory: {path}")

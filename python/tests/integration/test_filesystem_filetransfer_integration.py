@@ -51,7 +51,7 @@ class TestFileTransferIntegration(unittest.TestCase):
             raise unittest.SkipTest("Failed to create session")
 
         cls.session = session_result.session
-        print(f"Browser session created with ID: {cls.session.get_session_id()}")
+        print(f"Browser session created with ID: {cls.session.session_id}")
 
     @classmethod
     def tearDownClass(cls):

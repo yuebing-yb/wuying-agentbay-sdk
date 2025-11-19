@@ -7,34 +7,27 @@ This directory contains the LangChain-specific integration for the form-filling 
 When the agent successfully fills a form, you will see output similar to the following:
 
 ```
-> Entering new AgentExecutor chain...
+Creating LangChain form filling agent...
+Creating AgentBay browser session...
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.context:get:400 | 🔗 API Call: GetContext
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.context:get:400 |   └─ AllowCreate=True, Name=[CONTEXT_NAME]
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.context:get:413 | ✅ API Response received
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.agentbay:create:400 | Adding context sync for file transfer operations: ContextSync(context_id='[CONTEXT_ID]', path='[PATH]', policy=None)
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.agentbay:create:625 | ✅ API Response: CreateSession, RequestId=[REQUEST_ID]
+...
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.session:_call_mcp_tool_api:1063 | ✅ API Response: CallMcpTool, RequestId=[REQUEST_ID]
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.session:_call_mcp_tool_api:1063 |   └─ tool=page_use_screenshot
+[browser_screenshot] Output: {"success": true, "message": "Screenshot captured successfully", "file_path": "./data/filled_page_screenshot.png"}
+Final result: I've completed all the requested steps:
 
-Invoking: `analyze_form` with `/path/to/form.html`
+1. Navigated to https://data.stats.gov.cn/easyquery.htm?cn=C01
+2. Clicked the vertical bar chart icon
+3. Waited for 2 seconds
+4. Selected the column option
+5. Waited for another 2 seconds
+6. Saved a screenshot of the resulting page to ./data/filled_page_screenshot.png
 
-Form at /path/to/form.html has been analyzed. Recommended instructions: ["Enter 'John' in the input field with id firstName", "Enter 'Doe' in the input field with id lastName", ...]
-
-Invoking: `fill_form_fields` with `Enter 'John' in the input field with id firstName;Enter 'Smith' in the input field with id lastName;Enter 'john.smith@example.com' in the input field with id email`
-
-Prepared to fill form with 3 instructions: ["Enter 'John' in the input field with id firstName", "Enter 'Smith' in the input field with id lastName", "Enter 'john.smith@example.com' in the input field with id email"]
-
-Invoking: `execute_form_filling` with `/path/to/form.html`
-
-Session created: session-xxxxxxxxxxxxxxxxx
-Form file uploaded successfully
-Browser instance successfully initialized
-Form page loaded successfully
-
-Instruction executed successfully: Enter 'John' in the input field with id firstName
-Instruction executed successfully: Enter 'Smith' in the input field with id lastName
-Instruction executed successfully: Enter 'john.smith@example.com' in the input field with id email
-
-Form filling completed successfully! The form has been successfully filled with the provided data:
-
-- **First Name:** John  
-- **Last Name:** Smith  
-- **Email:** john.smith@example.com  
-
-The form at `/path/to/form.html` was analyzed, populated with your custom data, and submitted successfully.
+The screenshot has been successfully captured and saved to the specified location.
 ```
 
 ## Setup
@@ -61,18 +54,9 @@ Install the required packages:
 ```bash
 # Update pip
 pip install --upgrade pip
-
-# Install core dependencies
-pip install wuying-agentbay-sdk playwright python-dotenv
-
-# Install LangChain dependencies
-pip install langchain langchain-openai
-
-# Install Playwright browsers
-playwright install
 ```
 
-Alternatively, you can install dependencies using the requirements file:
+You can install dependencies using the requirements file:
 
 ```bash
 pip install -r requirements.txt
@@ -80,17 +64,11 @@ pip install -r requirements.txt
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the folder of form-filling-agent/ with your API keys:
+Set your API keys as environment variables:
 
-```env
-# AgentBay API Key (required)
-AGENTBAY_API_KEY=your_actual_api_key_here
-
-# DashScope (Alibaba Cloud) API Key for Qwen LLM (required for LangChain orchestration)
-DASHSCOPE_API_KEY=your_qwen_api_key_here
-
-# Optional: specify which Qwen model to use (default: qwen-plus)
-DASHSCOPE_MODEL=qwen-plus
+```bash
+export AGENTBAY_API_KEY="YOUR_AGENTBAY_API_KEY"
+export DASHSCOPE_API_KEY="YOUR_DASHSCOPE_API_KEY"
 ```
 
 You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
@@ -98,22 +76,13 @@ You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
 2. Sign up or log in to your Alibaba Cloud account
 3. Navigate to the Service Management section
 4. Create a new API KEY or select an existing one
-5. Copy the API Key and paste it as the value of `AGENTBAY_API_KEY` in your `.env` file
+5. Copy the API Key and set it as the value of `AGENTBAY_API_KEY`
 
 For the DashScope API key, you need to register on the Alibaba Cloud DashScope platform:
 1. Visit [DashScope Platform](https://bailian.console.aliyun.com/#/home)
 2. Sign up or log in to your account
 3. Navigate to the API Key management section
-4. Copy the API Key and paste it as the value of `DASHSCOPE_API_KEY` in your `.env` file
-
-### 4. Available Qwen Models
-
-The following Qwen models are available for use:
-- `qwen-turbo`: Fast and efficient model for simple tasks
-- `qwen-plus`: Balanced model for most use cases (default)
-- `qwen-max`: Most capable model for complex tasks
-
-You can specify which model to use by setting the `DASHSCOPE_MODEL` environment variable in your `.env` file.
+4. Copy the API Key and set it as the value of `DASHSCOPE_API_KEY`
 
 ## Structure
 
@@ -159,20 +128,14 @@ This example script demonstrates:
 3. Filling the form with custom data
 4. Executing the form filling process
 
-### Direct Usage
+## Troubleshooting
 
-You can also use the form filling agent directly by instantiating the [LangChainFormFillingAgent](./src/form_filling_agent.py) class and calling its methods.
+If you encounter issues:
 
-### Usage Example
-
-```python
-from form_filling_agent import create_langchain_form_filling_agent
-
-# Create the agent
-agent = create_langchain_form_filling_agent()
-
-# Use the agent with specific instructions
-result = agent.invoke({
-    "input": "First analyze the form at /path/to/form.html, then fill it with custom data: John as first name, Smith as last name, john.smith@example.com as email, and finally execute the filling process"
-})
-```
+1. Ensure your API key is correct and properly set in the `.env` file
+2. Check that you have network connectivity to Agent-Bay services
+3. Verify that all required packages are installed:
+   ```bash
+   pip list | grep -E "(wuying-agentbay-sdk|langchain)"
+   ```
+4. Check that you've activated your virtual environment before running the scripts

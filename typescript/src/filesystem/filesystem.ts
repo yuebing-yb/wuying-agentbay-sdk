@@ -1200,6 +1200,12 @@ export class FileSystem {
     const monitor = async () => {
       while (!signal?.aborted) {
         try {
+          // Check if session is still valid
+          if ((this.session as any)._isExpired && (this.session as any)._isExpired()) {
+            console.log(`Session expired, stopping directory monitoring for: ${path}`);
+            break;
+          }
+
           const result = await this.getFileChange(path);
 
           if (result.success && result.events.length > 0) {
@@ -1214,6 +1220,12 @@ export class FileSystem {
               console.error(`Error in callback function: ${error}`);
             }
           } else if (!result.success) {
+            // Check if error is due to session expiry
+            const errorMsg = (result.errorMessage || "").toLowerCase();
+            if (errorMsg.includes("session") && (errorMsg.includes("expired") || errorMsg.includes("invalid"))) {
+              console.log(`Session expired, stopping directory monitoring for: ${path}`);
+              break;
+            }
             console.error(`Error monitoring directory: ${result.errorMessage}`);
           }
 
@@ -1227,6 +1239,12 @@ export class FileSystem {
           });
         } catch (error) {
           console.error(`Unexpected error in directory monitoring: ${error}`);
+          // Check if exception indicates session expiry
+          const errorStr = String(error).toLowerCase();
+          if (errorStr.includes("session") && (errorStr.includes("expired") || errorStr.includes("invalid"))) {
+            console.log(`Session expired, stopping directory monitoring for: ${path}`);
+            break;
+          }
           await new Promise((resolve) => setTimeout(resolve, interval));
         }
       }

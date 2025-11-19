@@ -192,29 +192,29 @@ class TestBrowserTypeIntegration(unittest.TestCase):
         print(f"Browser endpoint URL: {endpoint_url}")
 
     def test_browser_type_serialization(self):
-        """Test that browser type is properly serialized in to_map()."""
+        """Test that browser type is properly serialized in _to_map()."""
         print("\n=== Testing browser type serialization ===")
-        
+
         # Test Chrome browser type serialization
         chrome_option = BrowserOption(browser_type="chrome")
-        chrome_map = chrome_option.to_map()
-        
+        chrome_map = chrome_option._to_map()
+
         self.assertIn("browserType", chrome_map)
         self.assertEqual(chrome_map["browserType"], "chrome")
         print("Chrome browser type serialized correctly")
-        
+
         # Test Chromium browser type serialization
         chromium_option = BrowserOption(browser_type="chromium")
-        chromium_map = chromium_option.to_map()
-        
+        chromium_map = chromium_option._to_map()
+
         self.assertIn("browserType", chromium_map)
         self.assertEqual(chromium_map["browserType"], "chromium")
         print("Chromium browser type serialized correctly")
-        
+
         # Test default browser type serialization (should be None/not in map)
         default_option = BrowserOption()
-        default_map = default_option.to_map()
-        
+        default_map = default_option._to_map()
+
         self.assertNotIn("browserType", default_map)
         print("Default browser type (None) not included in map - correct")
 

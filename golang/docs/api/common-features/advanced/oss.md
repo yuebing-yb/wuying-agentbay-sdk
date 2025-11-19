@@ -93,8 +93,8 @@ downloadResult, _ := result.Session.Oss.DownloadAnonymous("https://example.com/f
 func (o *OSSManager) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region string) (*EnvInitResult, error)
 ```
 
-EnvInit initializes OSS environment variables with the specified endpoint, access key ID, access key
-secret, security token, and region
+EnvInit initializes OSS environment variables with STS temporary credentials. All three credential
+parameters (accessKeyId, accessKeySecret, securityToken) are required for security.
 
 **Example:**
 
@@ -102,7 +102,7 @@ secret, security token, and region
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Create(nil)
 defer result.Session.Delete()
-ossResult, _ := result.Session.Oss.EnvInit("accessKeyId", "accessKeySecret", "token", "endpoint", "cn-hangzhou")
+ossResult, _ := result.Session.Oss.EnvInit("stsAccessKeyId", "stsAccessKeySecret", "stsToken", "endpoint", "cn-hangzhou")
 ```
 
 ### Upload

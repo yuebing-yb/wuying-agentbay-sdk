@@ -37,12 +37,12 @@ export class Oss {
   }
 
   /**
-   * Initialize OSS environment variables with the specified credentials.
+   * Initialize OSS environment variables with the specified STS temporary credentials.
    * Corresponds to Python's env_init() method
    *
-   * @param accessKeyId - The access key ID
-   * @param accessKeySecret - The access key secret
-   * @param securityToken - The security token (optional)
+   * @param accessKeyId - The access key ID from STS temporary credentials
+   * @param accessKeySecret - The access key secret from STS temporary credentials
+   * @param securityToken - The security token from STS temporary credentials (required)
    * @param endpoint - The OSS endpoint (optional)
    * @param region - The OSS region (optional)
    * @returns OSSClientResult with client configuration and requestId
@@ -53,7 +53,7 @@ export class Oss {
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const createResult = await agentBay.create();
    * if (createResult.success) {
-   *   const result = await createResult.session.oss.envInit('key_id', 'key_secret', 'token', 'oss-cn-hangzhou.aliyuncs.com', 'cn-hangzhou');
+   *   const result = await createResult.session.oss.envInit('sts_key_id', 'sts_key_secret', 'sts_token', 'oss-cn-hangzhou.aliyuncs.com', 'cn-hangzhou');
    *   console.log('OSS initialized:', result.success);
    *   await createResult.session.delete();
    * }
@@ -62,7 +62,7 @@ export class Oss {
   async envInit(
     accessKeyId: string,
     accessKeySecret: string,
-    securityToken?: string,
+    securityToken: string,
     endpoint?: string,
     region?: string
   ): Promise<OSSClientResult> {
@@ -70,7 +70,7 @@ export class Oss {
       const args = {
         access_key_id: accessKeyId,
         access_key_secret: accessKeySecret,
-        security_token: securityToken || "",
+        security_token: securityToken,
         endpoint: endpoint || "",
         region: region || "",
       };

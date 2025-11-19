@@ -1,4 +1,4 @@
-import { AgentBay, ContextSync, CreateSessionParams, newSyncPolicyWithDefaults } from "wuying-agentbay-sdk";
+import { AgentBay, ContextSync, CreateSessionParams, newSyncPolicyWithDefaults } from 'wuying-agentbay-sdk';
 
 /**
  * Context Sync Dual-Mode Example for TypeScript SDK

@@ -21,7 +21,7 @@ class TestOss(unittest.TestCase):
         )
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.oss.env_init("key_id", "key_secret", endpoint="test_endpoint")
+        result = self.oss.env_init("key_id", "key_secret", "security_token", endpoint="test_endpoint")
 
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -38,7 +38,7 @@ class TestOss(unittest.TestCase):
         )
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.oss.env_init("key_id", "key_secret")
+        result = self.oss.env_init("key_id", "key_secret", "security_token")
 
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "test-request-id")

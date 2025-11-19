@@ -168,7 +168,9 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
         self.session = self.mock_session  # Add session reference
         self.mock_session.get_api_key.return_value = "test-api-key"
         self.mock_session.get_session_id.return_value = "test-session-id"
-        
+        # Mock _is_expired to return False so the watch thread doesn't stop prematurely
+        self.mock_session._is_expired.return_value = False
+
         self.filesystem = FileSystem(self.mock_session)
 
     def test_get_file_change_success(self):

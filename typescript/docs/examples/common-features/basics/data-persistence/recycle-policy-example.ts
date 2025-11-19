@@ -73,9 +73,7 @@ async function example1DefaultRecyclePolicy(): Promise<void> {
   const agentBay = new AgentBay();
 
   // Create a context
-  const contextResult = await agentBay.context.get("default-recycle-demo", {
-    create: true,
-  });
+  const contextResult = await agentBay.context.get("default-recycle-demo", true);
   if (!contextResult.success || !contextResult.context) {
     console.log(`❌ Failed to create context: ${contextResult.errorMessage}`);
     return;
@@ -92,8 +90,8 @@ async function example1DefaultRecyclePolicy(): Promise<void> {
   const contextSync = new ContextSync(context.id, "/tmp/default_data", syncPolicy);
 
   // Create session with context sync
-  const params = new CreateSessionParams();
-  params.contextSyncs = [contextSync];
+  const params: CreateSessionParams = {};
+  params.contextSync = [contextSync];
   const sessionResult = await agentBay.create(params);
 
   if (!sessionResult.success || !sessionResult.session) {
@@ -126,9 +124,7 @@ async function example2OneDayLifecycle(): Promise<void> {
   const agentBay = new AgentBay();
 
   // Create a context
-  const contextResult = await agentBay.context.get("one-day-recycle-demo", {
-    create: true,
-  });
+  const contextResult = await agentBay.context.get("one-day-recycle-demo", true);
   if (!contextResult.success || !contextResult.context) {
     console.log(`❌ Failed to create context: ${contextResult.errorMessage}`);
     return;
@@ -154,9 +150,9 @@ async function example2OneDayLifecycle(): Promise<void> {
   const contextSync = new ContextSync(context.id, "/tmp/oneday_data", syncPolicy);
 
   // Create session with context sync
-  const params = new CreateSessionParams();
+  const params: CreateSessionParams = {};
   params.labels = { example: "recycle_policy", lifecycle: "1day" };
-  params.contextSyncs = [contextSync];
+  params.contextSync = [contextSync];
   const sessionResult = await agentBay.create(params);
 
   if (!sessionResult.success || !sessionResult.session) {
@@ -191,9 +187,7 @@ async function example3SpecificPaths(): Promise<void> {
   const agentBay = new AgentBay();
 
   // Create a context
-  const contextResult = await agentBay.context.get("specific-path-demo", {
-    create: true,
-  });
+  const contextResult = await agentBay.context.get("specific-path-demo", true);
   if (!contextResult.success || !contextResult.context) {
     console.log(`❌ Failed to create context: ${contextResult.errorMessage}`);
     return;
@@ -223,8 +217,8 @@ async function example3SpecificPaths(): Promise<void> {
   );
 
   // Create session
-  const params = new CreateSessionParams();
-  params.contextSyncs = [contextSync];
+  const params: CreateSessionParams = {};
+  params.contextSync = [contextSync];
   const sessionResult = await agentBay.create(params);
 
   if (!sessionResult.success || !sessionResult.session) {

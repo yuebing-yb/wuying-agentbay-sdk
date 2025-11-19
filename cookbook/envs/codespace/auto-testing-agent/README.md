@@ -6,7 +6,7 @@ This project demonstrates how to create a testing agent using LangChain and Agen
 
 - Scan Python projects to identify modules that need testing
 - Generate test cases using LLMs based on project structure
-- Execute tests in isolated AgentBay cloud sessions
+- Execute tests in isolated AgentBay cloud environments
 - Save test results to local log files
 - Support for multiple agent frameworks (currently LangChain, with plans for others)
 
