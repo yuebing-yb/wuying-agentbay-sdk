@@ -387,9 +387,7 @@ func TestAgentBay_CreateSessionWithRecyclePolicy(t *testing.T) {
 	}
 
 	// List sessions with the labels to verify they were applied
-	listParams := agentbay.NewListSessionParams()
-	listParams.Labels = expectedLabels
-	listResult, err := agentBay.ListByLabels(listParams)
+	listResult, err := agentBay.List(expectedLabels, nil, nil)
 	if err != nil {
 		fmt.Printf("Warning: Error listing sessions by labels: %v\n", err)
 	} else {

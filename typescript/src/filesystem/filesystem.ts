@@ -701,12 +701,13 @@ export class FileSystem {
   }
 
   /**
-   * Searches for files in a directory that match a pattern.
+   * Searches for files in a directory that match a wildcard pattern.
    * Corresponds to Python's search_files() method
    *
    * @param path - Path to the directory to search in.
-   * @param pattern - Pattern to search for. Supports glob patterns.
-   * @param excludePatterns - Optional: Array of patterns to exclude.
+   * @param pattern - Wildcard pattern to match against file names. Supports * (any characters)
+   *                  and ? (single character). Examples: "*.py", "test_*", "*config*".
+   * @param excludePatterns - Optional: Array of wildcard patterns to exclude.
    * @returns FileSearchResult with search results and requestId
    *
    * @example
@@ -716,7 +717,7 @@ export class FileSystem {
    * if (result.success) {
    *   await result.session.fileSystem.createDirectory('/tmp/test');
    *   await result.session.fileSystem.writeFile('/tmp/test/file1.py', "print('hello')");
-   *   const searchResult = await result.session.fileSystem.searchFiles('/tmp/test', '.py');
+   *   const searchResult = await result.session.fileSystem.searchFiles('/tmp/test', '*.py');
    *   console.log(`Found ${searchResult.matches.length} Python files`);
    *   await result.session.delete();
    * }

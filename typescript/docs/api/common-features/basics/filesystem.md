@@ -318,7 +318,7 @@ ___
 
 ▸ **searchFiles**(`path`, `pattern`, `excludePatterns?`): `Promise`\<`FileSearchResult`\>
 
-Searches for files in a directory that match a pattern.
+Searches for files in a directory that match a wildcard pattern.
 Corresponds to Python's search_files() method
 
 #### Parameters
@@ -326,8 +326,8 @@ Corresponds to Python's search_files() method
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `path` | `string` | `undefined` | Path to the directory to search in. |
-| `pattern` | `string` | `undefined` | Pattern to search for. Supports glob patterns. |
-| `excludePatterns` | `string`[] | `[]` | Optional: Array of patterns to exclude. |
+| `pattern` | `string` | `undefined` | Wildcard pattern to match against file names. Supports * (any characters) and ? (single character). Examples: "*.py", "test_*", "*config*". |
+| `excludePatterns` | `string`[] | `[]` | Optional: Array of wildcard patterns to exclude. |
 
 #### Returns
 
@@ -343,7 +343,7 @@ const result = await agentBay.create();
 if (result.success) {
   await result.session.fileSystem.createDirectory('/tmp/test');
   await result.session.fileSystem.writeFile('/tmp/test/file1.py', "print('hello')");
-  const searchResult = await result.session.fileSystem.searchFiles('/tmp/test', '.py');
+  const searchResult = await result.session.fileSystem.searchFiles('/tmp/test', '*.py');
   console.log(`Found ${searchResult.matches.length} Python files`);
   await result.session.delete();
 }

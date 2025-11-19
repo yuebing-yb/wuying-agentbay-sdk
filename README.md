@@ -1,6 +1,30 @@
-# AgentBay SDK
+<div align="center">
 
-> The AgentBay SDK provides a comprehensive suite of tools for efficient interaction with AgentBay cloud environments, enabling you to create and manage cloud sessions, execute commands, operate files, and interact with user interfaces.
+[![PyPI Downloads](https://img.shields.io/pypi/dm/wuying-agentbay-sdk?label=PyPI%20Downloads&logo=python&logoColor=white&cacheSeconds=86400)](https://pypi.org/project/wuying-agentbay-sdk/)
+[![NPM Downloads](https://img.shields.io/npm/dm/wuying-agentbay-sdk?label=NPM%20Downloads&logo=npm)](https://www.npmjs.com/package/wuying-agentbay-sdk)
+[![Go Report Card](https://goreportcard.com/badge/github.com/aliyun/wuying-agentbay-sdk/golang)](https://goreportcard.com/report/github.com/aliyun/wuying-agentbay-sdk/golang)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue)](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/LICENSE)
+
+</div>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/Agentbay-dark.png" width="800px">
+    <source media="(prefers-color-scheme: light)" srcset="./assets/Agentbay-light.png" width="800px">
+    <img src="./assets/Agentbay-light.png" alt="AgentBay" width="800px" />
+  </picture>
+</p>
+
+<p align="center">
+  <b>The Cloud Sandbox Built for AI Agents</b>
+  <br>
+  <a href="docs/guides/browser-use/README.md">Browser</a> ·
+  <a href="docs/guides/computer-use/README.md">Desktop</a> ·
+  <a href="docs/guides/mobile-use/README.md">Mobile</a> ·
+  <a href="docs/guides/codespace/README.md">Code</a>
+</p>
+
+---
 
 ## 📦 Installation
 

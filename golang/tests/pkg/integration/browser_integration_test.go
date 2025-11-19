@@ -53,7 +53,7 @@ func TestBrowser_Initialize_Integration(t *testing.T) {
 		// Verify option was saved
 		savedOption := session.Browser.GetOption()
 		assert.NotNil(t, savedOption)
-		assert.Equal(t, "chromium", savedOption.BrowserType)
+		assert.Nil(t, savedOption.BrowserType) // Default should be nil
 	})
 
 	t.Run("Get endpoint URL after initialization", func(t *testing.T) {
@@ -111,7 +111,8 @@ func TestBrowser_InitializeWithChrome_Integration(t *testing.T) {
 		// Verify Chrome was selected
 		savedOption := session.Browser.GetOption()
 		assert.NotNil(t, savedOption)
-		assert.Equal(t, "chrome", savedOption.BrowserType)
+		assert.NotNil(t, savedOption.BrowserType)
+		assert.Equal(t, "chrome", *savedOption.BrowserType)
 	})
 }
 
@@ -229,7 +230,7 @@ func TestBrowser_InitializeAlreadyInitialized_Integration(t *testing.T) {
 	// Should still have the original option
 	savedOption := session.Browser.GetOption()
 	assert.NotNil(t, savedOption)
-	assert.Equal(t, "chromium", savedOption.BrowserType) // Original value
+	assert.Nil(t, savedOption.BrowserType) // Original value (nil for default)
 }
 
 func TestBrowser_GetEndpointURLBeforeInitialization_Integration(t *testing.T) {

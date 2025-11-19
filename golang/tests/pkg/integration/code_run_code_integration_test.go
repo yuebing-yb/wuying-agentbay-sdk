@@ -1,8 +1,6 @@
 package integration_test
 
 import (
-	"encoding/json"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -10,34 +8,6 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
-
-// extractCodeOutput extracts the actual text output from the MCP tool response
-func extractCodeOutput(rawOutput string) (string, error) {
-	// The output is a JSON string with structure:
-	// {"content":[{"text":"...","type":"text"}],"isError":false,"parsedToolName":"..."}
-	var response struct {
-		Content []struct {
-			Text string `json:"text"`
-			Type string `json:"type"`
-		} `json:"content"`
-		IsError        bool   `json:"isError"`
-		ParsedToolName string `json:"parsedToolName"`
-	}
-
-	if err := json.Unmarshal([]byte(rawOutput), &response); err != nil {
-		return "", fmt.Errorf("failed to parse output JSON: %w", err)
-	}
-
-	// Extract text from all content items
-	var texts []string
-	for _, item := range response.Content {
-		if item.Type == "text" {
-			texts = append(texts, item.Text)
-		}
-	}
-
-	return strings.Join(texts, ""), nil
-}
 
 // TestCodeRunCodeIntegration tests the code.run_code functionality with Python and JavaScript
 func TestCodeRunCodeIntegration(t *testing.T) {
@@ -83,23 +53,15 @@ print(f"Result: {x}")`
 			t.Fatalf("Error executing Python code: %v", err)
 		}
 
-		// Extract actual code output
-		actualOutput, err := extractCodeOutput(result.Output)
-		if err != nil {
-			t.Logf("Warning: Failed to extract code output: %v", err)
-			t.Logf("Raw output: %s", result.Output)
-			actualOutput = result.Output
-		}
-
 		t.Logf("Python execution output (RequestID: %s):\n%s",
-			result.RequestID, actualOutput)
+			result.RequestID, result.Output)
 
 		// Verify output contains expected strings
-		if !strings.Contains(actualOutput, "Hello from Python!") {
-			t.Errorf("Expected output to contain 'Hello from Python!', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Hello from Python!") {
+			t.Errorf("Expected output to contain 'Hello from Python!', got: %s", result.Output)
 		}
-		if !strings.Contains(actualOutput, "30") {
-			t.Errorf("Expected output to contain '30', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "30") {
+			t.Errorf("Expected output to contain '30', got: %s", result.Output)
 		}
 		if result.RequestID == "" {
 			t.Error("RequestID should not be empty")
@@ -119,16 +81,15 @@ print("Completed after 2 seconds")`
 			t.Fatalf("Error executing Python code with timeout: %v", err)
 		}
 
-		actualOutput, _ := extractCodeOutput(result.Output)
 		t.Logf("Python execution with timeout output (RequestID: %s):\n%s",
-			result.RequestID, actualOutput)
+			result.RequestID, result.Output)
 
 		// Verify output contains expected strings
-		if !strings.Contains(actualOutput, "Starting...") {
-			t.Errorf("Expected output to contain 'Starting...', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Starting...") {
+			t.Errorf("Expected output to contain 'Starting...', got: %s", result.Output)
 		}
-		if !strings.Contains(actualOutput, "Completed after 2 seconds") {
-			t.Errorf("Expected output to contain 'Completed after 2 seconds', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Completed after 2 seconds") {
+			t.Errorf("Expected output to contain 'Completed after 2 seconds', got: %s", result.Output)
 		}
 	})
 
@@ -144,16 +105,15 @@ console.log("Result: " + x);`
 			t.Fatalf("Error executing JavaScript code: %v", err)
 		}
 
-		actualOutput, _ := extractCodeOutput(result.Output)
 		t.Logf("JavaScript execution output (RequestID: %s):\n%s",
-			result.RequestID, actualOutput)
+			result.RequestID, result.Output)
 
 		// Verify output contains expected strings
-		if !strings.Contains(actualOutput, "Hello from JavaScript!") {
-			t.Errorf("Expected output to contain 'Hello from JavaScript!', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Hello from JavaScript!") {
+			t.Errorf("Expected output to contain 'Hello from JavaScript!', got: %s", result.Output)
 		}
-		if !strings.Contains(actualOutput, "30") {
-			t.Errorf("Expected output to contain '30', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "30") {
+			t.Errorf("Expected output to contain '30', got: %s", result.Output)
 		}
 		if result.RequestID == "" {
 			t.Error("RequestID should not be empty")
@@ -174,16 +134,15 @@ console.log("Immediate output");`
 			t.Fatalf("Error executing JavaScript code with timeout: %v", err)
 		}
 
-		actualOutput, _ := extractCodeOutput(result.Output)
 		t.Logf("JavaScript execution with timeout output (RequestID: %s):\n%s",
-			result.RequestID, actualOutput)
+			result.RequestID, result.Output)
 
 		// Verify output contains expected strings
-		if !strings.Contains(actualOutput, "Starting...") {
-			t.Errorf("Expected output to contain 'Starting...', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Starting...") {
+			t.Errorf("Expected output to contain 'Starting...', got: %s", result.Output)
 		}
-		if !strings.Contains(actualOutput, "Immediate output") {
-			t.Errorf("Expected output to contain 'Immediate output', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Immediate output") {
+			t.Errorf("Expected output to contain 'Immediate output', got: %s", result.Output)
 		}
 	})
 
@@ -209,16 +168,15 @@ print("File operations completed successfully")`
 			t.Fatalf("Error executing Python code with file operations: %v", err)
 		}
 
-		actualOutput, _ := extractCodeOutput(result.Output)
 		t.Logf("Python file operations output (RequestID: %s):\n%s",
-			result.RequestID, actualOutput)
+			result.RequestID, result.Output)
 
 		// Verify output
-		if !strings.Contains(actualOutput, "Test content from Python code execution") {
-			t.Errorf("Expected output to contain file content, got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Test content from Python code execution") {
+			t.Errorf("Expected output to contain file content, got: %s", result.Output)
 		}
-		if !strings.Contains(actualOutput, "File operations completed successfully") {
-			t.Errorf("Expected output to contain success message, got: %s", actualOutput)
+		if !strings.Contains(result.Output, "File operations completed successfully") {
+			t.Errorf("Expected output to contain success message, got: %s", result.Output)
 		}
 	})
 
@@ -236,16 +194,15 @@ except ZeroDivisionError as e:
 			t.Fatalf("Error executing Python code with error handling: %v", err)
 		}
 
-		actualOutput, _ := extractCodeOutput(result.Output)
 		t.Logf("Python error handling output (RequestID: %s):\n%s",
-			result.RequestID, actualOutput)
+			result.RequestID, result.Output)
 
 		// Verify output
-		if !strings.Contains(actualOutput, "Caught error") {
-			t.Errorf("Expected output to contain 'Caught error', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Caught error") {
+			t.Errorf("Expected output to contain 'Caught error', got: %s", result.Output)
 		}
-		if !strings.Contains(actualOutput, "Error handled successfully") {
-			t.Errorf("Expected output to contain 'Error handled successfully', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Error handled successfully") {
+			t.Errorf("Expected output to contain 'Error handled successfully', got: %s", result.Output)
 		}
 	})
 
@@ -290,16 +247,15 @@ print(f"Numbers sum: {sum(parsed['numbers'])}")`
 			t.Fatalf("Error executing Python code with imports: %v", err)
 		}
 
-		actualOutput, _ := extractCodeOutput(result.Output)
 		t.Logf("Python with imports output (RequestID: %s):\n%s",
-			result.RequestID, actualOutput)
+			result.RequestID, result.Output)
 
 		// Verify output
-		if !strings.Contains(actualOutput, "Hello from Python") {
-			t.Errorf("Expected output to contain 'Hello from Python', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Hello from Python") {
+			t.Errorf("Expected output to contain 'Hello from Python', got: %s", result.Output)
 		}
-		if !strings.Contains(actualOutput, "Numbers sum: 15") {
-			t.Errorf("Expected output to contain 'Numbers sum: 15', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "Numbers sum: 15") {
+			t.Errorf("Expected output to contain 'Numbers sum: 15', got: %s", result.Output)
 		}
 	})
 
@@ -353,12 +309,11 @@ print("Completed")`
 			t.Logf("Note: Code execution with timeout returned error: %v", err)
 			// This is acceptable - timeout might cause an error
 		} else {
-			actualOutput, _ := extractCodeOutput(result.Output)
 			t.Logf("Python execution output (RequestID: %s):\n%s",
-				result.RequestID, actualOutput)
+				result.RequestID, result.Output)
 			// If it completes, verify it has the expected output
-			if !strings.Contains(actualOutput, "Starting long operation") {
-				t.Errorf("Expected output to contain 'Starting long operation', got: %s", actualOutput)
+			if !strings.Contains(result.Output, "Starting long operation") {
+				t.Errorf("Expected output to contain 'Starting long operation', got: %s", result.Output)
 			}
 		}
 	})
@@ -408,8 +363,7 @@ print("Python wrote data to file")`
 		if err != nil {
 			t.Fatalf("Error executing Python code: %v", err)
 		}
-		actualOutput, _ := extractCodeOutput(result.Output)
-		t.Logf("Python output (RequestID: %s):\n%s", result.RequestID, actualOutput)
+		t.Logf("Python output (RequestID: %s):\n%s", result.RequestID, result.Output)
 
 		// Add a small delay to ensure file is written
 		time.Sleep(1 * time.Second)
@@ -428,8 +382,7 @@ console.log('JavaScript updated data in file');`
 		if err != nil {
 			t.Fatalf("Error executing JavaScript code: %v", err)
 		}
-		actualOutput, _ = extractCodeOutput(result.Output)
-		t.Logf("JavaScript output (RequestID: %s):\n%s", result.RequestID, actualOutput)
+		t.Logf("JavaScript output (RequestID: %s):\n%s", result.RequestID, result.Output)
 
 		// Add a small delay
 		time.Sleep(1 * time.Second)
@@ -450,15 +403,14 @@ print("Cleanup completed")`
 		if err != nil {
 			t.Fatalf("Error executing Python verification code: %v", err)
 		}
-		actualOutput, _ = extractCodeOutput(result.Output)
-		t.Logf("Python verification output (RequestID: %s):\n%s", result.RequestID, actualOutput)
+		t.Logf("Python verification output (RequestID: %s):\n%s", result.RequestID, result.Output)
 
 		// Verify the data was correctly modified
-		if !strings.Contains(actualOutput, "javascript") {
-			t.Errorf("Expected language to be 'javascript', got: %s", actualOutput)
+		if !strings.Contains(result.Output, "javascript") {
+			t.Errorf("Expected language to be 'javascript', got: %s", result.Output)
 		}
-		if !strings.Contains(actualOutput, "84") {
-			t.Errorf("Expected value to be 84 (42*2), got: %s", actualOutput)
+		if !strings.Contains(result.Output, "84") {
+			t.Errorf("Expected value to be 84 (42*2), got: %s", result.Output)
 		}
 	})
 

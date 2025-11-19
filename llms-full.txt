@@ -2,9 +2,29 @@
 
 
 
-# AgentBay SDK
+<div align="center">
 
-> The AgentBay SDK provides a comprehensive suite of tools for efficient interaction with AgentBay cloud environments, enabling you to create and manage cloud sessions, execute commands, operate files, and interact with user interfaces.
+[![PyPI Downloads](https://img.shields.io/pypi/dm/wuying-agentbay-sdk?label=PyPI%20Downloads&logo=python&logoColor=white)](https://pypi.org/project/wuying-agentbay-sdk/)
+[![NPM Downloads](https://img.shields.io/npm/dm/wuying-agentbay-sdk?label=NPM%20Downloads&logo=npm)](https://www.npmjs.com/package/wuying-agentbay-sdk)
+[![Go Report Card](https://goreportcard.com/badge/github.com/aliyun/wuying-agentbay-sdk/golang)](https://goreportcard.com/report/github.com/aliyun/wuying-agentbay-sdk/golang)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue)](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/LICENSE)
+
+</div>
+
+<p align="center">
+  <img src="./assets/Agentbay.png" alt="AgentBay" width="800px" />
+</p>
+
+<p align="center">
+  <b>The Cloud Sandbox Built for AI Agents</b>
+  <br>
+  <a href="docs/guides/browser-use/README.md">Browser</a> ·
+  <a href="docs/guides/computer-use/README.md">Desktop</a> ·
+  <a href="docs/guides/mobile-use/README.md">Mobile</a> ·
+  <a href="docs/guides/codespace/README.md">Code</a>
+</p>
+
+---
 
 ## 📦 Installation
 
@@ -5827,22 +5847,25 @@ Object Storage Service (OSS) integration enables file upload and download operat
 ## Overview
 
 The OSS module provides:
-- **Authenticated Operations**: Upload/download files using OSS credentials
+- **Authenticated Operations**: Upload/download files using OSS STS temporary credentials
 - **Anonymous Operations**: Upload/download files using presigned URLs
 - **Session-scoped**: All OSS operations are executed within a cloud session environment
+- **Security-first**: Only STS temporary credentials are supported for authenticated operations
 
 ## Prerequisites
 
 Before using OSS operations, you need:
 1. An active AgentBay session (preferably `code_latest` image)
-2. Alibaba Cloud OSS credentials (Access Key ID and Secret)
+2. Alibaba Cloud OSS temporary credentials from STS (Access Key ID, Secret, and Security Token)
+   - See [Alibaba Cloud STS documentation](https://help.aliyun.com/zh/oss/developer-reference/use-temporary-access-credentials-provided-by-sts-to-access-oss) for obtaining temporary credentials
+   - **Security Note**: For security reasons, only STS temporary credentials are supported. Permanent credentials are not allowed.
 3. An OSS bucket (for authenticated operations)
 
 ## Basic Workflow
 
 ### 1. Initialize OSS Environment
 
-Before performing any OSS operations, you must initialize the OSS environment with your credentials:
+Before performing any OSS operations, you must initialize the OSS environment with your STS temporary credentials:
 
 ```python
 from agentbay import AgentBay
@@ -5857,7 +5880,7 @@ session = result.session
 init_result = session.oss.env_init(
     access_key_id="your-oss-access-key-id",
     access_key_secret="your-oss-access-key-secret",
-    securityToken="optional-security-token",  # Optional: for temporary credentials
+    securityToken="your-security-token",  # Required when using temporary credentials (STS)
     endpoint="https://oss-cn-hangzhou.aliyuncs.com",  # Optional: defaults to OSS endpoint
     region="cn-hangzhou"  # Optional: defaults to OSS region
 )
@@ -5870,9 +5893,9 @@ else:
 ```
 
 **Parameters:**
-- `access_key_id` (required): Your Alibaba Cloud Access Key ID
-- `access_key_secret` (required): Your Alibaba Cloud Access Key Secret
-- `securityToken` (optional): Security token for temporary credentials (STS)
+- `access_key_id` (required): Your Alibaba Cloud Access Key ID from STS
+- `access_key_secret` (required): Your Alibaba Cloud Access Key Secret from STS
+- `securityToken` (required): Security token from [STS temporary credentials](https://help.aliyun.com/zh/oss/developer-reference/use-temporary-access-credentials-provided-by-sts-to-access-oss). **For security reasons, only temporary credentials are supported.**
 - `endpoint` (optional): OSS service endpoint (e.g., `https://oss-cn-hangzhou.aliyuncs.com`)
 - `region` (optional): OSS region (e.g., `cn-hangzhou`)
 
@@ -6015,9 +6038,11 @@ if not result.success:
 session = result.session
 
 try:
+    # Initialize OSS with STS temporary credentials
     init_result = session.oss.env_init(
-        access_key_id="your-oss-access-key-id",
-        access_key_secret="your-oss-access-key-secret",
+        access_key_id="your-sts-access-key-id",
+        access_key_secret="your-sts-access-key-secret",
+        securityToken="your-sts-security-token",  # Required for STS credentials
         endpoint="https://oss-cn-hangzhou.aliyuncs.com",
         region="cn-hangzhou"
     )
@@ -6161,27 +6186,32 @@ session.command.execute_command("unzip /home/guest/dataset.zip -d /home/guest/da
 
 ## Best Practices
 
-1. **Always Initialize First**: Call `env_init()` before any other OSS operations
-2. **Handle Errors**: Check `success` field and handle `error_message` appropriately
-3. **Use Absolute Paths**: Use absolute paths for file operations (e.g., `/home/guest/file.txt`)
-4. **Secure Credentials**: Never hardcode credentials; use environment variables
-5. **Clean Up**: Delete sessions after completing OSS operations to avoid charges
-6. **Request IDs**: Log `request_id` from results for debugging and support
+1. **Use STS Temporary Credentials**: Always use STS temporary credentials with limited validity and minimal permissions
+2. **Always Initialize First**: Call `env_init()` with all three required credentials (`access_key_id`, `access_key_secret`, `securityToken`) before any other OSS operations
+3. **Handle Errors**: Check `success` field and handle `error_message` appropriately
+4. **Use Absolute Paths**: Use absolute paths for file operations (e.g., `/home/guest/file.txt`)
+5. **Secure Credentials**: Never hardcode credentials; use environment variables or secure vaults
+6. **Token Refresh**: Monitor STS token expiration and refresh tokens before they expire
+7. **Clean Up**: Delete sessions after completing OSS operations to avoid charges
+8. **Request IDs**: Log `request_id` from results for debugging and support
 
 ## Security Considerations
 
-- **Credential Management**: Store OSS credentials securely (environment variables, secrets manager)
-- **Temporary Credentials**: Use STS temporary credentials with `securityToken` when possible
-- **Bucket Permissions**: Grant minimal required permissions to OSS Access Keys
-- **Network Security**: Use HTTPS endpoints for OSS operations
-- **Session Cleanup**: Always delete sessions containing sensitive data
+- **Mandatory Temporary Credentials**: For security reasons, AgentBay OSS integration **only supports STS temporary credentials**. You must provide a valid `securityToken` when calling `env_init()`.
+- **Credential Management**: Store STS credentials securely (environment variables, secrets manager). Never hardcode credentials in source code.
+- **Credential Lifecycle**: STS tokens have limited validity. Ensure you obtain fresh temporary credentials before they expire. Refer to [Alibaba Cloud STS documentation](https://help.aliyun.com/zh/oss/developer-reference/use-temporary-access-credentials-provided-by-sts-to-access-oss) for details.
+- **Minimal Permissions**: Configure STS policies to grant only the minimum required OSS permissions (e.g., read-only for downloads, write-only for uploads)
+- **Bucket Permissions**: Use bucket policies to restrict access to specific resources
+- **Network Security**: Always use HTTPS endpoints for OSS operations
+- **Session Cleanup**: Delete sessions after completing operations to prevent credential leakage
 
 ## Limitations
 
 1. **Session Requirement**: OSS operations require an active session
-2. **Initialization Required**: `env_init()` must be called before upload/download operations
-3. **Path Restrictions**: File paths must be within the session filesystem
-4. **Image Compatibility**: Works best with `code_latest` image
+2. **STS Credentials Only**: Only STS temporary credentials are supported; permanent credentials are not allowed
+3. **Initialization Required**: `env_init()` must be called with `securityToken` before upload/download operations
+4. **Path Restrictions**: File paths must be within the session filesystem
+5. **Image Compatibility**: Works best with `code_latest` image
 
 ## Related Documentation
 
@@ -7072,13 +7102,59 @@ print(f"Found context: {context.name}")
 ### Listing and Deleting Contexts
 
 ```python
-# List all contexts
+# List all contexts (default pagination)
 contexts_result = agent_bay.context.list()
 if contexts_result.success:
+    print(f"Total contexts: {contexts_result.total_count}")
     for context in contexts_result.contexts:
         print(f"Context: {context.name} (ID: {context.id})")
 else:
     print(f"Failed to list contexts: {contexts_result.error_message}")
+
+# List contexts with pagination
+from agentbay.context import ContextListParams
+
+params = ContextListParams(max_results=20)
+result = agent_bay.context.list(params)
+
+if result.success:
+    print(f"Total contexts: {result.total_count}")
+    print(f"Current page: {len(result.contexts)} contexts")
+    
+    # Iterate through all pages
+    while result.next_token:
+        params = ContextListParams(max_results=20, next_token=result.next_token)
+        result = agent_bay.context.list(params)
+        if result.success:
+            print(f"Next page: {len(result.contexts)} contexts")
+        else:
+            print(f"Failed to fetch next page: {result.error_message}")
+            break
+
+# Get context by name
+context_result = agent_bay.context.get(name="my-project", create=False)
+if context_result.success:
+    print(f"Found context: {context_result.context.name}")
+else:
+    print(f"Context not found: {context_result.error_message}")
+
+# Get context by ID
+context_result = agent_bay.context.get(context_id="SdkCtx-123abc456def")
+if context_result.success:
+    print(f"Found context: {context_result.context.name} (ID: {context_result.context.id})")
+else:
+    print(f"Context not found: {context_result.error_message}")
+
+# Update context name
+context_result = agent_bay.context.get(name="old-name", create=False)
+if context_result.success:
+    context = context_result.context
+    context.name = "new-name"
+    update_result = agent_bay.context.update(context)
+    if update_result.success:
+        print("Context name updated successfully")
+    else:
+        print(f"Failed to update context: {update_result.error_message}")
 
 # Delete context
 context_to_delete = agent_bay.context.get("my-project", create=False).context
@@ -7088,6 +7164,325 @@ if context_to_delete:
         print("Context deleted successfully")
     else:
         print(f"Failed to delete context: {delete_result.error_message}")
+```
+
+## 📁 Context File Operations
+
+Context file operations provide direct access to files stored in a context's OSS directory. These operations are useful when you need to manage files without creating a session, or when you want to integrate context data with external systems.
+
+### When to Use Direct File Operations
+
+**Use direct file operations when:**
+- You need to access files without creating a session
+- You want to integrate with external systems (webhooks, APIs)
+- You need to download/upload large files directly
+- You want to inspect context contents programmatically
+
+**Use session sync when:**
+- You need to work with files during session execution
+- You want automatic bidirectional synchronization
+- You're running code that expects local filesystem access
+
+### Getting Presigned URLs
+
+Presigned URLs allow you to upload or download files directly to/from the context's OSS storage without going through a session.
+
+```python
+from agentbay import AgentBay
+import requests
+
+agent_bay = AgentBay()
+
+# Create or get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# Get upload URL
+upload_result = agent_bay.context.get_file_upload_url(
+    context_id=context.id,
+    file_path="/data/report.txt"
+)
+
+if upload_result.success:
+    print(f"Upload URL: {upload_result.url}")
+    print(f"URL expires at: {upload_result.expire_time}")
+    
+    # Upload file using requests library
+    file_content = "This is my report content"
+    response = requests.put(upload_result.url, data=file_content.encode('utf-8'))
+    
+    if response.status_code == 200:
+        print("File uploaded successfully")
+    else:
+        print(f"Upload failed: {response.status_code}")
+else:
+    print(f"Failed to get upload URL: {upload_result.error_message}")
+
+# Get download URL
+download_result = agent_bay.context.get_file_download_url(
+    context_id=context.id,
+    file_path="/data/report.txt"
+)
+
+if download_result.success:
+    print(f"Download URL: {download_result.url}")
+    
+    # Download file using requests library
+    response = requests.get(download_result.url)
+    
+    if response.status_code == 200:
+        content = response.text
+        print(f"File content: {content}")
+    else:
+        print(f"Download failed: {response.status_code}")
+else:
+    print(f"Failed to get download URL: {download_result.error_message}")
+```
+
+### Listing Files
+
+List files in a context with pagination support:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
+
+# Get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# List files in root directory
+list_result = agent_bay.context.list_files(
+    context_id=context.id,
+    parent_folder_path="/",
+    page_number=1,
+    page_size=50
+)
+
+if list_result.success:
+    print(f"Found {len(list_result.entries)} files")
+    
+    for entry in list_result.entries:
+        print(f"File: {entry.file_name}")
+        print(f"  Path: {entry.file_path}")
+        print(f"  Size: {entry.size} bytes")
+        print(f"  Type: {entry.file_type}")
+        print(f"  Created: {entry.gmt_create}")
+        print(f"  Modified: {entry.gmt_modified}")
+else:
+    print(f"Failed to list files: {list_result.error_message}")
+
+# List files with pagination
+page_number = 1
+page_size = 10
+
+while True:
+    list_result = agent_bay.context.list_files(
+        context_id=context.id,
+        parent_folder_path="/data",
+        page_number=page_number,
+        page_size=page_size
+    )
+    
+    if not list_result.success:
+        print(f"Failed to list files: {list_result.error_message}")
+        break
+    
+    if not list_result.entries:
+        print("No more files")
+        break
+    
+    print(f"Page {page_number}: {len(list_result.entries)} files")
+    for entry in list_result.entries:
+        print(f"  - {entry.file_name} ({entry.size} bytes)")
+    
+    page_number += 1
+```
+
+### Deleting Files
+
+Delete specific files from a context:
+
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
+
+# Get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# Delete a single file
+delete_result = agent_bay.context.delete_file(
+    context_id=context.id,
+    file_path="/data/old_report.txt"
+)
+
+if delete_result.success:
+    print("File deleted successfully")
+else:
+    print(f"Failed to delete file: {delete_result.error_message}")
+
+# Delete multiple files
+files_to_delete = ["/logs/debug.log", "/temp/cache.dat", "/old/data.json"]
+
+for file_path in files_to_delete:
+    delete_result = agent_bay.context.delete_file(
+        context_id=context.id,
+        file_path=file_path
+    )
+    
+    if delete_result.success:
+        print(f"Deleted: {file_path}")
+    else:
+        print(f"Failed to delete {file_path}: {delete_result.error_message}")
+```
+
+## 🗑️ Context Data Clearing
+
+Context clearing removes all files from a context while keeping the context itself intact. This is useful when you want to reset a context's data without deleting and recreating it.
+
+### Clear vs Delete
+
+| Operation | Context | Context ID | Files | Use Case |
+|-----------|---------|------------|-------|----------|
+| **Clear** | Preserved | Unchanged | Deleted | Reset data, keep configuration |
+| **Delete** | Removed | Lost | Deleted | Complete cleanup, remove context |
+
+**When to use Clear:**
+- Reset a context for a new workflow run
+- Clean up temporary data periodically
+- Prepare a context for fresh data
+- Keep context references in your code valid
+
+**When to use Delete:**
+- Remove a context completely
+- Clean up unused contexts
+- Context is no longer needed
+
+### Synchronous Clear (Recommended)
+
+The simplest way to clear a context is using the synchronous `clear()` method, which waits for the operation to complete:
+
+```python
+from agentbay import AgentBay
+from agentbay.exceptions import ClearanceTimeoutError
+
+agent_bay = AgentBay()
+
+# Get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# Clear context data (synchronous - waits for completion)
+try:
+    clear_result = agent_bay.context.clear(
+        context_id=context.id,
+        timeout=60,  # Wait up to 60 seconds
+        poll_interval=2.0  # Check status every 2 seconds
+    )
+    
+    if clear_result.success:
+        print(f"Context cleared successfully")
+        print(f"Final status: {clear_result.status}")  # Should be "available"
+    else:
+        print(f"Failed to clear context: {clear_result.error_message}")
+        
+except ClearanceTimeoutError as e:
+    print(f"Clearing timed out: {e}")
+    # Context may still be clearing in the background
+    # You can check status later using get_clear_status()
+```
+
+### Asynchronous Clear with Manual Polling
+
+For more control over the clearing process, you can use the asynchronous approach:
+
+```python
+from agentbay import AgentBay
+import time
+
+agent_bay = AgentBay()
+
+# Get context
+context = agent_bay.context.get("my-project", create=True).context
+
+# Start clearing asynchronously
+clear_result = agent_bay.context.clear_async(context_id=context.id)
+
+if clear_result.success:
+    print(f"Clearing started, status: {clear_result.status}")  # Should be "clearing"
+    
+    # Poll for completion
+    max_attempts = 30
+    attempt = 0
+    
+    while attempt < max_attempts:
+        time.sleep(2)  # Wait 2 seconds between checks
+        attempt += 1
+        
+        # Check status
+        status_result = agent_bay.context.get_clear_status(context_id=context.id)
+        
+        if not status_result.success:
+            print(f"Failed to get status: {status_result.error_message}")
+            break
+        
+        print(f"Status: {status_result.status} (attempt {attempt}/{max_attempts})")
+        
+        if status_result.status == "available":
+            print("Context cleared successfully!")
+            break
+        elif status_result.status == "clearing":
+            print("Still clearing...")
+        else:
+            print(f"Unexpected status: {status_result.status}")
+    else:
+        print("Clearing timed out")
+else:
+    print(f"Failed to start clearing: {clear_result.error_message}")
+```
+
+### Clear Status States
+
+The clearing operation follows this state machine:
+
+| Status | Description | Next State |
+|--------|-------------|------------|
+| `clearing` | Data is being deleted | `available` |
+| `available` | Clearing completed successfully | - (final state) |
+
+### Error Handling
+
+```python
+from agentbay import AgentBay
+from agentbay.exceptions import ClearanceTimeoutError, AgentBayError
+
+agent_bay = AgentBay()
+
+context = agent_bay.context.get("my-project", create=True).context
+
+try:
+    # Try to clear with a short timeout
+    clear_result = agent_bay.context.clear(
+        context_id=context.id,
+        timeout=30,
+        poll_interval=1.0
+    )
+    
+    if clear_result.success:
+        print("Context cleared successfully")
+    else:
+        print(f"Clear failed: {clear_result.error_message}")
+        
+except ClearanceTimeoutError as e:
+    print(f"Timeout: {e}")
+    print("The context may still be clearing in the background")
+    
+    # Check current status
+    status_result = agent_bay.context.get_clear_status(context.id)
+    if status_result.success:
+        print(f"Current status: {status_result.status}")
+        
+except AgentBayError as e:
+    print(f"API error: {e}")
 ```
 
 ### Context with Sessions
@@ -8136,10 +8531,10 @@ from agentbay import AgentBay
 
 session = agent_bay.create().session
 
-# Search for files with pattern (partial name matching, NOT wildcards)
-result = session.file_system.search_files("/tmp", "systemd")
+# Search for files with wildcard pattern
+result = session.file_system.search_files("/tmp", "*systemd*")
 if result.success:
-    print(f"Found {len(result.matches)} files containing 'test':")
+    print(f"Found {len(result.matches)} files matching pattern:")
     for match in result.matches:
         print(f"  - {match}")
 else:
@@ -8148,11 +8543,11 @@ else:
 # Search with exclusion patterns
 result = session.file_system.search_files(
     "/tmp",
-    "systemd",
-    exclude_patterns=["geoclue"]
+    "*config*",
+    exclude_patterns=["*backup*", "*temp*"]
 )
 if result.success:
-    print(f"Found {len(result.matches)} files containing 'config' (excluding 'backup' and 'temp'):")
+    print(f"Found {len(result.matches)} files matching '*config*' (excluding '*backup*' and '*temp*'):")
     for match in result.matches:
         print(f"  - {match}")
 ```
@@ -8160,8 +8555,7 @@ if result.success:
 #### ⚠️ Important: Search Rules and Limitations
 
 **Pattern Matching Rules:**
-- **NOT wildcard-based**: Patterns like `*.txt` or `test*` are NOT supported
-- **Partial name matching**: The pattern matches any part of the file/directory name
+- **Wildcard-based**: Supports `*` (any characters) and `?` (single character)
 - **Recursive search**: Searches through all subdirectories from the starting path
 - **Case sensitivity**:
   - **Windows**: Case-insensitive matching
@@ -8170,30 +8564,31 @@ if result.success:
 **Examples of Pattern Matching:**
 
 ```python
-# ✅ CORRECT: Partial name matching
-session.file_system.search_files("/tmp", "test")
-# Matches: test.txt, my_test_file.py, testing.log, etc.
+# ✅ CORRECT: Wildcard patterns
+session.file_system.search_files("/tmp", "*.txt")
+# Matches: test.txt, file.txt, etc.
 
-session.file_system.search_files("/tmp", "config")
-# Matches: config.json, app_config.xml, configuration.ini, etc.
+session.file_system.search_files("/tmp", "test_*")
+# Matches: test_file.py, test_data.json, etc.
 
-# ❌ INCORRECT: Wildcard patterns (NOT supported)
-session.file_system.search_files("/tmp", "*.txt")     # Won't work as expected
-session.file_system.search_files("/tmp", "test*")     # Won't work as expected
-session.file_system.search_files("/tmp", "?.log")     # Won't work as expected
+session.file_system.search_files("/tmp", "*config*")
+# Matches: config.json, app_config.xml, my_configuration.ini, etc.
+
+session.file_system.search_files("/tmp", "?.log")
+# Matches: a.log, 1.log, etc. (single character before .log)
 ```
 
 **Platform-Specific Behavior:**
 
 ```python
 # On Windows (case-insensitive)
-result = session.file_system.search_files("/tmp", "TEST")
-# Matches: TEST.txt, TEST.log, TEST.config, MyTEST.py
+result = session.file_system.search_files("/tmp", "*TEST*")
+# Matches: TEST.txt, test.log, MyTest.py, etc.
 
 # On Linux/Unix (case-sensitive)
-result = session.file_system.search_files("/tmp", "TEST")
-# Matches only: TEST.config, MyTEST.py (exact case match)
-result = session.file_system.search_files("/tmp", "test")
+result = session.file_system.search_files("/tmp", "*TEST*")
+# Matches only: TEST.txt, MyTEST.py (exact case match)
+result = session.file_system.search_files("/tmp", "*test*")
 # Matches only: test.txt, my_test.py (exact case match)
 ```
 
@@ -8535,7 +8930,7 @@ agent_bay.delete(session)
 | Upload file (local → cloud) | `upload_file()` | Supports all file types, with progress tracking |
 | Download file (cloud → local) | `download_file()` | Supports all file types, with progress tracking |
 | Find and replace text | `edit_file()` | **Text files only**, better than read-modify-write |
-| Search for files | `search_files()` | Partial name matching, NO wildcards |
+| Search for files | `search_files()` | Supports wildcard patterns (* and ?) |
 | Move/rename files | `move_file()` | Works for both text and binary files |
 | Get file metadata | `get_file_info()` | File size, type, timestamps |
 | List directory | `list_directory()` | Directory contents |
@@ -16055,18 +16450,18 @@ Handles Object Storage Service operations in the AgentBay cloud environment.
 ```python
 def env_init(access_key_id: str,
              access_key_secret: str,
-             securityToken: Optional[str] = None,
+             securityToken: str,
              endpoint: Optional[str] = None,
              region: Optional[str] = None) -> OSSClientResult
 ```
 
-Create an OSS client with the provided credentials.
+Create an OSS client with the provided STS temporary credentials.
 
 **Arguments**:
 
-    access_key_id: The Access Key ID for OSS authentication.
-    access_key_secret: The Access Key Secret for OSS authentication.
-    securityToken: Optional security token for temporary credentials.
+    access_key_id: The Access Key ID from STS temporary credentials.
+    access_key_secret: The Access Key Secret from STS temporary credentials.
+    securityToken: Security token from STS temporary credentials. Required for security.
     endpoint: The OSS service endpoint. If not specified, the default is used.
     region: The OSS region. If not specified, the default is used.
   
@@ -16082,8 +16477,9 @@ Create an OSS client with the provided credentials.
 ```python
 session = agent_bay.create().session
 session.oss.env_init(
-  access_key_id="your_access_key_id",
-  access_key_secret="your_access_key_secret"
+  access_key_id="your_sts_access_key_id",
+  access_key_secret="your_sts_access_key_secret",
+  securityToken="your_sts_security_token"
 )
 session.delete()
 ```
@@ -18236,13 +18632,14 @@ def search_files(
         exclude_patterns: Optional[List[str]] = None) -> FileSearchResult
 ```
 
-Search for files in the specified path using a pattern.
+Search for files in the specified path using a wildcard pattern.
 
 **Arguments**:
 
     path: The base directory path to search in.
-    pattern: The pattern string to match against file names (substring match).
-    exclude_patterns: Optional list of patterns to exclude from the search.
+    pattern: Wildcard pattern to match against file names. Supports * (any characters)
+  and ? (single character). Examples: "*.py", "test_*", "*config*".
+    exclude_patterns: Optional list of wildcard patterns to exclude from the search.
   
 
 **Returns**:
@@ -18258,7 +18655,7 @@ session = agent_bay.create().session
 session.file_system.write_file("/tmp/test/test_file1.py", "print('hello')")
 session.file_system.write_file("/tmp/test/test_file2.py", "print('world')")
 session.file_system.write_file("/tmp/test/other.txt", "text content")
-search_result = session.file_system.search_files("/tmp/test", "test_")
+search_result = session.file_system.search_files("/tmp/test", "test_*")
 session.delete()
 ```
 
@@ -19028,6 +19425,12 @@ result = session.call_mcp_tool("shell", {"command": "echo 'Hello World'", "timeo
 result = session.call_mcp_tool("shell", {"command": "pwd", "timeout_ms": 1000}, read_timeout=30, connect_timeout=10)
 result = session.call_mcp_tool("shell", {"command": "invalid_command_12345", "timeout_ms": 1000})
 ```
+
+
+**Notes**:
+
+- For press_keys tool, key names are automatically normalized to correct case format
+- This improves case compatibility (e.g., "CTRL" -> "Ctrl", "tab" -> "Tab")
 
 ## Related Resources
 
@@ -25888,18 +26291,18 @@ ___
 
 ### envInit
 
-▸ **envInit**(`accessKeyId`, `accessKeySecret`, `securityToken?`, `endpoint?`, `region?`): `Promise`\<`OSSClientResult`\>
+▸ **envInit**(`accessKeyId`, `accessKeySecret`, `securityToken`, `endpoint?`, `region?`): `Promise`\<`OSSClientResult`\>
 
-Initialize OSS environment variables with the specified credentials.
+Initialize OSS environment variables with the specified STS temporary credentials.
 Corresponds to Python's env_init() method
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `accessKeyId` | `string` | The access key ID |
-| `accessKeySecret` | `string` | The access key secret |
-| `securityToken?` | `string` | The security token (optional) |
+| `accessKeyId` | `string` | The access key ID from STS temporary credentials |
+| `accessKeySecret` | `string` | The access key secret from STS temporary credentials |
+| `securityToken` | `string` | The security token from STS temporary credentials (required) |
 | `endpoint?` | `string` | The OSS endpoint (optional) |
 | `region?` | `string` | The OSS region (optional) |
 
@@ -25919,7 +26322,7 @@ APIError if the operation fails.
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const createResult = await agentBay.create();
 if (createResult.success) {
-  const result = await createResult.session.oss.envInit('key_id', 'key_secret', 'token', 'oss-cn-hangzhou.aliyuncs.com', 'cn-hangzhou');
+  const result = await createResult.session.oss.envInit('sts_key_id', 'sts_key_secret', 'sts_token', 'oss-cn-hangzhou.aliyuncs.com', 'cn-hangzhou');
   console.log('OSS initialized:', result.success);
   await createResult.session.delete();
 }
@@ -27145,7 +27548,7 @@ ___
 
 ▸ **searchFiles**(`path`, `pattern`, `excludePatterns?`): `Promise`\<`FileSearchResult`\>
 
-Searches for files in a directory that match a pattern.
+Searches for files in a directory that match a wildcard pattern.
 Corresponds to Python's search_files() method
 
 #### Parameters
@@ -27153,8 +27556,8 @@ Corresponds to Python's search_files() method
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `path` | `string` | `undefined` | Path to the directory to search in. |
-| `pattern` | `string` | `undefined` | Pattern to search for. Supports glob patterns. |
-| `excludePatterns` | `string`[] | `[]` | Optional: Array of patterns to exclude. |
+| `pattern` | `string` | `undefined` | Wildcard pattern to match against file names. Supports * (any characters) and ? (single character). Examples: "*.py", "test_*", "*config*". |
+| `excludePatterns` | `string`[] | `[]` | Optional: Array of wildcard patterns to exclude. |
 
 #### Returns
 
@@ -27170,7 +27573,7 @@ const result = await agentBay.create();
 if (result.success) {
   await result.session.fileSystem.createDirectory('/tmp/test');
   await result.session.fileSystem.writeFile('/tmp/test/file1.py', "print('hello')");
-  const searchResult = await result.session.fileSystem.searchFiles('/tmp/test', '.py');
+  const searchResult = await result.session.fileSystem.searchFiles('/tmp/test', '*.py');
   console.log(`Found ${searchResult.matches.length} Python files`);
   await result.session.delete();
 }
@@ -27492,6 +27895,11 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+**`Remarks`**
+
+For press_keys tool, key names are automatically normalized to correct case format.
+This improves case compatibility (e.g., "CTRL" -> "Ctrl", "tab" -> "Tab").
 
 ___
 
@@ -32360,8 +32768,8 @@ downloadResult, _ := result.Session.Oss.DownloadAnonymous("https://example.com/f
 func (o *OSSManager) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoint, region string) (*EnvInitResult, error)
 ```
 
-EnvInit initializes OSS environment variables with the specified endpoint, access key ID, access key
-secret, security token, and region
+EnvInit initializes OSS environment variables with STS temporary credentials. All three credential
+parameters (accessKeyId, accessKeySecret, securityToken) are required for security.
 
 **Example:**
 
@@ -32369,7 +32777,7 @@ secret, security token, and region
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Create(nil)
 defer result.Session.Delete()
-ossResult, _ := result.Session.Oss.EnvInit("accessKeyId", "accessKeySecret", "token", "endpoint", "cn-hangzhou")
+ossResult, _ := result.Session.Oss.EnvInit("stsAccessKeyId", "stsAccessKeySecret", "stsToken", "endpoint", "cn-hangzhou")
 ```
 
 ### Upload
@@ -34514,12 +34922,13 @@ contents, _ := result.Session.FileSystem.ReadMultipleFiles(paths)
 func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (*SearchFilesResult, error)
 ```
 
-SearchFiles searches for files matching a pattern.
+SearchFiles searches for files matching a wildcard pattern.
 
 Parameters:
   - path: Absolute path to the directory to search in
-  - pattern: Pattern to match (supports wildcards like *.txt)
-  - excludePatterns: Array of patterns to exclude from results
+  - pattern: Wildcard pattern to match against file names. Supports * (any characters) and ? (single
+    character). Examples: "*.txt", "test_*", "*config*"
+  - excludePatterns: Array of wildcard patterns to exclude from results
 
 Returns:
   - *SearchFilesResult: Result containing matching file paths and request ID
@@ -34527,7 +34936,7 @@ Returns:
 
 Behavior:
 
-- Recursively searches the directory and subdirectories - Supports glob patterns for matching -
+- Recursively searches the directory and subdirectories - Supports wildcard patterns for matching -
 Exclude patterns help filter out unwanted results
 
 **Example:**
@@ -34536,7 +34945,7 @@ Exclude patterns help filter out unwanted results
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Create(nil)
 defer result.Session.Delete()
-searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", ".txt", []string{})
+searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", "*.txt", []string{})
 ```
 
 ### WatchDirectory
@@ -38526,37 +38935,72 @@ The example includes error handling for common scenarios:
 
 The AgentBay SDK Cookbook is a collection of practical examples and use cases demonstrating how to leverage the AgentBay SDK for various automation scenarios. Each cookbook showcases a specific application of the SDK, providing both basic implementations and integrations with popular frameworks like LangChain.
 
-## Sandbox Environments (envs)
+## Session Environments (envs)
 
-The `envs` directory contains examples organized by sandbox environments. A sandbox environment in AgentBay refers to an isolated cloud computing environment where specific types of operations can be performed safely and efficiently. Each environment provides specialized capabilities for different use cases.
+The `envs` directory contains examples organized by session environments. A session environment in AgentBay refers to an isolated cloud computing environment where specific types of operations can be performed safely and efficiently. Each environment provides specialized capabilities for different use cases.
 
-Currently, two distinct sandbox environments are implemented:
+Currently, two distinct session environments are implemented:
 
-1. **browser** - A web browser sandbox environment that provides capabilities for web automation, including form filling, web scraping, and UI interactions.
-2. **codespace** - A code execution sandbox environment that provides capabilities for running and testing code in isolated environments.
+1. **browser** - A web browser session environment that provides capabilities for web automation, including form filling, web scraping, and UI interactions.
+2. **codespace** - A code execution session environment that provides capabilities for running and testing code in isolated environments.
 
 ## Table of Contents
 
+### Browser Environment
+
 1. [Form-Filling Agent](./envs/browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
-2. [Auto Testing Agent](./envs/codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
+2. [E-commerce Inspector](./envs/browser/e-commerce-inspector/) - Automated product information extraction from e-commerce websites with AI-powered navigation
+
+### Codespace Environment
+
+3. [Auto Testing Agent](./envs/codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
+4. [OpenAI Data Analysis](./envs/codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
+5. [AI Code Assistant](./envs/codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
 
 ## Overview
 
 The AgentBay SDK provides a comprehensive suite of tools for efficient interaction with AgentBay cloud environments. These cookbooks demonstrate real-world applications of the SDK across different domains:
 
 ### Form-Filling Agent
-This cookbook demonstrates how to create a form-filling agent using the Agent-Bay SDK. The agent can:
-- Upload an HTML form to Agent-Bay environment
-- Open the form in a browser using Agent-Bay's browser capabilities
+This cookbook demonstrates how to create a form-filling agent using the AgentBay SDK. The agent can:
+- Upload an HTML form to AgentBay environment
+- Open the form in a browser using AgentBay's browser capabilities
 - Use natural language instructions to fill form fields
 - Submit the form automatically
 
+### E-commerce Inspector
+This cookbook demonstrates how to create an e-commerce inspector agent using the AgentBay SDK. The agent can:
+- Automatically navigate to product listing pages on e-commerce websites
+- Extract product information (names, prices, links) using AI-powered extraction
+- Handle popups, cookie banners, and overlays automatically
+- Support batch inspection of multiple websites
+- Save results as JSON files with screenshots for verification
+- Built-in CAPTCHA solving support
+
 ### Auto Testing Agent
-This cookbook demonstrates how to create a testing agent using LangChain and Agent-Bay SDK. The agent can:
+This cookbook demonstrates how to create a testing agent using LangChain and AgentBay SDK. The agent can:
 - Scan Python projects to identify modules that need testing
 - Generate test cases using LLMs based on project structure
 - Execute tests in isolated AgentBay cloud sessions
 - Save test results to local log files
+
+### OpenAI Data Analysis
+This cookbook demonstrates how to integrate OpenAI with AgentBay for automated data analysis. The example shows:
+- Creating AgentBay sessions with `code_latest` image for Python code execution
+- Uploading datasets to cloud environments for remote analysis
+- Using OpenAI function calling to generate Python analytics code
+- Executing AI-generated code in isolated AgentBay sessions
+- Capturing matplotlib visualizations and analysis results
+- Performing comprehensive e-commerce analytics including metrics, trends, and customer segmentation
+
+### AI Code Assistant
+This cookbook demonstrates how to build an interactive web-based AI code assistant using Next.js, AgentBay SDK, and Alibaba Cloud Bailian (DashScope). The application provides:
+- Real-time AI chat interface with streaming responses
+- Secure Python code execution in cloud environments
+- Automatic chart generation and visualization display
+- Pre-installed data science packages (pandas, numpy, matplotlib, scikit-learn, seaborn)
+- Session persistence for continuous development workflow
+- Dark mode UI with responsive design
 
 ## Framework Integration
 
@@ -38604,9 +39048,559 @@ If you'd like to contribute new cookbooks or improve existing ones, please follo
 
 
 
+# E-commerce Inspector Agent
+
+This project demonstrates how to create an e-commerce inspector agent using the AgentBay SDK. The agent can automatically visit e-commerce websites, navigate to product listing pages, extract product information (names, prices, links), and save the results with screenshots.
+
+## What It Does
+
+**Input:** A URL to an e-commerce product listing page
+```
+https://waydoo.com/collections/all
+```
+
+**Output:** Structured product data + Screenshot
+
+<table>
+<tr>
+<td width="50%">
+
+**Screenshot of Product Listing Page**
+
+![Product Listing Page](./assets/waydoo_screenshot.png)
+
+</td>
+<td width="50%">
+
+**Extracted Product Information (JSON)**
+
+```json
+[
+  {
+    "name": "15L Waterproof Dry Bag Backpack",
+    "price": "$22.90",
+    "link": "/products/15l-waterproof-dry-bag-backpack"
+  },
+  {
+    "name": "Evo 27\" Mast",
+    "price": "$599.00",
+    "link": "/products/waydoo-flyer-evo-27-mast"
+  },
+  {
+    "name": "Evo 31\" Mast",
+    "price": "$1,499.00",
+    "link": "/products/waydoo-flyer-evo-31-mast"
+  },
+  {
+    "name": "Evo 35\" Mast",
+    "price": "$799.00",
+    "link": "/products/waydoo-flyer-evo-35-mast"
+  },
+  {
+    "name": "Tactical Backpack",
+    "price": "$189.00",
+    "link": "/products/tactical-backpack"
+  },
+  {
+    "name": "Fireproof Safe Bag",
+    "price": "$79.90",
+    "link": "/products/fireproof-safe-bag"
+  },
+  {
+    "name": "Board Bag",
+    "price": "$149.00",
+    "link": "/products/board-bag"
+  },
+  {
+    "name": "Board Bag Pro",
+    "price": "$169.00",
+    "link": "/products/board-bag-pro"
+  },
+  {
+    "name": "Flyer ONE Plus",
+    "price": "$3,999.00",
+    "link": "/products/flyer-one-plus"
+  },
+  {
+    "name": "Flyer ONE",
+    "price": "$3,499.00",
+    "link": "/products/flyer-one"
+  },
+  {
+    "name": "Wing Set",
+    "price": "$899.00",
+    "link": "/products/wing-set"
+  },
+  {
+    "name": "Battery Charger",
+    "price": "$299.00",
+    "link": "/products/battery-charger"
+  }
+]
+```
+
+</td>
+</tr>
+</table>
+
+## Features
+
+- Automatically navigate to product listing pages
+- Extract product information using AI-powered extraction
+- Handle popups, cookie banners, and overlays automatically
+- Support for multiple websites in batch
+- Save results as JSON files with screenshots
+- Normalize and validate product data
+- Built-in CAPTCHA solving support
+
+## Use Cases
+
+- **Price Monitoring**: Track product prices across multiple e-commerce sites
+- **Competitive Analysis**: Compare product offerings from different retailers
+- **Product Aggregation**: Collect product information for comparison shopping
+- **Market Research**: Analyze product catalogs and pricing strategies
+- **Inventory Tracking**: Monitor product availability across sites
+
+## Framework Integration Guides
+
+This project is structured to support multiple agent frameworks. Please refer to the specific framework integration guide for detailed setup and usage instructions:
+
+- [LangChain Integration Guide](./langchain/README.md) - Complete setup and usage instructions for LangChain framework
+
+## Project Structure
+
+This project follows a modular structure that separates core functionality from framework-specific integrations:
+
+```
+e-commerce-inspector/
+├── README.md            # This documentation
+├── common/              # Public core functionality
+│   └── src/             # Framework-agnostic code
+│       └── __init__.py  # Python package initializer
+└── langchain/           # LangChain integration
+    ├── README.md        # LangChain integration documentation
+    ├── requirements.txt # Python dependencies
+    ├── data/            # Output directory for inspection results
+    └── src/             # LangChain-specific code
+        ├── __init__.py                      # Python package initializer
+        ├── inspector_tools.py               # Core inspection tools
+        ├── e_commerce_inspector.py          # Main inspector agent implementation
+        └── e_commerce_inspector_example.py  # Example usage script
+```
+
+### Common Module
+
+The [common](./common/) directory is intended for all the core functionality that can be used across different agent frameworks.
+
+### Framework Integration Modules
+
+Framework-specific directories (like [langchain](./langchain/)) contain the integration code that implements e-commerce inspection functionality using specific agent frameworks.
+
+## How It Works
+
+1. **Session Creation**: Creates an AgentBay browser session with CAPTCHA solving enabled
+2. **Navigation**: Navigates to the target e-commerce website
+3. **Page Analysis**: Uses AI to identify and navigate to product listing pages
+4. **Data Extraction**: Extracts product information using structured extraction with Pydantic schemas
+5. **Data Validation**: Normalizes links and validates product data
+6. **Result Storage**: Saves results as JSON files and captures screenshots for verification
+
+## Technical Highlights
+
+### AI-Powered Extraction
+
+The agent uses AgentBay's `extract_async` method with Pydantic schemas to extract structured data:
+
+```python
+class ProductInfo(BaseModel):
+    name: str = Field(..., description="Product name")
+    price: Optional[str] = Field(None, description="Price text")
+    link: str = Field(..., description="Relative path to product page")
+
+class InspectionResult(BaseModel):
+    products: List[ProductInfo] = Field(..., description="All products on the page")
+```
+
+### Automatic Navigation
+
+The agent can automatically:
+- Navigate to product listing pages (Shop, Store, Catalog, etc.)
+- Close popups and cookie banners
+- Retry extraction if the initial attempt fails
+- Handle different page layouts and structures
+
+### Data Normalization
+
+- Converts relative URLs to absolute URLs
+- Validates product data (name, price, link)
+- Filters out invalid entries
+- Ensures minimum quality standards
+
+## Customization
+
+You can customize the inspector behavior by:
+
+1. **Modifying extraction instructions**: Update the instruction text in `inspector_tools.py`
+2. **Adjusting validation rules**: Change the `is_valid_product` function
+3. **Adding new sites**: Simply provide new URLs to inspect
+4. **Customizing output format**: Modify the JSON serialization in `process_site`
+
+## AgentBay SDK Features Used
+
+- Session management with browser environments
+- Browser initialization with custom screen size
+- CAPTCHA solving capabilities
+- AI-powered browser agent for navigation and extraction
+- Structured data extraction with Pydantic schemas
+- Screenshot capture for verification
+- Async/await support for efficient execution
+
+## Output Files
+
+After running the inspector, you'll find the following files in the `./data/` directory:
+
+- **`inspection_[domain].json`** - Structured product data (name, price, link)
+- **`screenshot_[domain].png`** - Screenshot of the product listing page (viewport only, optimized for documentation)
+
+## Prerequisites
+
+Before using this cookbook, you need to:
+
+1. Register an Alibaba Cloud account: [https://aliyun.com](https://aliyun.com)
+2. Get APIKEY credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
+3. Get DashScope API key for LLM: [DashScope Console](https://bailian.console.aliyun.com/#/home)
+
+## Contributing
+
+If you'd like to contribute improvements or add support for new frameworks, please follow the established structure and submit a pull request.
+
+
+
+
+
+# LangChain Integration
+
+This directory contains the LangChain-specific integration for the e-commerce inspector agent.
+
+## Sample Output
+
+When the agent successfully inspects an e-commerce website, you will see output similar to the following:
+
+```
+Initializing LLM...
+Initializing AgentBay session...
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.agentbay:create:625 | ✅ API Response: CreateSession, RequestId=[REQUEST_ID]
+Session created with ID: [SESSION_ID]
+Browser initialized successfully
+
+================================================================================
+E-commerce Inspector Agent Ready!
+================================================================================
+
+--- Example 1: Inspect a single e-commerce website ---
+
+> Entering new AgentExecutor chain...
+
+Invoking: `inspect_website` with `{'url': 'https://waydoo.com/collections/all'}`
+
+Acting: Navigate to the product listing page...
+Extraction attempt 1/3 for https://waydoo.com/collections/all...
+Extraction successful on attempt 1. Found 12 valid products.
+Screenshot for https://waydoo.com/collections/all saved to: ./data/screenshot_waydoo.com.png
+waydoo.com -> 12 items (with price: 12) saved: ./data/inspection_waydoo.com.json
+Successfully inspected waydoo.com. Found 12 products. Results saved to: ./data/inspection_waydoo.com.json
+
+Result:
+Successfully inspected waydoo.com/collections/all and extracted product information. Found 12 products with prices and links. The results have been saved to ./data/inspection_waydoo.com.json and a screenshot has been captured for verification.
+
+================================================================================
+Inspection completed! Check the ./data directory for results.
+================================================================================
+```
+
+## Setup
+
+### 1. Create Virtual Environment
+
+First, create a virtual environment to isolate project dependencies:
+
+```bash
+# Create virtual environment
+python -m venv e-commerce-inspector-env
+
+# Activate virtual environment
+# On Windows:
+e-commerce-inspector-env\Scripts\activate
+# On macOS/Linux:
+source e-commerce-inspector-env/bin/activate
+```
+
+### 2. Install Dependencies
+
+Install the required packages:
+
+```bash
+# Update pip
+pip install --upgrade pip
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment Variables
+
+Set your API keys as environment variables:
+
+```bash
+export AGENTBAY_API_KEY="YOUR_AGENTBAY_API_KEY"
+export DASHSCOPE_API_KEY="YOUR_DASHSCOPE_API_KEY"
+```
+
+You can get your AgentBay API key from the AgentBay platform dashboard:
+1. Visit [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
+2. Sign up or log in to your Alibaba Cloud account
+3. Navigate to the Service Management section
+4. Create a new API KEY or select an existing one
+5. Copy the API Key and set it as the value of `AGENTBAY_API_KEY`
+
+For the DashScope API key, you need to register on the Alibaba Cloud DashScope platform:
+1. Visit [DashScope Platform](https://bailian.console.aliyun.com/#/home)
+2. Sign up or log in to your account
+3. Navigate to the API Key management section
+4. Copy the API Key and set it as the value of `DASHSCOPE_API_KEY`
+
+## Structure
+
+- [src/](./src/): Contains the LangChain-specific implementation
+  - `inspector_tools.py`: Core inspection tools and utilities
+  - `e_commerce_inspector.py`: Main inspector agent implementation
+  - `e_commerce_inspector_example.py`: Example usage script
+- `data/`: Output directory for inspection results (created automatically)
+- [README.md](./README.md): This documentation file
+- [requirements.txt](./requirements.txt): Python dependencies
+
+## Integration Details
+
+The LangChain integration uses the core functionality and wraps it in LangChain-specific components.
+
+This demonstrates how to:
+1. Use LangChain agents with AgentBay SDK
+2. Create custom tools for e-commerce inspection
+3. Structure the code to separate core functionality from framework-specific integration
+4. Maintain clean separation of concerns between core logic and framework integration
+5. Orchestrate inspection tasks using LangChain's agent framework
+
+## LangChain Orchestration
+
+The e-commerce inspector agent is orchestrated using LangChain's agent framework. This provides a flexible way to interact with the inspection functionality:
+
+1. **Tool-based approach**: The agent exposes tools for inspecting websites
+2. **Natural language interface**: Users can interact with the agent using natural language commands
+3. **Automatic workflow**: The agent automatically determines the correct sequence of operations
+
+### Available Tools
+
+1. `inspect_website`: Inspect a single e-commerce website and extract product information
+   - Input: URL of the website to inspect
+   - Output: Summary of products found and file paths
+
+2. `inspect_multiple_websites`: Inspect multiple e-commerce websites at once
+   - Input: Comma-separated list of URLs
+   - Output: Summary of all inspection results
+
+### Running the Example Script
+
+To run the LangChain orchestration example:
+
+```bash
+cd YOUR_PREFIX_PATH/cookbook/envs/browser/e-commerce-inspector/langchain/
+python src/e_commerce_inspector_example.py
+```
+
+This example script demonstrates:
+1. Creating a LangChain e-commerce inspector agent
+2. Inspecting a single e-commerce website
+3. Extracting product names, prices, and links
+4. Saving results to JSON files with screenshots
+
+## Customization
+
+You can customize the inspector behavior by:
+
+### 1. Modify Extraction Instructions
+
+Edit the instruction text in `inspector_tools.py`:
+
+```python
+instruction=(
+    "Please extract all products on this page. "
+    "Price can be a range (e.g., $199–$299) or 'from $199'. "
+    # Add your custom instructions here
+)
+```
+
+### 2. Adjust Validation Rules
+
+Modify the `is_valid_product` function in `inspector_tools.py`:
+
+```python
+def is_valid_product(p: ProductInfo) -> bool:
+    """Check if a product has valid information."""
+    # Add your custom validation logic here
+    has_name = bool(p.name and p.name.strip())
+    has_valid_link = bool(p.link and p.link.strip())
+    has_price = bool(p.price and p.price.strip())
+    return has_name and (has_valid_link or has_price)
+```
+
+### 3. Change Output Directory
+
+Specify a different output directory when creating the inspector:
+
+```python
+inspector = ECommerceInspector(
+    llm=llm,
+    agentbay_api_key=agentbay_api_key,
+    output_dir="/path/to/your/output/directory"
+)
+```
+
+### 4. Use Different LLM Models
+
+You can use different LLM models by changing the model parameter:
+
+```python
+from langchain_community.chat_models import ChatTongyi
+
+llm = ChatTongyi(
+    model="qwen-max",  # or "qwen-turbo", "qwen-plus"
+    dashscope_api_key=dashscope_api_key,
+    temperature=0
+)
+```
+
+## Advanced Usage
+
+### Inspect Multiple Websites
+
+You can inspect multiple websites in a single run:
+
+```python
+task = "Please inspect these websites: https://site1.com, https://site2.com, https://site3.com"
+result = await inspector.run(task)
+```
+
+### Use as Context Manager
+
+The inspector supports async context manager for automatic cleanup:
+
+```python
+async with ECommerceInspector(llm, agentbay_api_key, output_dir) as inspector:
+    result = await inspector.run("Inspect https://example.com")
+    # Session is automatically cleaned up when exiting the context
+```
+
+### Manual Session Management
+
+If you need more control over the session lifecycle:
+
+```python
+inspector = ECommerceInspector(llm, agentbay_api_key, output_dir)
+await inspector.initialize()
+try:
+    result = await inspector.run("Inspect https://example.com")
+finally:
+    await inspector.cleanup()
+```
+
+## Output Files
+
+The inspector generates two types of files for each inspected website:
+
+### 1. JSON File (inspection_[domain].json)
+
+Contains the extracted product information:
+
+```json
+[
+  {
+    "name": "Product Name",
+    "price": "$199.99",
+    "link": "https://example.com/products/item1"
+  },
+  {
+    "name": "Another Product",
+    "price": "from $299.99",
+    "link": "https://example.com/products/item2"
+  }
+]
+```
+
+### 2. Screenshot (screenshot_[domain].png)
+
+A full-page screenshot of the product listing page for visual verification.
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. **API Key Issues**: Ensure your API keys are correct and properly set as environment variables
+   ```bash
+   echo $AGENTBAY_API_KEY
+   echo $DASHSCOPE_API_KEY
+   ```
+
+2. **Network Connectivity**: Check that you have network connectivity to AgentBay services
+   ```bash
+   ping agentbay.console.aliyun.com
+   ```
+
+3. **Package Installation**: Verify that all required packages are installed
+   ```bash
+   pip list | grep -E "(wuying-agentbay-sdk|langchain|playwright)"
+   ```
+
+4. **Virtual Environment**: Check that you've activated your virtual environment before running the scripts
+   ```bash
+   which python  # Should point to your virtual environment
+   ```
+
+5. **Playwright Installation**: If you encounter browser-related issues, install Playwright browsers
+   ```bash
+   playwright install chromium
+   ```
+
+6. **Session Cleanup**: If sessions are not being cleaned up properly, you can manually delete them from the [AgentBay Console](https://agentbay.console.aliyun.com/session-management)
+
+## Performance Tips
+
+1. **Batch Processing**: Use `inspect_multiple_websites` for better efficiency when inspecting multiple sites
+2. **Screen Size**: Adjust browser screen size in `BrowserScreen` for faster rendering
+3. **Extraction Attempts**: Modify `max_steps` parameter in `ensure_listing_page` to control retry behavior
+4. **CAPTCHA Handling**: Enable `solve_captchas=True` for sites with CAPTCHA protection
+
+## Known Limitations
+
+1. **Dynamic Content**: Some websites with heavy JavaScript may require additional wait time
+2. **Anti-Bot Protection**: Some sites may have advanced anti-bot protection that requires additional configuration
+3. **Rate Limiting**: Inspecting too many sites in quick succession may trigger rate limits
+4. **Regional Restrictions**: Some sites may have geographical restrictions
+
+## Next Steps
+
+- Add support for more complex product extraction scenarios
+- Implement price change tracking over time
+- Add support for pagination to extract more products
+- Integrate with databases for persistent storage
+- Add email notifications for price changes
+
+
+
+
+
 # Form-Filling Agent
 
-This project demonstrates how to create a form-filling agent using the Agent-Bay SDK. The agent can upload an HTML form to Agent-Bay, open it in a browser, and automatically fill it with data based on natural language instructions.
+This project demonstrates how to create a form-filling agent using the Agent-Bay SDK. The agent can automatically fill HTML forms with data based on natural language instructions.
 
 ## Features
 
@@ -38627,37 +39621,30 @@ This project follows a modular structure that separates core functionality from 
 
 ```
 ├── README.md            # Documentation
-├── .env                 # Environment variables
 ├── common/              # Public core functionality
-│   ├── src/             # Framework-agnostic code
-│   │   ├── form.html    # Sample HTML form
-│   │   └── form_filler.py # Core form filling functionality
-│   └── README.md        # Documentation
-├── langchain/           # LangChain integration
-│   ├── data/            # Data directory for outputs (screenshots, etc.)
-│   ├── src/             # LangChain-specific code
-│   │   ├── form_filling_agent.py       # LangChain-specific implementation
-│   │   └── form_filling_agent_example.py # Example script for LangChain orchestration
-│   └── requirements.txt # Python dependencies
+│   └── src/             # Framework-agnostic code
+│       └── __init__.py  # Python package initializer
+└── langchain/           # LangChain integration
+    ├── README.md        # LangChain integration documentation
+    ├── requirements.txt # Python dependencies
+    └── src/             # LangChain-specific code
+        ├── __init__.py                # Python package initializer
+        ├── browser_tools.py           # Browser automation tools
+        ├── form_filling_agent.py      # Main form filling agent implementation
+        └── form_filling_agent_example.py # Example usage script
 ```
 
 ### Common Module
 
-The [common](./common/) directory contains all the core functionality that can be used across different agent frameworks. This includes:
-
-- Session management with Agent-Bay
-- File upload operations
-- Browser initialization and control
-- Form filling operations
-- Resource cleanup
+The [common](./common/) directory is intended for all the core functionality that can be used across different agent frameworks.
 
 ### Framework Integration Modules
 
-Framework-specific directories (like [langchain](./langchain/)) contain the integration code that uses the core functionality from the common module and wraps it in framework-specific components.
+Framework-specific directories (like [langchain](./langchain/)) contain the integration code that implements form filling functionality using specific agent frameworks.
 
 ## Customization
 
-You can modify the [form.html](./common/src/form.html) file to use your own form, and update the instructions in the example script to match the fields in your form.
+You can customize the form filling behavior by modifying the implementation in the framework-specific directories and providing your own forms and instructions.
 
 ## Agent-Bay SDK Features Used
 
@@ -38677,34 +39664,27 @@ This directory contains the LangChain-specific integration for the form-filling 
 When the agent successfully fills a form, you will see output similar to the following:
 
 ```
-> Entering new AgentExecutor chain...
+Creating LangChain form filling agent...
+Creating AgentBay browser session...
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.context:get:400 | 🔗 API Call: GetContext
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.context:get:400 |   └─ AllowCreate=True, Name=[CONTEXT_NAME]
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.context:get:413 | ✅ API Response received
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.agentbay:create:400 | Adding context sync for file transfer operations: ContextSync(context_id='[CONTEXT_ID]', path='[PATH]', policy=None)
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.agentbay:create:625 | ✅ API Response: CreateSession, RequestId=[REQUEST_ID]
+...
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.session:_call_mcp_tool_api:1063 | ✅ API Response: CallMcpTool, RequestId=[REQUEST_ID]
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.session:_call_mcp_tool_api:1063 |   └─ tool=page_use_screenshot
+[browser_screenshot] Output: {"success": true, "message": "Screenshot captured successfully", "file_path": "./data/filled_page_screenshot.png"}
+Final result: I've completed all the requested steps:
 
-Invoking: `analyze_form` with `/path/to/form.html`
+1. Navigated to https://data.stats.gov.cn/easyquery.htm?cn=C01
+2. Clicked the vertical bar chart icon
+3. Waited for 2 seconds
+4. Selected the column option
+5. Waited for another 2 seconds
+6. Saved a screenshot of the resulting page to ./data/filled_page_screenshot.png
 
-Form at /path/to/form.html has been analyzed. Recommended instructions: ["Enter 'John' in the input field with id firstName", "Enter 'Doe' in the input field with id lastName", ...]
-
-Invoking: `fill_form_fields` with `Enter 'John' in the input field with id firstName;Enter 'Smith' in the input field with id lastName;Enter 'john.smith@example.com' in the input field with id email`
-
-Prepared to fill form with 3 instructions: ["Enter 'John' in the input field with id firstName", "Enter 'Smith' in the input field with id lastName", "Enter 'john.smith@example.com' in the input field with id email"]
-
-Invoking: `execute_form_filling` with `/path/to/form.html`
-
-Session created: session-xxxxxxxxxxxxxxxxx
-Form file uploaded successfully
-Browser instance successfully initialized
-Form page loaded successfully
-
-Instruction executed successfully: Enter 'John' in the input field with id firstName
-Instruction executed successfully: Enter 'Smith' in the input field with id lastName
-Instruction executed successfully: Enter 'john.smith@example.com' in the input field with id email
-
-Form filling completed successfully! The form has been successfully filled with the provided data:
-
-- **First Name:** John  
-- **Last Name:** Smith  
-- **Email:** john.smith@example.com  
-
-The form at `/path/to/form.html` was analyzed, populated with your custom data, and submitted successfully.
+The screenshot has been successfully captured and saved to the specified location.
 ```
 
 ## Setup
@@ -38731,18 +39711,9 @@ Install the required packages:
 ```bash
 # Update pip
 pip install --upgrade pip
-
-# Install core dependencies
-pip install wuying-agentbay-sdk playwright python-dotenv
-
-# Install LangChain dependencies
-pip install langchain langchain-openai
-
-# Install Playwright browsers
-playwright install
 ```
 
-Alternatively, you can install dependencies using the requirements file:
+You can install dependencies using the requirements file:
 
 ```bash
 pip install -r requirements.txt
@@ -38750,17 +39721,11 @@ pip install -r requirements.txt
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the folder of form-filling-agent/ with your API keys:
+Set your API keys as environment variables:
 
-```env
-# AgentBay API Key (required)
-AGENTBAY_API_KEY=your_actual_api_key_here
-
-# DashScope (Alibaba Cloud) API Key for Qwen LLM (required for LangChain orchestration)
-DASHSCOPE_API_KEY=your_qwen_api_key_here
-
-# Optional: specify which Qwen model to use (default: qwen-plus)
-DASHSCOPE_MODEL=qwen-plus
+```bash
+export AGENTBAY_API_KEY="YOUR_AGENTBAY_API_KEY"
+export DASHSCOPE_API_KEY="YOUR_DASHSCOPE_API_KEY"
 ```
 
 You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
@@ -38768,22 +39733,13 @@ You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
 2. Sign up or log in to your Alibaba Cloud account
 3. Navigate to the Service Management section
 4. Create a new API KEY or select an existing one
-5. Copy the API Key and paste it as the value of `AGENTBAY_API_KEY` in your `.env` file
+5. Copy the API Key and set it as the value of `AGENTBAY_API_KEY`
 
 For the DashScope API key, you need to register on the Alibaba Cloud DashScope platform:
 1. Visit [DashScope Platform](https://bailian.console.aliyun.com/#/home)
 2. Sign up or log in to your account
 3. Navigate to the API Key management section
-4. Copy the API Key and paste it as the value of `DASHSCOPE_API_KEY` in your `.env` file
-
-### 4. Available Qwen Models
-
-The following Qwen models are available for use:
-- `qwen-turbo`: Fast and efficient model for simple tasks
-- `qwen-plus`: Balanced model for most use cases (default)
-- `qwen-max`: Most capable model for complex tasks
-
-You can specify which model to use by setting the `DASHSCOPE_MODEL` environment variable in your `.env` file.
+4. Copy the API Key and set it as the value of `DASHSCOPE_API_KEY`
 
 ## Structure
 
@@ -38829,23 +39785,491 @@ This example script demonstrates:
 3. Filling the form with custom data
 4. Executing the form filling process
 
-### Direct Usage
+## Troubleshooting
 
-You can also use the form filling agent directly by instantiating the [LangChainFormFillingAgent](./src/form_filling_agent.py) class and calling its methods.
+If you encounter issues:
 
-### Usage Example
+1. Ensure your API key is correct and properly set in the `.env` file
+2. Check that you have network connectivity to Agent-Bay services
+3. Verify that all required packages are installed:
+   ```bash
+   pip list | grep -E "(wuying-agentbay-sdk|langchain)"
+   ```
+4. Check that you've activated your virtual environment before running the scripts
 
-```python
-from form_filling_agent import create_langchain_form_filling_agent
 
-# Create the agent
-agent = create_langchain_form_filling_agent()
 
-# Use the agent with specific instructions
-result = agent.invoke({
-    "input": "First analyze the form at /path/to/form.html, then fill it with custom data: John as first name, Smith as last name, john.smith@example.com as email, and finally execute the filling process"
-})
+# 🤖 AI Code Assistant
+
+An intelligent web application that combines AI language models with cloud code execution, powered by **AgentBay** and **Alibaba Cloud Qwen**.
+
+## 📸 Screenshots
+
+### Welcome Screen
+
+![AI Code Assistant Welcome](./assets/welcome.png)
+
+*Choose from multiple pre-built examples or type your own prompt*
+
+### Code Execution in Progress
+
+![Code Execution](./assets/processing.png)
+
+*Real-time execution logs show AgentBay cloud session creation and code execution*
+
+### Dashboard Visualization Result
+
+![Dashboard Example](./assets/dashboard.png)
+
+*AI-generated business dashboard with multiple chart types displayed inline*
+
+## 🌟 Features
+
+- **💬 Natural Language Interface** - Chat with AI to write and execute Python code
+- **☁️ Cloud Execution** - Run code securely in isolated AgentBay environments
+- **🔄 Session Management** - Persistent sessions with automatic cleanup
+- **📊 Rich Output** - View code execution results, outputs, and errors
+- **🎨 Modern UI** - Clean, responsive interface built with Next.js and Tailwind CSS
+- **🚀 Powered by Qwen** - Leverages Alibaba Cloud's advanced language models
+
+## 🎯 Use Cases
+
+- **Data Analysis** - Generate and analyze datasets with Python
+- **Visualization** - Create charts and plots with matplotlib
+- **Learning** - Experiment with Python code in a safe environment
+- **Prototyping** - Quickly test algorithms and data processing logic
+- **Code Generation** - Let AI write Python code for specific tasks
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have:
+
+1. **Node.js 18+** installed
+2. **AgentBay API Key** - Get it from [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
+3. **DashScope API Key** - Get it from [DashScope Console](https://dashscope.console.aliyun.com/)
+
+## 🚀 Quick Start
+
+### 1. Clone and Navigate
+
+```bash
+cd /path/to/wuying-agentbay-sdk/cookbook/envs/codespace/ai-code-assistant
 ```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure Environment
+
+Copy the example environment file and add your API keys:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add your credentials:
+
+```env
+AGENTBAY_API_KEY=your_agentbay_api_key_here
+DASHSCOPE_API_KEY=your_dashscope_api_key_here
+DASHSCOPE_MODEL=qwen-max  # Optional: specify model
+```
+
+### 4. Run Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 5. Try It Out!
+
+Ask the AI assistant to:
+- "Generate 100 random numbers and calculate their mean and standard deviation"
+- "Create a bar chart showing monthly sales data"
+- "Implement the Fibonacci sequence and display the first 20 numbers"
+
+## 🏗️ Architecture
+
+### System Overview
+
+```
+┌─────────────┐      ┌──────────────┐      ┌─────────────┐
+│   Browser   │ ←──→ │  Next.js API │ ←──→ │  DashScope  │
+│  (React UI) │      │   (Backend)  │      │  (Qwen AI)  │
+└─────────────┘      └──────┬───────┘      └─────────────┘
+                            │
+                            ↓
+                    ┌───────────────┐
+                    │   AgentBay    │
+                    │  (Code Exec)  │
+                    └───────────────┘
+```
+
+### Key Components
+
+#### 1. **Frontend** (`app/page.tsx`)
+- React-based chat interface
+- Message history management
+- Real-time code execution results display
+- Session tracking
+
+#### 2. **API Route** (`app/api/chat/route.ts`)
+- Handles chat requests
+- Manages conversation flow
+- Coordinates AI and code execution
+- Error handling and logging
+
+#### 3. **DashScope Client** (`lib/dashscope-client.ts`)
+- Interfaces with Alibaba Cloud Qwen models
+- Handles tool calling (function calling)
+- Manages API communication
+
+#### 4. **AgentBay Executor** (`lib/agentbay-executor.ts`)
+- Creates and manages cloud sessions
+- Executes Python code in isolated environments
+- Session caching and cleanup
+- Result processing
+
+## 📖 How It Works
+
+### Execution Flow
+
+1. **User Input** → User sends a message through the chat interface
+2. **AI Processing** → DashScope (Qwen) analyzes the request
+3. **Tool Decision** → AI decides if code execution is needed
+4. **Code Generation** → AI generates Python code
+5. **Cloud Execution** → Code runs in AgentBay sandbox
+6. **Result Processing** → Output/errors are captured
+7. **AI Response** → AI interprets results and responds to user
+
+### Session Management
+
+- Each user gets a unique session ID
+- Sessions are reused for 10 minutes to maintain state
+- Variables and data persist across executions within a session
+- Automatic cleanup after timeout
+
+### Tool Calling
+
+The AI has access to an `execute_python` tool:
+
+```typescript
+{
+  name: 'execute_python',
+  description: 'Execute Python code in a secure cloud environment',
+  parameters: {
+    code: 'The Python code to execute'
+  }
+}
+```
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+ai-code-assistant/
+├── app/
+│   ├── api/chat/
+│   │   └── route.ts          # Chat API endpoint
+│   ├── page.tsx               # Main chat interface
+│   ├── layout.tsx             # App layout
+│   └── globals.css            # Global styles
+├── components/
+│   ├── CodeBlock.tsx          # Code execution display
+│   └── LoadingSpinner.tsx     # Loading animation
+├── lib/
+│   ├── agentbay-executor.ts   # AgentBay integration
+│   └── dashscope-client.ts    # DashScope API client
+├── package.json
+├── tsconfig.json
+├── tailwind.config.js
+└── next.config.js
+```
+
+### Adding Custom Tools
+
+To add new capabilities, extend the tools array in `app/api/chat/route.ts`:
+
+```typescript
+const TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'your_tool_name',
+      description: 'What your tool does',
+      parameters: {
+        type: 'object',
+        properties: {
+          // Define parameters
+        },
+        required: ['param1'],
+      },
+    },
+  },
+];
+```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AGENTBAY_API_KEY` | Yes | AgentBay API key for code execution |
+| `DASHSCOPE_API_KEY` | Yes | DashScope API key for AI models |
+| `DASHSCOPE_MODEL` | No | Model to use (default: qwen-max) |
+
+## 🔒 Security
+
+- **Isolated Execution** - Code runs in isolated cloud containers
+- **No Local Execution** - User code never runs on your server
+- **Session Timeout** - Automatic cleanup of inactive sessions
+- **API Key Protection** - Keys stored in environment variables only
+
+## 🎨 Customization
+
+### Changing the AI Model
+
+Edit `.env`:
+
+```env
+DASHSCOPE_MODEL=qwen-plus  # Faster, more economical
+DASHSCOPE_MODEL=qwen-max   # Most capable (default)
+```
+
+### Adjusting Session Timeout
+
+Edit `lib/agentbay-executor.ts`:
+
+```typescript
+const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+```
+
+### Styling
+
+The app uses Tailwind CSS. Customize colors in `tailwind.config.js` or modify component styles directly.
+
+## 📊 Performance
+
+- **Session Reuse** - Reduces cold start time by 80%
+- **Concurrent Requests** - Handles multiple users simultaneously
+- **Fast Response** - Average response time: 2-4 seconds
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Problem**: "DASHSCOPE_API_KEY is required"
+- **Solution**: Ensure `.env` file exists and contains your DashScope API key
+
+**Problem**: "Failed to create session"
+- **Solution**: Check your AgentBay API key and account quota
+
+**Problem**: Code execution timeout
+- **Solution**: Reduce code complexity or increase timeout in executor
+
+### Debug Mode
+
+Enable detailed logging:
+
+```typescript
+// In lib/agentbay-executor.ts
+console.log('[AgentBay] Debug info:', ...);
+```
+
+## 📝 Examples
+
+### Example 1: Data Analysis
+
+**User**: "Generate 1000 random numbers from a normal distribution and calculate statistics"
+
+**AI generates and executes**:
+```python
+import numpy as np
+
+data = np.random.normal(0, 1, 1000)
+print(f"Mean: {np.mean(data):.4f}")
+print(f"Std Dev: {np.std(data):.4f}")
+print(f"Min: {np.min(data):.4f}")
+print(f"Max: {np.max(data):.4f}")
+```
+
+### Example 2: Visualization
+
+**User**: "Create a sine and cosine wave plot"
+
+**AI generates and executes**:
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(0, 2*np.pi, 100)
+plt.plot(x, np.sin(x), label='sin(x)')
+plt.plot(x, np.cos(x), label='cos(x)')
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! This is part of the AgentBay SDK cookbook.
+
+1. Follow the existing code style
+2. Add tests for new features
+3. Update documentation
+4. Submit a pull request
+
+## 📄 License
+
+This project is part of the AgentBay SDK and is licensed under Apache License 2.0.
+
+## 🔗 Related Resources
+
+- [AgentBay Documentation](https://www.alibabacloud.com/help/agentbay)
+- [DashScope Documentation](https://help.aliyun.com/zh/dashscope/)
+- [AgentBay SDK GitHub](https://github.com/aliyun/wuying-agentbay-sdk)
+- [Next.js Documentation](https://nextjs.org/docs)
+
+## 💡 Tips
+
+- Use clear, specific prompts for better results
+- Sessions persist for 10 minutes - reuse them for related tasks
+- Check the code before execution in production use cases
+- Monitor your API usage in the respective consoles
+
+---
+
+**Built with ❤️ using AgentBay SDK and Alibaba Cloud Qwen**
+
+
+
+
+# 🚀 Quick Setup Guide
+
+Follow these steps to get the AI Code Assistant running in under 5 minutes.
+
+## Step 1: Prerequisites Check
+
+Ensure you have:
+- ✅ Node.js 18+ installed (`node --version`)
+- ✅ AgentBay API key
+- ✅ DashScope API key
+
+## Step 2: Install Dependencies
+
+```bash
+npm install
+```
+
+Expected output:
+```
+added 300+ packages in 30s
+```
+
+## Step 3: Configure Environment
+
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit the file with your credentials
+# On macOS/Linux:
+nano .env
+
+# On Windows:
+notepad .env
+```
+
+Add your keys:
+```env
+AGENTBAY_API_KEY=sk_xxxxx...
+DASHSCOPE_API_KEY=sk_xxxxx...
+DASHSCOPE_MODEL=qwen-max
+```
+
+## Step 4: Start the Development Server
+
+```bash
+npm run dev
+```
+
+You should see:
+```
+▲ Next.js 14.2.0
+- Local:        http://localhost:3000
+✓ Ready in 2.5s
+```
+
+## Step 5: Open in Browser
+
+Navigate to: **http://localhost:3000**
+
+## Step 6: Test It Out
+
+Try these example prompts:
+
+1. **Simple Math**
+   ```
+   Calculate the factorial of 10
+   ```
+
+2. **Data Analysis**
+   ```
+   Generate 100 random numbers and show me the distribution statistics
+   ```
+
+3. **Visualization**
+   ```
+   Create a line chart showing the Fibonacci sequence for the first 15 numbers
+   ```
+
+## Troubleshooting
+
+### Issue: Port 3000 already in use
+
+```bash
+# Use a different port
+npm run dev -- -p 3001
+```
+
+### Issue: Module not found errors
+
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Issue: API key errors
+
+- Check that `.env` file exists in the project root
+- Verify keys don't have extra spaces
+- Restart the development server after editing `.env`
+
+## What's Next?
+
+- Check out the [README.md](./README.md) for detailed documentation
+- Explore the code in `/app` and `/lib` directories
+- Customize the UI in `/components`
+- Add new AI tools in `/app/api/chat/route.ts`
+
+## Support
+
+Having issues?
+1. Check the logs in your terminal
+2. Look for errors in browser console (F12)
+3. Refer to the troubleshooting section in README.md
+4. Open an issue on GitHub
+
+---
+
+**Happy coding! 🎉**
+
 
 
 
@@ -38857,7 +40281,7 @@ This project demonstrates how to create a testing agent using LangChain and Agen
 
 - Scan Python projects to identify modules that need testing
 - Generate test cases using LLMs based on project structure
-- Execute tests in isolated AgentBay cloud sessions
+- Execute tests in isolated AgentBay cloud environments
 - Save test results to local log files
 - Support for multiple agent frameworks (currently LangChain, with plans for others)
 
@@ -38947,30 +40371,26 @@ Session created with ID: session-xxxxxxxxxxxxxxxxx
 Uploaded calculator.py to AgentBay environment at calculator.py
 Executing test case test_calculator.py
 
-......................
+.......................
 ----------------------------------------------------------------------
-Ran 22 tests in 0.001s
+Ran 23 tests in 0.001s
 
 OK
 
-Executed 1 tests. 1 passed, 0 failed.
+Final result: The testing process for the Python project has been completed successfully:
 
-Test file: test_calculator.py
-Status: PASS
+1. **Project Scanning**: I scanned the project structure at the specified path and found a single Python file `calculator.py` containing:
+   - A `Calculator` class with methods: `add`, `subtract`, `multiply`, `divide`
+   - Standalone functions: `add`, `subtract`, `multiply`, `divide`, `is_even`
 
-The testing process for the Python project at `/path/to/sample_project` has been successfully completed. Here's a summary:
+2. **Test Generation**: Based on the project structure, I generated a test file `test_calculator.py` that covers all the functions and class methods.
 
-1. **Project Structure Scanned**: The project contains a single Python file, `calculator.py`, which includes:
-   - A `Calculator` class with methods: `add`, `subtract`, `multiply`, and `divide`.
-   - Standalone functions: `add`, `subtract`, `multiply`, `divide`, and `is_even`.
+3. **Test Execution**: All tests passed successfully:
+   - 23 tests were executed in 0.001 seconds
+   - All tests passed (1/1 test files passed)
+   - No failures or errors were detected
 
-2. **Test Cases Generated**: One test file, `test_calculator.py`, was generated to cover the functionality of the `calculator.py` module.
-
-3. **Tests Executed**: The test suite in `test_calculator.py` was executed.
-   - **Result**: All 22 tests passed.
-   - **Status**: ✅ PASS
-
-No failures were detected. The code appears to be functioning as expected based on the test coverage.
+The project's calculator functionality is working correctly according to the generated test cases.
 ```
 
 ## Setup
@@ -38997,18 +40417,9 @@ Install the required packages:
 ```bash
 # Upgrade pip
 pip install --upgrade pip
-
-# Install core dependencies
-pip install wuying-agentbay-sdk python-dotenv
-
-# Install LangChain dependencies
-pip install langchain langchain-openai
-
-# Install other dependencies
-pip install pytest
 ```
 
-Alternatively, you can install dependencies using the requirements file:
+You can install dependencies using the requirements file:
 
 ```bash
 pip install -r requirements.txt
@@ -39016,17 +40427,11 @@ pip install -r requirements.txt
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the n the folder of auto-testing-agent/ with your API keys:
+Set your API keys as environment variables:
 
-```env
-# AgentBay API Key (required)
-AGENTBAY_API_KEY=your_actual_api_key_here
-
-# DashScope (Alibaba Cloud) API Key for Qwen LLM (required for LangChain orchestration)
-DASHSCOPE_API_KEY=your_qwen_api_key_here
-
-# Optional: specify which Qwen model to use (default: qwen-plus)
-DASHSCOPE_MODEL=qwen-plus
+```bash
+export AGENTBAY_API_KEY="YOUR_AGENTBAY_API_KEY"
+export DASHSCOPE_API_KEY="YOUR_DASHSCOPE_API_KEY"
 ```
 
 You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
@@ -39034,22 +40439,13 @@ You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
 2. Sign up or log in to your Alibaba Cloud account
 3. Navigate to the Service Management section
 4. Create a new API KEY or select an existing one
-5. Copy the API Key and paste it as the value of `AGENTBAY_API_KEY` in your `.env` file
+5. Copy the API Key and set it as the value of `AGENTBAY_API_KEY`
 
 For the DashScope API key, you need to register on the Alibaba Cloud DashScope platform:
 1. Visit [DashScope Platform](https://bailian.console.aliyun.com/#/home)
 2. Sign up or log in to your account
 3. Navigate to the API Key management section
-4. Create a new API Key and copy it for use in your `.env` file
-
-### 4. Available Qwen Models
-
-The following Qwen models are available for use:
-- `qwen-turbo`: Fast and efficient model for simple tasks
-- `qwen-plus`: Balanced model for most use cases (default)
-- `qwen-max`: Most capable model for complex tasks
-
-You can specify which model to use by setting the `DASHSCOPE_MODEL` environment variable in your `.env` file.
+4. Create a new API Key and copy it for use as `DASHSCOPE_API_KEY`
 
 ## Structure
 
@@ -39098,22 +40494,6 @@ This example script demonstrates:
 4. Executing the tests in AgentBay session
 5. Saving the results to a log file
 
-### Direct Usage
-
-You can also use the testing agent directly by instantiating the [LangChainTestingAgent](./src/auto_testing_agent.py) class and calling its methods.
-
-### Usage Example
-
-```python
-from auto_testing_agent import create_langchain_agent
-
-# Create the agent
-agent = create_langchain_agent()
-
-# Use the agent
-result = agent.invoke({
-    "input": "Test the Python project at path/to/your/project"
-})
 ```
 
 ## Troubleshooting
@@ -39128,4 +40508,579 @@ If you encounter issues:
    ```
 4. Check that you've activated your virtual environment before running the scripts
 5. Make sure the project path specified in PROJECT_PATH exists and contains Python files
+
+
+
+# OpenAI Data Analysis with AgentBay
+
+This project demonstrates how to integrate AgentBay with OpenAI to perform automated data analysis using the `code_latest` system image. The example showcases e-commerce sales analytics with AI-generated Python code executed in secure cloud environments.
+
+## Features
+
+- Create and manage AgentBay sessions with `code_latest` image
+- Upload datasets to AgentBay cloud environments
+- Use OpenAI function calling to generate and execute Python code remotely
+- Capture matplotlib visualizations from cloud execution
+- Perform comprehensive data analysis including metrics, trends, and visualizations
+- Handle stdout, stderr, and error reporting from remote execution
+
+## Framework Integration Guides
+
+This project is structured to support multiple agent frameworks. Please refer to the specific framework integration guide for detailed setup and usage instructions:
+
+- [OpenAI Integration Guide](./openai/README.md) - Complete setup and usage instructions for OpenAI function calling
+
+## Project Structure
+
+This project follows a modular structure that separates core functionality from framework-specific integrations:
+
+```
+├── README.md              # This documentation
+├── .env.example           # Environment variable template
+├── common/                # Shared resources
+│   ├── data/              # Sample datasets
+│   │   └── ecommerce_sales.csv    # E-commerce sales dataset
+│   └── src/               # Data generation scripts
+│       └── generate_ecommerce_data.py  # Synthetic data generator
+└── openai/                # OpenAI integration
+    ├── README.md          # OpenAI-specific documentation
+    ├── requirements.txt   # Python dependencies
+    └── src/               # OpenAI-specific code
+        └── agentbay_openai_sales_analysis.py  # Main analysis script
+```
+
+### Common Module
+
+The [common](./common/) directory contains shared resources that can be used across different framework integrations:
+
+- **Sample dataset**: Synthetic e-commerce sales data with 5000+ orders
+- **Data generator**: Script to create custom datasets with configurable parameters
+
+### Framework Integration Modules
+
+Framework-specific directories (like [openai](./openai/)) contain integration code that demonstrates how to use AgentBay with specific AI frameworks and tools.
+
+## Use Case
+
+This example demonstrates automated e-commerce sales analytics including:
+
+- **Sales Performance Metrics**: Calculate total revenue, order count, and average order value
+- **Category Analysis**: Identify best-selling product categories and revenue distribution
+- **Time-based Trends**: Analyze monthly revenue patterns and detect seasonality
+- **Customer Segmentation**: Break down sales by customer tier (Premium, Regular, New)
+- **Geographic Analysis**: Compare performance across regions and cities
+- **Visualization**: Generate professional charts and graphs using matplotlib
+
+## Dataset Description
+
+The synthetic e-commerce dataset includes:
+
+- **5000+ sample orders** spanning 2023-2024
+- **6 product categories**: Electronics, Clothing, Home & Garden, Books, Sports, Toys
+- **3 customer segments**: Premium (15%), Regular (60%), New (25%)
+- **4 geographic regions**: North America, Europe, Asia Pacific, Latin America
+- **15 data columns**: Date, OrderID, ProductID, ProductName, Category, Brand, UnitPrice, Quantity, TotalAmount, CustomerID, CustomerSegment, Region, City, PaymentMethod, ShippingMethod
+
+## Customization
+
+You can modify the data generation script to create custom datasets:
+
+- Adjust the number of records in `generate_ecommerce_data.py`
+- Add or modify product categories and pricing ranges
+- Change customer segment distributions
+- Customize geographic regions and cities
+
+You can also modify the analysis prompt in the main script to perform different types of analysis on the dataset.
+
+## AgentBay SDK Features Used
+
+This example demonstrates the following AgentBay SDK capabilities:
+
+- **Session Management**: Create and manage sessions with `code_latest` image using `agentbay.create(CreateSessionParams(image_id="code_latest"))`
+- **File Upload**: Upload datasets to cloud environments using `session.file_system.upload_file()`
+- **Code Execution**: Run Python code remotely using `session.code.run_code()` API
+- **File Download**: Download generated visualizations using `session.file_system.download_file()`
+- **Resource Management**: Automatic session cleanup with `session.delete()`
+
+## Learn More
+
+- [AgentBay SDK Documentation](https://help.aliyun.com/zh/agentbay/)
+- [OpenAI Function Calling Guide](https://platform.openai.com/docs/guides/function-calling)
+- [AgentBay Console](https://agentbay.console.aliyun.com/)
+
+
+
+
+# Alibaba Cloud Bailian Integration for AgentBay Data Analysis
+
+## 🎯 What This Example Demonstrates
+
+This integration showcases the power of combining Alibaba Cloud Bailian's (DashScope) function calling capabilities with AgentBay's cloud runtime environment to perform automated data analysis. The example demonstrates how to:
+
+- Upload a sales dataset to AgentBay's cloud environment
+- Use Bailian LLM to analyze the data and generate Python code dynamically
+- Execute the generated code in the cloud without any local setup
+- Retrieve and visualize the analysis results automatically
+
+### 📊 Example Output
+
+Below is an actual visualization generated by this example, showing the top 5 e-commerce product categories by revenue:
+
+![Sales Analysis Result](./assets/sales_analysis.png)
+
+**What you're seeing:** This horizontal bar chart was automatically generated by asking Alibaba Cloud Bailian to analyze the e-commerce sales dataset. The AI wrote the Python code, executed it in AgentBay's cloud environment, and returned this visualization—all without any manual coding or local environment setup.
+
+**Key Metrics from This Analysis:**
+- **Total Revenue:** $1,058,080.92
+- **Total Orders:** 5,000
+- **Average Order Value:** $211.62
+- **Top Category:** Home & Garden ($337,763.90)
+
+---
+
+This integration demonstrates how to use Alibaba Cloud Bailian's function calling feature with AgentBay to perform automated data analysis in cloud environments.
+
+## Overview
+
+This example shows how to:
+
+1. Create an AgentBay CodeSpace environment for Python code execution
+2. Upload datasets to the cloud environment
+3. Use Bailian's function calling to generate Python code dynamically
+4. Execute the generated code in the remote CodeSpace
+5. Capture and download visualization results automatically
+
+## Prerequisites
+
+- Python 3.8 or higher
+- AgentBay API key (get it from [AgentBay Console](https://agentbay.console.aliyun.com/service-management))
+- Alibaba Cloud DashScope API key (get it from [DashScope Console](https://dashscope.console.aliyun.com/))
+
+## Installation
+
+1. **Set up a Python virtual environment** (recommended):
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. **Install dependencies**:
+
+```bash
+pip install -r requirements.txt
+```
+
+Or install manually:
+
+```bash
+pip install openai wuying-agentbay-sdk
+```
+
+**Note**: For local development, you can install the SDK from the local path:
+
+```bash
+pip install /path/to/wuying-agentbay-sdk/python
+```
+
+## Configuration
+
+1. **Copy the environment template**:
+
+```bash
+cd ..  # Go to openai-data-analysis directory
+cp .env.example .env
+```
+
+2. **Edit `.env` and add your API keys**:
+
+```bash
+AGENTBAY_API_KEY=your_agentbay_api_key_here
+DASHSCOPE_API_KEY=your_dashscope_api_key_here
+DASHSCOPE_MODEL=qwen3-max
+```
+
+3. **Load environment variables**:
+
+```bash
+export $(cat .env | xargs)
+```
+
+Or source them in your shell:
+
+```bash
+source .env  # If your .env uses export statements
+```
+
+## Usage
+
+### 1. Generate Sample Data
+
+First, generate the synthetic e-commerce dataset:
+
+```bash
+cd ../common/src
+python generate_ecommerce_data.py
+```
+
+This will create `ecommerce_sales.csv` in the current directory with 5000 sample orders.
+
+### 2. Run the Analysis
+
+Execute the main analysis script:
+
+```bash
+cd ../../openai/src
+python agentbay_openai_sales_analysis.py
+```
+
+The script will:
+1. Initialize AgentBay and OpenAI clients
+2. Create a new AgentBay CodeSpace environment
+3. Upload the dataset to the CodeSpace
+4. Send an analysis request to OpenAI
+5. Execute the generated Python code in the remote CodeSpace
+6. Download and save the visualization as `sales_analysis.png`
+7. Clean up the session
+
+### Expected Output
+
+```
+================================================================================
+AgentBay + Alibaba Cloud Bailian Integration: E-commerce Sales Analysis
+================================================================================
+
+🚀 Initializing AgentBay client...
+📦 Creating AgentBay CodeSpace environment...
+✓ Session created: sess_xxxxx
+
+📤 Uploading dataset to AgentBay session...
+✓ Uploaded to /home/user/ecommerce_sales.csv
+
+🔍 Validating dataset...
+✓ Dataset validation results:
+  Total rows: 5000
+  Total columns: 15
+  Date range: 2023-01-01 to 2024-12-31
+  Total revenue: $1,089,178.68
+  Categories: Electronics, Clothing, Home & Garden, Books, Sports, Toys
+
+🤖 Starting AI-powered sales analysis...
+================================================================================
+User Request: Analyze the e-commerce sales dataset...
+================================================================================
+
+Waiting for the LLM to respond...
+
+LLM Response: (tool call)
+
+Tool Used: execute_python
+Code to Execute:
+--------------------------------------------------------------------------------
+import pandas as pd
+import matplotlib.pyplot as plt
+...
+--------------------------------------------------------------------------------
+
+🔧 Executing Python code in AgentBay session...
+
+================================================================================
+Analysis Results:
+================================================================================
+✓ Visualization saved to sales_analysis.png
+
+Analysis Output:
+Total revenue: $1089178.68
+Total orders: 5000
+Average order value: $217.84
+...
+
+🧹 Cleaning up...
+✓ Session deleted
+
+✓ Demo completed successfully!
+```
+
+## Code Walkthrough
+
+### Main Components
+
+#### 1. System Prompt
+
+The system prompt provides context to the LLM about:
+- Its role as a data analyst
+- Dataset structure and columns
+- Execution environment (AgentBay CodeSpace with pre-installed data science packages)
+- Available packages (pandas, numpy, matplotlib, etc.)
+- Guidelines for code generation
+
+#### 2. Function Definition
+
+The `execute_python` function is defined in the Bailian tools schema, allowing the LLM to generate code that will be executed remotely.
+
+#### 3. Code Execution
+
+The `execute_python_code()` function uses AgentBay's native `run_code` API:
+- Appends matplotlib save commands to the generated code
+- Executes code using `session.code.run_code()` API
+- Detects saved plots and downloads them using `session.file_system.download_file()`
+- Returns structured results (result, error, png_path)
+
+#### 4. Workflow
+
+```python
+# 1. Create CodeSpace session
+params = CreateSessionParams(image_id="code_latest")  # CodeSpace environment
+result = agentbay.create(params)
+session = result.session
+
+# 2. Upload dataset
+session.file_system.upload_file(local_path, remote_path)
+
+# 3. Call Bailian with function calling
+completion = llm_client.chat.completions.create(
+    model=MODEL_NAME,
+    messages=[...],
+    tools=TOOLS,
+    tool_choice="auto"
+)
+
+# 4. Execute generated code using run_code API
+result = session.code.run_code(code_with_save, "python", timeout_s=60)
+
+# 5. Download visualization if generated
+if "PLOT_SAVED:" in result.result:
+    download_result = session.file_system.download_file(
+        '/tmp/output.png',
+        'sales_analysis.png'
+    )
+
+# 6. Cleanup
+session.delete()
+```
+
+## Customization
+
+### Modify Analysis Query
+
+You can change the analysis request in `agentbay_openai_sales_analysis.py`:
+
+```python
+analysis_request = (
+    'Your custom analysis request here...'
+)
+```
+
+### Change Dataset
+
+To use a different dataset:
+
+1. Modify `generate_ecommerce_data.py` to generate your desired data structure
+2. Update the system prompt to reflect the new dataset structure
+3. Regenerate the data and run the analysis
+
+### Adjust LLM Model
+
+Set the `DASHSCOPE_MODEL` environment variable or modify the default in the script:
+
+```python
+MODEL_NAME = os.environ.get("DASHSCOPE_MODEL", "qwen3-max")
+```
+
+Available Bailian models:
+- `qwen3-max`: Most capable model (default)
+- `qwen-turbo`: Faster responses
+- `qwen-plus`: Balanced performance
+
+## Troubleshooting
+
+### Issue: "Failed to create session"
+
+**Solution**: Check that your AGENTBAY_API_KEY is valid and you have sufficient quota.
+
+### Issue: "Bailian API error"
+
+**Solution**: Verify your DASHSCOPE_API_KEY is correctly set and you have access to the DashScope service.
+
+### Issue: "Dataset file not found"
+
+**Solution**: Make sure you've run `generate_ecommerce_data.py` first to create the dataset.
+
+### Issue: "No visualization was generated"
+
+**Solution**: Check the code execution output for errors. Ensure the LLM-generated code includes matplotlib plotting commands.
+
+### Issue: "Code execution timeout"
+
+**Solution**: The script has a 60-second timeout. For larger datasets or complex analyses, you may need to increase the `timeout_s` parameter in `session.code.run_code()`.
+
+## Technical Details
+
+### Remote Code Execution
+
+The code execution mechanism uses AgentBay's native `run_code` API:
+
+1. Appends matplotlib save commands to the user's code
+2. Executes code using `session.code.run_code(code, "python", timeout_s=60)`
+3. Checks execution result for success/failure
+4. Detects saved plots by looking for "PLOT_SAVED:" marker in output
+5. Downloads visualization files using `session.file_system.download_file()`
+6. Returns structured output with result text, error (if any), and local PNG path
+
+### File Upload
+
+Files are uploaded using the AgentBay SDK's `file_system.upload_file()` method:
+
+```python
+result = session.file_system.upload_file(
+    local_path="./ecommerce_sales.csv",
+    remote_path="/home/user/ecommerce_sales.csv"
+)
+```
+
+### Session Management
+
+Sessions are automatically managed:
+- Created as isolated CodeSpace environments for secure code execution
+- Cleaned up in a `finally` block to ensure resource release
+- Each session is isolated from others for security
+
+## Learn More
+
+- [AgentBay SDK Documentation](https://help.aliyun.com/zh/agentbay/)
+- [Alibaba Cloud Bailian (DashScope) Documentation](https://help.aliyun.com/zh/dashscope/)
+- [AgentBay Python SDK Reference](https://github.com/aliyun/alibabacloud-agentbay-sdk)
+
+## License
+
+This example is provided as-is for demonstration purposes.
+
+
+
+
+Copyright © 2020, [Encode OSS Ltd](https://www.encode.io/).
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+
+Copyright © 2019, [Encode OSS Ltd](https://www.encode.io/).
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+
+BSD 3-Clause License
+
+Copyright (c) 2013-2025, Kim Davies and contributors.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+
+BSD 3-Clause License
+
+Copyright (c) 2013-2024, Kim Davies and contributors.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+
+macosx_11_0_arm64.whl driver package
+
+
+
+# playwright-core
+
+This package contains the no-browser flavor of [Playwright](http://github.com/microsoft/playwright).
+
 

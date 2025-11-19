@@ -13,26 +13,61 @@ Currently, two distinct session environments are implemented:
 
 ## Table of Contents
 
+### Browser Environment
+
 1. [Form-Filling Agent](./envs/browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
-2. [Auto Testing Agent](./envs/codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
+2. [E-commerce Inspector](./envs/browser/e-commerce-inspector/) - Automated product information extraction from e-commerce websites with AI-powered navigation
+
+### Codespace Environment
+
+3. [Auto Testing Agent](./envs/codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
+4. [OpenAI Data Analysis](./envs/codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
+5. [AI Code Assistant](./envs/codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
 
 ## Overview
 
 The AgentBay SDK provides a comprehensive suite of tools for efficient interaction with AgentBay cloud environments. These cookbooks demonstrate real-world applications of the SDK across different domains:
 
 ### Form-Filling Agent
-This cookbook demonstrates how to create a form-filling agent using the Agent-Bay SDK. The agent can:
-- Upload an HTML form to Agent-Bay environment
-- Open the form in a browser using Agent-Bay's browser capabilities
+This cookbook demonstrates how to create a form-filling agent using the AgentBay SDK. The agent can:
+- Upload an HTML form to AgentBay environment
+- Open the form in a browser using AgentBay's browser capabilities
 - Use natural language instructions to fill form fields
 - Submit the form automatically
 
+### E-commerce Inspector
+This cookbook demonstrates how to create an e-commerce inspector agent using the AgentBay SDK. The agent can:
+- Automatically navigate to product listing pages on e-commerce websites
+- Extract product information (names, prices, links) using AI-powered extraction
+- Handle popups, cookie banners, and overlays automatically
+- Support batch inspection of multiple websites
+- Save results as JSON files with screenshots for verification
+- Built-in CAPTCHA solving support
+
 ### Auto Testing Agent
-This cookbook demonstrates how to create a testing agent using LangChain and Agent-Bay SDK. The agent can:
+This cookbook demonstrates how to create a testing agent using LangChain and AgentBay SDK. The agent can:
 - Scan Python projects to identify modules that need testing
 - Generate test cases using LLMs based on project structure
 - Execute tests in isolated AgentBay cloud sessions
 - Save test results to local log files
+
+### OpenAI Data Analysis
+This cookbook demonstrates how to integrate OpenAI with AgentBay for automated data analysis. The example shows:
+- Creating AgentBay sessions with `code_latest` image for Python code execution
+- Uploading datasets to cloud environments for remote analysis
+- Using OpenAI function calling to generate Python analytics code
+- Executing AI-generated code in isolated AgentBay sessions
+- Capturing matplotlib visualizations and analysis results
+- Performing comprehensive e-commerce analytics including metrics, trends, and customer segmentation
+
+### AI Code Assistant
+This cookbook demonstrates how to build an interactive web-based AI code assistant using Next.js, AgentBay SDK, and Alibaba Cloud Bailian (DashScope). The application provides:
+- Real-time AI chat interface with streaming responses
+- Secure Python code execution in cloud environments
+- Automatic chart generation and visualization display
+- Pre-installed data science packages (pandas, numpy, matplotlib, scikit-learn, seaborn)
+- Session persistence for continuous development workflow
+- Dark mode UI with responsive design
 
 ## Framework Integration
 

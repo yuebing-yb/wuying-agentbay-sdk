@@ -334,14 +334,12 @@ func TestListByUIDLabel(t *testing.T) {
 		return
 	}
 
-	// Second page
-	t.Log("Fetching second page using NextToken...")
-	secondPageParams := agentbay.NewListSessionParams()
-	secondPageParams.Labels = uidFilter
-	secondPageParams.MaxResults = 3
-	secondPageParams.NextToken = firstPageResult.NextToken
-
-	secondPageResult, err := agentBayClient.ListByLabels(secondPageParams)
+	// Second page - note: List API doesn't support NextToken directly via page parameter
+	// We need to use the internal pagination logic by calculating which page to fetch
+	t.Log("Fetching second page...")
+	page := 2
+	secondPageLimit := int32(3)
+	secondPageResult, err := agentBayClient.List(uidFilter, &page, &secondPageLimit)
 	if err != nil {
 		t.Fatalf("Error listing second page of sessions: %v", err)
 	}
@@ -470,11 +468,9 @@ func TestListByLabels_OnlyUnreleasedSessions(t *testing.T) {
 		}
 	}()
 
-	// Use ListByLabels to get sessions with the test label
+	// Use List to get sessions with the test label
 	t.Log("Listing sessions by label to verify only unreleased sessions are returned...")
-	params := agentbay.NewListSessionParams()
-	params.Labels = testLabel
-	sessionsResult, err := agentBayClient.ListByLabels(params)
+	sessionsResult, err := agentBayClient.List(testLabel, nil, nil)
 	if err != nil {
 		t.Fatalf("Error listing sessions by label: %v", err)
 	}

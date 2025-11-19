@@ -29,7 +29,7 @@ func main() {
 	} else {
 		fmt.Printf("Found %d contexts (RequestID: %s):\n", len(listResult.Contexts), listResult.RequestID)
 		for _, ctx := range listResult.Contexts {
-			fmt.Printf("- %s (%s): state=%s, os=%s\n",
+			fmt.Printf("- %s (%s)\n",
 				ctx.Name, ctx.ID)
 		}
 	}

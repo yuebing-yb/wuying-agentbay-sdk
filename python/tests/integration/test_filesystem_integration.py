@@ -216,7 +216,7 @@ class TestFileSystemIntegration(unittest.TestCase):
 
     def test_search_files(self):
         """
-        Test searching for files.
+        Test searching for files using wildcard patterns.
         """
         test_subdir_path = "/tmp/search_test_dir"
         create_dir_result = self.fs.create_directory(test_subdir_path)
@@ -234,8 +234,8 @@ class TestFileSystemIntegration(unittest.TestCase):
         self.fs.write_file(search_file2_path, file2_content, "overwrite")
         self.fs.write_file(search_file3_path, file3_content, "overwrite")
 
-        # Search for files
-        search_pattern = "SEARCHABLE_PATTERN"
+        # Search for files using wildcard pattern
+        search_pattern = "*SEARCHABLE_PATTERN*"
         exclude_patterns = ["ignored_pattern"]
         result = self.fs.search_files(
             test_subdir_path, search_pattern, exclude_patterns

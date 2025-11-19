@@ -129,10 +129,11 @@ class TestSession(unittest.TestCase):
                 response = self.session.command.execute_command("ls")
                 print(f"Command execution result: {response}")
                 self.assertIsNotNone(response)
+                self.assertTrue(response.success, f"Command failed: {response.error_message}")
                 # Check if response contains "tool not found"
                 self.assertNotIn(
                     "tool not found",
-                    response.lower(),
+                    response.output.lower(),
                     "Command.ExecuteCommand returned 'tool not found'",
                 )
             except Exception as e:
@@ -146,13 +147,14 @@ class TestSession(unittest.TestCase):
         if self.session.file_system:
             print("Reading file...")
             try:
-                content = self.session.file_system.read_file("/etc/hosts")
-                print(f"ReadFile result: content='{content}'")
-                self.assertIsNotNone(content)
+                result = self.session.file_system.read_file("/etc/hosts")
+                print(f"ReadFile result: content='{result}'")
+                self.assertIsNotNone(result)
+                self.assertTrue(result.success, f"Read file failed: {result.error_message}")
                 # Check if response contains "tool not found"
                 self.assertNotIn(
                     "tool not found",
-                    content.lower(),
+                    result.content.lower(),
                     "FileSystem.ReadFile returned 'tool not found'",
                 )
                 print("File read successful")
