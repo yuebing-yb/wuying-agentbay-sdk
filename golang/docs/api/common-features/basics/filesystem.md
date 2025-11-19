@@ -426,12 +426,13 @@ contents, _ := result.Session.FileSystem.ReadMultipleFiles(paths)
 func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string) (*SearchFilesResult, error)
 ```
 
-SearchFiles searches for files matching a pattern.
+SearchFiles searches for files matching a wildcard pattern.
 
 Parameters:
   - path: Absolute path to the directory to search in
-  - pattern: Pattern to match (supports wildcards like *.txt)
-  - excludePatterns: Array of patterns to exclude from results
+  - pattern: Wildcard pattern to match against file names. Supports * (any characters) and ? (single
+    character). Examples: "*.txt", "test_*", "*config*"
+  - excludePatterns: Array of wildcard patterns to exclude from results
 
 Returns:
   - *SearchFilesResult: Result containing matching file paths and request ID
@@ -439,7 +440,7 @@ Returns:
 
 Behavior:
 
-- Recursively searches the directory and subdirectories - Supports glob patterns for matching -
+- Recursively searches the directory and subdirectories - Supports wildcard patterns for matching -
 Exclude patterns help filter out unwanted results
 
 **Example:**
@@ -448,7 +449,7 @@ Exclude patterns help filter out unwanted results
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Create(nil)
 defer result.Session.Delete()
-searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", ".txt", []string{})
+searchResult, _ := result.Session.FileSystem.SearchFiles("/tmp", "*.txt", []string{})
 ```
 
 ### WatchDirectory

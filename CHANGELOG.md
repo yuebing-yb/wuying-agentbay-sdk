@@ -2,6 +2,88 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.11.0] - 2025-11-18
+
+### Added
+
+#### 🖱️ Browser Fingerprint Persistence
+- **Fingerprint Management**: Support for browser fingerprint persistence and customization
+  - Local fingerprint file synchronization
+  - Custom fingerprint construction
+  - Cross-session fingerprint persistence
+  - Enhanced browser anti-detection capabilities
+
+#### 📸 Browser Screenshot Enhancement
+- **Long Screenshot Support**: Capture full-page screenshots beyond viewport
+  - Support for scrolling screenshots
+  - Automatic page stitching
+  - Network idle waiting for complete rendering
+
+#### 🔄 Cross-Platform Context Sync
+- **MappingPolicy**: New policy for cross-platform context synchronization
+  - Flexible path mapping between different platforms
+  - Support for Windows/Linux/macOS path translation
+  - Enhanced context portability
+
+#### 📚 Cookbook Examples
+- **E-Commerce Inspector**: Browser automation for e-commerce data extraction and analysis
+- **AI Code Assistant**: Code generation and execution in isolated sandbox environment
+- **Data Analysis**: Automated data processing and visualization with AI-driven insights
+
+### Changed
+
+#### 🔒 OSS Security Enhancement
+- **Breaking Change**: `securityToken` is now required for OSS operations
+  - Enhanced security for object storage operations
+  - Updated documentation and examples
+
+#### ⌨️ Key Normalization
+- **Improved Case Compatibility**: Better handling of key names in `press_keys` tool
+  - Automatic case normalization for common keys
+  - Support for both uppercase and lowercase key names
+  - Consistent behavior across all SDKs
+
+#### 🧹 API Surface Cleanup
+- **API Privatization**: Internal APIs marked as private across all SDKs
+  - Python: Private methods prefixed with `_`
+  - TypeScript: Internal APIs marked as private
+  - Golang: Internal packages and unexported functions
+  - Cleaner public API documentation
+  - Removed deprecated APIs and properties
+
+#### 📖 Documentation Overhaul
+- **Comprehensive Documentation Enhancement**: Major documentation improvements
+  - Migrated examples from separate docs to source code
+  - Metadata-driven documentation generation
+  - Inline examples for all public APIs
+  - Fixed broken links across all documentation
+  - Simplified and clarified API examples
+  - Enhanced API reference with comprehensive usage examples
+
+#### 🎯 Session Recovery
+- **File Transfer Context**: Automatic context creation for recovered sessions
+  - Better handling of session recovery scenarios
+  - Improved file transfer reliability
+
+### Fixed
+
+#### 🐛 Bug Fixes
+- **SDK Version Reporting**: Fixed version detection in SdkStats module
+- **Context Sync**: Removed invalid `sync_id` parameter in ContextSyncResult
+- **Session Info**: Handle NotFound errors gracefully with clear error messages
+- **Mobile API**: Aligned mobile API naming across SDKs with MCP tool specification
+- **UIElement Bounds**: Handle bounds string format correctly in Golang and TypeScript
+- **Screenshot Timeout**: Fixed timeout issues caused by network idle waiting
+- **Documentation**: Fixed RST code block rendering and markdown formatting issues
+
+### Removed
+
+#### 🗑️ Deprecated APIs
+- **Cleanup**: Removed all deprecated APIs and properties
+  - Cleaner codebase
+  - Reduced maintenance burden
+  - Clear upgrade path for users
+
 ## [0.10.0] - 2025-10-31
 
 ### Added

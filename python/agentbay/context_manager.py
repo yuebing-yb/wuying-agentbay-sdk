@@ -291,7 +291,6 @@ class ContextManager:
                 return ContextSyncResult(
                     request_id=request_id,
                     success=False,
-                    sync_id="",
                     error_message=f"[{code}] {message}",
                 )
 

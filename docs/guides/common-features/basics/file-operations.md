@@ -352,10 +352,10 @@ from agentbay import AgentBay
 
 session = agent_bay.create().session
 
-# Search for files with pattern (partial name matching, NOT wildcards)
-result = session.file_system.search_files("/tmp", "systemd")
+# Search for files with wildcard pattern
+result = session.file_system.search_files("/tmp", "*systemd*")
 if result.success:
-    print(f"Found {len(result.matches)} files containing 'test':")
+    print(f"Found {len(result.matches)} files matching pattern:")
     for match in result.matches:
         print(f"  - {match}")
 else:
@@ -364,11 +364,11 @@ else:
 # Search with exclusion patterns
 result = session.file_system.search_files(
     "/tmp",
-    "systemd",
-    exclude_patterns=["geoclue"]
+    "*config*",
+    exclude_patterns=["*backup*", "*temp*"]
 )
 if result.success:
-    print(f"Found {len(result.matches)} files containing 'config' (excluding 'backup' and 'temp'):")
+    print(f"Found {len(result.matches)} files matching '*config*' (excluding '*backup*' and '*temp*'):")
     for match in result.matches:
         print(f"  - {match}")
 ```
@@ -376,8 +376,7 @@ if result.success:
 #### ⚠️ Important: Search Rules and Limitations
 
 **Pattern Matching Rules:**
-- **NOT wildcard-based**: Patterns like `*.txt` or `test*` are NOT supported
-- **Partial name matching**: The pattern matches any part of the file/directory name
+- **Wildcard-based**: Supports `*` (any characters) and `?` (single character)
 - **Recursive search**: Searches through all subdirectories from the starting path
 - **Case sensitivity**:
   - **Windows**: Case-insensitive matching
@@ -386,30 +385,31 @@ if result.success:
 **Examples of Pattern Matching:**
 
 ```python
-# ✅ CORRECT: Partial name matching
-session.file_system.search_files("/tmp", "test")
-# Matches: test.txt, my_test_file.py, testing.log, etc.
+# ✅ CORRECT: Wildcard patterns
+session.file_system.search_files("/tmp", "*.txt")
+# Matches: test.txt, file.txt, etc.
 
-session.file_system.search_files("/tmp", "config")
-# Matches: config.json, app_config.xml, configuration.ini, etc.
+session.file_system.search_files("/tmp", "test_*")
+# Matches: test_file.py, test_data.json, etc.
 
-# ❌ INCORRECT: Wildcard patterns (NOT supported)
-session.file_system.search_files("/tmp", "*.txt")     # Won't work as expected
-session.file_system.search_files("/tmp", "test*")     # Won't work as expected
-session.file_system.search_files("/tmp", "?.log")     # Won't work as expected
+session.file_system.search_files("/tmp", "*config*")
+# Matches: config.json, app_config.xml, my_configuration.ini, etc.
+
+session.file_system.search_files("/tmp", "?.log")
+# Matches: a.log, 1.log, etc. (single character before .log)
 ```
 
 **Platform-Specific Behavior:**
 
 ```python
 # On Windows (case-insensitive)
-result = session.file_system.search_files("/tmp", "TEST")
-# Matches: TEST.txt, TEST.log, TEST.config, MyTEST.py
+result = session.file_system.search_files("/tmp", "*TEST*")
+# Matches: TEST.txt, test.log, MyTest.py, etc.
 
 # On Linux/Unix (case-sensitive)
-result = session.file_system.search_files("/tmp", "TEST")
-# Matches only: TEST.config, MyTEST.py (exact case match)
-result = session.file_system.search_files("/tmp", "test")
+result = session.file_system.search_files("/tmp", "*TEST*")
+# Matches only: TEST.txt, MyTEST.py (exact case match)
+result = session.file_system.search_files("/tmp", "*test*")
 # Matches only: test.txt, my_test.py (exact case match)
 ```
 
@@ -751,7 +751,7 @@ agent_bay.delete(session)
 | Upload file (local → cloud) | `upload_file()` | Supports all file types, with progress tracking |
 | Download file (cloud → local) | `download_file()` | Supports all file types, with progress tracking |
 | Find and replace text | `edit_file()` | **Text files only**, better than read-modify-write |
-| Search for files | `search_files()` | Partial name matching, NO wildcards |
+| Search for files | `search_files()` | Supports wildcard patterns (* and ?) |
 | Move/rename files | `move_file()` | Works for both text and binary files |
 | Get file metadata | `get_file_info()` | File size, type, timestamps |
 | List directory | `list_directory()` | Directory contents |

@@ -618,7 +618,7 @@ describe("fileSystem", () => {
           const file2Content = "This is test file 2 content.";
           const file3Content = "This is test file 3 content.";
 
-          const searchPattern = "SEARCHABLE_PATTERN";
+          const searchPattern = "*SEARCHABLE_PATTERN*";
           const searchFile1Path = `${testSubdirPath}/SEARCHABLE_PATTERN_file1.txt`;
           const searchFile2Path = `${testSubdirPath}/regular_file2.txt`;
           const searchFile3Path = `${testSubdirPath}/SEARCHABLE_PATTERN_file3.txt`;
@@ -637,7 +637,7 @@ describe("fileSystem", () => {
           );
           log(`Created test files for search test`);
 
-          // Search for files matching the pattern
+          // Search for files matching the wildcard pattern
           const searchResponse = await session.fileSystem.searchFiles(
             testSubdirPath,
             searchPattern
