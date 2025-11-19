@@ -1170,34 +1170,11 @@ export class AgentBay {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function pauseSessionAsyncExample() {
-   *   try {
-   *     // Create a session
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Pause the session asynchronously
-   *       const pauseResult = await agentBay.pauseAsync(session);
-   *       if (pauseResult.success) {
-   *         console.log("Session pause request submitted successfully");
-   *         // Output: Session pause request submitted successfully
-   *       } else {
-   *         console.log(`Failed to pause session: ${pauseResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * pauseSessionAsyncExample().catch(console.error);
+   * const session = (await agentBay.create()).session;
+   * const pauseResult = await agentBay.pauseAsync(session);
+   * await agentBay.resumeAsync(session);
+   * await session.delete();
    * ```
    *
    * @remarks
@@ -1236,37 +1213,11 @@ export class AgentBay {
    *
    * @example
    * ```typescript
-   * import { AgentBay } from 'wuying-agentbay-sdk';
-   *
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   *
-   * async function resumeSessionAsyncExample() {
-   *   try {
-   *     // Create a session
-   *     const result = await agentBay.create();
-   *     if (result.success) {
-   *       const session = result.session;
-   *
-   *       // Pause the session first
-   *       await agentBay.pauseAsync(session);
-   *
-   *       // Resume the session asynchronously
-   *       const resumeResult = await agentBay.resumeAsync(session);
-   *       if (resumeResult.success) {
-   *         console.log("Session resume request submitted successfully");
-   *         // Output: Session resume request submitted successfully
-   *       } else {
-   *         console.log(`Failed to resume session: ${resumeResult.errorMessage}`);
-   *       }
-   *
-   *       await session.delete();
-   *     }
-   *   } catch (error) {
-   *     console.error('Error:', error);
-   *   }
-   * }
-   *
-   * resumeSessionAsyncExample().catch(console.error);
+   * const session = (await agentBay.create()).session;
+   * await agentBay.pauseAsync(session);
+   * const resumeResult = await agentBay.resumeAsync(session);
+   * await session.delete();
    * ```
    *
    * @remarks

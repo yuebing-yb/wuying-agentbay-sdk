@@ -326,19 +326,9 @@ to check the session status until it becomes PAUSED or until timeout.
 **Example**:
 
 ```python
-# Create a session
-create_result = agent_bay.create()
-session = create_result.session
-
-# Pause the session
+session = agent_bay.create().session
 pause_result = agent_bay.pause(session)
-if pause_result.success:
-  print(f"Session paused successfully with status: {pause_result.status}")
-else:
-  print(f"Failed to pause session: {pause_result.error_message}")
-
-# Resume the session when needed
-resume_result = agent_bay.resume(session)
+agent_bay.resume(session)
 session.delete()
 ```
 
@@ -394,27 +384,10 @@ use the pause() method instead.
 ```python
 import asyncio
 
-# Create a session
-create_result = agent_bay.create()
-session = create_result.session
-
-# Pause the session asynchronously
-async def pause_session():
-  pause_result = await agent_bay.pause_async(session)
-  if pause_result.success:
-      print("Session pause request submitted successfully")
-  else:
-      print(f"Failed to pause session: {pause_result.error_message}")
-
-  # Wait for session to actually pause
-  import time
-  time.sleep(2)  # Wait for pause to complete
-
-  # Resume the session
-  resume_result = await agent_bay.resume_async(session)
-  session.delete()
-
-asyncio.run(pause_session())
+session = agent_bay.create().session
+pause_result = await agent_bay.pause_async(session)
+await agent_bay.resume_async(session)
+session.delete()
 ```
 
 
@@ -473,20 +446,9 @@ to check the session status until it becomes RUNNING or until timeout.
 **Example**:
 
 ```python
-# Create a session
-create_result = agent_bay.create()
-session = create_result.session
-
-# Pause the session
+session = agent_bay.create().session
 agent_bay.pause(session)
-
-# Resume the session
 resume_result = agent_bay.resume(session)
-if resume_result.success:
-  print(f"Session resumed successfully with status: {resume_result.status}")
-else:
-  print(f"Failed to resume session: {resume_result.error_message}")
-
 session.delete()
 ```
 
@@ -542,28 +504,10 @@ use the resume() method instead.
 ```python
 import asyncio
 
-# Create a session
-create_result = agent_bay.create()
-session = create_result.session
-
-# Pause the session
+session = agent_bay.create().session
 agent_bay.pause(session)
-
-# Resume the session asynchronously
-async def resume_session():
-  resume_result = await agent_bay.resume_async(session)
-  if resume_result.success:
-      print("Session resume request submitted successfully")
-  else:
-      print(f"Failed to resume session: {resume_result.error_message}")
-
-  # Wait for session to actually resume
-  import time
-  time.sleep(10)  # Wait for resume to complete
-
-  session.delete()
-
-asyncio.run(resume_session())
+resume_result = await agent_bay.resume_async(session)
+session.delete()
 ```
 
 

@@ -125,9 +125,9 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
 func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if params == nil {
 		params = NewCreateSessionParams()
@@ -417,8 +417,8 @@ func NewListSessionParams() *ListSessionParams {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.List(nil, nil, nil)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.List(nil, nil, nil)
 func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error) {
 	// Set default values
 	if labels == nil {
@@ -639,9 +639,9 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    client.Delete(result.Session, true)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	client.Delete(result.Session, true)
 func (a *AgentBay) Delete(session *Session, syncContext ...bool) (*DeleteResult, error) {
 	result, err := session.Delete(syncContext...)
 	if err == nil {
@@ -814,11 +814,11 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    createResult, _ := client.Create(nil)
-//    sessionID := createResult.Session.SessionID
-//    result, _ := client.Get(sessionID)
-//    defer result.Session.Delete()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	createResult, _ := client.Create(nil)
+//	sessionID := createResult.Session.SessionID
+//	result, _ := client.Get(sessionID)
+//	defer result.Session.Delete()
 func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	if sessionID == "" {
 		logOperationError("Get", "session_id is required", false)
@@ -941,29 +941,11 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-//		result, _ := client.Create(nil)
-//		session := result.Session
-//		defer session.Delete()
-//
-//		// Pause the session using AgentBay client
-//		pauseResult, _ := client.Pause(session, 300, 2.0)
-//		if pauseResult.Success {
-//			fmt.Printf("Session paused successfully (RequestID: %s)\n", pauseResult.RequestID)
-//			// Output: Session paused successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
-//		} else {
-//			fmt.Printf("Failed to pause session: %s\n", pauseResult.ErrorMessage)
-//		}
-//	}
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	pauseResult, _ := client.Pause(result.Session, 300, 2.0)
+//	client.Resume(result.Session, 300, 2.0)
 func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
 	// Use default values if not provided
 	if timeout <= 0 {
@@ -1003,32 +985,11 @@ func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-//		result, _ := client.Create(nil)
-//		session := result.Session
-//		defer session.Delete()
-//
-//		// Pause the session first
-//		client.Pause(session, 300, 2.0)
-//
-//		// Resume the session using AgentBay client
-//		resumeResult, _ := client.Resume(session, 300, 2.0)
-//		if resumeResult.Success {
-//			fmt.Printf("Session resumed successfully (RequestID: %s)\n", resumeResult.RequestID)
-//			// Output: Session resumed successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
-//		} else {
-//			fmt.Printf("Failed to resume session: %s\n", resumeResult.ErrorMessage)
-//		}
-//	}
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	client.Pause(result.Session, 300, 2.0)
+//	resumeResult, _ := client.Resume(result.Session, 300, 2.0)
 func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
 	// Use default values if not provided
 	if timeout <= 0 {

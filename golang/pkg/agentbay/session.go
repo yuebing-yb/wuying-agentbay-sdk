@@ -267,10 +267,10 @@ func (s *Session) GetCommand() *command.Command {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    deleteResult, _ := result.Session.Delete()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	deleteResult, _ := result.Session.Delete()
 func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 	shouldSync := len(syncContext) > 0 && syncContext[0]
 
@@ -400,11 +400,11 @@ func (s *Session) ValidateLabels(labels map[string]string) string {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    labels := map[string]string{"env": "test"}
-//    labelResult, _ := result.Session.SetLabels(labels)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	labels := map[string]string{"env": "test"}
+//	labelResult, _ := result.Session.SetLabels(labels)
 func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error) {
 	// Validate labels using the validation function
 	if validationError := s.ValidateLabels(labels); validationError != "" {
@@ -478,10 +478,10 @@ func (s *Session) SetLabels(labels map[string]string) (*LabelResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    labelResult, _ := result.Session.GetLabels()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	labelResult, _ := result.Session.GetLabels()
 func (s *Session) GetLabels() (*LabelResult, error) {
 	getLabelRequest := &mcp.GetLabelRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
@@ -550,11 +550,11 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    port := int32(30100)
-//    linkResult, _ := result.Session.GetLink(nil, &port, nil)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	port := int32(30100)
+//	linkResult, _ := result.Session.GetLink(nil, &port, nil)
 func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*LinkResult, error) {
 	// Validate port range if port is provided
 	if port != nil {
@@ -640,10 +640,10 @@ func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    infoResult, _ := result.Session.Info()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	infoResult, _ := result.Session.Info()
 func (s *Session) Info() (*InfoResult, error) {
 	getMcpResourceRequest := &mcp.GetMcpResourceRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
@@ -772,10 +772,10 @@ func (s *Session) Info() (*InfoResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    toolsResult, _ := result.Session.ListMcpTools()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	toolsResult, _ := result.Session.ListMcpTools()
 func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 	// Use session's ImageId, or default to "linux_latest" if empty
 	imageId := s.ImageId
@@ -926,11 +926,11 @@ func (s *Session) FindServerForTool(toolName string) string {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    args := map[string]interface{}{"command": "ls -la"}
-//    toolResult, _ := result.Session.CallMcpTool("execute_command", args)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	args := map[string]interface{}{"command": "ls -la"}
+//	toolResult, _ := result.Session.CallMcpTool("execute_command", args)
 func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
 	// Normalize press_keys arguments for better case compatibility
 	if toolName == "press_keys" {
@@ -1307,29 +1307,10 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-//		result, _ := client.Create(nil)
-//		session := result.Session
-//		defer session.Delete()
-//
-//		// Pause the session
-//		pauseResult, _ := session.Pause(300, 2.0)
-//		if pauseResult.Success {
-//			fmt.Printf("Session paused successfully (RequestID: %s)\n", pauseResult.RequestID)
-//			// Output: Session paused successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
-//		} else {
-//			fmt.Printf("Failed to pause session: %s\n", pauseResult.ErrorMessage)
-//		}
-//	}
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	pauseResult, _ := result.Session.Pause(300, 2.0)
 func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
 	// Set default values if not provided
 	if timeout <= 0 {
@@ -1475,32 +1456,11 @@ func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPause
 //
 // Example:
 //
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-//	)
-//
-//	func main() {
-//		client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-//		result, _ := client.Create(nil)
-//		session := result.Session
-//		defer session.Delete()
-//
-//		// Pause the session first
-//		session.Pause(300, 2.0)
-//
-//		// Resume the session
-//		resumeResult, _ := session.Resume(300, 2.0)
-//		if resumeResult.Success {
-//			fmt.Printf("Session resumed successfully (RequestID: %s)\n", resumeResult.RequestID)
-//			// Output: Session resumed successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
-//		} else {
-//			fmt.Printf("Failed to resume session: %s\n", resumeResult.ErrorMessage)
-//		}
-//	}
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	result.Session.Pause(300, 2.0)
+//	resumeResult, _ := result.Session.Resume(300, 2.0)
 func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
 	// Set default values if not provided
 	if timeout <= 0 {

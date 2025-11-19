@@ -236,30 +236,10 @@ result for timeout conditions - Returns Go error for transport-level failures
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-	result, _ := client.Create(nil)
-	session := result.Session
-	defer session.Delete()
-
-	// Pause the session
-
-	pauseResult, _ := session.Pause(300, 2.0)
-	if pauseResult.Success {
-		fmt.Printf("Session paused successfully (RequestID: %s)\n", pauseResult.RequestID)
-
-		// Output: Session paused successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
-
-	} else {
-		fmt.Printf("Failed to pause session: %s\n", pauseResult.ErrorMessage)
-	}
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+pauseResult, _ := result.Session.Pause(300, 2.0)
 ```
 
 ### Resume
@@ -294,34 +274,11 @@ result for timeout conditions - Returns Go error for transport-level failures
 **Example:**
 
 ```go
-package main
-import (
-	"fmt"
-	"os"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-func main() {
-	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-	result, _ := client.Create(nil)
-	session := result.Session
-	defer session.Delete()
-
-	// Pause the session first
-
-	session.Pause(300, 2.0)
-
-	// Resume the session
-
-	resumeResult, _ := session.Resume(300, 2.0)
-	if resumeResult.Success {
-		fmt.Printf("Session resumed successfully (RequestID: %s)\n", resumeResult.RequestID)
-
-		// Output: Session resumed successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
-
-	} else {
-		fmt.Printf("Failed to resume session: %s\n", resumeResult.ErrorMessage)
-	}
-}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+result.Session.Pause(300, 2.0)
+resumeResult, _ := result.Session.Resume(300, 2.0)
 ```
 
 ### SetLabels

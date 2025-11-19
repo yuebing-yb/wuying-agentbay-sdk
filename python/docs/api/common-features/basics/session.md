@@ -379,18 +379,9 @@ to check the session status until it becomes PAUSED or until timeout.
 **Example**:
 
 ```python
-# Create a session
 session = agent_bay.create().session
-
-# Pause the session
 pause_result = session.pause()
-if pause_result.success:
-  print(f"Session paused successfully with status: {pause_result.status}")
-else:
-  print(f"Failed to pause session: {pause_result.error_message}")
-
-# Resume the session when needed
-resume_result = session.resume()
+session.resume()
 session.delete()
 ```
 
@@ -450,25 +441,10 @@ asynchronously to check the session status until it becomes PAUSED or until time
 ```python
 import asyncio
 
-# Create a session
 session = agent_bay.create().session
-
-# Pause the session asynchronously
-async def pause_session():
-  pause_result = await session.pause_async()
-  if pause_result.success:
-      print(f"Session pause request submitted successfully")
-  else:
-      print(f"Failed to pause session: {pause_result.error_message}")
-
-  # Wait for session to actually pause
-  await asyncio.sleep(10)  # Wait for pause to complete
-
-  # Resume the session
-  await session.resume_async()
-  session.delete()
-
-asyncio.run(pause_session())
+pause_result = await session.pause_async()
+await session.resume_async()
+session.delete()
 ```
 
 
@@ -525,19 +501,9 @@ to check the session status until it becomes RUNNING or until timeout.
 **Example**:
 
 ```python
-# Create a session
 session = agent_bay.create().session
-
-# Pause the session
 session.pause()
-
-# Resume the session
 resume_result = session.resume()
-if resume_result.success:
-  print(f"Session resumed successfully with status: {resume_result.status}")
-else:
-  print(f"Failed to resume session: {resume_result.error_message}")
-
 session.delete()
 ```
 
@@ -597,26 +563,10 @@ asynchronously to check the session status until it becomes RUNNING or until tim
 ```python
 import asyncio
 
-# Create a session
 session = agent_bay.create().session
-
-# Pause the session
 session.pause()
-
-# Resume the session asynchronously
-async def resume_session():
-  resume_result = await session.resume_async()
-  if resume_result.success:
-      print("Session resume request submitted successfully")
-  else:
-      print(f"Failed to resume session: {resume_result.error_message}")
-
-  # Wait for session to actually resume
-  await asyncio.sleep(10)  # Wait for resume to complete
-
-  session.delete()
-
-asyncio.run(resume_session())
+resume_result = await session.resume_async()
+session.delete()
 ```
 
 
