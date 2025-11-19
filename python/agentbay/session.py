@@ -1510,7 +1510,7 @@ class Session:
             return result
 
         except Exception as e:
-            _log_operation_error("PauseSessionAsync", str(e), exc_info=True)
+            _log_operation_error("PauseSessionAsync", str(e))
             result = SessionPauseResult(
                 request_id="",
                 success=False,
@@ -1805,7 +1805,7 @@ class Session:
             return result
 
         except Exception as e:
-            _log_operation_error("ResumeSessionAsync", str(e), exc_info=True)
+            _log_operation_error("ResumeSessionAsync", str(e))
             result = SessionResumeResult(
                 request_id="",
                 success=False,
