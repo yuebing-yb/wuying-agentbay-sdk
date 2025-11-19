@@ -6,24 +6,6 @@ import * as dotenv from "dotenv";
 import * as path from "path";
 import * as fs from "fs";
 
-// Load environment variables from .env file
-function loadEnvFile(): void {
-  // Try to load .env file from project root
-  const envPath = path.resolve(__dirname, "../../.env");
-  if (fs.existsSync(envPath)) {
-    dotenv.config({ path: envPath });
-    log(`Loaded environment variables from ${envPath}`);
-  } else {
-    // Try to load .env file from root directory
-    const rootEnvPath = path.resolve(__dirname, "../../../.env");
-    if (fs.existsSync(rootEnvPath)) {
-      dotenv.config({ path: rootEnvPath });
-      log(`Loaded environment variables from ${rootEnvPath}`);
-    } else {
-      log("No .env file found, using environment variables from process.env");
-    }
-  }
-}
 
 describe("AgentBay pause and resume integration tests", () => {
   let agentBay: AgentBay;
@@ -31,8 +13,6 @@ describe("AgentBay pause and resume integration tests", () => {
   let sessionCreated = false;
 
   beforeAll(async () => {
-    // Load environment variables from .env file
-    loadEnvFile();
     
     const apiKey = process.env.AGENTBAY_API_KEY;
     log(`API Key loaded: ${apiKey ? "YES" : "NO"}`);

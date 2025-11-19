@@ -1395,6 +1395,7 @@ export class Session {
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
+      setRequestId(requestId);
 
       // Check for API-level errors
       const responseMap = response.to_map ? response.to_map() : response;
@@ -1526,6 +1527,7 @@ export class Session {
 
       // Extract request ID
       const requestId = extractRequestId(response) || "";
+      setRequestId(requestId);
 
       // Check for API-level errors
       const responseMap = response.to_map ? response.to_map() : response;
