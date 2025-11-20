@@ -2,7 +2,6 @@
 import { AgentBay, Browser, BrowserOptionClass, log } from '../../src';
 import { CreateSessionParams } from '../../src/session-params';
 import { getTestApiKey, wait } from '../utils/test-helpers';
-// Note: Playwright is imported dynamically in the test due to Jest compatibility issues
 
 /**
  * Browser replay integration test for TypeScript SDK
@@ -45,6 +44,10 @@ describe('Browser Replay Integration Tests', () => {
             }
         }
 
+        // Sleep 10 seconds before deleting session
+        log("Sleeping 10 seconds before deleting session...");
+        await wait(10000);
+
         // Clean up session
         if (session) {
             log("Cleaning up: Deleting the session...");
@@ -54,7 +57,6 @@ describe('Browser Replay Integration Tests', () => {
             } catch (error: any) {
                 log(`Warning: Error deleting session: ${error?.message || error}`);
             }
-            await wait(60000);
         }
     });
 
@@ -112,6 +114,7 @@ describe('Browser Replay Integration Tests', () => {
 
 
     test('should perform browser operations with recording', async () => {
+
         if (!session) {
             log("⏭️ Skipping test - session creation failed");
             expect(true).toBe(true);
@@ -139,9 +142,17 @@ describe('Browser Replay Integration Tests', () => {
             // Connect to browser using Playwright
             log("Connecting to browser via Playwright...");
 
-            // Dynamic import for Jest compatibility
-            const { chromium } = await import('playwright');
-            playwrightBrowser = await chromium.connectOverCDP(endpointUrl);
+            // Dynamically import Playwright to avoid module resolution issues during file loading
+            // This is more reliable than static import when Jest mocks are involved
+            const playwright = await import('playwright');
+            const chromium = playwright.chromium;
+
+            if (!chromium || typeof chromium.connectOverCDP !== 'function') {
+                throw new Error('chromium.connectOverCDP is not available. Make sure playwright is installed: npm install playwright');
+            }
+
+            log(`Attempting to connect to CDP endpoint: ${endpointUrl.substring(0, 50)}...`);
+            playwrightBrowser = await chromium.connectOverCDP(endpointUrl, { timeout: 30000 });
             expect(playwrightBrowser).toBeDefined();
             log("Playwright browser connection successful");
 
@@ -247,5 +258,5 @@ describe('Browser Replay Integration Tests', () => {
         }
 
         log("Browser operations completed successfully with recording");
-    }, 180000);
+    });
 });

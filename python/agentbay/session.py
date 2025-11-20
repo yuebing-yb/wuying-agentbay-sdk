@@ -30,6 +30,7 @@ from agentbay.model import SessionPauseResult, SessionResumeResult
 from agentbay.oss import Oss
 from agentbay.agent import Agent
 from agentbay.context_manager import ContextManager
+from agentbay.config import BROWSER_RECORD_PATH
 
 if TYPE_CHECKING:
     from agentbay.agentbay import AgentBay
@@ -227,7 +228,7 @@ class Session:
 
                     if sync_context_id:
                         # Sync specific context (browser recording)
-                        sync_result = asyncio.run(self.context.sync(context_id=sync_context_id))
+                        sync_result = asyncio.run(self.context.sync(context_id=sync_context_id, path=BROWSER_RECORD_PATH))
                         _logger.info(f"🎥 Synced browser recording context: {sync_context_id}")
                     else:
                         # Sync all contexts
@@ -313,7 +314,7 @@ class Session:
         Returns:
             None if validation passes, or OperationResult with error if validation fails
         """
-        # Check if labels is None
+        # Check if labels is null, undefined, or invalid type
         if labels is None:
             return OperationResult(
                 request_id="",
@@ -1365,7 +1366,7 @@ class Session:
         try:
             import asyncio
             from agentbay.api.models import PauseSessionAsyncRequest
-            
+
             request = PauseSessionAsyncRequest(
                 authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
@@ -1635,7 +1636,7 @@ class Session:
         try:
             import asyncio
             from agentbay.api.models import ResumeSessionAsyncRequest
-            
+
             request = ResumeSessionAsyncRequest(
                 authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
@@ -1671,7 +1672,7 @@ class Session:
             code = body.get("Code", "")
             message = body.get("Message", "")
             http_status_code = body.get("HttpStatusCode", 0)
-            
+
             # Build error message if not successful
             if not success:
                 error_message = f"[{code}] {message}" if code or message else "Unknown error"
@@ -1696,7 +1697,7 @@ class Session:
                 }
             )
             _log_operation_success("ResumeSessionAsync", f"Session {self.session_id} resume initiated successfully")
-            
+
             # Poll for session status until RUNNING or timeout
             import time
             start_time = time.time()

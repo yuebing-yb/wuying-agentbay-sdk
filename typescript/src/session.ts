@@ -20,6 +20,7 @@ import {
   ContextSyncResult,
   newContextManager,
 } from "./context-manager";
+import { BROWSER_RECORD_PATH } from "./config";
 import { FileSystem } from "./filesystem";
 import { Mobile } from "./mobile";
 import { Oss } from "./oss";
@@ -387,7 +388,7 @@ export class Session {
           let syncResult: ContextSyncResult;
           if (syncContextId) {
             // Sync specific context (browser recording)
-            syncResult = await this.context.sync(syncContextId);
+            syncResult = await this.context.sync(syncContextId, BROWSER_RECORD_PATH);
             logInfo(`🎥 Synced browser recording context: ${syncContextId}`);
           } else {
             // Sync all contexts
@@ -820,9 +821,9 @@ export class Session {
           `❌ Failed to get session info for session ${this.sessionId}`,
           error
         );
-        throw new Error(
-          `Failed to get session info for session ${this.sessionId}: ${error}`
-        );
+      throw new Error(
+        `Failed to get session info for session ${this.sessionId}: ${error}`
+      );
       }
     }
   }

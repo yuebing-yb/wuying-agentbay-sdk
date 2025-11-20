@@ -205,6 +205,23 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 	}
 
+	// Add browser recording persistence if enabled
+	var recordContextID string
+	if params.EnableBrowserReplay {
+		// Generate random context name for browser recording
+		recordContextName := fmt.Sprintf("browser-record-%d", time.Now().UnixNano())
+		recordResult, err := a.Context.Get(recordContextName, true)
+		if err == nil && recordResult.Success {
+			recordContextID = recordResult.ContextID
+			// Create browser recording persistence configuration
+			recordPersistence := &mcp.CreateMcpSessionRequestPersistenceDataList{
+				ContextId: tea.String(recordContextID),
+				Path:      tea.String(BrowserRecordPath),
+			}
+			persistenceDataList = append(persistenceDataList, recordPersistence)
+		}
+	}
+
 	if len(persistenceDataList) > 0 {
 		createSessionRequest.PersistenceDataList = persistenceDataList
 		needsContextSync = true
@@ -300,6 +317,10 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		session.ResourceUrl = *response.Body.Data.ResourceUrl
 	}
 
+	// Set browser recording state and context ID
+	session.EnableBrowserReplay = params.EnableBrowserReplay
+	session.RecordContextID = recordContextID
+
 	a.Sessions.Store(session.SessionID, *session)
 
 	// Log successful session creation
@@ -310,6 +331,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
 	logAPIResponseWithDetails("CreateMcpSession", requestID, true, keyFields, string(responseJSON))
+
+	// Update browser replay context if enabled
+	if params.EnableBrowserReplay && recordContextID != "" {
+		a.updateBrowserReplayContext(response.Body.Data, recordContextID)
+	}
 
 	// Apply mobile configuration if provided
 	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil {
@@ -1001,4 +1027,46 @@ func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) 
 
 	// Call session's Resume method with provided parameters
 	return session.Resume(timeout, pollInterval)
+}
+
+// updateBrowserReplayContext updates browser replay context with AppInstanceId from response data.
+// This method updates the context name to include the AppInstanceId for better tracking.
+func (a *AgentBay) updateBrowserReplayContext(responseData *mcp.CreateMcpSessionResponseBodyData, recordContextID string) {
+	// Check if recordContextID is provided
+	if recordContextID == "" {
+		return
+	}
+
+	// Extract AppInstanceId from response data
+	if responseData == nil || responseData.AppInstanceId == nil || *responseData.AppInstanceId == "" {
+		fmt.Printf("⚠️  AppInstanceId not found in response data, skipping browser replay context update\n")
+		return
+	}
+
+	appInstanceID := *responseData.AppInstanceId
+
+	// Create context name with prefix
+	contextName := fmt.Sprintf("browserreplay-%s", appInstanceID)
+
+	// Create Context object for update
+	contextObj := &Context{
+		ID:   recordContextID,
+		Name: contextName,
+	}
+
+	// Call context.update interface
+	fmt.Printf("Updating browser replay context: %s -> %s\n", contextName, recordContextID)
+	updateResult, err := a.Context.Update(contextObj)
+
+	if err != nil {
+		fmt.Printf("❌ Error updating browser replay context: %v\n", err)
+		// Continue execution even if context update fails
+		return
+	}
+
+	if updateResult.Success {
+		fmt.Printf("✅ Successfully updated browser replay context: %s\n", contextName)
+	} else {
+		fmt.Printf("⚠️  Failed to update browser replay context: %s\n", updateResult.ErrorMessage)
+	}
 }

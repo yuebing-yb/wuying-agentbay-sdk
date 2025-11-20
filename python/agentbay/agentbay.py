@@ -15,7 +15,7 @@ from agentbay.api.models import (
     GetSessionRequest,
     ListSessionRequest,
 )
-from agentbay.config import _load_config
+from agentbay.config import _load_config, BROWSER_RECORD_PATH
 from agentbay.context import ContextService
 from agentbay.model import (
     DeleteResult,
@@ -565,7 +565,7 @@ class AgentBay:
                 )
 
                 # Create browser recording persistence configuration
-                record_path = "/home/guest/record"
+                record_path = BROWSER_RECORD_PATH
                 record_context_name = _generate_random_context_name()
                 result = self.context.get(record_context_name, True)
                 record_context_id = result.context_id if result.success else ""

@@ -7,7 +7,7 @@ import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
 import { Client } from "./api/client";
 
-import { Config } from "./config";
+import { Config, BROWSER_RECORD_PATH } from "./config";
 import { ContextService } from "./context";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
@@ -432,7 +432,7 @@ export class AgentBay {
       let recordContextId = ""; // Initialize record_context_id
       if (params.enableBrowserReplay) {
         // Create browser recording persistence configuration
-        const recordPath = "/home/guest/record";
+        const recordPath = BROWSER_RECORD_PATH;
         const recordContextName = generateRandomContextName();
         const result = await this.context.get(recordContextName, true);
         recordContextId = result.success ? result.contextId : "";

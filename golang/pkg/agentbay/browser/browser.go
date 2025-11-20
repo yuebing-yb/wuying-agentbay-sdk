@@ -492,10 +492,15 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	// Convert option to map
 	browserOptionMap := option.toMap()
 
-	// TODO: Enable record if session has enableBrowserReplay set to true
-	// This would require adding enableBrowserReplay to the session interface
-	// if hasattr(self.session, 'enableBrowserReplay') and self.session.enableBrowserReplay:
-	//     browser_option_dict['enableRecord'] = True
+	// Enable record if session has enableBrowserReplay set to true
+	// Check if session implements GetEnableBrowserReplay method
+	if enableReplayGetter, ok := b.session.(interface {
+		GetEnableBrowserReplay() bool
+	}); ok {
+		if enableReplayGetter.GetEnableBrowserReplay() {
+			browserOptionMap["enableRecord"] = true
+		}
+	}
 
 	// Create InitBrowserRequest
 	authorization := "Bearer " + b.session.GetAPIKey()
