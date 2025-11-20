@@ -342,6 +342,7 @@ else:
 - **Resource Usage and Costs**: During pause, both resource usage and costs are lower
 - **Session State**: All session state is preserved during pause and resume operations
 - **Optional Operations**: Pause and resume are optional - you can also directly delete a session
+- **Paused Session Restrictions**: When a session is in a paused state, it cannot perform operations such as deletion, task execution, or other actions. You must resume the session first before performing these operations
 
 ## Session Release
 

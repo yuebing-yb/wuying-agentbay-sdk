@@ -1375,12 +1375,47 @@ export class Session {
   /**
    * Asynchronously pause this session, putting it into a dormant state.
    *
-   * This method directly calls the PauseSessionAsync API and then polls the GetSession API
-   * asynchronously to check the session status until it becomes PAUSED or until timeout.
+   * This method calls the PauseSessionAsync API to initiate the pause operation and then polls
+   * the GetSession API to check the session status until it becomes PAUSED or until timeout is reached.
+   * During the paused state, resource usage and costs are reduced while session state is preserved.
    *
    * @param timeout - Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
    * @param pollInterval - Interval in seconds between status polls. Defaults to 2.0 seconds.
-   * @returns SessionPauseResult indicating success or failure and request ID
+   *
+   * @returns Promise resolving to SessionPauseResult containing:
+   *          - success: Whether the pause operation succeeded
+   *          - requestId: Unique identifier for this API request
+   *          - status: Final session status (should be "PAUSED" if successful)
+   *          - errorMessage: Error description if pause failed
+   *
+   * @throws Error if the API call fails or network issues occur.
+   *
+   * @example
+   * ```typescript
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const pauseResult = await result.session.pauseAsync();
+   *   if (pauseResult.success) {
+   *     console.log('Session paused successfully');
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - Initiates pause operation through PauseSessionAsync API
+   * - Polls session status until PAUSED state or timeout
+   * - Session state transitions: RUNNING -> PAUSING -> PAUSED
+   * - All session state is preserved during pause
+   *
+   * **Important Notes:**
+   * - Paused sessions cannot perform operations (deletion, task execution, etc.)
+   * - Use {@link resumeAsync} to restore the session to RUNNING state
+   * - During pause, both resource usage and costs are lower
+   * - If timeout is exceeded, returns with success=false
+   *
+   * @see {@link resumeAsync}
    */
   async pauseAsync(timeout = 600, pollInterval = 2.0): Promise<SessionPauseResult> {
     try {
@@ -1507,12 +1542,47 @@ export class Session {
   /**
    * Asynchronously resume this session from a paused state.
    *
-   * This method directly calls the ResumeSessionAsync API and then polls the GetSession API
-   * asynchronously to check the session status until it becomes RUNNING or until timeout.
+   * This method calls the ResumeSessionAsync API to initiate the resume operation and then polls
+   * the GetSession API to check the session status until it becomes RUNNING or until timeout is reached.
+   * After resuming, the session restores full functionality and can perform all operations normally.
    *
    * @param timeout - Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
    * @param pollInterval - Interval in seconds between status polls. Defaults to 2.0 seconds.
-   * @returns SessionResumeResult indicating success or failure and request ID
+   *
+   * @returns Promise resolving to SessionResumeResult containing:
+   *          - success: Whether the resume operation succeeded
+   *          - requestId: Unique identifier for this API request
+   *          - status: Final session status (should be "RUNNING" if successful)
+   *          - errorMessage: Error description if resume failed
+   *
+   * @throws Error if the API call fails or network issues occur.
+   *
+   * @example
+   * ```typescript
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.get('paused_session_id');
+   * if (result.success) {
+   *   const resumeResult = await result.session.resumeAsync();
+   *   if (resumeResult.success) {
+   *     console.log('Session resumed successfully');
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - Initiates resume operation through ResumeSessionAsync API
+   * - Polls session status until RUNNING state or timeout
+   * - Session state transitions: PAUSED -> RESUMING -> RUNNING
+   * - All previous session state is restored during resume
+   *
+   * **Important Notes:**
+   * - Only sessions in PAUSED state can be resumed
+   * - After resume, the session can perform all operations normally
+   * - Use {@link pauseAsync} to put a session into PAUSED state
+   * - If timeout is exceeded, returns with success=false
+   *
+   * @see {@link pauseAsync}
    */
   async resumeAsync(timeout = 600, pollInterval = 2.0): Promise<SessionResumeResult> {
     try {
