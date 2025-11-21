@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from agentbay.command.command import Command, CommandResult
+from agentbay._sync.command import Command, CommandResult
 from agentbay.model import OperationResult
 
 
@@ -49,7 +49,7 @@ class TestCommand(unittest.TestCase):
         self.session.call_mcp_tool.assert_called_once()
         args = self.session.call_mcp_tool.call_args[0][1]
         self.assertEqual(args["command"], "ls -la")
-        self.assertEqual(args["timeout_ms"], 1000)  # Default timeout
+        self.assertEqual(args["timeout_ms"], 60000)  # Default timeout
 
     def test_execute_command_with_custom_timeout(self):
         """

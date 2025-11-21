@@ -1,0 +1,72 @@
+"""Integration tests for command pipes and redirects."""
+import os
+import pytest
+import pytest_asyncio
+
+from agentbay import AsyncAgentBay
+
+
+@pytest_asyncio.fixture(scope="module")
+async def agent_bay():
+    api_key = os.environ.get("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    return AsyncAgentBay(api_key=api_key)
+
+
+@pytest_asyncio.fixture
+async def test_session(agent_bay):
+    result = await agent_bay.create()
+    assert result.success
+    yield result.session
+    await result.session.delete()
+
+
+@pytest.mark.asyncio
+async def test_command_pipe(test_session):
+    """Test command with pipe."""
+    cmd = test_session.command
+    result = await cmd.execute_command("echo 'hello world' | grep 'hello'")
+    assert result.success
+    assert "hello" in result.output
+    print("Command with pipe executed successfully")
+
+
+@pytest.mark.asyncio
+async def test_command_redirect(test_session):
+    """Test command with redirect."""
+    cmd = test_session.command
+    fs = test_session.file_system
+    
+    # Write to file using redirect
+    result = await cmd.execute_command("echo 'test content' > /tmp/redirect_test.txt")
+    assert result.success
+    
+    # Read file to verify
+    read_result = await fs.read_file("/tmp/redirect_test.txt")
+    assert read_result.success
+    assert "test content" in read_result.content
+    print("Command with redirect executed successfully")
+
+
+@pytest.mark.asyncio
+async def test_command_append(test_session):
+    """Test command with append redirect."""
+    cmd = test_session.command
+    fs = test_session.file_system
+    
+    # Write initial content
+    await cmd.execute_command("echo 'line1' > /tmp/append_test.txt")
+    
+    # Append content
+    result = await cmd.execute_command("echo 'line2' >> /tmp/append_test.txt")
+    assert result.success
+    
+    # Read file to verify
+    read_result = await fs.read_file("/tmp/append_test.txt")
+    assert read_result.success
+    assert "line1" in read_result.content
+    assert "line2" in read_result.content
+    print("Command with append executed successfully")
+
+

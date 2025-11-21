@@ -1,9 +1,13 @@
 """
 Computer module for desktop UI automation.
 Provides mouse, keyboard, window management, application management, and screen operations.
+
+Deprecated import path. Use instead:
+    from agentbay import Computer  # Sync
+    from agentbay import AsyncComputer  # Async
 """
 
-from .computer import (
+from .._sync.computer import (
     Computer,
     MouseButton,
     ScrollDirection,

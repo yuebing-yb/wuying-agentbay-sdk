@@ -1,0 +1,134 @@
+"""
+Docker Operations Example
+
+This example demonstrates:
+1. Checking Docker availability
+2. Running Docker containers
+3. Managing Docker images
+4. Docker container lifecycle
+"""
+
+import asyncio
+import os
+import sys
+
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
+from agentbay import AsyncAgentBay
+from agentbay.session_params import CreateSessionParams
+
+
+async def main():
+    """Demonstrate Docker operations."""
+    print("=== Docker Operations Example ===\n")
+
+    # Initialize AgentBay client
+    client = AsyncAgentBay()
+    session = None
+
+    try:
+        # Create a session
+        print("Creating session...")
+        session_result = await client.create(
+            CreateSessionParams(
+                image_id="linux_latest"
+            )
+        )
+        session = session_result.session
+        print(f"Session created: {session.session_id}")
+
+        # Check Docker version
+        print("\n1. Checking Docker version...")
+        result = await session.command.execute_command("docker --version")
+        if result.success:
+            print(f"Docker version: {result.output}")
+        else:
+            print("Docker not available in this session")
+            print("Note: Docker operations require a session with Docker support")
+            return
+
+        # List Docker images
+        print("\n2. Listing Docker images...")
+        result = await session.command.execute_command("docker images")
+        print(f"Docker images:\n{result.output}")
+
+        # Pull a Docker image (using a small image)
+        print("\n3. Pulling hello-world image...")
+        result = await session.command.execute_command("docker pull hello-world")
+        if result.success:
+            print("Image pulled successfully")
+        else:
+            print(f"Failed to pull image: {result.error_message}")
+
+        # Run a Docker container
+        print("\n4. Running hello-world container...")
+        result = await session.command.execute_command("docker run hello-world")
+        print(f"Container output:\n{result.output}")
+
+        # List running containers
+        print("\n5. Listing running containers...")
+        result = await session.command.execute_command("docker ps")
+        print(f"Running containers:\n{result.output}")
+
+        # List all containers (including stopped)
+        print("\n6. Listing all containers...")
+        result = await session.command.execute_command("docker ps -a")
+        print(f"All containers:\n{result.output}")
+
+        # Create a Dockerfile
+        print("\n7. Creating a custom Dockerfile...")
+        dockerfile_content = """FROM alpine:latest
+RUN echo "Hello from AgentBay Docker build!"
+CMD ["echo", "Container is running!"]
+"""
+        await session.file_system.write_file("/tmp/Dockerfile", dockerfile_content)
+        print("Dockerfile created")
+
+        # Build a Docker image
+        print("\n8. Building Docker image...")
+        result = await session.command.execute_command(
+            "cd /tmp && docker build -t agentbay-test:latest ."
+        )
+        if result.success:
+            print("Image built successfully")
+        else:
+            print(f"Build output:\n{result.output}")
+
+        # List images again
+        print("\n9. Listing Docker images after build...")
+        result = await session.command.execute_command("docker images")
+        print(f"Docker images:\n{result.output}")
+
+        # Run the custom container
+        print("\n10. Running custom container...")
+        result = await session.command.execute_command("docker run agentbay-test:latest")
+        print(f"Container output:\n{result.output}")
+
+        # Clean up containers
+        print("\n11. Cleaning up stopped containers...")
+        result = await session.command.execute_command("docker container prune -f")
+        print(f"Cleanup output:\n{result.output}")
+
+        # Show Docker system info
+        print("\n12. Showing Docker system info...")
+        result = await session.command.execute_command("docker info | head -20")
+        print(f"Docker info:\n{result.output}")
+
+        print("\n=== Example completed successfully ===")
+
+    except Exception as e:
+        print(f"\nError occurred: {str(e)}")
+        raise
+
+    finally:
+        # Clean up
+        if session:
+            print("\nCleaning up session...")
+            await client.delete(session)
+            print("Session closed")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+

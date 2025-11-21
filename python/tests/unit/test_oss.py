@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from agentbay.model import OperationResult, McpToolResult
-from agentbay.oss.oss import Oss
+from agentbay._sync.oss import Oss
 
 
 class TestOss(unittest.TestCase):

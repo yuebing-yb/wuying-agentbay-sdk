@@ -1,0 +1,145 @@
+"""
+Browser Responsive Testing Example
+
+This example demonstrates:
+1. Testing different viewport sizes
+2. Mobile vs desktop rendering
+3. Responsive design verification
+4. Screenshot comparison across sizes
+"""
+
+import asyncio
+import os
+import sys
+
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
+
+from agentbay.async_api import AsyncAgentBay, CreateSessionParams
+from agentbay.browser import BrowserOption
+
+
+async def main():
+    """Demonstrate browser responsive testing."""
+    print("=== Browser Responsive Testing Example ===\n")
+
+    # Initialize AgentBay client
+    client = AsyncAgentBay()
+    session = None
+
+    try:
+        # Create a session with browser enabled
+        print("Creating session with browser...")
+        session_result = await client.create(
+            CreateSessionParams(image_id="browser_latest")
+        )
+        session = session_result.session
+        print(f"Session created: {session.session_id}")
+
+        # Initialize browser
+        print("Initializing browser...")
+        if not await session.browser.initialize(BrowserOption()):
+            raise Exception("Failed to initialize browser")
+        print("Browser initialized")
+
+        # Navigate to a responsive website
+        print("\n1. Navigating to test website...")
+        await session.browser.agent.navigate("https://example.com")
+
+        # Test desktop viewport
+        print("\n2. Testing desktop viewport (1920x1080)...")
+        await session.browser.agent.act(
+            "Set the browser viewport size to 1920x1080 pixels"
+        )
+        desktop_screenshot = await session.browser.agent.screenshot()
+        print(f"Desktop screenshot saved: {desktop_screenshot}")
+
+        # Extract desktop layout info
+        desktop_result = await session.browser.agent.extract(
+            "Describe the layout and visible elements on this page"
+        )
+        print(f"Desktop layout:\n{desktop_result.extracted_content}")
+
+        # Test tablet viewport
+        print("\n3. Testing tablet viewport (768x1024)...")
+        await session.browser.agent.act(
+            "Set the browser viewport size to 768x1024 pixels"
+        )
+        tablet_screenshot = await session.browser.agent.screenshot()
+        print(f"Tablet screenshot saved: {tablet_screenshot}")
+
+        # Extract tablet layout info
+        tablet_result = await session.browser.agent.extract(
+            "Describe the layout and visible elements on this page"
+        )
+        print(f"Tablet layout:\n{tablet_result.extracted_content}")
+
+        # Test mobile viewport
+        print("\n4. Testing mobile viewport (375x667)...")
+        await session.browser.agent.act(
+            "Set the browser viewport size to 375x667 pixels"
+        )
+        mobile_screenshot = await session.browser.agent.screenshot()
+        print(f"Mobile screenshot saved: {mobile_screenshot}")
+
+        # Extract mobile layout info
+        mobile_result = await session.browser.agent.extract(
+            "Describe the layout and visible elements on this page"
+        )
+        print(f"Mobile layout:\n{mobile_result.extracted_content}")
+
+        # Test a more complex responsive site
+        print("\n5. Testing responsive design on news site...")
+        await session.browser.agent.navigate("https://news.ycombinator.com")
+
+        # Mobile view
+        print("\n6. Checking mobile view...")
+        await session.browser.agent.act(
+            "Set the browser viewport size to 375x667 pixels"
+        )
+        mobile_news_screenshot = await session.browser.agent.screenshot()
+        print(f"Mobile news screenshot saved: {mobile_news_screenshot}")
+
+        mobile_news_result = await session.browser.agent.extract(
+            "How many story items are visible on the mobile view?"
+        )
+        print(f"Mobile view stories: {mobile_news_result.extracted_content}")
+
+        # Desktop view
+        print("\n7. Checking desktop view...")
+        await session.browser.agent.act(
+            "Set the browser viewport size to 1920x1080 pixels"
+        )
+        desktop_news_screenshot = await session.browser.agent.screenshot()
+        print(f"Desktop news screenshot saved: {desktop_news_screenshot}")
+
+        desktop_news_result = await session.browser.agent.extract(
+            "How many story items are visible on the desktop view?"
+        )
+        print(f"Desktop view stories: {desktop_news_result.extracted_content}")
+
+        # Test orientation change
+        print("\n8. Testing landscape orientation...")
+        await session.browser.agent.act(
+            "Set the browser viewport size to 667x375 pixels (landscape)"
+        )
+        landscape_screenshot = await session.browser.agent.screenshot()
+        print(f"Landscape screenshot saved: {landscape_screenshot}")
+
+        print("\n=== Example completed successfully ===")
+
+    except Exception as e:
+        print(f"\nError occurred: {str(e)}")
+        raise
+
+    finally:
+        # Clean up
+        if session:
+            print("\nCleaning up session...")
+            await client.delete(session)
+            print("Session closed")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+

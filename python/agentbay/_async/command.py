@@ -1,0 +1,86 @@
+from typing import Optional, Dict, Any
+from .base_service import AsyncBaseService
+from ..exceptions import AgentBayError, CommandError
+from ..model import ApiResponse
+from ..logger import get_logger
+
+# Initialize _logger for this module
+_logger = get_logger("command")
+
+
+class CommandResult(ApiResponse):
+    """Result of command execution operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        output: str = "",
+        error_message: str = "",
+    ):
+        """
+        Initialize a CommandResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+            success (bool, optional): Whether the operation was successful.
+            output (str, optional): The command execution output (stdout).
+            error_message (str, optional): Error message if the operation failed (stderr or system error).
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.output = output
+        self.error_message = error_message
+
+
+class AsyncCommand(AsyncBaseService):
+    """
+    Handles command execution operations in the AgentBay cloud environment.
+    """
+
+    async def execute_command(
+        self, command: str, timeout_ms: int = 60000
+    ) -> CommandResult:
+        """
+        Execute a shell command with a timeout.
+
+        Args:
+            command: The shell command to execute.
+            timeout_ms: The timeout for the command execution in milliseconds. Default is 60000ms (60s).
+
+        Returns:
+            CommandResult: Result object containing success status, execution
+                output, and error message if any.
+
+        Raises:
+            CommandError: If the command execution fails.
+
+        Example:
+            ```python
+            result = await session.command.execute_command("ls -la")
+            print(result.output)
+            ```
+        """
+        try:
+            args = {"command": command, "timeout_ms": timeout_ms}
+            result = await self.session.call_mcp_tool("shell", args)
+            _logger.debug(f"Execute command response: {result}")
+
+            if result.success:
+                return CommandResult(
+                    request_id=result.request_id,
+                    success=True,
+                    output=result.data,
+                )
+            else:
+                return CommandResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to execute command",
+                )
+        except Exception as e:
+            return CommandResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to execute command: {e}",
+            )

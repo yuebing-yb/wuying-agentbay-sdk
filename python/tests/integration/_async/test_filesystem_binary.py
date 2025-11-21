@@ -1,0 +1,66 @@
+"""Integration tests for binary file operations."""
+import os
+import pytest
+import pytest_asyncio
+
+from agentbay import AsyncAgentBay
+
+
+@pytest_asyncio.fixture(scope="module")
+async def agent_bay():
+    api_key = os.environ.get("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    return AsyncAgentBay(api_key=api_key)
+
+
+@pytest_asyncio.fixture
+async def test_session(agent_bay):
+    result = await agent_bay.create()
+    assert result.success
+    yield result.session
+    await result.session.delete()
+
+
+@pytest.mark.asyncio
+async def test_binary_file_creation(test_session):
+    """Test creating binary file using command."""
+    cmd = test_session.command
+    fs = test_session.file_system
+    
+    # Create binary file
+    result = await cmd.execute_command("dd if=/dev/zero of=/tmp/binary_test bs=1024 count=10")
+    assert result.success
+    
+    # Check file info
+    info = await fs.get_file_info("/tmp/binary_test")
+    assert info.success
+    size = int(info.file_info["size"])
+    assert size > 0
+    print(f"Binary file created, size: {size} bytes")
+
+
+@pytest.mark.asyncio
+async def test_binary_file_copy(test_session):
+    """Test copying binary file."""
+    cmd = test_session.command
+    fs = test_session.file_system
+    
+    # Create binary file
+    await cmd.execute_command("dd if=/dev/zero of=/tmp/binary_src bs=1024 count=5")
+    
+    # Copy file
+    copy_result = await cmd.execute_command("cp /tmp/binary_src /tmp/binary_dst")
+    assert copy_result.success
+    
+    # Verify both files exist
+    src_info = await fs.get_file_info("/tmp/binary_src")
+    dst_info = await fs.get_file_info("/tmp/binary_dst")
+
+    assert src_info.success
+    assert dst_info.success
+    src_size = int(src_info.file_info["size"])
+    dst_size = int(dst_info.file_info["size"])
+    assert src_size == dst_size
+    print(f"Binary file copied, size: {dst_size} bytes")
+

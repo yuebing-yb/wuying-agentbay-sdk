@@ -1,4 +1,15 @@
 from .agentbay import AgentBay, Config
+from .browser import (
+    Browser,
+    BrowserOption,
+    BrowserViewport,
+    BrowserScreen,
+    BrowserFingerprint,
+    BrowserProxy,
+    BrowserFingerprintContext,
+    BrowserAgent,
+    BrowserFingerprintGenerator,
+)
 from .command import Command
 from .computer import Computer
 from .exceptions import AgentBayError, APIError, AuthenticationError
@@ -26,6 +37,21 @@ from .context_sync import (
 from .context_manager import ContextManager, ContextInfoResult, ContextSyncResult
 from .extension import ExtensionsService, ExtensionOption, Extension
 from .logger import AgentBayLogger, get_logger, log
+from ._sync.context import ContextListParams
+from ._sync.browser_agent import ActOptions, ExtractOptions, ActResult, ObserveResult
+from .async_api import (
+    AsyncAgentBay,
+    AsyncSession,
+    AsyncComputer,
+    AsyncMobile,
+    AsyncOss,
+    AsyncFileSystem,
+    AsyncAgent,
+    AsyncCommand,
+    AsyncContextManager,
+    AsyncContextService,
+)
+
 __all__ = [
     "Config",
     "AgentBay",
@@ -33,6 +59,15 @@ __all__ = [
     "AgentBayError",
     "AuthenticationError",
     "APIError",
+    "Browser",
+    "BrowserOption",
+    "BrowserViewport",
+    "BrowserScreen",
+    "BrowserFingerprint",
+    "BrowserProxy",
+    "BrowserFingerprintContext",
+    "BrowserAgent",
+    "BrowserFingerprintGenerator",
     "Computer",
     "Mobile",
     "Oss",
@@ -63,4 +98,21 @@ __all__ = [
     "AgentBayLogger",
     "get_logger",
     "log",
+    # Sync exports
+    "ContextListParams",
+    "ActOptions",
+    "ExtractOptions",
+    "ActResult",
+    "ObserveResult",
+    # Async exports
+    "AsyncAgentBay",
+    "AsyncSession",
+    "AsyncComputer",
+    "AsyncMobile",
+    "AsyncOss",
+    "AsyncFileSystem",
+    "AsyncAgent",
+    "AsyncCommand",
+    "AsyncContextManager",
+    "AsyncContextService",
 ]

@@ -9,7 +9,7 @@ import time
 import json
 from typing import List, Dict, Any
 
-from agentbay.filesystem.filesystem import FileSystem, FileChangeEvent, FileChangeResult
+from agentbay._sync.filesystem import FileSystem, FileChangeEvent, FileChangeResult
 
 
 class TestFileChangeEvent(unittest.TestCase):
@@ -266,8 +266,7 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
         self.assertEqual(thread.stop_event, stop_event)
         self.assertTrue(thread.daemon)
         
-        # Start the thread and let it run briefly
-        thread.start()
+        # Thread is already started by _create_task, just let it run briefly
         time.sleep(0.2)  # Let it run for a short time
         
         # Stop the thread
@@ -299,8 +298,7 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
             stop_event=stop_event
         )
         
-        # Start the thread and let it run briefly
-        thread.start()
+        # Thread is already started by _create_task, just let it run briefly
         time.sleep(0.2)
         
         # Stop the thread - should not crash despite callback exception

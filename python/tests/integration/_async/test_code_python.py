@@ -1,0 +1,141 @@
+"""Integration tests for CodeSpace Python execution functionality."""
+import os
+import pytest
+import pytest_asyncio
+
+from agentbay import AsyncAgentBay
+from agentbay.session_params import CreateSessionParams
+
+
+@pytest_asyncio.fixture(scope="module")
+async def agent_bay():
+    """Create AsyncAgentBay instance."""
+    api_key = os.environ.get("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    return AsyncAgentBay(api_key=api_key)
+
+
+@pytest_asyncio.fixture
+async def session(agent_bay):
+    """Create a session with code_latest image."""
+    print("\nCreating session for Python code testing...")
+    session_param = CreateSessionParams(image_id="code_latest")
+    result = await agent_bay.create(session_param)
+    assert result.success, f"Failed to create session: {result.error_message}"
+    session = result.session
+    print(f"Session created with ID: {session.session_id}")
+    yield session
+    print("\nCleaning up: Deleting the session...")
+    await session.delete()
+
+
+@pytest.mark.asyncio
+async def test_run_simple_python_code(session):
+    """Test simple Python code execution."""
+    # Arrange
+    print("\nTest: Simple Python code execution...")
+    code = "print('Hello from Python')\nresult = 2 + 2\nprint(f'Result: {result}')"
+
+    # Act
+    result = await session.code.run_code(code, "python")
+
+    # Assert
+    assert result.success, f"Python execution failed: {result.error_message}"
+    assert result.result is not None, "Result should not be None"
+    print(f"Python output:\n{result.result}")
+
+
+@pytest.mark.asyncio
+async def test_python_with_imports(session):
+    """Test Python code with imports."""
+    # Arrange
+    print("\nTest: Python with imports...")
+    code = """
+import sys
+import json
+from datetime import datetime
+
+data = {
+    'python_version': sys.version.split()[0],
+    'timestamp': datetime.now().isoformat()
+}
+print(json.dumps(data, indent=2))
+"""
+
+    # Act
+    result = await session.code.run_code(code, "python")
+
+    # Assert
+    assert result.success, f"Python with imports failed: {result.error_message}"
+    assert result.result is not None, "Result should not be None"
+    assert "python_version" in result.result, "Output should contain python_version"
+    print(f"Python output:\n{result.result}")
+
+
+@pytest.mark.asyncio
+async def test_python_file_operations(session):
+    """Test Python file operations."""
+    # Arrange
+    print("\nTest: Python file operations...")
+
+    # Write a file first
+    write_result = await session.file_system.write_file("/tmp/test_python.txt", "Hello from Python test")
+    assert write_result.success, "Failed to write test file"
+
+    # Read the file with Python
+    code = """
+with open('/tmp/test_python.txt', 'r') as f:
+    content = f.read()
+print(f'File content: {content}')
+"""
+
+    # Act
+    result = await session.code.run_code(code, "python")
+
+    # Assert
+    assert result.success, f"Python file operations failed: {result.error_message}"
+    assert "Hello from Python test" in result.result, "Output should contain file content"
+    print(f"Python output:\n{result.result}")
+
+
+@pytest.mark.asyncio
+async def test_python_error_handling(session):
+    """Test Python error handling."""
+    # Arrange
+    print("\nTest: Python error handling...")
+    code = "x = 1 / 0"  # This will cause a ZeroDivisionError
+
+    # Act
+    result = await session.code.run_code(code, "python")
+
+    # Assert
+    # The execution should fail or return error in result
+    if not result.success:
+        print(f"Expected error: {result.error_message}")
+        assert "ZeroDivisionError" in result.error_message or "division" in result.error_message.lower()
+    else:
+        print(f"Error in output: {result.result}")
+        assert "ZeroDivisionError" in result.result or "Error" in result.result
+
+
+@pytest.mark.asyncio
+async def test_python_with_timeout(session):
+    """Test Python execution with reasonable timeout."""
+    # Arrange
+    print("\nTest: Python with timeout...")
+    code = """
+import time
+print('Starting...')
+time.sleep(1)
+print('Completed after 1 second')
+"""
+
+    # Act
+    result = await session.code.run_code(code, "python")
+
+    # Assert
+    assert result.success, f"Python with timeout failed: {result.error_message}"
+    assert "Completed" in result.result, "Should complete within timeout"
+    print(f"Python output:\n{result.result}")
+

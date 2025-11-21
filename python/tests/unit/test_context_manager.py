@@ -158,8 +158,8 @@ class TestContextManager(unittest.TestCase):
         self.assertEqual(call_args.path, "/home/user")
         self.assertEqual(call_args.task_type, "download")
 
-    def test_sync(self):
-        """Test sync method."""
+    def test_sync_context(self):
+        """Test sync_context method."""
         # Mock the API response
         mock_response = MagicMock()
         mock_response.to_map.return_value = {
@@ -174,8 +174,8 @@ class TestContextManager(unittest.TestCase):
                 context_status_data=[]
             )
 
-            # Call the method using asyncio.run
-            result = asyncio.run(self.context_manager.sync())
+            # Call the method directly (synchronously)
+            result = self.context_manager.sync_context()
 
             # Verify the results
             self.assertEqual(result.request_id, "test-request-id")
@@ -184,8 +184,8 @@ class TestContextManager(unittest.TestCase):
             # Verify the API was called correctly
             self.mock_client.sync_context.assert_called_once()
 
-    def test_sync_with_params(self):
-        """Test sync method with optional parameters."""
+    def test_sync_context_with_params(self):
+        """Test sync_context method with optional parameters."""
         # Mock the API response
         mock_response = MagicMock()
         mock_response.to_map.return_value = {
@@ -200,8 +200,8 @@ class TestContextManager(unittest.TestCase):
                 context_status_data=[]
             )
 
-            # Call the method with parameters using asyncio.run
-            result = asyncio.run(self.context_manager.sync("ctx-123", "/home/user", "upload"))
+            # Call the method with parameters directly (synchronously)
+            result = self.context_manager.sync_context("ctx-123", "/home/user", "upload")
 
             # Verify the results
             self.assertEqual(result.request_id, "test-request-id")

@@ -22,6 +22,14 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+venv/
+.venv/
+env/
+.env/
+venv_*/
+!venv_bailian_test/
+!venv_cookbook_test/
+*.log
 
 # TypeScript
 node_modules/
@@ -67,3 +75,4 @@ CLAUDE.md
 .tmp_usr/
 .history
 IFLOW.md
+tmp/

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from agentbay.filesystem.filesystem import (
+from agentbay._sync.filesystem import (
     BoolResult,
     DirectoryListResult,
     FileContentResult,
@@ -36,8 +36,8 @@ class TestFileSystem(unittest.TestCase):
         self.session = DummySession()
         self.fs = FileSystem(self.session)
 
-    @patch("agentbay.filesystem.filesystem.FileSystem.get_file_info")
-    @patch("agentbay.filesystem.filesystem.FileSystem._read_file_chunk")
+    @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._sync.filesystem.FileSystem._read_file_chunk")
     def test_read_file_success(self, mock_read_file_chunk, mock_get_file_info):
         """
         Test read_file method with successful response (small file).
@@ -61,7 +61,7 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.content, "file content")
         self.assertEqual(result.request_id, "request-123")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
     def test_read_file_get_info_error(self, mock_get_file_info):
         """
         Test read_file method with error in get_file_info.
@@ -80,8 +80,8 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.error_message, "Error in response: some error message")
         self.assertEqual(result.content, "")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem.get_file_info")
-    @patch("agentbay.filesystem.filesystem.FileSystem._read_file_chunk")
+    @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._sync.filesystem.FileSystem._read_file_chunk")
     def test_read_file_chunk_error(self, mock_read_file_chunk, mock_get_file_info):
         """
         Test read_file method with error in chunk reading.
@@ -183,7 +183,7 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Edit failed")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_success(self, mock_write_file_chunk):
         """
         Test write_file method with successful response (small content).
@@ -201,7 +201,7 @@ class TestFileSystem(unittest.TestCase):
         self.assertTrue(result.data)
         mock_write_file_chunk.assert_called_once_with("/path/to/file.txt", "content to write", "overwrite")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_error(self, mock_write_file_chunk):
         """
         Test write_file method with error response.
@@ -406,8 +406,8 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(len(result.matches), 1)
         self.assertEqual(result.matches[0], "/path/to/file1.txt")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem.get_file_info")
-    @patch("agentbay.filesystem.filesystem.FileSystem._read_file_chunk")
+    @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._sync.filesystem.FileSystem._read_file_chunk")
     def test_read_file_large_success(self, mock_read_file_chunk, mock_get_file_info):
         """
         Test read_file method with large file (automatic chunking).
@@ -440,7 +440,7 @@ class TestFileSystem(unittest.TestCase):
         mock_get_file_info.assert_called_once()
         self.assertEqual(mock_read_file_chunk.call_count, 3)
 
-    @patch("agentbay.filesystem.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
     def test_read_file_error(self, mock_get_file_info):
         """
         Test read_file method with error in get_file_info.
@@ -458,7 +458,7 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.error_message, "File not found")
         mock_get_file_info.assert_called_once()
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_large_success(self, mock_write_file_chunk):
         """
         Test write_file method with large content (automatic chunking).
@@ -482,7 +482,7 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(calls[1][0][2], "append")     # Second call mode
         self.assertEqual(calls[2][0][2], "append")     # Third call mode
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_small_content(self, mock_write_file_chunk):
         """
         Test write_file method with content smaller than chunk size.
@@ -498,7 +498,7 @@ class TestFileSystem(unittest.TestCase):
         self.assertTrue(result.data)
         mock_write_file_chunk.assert_called_once_with("/path/to/file.txt", content, "overwrite")
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_large_error(self, mock_write_file_chunk):
         """
         Test write_file method with error in first write.
@@ -516,7 +516,7 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.error_message, "Write error")
         mock_write_file_chunk.assert_called_once()
 
-    @patch("agentbay.filesystem.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_invalid_mode(self, mock_write_file_chunk):
         """
         Test write_file method with invalid mode.

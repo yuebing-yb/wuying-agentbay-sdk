@@ -1,0 +1,1266 @@
+from typing import Any, Dict, Tuple, List, Optional, Union, Callable, TYPE_CHECKING
+import json
+import threading
+import os
+import asyncio
+import time
+import httpx
+
+from dataclasses import dataclass
+
+from ..api.base_service import BaseService
+from ..logger import get_logger, _log_api_response, _log_operation_start, _log_operation_success
+from ..exceptions import AgentBayError, FileError
+from ..model import ApiResponse, BoolResult
+
+if TYPE_CHECKING:
+    from .agentbay import AsyncAgentBay
+    from .session import AsyncSession
+    from .context_manager import AsyncContextManager
+
+# Initialize logger for this module
+_logger = get_logger("filesystem")
+
+
+# Result structures
+@dataclass
+class UploadResult:
+    """Result structure for file upload operations."""
+    success: bool
+    request_id_upload_url: Optional[str]
+    request_id_sync: Optional[str]
+    http_status: Optional[int]
+    etag: Optional[str]
+    bytes_sent: int
+    path: str
+    error: Optional[str] = None
+
+@dataclass
+class DownloadResult:
+    """Result structure for file download operations."""
+    success: bool
+    request_id_download_url: Optional[str]
+    request_id_sync: Optional[str]
+    http_status: Optional[int]
+    bytes_received: int
+    path: str
+    local_path: str
+    error: Optional[str] = None
+
+class AsyncFileTransfer:
+    """
+    AsyncFileTransfer provides pre-signed URL upload/download functionality between local and OSS,
+    with integration to Session Context synchronization.
+    """
+
+    def __init__(
+        self,
+        agent_bay: "AsyncAgentBay",
+        session: "AsyncSession",
+        *,
+        http_timeout: float = 60.0,
+        follow_redirects: bool = True,
+    ):
+        self._agent_bay = agent_bay
+        self._context_svc = agent_bay.context
+        self._session = session
+        self._http_timeout = http_timeout
+        self._follow_redirects = follow_redirects
+        self._context_id: str = self._session.file_transfer_context_id
+
+        # Task completion states (for compatibility)
+        self._finished_states = {"success", "successful", "ok", "finished", "done", "completed", "complete"}
+
+    async def _run_in_thread(self, func, *args):
+        return await asyncio.to_thread(func, *args)
+
+    async def upload(
+        self,
+        local_path: str,
+        remote_path: str,
+        *,
+        content_type: Optional[str] = None,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None,
+    ) -> UploadResult:
+        # 0. Parameter validation
+        if not os.path.isfile(local_path):
+            return UploadResult(
+                success=False, request_id_upload_url=None, request_id_sync=None,
+                http_status=None, etag=None, bytes_sent=0, path=remote_path,
+                error=f"Local file not found: {local_path}"
+            )
+        if self._context_id is None:
+            return UploadResult(
+                success=False, request_id_upload_url=None, request_id_sync=None,
+                http_status=None, etag=None, bytes_sent=0, path=remote_path,
+                error="No context ID"
+            )
+        # 1. Get pre-signed upload URL
+        url_res = await self._context_svc.get_file_upload_url(self._context_id, remote_path)
+        if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
+            return UploadResult(
+                success=False, request_id_upload_url=getattr(url_res, "request_id", None), request_id_sync=None,
+                http_status=None, etag=None, bytes_sent=0, path=remote_path,
+                error=f"get_file_upload_url failed: {getattr(url_res, 'message', 'unknown error')}"
+            )
+
+        upload_url = url_res.url
+        req_id_upload = getattr(url_res, "request_id", None)
+
+        print(f"Uploading {local_path} to {upload_url}")
+
+        # 2. PUT upload to pre-signed URL
+        try:
+            http_status, etag, bytes_sent = await self._run_in_thread(
+                self._put_file_sync,
+                upload_url,
+                local_path,
+                self._http_timeout,
+                self._follow_redirects,
+                content_type,
+                progress_cb,
+            )
+            print(f"Upload completed with HTTP {http_status}")
+            if http_status not in (200, 201, 204):
+                return UploadResult(
+                    success=False,
+                    request_id_upload_url=req_id_upload,
+                    request_id_sync=None,
+                    http_status=http_status,
+                    etag=etag,
+                    bytes_sent=bytes_sent,
+                    path=remote_path,
+                    error=f"Upload failed with HTTP {http_status}",
+                )
+        except Exception as e:
+            return UploadResult(
+                success=False,
+                request_id_upload_url=req_id_upload,
+                request_id_sync=None,
+                http_status=None,
+                etag=None,
+                bytes_sent=0,
+                path=remote_path,
+                error=f"Upload exception: {e}",
+            )
+
+        # 3. Trigger sync to cloud disk (download mode)
+        req_id_sync = None
+        try:
+            print("Triggering sync to cloud disk")
+            # For Async, we await directly
+            sync_res = await self._session.context.sync(mode="download", path=remote_path, context_id=self._context_id)
+            req_id_sync = getattr(sync_res, "request_id", None)
+            if not getattr(sync_res, "success", False):
+                 raise Exception(getattr(sync_res, "error_message", "Unknown sync error"))
+
+        except Exception as e:
+            return UploadResult(
+                success=False,
+                request_id_upload_url=req_id_upload,
+                request_id_sync=req_id_sync,
+                http_status=http_status,
+                etag=etag,
+                bytes_sent=bytes_sent,
+                path=remote_path,
+                error=f"session.context.sync(download) failed: {e}",
+            )
+
+        print(f"Sync request ID: {req_id_sync}")
+        # 4. Optionally wait for task completion
+        if wait:
+            ok, err = await self._wait_for_task(
+                context_id=self._context_id,
+                remote_path=remote_path,
+                task_type="download",
+                timeout=wait_timeout,
+                interval=poll_interval,
+            )
+            if not ok:
+                return UploadResult(
+                    success=False,
+                    request_id_upload_url=req_id_upload,
+                    request_id_sync=req_id_sync,
+                    http_status=http_status,
+                    etag=etag,
+                    bytes_sent=bytes_sent,
+                    path=remote_path,
+                    error=f"Upload sync not finished: {err or 'timeout or unknown'}",
+                )
+
+        return UploadResult(
+            success=True,
+            request_id_upload_url=req_id_upload,
+            request_id_sync=req_id_sync,
+            http_status=http_status,
+            etag=etag,
+            bytes_sent=bytes_sent,
+            path=remote_path,
+            error=None,
+        )
+
+    async def download(
+        self,
+        remote_path: str,
+        local_path: str,
+        *,
+        overwrite: bool = True,
+        wait: bool = True,
+        wait_timeout: float = 300.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None,
+    ) -> DownloadResult:
+        if self._context_id is None:
+            return DownloadResult(success=False, request_id_download_url=None, request_id_sync=None, http_status=None, bytes_received=0, path=remote_path, local_path=local_path, error="No context ID")
+        
+        # 1. Trigger cloud disk to OSS download sync
+        req_id_sync = None
+        try:
+            sync_res = await self._session.context.sync(mode="upload", path=remote_path, context_id=self._context_id)
+            req_id_sync = getattr(sync_res, "request_id", None)
+            if not getattr(sync_res, "success", False):
+                 raise Exception(getattr(sync_res, "error_message", "Unknown sync error"))
+        except Exception as e:
+            return DownloadResult(
+                success=False,
+                request_id_download_url=None,
+                request_id_sync=req_id_sync,
+                http_status=None,
+                bytes_received=0,
+                path=remote_path,
+                local_path=local_path,
+                error=f"session.context.sync(upload) failed: {e}",
+            )
+
+        # Optionally wait for task completion
+        if wait:
+            ok, err = await self._wait_for_task(
+                context_id=self._context_id,
+                remote_path=remote_path,
+                task_type="upload",
+                timeout=wait_timeout,
+                interval=poll_interval,
+            )
+            if not ok:
+                return DownloadResult(
+                    success=False,
+                    request_id_download_url=None,
+                    request_id_sync=req_id_sync,
+                    http_status=None,
+                    bytes_received=0,
+                    path=remote_path,
+                    local_path=local_path,
+                    error=f"Download sync not finished: {err or 'timeout or unknown'}",
+                )
+
+        # 2. Get pre-signed download URL
+        url_res = await self._context_svc.get_file_download_url(self._context_id, remote_path)
+        if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
+            return DownloadResult(
+                success=False,
+                request_id_download_url=getattr(url_res, "request_id", None),
+                request_id_sync=req_id_sync,
+                http_status=None,
+                bytes_received=0,
+                path=remote_path,
+                local_path=local_path,
+                error=f"get_file_download_url failed: {getattr(url_res, 'message', 'unknown error')}",
+            )
+
+        download_url = url_res.url
+        req_id_download = getattr(url_res, "request_id", None)
+
+        # 3. Download and save to local
+        try:
+            os.makedirs(os.path.dirname(local_path) or ".", exist_ok=True)
+            if os.path.exists(local_path) and not overwrite:
+                return DownloadResult(
+                    success=False,
+                    request_id_download_url=req_id_download,
+                    request_id_sync=req_id_sync,
+                    http_status=None,
+                    bytes_received=0,
+                    path=remote_path,
+                    local_path=local_path,
+                    error=f"Destination exists and overwrite=False: {local_path}",
+                )
+
+            http_status, bytes_received = await self._run_in_thread(
+                self._get_file_sync,
+                download_url,
+                local_path,
+                self._http_timeout,
+                self._follow_redirects,
+                progress_cb,
+            )
+            if http_status != 200:
+                return DownloadResult(
+                    success=False,
+                    request_id_download_url=req_id_download,
+                    request_id_sync=req_id_sync,
+                    http_status=http_status,
+                    bytes_received=bytes_received,
+                    path=remote_path,
+                    local_path=local_path,
+                    error=f"Download failed with HTTP {http_status}",
+                )
+        except Exception as e:
+            return DownloadResult(
+                success=False,
+                request_id_download_url=req_id_download,
+                request_id_sync=req_id_sync,
+                http_status=None,
+                bytes_received=0,
+                path=remote_path,
+                local_path=local_path,
+                error=f"Download exception: {e}",
+            )
+
+        return DownloadResult(
+            success=True,
+            request_id_download_url=req_id_download,
+            request_id_sync=req_id_sync,
+            http_status=200,
+            bytes_received=os.path.getsize(local_path) if os.path.exists(local_path) else 0,
+            path=remote_path,
+            local_path=local_path,
+            error=None,
+        )
+
+    async def _wait_for_task(
+        self,
+        *,
+        context_id: str,
+        remote_path: str,
+        task_type: Optional[str],
+        timeout: float,
+        interval: float,
+    ) -> Tuple[bool, Optional[str]]:
+        deadline = time.time() + timeout
+        last_err = None
+
+        while time.time() < deadline:
+            try:
+                res = await self._session.context.info(context_id=context_id, path=remote_path, task_type=task_type)
+
+                status_list = getattr(res, "context_status_data", None) or []
+                for item in status_list:
+                    cid = getattr(item, "context_id", None)
+                    path = getattr(item, "path", None)
+                    ttype = getattr(item, "task_type", None)
+                    status = getattr(item, "status", None)
+                    err = getattr(item, "error_message", None)
+
+                    if cid == context_id and path == remote_path and (task_type is None or ttype == task_type):
+                        if err:
+                            return False, f"Task error: {err}"
+                        if status and status.lower() in self._finished_states:
+                            return True, None
+                last_err = "task not finished"
+            except Exception as e:
+                last_err = f"info error: {e}"
+
+            await asyncio.sleep(interval)
+
+        return False, last_err or "timeout"
+
+    @staticmethod
+    def _put_file_sync(
+        url: str,
+        file_path: str,
+        timeout: float,
+        follow_redirects: bool,
+        content_type: Optional[str],
+        progress_cb: Optional[Callable[[int], None]],
+    ) -> Tuple[int, Optional[str], int]:
+        headers: Dict[str, str] = {}
+        if content_type:
+            headers["Content-Type"] = content_type
+
+        file_size = os.path.getsize(file_path)
+
+        with httpx.Client(timeout=timeout, follow_redirects=follow_redirects) as client:
+            with open(file_path, "rb") as f:
+                resp = client.put(url, content=f, headers=headers)
+            status = resp.status_code
+            etag = resp.headers.get("ETag")
+            return status, etag, file_size
+
+    @staticmethod
+    def _get_file_sync(
+        url: str,
+        dest_path: str,
+        timeout: float,
+        follow_redirects: bool,
+        progress_cb: Optional[Callable[[int], None]],
+    ) -> Tuple[int, int]:
+        bytes_recv = 0
+        with httpx.Client(timeout=timeout, follow_redirects=follow_redirects) as client:
+            with client.stream("GET", url) as resp:
+                status = resp.status_code
+                if status != 200:
+                    _ = resp.read()
+                    return status, 0
+                with open(dest_path, "wb") as f:
+                    for chunk in resp.iter_bytes():
+                        if chunk:
+                            f.write(chunk)
+                            bytes_recv += len(chunk)
+                            if progress_cb:
+                                try:
+                                    progress_cb(bytes_recv)
+                                except Exception:
+                                    pass
+        return 200, bytes_recv
+
+class FileChangeEvent:
+    def __init__(
+        self,
+        event_type: str = "",
+        path: str = "",
+        path_type: str = "",
+    ):
+        self.event_type = event_type
+        self.path = path
+        self.path_type = path_type
+
+    def __repr__(self):
+        return f"FileChangeEvent(event_type='{self.event_type}', path='{self.path}', path_type='{self.path_type}')"
+
+    def _to_dict(self) -> Dict[str, str]:
+        return {
+            "eventType": self.event_type,
+            "path": self.path,
+            "pathType": self.path_type,
+        }
+
+    @classmethod
+    def _from_dict(cls, data: Dict[str, str]) -> "FileChangeEvent":
+        return cls(
+            event_type=data.get("eventType", ""),
+            path=data.get("path", ""),
+            path_type=data.get("pathType", ""),
+        )
+
+
+class FileChangeResult(ApiResponse):
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        events: Optional[List[FileChangeEvent]] = None,
+        raw_data: str = "",
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.events = events or []
+        self.raw_data = raw_data
+        self.error_message = error_message
+
+    def has_changes(self) -> bool:
+        return len(self.events) > 0
+
+    def get_modified_files(self) -> List[str]:
+        return [
+            event.path
+            for event in self.events
+            if event.event_type == "modify" and event.path_type == "file"
+        ]
+
+    def get_created_files(self) -> List[str]:
+        return [
+            event.path
+            for event in self.events
+            if event.event_type == "create" and event.path_type == "file"
+        ]
+
+    def get_deleted_files(self) -> List[str]:
+        return [
+            event.path
+            for event in self.events
+            if event.event_type == "delete" and event.path_type == "file"
+        ]
+
+
+class FileInfoResult(ApiResponse):
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        file_info: Optional[Dict[str, Any]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.file_info = file_info or {}
+        self.error_message = error_message
+
+
+class DirectoryListResult(ApiResponse):
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        entries: Optional[List[Dict[str, Any]]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.entries = entries or []
+        self.error_message = error_message
+
+
+class FileContentResult(ApiResponse):
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        content: str = "",
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.content = content
+        self.error_message = error_message
+
+
+class MultipleFileContentResult(ApiResponse):
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        contents: Optional[Dict[str, str]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.contents = contents or {}
+        self.error_message = error_message
+
+
+class FileSearchResult(ApiResponse):
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        matches: Optional[List[str]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.matches = matches or []
+        self.error_message = error_message
+
+
+class AsyncFileSystem(BaseService):
+    """
+    Handles file operations in the AgentBay cloud environment.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._file_transfer: Optional[AsyncFileTransfer] = None
+
+    def _ensure_file_transfer(self) -> AsyncFileTransfer:
+        if self._file_transfer is None:
+            agent_bay = getattr(self.session, 'agent_bay', None)
+            if agent_bay is None:
+                raise FileError("FileTransfer requires an AgentBay instance")
+            
+            session = self.session
+            if session is None:
+                raise FileError("FileTransfer requires a session")
+                
+            self._file_transfer = AsyncFileTransfer(agent_bay, session)
+        
+        return self._file_transfer
+
+    DEFAULT_CHUNK_SIZE = 50 * 1024
+
+    def _handle_error(self, e):
+        if isinstance(e, FileError):
+            return e
+        if isinstance(e, AgentBayError):
+            return FileError(str(e))
+        return e
+
+    async def create_directory(self, path: str) -> BoolResult:
+        args = {"path": path}
+        try:
+            result = await self.session.call_mcp_tool("create_directory", args)
+            _logger.debug(f"📥 create_directory response: {result}")
+            if result.success:
+                return BoolResult(request_id=result.request_id, success=True, data=True)
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message,
+                )
+        except FileError as e:
+            return BoolResult(request_id="", success=False, error_message=str(e))
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to create directory: {e}",
+            )
+
+    async def edit_file(
+        self, path: str, edits: List[Dict[str, str]], dry_run: bool = False
+    ) -> BoolResult:
+        args = {"path": path, "edits": edits, "dryRun": dry_run}
+        try:
+            result = await self.session.call_mcp_tool("edit_file", args)
+            _logger.debug(f"📥 edit_file response: {result}")
+            if result.success:
+                return BoolResult(request_id=result.request_id, success=True, data=True)
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message,
+                )
+        except FileError as e:
+            return BoolResult(request_id="", success=False, error_message=str(e))
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to edit file: {e}",
+            )
+
+    async def get_file_info(self, path: str) -> FileInfoResult:
+        def parse_file_info(file_info_str: str) -> dict:
+            result = {}
+            lines = file_info_str.split("\n")
+            for line in lines:
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    key = key.strip()
+                    value = value.strip()
+                    if value.lower() == "true":
+                        value = True
+                    elif value.lower() == "false":
+                        value = False
+                    try:
+                        if isinstance(value, str):
+                            value = float(value) if "." in value else int(value)
+                    except ValueError:
+                        pass
+                    result[key] = value
+            return result
+
+        args = {"path": path}
+        try:
+            result = await self.session.call_mcp_tool("get_file_info", args)
+            try:
+                response_body = json.dumps(
+                    getattr(result, "body", result), ensure_ascii=False, indent=2
+                )
+                _log_api_response(response_body)
+            except Exception:
+                _logger.debug(f"📥 Response: {result}")
+            if result.success:
+                file_info = parse_file_info(result.data)
+                return FileInfoResult(
+                    request_id=result.request_id,
+                    success=True,
+                    file_info=file_info,
+                )
+            else:
+                return FileInfoResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to get file info",
+                )
+        except FileError as e:
+            return FileInfoResult(request_id="", success=False, error_message=str(e))
+        except Exception as e:
+            return FileInfoResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get file info: {e}",
+            )
+
+    async def list_directory(self, path: str) -> DirectoryListResult:
+        def parse_directory_listing(text) -> List[Dict[str, Union[str, bool]]]:
+            result = []
+            lines = text.split("\n")
+            for line in lines:
+                line = line.strip()
+                if line == "":
+                    continue
+                entry_map = {}
+                if line.startswith("[DIR]"):
+                    entry_map["isDirectory"] = True
+                    entry_map["name"] = line.replace("[DIR]", "").strip()
+                elif line.startswith("[FILE]"):
+                    entry_map["isDirectory"] = False
+                    entry_map["name"] = line.replace("[FILE]", "").strip()
+                else:
+                    continue
+                result.append(entry_map)
+            return result
+
+        args = {"path": path}
+        try:
+            result = await self.session.call_mcp_tool("list_directory", args)
+            try:
+                response_body = json.dumps(
+                    getattr(result, "body", result), ensure_ascii=False, indent=2
+                )
+                _log_api_response(response_body)
+            except Exception:
+                _logger.debug(f"📥 Response: {result}")
+            if result.success:
+                entries = parse_directory_listing(result.data)
+                return DirectoryListResult(
+                    request_id=result.request_id, success=True, entries=entries
+                )
+            else:
+                return DirectoryListResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to list directory",
+                )
+        except FileError as e:
+            return DirectoryListResult(
+                request_id="", success=False, error_message=str(e)
+            )
+        except Exception as e:
+            return DirectoryListResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to list directory: {e}",
+            )
+
+    async def move_file(self, source: str, destination: str) -> BoolResult:
+        args = {"source": source, "destination": destination}
+        try:
+            result = await self.session.call_mcp_tool("move_file", args)
+            _logger.debug(f"📥 move_file response: {result}")
+            if result.success:
+                return BoolResult(request_id=result.request_id, success=True, data=True)
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to move file",
+                )
+        except AgentBayError as e:
+            return BoolResult(request_id="", success=False, error_message=str(e))
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to move file: {e}",
+            )
+
+    async def _read_file_chunk(
+        self, path: str, offset: int = 0, length: int = 0
+    ) -> FileContentResult:
+        args = {"path": path}
+        if offset >= 0:
+            args["offset"] = offset
+        if length >= 0:
+            args["length"] = length
+
+        try:
+            result = await self.session.call_mcp_tool("read_file", args)
+            try:
+                response_body = json.dumps(
+                    getattr(result, "body", result), ensure_ascii=False, indent=2
+                )
+                _log_api_response(response_body)
+            except Exception:
+                _logger.debug(f"📥 Response: {result}")
+            if result.success:
+                return FileContentResult(
+                    request_id=result.request_id,
+                    success=True,
+                    content=result.data,
+                )
+            else:
+                return FileContentResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to read file",
+                )
+        except FileError as e:
+            return FileContentResult(request_id="", success=False, error_message=str(e))
+        except Exception as e:
+            return FileContentResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to read file: {e}",
+            )
+
+    async def read_multiple_files(self, paths: List[str]) -> MultipleFileContentResult:
+        def parse_multiple_files_response(text: str) -> Dict[str, str]:
+            result = {}
+            if not text:
+                return result
+            lines = text.split("\n")
+            current_path = None
+            current_content = []
+            for i, line in enumerate(lines):
+                if ":" in line and not current_path:
+                    path_end = line.find(":")
+                    path = line[:path_end].strip()
+                    current_path = path
+                    if len(line) > path_end + 1:
+                        content_start = line[path_end + 1 :].strip()
+                        if content_start:
+                            current_content.append(content_start)
+                elif line.strip() == "---":
+                    if current_path:
+                        result[current_path] = "\n".join(current_content).strip()
+                        current_path = None
+                        current_content = []
+                elif current_path is not None:
+                    current_content.append(line)
+            if current_path:
+                result[current_path] = "\n".join(current_content).strip()
+            return result
+
+        args = {"paths": paths}
+        try:
+            result = await self.session.call_mcp_tool("read_multiple_files", args)
+            try:
+                response_body = json.dumps(
+                    getattr(result, "body", result), ensure_ascii=False, indent=2
+                )
+                _log_api_response(response_body)
+            except Exception:
+                _logger.debug(f"📥 Response: {result}")
+
+            if result.success:
+                files_content = parse_multiple_files_response(result.data)
+                return MultipleFileContentResult(
+                    request_id=result.request_id,
+                    success=True,
+                    contents=files_content,
+                )
+            else:
+                return MultipleFileContentResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message
+                    or "Failed to read multiple files",
+                )
+        except FileError as e:
+            return MultipleFileContentResult(
+                request_id="", success=False, error_message=str(e)
+            )
+        except Exception as e:
+            return MultipleFileContentResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to read multiple files: {e}",
+            )
+
+    async def search_files(
+        self,
+        path: str,
+        pattern: str,
+        exclude_patterns: Optional[List[str]] = None,
+    ) -> FileSearchResult:
+        args = {"path": path, "pattern": pattern}
+        if exclude_patterns:
+            args["excludePatterns"] = ",".join(exclude_patterns)
+
+        try:
+            result = await self.session.call_mcp_tool("search_files", args)
+            _logger.debug(f"📥 search_files response: {result}")
+
+            if result.success:
+                matching_files = result.data.strip().split("\n") if result.data else []
+                if matching_files == ['No matches found']:
+                    return FileSearchResult(
+                        request_id=result.request_id,
+                        success=True,
+                        matches=[],
+                        error_message="",
+                    )
+                return FileSearchResult(
+                    request_id=result.request_id,
+                    success=True,
+                    matches=matching_files,
+                )
+            else:
+                return FileSearchResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to search files",
+                )
+        except FileError as e:
+            return FileSearchResult(request_id="", success=False, error_message=str(e))
+        except Exception as e:
+            return FileSearchResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to search files: {e}",
+            )
+
+    async def _write_file_chunk(
+        self, path: str, content: str, mode: str = "overwrite"
+    ) -> BoolResult:
+        if mode not in ["overwrite", "append"]:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=(
+                    f"Invalid write mode: {mode}. Must be 'overwrite' or " "'append'."
+                ),
+            )
+
+        args = {"path": path, "content": content, "mode": mode}
+        try:
+            result = await self.session.call_mcp_tool("write_file", args)
+            _logger.debug(f"📥 write_file response: {result}")
+            if result.success:
+                return BoolResult(request_id=result.request_id, success=True, data=True)
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to write file",
+                )
+        except FileError as e:
+            return BoolResult(request_id="", success=False, error_message=str(e))
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to write file: {e}",
+            )
+
+    async def read_file(self, path: str) -> FileContentResult:
+        chunk_size = self.DEFAULT_CHUNK_SIZE
+
+        try:
+            file_info_result = await self.get_file_info(path)
+            if not file_info_result.success:
+                return FileContentResult(
+                    request_id=file_info_result.request_id,
+                    success=False,
+                    error_message=file_info_result.error_message,
+                )
+
+            if not file_info_result.file_info or file_info_result.file_info.get(
+                "isDirectory", False
+            ):
+                return FileContentResult(
+                    request_id=file_info_result.request_id,
+                    success=False,
+                    error_message=f"Path does not exist or is a directory: {path}",
+                )
+
+            file_size = file_info_result.file_info.get("size", 0)
+            if file_size == 0:
+                return FileContentResult(
+                    request_id=file_info_result.request_id,
+                    success=True,
+                    content="",
+                )
+
+            content = []
+            offset = 0
+            chunk_count = 0
+            while offset < file_size:
+                length = min(chunk_size, file_size - offset)
+                chunk_result = await self._read_file_chunk(path, offset, length)
+                _log_operation_start(
+                    f"ReadLargeFile chunk {chunk_count + 1}",
+                    f"{length} bytes at offset {offset}/{file_size}"
+                )
+
+                if not chunk_result.success:
+                    return chunk_result
+
+                content.append(chunk_result.content)
+                offset += length
+                chunk_count += 1
+
+            return FileContentResult(
+                request_id=file_info_result.request_id,
+                success=True,
+                content="".join(content),
+            )
+
+        except FileError as e:
+            return FileContentResult(request_id="", success=False, error_message=str(e))
+        except Exception as e:
+            return FileContentResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to read file: {e}",
+            )
+
+    async def write_file(
+        self, path: str, content: str, mode: str = "overwrite"
+    ) -> BoolResult:
+        chunk_size = self.DEFAULT_CHUNK_SIZE
+        content_len = len(content)
+        _log_operation_start(
+            f"WriteLargeFile to {path}",
+            f"total size: {content_len} bytes, chunk size: {chunk_size} bytes"
+        )
+
+        if content_len <= chunk_size:
+            return await self._write_file_chunk(path, content, mode)
+
+        try:
+            first_chunk = content[:chunk_size]
+            result = await self._write_file_chunk(path, first_chunk, mode)
+            if not result.success:
+                return result
+
+            offset = chunk_size
+            while offset < content_len:
+                end = min(offset + chunk_size, content_len)
+                current_chunk = content[offset:end]
+                result = await self._write_file_chunk(path, current_chunk, "append")
+                if not result.success:
+                    return result
+                offset = end
+
+            return BoolResult(request_id=result.request_id, success=True, data=True)
+
+        except FileError as e:
+            return BoolResult(request_id="", success=False, error_message=str(e))
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to write file: {e}",
+            )
+
+    async def upload_file(
+        self,
+        local_path: str,
+        remote_path: str,
+        *,
+        content_type: Optional[str] = None,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None,
+    ) -> UploadResult:
+        try:
+            file_transfer = self._ensure_file_transfer()
+            result = await file_transfer.upload(
+                local_path=local_path,
+                remote_path=remote_path,
+                content_type=content_type,
+                wait=wait,
+                wait_timeout=wait_timeout,
+                poll_interval=poll_interval,
+                progress_cb=progress_cb,
+            )
+            
+            if result.success and hasattr(self.session, 'file_transfer_context_id'):
+                context_id = self.session.file_transfer_context_id
+                if context_id:
+                    try:
+                        delete_result = await self.session.agent_bay.context.delete_file(context_id, remote_path)
+                        if not delete_result.success:
+                            _logger.warning(f"Failed to delete uploaded file from OSS: {delete_result.error_message}")
+                    except Exception as delete_error:
+                        _logger.warning(f"Error deleting uploaded file from OSS: {delete_error}")
+            return result
+        except Exception as e:
+            return UploadResult(
+                success=False,
+                request_id_upload_url=None,
+                request_id_sync=None,
+                http_status=None,
+                etag=None,
+                bytes_sent=0,
+                path=remote_path,
+                error=f"Upload failed: {str(e)}",
+            )
+
+    async def download_file(
+        self,
+        remote_path: str,
+        local_path: str,
+        *,
+        overwrite: bool = True,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None,
+    ) -> DownloadResult:
+        try:
+            file_transfer = self._ensure_file_transfer()
+            result = await file_transfer.download(
+                remote_path=remote_path,
+                local_path=local_path,
+                overwrite=overwrite,
+                wait=wait,
+                wait_timeout=wait_timeout,
+                poll_interval=poll_interval,
+                progress_cb=progress_cb,
+            )
+            
+            if result.success and hasattr(self.session, 'file_transfer_context_id'):
+                context_id = self.session.file_transfer_context_id
+                if context_id:
+                    try:
+                        delete_result = await self.session.agent_bay.context.delete_file(context_id, remote_path)
+                        if not delete_result.success:
+                            _logger.warning(f"Failed to delete downloaded file from OSS: {delete_result.error_message}")
+                    except Exception as delete_error:
+                        _logger.warning(f"Error deleting downloaded file from OSS: {delete_error}")
+            return result
+        except Exception as e:
+            return DownloadResult(
+                success=False,
+                request_id_download_url=None,
+                request_id_sync=None,
+                http_status=None,
+                bytes_received=0,
+                path=remote_path,
+                local_path=local_path,
+                error=f"Download failed: {str(e)}",
+            )
+
+    async def _get_file_change(self, path: str) -> FileChangeResult:
+        def parse_file_change_data(raw_data: str) -> List[FileChangeEvent]:
+            events = []
+            try:
+                change_data = json.loads(raw_data)
+                if isinstance(change_data, list):
+                    for event_dict in change_data:
+                        if isinstance(event_dict, dict):
+                            event = FileChangeEvent._from_dict(event_dict)
+                            events.append(event)
+                else:
+                    print(f"Warning: Expected list but got {type(change_data)}")
+            except json.JSONDecodeError as e:
+                print(f"Warning: Failed to parse JSON data: {e}")
+                print(f"Raw data: {raw_data}")
+            except Exception as e:
+                print(f"Warning: Unexpected error parsing file change data: {e}")
+            
+            return events
+
+        args = {"path": path}
+        try:
+            result = await self.session.call_mcp_tool("get_file_change", args)
+            try:
+                # print("Response body:")
+                # print(json.dumps(getattr(result, "body", result), ensure_ascii=False, indent=2))
+                pass
+            except Exception:
+                # print(f"Response: {result}")
+                pass
+
+            if result.success:
+                events = parse_file_change_data(result.data)
+                return FileChangeResult(
+                    request_id=result.request_id,
+                    success=True,
+                    events=events,
+                    raw_data=result.data,
+                )
+            else:
+                return FileChangeResult(
+                    request_id=result.request_id,
+                    success=False,
+                    raw_data=getattr(result, 'data', ''),
+                    error_message=result.error_message or "Failed to get file change",
+                )
+        except Exception as e:
+            return FileChangeResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get file change: {e}",
+            )
+
+    def _create_task(self, coro_func):
+        return asyncio.create_task(coro_func())
+
+    def _create_event(self):
+        return asyncio.Event()
+
+    async def _wait_for_event(self, event, timeout):
+        try:
+            await asyncio.wait_for(event.wait(), timeout=timeout)
+        except asyncio.TimeoutError:
+            pass
+
+    async def _run_in_thread(self, func, *args):
+        return await asyncio.to_thread(func, *args)
+
+    def watch_directory(
+        self,
+        path: str,
+        callback: Callable[[List[FileChangeEvent]], None],
+        interval: float = 0.5,
+        stop_event: Optional[asyncio.Event] = None,
+    ) -> asyncio.Task:
+        """
+        Watch a directory for file changes and call the callback function when changes occur.
+        Returns an asyncio.Task.
+        """
+
+        async def _monitor_directory():
+            print(f"Starting directory monitoring for: {path}")
+            print(f"Polling interval: {interval} seconds")
+            
+            while not stop_event.is_set():
+                try:
+                    # Check if session is still valid
+                    # if hasattr(self.session, '_is_expired') and self.session._is_expired(): ...
+                    
+                    result = await self._get_file_change(path)
+                    
+                    if result.success:
+                        current_events = result.events
+                        if current_events:
+                            print(f"Detected {len(current_events)} file changes:")
+                            for event in current_events:
+                                print(f"  - {event}")
+                            try:
+                                callback(current_events)
+                            except Exception as e:
+                                print(f"Error in callback function: {e}")
+                    else:
+                        error_msg = result.error_message or ""
+                        if "session" in error_msg.lower() and ("expired" in error_msg.lower() or "invalid" in error_msg.lower()):
+                            print(f"Session expired, stopping directory monitoring for: {path}")
+                            stop_event.set()
+                            break
+                        print(f"Error monitoring directory: {result.error_message}")
+                    
+                    # Wait for the next poll
+                    try:
+                        await asyncio.wait_for(stop_event.wait(), timeout=interval)
+                    except asyncio.TimeoutError:
+                        pass
+                    
+                except Exception as e:
+                    print(f"Unexpected error in directory monitoring: {e}")
+                    error_str = str(e).lower()
+                    if "session" in error_str and ("expired" in error_str or "invalid" in error_str):
+                        print(f"Session expired, stopping directory monitoring for: {path}")
+                        stop_event.set()
+                        break
+                    await asyncio.sleep(interval)
+            
+            print(f"Stopped monitoring directory: {path}")
+
+        if stop_event is None:
+            stop_event = asyncio.Event()
+        
+        task = self._create_task(_monitor_directory)
+        task.stop_event = stop_event
+        return task
+

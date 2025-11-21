@@ -1,7 +1,7 @@
 import re
 import unittest
 
-from agentbay.agentbay import _generate_random_context_name
+from agentbay._sync.agentbay import _generate_random_context_name
 
 
 class TestGenerateRandomContextName(unittest.TestCase):

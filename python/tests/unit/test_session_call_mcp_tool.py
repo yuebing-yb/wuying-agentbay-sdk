@@ -42,8 +42,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertTrue(hasattr(self.session, "call_mcp_tool"))
         self.assertTrue(callable(getattr(self.session, "call_mcp_tool")))
 
-    @patch("agentbay.api.models.CallMcpToolRequest")
-    @patch("agentbay.session.extract_request_id")
+    @patch("agentbay._sync.session.CallMcpToolRequest")
+    @patch("agentbay._sync.session.extract_request_id")
     def test_call_mcp_tool_success_non_vpc(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -88,8 +88,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertEqual(args_dict["command"], "ls")
         self.assertEqual(args_dict["timeout_ms"], 1000)
 
-    @patch("agentbay.api.models.CallMcpToolRequest")
-    @patch("agentbay.session.extract_request_id")
+    @patch("agentbay._sync.session.CallMcpToolRequest")
+    @patch("agentbay._sync.session.extract_request_id")
     def test_call_mcp_tool_with_error_response(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -123,8 +123,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("Error", result.error_message)
 
-    @patch("agentbay.api.models.CallMcpToolRequest")
-    @patch("agentbay.session.extract_request_id")
+    @patch("agentbay._sync.session.CallMcpToolRequest")
+    @patch("agentbay._sync.session.extract_request_id")
     def test_call_mcp_tool_api_exception(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -143,8 +143,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("Network error", result.error_message)
 
-    @patch("requests.get")
-    def test_call_mcp_tool_vpc_mode_success(self, mock_requests_get):
+    @patch("httpx.Client")
+    def test_call_mcp_tool_vpc_mode_success(self, mock_httpx_client):
         """Test successful MCP tool call in VPC mode."""
         # Setup VPC session
         self.session.is_vpc = True
@@ -164,7 +164,12 @@ class TestSessionCallMcpTool(unittest.TestCase):
             "content": [{"type": "text", "text": "vpc output"}],
             "isError": False,
         }
-        mock_requests_get.return_value = mock_response
+        
+        # Setup httpx client mock
+        # with httpx.Client() as client: client.get(...)
+        mock_client_instance = MagicMock()
+        mock_httpx_client.return_value.__enter__.return_value = mock_client_instance
+        mock_client_instance.get.return_value = mock_response
 
         # Call the method
         result = self.session.call_mcp_tool("shell", {"command": "pwd"})
@@ -175,8 +180,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertEqual(result.data, "vpc output")
 
         # Verify HTTP request was made
-        mock_requests_get.assert_called_once()
-        call_args = mock_requests_get.call_args
+        mock_client_instance.get.assert_called_once()
+        call_args = mock_client_instance.get.call_args
         self.assertIn("192.168.1.100", call_args[0][0])
         self.assertIn("8080", call_args[0][0])
 
@@ -218,8 +223,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("network configuration", result.error_message.lower())
 
-    @patch("agentbay.api.models.CallMcpToolRequest")
-    @patch("agentbay.session.extract_request_id")
+    @patch("agentbay._sync.session.CallMcpToolRequest")
+    @patch("agentbay._sync.session.extract_request_id")
     def test_call_mcp_tool_with_custom_timeouts(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -261,8 +266,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertEqual(call_kwargs.get("read_timeout"), 60)
         self.assertEqual(call_kwargs.get("connect_timeout"), 10)
 
-    @patch("agentbay.api.models.CallMcpToolRequest")
-    @patch("agentbay.session.extract_request_id")
+    @patch("agentbay._sync.session.CallMcpToolRequest")
+    @patch("agentbay._sync.session.extract_request_id")
     def test_call_mcp_tool_with_complex_args(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -378,4 +383,3 @@ class TestMcpToolResult(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

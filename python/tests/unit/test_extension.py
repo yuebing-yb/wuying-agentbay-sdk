@@ -154,9 +154,12 @@ class TestExtensionsService(unittest.TestCase):
         """Test ExtensionsService creation with explicit context_id."""
         service = ExtensionsService(self.mock_agent_bay, "test_context")
         
+        # Force context initialization
+        service._ensure_context()
+        
         self.assertEqual(service.context_id, "ctx_test_123")
         self.assertEqual(service.context_name, "test_context")
-        self.assertTrue(service.auto_created)
+        self.assertFalse(service.auto_created)
         self.mock_context_service.get.assert_called_once_with("test_context", create=True)
     
     @patch('time.time')
@@ -165,6 +168,9 @@ class TestExtensionsService(unittest.TestCase):
         mock_time.return_value = 1234567890
         
         service = ExtensionsService(self.mock_agent_bay, "")
+        
+        # Force context initialization
+        service._ensure_context()
         
         expected_context_name = "extensions-1234567890"
         self.mock_context_service.get.assert_called_once_with(expected_context_name, create=True)
@@ -175,19 +181,23 @@ class TestExtensionsService(unittest.TestCase):
         self.mock_context_result.success = False
         self.mock_context_result.context = None
         
+        service = ExtensionsService(self.mock_agent_bay, "test_context")
+        
         with self.assertRaises(AgentBayError) as context:
-            ExtensionsService(self.mock_agent_bay, "test_context")
+            service._ensure_context()
         
         self.assertIn("Failed to create extension repository context", str(context.exception))
     
     @patch('os.path.exists')
     @patch('builtins.open', create=True)
-    @patch('requests.put')
-    def test_create_extension_success(self, mock_put, mock_open, mock_exists):
+    @patch('httpx.Client')
+    def test_create_extension_success(self, mock_httpx_client, mock_open, mock_exists):
         """Test successful extension creation."""
         # Setup mocks
         mock_exists.return_value = True
-        mock_put.return_value.status_code = 200
+        mock_client_instance = MagicMock()
+        mock_httpx_client.return_value.__enter__.return_value = mock_client_instance
+        mock_client_instance.put.return_value.status_code = 200
         
         # Mock file upload URL
         mock_url_result = Mock()
@@ -200,6 +210,7 @@ class TestExtensionsService(unittest.TestCase):
         # Test extension creation
         extension = service.create("/path/to/test.zip")
         
+        # Verify result
         self.assertIsInstance(extension, Extension)
         self.assertTrue(extension.id.startswith("ext_"))
         self.assertEqual(extension.name, "test.zip")
@@ -207,8 +218,8 @@ class TestExtensionsService(unittest.TestCase):
         # Verify upload URL was requested
         self.mock_context_service.get_file_upload_url.assert_called_once()
         
-        # Verify file was uploaded
-        mock_put.assert_called_once()
+        # Verify file was uploaded using httpx
+        mock_client_instance.put.assert_called_once()
     
     @patch('os.path.exists')
     def test_create_extension_file_not_found(self, mock_exists):
@@ -270,12 +281,14 @@ class TestExtensionsService(unittest.TestCase):
     
     @patch('os.path.exists')
     @patch('builtins.open', create=True)
-    @patch('requests.put')
-    def test_update_extension_success(self, mock_put, mock_open, mock_exists):
+    @patch('httpx.Client')
+    def test_update_extension_success(self, mock_httpx_client, mock_open, mock_exists):
         """Test successful extension update."""
         # Setup mocks
         mock_exists.return_value = True
-        mock_put.return_value.status_code = 200
+        mock_client_instance = MagicMock()
+        mock_httpx_client.return_value.__enter__.return_value = mock_client_instance
+        mock_client_instance.put.return_value.status_code = 200
         
         # Mock existing extension
         mock_extension = Mock()
@@ -339,6 +352,9 @@ class TestExtensionsService(unittest.TestCase):
     def test_create_extension_option(self):
         """Test creation of ExtensionOption."""
         service = ExtensionsService(self.mock_agent_bay, "test_context")
+        
+        # Force context initialization to get the resolved context ID
+        service._ensure_context()
         
         ext_option = service.create_extension_option(["ext_1", "ext_2"])
         
@@ -408,12 +424,14 @@ class TestExtensionIntegration(unittest.TestCase):
     
     @patch('os.path.exists')
     @patch('builtins.open', create=True)
-    @patch('requests.put')
-    def test_full_extension_workflow(self, mock_put, mock_open, mock_exists):
+    @patch('httpx.Client')
+    def test_full_extension_workflow(self, mock_httpx_client, mock_open, mock_exists):
         """Test complete extension workflow: create, list, update, delete."""
         # Setup mocks
         mock_exists.return_value = True
-        mock_put.return_value.status_code = 200
+        mock_client_instance = MagicMock()
+        mock_httpx_client.return_value.__enter__.return_value = mock_client_instance
+        mock_client_instance.put.return_value.status_code = 200
         
         # Mock file upload URL
         mock_url_result = Mock()

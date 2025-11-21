@@ -1,0 +1,72 @@
+"""Integration tests for Mobile application management functionality."""
+import os
+import pytest
+import pytest_asyncio
+
+from agentbay import AsyncAgentBay
+from agentbay.session_params import CreateSessionParams
+
+
+@pytest_asyncio.fixture(scope="module")
+async def agent_bay():
+    """Create AsyncAgentBay instance."""
+    api_key = os.environ.get("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    return AsyncAgentBay(api_key=api_key)
+
+
+@pytest_asyncio.fixture
+async def session(agent_bay):
+    """Create a session with mobile_latest image."""
+    print("\nCreating session for mobile apps testing...")
+    session_param = CreateSessionParams(image_id="mobile_latest")
+    result = await agent_bay.create(session_param)
+    assert result.success, f"Failed to create session: {result.error_message}"
+    session = result.session
+    print(f"Session created with ID: {session.session_id}")
+    yield session
+    print("\nCleaning up: Deleting the session...")
+    await session.delete()
+
+
+@pytest.mark.asyncio
+async def test_get_installed_packages(session):
+    """Test getting installed packages."""
+    # Arrange
+    print("\nTest: Getting installed packages...")
+
+    # Act - Use command to list packages
+    result = await session.command.execute_command("pm list packages | head -10")
+
+    # Assert
+    assert result.success, f"List packages failed: {result.error_message}"
+    assert result.output is not None, "Package list should not be None"
+    print(f"Packages (first 10):\n{result.output}")
+
+
+@pytest.mark.asyncio
+async def test_start_app(session):
+    """Test starting a mobile app."""
+    # Arrange
+    print("\nTest: Starting Settings app...")
+
+    # Act - Start Settings app
+    result = await session.mobile.start_app("com.android.settings")
+
+    # Assert
+    assert result.success, f"Start app failed: {result.error_message}"
+    assert result.data is not None, "Process list should not be None"
+    print(f"Started {len(result.data)} process(es)")
+
+
+@pytest.mark.asyncio
+async def test_get_adb_url(session):
+    """Test getting ADB connection URL."""
+    # Arrange
+    print("\nTest: Getting ADB URL...")
+
+    # Note: This test requires an ADB public key
+    # For now, we'll skip if not available
+    pytest.skip("ADB URL test requires ADB public key configuration")
+

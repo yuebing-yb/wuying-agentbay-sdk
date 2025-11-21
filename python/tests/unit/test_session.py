@@ -1,17 +1,18 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from agentbay.session import Session, DeleteResult
+from agentbay._sync.session import Session, DeleteResult
+from agentbay.model.response import OperationResult
 
 class DummyAgentBay:
     def __init__(self):
         self.client = MagicMock()
         self.api_key = "test_api_key"
 
-    def get_api_key(self):
-        return self.api_key
-
     def get_client(self):
         return self.client
+    
+    def get_session(self, session_id):
+        return MagicMock()
 
 class TestSession(unittest.TestCase):
     def setUp(self):
@@ -81,8 +82,8 @@ class TestSession(unittest.TestCase):
         self.assertEqual(self.session.file_system.session, self.session)
         self.assertEqual(self.session.command.session, self.session)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.ReleaseMcpSessionRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.ReleaseMcpSessionRequest")
     def test_delete_success(
         self, MockReleaseMcpSessionRequest, mock_extract_request_id
     ):
@@ -107,8 +108,8 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.release_mcp_session.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.ReleaseMcpSessionRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.ReleaseMcpSessionRequest")
     def test_delete_without_params(
         self, MockReleaseMcpSessionRequest, mock_extract_request_id
     ):
@@ -132,8 +133,8 @@ class TestSession(unittest.TestCase):
         self.assertIsInstance(result, DeleteResult)
         self.assertTrue(result.success)
 
-        # Verify sync was not called
-        self.session.context.sync.assert_not_called()
+        # Verify sync_context was not called
+        self.session.context.sync_context.assert_not_called()
 
         # Verify API call is correct
         MockReleaseMcpSessionRequest.assert_called_once_with(
@@ -141,8 +142,8 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.release_mcp_session.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.ReleaseMcpSessionRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.ReleaseMcpSessionRequest")
     def test_delete_with_sync_context(
         self, MockReleaseMcpSessionRequest, mock_extract_request_id
     ):
@@ -161,22 +162,18 @@ class TestSession(unittest.TestCase):
         # Set up context mock object
         self.session.context = MagicMock()
 
-        # Mock context.sync return value (now returns a coroutine)
+        # Mock context.sync_context return value (sync result)
         sync_result = MagicMock()
         sync_result.success = True
-        # Since context.sync is now async, we need to mock it as a coroutine
-        import asyncio
-        async def mock_sync():
-            return sync_result
-        self.session.context.sync.return_value = mock_sync()
+        self.session.context.sync_context.return_value = sync_result
 
         # Call delete method with sync_context=True
         result = self.session.delete(sync_context=True)
         self.assertIsInstance(result, DeleteResult)
         self.assertTrue(result.success)
 
-        # Verify sync was called (but not info since we're not using callback mode)
-        self.session.context.sync.assert_called_once()
+        # Verify sync_context was called
+        self.session.context.sync_context.assert_called_once()
 
         # Verify API call is correct
         MockReleaseMcpSessionRequest.assert_called_once_with(
@@ -184,8 +181,8 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.release_mcp_session.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.ReleaseMcpSessionRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.ReleaseMcpSessionRequest")
     def test_delete_failure(
         self, MockReleaseMcpSessionRequest, mock_extract_request_id
     ):
@@ -207,8 +204,8 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.release_mcp_session.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.ReleaseMcpSessionRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.ReleaseMcpSessionRequest")
     def test_delete_api_failure_response(
         self, MockReleaseMcpSessionRequest, mock_extract_request_id
     ):
@@ -233,13 +230,11 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.release_mcp_session.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.SetLabelRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.SetLabelRequest")
     def test_set_labels_success(
         self, MockSetLabelRequest, mock_extract_request_id
     ):
-        from agentbay.model.response import OperationResult
-
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockSetLabelRequest.return_value = mock_request
@@ -264,8 +259,8 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.set_label.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.SetLabelRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.SetLabelRequest")
     def test_set_labels_api_failure(
         self, MockSetLabelRequest, mock_extract_request_id
     ):
@@ -287,13 +282,11 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.set_label.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.GetLabelRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.GetLabelRequest")
     def test_get_labels_success(
         self, MockGetLabelRequest, mock_extract_request_id
     ):
-        from agentbay.model.response import OperationResult
-
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockGetLabelRequest.return_value = mock_request
@@ -317,8 +310,8 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.get_label.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.GetLabelRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.GetLabelRequest")
     def test_get_labels_api_failure(
         self, MockGetLabelRequest, mock_extract_request_id
     ):
@@ -338,13 +331,11 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.get_label.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.GetLinkRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.GetLinkRequest")
     def test_get_link_success(
         self, MockGetLinkRequest, mock_extract_request_id
     ):
-        from agentbay.model.response import OperationResult
-
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockGetLinkRequest.return_value = mock_request
@@ -374,14 +365,12 @@ class TestSession(unittest.TestCase):
         )
         self.agent_bay.client.get_link.assert_called_once_with(mock_request)
 
-    @patch("agentbay.session.extract_request_id")
-    @patch("agentbay.session.GetLinkRequest")
+    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._sync.session.GetLinkRequest")
     def test_get_link_with_valid_port(
         self, MockGetLinkRequest, mock_extract_request_id
     ):
         """Test get_link with valid port values in range [30100, 30199]"""
-        from agentbay.model.response import OperationResult
-
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockGetLinkRequest.return_value = mock_request

@@ -1,426 +1,311 @@
-# Python SDK Examples
+# AgentBay Python SDK Examples
 
-This directory contains Python examples demonstrating various features and capabilities of the AgentBay SDK.
+This directory contains comprehensive examples demonstrating various features of the AgentBay Python SDK.
 
-## 📁 Directory Structure
-
-The examples are organized by feature categories:
+## Directory Structure
 
 ```
 examples/
-├── basic_usage.py                 # Quick start single-file example
-├── common-features/               # Features available across all environments
-│   ├── basics/                    # Essential features
-│   │   ├── session_creation/      # Session lifecycle management
-│   │   ├── session_pause_resume/  # Session pause and resume operations
-│   │   ├── file_system/           # File operations
-│   │   ├── filesystem_example/    # Practical filesystem use cases
-│   │   ├── context_management/    # Context creation and management
-│   │   ├── data_persistence/      # Data persistence across sessions
-│   │   ├── label_management/      # Session organization with labels
-│   │   ├── list_sessions/         # Session listing and filtering
-│   │   └── get/                   # Session retrieval
-│   └── advanced/                  # Advanced features
-│       ├── agent_module/          # AI-powered automation
-│       ├── oss_management/        # Object Storage Service integration
-│       ├── vpc_session/           # Secure isolated network environments
-│       └── screenshot_download/   # Screenshot capture and download
-├── browser-use/                   # Browser automation (browser_latest)
-│   ├── browser/                   # Browser automation examples
-│   └── extension/                 # Browser extension management
-├── computer-use/                  # Windows desktop automation (windows_latest)
-│   └── computer/                  # Application and window management
-├── mobile-use/                    # Mobile UI automation (mobile_latest)
-│   ├── mobile_system/             # Mobile automation examples
-│   └── mobile_get_adb_url_example.py  # ADB URL retrieval
-└── codespace/                     # Code execution (code_latest)
-    └── code_execution_example.py  # Python/JavaScript code execution
+├── _async/          # Async examples (Source of Truth)
+│   ├── browser-use/
+│   ├── codespace/
+│   ├── common-features/
+│   ├── computer-use/
+│   └── mobile-use/
+└── _sync/           # Sync examples (Auto-generated)
+    ├── browser-use/
+    ├── codespace/
+    ├── common-features/
+    ├── computer-use/
+    └── mobile-use/
 ```
 
-## 🚀 Quick Start
+## About Async/Sync Versions
 
-### Single-File Example
+- **`_async/`**: Contains asynchronous examples using `AsyncAgentBay` and `async/await` syntax
+- **`_sync/`**: Contains synchronous examples using `AgentBay` (auto-generated from async versions)
 
-The fastest way to get started:
+Both versions provide the same functionality. Choose based on your project requirements:
+- Use **async** for modern async/await applications
+- Use **sync** for traditional synchronous applications
+
+## Example Categories
+
+### 1. Browser-use Examples
+
+Located in `browser-use/browser/` and `browser-use/extension/`
+
+**Basic Browser Operations:**
+- `browser_screenshot.py` - Taking screenshots
+- `browser_viewport.py` - Managing viewport sizes
+- `browser_type_example.py` - Different browser types
+
+**Navigation and Interaction:**
+- `navigation_and_interaction.py` - Browser navigation and element interaction
+- `page_analysis.py` - Page metadata and content extraction
+- `multi_tab_management.py` - Managing multiple browser tabs
+
+**Advanced Browser Features:**
+- `javascript_execution.py` - Executing JavaScript in browser context
+- `authentication_flow.py` - Handling authentication and login flows
+- `responsive_testing.py` - Testing responsive design across viewports
+- `network_monitoring.py` - Monitoring network requests and responses
+- `popup_handling.py` - Managing popups and dialogs
+- `iframe_handling.py` - Working with iframes
+
+**File Operations:**
+- `file_upload_download.py` - File upload/download operations
+
+**Browser Automation:**
+- `form_automation.py` - Automated form filling
+- `web_scraping.py` - Web scraping techniques
+- `cookies_management.py` - Cookie management
+- `local_storage_management.py` - Local storage operations
+- `screenshot_comparison.py` - Screenshot comparison
+
+**Browser Configuration:**
+- `browser_fingerprint_*.py` - Browser fingerprinting
+- `browser_context_cookie_persistence.py` - Cookie persistence
+- `browser-proxies.py` - Proxy configuration
+- `browser_command_args.py` - Browser command arguments
+- `browser_replay.py` - Browser session replay
+
+**Extension Development:**
+- `basic_extension_usage.py` - Basic extension usage
+- `extension_development_workflow.py` - Extension development
+- `extension_testing_automation.py` - Extension testing
+
+**Real-world Examples:**
+- `search_agentbay_doc*.py` - Documentation search examples
+- `game_*.py` - Game automation examples
+- Various domain-specific examples
+
+### 2. Codespace Examples
+
+Located in `codespace/`
+
+**Development Environments:**
+- `python_development.py` - Python environment setup and package management
+- `nodejs_development.py` - Node.js environment and npm operations
+
+**Version Control:**
+- `git_operations.py` - Git repository initialization and commits
+
+**Containerization:**
+- `docker_operations.py` - Docker container management
+
+**Data Management:**
+- `database_operations.py` - SQLite database operations
+
+**Text Processing:**
+- `text_processing.py` - Text manipulation with grep/sed/awk
+
+**System Operations:**
+- `system_monitoring.py` - System resource monitoring
+- `file_compression.py` - File compression and archiving
+
+**Web Development:**
+- `web_server_setup.py` - HTTP server setup and configuration
+
+**Build Systems:**
+- `build_automation.py` - Build automation with Makefiles
+
+**Code Execution:**
+- `code_execution_example.py` - Code execution patterns
+
+### 3. Common-features Examples
+
+Located in `common-features/basics/` and `common-features/advanced/`
+
+**Basic Operations:**
+- `session_creation/` - Creating and managing sessions
+- `command_execution_patterns.py` - Various command execution patterns
+- `file_operations_patterns.py` - File operation patterns
+- `file_system/` - File system operations
+- `session_info.py` - Session information retrieval
+- `working_directory.py` - Working directory management
+- `environment_setup.py` - Environment variable configuration
+- `process_management.py` - Process monitoring and management
+- `data_transfer.py` - Data transfer operations
+
+**Session Management:**
+- `list_sessions/` - Listing sessions
+- `get/` - Getting session information
+- `session_pause_resume/` - Pausing and resuming sessions
+- `label_management/` - Managing session labels
+
+**Data Persistence:**
+- `data_persistence/` - Context synchronization and data persistence
+- `context_management/` - Context management
+- `archive-upload-mode-example/` - Archive upload modes
+
+**Advanced Features:**
+- `concurrent_sessions.py` - Managing multiple sessions concurrently
+- `resource_cleanup.py` - Proper resource cleanup patterns
+- `error_recovery.py` - Error handling and recovery
+- `error_handling/` - Comprehensive error handling
+- `batch_operations/` - Batch operations
+- `parallel_execution/` - Parallel execution patterns
+- `multi_session_management/` - Multi-session coordination
+
+**Testing and Monitoring:**
+- `api_testing/` - API testing patterns
+- `network_testing/` - Network diagnostics
+- `logging_monitoring/` - Logging and monitoring
+- `performance_monitoring/` - Performance monitoring
+- `screenshot_download/` - Screenshot operations
+
+**Infrastructure:**
+- `environment_variables/` - Environment variable management
+- `retry_mechanism/` - Retry patterns with circuit breaker
+- `session_pooling/` - Session pooling for efficiency
+- `vpc_session/` - VPC session management
+- `oss_management/` - OSS operations
+
+**Filesystem:**
+- `filesystem_example/` - Advanced filesystem operations
+- `mcp_tool_direct_call/` - MCP tool direct calls
+
+**Agent Integration:**
+- `agent_module/` - Agent module usage
+
+### 4. Computer-use Examples
+
+Located in `computer-use/computer/`
+
+- `windows_app_management_example.py` - Windows application management
+
+### 5. Mobile-use Examples
+
+Located in `mobile-use/`
+
+- `mobile_get_adb_url_example.py` - Getting ADB connection URL
+- `mobile_system/` - Mobile system operations
+
+## Getting Started
+
+### Prerequisites
 
 ```bash
-# Set your API key
-export AGENTBAY_API_KEY=your_api_key_here
-
-# Run the quick start example
-python basic_usage.py
+pip install agentbay
 ```
 
-This example demonstrates:
-- Initializing the AgentBay client
-- Creating sessions
-- Basic operations (commands, file operations)
-- Session cleanup
+### Running Examples
 
-## 📚 Feature Categories
-
-### [Common Features](common-features/)
-
-Features available across all environment types (browser, computer, mobile, codespace).
-
-**Basics:**
-- **Session Management**: Create, configure, and manage cloud sessions
-- **File Operations**: Read, write, and manage files in cloud environments
-- **Context Management**: Persistent data storage across sessions
-- **Data Persistence**: Cross-session data sharing and synchronization
-- **Label Management**: Organize and filter sessions with labels
-
-**Advanced:**
-- **Agent Module**: AI-powered task automation with natural language
-- **OSS Integration**: Object Storage Service for file management
-- **VPC Sessions**: Secure isolated network environments
-- **Screenshot Download**: Capture and download screenshots
-
-### [Browser Use](browser-use/)
-
-Cloud-based browser automation with Playwright integration.
-
-**Key Features:**
-- Cookie and session persistence
-- Stealth mode to avoid detection
-- CAPTCHA handling capabilities
-- Browser extension support
-- AI-powered automation
-- Proxy configuration
-
-**Use Cases:**
-- Web scraping and data extraction
-- Automated testing
-- Form filling and submission
-- Game automation
-- E-commerce automation
-
-### [Computer Use](computer-use/)
-
-Windows desktop automation for application control and window management.
-
-**Key Features:**
-- Application management (start, stop, list)
-- Window operations (maximize, minimize, resize, close)
-- Focus management
-- Desktop UI automation
-- Process monitoring
-
-**Use Cases:**
-- Desktop application testing
-- Automated workflows
-- Application monitoring
-- UI automation
-
-### [Mobile Use](mobile-use/)
-
-Android mobile UI automation for app testing and gesture-based interactions.
-
-**Key Features:**
-- UI element detection and interaction
-- Touch gestures (tap, swipe, scroll)
-- Text input and key events
-- Screenshot capture
-- Mobile application management
-- ADB integration
-
-**Use Cases:**
-- Mobile app testing
-- UI automation
-- Gesture-based interactions
-- Screenshot verification
-
-### [CodeSpace](codespace/)
-
-Cloud-based development environment for code execution and scripting.
-
-**Key Features:**
-- Python code execution
-- JavaScript/Node.js code execution
-- Shell command execution
-- File system operations
-- Package management (pip, npm)
-
-**Use Cases:**
-- Automated testing
-- Code validation
-- Data processing
-- CI/CD integration
-- Educational tools
-
-## 📋 Prerequisites
-
-### Basic Requirements
-
-- Python 3.8 or later
-- AgentBay SDK: `pip install wuying-agentbay-sdk`
-- Valid `AGENTBAY_API_KEY` environment variable
-
-### Additional Requirements by Category
-
-**Browser Use:**
+**Async version:**
 ```bash
-pip install playwright
-playwright install chromium
+python python/docs/examples/_async/codespace/python_development.py
 ```
 
-**All Others:**
-No additional requirements beyond the basic SDK.
-
-## 🎯 Running Examples
-
-### Option 1: Using Installed Package (Recommended)
-
-1. Install the SDK:
+**Sync version:**
 ```bash
-pip install wuying-agentbay-sdk
+python python/docs/examples/_sync/codespace/python_development.py
 ```
 
-2. For browser examples, install Playwright:
+### Environment Variables
+
+Most examples require the `AGENTBAY_API_KEY` environment variable:
+
 ```bash
-playwright install chromium
+export AGENTBAY_API_KEY="your_api_key_here"
 ```
 
-3. Set your API key:
-```bash
-export AGENTBAY_API_KEY=your_api_key_here
+## Example Template
+
+### Async Example Template
+
+```python
+import asyncio
+from agentbay import AsyncAgentBay
+from agentbay.session_params import CreateSessionParams
+
+async def main():
+    client = AsyncAgentBay()
+    session = None
+
+    try:
+        # Create session
+        session_result = await client.create(
+            CreateSessionParams(image_id="linux_latest")
+        )
+        session = session_result.session
+
+        # Your code here
+        result = await session.command.execute_command("echo 'Hello'")
+        print(result.output)
+
+    finally:
+        if session:
+            await client.delete(session)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-4. Run any example:
-```bash
-python basic_usage.py
-python common-features/basics/session_creation/main.py
-python browser-use/browser/browser_stealth.py
-python codespace/code_execution_example.py
-```
-
-### Option 2: Development from Source
-
-1. Install dependencies:
-```bash
-cd python
-poetry install
-```
-
-2. For browser examples, install Playwright:
-```bash
-poetry run playwright install chromium
-```
-
-3. Set your API key:
-```bash
-export AGENTBAY_API_KEY=your_api_key_here
-```
-
-4. Run examples with poetry:
-```bash
-poetry run python docs/examples/basic_usage.py
-poetry run python docs/examples/common-features/basics/session_creation/main.py
-```
-
-## 💡 Common Patterns
-
-### Basic Session Creation
+### Sync Example Template
 
 ```python
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
 
-# Initialize client
-agent_bay = AgentBay(api_key="your_api_key")
+def main():
+    client = AgentBay()
+    session = None
 
-# Create session
-params = CreateSessionParams(image_id="linux_latest")
-result = agent_bay.create(params)
+    try:
+        # Create session
+        session_result = client.create(
+            CreateSessionParams(image_id="linux_latest")
+        )
+        session = session_result.session
 
-if result.success:
-    session = result.session
-    # Use session...
-    
-    # Cleanup
-    agent_bay.delete(session)
+        # Your code here
+        result = session.command.execute_command("echo 'Hello'")
+        print(result.output)
+
+    finally:
+        if session:
+            client.delete(session)
+
+if __name__ == "__main__":
+    main()
 ```
 
-### File Operations
+## Contributing
 
-```python
-# Write file
-result = session.file_system.write_file("/tmp/test.txt", "content")
+When adding new examples:
 
-# Read file
-result = session.file_system.read_file("/tmp/test.txt")
-if result.success:
-    print(result.content)
-```
+1. **Always create async version first** in `_async/` directory
+2. **Run the generation script** to create sync version:
+   ```bash
+   cd python
+   make generate-examples-sync
+   ```
+3. **Verify both versions** work correctly
+4. **Update this README** with the new example
 
-### Command Execution
+## Maintenance
 
-```python
-result = session.command.execute_command("ls -la")
-if result.success:
-    print(result.output)
-```
+The sync examples are auto-generated from async examples. To regenerate:
 
-### Browser Automation
-
-```python
-import asyncio
-from agentbay.browser.browser import BrowserOption
-from playwright.async_api import async_playwright
-
-async def automate():
-    # Initialize browser
-    option = BrowserOption()
-    await session.browser.initialize_async(option)
-    
-    # Connect Playwright
-    endpoint_url = session.browser.get_endpoint_url()
-    async with async_playwright() as p:
-        browser = await p.chromium.connect_over_cdp(endpoint_url)
-        context = browser.contexts[0]
-        page = await context.new_page()
-        
-        # Automate...
-        await page.goto("https://example.com")
-        
-        await browser.close()
-
-asyncio.run(automate())
-```
-
-### Code Execution
-
-```python
-# Python code
-python_code = """
-print("Hello from Python!")
-"""
-result = session.code.run_code(python_code, "python")
-
-# JavaScript code
-js_code = """
-console.log("Hello from JavaScript!");
-"""
-result = session.code.run_code(js_code, "javascript")
-```
-
-## 🎓 Learning Path
-
-### For Beginners
-
-1. Start with [basic_usage.py](basic_usage.py)
-2. Explore [Common Features - Basics](common-features/basics/)
-3. Try environment-specific examples based on your use case
-
-### For Experienced Developers
-
-1. Review [Common Features](common-features/) for SDK capabilities
-2. Jump to your specific environment:
-   - [Browser Use](browser-use/) for web automation
-   - [Computer Use](computer-use/) for desktop automation
-   - [Mobile Use](mobile-use/) for mobile automation
-   - [CodeSpace](codespace/) for code execution
-3. Explore [Advanced Features](common-features/advanced/) for integrations
-
-## 📖 Best Practices
-
-1. **Always Clean Up**: Delete sessions when done to free resources
-2. **Error Handling**: Check `result.success` before using data
-3. **Use Labels**: Organize sessions with meaningful labels
-4. **Context Sync**: Use context synchronization for data persistence
-5. **Resource Limits**: Be aware of concurrent session limits
-6. **Proper Cleanup**: Close connections and delete sessions properly
-7. **API Key Security**: Never commit API keys to version control
-
-## 🔍 Example Index
-
-### By Use Case
-
-**Web Automation:**
-- Browser stealth mode: `browser-use/browser/browser_stealth.py`
-- Cookie persistence: `browser-use/browser/browser_context_cookie_persistence.py`
-- AI-powered automation: `browser-use/browser/search_agentbay_doc_by_agent.py`
-
-**Desktop Automation:**
-- Application management: `computer-use/computer/windows_app_management_example.py`
-
-**Mobile Automation:**
-- Mobile UI automation: `mobile-use/mobile_system/main.py`
-- ADB integration: `mobile-use/mobile_get_adb_url_example.py`
-
-**Code Execution:**
-- Python/JavaScript execution: `codespace/code_execution_example.py`
-
-**Data Management:**
-- File operations: `common-features/basics/file_system/main.py`
-- Context management: `common-features/basics/context_management/main.py`
-- Data persistence: `common-features/basics/data_persistence/main.py`
-
-**Session Management:**
-- Session pause and resume: `common-features/basics/session_pause_resume/main.py`
-
-**Advanced Features:**
-- AI Agent: `common-features/advanced/agent_module/main.py`
-- OSS integration: `common-features/advanced/oss_management/main.py`
-- VPC sessions: `common-features/advanced/vpc_session/main.py`
-
-## 🆘 Troubleshooting
-
-### Resource Creation Delay
-
-If you see "The system is creating resources" message:
-- Wait 90 seconds and retry
-- This is normal for resource initialization
-- Consider using session pooling for production
-
-### API Key Issues
-
-Ensure your API key is properly set:
 ```bash
-export AGENTBAY_API_KEY=your_api_key_here
-# Verify
-echo $AGENTBAY_API_KEY
-```
-
-### Import Errors
-
-If you get import errors:
-```bash
-# Ensure SDK is installed
-pip install wuying-agentbay-sdk
-
-# Or for development
 cd python
-poetry install
+python scripts/generate_examples_sync.py
 ```
 
-### Browser Examples Not Working
+Or use the Makefile:
 
-For browser examples:
 ```bash
-# Install Playwright
-pip install playwright
-playwright install chromium
+cd python
+make generate-examples-sync
 ```
 
-## 📚 Related Documentation
+## Need Help?
 
-- [Python SDK Documentation](../../)
-- [API Reference](../api/)
-- [Quick Start Guide](../../../docs/quickstart/README.md)
-- [Feature Guides](../../../docs/guides/README.md)
-- [Common Features Guide](../../../docs/guides/common-features/README.md)
-- [Browser Use Guide](../../../docs/guides/browser-use/README.md)
-- [Computer Use Guide](../../../docs/guides/computer-use/README.md)
-- [Mobile Use Guide](../../../docs/guides/mobile-use/README.md)
-- [CodeSpace Guide](../../../docs/guides/codespace/README.md)
+- Check the [API Documentation](../api/)
+- Visit the [Guides](../../guides/)
+- See the [Quickstart](../../quickstart/)
 
-## 🤝 Getting Help
+## License
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
-- [Documentation](../../../docs/README.md)
-
----
-
-💡 **Tip**: Start with `basic_usage.py` for a quick overview, then explore category-specific examples based on your needs.
-
+These examples are part of the AgentBay SDK and follow the same license.

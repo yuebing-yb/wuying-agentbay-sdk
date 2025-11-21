@@ -1,0 +1,89 @@
+import os
+import pytest
+import pytest_asyncio
+from agentbay import AsyncAgentBay
+from agentbay.session_params import CreateSessionParams
+
+# Define fixtures for session management
+@pytest_asyncio.fixture(scope="module")
+async def agent_session():
+    """
+    Fixture to create a session before all tests in this module
+    and delete it after all tests are done.
+    """
+    api_key = os.environ.get("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+
+    agent_bay = AsyncAgentBay(api_key=api_key)
+    print("Creating a new session for Command testing...")
+
+    params = CreateSessionParams(image_id="code_latest")
+    result = await agent_bay.create(params)
+
+    if not result.success or not result.session:
+        pytest.fail(f"Failed to create session: {result.error_message}")
+
+    session = result.session
+    print(f"Session created with ID: {session.session_id}")
+
+    yield session
+
+    print("Cleaning up: Deleting the session...")
+    try:
+        delete_result = await session.delete()
+        if delete_result.success:
+            print("Session successfully deleted")
+        else:
+            print(f"Warning: Error deleting session: {delete_result.error_message}")
+    except Exception as e:
+        print(f"Warning: Error deleting session: {e}")
+
+@pytest.fixture
+def command(agent_session):
+    """Fixture to get the command object from the session."""
+    return agent_session.command
+
+@pytest.mark.asyncio
+async def test_execute_command_success(command):
+    """Test executing a shell command successfully."""
+    cmd = "echo 'Hello, AgentBay!'"
+    result = await command.execute_command(cmd)
+    print(f"Command execution result: {result.output}")
+    assert result.success
+    assert result.output.strip() == "Hello, AgentBay!"
+    assert result.request_id != ""
+    assert result.error_message == ""
+
+@pytest.mark.asyncio
+async def test_execute_command_with_timeout(command):
+    """Test executing a shell command with a timeout."""
+    cmd = "sleep 5"
+    timeout_ms = 1000  # 1 second timeout
+    result = await command.execute_command(cmd, timeout_ms)
+    print(f"Command execution result with timeout: {result}")
+    assert not result.success
+    assert result.request_id != ""
+    assert result.error_message != ""
+    assert result.output == ""
+
+@pytest.mark.asyncio
+async def test_command_error_handling(command):
+    """Test command error handling - should handle command errors and edge cases."""
+    # Test invalid command
+    invalid_result = await command.execute_command('invalid_command_12345')
+    assert not invalid_result.success
+    assert invalid_result.error_message is not None
+
+    # Test command with permission issues (trying to write to protected directory)
+    permission_result = await command.execute_command('echo "test" > /root/protected.txt')
+    # This might succeed or fail depending on the environment, but should not crash
+    assert isinstance(permission_result.success, bool)
+
+    # Test long-running command with timeout considerations
+    time_command = 'echo "completed"'
+    time_result = await command.execute_command(time_command)
+    print(f'Command output: {time_result}')
+    assert time_result.success
+    assert 'completed' in time_result.output
+

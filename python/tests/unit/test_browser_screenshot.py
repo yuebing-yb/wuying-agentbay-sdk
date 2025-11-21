@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 from unittest.mock import MagicMock, patch, AsyncMock
-from agentbay.browser.browser import Browser, BrowserOption
+from agentbay._async.browser import AsyncBrowser, BrowserOption
 from agentbay.exceptions import BrowserError
 
 
@@ -11,22 +11,24 @@ class TestBrowserScreenshot(unittest.TestCase):
     def setUp(self):
         """Set up test browser with mocked session."""
         self.mock_session = MagicMock()
-        self.browser = Browser(self.mock_session)
+        self.browser = AsyncBrowser(self.mock_session)
         
         # Mock the session methods that would be called
-        self.mock_session._get_client().init_browser_async = AsyncMock()
-        self.mock_session._get_client().init_browser_async.return_value = MagicMock()
-        self.mock_session._get_client().init_browser_async.return_value.to_map.return_value = {
+        mock_client = AsyncMock()
+        mock_client.init_browser_async = AsyncMock()
+        mock_client.init_browser_async.return_value = MagicMock()
+        mock_client.init_browser_async.return_value.to_map.return_value = {
             "body": {"Data": {"Port": 9333}}
         }
+        self.mock_session._get_client.return_value = mock_client
         
         # Initialize the browser for tests
-        self.browser.initialize(BrowserOption())
+        asyncio.run(self.browser.initialize(BrowserOption()))
 
     def test_screenshot_async_with_uninitialized_browser_raises_error(self):
         """Test that screenshot_async raises BrowserError when browser is not initialized."""
         # Create a new browser instance that is not initialized
-        uninitialized_browser = Browser(self.mock_session)
+        uninitialized_browser = AsyncBrowser(self.mock_session)
         
         # Create a mock page
         mock_page = MagicMock()
@@ -44,7 +46,7 @@ class TestBrowserScreenshot(unittest.TestCase):
             
         self.assertIn("Page cannot be None", str(context.exception))
 
-    @patch('agentbay.browser.browser._logger')
+    @patch('agentbay._async.browser._logger')
     def test_screenshot_async_success(self, mock_logger):
         """Test successful screenshot capture."""
         # Create a mock page with async methods
@@ -71,7 +73,7 @@ class TestBrowserScreenshot(unittest.TestCase):
         # Verify logging
         mock_logger.info.assert_called_with("Screenshot captured successfully.")
 
-    @patch('agentbay.browser.browser._logger')
+    @patch('agentbay._async.browser._logger')
     def test_screenshot_async_with_full_page_option(self, mock_logger):
         """Test screenshot capture with full_page=True option."""
         # Create a mock page with async methods
@@ -105,7 +107,7 @@ class TestBrowserScreenshot(unittest.TestCase):
             type="png"
         )
 
-    @patch('agentbay.browser.browser._logger')
+    @patch('agentbay._async.browser._logger')
     def test_screenshot_async_with_custom_options(self, mock_logger):
         """Test screenshot capture with custom options."""
         # Create a mock page with async methods
@@ -141,7 +143,7 @@ class TestBrowserScreenshot(unittest.TestCase):
             quality=80
         )
 
-    @patch('agentbay.browser.browser._logger')
+    @patch('agentbay._async.browser._logger')
     def test_screenshot_async_handles_exception(self, mock_logger):
         """Test that screenshot_async handles exceptions properly."""
         # Create a mock page that raises an exception
@@ -164,7 +166,7 @@ class TestBrowserScreenshot(unittest.TestCase):
         # Verify logging
         mock_logger.error.assert_called()
 
-    @patch('agentbay.browser.browser._logger')
+    @patch('agentbay._async.browser._logger')
     def test_screenshot_async_handles_coroutine_exception(self, mock_logger):
         """Test that screenshot_async handles exceptions that can't be converted to string."""
         # Create a mock page that raises an exception that can't be converted to string

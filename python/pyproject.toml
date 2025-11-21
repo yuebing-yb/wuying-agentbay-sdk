@@ -37,11 +37,14 @@ loguru = "^0.7.0"
 pytest = "^8.2.2"
 pytest-cov = "^6.0.0"
 pytest-asyncio = "^0.25.0"
+unasync = "^0.6.0"
+setuptools = "^75.0.0"
 black = "^24.0.0"
 flake8 = "^7.0.0"
 mypy = "^1.8.0"
 isort = "^5.10.0"
 pydoc-markdown = "^4.8.0"
+docspec = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
