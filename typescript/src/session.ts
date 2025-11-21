@@ -1505,11 +1505,19 @@ export class Session {
               success: true,
               status,
             };
-          } else if (status !== "RUNNING" && status !== "PAUSING") {
-            // If status is not RUNNING, PAUSING, or PAUSED, treat as unexpected
+          } else if (status === "PAUSING") {
+            // Normal transitioning state, continue polling
+          } else {
+            // Any other status is unexpected - pause API succeeded but session is not pausing/paused
             const elapsed = Date.now() - startTime;
-            logWarn(`Session in unexpected state after ${elapsed}ms: ${status}`);
-            // Continue polling as the state might transition to PAUSED
+            const errorMessage = `Session pause failed: unexpected state '${status}' after ${elapsed}ms`;
+            logError(errorMessage);
+            return {
+              requestId: getResult.requestId || "",
+              success: false,
+              errorMessage,
+              status,
+            };
           }
         }
 
@@ -1672,11 +1680,19 @@ export class Session {
               success: true,
               status,
             };
-          } else if (status !== "PAUSED" && status !== "RESUMING") {
-            // If status is not PAUSED, RESUMING, or RUNNING, treat as unexpected
+          } else if (status === "RESUMING") {
+            // Normal transitioning state, continue polling
+          } else {
+            // Any other status is unexpected - resume API succeeded but session is not resuming/running
             const elapsed = Date.now() - startTime;
-            logWarn(`Session in unexpected state after ${elapsed}ms: ${status}`);
-            // Continue polling as the state might transition to RUNNING
+            const errorMessage = `Session resume failed: unexpected state '${status}' after ${elapsed}ms`;
+            logError(errorMessage);
+            return {
+              requestId: getResult.requestId || "",
+              success: false,
+              errorMessage,
+              status,
+            };
           }
         }
 

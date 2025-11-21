@@ -275,8 +275,8 @@ class TestSessionPause(unittest.TestCase):
         )
         self.agent_bay.client.pause_session_async_async = AsyncMock(return_value=mock_response)
 
-        # Mock get_session to return unexpected state, then PAUSED
-        get_session_running = GetSessionResult(
+        # Mock get_session to return unexpected state (should fail immediately)
+        get_session_unexpected = GetSessionResult(
             request_id="test-request-id",
             success=True,
             data=GetSessionData(
@@ -284,31 +284,22 @@ class TestSessionPause(unittest.TestCase):
                 status="other",
             ),
         )
-
-        get_session_paused = GetSessionResult(
-            request_id="test-request-id",
-            success=True,
-            data=GetSessionData(
-                session_id="session-123",
-                status="PAUSED",
-            ),
-        )
-        self.agent_bay.get_session = MagicMock(side_effect=[get_session_running, get_session_paused])
+        self.agent_bay.get_session = MagicMock(return_value=get_session_unexpected)
 
         # Patch asyncio.sleep to avoid waiting
         with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.pause_async(timeout=10, poll_interval=1))
 
-            # Verify the result
+            # Verify the result - should fail immediately due to unexpected state
             self.assertIsInstance(result, SessionPauseResult)
-            self.assertTrue(result.success)
+            self.assertFalse(result.success)
             self.assertEqual(result.request_id, "test-request-id")
-            self.assertEqual(result.status, "PAUSED")
-            self.assertEqual(result.error_message, "")
+            self.assertEqual(result.status, "other")
+            self.assertIn("unexpected state", result.error_message)
 
-            # Verify that sleep was called once (after the first attempt)
-            mock_sleep.assert_called_once_with(1)
+            # Verify that sleep was not called since we failed immediately
+            mock_sleep.assert_not_called()
 
     def test_pause_sync_success_immediate(self):
         """Test successful synchronous session pause with immediate success."""

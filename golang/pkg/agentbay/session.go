@@ -1441,11 +1441,19 @@ func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPause
 					Success:     true,
 					Status:      status,
 				}, nil
-			} else if status != "RUNNING" && status != "PAUSING" {
-				// If status is not RUNNING, PAUSING, or PAUSED, treat as unexpected
+			} else if status == "PAUSING" {
+				// Normal transitioning state, continue polling
+			} else {
+				// Any other status is unexpected - pause API succeeded but session is not pausing/paused
 				elapsed := time.Since(startTime)
-				fmt.Printf("Session in unexpected state after %v: %s\n", elapsed, status)
-				// Continue polling as the state might transition to PAUSED
+				errorMessage := fmt.Sprintf("Session pause failed: unexpected state '%s' after %v", status, elapsed)
+				fmt.Printf("%s\n", errorMessage)
+				return &models.SessionPauseResult{
+					ApiResponse:  models.WithRequestID(getSessionResult.GetRequestID()),
+					Success:      false,
+					ErrorMessage: errorMessage,
+					Status:       status,
+				}, nil
 			}
 		}
 
@@ -1591,11 +1599,19 @@ func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResu
 					Success:     true,
 					Status:      status,
 				}, nil
-			} else if status != "PAUSED" && status != "RESUMING" {
-				// If status is not PAUSED, RESUMING, or RUNNING, treat as unexpected
+			} else if status == "RESUMING" {
+				// Normal transitioning state, continue polling
+			} else {
+				// Any other status is unexpected - resume API succeeded but session is not resuming/running
 				elapsed := time.Since(startTime)
-				fmt.Printf("Session in unexpected state after %v: %s\n", elapsed, status)
-				// Continue polling as the state might transition to RUNNING
+				errorMessage := fmt.Sprintf("Session resume failed: unexpected state '%s' after %v", status, elapsed)
+				fmt.Printf("%s\n", errorMessage)
+				return &models.SessionResumeResult{
+					ApiResponse:  models.WithRequestID(getSessionResult.GetRequestID()),
+					Success:      false,
+					ErrorMessage: errorMessage,
+					Status:       status,
+				}, nil
 			}
 		}
 

@@ -1463,11 +1463,21 @@ class Session:
                             status=status,
                         )
                         return result
-                    elif status not in ("RUNNING", "PAUSING"):
-                        # If status is not RUNNING, PAUSING, or PAUSED, treat as unexpected
+                    elif status == "PAUSING":
+                        # Normal transitioning state, continue polling
+                        pass
+                    else:
+                        # Any other status is unexpected - pause API succeeded but session is not pausing/paused
                         elapsed = time.time() - start_time
-                        _logger.warning(f"Session in unexpected state after {elapsed:.2f} seconds: {status}")
-                        # Continue polling as the state might transition to PAUSED
+                        error_msg = f"Session pause failed: unexpected state '{status}' after {elapsed:.2f} seconds"
+                        _logger.error(error_msg)
+                        result = SessionPauseResult(
+                            request_id=get_result.request_id,
+                            success=False,
+                            error_message=error_msg,
+                            status=status,
+                        )
+                        return result
 
                 # Wait before next query (using asyncio.sleep to avoid blocking)
                 # Only wait if we're not at the last attempt
@@ -1732,11 +1742,21 @@ class Session:
                             status=status,
                         )
                         return result
-                    elif status not in ("PAUSED", "RESUMING"):
-                        # If status is not PAUSED, RESUMING, or RUNNING, treat as unexpected
+                    elif status == "RESUMING":
+                        # Normal transitioning state, continue polling
+                        pass
+                    else:
+                        # Any other status is unexpected - resume API succeeded but session is not resuming/running
                         elapsed = time.time() - start_time
-                        _logger.warning(f"Session in unexpected state after {elapsed:.2f} seconds: {status}")
-                        # Continue polling as the state might transition to RUNNING
+                        error_msg = f"Session resume failed: unexpected state '{status}' after {elapsed:.2f} seconds"
+                        _logger.error(error_msg)
+                        result = SessionResumeResult(
+                            request_id=get_result.request_id,
+                            success=False,
+                            error_message=error_msg,
+                            status=status,
+                        )
+                        return result
 
                 # Wait before next query (using asyncio.sleep to avoid blocking)
                 # Only wait if we're not at the last attempt
