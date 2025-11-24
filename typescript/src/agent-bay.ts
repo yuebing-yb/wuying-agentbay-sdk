@@ -37,6 +37,7 @@ import {
   setRequestId,
   getRequestId,
   logInfoWithColor,
+  logWarn,
 } from "./utils/logger";
 import { VERSION, IS_RELEASE } from "./version";
 
@@ -185,7 +186,6 @@ export class AgentBay {
   private apiKey: string;
   private client: Client;
   private endpoint: string;
-  private sessions: Map<string, Session> = new Map();
   private fileTransferContext: Context | null = null;
 
   /**
@@ -599,9 +599,6 @@ export class AgentBay {
       // Store imageId used for this session
       (session as any).imageId = params.imageId;
 
-
-      this.sessions.set(session.sessionId, session);
-
       // Apply mobile configuration if provided
       if (params.extraConfigs && params.extraConfigs.mobile) {
         log("Applying mobile configuration...");
@@ -907,8 +904,6 @@ export class AgentBay {
         { sessionId: session.sessionId }
       );
 
-      this.sessions.delete(session.sessionId);
-
       // Return the DeleteResult obtained from session.delete()
       return deleteResult;
     } catch (error) {
@@ -919,28 +914,6 @@ export class AgentBay {
         errorMessage: `Failed to delete session ${session.sessionId}: ${error}`,
       };
     }
-  }
-
-  /**
-   * Remove a session from the internal session cache.
-   *
-   * This is an internal utility method that removes a session reference from the AgentBay client's
-   * session cache without actually deleting the session from the cloud. Use this when you need to
-   * clean up local references to a session that was deleted externally or no longer needed.
-   *
-   * @param sessionId - The ID of the session to remove from the cache.
-   *
-   * @internal
-   *
-   * @remarks
-   * **Note:** This method only removes the session from the local cache. It does not delete the
-   * session from the cloud. To delete a session from the cloud, use {@link delete} or
-   * {@link Session.delete}.
-   *
-   * @see {@link delete}, {@link Session.delete}
-   */
-  public removeSession(sessionId: string): void {
-    this.sessions.delete(sessionId);
   }
 
   /**
@@ -992,6 +965,20 @@ export class AgentBay {
       };
 
       if (body?.data) {
+        // Extract contexts list from response
+        const contextsList = body.data.contexts || [];
+        const contexts: Array<{ name: string; id: string }> = [];
+        if (Array.isArray(contextsList)) {
+          for (const ctx of contextsList) {
+            if (ctx && typeof ctx === 'object' && ctx.name && ctx.id) {
+              contexts.push({
+                name: ctx.name,
+                id: ctx.id,
+              });
+            }
+          }
+        }
+
         result.data = {
           appInstanceId: body.data.appInstanceId || "",
           resourceId: body.data.resourceId || "",
@@ -1003,6 +990,7 @@ export class AgentBay {
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
           status: body.data.status || "",
+          contexts: contexts.length > 0 ? contexts : undefined,
         };
 
         logAPIResponseWithDetails(
@@ -1107,14 +1095,51 @@ export class AgentBay {
       session.resourceUrl = getResult.data.resourceUrl;
     }
 
-    // Create a default context for file transfer operations for the recovered session
-    const contextName = `file-transfer-context-${Date.now()}`;
-    const contextResult = await this.context.get(contextName, true);
-    if (contextResult.success && contextResult.context) {
-      session.fileTransferContextId = contextResult.context.id;
-      logInfo(`📁 Created file transfer context for recovered session: ${contextResult.context.id}`);
+    // Extract file transfer context ID from contexts list
+    if (getResult.data && getResult.data.contexts && getResult.data.contexts.length > 0) {
+      const contexts = getResult.data.contexts;
+      // Filter contexts with 'file-transfer-context-' prefix
+      const fileTransferContexts = contexts.filter(
+        (ctx) => ctx.name && ctx.name.startsWith("file-transfer-context-")
+      );
+
+      if (fileTransferContexts.length === 0) {
+        // No file transfer context found
+        const availableContexts = contexts.map((ctx) => ctx.name || "unknown");
+        logWarn(
+          `⚠️  No file-transfer-context- found in contexts list for session ${sessionId}. ` +
+            `Available contexts: ${availableContexts.join(", ")}`
+        );
+        session.fileTransferContextId = null;
+      } else if (fileTransferContexts.length === 1) {
+        // Exactly one file transfer context found
+        const contextId = fileTransferContexts[0].id;
+        if (contextId) {
+          session.fileTransferContextId = contextId;
+          logInfo(`📁 Found file transfer context for recovered session: ${contextId}`);
+        } else {
+          logWarn(
+            `⚠️  File transfer context found but missing 'id' field: ${JSON.stringify(fileTransferContexts[0])}`
+          );
+          session.fileTransferContextId = null;
+        }
+      } else {
+        // Multiple file transfer contexts found
+        const contextNames = fileTransferContexts.map((ctx) => ctx.name || "unknown");
+        logWarn(
+          `⚠️  Multiple file-transfer-context- found in contexts list for session ${sessionId}. ` +
+            `Found ${fileTransferContexts.length} contexts: ${contextNames.join(", ")}. ` +
+            `Not setting fileTransferContextId.`
+        );
+        session.fileTransferContextId = null;
+      }
     } else {
-      logError(`⚠️  Failed to create file transfer context for recovered session: ${contextResult.errorMessage || 'Unknown error'}`);
+      // No contexts list in response
+      logWarn(
+        `⚠️  No contexts list found in GetSession response for session ${sessionId}. ` +
+          `fileTransferContextId will remain null.`
+      );
+      session.fileTransferContextId = null;
     }
 
     return {

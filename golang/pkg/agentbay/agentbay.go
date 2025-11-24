@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	openapiutil "github.com/alibabacloud-go/darabonba-openapi/v2/utils"
@@ -39,10 +38,9 @@ func WithEnvFile(envFile string) Option {
 
 // AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
 type AgentBay struct {
-	APIKey   string
-	Client   *mcp.Client
-	Sessions sync.Map
-	Context  *ContextService
+	APIKey  string
+	Client  *mcp.Client
+	Context *ContextService
 }
 
 // NewAgentBay creates a new AgentBay client.
@@ -320,8 +318,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	// Set browser recording state and context ID
 	session.EnableBrowserReplay = params.EnableBrowserReplay
 	session.RecordContextID = recordContextID
-
-	a.Sessions.Store(session.SessionID, *session)
 
 	// Log successful session creation
 	keyFields := map[string]interface{}{
@@ -670,9 +666,6 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 //	client.Delete(result.Session, true)
 func (a *AgentBay) Delete(session *Session, syncContext ...bool) (*DeleteResult, error) {
 	result, err := session.Delete(syncContext...)
-	if err == nil {
-		a.Sessions.Delete(session.SessionID)
-	}
 	return result, err
 }
 
@@ -684,6 +677,12 @@ type GetSessionResult struct {
 	Success        bool
 	Data           *GetSessionData
 	ErrorMessage   string
+}
+
+// ContextInfo represents a context in the GetSession response
+type ContextInfo struct {
+	Name string
+	ID   string
 }
 
 // GetSessionData represents the data returned by GetSession API
@@ -698,6 +697,7 @@ type GetSessionData struct {
 	VpcResource        bool
 	ResourceUrl        string
 	Status             string
+	Contexts           []ContextInfo
 }
 
 // GetSession retrieves session information by session ID
@@ -802,6 +802,25 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 			if response.Body.Data.GetStatus() != nil {
 				data.Status = *response.Body.Data.GetStatus()
 			}
+			// Extract contexts list from response
+			if response.Body.Data.GetContexts() != nil {
+				contexts := []ContextInfo{}
+				for _, ctx := range response.Body.Data.GetContexts() {
+					if ctx != nil {
+						contextInfo := ContextInfo{}
+						if ctx.GetName() != nil {
+							contextInfo.Name = *ctx.GetName()
+						}
+						if ctx.GetId() != nil {
+							contextInfo.ID = *ctx.GetId()
+						}
+						if contextInfo.Name != "" || contextInfo.ID != "" {
+							contexts = append(contexts, contextInfo)
+						}
+					}
+				}
+				data.Contexts = contexts
+			}
 			result.Data = data
 
 			// Log successful response
@@ -900,23 +919,55 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 		session.ResourceUrl = getResult.Data.ResourceUrl
 	}
 
-	// Store the session in the local cache
-	a.Sessions.Store(sessionID, *session)
-
-	// Create a default context for file transfer operations for the recovered session
-	contextName := fmt.Sprintf("file-transfer-context-%d", time.Now().Unix())
-	contextResult, err := a.Context.Get(contextName, true)
-	if err == nil && contextResult.Success && contextResult.Context != nil {
-		session.FileTransferContextID = contextResult.Context.ID
-		fmt.Printf("📁 Created file transfer context for recovered session: %s\n", contextResult.Context.ID)
-	} else {
-		errorMsg := "Unknown error"
-		if err != nil {
-			errorMsg = err.Error()
-		} else if contextResult.ErrorMessage != "" {
-			errorMsg = contextResult.ErrorMessage
+	// Extract file transfer context ID from contexts list
+	if getResult.Data != nil && len(getResult.Data.Contexts) > 0 {
+		contexts := getResult.Data.Contexts
+		// Filter contexts with 'file-transfer-context-' prefix
+		fileTransferContexts := []ContextInfo{}
+		for _, ctx := range contexts {
+			if strings.HasPrefix(ctx.Name, "file-transfer-context-") {
+				fileTransferContexts = append(fileTransferContexts, ctx)
+			}
 		}
-		fmt.Printf("⚠️  Failed to create file transfer context for recovered session: %s\n", errorMsg)
+
+		if len(fileTransferContexts) == 0 {
+			// No file transfer context found
+			availableContexts := []string{}
+			for _, ctx := range contexts {
+				if ctx.Name != "" {
+					availableContexts = append(availableContexts, ctx.Name)
+				}
+			}
+			fmt.Printf("⚠️  No file-transfer-context- found in contexts list for session %s. Available contexts: %v\n",
+				sessionID, availableContexts)
+			session.FileTransferContextID = ""
+		} else if len(fileTransferContexts) == 1 {
+			// Exactly one file transfer context found
+			contextID := fileTransferContexts[0].ID
+			if contextID != "" {
+				session.FileTransferContextID = contextID
+				fmt.Printf("📁 Found file transfer context for recovered session: %s\n", contextID)
+			} else {
+				fmt.Printf("⚠️  File transfer context found but missing 'id' field: %+v\n", fileTransferContexts[0])
+				session.FileTransferContextID = ""
+			}
+		} else {
+			// Multiple file transfer contexts found
+			contextNames := []string{}
+			for _, ctx := range fileTransferContexts {
+				if ctx.Name != "" {
+					contextNames = append(contextNames, ctx.Name)
+				}
+			}
+			fmt.Printf("⚠️  Multiple file-transfer-context- found in contexts list for session %s. Found %d contexts: %v. Not setting FileTransferContextID.\n",
+				sessionID, len(fileTransferContexts), contextNames)
+			session.FileTransferContextID = ""
+		}
+	} else {
+		// No contexts list in response
+		fmt.Printf("⚠️  No contexts list found in GetSession response for session %s. FileTransferContextID will remain empty.\n",
+			sessionID)
+		session.FileTransferContextID = ""
 	}
 
 	// Log successful retrieval

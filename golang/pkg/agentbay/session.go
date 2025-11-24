@@ -373,8 +373,6 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 		}
 	}
 
-	s.AgentBay.Sessions.Delete(s.SessionID)
-
 	// Log successful deletion
 	keyFields := map[string]interface{}{
 		"session_id": s.SessionID,

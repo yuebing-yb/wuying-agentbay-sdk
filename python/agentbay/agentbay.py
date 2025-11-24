@@ -3,7 +3,6 @@ import os
 import random
 import string
 from enum import Enum
-from threading import Lock
 from typing import Any, Dict, List, Optional, Union
 
 from alibabacloud_tea_openapi import models as open_api_models
@@ -132,8 +131,6 @@ class AgentBay:
         config.connect_timeout = config_data["timeout_ms"]
 
         self.client = mcp_client(config)
-        self._sessions = {}
-        self._lock = Lock()
 
         # Initialize context service
         self.context = ContextService(self)
@@ -226,10 +223,6 @@ class AgentBay:
             and params.extra_configs.mobile
         ):
             session.mobile.configure(params.extra_configs.mobile)
-
-        # Store session in cache
-        with self._lock:
-            self._sessions[session_id] = session
 
         return session
 
@@ -953,9 +946,6 @@ class AgentBay:
             # Delete the session and get the result
             delete_result = session.delete(sync_context=sync_context)
 
-            with self._lock:
-                self._sessions.pop(session.session_id, None)
-
             # Return the DeleteResult obtained from session.delete()
             return delete_result
 
@@ -1024,6 +1014,7 @@ class AgentBay:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
+                print(f"get_session Response body: {response_body}")
             except Exception:
                 response_body = str(response)
 
@@ -1049,6 +1040,8 @@ class AgentBay:
                 data = None
                 if body.get("Data"):
                     data_dict = body.get("Data", {})
+                    # Extract contexts list from response
+                    contexts_list = data_dict.get("contexts") or data_dict.get("Contexts") or []
                     data = GetSessionData(
                         app_instance_id=data_dict.get("AppInstanceId", ""),
                         resource_id=data_dict.get("ResourceId", ""),
@@ -1060,6 +1053,7 @@ class AgentBay:
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
                         status=data_dict.get("Status", ""),
+                        contexts=contexts_list if isinstance(contexts_list, list) else [],
                     )
 
                 # Log API response with key details
@@ -1187,19 +1181,53 @@ class AgentBay:
             session.token = get_result.data.token
             session.resource_url = get_result.data.resource_url
 
-        # Create a default context for file transfer operations for the recovered session
-        import time
-        context_name = f"file-transfer-context-{int(time.time())}"
-        context_result = self.context.get(context_name, create=True)
-        if context_result.success and context_result.context:
-            session.file_transfer_context_id = context_result.context.id
-            _logger.info(
-                f"📁 Created file transfer context for recovered session: {context_result.context.id}"
-            )
+        # Extract file transfer context ID from contexts list
+        if get_result.data and get_result.data.contexts:
+            contexts = get_result.data.contexts
+            # Filter contexts with 'file-transfer-context-' prefix
+            file_transfer_contexts = [
+                ctx for ctx in contexts
+                if isinstance(ctx, dict) and ctx.get("name", "").startswith("file-transfer-context-")
+            ]
+
+            if len(file_transfer_contexts) == 0:
+                # No file transfer context found
+                _logger.warning(
+                    f"⚠️  No file-transfer-context- found in contexts list for session {session_id}. "
+                    f"Available contexts: {[ctx.get('name', 'unknown') for ctx in contexts if isinstance(ctx, dict)]}"
+                )
+                session.file_transfer_context_id = None
+            elif len(file_transfer_contexts) == 1:
+                # Exactly one file transfer context found
+                context_id = file_transfer_contexts[0].get("id", "")
+                if context_id:
+                    session.file_transfer_context_id = context_id
+                    _logger.info(
+                        f"📁 Found file transfer context for recovered session: {context_id}"
+                    )
+                else:
+                    _logger.warning(
+                        f"⚠️  File transfer context found but missing 'id' field: {file_transfer_contexts[0]}"
+                    )
+                    session.file_transfer_context_id = None
+            else:
+                # Multiple file transfer contexts found
+                context_names = [ctx.get("name", "unknown") for ctx in file_transfer_contexts]
+                _logger.warning(
+                    f"⚠️  Multiple file-transfer-context- found in contexts list for session {session_id}. "
+                    f"Found {len(file_transfer_contexts)} contexts: {context_names}. "
+                    f"Not setting file_transfer_context_id."
+                )
+                session.file_transfer_context_id = None
         else:
+            # No contexts list in response
             _logger.warning(
-                f"⚠️  Failed to create file transfer context for recovered session: {context_result.error_message if hasattr(context_result, 'error_message') else 'Unknown error'}"
+                f"⚠️  No contexts list found in GetSession response for session {session_id}. "
+                f"file_transfer_context_id will remain None."
             )
+            session.file_transfer_context_id = None
+
+        _logger.info(f"GetSession session.file_transfer_context_id: {session.file_transfer_context_id}")
 
         return SessionResult(
             request_id=get_result.request_id,

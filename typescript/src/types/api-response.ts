@@ -31,6 +31,16 @@ export interface DeleteResult extends ApiResponse {
 }
 
 /**
+ * Interface for context information in GetSession response
+ */
+export interface ContextInfo {
+  /** Context name */
+  name: string;
+  /** Context ID */
+  id: string;
+}
+
+/**
  * Interface for GetSession data
  */
 export interface GetSessionData {
@@ -54,6 +64,8 @@ export interface GetSessionData {
   resourceUrl: string;
   /** Current status of the session */
   status: string;
+  /** List of contexts associated with the session */
+  contexts?: ContextInfo[];
 }
 
 /**
