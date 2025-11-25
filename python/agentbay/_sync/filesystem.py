@@ -5,7 +5,6 @@ from typing import Any, Dict, Tuple, List, Optional, Union, Callable
 import json
 import threading
 import os
-import asyncio
 import time
 import httpx
 
@@ -133,9 +132,7 @@ class FileTransfer:
 
         # 2. PUT upload to pre-signed URL
         try:
-            http_status, etag, bytes_sent = asyncio.to_thread(
-                self._put_file_sync,
-                upload_url,
+            http_status, etag, bytes_sent = self._put_file_sync(upload_url,
                 local_path,
                 self._http_timeout,
                 self._follow_redirects,
@@ -309,9 +306,7 @@ class FileTransfer:
                     error=f"Destination exists and overwrite=False: {local_path}",
                 )
 
-            http_status, bytes_received = asyncio.to_thread(
-                self._get_file_sync,
-                download_url,
+            http_status, bytes_received = self._get_file_sync(download_url,
                 local_path,
                 self._http_timeout,
                 self._follow_redirects,
@@ -367,36 +362,21 @@ class FileTransfer:
         # Try as coroutine with mode, path, and context_id parameters
         try:
             result = sync_fn(mode=mode, path=remote_path if remote_path else None, context_id=context_id if context_id else None)
-            if asyncio.iscoroutine(result):
-                out = result
-            else:
-                # Sync: run in thread pool
-                out = asyncio.to_thread(sync_fn, mode=mode, path=remote_path if remote_path else None, context_id=context_id if context_id else None)
+            out = sync_fn(mode=mode, path=remote_path if remote_path else None, context_id=context_id if context_id else None)
         except TypeError:
             # Backend may not support all parameters, try with mode and path only
             try:
                 result = sync_fn(mode=mode, path=remote_path if remote_path else None)
-                if asyncio.iscoroutine(result):
-                    out = result
-                else:
-                    # Sync: run in thread pool
-                    out = asyncio.to_thread(sync_fn, mode=mode, path=remote_path if remote_path else None)
+                out = sync_fn(mode=mode, path=remote_path if remote_path else None)
             except TypeError:
                 # Backend may not support mode or path parameter
                 try:
                     result = sync_fn(mode=mode)
-                    if asyncio.iscoroutine(result):
-                        out = result
-                    else:
-                        # Sync: run in thread pool
-                        out = asyncio.to_thread(sync_fn, mode=mode)
+                    out = sync_fn(mode=mode)
                 except TypeError:
                     # Backend may not support mode parameter
                     result = sync_fn()
-                    if asyncio.iscoroutine(result):
-                        out = result
-                    else:
-                        out = asyncio.to_thread(sync_fn)
+                    out = sync_fn
         # Return request_id if available
         success = getattr(out, "success", False)
         print(f"   Result: {success}")
@@ -426,9 +406,6 @@ class FileTransfer:
                     res = info_fn(context_id=context_id, path=remote_path, task_type=task_type)
                 except TypeError:
                     res = info_fn()
-
-                if asyncio.iscoroutine(res):
-                    res = res  # Compatibility with async info
 
                 # Parse response
                 status_list = getattr(res, "context_status_data", None) or []
@@ -1678,10 +1655,7 @@ class FileSystem(BaseService):
         """
         try:
             file_transfer = self._ensure_file_transfer()
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(
-                file_transfer.upload(
+                        result = file_transfer.upload(
                     local_path=local_path,
                     remote_path=remote_path,
                     content_type=content_type,
@@ -1690,8 +1664,7 @@ class FileSystem(BaseService):
                     poll_interval=poll_interval,
                     progress_cb=progress_cb,
                 )
-            )
-            loop.close()
+            
             # If upload was successful, delete the file from OSS
             if result.success and self.session.file_transfer_context_id:
                 try:
@@ -1755,10 +1728,7 @@ class FileSystem(BaseService):
 
         try:
             file_transfer = self._ensure_file_transfer()
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(
-                file_transfer.download(
+                        result = file_transfer.download(
                     remote_path=remote_path,
                     local_path=local_path,
                     overwrite=overwrite,
@@ -1767,8 +1737,7 @@ class FileSystem(BaseService):
                     poll_interval=poll_interval,
                     progress_cb=progress_cb,
                 )
-            )
-            loop.close()
+            
             # If download was successful, delete the file from OSS
             if result.success and self.session.file_transfer_context_id:
                 try:

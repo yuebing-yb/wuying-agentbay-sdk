@@ -184,6 +184,29 @@ def generate_sync():
                     # Force replace asyncio.sleep if unasync missed it (common with await removal)
                     content = content.replace("asyncio.sleep", "time.sleep")
 
+                    # Remove asyncio.to_thread() calls - convert to direct function calls
+                    # Pattern: asyncio.to_thread(func, arg1, arg2, ...) -> func(arg1, arg2, ...)
+                    import re
+                    content = re.sub(r'asyncio\.to_thread\(\s*([^,\)]+),\s*', r'\1(', content)
+                    # Also handle asyncio.to_thread with no comma (single arg)
+                    content = re.sub(r'asyncio\.to_thread\(([^)]+)\)', r'\1', content)
+
+                    # Remove asyncio.iscoroutine checks - just keep the result assignment
+                    # Pattern: if asyncio.iscoroutine(result): out = result
+                    # Should become: out = result (just keep the assignment)
+                    content = re.sub(r'if asyncio\.iscoroutine\([^)]+\):\s+(\w+)\s+=\s+(\w+)\s*\n\s*else:\s*\n\s*.*?\1\s*=', lambda m: f'{m.group(1)} =', content, flags=re.DOTALL)
+
+                    # Remove asyncio event loop creation in sync code
+                    content = re.sub(r'loop\s*=\s*asyncio\.new_event_loop\(\)\s*\n\s*asyncio\.set_event_loop\(loop\)\s*\n', '', content)
+                    content = re.sub(r'loop\.close\(\)', '', content)
+
+                    # Remove standalone asyncio.iscoroutine checks without else clause
+                    content = re.sub(r'\s*if asyncio\.iscoroutine\([^)]+\):\s*\n\s+\w+\s+=\s+\w+\s*#[^\n]*\n', '\n', content)
+
+                    # Remove import asyncio from sync files (but keep it in imports section)
+                    # We need to be careful to only remove standalone "import asyncio" lines
+                    content = re.sub(r'^import asyncio\s*\n', '', content, flags=re.MULTILINE)
+
                     # Apply custom replacements
                     content = _apply_custom_replacements(content, path)
 
@@ -212,6 +235,23 @@ def generate_sync():
                         # _run_in_thread
                         content = content.replace("return asyncio.to_thread(func, *args)", "return func(*args)")
                         content = content.replace("return await asyncio.to_thread(func, *args)", "return func(*args)")
+
+                        # Fix FileSystem wrapper methods that still have loop.run_until_complete
+                        # These should directly call the sync FileTransfer methods
+                        # Pattern: result = loop.run_until_complete(\n                file_transfer.method(...)\n            )
+                        # Replace with: result = file_transfer.method(...)
+                        content = re.sub(
+                            r'result\s*=\s*loop\.run_until_complete\(\s*\n\s*file_transfer\.(upload|download)\(',
+                            r'result = file_transfer.\1(',
+                            content
+                        )
+                        # Remove the closing parenthesis of loop.run_until_complete that's left behind
+                        # This is the ) on a line by itself after the file_transfer method call
+                        content = re.sub(
+                            r'(\s+progress_cb=progress_cb,\s*\n\s*)\)\s*\n\s*\)',
+                            r'\1)',
+                            content
+                        )
 
                     if "browser_agent.py" in file:
                         content = content.replace("asyncio.get_event_loop().run_until_complete(", "")

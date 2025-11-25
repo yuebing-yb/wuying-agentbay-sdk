@@ -6,8 +6,6 @@ from .base_service import BaseService
 from ..model import ApiResponse
 from ..logger import get_logger
 import time, json
-import asyncio
-
 # Initialize logger for this module
 _logger = get_logger("agent")
 

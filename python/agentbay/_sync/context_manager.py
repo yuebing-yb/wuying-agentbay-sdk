@@ -7,8 +7,6 @@ from ..model.response import ApiResponse, extract_request_id
 from ..logger import get_logger, _log_api_call, _log_api_response_with_details
 import json
 import time
-import asyncio
-
 # Initialize logger for this module
 _logger = get_logger("context_manager")
 
@@ -114,7 +112,7 @@ class ContextManager:
         if hasattr(self.session._get_client(), "get_context_info"):
             response = self.session._get_client().get_context_info(request)
         else:
-            response = asyncio.to_thread(self.session._get_client().get_context_info, request)
+            response = self.session._get_client(.get_context_info, request)
 
         # Extract request ID
         request_id = extract_request_id(response)
@@ -225,7 +223,7 @@ class ContextManager:
         if hasattr(self.session._get_client(), "sync_context"):
             response = self.session._get_client().sync_context(request)
         else:
-            response = asyncio.to_thread(self.session._get_client().sync_context, request)
+            response = self.session._get_client(.sync_context, request)
 
         # Extract request ID
         request_id = extract_request_id(response)

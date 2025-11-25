@@ -5,8 +5,6 @@
 import os
 import pytest
 import pytest
-import asyncio
-
 from agentbay import AgentBay
 
 

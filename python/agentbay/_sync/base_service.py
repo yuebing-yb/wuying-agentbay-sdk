@@ -6,7 +6,6 @@ import requests
 import time
 import random
 import string
-import asyncio
 from typing import Any, Dict
 
 from ..api.models import CallMcpToolRequest
@@ -99,9 +98,7 @@ class BaseService:
         try:
             # Send HTTP request
             # Use asyncio.to_thread for blocking requests.get
-            response = asyncio.to_thread(
-                requests.get,
-                base_url, params=params, headers=headers, timeout=30
+            response = requests.get(base_url, params=params, headers=headers, timeout=30
             )
             response.raise_for_status()
 

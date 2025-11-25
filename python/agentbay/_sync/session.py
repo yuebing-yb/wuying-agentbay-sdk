@@ -3,7 +3,6 @@
 
 import json
 import time
-import asyncio
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from ..logger import (
@@ -364,7 +363,7 @@ class Session:
             else:
                  # Fallback if async method doesn't exist (though it should)
                 import asyncio
-                response = asyncio.to_thread(self._get_client().set_label, request)
+                response = self._get_client(.set_label, request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -402,7 +401,7 @@ class Session:
                 response = self._get_client().get_label(request)
             else:
                 import asyncio
-                response = asyncio.to_thread(self._get_client().get_label, request)
+                response = self._get_client(.get_label, request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -451,7 +450,7 @@ class Session:
                 response = self._get_client().get_mcp_resource(request)
             else:
                 import asyncio
-                response = asyncio.to_thread(self._get_client().get_mcp_resource, request)
+                response = self._get_client(.get_mcp_resource, request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -630,7 +629,7 @@ class Session:
             response = self._get_client().list_mcp_tools(request)
         else:
             import asyncio
-            response = asyncio.to_thread(self._get_client().list_mcp_tools, request)
+            response = self._get_client(.list_mcp_tools, request)
 
         # Extract request ID
         request_id = extract_request_id(response)
