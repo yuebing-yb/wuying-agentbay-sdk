@@ -33,19 +33,19 @@ METADATA_PATH = PROJECT_ROOT.parent / "scripts" / "doc-metadata.yaml"
 DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("common-features/basics/agentbay.md", "AgentBay", ("agentbay.agentbay",)),
     DocMapping("common-features/basics/session.md", "Session", ("agentbay.session",)),
-    DocMapping("common-features/basics/command.md", "Command", ("agentbay.command.command",)),
+    DocMapping("common-features/basics/command.md", "Command", ("agentbay.command",)),
     DocMapping("common-features/basics/context.md", "Context", ("agentbay.context",)),
     DocMapping("common-features/basics/context-manager.md", "Context Manager", ("agentbay.context_manager",)),
-    DocMapping("common-features/basics/filesystem.md", "File System", ("agentbay.filesystem.filesystem",)),
+    DocMapping("common-features/basics/filesystem.md", "File System", ("agentbay.filesystem",)),
     DocMapping("common-features/basics/context-sync.md", "Context Sync", ("agentbay.context_sync",)),
     DocMapping("common-features/basics/logging.md", "Logging", ("agentbay.logger",)),
-    DocMapping("common-features/advanced/agent.md", "Agent", ("agentbay.agent.agent",)),
-    DocMapping("common-features/advanced/oss.md", "OSS", ("agentbay.oss.oss",)),
-    DocMapping("browser-use/browser.md", "Browser", ("agentbay.browser.browser", "agentbay.browser.browser_agent")),
+    DocMapping("common-features/advanced/agent.md", "Agent", ("agentbay.agent",)),
+    DocMapping("common-features/advanced/oss.md", "OSS", ("agentbay.oss",)),
+    DocMapping("browser-use/browser.md", "Browser", ("agentbay.browser",)),
     DocMapping("browser-use/extension.md", "Extension", ("agentbay.extension",)),
-    DocMapping("codespace/code.md", "Code", ("agentbay.code.code",)),
-    DocMapping("computer-use/computer.md", "Computer", ("agentbay.computer.computer",)),
-    DocMapping("mobile-use/mobile.md", "Mobile", ("agentbay.mobile.mobile",)),
+    DocMapping("codespace/code.md", "Code", ("agentbay.code",)),
+    DocMapping("computer-use/computer.md", "Computer", ("agentbay.computer",)),
+    DocMapping("mobile-use/mobile.md", "Mobile", ("agentbay.mobile",)),
 )
 
 

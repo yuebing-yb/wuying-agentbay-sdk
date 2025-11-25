@@ -8,6 +8,7 @@ Deprecated import path. Use instead:
     from agentbay import AsyncMobile  # Async
 """
 
-from .._sync.mobile import Mobile, KeyCode, UIElementListResult
+from ._sync.mobile import Mobile, KeyCode, UIElementListResult
 
 __all__ = ["Mobile", "KeyCode", "UIElementListResult"]
+

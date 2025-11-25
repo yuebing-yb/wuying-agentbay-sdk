@@ -6,10 +6,11 @@ Deprecated import path. Use instead:
     from agentbay import AsyncAgent  # Async
 """
 
-from .._sync.agent import Agent, ExecutionResult, QueryResult
+from ._sync.agent import Agent, ExecutionResult, QueryResult
 
 __all__ = [
     "Agent",
     "ExecutionResult",
     "QueryResult",
 ]
+

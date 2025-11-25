@@ -11,7 +11,7 @@ from typing import List, Dict, Any
 from dataclasses import dataclass
 from agentbay import AgentBay
 from agentbay.extension import ExtensionsService
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import CreateSessionParams, BrowserContext
 
 
 @dataclass

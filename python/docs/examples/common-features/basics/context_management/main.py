@@ -4,7 +4,7 @@ import os
 
 from agentbay import AgentBay,ContextSync,SyncPolicy
 from agentbay.exceptions import AgentBayError, ClearanceTimeoutError
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 def main():
     # Initialize the AgentBay client

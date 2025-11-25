@@ -9,7 +9,7 @@ from urllib.parse import urlparse, urljoin
 import base64
 
 
-from agentbay.browser.browser_agent import ActOptions
+from agentbay.browser import ActOptions
 from agentbay.browser.eval.page_agent import PageAgent
 from agentbay.logger import get_logger
 

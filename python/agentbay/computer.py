@@ -7,7 +7,7 @@ Deprecated import path. Use instead:
     from agentbay import AsyncComputer  # Async
 """
 
-from .._sync.computer import (
+from ._sync.computer import (
     Computer,
     MouseButton,
     ScrollDirection,
@@ -34,3 +34,4 @@ __all__ = [
     "WindowListResult",
     "WindowInfoResult",
 ]
+

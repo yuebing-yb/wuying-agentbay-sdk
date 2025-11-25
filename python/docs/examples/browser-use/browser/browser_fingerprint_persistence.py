@@ -5,14 +5,13 @@ This test verifies that browser fingerprint can be persisted
 across sessions using the same ContextId and FingerprintContextId.
 """
 
-import asyncio
 import os
 import time
 import unittest
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
-from playwright.async_api import async_playwright
+from agentbay import CreateSessionParams, BrowserContext
+from agentbay import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
+from playwright.sync_api import sync_playwright
 
 # Global variables for persistent context and fingerprint context
 persistent_context = None
@@ -93,7 +92,7 @@ def run_as_first_time():
     print(f"First session created with ID: {session.session_id}")
 
     # Get browser object and generate fingerprint for persistence
-    async def first_session_operations():
+    def first_session_operations():
         # Initialize browser with fingerprint persistent enabled and set fingerprint generation options
         browser_option = BrowserOption(
             use_stealth=True,
@@ -104,7 +103,7 @@ def run_as_first_time():
                 locales=["zh-CN"],
             ),
         )
-        init_success = await session.browser.initialize_async(browser_option)
+        init_success = session.browser.initialize(browser_option)
         if not init_success:
             print("Failed to initialize browser")
             return
@@ -119,13 +118,13 @@ def run_as_first_time():
 
         # Connect with playwright, test first session fingerprint
         print("Opening https://httpbin.org/user-agent and test user agent...")
-        async with async_playwright() as p:
-            browser = await p.chromium.connect_over_cdp(endpoint_url)
-            context = browser.contexts[0] if browser.contexts else await browser.new_context()
+        with sync_playwright() as p:
+            browser = p.chromium.connect_over_cdp(endpoint_url)
+            context = browser.contexts[0] if browser.contexts else browser.new_context()
 
-            page = await context.new_page()
-            await page.goto("https://httpbin.org/user-agent", timeout=60000)
-            response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+            page = context.new_page()
+            page.goto("https://httpbin.org/user-agent", timeout=60000)
+            response = page.evaluate("() => JSON.parse(document.body.textContent)")
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
             is_windows = is_windows_user_agent(user_agent)
@@ -133,11 +132,11 @@ def run_as_first_time():
                 print("Failed to get windows user agent")
                 return
 
-            await context.close()
+            context.close()
             print("First session browser fingerprint check completed")
 
     # Run first session operations
-    asyncio.run(first_session_operations())
+    first_session_operations()
 
     # Delete first session with syncContext=True
     print("Deleting first session with syncContext=True...")
@@ -177,13 +176,13 @@ def run_as_second_time():
     print(f"Second session created with ID: {session.session_id}")
 
     # Get browser object and check if second session fingerprint is the same as first session
-    async def second_session_operations():
+    def second_session_operations():
         # Initialize browser with fingerprint persistent enabled but not specific fingerprint generation options
         browser_option = BrowserOption(
             use_stealth=True,
             fingerprint_persistent=True,
         )
-        init_success = await session.browser.initialize_async(browser_option)
+        init_success = session.browser.initialize(browser_option)
         if not init_success:
             print("Failed to initialize browser in second session")
             return
@@ -197,12 +196,12 @@ def run_as_second_time():
         print(f"Second session browser endpoint URL: {endpoint_url}")
 
         # Connect with playwright and test second session fingerprint
-        async with async_playwright() as p:
-            browser = await p.chromium.connect_over_cdp(endpoint_url)
-            context = browser.contexts[0] if browser.contexts else await browser.new_context()
-            page = await context.new_page()
-            await page.goto("https://httpbin.org/user-agent", timeout=60000)
-            response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+        with sync_playwright() as p:
+            browser = p.chromium.connect_over_cdp(endpoint_url)
+            context = browser.contexts[0] if browser.contexts else browser.new_context()
+            page = context.new_page()
+            page.goto("https://httpbin.org/user-agent", timeout=60000)
+            response = page.evaluate("() => JSON.parse(document.body.textContent)")
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
             is_windows = is_windows_user_agent(user_agent)
@@ -211,11 +210,11 @@ def run_as_second_time():
                 return
             print(f"SUCCESS: fingerprint persisted correctly!")
 
-            await context.close()
+            context.close()
             print("Second session browser fingerprint check completed")
 
     # Run second session operations
-    asyncio.run(second_session_operations())
+    second_session_operations()
 
     # Delete second session with syncContext=True
     print("Deleting second session with syncContext=True...")

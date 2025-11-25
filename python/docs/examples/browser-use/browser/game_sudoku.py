@@ -10,11 +10,11 @@ import asyncio
 from typing import List, Optional, Tuple
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import ExtractOptions, ActOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import ExtractOptions, ActOptions
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 from pydantic import BaseModel, Field
 
 class SudokuBoard(BaseModel):
@@ -26,7 +26,7 @@ class SudokuSolution(BaseModel):
 def format_board_for_llm(board: List[List[int]]) -> str:
     return "\n".join(["  [" + ", ".join(map(str, row)) + "]" for row in board])
 
-async def main():
+def main():
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
@@ -48,20 +48,20 @@ async def main():
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
 
-        if await session.browser.initialize_async(BrowserOption()):
+        if session.browser.initialize(BrowserOption()):
             print("Browser initialized successfully")
             endpoint_url = session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
                 try:
                     context = browser.contexts[0]
-                    page = await context.new_page()
+                    page = context.new_page()
                     print("🌐 Navigating to Sudoku site...")
                     url = "https://widget.websudoku.com/"
-                    await page.goto(url)
-                    await page.wait_for_selector("#puzzle_grid", timeout=10000)
+                    page.goto(url)
+                    page.wait_for_selector("#puzzle_grid", timeout=10000)
 
                     # 1. Extract the board
                     success = False
@@ -75,10 +75,10 @@ Each cell should be a number (1-9) if filled, or 0 if empty.
                             schema=SudokuBoard,
                             use_text_extract=False,
                         )
-                        success, board_obj = await session.browser.agent.extract_async(options=options, page=page)
+                        success, board_obj = session.browser.agent.extract(options=options, page=page)
                         if not success:
                             print("❌ Failed to extract sudoku board, retry extracting")
-                            await asyncio.sleep(3)
+                            asyncio.sleep(3)
                     board = board_obj.board
                     print(
                         "Current Board:\n" + "\n".join([" ".join(map(str, row)) for row in board])
@@ -109,8 +109,8 @@ Each cell should be a number (1-9) if filled, or 0 if empty.
                                 input_id = f"f{col}{row}"
                                 print(f"Type '{solution[row][col]}' into the cell with id '{input_id}'")
                                 input_element = page.locator(f"#f{col}{row}")
-                                await input_element.fill(str(solution[row][col]))
-                                await asyncio.sleep(0.5)
+                                input_element.fill(str(solution[row][col]))
+                                asyncio.sleep(0.5)
 
                     print("✅ Finished! The board has been solved and filled in the browser.")
 
@@ -192,4 +192,4 @@ class SudokuSolver:
         return filled_cells
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

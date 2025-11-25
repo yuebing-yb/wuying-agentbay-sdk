@@ -8,7 +8,7 @@ from typing import Dict, Optional
 
 from agentbay import AgentBay
 from agentbay.context_sync import ContextSync, SyncPolicy
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import CreateSessionParams, BrowserContext
 from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 
@@ -155,7 +155,7 @@ def create_session_with_context_sync() -> None:
                 contexts = list_result.contexts
                 print(f"Found {len(contexts)} synchronized contexts:")
                 for ctx in contexts:
-                    print(f"  Context ID: {ctx.id}, Name: {ctx.name}, State: {ctx.state}")
+                    print(f"  Context ID: {ctx.id}, Name: {ctx.name}")
 
             # Clean up
             delete_result = agent_bay.delete(session)

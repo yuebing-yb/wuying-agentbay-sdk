@@ -5,16 +5,15 @@
 """
 
 import os
-import asyncio
 import logging
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 from pydantic import BaseModel
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, Browser
-from agentbay.browser.browser_agent import ActOptions, ActResult, ExtractOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, Browser
+from agentbay import ActOptions, ActResult, ExtractOptions
 
 
 class DummySchema(BaseModel):
@@ -26,7 +25,7 @@ class TestRunner:
         self.session = session
         self.logger = logger
 
-    async def test_click_action(self):
+    def test_click_action(self):
         """测试点击动作"""
         browser = self.session.browser
         assert isinstance(browser, Browser), "浏览器实例类型错误"
@@ -35,32 +34,32 @@ class TestRunner:
         endpoint_url = browser.get_endpoint_url()
         assert endpoint_url is not None, "无法获取浏览器端点URL"
 
-        async with async_playwright() as p:
-            playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
+        with sync_playwright() as p:
+            playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
             assert playwright_browser is not None, "无法连接到浏览器"
             context = playwright_browser.contexts[0]
-            page = await context.new_page()
-            await page.goto("http://www.baidu.com", wait_until="networkidle")
+            page = context.new_page()
+            page.goto("http://www.baidu.com", wait_until="networkidle")
 
-            async with page.context.expect_page() as new_page_info:
+            with page.context.expect_page() as new_page_info:
                 action_str = "点击页面顶部的'新闻'链接"
 
-                act_result = await browser.agent.act_async(
+                act_result = browser.agent.act(
                     ActOptions(action=action_str), page=page
                 )
                 self.logger.info("点击动作结果: %s", act_result)
                 self.logger.info("resource_url: %s", self.session.resource_url)
-                new_page = await new_page_info.value
-                title = await new_page.title()
+                new_page = new_page_info.value
+                title = new_page.title()
                 self.logger.info("new_page_url: %s title %s", new_page.url, title)
 
                 assert isinstance(act_result, ActResult), "返回结果类型错误"
                 assert act_result.success, f"点击失败: {act_result.message}"
 
-                await new_page.wait_for_load_state("networkidle")
-                await new_page.wait_for_timeout(1000)
+                new_page.wait_for_load_state("networkidle")
+                new_page.wait_for_timeout(1000)
 
-                result, objs = await browser.agent.extract_async(
+                result, objs = browser.agent.extract(
                     ExtractOptions(instruction="提取页面标题", schema=DummySchema),
                     page=new_page,
                 )
@@ -70,10 +69,10 @@ class TestRunner:
                 assert result
                 assert "新闻" in objs.title
 
-                await new_page.close()
+                new_page.close()
 
 
-async def main():
+def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         print("Error: AGENTBAY_API_KEY not set")
@@ -91,13 +90,13 @@ async def main():
     session = session_result.session
 
     try:
-        await session.browser.initialize_async(BrowserOption())
+        session.browser.initialize(BrowserOption())
 
         runner = TestRunner(session=session, logger=logger)
-        await runner.test_click_action()
+        runner.test_click_action()
     finally:
         agent_bay.delete(session)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

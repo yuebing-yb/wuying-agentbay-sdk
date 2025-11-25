@@ -15,7 +15,7 @@ import time
 import asyncio
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -101,7 +101,7 @@ def main_sync():
             print(f"Failed to delete session: {delete_result.error_message}")
 
 
-async def main_async():
+def main():
     """Demonstrate asynchronous pause and resume operations."""
     print("\n=== Asynchronous Pause/Resume Example ===")
 
@@ -142,7 +142,7 @@ async def main_async():
 
         # Pause the session asynchronously
         print("\nPausing the session asynchronously...")
-        pause_result = await agent_bay.pause_async(session)
+        pause_result = agent_bay.pause(session)
         if pause_result.success:
             print(f"Session pause request submitted successfully")
             print(f"Request ID: {pause_result.request_id}")
@@ -152,16 +152,16 @@ async def main_async():
 
         # Wait for pause to complete
         print("Waiting for session to pause...")
-        await asyncio.sleep(1)
+        asyncio.sleep(1)
 
         # Simulate some time passing while session is paused
         print("\nSession is paused. Simulating async work being done elsewhere...")
-        await asyncio.sleep(2)
+        asyncio.sleep(2)
         print("Async work completed. Resuming session...")
 
         # Resume the session asynchronously
         print("\nResuming the session asynchronously...")
-        resume_result = await agent_bay.resume_async(session)
+        resume_result = agent_bay.resume(session)
         if resume_result.success:
             print(f"Session resume request submitted successfully")
             print(f"Request ID: {resume_result.request_id}")
@@ -171,7 +171,7 @@ async def main_async():
 
         # Wait for resume to complete
         print("Waiting for session to resume...")
-        await asyncio.sleep(2)
+        asyncio.sleep(2)
 
         # Run commands after resume to verify session is working
         print("\nRunning commands after resume...")
@@ -277,4 +277,4 @@ def main_direct():
 if __name__ == "__main__":
     # main_sync()
     # main_direct()
-    asyncio.run(main_async())
+    main()

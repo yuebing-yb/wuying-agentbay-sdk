@@ -7,62 +7,60 @@
 """
 
 import os
-import asyncio
-
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
-from playwright.async_api import async_playwright
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import ActOptions
+from playwright.sync_api import sync_playwright
 
 
-async def main():
+def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     agent_bay = AgentBay(api_key=api_key)
     session = agent_bay.create(CreateSessionParams(image_id="browser_latest")).session
     try:
-        assert await session.browser.initialize_async(BrowserOption())
+        assert session.browser.initialize(BrowserOption())
         agent = session.browser.agent
 
         endpoint_url = session.browser.get_endpoint_url()
-        async with async_playwright() as p:
-            playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
+        with sync_playwright() as p:
+            playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
             context = (
                 playwright_browser.contexts[0]
                 if playwright_browser.contexts
-                else await playwright_browser.new_context()
+                else playwright_browser.new_context()
             )
-            page = await context.new_page()
+            page = context.new_page()
 
             # 先用 Playwright 导航
-            await page.goto("https://www.aliyun.com", wait_until="domcontentloaded")
+            page.goto("https://www.aliyun.com", wait_until="domcontentloaded")
 
             # 让 Agent 跟上当前 Playwright 页面（显式传 page）
-            await agent.act_async(
+            agent.act(
                 ActOptions(action="搜索框输入'AgentBay帮助文档'并回车"), page=page
             )
 
             # 等待搜索结果加载
-            await page.wait_for_timeout(2000)
+            page.wait_for_timeout(2000)
 
             # 点击搜索结果（在同一页面导航）
-            await agent.act_async(
+            agent.act(
                 ActOptions(action="点击搜索结果中的第一项"),
                 page=page,
             )
 
             # 等待页面导航完成
-            await page.wait_for_load_state("domcontentloaded", timeout=60000)
+            page.wait_for_load_state("domcontentloaded", timeout=60000)
 
             # 在当前页面上继续用 Agent
-            await agent.act_async(ActOptions(action="滚动页面到底部"), page=page)
+            agent.act(ActOptions(action="滚动页面到底部"), page=page)
 
             print("Successfully completed browser automation with mixed Playwright and PageUse Agent")
 
-            await playwright_browser.close()
+            playwright_browser.close()
     finally:
         agent_bay.delete(session)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

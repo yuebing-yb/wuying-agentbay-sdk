@@ -14,12 +14,12 @@ import os
 import asyncio
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint
-from playwright.async_api import async_playwright
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserFingerprint
+from playwright.sync_api import sync_playwright
 
 
-async def main():
+def main():
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
@@ -51,7 +51,7 @@ async def main():
         print("- Command arguments:", browser_option.cmd_args)
         print("- Default navigate URL:", browser_option.default_navigate_url)
 
-        if await session.browser.initialize_async(browser_option):
+        if session.browser.initialize(browser_option):
             print("Browser initialized successfully")
             
             # Get browser endpoint URL
@@ -59,15 +59,15 @@ async def main():
             print(f"endpoint_url = {endpoint_url}")
 
             # Use Playwright to connect and validate
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = browser.contexts[0]
                 page = context.pages[0]
 
                 try:
                     # Check if browser navigated to default URL
                     print("\n--- Check Default Navigation ---")
-                    await asyncio.sleep(2)  # Wait for navigation
+                    asyncio.sleep(2)  # Wait for navigation
                     current_url = page.url
                     print(f"Current URL: {current_url}")
                     
@@ -79,7 +79,7 @@ async def main():
                     # Test command arguments effect by checking Chrome version page
                     if "chrome://version/" in current_url:
                         print("\n--- Check Chrome Version Info ---")
-                        version_info = await page.evaluate("""
+                        version_info = page.evaluate("""
                             () => {
                                 const versionElement = document.querySelector('#version');
                                 const commandLineElement = document.querySelector('#command_line');
@@ -98,9 +98,9 @@ async def main():
                         else:
                             print("✗ Custom command argument not found in browser")
 
-                    await asyncio.sleep(3)
+                    asyncio.sleep(3)
                 finally:
-                    await browser.close()
+                    browser.close()
                     session.browser.destroy()
         else:
             print("Failed to initialize browser")
@@ -111,4 +111,4 @@ async def main():
         print("Failed to create session", session_result.error_message)
     
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

@@ -17,7 +17,7 @@ import os
 import time
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 def main():

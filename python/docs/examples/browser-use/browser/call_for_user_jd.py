@@ -33,12 +33,12 @@ import base64
 import json
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
-from agentbay.browser.browser import (
+from agentbay import (
     Browser,
     BrowserOption,
     BrowserViewport,
@@ -47,7 +47,7 @@ from agentbay.browser.browser import (
     BrowserProxy
 )
 
-async def main():
+def main():
     """
     Main function demonstrating wuying-call-for-user message handling.
     This function sets up a browser session and navigates to JD.com to trigger
@@ -73,7 +73,7 @@ async def main():
     if session_result.success:
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
-        if await session.browser.initialize_async(BrowserOption()):
+        if session.browser.initialize(BrowserOption()):
             print("Browser initialized successfully")
             endpoint_url = session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
@@ -81,13 +81,13 @@ async def main():
             info = result.data
             print(f"session resource url is {info.resource_url}")
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = browser.contexts[0]
-                page = await context.new_page()
+                page = context.new_page()
                 print("🌐 Navigating to jd site...")
                 url = "https://www.jd.com/"
-                await page.goto(url)
+                page.goto(url)
 
                 # Listen for console messages
                 def handle_console(msg):
@@ -120,25 +120,25 @@ async def main():
 
                 page.on("console", handle_console)
 
-                await asyncio.sleep(5)
+                asyncio.sleep(5)
                 print("click login")
-                await page.click('.link-login')
-                await asyncio.sleep(25)
+                page.click('.link-login')
+                asyncio.sleep(25)
                 
                 print("Test completed")
                 
                 # Keep browser open for a while to observe results
-                await asyncio.sleep(5)
+                asyncio.sleep(5)
 
                 # Take screenshot and print base64, can be pasted directly into Chrome address bar
                 try:
-                    screenshot_bytes = await page.screenshot(full_page=False)
+                    screenshot_bytes = page.screenshot(full_page=False)
                     b64 = base64.b64encode(screenshot_bytes).decode("utf-8")
                     print("page_screenshot_base64 = data:image/png;base64,", b64)
                 except Exception as e:
                     print("screenshot failed:", e)
                 
-                await browser.close()
+                browser.close()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

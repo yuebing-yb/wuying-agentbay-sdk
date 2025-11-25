@@ -16,7 +16,7 @@ Based on TypeScript SDK archive-upload-mode-example functionality.
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, UploadMode
 
 def get_api_key():
@@ -146,10 +146,10 @@ def archive_upload_mode_example(agent_bay, unique_id):
         # Use asyncio to handle the async sync method
         import asyncio
         
-        async def run_sync():
-            return await session.context.sync()
+        def run_sync():
+            return session.context.sync()
         
-        sync_result = asyncio.run(run_sync())
+        sync_result = run_sync()
         
         if not sync_result.success:
             raise Exception(f"Context sync failed: {sync_result.error_message}")

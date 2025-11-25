@@ -7,12 +7,12 @@
 
 import os, asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import ActOptions
 
 
-async def main():
+def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         print("Error: AGENTBAY_API_KEY not set")
@@ -21,30 +21,30 @@ async def main():
 
     session = agent_bay.create(CreateSessionParams(image_id="browser_latest")).session
     try:
-        if not await session.browser.initialize_async(BrowserOption()):
+        if not session.browser.initialize(BrowserOption()):
             print("Browser init failed")
             return
         agent = session.browser.agent
-        await agent.navigate_async("https://meeting.alibaba-inc.com/")
-        await agent.act_async(
+        agent.navigate("https://meeting.alibaba-inc.com/")
+        agent.act(
             ActOptions(
                 action="帮我登陆",
                 variables={"用户名": "xxxx", "密码": "123456"},
             )
         )
-        await agent.act_async(
+        agent.act(
             ActOptions(
                 action="帮我找下下周三朝阳科技园C3六楼10点到12点有没有可用的会议室，如果有弹窗，帮我关掉",
             )
         )
-        await asyncio.sleep(2)
+        asyncio.sleep(2)
     finally:
         try:
-            await session.browser.agent.close_async()
+            session.browser.agent.close()
         except Exception:
             pass
         agent_bay.delete(session)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

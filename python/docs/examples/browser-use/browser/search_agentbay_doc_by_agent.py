@@ -9,12 +9,12 @@ import os
 import asyncio
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import ActOptions
 
 
-async def main():
+def main():
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
@@ -36,24 +36,24 @@ async def main():
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
 
-        if await session.browser.initialize_async(BrowserOption()):
+        if session.browser.initialize(BrowserOption()):
             print("Browser initialized successfully")
             agent = session.browser.agent
 
-            await agent.navigate_async("https://www.aliyun.com")
+            agent.navigate("https://www.aliyun.com")
 
-            await agent.act_async(
+            agent.act(
                 ActOptions(action="搜索框输入'AgentBay帮助文档'并回车")
             )
-            await agent.act_async(ActOptions(action="点击搜索结果中的第一项"))
-            await agent.act_async(ActOptions(action="点击'帮助文档'"))
-            await agent.act_async(ActOptions(action="滚动页面到底部"))
+            agent.act(ActOptions(action="点击搜索结果中的第一项"))
+            agent.act(ActOptions(action="点击'帮助文档'"))
+            agent.act(ActOptions(action="滚动页面到底部"))
 
-            await asyncio.sleep(5)
+            asyncio.sleep(5)
         else:
             print("Failed to initialize browser")
         agent_bay.delete(session)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

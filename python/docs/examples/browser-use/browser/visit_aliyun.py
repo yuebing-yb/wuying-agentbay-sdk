@@ -8,15 +8,13 @@ This example shows how to use AIBrowser to visit aliyun.com, including:
 
 import os
 import time
-import asyncio
-
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
-async def main():
+def main():
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
@@ -38,36 +36,36 @@ async def main():
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
 
-        if await session.browser.initialize_async(BrowserOption()):
+        if session.browser.initialize(BrowserOption()):
             print("Browser initialized successfully")
             endpoint_url = session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = browser.contexts[0]
-                page = await context.new_page()
-                await page.goto("https://www.aliyun.com")
-                print("page.title() =", await page.title())
+                page = context.new_page()
+                page.goto("https://www.aliyun.com")
+                print("page.title() =", page.title())
 
-                await page.wait_for_timeout(5000)
+                page.wait_for_timeout(5000)
 
                 # Modify page font to Microsoft YaHei
-                await page.evaluate("""
+                page.evaluate("""
                     document.body.style.fontFamily = 'Microsoft YaHei';
                 """)
 
-                await page.wait_for_timeout(5000)
+                page.wait_for_timeout(5000)
 
                 # Scale page content to 200%
-                await page.evaluate("""
+                page.evaluate("""
                     document.body.style.transform = 'scale(2)';
                     document.body.style.transformOrigin = 'top left';
                 """)
 
-                await page.wait_for_timeout(10000)
-                await browser.close()
+                page.wait_for_timeout(10000)
+                browser.close()
         agent_bay.delete(session)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

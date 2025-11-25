@@ -9,16 +9,14 @@ This example shows how to initialize the browser with custom viewport and user-a
 """
 
 import os
-import asyncio
-
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserViewport, BrowserScreen
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserViewport, BrowserScreen
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
 
-async def main():
+def main():
     """Main function demonstrating stealth mode."""
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
@@ -48,18 +46,18 @@ async def main():
             # screen=BrowserScreen(width=1920, height=1080),
         )
 
-        if await session.browser.initialize_async(browser_option):
+        if session.browser.initialize(browser_option):
             endpoint_url = session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = browser.contexts[0]
-                page = await context.new_page()
+                page = context.new_page()
 
                 # Check custom viewport and screen size.
                 print("\n--- Check window Properties ---")
-                window_info = await page.evaluate("""
+                window_info = page.evaluate("""
                     () => {                
                         const screenInfo = window.screen ? {
                             outerWidth: window.outerWidth,
@@ -83,18 +81,18 @@ async def main():
                 
                 # Check custom user agent.
                 print("\n--- Check User Agent ---")
-                await page.goto("https://httpbin.org/user-agent")
+                page.goto("https://httpbin.org/user-agent")
 
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+                response = page.evaluate("() => JSON.parse(document.body.textContent)")
                 user_agent = response.get("user-agent", "")
                 print(f"User Agent: {user_agent}")
 
-                await page.wait_for_timeout(3000)
-                await browser.close()
+                page.wait_for_timeout(3000)
+                browser.close()
 
         # Clean up session
         agent_bay.delete(session)
     
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

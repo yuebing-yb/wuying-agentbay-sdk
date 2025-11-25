@@ -13,17 +13,15 @@ This example will:
 """
 
 import os
-import asyncio
-
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.fingerprint import BrowserFingerprintGenerator
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import BrowserFingerprintGenerator
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
 
-async def main():
+def main():
     """Main function demonstrating browser fingerprint basic usage."""
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
@@ -47,7 +45,7 @@ async def main():
         print(f"Session created with ID: {session.session_id}")
 
         fingerprint_generator = BrowserFingerprintGenerator()
-        fingerprint_format = await fingerprint_generator.generate_fingerprint()
+        fingerprint_format = fingerprint_generator.generate_fingerprint()
 
         # Create browser option with fingerprint format.
         # Fingerprint format is dumped from local chrome browser by BrowserFingerprintGenerator
@@ -57,31 +55,31 @@ async def main():
             fingerprint_format=fingerprint_format
         )
 
-        if await session.browser.initialize_async(browser_option):
+        if session.browser.initialize(browser_option):
             endpoint_url = session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = browser.contexts[0]
-                page = await context.new_page()
+                page = context.new_page()
                 
                 # Check user agent.
                 print("\n--- Check User Agent ---")
-                await page.goto("https://httpbin.org/user-agent")
+                page.goto("https://httpbin.org/user-agent")
 
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+                response = page.evaluate("() => JSON.parse(document.body.textContent)")
                 user_agent = response.get("user-agent", "")
                 print(f"User Agent: {user_agent}")
 
                 print("Please check if User Agent is synced correctly by visiting https://httpbin.org/user-agent in local chrome browser.")
 
-                await page.wait_for_timeout(3000)
-                await browser.close()
+                page.wait_for_timeout(3000)
+                browser.close()
 
         # Clean up session
         agent_bay.delete(session)
     
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

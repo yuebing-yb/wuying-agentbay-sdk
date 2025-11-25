@@ -11,8 +11,8 @@ from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
 from agentbay.browser import BrowserOption
 from agentbay.model.response import SessionResult
-from agentbay.browser.browser_agent import ActOptions, ExtractOptions, ObserveOptions, ActResult, ObserveResult
-from agentbay.browser.eval.local_page_agent import LocalSession
+from agentbay.browser import ActOptions, ExtractOptions, ObserveOptions, ActResult, ObserveResult
+from .local_page_agent import LocalSession
 from agentbay.logger import get_logger
 
 # Initialize _logger for this module

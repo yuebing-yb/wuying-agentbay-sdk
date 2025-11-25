@@ -6,7 +6,7 @@ Deprecated import path. Use instead:
     from agentbay import AsyncCommand  # Async
 """
 
-from .._sync.command import Command, CommandResult
+from ._sync.command import Command, CommandResult
 from .command_templates import (
     MOBILE_COMMAND_TEMPLATES,
     RESOLUTION_LOCK_TEMPLATE,
@@ -22,3 +22,4 @@ __all__ = [
     "APP_WHITELIST_TEMPLATE",
     "APP_BLACKLIST_TEMPLATE"
 ]
+

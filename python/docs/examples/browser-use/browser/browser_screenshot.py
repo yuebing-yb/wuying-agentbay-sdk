@@ -13,25 +13,24 @@ Features demonstrated:
 
 import os
 import base64
-import asyncio
 from typing import Optional
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
 from agentbay import AgentBay
 from agentbay.session import Session
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 
 
-async def take_agent_screenshots(session: Session):
+def take_agent_screenshots(session: Session):
     """Take screenshots using the browser agent (returns base64 data)."""
     print("📸 Taking screenshots using browser agent...")
     
     # Navigate to a website
-    await session.browser.agent.navigate_async("https://www.aliyun.com")
+    session.browser.agent.navigate("https://www.aliyun.com")
     
     # Take a simple screenshot (returns base64 data)
-    screenshot_b64 = await session.browser.agent.screenshot_async()
+    screenshot_b64 = session.browser.agent.screenshot()
     print(f"✅ Agent screenshot captured (base64 length: {len(screenshot_b64)})")
     
     # Save the screenshot to a file
@@ -48,7 +47,7 @@ async def take_agent_screenshots(session: Session):
     print("✅ Agent screenshot saved as agent_screenshot.png")
     
     # Take a full page screenshot with custom quality
-    full_page_b64 = await session.browser.agent.screenshot_async(
+    full_page_b64 = session.browser.agent.screenshot(
         full_page=True,
         quality=75
     )
@@ -66,23 +65,23 @@ async def take_agent_screenshots(session: Session):
     print("✅ Agent full page screenshot saved as agent_full_page_screenshot.png")
 
 
-async def take_browser_screenshots(session: Session):
+def take_browser_screenshots(session: Session):
     """Take screenshots using direct Playwright integration (returns bytes data)."""
     print("📸 Taking screenshots using direct Playwright integration...")
     
     # Get the browser endpoint and connect with Playwright
     endpoint_url = session.browser.get_endpoint_url()
-    async with async_playwright() as p:
-        browser = await p.chromium.connect_over_cdp(endpoint_url)
+    with sync_playwright() as p:
+        browser = p.chromium.connect_over_cdp(endpoint_url)
         context = browser.contexts[0]
-        page = await context.new_page()
+        page = context.new_page()
         
         # Navigate to a website
-        await page.goto("https://www.aliyun.com")
+        page.goto("https://www.aliyun.com")
         print("✅ Navigated to website")
         
         # Take a simple screenshot (returns bytes data)
-        screenshot_bytes = await session.browser.screenshot(page)
+        screenshot_bytes = session.browser.screenshot(page)
         print(f"✅ Browser screenshot captured ({len(screenshot_bytes)} bytes)")
         
         # Save the screenshot to a file
@@ -91,7 +90,7 @@ async def take_browser_screenshots(session: Session):
         print("✅ Browser screenshot saved as browser_screenshot.png")
         
         # Take a full page screenshot with custom options
-        full_page_bytes = await session.browser.screenshot(
+        full_page_bytes = session.browser.screenshot(
             page,
             full_page=True,
             type="jpeg",
@@ -105,7 +104,7 @@ async def take_browser_screenshots(session: Session):
         print("✅ Browser full page screenshot saved as browser_full_page_screenshot.jpg")
         
         # Take a screenshot with custom viewport settings
-        custom_screenshot = await session.browser.screenshot(
+        custom_screenshot = session.browser.screenshot(
             page,
             full_page=False,
             type="png",
@@ -118,10 +117,10 @@ async def take_browser_screenshots(session: Session):
             f.write(custom_screenshot)
         print("✅ Browser custom screenshot saved as browser_custom_screenshot.png")
         
-        await browser.close()
+        browser.close()
 
 
-async def main():
+def main():
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
@@ -151,19 +150,19 @@ async def main():
     try:
         # Initialize the browser
         browser_option = BrowserOption()
-        if not await session.browser.initialize_async(browser_option):
+        if not session.browser.initialize(browser_option):
             print("Failed to initialize browser")
             return
         
         print("Browser initialized successfully")
         
         # Take screenshots using the browser agent
-        await take_agent_screenshots(session)
+        take_agent_screenshots(session)
         
         print("\n" + "="*50 + "\n")
         
         # Take screenshots using direct Playwright integration
-        await take_browser_screenshots(session)
+        take_browser_screenshots(session)
         
         print("\n" + "="*50)
         print("✅ All screenshot demos completed successfully!")
@@ -190,4 +189,4 @@ async def main():
 if __name__ == "__main__":
     print("📸 AgentBay Browser Screenshot Demo")
     print("=" * 50)
-    asyncio.run(main())
+    main()

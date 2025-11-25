@@ -23,15 +23,13 @@ This example demonstrates:
 """
 
 import os
-import asyncio
-
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserProxy
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserProxy
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
-async def main():
+def main():
     """Main function demonstrating browser proxy functionality."""
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
@@ -84,24 +82,24 @@ async def main():
         )
 
         # Initialize browser instance
-        if await session.browser.initialize_async(browser_option):
+        if session.browser.initialize(browser_option):
             # Get browser CDP connection endpoint
             endpoint_url = session.browser.get_endpoint_url()
             print(f"Browser CDP endpoint: {endpoint_url}")
 
             # Use Playwright to connect to remote browser instance
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = browser.contexts[0]  # Get default browser context
-                page = await context.new_page()  # Create new page
+                page = context.new_page()  # Create new page
 
                 # ==================== Verify Proxy IP ====================
                 print("\n--- Starting proxy public IP check ---")
-                await page.goto("https://httpbin.org/ip")  # Visit IP checking service
+                page.goto("https://httpbin.org/ip")  # Visit IP checking service
 
                 try:
                     # Parse JSON response from page content
-                    response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+                    response = page.evaluate("() => JSON.parse(document.body.textContent)")
                     public_ip = response.get("origin", "").strip()
                     print(f"Proxy public IP: {public_ip}")
                 except Exception as e:
@@ -110,8 +108,8 @@ async def main():
                 print("--- Proxy IP check completed ---\n")
                 
                 # Wait 3 seconds to observe results
-                await page.wait_for_timeout(3000)
-                await browser.close()
+                page.wait_for_timeout(3000)
+                browser.close()
         else:
             print("Browser initialization failed")
 
@@ -122,4 +120,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

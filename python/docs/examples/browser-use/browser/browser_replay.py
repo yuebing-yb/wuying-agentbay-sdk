@@ -14,7 +14,7 @@ The browser replay will capture all browser interactions and save them for inter
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.browser import BrowserOption
 from playwright.sync_api import sync_playwright
 

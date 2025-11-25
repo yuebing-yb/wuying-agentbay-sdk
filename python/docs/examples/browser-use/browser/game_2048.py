@@ -12,15 +12,15 @@ from collections import deque
 import random
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import ExtractOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import ExtractOptions
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 from pydantic import BaseModel, Field
 
 
-async def main():
+def main():
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
@@ -41,25 +41,25 @@ async def main():
     if session_result.success:
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
-        if await session.browser.initialize_async(BrowserOption()):
+        if session.browser.initialize(BrowserOption()):
             print("Browser initialized successfully")
             endpoint_url = session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
             page = None
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
                 try:
                     context = browser.contexts[0]
-                    page = await context.new_page()
+                    page = context.new_page()
                     print("🌐 Navigating to 2048...")
-                    await page.goto(
+                    page.goto(
                         "https://ovolve.github.io/2048-AI/",
                         wait_until="domcontentloaded",
                         timeout=180000,
                     )
                     print("🌐 Navigated to 2048 done")
-                    await page.wait_for_selector(".grid-container", timeout=10000)
+                    page.wait_for_selector(".grid-container", timeout=10000)
 
                     helper = MiniMax()
                     move_history: Deque[MoveHistoryEntry] = deque(maxlen=3)
@@ -69,7 +69,7 @@ async def main():
 
                     while True:
                         print("🔄 Game loop iteration...")
-                        await asyncio.sleep(0.3)
+                        asyncio.sleep(0.3)
 
                         # Get current game state
                         print("📊 Extracting game state...")
@@ -91,7 +91,7 @@ Extract the current game state:
                             use_text_extract=False,
                         )
                         # Calculate time cost， average time cost, min & max time cost
-                        success, gameState = await session.browser.agent.extract_async(
+                        success, gameState = session.browser.agent.extract(
                             options=options, page=page
                         )
                         if success:
@@ -168,7 +168,7 @@ Extract the current game state:
                             }[selected_move]
                             # }[analysis.move]
 
-                            await page.keyboard.press(move_key)
+                            page.keyboard.press(move_key)
                         else:
                             print("❌ Failed to extract game state, retry observing")
 
@@ -176,7 +176,7 @@ Extract the current game state:
                     print(f"❌ Error in game loop: {error}")
                     try:
                         if page is not None:
-                            is_game_over = await page.evaluate(
+                            is_game_over = page.evaluate(
                                 "() => document.querySelector('.game-over') !== null"
                             )
                             if is_game_over:
@@ -375,4 +375,4 @@ class MiniMax:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

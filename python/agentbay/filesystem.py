@@ -6,6 +6,7 @@ Deprecated import path. Use instead:
     from agentbay import AsyncFileSystem  # Async
 """
 
-from .._sync.filesystem import FileSystem
+from ._sync.filesystem import FileSystem
 
 __all__ = ["FileSystem"]
+

@@ -17,12 +17,12 @@ Note: The browser_type option is only available for computer use images.
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserViewport
-from playwright.async_api import async_playwright
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserViewport
+from playwright.sync_api import sync_playwright
 
 
-async def test_browser_type(browser_type: str | None, description: str):
+def test_browser_type(browser_type: str | None, description: str):
     """Test a specific browser type configuration."""
     print(f"\n{'='*60}")
     print(f"Testing: {description}")
@@ -53,7 +53,7 @@ async def test_browser_type(browser_type: str | None, description: str):
             viewport=BrowserViewport(width=1920, height=1080)
         )
 
-        success = await session.browser.initialize_async(option)
+        success = session.browser.initialize(option)
         if not success:
             raise RuntimeError("Browser initialization failed")
 
@@ -65,22 +65,22 @@ async def test_browser_type(browser_type: str | None, description: str):
 
         # Connect Playwright and verify browser
         print("\n4. Connecting to browser via CDP...")
-        async with async_playwright() as p:
-            browser = await p.chromium.connect_over_cdp(endpoint_url)
+        with sync_playwright() as p:
+            browser = p.chromium.connect_over_cdp(endpoint_url)
             context = browser.contexts[0]
-            page = await context.new_page()
+            page = context.new_page()
 
             # Navigate to a page that shows browser info
             print("   ✓ Connected successfully")
             print("\n5. Verifying browser configuration...")
 
-            await page.goto("https://www.whatismybrowser.com/")
-            await page.wait_for_load_state("networkidle")
+            page.goto("https://www.whatismybrowser.com/")
+            page.wait_for_load_state("networkidle")
 
             # Get browser information
-            user_agent = await page.evaluate("navigator.userAgent")
-            viewport_width = await page.evaluate("window.innerWidth")
-            viewport_height = await page.evaluate("window.innerHeight")
+            user_agent = page.evaluate("navigator.userAgent")
+            viewport_width = page.evaluate("window.innerWidth")
+            viewport_height = page.evaluate("window.innerHeight")
 
             print(f"\n   Browser Information:")
             print(f"   - User Agent: {user_agent[:80]}...")
@@ -95,7 +95,7 @@ async def test_browser_type(browser_type: str | None, description: str):
                     detected = "Chrome"
                 print(f"   - Detected Browser: {detected}")
 
-            await browser.close()
+            browser.close()
 
         print(f"\n   ✓ Test completed successfully for {description}")
 
@@ -105,7 +105,7 @@ async def test_browser_type(browser_type: str | None, description: str):
         print("   ✓ Session deleted")
 
 
-async def main():
+def main():
     """Run browser type examples."""
     print("Browser Type Selection Example")
     print("=" * 60)
@@ -113,23 +113,23 @@ async def main():
     print("Note: browser_type is only available for computer use images.")
 
     # Test 1: Chrome browser
-    await test_browser_type(
+    test_browser_type(
         browser_type="chrome",
         description="Chrome Browser (Google Chrome)"
     )
 
-    await asyncio.sleep(2)  # Brief pause between tests
+    asyncio.sleep(2)  # Brief pause between tests
 
     # Test 2: Chromium browser
-    await test_browser_type(
+    test_browser_type(
         browser_type="chromium",
         description="Chromium Browser (Open Source)"
     )
 
-    await asyncio.sleep(2)  # Brief pause between tests
+    asyncio.sleep(2)  # Brief pause between tests
 
     # Test 3: Default (None)
-    await test_browser_type(
+    test_browser_type(
         browser_type=None,
         description="Default Browser (Platform decides)"
     )
@@ -146,7 +146,7 @@ async def main():
     print("\nBest Practice: Use None unless you have a specific requirement")
 
 
-async def quick_example():
+def quick_example():
     """Quick example showing the most common usage."""
     print("\n" + "=" * 60)
     print("Quick Example: Using Chrome Browser")
@@ -163,22 +163,22 @@ async def quick_example():
     try:
         # Simply specify browser_type in BrowserOption
         option = BrowserOption(browser_type="chrome")
-        success = await session.browser.initialize_async(option)
+        success = session.browser.initialize(option)
 
         if success:
             print("✓ Chrome browser initialized successfully")
 
             # Get endpoint and use with Playwright
             endpoint_url = session.browser.get_endpoint_url()
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
-                page = await browser.contexts[0].new_page()
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
+                page = browser.contexts[0].new_page()
 
-                await page.goto("https://example.com")
-                title = await page.title()
+                page.goto("https://example.com")
+                title = page.title()
                 print(f"✓ Page title: {title}")
 
-                await browser.close()
+                browser.close()
     finally:
         session.delete()
 
@@ -196,6 +196,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.quick:
-        asyncio.run(quick_example())
+        quick_example()
     else:
-        asyncio.run(main())
+        main()

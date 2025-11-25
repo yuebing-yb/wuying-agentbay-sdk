@@ -10,7 +10,7 @@ import os
 import time
 import threading
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 def main():

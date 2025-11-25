@@ -6,6 +6,7 @@ Deprecated import path. Use instead:
     from agentbay import AsyncCode  # Async
 """
 
-from .._sync.code import Code, CodeExecutionResult
+from ._sync.code import Code, CodeExecutionResult
 
 __all__ = ["Code", "CodeExecutionResult"]
+

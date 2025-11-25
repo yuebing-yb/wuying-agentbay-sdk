@@ -4,8 +4,7 @@ import random
 import sys
 import time
 import unittest
-from agentbay.browser import Browser, BrowserOption, BrowserFingerprint, BrowserProxy
-from agentbay.browser.browser_agent import ActOptions, ExtractOptions, ObserveOptions, ActResult, ObserveResult
+from agentbay.browser import Browser, BrowserOption, BrowserFingerprint, BrowserProxy, ActOptions, ExtractOptions, ObserveOptions, ActResult, ObserveResult
 from playwright.sync_api import sync_playwright
 from pydantic import BaseModel
 from agentbay.model.response import SessionResult

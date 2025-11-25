@@ -15,9 +15,9 @@ import asyncio
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption
-from playwright.async_api import async_playwright
+from agentbay import CreateSessionParams, BrowserContext
+from agentbay import BrowserOption
+from playwright.sync_api import sync_playwright
 
 def main():
     """Demonstrate browser context cookie persistence."""
@@ -92,9 +92,9 @@ def main():
 
         # Step 3: Initialize browser and set cookies
         print("Step 3: Initializing browser and setting test cookies...")
-        async def first_session_operations():
+        def first_session_operations():
             # Initialize browser
-            init_success = await session1.browser.initialize_async(BrowserOption())
+            init_success = session1.browser.initialize(BrowserOption())
             if not init_success:
                 print("Failed to initialize browser")
                 return
@@ -109,23 +109,23 @@ def main():
 
             print(f"Browser endpoint URL: {endpoint_url}")
             # Connect with Playwright and set cookies
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
-                cdp_session = await browser.new_browser_cdp_session()
-                context_p = browser.contexts[0] if browser.contexts else await browser.new_context()
-                page = await context_p.new_page()
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
+                cdp_session = browser.new_browser_cdp_session()
+                context_p = browser.contexts[0] if browser.contexts else browser.new_context()
+                page = context_p.new_page()
 
                 # Navigate to test URL first (required before setting cookies)
-                await page.goto(test_url)
+                page.goto(test_url)
                 print(f"Navigated to {test_url}")
-                await page.wait_for_timeout(2000)
+                page.wait_for_timeout(2000)
 
                 # Add test cookies
-                await context_p.add_cookies(test_cookies)  # type: ignore
+                context_p.add_cookies(test_cookies)  # type: ignore
                 print(f"Added {len(test_cookies)} test cookies")
 
                 # Verify cookies were set
-                cookies = await context_p.cookies()
+                cookies = context_p.cookies()
                 cookie_dict = {cookie.get('name', ''): cookie.get('value', '') for cookie in cookies}
                 print(f"Total cookies in first session: {len(cookies)}")
                 # Check our test cookies
@@ -136,18 +136,18 @@ def main():
                     else:
                         print(f"✗ Test cookie '{cookie_name}' not found")
 
-                await cdp_session.send('Browser.close')
+                cdp_session.send('Browser.close')
                 print("First session browser operations completed")
 
                 # Wait for browser to save cookies to file
                 print("Waiting for browser to save cookies to file...")
-                await asyncio.sleep(2)
+                asyncio.sleep(2)
                 print("Wait completed")
 
-                await browser.close()
+                browser.close()
                 print("First session browser operations completed")
         # Run first session operations
-        asyncio.run(first_session_operations())
+        first_session_operations()
         # Step 4: Delete first session with context synchronization
         print("Step 4: Deleting first session with context synchronization...")
         delete_result = agent_bay.delete(session1, sync_context=True)
@@ -176,10 +176,10 @@ def main():
         # Step 6: Verify cookie persistence
         print("Step 6: Verifying cookie persistence in second session...")
 
-        async def second_session_operations():
+        def second_session_operations():
 
             # Initialize browser in second session
-            init_success2 = await session2.browser.initialize_async(BrowserOption())
+            init_success2 = session2.browser.initialize(BrowserOption())
             if not init_success2:
                 print("Failed to initialize browser in second session")
                 return
@@ -195,12 +195,12 @@ def main():
             print(f"Second session browser endpoint URL: {endpoint_url2}")
 
             # Check cookies in second session
-            async with async_playwright() as p:
-                browser2 = await p.chromium.connect_over_cdp(endpoint_url2)
-                context2 = browser2.contexts[0] if browser2.contexts else await browser2.new_context()
+            with sync_playwright() as p:
+                browser2 = p.chromium.connect_over_cdp(endpoint_url2)
+                context2 = browser2.contexts[0] if browser2.contexts else browser2.new_context()
 
                 # Read cookies directly from context (without opening any page)
-                cookies2 = await context2.cookies()
+                cookies2 = context2.cookies()
                 cookie_dict2 = {cookie.get('name', ''): cookie.get('value', '') for cookie in cookies2}
 
                 print(f"Total cookies in second session: {len(cookies2)}")
@@ -234,9 +234,9 @@ def main():
                     else:
                         print("Cookie persistence test FAILED due to value mismatches")
 
-                await browser2.close()
+                browser2.close()
                 print("Second session browser operations completed")
-        asyncio.run(second_session_operations())
+        second_session_operations()
         # Step 7: Clean up second session
         print("Step 7: Cleaning up second session...")
         delete_result2 = agent_bay.delete(session2)
@@ -251,13 +251,13 @@ def main():
 
     finally:
         # Clean up context
-        async def clear_context():
+        def clear_context():
             try:
                 agent_bay.context.delete(context)
                 print(f"Context '{context_name}' deleted")
             except Exception as e:
                 print(f"Warning: Failed to delete context: {e}")
-        asyncio.run(clear_context())
+        clear_context()
     print("\nBrowser Context Cookie Persistence Demo completed!")
 
 

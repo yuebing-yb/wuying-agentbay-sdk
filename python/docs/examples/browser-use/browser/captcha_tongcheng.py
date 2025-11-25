@@ -13,12 +13,12 @@ import asyncio
 import base64
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
-from agentbay.browser.browser import (
+from agentbay import (
     Browser,
     BrowserOption,
     BrowserViewport,
@@ -27,7 +27,7 @@ from agentbay.browser.browser import (
     BrowserProxy
 )
 
-async def main():
+def main():
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
@@ -53,37 +53,37 @@ async def main():
             use_stealth=True,
             solve_captchas=True,
         )
-        if await session.browser.initialize_async(browser_option):
+        if session.browser.initialize(browser_option):
             print("Browser initialized successfully")
             endpoint_url = session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = browser.contexts[0]
-                page = await context.new_page()
+                page = context.new_page()
                 print("🌐 Navigating to tongcheng site...")
                 url = "https://passport.ly.com/Passport/GetPassword"
-                await page.goto(url, wait_until="domcontentloaded")
+                page.goto(url, wait_until="domcontentloaded")
 
                 # Use selector to locate input field
-                input_element = await page.wait_for_selector('#name_in', timeout=10000)
+                input_element = page.wait_for_selector('#name_in', timeout=10000)
                 print("Found login name input field: #name_in")
 
                 # Clear input field and enter phone number
                 phone_number = "15011556760"
                 print(f"Entering phone number: {phone_number}")
 
-                await input_element.click()
-                await input_element.fill("")  # Clear input field
-                await input_element.type(phone_number)
+                input_element.click()
+                input_element.fill("")  # Clear input field
+                input_element.type(phone_number)
                 print("Waiting for captcha")
 
                 # Wait a moment to ensure input is complete
-                await asyncio.sleep(1)
+                asyncio.sleep(1)
 
                 print("Clicking next step button...")
-                await page.click('#next_step1')
+                page.click('#next_step1')
 
                 # Listen for captcha processing messages
                 captcha_solving_started = False
@@ -108,13 +108,13 @@ async def main():
 
                 # Wait 1 second first, then check if captcha processing has started
                 try:
-                    await asyncio.sleep(1)
-                    await page.wait_for_function("() => window.captchaSolvingStarted === true", timeout=1000)
+                    asyncio.sleep(1)
+                    page.wait_for_function("() => window.captchaSolvingStarted === true", timeout=1000)
                     print("🎯 Detected captcha processing started, waiting for completion...")
 
                     # If start is detected, wait for completion (max 30 seconds)
                     try:
-                        await page.wait_for_function("() => window.captchaSolvingFinished === true", timeout=30000)
+                        page.wait_for_function("() => window.captchaSolvingFinished === true", timeout=30000)
                         print("✅ Captcha processing completed")
                     except:
                         print("⚠️ Captcha processing timeout, may still be in progress")
@@ -122,21 +122,21 @@ async def main():
                 except:
                     print("⏭️ No captcha processing detected, continuing execution")
 
-                await asyncio.sleep(2)
+                asyncio.sleep(2)
                 print("Test completed")
 
                 # Keep browser open for a while to observe results
-                await asyncio.sleep(5)
+                asyncio.sleep(5)
 
                 # Take screenshot and print base64, can be pasted directly into Chrome address bar
                 try:
-                    screenshot_bytes = await page.screenshot(full_page=False)
+                    screenshot_bytes = page.screenshot(full_page=False)
                     b64 = base64.b64encode(screenshot_bytes).decode("utf-8")
                     print("page_screenshot_base64 = data:image/png;base64,", b64)
                 except Exception as e:
                     print("screenshot failed:", e)
 
-                await browser.close()
+                browser.close()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

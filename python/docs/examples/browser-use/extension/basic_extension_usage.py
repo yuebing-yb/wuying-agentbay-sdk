@@ -7,7 +7,7 @@ This example demonstrates the fundamental usage of browser extensions with Agent
 import os
 from agentbay import AgentBay
 from agentbay.extension import ExtensionsService
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import CreateSessionParams, BrowserContext
 
 
 def basic_extension_example():

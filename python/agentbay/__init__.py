@@ -9,6 +9,7 @@ from .browser import (
     BrowserFingerprintContext,
     BrowserAgent,
     BrowserFingerprintGenerator,
+    FingerprintFormat,
 )
 from .command import Command
 from .computer import Computer
@@ -17,7 +18,7 @@ from .filesystem import FileSystem
 from .mobile import Mobile
 from .oss import Oss
 from .session import Session
-from .session_params import CreateSessionParams, ListSessionParams
+from .session_params import CreateSessionParams, ListSessionParams, BrowserContext
 from .agent import Agent
 from .context_sync import (
     ContextSync,
@@ -68,6 +69,7 @@ __all__ = [
     "BrowserFingerprintContext",
     "BrowserAgent",
     "BrowserFingerprintGenerator",
+    "FingerprintFormat",
     "Computer",
     "Mobile",
     "Oss",
@@ -76,6 +78,7 @@ __all__ = [
     "Command",
     "CreateSessionParams",
     "ListSessionParams",
+    "BrowserContext",
     "ContextSync",
     "SyncPolicy",
     "UploadPolicy",

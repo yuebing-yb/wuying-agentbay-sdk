@@ -7,12 +7,12 @@
 
 import os, asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import ActOptions
 
 
-async def main():
+def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         print("Error: AGENTBAY_API_KEY not set")
@@ -22,22 +22,22 @@ async def main():
     session = agent_bay.create(CreateSessionParams(image_id="browser_latest")).session
 
     try:
-        ok = await session.browser.initialize_async(BrowserOption())
+        ok = session.browser.initialize(BrowserOption())
         if not ok:
             print("Browser init failed")
             return
 
         agent = session.browser.agent
 
-        await agent.navigate_async("https://work.aliyun-inc.com/")
-        await agent.act_async(
+        agent.navigate("https://work.aliyun-inc.com/")
+        agent.act(
             ActOptions(
                 action="帮我登陆",
                 variables={"用户名": "xxx", "密码": "123456"},
             )
         )
-        await agent.act_async(ActOptions(action="点击报销链接或按钮"))
-        await agent.act_async(ActOptions(action="在报销单列表中点击第一个项目"))
+        agent.act(ActOptions(action="点击报销链接或按钮"))
+        agent.act(ActOptions(action="在报销单列表中点击第一个项目"))
 
         invoices = [
             "/Users/user/Desktop/20250711114033.pdf",
@@ -45,22 +45,22 @@ async def main():
             "/Users/user/Desktop/20250711114035.pdf",
         ]
         for path in invoices:
-            await agent.act_async(
+            agent.act(
                 ActOptions(action="在快速新增费用列表中选择'差旅-餐费'")
             )
-            await agent.act_async(ActOptions(action="点击'上传电子发票'按钮"))
-            await agent.act_async(ActOptions(action=f"上传位于 '{path}' 的文件"))
-            await agent.act_async(ActOptions(action="点击'保存'按钮"))
+            agent.act(ActOptions(action="点击'上传电子发票'按钮"))
+            agent.act(ActOptions(action=f"上传位于 '{path}' 的文件"))
+            agent.act(ActOptions(action="点击'保存'按钮"))
 
-        await agent.act_async(ActOptions(action="点击提交报销单"))
-        await asyncio.sleep(3)
+        agent.act(ActOptions(action="点击提交报销单"))
+        asyncio.sleep(3)
     finally:
         try:
-            await session.browser.agent.close_async()
+            session.browser.agent.close()
         except Exception:
             pass
         agent_bay.delete(session)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
