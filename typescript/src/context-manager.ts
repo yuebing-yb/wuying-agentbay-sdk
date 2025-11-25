@@ -201,16 +201,31 @@ export class ContextManager {
   /**
    * Synchronizes a context with the session. Supports both async and callback modes.
    *
-   * @param contextId - Optional context ID to synchronize
-   * @param path - Optional path where the context should be mounted
+   * @param contextId - Optional context ID to synchronize. If provided, `path` must also be provided.
+   * @param path - Optional path where the context should be mounted. If provided, `contextId` must also be provided.
    * @param mode - Optional synchronization mode (e.g., "upload", "download")
    * @param callback - Optional callback function. If provided, runs in background and calls callback when complete
    * @param maxRetries - Maximum number of retries for polling completion status (default: 150)
    * @param retryInterval - Milliseconds to wait between retries (default: 1500)
    * @returns Promise resolving to ContextSyncResult with success status and request ID
    * @throws Error if the API call fails
+   * @throws Error if `contextId` or `path` is provided without the other parameter.
+   *               Both must be provided together, or both must be omitted.
    *
    * @example
+   * Sync all contexts (no parameters):
+   * ```typescript
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const syncResult = await result.session.context.sync();
+   *   console.log(`Sync: ${syncResult.success}`);
+   *   await result.session.delete();
+   * }
+   * ```
+   *
+   * @example
+   * Sync specific context with path:
    * ```typescript
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const result = await agentBay.create();
@@ -230,6 +245,18 @@ export class ContextManager {
     maxRetries = 150,
     retryInterval = 1500
   ): Promise<ContextSyncResult> {
+    // Validate that contextId and path are provided together or both omitted
+    const hasContextId = contextId !== undefined && contextId.trim() !== "";
+    const hasPath = path !== undefined && path.trim() !== "";
+
+    if (hasContextId !== hasPath) {
+      throw new Error(
+        "contextId and path must be provided together or both omitted. " +
+        "If you want to sync a specific context, both contextId and path are required. " +
+        "If you want to sync all contexts, omit both parameters."
+      );
+    }
+
     const request = new SyncContextRequest({
       authorization: `Bearer ${this.session.getAPIKey()}`,
       sessionId: this.session.getSessionId(),

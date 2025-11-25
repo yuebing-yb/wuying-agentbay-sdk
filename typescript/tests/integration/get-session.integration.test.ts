@@ -51,6 +51,17 @@ describe('GetSession API Integration Test', () => {
       expect(getSessionResult.data!.resourceId).toBeTruthy();
       log(`ResourceID: ${getSessionResult.data!.resourceId}`);
 
+      // Validate contexts field
+      expect(getSessionResult.data!.contexts).toBeDefined();
+      expect(getSessionResult.data!.contexts).not.toBeNull();
+      expect(getSessionResult.data!.contexts!.length).toBeGreaterThan(0);
+      log(`Contexts count: ${getSessionResult.data!.contexts!.length}`);
+      getSessionResult.data!.contexts!.forEach((ctx, i) => {
+        expect(ctx.name).toBeTruthy();
+        expect(ctx.id).toBeTruthy();
+        log(`Context ${i}: name=${ctx.name}, id=${ctx.id}`);
+      });
+
       log('GetSession API test passed successfully');
     } finally {
       // Clean up: Delete the session

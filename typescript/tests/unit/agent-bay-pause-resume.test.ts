@@ -164,13 +164,13 @@ describe("AgentBay Pause and Resume", () => {
         })
       };
 
-      // Mock get_session to always return RUNNING (never PAUSED)
+      // Mock get_session to always return PAUSING (never PAUSED)
       const mockGetSessionResponse = {
         body: {
           success: true,
           data: {
             sessionId: mockSessionData.sessionId,
-            status: "RUNNING",
+            status: "PAUSING",
           }
         }
       };
@@ -228,6 +228,100 @@ describe("AgentBay Pause and Resume", () => {
       expect(result).toBeDefined();
       expect(result.success).toBe(false);
       expect(result.errorMessage).toContain("Failed to get session status");
+    });
+
+    it("should fail when pause returns unexpected state RUNNING during polling", async () => {
+      // Mock the PauseSessionAsync response
+      const mockPauseResponse = {
+        body: {
+          success: true,
+          code: "Success",
+          message: "Session pause initiated successfully",
+          requestId: "test-request-id",
+          httpStatusCode: 200,
+        },
+        to_map: () => ({
+          body: {
+            success: true,
+            code: "Success",
+            message: "Session pause initiated successfully",
+            requestId: "test-request-id",
+            httpStatusCode: 200,
+          }
+        })
+      };
+
+      // Mock get_session to return unexpected state (RUNNING)
+      const mockGetSessionResponse = {
+        body: {
+          success: true,
+          data: {
+            sessionId: mockSessionData.sessionId,
+            status: "RUNNING",
+          }
+        },
+        requestId: "test-request-id"
+      };
+
+      pauseSessionAsyncStub.resolves(mockPauseResponse);
+      getSessionStub.resolves(mockGetSessionResponse);
+
+      // Call the method
+      const result: SessionPauseResult = await agentBay.pauseAsync(session);
+
+      // Verify the result
+      expect(result).toBeDefined();
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain("unexpected state");
+      expect(result.errorMessage).toContain("RUNNING");
+      expect(result.status).toBe("RUNNING");
+    });
+
+    it("should fail when pause returns unexpected state OTHER during polling", async () => {
+      // Mock the PauseSessionAsync response
+      const mockPauseResponse = {
+        body: {
+          success: true,
+          code: "Success",
+          message: "Session pause initiated successfully",
+          requestId: "test-request-id",
+          httpStatusCode: 200,
+        },
+        to_map: () => ({
+          body: {
+            success: true,
+            code: "Success",
+            message: "Session pause initiated successfully",
+            requestId: "test-request-id",
+            httpStatusCode: 200,
+          }
+        })
+      };
+
+      // Mock get_session to return unexpected state (OTHER)
+      const mockGetSessionResponse = {
+        body: {
+          success: true,
+          data: {
+            sessionId: mockSessionData.sessionId,
+            status: "OTHER",
+          }
+        },
+        requestId: "test-request-id"
+      };
+
+      pauseSessionAsyncStub.resolves(mockPauseResponse);
+      getSessionStub.resolves(mockGetSessionResponse);
+
+      // Call the method
+      const result: SessionPauseResult = await agentBay.pauseAsync(session);
+
+      // Verify the result
+      expect(result).toBeDefined();
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain("unexpected state");
+      expect(result.errorMessage).toContain("OTHER");
+      expect(result.status).toBe("OTHER");
     });
   });
 
@@ -354,13 +448,13 @@ describe("AgentBay Pause and Resume", () => {
         })
       };
 
-      // Mock get_session to always return PAUSED (never RUNNING)
+      // Mock get_session to always return RESUMING (never RUNNING)
       const mockGetSessionResponse = {
         body: {
           success: true,
           data: {
             sessionId: mockSessionData.sessionId,
-            status: "PAUSED",
+            status: "RESUMING",
           }
         }
       };
@@ -418,6 +512,100 @@ describe("AgentBay Pause and Resume", () => {
       expect(result).toBeDefined();
       expect(result.success).toBe(false);
       expect(result.errorMessage).toContain("Failed to get session status");
+    });
+
+    it("should fail when resume returns unexpected state PAUSED during polling", async () => {
+      // Mock the ResumeSessionAsync response
+      const mockResumeResponse = {
+        body: {
+          success: true,
+          code: "Success",
+          message: "Session resume initiated successfully",
+          requestId: "test-request-id",
+          httpStatusCode: 200,
+        },
+        to_map: () => ({
+          body: {
+            success: true,
+            code: "Success",
+            message: "Session resume initiated successfully",
+            requestId: "test-request-id",
+            httpStatusCode: 200,
+          }
+        })
+      };
+
+      // Mock get_session to return unexpected state (PAUSED)
+      const mockGetSessionResponse = {
+        body: {
+          success: true,
+          data: {
+            sessionId: mockSessionData.sessionId,
+            status: "PAUSED",
+          }
+        },
+        requestId: "test-request-id"
+      };
+
+      resumeSessionAsyncStub.resolves(mockResumeResponse);
+      getSessionStub.resolves(mockGetSessionResponse);
+
+      // Call the method
+      const result: SessionResumeResult = await agentBay.resumeAsync(session);
+
+      // Verify the result
+      expect(result).toBeDefined();
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain("unexpected state");
+      expect(result.errorMessage).toContain("PAUSED");
+      expect(result.status).toBe("PAUSED");
+    });
+
+    it("should fail when resume returns unexpected state UNKNOWN during polling", async () => {
+      // Mock the ResumeSessionAsync response
+      const mockResumeResponse = {
+        body: {
+          success: true,
+          code: "Success",
+          message: "Session resume initiated successfully",
+          requestId: "test-request-id",
+          httpStatusCode: 200,
+        },
+        to_map: () => ({
+          body: {
+            success: true,
+            code: "Success",
+            message: "Session resume initiated successfully",
+            requestId: "test-request-id",
+            httpStatusCode: 200,
+          }
+        })
+      };
+
+      // Mock get_session to return unexpected state (UNKNOWN)
+      const mockGetSessionResponse = {
+        body: {
+          success: true,
+          data: {
+            sessionId: mockSessionData.sessionId,
+            status: "UNKNOWN",
+          }
+        },
+        requestId: "test-request-id"
+      };
+
+      resumeSessionAsyncStub.resolves(mockResumeResponse);
+      getSessionStub.resolves(mockGetSessionResponse);
+
+      // Call the method
+      const result: SessionResumeResult = await agentBay.resumeAsync(session);
+
+      // Verify the result
+      expect(result).toBeDefined();
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain("unexpected state");
+      expect(result.errorMessage).toContain("UNKNOWN");
+      expect(result.status).toBe("UNKNOWN");
     });
   });
 });

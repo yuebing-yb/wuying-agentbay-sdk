@@ -162,7 +162,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertTrue(get_result.success, f"Failed to get session: {get_result.error_message}")
         self.assertEqual(get_result.data.status, "RUNNING")
         print(f"  ✓ Session is RUNNING after resume: {session.session_id}")
-
+    
     def test_resume_async_session_success(self):
         """Test successful async resume operation on a session."""
         print("\n" + "="*60)
@@ -209,6 +209,94 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Session should be RUNNING or still RESUMING
         self.assertIn(get_result.data.status, ["RUNNING", "RESUMING"])
         print(f"  ✓ Session status after async resume: {get_result.data.status}")
+
+    
+    def test_pause_and_delete_session_success(self):
+        """Test successful pause and delete operations on a session."""
+        print("\n" + "="*60)
+        print("TEST: Pause and Delete Session Success")
+        print("="*60)
+
+        # Create a test session
+        session = self._create_test_session()
+
+        # Verify session is initially in RUNNING state
+        print(f"\nStep 1: Verifying session is initially RUNNING...")
+        get_result = self.agent_bay.get_session(session.session_id)
+        self.assertTrue(get_result.success, f"Failed to get session: {get_result.error_message}")
+        self.assertEqual(get_result.data.status, "RUNNING")
+        print(f"  ✓ Session is RUNNING: {session.session_id}")
+
+        # Pause the session
+        print(f"\nStep 2: Pausing session...")
+        pause_result = self.agent_bay.pause(session)
+        
+        # Verify pause result
+        self.assertIsInstance(pause_result, SessionPauseResult)
+        self.assertTrue(pause_result.success, f"Pause failed: {pause_result.error_message}")
+        print(f"  ✓ Session pause initiated successfully")
+        print(f"    Request ID: {pause_result.request_id}")
+
+        # Wait a bit for pause to complete
+        print(f"\nStep 3: Waiting for session to pause...")
+        time.sleep(2)
+
+        # Check session status after pause
+        get_result = self.agent_bay.get_session(session.session_id)
+        self.assertTrue(get_result.success, f"Failed to get session: {get_result.error_message}")
+        # Session should be PAUSED or still PAUSING
+        self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
+        print(f"  ✓ Session status after pause: {get_result.data.status}")
+        get_result = self.agent_bay.get_session(session.session_id)
+        self.assertTrue(get_result.success, f"Failed to get session: {get_result.error_message}")
+        # Session should be PAUSED or still PAUSING
+        self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
+        print(f"  ✓ Session status after pause: {get_result.data.status}")
+
+        # Delete the session (synchronous)
+        print(f"\nStep 4: Deleting session...")
+        delete_result = self.agent_bay.delete(session)
+        if delete_result.success:
+            print('delete session successfully')
+        # # Verify resume result
+        # self.assertIsInstance(resume_result, SessionResumeResult)
+        # self.assertTrue(resume_result.success, f"Resume failed: {resume_result.error_message}")
+        # self.assertEqual(resume_result.status, "RUNNING")
+        # print(f"  ✓ Session resumed successfully")
+        # print(f"    Final status: {resume_result.status}")
+        # print(f"    Request ID: {resume_result.request_id}")
+
+        # # Verify session is RUNNING after resume
+        # get_result = self.agent_bay.get_session(session.session_id)
+        # self.assertTrue(get_result.success, f"Failed to get session: {get_result.error_message}")
+        # self.assertEqual(get_result.data.status, "RUNNING")
+        # print(f"  ✓ Session is RUNNING after resume: {session.session_id}")
+    
+    def test_resume_async_session_success(self):
+        """Test successful async resume operation on a session."""
+        print("\n" + "="*60)
+        print("TEST: Async Resume Session Success")
+        print("="*60)
+
+        # Create a test session
+        session = self._create_test_session()
+
+        # Pause the session first
+        print(f"\nStep 1: Pausing session...")
+        pause_result = self.agent_bay.pause(session)
+        self.assertTrue(pause_result.success, f"Pause failed: {pause_result.error_message}")
+        print(f"  ✓ Session pause initiated successfully")
+
+        # Wait for pause to complete
+        print(f"\nStep 2: Waiting for session to pause...")
+        time.sleep(2)
+
+        # Verify session is PAUSED or PAUSING
+        get_result = self.agent_bay.get_session(session.session_id)
+        self.assertTrue(get_result.success)
+        self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
+        print(f"  ✓ Session status: {get_result.data.status}")
+
 
     def test_pause_nonexistent_session(self):
         """Test pause operation on non-existent session."""
@@ -305,15 +393,8 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Try to pause again
         print(f"\nStep 3: Attempting to pause already paused session...")
         pause_result2 = self.agent_bay.pause(session)
+        self.assertFalse(pause_result2.success)
         
-        # Second pause may succeed or fail depending on API behavior
-        # Both are acceptable for this test
-        print(f"  ✓ Second pause completed")
-        print(f"    Success: {pause_result2.success}")
-        if pause_result2.success:
-            print(f"    Request ID: {pause_result2.request_id}")
-        else:
-            print(f"    Error: {pause_result2.error_message}")
 
     def test_resume_already_running_session(self):
         """Test resuming a session that is already running."""
@@ -337,13 +418,8 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Resume of already running session may succeed or have specific behavior
         # Just verify it doesn't crash and returns a proper result object
         self.assertIsInstance(resume_result, SessionResumeResult)
+        self.assertFalse(resume_result.success)
         print(f"  ✓ Resume completed")
-        print(f"    Success: {resume_result.success}")
-        if resume_result.success:
-            print(f"    Status: {resume_result.status}")
-            print(f"    Request ID: {resume_result.request_id}")
-        else:
-            print(f"    Error: {resume_result.error_message}")
 
     def test_pause_resume_with_custom_parameters(self):
         """Test pause and resume operations with custom timeout and poll interval."""

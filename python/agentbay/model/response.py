@@ -2,7 +2,7 @@
 API response models for AgentBay SDK.
 """
 
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from agentbay.session import Session
@@ -215,7 +215,8 @@ class GetSessionData:
         token: str = "",
         vpc_resource: bool = False,
         resource_url: str = "",
-        status:str = ""
+        status: str = "",
+        contexts: Optional[List[Dict[str, str]]] = None,
     ):
         """
         Initialize GetSessionData.
@@ -230,6 +231,9 @@ class GetSessionData:
             token (str): Token for VPC sessions.
             vpc_resource (bool): Whether this session uses VPC resources.
             resource_url (str): Resource URL for accessing the session.
+            status (str): Session status.
+            contexts (Optional[List[Dict[str, str]]]): List of contexts associated with the session.
+                Each context is a dict with 'name' and 'id' keys.
         """
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
@@ -241,6 +245,7 @@ class GetSessionData:
         self.vpc_resource = vpc_resource
         self.resource_url = resource_url
         self.status = status
+        self.contexts = contexts or []
 
 
 

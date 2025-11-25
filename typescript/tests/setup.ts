@@ -65,6 +65,7 @@ import { setupLogger } from '../src/utils/logger';
 
 // Check if we should suppress logs (can be controlled via environment variable)
 // Default to true for unit tests to reduce noise
+// For integration tests, set SUPPRESS_TEST_LOGS=false to see logs
 const suppressLogs = process.env.SUPPRESS_TEST_LOGS !== 'false';
 
 if (suppressLogs) {
@@ -73,5 +74,11 @@ if (suppressLogs) {
   setupLogger({
     enableConsole: false,
     level: 'ERROR' // Only log critical errors
+  });
+} else {
+  // Enable console logging for integration tests when explicitly requested
+  setupLogger({
+    enableConsole: true,
+    level: 'INFO' // Show INFO level and above
   });
 }

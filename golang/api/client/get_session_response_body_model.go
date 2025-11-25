@@ -114,6 +114,7 @@ type GetSessionResponseBodyData struct {
 	Success            *bool   `json:"Success,omitempty" xml:"Success,omitempty"`
 	Token              *string `json:"Token,omitempty" xml:"Token,omitempty"`
 	VpcResource        *bool   `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
+	Contexts           []*GetSessionResponseBodyDataContexts `json:"contexts,omitempty" xml:"contexts,omitempty" type:"Repeated"`
 }
 
 func (s GetSessionResponseBodyData) String() string {
@@ -162,6 +163,10 @@ func (s *GetSessionResponseBodyData) GetToken() *string {
 
 func (s *GetSessionResponseBodyData) GetVpcResource() *bool {
 	return s.VpcResource
+}
+
+func (s *GetSessionResponseBodyData) GetContexts() []*GetSessionResponseBodyDataContexts {
+	return s.Contexts
 }
 
 func (s *GetSessionResponseBodyData) SetAppInstanceId(v string) *GetSessionResponseBodyData {
@@ -214,6 +219,55 @@ func (s *GetSessionResponseBodyData) SetVpcResource(v bool) *GetSessionResponseB
 	return s
 }
 
+func (s *GetSessionResponseBodyData) SetContexts(v []*GetSessionResponseBodyDataContexts) *GetSessionResponseBodyData {
+	s.Contexts = v
+	return s
+}
+
 func (s *GetSessionResponseBodyData) Validate() error {
+	if s.Contexts != nil {
+		for _, item := range s.Contexts {
+			if item != nil {
+				if err := item.Validate(); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+type GetSessionResponseBodyDataContexts struct {
+	Id   *string `json:"id,omitempty" xml:"id,omitempty"`
+	Name *string `json:"name,omitempty" xml:"name,omitempty"`
+}
+
+func (s GetSessionResponseBodyDataContexts) String() string {
+	return dara.Prettify(s)
+}
+
+func (s GetSessionResponseBodyDataContexts) GoString() string {
+	return s.String()
+}
+
+func (s *GetSessionResponseBodyDataContexts) GetId() *string {
+	return s.Id
+}
+
+func (s *GetSessionResponseBodyDataContexts) GetName() *string {
+	return s.Name
+}
+
+func (s *GetSessionResponseBodyDataContexts) SetId(v string) *GetSessionResponseBodyDataContexts {
+	s.Id = &v
+	return s
+}
+
+func (s *GetSessionResponseBodyDataContexts) SetName(v string) *GetSessionResponseBodyDataContexts {
+	s.Name = &v
+	return s
+}
+
+func (s *GetSessionResponseBodyDataContexts) Validate() error {
 	return dara.Validate(s)
 }

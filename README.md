@@ -42,26 +42,26 @@ Before using the SDK, you need to:
 2. Get APIKEY credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
 3. Set environment variable:
    - For Linux/MacOS:
-```bash
-    export AGENTBAY_API_KEY=your_api_key_here
-```
+     ```bash
+     export AGENTBAY_API_KEY=your_api_key_here
+     ```
    - For Windows:
-```cmd
-    setx AGENTBAY_API_KEY your_api_key_here
-```
+     ```cmd
+     setx AGENTBAY_API_KEY your_api_key_here
+     ```
 
 ## 🚀 Quick Start
 
 ### Python
 ```python
-from agentbay import AgentBay
+from agentbay import AgentBay, CreateSessionParams
 
-# Create session and execute command
+# Create session and execute code
 agent_bay = AgentBay()
-session_result = agent_bay.create()
-session = session_result.session
-result = session.command.execute_command("echo 'Hello AgentBay'")
-print(result.output)  # Hello AgentBay
+session = agent_bay.create(CreateSessionParams(image_id="code_latest")).session
+result = session.code.run_code("print('Hello AgentBay')", "python")
+if result.success:
+    print(result.result)  # Hello AgentBay
 
 # Clean up
 agent_bay.delete(session)
@@ -71,12 +71,13 @@ agent_bay.delete(session)
 ```typescript
 import { AgentBay } from 'wuying-agentbay-sdk';
 
-// Create session and execute command
+// Create session and execute code
 const agentBay = new AgentBay();
-const sessionResult = await agentBay.create();
-const session = sessionResult.session;
-const result = await session.command.executeCommand("echo 'Hello AgentBay'");
-console.log(result.output);  // Hello AgentBay
+const session = (await agentBay.create({ imageId: "code_latest" })).session;
+const result = await session.code.runCode("print('Hello AgentBay')", "python");
+if (result.success) {
+    console.log(result.result);  // Hello AgentBay
+}
 
 // Clean up
 await agentBay.delete(session);
@@ -86,34 +87,50 @@ await agentBay.delete(session);
 ```go
 import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 
-// Create session and execute command
-client, err := agentbay.NewAgentBay("", nil)
-if err != nil {
-    fmt.Printf("Failed to initialize AgentBay client: %v\n", err)
-    return
-}
+// Create session and execute code
+client, _ := agentbay.NewAgentBay("", nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("code_latest"))
+session := result.Session
 
-sessionResult, err := client.Create(nil)
-if err != nil {
-    fmt.Printf("Failed to create session: %v\n", err)
-    return
-}
-
-session := sessionResult.Session
-result, err := session.Command.ExecuteCommand("echo 'Hello AgentBay'")
-if err != nil {
-    fmt.Printf("Failed to execute command: %v\n", err)
-    return
-}
-fmt.Println(result.Output)  // Hello AgentBay
+res, _ := session.Code.RunCode("print('Hello AgentBay')", "python")
+fmt.Println(res.Output)  // Hello AgentBay
 
 // Clean up
-_, err = client.Delete(session, false)
-if err != nil {
-    fmt.Printf("Failed to delete session: %v\n", err)
-    return
-}
+client.Delete(session, false)
 ```
+
+## 🎯 Use Cases
+
+<table>
+<tr>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Browser Use@2x.png" width="460px" alt="Browser Use"/>
+  <h3>🌐 Browser Use</h3>
+  <p>Automate web operations including content scraping, testing, and workflows. Cross-browser compatible with natural language control and remote access.</p>
+  <p><a href="docs/guides/browser-use/README.md">Learn more →</a></p>
+</td>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Computer Use@2x.png" width="460px" alt="Computer Use"/>
+  <h3>🖥️ Computer Use</h3>
+  <p>Cloud desktop environment for enterprise application automation. Standardized interfaces enable legacy software automation with intelligent resource scheduling.</p>
+  <p><a href="docs/guides/computer-use/README.md">Learn more →</a></p>
+</td>
+</tr>
+<tr>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Mobile Use@2x.png" width="460px" alt="Mobile Use"/>
+  <h3>📱 Mobile Use</h3>
+  <p>Cloud-based mobile environment for intelligent app automation. Precise UI recognition and control with parallel task processing for testing scenarios.</p>
+  <p><a href="docs/guides/mobile-use/README.md">Learn more →</a></p>
+</td>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Code Space@2x.png" width="460px" alt="Code Space"/>
+  <h3>💻 Code Space</h3>
+  <p>Professional cloud development environment supporting multi-language code generation, compilation, and debugging. Secure, intelligent automated programming experience.</p>
+  <p><a href="docs/guides/codespace/README.md">Learn more →</a></p>
+</td>
+</tr>
+</table>
 
 ## 📚 Documentation
 

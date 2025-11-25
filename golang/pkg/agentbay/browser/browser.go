@@ -7,6 +7,7 @@ import (
 
 	"github.com/alibabacloud-go/tea/dara"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
+	"github.com/playwright-community/playwright-go"
 )
 
 // BrowserProxy represents browser proxy configuration.
@@ -238,8 +239,8 @@ type BrowserOption struct {
 //
 // Example:
 //
-//    option := browser.NewBrowserOption()
-//    option.UseStealth = true
+//	option := browser.NewBrowserOption()
+//	option.UseStealth = true
 func NewBrowserOption() *BrowserOption {
 	defaultExtPath := "/tmp/extensions/"
 	return &BrowserOption{
@@ -405,9 +406,9 @@ func NewBrowser(session SessionInterface) *Browser {
 //
 // Example:
 //
-//    if session.Browser.IsInitialized() {
-//        // Browser is ready
-//    }
+//	if session.Browser.IsInitialized() {
+//	    // Browser is ready
+//	}
 func (b *Browser) IsInitialized() bool {
 	return b.initialized
 }
@@ -416,10 +417,10 @@ func (b *Browser) IsInitialized() bool {
 //
 // Example:
 //
-//    currentOption := session.Browser.GetOption()
-//    if currentOption != nil && currentOption.UseStealth {
-//        // Stealth mode is enabled
-//    }
+//	currentOption := session.Browser.GetOption()
+//	if currentOption != nil && currentOption.UseStealth {
+//	    // Stealth mode is enabled
+//	}
 func (b *Browser) GetOption() *BrowserOption {
 	return b.option
 }
@@ -428,11 +429,11 @@ func (b *Browser) GetOption() *BrowserOption {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
-//    defer result.Session.Delete()
-//    session.Browser.Initialize(browser.NewBrowserOption())
-//    endpointURL, _ := session.Browser.GetEndpointURL()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+//	defer result.Session.Delete()
+//	session.Browser.Initialize(browser.NewBrowserOption())
+//	endpointURL, _ := session.Browser.GetEndpointURL()
 func (b *Browser) GetEndpointURL() (string, error) {
 	if !b.initialized {
 		return "", errors.New("browser is not initialized. Cannot access endpoint URL")
@@ -476,9 +477,9 @@ func (b *Browser) GetEndpointURL() (string, error) {
 //
 // Example:
 //
-//    option := browser.NewBrowserOption()
-//    option.UseStealth = true
-//    success, _ := session.Browser.Initialize(option)
+//	option := browser.NewBrowserOption()
+//	option.UseStealth = true
+//	success, _ := session.Browser.Initialize(option)
 func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	if b.initialized {
 		return true, nil
@@ -492,10 +493,15 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	// Convert option to map
 	browserOptionMap := option.toMap()
 
-	// TODO: Enable record if session has enableBrowserReplay set to true
-	// This would require adding enableBrowserReplay to the session interface
-	// if hasattr(self.session, 'enableBrowserReplay') and self.session.enableBrowserReplay:
-	//     browser_option_dict['enableRecord'] = True
+	// Enable record if session has enableBrowserReplay set to true
+	// Check if session implements GetEnableBrowserReplay method
+	if enableReplayGetter, ok := b.session.(interface {
+		GetEnableBrowserReplay() bool
+	}); ok {
+		if enableReplayGetter.GetEnableBrowserReplay() {
+			browserOptionMap["enableRecord"] = true
+		}
+	}
 
 	// Create InitBrowserRequest
 	authorization := "Bearer " + b.session.GetAPIKey()
@@ -550,11 +556,11 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    session.Browser.Initialize(browser.NewBrowserOption())
-//    session.Browser.Destroy()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	session.Browser.Initialize(browser.NewBrowserOption())
+//	session.Browser.Destroy()
 func (b *Browser) Destroy() error {
 	if !b.initialized {
 		return errors.New("browser is not initialized. Cannot destroy browser")
@@ -595,12 +601,12 @@ type ScreenshotOptions struct {
 //
 // Example:
 //
-//    // Connect to browser using Playwright
-//    // pw, _ := playwright.Run()
-//    // browser, _ := pw.Chromium.ConnectOverCDP(endpointURL)
-//    // page, _ := browser.NewPage()
-//    screenshotData, _ := session.Browser.Screenshot(page, nil)
-func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error) {
+//	// Connect to browser using Playwright
+//	// pw, _ := playwright.Run()
+//	// browser, _ := pw.Chromium.ConnectOverCDP(endpointURL)
+//	// page, _ := browser.NewPage()
+//	screenshotData, _ := session.Browser.Screenshot(page, nil)
+func (b *Browser) Screenshot(page playwright.Page, options *ScreenshotOptions) ([]byte, error) {
 	if !b.initialized {
 		return nil, errors.New("browser must be initialized before calling screenshot")
 	}
@@ -630,17 +636,8 @@ func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]by
 		enhancedOptions["quality"] = options.Quality
 	}
 
-	// Type assert page to Playwright Page interface
-	playwrightPage, ok := page.(interface {
-		WaitForLoadState(state string, options ...interface{}) error
-		Evaluate(expression string, options ...interface{}) (interface{}, error)
-		WaitForTimeout(timeout int)
-		SetViewportSize(width, height int) error
-		Screenshot(options map[string]interface{}) ([]byte, error)
-	})
-	if !ok {
-		return nil, errors.New("page must be a Playwright Page object")
-	}
+	// Use the actual Playwright page object
+	playwrightPage := page
 
 	try := func() ([]byte, error) {
 		// Wait for page to load
@@ -652,7 +649,9 @@ func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]by
 			return nil, err
 		}
 
-		if err := playwrightPage.WaitForLoadState("domcontentloaded"); err != nil {
+		if err := playwrightPage.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
+			State: playwright.LoadStateDomcontentloaded,
+		}); err != nil {
 			return nil, err
 		}
 
@@ -704,7 +703,21 @@ func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]by
 		}
 
 		// Take the screenshot
-		screenshotBytes, err := playwrightPage.Screenshot(enhancedOptions)
+		timeoutFloat := float64(options.Timeout)
+		screenshotOptions := playwright.PageScreenshotOptions{
+			FullPage: &options.FullPage,
+			Timeout:  &timeoutFloat,
+		}
+		if options.Type == "jpeg" {
+			screenshotOptions.Type = playwright.ScreenshotTypeJpeg
+			if options.Quality > 0 {
+				quality := options.Quality
+				screenshotOptions.Quality = &quality
+			}
+		} else {
+			screenshotOptions.Type = playwright.ScreenshotTypePng
+		}
+		screenshotBytes, err := playwrightPage.Screenshot(screenshotOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -726,8 +739,8 @@ func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]by
 
 // _scrollToLoadAllContent scrolls the page to load all content (especially for lazy-loaded elements)
 func (b *Browser) _scrollToLoadAllContent(page interface {
-	Evaluate(expression string, options ...interface{}) (interface{}, error)
-	WaitForTimeout(timeout int)
+	Evaluate(string, ...interface{}) (interface{}, error)
+	WaitForTimeout(float64)
 }, maxScrolls int, delayMs int) error {
 	if maxScrolls <= 0 {
 		maxScrolls = 8
@@ -743,7 +756,7 @@ func (b *Browser) _scrollToLoadAllContent(page interface {
 			return err
 		}
 
-		page.WaitForTimeout(delayMs)
+		page.WaitForTimeout(float64(delayMs))
 
 		newHeightResult, err := page.Evaluate("Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)")
 		if err != nil {

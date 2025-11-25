@@ -121,6 +121,12 @@ type Session struct {
 	// File transfer context ID for file operations
 	FileTransferContextID string
 
+	// Browser recording context ID
+	RecordContextID string
+
+	// Browser replay enabled flag
+	EnableBrowserReplay bool
+
 	// File, command and code handlers
 	FileSystem *filesystem.FileSystem
 	Command    *command.Command
@@ -195,6 +201,11 @@ func (s *Session) GetImageID() string {
 // GetSessionID returns the session ID for this session (browser interface method).
 func (s *Session) GetSessionID() string {
 	return s.SessionID
+}
+
+// GetEnableBrowserReplay returns whether browser replay is enabled for this session.
+func (s *Session) GetEnableBrowserReplay() bool {
+	return s.EnableBrowserReplay
 }
 
 // IsVPCEnabled returns whether this session uses VPC resources.
@@ -272,14 +283,40 @@ func (s *Session) GetCommand() *command.Command {
 //	defer result.Session.Delete()
 //	deleteResult, _ := result.Session.Delete()
 func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
-	shouldSync := len(syncContext) > 0 && syncContext[0]
+	userRequestedSync := len(syncContext) > 0 && syncContext[0]
 
-	// If syncContext is true, trigger file uploads first
+	// Determine sync behavior based on enableBrowserReplay and syncContext
+	var shouldSync bool
+	var syncContextID string
+
+	if userRequestedSync {
+		// User explicitly requested sync - sync all contexts
+		shouldSync = true
+		fmt.Printf("🔄 User requested context synchronization\n")
+	} else if s.EnableBrowserReplay && s.RecordContextID != "" {
+		// Browser replay enabled but no explicit sync - sync only browser recording context
+		shouldSync = true
+		syncContextID = s.RecordContextID
+		fmt.Printf("🎥 Browser replay enabled - syncing recording context: %s\n", syncContextID)
+	}
+
+	// If sync is needed, trigger file uploads first
 	if shouldSync {
 		syncStartTime := time.Now()
 
 		// Use the new sync method without callback (sync mode)
-		syncResult, err := s.Context.SyncWithCallback("", "", "", nil, 150, 1500)
+		var syncResult *ContextSyncResult
+		var err error
+		if syncContextID != "" {
+			// Sync specific context (browser recording)
+			syncResult, err = s.Context.SyncWithCallback(syncContextID, BrowserRecordPath, "", nil, 150, 1500)
+			fmt.Printf("🎥 Synced browser recording context: %s\n", syncContextID)
+		} else {
+			// Sync all contexts
+			syncResult, err = s.Context.SyncWithCallback("", "", "", nil, 150, 1500)
+			fmt.Printf("🔄 Synced all contexts\n")
+		}
+
 		if err != nil {
 			syncDuration := time.Since(syncStartTime)
 			logOperationError("Delete", fmt.Sprintf("Failed to trigger context sync after %v: %v", syncDuration, err), false)
@@ -335,8 +372,6 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 			}, nil
 		}
 	}
-
-	s.AgentBay.Sessions.Delete(s.SessionID)
 
 	// Log successful deletion
 	keyFields := map[string]interface{}{
@@ -1404,11 +1439,19 @@ func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPause
 					Success:     true,
 					Status:      status,
 				}, nil
-			} else if status != "RUNNING" && status != "PAUSING" {
-				// If status is not RUNNING, PAUSING, or PAUSED, treat as unexpected
+			} else if status == "PAUSING" {
+				// Normal transitioning state, continue polling
+			} else {
+				// Any other status is unexpected - pause API succeeded but session is not pausing/paused
 				elapsed := time.Since(startTime)
-				fmt.Printf("Session in unexpected state after %v: %s\n", elapsed, status)
-				// Continue polling as the state might transition to PAUSED
+				errorMessage := fmt.Sprintf("Session pause failed: unexpected state '%s' after %v", status, elapsed)
+				fmt.Printf("%s\n", errorMessage)
+				return &models.SessionPauseResult{
+					ApiResponse:  models.WithRequestID(getSessionResult.GetRequestID()),
+					Success:      false,
+					ErrorMessage: errorMessage,
+					Status:       status,
+				}, nil
 			}
 		}
 
@@ -1554,11 +1597,19 @@ func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResu
 					Success:     true,
 					Status:      status,
 				}, nil
-			} else if status != "PAUSED" && status != "RESUMING" {
-				// If status is not PAUSED, RESUMING, or RUNNING, treat as unexpected
+			} else if status == "RESUMING" {
+				// Normal transitioning state, continue polling
+			} else {
+				// Any other status is unexpected - resume API succeeded but session is not resuming/running
 				elapsed := time.Since(startTime)
-				fmt.Printf("Session in unexpected state after %v: %s\n", elapsed, status)
-				// Continue polling as the state might transition to RUNNING
+				errorMessage := fmt.Sprintf("Session resume failed: unexpected state '%s' after %v", status, elapsed)
+				fmt.Printf("%s\n", errorMessage)
+				return &models.SessionResumeResult{
+					ApiResponse:  models.WithRequestID(getSessionResult.GetRequestID()),
+					Success:      false,
+					ErrorMessage: errorMessage,
+					Status:       status,
+				}, nil
 			}
 		}
 
