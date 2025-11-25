@@ -54,14 +54,14 @@ Before using the SDK, you need to:
 
 ### Python
 ```python
-from agentbay import AgentBay
+from agentbay import AgentBay, CreateSessionParams
 
-# Create session and execute command
+# Create session and execute code
 agent_bay = AgentBay()
-session_result = agent_bay.create()
-session = session_result.session
-result = session.command.execute_command("echo 'Hello AgentBay'")
-print(result.output)  # Hello AgentBay
+session = agent_bay.create(CreateSessionParams(image_id="code_latest")).session
+result = session.code.run_code("print('Hello AgentBay')", "python")
+if result.success:
+    print(result.result)  # Hello AgentBay
 
 # Clean up
 agent_bay.delete(session)
@@ -71,12 +71,13 @@ agent_bay.delete(session)
 ```typescript
 import { AgentBay } from 'wuying-agentbay-sdk';
 
-// Create session and execute command
+// Create session and execute code
 const agentBay = new AgentBay();
-const sessionResult = await agentBay.create();
-const session = sessionResult.session;
-const result = await session.command.executeCommand("echo 'Hello AgentBay'");
-console.log(result.output);  // Hello AgentBay
+const session = (await agentBay.create({ imageId: "code_latest" })).session;
+const result = await session.code.runCode("print('Hello AgentBay')", "python");
+if (result.success) {
+    console.log(result.result);  // Hello AgentBay
+}
 
 // Clean up
 await agentBay.delete(session);
@@ -86,33 +87,16 @@ await agentBay.delete(session);
 ```go
 import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 
-// Create session and execute command
-client, err := agentbay.NewAgentBay("", nil)
-if err != nil {
-    fmt.Printf("Failed to initialize AgentBay client: %v\n", err)
-    return
-}
+// Create session and execute code
+client, _ := agentbay.NewAgentBay("", nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("code_latest"))
+session := result.Session
 
-sessionResult, err := client.Create(nil)
-if err != nil {
-    fmt.Printf("Failed to create session: %v\n", err)
-    return
-}
-
-session := sessionResult.Session
-result, err := session.Command.ExecuteCommand("echo 'Hello AgentBay'")
-if err != nil {
-    fmt.Printf("Failed to execute command: %v\n", err)
-    return
-}
-fmt.Println(result.Output)  // Hello AgentBay
+res, _ := session.Code.RunCode("print('Hello AgentBay')", "python")
+fmt.Println(res.Output)  // Hello AgentBay
 
 // Clean up
-_, err = client.Delete(session, false)
-if err != nil {
-    fmt.Printf("Failed to delete session: %v\n", err)
-    return
-}
+client.Delete(session, false)
 ```
 
 ## 📚 Documentation
