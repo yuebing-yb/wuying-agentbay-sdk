@@ -42,13 +42,13 @@ Before using the SDK, you need to:
 2. Get APIKEY credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
 3. Set environment variable:
    - For Linux/MacOS:
-```bash
-    export AGENTBAY_API_KEY=your_api_key_here
-```
+     ```bash
+     export AGENTBAY_API_KEY=your_api_key_here
+     ```
    - For Windows:
-```cmd
-    setx AGENTBAY_API_KEY your_api_key_here
-```
+     ```cmd
+     setx AGENTBAY_API_KEY your_api_key_here
+     ```
 
 ## 🚀 Quick Start
 
