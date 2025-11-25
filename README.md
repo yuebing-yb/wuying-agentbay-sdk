@@ -103,36 +103,28 @@ client.Delete(session, false)
 
 <table>
 <tr>
-<td width="50%" align="center">
-  <a href="docs/guides/browser-use/README.md">
-    <img src="./assets/Browser Use@2x.png" width="460px" alt="Browser Use"/>
-  </a>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Browser Use@2x.png" width="460px" alt="Browser Use"/>
   <h3>🌐 Browser Use</h3>
   <p>Automate web operations including content scraping, testing, and workflows. Cross-browser compatible with natural language control and remote access.</p>
   <p><a href="docs/guides/browser-use/README.md">Learn more →</a></p>
 </td>
-<td width="50%" align="center">
-  <a href="docs/guides/computer-use/README.md">
-    <img src="./assets/Computer Use@2x.png" width="460px" alt="Computer Use"/>
-  </a>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Computer Use@2x.png" width="460px" alt="Computer Use"/>
   <h3>🖥️ Computer Use</h3>
   <p>Cloud desktop environment for enterprise application automation. Standardized interfaces enable legacy software automation with intelligent resource scheduling.</p>
   <p><a href="docs/guides/computer-use/README.md">Learn more →</a></p>
 </td>
 </tr>
 <tr>
-<td width="50%" align="center">
-  <a href="docs/guides/mobile-use/README.md">
-    <img src="./assets/Mobile Use@2x.png" width="460px" alt="Mobile Use"/>
-  </a>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Mobile Use@2x.png" width="460px" alt="Mobile Use"/>
   <h3>📱 Mobile Use</h3>
   <p>Cloud-based mobile environment for intelligent app automation. Precise UI recognition and control with parallel task processing for testing scenarios.</p>
   <p><a href="docs/guides/mobile-use/README.md">Learn more →</a></p>
 </td>
-<td width="50%" align="center">
-  <a href="docs/guides/codespace/README.md">
-    <img src="./assets/Code Space@2x.png" width="460px" alt="Code Space"/>
-  </a>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Code Space@2x.png" width="460px" alt="Code Space"/>
   <h3>💻 Code Space</h3>
   <p>Professional cloud development environment supporting multi-language code generation, compilation, and debugging. Secure, intelligent automated programming experience.</p>
   <p><a href="docs/guides/codespace/README.md">Learn more →</a></p>
