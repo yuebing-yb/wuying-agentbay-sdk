@@ -2,7 +2,7 @@ import os
 import unittest
 
 from agentbay import AgentBay
-from agentbay.filesystem.filesystem import (
+from agentbay._sync.filesystem import (
     BoolResult,
     DirectoryListResult,
     FileContentResult,
