@@ -14,7 +14,7 @@ from playwright.async_api import async_playwright
 
 from agentbay import AgentBay
 from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
-from agentbay.browser.browser import (
+from agentbay import (
     BrowserFingerprint,
     BrowserFingerprintContext,
     BrowserOption,
@@ -344,7 +344,7 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         async def async_local_sync_operations():
             # Generate local chrome browser fingerprint
             print("Dumping local chrome browser fingerprint...")
-            from agentbay.browser.fingerprint import BrowserFingerprintGenerator
+            from agentbay import BrowserFingerprintGenerator
 
             fingerprint_generator = BrowserFingerprintGenerator(headless=False)
             fingerprint_format = await fingerprint_generator.generate_fingerprint()
@@ -426,7 +426,7 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         async def async_construct_operations():
             # Load fingerprint from example file
             print("Loading fingerprint from example file...")
-            from agentbay.browser.fingerprint import FingerprintFormat
+            from agentbay import FingerprintFormat
 
             # Get the path to the example fingerprint file
             example_file_path = os.path.join(

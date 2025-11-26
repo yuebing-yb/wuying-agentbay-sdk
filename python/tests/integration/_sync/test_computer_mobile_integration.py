@@ -10,8 +10,8 @@ import pytest
 from unittest.mock import Mock, patch
 
 from agentbay import AgentBay, Session
-from agentbay.computer import Computer
-from agentbay.mobile import Mobile
+from agentbay import Computer
+from agentbay import Mobile
 
 
 class TestComputerMobileIntegration:

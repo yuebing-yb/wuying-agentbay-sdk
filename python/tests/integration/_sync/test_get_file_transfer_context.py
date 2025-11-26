@@ -5,7 +5,7 @@ import os
 import pytest
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 class TestGetFileTransferContext:

@@ -779,18 +779,20 @@ class Browser(BaseService):
                 )
                 self._endpoint_url = f"ws://{self.session.network_interface_ip}:{self.endpoint_router_port}"
             else:
-                # This calls an API, but we are in get_endpoint_url which is typically a property or synchronous accessor.
-                # However, if it needs to fetch data from network, it should be async.
-                # The original code calls session.agent_bay.client.get_cdp_link(request) synchronously.
-                # We should probably make this async.
-                # But properties cannot be async.
-                # Let's make it async method get_endpoint_url().
-                # But here I cannot change it easily without breaking API if it was sync.
-                # The original sync code did:
-                # response = self.session.agent_bay.client.get_cdp_link(request)
-                # If I want to keep it sync, I need a sync client? No, I am in AsyncBrowser.
-                # So it MUST be async.
-                pass
+                from ..api.models import GetCdpLinkRequest
+
+                request = GetCdpLinkRequest(
+                    authorization=f"Bearer {self.session.agent_bay.api_key}",
+                    session_id=self.session.session_id,
+                )
+                response = self.session.agent_bay.client.get_cdp_link(request)
+                if response.body and response.body.success and response.body.data:
+                    self._endpoint_url = response.body.data.url
+                else:
+                    error_msg = (
+                        response.body.message if response.body else "Unknown error"
+                    )
+                    raise BrowserError(f"Failed to get CDP link: {error_msg}")
         except Exception as e:
             raise BrowserError(f"Failed to get endpoint URL from session: {e}")
         return self._endpoint_url  # This is not correct if we need to fetch it.

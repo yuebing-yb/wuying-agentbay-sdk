@@ -7,8 +7,8 @@ import unittest
 from uuid import uuid4
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.context_sync import ContextSync
+from agentbay import CreateSessionParams
+from agentbay import ContextSync
 
 
 def get_test_api_key():

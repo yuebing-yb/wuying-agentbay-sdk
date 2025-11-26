@@ -12,8 +12,8 @@ import os
 import time
 import unittest
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams, BrowserContext
+from agentbay import BrowserOption
 from playwright.sync_api import sync_playwright
 
 

@@ -12,20 +12,22 @@ from pydantic import BaseModel
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from agentbay import AgentBay
-from agentbay.exceptions import AgentBayError
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.exceptions import AgentBayError
+from agentbay._common.params.session_params import CreateSessionParams
 
-# Fix imports: import from agentbay facade instead of non-existent agentbay.browser module
-from agentbay import (
+# Fix imports: import from agentbay facade
+from agentbay._sync.browser import (
     Browser,
     BrowserOption,
     BrowserFingerprint,
     BrowserProxy,
+)
+from agentbay._sync.browser_agent import (
     ActOptions,
     ExtractOptions,
-    ObserveOptions,
     ActResult,
-    ObserveResult
+    ObserveResult,
+    ObserveOptions
 )
 
 

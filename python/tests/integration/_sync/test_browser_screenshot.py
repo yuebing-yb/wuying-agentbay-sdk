@@ -10,9 +10,9 @@ from playwright.sync_api import sync_playwright
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from agentbay import AgentBay
-from agentbay.exceptions import BrowserError
-from agentbay.session_params import CreateSessionParams
-from agentbay.model.response import SessionResult
+from agentbay._common.exceptions import BrowserError
+from agentbay import CreateSessionParams
+from agentbay._common.models.response import SessionResult
 
 # Fix imports: import from agentbay facade instead of non-existent agentbay.browser module
 from agentbay import Browser, BrowserOption

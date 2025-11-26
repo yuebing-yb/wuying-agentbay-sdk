@@ -40,7 +40,7 @@ from agentbay._common.params.extension import (
     ExtensionsService,
 )
 from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 
 # Optional Playwright import
 try:

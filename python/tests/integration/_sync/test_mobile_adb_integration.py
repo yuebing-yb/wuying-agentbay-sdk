@@ -5,10 +5,10 @@ import os
 import sys
 import unittest
 import typing
-from agentbay.session import Session
-from agentbay.session_params import CreateSessionParams
-from agentbay.exceptions import SessionError
-from agentbay.model.response import AdbUrlResult
+from agentbay import Session
+from agentbay import CreateSessionParams
+from agentbay._common.exceptions import SessionError
+from agentbay._common.models.response import AdbUrlResult
 
 from agentbay import AgentBay
 

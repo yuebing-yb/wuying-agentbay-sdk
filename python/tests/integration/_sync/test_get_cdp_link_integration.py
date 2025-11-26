@@ -23,7 +23,7 @@ class TestGetCdpLinkIntegration:
 
     def test_get_cdp_link_with_browser_session(self, agentbay):
         """Test get_cdp_link with a real browser session"""
-        from agentbay.session_params import CreateSessionParams
+        from agentbay import CreateSessionParams
         
         # Create a browser session
         params = CreateSessionParams(image_id="browser_latest")

@@ -17,10 +17,10 @@ from uuid import uuid4
 from pathlib import Path
 
 from agentbay import AgentBay
-from agentbay.agentbay import Config
-from agentbay.exceptions import AgentBayError
-from agentbay.session_params import CreateSessionParams
-from agentbay.context_sync import ContextSync
+from agentbay import Config
+from agentbay._common.exceptions import AgentBayError
+from agentbay import CreateSessionParams
+from agentbay import ContextSync
 
 
 def get_test_api_key():

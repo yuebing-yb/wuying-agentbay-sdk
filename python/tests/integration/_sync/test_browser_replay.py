@@ -6,15 +6,15 @@ import os
 import sys
 import time
 import unittest
-from agentbay.browser import Browser, BrowserOption
+from agentbay import Browser, BrowserOption
 from playwright.sync_api import sync_playwright
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from agentbay import AgentBay
-from agentbay.exceptions import AgentBayError
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.exceptions import AgentBayError
+from agentbay import CreateSessionParams
 
 
 def get_test_api_key():

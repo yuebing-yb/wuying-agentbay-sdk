@@ -9,9 +9,9 @@ from uuid import uuid4
 from dotenv import load_dotenv
 
 from agentbay import AgentBay,CreateSessionParams
-from agentbay.agentbay import Config
-from agentbay.model.response import SessionPauseResult, SessionResumeResult
-from agentbay.exceptions import AgentBayError
+from agentbay import Config
+from agentbay._common.models.response import SessionPauseResult, SessionResumeResult
+from agentbay._common.exceptions import AgentBayError
 
 
 def get_test_api_key():
@@ -308,7 +308,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("="*60)
 
         # Create a mock session object with invalid session ID
-        from agentbay.session import Session
+        from agentbay import Session
         invalid_session = Session(self.agent_bay, "non-existent-session-12345")
 
         print(f"\nAttempting to pause non-existent session: {invalid_session.session_id}")
@@ -330,7 +330,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("="*60)
 
         # Create a mock session object with invalid session ID
-        from agentbay.session import Session
+        from agentbay import Session
         invalid_session = Session(self.agent_bay, "non-existent-session-12345")
 
         print(f"\nAttempting to resume non-existent session: {invalid_session.session_id}")
@@ -352,7 +352,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("="*60)
 
         # Create a mock session object with invalid session ID
-        from agentbay.session import Session
+        from agentbay import Session
         invalid_session = Session(self.agent_bay, "non-existent-session-12345")
 
         print(f"\nAttempting to async resume non-existent session: {invalid_session.session_id}")

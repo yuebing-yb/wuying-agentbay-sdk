@@ -10,7 +10,7 @@ import os
 import time
 import unittest
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from ..functional_helpers import (
     default_functional_test_config,
     FunctionalTestResult,

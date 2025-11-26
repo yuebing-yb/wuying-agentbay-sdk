@@ -6,8 +6,8 @@ import time
 import unittest
 import random
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList, UploadMode
-from agentbay.session import Session
+from agentbay import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList, UploadMode
+from agentbay import Session
 
 def get_test_api_key():
     """Get API key for testing"""
