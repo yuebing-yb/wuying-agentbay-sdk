@@ -76,4 +76,3 @@ def test_get_whitespace_session_id(agentbay_client: AgentBay):
     assert "session_id is required" in result.error_message
     print(f"Correctly received error for whitespace session ID: {result.error_message}")
     print("Get API whitespace session ID test passed successfully")
-
