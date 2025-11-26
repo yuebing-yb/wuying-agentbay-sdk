@@ -846,7 +846,7 @@ class AsyncFileSystem(BaseService):
             return FileError(str(e))
         return e
 
-    def create_directory(self, path: str) -> BoolResult:
+    async def create_directory(self, path: str) -> BoolResult:
         """
         Create a new directory at the specified path.
 
@@ -867,7 +867,7 @@ class AsyncFileSystem(BaseService):
         """
         args = {"path": path}
         try:
-            result = self.session.call_mcp_tool("create_directory", args)
+            result = await self.session.call_mcp_tool("create_directory", args)
             _logger.debug(f"📥 create_directory response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -886,7 +886,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to create directory: {e}",
             )
 
-    def edit_file(
+    async def edit_file(
         self, path: str, edits: List[Dict[str, str]], dry_run: bool = False
     ) -> BoolResult:
         """
@@ -912,7 +912,7 @@ class AsyncFileSystem(BaseService):
         """
         args = {"path": path, "edits": edits, "dryRun": dry_run}
         try:
-            result = self.session.call_mcp_tool("edit_file", args)
+            result = await self.session.call_mcp_tool("edit_file", args)
             _logger.debug(f"📥 edit_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -931,7 +931,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to edit file: {e}",
             )
 
-    def get_file_info(self, path: str) -> FileInfoResult:
+    async def get_file_info(self, path: str) -> FileInfoResult:
         """
         Get information about a file or directory.
 
@@ -987,7 +987,7 @@ class AsyncFileSystem(BaseService):
 
         args = {"path": path}
         try:
-            result = self.session.call_mcp_tool("get_file_info", args)
+            result = await self.session.call_mcp_tool("get_file_info", args)
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1017,7 +1017,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to get file info: {e}",
             )
 
-    def list_directory(self, path: str) -> DirectoryListResult:
+    async def list_directory(self, path: str) -> DirectoryListResult:
         """
         List the contents of a directory.
 
@@ -1107,7 +1107,7 @@ class AsyncFileSystem(BaseService):
 
         args = {"path": path}
         try:
-            result = self.session.call_mcp_tool("list_directory", args)
+            result = await self.session.call_mcp_tool("list_directory", args)
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1137,7 +1137,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to list directory: {e}",
             )
 
-    def move_file(self, source: str, destination: str) -> BoolResult:
+    async def move_file(self, source: str, destination: str) -> BoolResult:
         """
         Move a file or directory from source path to destination path.
 
@@ -1160,7 +1160,7 @@ class AsyncFileSystem(BaseService):
         """
         args = {"source": source, "destination": destination}
         try:
-            result = self.session.call_mcp_tool("move_file", args)
+            result = await self.session.call_mcp_tool("move_file", args)
             _logger.debug(f"📥 move_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -1179,7 +1179,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to move file: {e}",
             )
 
-    def _read_file_chunk(
+    async def _read_file_chunk(
         self, path: str, offset: int = 0, length: int = 0
     ) -> FileContentResult:
         """
@@ -1201,7 +1201,7 @@ class AsyncFileSystem(BaseService):
             args["length"] = length
 
         try:
-            result = self.session.call_mcp_tool("read_file", args)
+            result = await self.session.call_mcp_tool("read_file", args)
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1230,7 +1230,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to read file: {e}",
             )
 
-    def read_multiple_files(self, paths: List[str]) -> MultipleFileContentResult:
+    async def read_multiple_files(self, paths: List[str]) -> MultipleFileContentResult:
         """
         Read the contents of multiple files at once.
 
@@ -1310,7 +1310,7 @@ class AsyncFileSystem(BaseService):
 
         args = {"paths": paths}
         try:
-            result = self.session.call_mcp_tool("read_multiple_files", args)
+            result = await self.session.call_mcp_tool("read_multiple_files", args)
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1344,7 +1344,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to read multiple files: {e}",
             )
 
-    def search_files(
+    async def search_files(
         self,
         path: str,
         pattern: str,
@@ -1378,7 +1378,7 @@ class AsyncFileSystem(BaseService):
             args["excludePatterns"] = ",".join(exclude_patterns)
 
         try:
-            result = self.session.call_mcp_tool("search_files", args)
+            result = await self.session.call_mcp_tool("search_files", args)
             _logger.debug(f"📥 search_files response: {result}")
 
             if result.success:
@@ -1411,7 +1411,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to search files: {e}",
             )
 
-    def _write_file_chunk(
+    async def _write_file_chunk(
         self, path: str, content: str, mode: str = "overwrite"
     ) -> BoolResult:
         """
@@ -1437,7 +1437,7 @@ class AsyncFileSystem(BaseService):
 
         args = {"path": path, "content": content, "mode": mode}
         try:
-            result = self.session.call_mcp_tool("write_file", args)
+            result = await self.session.call_mcp_tool("write_file", args)
             _logger.debug(f"📥 write_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -1456,7 +1456,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to write file: {e}",
             )
 
-    def read_file(self, path: str) -> FileContentResult:
+    async def read_file(self, path: str) -> FileContentResult:
         """
         Read the contents of a file. Automatically handles large files by chunking.
 
@@ -1495,7 +1495,7 @@ class AsyncFileSystem(BaseService):
 
         try:
             # Get file info to check size
-            file_info_result = self.get_file_info(path)
+            file_info_result = await self.get_file_info(path)
             if not file_info_result.success:
                 return FileContentResult(
                     request_id=file_info_result.request_id,
@@ -1528,7 +1528,7 @@ class AsyncFileSystem(BaseService):
             chunk_count = 0
             while offset < file_size:
                 length = min(chunk_size, file_size - offset)
-                chunk_result = self._read_file_chunk(path, offset, length)
+                chunk_result = await self._read_file_chunk(path, offset, length)
                 _log_operation_start(
                     f"ReadLargeFile chunk {chunk_count + 1}",
                     f"{length} bytes at offset {offset}/{file_size}"
@@ -1556,7 +1556,7 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to read file: {e}",
             )
 
-    def write_file(
+    async def write_file(
         self, path: str, content: str, mode: str = "overwrite"
     ) -> BoolResult:
         """
@@ -1607,12 +1607,12 @@ class AsyncFileSystem(BaseService):
 
         # If the content length is less than the chunk size, write it directly
         if content_len <= chunk_size:
-            return self._write_file_chunk(path, content, mode)
+            return await self._write_file_chunk(path, content, mode)
 
         try:
             # Write the first chunk (creates or overwrites the file)
             first_chunk = content[:chunk_size]
-            result = self._write_file_chunk(path, first_chunk, mode)
+            result = await self._write_file_chunk(path, first_chunk, mode)
             if not result.success:
                 return result
 
@@ -1621,7 +1621,7 @@ class AsyncFileSystem(BaseService):
             while offset < content_len:
                 end = min(offset + chunk_size, content_len)
                 current_chunk = content[offset:end]
-                result = self._write_file_chunk(path, current_chunk, "append")
+                result = await self._write_file_chunk(path, current_chunk, "append")
                 if not result.success:
                     return result
                 offset = end
@@ -1776,7 +1776,7 @@ class AsyncFileSystem(BaseService):
                 error=f"Download failed: {str(e)}",
             )
 
-    def _get_file_change(self, path: str) -> FileChangeResult:
+    async def _get_file_change(self, path: str) -> FileChangeResult:
         """
         Get file change information for the specified directory path.
 
@@ -1819,7 +1819,7 @@ class AsyncFileSystem(BaseService):
 
         args = {"path": path}
         try:
-            result = self.session.call_mcp_tool("get_file_change", args)
+            result = await self.session.call_mcp_tool("get_file_change", args)
             try:
                 print("Response body:")
                 print(
