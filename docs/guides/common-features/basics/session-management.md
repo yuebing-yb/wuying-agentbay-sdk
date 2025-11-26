@@ -1,6 +1,8 @@
 # Session Management Documentation
 
-This document provides comprehensive guidance on using the session management capabilities of the AgentBay SDK across all supported languages.
+This document provides comprehensive guidance on using the session management capabilities of the AgentBay SDK. Both synchronous and asynchronous APIs are fully supported.
+
+> **💡 Sync or Async?** This guide shows both synchronous and asynchronous examples. For detailed comparison and choosing guidance, see the [Sync vs Async Guide](../sync-vs-async.md).
 
 ## Overview
 
@@ -24,8 +26,7 @@ Before running the example programs in this guide, please ensure you have comple
 2. **SDK Configuration**: Review the [SDK Configuration Guide](../configuration/sdk-configuration.md) for detailed configuration options including environment variables and API gateway selection
 3. **Core Concepts**: Review [Core Concepts Guide](../../../quickstart/basic-concepts.md) to understand AgentBay fundamentals including sessions, images, and data persistence
 
-**Quick Verification:**
-After setup, verify everything works with this simple test:
+**Quick Verification (Sync):**
 ```python
 import os
 from agentbay import AgentBay
@@ -40,10 +41,30 @@ else:
     print(f"❌ Setup issue: {result.error_message}")
 ```
 
+**Quick Verification (Async):**
+```python
+import os
+import asyncio
+from agentbay import AsyncAgentBay
+
+async def main():
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    agent_bay = AsyncAgentBay(api_key=api_key)
+    result = await agent_bay.create()
+    if result.success:
+        print("✅ Setup successful - ready to use session management!")
+        await agent_bay.delete(result.session)
+    else:
+        print(f"❌ Setup issue: {result.error_message}")
+
+asyncio.run(main())
+```
+
 ### Creating a Session
 
-Creating a session is the first step in using the AgentBay SDK:
+Creating a session is the first step in using the AgentBay SDK.
 
+**Synchronous API:**
 ```python
 from agentbay import AgentBay
 

@@ -1,6 +1,8 @@
 # CodeSpace Guide
 
-CodeSpace is AgentBay's development environment for code execution and scripting.
+CodeSpace is AgentBay's development environment for code execution and scripting. Both synchronous and asynchronous APIs are supported.
+
+> **💡 Sync or Async?** Code execution works with both sync and async APIs. For concurrent code execution, see the [Sync vs Async Guide](../common-features/sync-vs-async.md).
 
 ## Documentation
 

@@ -1,6 +1,8 @@
 # SDK Configuration Guide
 
-This guide explains how to configure the AgentBay SDK for different environments and requirements.
+This guide explains how to configure the AgentBay SDK for different environments and requirements. Configuration works identically for both synchronous (`AgentBay`) and asynchronous (`AsyncAgentBay`) APIs.
+
+> **💡 Sync or Async?** All configuration options work the same way for both sync and async APIs. Simply use `AgentBay` or `AsyncAgentBay` with the same configuration parameters.
 
 > **Important:** The `endpoint` configuration specifies the **API Gateway location** used for SDK-backend communication. This determines which regional gateway your SDK connects to, but does not necessarily determine where your cloud sessions will be created. A future feature may allow selecting the cloud environment region separately when creating sessions.
 
@@ -81,16 +83,31 @@ my-project/
         └── main.py         # Searches upward: app/ → src/ → my-project/ ✅
 ```
 
-**Custom .env file path:**
+**Custom .env file path (Sync):**
 
 ```python
 from agentbay import AgentBay
 client = AgentBay(env_file="/path/to/custom.env")
 ```
 
+**Custom .env file path (Async):**
+
+```python
+import asyncio
+from agentbay import AsyncAgentBay
+
+async def main():
+    client = AsyncAgentBay(env_file="/path/to/custom.env")
+    # Use client...
+
+asyncio.run(main())
+```
+
 ### Method 3: Hard-coded Configuration (Debug Only)
 
-For debugging purposes, you can pass configuration directly in code:
+For debugging purposes, you can pass configuration directly in code.
+
+**Sync API:**
 
 ```python
 from agentbay import AgentBay, Config
@@ -101,6 +118,24 @@ config = Config(
     timeout_ms=60000
 )
 agent_bay = AgentBay(api_key="your-api-key-here", cfg=config)
+```
+
+**Async API:**
+
+```python
+import asyncio
+from agentbay import AsyncAgentBay, Config
+
+async def main():
+    # Hard-coded configuration (not recommended for production)
+    config = Config(
+        endpoint="wuyingai.ap-southeast-1.aliyuncs.com",
+        timeout_ms=60000
+    )
+    agent_bay = AsyncAgentBay(api_key="your-api-key-here", cfg=config)
+    # Use agent_bay...
+
+asyncio.run(main())
 ```
 
 > **Warning:** Hard-coding API keys and configuration is not recommended for production environments due to security risks.

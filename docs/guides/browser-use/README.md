@@ -1,6 +1,8 @@
 # AgentBay AIBrowser Guide
 
-Welcome to the AgentBay AIBrowser Guides! This provides complete functionality introduction and best practices for experienced developers.
+Welcome to the AgentBay AIBrowser Guides! This provides complete functionality introduction and best practices for experienced developers. Both synchronous and asynchronous APIs are fully supported.
+
+> **💡 Sync or Async?** All browser automation features work with both sync and async APIs. For concurrent browser operations and performance optimization, see the [Sync vs Async Guide](../common-features/sync-vs-async.md).
 
 ## 🎯 Quick Navigation
 

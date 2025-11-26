@@ -1,5 +1,9 @@
 # VPC Sessions
 
+VPC (Virtual Private Cloud) sessions provide a secure communication mechanism where the SDK directly connects to cloud environments within the same VPC after session creation. Both synchronous and asynchronous APIs are supported.
+
+> **💡 Sync or Async?** VPC sessions work with both sync and async APIs. See the [Sync vs Async Guide](../sync-vs-async.md) for API selection guidance.
+
 ## Overview
 
 VPC (Virtual Private Cloud) sessions provide a secure communication mechanism where the SDK directly connects to cloud environments within the same VPC after session creation. This ensures that all business data bypasses AgentBay's control plane services, delivering enhanced security for customers.
