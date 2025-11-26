@@ -20,8 +20,22 @@ def test_generate_python_api_docs():
 
     assert result.returncode == 0, result.stderr or result.stdout
 
-    target_file = docs_dir / "common-features" / "basics" / "session.md"
-    assert target_file.exists(), "Session documentation was not generated"
-    contents = target_file.read_text(encoding="utf-8")
-    assert "# Session API Reference" in contents
-    assert "Documentation generated automatically" in contents
+    # Check sync API docs
+    sync_session_file = docs_dir / "common-features" / "sync" / "session.md"
+    assert sync_session_file.exists(), "Sync Session documentation was not generated"
+    sync_contents = sync_session_file.read_text(encoding="utf-8")
+    assert "# Session API Reference" in sync_contents
+    assert "Documentation generated automatically" in sync_contents
+    assert "💡 Async Version" in sync_contents
+
+    # Check async API docs
+    async_session_file = docs_dir / "common-features" / "async" / "async-session.md"
+    assert async_session_file.exists(), "Async Session documentation was not generated"
+    async_contents = async_session_file.read_text(encoding="utf-8")
+    assert "# AsyncSession API Reference" in async_contents
+    assert "Documentation generated automatically" in async_contents
+    assert "💡 Sync Version" in async_contents
+
+    # Check common docs
+    config_file = docs_dir / "common-features" / "common" / "config.md"
+    assert config_file.exists(), "Common Config documentation was not generated"

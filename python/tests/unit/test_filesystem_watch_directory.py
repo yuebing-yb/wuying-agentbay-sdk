@@ -266,7 +266,8 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
         self.assertEqual(thread.stop_event, stop_event)
         self.assertTrue(thread.daemon)
         
-        # Thread is already started by _create_task, just let it run briefly
+        # Start the thread
+        thread.start()
         time.sleep(0.2)  # Let it run for a short time
         
         # Stop the thread
@@ -298,7 +299,8 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
             stop_event=stop_event
         )
         
-        # Thread is already started by _create_task, just let it run briefly
+        # Start the thread
+        thread.start()
         time.sleep(0.2)
         
         # Stop the thread - should not crash despite callback exception

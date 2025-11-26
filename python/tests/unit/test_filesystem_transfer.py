@@ -184,11 +184,11 @@ class TestAsyncFileTransfer(unittest.TestCase):
             self.mock_context_svc.get_file_upload_url.side_effect = get_upload_url_mock
             
             # Mock internal methods
-            # Mock _run_in_thread to bypass HTTP call
-            async def run_in_thread_mock(func, *args, **kwargs):
+            # Mock _put_file_sync to bypass HTTP call
+            def put_file_sync_mock(*args, **kwargs):
                 # Mock return of _put_file_sync: (http_status, etag, bytes_sent)
                 return 200, "etag_456", 1024
-            self.file_transfer._run_in_thread = Mock(side_effect=run_in_thread_mock)
+            self.file_transfer._put_file_sync = Mock(side_effect=put_file_sync_mock)
 
             # Mock sync operation
             mock_sync_result = Mock()
@@ -197,7 +197,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             
             async def sync_mock(*args, **kwargs):
                 return mock_sync_result
-            self.mock_session.context.sync.side_effect = sync_mock
+            self.mock_session.context.sync_context = Mock(side_effect=sync_mock)
             
             # Mock wait for task
             async def wait_mock(*args, **kwargs):
@@ -221,7 +221,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             
             # Verify calls were made
             self.mock_context_svc.get_file_upload_url.assert_called_once_with("ctx_123", "/remote/file.txt")
-            self.mock_session.context.sync.assert_called_once_with(mode="download", path="/remote/file.txt", context_id="ctx_123")
+            self.mock_session.context.sync_context.assert_called_once_with(mode="download", path="/remote/file.txt", context_id="ctx_123")
             self.file_transfer._wait_for_task.assert_called()
         
         # Run the async test
@@ -276,10 +276,10 @@ class TestAsyncFileTransfer(unittest.TestCase):
             self.mock_context_svc.get_file_upload_url.side_effect = get_upload_url_mock
             
             # Mock HTTP upload failure
-            async def run_in_thread_mock(func, *args, **kwargs):
+            def put_file_sync_mock(*args, **kwargs):
                 # Return 500 error
                 return 500, None, 0
-            self.file_transfer._run_in_thread = Mock(side_effect=run_in_thread_mock)
+            self.file_transfer._put_file_sync = Mock(side_effect=put_file_sync_mock)
             
             # Test upload
             result = await self.file_transfer.upload(
@@ -314,7 +314,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             
             async def sync_mock(*args, **kwargs):
                 return mock_sync_result
-            self.mock_session.context.sync.side_effect = sync_mock
+            self.mock_session.context.sync_context = Mock(side_effect=sync_mock)
             
             # Mock wait for task
             async def wait_mock(*args, **kwargs):
@@ -332,10 +332,10 @@ class TestAsyncFileTransfer(unittest.TestCase):
             self.mock_context_svc.get_file_download_url.side_effect = get_download_url_mock
             
             # Mock download
-            async def run_in_thread_mock(func, *args, **kwargs):
+            def get_file_sync_mock(*args, **kwargs):
                 # Return (http_status, bytes_received) for _get_file_sync
                 return 200, 2048
-            self.file_transfer._run_in_thread = Mock(side_effect=run_in_thread_mock)
+            self.file_transfer._get_file_sync = Mock(side_effect=get_file_sync_mock)
             
             # Test download
             result = await self.file_transfer.download(
@@ -351,7 +351,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             self.assertEqual(result.bytes_received, 2048)
             
             # Verify calls were made
-            self.mock_session.context.sync.assert_called_once_with(mode="upload", path="/remote/file.txt", context_id="ctx_123")
+            self.mock_session.context.sync_context.assert_called_once_with(mode="upload", path="/remote/file.txt", context_id="ctx_123")
             self.file_transfer._wait_for_task.assert_called()
             self.mock_context_svc.get_file_download_url.assert_called_once_with("ctx_123", "/remote/file.txt")
         
@@ -373,7 +373,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             
             async def sync_mock(*args, **kwargs):
                 return mock_sync_result
-            self.mock_session.context.sync.side_effect = sync_mock
+            self.mock_session.context.sync_context = Mock(side_effect=sync_mock)
             
             # Mock wait for task
             async def wait_mock(*args, **kwargs):
