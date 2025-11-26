@@ -26,7 +26,11 @@ Before running the example programs in this guide, please ensure you have comple
 2. **SDK Configuration**: Review the [SDK Configuration Guide](../configuration/sdk-configuration.md) for detailed configuration options including environment variables and API gateway selection
 3. **Core Concepts**: Review [Core Concepts Guide](../../../quickstart/basic-concepts.md) to understand AgentBay fundamentals including sessions, images, and data persistence
 
-**Quick Verification (Sync):**
+**Quick Verification:**
+
+<details open>
+<summary>📘 <strong>Synchronous API</strong> (Recommended for beginners)</summary>
+
 ```python
 import os
 from agentbay import AgentBay
@@ -41,7 +45,13 @@ else:
     print(f"❌ Setup issue: {result.error_message}")
 ```
 
-**Quick Verification (Async):**
+**Best for**: Simple scripts, sequential operations
+
+</details>
+
+<details>
+<summary>⚡ <strong>Asynchronous API</strong> (Click to expand)</summary>
+
 ```python
 import os
 import asyncio
@@ -60,11 +70,17 @@ async def main():
 asyncio.run(main())
 ```
 
+**Best for**: High concurrency, async projects, web applications
+
+</details>
+
 ### Creating a Session
 
 Creating a session is the first step in using the AgentBay SDK.
 
-**Synchronous API:**
+<details open>
+<summary>📘 <strong>Synchronous API</strong> (Recommended for beginners)</summary>
+
 ```python
 from agentbay import AgentBay
 
@@ -77,6 +93,36 @@ if session_result.success:
     session = session_result.session
     print(f"Session created with ID: {session.session_id}")
 ```
+
+**Best for**: Simple scripts, sequential operations
+
+</details>
+
+<details>
+<summary>⚡ <strong>Asynchronous API</strong> (Click to expand)</summary>
+
+```python
+import asyncio
+from agentbay import AsyncAgentBay
+
+async def main():
+    # Initialize the SDK
+    agent_bay = AsyncAgentBay(api_key=api_key)
+
+    # Create a session with default parameters
+    session_result = await agent_bay.create()
+    if session_result.success:
+        session = session_result.session
+        print(f"Session created with ID: {session.session_id}")
+
+asyncio.run(main())
+```
+
+**Best for**: High concurrency, async projects, web applications
+
+> **Note**: The async API allows you to create multiple sessions concurrently using `asyncio.gather()`. See [Sync vs Async Guide](../sync-vs-async.md) for concurrent session creation patterns.
+
+</details>
 
 ## Creating Sessions with Custom Parameters
 

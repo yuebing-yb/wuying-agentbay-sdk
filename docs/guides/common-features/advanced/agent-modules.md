@@ -1,8 +1,10 @@
 # Agent Modules
 
-Agent modules are specialized AI task execution units running in AgentBay windows environment to execute tasks described in natural language. Both synchronous and asynchronous APIs are supported.
+Agent modules are specialized AI task execution units running in AgentBay windows environment to execute tasks described in natural language.
 
-> **💡 Sync or Async?** Agent modules work with both sync and async APIs. For concurrent agent task execution, see the [Sync vs Async Guide](../sync-vs-async.md).
+> **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
+> - [Sync vs Async Guide](../sync-vs-async.md)
+> - [Async Patterns Guide](../async-patterns.md)
 
 ## 🤖 Agent Module Overview
 

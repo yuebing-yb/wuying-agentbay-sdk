@@ -1,8 +1,10 @@
 # SDK Configuration Guide
 
-This guide explains how to configure the AgentBay SDK for different environments and requirements. Configuration works identically for both synchronous (`AgentBay`) and asynchronous (`AsyncAgentBay`) APIs.
+This guide explains how to configure the AgentBay SDK for different environments and requirements.
 
-> **💡 Sync or Async?** All configuration options work the same way for both sync and async APIs. Simply use `AgentBay` or `AsyncAgentBay` with the same configuration parameters.
+> **💡 Async API Support**: Configuration works identically for both sync and async APIs. For async patterns, see:
+> - [Sync vs Async Guide](../sync-vs-async.md)
+> - [Async Patterns Guide](../async-patterns.md)
 
 > **Important:** The `endpoint` configuration specifies the **API Gateway location** used for SDK-backend communication. This determines which regional gateway your SDK connects to, but does not necessarily determine where your cloud sessions will be created. A future feature may allow selecting the cloud environment region separately when creating sessions.
 

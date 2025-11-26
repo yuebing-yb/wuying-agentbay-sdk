@@ -14,8 +14,6 @@ Already done? Great! Let's verify everything works with a quick test.
 
 Let's first verify everything works with the simplest possible example:
 
-### Synchronous Version
-
 ```python
 import os
 from agentbay import AgentBay
@@ -36,41 +34,11 @@ else:
 # ✅ Cloud says: Hello from the cloud!
 ```
 
-### Asynchronous Version
-
-```python
-import os
-import asyncio
-from agentbay import AsyncAgentBay
-
-async def main():
-    api_key = os.getenv("AGENTBAY_API_KEY")
-    agent_bay = AsyncAgentBay(api_key=api_key)
-
-    result = await agent_bay.create()
-    if result.success:
-        session = result.session
-        cmd_result = await session.command.execute_command("echo 'Hello from the cloud!'")
-        print(f"✅ Cloud says: {cmd_result.output.strip()}")
-        await agent_bay.delete(session)
-    else:
-        print(f"❌ Failed: {result.error_message}")
-
-asyncio.run(main())
-
-# Expected output:
-# ✅ Cloud says: Hello from the cloud!
-```
-
 If this works, you're ready to explore more! 🎉
-
-> **💡 Sync or Async?** New to AgentBay? Start with the synchronous version (first example) - it's simpler. Building a web app or need high concurrency? Use the async version. [Learn more about choosing between sync and async](../guides/common-features/sync-vs-async.md).
 
 ## 🌟 A Practical Example: Cloud Data Processing
 
 Let's do something more useful - process a data file in the cloud:
-
-### Synchronous Version
 
 ```python
 import os
@@ -133,102 +101,29 @@ finally:
 # Expected output includes JSON formatted student grades
 ```
 
-### Asynchronous Version
-
-```python
-import os
-import asyncio
-from agentbay import AsyncAgentBay
-
-async def main():
-    agent_bay = AsyncAgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
-    result = await agent_bay.create()
-    session = result.session
-
-    try:
-        # 1. Create a Python script for data processing
-        script_content = '''
-import json
-import sys
-
-data = {
-    "students": [
-        {"name": "Alice", "scores": [85, 92, 88]},
-        {"name": "Bob", "scores": [78, 85, 80]},
-        {"name": "Charlie", "scores": [92, 95, 98]}
-    ]
-}
-
-results = []
-for student in data["students"]:
-    avg = sum(student["scores"]) / len(student["scores"])
-    results.append({
-        "name": student["name"],
-        "average": round(avg, 2),
-        "grade": "A" if avg >= 90 else "B" if avg >= 80 else "C"
-    })
-
-print(json.dumps(results, indent=2))
-'''
-
-        # 2. Upload script to cloud
-        # Note: For large files or when file_system methods have issues,
-        # you can use command execution as a workaround
-        import base64
-        encoded_content = base64.b64encode(script_content.encode()).decode()
-        write_cmd = f"echo '{encoded_content}' | base64 -d > /tmp/process_data.py"
-        write_result = await session.command.execute_command(write_cmd)
-        if not write_result.success:
-            raise Exception(f"Failed to write file: {write_result.error_message}")
-        print("✅ Script uploaded to cloud")
-
-        # 3. Execute the script in cloud environment
-        result = await session.command.execute_command("python3 /tmp/process_data.py")
-        print(f"\n📊 Processing results:\n{result.output}")
-
-        # Expected output:
-        # [
-        #   {"name": "Alice", "average": 88.33, "grade": "B"},
-        #   {"name": "Bob", "average": 81.0, "grade": "B"},
-        #   {"name": "Charlie", "average": 95.0, "grade": "A"}
-        # ]
-
-        print("\n💡 What happened:")
-        print("  1. Uploaded Python script to cloud environment")
-        print("  2. Executed script with pre-installed Python")
-        print("  3. Got results back - all without local setup!")
-
-    finally:
-        await agent_bay.delete(session)
-        print("\n✅ Session cleaned up")
-
-asyncio.run(main())
-
-# Expected output includes JSON formatted student grades
-```
-
 ## 💡 What You Learned
 
 **The AgentBay Workflow:**
-1. **Create** - Get a fresh cloud environment
+1. **Create** - Get a fresh cloud environment (`agent_bay.create()`)
 2. **Use** - Execute commands, upload/download files
-3. **Cleanup** - Delete session to free resources
+3. **Cleanup** - Delete session to free resources (`agent_bay.delete()`)
 
-**Key Concepts:**
+**Key Operations:**
+- `agent_bay.create()` - Create a new cloud session
+- `session.command.execute_command()` - Run shell commands
+- `session.file_system.write_file()` - Upload files
+- `agent_bay.delete(session)` - Clean up resources
 
-| Operation | Sync API | Async API |
-|-----------|----------|-----------|
-| Create session | `agent_bay.create()` | `await agent_bay.create()` |
-| Execute command | `session.command.execute_command()` | `await session.command.execute_command()` |
-| Upload file | `session.file_system.write_file()` | `session.file_system.write_file()` * |
-| Delete session | `agent_bay.delete(session)` | `await agent_bay.delete(session)` |
+---
 
-\* Note: File operations (`write_file`, `read_file`) are currently synchronous in both sync and async sessions.
+## 💡 Need Async API?
 
-**Choosing Between Sync and Async:**
-- **Use Sync** for: Scripts, CLI tools, learning, simple automation
-- **Use Async** for: Web apps, high-concurrency scenarios, real-time systems
-- **Learn more**: [Sync vs Async Guide](../guides/common-features/sync-vs-async.md)
+This quickstart uses synchronous API for simplicity. If you're building a web app or need high concurrency, check out:
+- [Sync vs Async API Comparison](../guides/common-features/sync-vs-async.md) - Detailed comparison and decision guide
+- [Async Patterns Guide](../guides/common-features/async-patterns.md) - Production-ready async patterns
+- [Migration Guide](../guides/migration/async-api-migration.md) - Step-by-step migration from sync to async
+
+---
 
 ## 🚀 Next Steps
 
@@ -238,7 +133,6 @@ Now that you've created your first session, explore more capabilities:
 - 📝 **[Command Execution](../guides/codespace/code-execution.md)** - Run shell commands and code
 - 📁 **[File Operations](../guides/common-features/basics/file-operations.md)** - Upload, download, and manage files
 - 🔧 **[Session Management](../guides/common-features/basics/session-management.md)** - Advanced session patterns and best practices
-- 🔄 **[Sync vs Async](../guides/common-features/sync-vs-async.md)** - Comprehensive guide on choosing and using sync/async APIs
 
 **Explore Use Cases:**
 - 🌐 **[Browser Automation](../guides/computer-use/computer-ui-automation.md)** - Web scraping and testing
