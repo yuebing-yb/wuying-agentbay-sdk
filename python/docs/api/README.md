@@ -1,33 +1,73 @@
 # AgentBay Python SDK API Reference
 
-This directory is generated. Run `python scripts/generate_api_docs.py` to refresh it.
+This directory contains auto-generated API reference documentation.
 
-## Browser Use
+## Quick Links
 
-- `browser-use/browser.md` – Browser
-- `browser-use/extension.md` – Extension
+- [📁 Synchronous API (`sync/`)](#synchronous-api)
+- [⚡ Asynchronous API (`async/`)](#asynchronous-api)
+- [📦 Common Classes (`common/`)](#common-classes)
 
-## Codespace
+## Synchronous vs Asynchronous
 
-- `codespace/code.md` – Code
+AgentBay provides both synchronous and asynchronous APIs with identical interfaces:
 
-## Common Features
+| Feature | Sync API | Async API |
+|-|-|-|
+| **Use Case** | Simple scripts, linear workflows | Concurrent operations, high performance |
+| **Performance** | Sequential execution | 4-6x faster for parallel tasks |
+| **Syntax** | `result = agent.create()` | `result = await agent.create()` |
+| **Import** | `from agentbay import AgentBay` | `from agentbay import AsyncAgentBay` |
 
-- `common-features/basics/agentbay.md` – AgentBay
-- `common-features/basics/session.md` – Session
-- `common-features/basics/command.md` – Command
-- `common-features/basics/context.md` – Context
-- `common-features/basics/context-manager.md` – Context Manager
-- `common-features/basics/filesystem.md` – File System
-- `common-features/basics/context-sync.md` – Context Sync
-- `common-features/basics/logging.md` – Logging
-- `common-features/advanced/agent.md` – Agent
-- `common-features/advanced/oss.md` – OSS
+See [Synchronous vs Asynchronous Guide](../guides/common-features/sync-vs-async.md) for detailed comparison.
 
-## Computer Use
+---
 
-- `computer-use/computer.md` – Computer
+## Synchronous API
 
-## Mobile Use
+All synchronous API classes are in the `sync/` directory:
 
-- `mobile-use/mobile.md` – Mobile
+- [AgentBay](sync/agentbay.md) - `agentbay.agentbay`
+- [Session](sync/session.md) - `agentbay.session`
+- [Command](sync/command.md) - `agentbay.command`
+- [Context](sync/context.md) - `agentbay.context`
+- [Context Manager](sync/context-manager.md) - `agentbay.context_manager`
+- [File System](sync/filesystem.md) - `agentbay.filesystem`
+- [Agent](sync/agent.md) - `agentbay.agent`
+- [OSS](sync/oss.md) - `agentbay.oss`
+- [Browser](sync/browser.md) - `agentbay.browser`
+- [Extension](sync/extension.md) - `agentbay.extension`
+- [Code](sync/code.md) - `agentbay.code`
+- [Computer](sync/computer.md) - `agentbay.computer`
+- [Mobile](sync/mobile.md) - `agentbay.mobile`
+
+## Asynchronous API
+
+All asynchronous API classes are in the `async/` directory:
+
+- [AsyncAgentBay](async/async-agentbay.md) - `agentbay.agentbay`
+- [AsyncSession](async/async-session.md) - `agentbay.session`
+- [AsyncCommand](async/async-command.md) - `agentbay.command`
+- [AsyncContext](async/async-context.md) - `agentbay.context`
+- [AsyncContextManager](async/async-context-manager.md) - `agentbay.context_manager`
+- [AsyncFileSystem](async/async-filesystem.md) - `agentbay.filesystem`
+- [AsyncAgent](async/async-agent.md) - `agentbay.agent`
+- [AsyncOss](async/async-oss.md) - `agentbay.oss`
+- [AsyncBrowser](async/async-browser.md) - `agentbay.browser`
+- [AsyncExtension](async/async-extension.md) - `agentbay.extension`
+- [AsyncCode](async/async-code.md) - `agentbay.code`
+- [AsyncComputer](async/async-computer.md) - `agentbay.computer`
+- [AsyncMobile](async/async-mobile.md) - `agentbay.mobile`
+
+## Common Classes
+
+Shared classes used by both sync and async APIs are in the `common/` directory:
+
+- [Configuration](common/config.md) - `agentbay.config`
+- [Exceptions](common/exceptions.md) - `agentbay.exceptions`
+- [Logging](common/logging.md) - `agentbay.logger`
+- [Context Sync](common/context-sync.md) - `agentbay._sync.context_sync`
+
+---
+
+**Note**: This documentation is auto-generated from source code. Run `python scripts/generate_api_docs.py` to regenerate.

@@ -115,7 +115,7 @@ class AsyncFileTransfer:
                 error="No context ID"
             )
         # 1. Get pre-signed upload URL
-        url_res = self._context_svc.get_file_upload_url(self._context_id, remote_path)
+        url_res = await self._context_svc.get_file_upload_url(self._context_id, remote_path)
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
             return UploadResult(
                 success=False, request_id_upload_url=getattr(url_res, "request_id", None), request_id_sync=None,
@@ -275,7 +275,7 @@ class AsyncFileTransfer:
                 )
 
         # 2. Get pre-signed download URL
-        url_res = self._context_svc.get_file_download_url(self._context_id, remote_path)
+        url_res = await self._context_svc.get_file_download_url(self._context_id, remote_path)
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
             return DownloadResult(
                 success=False,

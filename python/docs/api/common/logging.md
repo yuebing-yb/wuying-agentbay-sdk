@@ -179,6 +179,10 @@ Convenience function to get a named logger.
 log = get_logger("agentbay")
 ```
 
+## See Also
+
+- [Synchronous vs Asynchronous API](../../../../docs/guides/common-features/sync-vs-async.md)
+
 ---
 
 *Documentation generated automatically from source code using pydoc-markdown.*
