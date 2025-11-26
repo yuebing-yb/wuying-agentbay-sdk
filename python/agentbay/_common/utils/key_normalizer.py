@@ -7,7 +7,6 @@ expected by the press_keys MCP tool, improving case compatibility.
 
 from typing import List
 
-
 # Define key name mappings with correct case formats
 # Category 1: Modifier keys - should be Title Case
 MODIFIER_KEYS = {

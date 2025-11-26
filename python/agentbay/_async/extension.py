@@ -1,12 +1,13 @@
 import os
-import uuid
 import time
-import httpx
+import uuid
 from typing import TYPE_CHECKING, List, Optional
 
-from agentbay.exceptions import AgentBayError
-from agentbay.model.response import OperationResult
-from agentbay.logger import get_logger
+import httpx
+
+from agentbay._common.exceptions import AgentBayError
+from agentbay._common.logger import get_logger
+from agentbay._common.models.response import OperationResult
 
 if TYPE_CHECKING:
     from .agentbay import AsyncAgentBay
@@ -20,59 +21,61 @@ _logger = get_logger("extension")
 # ==============================================================================
 EXTENSIONS_BASE_PATH = "/tmp/extensions"
 
+
 # ==============================================================================
 # 1. Data Models
 # ==============================================================================
 class Extension:
     """Represents a browser extension as a cloud resource."""
+
     def __init__(self, id: str, name: str, created_at: Optional[str] = None):
         self.id = id
         self.name = name
-        self.created_at = created_at # Retrieved from the cloud
+        self.created_at = created_at  # Retrieved from the cloud
 
 
 class ExtensionOption:
     """
     Configuration options for browser extension integration.
-    
+
     This class encapsulates the necessary parameters for setting up
     browser extension synchronization and context management.
-    
+
     Attributes:
         context_id (str): ID of the extension context for browser extensions
         extension_ids (List[str]): List of extension IDs to be loaded/synchronized
     """
-    
+
     def __init__(self, context_id: str, extension_ids: List[str]):
         """
         Initialize ExtensionOption with context and extension configuration.
-        
+
         Args:
             context_id (str): ID of the extension context for browser extensions.
                              This should match the context where extensions are stored.
             extension_ids (List[str]): List of extension IDs to be loaded in the browser session.
                                      Each ID should correspond to a valid extension in the context.
-        
+
         Raises:
             ValueError: If context_id is empty or extension_ids is empty.
         """
         if not context_id or not context_id.strip():
             raise ValueError("context_id cannot be empty")
-        
+
         if not extension_ids or len(extension_ids) == 0:
             raise ValueError("extension_ids cannot be empty")
-        
+
         self.context_id = context_id
         self.extension_ids = extension_ids
-    
+
     def __repr__(self) -> str:
         """String representation of ExtensionOption."""
         return f"ExtensionOption(context_id='{self.context_id}', extension_ids={self.extension_ids})"
-    
+
     def __str__(self) -> str:
         """Human-readable string representation."""
         return f"Extension Config: {len(self.extension_ids)} extension(s) in context '{self.context_id}'"
-    
+
     def validate(self) -> bool:
         """
         Validate the extension option configuration.
@@ -91,48 +94,50 @@ class ExtensionOption:
             # Check context_id
             if not self.context_id or not self.context_id.strip():
                 return False
-            
+
             # Check extension_ids
             if not self.extension_ids or len(self.extension_ids) == 0:
                 return False
-            
+
             # Check that all extension IDs are non-empty strings
             for ext_id in self.extension_ids:
                 if not isinstance(ext_id, str) or not ext_id.strip():
                     return False
-            
+
             return True
         except Exception:
             return False
+
 
 # ==============================================================================
 # 2. Core Service Class (Scoped Stateless Model)
 # ==============================================================================
 
+
 class AsyncExtensionsService:
     """
     Provides methods to manage user browser extensions asynchronously.
     This service integrates with the existing context functionality for file operations.
-    
+
     **Usage** (Simplified - Auto-detection):
     ```python
     # Service automatically detects if context exists and creates if needed
     extensions_service = AsyncExtensionsService(agent_bay, "browser_extensions")
-    
+
     # Use the service immediately
     extension = await extensions_service.create("/path/to/plugin.zip")
     ```
-    
+
     **Integration with ExtensionOption (Simplified)**:
     ```python
     # Create extensions and configure for browser sessions
     extensions_service = AsyncExtensionsService(agent_bay, "my_extensions")
     ext1 = await extensions_service.create("/path/to/ext1.zip")
     ext2 = await extensions_service.create("/path/to/ext2.zip")
-    
+
     # Create extension option for browser integration (no context_id needed!)
     ext_option = extensions_service.create_extension_option([ext1.id, ext2.id])
-    
+
     # Use with BrowserContext for session creation
     browser_context = BrowserContext(
         context_id="browser_session",
@@ -140,7 +145,7 @@ class AsyncExtensionsService:
         extension_option=ext_option  # All extension config encapsulated
     )
     ```
-    
+
     **Context Management**:
     - If context_id provided and exists: Uses the existing context
     - If context_id provided but doesn't exist: Creates context with provided name
@@ -161,10 +166,10 @@ class AsyncExtensionsService:
         """
         self.agent_bay = agent_bay
         self.context_service: "AsyncContextService" = agent_bay.context
-        
+
         # Store provided context_id/name for lazy initialization
         self._provided_context_id = context_id
-        
+
         # Internal state
         self.extension_context = None
         self.context_id = None
@@ -183,15 +188,18 @@ class AsyncExtensionsService:
         context_name = self._provided_context_id
         if not context_name or context_name.strip() == "":
             import time
+
             context_name = f"extensions-{int(time.time())}"
             _logger.info(f"Generated default context name: {context_name}")
-            self.auto_created = True # Flag as auto-created if we generated the name
-        
+            self.auto_created = True  # Flag as auto-created if we generated the name
+
         # Context doesn't exist, create it
         context_result = await self.context_service.get(context_name, create=True)
         if not context_result.success or not context_result.context:
-            raise AgentBayError(f"Failed to create extension repository context: {context_name}")
-        
+            raise AgentBayError(
+                f"Failed to create extension repository context: {context_name}"
+            )
+
         self.extension_context = context_result.context
         self.context_id = self.extension_context.id
         self.context_name = context_name
@@ -205,7 +213,7 @@ class AsyncExtensionsService:
         Args:
             local_path (str): The path to the local file.
             remote_path (str): The path of the file in context storage.
-        
+
         Raises:
             AgentBayError: If getting the credential or uploading fails.
         """
@@ -213,26 +221,36 @@ class AsyncExtensionsService:
 
         # 1. Get upload URL using context service
         try:
-            url_result = await self.context_service.get_file_upload_url(self.context_id, remote_path)
+            url_result = await self.context_service.get_file_upload_url(
+                self.context_id, remote_path
+            )
             if not url_result.success or not url_result.url:
-                raise AgentBayError(f"Failed to get upload URL: {url_result.url if url_result.url else 'No URL returned'}")
-            
+                raise AgentBayError(
+                    f"Failed to get upload URL: {url_result.url if url_result.url else 'No URL returned'}"
+                )
+
             pre_signed_url = url_result.url
         except Exception as e:
-            raise AgentBayError(f"An error occurred while requesting the upload URL: {e}") from e
+            raise AgentBayError(
+                f"An error occurred while requesting the upload URL: {e}"
+            ) from e
 
         # 2. Use the presigned URL to upload the file directly using httpx
         try:
             async with httpx.AsyncClient() as client:
-                with open(local_path, 'rb') as f:
+                with open(local_path, "rb") as f:
                     # httpx needs read content for upload usually, or an iterable
-                    content = f.read() 
+                    content = f.read()
                     response = await client.put(pre_signed_url, content=content)
                     response.raise_for_status()  # This will raise an HTTPError if the status is 4xx or 5xx
         except httpx.HTTPStatusError as e:
-            raise AgentBayError(f"An error occurred while uploading the file: {e}") from e
+            raise AgentBayError(
+                f"An error occurred while uploading the file: {e}"
+            ) from e
         except Exception as e:
-            raise AgentBayError(f"An error occurred while uploading the file: {e}") from e
+            raise AgentBayError(
+                f"An error occurred while uploading the file: {e}"
+            ) from e
 
     async def list(self) -> List[Extension]:
         """
@@ -254,30 +272,36 @@ class AsyncExtensionsService:
         """
         try:
             await self._ensure_context()
-            
+
             # Use context service to list files in the extensions directory
             file_list_result = await self.context_service.list_files(
                 context_id=self.context_id,
                 parent_folder_path=EXTENSIONS_BASE_PATH,
                 page_number=1,
-                page_size=100  # Reasonable limit for extensions
+                page_size=100,  # Reasonable limit for extensions
             )
 
             if not file_list_result.success:
-                raise AgentBayError("Failed to list extensions: Context file listing failed.")
+                raise AgentBayError(
+                    "Failed to list extensions: Context file listing failed."
+                )
 
             extensions = []
             for file_entry in file_list_result.entries:
                 # Extract the extension ID from the file name
                 extension_id = file_entry.file_name
-                extensions.append(Extension(
-                    id=extension_id,
-                    name=file_entry.file_name,
-                    created_at=file_entry.gmt_create
-                ))
+                extensions.append(
+                    Extension(
+                        id=extension_id,
+                        name=file_entry.file_name,
+                        created_at=file_entry.gmt_create,
+                    )
+                )
             return extensions
         except Exception as e:
-            raise AgentBayError(f"An error occurred while listing browser extensions: {e}") from e
+            raise AgentBayError(
+                f"An error occurred while listing browser extensions: {e}"
+            ) from e
 
     async def create(self, local_path: str) -> Extension:
         """
@@ -302,21 +326,25 @@ class AsyncExtensionsService:
             ```
         """
         if not os.path.exists(local_path):
-            raise FileNotFoundError(f"The specified local file was not found: {local_path}")
-        
+            raise FileNotFoundError(
+                f"The specified local file was not found: {local_path}"
+            )
+
         # Determine the ID and cloud path before uploading
         # Validate file type - only ZIP format is supported
         file_extension = os.path.splitext(local_path)[1].lower()
-        if file_extension != '.zip':
-            raise ValueError(f"Unsupported plugin format '{file_extension}'. Only ZIP format (.zip) is supported.")
-        
+        if file_extension != ".zip":
+            raise ValueError(
+                f"Unsupported plugin format '{file_extension}'. Only ZIP format (.zip) is supported."
+            )
+
         extension_id = f"ext_{uuid.uuid4().hex}{file_extension}"
         extension_name = os.path.basename(local_path)
         remote_path = f"{EXTENSIONS_BASE_PATH}/{extension_id}"
 
         # Use the helper method to perform the cloud upload
         await self._upload_to_cloud(local_path, remote_path)
-        
+
         # Upload implies creation. Return a locally constructed object with basic info.
         return Extension(id=extension_id, name=extension_name)
 
@@ -344,7 +372,9 @@ class AsyncExtensionsService:
             ```
         """
         if not os.path.exists(new_local_path):
-            raise FileNotFoundError(f"The specified new local file was not found: {new_local_path}")
+            raise FileNotFoundError(
+                f"The specified new local file was not found: {new_local_path}"
+            )
 
         await self._ensure_context()
 
@@ -352,10 +382,12 @@ class AsyncExtensionsService:
         extensions = await self.list()
         existing_extensions = {ext.id: ext for ext in extensions}
         if extension_id not in existing_extensions:
-            raise ValueError(f"Browser extension with ID '{extension_id}' not found in the context. Cannot update.")
+            raise ValueError(
+                f"Browser extension with ID '{extension_id}' not found in the context. Cannot update."
+            )
 
         remote_path = f"{EXTENSIONS_BASE_PATH}/{extension_id}"
-        
+
         # Use the helper method to perform the cloud upload (overwrite)
         await self._upload_to_cloud(new_local_path, remote_path)
 
@@ -364,10 +396,10 @@ class AsyncExtensionsService:
     async def _get_extension_info(self, extension_id: str) -> Optional[Extension]:
         """
         Gets detailed information about a specific browser extension.
-        
+
         Args:
             extension_id (str): The ID of the extension to get info for.
-            
+
         Returns:
             Optional[Extension]: Extension object if found, None otherwise.
         """
@@ -378,7 +410,9 @@ class AsyncExtensionsService:
                     return ext
             return None
         except Exception as e:
-            _logger.error(f"An error occurred while getting extension info for '{extension_id}': {e}")
+            _logger.error(
+                f"An error occurred while getting extension info for '{extension_id}': {e}"
+            )
             return None
 
     async def cleanup(self) -> bool:
@@ -400,18 +434,22 @@ class AsyncExtensionsService:
             ```
         """
         await self._ensure_context()
-        
+
         if not self.auto_created:
             # Context was not auto-created by this service, no cleanup needed
             return True
-            
+
         try:
             delete_result = await self.context_service.delete(self.extension_context)
             if delete_result:
-                _logger.info(f"Extension context deleted: {self.context_name} (ID: {self.context_id})")
+                _logger.info(
+                    f"Extension context deleted: {self.context_name} (ID: {self.context_id})"
+                )
                 return True
             else:
-                _logger.warning(f"Failed to delete extension context: {self.context_name}")
+                _logger.warning(
+                    f"Failed to delete extension context: {self.context_name}"
+                )
                 return False
         except Exception as e:
             _logger.warning(f"Failed to delete extension context: {e}")
@@ -438,28 +476,32 @@ class AsyncExtensionsService:
         remote_path = f"{EXTENSIONS_BASE_PATH}/{extension_id}"
         try:
             # Use context service to delete the file
-            delete_result = await self.context_service.delete_file(self.context_id, remote_path)
-            
+            delete_result = await self.context_service.delete_file(
+                self.context_id, remote_path
+            )
+
             return delete_result.success
         except Exception as e:
-            _logger.error(f"An error occurred while deleting browser extension '{extension_id}': {e}")
+            _logger.error(
+                f"An error occurred while deleting browser extension '{extension_id}': {e}"
+            )
             return False
-    
+
     def create_extension_option(self, extension_ids: List[str]) -> ExtensionOption:
         """
         Create an ExtensionOption for the current context with specified extension IDs.
-        
+
         This is a convenience method that creates an ExtensionOption using the current
         service's context_id and the provided extension IDs. This option can then be
         used with BrowserContext for browser session creation.
-        
+
         Args:
             extension_ids (List[str]): List of extension IDs to include in the option.
                                      These should be extensions that exist in the current context.
-        
+
         Returns:
             ExtensionOption: Configuration object for browser extension integration.
-        
+
         Raises:
             ValueError: If extension_ids is empty or invalid.
 
@@ -473,22 +515,18 @@ class AsyncExtensionsService:
         # Warning: This method assumes context_id is available. If _ensure_context hasn't been called
         # (via another method), context_id might be None or just the provided string.
         # Ideally, one should use this after ensure_context, or we check if we have an ID.
-        
+
         cid = self.context_id or self._provided_context_id
         if not cid:
-             # This is a corner case where init was called with empty string and no async method called yet.
-             # We cannot validly create ExtensionOption without a context ID.
-             # But we cannot await here.
-             # For now, we can rely on the user providing an ID or calling an async method first.
-             # Or we can raise an error suggesting they await something or provide an ID.
-             # However, backward compatibility with Sync might expect immediate return.
-             # In Sync version, init does IO, so context_id is always set.
-             # In Async version, we deferred IO.
-             # So users MUST await something before getting context_id if they relied on auto-gen.
-             pass
+            # This is a corner case where init was called with empty string and no async method called yet.
+            # We cannot validly create ExtensionOption without a context ID.
+            # But we cannot await here.
+            # For now, we can rely on the user providing an ID or calling an async method first.
+            # Or we can raise an error suggesting they await something or provide an ID.
+            # However, backward compatibility with Sync might expect immediate return.
+            # In Sync version, init does IO, so context_id is always set.
+            # In Async version, we deferred IO.
+            # So users MUST await something before getting context_id if they relied on auto-gen.
+            pass
 
-        return ExtensionOption(
-            context_id=cid,
-            extension_ids=extension_ids
-        )
-
+        return ExtensionOption(context_id=cid, extension_ids=extension_ids)

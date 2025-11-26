@@ -1,17 +1,23 @@
-from typing import Any, Dict, Tuple, List, Optional, Union, Callable
-import json
-import threading
-import os
 import asyncio
+import json
+import os
+import threading
 import time
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import httpx
 
-from dataclasses import dataclass
-
+from agentbay._common.exceptions import AgentBayError, FileError
+from agentbay._common.models import ApiResponse, BoolResult
 from agentbay.api.base_service import BaseService
-from ..logger import get_logger, _log_api_response, _log_operation_start, _log_operation_success
-from agentbay.exceptions import AgentBayError, FileError
-from agentbay.model import ApiResponse, BoolResult
+
+from .._common.logger import (
+    _log_api_response,
+    _log_operation_start,
+    _log_operation_success,
+    get_logger,
+)
 
 # Initialize logger for this module
 _logger = get_logger("filesystem")
@@ -21,6 +27,7 @@ _logger = get_logger("filesystem")
 @dataclass
 class UploadResult:
     """Result structure for file upload operations."""
+
     success: bool
     request_id_upload_url: Optional[str]
     request_id_sync: Optional[str]
@@ -30,9 +37,11 @@ class UploadResult:
     path: str
     error: Optional[str] = None
 
+
 @dataclass
 class DownloadResult:
     """Result structure for file download operations."""
+
     success: bool
     request_id_download_url: Optional[str]
     request_id_sync: Optional[str]
@@ -41,6 +50,7 @@ class DownloadResult:
     path: str
     local_path: str
     error: Optional[str] = None
+
 
 class AsyncFileTransfer:
     """
@@ -56,8 +66,8 @@ class AsyncFileTransfer:
 
     def __init__(
         self,
-        agent_bay,           # AgentBay instance (for using agent_bay.context service)
-        session,             # Created session object (for session.context.sync/info)
+        agent_bay,  # AgentBay instance (for using agent_bay.context service)
+        session,  # Created session object (for session.context.sync/info)
         *,
         http_timeout: float = 60.0,
         follow_redirects: bool = True,
@@ -79,7 +89,15 @@ class AsyncFileTransfer:
         self._context_id: str = self._session.file_transfer_context_id
 
         # Task completion states (for compatibility)
-        self._finished_states = {"success", "successful", "ok", "finished", "done", "completed", "complete"}
+        self._finished_states = {
+            "success",
+            "successful",
+            "ok",
+            "finished",
+            "done",
+            "completed",
+            "complete",
+        }
 
     async def upload(
         self,
@@ -90,7 +108,9 @@ class AsyncFileTransfer:
         wait: bool = True,
         wait_timeout: float = 30.0,
         poll_interval: float = 1.5,
-        progress_cb: Optional[Callable[[int], None]] = None,  # Callback with cumulative bytes transferred
+        progress_cb: Optional[
+            Callable[[int], None]
+        ] = None,  # Callback with cumulative bytes transferred
     ) -> UploadResult:
         """
         Upload workflow:
@@ -104,23 +124,40 @@ class AsyncFileTransfer:
         # 0. Parameter validation
         if not os.path.isfile(local_path):
             return UploadResult(
-                success=False, request_id_upload_url=None, request_id_sync=None,
-                http_status=None, etag=None, bytes_sent=0, path=remote_path,
-                error=f"Local file not found: {local_path}"
+                success=False,
+                request_id_upload_url=None,
+                request_id_sync=None,
+                http_status=None,
+                etag=None,
+                bytes_sent=0,
+                path=remote_path,
+                error=f"Local file not found: {local_path}",
             )
         if self._context_id is None:
             return UploadResult(
-                success=False, request_id_upload_url=None, request_id_sync=None,
-                http_status=None, etag=None, bytes_sent=0, path=remote_path,
-                error="No context ID"
+                success=False,
+                request_id_upload_url=None,
+                request_id_sync=None,
+                http_status=None,
+                etag=None,
+                bytes_sent=0,
+                path=remote_path,
+                error="No context ID",
             )
         # 1. Get pre-signed upload URL
-        url_res = await self._context_svc.get_file_upload_url(self._context_id, remote_path)
+        url_res = await self._context_svc.get_file_upload_url(
+            self._context_id, remote_path
+        )
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
             return UploadResult(
-                success=False, request_id_upload_url=getattr(url_res, "request_id", None), request_id_sync=None,
-                http_status=None, etag=None, bytes_sent=0, path=remote_path,
-                error=f"get_file_upload_url failed: {getattr(url_res, 'message', 'unknown error')}"
+                success=False,
+                request_id_upload_url=getattr(url_res, "request_id", None),
+                request_id_sync=None,
+                http_status=None,
+                etag=None,
+                bytes_sent=0,
+                path=remote_path,
+                error=f"get_file_upload_url failed: {getattr(url_res, 'message', 'unknown error')}",
             )
 
         upload_url = url_res.url
@@ -167,7 +204,9 @@ class AsyncFileTransfer:
         req_id_sync = None
         try:
             print("Triggering sync to cloud disk")
-            req_id_sync = await self._await_sync("download", remote_path, self._context_id)
+            req_id_sync = await self._await_sync(
+                "download", remote_path, self._context_id
+            )
         except Exception as e:
             return UploadResult(
                 success=False,
@@ -222,7 +261,9 @@ class AsyncFileTransfer:
         wait: bool = True,
         wait_timeout: float = 300.0,
         poll_interval: float = 1.5,
-        progress_cb: Optional[Callable[[int], None]] = None,  # Callback with cumulative bytes received
+        progress_cb: Optional[
+            Callable[[int], None]
+        ] = None,  # Callback with cumulative bytes received
     ) -> DownloadResult:
         """
         Download workflow:
@@ -236,11 +277,22 @@ class AsyncFileTransfer:
         """
         # Use default context if none provided
         if self._context_id is None:
-            return DownloadResult(success=False, request_id_download_url=None, request_id_sync=None, http_status=None, bytes_received=0, path=remote_path, local_path=local_path, error="No context ID")
+            return DownloadResult(
+                success=False,
+                request_id_download_url=None,
+                request_id_sync=None,
+                http_status=None,
+                bytes_received=0,
+                path=remote_path,
+                local_path=local_path,
+                error="No context ID",
+            )
         # 1. Trigger cloud disk to OSS download sync
         req_id_sync = None
         try:
-            req_id_sync = await self._await_sync("upload", remote_path, self._context_id)
+            req_id_sync = await self._await_sync(
+                "upload", remote_path, self._context_id
+            )
         except Exception as e:
             return DownloadResult(
                 success=False,
@@ -275,7 +327,9 @@ class AsyncFileTransfer:
                 )
 
         # 2. Get pre-signed download URL
-        url_res = await self._context_svc.get_file_download_url(self._context_id, remote_path)
+        url_res = await self._context_svc.get_file_download_url(
+            self._context_id, remote_path
+        )
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
             return DownloadResult(
                 success=False,
@@ -342,7 +396,9 @@ class AsyncFileTransfer:
             request_id_download_url=req_id_download,
             request_id_sync=req_id_sync,
             http_status=200,
-            bytes_received=os.path.getsize(local_path) if os.path.exists(local_path) else 0,
+            bytes_received=(
+                os.path.getsize(local_path) if os.path.exists(local_path) else 0
+            ),
             path=remote_path,
             local_path=local_path,
             error=None,
@@ -350,7 +406,9 @@ class AsyncFileTransfer:
 
     # ========== Internal Utilities ==========
 
-    async def _await_sync(self, mode: str, remote_path: str = "", context_id: str = "") -> Optional[str]:
+    async def _await_sync(
+        self, mode: str, remote_path: str = "", context_id: str = ""
+    ) -> Optional[str]:
         """
         Compatibility wrapper for session.context.sync_context which may be sync or async:
         - Try async call first
@@ -360,15 +418,26 @@ class AsyncFileTransfer:
         mode = mode.lower().strip()
 
         sync_fn = getattr(self._session.context, "sync_context")
-        print(f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})")
+        print(
+            f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})"
+        )
         # Try as coroutine with mode, path, and context_id parameters
         try:
-            result = sync_fn(mode=mode, path=remote_path if remote_path else None, context_id=context_id if context_id else None)
+            result = sync_fn(
+                mode=mode,
+                path=remote_path if remote_path else None,
+                context_id=context_id if context_id else None,
+            )
             if asyncio.iscoroutine(result):
                 out = await result
             else:
                 # Sync: run in thread pool
-                out = await asyncio.to_thread(sync_fn, mode=mode, path=remote_path if remote_path else None, context_id=context_id if context_id else None)
+                out = await asyncio.to_thread(
+                    sync_fn,
+                    mode=mode,
+                    path=remote_path if remote_path else None,
+                    context_id=context_id if context_id else None,
+                )
         except TypeError:
             # Backend may not support all parameters, try with mode and path only
             try:
@@ -377,7 +446,9 @@ class AsyncFileTransfer:
                     out = await result
                 else:
                     # Sync: run in thread pool
-                    out = await asyncio.to_thread(sync_fn, mode=mode, path=remote_path if remote_path else None)
+                    out = await asyncio.to_thread(
+                        sync_fn, mode=mode, path=remote_path if remote_path else None
+                    )
             except TypeError:
                 # Backend may not support mode or path parameter
                 try:
@@ -420,7 +491,9 @@ class AsyncFileTransfer:
                 info_fn = getattr(self._session.context, "info")
                 # Try calling with filter parameters
                 try:
-                    res = info_fn(context_id=context_id, path=remote_path, task_type=task_type)
+                    res = info_fn(
+                        context_id=context_id, path=remote_path, task_type=task_type
+                    )
                 except TypeError:
                     res = info_fn()
 
@@ -436,7 +509,11 @@ class AsyncFileTransfer:
                     status = getattr(item, "status", None)
                     err = getattr(item, "error_message", None)
 
-                    if cid == context_id and path == remote_path and (task_type is None or ttype == task_type):
+                    if (
+                        cid == context_id
+                        and path == remote_path
+                        and (task_type is None or ttype == task_type)
+                    ):
                         if err:
                             return False, f"Task error: {err}"
                         if status and status.lower() in self._finished_states:
@@ -507,6 +584,7 @@ class AsyncFileTransfer:
                                 except Exception:
                                     pass
         return 200, bytes_recv
+
 
 class FileChangeEvent:
     """Represents a single file change event."""
@@ -814,7 +892,7 @@ class AsyncFileSystem(BaseService):
         """
         if self._file_transfer is None:
             # Get the agent_bay instance from the session
-            agent_bay = getattr(self.session, 'agent_bay', None)
+            agent_bay = getattr(self.session, "agent_bay", None)
             if agent_bay is None:
                 raise FileError("AsyncFileTransfer requires an AgentBay instance")
 
@@ -1384,7 +1462,7 @@ class AsyncFileSystem(BaseService):
             if result.success:
                 matching_files = result.data.strip().split("\n") if result.data else []
                 # "No matches found" is a successful search with no results, not an error
-                if matching_files == ['No matches found']:
+                if matching_files == ["No matches found"]:
                     return FileSearchResult(
                         request_id=result.request_id,
                         success=True,
@@ -1531,7 +1609,7 @@ class AsyncFileSystem(BaseService):
                 chunk_result = await self._read_file_chunk(path, offset, length)
                 _log_operation_start(
                     f"ReadLargeFile chunk {chunk_count + 1}",
-                    f"{length} bytes at offset {offset}/{file_size}"
+                    f"{length} bytes at offset {offset}/{file_size}",
                 )
 
                 if not chunk_result.success:
@@ -1602,7 +1680,7 @@ class AsyncFileSystem(BaseService):
         content_len = len(content)
         _log_operation_start(
             f"WriteLargeFile to {path}",
-            f"total size: {content_len} bytes, chunk size: {chunk_size} bytes"
+            f"total size: {content_len} bytes, chunk size: {chunk_size} bytes",
         )
 
         # If the content length is less than the chunk size, write it directly
@@ -1690,9 +1768,13 @@ class AsyncFileSystem(BaseService):
                         self.session.file_transfer_context_id, remote_path
                     )
                     if not delete_result.success:
-                        _logger.warning(f"Failed to delete uploaded file from OSS: {delete_result.error_message}")
+                        _logger.warning(
+                            f"Failed to delete uploaded file from OSS: {delete_result.error_message}"
+                        )
                 except Exception as delete_error:
-                    _logger.warning(f"Error deleting uploaded file from OSS: {delete_error}")
+                    _logger.warning(
+                        f"Error deleting uploaded file from OSS: {delete_error}"
+                    )
             return result
         except Exception as e:
             return UploadResult(
@@ -1760,9 +1842,13 @@ class AsyncFileSystem(BaseService):
                         self.session.file_transfer_context_id, remote_path
                     )
                     if not delete_result.success:
-                        _logger.warning(f"Failed to delete downloaded file from OSS: {delete_result.error_message}")
+                        _logger.warning(
+                            f"Failed to delete downloaded file from OSS: {delete_result.error_message}"
+                        )
                 except Exception as delete_error:
-                    _logger.warning(f"Error deleting downloaded file from OSS: {delete_error}")
+                    _logger.warning(
+                        f"Error deleting downloaded file from OSS: {delete_error}"
+                    )
             return result
         except Exception as e:
             return DownloadResult(
@@ -1843,7 +1929,7 @@ class AsyncFileSystem(BaseService):
                 return FileChangeResult(
                     request_id=result.request_id,
                     success=False,
-                    raw_data=getattr(result, 'data', ''),
+                    raw_data=getattr(result, "data", ""),
                     error_message=result.error_message or "Failed to get file change",
                 )
         except Exception as e:
@@ -1897,8 +1983,13 @@ class AsyncFileSystem(BaseService):
             while not stop_event.is_set():
                 try:
                     # Check if session is still valid
-                    if hasattr(self.session, '_is_expired') and self.session._is_expired():
-                        print(f"Session expired, stopping directory monitoring for: {path}")
+                    if (
+                        hasattr(self.session, "_is_expired")
+                        and self.session._is_expired()
+                    ):
+                        print(
+                            f"Session expired, stopping directory monitoring for: {path}"
+                        )
                         stop_event.set()
                         break
 
@@ -1922,8 +2013,13 @@ class AsyncFileSystem(BaseService):
                     else:
                         # Check if error is due to session expiry
                         error_msg = result.error_message or ""
-                        if "session" in error_msg.lower() and ("expired" in error_msg.lower() or "invalid" in error_msg.lower()):
-                            print(f"Session expired, stopping directory monitoring for: {path}")
+                        if "session" in error_msg.lower() and (
+                            "expired" in error_msg.lower()
+                            or "invalid" in error_msg.lower()
+                        ):
+                            print(
+                                f"Session expired, stopping directory monitoring for: {path}"
+                            )
                             stop_event.set()
                             break
                         print(f"Error monitoring directory: {result.error_message}")
@@ -1935,8 +2031,12 @@ class AsyncFileSystem(BaseService):
                     print(f"Unexpected error in directory monitoring: {e}")
                     # Check if exception indicates session expiry
                     error_str = str(e).lower()
-                    if "session" in error_str and ("expired" in error_str or "invalid" in error_str):
-                        print(f"Session expired, stopping directory monitoring for: {path}")
+                    if "session" in error_str and (
+                        "expired" in error_str or "invalid" in error_str
+                    ):
+                        print(
+                            f"Session expired, stopping directory monitoring for: {path}"
+                        )
                         stop_event.set()
                         break
                     stop_event.wait(interval)
@@ -1951,7 +2051,7 @@ class AsyncFileSystem(BaseService):
         monitor_thread = threading.Thread(
             target=_monitor_directory,
             name=f"DirectoryWatcher-{path.replace('/', '_')}",
-            daemon=True
+            daemon=True,
         )
 
         # Add stop_event as an attribute to the thread for easy access

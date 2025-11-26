@@ -1,8 +1,8 @@
+import asyncio
 import json
 import os
 import random
 import string
-import asyncio
 import time
 from enum import Enum
 from threading import Lock
@@ -11,39 +11,35 @@ from typing import Any, Dict, List, Optional, Union
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_tea_openapi.exceptions._client import ClientException
 
-from ..api.client import Client as mcp_client
-from ..api.models import (
-    CreateMcpSessionRequest,
-    GetSessionRequest,
-    ListSessionRequest,
+from .._common.config import _BROWSER_DATA_PATH, _load_config
+from .._common.logger import (
+    _log_api_call,
+    _log_api_response,
+    _log_api_response_with_details,
+    _log_info_with_color,
+    _log_operation_error,
+    _log_operation_start,
+    _log_operation_success,
+    _log_warning,
+    _mask_sensitive_data,
+    get_logger,
 )
-from ..config import _load_config, _BROWSER_DATA_PATH
-from .context import AsyncContextService
-from ..model import (
+from .._common.models import (
     DeleteResult,
     GetSessionData,
     GetSessionResult,
     SessionListResult,
     SessionPauseResult,
-    SessionResumeResult,
     SessionResult,
+    SessionResumeResult,
     extract_request_id,
 )
+from .._common.version import __is_release__, __version__
+from ..api.client import Client as mcp_client
+from ..api.models import CreateMcpSessionRequest, GetSessionRequest, ListSessionRequest
+from .context import AsyncContextService
 from .session import AsyncSession
 from .session_params import CreateSessionParams, ListSessionParams
-from ..version import __version__, __is_release__
-from ..logger import (
-    get_logger,
-    _log_api_call,
-    _log_api_response,
-    _log_api_response_with_details,
-    _log_operation_start,
-    _log_operation_success,
-    _log_operation_error,
-    _log_warning,
-    _mask_sensitive_data,
-    _log_info_with_color,
-)
 
 # Initialize logger for this module
 _logger = get_logger("agentbay")
@@ -165,7 +161,10 @@ class AsyncAgentBay:
             return str(obj)
 
     def _build_session_from_response(
-        self, response_data: dict, params: CreateSessionParams, record_context_id: Optional[str] = None
+        self,
+        response_data: dict,
+        params: CreateSessionParams,
+        record_context_id: Optional[str] = None,
     ) -> AsyncSession:
         """
         Build Session object from API response data.
@@ -368,7 +367,9 @@ class AsyncAgentBay:
             _logger.error(f"❌ Error updating browser replay context: {e}")
             # Continue execution even if context update fails
 
-    async def create(self, params: Optional[CreateSessionParams] = None) -> SessionResult:
+    async def create(
+        self, params: Optional[CreateSessionParams] = None
+    ) -> SessionResult:
         """
         Create a new session in the AgentBay cloud environment asynchronously.
 
@@ -425,7 +426,9 @@ class AsyncAgentBay:
             request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")
 
             # Add SDK stats for tracking
-            framework = params.framework if params and hasattr(params, 'framework') else ""
+            framework = (
+                params.framework if params and hasattr(params, "framework") else ""
+            )
             sdk_stats_json = f'{{"source":"sdk","sdk_language":"python","sdk_version":"{__version__}","is_release":{str(__is_release__).lower()},"framework":"{framework}"}}'
             request.sdk_stats = sdk_stats_json
 
@@ -441,9 +444,7 @@ class AsyncAgentBay:
 
             # Add context_syncs if provided
             if hasattr(params, "context_syncs") and params.context_syncs:
-                from ..api.models import (
-                    CreateMcpSessionRequestPersistenceDataList,
-                )
+                from ..api.models import CreateMcpSessionRequestPersistenceDataList
 
                 persistence_data_list = []
                 for cs in params.context_syncs:
@@ -465,15 +466,13 @@ class AsyncAgentBay:
 
             # Add BrowserContext as a ContextSync if provided
             if hasattr(params, "browser_context") and params.browser_context:
-                from ..api.models import (
-                    CreateMcpSessionRequestPersistenceDataList,
-                )
+                from ..api.models import CreateMcpSessionRequestPersistenceDataList
                 from .context_sync import (
+                    BWList,
+                    RecyclePolicy,
                     SyncPolicy,
                     UploadPolicy,
                     WhiteList,
-                    BWList,
-                    RecyclePolicy,
                 )
 
                 # Create a new SyncPolicy with default values for browser context
@@ -546,9 +545,7 @@ class AsyncAgentBay:
                 hasattr(params, "enable_browser_replay")
                 and params.enable_browser_replay
             ):
-                from ..api.models import (
-                    CreateMcpSessionRequestPersistenceDataList,
-                )
+                from ..api.models import CreateMcpSessionRequestPersistenceDataList
 
                 # Create browser recording persistence configuration
                 record_path = "/home/guest/record"
@@ -646,11 +643,8 @@ class AsyncAgentBay:
                 api_name="CreateSession",
                 request_id=request_id,
                 success=True,
-                key_fields={
-                    "session_id": session_id,
-                    "resource_url": resource_url
-                },
-                full_response=response_body
+                key_fields={"session_id": session_id, "resource_url": resource_url},
+                full_response=response_body,
             )
 
             # Build Session object from response data
@@ -675,7 +669,9 @@ class AsyncAgentBay:
             return SessionResult(request_id=request_id, success=True, session=session)
 
         except ClientException as e:
-            _log_operation_error("create_mcp_session - ClientException", str(e), exc_info=True)
+            _log_operation_error(
+                "create_mcp_session - ClientException", str(e), exc_info=True
+            )
             return SessionResult(
                 request_id="",
                 success=False,
@@ -852,9 +848,9 @@ class AsyncAgentBay:
                 key_fields={
                     "total_count": total_count,
                     "returned_count": len(session_ids),
-                    "has_more": "yes" if next_token else "no"
+                    "has_more": "yes" if next_token else "no",
                 },
-                full_response=response_body
+                full_response=response_body,
             )
 
             # Return SessionListResult with request ID and pagination info
@@ -876,7 +872,9 @@ class AsyncAgentBay:
                 error_message=f"Failed to list sessions: {e}",
             )
 
-    async def delete(self, session: AsyncSession, sync_context: bool = False) -> DeleteResult:
+    async def delete(
+        self, session: AsyncSession, sync_context: bool = False
+    ) -> DeleteResult:
         """
         Delete a session by session object asynchronously.
 
@@ -981,7 +979,7 @@ class AsyncAgentBay:
                     request_id=request_id,
                     success=success,
                     key_fields=key_fields,
-                    full_response=response_body
+                    full_response=response_body,
                 )
 
                 return GetSessionResult(
@@ -1073,6 +1071,7 @@ class AsyncAgentBay:
 
         # Create a default context for file transfer operations for the recovered session
         import time
+
         context_name = f"file-transfer-context-{int(time.time())}"
         context_result = await self.context.get(context_name, create=True)
         if context_result.success and context_result.context:
@@ -1091,7 +1090,9 @@ class AsyncAgentBay:
             session=session,
         )
 
-    async def pause(self, session: AsyncSession, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
+    async def pause(
+        self, session: AsyncSession, timeout: int = 600, poll_interval: float = 2.0
+    ) -> SessionPauseResult:
         """
         Asynchronously pause a session, putting it into a dormant state.
 
@@ -1148,26 +1149,30 @@ class AsyncAgentBay:
         # `AgentBay.pause_async` called `session.pause_async`.
         # I should probably add `pause_async` to `AsyncSession` as well, or implement it here.
         # Implementing here is fine as `AsyncSession` holds `client` via `agent_bay`.
-        
+
         try:
             request = open_api_models.PauseSessionAsyncRequest(
                 authorization=f"Bearer {self.api_key}",
                 session_id=session.session_id,
             )
-            
+
             _log_api_call("PauseSessionAsync", f"SessionId={session.session_id}")
-            
+
             response = await self.client.pause_session_async_async(request)
-            
+
             request_id = extract_request_id(response)
-            
+
             response_map = response.to_map()
             if not response_map:
-                 return SessionPauseResult(request_id=request_id, success=False, error_message="Invalid response format")
-            
+                return SessionPauseResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response format",
+                )
+
             body = response_map.get("body", {})
             success = body.get("Success", False)
-            
+
             if not success:
                 code = body.get("Code", "")
                 message = body.get("Message", "")
@@ -1176,11 +1181,11 @@ class AsyncAgentBay:
                     success=False,
                     error_message=f"[{code}] {message}",
                     code=code,
-                    message=message
+                    message=message,
                 )
-                
+
             return SessionPauseResult(request_id=request_id, success=True)
-            
+
         except Exception as e:
             _log_operation_error("pause_session_async", str(e), exc_info=True)
             return SessionPauseResult(
@@ -1189,7 +1194,9 @@ class AsyncAgentBay:
                 error_message=f"Failed to pause session {session.session_id}: {e}",
             )
 
-    async def resume(self, session: AsyncSession, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
+    async def resume(
+        self, session: AsyncSession, timeout: int = 600, poll_interval: float = 2.0
+    ) -> SessionResumeResult:
         """
         Asynchronously resume a session from a paused state.
 
@@ -1236,20 +1243,24 @@ class AsyncAgentBay:
                 authorization=f"Bearer {self.api_key}",
                 session_id=session.session_id,
             )
-            
+
             _log_api_call("ResumeSessionAsync", f"SessionId={session.session_id}")
-            
+
             response = await self.client.resume_session_async_async(request)
-            
+
             request_id = extract_request_id(response)
-            
+
             response_map = response.to_map()
             if not response_map:
-                 return SessionResumeResult(request_id=request_id, success=False, error_message="Invalid response format")
-            
+                return SessionResumeResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response format",
+                )
+
             body = response_map.get("body", {})
             success = body.get("Success", False)
-            
+
             if not success:
                 code = body.get("Code", "")
                 message = body.get("Message", "")
@@ -1258,11 +1269,11 @@ class AsyncAgentBay:
                     success=False,
                     error_message=f"[{code}] {message}",
                     code=code,
-                    message=message
+                    message=message,
                 )
-                
+
             return SessionResumeResult(request_id=request_id, success=True)
-            
+
         except Exception as e:
             _log_operation_error("resume_session_async", str(e), exc_info=True)
             return SessionResumeResult(
@@ -1270,4 +1281,3 @@ class AsyncAgentBay:
                 success=False,
                 error_message=f"Failed to resume session {session.session_id}: {e}",
             )
-

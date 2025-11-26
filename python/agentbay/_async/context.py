@@ -1,22 +1,33 @@
-from typing import TYPE_CHECKING, List, Optional, Any
-import json
 import asyncio
+import json
 import time
+from typing import TYPE_CHECKING, Any, List, Optional
 
+from agentbay._common.exceptions import AgentBayError, ClearanceTimeoutError
+from agentbay._common.models.response import (
+    ApiResponse,
+    OperationResult,
+    extract_request_id,
+)
 from agentbay.api.models import (
+    ClearContextRequest,
+    DeleteContextFileRequest,
     DeleteContextRequest,
-    GetContextRequest,
-    ListContextsRequest,
-    ModifyContextRequest,
     DescribeContextFilesRequest,
     GetContextFileDownloadUrlRequest,
     GetContextFileUploadUrlRequest,
-    DeleteContextFileRequest,
-    ClearContextRequest,
+    GetContextRequest,
+    ListContextsRequest,
+    ModifyContextRequest,
 )
-from agentbay.exceptions import AgentBayError, ClearanceTimeoutError
-from agentbay.model.response import ApiResponse, OperationResult, extract_request_id
-from ..logger import get_logger, _log_api_call, _log_api_response, _log_api_response_with_details, _log_operation_error
+
+from .._common.logger import (
+    _log_api_call,
+    _log_api_response,
+    _log_api_response_with_details,
+    _log_operation_error,
+    get_logger,
+)
 
 # Initialize logger for this module
 _logger = get_logger("context")
@@ -243,7 +254,9 @@ class AsyncContextService:
         """
         self.agent_bay = agent_bay
 
-    async def list(self, params: Optional[ContextListParams] = None) -> ContextListResult:
+    async def list(
+        self, params: Optional[ContextListParams] = None
+    ) -> ContextListResult:
         """
         Lists all available contexts with pagination support.
 
@@ -362,7 +375,7 @@ class AsyncContextService:
         self,
         name: Optional[str] = None,
         create: bool = False,
-        context_id: Optional[str] = None
+        context_id: Optional[str] = None,
     ) -> ContextResult:
         """
         Gets a context by name or ID. Optionally creates it if it doesn't exist.
@@ -404,7 +417,9 @@ class AsyncContextService:
             raise AgentBayError("Either 'name' or 'context_id' must be provided")
 
         if create and context_id is not None:
-            raise AgentBayError("Cannot create context using context_id. Use 'name' parameter when create=True")
+            raise AgentBayError(
+                "Cannot create context using context_id. Use 'name' parameter when create=True"
+            )
 
         try:
             # Log what we're sending to the server
@@ -672,7 +687,9 @@ class AsyncContextService:
             _logger.exception(f"Error calling DeleteContext: {e}")
             raise AgentBayError(f"Failed to delete context {context.id}: {e}")
 
-    async def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
+    async def get_file_download_url(
+        self, context_id: str, file_path: str
+    ) -> FileUrlResult:
         """
         Get a presigned download URL for a file in a context.
 
@@ -732,7 +749,9 @@ class AsyncContextService:
             error_message="",
         )
 
-    async def get_file_upload_url(self, context_id: str, file_path: str) -> FileUrlResult:
+    async def get_file_upload_url(
+        self, context_id: str, file_path: str
+    ) -> FileUrlResult:
         """
         Get a presigned upload URL for a file in a context.
 
@@ -982,7 +1001,9 @@ class AsyncContextService:
             )
         except Exception as e:
             _log_operation_error("ClearContext", str(e))
-            raise AgentBayError(f"Failed to start context clearing for {context_id}: {e}")
+            raise AgentBayError(
+                f"Failed to start context clearing for {context_id}: {e}"
+            )
 
     async def get_clear_status(self, context_id: str) -> ClearContextResult:
         """
@@ -1165,4 +1186,3 @@ class AsyncContextService:
         error_msg = f"Context clearing timed out after {elapsed:.2f} seconds"
         _logger.error(f"{error_msg}")
         raise ClearanceTimeoutError(error_msg)
-

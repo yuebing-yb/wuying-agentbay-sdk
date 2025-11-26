@@ -5,8 +5,8 @@ API response models for AgentBay SDK.
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
-    from agentbay.session import Session
     from agentbay.models.mcp_tool import McpTool
+    from agentbay.session import Session
 
 
 class ApiResponse:
@@ -248,7 +248,6 @@ class GetSessionData:
         self.contexts = contexts or []
 
 
-
 class GetSessionResult(ApiResponse):
     """Result of GetSession operations."""
 
@@ -451,3 +450,6 @@ class McpToolResult(ApiResponse):
         self.success = success
         self.data = data
         self.error_message = error_message
+
+
+Response = ApiResponse

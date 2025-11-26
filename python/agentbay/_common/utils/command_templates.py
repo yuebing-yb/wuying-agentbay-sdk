@@ -48,11 +48,15 @@ setprop persist.wy.pm_blacklist.switch 1
 
 # Hide navigation bar template
 # Hides the system navigation bar by setting system property and restarting SystemUI
-HIDE_NAVIGATION_BAR_TEMPLATE = "setprop persist.wy.hasnavibar false; killall com.android.systemui"
+HIDE_NAVIGATION_BAR_TEMPLATE = (
+    "setprop persist.wy.hasnavibar false; killall com.android.systemui"
+)
 
 # Show navigation bar template
 # Shows the system navigation bar by setting system property and restarting SystemUI
-SHOW_NAVIGATION_BAR_TEMPLATE = "setprop persist.wy.hasnavibar true; killall com.android.systemui"
+SHOW_NAVIGATION_BAR_TEMPLATE = (
+    "setprop persist.wy.hasnavibar true; killall com.android.systemui"
+)
 
 # Uninstall blacklist template
 # Parameters:

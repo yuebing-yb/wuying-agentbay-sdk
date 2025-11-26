@@ -4,17 +4,18 @@ Handles mouse operations, keyboard operations, window management,
 application management, and screen operations.
 """
 
-from enum import Enum
-from typing import List, Optional, Dict, Any, Union
-
-from .base_service import AsyncBaseService
-from ..exceptions import AgentBayError
-from ..model import BoolResult, OperationResult, ApiResponse
 import json
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+
+from .._common.exceptions import AgentBayError
+from .._common.models.response import ApiResponse, BoolResult, OperationResult
+from .base_service import AsyncBaseService
 
 
 class MouseButton(str, Enum):
     """Mouse button types for click and drag operations."""
+
     LEFT = "left"
     RIGHT = "right"
     MIDDLE = "middle"
@@ -23,6 +24,7 @@ class MouseButton(str, Enum):
 
 class ScrollDirection(str, Enum):
     """Scroll direction for scroll operations."""
+
     UP = "up"
     DOWN = "down"
     LEFT = "left"
@@ -31,7 +33,14 @@ class ScrollDirection(str, Enum):
 
 class InstalledApp:
     """Represents an installed application."""
-    def __init__(self, name: str, start_cmd: str, stop_cmd: Optional[str] = None, work_directory: Optional[str] = None):
+
+    def __init__(
+        self,
+        name: str,
+        start_cmd: str,
+        stop_cmd: Optional[str] = None,
+        work_directory: Optional[str] = None,
+    ):
         self.name = name
         self.start_cmd = start_cmd
         self.stop_cmd = stop_cmd
@@ -49,6 +58,7 @@ class InstalledApp:
 
 class Process:
     """Represents a running process."""
+
     def __init__(self, pname: str, pid: int, cmdline: Optional[str] = None):
         self.pname = pname
         self.pid = pid
@@ -65,6 +75,7 @@ class Process:
 
 class Window:
     """Represents a window in the system."""
+
     def __init__(
         self,
         window_id: int,
@@ -107,6 +118,7 @@ class Window:
 
 class InstalledAppListResult(ApiResponse):
     """Result of operations returning a list of InstalledApps."""
+
     def __init__(
         self,
         request_id: str = "",
@@ -122,6 +134,7 @@ class InstalledAppListResult(ApiResponse):
 
 class ProcessListResult(ApiResponse):
     """Result of operations returning a list of Processes."""
+
     def __init__(
         self,
         request_id: str = "",
@@ -137,6 +150,7 @@ class ProcessListResult(ApiResponse):
 
 class AppOperationResult(ApiResponse):
     """Result of application operations like start/stop."""
+
     def __init__(
         self,
         request_id: str = "",
@@ -150,6 +164,7 @@ class AppOperationResult(ApiResponse):
 
 class WindowListResult(ApiResponse):
     """Result of window listing operations."""
+
     def __init__(
         self,
         request_id: str = "",
@@ -165,6 +180,7 @@ class WindowListResult(ApiResponse):
 
 class WindowInfoResult(ApiResponse):
     """Result of window info operations."""
+
     def __init__(
         self,
         request_id: str = "",
@@ -195,7 +211,9 @@ class AsyncComputer(AsyncBaseService):
         super().__init__(session)
 
     # Mouse Operations
-    async def click_mouse(self, x: int, y: int, button: Union[MouseButton, str] = MouseButton.LEFT) -> BoolResult:
+    async def click_mouse(
+        self, x: int, y: int, button: Union[MouseButton, str] = MouseButton.LEFT
+    ) -> BoolResult:
         """
         Clicks the mouse at the specified screen coordinates.
 
@@ -244,7 +262,9 @@ class AsyncComputer(AsyncBaseService):
         button_str = button.value if isinstance(button, MouseButton) else button
         valid_buttons = [b.value for b in MouseButton]
         if button_str not in valid_buttons:
-            raise ValueError(f"Invalid button '{button_str}'. Must be one of {valid_buttons}")
+            raise ValueError(
+                f"Invalid button '{button_str}'. Must be one of {valid_buttons}"
+            )
 
         args = {"x": x, "y": y, "button": button_str}
         try:
@@ -327,7 +347,12 @@ class AsyncComputer(AsyncBaseService):
             )
 
     async def drag_mouse(
-        self, from_x: int, from_y: int, to_x: int, to_y: int, button: Union[MouseButton, str] = MouseButton.LEFT
+        self,
+        from_x: int,
+        from_y: int,
+        to_x: int,
+        to_y: int,
+        button: Union[MouseButton, str] = MouseButton.LEFT,
     ) -> BoolResult:
         """
         Drags the mouse from one point to another.
@@ -368,7 +393,9 @@ class AsyncComputer(AsyncBaseService):
         button_str = button.value if isinstance(button, MouseButton) else button
         valid_buttons = ["left", "right", "middle"]
         if button_str not in valid_buttons:
-            raise ValueError(f"Invalid button '{button_str}'. Must be one of {valid_buttons}")
+            raise ValueError(
+                f"Invalid button '{button_str}'. Must be one of {valid_buttons}"
+            )
 
         args = {
             "from_x": from_x,
@@ -403,7 +430,11 @@ class AsyncComputer(AsyncBaseService):
             )
 
     async def scroll(
-        self, x: int, y: int, direction: Union[ScrollDirection, str] = ScrollDirection.UP, amount: int = 1
+        self,
+        x: int,
+        y: int,
+        direction: Union[ScrollDirection, str] = ScrollDirection.UP,
+        amount: int = 1,
     ) -> BoolResult:
         """
         Scrolls the mouse wheel at the specified coordinates.
@@ -439,10 +470,14 @@ class AsyncComputer(AsyncBaseService):
         See Also:
             click_mouse, move_mouse
         """
-        direction_str = direction.value if isinstance(direction, ScrollDirection) else direction
+        direction_str = (
+            direction.value if isinstance(direction, ScrollDirection) else direction
+        )
         valid_directions = [d.value for d in ScrollDirection]
         if direction_str not in valid_directions:
-            raise ValueError(f"Invalid direction '{direction_str}'. Must be one of {valid_directions}")
+            raise ValueError(
+                f"Invalid direction '{direction_str}'. Must be one of {valid_directions}"
+            )
 
         args = {"x": x, "y": y, "direction": direction_str, "amount": amount}
         try:
@@ -1170,7 +1205,9 @@ class AsyncComputer(AsyncBaseService):
                 error_message=f"Failed to restore window: {str(e)}",
             )
 
-    async def resize_window(self, window_id: int, width: int, height: int) -> BoolResult:
+    async def resize_window(
+        self, window_id: int, width: int, height: int
+    ) -> BoolResult:
         """
         Resizes the specified window.
 
@@ -1333,7 +1370,10 @@ class AsyncComputer(AsyncBaseService):
 
     # Application Management Operations
     async def get_installed_apps(
-        self, start_menu: bool = True, desktop: bool = False, ignore_system_apps: bool = True
+        self,
+        start_menu: bool = True,
+        desktop: bool = False,
+        ignore_system_apps: bool = True,
     ) -> InstalledAppListResult:
         """
         Gets the list of installed applications.
@@ -1400,11 +1440,11 @@ class AsyncComputer(AsyncBaseService):
                     error_message=f"Failed to parse applications JSON: {e}",
                 )
         except Exception as e:
-            return InstalledAppListResult(
-                success=False, error_message=str(e)
-            )
+            return InstalledAppListResult(success=False, error_message=str(e))
 
-    async def start_app(self, start_cmd: str, work_directory: str = "", activity: str = "") -> ProcessListResult:
+    async def start_app(
+        self, start_cmd: str, work_directory: str = "", activity: str = ""
+    ) -> ProcessListResult:
         """
         Starts the specified application.
 
@@ -1647,4 +1687,3 @@ class AsyncComputer(AsyncBaseService):
             )
         except Exception as e:
             return AppOperationResult(success=False, error_message=str(e))
-

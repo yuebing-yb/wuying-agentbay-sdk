@@ -7,21 +7,25 @@ Handles touch operations, UI element interactions, application management, scree
 and mobile environment configuration operations.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from .base_service import BaseService
-from ..exceptions import AgentBayError, SessionError
-from ..model import BoolResult, OperationResult, ApiResponse
-from ..model.response import AdbUrlResult
-from .computer import (
-    InstalledAppListResult,
-    ProcessListResult,
-    AppOperationResult,
-    Process,
-    InstalledApp,
+from .._common.exceptions import AgentBayError, SessionError
+from .._common.logger import get_logger
+from .._common.models.response import (
+    AdbUrlResult,
+    ApiResponse,
+    BoolResult,
+    OperationResult,
 )
-from ..logger import get_logger
-from ..command import MOBILE_COMMAND_TEMPLATES
+from .._common.utils.command_templates import MOBILE_COMMAND_TEMPLATES
+from .base_service import BaseService
+from .computer import (
+    AppOperationResult,
+    InstalledApp,
+    InstalledAppListResult,
+    Process,
+    ProcessListResult,
+)
 
 # Initialize logger for this module
 _logger = get_logger("mobile")
@@ -29,6 +33,7 @@ _logger = get_logger("mobile")
 
 class UIElementListResult(ApiResponse):
     """Result of UI element listing operations."""
+
     def __init__(
         self,
         request_id: str = "",
@@ -308,6 +313,7 @@ class Mobile(BaseService):
 
             try:
                 import json
+
                 elements = json.loads(result.data)
                 return UIElementListResult(
                     request_id=request_id,
@@ -391,6 +397,7 @@ class Mobile(BaseService):
 
             try:
                 import json
+
                 elements = json.loads(result.data)
                 parsed_elements = [parse_element(element) for element in elements]
                 return UIElementListResult(
@@ -456,6 +463,7 @@ class Mobile(BaseService):
 
             try:
                 import json
+
                 apps_json = json.loads(result.data)
                 installed_apps = []
 
@@ -475,9 +483,7 @@ class Mobile(BaseService):
                     error_message=f"Failed to parse applications JSON: {e}",
                 )
         except Exception as e:
-            return InstalledAppListResult(
-                success=False, error_message=str(e)
-            )
+            return InstalledAppListResult(success=False, error_message=str(e))
 
     def start_app(
         self, start_cmd: str, work_directory: str = "", activity: str = ""
@@ -521,6 +527,7 @@ class Mobile(BaseService):
 
             try:
                 import json
+
                 processes_json = json.loads(result.data)
                 processes = []
 
@@ -652,30 +659,35 @@ class Mobile(BaseService):
         if not mobile_config:
             _logger.warning("No mobile configuration provided")
             return
-        
+
         # Configure resolution lock
         if mobile_config.lock_resolution is not None:
             self._set_resolution_lock(mobile_config.lock_resolution)
-        
+
         # Configure app management rules
         if mobile_config.app_manager_rule and mobile_config.app_manager_rule.rule_type:
             app_rule = mobile_config.app_manager_rule
             package_names = app_rule.app_package_name_list or []
-            
+
             if package_names and app_rule.rule_type in ["White", "Black"]:
                 if app_rule.rule_type == "White":
                     self._set_app_whitelist(package_names)
                 else:
                     self._set_app_blacklist(package_names)
             elif not package_names:
-                _logger.warning(f"No package names provided for {app_rule.rule_type} list")
-        
+                _logger.warning(
+                    f"No package names provided for {app_rule.rule_type} list"
+                )
+
         # Configure navigation bar visibility
         if mobile_config.hide_navigation_bar is not None:
             self._set_navigation_bar_visibility(mobile_config.hide_navigation_bar)
-        
+
         # Configure uninstall blacklist
-        if mobile_config.uninstall_blacklist and len(mobile_config.uninstall_blacklist) > 0:
+        if (
+            mobile_config.uninstall_blacklist
+            and len(mobile_config.uninstall_blacklist) > 0
+        ):
             self._set_uninstall_blacklist(mobile_config.uninstall_blacklist)
 
     def set_resolution_lock(self, enable: bool):
@@ -821,19 +833,21 @@ class Mobile(BaseService):
         try:
             # Build options JSON with adbkey_pub
             import json
+
             from ..api.models import GetAdbLinkRequest
+
             options_json = json.dumps({"adbkey_pub": adbkey_pub})
 
             # Call get_adb_link API
             # NOTE: We need to use the async version of the client method here, but it's on session.agent_bay.client
-            # The session.agent_bay.client is the sync/async client. 
+            # The session.agent_bay.client is the sync/async client.
             # In async session, session.agent_bay is AsyncAgentBay, and client is AsyncClient.
             # So we should await the method call.
-            
+
             request = GetAdbLinkRequest(
                 authorization=f"Bearer {self.session.agent_bay.api_key}",
                 session_id=self.session.session_id,
-                option=options_json
+                option=options_json,
             )
             response = self.session.agent_bay.client.get_adb_link(request)
 
@@ -841,7 +855,9 @@ class Mobile(BaseService):
             if response.body and response.body.success and response.body.data:
                 adb_url = response.body.data.url
                 request_id = response.body.request_id or ""
-                _logger.info(f"✅ get_adb_url completed successfully. RequestID: {request_id}")
+                _logger.info(
+                    f"✅ get_adb_url completed successfully. RequestID: {request_id}"
+                )
                 return AdbUrlResult(
                     request_id=request_id,
                     success=True,
@@ -869,19 +885,21 @@ class Mobile(BaseService):
                 error_message=error_msg,
             )
 
-    def _execute_template_command(self, template_name: str, params: Dict[str, Any], operation_name: str):
+    def _execute_template_command(
+        self, template_name: str, params: Dict[str, Any], operation_name: str
+    ):
         """Execute a command using template and parameters."""
         template = MOBILE_COMMAND_TEMPLATES.get(template_name)
         if not template:
             _logger.error(f"Template '{template_name}' not found")
             return
-            
+
         command = template.format(**params)
 
         _logger.info(f"Executing {operation_name}")
         # execute_command is async in AsyncCommand
         result = self.session.command.execute_command(command)
-        
+
         if result.success:
             _logger.info(f"✅ {operation_name} completed successfully")
         else:
@@ -896,8 +914,8 @@ class Mobile(BaseService):
     def _set_app_whitelist(self, package_names: List[str]):
         """Execute app whitelist command."""
         params = {
-            "package_list": '\n'.join(package_names),
-            "package_count": len(package_names)
+            "package_list": "\n".join(package_names),
+            "package_count": len(package_names),
         }
         operation_name = f"App whitelist configuration ({len(package_names)} packages)"
         self._execute_template_command("app_whitelist", params, operation_name)
@@ -905,8 +923,8 @@ class Mobile(BaseService):
     def _set_app_blacklist(self, package_names: List[str]):
         """Execute app blacklist command."""
         params = {
-            "package_list": '\n'.join(package_names),
-            "package_count": len(package_names)
+            "package_list": "\n".join(package_names),
+            "package_count": len(package_names),
         }
         operation_name = f"App blacklist configuration ({len(package_names)} packages)"
         self._execute_template_command("app_blacklist", params, operation_name)
@@ -920,11 +938,13 @@ class Mobile(BaseService):
     def _set_uninstall_blacklist(self, package_names: List[str]):
         """Execute uninstall blacklist command."""
         import time
+
         # Use newline-separated format for uninstall blacklist file content
         params = {
-            "package_list": '\n'.join(package_names),
-            "timestamp": str(int(time.time()))
+            "package_list": "\n".join(package_names),
+            "timestamp": str(int(time.time())),
         }
-        operation_name = f"Uninstall blacklist configuration ({len(package_names)} packages)"
+        operation_name = (
+            f"Uninstall blacklist configuration ({len(package_names)} packages)"
+        )
         self._execute_template_command("uninstall_blacklist", params, operation_name)
-

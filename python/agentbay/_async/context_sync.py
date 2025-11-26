@@ -1,7 +1,7 @@
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
-import re
 
 
 class UploadStrategy(Enum):
@@ -15,16 +15,17 @@ class DownloadStrategy(Enum):
 
     DOWNLOAD_ASYNC = "DownloadAsync"
 
+
 class UploadMode(Enum):
     """Upload mode for context synchronization"""
-    
+
     FILE = "File"
     ARCHIVE = "Archive"
 
 
 class Lifecycle(Enum):
     """Lifecycle options for recycle policy"""
-    
+
     LIFECYCLE_1DAY = "Lifecycle_1Day"
     LIFECYCLE_3DAYS = "Lifecycle_3Days"
     LIFECYCLE_5DAYS = "Lifecycle_5Days"
@@ -143,14 +144,18 @@ class ExtractPolicy:
         return cls()
 
     def __dict__(self):
-        return {"extract": self.extract, "deleteSrcFile": self.delete_src_file, "extractToCurrentFolder": self.extract_current_folder}
+        return {
+            "extract": self.extract,
+            "deleteSrcFile": self.delete_src_file,
+            "extractToCurrentFolder": self.extract_current_folder,
+        }
 
 
 @dataclass
 class RecyclePolicy:
     """
     Defines the recycle policy for context synchronization
-    
+
     Attributes:
         lifecycle: Defines how long the context data should be retained
             Available options:
@@ -172,7 +177,7 @@ class RecyclePolicy:
             - Multiple paths can be specified as a list
             Default: [""] (applies to all paths)
     """
-    
+
     lifecycle: Lifecycle = Lifecycle.LIFECYCLE_FOREVER
     paths: List[str] = field(default_factory=lambda: [""])
 
@@ -185,7 +190,7 @@ class RecyclePolicy:
                 f"Invalid lifecycle value: {self.lifecycle}. "
                 f"Valid values are: {', '.join(valid_values)}"
             )
-        
+
         # Validate that paths don't contain wildcard patterns
         for path in self.paths:
             if path and path.strip() != "" and self._contains_wildcard(path):
@@ -197,7 +202,7 @@ class RecyclePolicy:
     @staticmethod
     def _contains_wildcard(path: str) -> bool:
         """Check if path contains wildcard characters"""
-        return bool(re.search(r'[*?\[\]]', path))
+        return bool(re.search(r"[*?\[\]]", path))
 
     @classmethod
     def default(cls):
@@ -207,7 +212,7 @@ class RecyclePolicy:
     def __dict__(self):
         return {
             "lifecycle": self.lifecycle.value if self.lifecycle else None,
-            "paths": self.paths
+            "paths": self.paths,
         }
 
 
@@ -241,7 +246,7 @@ class WhiteList:
     @staticmethod
     def _contains_wildcard(path: str) -> bool:
         """Check if path contains wildcard characters"""
-        return bool(re.search(r'[*?\[\]]', path))
+        return bool(re.search(r"[*?\[\]]", path))
 
     def __dict__(self):
         return {"path": self.path, "excludePaths": self.exclude_paths}
@@ -379,4 +384,3 @@ class ContextSync:
         """Sets the policy"""
         self.policy = policy
         return self
-

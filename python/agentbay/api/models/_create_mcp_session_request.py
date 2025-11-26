@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-from darabonba.model import DaraModel 
-from agentbay.api import models as main_models 
+
 from typing import List, Optional
+
+from darabonba.model import DaraModel
+
+from agentbay.api import models as main_models
 
 
 class CreateMcpSessionRequest(DaraModel):
@@ -15,7 +18,9 @@ class CreateMcpSessionRequest(DaraModel):
         image_id: Optional[str] = None,
         labels: Optional[str] = None,
         mcp_policy_id: Optional[str] = None,
-        persistence_data_list: Optional[List[main_models.CreateMcpSessionRequestPersistenceDataList]] = None,
+        persistence_data_list: Optional[
+            List[main_models.CreateMcpSessionRequestPersistenceDataList]
+        ] = None,
         session_id: Optional[str] = None,
         vpc_resource: Optional[bool] = None,
         extra_configs: Optional[main_models.ExtraConfigs] = None,
@@ -36,7 +41,7 @@ class CreateMcpSessionRequest(DaraModel):
     def validate(self):
         if self.persistence_data_list:
             for v1 in self.persistence_data_list:
-                 if v1:
+                if v1:
                     v1.validate()
         if self.extra_configs:
             self.extra_configs.validate()
@@ -47,82 +52,83 @@ class CreateMcpSessionRequest(DaraModel):
         if _map is not None:
             result = _map
         if self.authorization is not None:
-            result['Authorization'] = self.authorization
+            result["Authorization"] = self.authorization
 
         if self.context_id is not None:
-            result['ContextId'] = self.context_id
+            result["ContextId"] = self.context_id
 
         if self.external_user_id is not None:
-            result['ExternalUserId'] = self.external_user_id
+            result["ExternalUserId"] = self.external_user_id
 
         if self.image_id is not None:
-            result['ImageId'] = self.image_id
+            result["ImageId"] = self.image_id
 
         if self.labels is not None:
-            result['Labels'] = self.labels
+            result["Labels"] = self.labels
 
         if self.mcp_policy_id is not None:
-            result['McpPolicyId'] = self.mcp_policy_id
+            result["McpPolicyId"] = self.mcp_policy_id
 
-        result['PersistenceDataList'] = []
+        result["PersistenceDataList"] = []
         if self.persistence_data_list is not None:
             for k1 in self.persistence_data_list:
-                result['PersistenceDataList'].append(k1.to_map() if k1 else None)
+                result["PersistenceDataList"].append(k1.to_map() if k1 else None)
 
         if self.session_id is not None:
-            result['SessionId'] = self.session_id
+            result["SessionId"] = self.session_id
 
         if self.vpc_resource is not None:
-            result['VpcResource'] = self.vpc_resource
+            result["VpcResource"] = self.vpc_resource
 
         if self.extra_configs is not None:
-            result['ExtraConfigs'] = self.extra_configs.to_map()
+            result["ExtraConfigs"] = self.extra_configs.to_map()
 
         if self.sdk_stats is not None:
-            result['SdkStats'] = self.sdk_stats
+            result["SdkStats"] = self.sdk_stats
 
         return result
 
     def from_map(self, m: Optional[dict] = None):
         m = m or dict()
-        if m.get('Authorization') is not None:
-            self.authorization = m.get('Authorization')
+        if m.get("Authorization") is not None:
+            self.authorization = m.get("Authorization")
 
-        if m.get('ContextId') is not None:
-            self.context_id = m.get('ContextId')
+        if m.get("ContextId") is not None:
+            self.context_id = m.get("ContextId")
 
-        if m.get('ExternalUserId') is not None:
-            self.external_user_id = m.get('ExternalUserId')
+        if m.get("ExternalUserId") is not None:
+            self.external_user_id = m.get("ExternalUserId")
 
-        if m.get('ImageId') is not None:
-            self.image_id = m.get('ImageId')
+        if m.get("ImageId") is not None:
+            self.image_id = m.get("ImageId")
 
-        if m.get('Labels') is not None:
-            self.labels = m.get('Labels')
+        if m.get("Labels") is not None:
+            self.labels = m.get("Labels")
 
-        if m.get('McpPolicyId') is not None:
-            self.mcp_policy_id = m.get('McpPolicyId')
+        if m.get("McpPolicyId") is not None:
+            self.mcp_policy_id = m.get("McpPolicyId")
 
         self.persistence_data_list = []
-        if m.get('PersistenceDataList') is not None:
-            for k1 in m.get('PersistenceDataList', []):
+        if m.get("PersistenceDataList") is not None:
+            for k1 in m.get("PersistenceDataList", []):
                 temp_model = main_models.CreateMcpSessionRequestPersistenceDataList()
                 self.persistence_data_list.append(temp_model.from_map(k1))
 
-        if m.get('SessionId') is not None:
-            self.session_id = m.get('SessionId')
+        if m.get("SessionId") is not None:
+            self.session_id = m.get("SessionId")
 
-        if m.get('VpcResource') is not None:
-            self.vpc_resource = m.get('VpcResource')
+        if m.get("VpcResource") is not None:
+            self.vpc_resource = m.get("VpcResource")
 
-        if m.get('ExtraConfigs') is not None:
+        if m.get("ExtraConfigs") is not None:
             temp_model = main_models.ExtraConfigs()
-            self.extra_configs = temp_model.from_map(m.get('ExtraConfigs'))
+            self.extra_configs = temp_model.from_map(m.get("ExtraConfigs"))
 
-        if m.get('SdkStats') is not None:
-            self.sdk_stats = m.get('SdkStats')
+        if m.get("SdkStats") is not None:
+            self.sdk_stats = m.get("SdkStats")
 
         return self
+
 
 class CreateMcpSessionRequestPersistenceDataList(DaraModel):
     def __init__(
@@ -144,30 +150,31 @@ class CreateMcpSessionRequestPersistenceDataList(DaraModel):
         if _map is not None:
             result = _map
         if self.context_id is not None:
-            result['ContextId'] = self.context_id
+            result["ContextId"] = self.context_id
 
         if self.path is not None:
-            result['Path'] = self.path
+            result["Path"] = self.path
 
         if self.policy is not None:
-            result['Policy'] = self.policy
+            result["Policy"] = self.policy
 
         return result
 
     def from_map(self, m: Optional[dict] = None):
         m = m or dict()
-        if m.get('ContextId') is not None:
-            self.context_id = m.get('ContextId')
+        if m.get("ContextId") is not None:
+            self.context_id = m.get("ContextId")
 
-        if m.get('Path') is not None:
-            self.path = m.get('Path')
+        if m.get("Path") is not None:
+            self.path = m.get("Path")
 
-        if m.get('Policy') is not None:
-            self.policy = m.get('Policy')
+        if m.get("Policy") is not None:
+            self.policy = m.get("Policy")
 
         return self
 
-class AppManagerRule(DaraModel):    
+
+class AppManagerRule(DaraModel):
     def __init__(
         self,
         rule_type: Optional[str] = None,
@@ -187,24 +194,24 @@ class AppManagerRule(DaraModel):
         _map = super().to_map()
         if _map is not None:
             result = _map
-        
+
         if self.rule_type is not None:
-            result['RuleType'] = self.rule_type
-        
-        result['AppPackageNameList'] = []
+            result["RuleType"] = self.rule_type
+
+        result["AppPackageNameList"] = []
         if self.app_package_name_list is not None:
-            result['AppPackageNameList'] = self.app_package_name_list
-        
+            result["AppPackageNameList"] = self.app_package_name_list
+
         return result
 
     def from_map(self, m: Optional[dict] = None):
         m = m or dict()
-        if m.get('RuleType') is not None:
-            self.rule_type = m.get('RuleType')
-        
-        if m.get('AppPackageNameList') is not None:
-            self.app_package_name_list = m.get('AppPackageNameList', [])
-        
+        if m.get("RuleType") is not None:
+            self.rule_type = m.get("RuleType")
+
+        if m.get("AppPackageNameList") is not None:
+            self.app_package_name_list = m.get("AppPackageNameList", [])
+
         return self
 
 
@@ -234,36 +241,36 @@ class MobileExtraConfig(DaraModel):
         _map = super().to_map()
         if _map is not None:
             result = _map
-        
+
         if self.lock_resolution is not None:
-            result['LockResolution'] = self.lock_resolution
-        
+            result["LockResolution"] = self.lock_resolution
+
         if self.app_manager_rule is not None:
-            result['AppManagerRule'] = self.app_manager_rule.to_map()
-        
+            result["AppManagerRule"] = self.app_manager_rule.to_map()
+
         if self.hide_navigation_bar is not None:
-            result['HideNavigationBar'] = self.hide_navigation_bar
-        
+            result["HideNavigationBar"] = self.hide_navigation_bar
+
         if self.uninstall_blacklist is not None:
-            result['UninstallBlacklist'] = self.uninstall_blacklist
-        
+            result["UninstallBlacklist"] = self.uninstall_blacklist
+
         return result
 
     def from_map(self, m: Optional[dict] = None):
         m = m or dict()
-        if m.get('LockResolution') is not None:
-            self.lock_resolution = m.get('LockResolution')
-        
-        if m.get('AppManagerRule') is not None:
+        if m.get("LockResolution") is not None:
+            self.lock_resolution = m.get("LockResolution")
+
+        if m.get("AppManagerRule") is not None:
             temp_model = AppManagerRule()
-            self.app_manager_rule = temp_model.from_map(m.get('AppManagerRule'))
-        
-        if m.get('HideNavigationBar') is not None:
-            self.hide_navigation_bar = m.get('HideNavigationBar')
-        
-        if m.get('UninstallBlacklist') is not None:
-            self.uninstall_blacklist = m.get('UninstallBlacklist', [])
-        
+            self.app_manager_rule = temp_model.from_map(m.get("AppManagerRule"))
+
+        if m.get("HideNavigationBar") is not None:
+            self.hide_navigation_bar = m.get("HideNavigationBar")
+
+        if m.get("UninstallBlacklist") is not None:
+            self.uninstall_blacklist = m.get("UninstallBlacklist", [])
+
         return self
 
 
@@ -283,17 +290,16 @@ class ExtraConfigs(DaraModel):
         _map = super().to_map()
         if _map is not None:
             result = _map
-        
+
         if self.mobile is not None:
-            result['Mobile'] = self.mobile.to_map()
-        
+            result["Mobile"] = self.mobile.to_map()
+
         return result
 
     def from_map(self, m: Optional[dict] = None):
         m = m or dict()
-        if m.get('Mobile') is not None:
+        if m.get("Mobile") is not None:
             temp_model = MobileExtraConfig()
-            self.mobile = temp_model.from_map(m.get('Mobile'))
-        
-        return self
+            self.mobile = temp_model.from_map(m.get("Mobile"))
 
+        return self

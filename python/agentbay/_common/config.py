@@ -1,12 +1,24 @@
 import json
 import os
-from typing import Any, Dict, Optional
-import dotenv
 from pathlib import Path
-from agentbay.logger import get_logger
+from typing import Any, Dict, Optional
+
+import dotenv
+
+from .logger import get_logger
 
 # Initialize _logger for this module
 _logger = get_logger("config")
+
+
+class Config:
+    """
+    Configuration object for AgentBay client.
+    """
+
+    def __init__(self, endpoint: str, timeout_ms: int):
+        self.endpoint = endpoint
+        self.timeout_ms = timeout_ms
 
 
 def _default_config() -> Dict[str, Any]:
@@ -138,6 +150,8 @@ def _load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
             try:
                 config["timeout_ms"] = int(timeout_ms)
             except ValueError:
-                _logger.warning(f"Invalid AGENTBAY_TIMEOUT_MS value: {timeout_ms}, using default")
+                _logger.warning(
+                    f"Invalid AGENTBAY_TIMEOUT_MS value: {timeout_ms}, using default"
+                )
 
     return config

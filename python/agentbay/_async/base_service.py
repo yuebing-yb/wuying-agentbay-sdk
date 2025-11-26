@@ -1,22 +1,23 @@
+import asyncio
 import json
-import requests
-import time
 import random
 import string
-import asyncio
+import time
 from typing import Any, Dict
 
-from ..api.models import CallMcpToolRequest
-from ..exceptions import AgentBayError
-from ..model import OperationResult, extract_request_id
-from ..logger import (
-    get_logger,
+import requests
+
+from .._common.exceptions import AgentBayError
+from .._common.logger import (
     _log_api_call,
     _log_api_response,
     _log_api_response_with_details,
-    _log_operation_error,
     _log_code_execution_output,
+    _log_operation_error,
+    get_logger,
 )
+from .._common.models import OperationResult, extract_request_id
+from ..api.models import CallMcpToolRequest
 
 # Initialize _logger for this module
 _logger = get_logger("base_service")
@@ -97,8 +98,7 @@ class AsyncBaseService:
             # Send HTTP request
             # Use asyncio.to_thread for blocking requests.get
             response = await asyncio.to_thread(
-                requests.get,
-                base_url, params=params, headers=headers, timeout=30
+                requests.get, base_url, params=params, headers=headers, timeout=30
             )
             response.raise_for_status()
 
@@ -113,12 +113,16 @@ class AsyncBaseService:
                     try:
                         data_map = json.loads(response_data["data"])
                         if "result" in data_map:
-                            _log_code_execution_output(request_id, json.dumps(data_map["result"]))
+                            _log_code_execution_output(
+                                request_id, json.dumps(data_map["result"])
+                            )
                     except json.JSONDecodeError:
                         pass
                 elif isinstance(response_data["data"], dict):
                     if "result" in response_data["data"]:
-                        _log_code_execution_output(request_id, json.dumps(response_data["data"]["result"]))
+                        _log_code_execution_output(
+                            request_id, json.dumps(response_data["data"]["result"])
+                        )
 
             # Log API response with key details
             _log_api_response_with_details(
@@ -126,7 +130,7 @@ class AsyncBaseService:
                 request_id=request_id,
                 success=True,
                 key_fields={"tool": tool_name},
-                full_response=response_str
+                full_response=response_str,
             )
 
             # Extract the actual result from the nested VPC response structure
@@ -162,7 +166,9 @@ class AsyncBaseService:
 
         except requests.RequestException as e:
             sanitized_error = self._sanitize_error(str(e))
-            _log_operation_error(f"CallMcpTool (VPC) - {tool_name}", sanitized_error, exc_info=True)
+            _log_operation_error(
+                f"CallMcpTool (VPC) - {tool_name}", sanitized_error, exc_info=True
+            )
             return OperationResult(
                 request_id="",
                 success=False,
@@ -205,7 +211,7 @@ class AsyncBaseService:
                 args=args_json,
                 auto_gen_session=auto_gen_session,
             )
-            
+
             # Async call
             response = await self.session._get_client().call_mcp_tool_async(
                 request, read_timeout=read_timeout, connect_timeout=connect_timeout
@@ -246,7 +252,11 @@ class AsyncBaseService:
 
             # For run_code tool, extract and log the actual code execution output BEFORE parsing
             # But only if it's not an error response
-            if name == "run_code" and body.get("Data") and not body.get("Data", {}).get("isError", False):
+            if (
+                name == "run_code"
+                and body.get("Data")
+                and not body.get("Data", {}).get("isError", False)
+            ):
                 data_str = json.dumps(body["Data"], ensure_ascii=False)
                 _log_code_execution_output(request_id, data_str)
 
@@ -258,7 +268,7 @@ class AsyncBaseService:
                 request_id=request_id,
                 success=True,
                 key_fields={"tool": name},
-                full_response=response_body
+                full_response=response_body,
             )
 
             return OperationResult(request_id=request_id, success=True, data=result)
@@ -383,4 +393,3 @@ class AsyncBaseService:
                 AgentBayError(f"Error parsing response body: {e}")
             )
             raise handled_error
-

@@ -1,7 +1,7 @@
+from .._common.exceptions import AgentBayError, CommandError
+from .._common.logger import get_logger
+from .._common.models.response import ApiResponse
 from .base_service import AsyncBaseService
-from ..exceptions import AgentBayError, CommandError
-from ..model import ApiResponse
-from ..logger import get_logger
 
 # Initialize _logger for this module
 _logger = get_logger("code")
@@ -84,7 +84,7 @@ class AsyncCode(AsyncBaseService):
             Execute Python code in a code execution environment::
 
                 from agentbay import AgentBay
-                from agentbay.session_params import CreateSessionParams
+                from agentbay._common.params.session_params import CreateSessionParams
 
                 agent_bay = AgentBay(api_key="your_api_key")
                 result = await agent_bay.create(CreateSessionParams(image_id="code_latest"))
@@ -128,4 +128,3 @@ class AsyncCode(AsyncBaseService):
                 success=False,
                 error_message=f"Failed to run code: {e}",
             )
-

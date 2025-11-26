@@ -5,41 +5,46 @@ import json
 import time
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from ..logger import (
-    get_logger,
+from .._common.exceptions import SessionError
+from .._common.logger import (
     _log_api_call,
     _log_api_response_with_details,
+    _log_info_with_color,
+    _log_operation_error,
     _log_operation_start,
     _log_operation_success,
-    _log_operation_error,
     _log_warning,
-    _log_info_with_color,
+    get_logger,
 )
-
+from .._common.models import (
+    DeleteResult,
+    McpToolResult,
+    OperationResult,
+    SessionPauseResult,
+    SessionResumeResult,
+    extract_request_id,
+)
 from ..api.models import (
+    CallMcpToolRequest,
     GetLabelRequest,
     GetLinkRequest,
     GetLinkResponse,
     GetMcpResourceRequest,
-    ReleaseMcpSessionRequest,
-    SetLabelRequest,
     ListMcpToolsRequest,
     PauseSessionAsyncRequest,
+    ReleaseMcpSessionRequest,
     ResumeSessionAsyncRequest,
-    CallMcpToolRequest,
+    SetLabelRequest,
 )
+from .agent import Agent
+from .browser import Browser
 from .code import Code
 from .command import Command
 from .computer import Computer
-from ..exceptions import SessionError
+from .context_manager import ContextManager
 from .filesystem import FileSystem
 from .mobile import Mobile
-from ..model import DeleteResult, OperationResult, extract_request_id, McpToolResult
-from ..model import SessionPauseResult, SessionResumeResult
 from .oss import Oss
-from .agent import Agent
-from .context_manager import ContextManager
-from .browser import Browser
 
 if TYPE_CHECKING:
     from .agentbay import AgentBay
@@ -118,7 +123,7 @@ class Session:
 
         self.context = ContextManager(self)
         self.browser = Browser(self)
-        
+
         self.agent = Agent(self)
 
     def _get_api_key(self) -> str:
@@ -187,23 +192,31 @@ class Session:
                 if hasattr(self, "record_context_id") and self.record_context_id:
                     should_sync = True
                     sync_context_id = self.record_context_id
-                    _logger.info(f"🎥 Browser replay enabled - syncing recording context: {sync_context_id}")
+                    _logger.info(
+                        f"🎥 Browser replay enabled - syncing recording context: {sync_context_id}"
+                    )
                 else:
-                    _logger.warning("⚠️  Browser replay enabled but no record_context_id found")
+                    _logger.warning(
+                        "⚠️  Browser replay enabled but no record_context_id found"
+                    )
 
             # Perform context synchronization if needed
             if should_sync:
                 _log_operation_start(
                     "Context synchronization", "Before session deletion"
                 )
-                
+
                 sync_start_time = time.time()
 
                 try:
                     if sync_context_id:
                         # Sync specific context (browser recording)
-                        sync_result = self.context.sync_context(context_id=sync_context_id)
-                        _logger.info(f"🎥 Synced browser recording context: {sync_context_id}")
+                        sync_result = self.context.sync_context(
+                            context_id=sync_context_id
+                        )
+                        _logger.info(
+                            f"🎥 Synced browser recording context: {sync_context_id}"
+                        )
                     else:
                         # Sync all contexts
                         sync_result = self.context.sync_context()
@@ -251,7 +264,7 @@ class Session:
                     api_name="ReleaseMcpSession",
                     request_id=request_id,
                     success=False,
-                    full_response=json.dumps(body, ensure_ascii=False, indent=2)
+                    full_response=json.dumps(body, ensure_ascii=False, indent=2),
                 )
                 return DeleteResult(
                     request_id=request_id,
@@ -264,7 +277,7 @@ class Session:
                 api_name="ReleaseMcpSession",
                 request_id=request_id,
                 success=True,
-                key_fields={"session_id": self.session_id}
+                key_fields={"session_id": self.session_id},
             )
 
             # Return success result with request ID
@@ -368,10 +381,7 @@ class Session:
                 api_name="SetLabel",
                 request_id=request_id,
                 success=True,
-                key_fields={
-                    "session_id": self.session_id,
-                    "labels_count": len(labels)
-                }
+                key_fields={"session_id": self.session_id, "labels_count": len(labels)},
             )
 
             return OperationResult(request_id=request_id, success=True)
@@ -411,10 +421,7 @@ class Session:
                 api_name="GetLabel",
                 request_id=request_id,
                 success=True,
-                key_fields={
-                    "session_id": self.session_id,
-                    "labels_count": len(labels)
-                }
+                key_fields={"session_id": self.session_id, "labels_count": len(labels)},
             )
 
             return OperationResult(request_id=request_id, success=True, data=labels)
@@ -479,8 +486,8 @@ class Session:
                 key_fields={
                     "session_id": session_info.session_id,
                     "resource_url": session_info.resource_url,
-                    "resource_type": session_info.resource_type
-                }
+                    "resource_type": session_info.resource_type,
+                },
             )
 
             return OperationResult(
@@ -493,12 +500,12 @@ class Session:
             error_code = ""
 
             # Try to extract error code from the exception
-            if hasattr(e, 'data') and hasattr(e.data, 'get'):
-                error_code = e.data.get('Code', '')
-            elif 'InvalidMcpSession.NotFound' in error_str or 'NotFound' in error_str:
-                error_code = 'InvalidMcpSession.NotFound'
+            if hasattr(e, "data") and hasattr(e.data, "get"):
+                error_code = e.data.get("Code", "")
+            elif "InvalidMcpSession.NotFound" in error_str or "NotFound" in error_str:
+                error_code = "InvalidMcpSession.NotFound"
 
-            if error_code == 'InvalidMcpSession.NotFound':
+            if error_code == "InvalidMcpSession.NotFound":
                 # This is an expected error - session doesn't exist
                 # Use info level logging without stack trace, but with red color for visibility
                 _log_info_with_color(f"Session not found: {self.session_id}")
@@ -506,17 +513,22 @@ class Session:
                 return OperationResult(
                     request_id="",
                     success=False,
-                    error_message=f"Session {self.session_id} not found"
+                    error_message=f"Session {self.session_id} not found",
                 )
             else:
                 # This is an unexpected error - log with full error
-                _logger.exception(f"❌ Failed to get session info for session {self.session_id}")
+                _logger.exception(
+                    f"❌ Failed to get session info for session {self.session_id}"
+                )
                 raise SessionError(
                     f"Failed to get session info for session {self.session_id}: {e}"
                 )
 
     def get_link(
-        self, protocol_type: Optional[str] = None, port: Optional[int] = None, options: Optional[str] = None
+        self,
+        protocol_type: Optional[str] = None,
+        port: Optional[int] = None,
+        options: Optional[str] = None,
     ) -> OperationResult:
         """
         Asynchronously get a link associated with the current session.
@@ -533,7 +545,7 @@ class Session:
             _log_api_call(
                 "GetLink",
                 f"SessionId={self.session_id}, ProtocolType={protocol_type or 'default'}, "
-                f"Port={port or 'default'}, Options={'provided' if options else 'none'}"
+                f"Port={port or 'default'}, Options={'provided' if options else 'none'}",
             )
 
             request = GetLinkRequest(
@@ -543,7 +555,7 @@ class Session:
                 port=port,
                 options=options,
             )
-            
+
             response = self.agent_bay.client.get_link(request)
 
             # Extract request ID
@@ -583,8 +595,8 @@ class Session:
                     "session_id": self.session_id,
                     "url": url,
                     "protocol_type": protocol_type or "default",
-                    "port": port or "default"
-                }
+                    "port": port or "default",
+                },
             )
 
             return OperationResult(request_id=request_id, success=True, data=url)
@@ -599,7 +611,7 @@ class Session:
         """
         List MCP tools available for this session asynchronously.
         """
-        from ..model.response import McpToolsResult
+        from .._common.models.response import McpToolsResult
         from ..models.mcp_tool import McpTool
 
         # Use provided image_id, session's image_id, or default
@@ -645,10 +657,7 @@ class Session:
             api_name="ListMcpTools",
             request_id=request_id,
             success=True,
-            key_fields={
-                "image_id": image_id,
-                "tools_count": len(tools)
-            }
+            key_fields={"image_id": image_id, "tools_count": len(tools)},
         )
 
         return McpToolsResult(request_id=request_id, tools=tools)
@@ -667,7 +676,8 @@ class Session:
         try:
             # Normalize press_keys arguments for better case compatibility
             if tool_name == "press_keys" and "keys" in args:
-                from ..key_normalizer import normalize_keys
+                from .._common.utils.key_normalizer import normalize_keys
+
                 args = args.copy()  # Don't modify the original args
                 args["keys"] = normalize_keys(args["keys"])
                 _logger.debug(f"Normalized press_keys arguments: {args}")
@@ -695,9 +705,10 @@ class Session:
         """
         Handle VPC-based MCP tool calls using HTTP requests asynchronously.
         """
-        import time
         import random
         import string
+        import time
+
         import httpx
 
         _log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
@@ -796,9 +807,7 @@ class Session:
             )
 
         except httpx.RequestError as e:
-            _log_operation_error(
-                "CallMcpTool(VPC)", f"HTTP request failed: {e}", True
-            )
+            _log_operation_error("CallMcpTool(VPC)", f"HTTP request failed: {e}", True)
             return McpToolResult(
                 request_id=request_id,
                 success=False,
@@ -806,9 +815,7 @@ class Session:
                 error_message=f"HTTP request failed: {e}",
             )
         except Exception as e:
-            _log_operation_error(
-                "CallMcpTool(VPC)", f"Unexpected error: {e}", True
-            )
+            _log_operation_error("CallMcpTool(VPC)", f"Unexpected error: {e}", True)
             return McpToolResult(
                 request_id=request_id,
                 success=False,
@@ -938,7 +945,9 @@ class Session:
                 error_message=f"API request failed: {e}",
             )
 
-    def pause(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
+    def pause(
+        self, timeout: int = 600, poll_interval: float = 2.0
+    ) -> SessionPauseResult:
         """
         Asynchronously pause this session, putting it into a dormant state.
         This method waits until the session enters the PAUSED state.
@@ -950,8 +959,11 @@ class Session:
                 return result
 
             request_id = result.request_id
-            
-            _log_operation_success("PauseSessionAsync", f"Session {self.session_id} pause initiated successfully")
+
+            _log_operation_success(
+                "PauseSessionAsync",
+                f"Session {self.session_id} pause initiated successfully",
+            )
 
             # Poll for session status until PAUSED or timeout
             start_time = time.time()
@@ -960,7 +972,7 @@ class Session:
 
             while attempt < max_attempts:
                 attempt += 1
-                
+
                 try:
                     # Check session status using get_session
                     # This will work if agent_bay has get_session (which it does)
@@ -968,36 +980,47 @@ class Session:
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         if status == "PAUSED":
-                            _log_operation_success("PauseSessionAsync", f"Session {self.session_id} is now PAUSED")
+                            _log_operation_success(
+                                "PauseSessionAsync",
+                                f"Session {self.session_id} is now PAUSED",
+                            )
                             return SessionPauseResult(
                                 request_id=request_id,
                                 success=True,
                                 status="PAUSED",
                             )
-                        elif status == "ERROR" or status == "FAILED": # Add other failure states if known
-                             _log_operation_error("PauseSessionAsync", f"Session entered error state: {status}")
-                             return SessionPauseResult(
+                        elif (
+                            status == "ERROR" or status == "FAILED"
+                        ):  # Add other failure states if known
+                            _log_operation_error(
+                                "PauseSessionAsync",
+                                f"Session entered error state: {status}",
+                            )
+                            return SessionPauseResult(
                                 request_id=request_id,
                                 success=False,
                                 error_message=f"Session entered error state: {status}",
-                                status=status
+                                status=status,
                             )
                 except Exception:
                     pass
 
                 # Check timeout
                 if time.time() - start_time > timeout:
-                     break
+                    break
 
                 # Wait before next poll
                 time.sleep(poll_interval)
 
-            _log_operation_error("PauseSessionAsync", f"Timed out waiting for session {self.session_id} to pause")
+            _log_operation_error(
+                "PauseSessionAsync",
+                f"Timed out waiting for session {self.session_id} to pause",
+            )
             return SessionPauseResult(
                 request_id=request_id,
                 success=False,
-                status="PAUSING", # Still technically pausing or unknown
-                error_message=f"Timed out after {timeout} seconds waiting for session to pause"
+                status="PAUSING",  # Still technically pausing or unknown
+                error_message=f"Timed out after {timeout} seconds waiting for session to pause",
             )
 
         except Exception as e:
@@ -1028,27 +1051,37 @@ class Session:
             # Check for API-level errors
             response_map = response.to_map()
             if not response_map:
-                return SessionPauseResult(request_id=request_id, success=False, error_message="Invalid response format")
+                return SessionPauseResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response format",
+                )
 
             body = response_map.get("body", {})
             if not body:
-                return SessionPauseResult(request_id=request_id, success=False, error_message="Invalid response body")
+                return SessionPauseResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response body",
+                )
 
             # Extract fields from response body
             success = body.get("Success", False)
             code = body.get("Code", "")
             message = body.get("Message", "")
             http_status_code = body.get("HttpStatusCode", 0)
-            
+
             _log_api_response_with_details(
                 api_name="PauseSessionAsync",
                 request_id=request_id,
                 success=True,
-                key_fields={"session_id": self.session_id}
+                key_fields={"session_id": self.session_id},
             )
-            
+
             if not success:
-                error_message = f"[{code}] {message}" if code or message else "Unknown error"
+                error_message = (
+                    f"[{code}] {message}" if code or message else "Unknown error"
+                )
                 _log_operation_error("PauseSessionAsync", error_message)
                 return SessionPauseResult(
                     request_id=request_id,
@@ -1059,7 +1092,9 @@ class Session:
                     http_status_code=http_status_code,
                 )
 
-            return SessionPauseResult(request_id=request_id, success=True, status="PAUSING")
+            return SessionPauseResult(
+                request_id=request_id, success=True, status="PAUSING"
+            )
 
         except Exception as e:
             _log_operation_error("PauseSessionAsync", str(e))
@@ -1069,7 +1104,9 @@ class Session:
                 error_message=f"Unexpected error pausing session: {e}",
             )
 
-    def resume(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
+    def resume(
+        self, timeout: int = 600, poll_interval: float = 2.0
+    ) -> SessionResumeResult:
         """
         Asynchronously resume this session from a paused state.
         This method waits until the session enters the RUNNING state.
@@ -1079,11 +1116,14 @@ class Session:
             result = self.resume_async()
             if not result.success:
                 return result
-                
+
             request_id = result.request_id
-            
-            _log_operation_success("ResumeSessionAsync", f"Session {self.session_id} resume initiated successfully")
-            
+
+            _log_operation_success(
+                "ResumeSessionAsync",
+                f"Session {self.session_id} resume initiated successfully",
+            )
+
             # Poll for session status until RUNNING or timeout
             start_time = time.time()
             max_attempts = int(timeout / poll_interval)
@@ -1091,45 +1131,54 @@ class Session:
 
             while attempt < max_attempts:
                 attempt += 1
-                
+
                 try:
-                     # Check session status using get_session
+                    # Check session status using get_session
                     session_result = self.agent_bay.get_session(self.session_id)
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         if status == "RUNNING":
-                            _log_operation_success("ResumeSessionAsync", f"Session {self.session_id} is now RUNNING")
+                            _log_operation_success(
+                                "ResumeSessionAsync",
+                                f"Session {self.session_id} is now RUNNING",
+                            )
                             return SessionResumeResult(
                                 request_id=request_id,
                                 success=True,
                                 status="RUNNING",
                             )
                         elif status == "ERROR" or status == "FAILED":
-                             _log_operation_error("ResumeSessionAsync", f"Session entered error state: {status}")
-                             return SessionResumeResult(
+                            _log_operation_error(
+                                "ResumeSessionAsync",
+                                f"Session entered error state: {status}",
+                            )
+                            return SessionResumeResult(
                                 request_id=request_id,
                                 success=False,
                                 error_message=f"Session entered error state: {status}",
-                                status=status
+                                status=status,
                             )
                 except Exception:
                     pass
-                
+
                 # Check timeout
                 if time.time() - start_time > timeout:
-                     break
+                    break
 
                 # Wait before next poll
                 time.sleep(poll_interval)
-            
-            _log_operation_error("ResumeSessionAsync", f"Timed out waiting for session {self.session_id} to resume")
+
+            _log_operation_error(
+                "ResumeSessionAsync",
+                f"Timed out waiting for session {self.session_id} to resume",
+            )
             return SessionResumeResult(
                 request_id=request_id,
                 success=False,
-                status="RESUMING", # Still technically resuming or unknown
-                error_message=f"Timed out after {timeout} seconds waiting for session to resume"
+                status="RESUMING",  # Still technically resuming or unknown
+                error_message=f"Timed out after {timeout} seconds waiting for session to resume",
             )
-            
+
         except Exception as e:
             _log_operation_error("ResumeSessionAsync", str(e))
             return SessionResumeResult(
@@ -1156,18 +1205,28 @@ class Session:
 
             response_map = response.to_map()
             if not response_map:
-                return SessionResumeResult(request_id=request_id, success=False, error_message="Invalid response format")
+                return SessionResumeResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response format",
+                )
             body = response_map.get("body", {})
             if not body:
-                return SessionResumeResult(request_id=request_id, success=False, error_message="Invalid response body")
+                return SessionResumeResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Invalid response body",
+                )
 
             success = body.get("Success", False)
             code = body.get("Code", "")
             message = body.get("Message", "")
             http_status_code = body.get("HttpStatusCode", 0)
-            
+
             if not success:
-                error_message = f"[{code}] {message}" if code or message else "Unknown error"
+                error_message = (
+                    f"[{code}] {message}" if code or message else "Unknown error"
+                )
                 _log_operation_error("ResumeSessionAsync", error_message)
                 return SessionResumeResult(
                     request_id=request_id,
@@ -1182,10 +1241,12 @@ class Session:
                 api_name="ResumeSessionAsync",
                 request_id=request_id,
                 success=True,
-                key_fields={"session_id": self.session_id}
+                key_fields={"session_id": self.session_id},
             )
-            
-            return SessionResumeResult(request_id=request_id, success=True, status="RESUMING")
+
+            return SessionResumeResult(
+                request_id=request_id, success=True, status="RESUMING"
+            )
 
         except Exception as e:
             _log_operation_error("ResumeSessionAsync", str(e))

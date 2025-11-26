@@ -1,56 +1,61 @@
-from .agentbay import AgentBay, Config
-from .browser import (
-    Browser,
-    BrowserOption,
-    BrowserViewport,
-    BrowserScreen,
-    BrowserFingerprint,
-    BrowserProxy,
-    BrowserFingerprintContext,
-    BrowserAgent,
-    BrowserFingerprintGenerator,
-    FingerprintFormat,
-)
-from .command import Command
-from .computer import Computer
-from .exceptions import AgentBayError, APIError, AuthenticationError
-from .filesystem import FileSystem
-from .mobile import Mobile
-from .oss import Oss
-from .session import Session
-from .session_params import CreateSessionParams, ListSessionParams, BrowserContext
-from .agent import Agent
-from .context_sync import (
+from ._common.config import Config
+from ._common.exceptions import AgentBayError, APIError, AuthenticationError
+from ._common.logger import AgentBayLogger, get_logger, log
+from ._common.params.context_sync import (
+    BWList,
     ContextSync,
-    SyncPolicy,
-    UploadPolicy,
-    UploadStrategy,
-    UploadMode,
+    DeletePolicy,
     DownloadPolicy,
     DownloadStrategy,
-    DeletePolicy,
     ExtractPolicy,
-    RecyclePolicy,
     Lifecycle,
-    BWList,
+    RecyclePolicy,
+    SyncPolicy,
+    UploadMode,
+    UploadPolicy,
+    UploadStrategy,
     WhiteList,
 )
-from .context_manager import ContextManager, ContextInfoResult, ContextSyncResult
-from .extension import ExtensionsService, ExtensionOption, Extension
-from .logger import AgentBayLogger, get_logger, log
+from ._common.params.extension import Extension, ExtensionOption, ExtensionsService
+from ._common.params.session_params import (
+    BrowserContext,
+    CreateSessionParams,
+    ListSessionParams,
+)
+from ._sync.agent import Agent
+from ._sync.agentbay import AgentBay
+from ._sync.browser import (
+    Browser,
+    BrowserAgent,
+    BrowserFingerprint,
+    BrowserFingerprintContext,
+    BrowserFingerprintGenerator,
+    BrowserOption,
+    BrowserProxy,
+    BrowserScreen,
+    BrowserViewport,
+    FingerprintFormat,
+)
+from ._sync.browser_agent import ActOptions, ActResult, ExtractOptions, ObserveResult
+from ._sync.command import Command
+from ._sync.computer import Computer
 from ._sync.context import ContextListParams
-from ._sync.browser_agent import ActOptions, ExtractOptions, ActResult, ObserveResult
+from ._sync.context_manager import ContextInfoResult, ContextManager, ContextSyncResult
+from ._sync.filesystem import FileSystem
+from ._sync.mobile import Mobile
+from ._sync.oss import Oss
+from ._sync.session import Session
 from .async_api import (
-    AsyncAgentBay,
-    AsyncSession,
-    AsyncComputer,
-    AsyncMobile,
-    AsyncOss,
-    AsyncFileSystem,
     AsyncAgent,
+    AsyncAgentBay,
     AsyncCommand,
+    AsyncComputer,
     AsyncContextManager,
     AsyncContextService,
+    AsyncFileSystem,
+    AsyncMobile,
+    AsyncOss,
+    AsyncSession,
 )
 
 __all__ = [
@@ -101,13 +106,11 @@ __all__ = [
     "AgentBayLogger",
     "get_logger",
     "log",
-    # Sync exports
     "ContextListParams",
     "ActOptions",
     "ExtractOptions",
     "ActResult",
     "ObserveResult",
-    # Async exports
     "AsyncAgentBay",
     "AsyncSession",
     "AsyncComputer",

@@ -1,10 +1,10 @@
 import json
 from typing import Any, Dict, Optional
 
+from .._common.exceptions import AgentBayError, OssError
+from .._common.logger import _log_api_response, get_logger
+from .._common.models.response import ApiResponse
 from .base_service import AsyncBaseService
-from ..logger import get_logger, _log_api_response
-from ..exceptions import AgentBayError, OssError
-from ..model import ApiResponse
 
 # Initialize logger for this module
 _logger = get_logger("oss")
@@ -421,4 +421,3 @@ class AsyncOss(AsyncBaseService):
                 success=False,
                 error_message=f"Failed to download anonymously: {e}",
             )
-

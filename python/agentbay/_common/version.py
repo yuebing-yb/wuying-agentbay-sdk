@@ -13,7 +13,8 @@ def _get_version() -> str:
     """
     try:
         # Try to get version from installed package metadata (works in production)
-        from importlib.metadata import version, PackageNotFoundError
+        from importlib.metadata import PackageNotFoundError, version
+
         try:
             return version("wuying-agentbay-sdk")
         except PackageNotFoundError:
@@ -21,7 +22,8 @@ def _get_version() -> str:
     except ImportError:
         # Python < 3.8, try importlib_metadata
         try:
-            from importlib_metadata import version, PackageNotFoundError
+            from importlib_metadata import PackageNotFoundError, version
+
             try:
                 return version("wuying-agentbay-sdk")
             except PackageNotFoundError:
@@ -64,4 +66,3 @@ __version__ = _get_version()
 # For release builds, the CI/CD will replace __AGENTBAY_IS_RELEASE_BUILD__ with True
 __AGENTBAY_IS_RELEASE_BUILD__ = False
 __is_release__ = _is_release_build()
-

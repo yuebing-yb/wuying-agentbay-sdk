@@ -1,10 +1,11 @@
-from typing import Optional, List, Dict, Any, Callable
-from ..api.models import GetContextInfoRequest, SyncContextRequest
-from ..model.response import ApiResponse, extract_request_id
-from ..logger import get_logger, _log_api_call, _log_api_response_with_details
+import asyncio
 import json
 import time
-import asyncio
+from typing import Any, Callable, Dict, List, Optional
+
+from .._common.logger import _log_api_call, _log_api_response_with_details, get_logger
+from .._common.models.response import ApiResponse, extract_request_id
+from ..api.models import GetContextInfoRequest, SyncContextRequest
 
 # Initialize logger for this module
 _logger = get_logger("context_manager")
@@ -72,6 +73,7 @@ class AsyncContextManager:
     The AsyncContextManager provides methods to get information about context synchronization
     status and to synchronize contexts with the session.
     """
+
     def __init__(self, session):
         self.session = session
 
@@ -106,7 +108,7 @@ class AsyncContextManager:
             "GetContextInfo",
             f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}",
         )
-        
+
         # Async API call
         response = await self.session._get_client().get_context_info_async(request)
 
@@ -131,7 +133,7 @@ class AsyncContextManager:
                     api_name="GetContextInfo",
                     request_id=request_id,
                     success=False,
-                    full_response=response_body
+                    full_response=response_body,
                 )
                 return ContextInfoResult(
                     request_id=request_id,
@@ -168,8 +170,8 @@ class AsyncContextManager:
             success=True,
             key_fields={
                 "context_id": context_id,
-                "status_count": len(context_status_data)
-            }
+                "status_count": len(context_status_data),
+            },
         )
 
         return ContextInfoResult(
@@ -214,7 +216,7 @@ class AsyncContextManager:
             "SyncContext",
             f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}",
         )
-        
+
         # Async API call
         response = await self.session._get_client().sync_context_async(request)
 
@@ -239,7 +241,7 @@ class AsyncContextManager:
                     api_name="SyncContext",
                     request_id=request_id,
                     success=False,
-                    full_response=response_body
+                    full_response=response_body,
                 )
                 return ContextSyncResult(
                     request_id=request_id,
@@ -255,10 +257,7 @@ class AsyncContextManager:
                 api_name="SyncContext",
                 request_id=request_id,
                 success=True,
-                key_fields={
-                    "context_id": context_id,
-                    "path": path or "default"
-                }
+                key_fields={"context_id": context_id, "path": path or "default"},
             )
 
         # Wait for completion
@@ -345,4 +344,3 @@ class AsyncContextManager:
         # If we've exhausted all retries, return failure
         _logger.error(f"❌ Context sync polling timed out after {max_retries} attempts")
         return False
-
