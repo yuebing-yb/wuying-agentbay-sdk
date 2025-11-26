@@ -46,7 +46,7 @@ class DownloadResult:
 
 class FileTransfer:
     """
-    FileTransfer provides pre-signed URL upload/download functionality between local and OSS,
+    AsyncFileTransfer provides pre-signed URL upload/download functionality between local and OSS,
     with integration to Session Context synchronization.
 
     Prerequisites and Constraints:
@@ -350,14 +350,14 @@ class FileTransfer:
 
     def _await_sync(self, mode: str, remote_path: str = "", context_id: str = "") -> Optional[str]:
         """
-        Compatibility wrapper for session.context.sync which may be sync or async:
+        Compatibility wrapper for session.context.sync_context which may be sync or async:
         - Try async call first
         - Fall back to sync call using asyncio.to_thread
         Returns request_id if available
         """
         mode = mode.lower().strip()
 
-        sync_fn = getattr(self._session.context, "sync")
+        sync_fn = getattr(self._session.context, "sync_context")
         print(f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})")
         # Try as coroutine with mode, path, and context_id parameters
         try:
@@ -787,21 +787,21 @@ class FileSystem(BaseService):
 
     def _ensure_file_transfer(self) -> FileTransfer:
         """
-        Ensure FileTransfer is initialized with the current session.
+        Ensure AsyncFileTransfer is initialized with the current session.
 
         Returns:
-            FileTransfer: The FileTransfer instance
+            AsyncFileTransfer: The AsyncFileTransfer instance
         """
         if self._file_transfer is None:
             # Get the agent_bay instance from the session
             agent_bay = getattr(self.session, 'agent_bay', None)
             if agent_bay is None:
-                raise FileError("FileTransfer requires an AgentBay instance")
+                raise FileError("SyncFileTransfer requires an AgentBay instance")
 
             # Get the session from the service
             session = self.session
             if session is None:
-                raise FileError("FileTransfer requires a session")
+                raise FileError("SyncFileTransfer requires a session")
 
             self._file_transfer = FileTransfer(agent_bay, session)
 
@@ -1631,8 +1631,6 @@ class FileSystem(BaseService):
         """
         Upload a file from local to remote path using pre-signed URLs.
 
-        This is a synchronous wrapper around the async FileTransfer.upload method.
-
         Args:
             local_path: Local file path to upload
             remote_path: Remote file path to upload to
@@ -1648,23 +1646,22 @@ class FileSystem(BaseService):
         Example:
             ```python
             params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
-            session = agent_bay.create(params).session
-            upload_result = session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
-            session.delete()
+            session = await agent_bay.create(params)
+            upload_result = await session.session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
+            await session.session.delete()
             ```
         """
         try:
             file_transfer = self._ensure_file_transfer()
-                        result = file_transfer.upload(
-                    local_path=local_path,
-                    remote_path=remote_path,
-                    content_type=content_type,
-                    wait=wait,
-                    wait_timeout=wait_timeout,
-                    poll_interval=poll_interval,
-                    progress_cb=progress_cb,
-                )
-            
+            result = file_transfer.upload(
+                local_path=local_path,
+                remote_path=remote_path,
+                content_type=content_type,
+                wait=wait,
+                wait_timeout=wait_timeout,
+                poll_interval=poll_interval,
+                progress_cb=progress_cb,
+            )
             # If upload was successful, delete the file from OSS
             if result.success and self.session.file_transfer_context_id:
                 try:
@@ -1703,8 +1700,6 @@ class FileSystem(BaseService):
         """
         Download a file from remote path to local path using pre-signed URLs.
 
-        This is a synchronous wrapper around the async FileTransfer.download method.
-
         Args:
             remote_path: Remote file path to download from
             local_path: Local file path to download to
@@ -1720,24 +1715,23 @@ class FileSystem(BaseService):
         Example:
             ```python
             params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
-            session = agent_bay.create(params).session
-            download_result = session.file_system.download_file("/workspace/file.txt", "/local/file.txt")
-            session.delete()
+            session = await agent_bay.create(params)
+            download_result = await session.session.file_system.download_file("/workspace/file.txt", "/local/file.txt")
+            await session.session.delete()
             ```
         """
 
         try:
             file_transfer = self._ensure_file_transfer()
-                        result = file_transfer.download(
-                    remote_path=remote_path,
-                    local_path=local_path,
-                    overwrite=overwrite,
-                    wait=wait,
-                    wait_timeout=wait_timeout,
-                    poll_interval=poll_interval,
-                    progress_cb=progress_cb,
-                )
-            
+            result = file_transfer.download(
+                remote_path=remote_path,
+                local_path=local_path,
+                overwrite=overwrite,
+                wait=wait,
+                wait_timeout=wait_timeout,
+                poll_interval=poll_interval,
+                progress_cb=progress_cb,
+            )
             # If download was successful, delete the file from OSS
             if result.success and self.session.file_transfer_context_id:
                 try:

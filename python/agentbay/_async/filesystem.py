@@ -42,9 +42,9 @@ class DownloadResult:
     local_path: str
     error: Optional[str] = None
 
-class FileTransfer:
+class AsyncFileTransfer:
     """
-    FileTransfer provides pre-signed URL upload/download functionality between local and OSS,
+    AsyncFileTransfer provides pre-signed URL upload/download functionality between local and OSS,
     with integration to Session Context synchronization.
 
     Prerequisites and Constraints:
@@ -352,14 +352,14 @@ class FileTransfer:
 
     async def _await_sync(self, mode: str, remote_path: str = "", context_id: str = "") -> Optional[str]:
         """
-        Compatibility wrapper for session.context.sync which may be sync or async:
+        Compatibility wrapper for session.context.sync_context which may be sync or async:
         - Try async call first
         - Fall back to sync call using asyncio.to_thread
         Returns request_id if available
         """
         mode = mode.lower().strip()
 
-        sync_fn = getattr(self._session.context, "sync")
+        sync_fn = getattr(self._session.context, "sync_context")
         print(f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})")
         # Try as coroutine with mode, path, and context_id parameters
         try:
@@ -789,7 +789,7 @@ class FileSearchResult(ApiResponse):
         self.error_message = error_message
 
 
-class FileSystem(BaseService):
+class AsyncFileSystem(BaseService):
     """
     Handles file operations in the AgentBay cloud environment.
     """
@@ -803,27 +803,27 @@ class FileSystem(BaseService):
             **kwargs: Keyword arguments to pass to BaseService
         """
         super().__init__(*args, **kwargs)
-        self._file_transfer: Optional[FileTransfer] = None
+        self._file_transfer: Optional[AsyncFileTransfer] = None
 
-    def _ensure_file_transfer(self) -> FileTransfer:
+    def _ensure_file_transfer(self) -> AsyncFileTransfer:
         """
-        Ensure FileTransfer is initialized with the current session.
+        Ensure AsyncFileTransfer is initialized with the current session.
 
         Returns:
-            FileTransfer: The FileTransfer instance
+            AsyncFileTransfer: The AsyncFileTransfer instance
         """
         if self._file_transfer is None:
             # Get the agent_bay instance from the session
             agent_bay = getattr(self.session, 'agent_bay', None)
             if agent_bay is None:
-                raise FileError("FileTransfer requires an AgentBay instance")
+                raise FileError("AsyncFileTransfer requires an AgentBay instance")
 
             # Get the session from the service
             session = self.session
             if session is None:
-                raise FileError("FileTransfer requires a session")
+                raise FileError("AsyncFileTransfer requires a session")
 
-            self._file_transfer = FileTransfer(agent_bay, session)
+            self._file_transfer = AsyncFileTransfer(agent_bay, session)
 
         return self._file_transfer
 
@@ -1637,7 +1637,7 @@ class FileSystem(BaseService):
                 error_message=f"Failed to write file: {e}",
             )
 
-    def upload_file(
+    async def upload_file(
         self,
         local_path: str,
         remote_path: str,
@@ -1650,8 +1650,6 @@ class FileSystem(BaseService):
     ) -> UploadResult:
         """
         Upload a file from local to remote path using pre-signed URLs.
-
-        This is a synchronous wrapper around the async FileTransfer.upload method.
 
         Args:
             local_path: Local file path to upload
@@ -1668,27 +1666,22 @@ class FileSystem(BaseService):
         Example:
             ```python
             params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
-            session = agent_bay.create(params).session
-            upload_result = session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
-            session.delete()
+            session = await agent_bay.create(params)
+            upload_result = await session.session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
+            await session.session.delete()
             ```
         """
         try:
             file_transfer = self._ensure_file_transfer()
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(
-                file_transfer.upload(
-                    local_path=local_path,
-                    remote_path=remote_path,
-                    content_type=content_type,
-                    wait=wait,
-                    wait_timeout=wait_timeout,
-                    poll_interval=poll_interval,
-                    progress_cb=progress_cb,
-                )
+            result = await file_transfer.upload(
+                local_path=local_path,
+                remote_path=remote_path,
+                content_type=content_type,
+                wait=wait,
+                wait_timeout=wait_timeout,
+                poll_interval=poll_interval,
+                progress_cb=progress_cb,
             )
-            loop.close()
             # If upload was successful, delete the file from OSS
             if result.success and self.session.file_transfer_context_id:
                 try:
@@ -1713,7 +1706,7 @@ class FileSystem(BaseService):
                 error=f"Upload failed: {str(e)}",
             )
 
-    def download_file(
+    async def download_file(
         self,
         remote_path: str,
         local_path: str,
@@ -1726,8 +1719,6 @@ class FileSystem(BaseService):
     ) -> DownloadResult:
         """
         Download a file from remote path to local path using pre-signed URLs.
-
-        This is a synchronous wrapper around the async FileTransfer.download method.
 
         Args:
             remote_path: Remote file path to download from
@@ -1744,28 +1735,23 @@ class FileSystem(BaseService):
         Example:
             ```python
             params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
-            session = agent_bay.create(params).session
-            download_result = session.file_system.download_file("/workspace/file.txt", "/local/file.txt")
-            session.delete()
+            session = await agent_bay.create(params)
+            download_result = await session.session.file_system.download_file("/workspace/file.txt", "/local/file.txt")
+            await session.session.delete()
             ```
         """
 
         try:
             file_transfer = self._ensure_file_transfer()
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(
-                file_transfer.download(
-                    remote_path=remote_path,
-                    local_path=local_path,
-                    overwrite=overwrite,
-                    wait=wait,
-                    wait_timeout=wait_timeout,
-                    poll_interval=poll_interval,
-                    progress_cb=progress_cb,
-                )
+            result = await file_transfer.download(
+                remote_path=remote_path,
+                local_path=local_path,
+                overwrite=overwrite,
+                wait=wait,
+                wait_timeout=wait_timeout,
+                poll_interval=poll_interval,
+                progress_cb=progress_cb,
             )
-            loop.close()
             # If download was successful, delete the file from OSS
             if result.success and self.session.file_transfer_context_id:
                 try:
