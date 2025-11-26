@@ -29,13 +29,12 @@ from ._sync.browser import (
     BrowserAgent,
     BrowserFingerprint,
     BrowserFingerprintContext,
-    BrowserFingerprintGenerator,
     BrowserOption,
     BrowserProxy,
     BrowserScreen,
     BrowserViewport,
-    FingerprintFormat,
 )
+from ._sync.fingerprint import BrowserFingerprintGenerator, FingerprintFormat
 from ._sync.browser_agent import ActOptions, ActResult, ExtractOptions, ObserveResult
 from ._sync.command import Command
 from ._sync.computer import Computer

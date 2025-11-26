@@ -183,6 +183,7 @@ def generate_sync():
                     # Custom Replacements
                     # Force replace asyncio.sleep if unasync missed it (common with await removal)
                     content = content.replace("asyncio.sleep", "time.sleep")
+                    content = content.replace("asyncio.gather(*tasks)", "tasks")
 
                     # Remove asyncio.to_thread() calls - convert to direct function calls
                     # Pattern: asyncio.to_thread(func, arg1, arg2, ...) -> func(arg1, arg2, ...)

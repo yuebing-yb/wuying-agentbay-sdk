@@ -5,7 +5,7 @@ import os
 import unittest
 
 from agentbay import AgentBay
-from agentbay import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 def get_oss_credentials():

@@ -5,7 +5,7 @@ import os
 import unittest
 
 from agentbay import AgentBay
-from agentbay import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 class TestCodeIntegration(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestCodeIntegration(unittest.TestCase):
             self.skipTest("AGENTBAY_API_KEY environment variable not set")
 
         self.agent_bay = AgentBay(api_key=self.api_key)
-        params = CreateSessionParams(image_id='code_latest')
+        params = CreateSessionParams(image_id="code_latest")
         # Use code_latest image for code execution tests
         session_result = self.agent_bay.create(params)
         if not session_result.success or not session_result.session:
@@ -33,11 +33,11 @@ class TestCodeIntegration(unittest.TestCase):
 
     def test_run_code_python_success(self):
         """Test successful Python code execution."""
-        code = '''
+        code = """
 print("Hello, world!")
 x = 1 + 1
 print(x)
-'''
+"""
         result = self.code.run_code(code, "python")
 
         print(f"Python code execution result: {result}")
@@ -51,11 +51,11 @@ print(x)
 
     def test_run_code_javascript_success(self):
         """Test successful JavaScript code execution."""
-        code = '''
+        code = """
 console.log("Hello, world!");
 const x = 1 + 1;
 console.log(x);
-'''
+"""
         result = self.code.run_code(code, "javascript")
 
         print(f"JavaScript code execution result: {result}")
@@ -80,12 +80,12 @@ console.log(x);
 
     def test_run_code_python_with_timeout(self):
         """Test Python code execution with custom timeout."""
-        code = '''
+        code = """
 import time
 print("Starting...")
 time.sleep(2)
 print("Completed after 2 seconds")
-'''
+"""
         result = self.code.run_code(code, "python", timeout_s=10)
 
         print(f"Python code with timeout result: {result}")
@@ -97,13 +97,13 @@ print("Completed after 2 seconds")
 
     def test_run_code_javascript_with_timeout(self):
         """Test JavaScript code execution with custom timeout."""
-        code = '''
+        code = """
 console.log("Starting...");
 setTimeout(() => {
     console.log("This should not appear");
 }, 5000);
 console.log("Immediate output");
-'''
+"""
         result = self.code.run_code(code, "javascript", timeout_s=10)
 
         print(f"JavaScript code with timeout result: {result}")
@@ -115,7 +115,7 @@ console.log("Immediate output");
 
     def test_run_code_python_file_operations(self):
         """Test Python code with file operations."""
-        code = '''
+        code = """
 import os
 # Create a test file
 with open('/tmp/test_code_integration.txt', 'w') as f:
@@ -129,7 +129,7 @@ with open('/tmp/test_code_integration.txt', 'r') as f:
 # Clean up
 os.remove('/tmp/test_code_integration.txt')
 print("File operations completed successfully")
-'''
+"""
         result = self.code.run_code(code, "python")
 
         print(f"Python file operations result: {result}")
@@ -141,13 +141,13 @@ print("File operations completed successfully")
 
     def test_run_code_python_error_handling(self):
         """Test Python code with error handling."""
-        code = '''
+        code = """
 try:
     result = 10 / 0
 except ZeroDivisionError as e:
     print(f"Caught error: {e}")
     print("Error handled successfully")
-'''
+"""
         result = self.code.run_code(code, "python")
 
         print(f"Python error handling result: {result}")
@@ -159,7 +159,7 @@ except ZeroDivisionError as e:
 
     def test_run_code_python_with_imports(self):
         """Test Python code with standard library imports."""
-        code = '''
+        code = """
 import json
 import datetime
 
@@ -176,7 +176,7 @@ print(json_str)
 parsed = json.loads(json_str)
 print(f"Message: {parsed['message']}")
 print(f"Numbers sum: {sum(parsed['numbers'])}")
-'''
+"""
         result = self.code.run_code(code, "python")
 
         print(f"Python with imports result: {result}")
@@ -191,13 +191,13 @@ print(f"Numbers sum: {sum(parsed['numbers'])}")
         import time
 
         # Step 1: Create a file with Python
-        python_code = '''
+        python_code = """
 import json
 data = {"language": "python", "value": 42}
 with open('/tmp/interop_test.json', 'w') as f:
     json.dump(data, f)
 print("Python wrote data to file")
-'''
+"""
         result = self.code.run_code(python_code, "python")
         self.assertTrue(result.success)
         self.assertIn("Python wrote data to file", result.result)
@@ -205,7 +205,7 @@ print("Python wrote data to file")
         time.sleep(1)
 
         # Step 2: Read and modify with JavaScript
-        js_code = '''
+        js_code = """
 const fs = require('fs');
 const data = JSON.parse(fs.readFileSync('/tmp/interop_test.json', 'utf8'));
 console.log('JavaScript read data:', JSON.stringify(data));
@@ -213,7 +213,7 @@ data.language = 'javascript';
 data.value = data.value * 2;
 fs.writeFileSync('/tmp/interop_test.json', JSON.stringify(data));
 console.log('JavaScript updated data in file');
-'''
+"""
         result = self.code.run_code(js_code, "javascript")
         self.assertTrue(result.success)
         self.assertIn("JavaScript read data", result.result)
@@ -222,7 +222,7 @@ console.log('JavaScript updated data in file');
         time.sleep(1)
 
         # Step 3: Verify with Python
-        python_verify_code = '''
+        python_verify_code = """
 import json
 with open('/tmp/interop_test.json', 'r') as f:
     data = json.load(f)
@@ -232,7 +232,7 @@ print(f"Value: {data['value']}")
 import os
 os.remove('/tmp/interop_test.json')
 print("Cleanup completed")
-'''
+"""
         result = self.code.run_code(python_verify_code, "python")
         self.assertTrue(result.success)
         self.assertIn("javascript", result.result)
@@ -242,8 +242,8 @@ print("Cleanup completed")
     def test_3_2_complex_code_with_file_operations(self):
         """3.2 Complex Code with File Operations - should execute complex code with file operations"""
         # Step 1: Session creation
-        session_params1 = CreateSessionParams(image_id='code_latest')
-        session_params2 = CreateSessionParams(image_id='code_latest')
+        session_params1 = CreateSessionParams(image_id="code_latest")
+        session_params2 = CreateSessionParams(image_id="code_latest")
 
         session_result1 = self.agent_bay.create(session_params1)
         session_result2 = self.agent_bay.create(session_params2)
@@ -258,7 +258,7 @@ print("Cleanup completed")
         code2 = session2.code
 
         # Step 7: Complex code test with file operations
-        python_file_code = '''
+        python_file_code = """
 import os
 import json
 
@@ -272,9 +272,9 @@ with open('/tmp/python_test.txt', 'r') as f:
 
 result = {"operation": "file_write_read", "content": content, "file_exists": os.path.exists('/tmp/python_test.txt')}
 print(json.dumps(result))
-'''.strip()
+""".strip()
 
-        js_file_code = '''
+        js_file_code = """
 const fs = require('fs');
 
 // Create a test file
@@ -289,22 +289,21 @@ const result = {
   file_exists: fs.existsSync('/tmp/js_test.txt')
 };
 console.log(JSON.stringify(result));
-'''.strip()
+""".strip()
 
-        python_file_result = code1.run_code(python_file_code, 'python')
-        js_file_result = code2.run_code(js_file_code, 'javascript')
+        python_file_result = code1.run_code(python_file_code, "python")
+        js_file_result = code2.run_code(js_file_code, "javascript")
 
         self.assertTrue(python_file_result.success)
         self.assertTrue(js_file_result.success)
 
-        self.assertIn('Python file operation test', python_file_result.result)
-        self.assertIn('JavaScript file operation test', js_file_result.result)
-
+        self.assertIn("Python file operation test", python_file_result.result)
+        self.assertIn("JavaScript file operation test", js_file_result.result)
 
     def test_3_2_code_execution_error_handling(self):
         """3.2 Code Execution Error Handling - should handle code execution errors gracefully"""
         # Step 1: Session creation
-        session_params = CreateSessionParams(image_id='code_latest')
+        session_params = CreateSessionParams(image_id="code_latest")
 
         session_result = self.agent_bay.create(session_params)
         self.assertTrue(session_result.success)
@@ -313,24 +312,25 @@ console.log(JSON.stringify(result));
         code = session.code
 
         # Test Python code with syntax error
-        bad_python_code = '''
+        bad_python_code = """
 print("Hello"
 # Missing closing parenthesis
-'''.strip()
+""".strip()
 
-        bad_result = code.run_code(bad_python_code, 'python')
+        bad_result = code.run_code(bad_python_code, "python")
         self.assertFalse(bad_result.success)
         self.assertIsNotNone(bad_result.error_message)
 
         # Test code with runtime error
-        runtime_error_code = '''
+        runtime_error_code = """
 undefined_variable = nonexistent_variable + 1
 print(undefined_variable)
-'''.strip()
+""".strip()
 
-        runtime_result = code.run_code(runtime_error_code, 'python')
+        runtime_result = code.run_code(runtime_error_code, "python")
         self.assertFalse(runtime_result.success)
-        self.assertIn('NameError', runtime_result.error_message)
+        self.assertIn("NameError", runtime_result.error_message)
+
 
 if __name__ == "__main__":
     unittest.main()

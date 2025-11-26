@@ -13,7 +13,6 @@ from .._common.logger import _log_api_response_with_details, get_logger
 from ..api.models import InitBrowserRequest
 from .base_service import BaseService
 from .browser_agent import BrowserAgent
-from .fingerprint import BrowserFingerprintGenerator, FingerprintFormat
 
 # Initialize logger for this module
 _logger = get_logger("browser")
@@ -706,7 +705,9 @@ class Browser(BaseService):
             # Wait a bit for images to load
             page.wait_for_timeout(1500)
             final_height = page.evaluate("document.body.scrollHeight")
-            page.set_viewport_size({"width": 1920, "height": min(final_height, 10000)})
+            page.set_viewport_size(
+                {"width": 1920, "height": min(final_height, 10000)}
+            )
 
             # Take the screenshot
             screenshot_bytes = page.screenshot(**enhanced_options)
@@ -763,7 +764,7 @@ class Browser(BaseService):
             session = await agent_bay.create().session
             browser_option = BrowserOption()
             await session.browser.initialize(browser_option)
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print(f"CDP Endpoint: {endpoint_url}")
             await session.delete()
             ```
@@ -785,42 +786,10 @@ class Browser(BaseService):
                     authorization=f"Bearer {self.session.agent_bay.api_key}",
                     session_id=self.session.session_id,
                 )
-                response = self.session.agent_bay.client.get_cdp_link(request)
-                if response.body and response.body.success and response.body.data:
-                    self._endpoint_url = response.body.data.url
-                else:
-                    error_msg = (
-                        response.body.message if response.body else "Unknown error"
-                    )
-                    raise BrowserError(f"Failed to get CDP link: {error_msg}")
-        except Exception as e:
-            raise BrowserError(f"Failed to get endpoint URL from session: {e}")
-        return self._endpoint_url  # This is not correct if we need to fetch it.
-
-    def get_endpoint_url_async(self) -> str:
-        """
-        Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
-        When initialized, always fetches the latest CDP url from session.get_link().
-        """
-        if not self.is_initialized():
-            raise BrowserError(
-                "Browser is not initialized. Cannot access endpoint URL."
-            )
-        try:
-            if self.session.is_vpc:
-                _logger.debug(
-                    f"VPC mode, endpoint_router_port: {self.endpoint_router_port}"
-                )
-                self._endpoint_url = f"ws://{self.session.network_interface_ip}:{self.endpoint_router_port}"
-            else:
-                from ..api.models import GetCdpLinkRequest
-
-                request = GetCdpLinkRequest(
-                    authorization=f"Bearer {self.session.agent_bay.api_key}",
-                    session_id=self.session.session_id,
-                )
                 # Async call
-                response = self.session.agent_bay.client.get_cdp_link(request)
+                response = self.session.agent_bay.client.get_cdp_link(
+                    request
+                )
                 if response.body and response.body.success and response.body.data:
                     self._endpoint_url = response.body.data.url
                 else:

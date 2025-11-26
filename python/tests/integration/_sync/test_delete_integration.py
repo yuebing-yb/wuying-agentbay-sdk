@@ -7,8 +7,8 @@ import unittest
 from uuid import uuid4
 
 from agentbay import AgentBay
-from agentbay import CreateSessionParams
-from agentbay import ContextSync
+from agentbay._common.params.context_sync import ContextSync
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 def get_test_api_key():
@@ -48,11 +48,11 @@ class TestDeleteIntegration(unittest.TestCase):
         # Verify session has been deleted
         # Wait for a while to ensure deletion operation is completed
         time.sleep(2)
-        
+
         # Use list to get latest session list from server
         list_result = self.agent_bay.list()
         self.assertTrue(list_result.success)
-        
+
         # Check if session has been deleted
         self.assertNotIn(
             session.session_id,
@@ -73,16 +73,12 @@ class TestDeleteIntegration(unittest.TestCase):
 
         # Create persistence configuration
         persistence_data = [
-            ContextSync(
-                context_id=context.id,
-                path="/home/wuying/test"
-            )
+            ContextSync(context_id=context.id, path="/home/wuying/test")
         ]
 
         # Create session with context
         params = CreateSessionParams(
-            image_id="linux_latest",
-            context_syncs=persistence_data
+            image_id="linux_latest", context_syncs=persistence_data
         )
 
         print("Creating session with context...")
@@ -109,11 +105,11 @@ class TestDeleteIntegration(unittest.TestCase):
         # Verify session has been deleted
         # Wait for a while to ensure deletion operation is completed
         time.sleep(2)
-        
+
         # Use list to get latest session list from server
         list_result = self.agent_bay.list()
         self.assertTrue(list_result.success)
-        
+
         # Check if session has been deleted
         self.assertNotIn(
             session.session_id,
@@ -144,16 +140,12 @@ class TestDeleteIntegration(unittest.TestCase):
 
         # Create persistence configuration
         persistence_data = [
-            ContextSync(
-                context_id=context.id,
-                path="/home/wuying/test2"
-            )
+            ContextSync(context_id=context.id, path="/home/wuying/test2")
         ]
 
         # Create session with context
         params = CreateSessionParams(
-            image_id="linux_latest",
-            context_syncs=persistence_data
+            image_id="linux_latest", context_syncs=persistence_data
         )
 
         print("Creating session with context...")
@@ -164,7 +156,9 @@ class TestDeleteIntegration(unittest.TestCase):
         print(f"Session created successfully, ID: {session.session_id}")
 
         # Create test file in session
-        test_cmd = "echo 'test file for agentbay delete' > /home/wuying/test2/testfile2.txt"
+        test_cmd = (
+            "echo 'test file for agentbay delete' > /home/wuying/test2/testfile2.txt"
+        )
         try:
             cmd_result = session.command.execute_command(test_cmd)
             print(f"Create test file: {cmd_result}")
@@ -180,11 +174,11 @@ class TestDeleteIntegration(unittest.TestCase):
         # Verify session has been deleted
         # Wait for a while to ensure deletion operation is completed
         time.sleep(2)
-        
+
         # Use list to get latest session list from server
         list_result = self.agent_bay.list()
         self.assertTrue(list_result.success)
-        
+
         # Check if session has been deleted
         self.assertNotIn(
             session.session_id,

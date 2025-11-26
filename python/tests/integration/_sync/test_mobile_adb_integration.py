@@ -3,14 +3,14 @@
 
 import os
 import sys
-import unittest
 import typing
-from agentbay import Session
-from agentbay import CreateSessionParams
-from agentbay._common.exceptions import SessionError
-from agentbay._common.models.response import AdbUrlResult
+import unittest
 
 from agentbay import AgentBay
+from agentbay._common.exceptions import SessionError
+from agentbay._common.models.response import AdbUrlResult
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.session import Session
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -59,16 +59,21 @@ class TestMobileGetAdbUrl(unittest.TestCase):
         """Test session.mobile.get_adb_url() returns AdbUrlResult with valid adbkey_pub."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
         session: Session = typing.cast(Session, self.session)
-        
+
         # Create a test ADB key
         adbkey_pub = "test_adb_key_123"
-        
+
         print(f"Calling session.mobile.get_adb_url() with adbkey_pub...")
         result = session.mobile.get_adb_url(adbkey_pub)
-        
-        self.assertTrue(result.success, f"session.mobile.get_adb_url() did not succeed: {result.error_message}")
-        self.assertIsInstance(result, AdbUrlResult, "Result should be AdbUrlResult instance")
-        
+
+        self.assertTrue(
+            result.success,
+            f"session.mobile.get_adb_url() did not succeed: {result.error_message}",
+        )
+        self.assertIsInstance(
+            result, AdbUrlResult, "Result should be AdbUrlResult instance"
+        )
+
         adb_url = result.data
         print(f"ADB URL: {adb_url}")
         self.assertIsInstance(adb_url, str)
@@ -81,34 +86,40 @@ class TestMobileGetAdbUrl(unittest.TestCase):
         """Test session.mobile.get_adb_url() returns properly formatted URL."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
         session: Session = typing.cast(Session, self.session)
-        
+
         adbkey_pub = "test_key_123"
         print(f"Calling session.mobile.get_adb_url()...")
         result = session.mobile.get_adb_url(adbkey_pub)
-        
+
         self.assertTrue(result.success)
         adb_url = result.data
         print(f"ADB URL: {adb_url}")
-        
+
         # Verify URL format: "adb connect <IP>:<Port>"
         parts = adb_url.split()
-        self.assertEqual(len(parts), 3, f"URL should have format 'adb connect <address>', got: {adb_url}")
+        self.assertEqual(
+            len(parts),
+            3,
+            f"URL should have format 'adb connect <address>', got: {adb_url}",
+        )
         self.assertEqual(parts[0], "adb")
         self.assertEqual(parts[1], "connect")
-        
+
         # Extract and verify IP:Port part
         address_parts = parts[2].split(":")
-        self.assertEqual(len(address_parts), 2, f"Address should be <IP>:<Port>, got: {parts[2]}")
+        self.assertEqual(
+            len(address_parts), 2, f"Address should be <IP>:<Port>, got: {parts[2]}"
+        )
 
     def test_get_adb_url_request_id_exists(self):
         """Test session.mobile.get_adb_url() result has valid request_id."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
         session: Session = typing.cast(Session, self.session)
-        
+
         adbkey_pub = "test_key_xyz"
         print(f"Calling session.mobile.get_adb_url()...")
         result = session.mobile.get_adb_url(adbkey_pub)
-        
+
         self.assertTrue(result.success)
         self.assertIsNotNone(result.request_id, "Request ID should not be None")
         self.assertTrue(len(result.request_id) > 0, "Request ID should not be empty")
@@ -121,17 +132,25 @@ class TestMobileGetAdbUrl(unittest.TestCase):
         params = CreateSessionParams(image_id="browser_latest")
         result = self.agent_bay.create(params=params)
         browser_session = getattr(result, "session", None)
-        
-        self.assertIsNotNone(browser_session, "Browser session was not created successfully.")
-        
+
+        self.assertIsNotNone(
+            browser_session, "Browser session was not created successfully."
+        )
+
         try:
             adbkey_pub = "test_key_456"
             print(f"Calling session.mobile.get_adb_url() on browser session...")
             result = browser_session.mobile.get_adb_url(adbkey_pub)
-            
+
             # Should fail because this is not a mobile environment
-            self.assertFalse(result.success, "get_adb_url() should fail on non-mobile image")
-            self.assertIn("mobile", result.error_message.lower(), "Error message should mention mobile environment")
+            self.assertFalse(
+                result.success, "get_adb_url() should fail on non-mobile image"
+            )
+            self.assertIn(
+                "mobile",
+                result.error_message.lower(),
+                "Error message should mention mobile environment",
+            )
             print(f"Expected error: {result.error_message}")
         finally:
             # Clean up browser session

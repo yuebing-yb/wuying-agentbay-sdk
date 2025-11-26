@@ -6,12 +6,13 @@ Integration tests for Computer and Mobile modules.
 Tests the integration with Session and actual usage patterns.
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
+
 from agentbay import AgentBay, Session
-from agentbay import Computer
-from agentbay import Mobile
+from agentbay._sync.computer import Computer
+from agentbay._sync.mobile import Mobile
 
 
 class TestComputerMobileIntegration:
@@ -25,13 +26,13 @@ class TestComputerMobileIntegration:
         """Test that Session includes Computer and Mobile modules."""
         # Arrange - Create a mock AgentBay instance
         mock_agent_bay = Mock()
-        
+
         # Act - Create a Session directly
         session = Session(mock_agent_bay, "test-session-123")
 
         # Assert
-        assert hasattr(session, 'computer')
-        assert hasattr(session, 'mobile')
+        assert hasattr(session, "computer")
+        assert hasattr(session, "mobile")
         assert isinstance(session.computer, Computer)
         assert isinstance(session.mobile, Mobile)
 
@@ -42,7 +43,7 @@ class TestComputerMobileIntegration:
         session = Session(mock_agent_bay, "test-session-123")
 
         # Mock the call_mcp_tool method at the session level
-        with patch.object(session, 'call_mcp_tool') as mock_mcp:
+        with patch.object(session, "call_mcp_tool") as mock_mcp:
             mock_mcp_result = Mock()
             mock_mcp_result.success = True
             mock_mcp_result.request_id = "test-123"
@@ -54,7 +55,9 @@ class TestComputerMobileIntegration:
 
             # Assert
             assert result.success is True
-            mock_mcp.assert_called_once_with("click_mouse", {"x": 100, "y": 200, "button": "left"})
+            mock_mcp.assert_called_once_with(
+                "click_mouse", {"x": 100, "y": 200, "button": "left"}
+            )
 
     def test_mobile_module_usage_in_session(self):
         """Test Mobile module usage through Session."""
@@ -63,7 +66,7 @@ class TestComputerMobileIntegration:
         session = Session(mock_agent_bay, "test-session-123")
 
         # Mock the call_mcp_tool method at the session level
-        with patch.object(session, 'call_mcp_tool') as mock_mcp:
+        with patch.object(session, "call_mcp_tool") as mock_mcp:
             mock_mcp_result = Mock()
             mock_mcp_result.success = True
             mock_mcp_result.request_id = "test-123"
@@ -84,7 +87,7 @@ class TestComputerMobileIntegration:
         session = Session(mock_agent_bay, "test-session-123")
 
         # Mock the call_mcp_tool method at the session level
-        with patch.object(session, 'call_mcp_tool') as mock_mcp:
+        with patch.object(session, "call_mcp_tool") as mock_mcp:
             mock_mcp_result = Mock()
             mock_mcp_result.success = True
             mock_mcp_result.request_id = "test-123"
@@ -104,7 +107,7 @@ class TestComputerMobileIntegration:
         session = Session(mock_agent_bay, "test-session-123")
 
         # Mock the call_mcp_tool method at the session level
-        with patch.object(session, 'call_mcp_tool') as mock_mcp:
+        with patch.object(session, "call_mcp_tool") as mock_mcp:
             mock_mcp_result = Mock()
             mock_mcp_result.success = True
             mock_mcp_result.request_id = "test-123"

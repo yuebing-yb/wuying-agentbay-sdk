@@ -43,13 +43,15 @@ class TestSessionLabels(unittest.TestCase):
         # Create a session
         print("Creating a new session for labels testing...")
         result = cls.agent_bay.create()
-        
+
         # Check if session creation was successful
         if not result.success:
-            raise Exception(f"Session creation failed in setUpClass: {result.error_message}")
+            raise Exception(
+                f"Session creation failed in setUpClass: {result.error_message}"
+            )
         if result.session is None:
             raise Exception("Session object is None in setUpClass")
-            
+
         cls.session = result.session
         print(f"Session created with ID: {cls.session.session_id}")
         print(f"Request ID: {result.request_id}")
@@ -286,7 +288,8 @@ class TestSessionLabels(unittest.TestCase):
         self.assertIn("empty", set_result.error_message.lower())
 
         print(f"Empty labels handled correctly")
- # 5. Error Handling Tests
+
+    # 5. Error Handling Tests
     def test_set_labels_invalid_parameters(self):
         """5.1 setLabels invalid parameter handling test - should handle invalid parameters"""
         # Prerequisites: Session instance has been created
@@ -322,7 +325,9 @@ class TestSessionLabels(unittest.TestCase):
         self.assertFalse(array_with_data_result.success)
         self.assertIn("array", array_with_data_result.error_message.lower())
 
-        print(f"setLabels invalid parameters: All invalid parameter types correctly rejected")
+        print(
+            f"setLabels invalid parameters: All invalid parameter types correctly rejected"
+        )
 
     def test_set_labels_empty_object(self):
         """5.2 setLabels empty object handling test - should handle empty object"""
@@ -358,7 +363,9 @@ class TestSessionLabels(unittest.TestCase):
         self.assertFalse(null_value_result.success)
         self.assertIn("values", null_value_result.error_message.lower())
 
-        print(f"setLabels empty keys/values: All empty keys and values correctly rejected")
+        print(
+            f"setLabels empty keys/values: All empty keys and values correctly rejected"
+        )
 
     def test_set_labels_mixed_invalid_parameters(self):
         """5.4 setLabels mixed invalid parameters test - should handle mixed invalid parameters with proper priority"""
@@ -366,32 +373,31 @@ class TestSessionLabels(unittest.TestCase):
         # Test objective: Verify priority handling of mixed invalid parameters
 
         # Test mixed situation with empty key and valid key-value pair
-        mixed_empty_key_result = self.session.set_labels({
-            "validKey": "validValue",
-            "": "emptyKeyValue"
-        })
+        mixed_empty_key_result = self.session.set_labels(
+            {"validKey": "validValue", "": "emptyKeyValue"}
+        )
         self.assertFalse(mixed_empty_key_result.success)
         self.assertIn("keys", mixed_empty_key_result.error_message.lower())
 
         # Test mixed situation with empty value and valid key-value pair
-        mixed_empty_value_result = self.session.set_labels({
-            "validKey": "validValue",
-            "emptyValueKey": ""
-        })
+        mixed_empty_value_result = self.session.set_labels(
+            {"validKey": "validValue", "emptyValueKey": ""}
+        )
         self.assertFalse(mixed_empty_value_result.success)
         self.assertIn("values", mixed_empty_value_result.error_message.lower())
 
         # Test multiple invalid key-value pairs
-        multiple_invalid_result = self.session.set_labels({
-            "": "emptyKey",
-            "emptyValue": "",
-            "nullValue": None
-        })
+        multiple_invalid_result = self.session.set_labels(
+            {"": "emptyKey", "emptyValue": "", "nullValue": None}
+        )
         self.assertFalse(multiple_invalid_result.success)
         # Should return the first encountered error (empty key)
         self.assertIn("keys", multiple_invalid_result.error_message.lower())
 
-        print(f"setLabels mixed invalid parameters: Mixed invalid parameters correctly handled with proper priority")
+        print(
+            f"setLabels mixed invalid parameters: Mixed invalid parameters correctly handled with proper priority"
+        )
+
     def test_set_labels_boundary_cases(self):
         """5.5 setLabels boundary cases test - should handle boundary cases"""
         # Prerequisites: Session instance has been created
@@ -406,13 +412,13 @@ class TestSessionLabels(unittest.TestCase):
         self.assertFalse(whitespace_value_result.success)
 
         # Test zero-length but non-empty special cases (if any exist)
-        special_chars_result = self.session.set_labels({
-            "key1": "value1",
-            "key2": "value2"
-        })
+        special_chars_result = self.session.set_labels(
+            {"key1": "value1", "key2": "value2"}
+        )
         self.assertTrue(special_chars_result.success)
 
         print(f"setLabels boundary cases: Boundary cases correctly handled")
+
 
 if __name__ == "__main__":
     unittest.main()

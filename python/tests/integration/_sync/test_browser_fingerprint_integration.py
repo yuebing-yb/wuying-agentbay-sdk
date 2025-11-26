@@ -8,13 +8,20 @@ This test verifies that browser fingerprint can be persisted
 across sessions using the same ContextId and FingerprintContextId.
 """
 
+import asyncio
 import os
 import time
 import unittest
-from agentbay import AgentBay
-from agentbay import CreateSessionParams, BrowserContext
-from agentbay import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
+
 from playwright.sync_api import sync_playwright
+
+from agentbay import AgentBay
+from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay import (
+    BrowserFingerprint,
+    BrowserFingerprintContext,
+    BrowserOption,
+)
 
 
 def get_test_api_key():
@@ -29,20 +36,14 @@ def is_windows_user_agent(user_agent: str) -> bool:
     if not user_agent:
         return False
     user_agent_lower = user_agent.lower()
-    windows_indicators = [
-        'windows nt',
-        'win32',
-        'win64',
-        'windows',
-        'wow64'
-    ]
+    windows_indicators = ["windows nt", "win32", "win64", "windows", "wow64"]
     return any(indicator in user_agent_lower for indicator in windows_indicators)
 
 
 class TestBrowserFingerprintIntegration(unittest.TestCase):
     """Integration tests for browser fingerprint persistence functionality."""
 
-    def __init__(self, methodName='runTest'):
+    def __init__(self, methodName="runTest"):
         super().__init__(methodName)
 
     @classmethod
@@ -68,13 +69,19 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
         # Create a browser fingerprint context
         cls.fingerprint_context_name = f"test-browser-fingerprint-{int(time.time())}"
-        fingerprint_context_result = cls.agent_bay.context.get(cls.fingerprint_context_name, True)
-        if not fingerprint_context_result.success or not fingerprint_context_result.context:
+        fingerprint_context_result = cls.agent_bay.context.get(
+            cls.fingerprint_context_name, True
+        )
+        if (
+            not fingerprint_context_result.success
+            or not fingerprint_context_result.context
+        ):
             raise unittest.SkipTest("Failed to create fingerprint context")
-        
+
         cls.fingerprint_context = fingerprint_context_result.context
-        print(f"Created fingerprint context: {cls.fingerprint_context.name} (ID: {cls.fingerprint_context.id})")
-        
+        print(
+            f"Created fingerprint context: {cls.fingerprint_context.name} (ID: {cls.fingerprint_context.id})"
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -88,13 +95,10 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             except Exception as e:
                 print(f"Warning: Failed to delete context: {e}")
 
-
     def test_browser_fingerprint_basic_usage(self):
         print("===== Test browser fingerprint basic usage =====")
 
-        params = CreateSessionParams(
-            image_id="browser_latest"
-        )
+        params = CreateSessionParams(image_id="browser_latest")
         session_result = self.agent_bay.create(params)
         self.assertTrue(session_result.success, "Failed to create session")
         self.assertIsNotNone(session_result.session, "Session should not be None")
@@ -127,11 +131,17 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
-                context = browser.contexts[0] if browser.contexts else browser.new_context()
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else browser.new_context()
+                )
 
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate("() => JSON.parse(document.body.textContent)")
+                response = page.evaluate(
+                    "() => JSON.parse(document.body.textContent)"
+                )
                 user_agent = response["user-agent"]
                 print("user_agent =", user_agent)
                 self.assertTrue(user_agent is not None)
@@ -140,6 +150,7 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
                 context.close()
                 print("Browser fingerprint test completed")
+
         # Run fingerprint test operations
         asyncio.run(async_fingerprint_operations())
 
@@ -147,19 +158,21 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         self.assertTrue(delete_result.success, "Failed to delete session")
         print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
-
     def test_browser_fingerprint_persistence(self):
         """Test browser fingerprint persist across sessions with the same browser and fingerprint context."""
         print("===== Test browser fingerprint persistence =====")
 
         # Step 1: Create session with BrowserContext and FingerprintContext
-        print(f"Step 1: Creating session with browser context ID: {self.context.id} "
-              f"and fingerprint context ID: {self.fingerprint_context.id}")
+        print(
+            f"Step 1: Creating session with browser context ID: {self.context.id} "
+            f"and fingerprint context ID: {self.fingerprint_context.id}"
+        )
         fingerprint_context = BrowserFingerprintContext(self.fingerprint_context.id)
-        browser_context = BrowserContext(self.context.id, auto_upload=True, fingerprint_context=fingerprint_context)
+        browser_context = BrowserContext(
+            self.context.id, auto_upload=True, fingerprint_context=fingerprint_context
+        )
         params1 = CreateSessionParams(
-            image_id="browser_latest",
-            browser_context=browser_context
+            image_id="browser_latest", browser_context=browser_context
         )
 
         session_result = self.agent_bay.create(params1)
@@ -172,7 +185,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
         # Step 3: Get browser object and generate fingerprint for persistence
         def first_session_operations():
-            print("Step 2: Initializing firsts browser and generate fingerprint for persistence...")
+            print(
+                "Step 2: Initializing firsts browser and generate fingerprint for persistence..."
+            )
 
             # Initialize browser with fingerprint persistent enabled and set fingerprint generation options
             browser_option1 = BrowserOption(
@@ -194,15 +209,23 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             print(f"Browser endpoint URL: {endpoint_url}")
 
             # Step 4: Connect with playwright, test first session fingerprint
-            print("Step 3: Opening https://httpbin.org/user-agent and test user agent...")
+            print(
+                "Step 3: Opening https://httpbin.org/user-agent and test user agent..."
+            )
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
-                context = browser.contexts[0] if browser.contexts else browser.new_context()
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else browser.new_context()
+                )
 
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate("() => JSON.parse(document.body.textContent)")
+                response = page.evaluate(
+                    "() => JSON.parse(document.body.textContent)"
+                )
                 user_agent = response["user-agent"]
                 print("user_agent =", user_agent)
                 self.assertTrue(user_agent is not None)
@@ -219,21 +242,26 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         print("Step 4: Releasing first session with syncContext=True...")
         delete_result = self.agent_bay.delete(session1, sync_context=True)
         self.assertTrue(delete_result.success, "Failed to delete first session")
-        print(f"First session deleted successfully (RequestID: {delete_result.request_id})")
+        print(
+            f"First session deleted successfully (RequestID: {delete_result.request_id})"
+        )
 
         # Wait for context sync to complete
         time.sleep(3)
 
         # Step 5: Create second session with same browser context and fingerprint context
-        print(f"Step 5: Creating second session with same browser context ID: {self.context.id} "
-              f"and fingerprint context ID: {self.fingerprint_context.id}")
+        print(
+            f"Step 5: Creating second session with same browser context ID: {self.context.id} "
+            f"and fingerprint context ID: {self.fingerprint_context.id}"
+        )
         params2 = CreateSessionParams(
-            image_id="browser_latest",
-            browser_context=browser_context
+            image_id="browser_latest", browser_context=browser_context
         )
         session_result2 = self.agent_bay.create(params2)
         self.assertTrue(session_result2.success, "Failed to create second session")
-        self.assertIsNotNone(session_result2.session, "Second session should not be None")
+        self.assertIsNotNone(
+            session_result2.session, "Second session should not be None"
+        )
 
         session2 = session_result2.session
         assert session2 is not None  # Type narrowing for linter
@@ -241,7 +269,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
         # Step 6: Get browser object and check if second session fingerprint is the same as first session
         def second_session_operations():
-            print("Step 6: Get browser object and check if second session fingerprint is the same as first session...")
+            print(
+                "Step 6: Get browser object and check if second session fingerprint is the same as first session..."
+            )
 
             # Initialize browser with fingerprint persistent enabled but not specific fingerprint generation options
             browser_option2 = BrowserOption(
@@ -249,7 +279,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
                 fingerprint_persistent=True,
             )
             init_success = session2.browser.initialize_async(browser_option2)
-            self.assertTrue(init_success, "Failed to initialize browser in second session")
+            self.assertTrue(
+                init_success, "Failed to initialize browser in second session"
+            )
             print("Second session browser initialized successfully")
 
             # Get endpoint URL
@@ -260,12 +292,20 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             # Connect with playwright and test second session fingerprint
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
-                self.assertIsNotNone(browser, "Failed to connect to browser in second session")
+                self.assertIsNotNone(
+                    browser, "Failed to connect to browser in second session"
+                )
 
-                context = browser.contexts[0] if browser.contexts else browser.new_context()
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else browser.new_context()
+                )
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate("() => JSON.parse(document.body.textContent)")
+                response = page.evaluate(
+                    "() => JSON.parse(document.body.textContent)"
+                )
                 user_agent = response["user-agent"]
                 print("user_agent =", user_agent)
                 self.assertTrue(user_agent is not None)
@@ -283,10 +323,11 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         print("Step 7: Releasing second session with syncContext=True...")
         delete_result = self.agent_bay.delete(session2, sync_context=True)
         self.assertTrue(delete_result.success, "Failed to delete second session")
-        print(f"Second session deleted successfully (RequestID: {delete_result.request_id})")
+        print(
+            f"Second session deleted successfully (RequestID: {delete_result.request_id})"
+        )
 
         print("Browser fingerprint persistence test completed successfully!")
-
 
     def test_browser_fingerprint_local_sync(self):
         """Test browser fingerprint local sync functionality."""
@@ -306,17 +347,18 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         def async_local_sync_operations():
             # Generate local chrome browser fingerprint
             print("Dumping local chrome browser fingerprint...")
-            from agentbay.browser.fingerprint import BrowserFingerprintGenerator
-            
+            from agentbay import BrowserFingerprintGenerator
+
             fingerprint_generator = BrowserFingerprintGenerator(headless=False)
             fingerprint_format = fingerprint_generator.generate_fingerprint()
-            self.assertIsNotNone(fingerprint_format, "Fingerprint format should not be None")
+            self.assertIsNotNone(
+                fingerprint_format, "Fingerprint format should not be None"
+            )
             print("Local fingerprint generated successfully")
 
             # Initialize browser with fingerprint format from local chrome
             browser_option = BrowserOption(
-                use_stealth=True,
-                fingerprint_format=fingerprint_format
+                use_stealth=True, fingerprint_format=fingerprint_format
             )
             init_success = session.browser.initialize_async(browser_option)
             self.assertTrue(init_success, "Failed to initialize browser")
@@ -332,18 +374,29 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
-                context = browser.contexts[0] if browser.contexts else browser.new_context()
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else browser.new_context()
+                )
 
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate("() => JSON.parse(document.body.textContent)")
+                response = page.evaluate(
+                    "() => JSON.parse(document.body.textContent)"
+                )
                 user_agent = response["user-agent"]
                 print(f"Remote user agent: {user_agent}")
-                print(f"Local user agent: {fingerprint_format.fingerprint.navigator.userAgent}")
-                
+                print(
+                    f"Local user agent: {fingerprint_format.fingerprint.navigator.userAgent}"
+                )
+
                 # Verify that the user agents match (fingerprint sync successful)
-                self.assertEqual(user_agent, fingerprint_format.fingerprint.navigator.userAgent, 
-                               "User agent should match between local and remote")
+                self.assertEqual(
+                    user_agent,
+                    fingerprint_format.fingerprint.navigator.userAgent,
+                    "User agent should match between local and remote",
+                )
                 print("SUCCESS: Local fingerprint synced correctly to remote browser!")
 
                 context.close()
@@ -357,7 +410,6 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
         print("Browser fingerprint local sync test completed successfully!")
-
 
     def test_browser_fingerprint_construct(self):
         """Test browser fingerprint construction from file."""
@@ -377,25 +429,29 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         def async_construct_operations():
             # Load fingerprint from example file
             print("Loading fingerprint from example file...")
-            from agentbay.browser.fingerprint import FingerprintFormat
-            
+            from agentbay import FingerprintFormat
+
             # Get the path to the example fingerprint file
             example_file_path = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 
-                "resource", "fingerprint.example.json"
+                os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                ),
+                "resource",
+                "fingerprint.example.json",
             )
-            
+
             with open(example_file_path, "r") as f:
                 fingerprint_json = f.read()
-            
+
             fingerprint_format = FingerprintFormat.load(fingerprint_json)
-            self.assertIsNotNone(fingerprint_format, "Fingerprint format should not be None")
+            self.assertIsNotNone(
+                fingerprint_format, "Fingerprint format should not be None"
+            )
             print("Fingerprint loaded from file successfully")
 
             # Initialize browser with constructed fingerprint format
             browser_option = BrowserOption(
-                use_stealth=True,
-                fingerprint_format=fingerprint_format
+                use_stealth=True, fingerprint_format=fingerprint_format
             )
             init_success = session.browser.initialize_async(browser_option)
             self.assertTrue(init_success, "Failed to initialize browser")
@@ -411,18 +467,29 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
-                context = browser.contexts[0] if browser.contexts else browser.new_context()
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else browser.new_context()
+                )
 
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate("() => JSON.parse(document.body.textContent)")
+                response = page.evaluate(
+                    "() => JSON.parse(document.body.textContent)"
+                )
                 user_agent = response["user-agent"]
                 print(f"Remote user agent: {user_agent}")
-                print(f"Expected user agent: {fingerprint_format.fingerprint.navigator.userAgent}")
-                
+                print(
+                    f"Expected user agent: {fingerprint_format.fingerprint.navigator.userAgent}"
+                )
+
                 # Verify that the user agents match (fingerprint construction successful)
-                self.assertEqual(user_agent, fingerprint_format.fingerprint.navigator.userAgent, 
-                               "User agent should match the constructed fingerprint")
+                self.assertEqual(
+                    user_agent,
+                    fingerprint_format.fingerprint.navigator.userAgent,
+                    "User agent should match the constructed fingerprint",
+                )
                 print("SUCCESS: Fingerprint constructed correctly from file!")
 
                 context.close()

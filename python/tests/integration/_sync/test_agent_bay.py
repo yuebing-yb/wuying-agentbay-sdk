@@ -6,9 +6,20 @@ import sys
 import unittest
 
 from agentbay import AgentBay
-from agentbay import CreateSessionParams, BrowserContext
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
-from agentbay import ContextSync, SyncPolicy, RecyclePolicy, Lifecycle, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, BWList, WhiteList
+from agentbay._common.params.context_sync import (
+    BWList,
+    ContextSync,
+    DeletePolicy,
+    DownloadPolicy,
+    ExtractPolicy,
+    Lifecycle,
+    RecyclePolicy,
+    SyncPolicy,
+    UploadPolicy,
+    WhiteList,
+)
+from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -74,18 +85,19 @@ class TestAgentBay(unittest.TestCase):
         # Create a session
         print("Creating a new session...")
         result = agent_bay.create()
-        
+
         # Check if session creation was successful
-        self.assertTrue(result.success, f"Session creation failed: {result.error_message}")
+        self.assertTrue(
+            result.success, f"Session creation failed: {result.error_message}"
+        )
         self.assertIsNotNone(result.session, "Session object is None")
-        
+
         session = result.session
         print(f"Session created with ID: {session.session_id}")
 
         # Ensure session ID is not empty
         self.assertIsNotNone(session.session_id)
         self.assertNotEqual(session.session_id, "")
-
 
         # Delete the session
         print("Deleting the session...")
@@ -105,13 +117,13 @@ class TestSession(unittest.TestCase):
         # Create a session with default windows image
         print("Creating a new session for testing...")
         self.result = self.agent_bay.create()
-        
+
         # Check if session creation was successful
         if not self.result.success:
             self.fail(f"Session creation failed in setUp: {self.result.error_message}")
         if self.result.session is None:
             self.fail("Session object is None in setUp")
-            
+
         self.session = self.result.session
         print(f"Session created with ID: {self.session.session_id}")
 
@@ -168,7 +180,9 @@ class TestSession(unittest.TestCase):
                 response = self.session.command.execute_command("ls")
                 print(f"Command execution result: {response}")
                 self.assertIsNotNone(response)
-                self.assertTrue(response.success, f"Command failed: {response.error_message}")
+                self.assertTrue(
+                    response.success, f"Command failed: {response.error_message}"
+                )
                 # Check if response contains "tool not found"
                 self.assertNotIn(
                     "tool not found",
@@ -189,7 +203,9 @@ class TestSession(unittest.TestCase):
                 result = self.session.file_system.read_file("/etc/hosts")
                 print(f"ReadFile result: content='{result}'")
                 self.assertIsNotNone(result)
-                self.assertTrue(result.success, f"Read file failed: {result.error_message}")
+                self.assertTrue(
+                    result.success, f"Read file failed: {result.error_message}"
+                )
                 # Check if response contains "tool not found"
                 self.assertNotIn(
                     "tool not found",
@@ -202,7 +218,6 @@ class TestSession(unittest.TestCase):
                 # Don't fail the test if filesystem operations are not supported
         else:
             print("Note: FileSystem interface is nil, skipping file test")
-
 
 
 class TestRecyclePolicy(unittest.TestCase):
@@ -221,7 +236,9 @@ class TestRecyclePolicy(unittest.TestCase):
             try:
                 print("Cleaning up session with custom recyclePolicy...")
                 delete_result = self.agent_bay.delete(self.session)
-                print(f"Delete Session RequestId: {delete_result.request_id or 'undefined'}")
+                print(
+                    f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
+                )
             except Exception as e:
                 print(f"Warning: Error deleting session: {e}")
 
@@ -229,8 +246,7 @@ class TestRecyclePolicy(unittest.TestCase):
         """Test creating session with custom recyclePolicy using Lifecycle_1Day."""
         # Create custom recyclePolicy with Lifecycle_1Day and default paths
         recycle_policy = RecyclePolicy(
-            lifecycle=Lifecycle.LIFECYCLE_1DAY,
-            paths=[""]  # Using default path value
+            lifecycle=Lifecycle.LIFECYCLE_1DAY, paths=[""]  # Using default path value
         )
 
         # Create custom SyncPolicy with recyclePolicy
@@ -240,24 +256,26 @@ class TestRecyclePolicy(unittest.TestCase):
             delete_policy=DeletePolicy.default(),
             extract_policy=ExtractPolicy.default(),
             recycle_policy=recycle_policy,
-            bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])])
+            bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])]),
         )
 
         # Create ContextSync with custom policy
         context_sync = ContextSync(
             context_id="test-recycle-context",
             path="/test/recycle/path",
-            policy=custom_sync_policy
+            policy=custom_sync_policy,
         )
 
         print("Creating session with custom recyclePolicy...")
-        print(f"RecyclePolicy lifecycle: {custom_sync_policy.recycle_policy.lifecycle.value}")
+        print(
+            f"RecyclePolicy lifecycle: {custom_sync_policy.recycle_policy.lifecycle.value}"
+        )
         print(f"RecyclePolicy paths: {custom_sync_policy.recycle_policy.paths}")
 
         # Create session parameters with custom recyclePolicy
         params = CreateSessionParams(
             labels={"test": "recyclePolicy", "lifecycle": "1day"},
-            context_syncs=[context_sync]
+            context_syncs=[context_sync],
         )
 
         # Create session with custom recyclePolicy
@@ -289,12 +307,15 @@ class TestRecyclePolicy(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             RecyclePolicy(
                 lifecycle=Lifecycle.LIFECYCLE_1DAY,
-                paths=["/invalid/path/*"]  # Invalid path with wildcard
+                paths=["/invalid/path/*"],  # Invalid path with wildcard
             )
 
         # Verify the error message
         expected_message = "Wildcard patterns are not supported in recycle policy paths. Got: /invalid/path/*. Please use exact directory paths instead."
-        self.assertIn("Wildcard patterns are not supported in recycle policy paths", str(context.exception))
+        self.assertIn(
+            "Wildcard patterns are not supported in recycle policy paths",
+            str(context.exception),
+        )
         self.assertIn("/invalid/path/*", str(context.exception))
 
         print("RecyclePolicy correctly threw error for invalid path")
@@ -303,11 +324,10 @@ class TestRecyclePolicy(unittest.TestCase):
         with self.assertRaises(ValueError):
             RecyclePolicy(
                 lifecycle=Lifecycle.LIFECYCLE_1DAY,
-                paths=["/valid/path", "/invalid/path?", "/another/invalid/*"]
+                paths=["/valid/path", "/invalid/path?", "/another/invalid/*"],
             )
 
         print("RecyclePolicy correctly threw error for multiple invalid paths")
-
 
     def test_recycle_policy_invalid_lifecycle(self):
         """Test invalid Lifecycle values."""
@@ -317,7 +337,7 @@ class TestRecyclePolicy(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             RecyclePolicy(
                 lifecycle="invalid_lifecycle",  # Invalid: should be Lifecycle enum
-                paths=[""]
+                paths=[""],
             )
 
         # Verify error message contains expected information
@@ -325,13 +345,15 @@ class TestRecyclePolicy(unittest.TestCase):
         expected_substrings = [
             "Invalid lifecycle value",
             "invalid_lifecycle",
-            "Valid values are:"
+            "Valid values are:",
         ]
 
         for substring in expected_substrings:
             self.assertIn(substring, error_message)
 
-        print(f"Invalid lifecycle 'invalid_lifecycle' correctly failed validation: {error_message}")
+        print(
+            f"Invalid lifecycle 'invalid_lifecycle' correctly failed validation: {error_message}"
+        )
         print("Invalid Lifecycle values test completed successfully")
 
     def test_recycle_policy_combined_invalid(self):
@@ -342,14 +364,16 @@ class TestRecyclePolicy(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             RecyclePolicy(
                 lifecycle="invalid_lifecycle",  # Invalid lifecycle
-                paths=["/invalid/path/*"]       # Invalid path with wildcard
+                paths=["/invalid/path/*"],  # Invalid path with wildcard
             )
 
         # Should fail on lifecycle validation first (since it's checked first in __post_init__)
         error_message = str(context.exception)
         self.assertIn("Invalid lifecycle value", error_message)
 
-        print(f"Policy with both invalid lifecycle and invalid path correctly failed validation: {error_message}")
+        print(
+            f"Policy with both invalid lifecycle and invalid path correctly failed validation: {error_message}"
+        )
         print("Combined invalid configuration test completed successfully")
 
 
@@ -369,7 +393,9 @@ class TestBrowserContext(unittest.TestCase):
             try:
                 print("Cleaning up session with BrowserContext...")
                 delete_result = self.agent_bay.delete(self.session)
-                print(f"Delete Session RequestId: {delete_result.request_id or 'undefined'}")
+                print(
+                    f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
+                )
             except Exception as e:
                 print(f"Warning: Error deleting session: {e}")
 
@@ -379,8 +405,7 @@ class TestBrowserContext(unittest.TestCase):
 
         # Create BrowserContext with default RecyclePolicy
         browser_context = BrowserContext(
-            context_id="test-browser-context-default",
-            auto_upload=True
+            context_id="test-browser-context-default", auto_upload=True
         )
 
         print(f"BrowserContext context_id: {browser_context.context_id}")
@@ -389,7 +414,7 @@ class TestBrowserContext(unittest.TestCase):
         # Create session parameters with BrowserContext
         params = CreateSessionParams(
             labels={"test": "browserContext", "recycle_policy": "default"},
-            browser_context=browser_context
+            browser_context=browser_context,
         )
 
         # Create session with BrowserContext
@@ -411,7 +436,9 @@ class TestBrowserContext(unittest.TestCase):
         self.assertIsNotNone(self.session.session_id)
         self.assertGreater(len(self.session.session_id), 0)
 
-        print("Session with BrowserContext (default RecyclePolicy) created and verified successfully")
+        print(
+            "Session with BrowserContext (default RecyclePolicy) created and verified successfully"
+        )
 
 
 if __name__ == "__main__":

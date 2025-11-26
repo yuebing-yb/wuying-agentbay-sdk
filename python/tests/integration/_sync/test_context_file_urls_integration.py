@@ -4,6 +4,7 @@
 import os
 import time
 import unittest
+
 import httpx
 
 from agentbay import AgentBay
@@ -45,9 +46,14 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         test_path = "/tmp/integration_upload_test.txt"
         result = self.agent_bay.context.get_file_upload_url(self.context.id, test_path)
 
-        self.assertTrue(result.request_id is not None and isinstance(result.request_id, str))
+        self.assertTrue(
+            result.request_id is not None and isinstance(result.request_id, str)
+        )
         self.assertTrue(result.success, "get_file_upload_url should be successful")
-        self.assertTrue(isinstance(result.url, str) and len(result.url) > 0, "URL should be non-empty")
+        self.assertTrue(
+            isinstance(result.url, str) and len(result.url) > 0,
+            "URL should be non-empty",
+        )
         # Expire time may be optional depending on backend; if present, should be int-like
         if result.expire_time is not None:
             self.assertTrue(isinstance(result.expire_time, int))
@@ -55,32 +61,53 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         print(f"Upload URL: {result.url[:80]}... (RequestID: {result.request_id})")
 
         # Use the obtained presigned URL to upload content to OSS
-        upload_content = f"agentbay integration upload test at {int(time.time())}\n".encode("utf-8")
+        upload_content = (
+            f"agentbay integration upload test at {int(time.time())}\n".encode("utf-8")
+        )
         response = httpx.put(result.url, content=upload_content, timeout=30.0)
         self.assertIn(
             response.status_code,
             (200, 204),
-            f"Upload failed with status code {response.status_code}"
+            f"Upload failed with status code {response.status_code}",
         )
         etag = response.headers.get("ETag")
-        print(f"Uploaded {len(upload_content)} bytes, status={response.status_code}, ETag={etag}")
+        print(
+            f"Uploaded {len(upload_content)} bytes, status={response.status_code}, ETag={etag}"
+        )
 
         # Fetch a presigned download URL for the same file and verify content
-        dl_result = self.agent_bay.context.get_file_download_url(self.context.id, test_path)
+        dl_result = self.agent_bay.context.get_file_download_url(
+            self.context.id, test_path
+        )
         self.assertTrue(dl_result.success, "get_file_download_url should be successful")
-        self.assertTrue(isinstance(dl_result.url, str) and len(dl_result.url) > 0, "Download URL should be non-empty")
-        print(f"Download URL: {dl_result.url[:80]}... (RequestID: {dl_result.request_id})")
+        self.assertTrue(
+            isinstance(dl_result.url, str) and len(dl_result.url) > 0,
+            "Download URL should be non-empty",
+        )
+        print(
+            f"Download URL: {dl_result.url[:80]}... (RequestID: {dl_result.request_id})"
+        )
 
         dl_resp = httpx.get(dl_result.url, timeout=30.0)
-        self.assertEqual(dl_resp.status_code, 200, f"Download failed with status code {dl_resp.status_code}")
-        self.assertEqual(dl_resp.content, upload_content, "Downloaded content does not match uploaded content")
+        self.assertEqual(
+            dl_resp.status_code,
+            200,
+            f"Download failed with status code {dl_resp.status_code}",
+        )
+        self.assertEqual(
+            dl_resp.content,
+            upload_content,
+            "Downloaded content does not match uploaded content",
+        )
         print(f"Downloaded {len(dl_resp.content)} bytes, content matches uploaded data")
 
         # List files to verify presence of the uploaded file under /tmp (with small retry)
         file_name = os.path.basename(test_path)
 
         def list_contains():
-            res = self.agent_bay.context.list_files(self.context.id, "/tmp", page_number=1, page_size=50)
+            res = self.agent_bay.context.list_files(
+                self.context.id, "/tmp", page_number=1, page_size=50
+            )
             if not res or not res.success:
                 return False, res, "/tmp"
             found_local = any(
@@ -105,8 +132,14 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         print(f"List files retry attempts (presence check): {retries_presence}")
 
         if last_lf_res and chosen_parent:
-            total = (last_lf_res.count if getattr(last_lf_res, "count", None) is not None else len(last_lf_res.entries))
-            print(f"List files: checked parent={chosen_parent}, total={total}, contains={found}")
+            total = (
+                last_lf_res.count
+                if getattr(last_lf_res, "count", None) is not None
+                else len(last_lf_res.entries)
+            )
+            print(
+                f"List files: checked parent={chosen_parent}, total={total}, contains={found}"
+            )
         else:
             print("List files: no listing result available")
 
@@ -134,16 +167,29 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
             retries_deletion += 1
             time.sleep(1.0)
         print(f"List files retry attempts (deletion check): {retries_deletion}")
-        self.assertTrue(removed, "Deleted file should not appear in list_files when listing is available")
+        self.assertTrue(
+            removed,
+            "Deleted file should not appear in list_files when listing is available",
+        )
         if last_lf_res:
-            prev = (last_lf_res.count if getattr(last_lf_res, "count", None) is not None else len(last_lf_res.entries))
-            print(f"List files: {file_name} absent after delete (listing availability: {prev})")
+            prev = (
+                last_lf_res.count
+                if getattr(last_lf_res, "count", None) is not None
+                else len(last_lf_res.entries)
+            )
+            print(
+                f"List files: {file_name} absent after delete (listing availability: {prev})"
+            )
 
         # Additionally, attempt to download after delete and log the status.
         # Some backends may keep presigned URLs valid until expiry even if the file is deleted.
-        post_dl = self.agent_bay.context.get_file_download_url(self.context.id, test_path)
+        post_dl = self.agent_bay.context.get_file_download_url(
+            self.context.id, test_path
+        )
         if post_dl.success and isinstance(post_dl.url, str) and len(post_dl.url) > 0:
             post_resp = httpx.get(post_dl.url, timeout=30.0)
-            print(f"Post-delete download status (informational): {post_resp.status_code}")
+            print(
+                f"Post-delete download status (informational): {post_resp.status_code}"
+            )
         else:
             print("Post-delete: download URL not available, treated as deleted")

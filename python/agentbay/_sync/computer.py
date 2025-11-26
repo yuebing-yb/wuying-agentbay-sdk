@@ -1208,7 +1208,9 @@ class Computer(BaseService):
                 error_message=f"Failed to restore window: {str(e)}",
             )
 
-    def resize_window(self, window_id: int, width: int, height: int) -> BoolResult:
+    def resize_window(
+        self, window_id: int, width: int, height: int
+    ) -> BoolResult:
         """
         Resizes the specified window.
 

@@ -746,7 +746,7 @@ class AsyncBrowser(AsyncBaseService):
         else:
             raise BrowserError("Browser is not initialized. Cannot stop browser.")
 
-    def get_endpoint_url(self) -> str:
+    async def get_endpoint_url(self) -> str:
         """
         Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
         When initialized, always fetches the latest CDP url from session.get_link().
@@ -762,42 +762,10 @@ class AsyncBrowser(AsyncBaseService):
             session = await agent_bay.create().session
             browser_option = BrowserOption()
             await session.browser.initialize(browser_option)
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print(f"CDP Endpoint: {endpoint_url}")
             await session.delete()
             ```
-        """
-        if not self.is_initialized():
-            raise BrowserError(
-                "Browser is not initialized. Cannot access endpoint URL."
-            )
-        try:
-            if self.session.is_vpc:
-                _logger.debug(
-                    f"VPC mode, endpoint_router_port: {self.endpoint_router_port}"
-                )
-                self._endpoint_url = f"ws://{self.session.network_interface_ip}:{self.endpoint_router_port}"
-            else:
-                # This calls an API, but we are in get_endpoint_url which is typically a property or synchronous accessor.
-                # However, if it needs to fetch data from network, it should be async.
-                # The original code calls session.agent_bay.client.get_cdp_link(request) synchronously.
-                # We should probably make this async.
-                # But properties cannot be async.
-                # Let's make it async method get_endpoint_url().
-                # But here I cannot change it easily without breaking API if it was sync.
-                # The original sync code did:
-                # response = self.session.agent_bay.client.get_cdp_link(request)
-                # If I want to keep it sync, I need a sync client? No, I am in AsyncBrowser.
-                # So it MUST be async.
-                pass
-        except Exception as e:
-            raise BrowserError(f"Failed to get endpoint URL from session: {e}")
-        return self._endpoint_url  # This is not correct if we need to fetch it.
-
-    async def get_endpoint_url_async(self) -> str:
-        """
-        Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
-        When initialized, always fetches the latest CDP url from session.get_link().
         """
         if not self.is_initialized():
             raise BrowserError(

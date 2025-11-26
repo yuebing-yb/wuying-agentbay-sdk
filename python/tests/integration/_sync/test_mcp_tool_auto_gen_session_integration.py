@@ -41,9 +41,11 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         tool_result = session.call_mcp_tool(
             tool_name="shell",
             args={"command": "echo 'test'", "timeout_ms": 5000},
-            auto_gen_session=False
+            auto_gen_session=False,
         )
-        self.assertTrue(tool_result.success, f"MCP tool call failed: {tool_result.error_message}")
+        self.assertTrue(
+            tool_result.success, f"MCP tool call failed: {tool_result.error_message}"
+        )
         print(f"MCP tool call succeeded (RequestID: {tool_result.request_id})")
 
         # Clean up
@@ -86,10 +88,12 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         tool_result = session.call_mcp_tool(
             tool_name="shell",
             args={"command": "echo 'test'", "timeout_ms": 5000},
-            auto_gen_session=False
+            auto_gen_session=False,
         )
         # Expect failure
-        self.assertFalse(tool_result.success, "MCP tool call should fail with deleted session")
+        self.assertFalse(
+            tool_result.success, "MCP tool call should fail with deleted session"
+        )
         self.assertIsNotNone(tool_result.error_message)
         self.assertTrue(len(tool_result.error_message) > 0)
         print(f"MCP tool call failed as expected: {tool_result.error_message}")
@@ -128,12 +132,14 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         tool_result = session.call_mcp_tool(
             tool_name="shell",
             args={"command": "echo 'test'", "timeout_ms": 5000},
-            auto_gen_session=True
+            auto_gen_session=True,
         )
         # The behavior depends on the server implementation
         # If auto_gen_session is supported, it may succeed by creating a new session
         # If not supported, it should fail
-        print(f"MCP tool call result: success={tool_result.success}, error={tool_result.error_message}")
+        print(
+            f"MCP tool call result: success={tool_result.success}, error={tool_result.error_message}"
+        )
         # We don't assert success/failure here as it depends on server support
         # Just verify we got a response
         self.assertIsNotNone(tool_result)
@@ -141,4 +147,3 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

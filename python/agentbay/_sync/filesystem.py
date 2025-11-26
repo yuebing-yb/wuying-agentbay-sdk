@@ -147,7 +147,9 @@ class FileTransfer:
                 error="No context ID",
             )
         # 1. Get pre-signed upload URL
-        url_res = self._context_svc.get_file_upload_url(self._context_id, remote_path)
+        url_res = self._context_svc.get_file_upload_url(
+            self._context_id, remote_path
+        )
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
             return UploadResult(
                 success=False,
@@ -167,8 +169,7 @@ class FileTransfer:
 
         # 2. PUT upload to pre-signed URL
         try:
-            http_status, etag, bytes_sent = self._put_file_sync(
-                upload_url,
+            http_status, etag, bytes_sent = self._put_file_sync(upload_url,
                 local_path,
                 self._http_timeout,
                 self._follow_redirects,
@@ -203,7 +204,9 @@ class FileTransfer:
         req_id_sync = None
         try:
             print("Triggering sync to cloud disk")
-            req_id_sync = self._await_sync("download", remote_path, self._context_id)
+            req_id_sync = self._await_sync(
+                "download", remote_path, self._context_id
+            )
         except Exception as e:
             return UploadResult(
                 success=False,
@@ -287,7 +290,9 @@ class FileTransfer:
         # 1. Trigger cloud disk to OSS download sync
         req_id_sync = None
         try:
-            req_id_sync = self._await_sync("upload", remote_path, self._context_id)
+            req_id_sync = self._await_sync(
+                "upload", remote_path, self._context_id
+            )
         except Exception as e:
             return DownloadResult(
                 success=False,
@@ -322,7 +327,9 @@ class FileTransfer:
                 )
 
         # 2. Get pre-signed download URL
-        url_res = self._context_svc.get_file_download_url(self._context_id, remote_path)
+        url_res = self._context_svc.get_file_download_url(
+            self._context_id, remote_path
+        )
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
             return DownloadResult(
                 success=False,
@@ -353,8 +360,7 @@ class FileTransfer:
                     error=f"Destination exists and overwrite=False: {local_path}",
                 )
 
-            http_status, bytes_received = self._get_file_sync(
-                download_url,
+            http_status, bytes_received = self._get_file_sync(download_url,
                 local_path,
                 self._http_timeout,
                 self._follow_redirects,
@@ -420,16 +426,16 @@ class FileTransfer:
                 path=remote_path if remote_path else None,
                 context_id=context_id if context_id else None,
             )
-            out = sync_fn(
-                mode=mode,
-                path=remote_path if remote_path else None,
-                context_id=context_id if context_id else None,
-            )
+            out = sync_fn(mode=mode,
+                    path=remote_path if remote_path else None,
+                    context_id=context_id if context_id else None,
+                )
         except TypeError:
             # Backend may not support all parameters, try with mode and path only
             try:
                 result = sync_fn(mode=mode, path=remote_path if remote_path else None)
-                out = sync_fn(mode=mode, path=remote_path if remote_path else None)
+                out = sync_fn(mode=mode, path=remote_path if remote_path else None
+                    )
             except TypeError:
                 # Backend may not support mode or path parameter
                 try:

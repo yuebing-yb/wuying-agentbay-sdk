@@ -3,13 +3,13 @@
 
 import os
 import sys
-import unittest
 import typing
-from agentbay import Session
-from agentbay import CreateSessionParams
-from agentbay._common.exceptions import SessionError
+import unittest
 
 from agentbay import AgentBay
+from agentbay._common.exceptions import SessionError
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.session import Session
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -112,12 +112,16 @@ class TestSessionInfoAndLink(unittest.TestCase):
             with self.subTest(port=port):
                 print(f"Calling session.get_link() with port {port}...")
                 result = session.get_link(port=port)
-                self.assertTrue(result.success, f"session.get_link(port={port}) did not succeed")
+                self.assertTrue(
+                    result.success, f"session.get_link(port={port}) did not succeed"
+                )
                 url = result.data
                 print(f"Session link URL with port {port}: {url}")
                 self.assertIsInstance(url, str)
                 self.assertTrue(
-                    url.startswith("http") or url.startswith("wss") or url.startswith("ws"),
+                    url.startswith("http")
+                    or url.startswith("wss")
+                    or url.startswith("ws"),
                     f"Returned link with port {port} does not look like a URL",
                 )
 

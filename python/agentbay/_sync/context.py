@@ -256,7 +256,9 @@ class ContextService:
         """
         self.agent_bay = agent_bay
 
-    def list(self, params: Optional[ContextListParams] = None) -> ContextListResult:
+    def list(
+        self, params: Optional[ContextListParams] = None
+    ) -> ContextListResult:
         """
         Lists all available contexts with pagination support.
 
@@ -687,7 +689,9 @@ class ContextService:
             _logger.exception(f"Error calling DeleteContext: {e}")
             raise AgentBayError(f"Failed to delete context {context.id}: {e}")
 
-    def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
+    def get_file_download_url(
+        self, context_id: str, file_path: str
+    ) -> FileUrlResult:
         """
         Get a presigned download URL for a file in a context.
 
@@ -747,7 +751,9 @@ class ContextService:
             error_message="",
         )
 
-    def get_file_upload_url(self, context_id: str, file_path: str) -> FileUrlResult:
+    def get_file_upload_url(
+        self, context_id: str, file_path: str
+    ) -> FileUrlResult:
         """
         Get a presigned upload URL for a file in a context.
 
