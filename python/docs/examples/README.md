@@ -29,7 +29,7 @@ Both versions provide the same functionality. Choose based on your project requi
 - Use **async** for modern async/await applications
 - Use **sync** for traditional synchronous applications
 
-## Example Categories
+## Example Categories (in _async/ and _sync/ directories)
 
 ### 1. Browser-use Examples
 
