@@ -1,6 +1,10 @@
 # Command Execution Guide
 
-This guide covers command execution capabilities in AgentBay SDK. The command module allows you to execute shell commands and system operations in cloud sessions with both synchronous and asynchronous APIs.
+This guide covers command execution capabilities in AgentBay SDK. The command module allows you to execute shell commands and system operations in cloud sessions.
+
+> **💡 Async API Support**: This guide uses synchronous API by default. For async/await syntax and concurrent execution patterns, see:
+> - [Async-Specific Patterns](#async-specific-patterns) - Concurrent command execution
+> - [Sync vs Async Guide](../sync-vs-async.md) - Comprehensive comparison
 
 ## 📋 Table of Contents
 
@@ -9,6 +13,7 @@ This guide covers command execution capabilities in AgentBay SDK. The command mo
 - [Command with Timeout](#command-with-timeout)
 - [Working with Command Output](#working-with-command-output)
 - [Advanced Patterns](#advanced-patterns)
+- [Async-Specific Patterns](#async-specific-patterns)
 - [Choosing Sync vs Async](#choosing-sync-vs-async)
 
 <a id="overview"></a>
@@ -31,7 +36,7 @@ The `session.command` module provides programmatic access to execute shell comma
 <a id="basic-command-execution"></a>
 ## 💻 Basic Command Execution
 
-### Simple Commands (Sync)
+### Simple Commands
 
 ```python
 from agentbay import AgentBay
@@ -61,41 +66,14 @@ else:
 # ...
 ```
 
-### Simple Commands (Async)
+### Sequential Command Execution
+
+Execute multiple commands one after another:
 
 ```python
-import asyncio
-from agentbay import AsyncAgentBay
+from agentbay import AgentBay
 
-async def main():
-    agent_bay = AsyncAgentBay(api_key="your-api-key")
-    result = await agent_bay.create()
-
-    if result.success:
-        session = result.session
-
-        cmd_result = await session.command.execute_command("ls -la /tmp")
-        if cmd_result.success:
-            print("Output:", cmd_result.output)
-        else:
-            print("Command failed:", cmd_result.error_message)
-
-        await agent_bay.delete(session)
-    else:
-        print("Failed to create session:", result.error_message)
-
-asyncio.run(main())
-
-# Output example:
-# Output: total 140
-# drwxrwxrwt 21 root   root    4096 Oct  2 14:57 .
-# drwxr-xr-x 19 root   root    4096 Oct  2 14:20 ..
-# ...
-```
-
-### Command with Arguments (Sync)
-
-```python
+agent_bay = AgentBay()
 session = agent_bay.create().session
 
 commands = [
@@ -121,74 +99,17 @@ agent_bay.delete(session)
 # uname -a -> Linux hostname 5.15.0-125-generic #135-Ubuntu SMP x86_64 x86_64 x86_64 GNU/Linux
 ```
 
-### Command with Arguments (Async)
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    commands = [
-        "echo 'Hello from cloud'",
-        "pwd",
-        "whoami",
-        "uname -a"
-    ]
-
-    for cmd in commands:
-        result = await session.command.execute_command(cmd)
-        if result.success:
-            print(f"{cmd} -> {result.output.strip()}")
-        else:
-            print(f"{cmd} failed: {result.error_message}")
-
-    await agent_bay.delete(session)
-
-asyncio.run(main())
-```
-
-### Concurrent Command Execution (Async Only)
-
-One of the key benefits of the async API is the ability to execute multiple commands concurrently:
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    # Execute multiple commands concurrently
-    commands = [
-        "sleep 2 && echo 'Command 1 done'",
-        "sleep 2 && echo 'Command 2 done'",
-        "sleep 2 && echo 'Command 3 done'"
-    ]
-
-    # This takes ~2 seconds instead of ~6 seconds
-    results = await asyncio.gather(*[
-        session.command.execute_command(cmd)
-        for cmd in commands
-    ])
-
-    for i, result in enumerate(results, 1):
-        if result.success:
-            print(f"Command {i}: {result.output.strip()}")
-
-    await agent_bay.delete(session)
-
-asyncio.run(main())
-
-# Output (all commands complete in ~2 seconds):
-# Command 1: Command 1 done
-# Command 2: Command 2 done
-# Command 3: Command 3 done
-```
-
 <a id="command-with-timeout"></a>
 ## ⏱️ Command with Timeout
 
-### Setting Execution Timeout (Sync)
+### Setting Execution Timeout
+
+Control how long a command can run before timing out:
 
 ```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
 session = agent_bay.create().session
 
 # Command completes within timeout
@@ -212,62 +133,15 @@ agent_bay.delete(session)
 # Command timed out: Error in response: Execution failed. Error code:-1 Error message: [timeout]
 ```
 
-### Setting Execution Timeout (Async)
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    # Command completes within timeout
-    result = await session.command.execute_command("sleep 3", timeout_ms=5000)
-    if result.success:
-        print("Command completed within timeout")
-    else:
-        print("Command timed out or failed:", result.error_message)
-
-    # Command exceeds timeout
-    result = await session.command.execute_command("sleep 10", timeout_ms=2000)
-    if result.success:
-        print("Command completed")
-    else:
-        print("Command timed out:", result.error_message)
-
-    await agent_bay.delete(session)
-
-asyncio.run(main())
-```
-
-### Async Timeout with asyncio
-
-You can also use asyncio's timeout functionality:
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    try:
-        # Use asyncio.wait_for for timeout
-        result = await asyncio.wait_for(
-            session.command.execute_command("sleep 10"),
-            timeout=5.0  # 5 seconds
-        )
-        print("Command completed:", result.output)
-    except asyncio.TimeoutError:
-        print("Command timed out after 5 seconds")
-    finally:
-        await agent_bay.delete(session)
-
-asyncio.run(main())
-```
-
 <a id="working-with-command-output"></a>
 ## 📤 Working with Command Output
 
-### Capturing Output (Sync)
+### Capturing and Processing Output
 
 ```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
 session = agent_bay.create().session
 
 result = session.command.execute_command("df -h")
@@ -293,34 +167,17 @@ agent_bay.delete(session)
 # Found 8 filesystems
 ```
 
-### Capturing Output (Async)
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    result = await session.command.execute_command("df -h")
-    if result.success:
-        print("Full output:")
-        print(result.output)
-
-        lines = result.output.strip().split('\n')
-        print(f"Found {len(lines)} filesystems")
-    else:
-        print("Command failed:", result.error_message)
-
-    await agent_bay.delete(session)
-
-asyncio.run(main())
-```
-
 <a id="advanced-patterns"></a>
 ## 🔧 Advanced Patterns
 
-### Command Chaining (Sync)
+### Command Chaining
+
+Execute multiple commands in a single shell invocation:
 
 ```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
 session = agent_bay.create().session
 
 result = session.command.execute_command(
@@ -335,64 +192,89 @@ agent_bay.delete(session)
 # Output: Hello
 ```
 
-### Command Chaining (Async)
+<a id="async-specific-patterns"></a>
+## ⚡ Async-Specific Patterns
+
+The async API provides powerful patterns for concurrent command execution, delivering **4-6x performance improvements** when running multiple independent commands.
+
+> **Note**: These patterns require the asynchronous API (`from agentbay import AsyncAgentBay`)
+
+### Concurrent Command Execution
+
+Execute multiple commands simultaneously for dramatic performance gains:
 
 ```python
+import asyncio
+from agentbay import AsyncAgentBay
+
 async def main():
     agent_bay = AsyncAgentBay()
     session = (await agent_bay.create()).session
 
-    result = await session.command.execute_command(
-        "mkdir -p /tmp/test && cd /tmp/test && echo 'Hello' > file.txt && cat file.txt"
-    )
-    if result.success:
-        print("Output:", result.output)
-
-    await agent_bay.delete(session)
-
-asyncio.run(main())
-```
-
-### Pipeline Pattern (Async)
-
-Execute a series of dependent commands efficiently:
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    # Setup
-    await session.command.execute_command("mkdir -p /tmp/pipeline")
-
-    # Execute pipeline
+    # Execute multiple commands concurrently
     commands = [
-        "echo 'Step 1: Creating file' && echo 'data' > /tmp/pipeline/input.txt",
-        "echo 'Step 2: Processing' && cat /tmp/pipeline/input.txt | tr 'a-z' 'A-Z' > /tmp/pipeline/output.txt",
-        "echo 'Step 3: Result' && cat /tmp/pipeline/output.txt"
+        "sleep 2 && echo 'Command 1 done'",
+        "sleep 2 && echo 'Command 2 done'",
+        "sleep 2 && echo 'Command 3 done'"
     ]
 
-    for cmd in commands:
-        result = await session.command.execute_command(cmd)
+    # This takes ~2 seconds instead of ~6 seconds (3x faster!)
+    results = await asyncio.gather(*[
+        session.command.execute_command(cmd)
+        for cmd in commands
+    ])
+
+    for i, result in enumerate(results, 1):
         if result.success:
-            print(result.output.strip())
+            print(f"Command {i}: {result.output.strip()}")
 
     await agent_bay.delete(session)
 
 asyncio.run(main())
 
-# Output:
-# Step 1: Creating file
-# Step 2: Processing
-# Step 3: Result
-# DATA
+# Output (all commands complete in ~2 seconds):
+# Command 1: Command 1 done
+# Command 2: Command 2 done
+# Command 3: Command 3 done
 ```
 
-### Parallel Processing (Async)
+**Performance**: Sequential execution would take 6 seconds, concurrent execution takes only 2 seconds.
 
-Process multiple independent tasks concurrently:
+### Async Timeout with asyncio.wait_for
+
+Use asyncio's native timeout functionality for fine-grained control:
 
 ```python
+import asyncio
+from agentbay import AsyncAgentBay
+
+async def main():
+    agent_bay = AsyncAgentBay()
+    session = (await agent_bay.create()).session
+
+    try:
+        # Use asyncio.wait_for for timeout
+        result = await asyncio.wait_for(
+            session.command.execute_command("sleep 10"),
+            timeout=5.0  # 5 seconds
+        )
+        print("Command completed:", result.output)
+    except asyncio.TimeoutError:
+        print("Command timed out after 5 seconds")
+    finally:
+        await agent_bay.delete(session)
+
+asyncio.run(main())
+```
+
+### Parallel Processing Pattern
+
+Process multiple files or tasks concurrently:
+
+```python
+import asyncio
+from agentbay import AsyncAgentBay
+
 async def process_file(session, filename):
     """Process a single file"""
     cmd = f"wc -l /tmp/{filename}"
@@ -454,14 +336,15 @@ asyncio.run(main())
 
 **Sequential Execution (5 commands, 1 second each)**:
 - Sync API: ~5 seconds
-- Async API (sequential): ~5 seconds
-- Async API (concurrent): ~1 second
+- Async API (sequential with for loop): ~5 seconds
+- Async API (concurrent with asyncio.gather): ~1 second ⚡ **5x faster!**
 
-**Recommendation**: For command execution, async API shines when you need to run multiple commands concurrently. For single commands or sequential workflows, both APIs perform similarly.
+**Recommendation**: For command execution, async API shines when you need to run multiple commands concurrently. For single commands or sequential workflows, both APIs perform similarly - use sync for simplicity.
 
 ## 📚 Related Documentation
 
 - [Sync vs Async Guide](../sync-vs-async.md) - Comprehensive comparison and decision guide
+- [Async Patterns Guide](../async-patterns.md) - Advanced async patterns and best practices
 - [Code Execution (CodeSpace)](../../codespace/code-execution.md) - Python, JavaScript code execution
 - [File Operations](file-operations.md) - File handling and management
 - [Session Management](session-management.md) - Session lifecycle

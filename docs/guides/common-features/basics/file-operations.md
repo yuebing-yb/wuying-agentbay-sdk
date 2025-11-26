@@ -98,7 +98,9 @@ User: root
 <a id="api-quick-reference"></a>
 ## 🚀 API Quick Reference
 
-### Python (Sync)
+<details open>
+<summary>📘 <strong>Synchronous API</strong> (Recommended for beginners)</summary>
+
 ```python
 from agentbay import AgentBay
 
@@ -137,7 +139,13 @@ if result.success:
 agent_bay.delete(session)
 ```
 
-### Python (Async)
+**Best for**: Simple scripts, sequential operations
+
+</details>
+
+<details>
+<summary>⚡ <strong>Asynchronous API</strong> (Click to expand)</summary>
+
 ```python
 import asyncio
 from agentbay import AsyncAgentBay
@@ -180,7 +188,11 @@ async def main():
 asyncio.run(main())
 ```
 
+**Best for**: High concurrency, async projects, web applications
+
 > **Note**: File system methods (`write_file`, `read_file`, etc.) are currently synchronous even in `AsyncAgentBay` sessions. For truly asynchronous file operations, consider using command-based approaches. See [Sync vs Async Guide](../sync-vs-async.md) for details.
+
+</details>
 
 <a id="basic-file-operations"></a>
 ## 📝 Basic File Operations
