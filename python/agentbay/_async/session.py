@@ -356,12 +356,7 @@ class AsyncSession:
             # But based on previous checks, client has async methods
             # However, SetLabel might not have an async version if it's not generated.
             # Let's assume standard pattern: method_async
-            if hasattr(self._get_client(), "set_label_async"):
-                response = await self._get_client().set_label_async(request)
-            else:
-                 # Fallback if async method doesn't exist (though it should)
-                import asyncio
-                response = await asyncio.to_thread(self._get_client().set_label, request)
+            response = await self._get_client().set_label_async(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -395,11 +390,7 @@ class AsyncSession:
                 session_id=self.session_id,
             )
 
-            if hasattr(self._get_client(), "get_label_async"):
-                response = await self._get_client().get_label_async(request)
-            else:
-                import asyncio
-                response = await asyncio.to_thread(self._get_client().get_label, request)
+            response = await self._get_client().get_label_async(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -444,11 +435,7 @@ class AsyncSession:
 
             _log_api_call("GetMcpResource", f"SessionId={self.session_id}")
 
-            if hasattr(self._get_client(), "get_mcp_resource_async"):
-                response = await self._get_client().get_mcp_resource_async(request)
-            else:
-                import asyncio
-                response = await asyncio.to_thread(self._get_client().get_mcp_resource, request)
+            response = await self._get_client().get_mcp_resource_async(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -623,11 +610,7 @@ class AsyncSession:
 
         _log_api_call("ListMcpTools", f"ImageId={image_id}")
 
-        if hasattr(self._get_client(), "list_mcp_tools_async"):
-            response = await self._get_client().list_mcp_tools_async(request)
-        else:
-            import asyncio
-            response = await asyncio.to_thread(self._get_client().list_mcp_tools, request)
+        response = await self._get_client().list_mcp_tools_async(request)
 
         # Extract request ID
         request_id = extract_request_id(response)

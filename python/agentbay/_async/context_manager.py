@@ -108,10 +108,7 @@ class AsyncContextManager:
         )
         
         # Async API call
-        if hasattr(self.session._get_client(), "get_context_info_async"):
-            response = await self.session._get_client().get_context_info_async(request)
-        else:
-            response = await asyncio.to_thread(self.session._get_client().get_context_info, request)
+        response = await self.session._get_client().get_context_info_async(request)
 
         # Extract request ID
         request_id = extract_request_id(response)
@@ -219,10 +216,7 @@ class AsyncContextManager:
         )
         
         # Async API call
-        if hasattr(self.session._get_client(), "sync_context_async"):
-            response = await self.session._get_client().sync_context_async(request)
-        else:
-            response = await asyncio.to_thread(self.session._get_client().sync_context, request)
+        response = await self.session._get_client().sync_context_async(request)
 
         # Extract request ID
         request_id = extract_request_id(response)

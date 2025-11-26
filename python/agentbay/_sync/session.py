@@ -358,12 +358,7 @@ class Session:
             # But based on previous checks, client has async methods
             # However, SetLabel might not have an async version if it's not generated.
             # Let's assume standard pattern: method_async
-            if hasattr(self._get_client(), "set_label"):
-                response = self._get_client().set_label(request)
-            else:
-                 # Fallback if async method doesn't exist (though it should)
-                import asyncio
-                response = self._get_client(.set_label, request)
+            response = self._get_client().set_label(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -397,11 +392,7 @@ class Session:
                 session_id=self.session_id,
             )
 
-            if hasattr(self._get_client(), "get_label"):
-                response = self._get_client().get_label(request)
-            else:
-                import asyncio
-                response = self._get_client(.get_label, request)
+            response = self._get_client().get_label(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -446,11 +437,7 @@ class Session:
 
             _log_api_call("GetMcpResource", f"SessionId={self.session_id}")
 
-            if hasattr(self._get_client(), "get_mcp_resource"):
-                response = self._get_client().get_mcp_resource(request)
-            else:
-                import asyncio
-                response = self._get_client(.get_mcp_resource, request)
+            response = self._get_client().get_mcp_resource(request)
 
             # Extract request ID
             request_id = extract_request_id(response)
@@ -625,11 +612,7 @@ class Session:
 
         _log_api_call("ListMcpTools", f"ImageId={image_id}")
 
-        if hasattr(self._get_client(), "list_mcp_tools"):
-            response = self._get_client().list_mcp_tools(request)
-        else:
-            import asyncio
-            response = self._get_client(.list_mcp_tools, request)
+        response = self._get_client().list_mcp_tools(request)
 
         # Extract request ID
         request_id = extract_request_id(response)

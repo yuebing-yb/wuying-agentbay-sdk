@@ -236,20 +236,25 @@ def generate_sync():
                         content = content.replace("return asyncio.to_thread(func, *args)", "return func(*args)")
                         content = content.replace("return await asyncio.to_thread(func, *args)", "return func(*args)")
 
-                        # Fix FileSystem wrapper methods that still have loop.run_until_complete
-                        # These should directly call the sync FileTransfer methods
-                        # Pattern: result = loop.run_until_complete(\n                file_transfer.method(...)\n            )
-                        # Replace with: result = file_transfer.method(...)
+                        # Fix FileSystem wrapper methods that have loop.run_until_complete
+                        # The async source has upload_file and download_file as sync methods that call
+                        # async FileTransfer methods via loop.run_until_complete.
+                        # After event loop removal (lines 200-201), we're left with:
+                        #   result = loop.run_until_complete(
+                        #       file_transfer.upload(...
+                        #       )
+                        #   )
+                        # We need to remove loop.run_until_complete wrapper entirely
                         content = re.sub(
                             r'result\s*=\s*loop\.run_until_complete\(\s*\n\s*file_transfer\.(upload|download)\(',
                             r'result = file_transfer.\1(',
                             content
                         )
-                        # Remove the closing parenthesis of loop.run_until_complete that's left behind
-                        # This is the ) on a line by itself after the file_transfer method call
+                        # Remove the extra closing parenthesis from loop.run_until_complete
+                        # Pattern: )\n            ) after the parameters
                         content = re.sub(
-                            r'(\s+progress_cb=progress_cb,\s*\n\s*)\)\s*\n\s*\)',
-                            r'\1)',
+                            r'(progress_cb=progress_cb,\s*\n\s*)\)\s*\n\s*\)\s*\n',
+                            r'\1)\n',
                             content
                         )
 

@@ -109,10 +109,7 @@ class ContextManager:
         )
         
         # Async API call
-        if hasattr(self.session._get_client(), "get_context_info"):
-            response = self.session._get_client().get_context_info(request)
-        else:
-            response = self.session._get_client(.get_context_info, request)
+        response = self.session._get_client().get_context_info(request)
 
         # Extract request ID
         request_id = extract_request_id(response)
@@ -220,10 +217,7 @@ class ContextManager:
         )
         
         # Async API call
-        if hasattr(self.session._get_client(), "sync_context"):
-            response = self.session._get_client().sync_context(request)
-        else:
-            response = self.session._get_client(.sync_context, request)
+        response = self.session._get_client().sync_context(request)
 
         # Extract request ID
         request_id = extract_request_id(response)
