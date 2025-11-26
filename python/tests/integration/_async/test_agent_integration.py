@@ -1,0 +1,90 @@
+"""Integration tests for Agent functionality."""
+import os
+import time
+import pytest
+import pytest_asyncio
+
+from agentbay import AsyncAgentBay
+from agentbay.agent import Agent
+from agentbay.session_params import CreateSessionParams
+from agentbay.logger import get_logger
+
+logger = get_logger("agentbay-integration-test")
+
+
+@pytest_asyncio.fixture(scope="module")
+async def agent_bay():
+    """Create an AsyncAgentBay instance."""
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    return AsyncAgentBay(api_key=api_key)
+
+
+@pytest_asyncio.fixture(scope="module")
+async def agent_session(agent_bay):
+    """Create a session for agent testing."""
+    time.sleep(3)  # Ensure a delay to avoid session creation conflicts
+    params = CreateSessionParams(
+        image_id="windows_latest",
+    )
+    session_result = await agent_bay.create(params)
+    if not session_result.success or not session_result.session:
+        pytest.skip("Failed to create session")
+
+    session = session_result.session
+    yield session
+
+    # Clean up session
+    try:
+        await agent_bay.delete(session)
+    except Exception as e:
+        print(f"Warning: Error deleting session: {e}")
+
+
+def test_execute_task_success(agent_session):
+    """Test executing a flux task successfully."""
+    # Note: This test assumes synchronous access to the agent, which may need to be adapted
+    agent = agent_session.agent  # Assuming direct access to agent
+
+    task = "create a folder named 'agentbay' in C:\\Window\\Temp"
+    max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
+    if not max_try_times:
+        max_try_times = 100
+    print("🚀 task of creating folders")
+    result = agent.execute_task(task, int(max_try_times))
+    assert result.success
+    assert result.request_id != ""
+    assert result.error_message == ""
+    print(f"✅ result {result.task_result}")
+
+
+def test_async_execute_task_success(agent_session):
+    """Test executing a flux task successfully."""
+    # Note: This test assumes synchronous access to the agent, which may need to be adapted
+    agent = agent_session.agent  # Assuming direct access to agent
+
+    task = "create a folder named 'agentbay' in C:\\Window\\Temp"
+    max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
+    if not max_try_times:
+        max_try_times = 100
+    print("🚀 async task of creating folders")
+    result = agent.async_execute_task(task)
+    assert result.success
+    assert result.request_id != ""
+    assert result.error_message == ""
+    retry_times: int = 0
+    query_result = None
+    while retry_times < int(max_try_times):
+        query_result = agent.get_task_status(result.task_id)
+        assert result.success
+        print(
+            f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}."
+        )
+        if query_result.task_status == "finished":
+            break
+        retry_times += 1
+        time.sleep(3)
+    # Verify the final task status
+    assert retry_times < int(max_try_times)
+    print(f"✅ result {query_result.task_product}")

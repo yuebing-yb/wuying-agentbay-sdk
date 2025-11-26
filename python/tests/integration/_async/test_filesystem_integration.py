@@ -1,0 +1,328 @@
+"""Integration tests for filesystem functionality."""
+import os
+import pytest
+import pytest_asyncio
+import time
+
+from agentbay import AsyncAgentBay
+from agentbay.session_params import CreateSessionParams
+
+
+@pytest_asyncio.fixture(scope="module")
+async def agent_bay():
+    """Create an AsyncAgentBay instance."""
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    return AsyncAgentBay(api_key=api_key)
+
+
+@pytest_asyncio.fixture(scope="module")
+async def filesystem_session(agent_bay):
+    """Create a session for filesystem testing."""
+    # Get API key from environment
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+
+    # Initialize AgentBay client
+    # Create a session
+    print("Creating a new session for FileSystem testing...")
+    params = CreateSessionParams(
+        image_id="linux_latest",
+    )
+    result = await agent_bay.create(params)
+    if not result.success or not result.session:
+        pytest.skip("Failed to create session")
+
+    session = result.session
+    yield session
+
+    # Clean up session
+    print("Cleaning up: Deleting the session...")
+    try:
+        await agent_bay.delete(session)
+        print(f"Session deleted: {session.session_id}")
+    except Exception as e:
+        print(f"Warning: Failed to delete session: {e}")
+
+
+def test_read_file(filesystem_session):
+    """Test reading a file."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    test_content = "This is a test file content for ReadFile test."
+    test_file_path = "/tmp/test_read.txt"
+
+    # Write the test file
+    write_result = fs.write_file(test_file_path, test_content, "overwrite")
+    assert write_result.success
+
+    # Read the file
+    result = fs.read_file(test_file_path)
+    assert result.success
+    assert result.content == test_content
+
+
+def test_write_file(filesystem_session):
+    """Test writing to a file."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    test_content = "This is a test file content for WriteFile test."
+    test_file_path = "/tmp/test_write.txt"
+
+    # Write the file
+    result = fs.write_file(test_file_path, test_content, "overwrite")
+    assert result.success
+
+    # Verify the file content
+    read_result = fs.read_file(test_file_path)
+    assert read_result.success
+    assert read_result.content == test_content
+
+
+def test_create_directory(filesystem_session):
+    """Test creating a directory."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    test_dir_path = "/tmp/test_directory"
+
+    # Create the directory
+    result = fs.create_directory(test_dir_path)
+    assert result.success
+
+    # Verify the directory exists
+    list_result = fs.list_directory("/tmp/")
+    assert list_result.success
+    entry_names = [entry["name"] for entry in list_result.entries]
+    assert "test_directory" in entry_names
+
+
+def test_edit_file(filesystem_session):
+    """Test editing a file."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    initial_content = "This is the original content.\nLine to be replaced.\nThis is the final line."
+    test_file_path = "/tmp/test_edit.txt"
+
+    # Write the initial file
+    write_result = fs.write_file(test_file_path, initial_content, "overwrite")
+    assert write_result.success
+
+    # Edit the file
+    edits = [
+        {
+            "oldText": "Line to be replaced.",
+            "newText": "This line has been edited.",
+        }
+    ]
+    result = fs.edit_file(test_file_path, edits, False)
+    assert result.success
+
+    # Verify the file content
+    expected_content = "This is the original content.\nThis line has been edited.\nThis is the final line."
+    read_result = fs.read_file(test_file_path)
+    assert read_result.success
+    assert read_result.content == expected_content
+
+
+def test_get_file_info(filesystem_session):
+    """Test getting file information."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    test_content = "This is a test file for GetFileInfo."
+    test_file_path = "/tmp/test_info.txt"
+
+    # Write the test file
+    write_result = fs.write_file(test_file_path, test_content, "overwrite")
+    assert write_result.success
+
+    # Get file info
+    result = fs.get_file_info(test_file_path)
+    assert result.success
+
+    file_info = result.file_info
+    assert not file_info["isDirectory"]
+    size = int(file_info["size"])
+    assert size > 0, f"File size should be positive, got {size}"
+
+
+def test_list_directory(filesystem_session):
+    """Test listing a directory."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    result = fs.list_directory("/tmp/")
+    assert result.success
+
+    entries = result.entries
+    assert len(entries) > 0
+    assert "name" in entries[0]
+    assert "isDirectory" in entries[0]
+
+
+def test_move_file(filesystem_session):
+    """Test moving a file."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    test_content = "This is a test file for MoveFile."
+    source_file_path = "/tmp/test_source.txt"
+    dest_file_path = "/tmp/test_destination.txt"
+
+    # Write the source file
+    write_result = fs.write_file(source_file_path, test_content, "overwrite")
+    assert write_result.success
+
+    # Move the file
+    result = fs.move_file(source_file_path, dest_file_path)
+    assert result.success
+
+    # Verify the destination file content
+    read_result = fs.read_file(dest_file_path)
+    assert read_result.success
+    assert read_result.content == test_content
+
+    # Verify the source file no longer exists
+    get_file_info_result = fs.get_file_info(source_file_path)
+    assert not get_file_info_result.success
+
+
+def test_read_multiple_files(filesystem_session):
+    """Test reading multiple files."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    file1_content = "This is test file 1 content."
+    file2_content = "This is test file 2 content."
+    test_file1_path = "/tmp/test_file1.txt"
+    test_file2_path = "/tmp/test_file2.txt"
+
+    # Write the test files
+    fs.write_file(test_file1_path, file1_content, "overwrite")
+    fs.write_file(test_file2_path, file2_content, "overwrite")
+
+    # Read multiple files
+    result = fs.read_multiple_files([test_file1_path, test_file2_path])
+    assert result.success
+
+    contents = result.contents
+    assert contents[test_file1_path] == file1_content
+    assert contents[test_file2_path] == file2_content
+
+
+def test_search_files(filesystem_session):
+    """Test searching for files using wildcard patterns."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    test_subdir_path = "/tmp/search_test_dir"
+    create_dir_result = fs.create_directory(test_subdir_path)
+    assert create_dir_result.success
+
+    file1_content = "This is test file 1 content."
+    file2_content = "This is test file 2 content."
+    file3_content = "This is test file 3 content."
+    search_file1_path = f"{test_subdir_path}/SEARCHABLE_PATTERN_file1.txt"
+    search_file2_path = f"{test_subdir_path}/regular_file2.txt"
+    search_file3_path = f"{test_subdir_path}/SEARCHABLE_PATTERN_file3.txt"
+
+    # Write the test files
+    fs.write_file(search_file1_path, file1_content, "overwrite")
+    fs.write_file(search_file2_path, file2_content, "overwrite")
+    fs.write_file(search_file3_path, file3_content, "overwrite")
+
+    # Search for files using wildcard pattern
+    search_pattern = "*SEARCHABLE_PATTERN*"
+    exclude_patterns = ["ignored_pattern"]
+    result = fs.search_files(
+        test_subdir_path, search_pattern, exclude_patterns
+    )
+    assert result.success
+
+    matches = result.matches
+    assert len(matches) == 2
+    assert any(search_file1_path in match for match in matches)
+    assert any(search_file3_path in match for match in matches)
+
+
+def test_write_and_read_large_file(filesystem_session):
+    """Test writing and reading a large file using automatic chunking."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    # Generate approximately 150KB of test content
+    line_content = "This is a line of test content for large file testing. It contains enough characters to test the chunking functionality.\n"
+    large_content = line_content * 3000  # About 150KB
+    test_file_path = "/tmp/test_large_file.txt"
+
+    print(f"Generated test content size: {len(large_content)} bytes")
+
+    # Test 1: Write large file (automatic chunking)
+    print("Test 1: Writing large file with automatic chunking...")
+    result = fs.write_file(test_file_path, large_content)
+    assert result.success
+    print("Test 1: Large file write successful")
+
+    # Test 2: Read large file (automatic chunking)
+    print("Test 2: Reading large file with automatic chunking...")
+    result = fs.read_file(test_file_path)
+    assert result.success
+
+    # Verify content
+    read_content = result.content
+    print(
+        f"Test 2: File read successful, content length: {len(read_content)} bytes"
+    )
+    assert len(read_content) == len(large_content)
+    assert read_content == large_content
+    print("Test 2: File content verification successful")
+
+    # Test 3: Write another large file
+    test_file_path2 = "/tmp/test_large_file2.txt"
+    print("Test 3: Writing another large file...")
+
+    result = fs.write_file(test_file_path2, large_content)
+    assert result.success
+    print("Test 3: Second large file write successful")
+
+    # Test 4: Read the second large file
+    print("Test 4: Reading the second large file...")
+    result = fs.read_file(test_file_path2)
+    assert result.success
+
+    # Verify content
+    read_content2 = result.content
+    print(
+        f"Test 4: File read successful, content length: {len(read_content2)} bytes"
+    )
+    assert len(read_content2) == len(large_content)
+    assert read_content2 == large_content
+    print("Test 4: Second file content verification successful")
+
+    # Test 5: Re-read the first file to ensure consistency
+    print("Test 5: Re-reading the first file to ensure consistency...")
+    result = fs.read_file(test_file_path)
+    assert result.success
+
+    # Verify content
+    cross_test_content = result.content
+    print(
+        f"Test 5: Re-read successful, content length: {len(cross_test_content)} bytes"
+    )
+    assert len(cross_test_content) == len(large_content)
+    assert cross_test_content == large_content
+    print("Test 5: Consistency verification successful")
+
+
+def test_write_and_read_small_file(filesystem_session):
+    """Test writing and reading a small file (should use direct write, not chunking)."""
+    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+
+    # Generate a small file content (10KB)
+    small_content = "x" * (10 * 1024)
+    test_file_path = "/tmp/test_small_file.txt"
+
+    # Use write_file method to write small file
+    result = fs.write_file(test_file_path, small_content)
+    assert result.success
+
+    # Read and verify content
+    result = fs.read_file(test_file_path)
+    assert result.success
+    assert result.content == small_content
