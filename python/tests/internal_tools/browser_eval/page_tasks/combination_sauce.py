@@ -1,7 +1,8 @@
 import logging
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from mcp_server.page_agent import PageAgent
+from pydantic import BaseModel, Field
 
 
 class LoginCredentials(BaseModel):
@@ -9,7 +10,9 @@ class LoginCredentials(BaseModel):
     password: str = Field(..., description="The password for all users.")
 
 
-async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     await agent.goto("https://www.saucedemo.com/")
 
     _logger.info("Extracting login credentials...")

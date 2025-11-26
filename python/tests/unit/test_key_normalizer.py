@@ -3,10 +3,11 @@ Unit tests for key name normalization functionality.
 """
 
 import pytest
-from agentbay.key_normalizer import (
-    normalize_keys,
+
+from agentbay._common.utils.key_normalizer import (
     _normalize_single_key,
     get_supported_key_names,
+    normalize_keys,
 )
 
 

@@ -1,34 +1,37 @@
 import os
+
 import pytest
 import pytest_asyncio
+
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
+
 
 # Define fixtures for session management
 @pytest_asyncio.fixture(scope="module")
 async def agent_session():
     """
-    Fixture to create a session before all tests in this module 
+    Fixture to create a session before all tests in this module
     and delete it after all tests are done.
     """
     api_key = os.environ.get("AGENTBAY_API_KEY")
     if not api_key:
         pytest.skip("AGENTBAY_API_KEY environment variable not set")
-        
+
     agent_bay = AsyncAgentBay(api_key=api_key)
     print("Creating a new session for FileSystem testing...")
-    
+
     params = CreateSessionParams(image_id="linux_latest")
     result = await agent_bay.create(params)
-    
+
     if not result.success or not result.session:
         pytest.fail(f"Failed to create session: {result.error_message}")
-        
+
     session = result.session
     print(f"Session created with ID: {session.session_id}")
-    
+
     yield session
-    
+
     print("Cleaning up: Deleting the session...")
     try:
         delete_result = await session.delete()
@@ -39,10 +42,12 @@ async def agent_session():
     except Exception as e:
         print(f"Warning: Error deleting session: {e}")
 
+
 @pytest.fixture
 def fs(agent_session):
     """Fixture to get the file system object from the session."""
     return agent_session.file_system
+
 
 @pytest.mark.asyncio
 async def test_read_file(fs):
@@ -59,6 +64,7 @@ async def test_read_file(fs):
     assert result.success
     assert result.content == test_content
 
+
 @pytest.mark.asyncio
 async def test_write_file(fs):
     """Test writing to a file."""
@@ -73,6 +79,7 @@ async def test_write_file(fs):
     read_result = await fs.read_file(test_file_path)
     assert read_result.success
     assert read_result.content == test_content
+
 
 @pytest.mark.asyncio
 async def test_create_directory(fs):
@@ -89,10 +96,13 @@ async def test_create_directory(fs):
     entry_names = [entry["name"] for entry in list_result.entries]
     assert "test_directory" in entry_names
 
+
 @pytest.mark.asyncio
 async def test_edit_file(fs):
     """Test editing a file."""
-    initial_content = "This is the original content.\nLine to be replaced.\nThis is the final line."
+    initial_content = (
+        "This is the original content.\nLine to be replaced.\nThis is the final line."
+    )
     test_file_path = "/tmp/test_edit.txt"
 
     # Write the initial file
@@ -115,6 +125,7 @@ async def test_edit_file(fs):
     assert read_result.success
     assert read_result.content == expected_content
 
+
 @pytest.mark.asyncio
 async def test_get_file_info(fs):
     """Test getting file information."""
@@ -134,6 +145,7 @@ async def test_get_file_info(fs):
     size = int(file_info["size"])
     assert size > 0, f"File size should be positive, got {size}"
 
+
 @pytest.mark.asyncio
 async def test_list_directory(fs):
     """Test listing a directory."""
@@ -144,6 +156,7 @@ async def test_list_directory(fs):
     assert len(entries) > 0
     assert "name" in entries[0]
     assert "isDirectory" in entries[0]
+
 
 @pytest.mark.asyncio
 async def test_move_file(fs):
@@ -169,6 +182,7 @@ async def test_move_file(fs):
     get_file_info_result = await fs.get_file_info(source_file_path)
     assert not get_file_info_result.success
 
+
 @pytest.mark.asyncio
 async def test_read_multiple_files(fs):
     """Test reading multiple files."""
@@ -188,6 +202,7 @@ async def test_read_multiple_files(fs):
     contents = result.contents
     assert contents[test_file1_path] == file1_content
     assert contents[test_file2_path] == file2_content
+
 
 @pytest.mark.asyncio
 async def test_search_files(fs):
@@ -211,15 +226,14 @@ async def test_search_files(fs):
     # Search for files using wildcard pattern
     search_pattern = "*SEARCHABLE_PATTERN*"
     exclude_patterns = ["ignored_pattern"]
-    result = await fs.search_files(
-        test_subdir_path, search_pattern, exclude_patterns
-    )
+    result = await fs.search_files(test_subdir_path, search_pattern, exclude_patterns)
     assert result.success
 
     matches = result.matches
     assert len(matches) == 2
     assert any(search_file1_path in match for match in matches)
     assert any(search_file3_path in match for match in matches)
+
 
 @pytest.mark.asyncio
 async def test_write_and_read_large_file(fs):
@@ -276,10 +290,13 @@ async def test_write_and_read_large_file(fs):
 
     # Verify content
     cross_test_content = result.content
-    print(f"Test 5: Re-read successful, content length: {len(cross_test_content)} bytes")
+    print(
+        f"Test 5: Re-read successful, content length: {len(cross_test_content)} bytes"
+    )
     assert len(cross_test_content) == len(large_content)
     assert cross_test_content == large_content
     print("Test 5: Consistency verification successful")
+
 
 @pytest.mark.asyncio
 async def test_write_and_read_small_file(fs):
@@ -296,4 +313,3 @@ async def test_write_and_read_small_file(fs):
     result = await fs.read_file(test_file_path)
     assert result.success
     assert result.content == small_content
-

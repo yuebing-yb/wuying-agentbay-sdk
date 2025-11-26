@@ -1,7 +1,8 @@
 import logging
-from pydantic import BaseModel, Field, HttpUrl
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from mcp_server.page_agent import PageAgent
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class PaperLink(BaseModel):
@@ -39,7 +40,9 @@ class PaperDetails(BaseModel):
     # )
 
 
-async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     """
     Tests a complex workflow: search, extract links, loop through links,
     and perform detailed extraction on each sub-page.
@@ -49,6 +52,7 @@ async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any])
     await agent.act("type 'web agents with multimodal models' in the search bar")
     await agent.act("hit enter")
     import asyncio
+
     await asyncio.sleep(1)
 
     extract_method = config.get("extract_method", "domExtract")

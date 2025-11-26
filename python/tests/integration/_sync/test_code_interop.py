@@ -3,11 +3,11 @@
 
 """Integration tests for CodeSpace cross-language interoperability."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest.fixture(scope="module")
@@ -64,7 +64,9 @@ console.log(`JavaScript read: ${data.message}, value: ${data.value}`);
 
     # Assert
     assert js_result.success, f"JavaScript read failed: {js_result.error_message}"
-    assert "Hello from Python" in js_result.result, "JavaScript should read Python's data"
+    assert (
+        "Hello from Python" in js_result.result
+    ), "JavaScript should read Python's data"
     assert "42" in js_result.result, "JavaScript should read Python's value"
     print(f"JavaScript output: {js_result.result}")
 
@@ -128,4 +130,3 @@ def test_sequential_execution(session):
 
     # Assert
     print("Sequential execution completed successfully")
-

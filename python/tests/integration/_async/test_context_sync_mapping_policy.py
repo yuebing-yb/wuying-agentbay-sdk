@@ -4,22 +4,22 @@ Integration tests for context sync with MappingPolicy.
 This test simulates: Windows session -> persist data -> Linux session -> access data
 """
 
+import asyncio
 import os
 import time
 import unittest
-import asyncio
 
 from agentbay import AgentBay
-from agentbay.context_sync import (
+from agentbay._common.params.context_sync import (
     ContextSync,
-    SyncPolicy,
-    UploadPolicy,
-    DownloadPolicy,
     DeletePolicy,
+    DownloadPolicy,
     ExtractPolicy,
     MappingPolicy,
+    SyncPolicy,
+    UploadPolicy,
 )
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
@@ -30,7 +30,9 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
         # Skip in CI environment or if API key is not available
         self.api_key = os.getenv("AGENTBAY_API_KEY")
         if not self.api_key or os.getenv("CI"):
-            self.skipTest("Skipping integration test: No API key available or running in CI")
+            self.skipTest(
+                "Skipping integration test: No API key available or running in CI"
+            )
 
         # Initialize the AgentBay client
         self.ab = AgentBay(self.api_key)
@@ -53,22 +55,26 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             test_content = "This file was created in Windows session and should be accessible in Linux session"
 
             # ========== Phase 1: Create Windows session and persist data ==========
-            print("========== Phase 1: Windows Session - Create and Persist Data ==========")
+            print(
+                "========== Phase 1: Windows Session - Create and Persist Data =========="
+            )
 
             # Create sync policy for Windows session (no mapping policy needed for first session)
             windows_sync_policy = SyncPolicy(
                 upload_policy=UploadPolicy(),
                 download_policy=DownloadPolicy(),
                 delete_policy=DeletePolicy(),
-                extract_policy=ExtractPolicy()
+                extract_policy=ExtractPolicy(),
             )
 
             # Create Windows session with context sync
-            windows_context_sync = ContextSync.new(context.id, windows_path, windows_sync_policy)
+            windows_context_sync = ContextSync.new(
+                context.id, windows_path, windows_sync_policy
+            )
             windows_session_params = CreateSessionParams(
                 image_id="windows_latest",
                 context_syncs=[windows_context_sync],
-                labels={"test": "mapping-policy-windows"}
+                labels={"test": "mapping-policy-windows"},
             )
 
             # Create Windows session
@@ -84,14 +90,18 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
 
             # Create directory in Windows session
             print(f"Creating directory in Windows: {windows_path}")
-            windows_dir_result = windows_session.file_system.create_directory(windows_path)
+            windows_dir_result = windows_session.file_system.create_directory(
+                windows_path
+            )
             self.assertIsNotNone(windows_dir_result.request_id)
 
             # Create test file in Windows session
             test_file_path = f"{windows_path}\\{test_file_name}"
             print(f"Creating test file in Windows: {test_file_path}")
             create_file_cmd = f'echo {test_content} > "{test_file_path}"'
-            windows_cmd_result = windows_session.command.execute_command(create_file_cmd)
+            windows_cmd_result = windows_session.command.execute_command(
+                create_file_cmd
+            )
             self.assertIsNotNone(windows_cmd_result)
             print(f"Windows file creation result: {windows_cmd_result}")
 
@@ -100,13 +110,19 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             verify_result = windows_session.command.execute_command(verify_file_cmd)
             self.assertIsNotNone(verify_result)
             print(f"Windows file content: {verify_result.output}")
-            self.assertIn(test_content, verify_result.output, "File should contain test content in Windows")
+            self.assertIn(
+                test_content,
+                verify_result.output,
+                "File should contain test content in Windows",
+            )
 
             # Sync Windows session to upload data
             print("Syncing Windows session to upload data...")
             windows_sync_result = asyncio.run(windows_session.context.sync())
             self.assertTrue(windows_sync_result.success)
-            print(f"Windows context sync successful (RequestID: {windows_sync_result.request_id})")
+            print(
+                f"Windows context sync successful (RequestID: {windows_sync_result.request_id})"
+            )
 
             # Wait for upload to complete
             print("Waiting for upload to complete...")
@@ -115,10 +131,14 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             # Delete Windows session
             print("Deleting Windows session...")
             windows_delete_result = self.ab.delete(windows_session)
-            print(f"Windows session deleted: {windows_session.session_id} (RequestID: {windows_delete_result.request_id})")
+            print(
+                f"Windows session deleted: {windows_session.session_id} (RequestID: {windows_delete_result.request_id})"
+            )
 
             # ========== Phase 2: Create Linux session with MappingPolicy and verify data ==========
-            print("========== Phase 2: Linux Session - Access Data via MappingPolicy ==========")
+            print(
+                "========== Phase 2: Linux Session - Access Data via MappingPolicy =========="
+            )
 
             # Create mapping policy with Windows path
             mapping_policy = MappingPolicy(path=windows_path)
@@ -129,15 +149,17 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
                 download_policy=DownloadPolicy(),
                 delete_policy=DeletePolicy(),
                 extract_policy=ExtractPolicy(),
-                mapping_policy=mapping_policy
+                mapping_policy=mapping_policy,
             )
 
             # Create Linux session with context sync and mapping policy
-            linux_context_sync = ContextSync.new(context.id, linux_path, linux_sync_policy)
+            linux_context_sync = ContextSync.new(
+                context.id, linux_path, linux_sync_policy
+            )
             linux_session_params = CreateSessionParams(
                 image_id="linux_latest",
                 context_syncs=[linux_context_sync],
-                labels={"test": "mapping-policy-linux"}
+                labels={"test": "mapping-policy-linux"},
             )
 
             # Create Linux session
@@ -145,11 +167,15 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             self.assertIsNotNone(linux_session_result.session)
 
             linux_session = linux_session_result.session
-            print(f"Created Linux session: {linux_session.session_id} with mapping from {windows_path} to {linux_path}")
+            print(
+                f"Created Linux session: {linux_session.session_id} with mapping from {windows_path} to {linux_path}"
+            )
 
             try:
                 # Wait for Linux session to be ready and data to be downloaded
-                print("Waiting for Linux session to be ready and data to be downloaded...")
+                print(
+                    "Waiting for Linux session to be ready and data to be downloaded..."
+                )
                 time.sleep(15)
 
                 # Verify file exists in Linux session at the mapped path
@@ -163,7 +189,11 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
                 print(f"Linux file check result: {check_result.output}")
 
                 # Verify file exists
-                self.assertIn("FILE_EXISTS", check_result.output, "File should exist in Linux session at mapped path")
+                self.assertIn(
+                    "FILE_EXISTS",
+                    check_result.output,
+                    "File should exist in Linux session at mapped path",
+                )
 
                 # Read file content in Linux session
                 read_file_cmd = f'cat "{linux_test_file_path}"'
@@ -173,8 +203,9 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
 
                 # Verify file content matches
                 self.assertTrue(
-                    test_content in read_result.output or test_content.strip() in read_result.output,
-                    "File content in Linux should match the content created in Windows"
+                    test_content in read_result.output
+                    or test_content.strip() in read_result.output,
+                    "File content in Linux should match the content created in Windows",
                 )
 
                 # Verify context info
@@ -193,20 +224,32 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
                     # Verify the context data
                     for data in context_info.context_status_data:
                         if data.context_id == context.id:
-                            self.assertEqual(data.path, linux_path, "Path should match the Linux path")
+                            self.assertEqual(
+                                data.path,
+                                linux_path,
+                                "Path should match the Linux path",
+                            )
 
-                print("========== Cross-platform mapping policy test completed successfully ==========")
-                print("✓ Data created in Windows session was successfully accessed in Linux session via MappingPolicy")
+                print(
+                    "========== Cross-platform mapping policy test completed successfully =========="
+                )
+                print(
+                    "✓ Data created in Windows session was successfully accessed in Linux session via MappingPolicy"
+                )
 
             finally:
                 # Ensure Linux session is deleted
                 delete_result = self.ab.delete(linux_session)
-                print(f"Linux session deleted: {linux_session.session_id} (RequestID: {delete_result.request_id})")
+                print(
+                    f"Linux session deleted: {linux_session.session_id} (RequestID: {delete_result.request_id})"
+                )
 
         finally:
             # Ensure context is deleted
             delete_context_result = self.ab.context.delete(context)
-            print(f"Context deleted: {context.id} (RequestID: {delete_context_result.request_id})")
+            print(
+                f"Context deleted: {context.id} (RequestID: {delete_context_result.request_id})"
+            )
 
 
 if __name__ == "__main__":

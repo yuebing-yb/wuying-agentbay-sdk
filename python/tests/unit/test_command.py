@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+from agentbay._common.models.response import OperationResult
 from agentbay._sync.command import Command, CommandResult
-from agentbay.model import OperationResult
 
 
 class DummySession:
@@ -32,7 +32,8 @@ class TestCommand(unittest.TestCase):
         """
         Test execute_command method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123", success=True, data="line1\nline2\n"
         )
@@ -55,7 +56,8 @@ class TestCommand(unittest.TestCase):
         """
         Test execute_command method with custom timeout.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123", success=True, data="line1\nline2\n"
         )
@@ -76,7 +78,8 @@ class TestCommand(unittest.TestCase):
         """
         Test execute_command method with error response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=False,

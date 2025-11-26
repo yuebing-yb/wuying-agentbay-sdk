@@ -1,24 +1,33 @@
 import asyncio
+import concurrent.futures
 import logging
 import os
 from types import ModuleType
-from typing import List, Optional, Type, Union, Literal, Dict, Any, TypeVar
-import concurrent.futures
+from typing import Any, Dict, List, Literal, Optional, Type, TypeVar, Union
 
-from pydantic import BaseModel
 from playwright.async_api import Page, async_playwright
+from pydantic import BaseModel
+
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser import BrowserOption
-from agentbay.model.response import SessionResult
-from agentbay.browser import ActOptions, ExtractOptions, ObserveOptions, ActResult, ObserveResult
+from agentbay._common.logger import get_logger
+from agentbay._common.models.response import SessionResult
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.browser import (
+    ActOptions,
+    ActResult,
+    BrowserOption,
+    ExtractOptions,
+    ObserveOptions,
+    ObserveResult,
+)
+
 from .local_page_agent import LocalSession
-from agentbay.logger import get_logger
 
 # Initialize _logger for this module
 _logger = get_logger("page_agent")
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
+
 
 class PageAgent:
     def __init__(
@@ -71,8 +80,11 @@ class PageAgent:
                     _logger.info("Browser initialized successfully")
                     endpoint_url = self.session.browser.get_endpoint_url()
                     _logger.info(f"endpoint_url = {endpoint_url}")
-                    if (self._worker_thread is None):
-                        promise: concurrent.futures.Future[bool] = concurrent.futures.Future()
+                    if self._worker_thread is None:
+                        promise: concurrent.futures.Future[bool] = (
+                            concurrent.futures.Future()
+                        )
+
                         def thread_target():
                             async def _connect_browser():
                                 success = False
@@ -81,7 +93,11 @@ class PageAgent:
                                     async with async_playwright() as p:
                                         self._task_queue = asyncio.Queue()
                                         self._loop = asyncio.get_running_loop()
-                                        self.browser = await p.chromium.connect_over_cdp(endpoint_url)
+                                        self.browser = (
+                                            await p.chromium.connect_over_cdp(
+                                                endpoint_url
+                                            )
+                                        )
                                         _logger.info("Browser connected successfully")
                                         success = True
                                         promise.set_result(success)
@@ -90,8 +106,14 @@ class PageAgent:
                                     _logger.error(f"Failed to connect to browser: {e}")
                                     success = False
                                     promise.set_result(success)
+
                             asyncio.run(_connect_browser())
-                        self._worker_thread = concurrent.futures.ThreadPoolExecutor().submit(thread_target)
+
+                        self._worker_thread = (
+                            concurrent.futures.ThreadPoolExecutor().submit(
+                                thread_target
+                            )
+                        )
                         promise.result()
 
                     # Get pwd
@@ -101,7 +123,10 @@ class PageAgent:
                         if file.endswith(".py") and file != "__init__.py":
                             with open(f"{pwd}/page_tasks/{file}", "r") as f:
                                 content = f.read()
-                            content = content.replace("mcp_server.page_agent", "agentbay.browser.eval.page_agent")
+                            content = content.replace(
+                                "mcp_server.page_agent",
+                                "agentbay.browser.eval.page_agent",
+                            )
                             with open(f"{pwd}/page_tasks/{file}", "w") as f:
                                 f.write(content)
 
@@ -118,31 +143,37 @@ class PageAgent:
         _logger.info("Initialize browser agent successfully")
 
     async def _playwright_interactive_loop(self) -> None:
-            """Run interactive loop."""
-            while True:
-                if self._task_queue is not None:
+        """Run interactive loop."""
+        while True:
+            if self._task_queue is not None:
+                try:
+                    task_name, arguments, future = await asyncio.wait_for(
+                        self._task_queue.get(), timeout=1.0
+                    )
                     try:
-                        task_name, arguments, future = await asyncio.wait_for(self._task_queue.get(), timeout=1.0)
-                        try:
-                            _logger.debug(f"Execute task {task_name} with arguments {arguments}")
-                            if task_name == "run_task":
-                                task_module = arguments["task"]
-                                task_logger = arguments["_logger"]
-                                config = arguments["config"]
-                                ret = await task_module.run(self, task_logger, config)
-                            else:
-                                raise RuntimeError(f"Unknown task: {task_name}")
-                            future.set_result(ret)
-                        except Exception as e:
-                            future.set_exception(e)
-                    except asyncio.TimeoutError:
-                        pass
-                else:
-                    await asyncio.sleep(1)
+                        _logger.debug(
+                            f"Execute task {task_name} with arguments {arguments}"
+                        )
+                        if task_name == "run_task":
+                            task_module = arguments["task"]
+                            task_logger = arguments["_logger"]
+                            config = arguments["config"]
+                            ret = await task_module.run(self, task_logger, config)
+                        else:
+                            raise RuntimeError(f"Unknown task: {task_name}")
+                        future.set_result(ret)
+                    except Exception as e:
+                        future.set_exception(e)
+                except asyncio.TimeoutError:
+                    pass
+            else:
+                await asyncio.sleep(1)
 
     async def _call_mcp_tool(self, tool_name: str, arguments: dict) -> Any:
         if not self.session or not self._tool_call_queue or not self._loop:
-            raise RuntimeError("MCP client is not connected. Call connect() and ensure it returns True before calling callTool.")
+            raise RuntimeError(
+                "MCP client is not connected. Call connect() and ensure it returns True before calling callTool."
+            )
         # Use a Future to get the result back from the interactive loop
         future: concurrent.futures.Future = concurrent.futures.Future()
         await self._tool_call_queue.put((tool_name, arguments, future))
@@ -153,17 +184,26 @@ class PageAgent:
         while True:
             if self._tool_call_queue is not None:
                 try:
-                    tool_name, arguments, future = await asyncio.wait_for(self._tool_call_queue.get(), timeout=1.0)
+                    tool_name, arguments, future = await asyncio.wait_for(
+                        self._tool_call_queue.get(), timeout=1.0
+                    )
                     try:
-                        _logger.debug(f"Call tool {tool_name} with arguments {arguments}")
+                        _logger.debug(
+                            f"Call tool {tool_name} with arguments {arguments}"
+                        )
                         if self.session is not None:
-                            response = await self.session.call_tool(tool_name, arguments)
+                            response = await self.session.call_tool(
+                                tool_name, arguments
+                            )
                             _logger.debug(f"MCP tool response: {response}")
 
                             # Extract text content from response
-                            if hasattr(response, 'content') and response.content:
+                            if hasattr(response, "content") and response.content:
                                 for content_item in response.content:
-                                    if hasattr(content_item, 'text') and content_item.text:
+                                    if (
+                                        hasattr(content_item, "text")
+                                        and content_item.text
+                                    ):
                                         future.set_result(content_item.text)
                                         break
                                 else:
@@ -173,7 +213,9 @@ class PageAgent:
                                 # Fallback to original response if no content structure
                                 future.set_result(response)
                         else:
-                            future.set_exception(RuntimeError("MCP client session is not initialized."))
+                            future.set_exception(
+                                RuntimeError("MCP client session is not initialized.")
+                            )
                     except Exception as e:
                         future.set_exception(e)
                 except asyncio.TimeoutError:
@@ -183,7 +225,9 @@ class PageAgent:
 
     async def _post_task_to_pr_loop(self, task: str, arguments: dict) -> Any:
         if not self.session or not self._task_queue or not self._loop:
-            raise RuntimeError("Session is not ready. Call initialize() and ensure it returns True before calling _post_task_to_pr_loop.")
+            raise RuntimeError(
+                "Session is not ready. Call initialize() and ensure it returns True before calling _post_task_to_pr_loop."
+            )
         # Use a Future to get the result back from the interactive loop
         future: concurrent.futures.Future = concurrent.futures.Future()
         await self._task_queue.put((task, arguments, future))
@@ -191,18 +235,24 @@ class PageAgent:
 
     async def get_current_page(self) -> Page:
         if self.current_page is None:
-            raise RuntimeError("Current page is not available. Make sure to navigate to a page first.")
-        
+            raise RuntimeError(
+                "Current page is not available. Make sure to navigate to a page first."
+            )
+
         cdp_session = None
         try:
-            cdp_session = await self.current_page.context.new_cdp_session(self.current_page)
-            #_logger.info(f"get_current_page: {self.current_page}")
+            cdp_session = await self.current_page.context.new_cdp_session(
+                self.current_page
+            )
+            # _logger.info(f"get_current_page: {self.current_page}")
         finally:
             if cdp_session:
                 await cdp_session.detach()
         return self.current_page
 
-    async def run_task(self, task: ModuleType, _logger: logging.Logger, config: Dict[str, Any]) -> Any:
+    async def run_task(
+        self, task: ModuleType, _logger: logging.Logger, config: Dict[str, Any]
+    ) -> Any:
         arguments = {
             "task": task,
             "_logger": _logger,
@@ -234,13 +284,16 @@ class PageAgent:
         wait_until: Optional[
             Literal["load", "domcontentloaded", "networkidle", "commit"]
         ] = "load",
-        timeout_ms: Optional[int] = 180000) -> str:
+        timeout_ms: Optional[int] = 180000,
+    ) -> str:
         """Navigates the browser to the specified URL."""
         _logger.info(f"goto {url}")
         try:
             if self.browser is None:
-                raise RuntimeError("Browser is not initialized. Call initialize() first.")
-            
+                raise RuntimeError(
+                    "Browser is not initialized. Call initialize() first."
+                )
+
             self.current_page = await self.browser.new_page()
             await self.current_page.goto(url, wait_until=wait_until, timeout=timeout_ms)
             return f"Successfully navigated to {url}"
@@ -248,28 +301,28 @@ class PageAgent:
             _logger.error(f"Error in goto: {e}", exc_info=True)
             return f"goto {url} failed: {str(e)}"
 
-    async def navigate(
-        self,
-        url: str) -> str:
+    async def navigate(self, url: str) -> str:
         """Navigates the browser to the specified URL."""
         _logger.info(f"navigate {url}")
         try:
             if self.session is None:
-                raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+                raise RuntimeError(
+                    "Session is not initialized. Call initialize() first."
+                )
+
             await self.session.browser.agent.navigate_async(url)
             return f"Successfully navigated to {url}"
         except Exception as e:
             _logger.error(f"Error in navigate: {e}", exc_info=True)
             return f"navigate {url} failed: {str(e)}"
 
-    async def screenshot(
-        self
-    ) -> str:
+    async def screenshot(self) -> str:
         try:
             if self.session is None:
-                raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+                raise RuntimeError(
+                    "Session is not initialized. Call initialize() first."
+                )
+
             data_url_or_error = await self.session.browser.agent.screenshot_async()
             if data_url_or_error.startswith("screenshot failed:"):
                 _logger.error(data_url_or_error)
@@ -278,15 +331,23 @@ class PageAgent:
                 error_msg = f"screenshot failed: Unexpected format from SDK: {data_url_or_error[:100]}"
                 _logger.error(error_msg)
                 return error_msg
-                
-            base64_data = data_url_or_error.split(',', 1)[1]
+
+            base64_data = data_url_or_error.split(",", 1)[1]
             return base64_data
 
         except Exception as e:
             _logger.error(f"Error in screenshot: {e}", exc_info=True)
             return f"screenshot failed: {str(e)}"
 
-    async def extract(self, instruction: str, schema: Type[T], use_text_extract: Optional[bool] = False, dom_settle_timeout_ms: Optional[int] = 5000, use_vision: Optional[bool] = False, selector: Optional[str] = None) -> T:
+    async def extract(
+        self,
+        instruction: str,
+        schema: Type[T],
+        use_text_extract: Optional[bool] = False,
+        dom_settle_timeout_ms: Optional[int] = 5000,
+        use_vision: Optional[bool] = False,
+        selector: Optional[str] = None,
+    ) -> T:
         """
         Extracts structured data from the current webpage based on an instruction.
 
@@ -303,8 +364,10 @@ class PageAgent:
         """
         try:
             if self.session is None:
-                raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+                raise RuntimeError(
+                    "Session is not initialized. Call initialize() first."
+                )
+
             options = ExtractOptions(
                 instruction=instruction,
                 schema=schema,
@@ -314,7 +377,9 @@ class PageAgent:
                 selector=selector,
             )
 
-            success, extracted_data = await self.session.browser.agent.extract_async(options=options, page=self.current_page)
+            success, extracted_data = await self.session.browser.agent.extract_async(
+                options=options, page=self.current_page
+            )
             if not success or extracted_data is None:
                 raise RuntimeError("Failed to extract data from the page")
             return extracted_data
@@ -322,7 +387,12 @@ class PageAgent:
             _logger.error(f"Error in extract: {e}", exc_info=True)
             raise
 
-    async def observe(self, instruction: str, dom_settle_timeout_ms: Optional[int] = None, use_vision: bool = False) -> List[ObserveResult]:
+    async def observe(
+        self,
+        instruction: str,
+        dom_settle_timeout_ms: Optional[int] = None,
+        use_vision: bool = False,
+    ) -> List[ObserveResult]:
         """
         Observes the current webpage to identify and describe elements.
 
@@ -336,21 +406,29 @@ class PageAgent:
         """
         try:
             if self.session is None:
-                raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+                raise RuntimeError(
+                    "Session is not initialized. Call initialize() first."
+                )
+
             _logger.info("Starting observation...")
             options = ObserveOptions(
                 instruction=instruction,
                 dom_settle_timeout_ms=dom_settle_timeout_ms,
                 use_vision=use_vision,
             )
-            success, observed_elements = await self.session.browser.agent.observe_async(options=options, page=self.current_page)
+            success, observed_elements = await self.session.browser.agent.observe_async(
+                options=options, page=self.current_page
+            )
             return observed_elements
         except Exception as e:
             _logger.error(f"Error in observe: {e}", exc_info=True)
             raise
 
-    async def act(self, action_input: Union[str, ActOptions, ObserveResult], use_vision: bool = False) -> ActResult:
+    async def act(
+        self,
+        action_input: Union[str, ActOptions, ObserveResult],
+        use_vision: bool = False,
+    ) -> ActResult:
         """
         Performs an action on the current webpage, either inferred from an instruction
         or directly on an ObservedElement.
@@ -367,17 +445,23 @@ class PageAgent:
         """
         try:
             if self.session is None:
-                raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+                raise RuntimeError(
+                    "Session is not initialized. Call initialize() first."
+                )
+
             _logger.info(f"Attempting to execute action: {action_input}")
             if isinstance(action_input, str):
                 options = ActOptions(
                     action=action_input,
-                    use_vision=use_vision,    
+                    use_vision=use_vision,
                 )
-                return await self.session.browser.agent.act_async(action_input=options, page=self.current_page)
+                return await self.session.browser.agent.act_async(
+                    action_input=options, page=self.current_page
+                )
             else:
-                return await self.session.browser.agent.act_async(action_input=action_input, page=self.current_page)
+                return await self.session.browser.agent.act_async(
+                    action_input=action_input, page=self.current_page
+                )
         except Exception as e:
             _logger.error(f"Error in act: {e}", exc_info=True)
             raise

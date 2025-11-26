@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+from agentbay._common.models.response import McpToolResult, OperationResult
 from agentbay._sync.filesystem import (
     BoolResult,
     DirectoryListResult,
@@ -10,7 +11,6 @@ from agentbay._sync.filesystem import (
     FileSystem,
     MultipleFileContentResult,
 )
-from agentbay.model import OperationResult, McpToolResult
 
 
 class DummySession:
@@ -107,15 +107,13 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Invalid response body")
 
-    
     def test_create_directory_success(self):
         """
         Test create_directory method with successful response.
         """
-        from agentbay.model import McpToolResult
-        mock_result = McpToolResult(
-            request_id="request-123", success=True, data="True"
-        )
+        from agentbay._common.models.response import McpToolResult
+
+        mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.create_directory("/path/to/directory")
@@ -124,7 +122,6 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.data)
 
-    
     def test_create_directory_error(self):
         """
         Test create_directory method with error response.
@@ -143,15 +140,13 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Directory creation failed")
 
-    
     def test_edit_file_success(self):
         """
         Test edit_file method with successful response.
         """
-        from agentbay.model import McpToolResult
-        mock_result = McpToolResult(
-            request_id="request-123", success=True, data="True"
-        )
+        from agentbay._common.models.response import McpToolResult
+
+        mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.edit_file(
@@ -162,12 +157,12 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.data)
 
-    
     def test_edit_file_error(self):
         """
         Test edit_file method with error response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=False,
@@ -199,7 +194,9 @@ class TestFileSystem(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.data)
-        mock_write_file_chunk.assert_called_once_with("/path/to/file.txt", "content to write", "overwrite")
+        mock_write_file_chunk.assert_called_once_with(
+            "/path/to/file.txt", "content to write", "overwrite"
+        )
 
     @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_error(self, mock_write_file_chunk):
@@ -220,12 +217,12 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Write failed")
 
-    
     def test_get_file_info_success(self):
         """
         Test get_file_info method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
@@ -242,12 +239,12 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.file_info["modified"], "2023-01-01T12:00:00Z")
         self.assertEqual(result.file_info["isDirectory"], False)
 
-    
     def test_get_file_info_error(self):
         """
         Test get_file_info method with error response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=False,
@@ -261,12 +258,12 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "File not found")
 
-    
     def test_list_directory_success(self):
         """
         Test list_directory method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
@@ -286,12 +283,12 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.entries[2]["name"], "file2.txt")
         self.assertEqual(result.entries[2]["isDirectory"], False)
 
-    
     def test_list_directory_error(self):
         """
         Test list_directory method with error response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=False,
@@ -306,15 +303,13 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.error_message, "Directory not found")
         self.assertEqual(result.entries, [])
 
-    
     def test_move_file_success(self):
         """
         Test move_file method with successful response.
         """
-        from agentbay.model import McpToolResult
-        mock_result = McpToolResult(
-            request_id="request-123", success=True, data="True"
-        )
+        from agentbay._common.models.response import McpToolResult
+
+        mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
 
         result = self.fs.move_file("/path/to/source.txt", "/path/to/dest.txt")
@@ -323,12 +318,12 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.data)
 
-    
     def test_move_file_error(self):
         """
         Test move_file method with error response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=False,
@@ -342,12 +337,12 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Move operation failed")
 
-    
     def test_read_multiple_files_success(self):
         """
         Test read_multiple_files method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
@@ -365,12 +360,12 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.contents["file1.txt"], "File 1 content")
         self.assertEqual(result.contents["file2.txt"], "File 2 content")
 
-    
     def test_search_files_success(self):
         """
         Test search_files method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
@@ -386,12 +381,12 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.matches[0], "/path/to/file1.txt")
         self.assertEqual(result.matches[1], "/path/to/file2.txt")
 
-    
     def test_search_files_with_exclude(self):
         """
         Test search_files method with exclude patterns.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123", success=True, data="/path/to/file1.txt"
         )
@@ -479,8 +474,8 @@ class TestFileSystem(unittest.TestCase):
         # Verify the calls (first overwrite, then appends)
         calls = mock_write_file_chunk.call_args_list
         self.assertEqual(calls[0][0][2], "overwrite")  # First call mode
-        self.assertEqual(calls[1][0][2], "append")     # Second call mode
-        self.assertEqual(calls[2][0][2], "append")     # Third call mode
+        self.assertEqual(calls[1][0][2], "append")  # Second call mode
+        self.assertEqual(calls[2][0][2], "append")  # Third call mode
 
     @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_small_content(self, mock_write_file_chunk):
@@ -496,7 +491,9 @@ class TestFileSystem(unittest.TestCase):
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
         self.assertTrue(result.data)
-        mock_write_file_chunk.assert_called_once_with("/path/to/file.txt", content, "overwrite")
+        mock_write_file_chunk.assert_called_once_with(
+            "/path/to/file.txt", content, "overwrite"
+        )
 
     @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_large_error(self, mock_write_file_chunk):
@@ -524,7 +521,7 @@ class TestFileSystem(unittest.TestCase):
         mock_write_file_chunk.return_value = BoolResult(
             request_id="",
             success=False,
-            error_message="Invalid write mode: invalid_mode. Must be 'overwrite' or 'append'."
+            error_message="Invalid write mode: invalid_mode. Must be 'overwrite' or 'append'.",
         )
 
         result = self.fs.write_file("/path/to/file.txt", "content", "invalid_mode")

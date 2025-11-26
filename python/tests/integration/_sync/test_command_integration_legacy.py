@@ -6,8 +6,8 @@ import time
 import unittest
 
 from agentbay import AgentBay
-from agentbay.command import Command
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.command import Command
 
 
 class TestCommandIntegration(unittest.TestCase):
@@ -73,21 +73,23 @@ class TestCommandIntegration(unittest.TestCase):
     def test_command_error_handling(self):
         """3.1 Command Error Handling - should handle command errors and edge cases"""
         # Test invalid command
-        invalid_result = self.command.execute_command('invalid_command_12345')
+        invalid_result = self.command.execute_command("invalid_command_12345")
         self.assertFalse(invalid_result.success)
         self.assertIsNotNone(invalid_result.error_message)
 
         # Test command with permission issues (trying to write to protected directory)
-        permission_result = self.command.execute_command('echo "test" > /root/protected.txt')
+        permission_result = self.command.execute_command(
+            'echo "test" > /root/protected.txt'
+        )
         # This might succeed or fail depending on the environment, but should not crash
         self.assertIsInstance(permission_result.success, bool)
 
         # Test long-running command with timeout considerations
         time_command = 'echo "completed"'
         time_result = self.command.execute_command(time_command)
-        print(f'Command output: {time_result}')
+        print(f"Command output: {time_result}")
         self.assertTrue(time_result.success)
-        self.assertIn('completed', time_result.output)
+        self.assertIn("completed", time_result.output)
 
 
 if __name__ == "__main__":

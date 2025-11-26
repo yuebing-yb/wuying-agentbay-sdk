@@ -7,9 +7,9 @@ This test suite follows TDD principles:
 3. Refactor if needed
 """
 
-import unittest
-from unittest.mock import MagicMock, patch, Mock
 import json
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 
 class DummyAgentBay:
@@ -31,7 +31,7 @@ class TestSessionCallMcpTool(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        from agentbay.session import Session
+        from agentbay._sync.session import Session
 
         self.agent_bay = DummyAgentBay()
         self.session_id = "test_session_id"
@@ -69,7 +69,9 @@ class TestSessionCallMcpTool(unittest.TestCase):
         }
 
         # Call the method
-        result = self.session.call_mcp_tool("shell", {"command": "ls", "timeout_ms": 1000})
+        result = self.session.call_mcp_tool(
+            "shell", {"command": "ls", "timeout_ms": 1000}
+        )
 
         # Assertions
         self.assertIsNotNone(result)
@@ -106,7 +108,9 @@ class TestSessionCallMcpTool(unittest.TestCase):
             "body": {
                 "Data": json.dumps(
                     {
-                        "content": [{"type": "text", "text": "Error: command not found"}],
+                        "content": [
+                            {"type": "text", "text": "Error: command not found"}
+                        ],
                         "isError": True,
                     }
                 ),
@@ -164,7 +168,7 @@ class TestSessionCallMcpTool(unittest.TestCase):
             "content": [{"type": "text", "text": "vpc output"}],
             "isError": False,
         }
-        
+
         # Setup httpx client mock
         # with httpx.Client() as client: client.get(...)
         mock_client_instance = MagicMock()
@@ -251,10 +255,7 @@ class TestSessionCallMcpTool(unittest.TestCase):
 
         # Call with custom timeouts
         result = self.session.call_mcp_tool(
-            "shell",
-            {"command": "ls"},
-            read_timeout=60,
-            connect_timeout=10
+            "shell", {"command": "ls"}, read_timeout=60, connect_timeout=10
         )
 
         # Assertions
@@ -298,12 +299,9 @@ class TestSessionCallMcpTool(unittest.TestCase):
             "options": {
                 "format": "json",
                 "compress": True,
-                "filters": ["filter1", "filter2"]
+                "filters": ["filter1", "filter2"],
             },
-            "metadata": {
-                "user": "test_user",
-                "timestamp": 1234567890
-            }
+            "metadata": {"user": "test_user", "timestamp": 1234567890},
         }
 
         # Call the method
@@ -322,7 +320,7 @@ class TestSessionCallMcpTool(unittest.TestCase):
 
     def test_call_mcp_tool_return_type(self):
         """Test that call_mcp_tool returns McpToolResult type."""
-        from agentbay.model.response import McpToolResult
+        from agentbay._common.models.response import McpToolResult
 
         # Mock the client
         mock_response = MagicMock()
@@ -355,13 +353,10 @@ class TestMcpToolResult(unittest.TestCase):
 
     def test_mcp_tool_result_initialization(self):
         """Test McpToolResult can be initialized with all fields."""
-        from agentbay.model.response import McpToolResult
+        from agentbay._common.models.response import McpToolResult
 
         result = McpToolResult(
-            request_id="req-123",
-            success=True,
-            data="test data",
-            error_message=""
+            request_id="req-123", success=True, data="test data", error_message=""
         )
 
         self.assertEqual(result.request_id, "req-123")
@@ -371,7 +366,7 @@ class TestMcpToolResult(unittest.TestCase):
 
     def test_mcp_tool_result_defaults(self):
         """Test McpToolResult default values."""
-        from agentbay.model.response import McpToolResult
+        from agentbay._common.models.response import McpToolResult
 
         result = McpToolResult()
 

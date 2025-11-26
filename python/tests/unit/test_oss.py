@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from agentbay.model import OperationResult, McpToolResult
+from agentbay._common.models.response import McpToolResult, OperationResult
 from agentbay._sync.oss import Oss
 
 
@@ -21,7 +21,9 @@ class TestOss(unittest.TestCase):
         )
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.oss.env_init("key_id", "key_secret", "security_token", endpoint="test_endpoint")
+        result = self.oss.env_init(
+            "key_id", "key_secret", "security_token", endpoint="test_endpoint"
+        )
 
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -49,7 +51,8 @@ class TestOss(unittest.TestCase):
         """
         Test the upload method to ensure it succeeds with valid input.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="test-request-id",
             success=True,

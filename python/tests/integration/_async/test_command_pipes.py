@@ -1,5 +1,7 @@
 """Integration tests for command pipes and redirects."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
@@ -37,11 +39,11 @@ async def test_command_redirect(test_session):
     """Test command with redirect."""
     cmd = test_session.command
     fs = test_session.file_system
-    
+
     # Write to file using redirect
     result = await cmd.execute_command("echo 'test content' > /tmp/redirect_test.txt")
     assert result.success
-    
+
     # Read file to verify
     read_result = await fs.read_file("/tmp/redirect_test.txt")
     assert read_result.success
@@ -54,19 +56,17 @@ async def test_command_append(test_session):
     """Test command with append redirect."""
     cmd = test_session.command
     fs = test_session.file_system
-    
+
     # Write initial content
     await cmd.execute_command("echo 'line1' > /tmp/append_test.txt")
-    
+
     # Append content
     result = await cmd.execute_command("echo 'line2' >> /tmp/append_test.txt")
     assert result.success
-    
+
     # Read file to verify
     read_result = await fs.read_file("/tmp/append_test.txt")
     assert read_result.success
     assert "line1" in read_result.content
     assert "line2" in read_result.content
     print("Command with append executed successfully")
-
-

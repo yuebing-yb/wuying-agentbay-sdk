@@ -1,5 +1,7 @@
 """Advanced filesystem integration tests."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
@@ -30,11 +32,11 @@ async def test_file_permissions(test_session):
     """Test file permission operations."""
     fs = test_session.file_system
     test_file = "/tmp/test_permissions.txt"
-    
+
     # Create file
     write_result = await fs.write_file(test_file, "test content")
     assert write_result.success
-    
+
     # Get file info
     info_result = await fs.get_file_info(test_file)
     assert info_result.success
@@ -47,11 +49,11 @@ async def test_nested_directory_creation(test_session):
     """Test creating nested directories."""
     fs = test_session.file_system
     nested_path = "/tmp/test/nested/deep/directory"
-    
+
     # Create nested directories
     result = await fs.create_directory(nested_path)
     assert result.success
-    
+
     # Verify directory exists
     info_result = await fs.get_file_info(nested_path)
     assert info_result.success
@@ -64,20 +66,20 @@ async def test_file_overwrite(test_session):
     """Test overwriting existing file."""
     fs = test_session.file_system
     test_file = "/tmp/test_overwrite.txt"
-    
+
     # Write initial content
     result1 = await fs.write_file(test_file, "initial content")
     assert result1.success
-    
+
     # Read back
     read1 = await fs.read_file(test_file)
     assert read1.success
     assert "initial content" in read1.content
-    
+
     # Overwrite
     result2 = await fs.write_file(test_file, "new content")
     assert result2.success
-    
+
     # Read again
     read2 = await fs.read_file(test_file)
     assert read2.success
@@ -91,16 +93,16 @@ async def test_empty_file_operations(test_session):
     """Test operations on empty files."""
     fs = test_session.file_system
     empty_file = "/tmp/empty_file.txt"
-    
+
     # Create empty file
     result = await fs.write_file(empty_file, "")
     assert result.success
-    
+
     # Read empty file
     read_result = await fs.read_file(empty_file)
     assert read_result.success
     assert read_result.content == ""
-    
+
     # Get info
     info_result = await fs.get_file_info(empty_file)
     assert info_result.success
@@ -113,11 +115,11 @@ async def test_special_characters_in_filename(test_session):
     """Test files with special characters in names."""
     fs = test_session.file_system
     special_file = "/tmp/test_file_with-special.chars_123.txt"
-    
+
     # Write file with special chars in name
     result = await fs.write_file(special_file, "content")
     assert result.success
-    
+
     # Read it back
     read_result = await fs.read_file(special_file)
     assert read_result.success
@@ -130,24 +132,23 @@ async def test_directory_listing_with_filters(test_session):
     """Test listing directory with different file types."""
     fs = test_session.file_system
     test_dir = "/tmp/test_listing"
-    
+
     # Create test directory
     await fs.create_directory(test_dir)
-    
+
     # Create some files
     await fs.write_file(f"{test_dir}/file1.txt", "content1")
     await fs.write_file(f"{test_dir}/file2.txt", "content2")
     await fs.create_directory(f"{test_dir}/subdir")
-    
+
     # List directory
     list_result = await fs.list_directory(test_dir)
     assert list_result.success
     assert len(list_result.entries) >= 3
-    
+
     # Check entries
     names = [entry.name for entry in list_result.entries]
     assert "file1.txt" in names
     assert "file2.txt" in names
     assert "subdir" in names
     print(f"Listed {len(list_result.entries)} entries in {test_dir}")
-

@@ -1,10 +1,12 @@
 """Integration tests for complete session lifecycle."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -20,7 +22,7 @@ async def agent_bay():
 async def test_create_with_different_images(agent_bay):
     """Test creating sessions with different image types."""
     images = ["linux_latest", "browser_latest"]
-    
+
     for image_id in images:
         params = CreateSessionParams(image_id=image_id)
         result = await agent_bay.create(params)
@@ -36,16 +38,16 @@ async def test_session_has_required_attributes(agent_bay):
     result = await agent_bay.create()
     assert result.success
     session = result.session
-    
+
     try:
         # Check required attributes
-        assert hasattr(session, 'session_id')
-        assert hasattr(session, 'agent_bay')
-        assert hasattr(session, 'file_system')
-        assert hasattr(session, 'command')
-        assert hasattr(session, 'browser')
-        assert hasattr(session, 'context')
-        
+        assert hasattr(session, "session_id")
+        assert hasattr(session, "agent_bay")
+        assert hasattr(session, "file_system")
+        assert hasattr(session, "command")
+        assert hasattr(session, "browser")
+        assert hasattr(session, "context")
+
         assert session.session_id is not None
         assert len(session.session_id) > 0
         print(f"Session {session.session_id} has all required attributes")
@@ -57,7 +59,7 @@ async def test_session_has_required_attributes(agent_bay):
 async def test_multiple_sessions_simultaneously(agent_bay):
     """Test creating multiple sessions at the same time."""
     sessions = []
-    
+
     try:
         # Create 3 sessions
         for i in range(3):
@@ -65,11 +67,11 @@ async def test_multiple_sessions_simultaneously(agent_bay):
             assert result.success
             sessions.append(result.session)
             print(f"Created session {i+1}: {result.session.session_id}")
-        
+
         # Verify all sessions are different
         session_ids = [s.session_id for s in sessions]
         assert len(set(session_ids)) == 3, "Session IDs should be unique"
-        
+
     finally:
         # Clean up all sessions
         for session in sessions:
@@ -83,12 +85,12 @@ async def test_session_delete_is_idempotent(agent_bay):
     result = await agent_bay.create()
     assert result.success
     session = result.session
-    
+
     # Delete once
     delete_result1 = await session.delete()
     assert delete_result1.success
     print(f"First delete successful: {session.session_id}")
-    
+
     # Delete again (should not error)
     try:
         delete_result2 = await session.delete()
@@ -106,11 +108,11 @@ async def test_session_operations_after_delete_fail(agent_bay):
     assert result.success
     session = result.session
     session_id = session.session_id
-    
+
     # Delete session
     await session.delete()
     print(f"Deleted session: {session_id}")
-    
+
     # Try to use command (should fail or handle gracefully)
     try:
         cmd_result = await session.command.execute_command("echo test")
@@ -121,5 +123,3 @@ async def test_session_operations_after_delete_fail(agent_bay):
             print("Warning: Command succeeded on deleted session")
     except Exception as e:
         print(f"Command correctly raised exception: {type(e).__name__}")
-
-

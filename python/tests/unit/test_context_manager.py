@@ -1,12 +1,12 @@
+import asyncio
+import json
 import unittest
 from unittest.mock import MagicMock, patch
-import json
-import asyncio
 
-from agentbay.context_manager import (
+from agentbay._sync.context_manager import (
+    ContextInfoResult,
     ContextManager,
     ContextStatusData,
-    ContextInfoResult,
     ContextSyncResult,
 )
 
@@ -168,10 +168,9 @@ class TestContextManager(unittest.TestCase):
         self.mock_client.sync_context.return_value = mock_response
 
         # Mock the info method to return completed status
-        with patch.object(self.context_manager, 'info') as mock_info:
+        with patch.object(self.context_manager, "info") as mock_info:
             mock_info.return_value = ContextInfoResult(
-                request_id="test-request-id",
-                context_status_data=[]
+                request_id="test-request-id", context_status_data=[]
             )
 
             # Call the method directly (synchronously)
@@ -194,14 +193,15 @@ class TestContextManager(unittest.TestCase):
         self.mock_client.sync_context.return_value = mock_response
 
         # Mock the info method to return completed status
-        with patch.object(self.context_manager, 'info') as mock_info:
+        with patch.object(self.context_manager, "info") as mock_info:
             mock_info.return_value = ContextInfoResult(
-                request_id="test-request-id",
-                context_status_data=[]
+                request_id="test-request-id", context_status_data=[]
             )
 
             # Call the method with parameters directly (synchronously)
-            result = self.context_manager.sync_context("ctx-123", "/home/user", "upload")
+            result = self.context_manager.sync_context(
+                "ctx-123", "/home/user", "upload"
+            )
 
             # Verify the results
             self.assertEqual(result.request_id, "test-request-id")

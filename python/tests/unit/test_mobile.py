@@ -3,13 +3,14 @@ Unit tests for Mobile module.
 Following TDD principles - tests first, then implementation.
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
-from agentbay.mobile import Mobile
-from agentbay.model import BoolResult, OperationResult
-from agentbay.computer import ProcessListResult, AppOperationResult
-from agentbay.exceptions import AgentBayError
+import pytest
+
+from agentbay._common.exceptions import AgentBayError
+from agentbay._common.models import BoolResult, OperationResult
+from agentbay._sync.computer import AppOperationResult, ProcessListResult
+from agentbay._sync.mobile import Mobile
 
 
 class TestMobile:
@@ -33,19 +34,17 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
         mock_result.error_message = ""
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.tap(100, 200)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
         assert result.data is True
-        self.session.call_mcp_tool.assert_called_once_with(
-            "tap", {"x": 100, "y": 200}
-        )
+        self.session.call_mcp_tool.assert_called_once_with("tap", {"x": 100, "y": 200})
 
     def test_swipe_success(self):
         """Test successful swipe."""
@@ -53,21 +52,24 @@ class TestMobile:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.swipe(100, 100, 200, 200)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "swipe", {
-                "start_x": 100, "start_y": 100,
-                "end_x": 200, "end_y": 200,
-                "duration_ms": 300
-            }
+            "swipe",
+            {
+                "start_x": 100,
+                "start_y": 100,
+                "end_x": 200,
+                "end_y": 200,
+                "duration_ms": 300,
+            },
         )
 
     def test_swipe_with_duration(self):
@@ -76,19 +78,22 @@ class TestMobile:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.swipe(100, 100, 200, 200, duration_ms=500)
-        
+
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "swipe", {
-                "start_x": 100, "start_y": 100,
-                "end_x": 200, "end_y": 200,
-                "duration_ms": 500
-            }
+            "swipe",
+            {
+                "start_x": 100,
+                "start_y": 100,
+                "end_x": 200,
+                "end_y": 200,
+                "duration_ms": 500,
+            },
         )
 
     def test_input_text_success(self):
@@ -97,12 +102,12 @@ class TestMobile:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.input_text("Hello Mobile")
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
@@ -116,18 +121,16 @@ class TestMobile:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.send_key(4)  # BACK key
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
-        self.session.call_mcp_tool.assert_called_once_with(
-            "send_key", {"key": 4}
-        )
+        self.session.call_mcp_tool.assert_called_once_with("send_key", {"key": 4})
 
     # UI Elements Tests
     def test_get_clickable_ui_elements_success(self):
@@ -157,7 +160,7 @@ class TestMobile:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        mock_result.data = '[]'  # JSON string
+        mock_result.data = "[]"  # JSON string
 
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
@@ -209,22 +212,20 @@ class TestMobile:
         mock_result.success = True
         mock_result.data = '[{"name": "Calculator", "package_name": "com.calculator"}]'
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.get_installed_apps(
-            start_menu=False,
-            desktop=True,
-            ignore_system_apps=True
+            start_menu=False, desktop=True, ignore_system_apps=True
         )
-        
+
         # Assert
         assert result.success is True
         assert len(result.data) == 1
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
-            {"start_menu": False, "desktop": True, "ignore_system_apps": True}
+            {"start_menu": False, "desktop": True, "ignore_system_apps": True},
         )
 
     def test_get_installed_apps_with_options(self):
@@ -232,22 +233,20 @@ class TestMobile:
         # Arrange - Mock the _call_mcp_tool method
         mock_result = Mock()
         mock_result.success = True
-        mock_result.data = '[]'
+        mock_result.data = "[]"
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.get_installed_apps(
-            start_menu=True,
-            desktop=False,
-            ignore_system_apps=False
+            start_menu=True, desktop=False, ignore_system_apps=False
         )
-        
+
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
-            {"start_menu": True, "desktop": False, "ignore_system_apps": False}
+            {"start_menu": True, "desktop": False, "ignore_system_apps": False},
         )
 
     def test_start_app_success(self):
@@ -257,12 +256,12 @@ class TestMobile:
         mock_result.success = True
         mock_result.data = '[{"pid": 1234, "name": "calculator"}]'
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.start_app("com.android.calculator2")
-        
+
         # Assert
         assert isinstance(result, ProcessListResult)
         assert result.success is True
@@ -277,21 +276,16 @@ class TestMobile:
         mock_result.success = True
         mock_result.data = '[{"pid": 1234, "name": "settings"}]'
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
-        result = self.mobile.start_app(
-            "com.android.settings",
-            activity=".MainActivity"
-        )
-        
+        result = self.mobile.start_app("com.android.settings", activity=".MainActivity")
+
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "start_app", {
-                "start_cmd": "com.android.settings",
-                "activity": ".MainActivity"
-            }
+            "start_app",
+            {"start_cmd": "com.android.settings", "activity": ".MainActivity"},
         )
 
     def test_stop_app_by_cmd_success(self):
@@ -301,12 +295,12 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
         mock_result.error_message = ""
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.stop_app_by_cmd("com.android.calculator2")
-        
+
         # Assert
         assert isinstance(result, AppOperationResult)
         assert result.success is True
@@ -322,12 +316,12 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
         mock_result.data = "/path/to/mobile_screenshot.png"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.screenshot()
-        
+
         # Assert
         assert isinstance(result, OperationResult)
         assert result.success is True
@@ -339,7 +333,7 @@ class TestMobile:
         """Test get_adb_url returns AdbUrlResult with valid adbkey_pub in mobile environment."""
         # Arrange
         self.mock_session.image_id = "mobile_latest"
-        
+
         # Mock get_adb_link response
         mock_response = Mock()
         mock_response.body = Mock()
@@ -347,15 +341,18 @@ class TestMobile:
         mock_response.body.request_id = "adb-request-123"
         mock_response.body.data = Mock()
         mock_response.body.data.url = "adb connect 47.99.76.99:54848"
-        
-        self.mobile.session.agent_bay.client.get_adb_link = Mock(return_value=mock_response)
+
+        self.mobile.session.agent_bay.client.get_adb_link = Mock(
+            return_value=mock_response
+        )
 
         # Act
         adbkey_pub = "test_adb_key..."
         result = self.mobile.get_adb_url(adbkey_pub)
 
         # Assert
-        from agentbay.model.response import AdbUrlResult
+        from agentbay._common.models.response import AdbUrlResult
+
         assert isinstance(result, AdbUrlResult)
         assert result.success is True
         assert result.request_id == "adb-request-123"
@@ -367,16 +364,20 @@ class TestMobile:
         self.mock_session.image_id = "browser_latest"
 
         # Mock get_adb_link to return error response
-        from agentbay.model.response import AdbUrlResult
-        
+        from agentbay._common.models.response import AdbUrlResult
+
         mock_response = Mock()
         mock_response.body = Mock()
         mock_response.body.success = False
         mock_response.body.request_id = "adb-request-error"
-        mock_response.body.message = "ImageTypeNotMatched: Expected: MobileUse, Actual: BrowserUse"
+        mock_response.body.message = (
+            "ImageTypeNotMatched: Expected: MobileUse, Actual: BrowserUse"
+        )
         mock_response.body.data = None
-        
-        self.mobile.session.agent_bay.client.get_adb_link = Mock(return_value=mock_response)
+
+        self.mobile.session.agent_bay.client.get_adb_link = Mock(
+            return_value=mock_response
+        )
 
         # Act
         adbkey_pub = "test_adb_key..."
@@ -385,13 +386,16 @@ class TestMobile:
         # Assert - Should return AdbUrlResult with success=False
         assert isinstance(result, AdbUrlResult)
         assert result.success is False
-        assert "imagetypenotmatched" in result.error_message.lower() or "failed" in result.error_message.lower()
+        assert (
+            "imagetypenotmatched" in result.error_message.lower()
+            or "failed" in result.error_message.lower()
+        )
 
     def test_get_adb_url_calls_get_link_with_correct_params(self):
         """Test get_adb_url calls client.get_adb_link with correct parameters."""
         # Arrange
         self.mock_session.image_id = "mobile_latest"
-        
+
         mock_response = Mock()
         mock_response.body = Mock()
         mock_response.body.success = True
@@ -399,7 +403,9 @@ class TestMobile:
         mock_response.body.data = Mock()
         mock_response.body.data.url = "adb connect 192.168.1.1:5555"
 
-        self.mobile.session.agent_bay.client.get_adb_link = Mock(return_value=mock_response)
+        self.mobile.session.agent_bay.client.get_adb_link = Mock(
+            return_value=mock_response
+        )
 
         # Act
         adbkey_pub = "test_key_123"
@@ -408,14 +414,15 @@ class TestMobile:
         # Assert
         self.mobile.session.agent_bay.client.get_adb_link.assert_called_once()
         call_args = self.mobile.session.agent_bay.client.get_adb_link.call_args
-        
+
         # Verify the request object
         request = call_args[0][0]
         assert request.authorization == f"Bearer {self.mock_session.agent_bay.api_key}"
         assert request.session_id == self.mock_session.session_id
-        
+
         # Verify options contains adbkey_pub
         import json
+
         options_dict = json.loads(request.option)
         assert options_dict["adbkey_pub"] == adbkey_pub
 
@@ -434,7 +441,8 @@ class TestMobile:
         result = self.mobile.get_adb_url("key_xyz")
 
         # Assert - verify result structure
-        from agentbay.model.response import AdbUrlResult
+        from agentbay._common.models.response import AdbUrlResult
+
         assert isinstance(result, AdbUrlResult)
         assert hasattr(result, "success")
         assert hasattr(result, "request_id")
@@ -449,12 +457,12 @@ class TestMobile:
         mock_result.success = False
         mock_result.request_id = "test-123"
         mock_result.error_message = "MCP tool failed"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.mobile.tap(100, 200)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is False
@@ -464,10 +472,10 @@ class TestMobile:
         """Test tap when exception occurs."""
         # Arrange
         self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
-        
+
         # Act
         result = self.mobile.tap(100, 200)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is False
@@ -477,10 +485,10 @@ class TestMobile:
         """Test UI elements retrieval when exception occurs."""
         # Arrange
         self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
-        
+
         # Act
         result = self.mobile.get_clickable_ui_elements()
-        
+
         # Assert
         assert result.success is False
-        assert "Failed to get clickable UI elements" in result.error_message 
+        assert "Failed to get clickable UI elements" in result.error_message

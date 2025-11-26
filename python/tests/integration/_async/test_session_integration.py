@@ -1,10 +1,12 @@
 """Integration tests for Session functionality."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 def get_test_api_key():
@@ -143,8 +145,9 @@ async def test_command(session_fixture):
             assert response is not None
             assert response.success, f"Command failed: {response.error_message}"
             # Check if response contains "tool not found"
-            assert "tool not found" not in response.output.lower(), \
-                "Command.ExecuteCommand returned 'tool not found'"
+            assert (
+                "tool not found" not in response.output.lower()
+            ), "Command.ExecuteCommand returned 'tool not found'"
         except Exception as e:
             print(f"Note: Command execution failed: {e}")
             # Don't fail the test if command execution is not supported
@@ -165,8 +168,9 @@ async def test_filesystem(session_fixture):
             assert result is not None
             assert result.success, f"Read file failed: {result.error_message}"
             # Check if response contains "tool not found"
-            assert "tool not found" not in result.content.lower(), \
-                "FileSystem.ReadFile returned 'tool not found'"
+            assert (
+                "tool not found" not in result.content.lower()
+            ), "FileSystem.ReadFile returned 'tool not found'"
             print("File read successful")
         except Exception as e:
             print(f"Note: File operation failed: {e}")

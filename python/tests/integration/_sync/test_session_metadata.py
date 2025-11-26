@@ -3,11 +3,11 @@
 
 """Integration tests for session metadata."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest.fixture(scope="module")
@@ -23,7 +23,7 @@ def test_session_with_metadata(agent_bay):
     """Test creating session with labels."""
     params = CreateSessionParams(
         image_id="code_latest",
-        labels={"test_key": "test_value", "environment": "testing"}
+        labels={"test_key": "test_value", "environment": "testing"},
     )
     result = agent_bay.create(params)
     assert result.success
@@ -39,12 +39,10 @@ def test_session_basic_attributes(agent_bay):
     """Test session basic attributes."""
     result = agent_bay.create()
     assert result.success
-    
+
     session = result.session
     assert session.session_id is not None
     assert session.agent_bay is agent_bay
     print(f"Session attributes verified: {session.session_id}")
-    
+
     session.delete()
-
-

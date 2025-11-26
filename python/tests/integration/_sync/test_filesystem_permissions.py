@@ -3,7 +3,7 @@
 
 """Integration tests for filesystem permissions."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
@@ -30,10 +30,10 @@ def test_file_permissions(test_session):
     """Test file permissions."""
     fs = test_session.file_system
     cmd = test_session.command
-    
+
     # Create file
     fs.write_file("/tmp/perm_test.txt", "test content")
-    
+
     # Check permissions
     result = cmd.execute_command("ls -l /tmp/perm_test.txt")
     assert result.success
@@ -61,17 +61,16 @@ def test_executable_file(test_session):
     """Test executable file creation."""
     fs = test_session.file_system
     cmd = test_session.command
-    
+
     # Create script
     script_content = "#!/bin/bash\necho 'executable test'"
     fs.write_file("/tmp/test_script.sh", script_content)
-    
+
     # Make executable
     cmd.execute_command("chmod +x /tmp/test_script.sh")
-    
+
     # Execute script
     result = cmd.execute_command("/tmp/test_script.sh")
     assert result.success
     assert "executable test" in result.output
     print("Executable file test successful")
-

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from agentbay.model import (
+from agentbay._common.models import (
     ApiResponse,
     BoolResult,
     DeleteResult,

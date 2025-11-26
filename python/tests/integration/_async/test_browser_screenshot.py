@@ -1,351 +1,326 @@
+"""Integration tests for browser screenshots."""
+
+import asyncio
 import os
-import sys
 import time
-import unittest
-from typing import Optional, Any
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser import Browser, BrowserOption
-from agentbay.exceptions import BrowserError
-from agentbay.model.response import SessionResult
+import pytest
+import pytest_asyncio
+from playwright.async_api import async_playwright
 
-# Add the parent directory to the path so we can import the agentbay package
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Optional Playwright import
-try:
-    from playwright.async_api import async_playwright
-    PLAYWRIGHT_AVAILABLE = True
-except ImportError:
-    async_playwright = None
-    PLAYWRIGHT_AVAILABLE = False
-    print("Warning: Playwright not available. Browser screenshot tests will be skipped.")
+from agentbay import AsyncAgentBay
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.browser import BrowserOption
+from agentbay._common.exceptions import BrowserError
 
 
 def get_test_api_key():
     """Get API key for testing"""
     api_key = os.environ.get("AGENTBAY_API_KEY")
     if not api_key:
-        raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
+        api_key = "akm-xxx"
+        print(
+            "Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing."
+        )
     return api_key
 
 
-class TestBrowserScreenshotIntegration(unittest.TestCase):
-    """Integration tests for browser screenshot functionality."""
+@pytest_asyncio.fixture
+async def browser_session():
+    api_key = get_test_api_key()
+    agent_bay = AsyncAgentBay(api_key=api_key)
+    params = CreateSessionParams(image_id="browser_latest")
+    result = await agent_bay.create(params)
+    assert result.success
     
-    @classmethod
-    def setUpClass(cls):
-        """Set up test environment with AgentBay client and browser session."""
-        # Skip if no API key or in CI
-        api_key = get_test_api_key()
-        if not api_key or os.environ.get("CI"):
-            raise unittest.SkipTest("Skipping integration test: No API key or running in CI")
+    # Initialize browser for all tests (except the one testing initialization check)
+    # But fixture should probably just provide session. Tests can initialize if needed.
+    # However, most tests need initialized browser.
+    
+    yield result.session
+    
+    try:
+        await result.session.delete()
+    except Exception as e:
+        print(f"Warning: Failed to delete session: {e}")
 
-        cls.agent_bay = AgentBay(api_key)
-        
-        # Create browser session
-        session_params = CreateSessionParams(image_id="browser_latest")
-        session_result: SessionResult = cls.agent_bay.create(session_params)
-        if not session_result.success or session_result.session is None:
-            raise unittest.SkipTest("Failed to create browser session")
-        
-        cls.session = session_result.session
-        cls.browser = cls.session.browser
-        
-        # Initialize browser
-        if not cls.browser.initialize(BrowserOption()):
-            raise unittest.SkipTest("Failed to initialize browser")
-            
-        print(f"Created browser session: {cls.session.session_id}")
 
-    @classmethod
-    def tearDownClass(cls):
-        """Clean up test environment."""
-        if hasattr(cls, "agent_bay") and hasattr(cls, "session"):
-            try:
-                cls.agent_bay.delete(cls.session)
-                print(f"Browser session deleted: {cls.session.session_id}")
-            except Exception as e:
-                print(f"Warning: Failed to delete browser session: {e}")
-
-    def setUp(self):
-        """Set up test fixtures before each test method."""
-        if not PLAYWRIGHT_AVAILABLE or async_playwright is None:
-            self.skipTest("Playwright not available")
-            
-        # Get browser endpoint URL
+@pytest.mark.asyncio
+async def test_screenshot_with_valid_page(browser_session):
+    """Test taking screenshot with a valid page."""
+    print("\n=== Testing screenshot with valid page ===")
+    browser = browser_session.browser
+    await browser.initialize(BrowserOption())
+    
+    endpoint_url = await browser.get_endpoint_url_async()
+    
+    async with async_playwright() as p:
+        playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
+        page = await playwright_browser.new_page()
+        await page.goto("https://www.aliyun.com", timeout=30000)
+        
         try:
-            self.endpoint_url = self.browser.get_endpoint_url()
-        except Exception as e:
-            self.skipTest(f"Failed to get browser endpoint URL: {e}")
-
-    def tearDown(self):
-        """Tear down test fixtures after each test method."""
-        pass
-
-    async def _create_page_and_navigate(self, url: str) -> Any:
-        """Helper method to create a page and navigate to a URL."""
-        if not PLAYWRIGHT_AVAILABLE or async_playwright is None:
-            raise unittest.SkipTest("Playwright not available")
+            # Take screenshot with default full_page=False
+            screenshot_data = await browser.screenshot(page)
             
-        self.playwright = await async_playwright().start()
-        self.browser_instance = await self.playwright.chromium.connect_over_cdp(self.endpoint_url)
-        self.context = self.browser_instance.contexts[0]
-        page = await self.context.new_page()
-        
-        await page.goto(url, timeout=30000)
-        await page.wait_for_load_state("domcontentloaded")
-        return page
-
-    async def _close_page_and_browser(self, page: Any):
-        """Helper method to close page and browser."""
-        if hasattr(self, 'context') and page:
+            # Verify screenshot data
+            assert isinstance(screenshot_data, bytes), "Screenshot data should be bytes"
+            assert len(screenshot_data) > 0, "Screenshot data should not be empty"
+            
+            # Save screenshot to local file
+            filename = "screenshot_valid_page_async.png"
+            with open(filename, "wb") as f:
+                f.write(screenshot_data)
+            print(f"✅ Screenshot saved to {filename}")
+            print(f"✅ Screenshot captured successfully. Size: {len(screenshot_data)} bytes")
+            
+        finally:
             await page.close()
-        if hasattr(self, 'browser_instance'):
-            await self.browser_instance.close()
-        if hasattr(self, 'playwright'):
-            await self.playwright.stop()
+            await playwright_browser.close()
 
-    def test_screenshot_with_valid_page(self):
-        """Test taking screenshot with a valid page."""
-        print("\n=== Testing screenshot with valid page ===")
-        
-        async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
-            try:
-                # Take screenshot with default full_page=False
-                screenshot_data = await self.browser.screenshot(page)
-                
-                # Verify screenshot data
-                self.assertIsInstance(screenshot_data, bytes, "Screenshot data should be bytes")
-                self.assertGreater(len(screenshot_data), 0, "Screenshot data should not be empty")
-                
-                # Save screenshot to local file
-                filename = "screenshot_valid_page.png"
-                with open(filename, "wb") as f:
-                    f.write(screenshot_data)
-                print(f"✅ Screenshot saved to {filename}")
-                
-                print(f"✅ Screenshot captured successfully. Size: {len(screenshot_data)} bytes")
-            finally:
-                await self._close_page_and_browser(page)
-        
-        import asyncio
-        asyncio.run(run_test())
 
-    def test_screenshot_with_full_page(self):
-        """Test taking screenshot with full_page=True."""
-        print("\n=== Testing screenshot with full_page=True ===")
+@pytest.mark.asyncio
+async def test_screenshot_with_full_page(browser_session):
+    """Test taking screenshot with full_page=True."""
+    print("\n=== Testing screenshot with full_page=True ===")
+    browser = browser_session.browser
+    await browser.initialize(BrowserOption())
+    
+    endpoint_url = await browser.get_endpoint_url_async()
+    
+    async with async_playwright() as p:
+        playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
+        page = await playwright_browser.new_page()
+        await page.goto("https://www.aliyun.com", timeout=30000)
         
-        async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
-            try:
-                # Take screenshot with full_page=True
-                screenshot_data = await self.browser.screenshot(page, full_page=True)
-                
-                # Verify screenshot data
-                self.assertIsInstance(screenshot_data, bytes, "Screenshot data should be bytes")
-                self.assertGreater(len(screenshot_data), 0, "Screenshot data should not be empty")
-                
-                # Save screenshot to local file
-                filename = "screenshot_full_page.png"
-                with open(filename, "wb") as f:
-                    f.write(screenshot_data)
-                print(f"✅ Full page screenshot saved to {filename}")
-                
-                print(f"✅ Full page screenshot captured successfully. Size: {len(screenshot_data)} bytes")
-            finally:
-                await self._close_page_and_browser(page)
-        
-        import asyncio
-        asyncio.run(run_test())
-
-    def test_screenshot_with_custom_options(self):
-        """Test taking screenshot with custom options."""
-        print("\n=== Testing screenshot with custom options ===")
-        
-        async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
-            try:
-                # Take screenshot with custom options
-                screenshot_data = await self.browser.screenshot(
-                    page, 
-                    full_page=False,  # Capture only viewport (explicitly set)
-                    type="jpeg",      # Use JPEG format
-                    quality=80        # Set quality to 80%
-                )
-                
-                # Verify screenshot data
-                self.assertIsInstance(screenshot_data, bytes, "Screenshot data should be bytes")
-                self.assertGreater(len(screenshot_data), 0, "Screenshot data should not be empty")
-                
-                # Save screenshot to local file
-                filename = "screenshot_custom_options.jpg"
-                with open(filename, "wb") as f:
-                    f.write(screenshot_data)
-                print(f"✅ Custom options screenshot saved to {filename}")
-                
-                print(f"✅ Screenshot with custom options captured successfully. Size: {len(screenshot_data)} bytes")
-            finally:
-                await self._close_page_and_browser(page)
-        
-        import asyncio
-        asyncio.run(run_test())
-
-    def test_screenshot_function_parameter_priority(self):
-        """Test that function parameter full_page takes priority over options."""
-        print("\n=== Testing function parameter priority ===")
-        
-        async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
-            try:
-                # Take screenshot with function parameter full_page=False
-                # The function parameter should take priority over options
-                screenshot_data = await self.browser.screenshot(
-                    page, 
-                    False,  # full_page parameter (should take priority)
-                    type="png",  # Add another option to test options handling
-                    timeout=30000  # Add timeout option
-                )
-                
-                # Verify screenshot data - we can't easily verify the full_page behavior,
-                # but we can verify the function executes without error
-                self.assertIsInstance(screenshot_data, bytes, "Screenshot data should be bytes")
-                self.assertGreater(len(screenshot_data), 0, "Screenshot data should not be empty")
-                
-                # Save screenshot to local file
-                filename = "screenshot_function_priority.png"
-                with open(filename, "wb") as f:
-                    f.write(screenshot_data)
-                print(f"✅ Function priority screenshot saved to {filename}")
-                
-                print(f"✅ Screenshot with function parameter priority captured successfully. Size: {len(screenshot_data)} bytes")
-            finally:
-                await self._close_page_and_browser(page)
-        
-        import asyncio
-        asyncio.run(run_test())
-
-    def test_screenshot_without_browser_initialization(self):
-        """Test taking screenshot without browser initialization."""
-        print("\n=== Testing screenshot without browser initialization ===")
-        
-        # Create a new browser instance that is not initialized
-        uninitialized_browser = Browser(self.session)
-        
-        async def run_test():
-            # Create a simple mock page object for testing
-            # We don't need to navigate to a real website for this test
-            # since we're only testing the browser initialization check
-            class MockPage:
-                pass
+        try:
+            # Take screenshot with full_page=True
+            screenshot_data = await browser.screenshot(page, full_page=True)
             
-            mock_page = MockPage()
+            # Verify screenshot data
+            assert isinstance(screenshot_data, bytes), "Screenshot data should be bytes"
+            assert len(screenshot_data) > 0, "Screenshot data should not be empty"
             
-            try:
-                # Attempt to take screenshot with uninitialized browser
-                with self.assertRaises(BrowserError) as context_manager:
-                    await uninitialized_browser.screenshot(mock_page)
-                    
-                # Verify the error message
-                self.assertIn("Browser must be initialized", str(context_manager.exception))
-                
-                print("✅ Uninitialized browser screenshot correctly raised BrowserError")
-            except Exception as e:
-                print(f"⚠️ Test encountered an issue: {e}")
-                raise
-        
-        import asyncio
-        asyncio.run(run_test())
+            # Save screenshot to local file
+            filename = "screenshot_full_page_async.png"
+            with open(filename, "wb") as f:
+                f.write(screenshot_data)
+            print(f"✅ Full page screenshot saved to {filename}")
+            print(f"✅ Full page screenshot captured successfully. Size: {len(screenshot_data)} bytes")
+            
+        finally:
+            await page.close()
+            await playwright_browser.close()
 
-    def test_screenshot_with_multiple_pages(self):
-        """Test taking screenshots with multiple pages."""
-        print("\n=== Testing screenshot with multiple pages ===")
+
+@pytest.mark.asyncio
+async def test_screenshot_with_custom_options(browser_session):
+    """Test taking screenshot with custom options."""
+    print("\n=== Testing screenshot with custom options ===")
+    browser = browser_session.browser
+    await browser.initialize(BrowserOption())
+    
+    endpoint_url = await browser.get_endpoint_url_async()
+    
+    async with async_playwright() as p:
+        playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
+        page = await playwright_browser.new_page()
+        await page.goto("https://www.aliyun.com", timeout=30000)
         
-        urls = [
-            "https://www.aliyun.com",
-            "https://www.taobao.com"
-        ]
-        
-        async def run_test():
-            screenshot_sizes = []
+        try:
+            # Take screenshot with custom options
+            screenshot_data = await browser.screenshot(
+                page, 
+                full_page=False,  # Capture only viewport (explicitly set)
+                type="jpeg",      # Use JPEG format
+                quality=80        # Set quality to 80%
+            )
             
-            for i, url in enumerate(urls):
+            # Verify screenshot data
+            assert isinstance(screenshot_data, bytes), "Screenshot data should be bytes"
+            assert len(screenshot_data) > 0, "Screenshot data should not be empty"
+            
+            # Save screenshot to local file
+            filename = "screenshot_custom_options_async.jpg"
+            with open(filename, "wb") as f:
+                f.write(screenshot_data)
+            print(f"✅ Custom options screenshot saved to {filename}")
+            print(f"✅ Screenshot with custom options captured successfully. Size: {len(screenshot_data)} bytes")
+            
+        finally:
+            await page.close()
+            await playwright_browser.close()
+
+
+@pytest.mark.asyncio
+async def test_screenshot_function_parameter_priority(browser_session):
+    """Test that function parameter full_page takes priority over options."""
+    print("\n=== Testing function parameter priority ===")
+    browser = browser_session.browser
+    await browser.initialize(BrowserOption())
+    
+    endpoint_url = await browser.get_endpoint_url_async()
+    
+    async with async_playwright() as p:
+        playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
+        page = await playwright_browser.new_page()
+        await page.goto("https://www.aliyun.com", timeout=30000)
+        
+        try:
+            # Take screenshot with function parameter full_page=False
+            # The function parameter should take priority over options
+            screenshot_data = await browser.screenshot(
+                page, 
+                False,  # full_page parameter (should take priority)
+                type="png",  # Add another option to test options handling
+                timeout=30000  # Add timeout option
+            )
+            
+            # Verify screenshot data
+            assert isinstance(screenshot_data, bytes), "Screenshot data should be bytes"
+            assert len(screenshot_data) > 0, "Screenshot data should not be empty"
+            
+            # Save screenshot to local file
+            filename = "screenshot_function_priority_async.png"
+            with open(filename, "wb") as f:
+                f.write(screenshot_data)
+            print(f"✅ Function priority screenshot saved to {filename}")
+            print(f"✅ Screenshot with function parameter priority captured successfully. Size: {len(screenshot_data)} bytes")
+            
+        finally:
+            await page.close()
+            await playwright_browser.close()
+
+
+@pytest.mark.asyncio
+async def test_screenshot_without_browser_initialization(browser_session):
+    """Test taking screenshot without browser initialization."""
+    print("\n=== Testing screenshot without browser initialization ===")
+    
+    # Use the browser from session (which is NOT initialized by default in fixture)
+    # Wait, the fixture creates session. The session creates browser instance but does NOT initialize it unless called.
+    # In previous tests we called initialize(). Here we won't.
+    # But wait, previous tests called initialize(). The fixture yields session.
+    # Session object is fresh each time if scope is function (default).
+    
+    browser = browser_session.browser
+    # Ensure it's not initialized
+    assert not browser.is_initialized()
+    
+    # Create a simple mock page object for testing
+    class MockPage:
+        pass
+    
+    mock_page = MockPage()
+    
+    try:
+        # Attempt to take screenshot with uninitialized browser
+        await browser.screenshot(mock_page)
+        pytest.fail("Should have raised BrowserError")
+    except BrowserError as e:
+        # Verify the error message
+        assert "Browser must be initialized" in str(e)
+        print("✅ Uninitialized browser screenshot correctly raised BrowserError")
+    except Exception as e:
+        print(f"⚠️ Test encountered an issue: {e}")
+        raise
+
+
+@pytest.mark.asyncio
+async def test_screenshot_with_multiple_pages(browser_session):
+    """Test taking screenshots with multiple pages."""
+    print("\n=== Testing screenshot with multiple pages ===")
+    browser = browser_session.browser
+    await browser.initialize(BrowserOption())
+    
+    endpoint_url = await browser.get_endpoint_url_async()
+    
+    urls = [
+        "https://www.aliyun.com",
+        "https://www.taobao.com"
+    ]
+    
+    async with async_playwright() as p:
+        playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
+        
+        screenshot_sizes = []
+        
+        for i, url in enumerate(urls):
+            try:
+                page = await playwright_browser.new_page()
+                await page.goto(url, timeout=30000)
+                
                 try:
-                    page = await self._create_page_and_navigate(url)
-                    try:
-                        # Take screenshot with default settings
-                        # Use a shorter timeout for testing to avoid long waits
-                        screenshot_data = await self.browser.screenshot(page, timeout=10000)
-                        
-                        # Verify screenshot data
-                        self.assertIsInstance(screenshot_data, bytes, f"Screenshot {i+1} data should be bytes")
-                        self.assertGreater(len(screenshot_data), 0, f"Screenshot {i+1} data should not be empty")
-                        
-                        # Save screenshot to local file
-                        filename = f"screenshot_page_{i+1}.png"
-                        with open(filename, "wb") as f:
-                            f.write(screenshot_data)
-                        print(f"✅ Screenshot {i+1} saved to {filename}")
-                        
-                        screenshot_sizes.append(len(screenshot_data))
-                        print(f"✅ Screenshot {i+1} captured successfully. Size: {len(screenshot_data)} bytes")
-                    finally:
-                        await self._close_page_and_browser(page)
-                except Exception as e:
-                    print(f"⚠️ Warning: Failed to capture screenshot for {url}: {e}")
-                    # Continue with other URLs rather than failing the entire test
-                    continue
-            
-            # Verify we got at least one screenshot
-            self.assertGreater(len(screenshot_sizes), 0, "Should have at least one successful screenshot")
+                    # Take screenshot with default settings
+                    screenshot_data = await browser.screenshot(page, timeout=10000)
+                    
+                    # Verify screenshot data
+                    assert isinstance(screenshot_data, bytes), f"Screenshot {i+1} data should be bytes"
+                    assert len(screenshot_data) > 0, f"Screenshot {i+1} data should not be empty"
+                    
+                    # Save screenshot to local file
+                    filename = f"screenshot_page_{i+1}_async.png"
+                    with open(filename, "wb") as f:
+                        f.write(screenshot_data)
+                    print(f"✅ Screenshot {i+1} saved to {filename}")
+                    
+                    screenshot_sizes.append(len(screenshot_data))
+                    print(f"✅ Screenshot {i+1} captured successfully. Size: {len(screenshot_data)} bytes")
+                finally:
+                    await page.close()
+            except Exception as e:
+                print(f"⚠️ Warning: Failed to capture screenshot for {url}: {e}")
+                # Continue with other URLs
+                continue
         
-        import asyncio
-        asyncio.run(run_test())
+        # Verify we got at least one screenshot
+        assert len(screenshot_sizes) > 0, "Should have at least one successful screenshot"
+        await playwright_browser.close()
 
-    def test_screenshot_performance(self):
-        """Test screenshot performance."""
-        print("\n=== Testing screenshot performance ===")
+
+@pytest.mark.asyncio
+async def test_screenshot_performance(browser_session):
+    """Test screenshot performance."""
+    print("\n=== Testing screenshot performance ===")
+    browser = browser_session.browser
+    await browser.initialize(BrowserOption())
+    
+    endpoint_url = await browser.get_endpoint_url_async()
+    
+    async with async_playwright() as p:
+        playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
+        page = await playwright_browser.new_page()
+        await page.goto("https://www.aliyun.com", timeout=30000)
         
-        async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
-            
+        try:
             # Measure screenshot time
             start_time = time.time()
             
-            try:
-                # Use a shorter timeout for testing
-                screenshot_data = await self.browser.screenshot(page, timeout=10000)
-                
-                end_time = time.time()
-                
-                # Calculate duration
-                duration = end_time - start_time
-                
-                # Verify screenshot data
-                self.assertIsInstance(screenshot_data, bytes, "Screenshot data should be bytes")
-                self.assertGreater(len(screenshot_data), 0, "Screenshot data should not be empty")
-                
-                # Save screenshot to local file
-                filename = "screenshot_performance_test.png"
-                with open(filename, "wb") as f:
-                    f.write(screenshot_data)
-                print(f"✅ Performance test screenshot saved to {filename}")
-                
-                print(f"✅ Screenshot captured in {duration:.2f} seconds. Size: {len(screenshot_data)} bytes")
-                
-                # Performance check (should complete within reasonable time)
-                self.assertLess(duration, 30.0, "Screenshot should complete within 30 seconds")
-            except Exception as e:
-                print(f"⚠️ Performance test encountered an issue: {e}")
-                # Don't fail the test entirely, but note the issue
-                raise
-            finally:
-                await self._close_page_and_browser(page)
-        
-        import asyncio
-        asyncio.run(run_test())
-
-
-if __name__ == "__main__":
-    unittest.main()
+            # Use a shorter timeout for testing
+            screenshot_data = await browser.screenshot(page, timeout=10000)
+            
+            end_time = time.time()
+            
+            # Calculate duration
+            duration = end_time - start_time
+            
+            # Verify screenshot data
+            assert isinstance(screenshot_data, bytes), "Screenshot data should be bytes"
+            assert len(screenshot_data) > 0, "Screenshot data should not be empty"
+            
+            # Save screenshot to local file
+            filename = "screenshot_performance_test_async.png"
+            with open(filename, "wb") as f:
+                f.write(screenshot_data)
+            print(f"✅ Performance test screenshot saved to {filename}")
+            print(f"✅ Screenshot captured in {duration:.2f} seconds. Size: {len(screenshot_data)} bytes")
+            
+            # Performance check (should complete within reasonable time)
+            assert duration < 30.0, "Screenshot should complete within 30 seconds"
+            
+        except Exception as e:
+            print(f"⚠️ Performance test encountered an issue: {e}")
+            # Don't fail the test entirely, but note the issue
+            raise
+        finally:
+            await page.close()
+            await playwright_browser.close()

@@ -3,11 +3,11 @@
 
 """Integration tests for CodeSpace Python execution functionality."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest.fixture(scope="module")
@@ -83,7 +83,9 @@ def test_python_file_operations(session):
     print("\nTest: Python file operations...")
 
     # Write a file first
-    write_result = session.file_system.write_file("/tmp/test_python.txt", "Hello from Python test")
+    write_result = session.file_system.write_file(
+        "/tmp/test_python.txt", "Hello from Python test"
+    )
     assert write_result.success, "Failed to write test file"
 
     # Read the file with Python
@@ -98,7 +100,9 @@ print(f'File content: {content}')
 
     # Assert
     assert result.success, f"Python file operations failed: {result.error_message}"
-    assert "Hello from Python test" in result.result, "Output should contain file content"
+    assert (
+        "Hello from Python test" in result.result
+    ), "Output should contain file content"
     print(f"Python output:\n{result.result}")
 
 
@@ -116,7 +120,10 @@ def test_python_error_handling(session):
     # The execution should fail or return error in result
     if not result.success:
         print(f"Expected error: {result.error_message}")
-        assert "ZeroDivisionError" in result.error_message or "division" in result.error_message.lower()
+        assert (
+            "ZeroDivisionError" in result.error_message
+            or "division" in result.error_message.lower()
+        )
     else:
         print(f"Error in output: {result.result}")
         assert "ZeroDivisionError" in result.result or "Error" in result.result
@@ -141,4 +148,3 @@ print('Completed after 1 second')
     assert result.success, f"Python with timeout failed: {result.error_message}"
     assert "Completed" in result.result, "Should complete within timeout"
     print(f"Python output:\n{result.result}")
-

@@ -77,7 +77,7 @@ Execute Python code in a code execution environment
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your_api_key")
 result = agent_bay.create(CreateSessionParams(image_id="code_latest"))

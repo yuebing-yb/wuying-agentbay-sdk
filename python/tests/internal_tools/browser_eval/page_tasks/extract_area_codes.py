@@ -1,12 +1,12 @@
 import logging
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from mcp_server.page_agent import PageAgent
+from pydantic import BaseModel, Field
+
 
 class Center(BaseModel):
-    name: str = Field(
-        ..., description="The name of the Primary Center (city/town)."
-    )
+    name: str = Field(..., description="The name of the Primary Center (city/town).")
     code: str = Field(..., description="The area code for the Primary Center.")
 
 
@@ -18,14 +18,10 @@ class Zone(BaseModel):
 class AreaCodeData(BaseModel):
     zone: List[Zone]
 
+
 EXPECTED_DATA = {
     "zone": [
-        {
-            "name": "Lagos Zone",
-            "center": [
-                {"name": "Lagos", "code": "01"}
-            ]
-        },
+        {"name": "Lagos Zone", "center": [{"name": "Lagos", "code": "01"}]},
         {
             "name": "North West Zone",
             "center": [
@@ -37,8 +33,8 @@ EXPECTED_DATA = {
                 {"name": "Katsina", "code": "065"},
                 {"name": "Birnin-Kebbi", "code": "068"},
                 {"name": "Zaria", "code": "069"},
-                {"name": "Hadejia", "code": "078"}
-            ]
+                {"name": "Hadejia", "code": "078"},
+            ],
         },
         {
             "name": "Central Zone",
@@ -49,8 +45,8 @@ EXPECTED_DATA = {
                 {"name": "Lokoja", "code": "058"},
                 {"name": "Minna", "code": "066"},
                 {"name": "Kontagora", "code": "067"},
-                {"name": "New Bussa", "code": "033"}
-            ]
+                {"name": "New Bussa", "code": "033"},
+            ],
         },
         {
             "name": "North-East Zone",
@@ -63,8 +59,8 @@ EXPECTED_DATA = {
                 {"name": "Yola", "code": "075"},
                 {"name": "Maiduguri", "code": "076"},
                 {"name": "Bauchi", "code": "077"},
-                {"name": "Jalingo", "code": "079"}
-            ]
+                {"name": "Jalingo", "code": "079"},
+            ],
         },
         {
             "name": "South-West Zone",
@@ -85,8 +81,8 @@ EXPECTED_DATA = {
                 {"name": "Agbor", "code": "055"},
                 {"name": "Asaba", "code": "056"},
                 {"name": "Auchi", "code": "057"},
-                {"name": "Okitipupa", "code": "059"}
-            ]
+                {"name": "Okitipupa", "code": "059"},
+            ],
         },
         {
             "name": "South-East",
@@ -103,19 +99,26 @@ EXPECTED_DATA = {
                 {"name": "Ahoada", "code": "086"},
                 {"name": "Calabar", "code": "087"},
                 {"name": "Umuahia", "code": "088"},
-                {"name": "Yenagoa", "code": "089"}
-            ]
-        }
+                {"name": "Yenagoa", "code": "089"},
+            ],
+        },
     ]
 }
 
-def validate_zone_centers(extracted_centers: List[Dict], expected_centers: List[Dict], zone_name: str) -> tuple[bool, str]:
+
+def validate_zone_centers(
+    extracted_centers: List[Dict], expected_centers: List[Dict], zone_name: str
+) -> tuple[bool, str]:
     """
     Validate all the centers in a zone
     """
     # Convert to dictionary for fast lookup
-    extracted_dict = {(center["name"], center["code"]): center for center in extracted_centers}
-    expected_dict = {(center["name"], center["code"]): center for center in expected_centers}
+    extracted_dict = {
+        (center["name"], center["code"]): center for center in extracted_centers
+    }
+    expected_dict = {
+        (center["name"], center["code"]): center for center in expected_centers
+    }
 
     # Check for missing items
     missing_items = set(expected_dict.keys()) - set(extracted_dict.keys())
@@ -128,6 +131,7 @@ def validate_zone_centers(extracted_centers: List[Dict], expected_centers: List[
         return False, f"Zone '{zone_name}' have additional zone centers: {extra_items}"
 
     return True, ""
+
 
 def validate_extracted_data(extracted_data: Dict[str, Any]) -> tuple[bool, str]:
     """
@@ -145,7 +149,10 @@ def validate_extracted_data(extracted_data: Dict[str, Any]) -> tuple[bool, str]:
 
     # Check zone count
     if len(extracted_zones) != len(expected_zones):
-        return False, f"Zone count mismatch: expected {len(expected_zones)} zones, got {len(extracted_zones)} zones"
+        return (
+            False,
+            f"Zone count mismatch: expected {len(expected_zones)} zones, got {len(extracted_zones)} zones",
+        )
 
     # Check for missing zones
     missing_zones = set(expected_zone_dict.keys()) - set(extracted_zone_dict.keys())
@@ -167,9 +174,7 @@ def validate_extracted_data(extracted_data: Dict[str, Any]) -> tuple[bool, str]:
             return False, f"Zone '{zone_name}' is missing 'center' field"
 
         success, error_msg = validate_zone_centers(
-            extracted_zone["center"],
-            expected_zone["center"],
-            zone_name
+            extracted_zone["center"], expected_zone["center"], zone_name
         )
         if not success:
             return False, error_msg
@@ -177,7 +182,9 @@ def validate_extracted_data(extracted_data: Dict[str, Any]) -> tuple[bool, str]:
     return True, "Validation passed"
 
 
-async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     await agent.goto(
         "https://browserbase.github.io/stagehand-eval-sites/sites/ncc-area-codes/"
     )

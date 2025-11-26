@@ -5,6 +5,7 @@ import os
 import unittest
 
 from agentbay import AgentBay
+from agentbay._common.params.session_params import CreateSessionParams
 from agentbay._sync.filesystem import (
     BoolResult,
     DirectoryListResult,
@@ -13,7 +14,6 @@ from agentbay._sync.filesystem import (
     FileSearchResult,
     MultipleFileContentResult,
 )
-from agentbay.session_params import CreateSessionParams
 
 
 class TestFileSystemIntegration(unittest.TestCase):

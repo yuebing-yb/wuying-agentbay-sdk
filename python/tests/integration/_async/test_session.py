@@ -1,6 +1,9 @@
 import os
+
 import pytest
+
 from agentbay import AsyncAgentBay
+
 
 @pytest.mark.asyncio
 async def test_create_list_delete():
@@ -14,11 +17,11 @@ async def test_create_list_delete():
     # Create a session
     print("Creating a new session...")
     result = await agent_bay.create()
-    
+
     # Check if session creation was successful
     assert result.success, f"Session creation failed: {result.error_message}"
     assert result.session is not None, "Session object is None"
-    
+
     session = result.session
     print(f"Session created with ID: {session.session_id}")
 
@@ -31,4 +34,3 @@ async def test_create_list_delete():
     await session.delete()
 
     # Session deletion completed
-

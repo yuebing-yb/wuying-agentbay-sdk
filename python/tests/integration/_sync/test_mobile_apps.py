@@ -3,11 +3,11 @@
 
 """Integration tests for Mobile application management functionality."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest.fixture(scope="module")
@@ -72,4 +72,3 @@ def test_get_adb_url(session):
     # Note: This test requires an ADB public key
     # For now, we'll skip if not available
     pytest.skip("ADB URL test requires ADB public key configuration")
-

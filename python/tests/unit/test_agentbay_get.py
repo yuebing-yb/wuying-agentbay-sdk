@@ -1,7 +1,8 @@
 import pytest
+
 from agentbay import AgentBay
-from agentbay.session import Session
-from agentbay.model.response import SessionResult
+from agentbay._common.models.response import SessionResult
+from agentbay._sync.session import Session
 
 
 class TestAgentBayGet:
@@ -81,6 +82,7 @@ class TestAgentBayGetValidation:
     def test_get_requires_api_key(self):
         """Test that AgentBay requires an API key."""
         import os
+
         # Temporarily remove environment variable
         old_api_key = os.environ.get("AGENTBAY_API_KEY")
         if old_api_key:
@@ -116,4 +118,3 @@ def test_get_documentation():
     # Method should have docstring
     assert get_method.__doc__ is not None
     assert len(get_method.__doc__.strip()) > 0
-

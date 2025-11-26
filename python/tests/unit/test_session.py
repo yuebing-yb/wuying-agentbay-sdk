@@ -1,7 +1,9 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from agentbay._sync.session import Session, DeleteResult
-from agentbay.model.response import OperationResult
+
+from agentbay._common.models.response import OperationResult
+from agentbay._sync.session import DeleteResult, Session
+
 
 class DummyAgentBay:
     def __init__(self):
@@ -10,9 +12,10 @@ class DummyAgentBay:
 
     def get_client(self):
         return self.client
-    
+
     def get_session(self, session_id):
         return MagicMock()
+
 
 class TestSession(unittest.TestCase):
     def setUp(self):
@@ -232,9 +235,7 @@ class TestSession(unittest.TestCase):
 
     @patch("agentbay._sync.session.extract_request_id")
     @patch("agentbay._sync.session.SetLabelRequest")
-    def test_set_labels_success(
-        self, MockSetLabelRequest, mock_extract_request_id
-    ):
+    def test_set_labels_success(self, MockSetLabelRequest, mock_extract_request_id):
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockSetLabelRequest.return_value = mock_request
@@ -242,9 +243,7 @@ class TestSession(unittest.TestCase):
         self.agent_bay.client.set_label.return_value = mock_response
 
         # Mock the response.to_map() method
-        mock_response.to_map.return_value = {
-            "body": {"Data": {}, "Success": True}
-        }
+        mock_response.to_map.return_value = {"body": {"Data": {}, "Success": True}}
 
         labels = {"key1": "value1", "key2": "value2"}
         result = self.session.set_labels(labels)
@@ -261,9 +260,7 @@ class TestSession(unittest.TestCase):
 
     @patch("agentbay._sync.session.extract_request_id")
     @patch("agentbay._sync.session.SetLabelRequest")
-    def test_set_labels_api_failure(
-        self, MockSetLabelRequest, mock_extract_request_id
-    ):
+    def test_set_labels_api_failure(self, MockSetLabelRequest, mock_extract_request_id):
         mock_request = MagicMock()
         MockSetLabelRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-789"
@@ -284,9 +281,7 @@ class TestSession(unittest.TestCase):
 
     @patch("agentbay._sync.session.extract_request_id")
     @patch("agentbay._sync.session.GetLabelRequest")
-    def test_get_labels_success(
-        self, MockGetLabelRequest, mock_extract_request_id
-    ):
+    def test_get_labels_success(self, MockGetLabelRequest, mock_extract_request_id):
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockGetLabelRequest.return_value = mock_request
@@ -312,9 +307,7 @@ class TestSession(unittest.TestCase):
 
     @patch("agentbay._sync.session.extract_request_id")
     @patch("agentbay._sync.session.GetLabelRequest")
-    def test_get_labels_api_failure(
-        self, MockGetLabelRequest, mock_extract_request_id
-    ):
+    def test_get_labels_api_failure(self, MockGetLabelRequest, mock_extract_request_id):
         mock_request = MagicMock()
         MockGetLabelRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-102"
@@ -333,9 +326,7 @@ class TestSession(unittest.TestCase):
 
     @patch("agentbay._sync.session.extract_request_id")
     @patch("agentbay._sync.session.GetLinkRequest")
-    def test_get_link_success(
-        self, MockGetLinkRequest, mock_extract_request_id
-    ):
+    def test_get_link_success(self, MockGetLinkRequest, mock_extract_request_id):
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockGetLinkRequest.return_value = mock_request
@@ -344,10 +335,7 @@ class TestSession(unittest.TestCase):
 
         # Mock the response.to_map() method
         mock_response.to_map.return_value = {
-            "body": {
-                "Data": {"Url": "http://example.com"},
-                "Success": True
-            }
+            "body": {"Data": {"Url": "http://example.com"}, "Success": True}
         }
 
         result = self.session.get_link()
@@ -379,10 +367,7 @@ class TestSession(unittest.TestCase):
 
         # Mock the response.to_map() method
         mock_response.to_map.return_value = {
-            "body": {
-                "Data": {"Url": "http://example.com:30150"},
-                "Success": True
-            }
+            "body": {"Data": {"Url": "http://example.com:30150"}, "Success": True}
         }
 
         # Test with valid ports in range [30100, 30199]
@@ -410,7 +395,7 @@ class TestSession(unittest.TestCase):
 
     def test_get_link_with_invalid_port_below_range(self):
         """Test get_link with port below valid range raises SessionError"""
-        from agentbay.exceptions import SessionError
+        from agentbay._common.exceptions import SessionError
 
         invalid_port = 30099
 
@@ -423,7 +408,7 @@ class TestSession(unittest.TestCase):
 
     def test_get_link_with_invalid_port_above_range(self):
         """Test get_link with port above valid range raises SessionError"""
-        from agentbay.exceptions import SessionError
+        from agentbay._common.exceptions import SessionError
 
         invalid_port = 30200
 
@@ -436,7 +421,7 @@ class TestSession(unittest.TestCase):
 
     def test_get_link_with_invalid_port_non_integer(self):
         """Test get_link with non-integer port raises SessionError"""
-        from agentbay.exceptions import SessionError
+        from agentbay._common.exceptions import SessionError
 
         invalid_ports = [30150.5, "30150"]
 
@@ -451,7 +436,7 @@ class TestSession(unittest.TestCase):
 
     def test_get_link_with_invalid_port_boundary_values(self):
         """Test get_link with boundary values outside valid range"""
-        from agentbay.exceptions import SessionError
+        from agentbay._common.exceptions import SessionError
 
         # Test boundary values just outside the valid range
         invalid_ports = [30099, 30200, 0, -1, 65536]
@@ -472,7 +457,7 @@ class TestSession(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "RequestId": "request-123",
-                "Data": {"Url": "adb connect 47.99.76.99:54848"}
+                "Data": {"Url": "adb connect 47.99.76.99:54848"},
             }
         }
 
@@ -493,7 +478,7 @@ class TestSession(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "RequestId": "request-123",
-                "Data": {"Url": "adb connect 47.99.76.99:54848"}
+                "Data": {"Url": "adb connect 47.99.76.99:54848"},
             }
         }
 
@@ -521,7 +506,7 @@ class TestSession(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "RequestId": "adb-request-456",
-                "Data": {"Url": "adb connect 47.99.76.99:54848"}
+                "Data": {"Url": "adb connect 47.99.76.99:54848"},
             }
         }
 
@@ -552,12 +537,13 @@ class TestAgentBayDelete(unittest.TestCase):
         # Mock session.delete return value
         delete_result = DeleteResult(request_id="request-123", success=True)
         self.session.delete.return_value = delete_result
-        
+
         # Ensure session doesn't have enableBrowserReplay or it's False
         self.session.enableBrowserReplay = False
 
         # Import AgentBay class
         from agentbay import AgentBay
+
         # Monkey patch AgentBay instance
         self.agent_bay.__class__ = AgentBay
 
@@ -576,6 +562,7 @@ class TestAgentBayDelete(unittest.TestCase):
 
         # Import AgentBay class
         from agentbay import AgentBay
+
         # Monkey patch AgentBay instance
         self.agent_bay.__class__ = AgentBay
 

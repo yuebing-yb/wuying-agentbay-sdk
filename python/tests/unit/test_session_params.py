@@ -1,8 +1,8 @@
 import json
 import unittest
 
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 
 class TestCreateSessionParams(unittest.TestCase):
@@ -39,69 +39,77 @@ class TestCreateSessionParams(unittest.TestCase):
         # Create mobile configuration with whitelist
         app_rule = AppManagerRule(
             rule_type="White",
-            app_package_name_list=["com.example.app", "com.trusted.service"]
+            app_package_name_list=["com.example.app", "com.trusted.service"],
         )
         mobile_config = MobileExtraConfig(
-            lock_resolution=True,
-            app_manager_rule=app_rule
+            lock_resolution=True, app_manager_rule=app_rule
         )
         extra_configs = ExtraConfigs(mobile=mobile_config)
-        
+
         params = CreateSessionParams(extra_configs=extra_configs)
         self.assertEqual(params.extra_configs, extra_configs)
         self.assertEqual(params.extra_configs.mobile.lock_resolution, True)
-        self.assertEqual(params.extra_configs.mobile.app_manager_rule.rule_type, "White")
-        self.assertEqual(len(params.extra_configs.mobile.app_manager_rule.app_package_name_list), 2)
+        self.assertEqual(
+            params.extra_configs.mobile.app_manager_rule.rule_type, "White"
+        )
+        self.assertEqual(
+            len(params.extra_configs.mobile.app_manager_rule.app_package_name_list), 2
+        )
 
     def test_mobile_extra_config_comprehensive(self):
         """Comprehensive test for MobileExtraConfig with all configuration options."""
         # Test whitelist configuration with all features
         whitelist_rule = AppManagerRule(
             rule_type="White",
-            app_package_name_list=["com.allowed.app1", "com.allowed.app2"]
+            app_package_name_list=["com.allowed.app1", "com.allowed.app2"],
         )
         whitelist_config = MobileExtraConfig(
             lock_resolution=True,
             app_manager_rule=whitelist_rule,
             hide_navigation_bar=True,
-            uninstall_blacklist=["com.android.systemui", "com.android.settings"]
+            uninstall_blacklist=["com.android.systemui", "com.android.settings"],
         )
-        
+
         # Verify whitelist configuration
         self.assertTrue(whitelist_config.lock_resolution)
         self.assertEqual(whitelist_config.app_manager_rule.rule_type, "White")
-        self.assertIn("com.allowed.app1", whitelist_config.app_manager_rule.app_package_name_list)
-        self.assertIn("com.allowed.app2", whitelist_config.app_manager_rule.app_package_name_list)
+        self.assertIn(
+            "com.allowed.app1", whitelist_config.app_manager_rule.app_package_name_list
+        )
+        self.assertIn(
+            "com.allowed.app2", whitelist_config.app_manager_rule.app_package_name_list
+        )
         self.assertTrue(whitelist_config.hide_navigation_bar)
         self.assertIsNotNone(whitelist_config.uninstall_blacklist)
         self.assertEqual(len(whitelist_config.uninstall_blacklist), 2)
-        
+
         # Test blacklist configuration with different settings
         blacklist_rule = AppManagerRule(
             rule_type="Black",
-            app_package_name_list=["com.malware.app", "com.blocked.service"]
+            app_package_name_list=["com.malware.app", "com.blocked.service"],
         )
         blacklist_config = MobileExtraConfig(
             lock_resolution=False,
             app_manager_rule=blacklist_rule,
             hide_navigation_bar=False,
-            uninstall_blacklist=["com.android.systemui"]
+            uninstall_blacklist=["com.android.systemui"],
         )
-        
+
         # Verify blacklist configuration
         self.assertFalse(blacklist_config.lock_resolution)
         self.assertEqual(blacklist_config.app_manager_rule.rule_type, "Black")
-        self.assertIn("com.malware.app", blacklist_config.app_manager_rule.app_package_name_list)
+        self.assertIn(
+            "com.malware.app", blacklist_config.app_manager_rule.app_package_name_list
+        )
         self.assertFalse(blacklist_config.hide_navigation_bar)
         self.assertIsNotNone(blacklist_config.uninstall_blacklist)
         self.assertEqual(len(blacklist_config.uninstall_blacklist), 1)
-        
+
         # Test minimal configuration (only new features)
         minimal_config = MobileExtraConfig(
-            hide_navigation_bar=True,
-            uninstall_blacklist=["com.critical.app"]
+            hide_navigation_bar=True, uninstall_blacklist=["com.critical.app"]
         )
-        
+
         # Verify minimal configuration
         self.assertIsNone(minimal_config.lock_resolution)
         self.assertIsNone(minimal_config.app_manager_rule)
@@ -114,49 +122,51 @@ class TestCreateSessionParams(unittest.TestCase):
         # Test with valid string list
         app_rule = AppManagerRule(
             rule_type="White",
-            app_package_name_list=["com.valid.app", "com.another.app"]
+            app_package_name_list=["com.valid.app", "com.another.app"],
         )
         # Should not raise any exception
         app_rule.validate()
-        
+
         # Test with empty list
-        app_rule_empty = AppManagerRule(
-            rule_type="Black",
-            app_package_name_list=[]
-        )
+        app_rule_empty = AppManagerRule(rule_type="Black", app_package_name_list=[])
         app_rule_empty.validate()  # Should not raise
 
     def test_extra_configs_serialization_comprehensive(self):
         """Comprehensive test for ExtraConfigs serialization and deserialization."""
         # Test complete configuration serialization
         app_rule = AppManagerRule(
-            rule_type="White",
-            app_package_name_list=["com.test.app", "com.another.app"]
+            rule_type="White", app_package_name_list=["com.test.app", "com.another.app"]
         )
         mobile_config = MobileExtraConfig(
             lock_resolution=True,
             app_manager_rule=app_rule,
             hide_navigation_bar=True,
-            uninstall_blacklist=["com.android.systemui", "com.android.settings"]
+            uninstall_blacklist=["com.android.systemui", "com.android.settings"],
         )
         extra_configs = ExtraConfigs(mobile=mobile_config)
-        
+
         # Test serialization (to_map)
         config_dict = extra_configs.to_map()
-        
+
         self.assertIn("Mobile", config_dict)
         mobile_dict = config_dict["Mobile"]
         self.assertIn("LockResolution", mobile_dict)
         self.assertIn("AppManagerRule", mobile_dict)
         self.assertIn("HideNavigationBar", mobile_dict)
         self.assertIn("UninstallBlacklist", mobile_dict)
-        
+
         self.assertTrue(mobile_dict["LockResolution"])
         self.assertTrue(mobile_dict["HideNavigationBar"])
-        self.assertEqual(mobile_dict["UninstallBlacklist"], ["com.android.systemui", "com.android.settings"])
+        self.assertEqual(
+            mobile_dict["UninstallBlacklist"],
+            ["com.android.systemui", "com.android.settings"],
+        )
         self.assertEqual(mobile_dict["AppManagerRule"]["RuleType"], "White")
-        self.assertEqual(mobile_dict["AppManagerRule"]["AppPackageNameList"], ["com.test.app", "com.another.app"])
-        
+        self.assertEqual(
+            mobile_dict["AppManagerRule"]["AppPackageNameList"],
+            ["com.test.app", "com.another.app"],
+        )
+
         # Test deserialization (from_map) with different configuration
         different_config_dict = {
             "Mobile": {
@@ -165,14 +175,18 @@ class TestCreateSessionParams(unittest.TestCase):
                 "UninstallBlacklist": ["com.critical.system.app"],
                 "AppManagerRule": {
                     "RuleType": "Black",
-                    "AppPackageNameList": ["com.blocked.app1", "com.blocked.app2", "com.malware.app"]
-                }
+                    "AppPackageNameList": [
+                        "com.blocked.app1",
+                        "com.blocked.app2",
+                        "com.malware.app",
+                    ],
+                },
             }
         }
-        
+
         new_extra_configs = ExtraConfigs()
         new_extra_configs.from_map(different_config_dict)
-        
+
         # Verify deserialization
         self.assertIsNotNone(new_extra_configs.mobile)
         mobile = new_extra_configs.mobile
@@ -184,7 +198,7 @@ class TestCreateSessionParams(unittest.TestCase):
         self.assertEqual(len(mobile.app_manager_rule.app_package_name_list), 3)
         self.assertIn("com.blocked.app1", mobile.app_manager_rule.app_package_name_list)
         self.assertIn("com.malware.app", mobile.app_manager_rule.app_package_name_list)
-        
+
         # Test round-trip serialization (serialize -> deserialize -> serialize)
         round_trip_dict = new_extra_configs.to_map()
         self.assertEqual(round_trip_dict, different_config_dict)

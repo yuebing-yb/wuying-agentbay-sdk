@@ -1,7 +1,9 @@
 import os
+
 import pytest
+
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.session import Session
+from agentbay._sync.session import Session
 
 
 @pytest.fixture(scope="module")
@@ -18,7 +20,9 @@ def test_get_api(agentbay_client: AgentBay):
 
     # Create session
     create_result = agentbay_client.create()
-    assert create_result.success, f"Failed to create session: {create_result.error_message}"
+    assert (
+        create_result.success
+    ), f"Failed to create session: {create_result.error_message}"
     created_session = create_result.session
     session_id = created_session.session_id
     print(f"Session created with ID: {session_id}")
@@ -30,9 +34,12 @@ def test_get_api(agentbay_client: AgentBay):
     assert result.success, f"Failed to get session: {result.error_message}"
     session = result.session
     assert session is not None, "Get returned None session"
-    assert isinstance(session, Session), f"Expected Session instance, got {type(session)}"
-    assert session.session_id == session_id, \
-        f"Expected SessionID {session_id}, got {session.session_id}"
+    assert isinstance(
+        session, Session
+    ), f"Expected Session instance, got {type(session)}"
+    assert (
+        session.session_id == session_id
+    ), f"Expected SessionID {session_id}, got {session.session_id}"
     assert session.agent_bay is not None, "Session agent_bay reference is None"
 
     print(f"Successfully retrieved session with ID: {session.session_id}")

@@ -3,13 +3,25 @@
 
 """Integration tests for context synchronization."""
 import os
-import pytest
-import pytest
 import time
+
+import pytest
+
 from agentbay import AgentBay
-from agentbay.context_manager import ContextStatusData
-from agentbay.session_params import CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, RecyclePolicy, Lifecycle, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, BWList, WhiteList
+from agentbay._common.params.context_sync import (
+    BWList,
+    ContextSync,
+    DeletePolicy,
+    DownloadPolicy,
+    ExtractPolicy,
+    Lifecycle,
+    RecyclePolicy,
+    SyncPolicy,
+    UploadPolicy,
+    WhiteList,
+)
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.context_manager import ContextStatusData
 
 
 @pytest.fixture(scope="module")
@@ -63,7 +75,9 @@ def test_context_sync_status(test_session):
 
     # The test just verifies we can retrieve context info successfully
     # context_status_data may be empty if no sync operations are in progress
-    print(f"Context sync test completed, found {len(context_info.context_status_data)} status entries")
+    print(
+        f"Context sync test completed, found {len(context_info.context_status_data)} status entries"
+    )
 
 
 @pytest.mark.sync
@@ -107,7 +121,7 @@ def test_context_info_returns_context_status_data(agent_bay, context_for_test):
             print(f"  Task Type: {data.task_type}")
             print(f"  Start Time: {data.start_time}")
             print(f"  Finish Time: {data.finish_time}")
-            if hasattr(data, 'error_message') and data.error_message:
+            if hasattr(data, "error_message") and data.error_message:
                 print(f"  Error: {data.error_message}")
 
         # There might not be any status data yet, so we don't assert on the count
@@ -134,8 +148,7 @@ def test_context_sync_with_recycle_policy_integration(agent_bay, context_for_tes
 
     # Create custom RecyclePolicy with Lifecycle_3Days
     custom_recycle_policy = RecyclePolicy(
-        lifecycle=Lifecycle.LIFECYCLE_3DAYS,
-        paths=["/test/recycle/data"]
+        lifecycle=Lifecycle.LIFECYCLE_3DAYS, paths=["/test/recycle/data"]
     )
 
     # Create SyncPolicy with custom RecyclePolicy
@@ -145,11 +158,13 @@ def test_context_sync_with_recycle_policy_integration(agent_bay, context_for_tes
         delete_policy=DeletePolicy.default(),
         extract_policy=ExtractPolicy.default(),
         recycle_policy=custom_recycle_policy,
-        bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])])
+        bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])]),
     )
 
     # Create ContextSync with custom policy
-    context_sync = ContextSync.new(context_for_test.id, "/home/wuying/recycle-test", sync_policy)
+    context_sync = ContextSync.new(
+        context_for_test.id, "/home/wuying/recycle-test", sync_policy
+    )
 
     # Create session parameters
     session_params = CreateSessionParams()
@@ -193,8 +208,7 @@ def test_recycle_policy_with_lifecycle_1day():
     """Test creating ContextSync with custom RecyclePolicy using Lifecycle_1Day."""
     # Create a custom recycle policy with Lifecycle_1Day
     custom_recycle_policy = RecyclePolicy(
-        lifecycle=Lifecycle.LIFECYCLE_1DAY,
-        paths=["/custom/path"]
+        lifecycle=Lifecycle.LIFECYCLE_1DAY, paths=["/custom/path"]
     )
 
     # Create a sync policy with the custom recycle policy
@@ -204,7 +218,7 @@ def test_recycle_policy_with_lifecycle_1day():
         delete_policy=DeletePolicy.default(),
         extract_policy=ExtractPolicy.default(),
         recycle_policy=custom_recycle_policy,
-        bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])])
+        bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])]),
     )
 
     # Verify the recycle policy
@@ -225,9 +239,7 @@ def test_recycle_policy_with_lifecycle_1day():
 
     # Create ContextSync with the custom policy
     context_sync = ContextSync(
-        context_id="test-recycle-context",
-        path="/test/recycle/path",
-        policy=sync_policy
+        context_id="test-recycle-context", path="/test/recycle/path", policy=sync_policy
     )
 
     # Verify ContextSync properties
@@ -304,7 +316,9 @@ def test_context_sync_and_info(agent_bay, context_for_test):
         # We should have found our context in the status data
         # But this might be flaky in CI, so just log a warning if not found
         if not found_context:
-            print(f"Warning: Could not find context {context_for_test.id} in status data")
+            print(
+                f"Warning: Could not find context {context_for_test.id} in status data"
+            )
 
     finally:
         # Clean up session
@@ -378,14 +392,13 @@ def test_recycle_policy_with_invalid_wildcard_path():
 
     # Test that RecyclePolicy constructor throws an error for invalid path with wildcard
     with pytest.raises(ValueError) as exc_info:
-        RecyclePolicy(
-            lifecycle=Lifecycle.LIFECYCLE_1DAY,
-            paths=["/path/with/*"]
-        )
+        RecyclePolicy(lifecycle=Lifecycle.LIFECYCLE_1DAY, paths=["/path/with/*"])
 
     # Verify the error message
     error_message = str(exc_info.value)
-    assert "Wildcard patterns are not supported in recycle policy paths" in error_message
+    assert (
+        "Wildcard patterns are not supported in recycle policy paths" in error_message
+    )
     assert "/path/with/*" in error_message
     assert "Please use exact directory paths instead" in error_message
 
@@ -395,7 +408,7 @@ def test_recycle_policy_with_invalid_wildcard_path():
     with pytest.raises(ValueError):
         RecyclePolicy(
             lifecycle=Lifecycle.LIFECYCLE_1DAY,
-            paths=["/valid/path", "/invalid/path?", "/another/invalid/*"]
+            paths=["/valid/path", "/invalid/path?", "/another/invalid/*"],
         )
 
     print("RecyclePolicy correctly threw error for multiple invalid paths")
@@ -405,15 +418,12 @@ def test_recycle_policy_with_invalid_wildcard_path():
         "/path/with/*",
         "/path/with/?",
         "/path/with/[abc]",
-        "/path/with/file*.txt"
+        "/path/with/file*.txt",
     ]
 
     for pattern in invalid_patterns:
         with pytest.raises(ValueError) as exc_info:
-            RecyclePolicy(
-                lifecycle=Lifecycle.LIFECYCLE_1DAY,
-                paths=[pattern]
-            )
+            RecyclePolicy(lifecycle=Lifecycle.LIFECYCLE_1DAY, paths=[pattern])
 
         error_message = str(exc_info.value)
         assert "Wildcard patterns are not supported" in error_message
@@ -443,5 +453,3 @@ def test_recycle_policy_default_values():
     assert policy_dict["paths"] == [""]
 
     print("RecyclePolicy default values verified successfully")
-
-

@@ -1,7 +1,11 @@
 import unittest
 from unittest.mock import MagicMock
 
-from agentbay.context import ContextService, ContextFileListResult, ContextFileEntry
+from agentbay._sync.context import (
+    ContextFileEntry,
+    ContextFileListResult,
+    ContextService,
+)
 
 
 class TestContextFileUrls(unittest.TestCase):
@@ -80,11 +84,15 @@ class TestContextFileUrls(unittest.TestCase):
         mock_resp.body = mock_body
         self.agent_bay.client.describe_context_files.return_value = mock_resp
 
-        result = self.context.list_files(self.context_id, "/tmp", page_number=1, page_size=50)
+        result = self.context.list_files(
+            self.context_id, "/tmp", page_number=1, page_size=50
+        )
 
         self.assertTrue(result.success)
         self.assertEqual(len(result.entries), 1)
-        self.assertEqual(result.entries[0].file_path, "/tmp/integration_upload_test.txt")
+        self.assertEqual(
+            result.entries[0].file_path, "/tmp/integration_upload_test.txt"
+        )
         self.assertEqual(result.count, 1)
 
     def test_list_files_empty(self):
@@ -97,7 +105,9 @@ class TestContextFileUrls(unittest.TestCase):
         mock_resp.body = mock_body
         self.agent_bay.client.describe_context_files.return_value = mock_resp
 
-        result = self.context.list_files(self.context_id, "/tmp", page_number=1, page_size=50)
+        result = self.context.list_files(
+            self.context_id, "/tmp", page_number=1, page_size=50
+        )
 
         self.assertTrue(result.success)
         self.assertEqual(len(result.entries), 0)
@@ -117,4 +127,4 @@ class TestContextFileUrls(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()

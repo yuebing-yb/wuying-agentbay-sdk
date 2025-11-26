@@ -19,7 +19,7 @@ class TestGenerateRandomContextName(unittest.TestCase):
         parts = name.split("_")
         self.assertEqual(len(parts), 2)
         self.assertEqual(len(parts[0]), 14)  # Timestamp is 14 digits
-        self.assertEqual(len(parts[1]), 8)   # Default random length is 8
+        self.assertEqual(len(parts[1]), 8)  # Default random length is 8
 
         # Verify timestamp is all digits
         self.assertTrue(parts[0].isdigit())
@@ -97,7 +97,7 @@ class TestGenerateRandomContextName(unittest.TestCase):
         for _ in range(10):
             name = _generate_random_context_name(100, False)
             # Should only contain a-zA-Z0-9
-            self.assertIsNotNone(re.match(r'^[a-zA-Z0-9]+$', name))
+            self.assertIsNotNone(re.match(r"^[a-zA-Z0-9]+$", name))
 
 
 if __name__ == "__main__":

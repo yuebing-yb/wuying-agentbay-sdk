@@ -1,5 +1,7 @@
 """Integration tests for multiline commands."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
@@ -26,7 +28,7 @@ async def test_session(agent_bay):
 async def test_multiline_script(test_session):
     """Test executing multiline script."""
     cmd = test_session.command
-    
+
     script = """
 for i in 1 2 3; do
     echo "Number: $i"
@@ -44,7 +46,7 @@ done
 async def test_command_with_conditionals(test_session):
     """Test command with if-else."""
     cmd = test_session.command
-    
+
     script = """
 if [ -d /tmp ]; then
     echo "tmp exists"
@@ -62,7 +64,7 @@ fi
 async def test_command_with_functions(test_session):
     """Test command with bash functions."""
     cmd = test_session.command
-    
+
     script = """
 test_function() {
     echo "Function called with: $1"
@@ -73,5 +75,3 @@ test_function "hello"
     assert result.success
     assert "Function called with: hello" in result.output
     print("Function command executed successfully")
-
-

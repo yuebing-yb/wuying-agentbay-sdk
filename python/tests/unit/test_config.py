@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import mock_open, patch
 
-from agentbay.config import _default_config, _load_config
+from agentbay._common.config import _default_config, _load_config
 
 
 class TestConfig(unittest.TestCase):

@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import unittest
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Add the parent directory to the Python path to find agentbay module
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -11,19 +11,19 @@ if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 class TestVPCSessionIntegration(unittest.TestCase):
     """VPC Session Integration Tests
-    
+
     Tests the creation of VPC-based sessions and various functionality:
-    1. Create sessions with IsVpc=True  
+    1. Create sessions with IsVpc=True
     2. Test FileSystem WriteFile/ReadFile functionality
     3. Test Command ExecuteCommand functionality
     4. Clean up sessions
-    
-    Note: This test is designed to verify that VPC sessions can be created 
+
+    Note: This test is designed to verify that VPC sessions can be created
     and core operations work correctly.
     """
 
@@ -51,19 +51,23 @@ class TestVPCSessionIntegration(unittest.TestCase):
         params = CreateSessionParams(
             image_id="imgc-07eksy57nw6r759fb",
             is_vpc=True,
-            labels={
-                "test-type": "vpc-integration",
-                "purpose": "vpc-session-testing"
-            }
+            labels={"test-type": "vpc-integration", "purpose": "vpc-session-testing"},
         )
 
-        print(f"Session params: ImageId={params.image_id}, IsVpc={params.is_vpc}, Labels={params.labels}")
+        print(
+            f"Session params: ImageId={params.image_id}, IsVpc={params.is_vpc}, Labels={params.labels}"
+        )
 
         session_result = self.agent_bay.create(params)
-        self.assertTrue(session_result.success, f"Error creating VPC session: {session_result.error_message}")
-        
+        self.assertTrue(
+            session_result.success,
+            f"Error creating VPC session: {session_result.error_message}",
+        )
+
         session = session_result.session
-        print(f"VPC session created successfully with ID: {session.session_id} (RequestID: {session_result.request_id})")
+        print(
+            f"VPC session created successfully with ID: {session.session_id} (RequestID: {session_result.request_id})"
+        )
 
         try:
             # Verify session properties
@@ -89,7 +93,9 @@ class TestVPCSessionIntegration(unittest.TestCase):
 
                 cmd_result = session.command.execute_command(write_command)
                 if cmd_result.success:
-                    print(f"✓ ExecuteCommand successful - Output: {cmd_result.output}, RequestID: {cmd_result.request_id}")
+                    print(
+                        f"✓ ExecuteCommand successful - Output: {cmd_result.output}, RequestID: {cmd_result.request_id}"
+                    )
                     print("✓ File creation command executed successfully")
 
                     # Verify RequestID is present
@@ -103,7 +109,9 @@ class TestVPCSessionIntegration(unittest.TestCase):
                 print("⚠ Command tool is not available in VPC session")
 
             # Step 3: Test FileSystem ReadFile functionality to verify written content
-            print("Step 3: Testing FileSystem ReadFile functionality to verify written content...")
+            print(
+                "Step 3: Testing FileSystem ReadFile functionality to verify written content..."
+            )
             if session.file_system is not None:
                 # Test reading the file we just wrote
                 test_file_path = "/tmp/vpc_test_file.txt"
@@ -111,7 +119,9 @@ class TestVPCSessionIntegration(unittest.TestCase):
 
                 read_result = session.file_system.read_file(test_file_path)
                 if read_result.success:
-                    print(f"✓ ReadFile successful - Content length: {len(read_result.content)} bytes, RequestID: {read_result.request_id}")
+                    print(
+                        f"✓ ReadFile successful - Content length: {len(read_result.content)} bytes, RequestID: {read_result.request_id}"
+                    )
 
                     # Log first 200 characters of content for verification
                     content_preview = read_result.content
@@ -120,19 +130,28 @@ class TestVPCSessionIntegration(unittest.TestCase):
                     print(f"Content preview: {content_preview}")
 
                     # Verify that content is not empty
-                    self.assertTrue(len(read_result.content) > 0, "ReadFile returned empty content")
+                    self.assertTrue(
+                        len(read_result.content) > 0, "ReadFile returned empty content"
+                    )
                     print("✓ ReadFile returned non-empty content")
 
                     # Verify that content contains expected test content
                     if "Hello from VPC session!" in read_result.content:
                         print("✓ ReadFile content contains expected test message")
                     else:
-                        print("⚠ ReadFile content does not contain expected test message")
+                        print(
+                            "⚠ ReadFile content does not contain expected test message"
+                        )
 
-                    if "This is a test file written by the VPC integration test" in read_result.content:
+                    if (
+                        "This is a test file written by the VPC integration test"
+                        in read_result.content
+                    ):
                         print("✓ ReadFile content contains expected test description")
                     else:
-                        print("⚠ ReadFile content does not contain expected test description")
+                        print(
+                            "⚠ ReadFile content does not contain expected test description"
+                        )
 
                     # Verify RequestID is present
                     if read_result.request_id:
@@ -149,11 +168,16 @@ class TestVPCSessionIntegration(unittest.TestCase):
             print("Cleaning up: Deleting the VPC session...")
             delete_result = self.agent_bay.delete(session)
             if delete_result.success:
-                print(f"VPC session successfully deleted (RequestID: {delete_result.request_id})")
+                print(
+                    f"VPC session successfully deleted (RequestID: {delete_result.request_id})"
+                )
             else:
-                print(f"Warning: Error deleting VPC session: {delete_result.error_message}")
+                print(
+                    f"Warning: Error deleting VPC session: {delete_result.error_message}"
+                )
 
         print("VPC session filesystem write/read test completed successfully")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

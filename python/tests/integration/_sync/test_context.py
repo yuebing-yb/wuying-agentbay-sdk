@@ -3,9 +3,9 @@
 
 """Integration tests for Context operations."""
 import os
-import pytest
-import pytest
 from uuid import uuid4
+
+import pytest
 
 from agentbay import AgentBay
 
@@ -23,18 +23,18 @@ def agent_bay():
 def test_context_create_and_delete(agent_bay):
     """Test creating and deleting a context."""
     context_name = f"test-context-{uuid4().hex[:8]}"
-    
+
     # Create context using create=True parameter
     create_result = agent_bay.context.get(name=context_name, create=True)
     assert create_result.success is True
     assert create_result.context is not None
     context = create_result.context
     print(f"Created context: {context.id}, name: {context.name}")
-    
+
     # Verify context was created
     assert context.id is not None
     assert context.name == context_name
-    
+
     # Delete context
     delete_result = agent_bay.context.delete(context)
     assert delete_result.success is True
@@ -45,12 +45,12 @@ def test_context_create_and_delete(agent_bay):
 def test_context_get_existing(agent_bay):
     """Test getting an existing context."""
     context_name = f"test-existing-{uuid4().hex[:8]}"
-    
+
     # Create context
     create_result = agent_bay.context.get(name=context_name, create=True)
     assert create_result.success is True
     context = create_result.context
-    
+
     try:
         # Get existing context
         get_result = agent_bay.context.get(name=context_name)
@@ -66,7 +66,7 @@ def test_context_get_existing(agent_bay):
 def test_context_get_nonexistent(agent_bay):
     """Test getting a non-existent context without create flag."""
     context_name = f"test-nonexistent-{uuid4().hex[:8]}"
-    
+
     # Try to get non-existent context
     # NOTE: API may auto-create context even with create=False, so we just verify it doesn't error
     get_result = agent_bay.context.get(name=context_name, create=False)
@@ -86,14 +86,14 @@ def test_context_list(agent_bay):
     create_result = agent_bay.context.get(name=context_name, create=True)
     assert create_result.success is True
     context = create_result.context
-    
+
     try:
         # List contexts
         list_result = agent_bay.context.list()
         assert list_result.success is True
         assert isinstance(list_result.contexts, list)
         assert len(list_result.contexts) > 0
-        
+
         # Verify our context is in the list
         context_ids = [ctx.id for ctx in list_result.contexts]
         assert context.id in context_ids
@@ -106,13 +106,13 @@ def test_context_list(agent_bay):
 def test_context_update(agent_bay):
     """Test updating a context."""
     context_name = f"test-update-{uuid4().hex[:8]}"
-    
+
     # Create context
     create_result = agent_bay.context.get(name=context_name, create=True)
     assert create_result.success is True
     context = create_result.context
     original_id = context.id
-    
+
     try:
         # Update context name
         new_name = f"test-updated-{uuid4().hex[:8]}"
@@ -120,7 +120,7 @@ def test_context_update(agent_bay):
         update_result = agent_bay.context.update(context)
         assert update_result.success is True
         print(f"Updated context: {context.id} to new name: {new_name}")
-        
+
         # Note: Getting by context_id may not be supported, skip verification
         print("Context update completed")
     finally:
@@ -130,32 +130,28 @@ def test_context_update(agent_bay):
 @pytest.mark.sync
 def test_context_with_session(agent_bay):
     """Test using context with a session."""
-    from agentbay.session_params import CreateSessionParams
-    from agentbay.context_sync import ContextSync
-    
+    from agentbay._common.params.context_sync import ContextSync
+    from agentbay._common.params.session_params import CreateSessionParams
+
     context_name = f"test-session-ctx-{uuid4().hex[:8]}"
-    
+
     # Create context
     create_result = agent_bay.context.get(name=context_name, create=True)
     assert create_result.success is True
     context = create_result.context
-    
+
     try:
         # Create session with context sync
-        context_sync = ContextSync(
-            context_id=context.id,
-            path="/tmp/test_context"
-        )
+        context_sync = ContextSync(context_id=context.id, path="/tmp/test_context")
         params = CreateSessionParams(
-            image_id="linux_latest",
-            context_syncs=[context_sync]
+            image_id="linux_latest", context_syncs=[context_sync]
         )
-        
+
         session_result = agent_bay.create(params)
         assert session_result.success is True
         session = session_result.session
         print(f"Created session {session.session_id} with context {context.id}")
-        
+
         # Cleanup session
         session.delete()
     finally:
@@ -167,28 +163,26 @@ def test_context_with_session(agent_bay):
 def test_context_file_operations(agent_bay):
     """Test context file upload/download URL operations."""
     context_name = f"test-file-ops-{uuid4().hex[:8]}"
-    
+
     # Create context
     create_result = agent_bay.context.get(name=context_name, create=True)
     assert create_result.success is True
     context = create_result.context
-    
+
     try:
         # Get upload URL
         upload_url_result = agent_bay.context.get_file_upload_url(
-            context.id,
-            "/test_file.txt"
+            context.id, "/test_file.txt"
         )
         assert upload_url_result.success is True
         assert upload_url_result.url is not None
         assert len(upload_url_result.url) > 0
         print(f"Got upload URL: {upload_url_result.url[:50]}...")
-        
+
         # Get download URL (will fail if file doesn't exist, which is expected)
         try:
             download_url_result = agent_bay.context.get_file_download_url(
-                context.id,
-                "/test_file.txt"
+                context.id, "/test_file.txt"
             )
             print(f"Download URL result success: {download_url_result.success}")
         except Exception as e:
@@ -196,4 +190,3 @@ def test_context_file_operations(agent_bay):
             print(f"Download URL failed as expected: file not exist")
     finally:
         agent_bay.context.delete(context)
-

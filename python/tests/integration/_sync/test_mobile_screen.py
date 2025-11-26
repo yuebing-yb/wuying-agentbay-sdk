@@ -3,11 +3,11 @@
 
 """Integration tests for Mobile screen operations functionality."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest.fixture(scope="module")
@@ -63,4 +63,3 @@ def test_get_device_info(session):
     assert result.success, f"Get device info failed: {result.error_message}"
     assert result.output is not None, "Device info should not be None"
     print(f"Device model: {result.output.strip()}")
-

@@ -9,10 +9,12 @@ import asyncio
 import os
 import time
 import unittest
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption
+
 from playwright.async_api import async_playwright
+
+from agentbay import AgentBay
+from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay.browser.browser import BrowserOption
 
 
 def get_test_api_key():
@@ -26,7 +28,7 @@ def get_test_api_key():
 class TestBrowserContextIntegration(unittest.TestCase):
     """Integration tests for browser context persistence functionality."""
 
-    def __init__(self, methodName='runTest'):
+    def __init__(self, methodName="runTest"):
         super().__init__(methodName)
         self.first_session_cookies: list = []
         self.first_session_cookie_dict: dict = {}
@@ -82,7 +84,7 @@ class TestBrowserContextIntegration(unittest.TestCase):
                 "path": "/",
                 "httpOnly": False,
                 "secure": False,
-                "expires": add_hour()
+                "expires": add_hour(),
             },
             {
                 "name": "test_cookie_2",
@@ -91,16 +93,15 @@ class TestBrowserContextIntegration(unittest.TestCase):
                 "path": "/",
                 "httpOnly": False,
                 "secure": False,
-                "expires": add_hour()
-            }
+                "expires": add_hour(),
+            },
         ]
 
         # Step 1 & 2: Create ContextId and create session with BrowserContext
         print(f"Step 1-2: Creating session with browser context ID: {self.context.id}")
         browser_context = BrowserContext(self.context.id, auto_upload=True)
         params = CreateSessionParams(
-            image_id="browser_latest",
-            browser_context=browser_context
+            image_id="browser_latest", browser_context=browser_context
         )
 
         session_result = self.agent_bay.create(params)
@@ -132,7 +133,11 @@ class TestBrowserContextIntegration(unittest.TestCase):
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 cdp_session = await browser.new_browser_cdp_session()
 
-                context = browser.contexts[0] if browser.contexts else await browser.new_context()
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else await browser.new_context()
+                )
                 page = await context.new_page()
 
                 # Navigate to test URL first
@@ -144,11 +149,16 @@ class TestBrowserContextIntegration(unittest.TestCase):
 
                 # Add test cookies after navigating to the page
                 await context.add_cookies(test_cookies)  # type: ignore
-                print(f"Added {len(test_cookies)} test cookies after navigating to {test_url}")
+                print(
+                    f"Added {len(test_cookies)} test cookies after navigating to {test_url}"
+                )
 
                 # Read cookies to verify they were set correctly
                 cookies = await context.cookies()
-                cookie_dict = {cookie.get('name', ''): cookie.get('value', '') for cookie in cookies}
+                cookie_dict = {
+                    cookie.get("name", ""): cookie.get("value", "")
+                    for cookie in cookies
+                }
 
                 print(f"Cookies found in first session: {list(cookie_dict.keys())}")
                 print(f"Total cookies count: {len(cookies)}")
@@ -157,7 +167,7 @@ class TestBrowserContextIntegration(unittest.TestCase):
                 self.first_session_cookies = cookies
                 self.first_session_cookie_dict = cookie_dict
 
-                await cdp_session.send('Browser.close')
+                await cdp_session.send("Browser.close")
                 print("First session browser operations completed")
 
                 # Wait for browser to save cookies to file
@@ -172,16 +182,22 @@ class TestBrowserContextIntegration(unittest.TestCase):
         print("Step 5: Releasing first session with syncContext=True...")
         delete_result = self.agent_bay.delete(session1, sync_context=True)
         self.assertTrue(delete_result.success, "Failed to delete first session")
-        print(f"First session deleted successfully (RequestID: {delete_result.request_id})")
+        print(
+            f"First session deleted successfully (RequestID: {delete_result.request_id})"
+        )
 
         # Wait for context sync to complete
         time.sleep(3)
 
         # Step 6: Create second session with same ContextId
-        print(f"Step 6: Creating second session with same context ID: {self.context.id}")
+        print(
+            f"Step 6: Creating second session with same context ID: {self.context.id}"
+        )
         session_result2 = self.agent_bay.create(params)
         self.assertTrue(session_result2.success, "Failed to create second session")
-        self.assertIsNotNone(session_result2.session, "Second session should not be None")
+        self.assertIsNotNone(
+            session_result2.session, "Second session should not be None"
+        )
 
         session2 = session_result2.session
         assert session2 is not None  # Type narrowing for linter
@@ -189,11 +205,15 @@ class TestBrowserContextIntegration(unittest.TestCase):
 
         # Step 7: Get browser object and check if test cookies exist without opening any page
         async def second_session_operations():
-            print("Step 7: Getting browser object and checking test cookie persistence without opening any page...")
+            print(
+                "Step 7: Getting browser object and checking test cookie persistence without opening any page..."
+            )
 
             # Initialize browser
             init_success = await session2.browser.initialize_async(BrowserOption())
-            self.assertTrue(init_success, "Failed to initialize browser in second session")
+            self.assertTrue(
+                init_success, "Failed to initialize browser in second session"
+            )
             print("Second session browser initialized successfully")
 
             # Get endpoint URL
@@ -201,20 +221,29 @@ class TestBrowserContextIntegration(unittest.TestCase):
             self.assertIsNotNone(endpoint_url, "Endpoint URL should not be None")
             print(f"Second session browser endpoint URL: {endpoint_url}")
 
-
-
             # Connect with playwright and read cookies directly from context without opening any page
             async with async_playwright() as p:
                 browser = await p.chromium.connect_over_cdp(endpoint_url)
-                self.assertIsNotNone(browser, "Failed to connect to browser in second session")
+                self.assertIsNotNone(
+                    browser, "Failed to connect to browser in second session"
+                )
 
-                context = browser.contexts[0] if browser.contexts else await browser.new_context()
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else await browser.new_context()
+                )
 
                 # Read cookies directly from context without opening any page
                 cookies = await context.cookies()
-                cookie_dict = {cookie.get('name', ''): cookie.get('value', '') for cookie in cookies}
+                cookie_dict = {
+                    cookie.get("name", ""): cookie.get("value", "")
+                    for cookie in cookies
+                }
 
-                print(f"Cookies found in second session (without opening page): {list(cookie_dict.keys())}")
+                print(
+                    f"Cookies found in second session (without opening page): {list(cookie_dict.keys())}"
+                )
                 print(f"Total cookies count in second session: {len(cookies)}")
 
                 # Check if our test cookies exist in the second session
@@ -227,20 +256,32 @@ class TestBrowserContextIntegration(unittest.TestCase):
                 # Check if all expected test cookies are present
                 missing_cookies = expected_cookie_names - found_cookie_names
                 if missing_cookies:
-                    self.fail(f"Missing expected test cookies in second session: {missing_cookies}")
+                    self.fail(
+                        f"Missing expected test cookies in second session: {missing_cookies}"
+                    )
 
                 # Check if test cookie values match what we set
                 for cookie_name in expected_cookie_names:
                     if cookie_name in cookie_dict:
-                        expected_value = next(cookie["value"] for cookie in test_cookies if cookie["name"] == cookie_name)
+                        expected_value = next(
+                            cookie["value"]
+                            for cookie in test_cookies
+                            if cookie["name"] == cookie_name
+                        )
                         actual_value = cookie_dict[cookie_name]
-                        self.assertEqual(expected_value, actual_value,
-                                       f"Test cookie '{cookie_name}' value should match. Expected: {expected_value}, Actual: {actual_value}")
-                        print(f"✓ Test cookie '{cookie_name}' value matches: {actual_value}")
+                        self.assertEqual(
+                            expected_value,
+                            actual_value,
+                            f"Test cookie '{cookie_name}' value should match. Expected: {expected_value}, Actual: {actual_value}",
+                        )
+                        print(
+                            f"✓ Test cookie '{cookie_name}' value matches: {actual_value}"
+                        )
 
-                print(f"SUCCESS: All {len(expected_cookie_names)} test cookies persisted correctly!")
+                print(
+                    f"SUCCESS: All {len(expected_cookie_names)} test cookies persisted correctly!"
+                )
                 print(f"Test cookies found: {list(expected_cookie_names)}")
-
 
                 await context.close()
                 print("Second session browser operations completed")

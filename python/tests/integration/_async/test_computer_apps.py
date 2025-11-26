@@ -1,10 +1,12 @@
 """Integration tests for Computer application management functionality."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -47,8 +49,8 @@ async def test_get_installed_apps(session):
 
     if len(result.data) > 0:
         app = result.data[0]
-        assert hasattr(app, 'name'), "App should have name"
-        assert hasattr(app, 'start_cmd'), "App should have start_cmd"
+        assert hasattr(app, "name"), "App should have name"
+        assert hasattr(app, "start_cmd"), "App should have start_cmd"
         print(f"First app: {app.name}")
 
 
@@ -69,8 +71,8 @@ async def test_start_app(session):
 
     if len(result.data) > 0:
         process = result.data[0]
-        assert hasattr(process, 'pname'), "Process should have pname"
-        assert hasattr(process, 'pid'), "Process should have pid"
+        assert hasattr(process, "pname"), "Process should have pname"
+        assert hasattr(process, "pid"), "Process should have pid"
         print(f"Process: {process.pname}, PID: {process.pid}")
 
 
@@ -90,4 +92,3 @@ async def test_stop_app(session):
     # Assert
     assert result.success, f"Stop app failed: {result.error_message}"
     print("App stopped successfully")
-

@@ -1,10 +1,12 @@
 """Integration tests for Mobile screen operations functionality."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -60,4 +62,3 @@ async def test_get_device_info(session):
     assert result.success, f"Get device info failed: {result.error_message}"
     assert result.output is not None, "Device info should not be None"
     print(f"Device model: {result.output.strip()}")
-

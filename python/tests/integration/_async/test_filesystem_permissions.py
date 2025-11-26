@@ -1,5 +1,7 @@
 """Integration tests for filesystem permissions."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
@@ -27,10 +29,10 @@ async def test_file_permissions(test_session):
     """Test file permissions."""
     fs = test_session.file_system
     cmd = test_session.command
-    
+
     # Create file
     await fs.write_file("/tmp/perm_test.txt", "test content")
-    
+
     # Check permissions
     result = await cmd.execute_command("ls -l /tmp/perm_test.txt")
     assert result.success
@@ -58,17 +60,16 @@ async def test_executable_file(test_session):
     """Test executable file creation."""
     fs = test_session.file_system
     cmd = test_session.command
-    
+
     # Create script
     script_content = "#!/bin/bash\necho 'executable test'"
     await fs.write_file("/tmp/test_script.sh", script_content)
-    
+
     # Make executable
     await cmd.execute_command("chmod +x /tmp/test_script.sh")
-    
+
     # Execute script
     result = await cmd.execute_command("/tmp/test_script.sh")
     assert result.success
     assert "executable test" in result.output
     print("Executable file test successful")
-

@@ -1,10 +1,12 @@
 """Integration tests for CodeSpace cross-language interoperability."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -61,7 +63,9 @@ console.log(`JavaScript read: ${data.message}, value: ${data.value}`);
 
     # Assert
     assert js_result.success, f"JavaScript read failed: {js_result.error_message}"
-    assert "Hello from Python" in js_result.result, "JavaScript should read Python's data"
+    assert (
+        "Hello from Python" in js_result.result
+    ), "JavaScript should read Python's data"
     assert "42" in js_result.result, "JavaScript should read Python's value"
     print(f"JavaScript output: {js_result.result}")
 
@@ -114,7 +118,9 @@ async def test_sequential_execution(session):
     print(f"Step 1: {py_result.result}")
 
     # 2. JavaScript
-    js_result = await session.code.run_code("console.log('Step 2: JavaScript')", "javascript")
+    js_result = await session.code.run_code(
+        "console.log('Step 2: JavaScript')", "javascript"
+    )
     assert js_result.success, "JavaScript step failed"
     print(f"Step 2: {js_result.result}")
 
@@ -125,4 +131,3 @@ async def test_sequential_execution(session):
 
     # Assert
     print("Sequential execution completed successfully")
-

@@ -1,8 +1,11 @@
 import os
+
 import pytest
 import pytest_asyncio
+
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
+
 
 @pytest_asyncio.fixture(scope="module")
 async def agent_bay():
@@ -12,6 +15,7 @@ async def agent_bay():
         pytest.skip("AGENTBAY_API_KEY environment variable not set")
 
     return AsyncAgentBay(api_key=api_key)
+
 
 @pytest.mark.asyncio
 async def test_pause_resume_session(agent_bay):
@@ -26,7 +30,7 @@ async def test_pause_resume_session(agent_bay):
     pause_result = await session.pause()
     if pause_result.success:
         print("Session paused successfully")
-        
+
         # Resume the session
         resume_result = await session.resume()
         if resume_result.success:
@@ -40,13 +44,14 @@ async def test_pause_resume_session(agent_bay):
     # Clean up
     await session.delete()
 
+
 @pytest.mark.asyncio
 async def test_pause_already_paused(agent_bay):
     """Test pausing an already paused session."""
     # Create and pause a session
     create_result = await agent_bay.create()
     session = create_result.session
-    
+
     await session.pause()
     print("Session paused first time")
 
@@ -58,6 +63,7 @@ async def test_pause_already_paused(agent_bay):
     # Clean up
     await session.resume()
     await session.delete()
+
 
 @pytest.mark.asyncio
 async def test_resume_running_session(agent_bay):
@@ -73,6 +79,7 @@ async def test_resume_running_session(agent_bay):
 
     # Clean up
     await session.delete()
+
 
 @pytest.mark.asyncio
 async def test_pause_resume_with_operations(agent_bay):
@@ -102,4 +109,3 @@ async def test_pause_resume_with_operations(agent_bay):
 
     # Clean up
     await session.delete()
-

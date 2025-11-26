@@ -4,13 +4,13 @@
 """Integration tests for Agent functionality."""
 import os
 import time
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
-from agentbay.agent import Agent
-from agentbay.session_params import CreateSessionParams
-from agentbay.logger import get_logger
+from agentbay._common.logger import get_logger
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.agent import Agent
 
 logger = get_logger("agentbay-integration-test")
 
@@ -81,9 +81,7 @@ def test_async_execute_task_success(agent_session):
     while retry_times < int(max_try_times):
         query_result = agent.get_task_status(result.task_id)
         assert result.success
-        print(
-            f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}."
-        )
+        print(f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}.")
         if query_result.task_status == "finished":
             break
         retry_times += 1

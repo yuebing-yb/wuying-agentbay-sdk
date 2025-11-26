@@ -8,10 +8,11 @@ import time
 import unittest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 def get_test_api_key():
     """Get API key for testing"""
@@ -96,14 +97,18 @@ class TestAgentBayList(unittest.TestCase):
                 print(f"Request ID: {result3.request_id}")
                 break
             else:
-                print(f"Attempt {attempt + 1} failed to create session 3: {result3.error_message}")
+                print(
+                    f"Attempt {attempt + 1} failed to create session 3: {result3.error_message}"
+                )
                 if attempt < max_retries - 1:
                     print("Waiting 15 seconds before retrying...")
                     time.sleep(15)
 
         # Verify all sessions were created
         if len(cls.sessions) != 3:
-            raise RuntimeError(f"Failed to create all 3 test sessions. Only created {len(cls.sessions)} sessions.")
+            raise RuntimeError(
+                f"Failed to create all 3 test sessions. Only created {len(cls.sessions)} sessions."
+            )
 
         # Wait a bit for sessions to be fully created and labels to propagate
         time.sleep(5)
@@ -157,9 +162,7 @@ class TestAgentBayList(unittest.TestCase):
             if session_id in session_ids:
                 found_count += 1
 
-        self.assertEqual(
-            found_count, 3, "Should find exactly 3 test sessions"
-        )
+        self.assertEqual(found_count, 3, "Should find exactly 3 test sessions")
 
         print(f"Found {found_count} test sessions")
         print(f"Total sessions with label: {len(result.session_ids)}")
@@ -211,7 +214,9 @@ class TestAgentBayList(unittest.TestCase):
         self.assertTrue(result_page1.success, "First page should succeed")
         self.assertIsNotNone(result_page1.request_id, "Request ID should be present")
         self.assertLessEqual(
-            len(result_page1.session_ids), 2, "First page should have at most 2 sessions"
+            len(result_page1.session_ids),
+            2,
+            "First page should have at most 2 sessions",
         )
 
         print(f"Page 1 - Found {len(result_page1.session_ids)} sessions")
@@ -344,13 +349,13 @@ class TestAgentBayList(unittest.TestCase):
 
         while True:
             result = self.agent_bay.list(
-                labels={"project": f"list-test-{self.unique_id}"}, page=page, limit=limit
+                labels={"project": f"list-test-{self.unique_id}"},
+                page=page,
+                limit=limit,
             )
 
             # Verify each page request succeeds
-            self.assertTrue(
-                result.success, f"Page {page} request should succeed"
-            )
+            self.assertTrue(result.success, f"Page {page} request should succeed")
             self.assertIsNotNone(
                 result.request_id, f"Page {page} should have request_id"
             )
@@ -441,10 +446,14 @@ class TestAgentBayList(unittest.TestCase):
             result2.total_count,
             "total_count should be consistent across calls",
         )
-        print(f"✓ total_count consistent: {result.total_count} == {result2.total_count}")
+        print(
+            f"✓ total_count consistent: {result.total_count} == {result2.total_count}"
+        )
 
         # Test 3: Verify total_count matches actual sessions when collecting all pages
-        print("\nTest 3: total_count should match actual session count across all pages")
+        print(
+            "\nTest 3: total_count should match actual session count across all pages"
+        )
 
         all_session_ids = []
         page = 1
@@ -453,7 +462,9 @@ class TestAgentBayList(unittest.TestCase):
 
         while True:
             result = self.agent_bay.list(
-                labels={"project": f"list-test-{self.unique_id}"}, page=page, limit=limit
+                labels={"project": f"list-test-{self.unique_id}"},
+                page=page,
+                limit=limit,
             )
 
             if not result.success:

@@ -1,8 +1,11 @@
 import os
+
 import pytest
 import pytest_asyncio
+
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
+
 
 # Define fixtures for session management
 @pytest_asyncio.fixture(scope="module")
@@ -39,10 +42,12 @@ async def agent_session():
     except Exception as e:
         print(f"Warning: Error deleting session: {e}")
 
+
 @pytest.fixture
 def command(agent_session):
     """Fixture to get the command object from the session."""
     return agent_session.command
+
 
 @pytest.mark.asyncio
 async def test_execute_command_success(command):
@@ -54,6 +59,7 @@ async def test_execute_command_success(command):
     assert result.output.strip() == "Hello, AgentBay!"
     assert result.request_id != ""
     assert result.error_message == ""
+
 
 @pytest.mark.asyncio
 async def test_execute_command_with_timeout(command):
@@ -67,23 +73,25 @@ async def test_execute_command_with_timeout(command):
     assert result.error_message != ""
     assert result.output == ""
 
+
 @pytest.mark.asyncio
 async def test_command_error_handling(command):
     """Test command error handling - should handle command errors and edge cases."""
     # Test invalid command
-    invalid_result = await command.execute_command('invalid_command_12345')
+    invalid_result = await command.execute_command("invalid_command_12345")
     assert not invalid_result.success
     assert invalid_result.error_message is not None
 
     # Test command with permission issues (trying to write to protected directory)
-    permission_result = await command.execute_command('echo "test" > /root/protected.txt')
+    permission_result = await command.execute_command(
+        'echo "test" > /root/protected.txt'
+    )
     # This might succeed or fail depending on the environment, but should not crash
     assert isinstance(permission_result.success, bool)
 
     # Test long-running command with timeout considerations
     time_command = 'echo "completed"'
     time_result = await command.execute_command(time_command)
-    print(f'Command output: {time_result}')
+    print(f"Command output: {time_result}")
     assert time_result.success
-    assert 'completed' in time_result.output
-
+    assert "completed" in time_result.output

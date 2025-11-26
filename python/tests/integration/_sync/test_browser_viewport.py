@@ -3,13 +3,13 @@
 
 """Integration tests for browser viewport."""
 import os
-import pytest
+
 import pytest
 from playwright.sync_api import sync_playwright
 
 from agentbay import AgentBay
-from agentbay.browser import BrowserOption
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.browser import BrowserOption
 
 
 @pytest.fixture(scope="module")
@@ -34,21 +34,21 @@ def test_browser_viewport_size(browser_session):
     """Test setting browser viewport size."""
     browser = browser_session.browser
     browser.initialize(BrowserOption())
-    
+
     endpoint_url = browser.get_endpoint_url_async()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     page = playwright_browser.new_page()
-    
+
     # Set viewport
     page.set_viewport_size({"width": 1280, "height": 720})
-    
+
     # Get viewport
     viewport = page.viewport_size
     assert viewport["width"] == 1280
     assert viewport["height"] == 720
     print(f"Viewport set to: {viewport}")
-    
+
     page.close()
     playwright_browser.close()
     p.stop()
@@ -59,22 +59,20 @@ def test_browser_mobile_viewport(browser_session):
     """Test mobile viewport."""
     browser = browser_session.browser
     browser.initialize(BrowserOption())
-    
+
     endpoint_url = browser.get_endpoint_url_async()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     page = playwright_browser.new_page()
-    
+
     # Set mobile viewport
     page.set_viewport_size({"width": 375, "height": 667})
-    
+
     viewport = page.viewport_size
     assert viewport["width"] == 375
     assert viewport["height"] == 667
     print(f"Mobile viewport: {viewport}")
-    
+
     page.close()
     playwright_browser.close()
     p.stop()
-
-

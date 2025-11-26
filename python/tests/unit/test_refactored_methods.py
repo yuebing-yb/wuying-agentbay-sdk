@@ -4,10 +4,12 @@ import unittest
 from unittest.mock import Mock, patch
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 # Add the parent directory to the path so we can import the agentbay package
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 
 class TestRefactoredMethods(unittest.TestCase):
@@ -25,7 +27,7 @@ class TestRefactoredMethods(unittest.TestCase):
             "ResourceUrl": "https://test.example.com",
             "NetworkInterfaceIp": "192.168.1.1",
             "HttpPort": 8080,
-            "Token": "test-token"
+            "Token": "test-token",
         }
 
         # Mock params
@@ -36,7 +38,7 @@ class TestRefactoredMethods(unittest.TestCase):
         params.extra_configs = None
 
         # Mock session - need to patch the correct path after refactoring
-        with patch('agentbay._sync.agentbay.Session') as mock_session_class:
+        with patch("agentbay._sync.agentbay.Session") as mock_session_class:
             mock_session = Mock()
             mock_session_class.return_value = mock_session
 
@@ -44,7 +46,9 @@ class TestRefactoredMethods(unittest.TestCase):
             result = self.agent_bay._build_session_from_response(response_data, params)
 
             # Verify session was created with correct parameters
-            mock_session_class.assert_called_once_with(self.agent_bay, "test-session-123")
+            mock_session_class.assert_called_once_with(
+                self.agent_bay, "test-session-123"
+            )
 
             # Verify session properties were set
             self.assertEqual(mock_session.is_vpc, True)
@@ -114,7 +118,7 @@ class TestRefactoredMethods(unittest.TestCase):
         mock_request = Mock()
         mock_request.to_map.return_value = {
             "Authorization": "Bearer test-token-1234567890",
-            "OtherField": "test-value"
+            "OtherField": "test-value",
         }
 
         # Call the method
@@ -129,7 +133,7 @@ class TestRefactoredMethods(unittest.TestCase):
         mock_request = Mock()
         mock_request.to_map.return_value = {
             "Authorization": "short",
-            "OtherField": "test-value"
+            "OtherField": "test-value",
         }
 
         # Call the method
@@ -156,7 +160,7 @@ class TestRefactoredMethods(unittest.TestCase):
         response_data = {
             "AppInstanceId": "ai-0d67g8gz0l6tsd17i",
             "SessionId": "session-123",
-            "Success": True
+            "Success": True,
         }
         record_context_id = "record-context-123"
 
@@ -166,11 +170,13 @@ class TestRefactoredMethods(unittest.TestCase):
         mock_update_result.error_message = None
 
         # Mock context service
-        with patch.object(self.agent_bay, 'context') as mock_context:
+        with patch.object(self.agent_bay, "context") as mock_context:
             mock_context.update.return_value = mock_update_result
 
             # Call the method
-            self.agent_bay._update_browser_replay_context(response_data, record_context_id)
+            self.agent_bay._update_browser_replay_context(
+                response_data, record_context_id
+            )
 
             # Verify context.update was called with a Context object
             mock_context.update.assert_called_once()
@@ -185,14 +191,16 @@ class TestRefactoredMethods(unittest.TestCase):
         response_data = {
             "AppInstanceId": "ai-0d67g8gz0l6tsd17i",
             "SessionId": "session-123",
-            "Success": True
+            "Success": True,
         }
         record_context_id = ""  # Empty record context ID
 
         # Mock context service
-        with patch.object(self.agent_bay, 'context') as mock_context:
+        with patch.object(self.agent_bay, "context") as mock_context:
             # Call the method
-            self.agent_bay._update_browser_replay_context(response_data, record_context_id)
+            self.agent_bay._update_browser_replay_context(
+                response_data, record_context_id
+            )
 
             # Verify context.update was not called
             mock_context.update.assert_not_called()
@@ -200,16 +208,15 @@ class TestRefactoredMethods(unittest.TestCase):
     def test_update_browser_replay_context_no_app_instance_id(self):
         """Test _update_browser_replay_context method when AppInstanceId is missing."""
         # Mock response data without AppInstanceId
-        response_data = {
-            "SessionId": "session-123",
-            "Success": True
-        }
+        response_data = {"SessionId": "session-123", "Success": True}
         record_context_id = "record-context-123"
 
         # Mock context service
-        with patch.object(self.agent_bay, 'context') as mock_context:
+        with patch.object(self.agent_bay, "context") as mock_context:
             # Call the method
-            self.agent_bay._update_browser_replay_context(response_data, record_context_id)
+            self.agent_bay._update_browser_replay_context(
+                response_data, record_context_id
+            )
 
             # Verify context.update was not called
             mock_context.update.assert_not_called()
@@ -220,7 +227,7 @@ class TestRefactoredMethods(unittest.TestCase):
         response_data = {
             "AppInstanceId": "ai-0d67g8gz0l6tsd17i",
             "SessionId": "session-123",
-            "Success": True
+            "Success": True,
         }
         record_context_id = "record-context-123"
 
@@ -230,11 +237,13 @@ class TestRefactoredMethods(unittest.TestCase):
         mock_update_result.error_message = "Context update failed"
 
         # Mock context service
-        with patch.object(self.agent_bay, 'context') as mock_context:
+        with patch.object(self.agent_bay, "context") as mock_context:
             mock_context.update.return_value = mock_update_result
 
             # Call the method - should not raise an exception
-            self.agent_bay._update_browser_replay_context(response_data, record_context_id)
+            self.agent_bay._update_browser_replay_context(
+                response_data, record_context_id
+            )
 
             # Verify context.update was called
             mock_context.update.assert_called_once()
@@ -249,16 +258,18 @@ class TestRefactoredMethods(unittest.TestCase):
         response_data = {
             "AppInstanceId": "ai-0d67g8gz0l6tsd17i",
             "SessionId": "session-123",
-            "Success": True
+            "Success": True,
         }
         record_context_id = "record-context-123"
 
         # Mock context service that raises an exception
-        with patch.object(self.agent_bay, 'context') as mock_context:
+        with patch.object(self.agent_bay, "context") as mock_context:
             mock_context.update.side_effect = Exception("Test error")
 
             # Call the method - should not raise an exception
-            self.agent_bay._update_browser_replay_context(response_data, record_context_id)
+            self.agent_bay._update_browser_replay_context(
+                response_data, record_context_id
+            )
 
             # Verify context.update was called
             mock_context.update.assert_called_once()
@@ -266,7 +277,6 @@ class TestRefactoredMethods(unittest.TestCase):
             context_obj = call_args[0]
             self.assertEqual(context_obj.id, record_context_id)
             self.assertEqual(context_obj.name, "browserreplay-ai-0d67g8gz0l6tsd17i")
-
 
 
 if __name__ == "__main__":

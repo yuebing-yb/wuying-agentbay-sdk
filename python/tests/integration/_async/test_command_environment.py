@@ -1,5 +1,7 @@
 """Integration tests for command environment variables."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
@@ -40,5 +42,3 @@ async def test_command_path_env(test_session):
     assert result.success
     assert len(result.output) > 0
     print(f"PATH: {result.output[:100]}...")
-
-

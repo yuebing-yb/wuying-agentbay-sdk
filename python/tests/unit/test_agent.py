@@ -1,11 +1,11 @@
+import os
+import time
 import unittest
 from unittest.mock import MagicMock, patch
 
-from agentbay.agent import Agent, ExecutionResult
-from agentbay.model import OperationResult, McpToolResult, McpToolResult
-import os, time
-
-from agentbay.logger import get_logger
+from agentbay._common.logger import get_logger
+from agentbay._common.models.response import McpToolResult, OperationResult
+from agentbay._sync.agent import Agent, ExecutionResult
 
 logger = get_logger("agentbay-unit-test")
 
@@ -40,7 +40,8 @@ class TestAgent(unittest.TestCase):
         """
         Test flux_execute_task method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
@@ -65,7 +66,8 @@ class TestAgent(unittest.TestCase):
         """
         Test execute_task method with error response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=False,
@@ -87,7 +89,8 @@ class TestAgent(unittest.TestCase):
         """
         Test terminate_task method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
@@ -111,7 +114,8 @@ class TestAgent(unittest.TestCase):
         """
         Test flux_execute_task method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
@@ -153,7 +157,8 @@ class TestAgent(unittest.TestCase):
         """
         Test flux_execute_task method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
@@ -173,7 +178,8 @@ class TestAgent(unittest.TestCase):
         """
         Test terminate_task method with successful response.
         """
-        from agentbay.model import McpToolResult
+        from agentbay._common.models.response import McpToolResult
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=False,

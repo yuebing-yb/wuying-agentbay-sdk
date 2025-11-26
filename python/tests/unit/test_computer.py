@@ -3,12 +3,13 @@ Unit tests for Computer module.
 Following TDD principles - tests first, then implementation.
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
-from agentbay.computer import Computer, MouseButton, ScrollDirection
-from agentbay.model import BoolResult, OperationResult
-from agentbay.exceptions import AgentBayError
+import pytest
+
+from agentbay._common.exceptions import AgentBayError
+from agentbay._common.models import BoolResult, OperationResult
+from agentbay._sync.computer import Computer, MouseButton, ScrollDirection
 
 
 class TestComputer:
@@ -32,12 +33,12 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
         mock_result.error_message = ""
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.click_mouse(100, 200)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
@@ -52,12 +53,12 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.click_mouse(100, 200, button="right")
-        
+
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
             "click_mouse", {"x": 100, "y": 200, "button": "right"}
@@ -75,12 +76,12 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.click_mouse(100, 200, button=MouseButton.RIGHT)
-        
+
         # Assert
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
@@ -93,28 +94,29 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.click_mouse(100, 200, button=MouseButton.DOUBLE_LEFT)
-        
+
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
             "click_mouse", {"x": 100, "y": 200, "button": "double_left"}
         )
+
     def test_move_mouse_success(self):
         """Test successful mouse move."""
         # Arrange
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.move_mouse(150, 250)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
@@ -128,21 +130,18 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.drag_mouse(100, 100, 200, 200)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "drag_mouse", {
-                "from_x": 100, "from_y": 100, 
-                "to_x": 200, "to_y": 200, 
-                "button": "left"
-            }
+            "drag_mouse",
+            {"from_x": 100, "from_y": 100, "to_x": 200, "to_y": 200, "button": "left"},
         )
 
     def test_scroll_success(self):
@@ -151,12 +150,12 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.scroll(300, 300)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
@@ -170,12 +169,12 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.scroll(300, 300, direction="down", amount=3)
-        
+
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
             "scroll", {"x": 300, "y": 300, "direction": "down", "amount": 3}
@@ -188,12 +187,12 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
         mock_result.data = {"x": 150, "y": 250}
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.get_cursor_position()
-        
+
         # Assert
         assert isinstance(result, OperationResult)
         assert result.success is True
@@ -207,12 +206,12 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.input_text("Hello World")
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
@@ -226,12 +225,12 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.press_keys(["Ctrl", "a"])
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
@@ -245,12 +244,12 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.press_keys(["Shift"], hold=True)
-        
+
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
             "press_keys", {"keys": ["Shift"], "hold": True}
@@ -262,12 +261,12 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.release_keys(["Shift"])
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
@@ -283,12 +282,12 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
         mock_result.data = {"width": 1920, "height": 1080, "dpiScalingFactor": 1.0}
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.get_screen_size()
-        
+
         # Assert
         assert isinstance(result, OperationResult)
         assert result.success is True
@@ -303,12 +302,12 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
         mock_result.data = "/path/to/screenshot.png"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.screenshot()
-        
+
         # Assert
         assert isinstance(result, OperationResult)
         assert result.success is True
@@ -323,12 +322,12 @@ class TestComputer:
         mock_result.success = False
         mock_result.request_id = "test-123"
         mock_result.error_message = "MCP tool failed"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.click_mouse(100, 200)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is False
@@ -338,10 +337,10 @@ class TestComputer:
         """Test mouse click when exception occurs."""
         # Arrange
         self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
-        
+
         # Act
         result = self.computer.click_mouse(100, 200)
-        
+
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is False
@@ -359,12 +358,14 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
-        result = self.computer.scroll(300, 300, direction=ScrollDirection.DOWN, amount=5)
-        
+        result = self.computer.scroll(
+            300, 300, direction=ScrollDirection.DOWN, amount=5
+        )
+
         # Assert
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
@@ -377,28 +378,32 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-123"
-        
+
         self.session.call_mcp_tool = Mock(return_value=mock_result)
-        
+
         # Act
         result = self.computer.drag_mouse(100, 100, 200, 200, button=MouseButton.MIDDLE)
-        
+
         # Assert
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "drag_mouse", {
-                "from_x": 100, "from_y": 100,
-                "to_x": 200, "to_y": 200,
-                "button": "middle"
-            }
+            "drag_mouse",
+            {
+                "from_x": 100,
+                "from_y": 100,
+                "to_x": 200,
+                "to_y": 200,
+                "button": "middle",
+            },
         )
+
     # Application Management Operations Tests
     def test_list_visible_apps_success(self):
         """Test list_visible_apps success."""
         self.mock_session.call_mcp_tool.return_value = Mock(
             success=True,
             request_id="test-request-id",
-            data='[{"pname":"Calculator","pid":1234}]'
+            data='[{"pname":"Calculator","pid":1234}]',
         )
 
         result = self.computer.list_visible_apps()
@@ -406,68 +411,62 @@ class TestComputer:
         assert result.success is True
         assert len(result.data) == 1
         assert result.data[0].pname == "Calculator"
-        self.mock_session.call_mcp_tool.assert_called_once_with(
-            "list_visible_apps", {}
-        )
+        self.mock_session.call_mcp_tool.assert_called_once_with("list_visible_apps", {})
 
     def test_get_installed_apps_success(self):
         """Test get_installed_apps success."""
         self.mock_session.call_mcp_tool.return_value = Mock(
             success=True,
             request_id="test-request-id",
-            data='[{"name":"Notepad","start_cmd":"notepad.exe"},{"name":"Calculator","start_cmd":"calc.exe"}]'
+            data='[{"name":"Notepad","start_cmd":"notepad.exe"},{"name":"Calculator","start_cmd":"calc.exe"}]',
         )
 
         result = self.computer.get_installed_apps()
 
         assert result.success is True
         assert len(result.data) == 2
-        assert result.data[0].name == 'Notepad'
-        assert result.data[1].name == 'Calculator'
+        assert result.data[0].name == "Notepad"
+        assert result.data[1].name == "Calculator"
 
     def test_start_app_success(self):
         """Test start_app success."""
         self.mock_session.call_mcp_tool.return_value = Mock(
             success=True,
             request_id="test-request-id",
-            data='[{"pname":"notepad","pid":1234}]'
+            data='[{"pname":"notepad","pid":1234}]',
         )
 
-        result = self.computer.start_app('notepad.exe')
+        result = self.computer.start_app("notepad.exe")
 
         assert result.success is True
         assert len(result.data) == 1
-        assert result.data[0].pname == 'notepad'
+        assert result.data[0].pname == "notepad"
         assert result.data[0].pid == 1234
 
     def test_start_app_with_working_directory(self):
         """Test start_app with working directory."""
         self.mock_session.call_mcp_tool.return_value = Mock(
-            success=True,
-            request_id="test-request-id",
-            data='[]'
+            success=True, request_id="test-request-id", data="[]"
         )
 
-        result = self.computer.start_app('notepad.exe', '/home/user/documents')
+        result = self.computer.start_app("notepad.exe", "/home/user/documents")
 
         assert result.success is True
 
     def test_stop_app_by_pname_success(self):
         """Test stop_app_by_pname success."""
         self.mock_session.call_mcp_tool.return_value = Mock(
-            success=True,
-            request_id="test-request-id"
+            success=True, request_id="test-request-id"
         )
 
-        result = self.computer.stop_app_by_pname('notepad')
+        result = self.computer.stop_app_by_pname("notepad")
 
         assert result.success is True
 
     def test_stop_app_by_pid_success(self):
         """Test stop_app_by_pid success."""
         self.mock_session.call_mcp_tool.return_value = Mock(
-            success=True,
-            request_id="test-request-id"
+            success=True, request_id="test-request-id"
         )
 
         result = self.computer.stop_app_by_pid(1234)
@@ -477,28 +476,27 @@ class TestComputer:
     def test_stop_app_by_cmd_success(self):
         """Test stop_app_by_cmd success."""
         self.mock_session.call_mcp_tool.return_value = Mock(
-            success=True,
-            request_id="test-request-id"
+            success=True, request_id="test-request-id"
         )
 
-        result = self.computer.stop_app_by_cmd('pkill notepad')
+        result = self.computer.stop_app_by_cmd("pkill notepad")
 
         assert result.success is True
 
     def test_application_management_methods_exist(self):
         """Test that all application management methods exist on Computer class."""
         # Assert
-        assert hasattr(self.computer, 'get_installed_apps')
-        assert hasattr(self.computer, 'start_app')
-        assert hasattr(self.computer, 'stop_app_by_pname')
-        assert hasattr(self.computer, 'stop_app_by_pid')
-        assert hasattr(self.computer, 'stop_app_by_cmd')
-        assert hasattr(self.computer, 'list_visible_apps')
-        
+        assert hasattr(self.computer, "get_installed_apps")
+        assert hasattr(self.computer, "start_app")
+        assert hasattr(self.computer, "stop_app_by_pname")
+        assert hasattr(self.computer, "stop_app_by_pid")
+        assert hasattr(self.computer, "stop_app_by_cmd")
+        assert hasattr(self.computer, "list_visible_apps")
+
         # Verify they are callable
         assert callable(self.computer.get_installed_apps)
         assert callable(self.computer.start_app)
         assert callable(self.computer.stop_app_by_pname)
         assert callable(self.computer.stop_app_by_pid)
         assert callable(self.computer.stop_app_by_cmd)
-        assert callable(self.computer.list_visible_apps) 
+        assert callable(self.computer.list_visible_apps)

@@ -1,5 +1,7 @@
 """Integration tests for binary file operations."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
@@ -27,11 +29,13 @@ async def test_binary_file_creation(test_session):
     """Test creating binary file using command."""
     cmd = test_session.command
     fs = test_session.file_system
-    
+
     # Create binary file
-    result = await cmd.execute_command("dd if=/dev/zero of=/tmp/binary_test bs=1024 count=10")
+    result = await cmd.execute_command(
+        "dd if=/dev/zero of=/tmp/binary_test bs=1024 count=10"
+    )
     assert result.success
-    
+
     # Check file info
     info = await fs.get_file_info("/tmp/binary_test")
     assert info.success
@@ -45,14 +49,14 @@ async def test_binary_file_copy(test_session):
     """Test copying binary file."""
     cmd = test_session.command
     fs = test_session.file_system
-    
+
     # Create binary file
     await cmd.execute_command("dd if=/dev/zero of=/tmp/binary_src bs=1024 count=5")
-    
+
     # Copy file
     copy_result = await cmd.execute_command("cp /tmp/binary_src /tmp/binary_dst")
     assert copy_result.success
-    
+
     # Verify both files exist
     src_info = await fs.get_file_info("/tmp/binary_src")
     dst_info = await fs.get_file_info("/tmp/binary_dst")
@@ -63,4 +67,3 @@ async def test_binary_file_copy(test_session):
     dst_size = int(dst_info.file_info["size"])
     assert src_size == dst_size
     print(f"Binary file copied, size: {dst_size} bytes")
-

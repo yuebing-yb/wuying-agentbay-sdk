@@ -3,7 +3,7 @@
 
 """Integration tests for context updates."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
@@ -25,7 +25,6 @@ def test_session(agent_bay):
     result.session.delete()
 
 
-
 @pytest.mark.sync
 def test_context_file_update(test_session):
     """Test updating file in context using upload URLs."""
@@ -37,8 +36,7 @@ def test_context_file_update(test_session):
 
     # Upload initial file
     upload_url_result = test_session.agent_bay.context.get_file_upload_url(
-        ctx_result.context_id,
-        "/update_file.txt"
+        ctx_result.context_id, "/update_file.txt"
     )
     assert upload_url_result.success
 
@@ -49,8 +47,7 @@ def test_context_file_update(test_session):
 
     # Update the file with new content
     upload_url_result2 = test_session.agent_bay.context.get_file_upload_url(
-        ctx_result.context_id,
-        "/update_file.txt"
+        ctx_result.context_id, "/update_file.txt"
     )
     assert upload_url_result2.success
 
@@ -61,8 +58,7 @@ def test_context_file_update(test_session):
 
     # Verify the file was updated
     download_url_result = test_session.agent_bay.context.get_file_download_url(
-        ctx_result.context_id,
-        "/update_file.txt"
+        ctx_result.context_id, "/update_file.txt"
     )
     assert download_url_result.success
 

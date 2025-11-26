@@ -1,8 +1,9 @@
 import logging
 import re
-from pydantic import BaseModel, Field
-from typing import Dict, Any
+from typing import Any, Dict
+
 from mcp_server.page_agent import PageAgent
+from pydantic import BaseModel, Field
 
 
 class RecipeDetails(BaseModel):
@@ -10,7 +11,9 @@ class RecipeDetails(BaseModel):
     total_ratings: int | None
 
 
-async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     await agent.goto("https://www.allrecipes.com/")
     await agent.act('Type "chocolate chip cookies" in the search bar')
     await agent.act("press enter")

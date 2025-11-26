@@ -1,4 +1,5 @@
 import pytest
+
 from agentbay import WhiteList
 
 
@@ -36,13 +37,17 @@ class TestWhiteListValidation:
     def test_exclude_path_with_asterisk_raises_error(self):
         with pytest.raises(ValueError) as exc_info:
             WhiteList(path="/src", exclude_paths=["*.log"])
-        assert "Wildcard patterns are not supported in exclude_paths" in str(exc_info.value)
+        assert "Wildcard patterns are not supported in exclude_paths" in str(
+            exc_info.value
+        )
         assert "*.log" in str(exc_info.value)
 
     def test_exclude_path_with_pattern_raises_error(self):
         with pytest.raises(ValueError) as exc_info:
             WhiteList(path="/src", exclude_paths=["/node_modules", "**/*.tmp"])
-        assert "Wildcard patterns are not supported in exclude_paths" in str(exc_info.value)
+        assert "Wildcard patterns are not supported in exclude_paths" in str(
+            exc_info.value
+        )
 
     def test_glob_pattern_raises_error(self):
         with pytest.raises(ValueError) as exc_info:

@@ -1,10 +1,10 @@
-import unittest
-from unittest.mock import Mock, patch, MagicMock
 import json
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
-from agentbay.config import _BROWSER_DATA_PATH
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.agentbay import AgentBay
+from agentbay._common.config import _BROWSER_DATA_PATH
+from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay._sync.agentbay import AgentBay
 
 
 class TestBrowserContextConfig(unittest.TestCase):
@@ -20,18 +20,18 @@ class TestBrowserContextConfig(unittest.TestCase):
         """Test BrowserContext creation with correct attributes."""
         context_id = "test-context-123"
         auto_upload = True
-        
+
         browser_context = BrowserContext(context_id, auto_upload)
-        
+
         self.assertEqual(browser_context.context_id, context_id)
         self.assertEqual(browser_context.auto_upload, auto_upload)
 
     def test_browser_context_default_auto_upload(self):
         """Test BrowserContext creation with default auto_upload value."""
         context_id = "test-context-456"
-        
+
         browser_context = BrowserContext(context_id)
-        
+
         self.assertEqual(browser_context.context_id, context_id)
         self.assertTrue(browser_context.auto_upload)  # Default should be True
 
@@ -39,9 +39,9 @@ class TestBrowserContextConfig(unittest.TestCase):
         """Test CreateSessionParams with browser context."""
         context_id = "test-context-789"
         browser_context = BrowserContext(context_id, auto_upload=False)
-        
+
         params = CreateSessionParams(browser_context=browser_context)
-        
+
         self.assertIsNotNone(params.browser_context)
         self.assertEqual(params.browser_context.context_id, context_id)
         self.assertFalse(params.browser_context.auto_upload)
@@ -50,12 +50,11 @@ class TestBrowserContextConfig(unittest.TestCase):
         """Test that AgentBay.create uses _BROWSER_DATA_PATH constant when creating browser context sync."""
 
         agent_bay = AgentBay(api_key="test-api-key")
-        
+
         # Create session params with browser context
         context_id = "test-context-456"
         browser_context = BrowserContext(context_id, auto_upload=True)
         params = CreateSessionParams(browser_context=browser_context)
-        
 
         self.assertIsNotNone(params.browser_context)
         self.assertEqual(params.browser_context.context_id, context_id)
@@ -65,23 +64,23 @@ class TestBrowserContextConfig(unittest.TestCase):
         """Test that BrowserContext can be properly serialized for JSON."""
         context_id = "test-context-serialization"
         browser_context = BrowserContext(context_id, auto_upload=True)
-        
+
         # Test that the object can be converted to dict-like structure
         self.assertEqual(browser_context.context_id, context_id)
         self.assertEqual(browser_context.auto_upload, True)
-        
+
         # Test that it can be used in JSON serialization context
         data = {
             "context_id": browser_context.context_id,
-            "auto_upload": browser_context.auto_upload
+            "auto_upload": browser_context.auto_upload,
         }
-        
+
         json_str = json.dumps(data)
         parsed_data = json.loads(json_str)
-        
+
         self.assertEqual(parsed_data["context_id"], context_id)
         self.assertEqual(parsed_data["auto_upload"], True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

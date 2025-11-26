@@ -3,11 +3,11 @@
 
 """Integration tests for different session images."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest.fixture(scope="module")
@@ -24,15 +24,15 @@ def test_ubuntu_session(agent_bay):
     params = CreateSessionParams(image_id="linux_latest")
     result = agent_bay.create(params)
     assert result.success
-    
+
     session = result.session
     print(f"Ubuntu session created: {session.session_id}")
-    
+
     # Test basic command
     cmd_result = session.command.execute_command("uname -a")
     assert cmd_result.success
     print(f"OS info: {cmd_result.output[:50]}...")
-    
+
     session.delete()
 
 
@@ -42,10 +42,8 @@ def test_browser_session(agent_bay):
     params = CreateSessionParams(image_id="browser_latest")
     result = agent_bay.create(params)
     assert result.success
-    
+
     session = result.session
     print(f"Browser session created: {session.session_id}")
-    
+
     session.delete()
-
-

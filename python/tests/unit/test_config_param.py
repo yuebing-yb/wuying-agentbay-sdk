@@ -1,14 +1,12 @@
-import unittest
-from unittest.mock import mock_open, patch
-
 import os
 import tempfile
-from unittest import TestCase
-from unittest.mock import patch, mock_open
-
-from agentbay.config import _load_config, _default_config
-from agentbay import Config
+import unittest
 from pathlib import Path
+from unittest import TestCase
+from unittest.mock import mock_open, patch
+
+from agentbay import Config
+from agentbay._common.config import _default_config, _load_config
 
 
 class LoadConfigTestCase(unittest.TestCase):
@@ -35,10 +33,7 @@ class LoadConfigTestCase(unittest.TestCase):
     def test_load_from_env_file(self):
         """Test loading configuration from .env file"""
         with open(self.env_file, "w") as f:
-            f.write(
-                "AGENTBAY_ENDPOINT=env-endpoint\n"
-                "AGENTBAY_TIMEOUT_MS=10000\n"
-            )
+            f.write("AGENTBAY_ENDPOINT=env-endpoint\n" "AGENTBAY_TIMEOUT_MS=10000\n")
 
         with os.scandir(self.test_dir.name) as it:
             print("Files in temp dir:", [entry.name for entry in it])
@@ -83,10 +78,7 @@ class LoadConfigTestCase(unittest.TestCase):
         # Create .env file
         os.chdir(self.test_dir.name)
         with open(self.env_file, "w") as f:
-            f.write(
-                "AGENTBAY_ENDPOINT=env-endpoint\n"
-                "AGENTBAY_TIMEOUT_MS=10000\n"
-            )
+            f.write("AGENTBAY_ENDPOINT=env-endpoint\n" "AGENTBAY_TIMEOUT_MS=10000\n")
 
         os.chdir(self.test_dir.name)
         # Set environment variables

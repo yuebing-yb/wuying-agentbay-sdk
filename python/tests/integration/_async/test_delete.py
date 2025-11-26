@@ -1,5 +1,7 @@
 """Integration tests for Session delete operations."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
@@ -21,7 +23,7 @@ async def test_delete_session_basic(agent_bay):
     result = await agent_bay.create()
     assert result.success is True
     session = result.session
-    
+
     delete_result = await session.delete()
     assert delete_result.success is True
     print(f"Session deleted: {session.session_id}")
@@ -33,7 +35,7 @@ async def test_delete_session_with_sync_context(agent_bay):
     result = await agent_bay.create()
     assert result.success is True
     session = result.session
-    
+
     delete_result = await session.delete(sync_context=True)
     assert delete_result.success is True
     print(f"Session deleted with context sync: {session.session_id}")
@@ -47,12 +49,12 @@ async def test_delete_multiple_sessions(agent_bay):
         result = await agent_bay.create()
         assert result.success is True
         sessions.append(result.session)
-    
+
     for session in sessions:
         delete_result = await session.delete()
         assert delete_result.success is True
         print(f"Session {session.session_id} deleted")
-    
+
     print(f"Deleted {len(sessions)} sessions")
 
 
@@ -62,8 +64,7 @@ async def test_delete_using_agent_bay(agent_bay):
     result = await agent_bay.create()
     assert result.success is True
     session = result.session
-    
+
     delete_result = await agent_bay.delete(session)
     assert delete_result.success is True
     print(f"Session deleted via AgentBay: {session.session_id}")
-

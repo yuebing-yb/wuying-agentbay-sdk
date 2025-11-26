@@ -1,19 +1,17 @@
 """Unit tests for Session pause operations."""
-import unittest
-from unittest.mock import MagicMock, patch, AsyncMock
+
 import asyncio
+import unittest
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._async.agentbay import AsyncAgentBay
 from agentbay._async.session import AsyncSession
-from agentbay.model import (
-    SessionPauseResult,
-    GetSessionResult,
+from agentbay._common.models.response import (
     GetSessionData,
+    GetSessionResult,
+    SessionPauseResult,
 )
-from agentbay.api.models import (
-    PauseSessionAsyncResponse,
-    PauseSessionAsyncResponseBody,
-)
+from agentbay.api.models import PauseSessionAsyncResponse, PauseSessionAsyncResponseBody
 
 
 class TestSessionPause(unittest.TestCase):
@@ -43,7 +41,9 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.pause_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to return PAUSED immediately
         get_session_paused = GetSessionResult(
@@ -57,7 +57,7 @@ class TestSessionPause(unittest.TestCase):
         self.agent_bay.get_session = AsyncMock(return_value=get_session_paused)
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method (pause not pause_async for polling)
             result = asyncio.run(self.session.pause(timeout=10, poll_interval=1))
 
@@ -82,7 +82,9 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.pause_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to return PAUSING first, then PAUSED
         get_session_pausing = GetSessionResult(
@@ -102,10 +104,12 @@ class TestSessionPause(unittest.TestCase):
                 status="PAUSED",
             ),
         )
-        self.agent_bay.get_session = AsyncMock(side_effect=[get_session_pausing, get_session_paused])
+        self.agent_bay.get_session = AsyncMock(
+            side_effect=[get_session_pausing, get_session_paused]
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.pause(timeout=10, poll_interval=1))
 
@@ -130,7 +134,9 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.pause_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to always return PAUSING
         get_session_pausing = GetSessionResult(
@@ -144,7 +150,7 @@ class TestSessionPause(unittest.TestCase):
         self.agent_bay.get_session = AsyncMock(return_value=get_session_pausing)
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method with a short timeout
             result = asyncio.run(self.session.pause(timeout=2, poll_interval=1))
 
@@ -166,7 +172,9 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.pause_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to return failure
         get_session_failure = GetSessionResult(
@@ -177,7 +185,7 @@ class TestSessionPause(unittest.TestCase):
         self.agent_bay.get_session = AsyncMock(return_value=get_session_failure)
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.pause(timeout=2, poll_interval=1))
 
@@ -202,10 +210,12 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=404,
         )
-        self.agent_bay.client.pause_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.pause_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.pause())
 
@@ -213,17 +223,21 @@ class TestSessionPause(unittest.TestCase):
             self.assertIsInstance(result, SessionPauseResult)
             self.assertFalse(result.success)
             self.assertEqual(result.request_id, "test-request-id")
-            self.assertEqual(result.error_message, "[SessionNotFound] Session does not exist")
+            self.assertEqual(
+                result.error_message, "[SessionNotFound] Session does not exist"
+            )
 
     def test_pause_empty_response_body(self):
         """Test session pause with empty response body."""
         # Mock the PauseSessionAsync response with no body
         mock_response = PauseSessionAsyncResponse(status_code=200)
         mock_response.body = None
-        self.agent_bay.client.pause_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.pause_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.pause())
 
@@ -231,17 +245,19 @@ class TestSessionPause(unittest.TestCase):
             self.assertIsInstance(result, SessionPauseResult)
             self.assertFalse(result.success)
             self.assertEqual(result.error_message, "Invalid response body")
-            self.assertEqual(result.request_id, '')
+            self.assertEqual(result.request_id, "")
 
     def test_pause_invalid_response_format(self):
         """Test session pause with invalid response format."""
         # Mock the PauseSessionAsync response with invalid format
         mock_response = MagicMock()
         mock_response.to_map.return_value = None
-        self.agent_bay.client.pause_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.pause_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.pause())
 
@@ -249,15 +265,17 @@ class TestSessionPause(unittest.TestCase):
             self.assertIsInstance(result, SessionPauseResult)
             self.assertFalse(result.success)
             self.assertEqual(result.error_message, "Invalid response format")
-            self.assertEqual(result.request_id, '')
+            self.assertEqual(result.request_id, "")
 
     def test_pause_client_exception(self):
         """Test session pause with client exception."""
         # Mock the client to raise an exception
-        self.agent_bay.client.pause_session_async_async.side_effect = Exception("Network error")
+        self.agent_bay.client.pause_session_async_async.side_effect = Exception(
+            "Network error"
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.pause())
 
@@ -278,7 +296,9 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.pause_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to return unexpected state, then PAUSED
         get_session_running = GetSessionResult(
@@ -298,10 +318,12 @@ class TestSessionPause(unittest.TestCase):
                 status="PAUSED",
             ),
         )
-        self.agent_bay.get_session = AsyncMock(side_effect=[get_session_running, get_session_paused])
+        self.agent_bay.get_session = AsyncMock(
+            side_effect=[get_session_running, get_session_paused]
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.pause(timeout=10, poll_interval=1))
 

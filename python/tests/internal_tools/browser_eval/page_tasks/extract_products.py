@@ -1,17 +1,17 @@
+import asyncio
+import base64
+import json
 import logging
 import os
-import asyncio
-import json
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-from urllib.parse import urlparse, urljoin
-import base64
+from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin, urlparse
 
+from pydantic import BaseModel, Field
 
-from agentbay.browser import ActOptions
+from agentbay._common.logger import get_logger
+from agentbay._sync.browser import ActOptions
 from agentbay.browser.eval.page_agent import PageAgent
-from agentbay.logger import get_logger
 
 _logger = get_logger(__name__)
 
@@ -181,7 +181,9 @@ CAPTURE_DETECT_URL = [
 ]
 
 
-async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     """
     Performs a paginated e-commerce site inspection.
     """

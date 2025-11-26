@@ -3,13 +3,13 @@
 
 """Integration tests for browser navigation."""
 import os
-import pytest
+
 import pytest
 from playwright.sync_api import sync_playwright
 
 from agentbay import AgentBay
-from agentbay.browser import BrowserOption
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.browser import BrowserOption
 
 
 @pytest.fixture(scope="module")
@@ -37,22 +37,22 @@ def test_browser_navigate_to_url(browser_session):
     """Test navigating browser to a URL."""
     browser = browser_session.browser
     browser.initialize(BrowserOption())
-    
+
     endpoint_url = browser.get_endpoint_url_async()
     assert endpoint_url is not None
-    
+
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     page = playwright_browser.new_page()
-    
+
     # Navigate to URL
     response = page.goto("https://www.example.com")
     assert response.status == 200
-    
+
     # Verify navigation
     assert "example.com" in page.url
     print(f"Navigated to: {page.url}")
-    
+
     page.close()
     playwright_browser.close()
     p.stop()
@@ -63,26 +63,26 @@ def test_browser_multiple_pages(browser_session):
     """Test opening multiple pages in browser."""
     browser = browser_session.browser
     browser.initialize(BrowserOption())
-    
+
     endpoint_url = browser.get_endpoint_url_async()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
-    
+
     # Open multiple pages
     page1 = playwright_browser.new_page()
     page2 = playwright_browser.new_page()
     page3 = playwright_browser.new_page()
-    
+
     page1.goto("https://www.example.com")
     page2.goto("https://www.example.org")
     page3.goto("https://www.example.net")
-    
+
     # Verify all pages
     assert "example.com" in page1.url
     assert "example.org" in page2.url
     assert "example.net" in page3.url
     print(f"Opened 3 pages successfully")
-    
+
     page1.close()
     page2.close()
     page3.close()
@@ -95,21 +95,19 @@ def test_browser_page_title(browser_session):
     """Test getting page title."""
     browser = browser_session.browser
     browser.initialize(BrowserOption())
-    
+
     endpoint_url = browser.get_endpoint_url_async()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     page = playwright_browser.new_page()
-    
+
     page.goto("https://www.example.com")
     title = page.title()
-    
+
     assert title is not None
     assert len(title) > 0
     print(f"Page title: {title}")
-    
+
     page.close()
     playwright_browser.close()
     p.stop()
-
-

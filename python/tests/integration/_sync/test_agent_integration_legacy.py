@@ -6,9 +6,9 @@ import time
 import unittest
 
 from agentbay import AgentBay
-from agentbay.agent import Agent
-from agentbay.session_params import CreateSessionParams
-from agentbay.logger import get_logger
+from agentbay._common.logger import get_logger
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.agent import Agent
 
 logger = get_logger("agentbay-integration-test")
 

@@ -3,12 +3,12 @@
 
 """Integration tests for Computer keyboard and mouse operations functionality."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.computer import MouseButton
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.computer import MouseButton
 
 
 @pytest.fixture(scope="module")
@@ -66,7 +66,12 @@ def test_move_mouse(session):
     position_result = session.computer.get_cursor_position()
     if position_result.success:
         import json
-        position = json.loads(position_result.data) if isinstance(position_result.data, str) else position_result.data
+
+        position = (
+            json.loads(position_result.data)
+            if isinstance(position_result.data, str)
+            else position_result.data
+        )
         print(f"Mouse moved to position: {position}")
 
     print("Mouse movement successful")
@@ -131,4 +136,3 @@ def test_mouse_right_click(session):
     assert result.success, f"Mouse right click failed: {result.error_message}"
     assert result.data is True, "Right click should return True"
     print("Mouse right click successful")
-

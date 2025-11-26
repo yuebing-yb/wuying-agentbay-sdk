@@ -66,10 +66,10 @@ ASYNC_DOC_MAPPINGS: Sequence[DocMapping] = (
 
 # Common/Shared docs (Config, Exceptions, etc.)
 COMMON_DOC_MAPPINGS: Sequence[DocMapping] = (
-    DocMapping("common/config.md", "Configuration", ("agentbay.config",)),
-    DocMapping("common/exceptions.md", "Exceptions", ("agentbay.exceptions",)),
-    DocMapping("common/logging.md", "Logging", ("agentbay.logger",)),
-    DocMapping("common/context-sync.md", "Context Sync", ("agentbay._sync.context_sync",)),
+    DocMapping("common/config.md", "Configuration", ("agentbay._common.config",)),
+    DocMapping("common/exceptions.md", "Exceptions", ("agentbay._common.exceptions",)),
+    DocMapping("common/logging.md", "Logging", ("agentbay._common.logger",)),
+    DocMapping("common/context-sync.md", "Context Sync", ("agentbay._common.params.context_sync",)),
 )
 
 

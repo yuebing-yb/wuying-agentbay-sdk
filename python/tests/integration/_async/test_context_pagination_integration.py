@@ -10,7 +10,7 @@ import unittest
 from typing import List
 
 from agentbay import AgentBay
-from agentbay.context import Context, ContextListParams
+from agentbay._sync.context import Context, ContextListParams
 
 
 class TestContextPaginationIntegration(unittest.TestCase):
@@ -37,7 +37,9 @@ class TestContextPaginationIntegration(unittest.TestCase):
             if context_result.success and context_result.context:
                 cls.context_names.append(context_name)
                 cls.created_contexts.append(context_result.context)
-                print(f"Created context: {context_name} (ID: {context_result.context.id})")
+                print(
+                    f"Created context: {context_name} (ID: {context_result.context.id})"
+                )
             else:
                 raise unittest.SkipTest(f"Failed to create context {context_name}")
 
@@ -63,10 +65,16 @@ class TestContextPaginationIntegration(unittest.TestCase):
         list_result = self.agent_bay.context.list(params)
 
         self.assertTrue(list_result.success, "List contexts should be successful")
-        self.assertEqual(len(list_result.contexts), 10, "Expected 10 contexts in first page")
-        
-        print(f"First page: Got {len(list_result.contexts)} contexts (RequestID: {list_result.request_id})")
-        print(f"NextToken: {list_result.next_token}, MaxResults: {list_result.max_results}, TotalCount: {list_result.total_count}")
+        self.assertEqual(
+            len(list_result.contexts), 10, "Expected 10 contexts in first page"
+        )
+
+        print(
+            f"First page: Got {len(list_result.contexts)} contexts (RequestID: {list_result.request_id})"
+        )
+        print(
+            f"NextToken: {list_result.next_token}, MaxResults: {list_result.max_results}, TotalCount: {list_result.total_count}"
+        )
 
     def test_context_pagination_custom_page_size(self):
         """Test 2: List contexts with custom page size"""
@@ -77,15 +85,21 @@ class TestContextPaginationIntegration(unittest.TestCase):
         list_result = self.agent_bay.context.list(params)
 
         self.assertTrue(list_result.success, "List contexts should be successful")
-        self.assertEqual(len(list_result.contexts), 5, "Expected 5 contexts with custom page size")
-        
-        print(f"Custom page size: Got {len(list_result.contexts)} contexts (RequestID: {list_result.request_id})")
-        print(f"NextToken: {list_result.next_token}, MaxResults: {list_result.max_results}, TotalCount: {list_result.total_count}")
+        self.assertEqual(
+            len(list_result.contexts), 5, "Expected 5 contexts with custom page size"
+        )
+
+        print(
+            f"Custom page size: Got {len(list_result.contexts)} contexts (RequestID: {list_result.request_id})"
+        )
+        print(
+            f"NextToken: {list_result.next_token}, MaxResults: {list_result.max_results}, TotalCount: {list_result.total_count}"
+        )
 
     def test_context_pagination_second_page(self):
         """Test 3: Get second page using NextToken"""
         print("Test 3: Getting second page using NextToken")
-        
+
         # First, get the first page to obtain the NextToken
         params = ContextListParams()
         params.max_results = 5
@@ -98,11 +112,18 @@ class TestContextPaginationIntegration(unittest.TestCase):
             params.next_token = first_page_result.next_token
 
             second_page_result = self.agent_bay.context.list(params)
-            
-            self.assertTrue(second_page_result.success, "List contexts second page should be successful")
-            
-            print(f"Second page: Got {len(second_page_result.contexts)} contexts (RequestID: {second_page_result.request_id})")
-            print(f"NextToken: {second_page_result.next_token}, MaxResults: {second_page_result.max_results}, TotalCount: {second_page_result.total_count}")
+
+            self.assertTrue(
+                second_page_result.success,
+                "List contexts second page should be successful",
+            )
+
+            print(
+                f"Second page: Got {len(second_page_result.contexts)} contexts (RequestID: {second_page_result.request_id})"
+            )
+            print(
+                f"NextToken: {second_page_result.next_token}, MaxResults: {second_page_result.max_results}, TotalCount: {second_page_result.total_count}"
+            )
         else:
             print("No NextToken available for second page test")
 
@@ -116,10 +137,18 @@ class TestContextPaginationIntegration(unittest.TestCase):
 
         self.assertTrue(list_result.success, "List contexts should be successful")
         # Should get all contexts (up to 15) since we only created 15
-        self.assertGreaterEqual(len(list_result.contexts), 10, "Expected at least 10 contexts with larger page size")
-        
-        print(f"Larger page size: Got {len(list_result.contexts)} contexts (RequestID: {list_result.request_id})")
-        print(f"NextToken: {list_result.next_token}, MaxResults: {list_result.max_results}, TotalCount: {list_result.total_count}")
+        self.assertGreaterEqual(
+            len(list_result.contexts),
+            10,
+            "Expected at least 10 contexts with larger page size",
+        )
+
+        print(
+            f"Larger page size: Got {len(list_result.contexts)} contexts (RequestID: {list_result.request_id})"
+        )
+        print(
+            f"NextToken: {list_result.next_token}, MaxResults: {list_result.max_results}, TotalCount: {list_result.total_count}"
+        )
 
     def test_context_pagination_nil_params(self):
         """Test 5: Test with empty parameters (should use defaults)"""
@@ -130,10 +159,14 @@ class TestContextPaginationIntegration(unittest.TestCase):
         # Note: We're not checking for a specific number of contexts since the API behavior
         # may vary, but we're ensuring the call succeeds and returns some data
         self.assertIsNotNone(list_result.contexts, "Contexts should not be None")
-        
-        print(f"Nil parameters: Got {len(list_result.contexts)} contexts (RequestID: {list_result.request_id})")
+
+        print(
+            f"Nil parameters: Got {len(list_result.contexts)} contexts (RequestID: {list_result.request_id})"
+        )
         if list_result.next_token:
-            print(f"NextToken: {list_result.next_token}, MaxResults: {list_result.max_results}, TotalCount: {list_result.total_count}")
+            print(
+                f"NextToken: {list_result.next_token}, MaxResults: {list_result.max_results}, TotalCount: {list_result.total_count}"
+            )
 
 
 if __name__ == "__main__":

@@ -1,8 +1,10 @@
 import os
-import pytest
 import time
+
+import pytest
+
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 class TestGetFileTransferContext:
@@ -53,14 +55,19 @@ class TestGetFileTransferContext:
 
         # Verify that the recovered session has a file transfer context ID
         recovered_session = get_result.session
-        assert hasattr(recovered_session, "file_transfer_context_id"), \
-            "Recovered session should have file_transfer_context_id attribute"
-        assert recovered_session.file_transfer_context_id is not None, \
-            "Recovered session should have a non-None file_transfer_context_id"
-        assert recovered_session.file_transfer_context_id != "", \
-            "Recovered session should have a non-empty file_transfer_context_id"
+        assert hasattr(
+            recovered_session, "file_transfer_context_id"
+        ), "Recovered session should have file_transfer_context_id attribute"
+        assert (
+            recovered_session.file_transfer_context_id is not None
+        ), "Recovered session should have a non-None file_transfer_context_id"
+        assert (
+            recovered_session.file_transfer_context_id != ""
+        ), "Recovered session should have a non-empty file_transfer_context_id"
 
-    def test_recovered_session_can_perform_file_operations(self, agent_bay, test_session):
+    def test_recovered_session_can_perform_file_operations(
+        self, agent_bay, test_session
+    ):
         """
         Test that recovered session can perform actual file operations.
 
@@ -88,20 +95,22 @@ class TestGetFileTransferContext:
         try:
             # Write file to the session
             write_result = recovered_session.file_system.write_file(
-                f"/tmp/{test_filename}",
-                test_content
+                f"/tmp/{test_filename}", test_content
             )
 
             # Verify the write was successful
-            assert write_result.success, \
-                f"File write failed: {write_result.error_message}"
+            assert (
+                write_result.success
+            ), f"File write failed: {write_result.error_message}"
 
             # Read back the file to verify
-            read_result = recovered_session.file_system.read_file(f"/tmp/{test_filename}")
-            assert read_result.success, \
-                f"File read failed: {read_result.error_message}"
-            assert read_result.content == test_content, \
-                "Read content doesn't match written content"
+            read_result = recovered_session.file_system.read_file(
+                f"/tmp/{test_filename}"
+            )
+            assert read_result.success, f"File read failed: {read_result.error_message}"
+            assert (
+                read_result.content == test_content
+            ), "Read content doesn't match written content"
 
         except Exception as e:
             pytest.fail(f"File operations failed on recovered session: {e}")
@@ -125,11 +134,11 @@ class TestGetFileTransferContext:
         test_filename_1 = f"original_test_{int(time.time())}.txt"
 
         write_result_1 = test_session.file_system.write_file(
-            f"/tmp/{test_filename_1}",
-            test_content_1
+            f"/tmp/{test_filename_1}", test_content_1
         )
-        assert write_result_1.success, \
-            f"Original session file write failed: {write_result_1.error_message}"
+        assert (
+            write_result_1.success
+        ), f"Original session file write failed: {write_result_1.error_message}"
 
         # Test 2: Recover the session
         get_result = agent_bay.get(session_id)
@@ -141,15 +150,19 @@ class TestGetFileTransferContext:
         test_filename_2 = f"recovered_test_{int(time.time())}.txt"
 
         write_result_2 = recovered_session.file_system.write_file(
-            f"/tmp/{test_filename_2}",
-            test_content_2
+            f"/tmp/{test_filename_2}", test_content_2
         )
-        assert write_result_2.success, \
-            f"Recovered session file write failed: {write_result_2.error_message}"
+        assert (
+            write_result_2.success
+        ), f"Recovered session file write failed: {write_result_2.error_message}"
 
         # Test 4: Verify both files exist and have correct content
-        read_result_1 = recovered_session.file_system.read_file(f"/tmp/{test_filename_1}")
+        read_result_1 = recovered_session.file_system.read_file(
+            f"/tmp/{test_filename_1}"
+        )
         assert read_result_1.success and read_result_1.content == test_content_1
 
-        read_result_2 = recovered_session.file_system.read_file(f"/tmp/{test_filename_2}")
+        read_result_2 = recovered_session.file_system.read_file(
+            f"/tmp/{test_filename_2}"
+        )
         assert read_result_2.success and read_result_2.content == test_content_2

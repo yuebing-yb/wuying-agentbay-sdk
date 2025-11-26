@@ -1,10 +1,12 @@
 """Integration tests for Computer screen operations functionality."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -62,6 +64,7 @@ async def test_get_screen_size(session):
 
     # Parse JSON if data is a string
     import json
+
     if isinstance(result.data, str):
         data = json.loads(result.data)
     else:
@@ -76,7 +79,9 @@ async def test_get_screen_size(session):
 
     # DPI scaling factor is optional but should be present
     if "dpiScalingFactor" in data:
-        assert isinstance(data["dpiScalingFactor"], (int, float)), "DPI scaling factor should be numeric"
+        assert isinstance(
+            data["dpiScalingFactor"], (int, float)
+        ), "DPI scaling factor should be numeric"
         assert data["dpiScalingFactor"] > 0, "DPI scaling factor should be positive"
 
     print(f"Screen size: {data['width']}x{data['height']}")
@@ -100,10 +105,10 @@ async def test_screen_info_consistency(session):
 
     # Parse JSON if data is a string
     import json
+
     data1 = json.loads(result1.data) if isinstance(result1.data, str) else result1.data
     data2 = json.loads(result2.data) if isinstance(result2.data, str) else result2.data
 
     assert data1["width"] == data2["width"], "Width should be consistent"
     assert data1["height"] == data2["height"], "Height should be consistent"
     print("Screen info is consistent across multiple calls")
-

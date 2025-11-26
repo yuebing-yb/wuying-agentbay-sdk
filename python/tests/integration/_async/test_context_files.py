@@ -1,5 +1,7 @@
 """Integration tests for context file operations."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
@@ -22,7 +24,6 @@ async def test_session(agent_bay):
     await result.session.delete()
 
 
-
 @pytest.mark.asyncio
 async def test_context_file_operations(test_session):
     """Test context file operations using upload/download URLs."""
@@ -34,8 +35,7 @@ async def test_context_file_operations(test_session):
 
     # Get upload URL for a file
     upload_url_result = await test_session.agent_bay.context.get_file_upload_url(
-        ctx_result.context_id,
-        "/test_file.txt"
+        ctx_result.context_id, "/test_file.txt"
     )
     assert upload_url_result.success
     assert upload_url_result.url != ""
@@ -48,15 +48,13 @@ async def test_context_file_operations(test_session):
 
     # List files in context
     files_result = await test_session.agent_bay.context.list_files(
-        ctx_result.context_id,
-        "/"
+        ctx_result.context_id, "/"
     )
     assert files_result.success
 
     # Get download URL
     download_url_result = await test_session.agent_bay.context.get_file_download_url(
-        ctx_result.context_id,
-        "/test_file.txt"
+        ctx_result.context_id, "/test_file.txt"
     )
     assert download_url_result.success
     assert download_url_result.url != ""
@@ -69,8 +67,7 @@ async def test_context_file_operations(test_session):
 
     # Delete the file
     delete_result = await test_session.agent_bay.context.delete_file(
-        ctx_result.context_id,
-        "/test_file.txt"
+        ctx_result.context_id, "/test_file.txt"
     )
     assert delete_result.success
 

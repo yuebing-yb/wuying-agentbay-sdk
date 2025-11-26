@@ -1,10 +1,12 @@
 """Integration tests for CodeSpace JavaScript execution functionality."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -78,7 +80,9 @@ async def test_js_file_operations(session):
     print("\nTest: JavaScript file operations...")
 
     # Write a file first
-    write_result = await session.file_system.write_file("/tmp/test_js.txt", "Hello from JS test")
+    write_result = await session.file_system.write_file(
+        "/tmp/test_js.txt", "Hello from JS test"
+    )
     assert write_result.success, "Failed to write test file"
 
     # Read the file with JavaScript
@@ -111,7 +115,9 @@ async def test_js_error_handling(session):
     # The execution should fail or return error in result
     if not result.success:
         print(f"Expected error: {result.error_message}")
-        assert "Error" in result.error_message or "error" in result.error_message.lower()
+        assert (
+            "Error" in result.error_message or "error" in result.error_message.lower()
+        )
     else:
         print(f"Error in output: {result.result}")
         assert "Error" in result.result
@@ -137,4 +143,3 @@ console.log('Completed immediately');
     assert result.success, f"JavaScript with timeout failed: {result.error_message}"
     assert "Completed" in result.result, "Should complete within timeout"
     print(f"JavaScript output:\n{result.result}")
-

@@ -3,13 +3,13 @@
 
 """Integration tests for browser cookies."""
 import os
-import pytest
+
 import pytest
 from playwright.sync_api import sync_playwright
 
 from agentbay import AgentBay
-from agentbay.browser import BrowserOption
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.browser import BrowserOption
 
 
 @pytest.fixture(scope="module")
@@ -37,27 +37,31 @@ def test_browser_set_cookie(browser_session):
     """Test setting cookies in browser."""
     browser = browser_session.browser
     browser.initialize(BrowserOption())
-    
+
     endpoint_url = browser.get_endpoint_url_async()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     context = playwright_browser.contexts[0]
-    
+
     # Set cookie
-    context.add_cookies([{
-        "name": "test_cookie",
-        "value": "test_value",
-        "domain": ".example.com",
-        "path": "/"
-    }])
-    
+    context.add_cookies(
+        [
+            {
+                "name": "test_cookie",
+                "value": "test_value",
+                "domain": ".example.com",
+                "path": "/",
+            }
+        ]
+    )
+
     # Get cookies
     cookies = context.cookies()
     cookie_names = [c["name"] for c in cookies]
-    
+
     assert "test_cookie" in cookie_names
     print(f"Set cookie successfully: test_cookie")
-    
+
     playwright_browser.close()
     p.stop()
 
@@ -67,31 +71,33 @@ def test_browser_clear_cookies(browser_session):
     """Test clearing cookies."""
     browser = browser_session.browser
     browser.initialize(BrowserOption())
-    
+
     endpoint_url = browser.get_endpoint_url_async()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     context = playwright_browser.contexts[0]
-    
+
     # Set cookie
-    context.add_cookies([{
-        "name": "temp_cookie",
-        "value": "temp_value",
-        "domain": ".example.com",
-        "path": "/"
-    }])
-    
+    context.add_cookies(
+        [
+            {
+                "name": "temp_cookie",
+                "value": "temp_value",
+                "domain": ".example.com",
+                "path": "/",
+            }
+        ]
+    )
+
     # Clear cookies
     context.clear_cookies()
-    
+
     # Verify cleared
     cookies = context.cookies()
     cookie_names = [c["name"] for c in cookies]
-    
+
     assert "temp_cookie" not in cookie_names
     print("Cookies cleared successfully")
-    
+
     playwright_browser.close()
     p.stop()
-
-

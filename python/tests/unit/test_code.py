@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from agentbay.code import Code, CodeExecutionResult
+from agentbay._sync.code import Code, CodeExecutionResult
 
 
 class TestCode(unittest.TestCase):
@@ -17,7 +17,6 @@ class TestCode(unittest.TestCase):
 
         self.code = Code(self.mock_session)
 
-    
     def test_run_code_success_python(self):
         """
         Test run_code method with Python code.
@@ -33,11 +32,9 @@ class TestCode(unittest.TestCase):
         result = self.code.run_code(code, "python")
 
         # Verify the call
-        self.session.call_mcp_tool.assert_called_once_with("run_code", {
-            "code": code,
-            "language": "python",
-            "timeout_s": 60
-        })
+        self.session.call_mcp_tool.assert_called_once_with(
+            "run_code", {"code": code, "language": "python", "timeout_s": 60}
+        )
 
         # Verify the result
         self.assertIsInstance(result, CodeExecutionResult)
@@ -45,7 +42,6 @@ class TestCode(unittest.TestCase):
         self.assertEqual(result.result, "Hello, world!\n2\n")
         self.assertEqual(result.request_id, "test-request-id")
 
-    
     def test_run_code_success_javascript(self):
         """
         Test run_code method with JavaScript code.
@@ -63,11 +59,10 @@ class TestCode(unittest.TestCase):
         result = self.code.run_code(code, "javascript", timeout_s=custom_timeout)
 
         # Verify the call
-        self.session.call_mcp_tool.assert_called_once_with("run_code", {
-            "code": code,
-            "language": "javascript",
-            "timeout_s": custom_timeout
-        })
+        self.session.call_mcp_tool.assert_called_once_with(
+            "run_code",
+            {"code": code, "language": "javascript", "timeout_s": custom_timeout},
+        )
 
         # Verify the result
         self.assertIsInstance(result, CodeExecutionResult)
@@ -85,7 +80,6 @@ class TestCode(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("Unsupported language", result.error_message)
 
-    
     def test_run_code_error(self):
         """
         Test run_code method with error response.
@@ -104,7 +98,6 @@ class TestCode(unittest.TestCase):
         self.assertEqual(result.error_message, "Execution failed")
         self.assertEqual(result.request_id, "test-request-id")
 
-    
     def test_run_code_exception(self):
         """
         Test run_code method with exception.
@@ -119,4 +112,4 @@ class TestCode(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()

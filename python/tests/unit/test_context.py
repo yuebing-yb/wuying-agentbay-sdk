@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from agentbay.context import Context, ContextService
+from agentbay._sync.context import Context, ContextService
 
 
 class TestContext(unittest.TestCase):
@@ -139,9 +139,7 @@ class TestContextService(unittest.TestCase):
     def test_update_context(self):
         """Test updating a context."""
         # Create a context to update
-        context = Context(
-            id="context-to-update", name="updated-name"
-        )
+        context = Context(id="context-to-update", name="updated-name")
 
         # Mock the API response
         mock_response = MagicMock()
@@ -167,9 +165,7 @@ class TestContextService(unittest.TestCase):
     def test_delete_context(self):
         """Test deleting a context."""
         # Create a context to delete
-        context = Context(
-            id="context-to-delete", name="context-name"
-        )
+        context = Context(id="context-to-delete", name="context-name")
 
         # Mock the API response
         mock_response = MagicMock()

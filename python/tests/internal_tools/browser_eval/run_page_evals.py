@@ -1,14 +1,15 @@
+import argparse
 import asyncio
+import importlib
 import json
 import os
 import time
-import importlib
-import argparse
-from typing import Dict, Any
+from typing import Any, Dict
+
 from dotenv import load_dotenv
 
+from agentbay._common.logger import get_logger
 from agentbay.browser.eval.page_agent import PageAgent
-from agentbay.logger import get_logger
 
 _logger = get_logger("run_page_evals")
 
@@ -29,7 +30,7 @@ async def run_single_task(
     try:
         task_module = importlib.import_module(f"page_tasks.{task_name}")
 
-        #result = await task_module.run(agent, _logger, task_config)
+        # result = await task_module.run(agent, _logger, task_config)
         result = await agent.run_task(task_module, _logger, task_config)
 
         status = "✅ Passed" if result.get("_success") else "❌ Failed"
@@ -52,7 +53,9 @@ async def run_single_task(
     task_duration_s = round(total_duration_s - browser_setup_s, 2)
 
     llm_metrics = agent.get_metrics()
-    llm_metrics["llm_duration_s"] = int(round(llm_metrics.get("llm_duration_s", 0.0), 2))
+    llm_metrics["llm_duration_s"] = int(
+        round(llm_metrics.get("llm_duration_s", 0.0), 2)
+    )
     if task_duration_s:
         llm_time_percentage = round(
             llm_metrics["llm_duration_s"] / task_duration_s * 100, 1
@@ -130,7 +133,9 @@ async def main():
             task for task in all_tasks if task.get("name") == args.eval_name
         ]
         if not tasks_to_run:
-            _logger.error(f"Task with name '{args.eval_name}' not found in config file.")
+            _logger.error(
+                f"Task with name '{args.eval_name}' not found in config file."
+            )
             return
     elif args.category:
         tasks_to_run = [

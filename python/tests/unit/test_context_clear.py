@@ -1,10 +1,11 @@
 """Unit tests for Context clear operations."""
+
+import time
 import unittest
 from unittest.mock import MagicMock, patch
-import time
 
-from agentbay.context import ContextService, ClearContextResult
-from agentbay.exceptions import AgentBayError, ClearanceTimeoutError
+from agentbay._common.exceptions import AgentBayError, ClearanceTimeoutError
+from agentbay._sync.context import ClearContextResult, ContextService
 from agentbay.api.models import (
     ClearContextResponse,
     ClearContextResponseBody,
@@ -195,7 +196,7 @@ class TestContextClear(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "No data in response")
 
-    @patch('time.sleep')  # Mock sleep to speed up the test
+    @patch("time.sleep")  # Mock sleep to speed up the test
     def test_clear_sync_success(self, mock_sleep):
         """Test successful synchronous clear operation."""
         # Mock clear_async
@@ -224,14 +225,16 @@ class TestContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, 'clear_async', return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ), patch.object(
             self.context_service,
-            'get_clear_status',
+            "get_clear_status",
             side_effect=[status_clearing, status_available],
         ):
             # Call the method
-            result = self.context_service.clear("context-123", timeout=10, poll_interval=1)
+            result = self.context_service.clear(
+                "context-123", timeout=10, poll_interval=1
+            )
 
             # Verify the result
             self.assertTrue(result.success)
@@ -239,7 +242,7 @@ class TestContextClear(unittest.TestCase):
             self.assertEqual(result.status, "available")
             self.assertEqual(mock_sleep.call_count, 2)
 
-    @patch('time.sleep')
+    @patch("time.sleep")
     def test_clear_sync_timeout(self, mock_sleep):
         """Test synchronous clear operation timeout."""
         # Mock clear_async
@@ -261,9 +264,9 @@ class TestContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, 'clear_async', return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ), patch.object(
-            self.context_service, 'get_clear_status', return_value=status_clearing
+            self.context_service, "get_clear_status", return_value=status_clearing
         ):
             # Call the method and expect timeout
             with self.assertRaises(ClearanceTimeoutError) as context:
@@ -271,7 +274,7 @@ class TestContextClear(unittest.TestCase):
 
             self.assertIn("timed out", str(context.exception))
 
-    @patch('time.sleep')
+    @patch("time.sleep")
     def test_clear_sync_status_check_failure(self, mock_sleep):
         """Test synchronous clear when status check fails."""
         # Mock clear_async
@@ -291,9 +294,9 @@ class TestContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, 'clear_async', return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ), patch.object(
-            self.context_service, 'get_clear_status', return_value=status_failure
+            self.context_service, "get_clear_status", return_value=status_failure
         ):
             # Call the method
             result = self.context_service.clear("context-123")
@@ -312,7 +315,7 @@ class TestContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, 'clear_async', return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ):
             # Call the method
             result = self.context_service.clear("context-123")
@@ -321,7 +324,7 @@ class TestContextClear(unittest.TestCase):
             self.assertFalse(result.success)
             self.assertIn("Failed to start clearing", result.error_message)
 
-    @patch('time.sleep')
+    @patch("time.sleep")
     def test_clear_sync_unexpected_state(self, mock_sleep):
         """Test synchronous clear with unexpected state."""
         # Mock clear_async
@@ -350,14 +353,16 @@ class TestContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, 'clear_async', return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ), patch.object(
             self.context_service,
-            'get_clear_status',
+            "get_clear_status",
             side_effect=[status_in_use, status_available],
         ):
             # Call the method
-            result = self.context_service.clear("context-123", timeout=10, poll_interval=1)
+            result = self.context_service.clear(
+                "context-123", timeout=10, poll_interval=1
+            )
 
             # Verify the result - should continue polling and succeed
             self.assertTrue(result.success)
@@ -396,4 +401,3 @@ class TestClearContextResult(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

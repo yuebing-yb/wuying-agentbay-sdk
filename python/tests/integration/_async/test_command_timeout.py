@@ -1,5 +1,7 @@
 """Integration tests for command timeout."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
@@ -26,7 +28,9 @@ async def test_session(agent_bay):
 async def test_command_with_timeout(test_session):
     """Test command execution with timeout."""
     cmd = test_session.command
-    result = await cmd.execute_command("echo 'test' && sleep 1 && echo 'done'", timeout_ms=5000)
+    result = await cmd.execute_command(
+        "echo 'test' && sleep 1 && echo 'done'", timeout_ms=5000
+    )
     assert result.success
     assert "test" in result.output
     assert "done" in result.output
@@ -41,4 +45,3 @@ async def test_command_quick_execution(test_session):
     assert result.success
     assert "quick" in result.output
     print("Quick command executed successfully")
-

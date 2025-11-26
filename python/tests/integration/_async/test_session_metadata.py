@@ -1,10 +1,12 @@
 """Integration tests for session metadata."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -20,7 +22,7 @@ async def test_session_with_metadata(agent_bay):
     """Test creating session with labels."""
     params = CreateSessionParams(
         image_id="code_latest",
-        labels={"test_key": "test_value", "environment": "testing"}
+        labels={"test_key": "test_value", "environment": "testing"},
     )
     result = await agent_bay.create(params)
     assert result.success
@@ -36,12 +38,10 @@ async def test_session_basic_attributes(agent_bay):
     """Test session basic attributes."""
     result = await agent_bay.create()
     assert result.success
-    
+
     session = result.session
     assert session.session_id is not None
     assert session.agent_bay is agent_bay
     print(f"Session attributes verified: {session.session_id}")
-    
+
     await session.delete()
-
-

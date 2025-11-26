@@ -6,17 +6,18 @@ Tests data structures and API without network calls.
 
 import unittest
 
-from agentbay.context_sync import (
+from agentbay._common.params.context_sync import (
+    BWList,
     ContextSync,
+    DeletePolicy,
+    DownloadPolicy,
+    DownloadStrategy,
     SyncPolicy,
     UploadPolicy,
     UploadStrategy,
-    DownloadPolicy,
-    DownloadStrategy,
-    DeletePolicy,
-    BWList,
     WhiteList,
 )
+
 
 class TestContextSyncUnit(unittest.TestCase):
     """Unit tests for context synchronization functionality."""
@@ -250,9 +251,7 @@ class TestContextSyncUnit(unittest.TestCase):
         ]
 
         for strategy in strategies:
-            upload_policy = UploadPolicy(
-                auto_upload=True, upload_strategy=strategy
-            )
+            upload_policy = UploadPolicy(auto_upload=True, upload_strategy=strategy)
 
             sync_policy = SyncPolicy(upload_policy=upload_policy)
             context_sync = ContextSync.new("test-context-id", "/test", sync_policy)
@@ -290,7 +289,8 @@ class TestContextSyncUnit(unittest.TestCase):
 
         # Modify upload policy - use existing upload strategy
         new_upload_policy = UploadPolicy(
-            auto_upload=False, upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
+            auto_upload=False,
+            upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
         )
 
         # Create new sync policy with modified upload policy
@@ -393,7 +393,9 @@ class TestContextSyncUnit(unittest.TestCase):
         # Test with None exclude_paths - fix initialization
         white_list = WhiteList(path="/test")
         self.assertEqual(white_list.path, "/test")
-        self.assertEqual(white_list.exclude_paths, [])  # Default to empty list, not None
+        self.assertEqual(
+            white_list.exclude_paths, []
+        )  # Default to empty list, not None
 
         # Test with empty white_lists
         bw_list = BWList(white_lists=[])
@@ -404,6 +406,7 @@ class TestContextSyncUnit(unittest.TestCase):
         self.assertEqual(bw_list.white_lists, [])  # Default to empty list, not None
 
         print("Edge cases test passed")
+
 
 if __name__ == "__main__":
     # Run the tests

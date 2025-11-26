@@ -1,5 +1,13 @@
 # Configuration API Reference
 
+## Config
+
+```python
+class Config()
+```
+
+Configuration object for AgentBay client.
+
 #### BROWSER\_RECORD\_PATH
 
 ```python

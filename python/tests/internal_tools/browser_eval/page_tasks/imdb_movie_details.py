@@ -1,7 +1,8 @@
 import logging
-from pydantic import BaseModel, Field
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from mcp_server.page_agent import PageAgent
+from pydantic import BaseModel, Field
 
 
 class CountryRatings(BaseModel):
@@ -11,7 +12,9 @@ class CountryRatings(BaseModel):
     )
 
 
-async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     await agent.goto("https://www.imdb.com/title/tt0111161/")
     await agent.act("click on the movie ratings")
     extract_method = config.get("extract_method", "domExtract")

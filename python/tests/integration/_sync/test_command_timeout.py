@@ -3,7 +3,7 @@
 
 """Integration tests for command timeout."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
@@ -29,7 +29,9 @@ def test_session(agent_bay):
 def test_command_with_timeout(test_session):
     """Test command execution with timeout."""
     cmd = test_session.command
-    result = cmd.execute_command("echo 'test' && sleep 1 && echo 'done'", timeout_ms=5000)
+    result = cmd.execute_command(
+        "echo 'test' && sleep 1 && echo 'done'", timeout_ms=5000
+    )
     assert result.success
     assert "test" in result.output
     assert "done" in result.output
@@ -44,4 +46,3 @@ def test_command_quick_execution(test_session):
     assert result.success
     assert "quick" in result.output
     print("Quick command executed successfully")
-

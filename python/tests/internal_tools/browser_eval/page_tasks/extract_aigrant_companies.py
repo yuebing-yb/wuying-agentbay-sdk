@@ -1,7 +1,8 @@
 import logging
-from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from mcp_server.page_agent import PageAgent
+from pydantic import BaseModel
 
 
 class Batch(BaseModel):
@@ -13,7 +14,9 @@ class CompanyList(BaseModel):
     batches: List[Batch]
 
 
-async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     await agent.goto(
         "https://browserbase.github.io/stagehand-eval-sites/sites/aigrant/"
     )

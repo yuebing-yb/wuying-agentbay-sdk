@@ -17,10 +17,11 @@ class TestContextSyncExports:
 
     def test_upload_mode_enum_export(self):
         """Test that UploadMode enum can be imported from agentbay package"""
-        from agentbay import UploadMode
-
         # Verify it's an enum
         from enum import Enum
+
+        from agentbay import UploadMode
+
         assert issubclass(UploadMode, Enum)
 
         # Verify enum values
@@ -31,10 +32,11 @@ class TestContextSyncExports:
 
     def test_lifecycle_enum_export(self):
         """Test that Lifecycle enum can be imported from agentbay package"""
-        from agentbay import Lifecycle
-
         # Verify it's an enum
         from enum import Enum
+
+        from agentbay import Lifecycle
+
         assert issubclass(Lifecycle, Enum)
 
         # Verify some key enum values
@@ -46,7 +48,7 @@ class TestContextSyncExports:
 
     def test_upload_policy_with_upload_mode(self):
         """Test that UploadPolicy can be created with UploadMode from main package"""
-        from agentbay import UploadPolicy, UploadMode
+        from agentbay import UploadMode, UploadPolicy
 
         # Test FILE mode
         policy = UploadPolicy(upload_mode=UploadMode.FILE)
@@ -58,7 +60,7 @@ class TestContextSyncExports:
 
     def test_recycle_policy_with_lifecycle(self):
         """Test that RecyclePolicy can be created with Lifecycle from main package"""
-        from agentbay import RecyclePolicy, Lifecycle
+        from agentbay import Lifecycle, RecyclePolicy
 
         # Test 1 day lifecycle
         policy = RecyclePolicy(lifecycle=Lifecycle.LIFECYCLE_1DAY, paths=[""])
@@ -71,18 +73,18 @@ class TestContextSyncExports:
     def test_all_context_sync_classes_exported(self):
         """Test that all context_sync classes can be imported from main package"""
         from agentbay import (
+            BWList,
             ContextSync,
-            SyncPolicy,
-            UploadPolicy,
-            UploadStrategy,
-            UploadMode,
+            DeletePolicy,
             DownloadPolicy,
             DownloadStrategy,
-            DeletePolicy,
             ExtractPolicy,
-            RecyclePolicy,
             Lifecycle,
-            BWList,
+            RecyclePolicy,
+            SyncPolicy,
+            UploadMode,
+            UploadPolicy,
+            UploadStrategy,
             WhiteList,
         )
 
@@ -103,8 +105,14 @@ class TestContextSyncExports:
 
     def test_backward_compatibility_context_sync_import(self):
         """Test that importing from context_sync module still works (backward compatibility)"""
-        from agentbay.context_sync import UploadMode, Lifecycle, RecyclePolicy
-        from agentbay import UploadMode as UploadMode2, Lifecycle as Lifecycle2, RecyclePolicy as RecyclePolicy2
+        from agentbay import Lifecycle as Lifecycle2
+        from agentbay import RecyclePolicy as RecyclePolicy2
+        from agentbay import UploadMode as UploadMode2
+        from agentbay._common.params.context_sync import (
+            Lifecycle,
+            RecyclePolicy,
+            UploadMode,
+        )
 
         # Verify they are the same classes
         assert UploadMode is UploadMode2
@@ -141,15 +149,15 @@ class TestContextSyncExports:
     def test_complete_sync_policy_with_all_imports(self):
         """Test creating a complete SyncPolicy using imports from main package"""
         from agentbay import (
-            SyncPolicy,
-            UploadPolicy,
-            UploadMode,
-            DownloadPolicy,
-            DeletePolicy,
-            ExtractPolicy,
-            RecyclePolicy,
-            Lifecycle,
             BWList,
+            DeletePolicy,
+            DownloadPolicy,
+            ExtractPolicy,
+            Lifecycle,
+            RecyclePolicy,
+            SyncPolicy,
+            UploadMode,
+            UploadPolicy,
             WhiteList,
         )
 
@@ -160,10 +168,9 @@ class TestContextSyncExports:
             delete_policy=DeletePolicy(),
             extract_policy=ExtractPolicy(),
             recycle_policy=RecyclePolicy(
-                lifecycle=Lifecycle.LIFECYCLE_3DAYS,
-                paths=["/tmp/cache"]
+                lifecycle=Lifecycle.LIFECYCLE_3DAYS, paths=["/tmp/cache"]
             ),
-            bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])])
+            bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])]),
         )
 
         # Verify the policy was created correctly

@@ -3,7 +3,7 @@
 
 """Integration tests for multiline commands."""
 import os
-import pytest
+
 import pytest
 
 from agentbay import AgentBay
@@ -29,7 +29,7 @@ def test_session(agent_bay):
 def test_multiline_script(test_session):
     """Test executing multiline script."""
     cmd = test_session.command
-    
+
     script = """
 for i in 1 2 3; do
     echo "Number: $i"
@@ -47,7 +47,7 @@ done
 def test_command_with_conditionals(test_session):
     """Test command with if-else."""
     cmd = test_session.command
-    
+
     script = """
 if [ -d /tmp ]; then
     echo "tmp exists"
@@ -65,7 +65,7 @@ fi
 def test_command_with_functions(test_session):
     """Test command with bash functions."""
     cmd = test_session.command
-    
+
     script = """
 test_function() {
     echo "Function called with: $1"
@@ -76,5 +76,3 @@ test_function "hello"
     assert result.success
     assert "Function called with: hello" in result.output
     print("Function command executed successfully")
-
-

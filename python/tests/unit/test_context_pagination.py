@@ -1,7 +1,12 @@
 import unittest
 from unittest.mock import MagicMock
 
-from agentbay.context import Context, ContextService, ContextListParams, ContextListResult
+from agentbay._sync.context import (
+    Context,
+    ContextListParams,
+    ContextListResult,
+    ContextService,
+)
 
 
 class TestContextPagination(unittest.TestCase):

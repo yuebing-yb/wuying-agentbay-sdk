@@ -8,13 +8,13 @@ with real sessions and actual file transfers.
 """
 
 import os
-import pytest
-import pytest
-import time
 import tempfile
+import time
+
+import pytest
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
 
 
 @pytest.fixture(scope="module")
@@ -45,14 +45,11 @@ def file_transfer_session(agent_bay):
     print(f"Context created with ID: {context.id}")
 
     # Create browser session with context for testing
-    browser_context = BrowserContext(
-        context_id=context.id,
-        auto_upload=True
-    )
+    browser_context = BrowserContext(context_id=context.id, auto_upload=True)
 
     params = CreateSessionParams(
         image_id="browser_latest",  # Use browser image for more comprehensive testing
-        browser_context=browser_context
+        browser_context=browser_context,
     )
 
     session_result = agent_bay.create(params)
@@ -102,14 +99,11 @@ def test_file_upload_integration():
     print(f"Context created with ID: {context.id}")
 
     # Create browser session with context for testing
-    browser_context = BrowserContext(
-        context_id=context.id,
-        auto_upload=True
-    )
+    browser_context = BrowserContext(context_id=context.id, auto_upload=True)
 
     params = CreateSessionParams(
         image_id="browser_latest",  # Use browser image for more comprehensive testing
-        browser_context=browser_context
+        browser_context=browser_context,
     )
 
     session_result = agent_bay.create(params)
@@ -122,8 +116,13 @@ def test_file_upload_integration():
     try:
         print("Testing file upload...")
         # Create a temporary file for upload
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as temp_file:
-            test_content = "This is a test file for AgentBay FileTransfer upload integration test.\n" * 10
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".txt"
+        ) as temp_file:
+            test_content = (
+                "This is a test file for AgentBay FileTransfer upload integration test.\n"
+                * 10
+            )
             temp_file.write(test_content)
             temp_file_path = temp_file.name
 
@@ -141,7 +140,9 @@ def test_file_upload_integration():
             assert upload_result.request_id_upload_url is not None
             assert upload_result.request_id_sync is not None
 
-            ls_result = session.command.execute_command("ls -la /tmp/file_transfer_test/")
+            ls_result = session.command.execute_command(
+                "ls -la /tmp/file_transfer_test/"
+            )
             if not ls_result.success:
                 print("    ❌ fileTransfer directory not found")
                 assert False
@@ -151,12 +152,14 @@ def test_file_upload_integration():
 
             # Verify file exists in remote location by listing directory
             list_result = session.file_system.list_directory("/tmp/file_transfer_test/")
-            assert list_result.success, f"Failed to list directory: {list_result.error_message}"
+            assert (
+                list_result.success
+            ), f"Failed to list directory: {list_result.error_message}"
 
             # Check if our uploaded file is in the directory listing
             file_found = False
             for entry in list_result.entries:
-                if entry.get('name') == 'upload_test.txt':
+                if entry.get("name") == "upload_test.txt":
                     file_found = True
                     break
 
@@ -164,7 +167,9 @@ def test_file_upload_integration():
 
             # Verify file content by reading it back
             read_result = session.file_system.read_file(remote_path)
-            assert read_result.success, f"Failed to read uploaded file: {read_result.error_message}"
+            assert (
+                read_result.success
+            ), f"Failed to read uploaded file: {read_result.error_message}"
             assert read_result.content == test_content
 
         finally:
@@ -208,14 +213,11 @@ def test_file_download_integration():
     print(f"Context created with ID: {context.id}")
 
     # Create browser session with context for testing
-    browser_context = BrowserContext(
-        context_id=context.id,
-        auto_upload=True
-    )
+    browser_context = BrowserContext(context_id=context.id, auto_upload=True)
 
     params = CreateSessionParams(
         image_id="browser_latest",  # Use browser image for more comprehensive testing
-        browser_context=browser_context
+        browser_context=browser_context,
     )
 
     session_result = agent_bay.create(params)
@@ -228,13 +230,20 @@ def test_file_download_integration():
     try:
         # First, create a file in the remote location
         remote_path = "/tmp/file_transfer_test/download_test.txt"
-        test_content = "This is a test file for AgentBay FileTransfer download integration test.\n" * 15
+        test_content = (
+            "This is a test file for AgentBay FileTransfer download integration test.\n"
+            * 15
+        )
         print("\n Creating test directory...")
-        create_dir_result = session.file_system.create_directory("/tmp/file_transfer_test/")
+        create_dir_result = session.file_system.create_directory(
+            "/tmp/file_transfer_test/"
+        )
         print(f"Create directory result: {create_dir_result.success}")
         assert create_dir_result.success
         write_result = session.file_system.write_file(remote_path, test_content)
-        assert write_result.success, f"Failed to create remote file: {write_result.error_message}"
+        assert (
+            write_result.success
+        ), f"Failed to create remote file: {write_result.error_message}"
 
         ls_result = session.command.execute_command("ls -la /tmp/file_transfer_test/")
         if not ls_result.success:
@@ -244,7 +253,7 @@ def test_file_download_integration():
         print(f"    ✅ fileTransfer directory exists: /tmp/file_transfer_test/")
         print(f"    Directory content:\n{ls_result.output}")
         # Create a temporary file path for download
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as temp_file:
             temp_file_path = temp_file.name
 
         try:
@@ -262,7 +271,7 @@ def test_file_download_integration():
             assert download_result.local_path == temp_file_path
 
             # Verify downloaded file content
-            with open(temp_file_path, 'r') as f:
+            with open(temp_file_path, "r") as f:
                 downloaded_content = f.read()
 
             print(f"Downloaded file content length: {len(downloaded_content)} bytes")

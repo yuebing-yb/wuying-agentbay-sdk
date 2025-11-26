@@ -1,11 +1,13 @@
 """Integration tests for Command functionality."""
+
 import os
 import time
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -67,7 +69,7 @@ def test_command_error_handling(command_session):
     command = command_session.command  # Assuming direct access to command interface
 
     # Test invalid command
-    invalid_result = command.execute_command('invalid_command_12345')
+    invalid_result = command.execute_command("invalid_command_12345")
     assert not invalid_result.success
     assert invalid_result.error_message is not None
 
@@ -79,6 +81,6 @@ def test_command_error_handling(command_session):
     # Test long-running command with timeout considerations
     time_command = 'echo "completed"'
     time_result = command.execute_command(time_command)
-    print(f'Command output: {time_result}')
+    print(f"Command output: {time_result}")
     assert time_result.success
-    assert 'completed' in time_result.output
+    assert "completed" in time_result.output

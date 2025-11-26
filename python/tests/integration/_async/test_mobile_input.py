@@ -1,11 +1,13 @@
 """Integration tests for Mobile input operations functionality."""
+
 import os
+
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.mobile import KeyCode
+from agentbay._common.params.session_params import CreateSessionParams
+from agentbay._sync.mobile import KeyCode
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -90,4 +92,3 @@ async def test_press_key(session):
     assert result.success, f"Press key failed: {result.error_message}"
     assert result.data is True, "Press key should return True"
     print("Key press successful")
-

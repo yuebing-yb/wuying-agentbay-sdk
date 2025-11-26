@@ -1,7 +1,8 @@
 import logging
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from mcp_server.page_agent import PageAgent
+from pydantic import BaseModel, Field
 
 
 class Listing(BaseModel):
@@ -13,11 +14,11 @@ class ApartmentListings(BaseModel):
     listings: List[Listing]
 
 
-async def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+async def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     _logger.info("Navigating to apartments.com with extended timeout...")
-    await agent.goto(
-        "https://www.apartments.com/san-francisco-ca/2-bedrooms/"
-    )
+    await agent.goto("https://www.apartments.com/san-francisco-ca/2-bedrooms/")
     _logger.info("Page navigation completed.")
 
     extract_method = config.get("extract_method", "domExtract")

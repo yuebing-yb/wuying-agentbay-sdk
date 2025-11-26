@@ -1,13 +1,13 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+from agentbay._common.models.response import McpToolResult, OperationResult
 from agentbay._sync.filesystem import (
     BoolResult,
     FileContentResult,
     FileInfoResult,
     FileSystem,
 )
-from agentbay.model import OperationResult, McpToolResult
 
 
 class DummySession:
@@ -49,7 +49,7 @@ class TestFileSystemRefactor(unittest.TestCase):
         self.session.call_mcp_tool.return_value = mock_result
 
         # Test internal method exists
-        self.assertTrue(hasattr(self.fs, '_read_file_chunk'))
+        self.assertTrue(hasattr(self.fs, "_read_file_chunk"))
 
         result = self.fs._read_file_chunk("/path/to/file.txt", 0, 100)
         self.assertIsInstance(result, FileContentResult)
@@ -61,13 +61,11 @@ class TestFileSystemRefactor(unittest.TestCase):
         """
         Test that _write_file_chunk internal method exists and works correctly.
         """
-        mock_result = McpToolResult(
-            request_id="request-123", success=True, data="True"
-        )
+        mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
 
         # Test internal method exists
-        self.assertTrue(hasattr(self.fs, '_write_file_chunk'))
+        self.assertTrue(hasattr(self.fs, "_write_file_chunk"))
 
         result = self.fs._write_file_chunk("/path/to/file.txt", "content", "overwrite")
         self.assertIsInstance(result, BoolResult)
@@ -78,7 +76,9 @@ class TestFileSystemRefactor(unittest.TestCase):
     # Test new unified read_file method
     @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
     @patch("agentbay._sync.filesystem.FileSystem._read_file_chunk")
-    def test_read_file_small_file_direct_read(self, mock_read_chunk, mock_get_file_info):
+    def test_read_file_small_file_direct_read(
+        self, mock_read_chunk, mock_get_file_info
+    ):
         """
         Test that read_file handles small files efficiently (single chunk).
         """
@@ -105,7 +105,9 @@ class TestFileSystemRefactor(unittest.TestCase):
 
     @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
     @patch("agentbay._sync.filesystem.FileSystem._read_file_chunk")
-    def test_read_file_large_file_chunked_read(self, mock_read_chunk, mock_get_file_info):
+    def test_read_file_large_file_chunked_read(
+        self, mock_read_chunk, mock_get_file_info
+    ):
         """
         Test that read_file handles large files with automatic chunking.
         """
@@ -119,9 +121,15 @@ class TestFileSystemRefactor(unittest.TestCase):
 
         # Mock chunked reads (3 chunks of 50KB each)
         mock_read_chunk.side_effect = [
-            FileContentResult(request_id="request-123-1", success=True, content="chunk1"),
-            FileContentResult(request_id="request-123-2", success=True, content="chunk2"),
-            FileContentResult(request_id="request-123-3", success=True, content="chunk3"),
+            FileContentResult(
+                request_id="request-123-1", success=True, content="chunk1"
+            ),
+            FileContentResult(
+                request_id="request-123-2", success=True, content="chunk2"
+            ),
+            FileContentResult(
+                request_id="request-123-3", success=True, content="chunk3"
+            ),
         ]
 
         result = self.fs.read_file("/path/to/large_file.txt")
@@ -187,7 +195,9 @@ class TestFileSystemRefactor(unittest.TestCase):
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
         self.assertTrue(result.data)
-        mock_write_chunk.assert_called_once_with("/path/to/file.txt", small_content, "overwrite")
+        mock_write_chunk.assert_called_once_with(
+            "/path/to/file.txt", small_content, "overwrite"
+        )
 
     @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_large_content_chunked_write(self, mock_write_chunk):
@@ -234,7 +244,9 @@ class TestFileSystemRefactor(unittest.TestCase):
 
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
-        mock_write_chunk.assert_called_once_with("/path/to/file.txt", small_content, "append")
+        mock_write_chunk.assert_called_once_with(
+            "/path/to/file.txt", small_content, "append"
+        )
 
     @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
     def test_write_file_append_mode_large_content(self, mock_write_chunk):
@@ -271,9 +283,7 @@ class TestFileSystemRefactor(unittest.TestCase):
         Test that write_file properly propagates errors from chunk operations.
         """
         mock_write_chunk.return_value = BoolResult(
-            request_id="request-123",
-            success=False,
-            error_message="Write failed"
+            request_id="request-123", success=False, error_message="Write failed"
         )
 
         result = self.fs.write_file("/path/to/file.txt", "content")
@@ -288,9 +298,7 @@ class TestFileSystemRefactor(unittest.TestCase):
         Test that read_file properly propagates errors from get_file_info.
         """
         mock_get_file_info.return_value = FileInfoResult(
-            request_id="request-123",
-            success=False,
-            error_message="File not found"
+            request_id="request-123", success=False, error_message="File not found"
         )
 
         result = self.fs.read_file("/path/to/nonexistent.txt")
@@ -306,8 +314,8 @@ class TestFileSystemRefactor(unittest.TestCase):
         This test should pass after the refactor is complete.
         """
         # These should not exist after refactor
-        self.assertFalse(hasattr(self.fs, 'read_large_file'))
-        self.assertFalse(hasattr(self.fs, 'write_large_file'))
+        self.assertFalse(hasattr(self.fs, "read_large_file"))
+        self.assertFalse(hasattr(self.fs, "write_large_file"))
 
     # Test default chunk size configuration
     def test_default_chunk_size_configuration(self):

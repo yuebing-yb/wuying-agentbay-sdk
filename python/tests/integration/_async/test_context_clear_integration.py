@@ -1,12 +1,13 @@
 """Integration tests for Context clear operations."""
+
 import os
 import time
 import unittest
 from uuid import uuid4
 
 from agentbay import AgentBay
-from agentbay.agentbay import Config
-from agentbay.exceptions import ClearanceTimeoutError
+from agentbay._common.exceptions import ClearanceTimeoutError
+from agentbay._sync.agentbay import Config
 
 
 def get_test_api_key():
@@ -51,8 +52,8 @@ class TestContextClearIntegration(unittest.TestCase):
             try:
                 # Get the context object first
                 if isinstance(context_info, dict):
-                    context_id = context_info['id']
-                    context_name = context_info['name']
+                    context_id = context_info["id"]
+                    context_name = context_info["name"]
                 else:
                     context_id = context_info
                     context_name = None
@@ -79,19 +80,21 @@ class TestContextClearIntegration(unittest.TestCase):
         print(f"\nCreating test context: {context_name}")
 
         result = self.agent_bay.context.create(context_name)
-        self.assertTrue(result.success, f"Failed to create context: {result.error_message}")
+        self.assertTrue(
+            result.success, f"Failed to create context: {result.error_message}"
+        )
         self.assertIsNotNone(result.context)
 
         context = result.context
-        self.test_contexts.append({'id': context.id, 'name': context.name})
+        self.test_contexts.append({"id": context.id, "name": context.name})
         print(f"  ✓ Context created: {context.id}")
 
         # Optionally add some data to the context
         if with_data:
             print(f"  Adding data to context via session...")
             # Create a session with this context to generate some data
-            from agentbay.session_params import CreateSessionParams
-            from agentbay.context_sync import ContextSync
+            from agentbay._common.params.context_sync import ContextSync
+            from agentbay._common.params.session_params import CreateSessionParams
 
             params = CreateSessionParams(
                 context_syncs=[
@@ -119,15 +122,17 @@ class TestContextClearIntegration(unittest.TestCase):
 
     def test_clear_async_success(self):
         """Test async clear operation on a context."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Async Clear Operation")
-        print("="*60)
+        print("=" * 60)
 
         # Create a test context
         context = self._create_test_context()
 
         # Call clear_async (using context ID)
-        print(f"\nInitiating async clear for context: {context.name} (ID: {context.id})")
+        print(
+            f"\nInitiating async clear for context: {context.name} (ID: {context.id})"
+        )
         result = self.agent_bay.context.clear_async(context.id)
 
         # Verify the result
@@ -149,15 +154,17 @@ class TestContextClearIntegration(unittest.TestCase):
 
     def test_clear_sync_success(self):
         """Test synchronous clear operation on a context."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Synchronous Clear Operation")
-        print("="*60)
+        print("=" * 60)
 
         # Create a test context with some data
         context = self._create_test_context(with_data=True)
 
         # Call clear (synchronous, only need context ID)
-        print(f"\nInitiating synchronous clear for context: {context.name} (ID: {context.id})")
+        print(
+            f"\nInitiating synchronous clear for context: {context.name} (ID: {context.id})"
+        )
         print(f"  Timeout: 60 seconds")
         print(f"  Poll interval: 2 seconds")
 
@@ -177,9 +184,9 @@ class TestContextClearIntegration(unittest.TestCase):
 
     def test_clear_sync_with_short_timeout(self):
         """Test synchronous clear with a short timeout."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Synchronous Clear with Short Timeout")
-        print("="*60)
+        print("=" * 60)
 
         # Create a test context
         context = self._create_test_context(with_data=True)
@@ -190,9 +197,7 @@ class TestContextClearIntegration(unittest.TestCase):
         try:
             start_time = time.time()
             result = self.agent_bay.context.clear(
-                context.id,
-                timeout=5,  # Very short timeout
-                poll_interval=1
+                context.id, timeout=5, poll_interval=1  # Very short timeout
             )
             elapsed = time.time() - start_time
 
@@ -212,16 +217,17 @@ class TestContextClearIntegration(unittest.TestCase):
 
     def test_clear_invalid_context(self):
         """Test clear operation on non-existent context."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Clear Operation on Non-Existent Context")
-        print("="*60)
+        print("=" * 60)
 
         invalid_context_id = "non-existent-context-12345"
 
         print(f"\nAttempting to clear non-existent context: {invalid_context_id}")
 
         # This should raise AgentBayError
-        from agentbay.exceptions import AgentBayError
+        from agentbay._common.exceptions import AgentBayError
+
         with self.assertRaises(AgentBayError) as context:
             self.agent_bay.context.clear_async(invalid_context_id)
 
@@ -231,9 +237,9 @@ class TestContextClearIntegration(unittest.TestCase):
 
     def test_clear_multiple_times(self):
         """Test clearing the same context multiple times."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Clear Context Multiple Times")
-        print("="*60)
+        print("=" * 60)
 
         # Create a test context
         context = self._create_test_context()
@@ -255,25 +261,31 @@ class TestContextClearIntegration(unittest.TestCase):
         result2 = self.agent_bay.context.clear(context.id, timeout=30, poll_interval=2)
 
         # Second clear might succeed immediately (already available) or succeed after clearing again
-        self.assertTrue(result2.success or "available" in str(result2.status).lower(),
-                       f"Second clear failed: {result2.error_message}")
+        self.assertTrue(
+            result2.success or "available" in str(result2.status).lower(),
+            f"Second clear failed: {result2.error_message}",
+        )
         print(f"  ✓ Second clear completed")
         print(f"    Status: {result2.status}")
         print(f"    Request ID: {result2.request_id}")
 
     def test_clear_then_use_context(self):
         """Test that a cleared context can still be used."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Use Context After Clearing")
-        print("="*60)
+        print("=" * 60)
 
         # Create a test context with data
         context = self._create_test_context(with_data=True)
 
         # Clear the context
         print(f"\nStep 1: Clearing context...")
-        clear_result = self.agent_bay.context.clear(context.id, timeout=60, poll_interval=2)
-        self.assertTrue(clear_result.success, f"Clear failed: {clear_result.error_message}")
+        clear_result = self.agent_bay.context.clear(
+            context.id, timeout=60, poll_interval=2
+        )
+        self.assertTrue(
+            clear_result.success, f"Clear failed: {clear_result.error_message}"
+        )
         print(f"  ✓ Context cleared successfully")
         print(f"    Status: {clear_result.status}")
         print(f"    Request ID: {clear_result.request_id}")
@@ -285,8 +297,8 @@ class TestContextClearIntegration(unittest.TestCase):
 
         # Try to use the context again
         print(f"\nStep 3: Creating new session with cleared context...")
-        from agentbay.session_params import CreateSessionParams
-        from agentbay.context_sync import ContextSync
+        from agentbay._common.params.context_sync import ContextSync
+        from agentbay._common.params.session_params import CreateSessionParams
 
         params = CreateSessionParams(
             context_syncs=[
@@ -334,9 +346,9 @@ class TestContextClearEdgeCases(unittest.TestCase):
 
     def test_clear_with_custom_poll_interval(self):
         """Test clear with different poll intervals."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Clear with Custom Poll Interval")
-        print("="*60)
+        print("=" * 60)
 
         # Create context
         context_name = f"test-poll-{uuid4().hex[:8]}"
@@ -352,9 +364,7 @@ class TestContextClearEdgeCases(unittest.TestCase):
 
         start_time = time.time()
         result = self.agent_bay.context.clear(
-            context.id,
-            timeout=30,
-            poll_interval=3  # Longer interval
+            context.id, timeout=30, poll_interval=3  # Longer interval
         )
         elapsed = time.time() - start_time
 
@@ -374,12 +384,11 @@ class TestContextClearEdgeCases(unittest.TestCase):
 
 if __name__ == "__main__":
     # Print environment info
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("ENVIRONMENT CONFIGURATION")
-    print("="*60)
+    print("=" * 60)
     print(f"API Key: {'✓ Set' if get_test_api_key() else '✗ Not Set'}")
     print(f"Endpoint: {get_test_endpoint() or 'Using default'}")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     unittest.main(verbosity=2)
-

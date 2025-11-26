@@ -3,8 +3,9 @@
 
 """Integration tests for concurrent session operations."""
 import os
+
 import pytest
-import pytest
+
 from agentbay import AgentBay
 
 
@@ -22,19 +23,18 @@ def test_concurrent_file_operations(agent_bay):
     result = agent_bay.create()
     assert result.success
     session = result.session
-    
+
     fs = session.file_system
-    
+
     # Concurrent writes
     tasks = [
-        fs.write_file(f"/tmp/concurrent_{i}.txt", f"content_{i}")
-        for i in range(5)
+        fs.write_file(f"/tmp/concurrent_{i}.txt", f"content_{i}") for i in range(5)
     ]
     results = asyncio.gather(*tasks)
-    
+
     assert all(r.success for r in results)
     print("Concurrent file operations successful")
-    
+
     session.delete()
 
 
@@ -44,19 +44,14 @@ def test_concurrent_commands(agent_bay):
     result = agent_bay.create()
     assert result.success
     session = result.session
-    
+
     cmd = session.command
-    
+
     # Concurrent commands
-    tasks = [
-        cmd.execute_command(f"echo 'test_{i}'")
-        for i in range(3)
-    ]
+    tasks = [cmd.execute_command(f"echo 'test_{i}'") for i in range(3)]
     results = asyncio.gather(*tasks)
-    
+
     assert all(r.success for r in results)
     print("Concurrent commands executed successfully")
-    
+
     session.delete()
-
-

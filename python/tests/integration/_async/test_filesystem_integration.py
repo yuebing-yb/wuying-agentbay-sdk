@@ -1,11 +1,13 @@
 """Integration tests for filesystem functionality."""
+
 import os
-import pytest
-import pytest_asyncio
 import time
 
+import pytest
+import pytest_asyncio
+
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay._common.params.session_params import CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -49,7 +51,9 @@ async def filesystem_session(agent_bay):
 
 def test_read_file(filesystem_session):
     """Test reading a file."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     test_content = "This is a test file content for ReadFile test."
     test_file_path = "/tmp/test_read.txt"
@@ -66,7 +70,9 @@ def test_read_file(filesystem_session):
 
 def test_write_file(filesystem_session):
     """Test writing to a file."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     test_content = "This is a test file content for WriteFile test."
     test_file_path = "/tmp/test_write.txt"
@@ -83,7 +89,9 @@ def test_write_file(filesystem_session):
 
 def test_create_directory(filesystem_session):
     """Test creating a directory."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     test_dir_path = "/tmp/test_directory"
 
@@ -100,9 +108,13 @@ def test_create_directory(filesystem_session):
 
 def test_edit_file(filesystem_session):
     """Test editing a file."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
-    initial_content = "This is the original content.\nLine to be replaced.\nThis is the final line."
+    initial_content = (
+        "This is the original content.\nLine to be replaced.\nThis is the final line."
+    )
     test_file_path = "/tmp/test_edit.txt"
 
     # Write the initial file
@@ -128,7 +140,9 @@ def test_edit_file(filesystem_session):
 
 def test_get_file_info(filesystem_session):
     """Test getting file information."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     test_content = "This is a test file for GetFileInfo."
     test_file_path = "/tmp/test_info.txt"
@@ -149,7 +163,9 @@ def test_get_file_info(filesystem_session):
 
 def test_list_directory(filesystem_session):
     """Test listing a directory."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     result = fs.list_directory("/tmp/")
     assert result.success
@@ -162,7 +178,9 @@ def test_list_directory(filesystem_session):
 
 def test_move_file(filesystem_session):
     """Test moving a file."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     test_content = "This is a test file for MoveFile."
     source_file_path = "/tmp/test_source.txt"
@@ -188,7 +206,9 @@ def test_move_file(filesystem_session):
 
 def test_read_multiple_files(filesystem_session):
     """Test reading multiple files."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     file1_content = "This is test file 1 content."
     file2_content = "This is test file 2 content."
@@ -210,7 +230,9 @@ def test_read_multiple_files(filesystem_session):
 
 def test_search_files(filesystem_session):
     """Test searching for files using wildcard patterns."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     test_subdir_path = "/tmp/search_test_dir"
     create_dir_result = fs.create_directory(test_subdir_path)
@@ -231,9 +253,7 @@ def test_search_files(filesystem_session):
     # Search for files using wildcard pattern
     search_pattern = "*SEARCHABLE_PATTERN*"
     exclude_patterns = ["ignored_pattern"]
-    result = fs.search_files(
-        test_subdir_path, search_pattern, exclude_patterns
-    )
+    result = fs.search_files(test_subdir_path, search_pattern, exclude_patterns)
     assert result.success
 
     matches = result.matches
@@ -244,7 +264,9 @@ def test_search_files(filesystem_session):
 
 def test_write_and_read_large_file(filesystem_session):
     """Test writing and reading a large file using automatic chunking."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     # Generate approximately 150KB of test content
     line_content = "This is a line of test content for large file testing. It contains enough characters to test the chunking functionality.\n"
@@ -266,9 +288,7 @@ def test_write_and_read_large_file(filesystem_session):
 
     # Verify content
     read_content = result.content
-    print(
-        f"Test 2: File read successful, content length: {len(read_content)} bytes"
-    )
+    print(f"Test 2: File read successful, content length: {len(read_content)} bytes")
     assert len(read_content) == len(large_content)
     assert read_content == large_content
     print("Test 2: File content verification successful")
@@ -288,9 +308,7 @@ def test_write_and_read_large_file(filesystem_session):
 
     # Verify content
     read_content2 = result.content
-    print(
-        f"Test 4: File read successful, content length: {len(read_content2)} bytes"
-    )
+    print(f"Test 4: File read successful, content length: {len(read_content2)} bytes")
     assert len(read_content2) == len(large_content)
     assert read_content2 == large_content
     print("Test 4: Second file content verification successful")
@@ -312,7 +330,9 @@ def test_write_and_read_large_file(filesystem_session):
 
 def test_write_and_read_small_file(filesystem_session):
     """Test writing and reading a small file (should use direct write, not chunking)."""
-    fs = filesystem_session.file_system  # Assuming direct access to file system interface
+    fs = (
+        filesystem_session.file_system
+    )  # Assuming direct access to file system interface
 
     # Generate a small file content (10KB)
     small_content = "x" * (10 * 1024)

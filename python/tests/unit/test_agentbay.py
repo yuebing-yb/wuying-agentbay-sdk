@@ -3,8 +3,11 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, ListSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay._common.params.session_params import (
+    CreateSessionParams,
+    ListSessionParams,
+)
+from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 
 class TestAgentBay(unittest.TestCase):
@@ -112,7 +115,6 @@ class TestAgentBay(unittest.TestCase):
         self.assertIsNotNone(result.session)
         self.assertEqual(result.session.session_id, "new-session-id")
 
-
         # Verify session was added to the internal dictionary
         self.assertIn("new-session-id", agent_bay._sessions)
         self.assertEqual(agent_bay._sessions["new-session-id"], result.session)
@@ -150,9 +152,7 @@ class TestAgentBay(unittest.TestCase):
     @patch("agentbay._sync.agentbay.extract_request_id")
     @patch("agentbay._sync.agentbay._load_config")
     @patch("agentbay._sync.agentbay.mcp_client")
-    def test_list(
-        self, mock_mcp_client, mock_load_config, mock_extract_request_id
-    ):
+    def test_list(self, mock_mcp_client, mock_load_config, mock_extract_request_id):
         """Test listing sessions using the new list API"""
         # Mock configuration and request ID
         mock_load_config.return_value = {
@@ -262,7 +262,9 @@ class TestAgentBay(unittest.TestCase):
     @patch("agentbay._sync.agentbay.extract_request_id")
     @patch("agentbay._sync.agentbay._load_config")
     @patch("agentbay._sync.agentbay.mcp_client")
-    def test_create_session_with_policy_id(self, mock_mcp_client, mock_load_config, mock_extract_request_id):
+    def test_create_session_with_policy_id(
+        self, mock_mcp_client, mock_load_config, mock_extract_request_id
+    ):
         """Ensure policy_id is passed to create_mcp_session body"""
         mock_load_config.return_value = {
             "region_id": "cn-shanghai",
@@ -293,7 +295,11 @@ class TestAgentBay(unittest.TestCase):
         mock_client.create_mcp_session.assert_called_once()
         call_arg = mock_client.create_mcp_session.call_args[0][0]
         # Ensure policy_id is carried on the request object; client will include it in request body
-        self.assertEqual(getattr(call_arg, "mcp_policy_id", None) or getattr(call_arg, "McpPolicyId", None), "policy-xyz")
+        self.assertEqual(
+            getattr(call_arg, "mcp_policy_id", None)
+            or getattr(call_arg, "McpPolicyId", None),
+            "policy-xyz",
+        )
         # Basic success assertion remains; deep body behavior is validated in client integration tests
 
     @patch("agentbay._sync.agentbay._load_config")
@@ -324,20 +330,19 @@ class TestAgentBay(unittest.TestCase):
         # Create mobile configuration
         app_rule = AppManagerRule(
             rule_type="White",
-            app_package_name_list=["com.allowed.app", "com.trusted.service"]
+            app_package_name_list=["com.allowed.app", "com.trusted.service"],
         )
         mobile_config = MobileExtraConfig(
             lock_resolution=True,
             app_manager_rule=app_rule,
             hide_navigation_bar=True,
-            uninstall_blacklist=["com.android.systemui", "com.android.settings"]
+            uninstall_blacklist=["com.android.systemui", "com.android.settings"],
         )
         extra_configs = ExtraConfigs(mobile=mobile_config)
 
         agent_bay = AgentBay(api_key="test-key")
         params = CreateSessionParams(
-            labels={"project": "mobile-testing"},
-            extra_configs=extra_configs
+            labels={"project": "mobile-testing"}, extra_configs=extra_configs
         )
 
         result = agent_bay.create(params)
@@ -345,23 +350,29 @@ class TestAgentBay(unittest.TestCase):
         self.assertIsNotNone(result.session)
         if result.session:
             self.assertEqual(result.session.session_id, "mobile-session-id")
-        
+
         # Verify the client was called with extra configs
         mock_client.create_mcp_session.assert_called_once()
         call_arg = mock_client.create_mcp_session.call_args[0][0]
-        
+
         # Check that extra_configs is present in the request
         self.assertIsNotNone(call_arg.extra_configs)
         self.assertIsNotNone(call_arg.extra_configs.mobile)
         self.assertTrue(call_arg.extra_configs.mobile.lock_resolution)
         self.assertTrue(call_arg.extra_configs.mobile.hide_navigation_bar)
         self.assertEqual(len(call_arg.extra_configs.mobile.uninstall_blacklist), 2)
-        self.assertEqual(call_arg.extra_configs.mobile.app_manager_rule.rule_type, "White")
-        self.assertEqual(len(call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list), 2)
+        self.assertEqual(
+            call_arg.extra_configs.mobile.app_manager_rule.rule_type, "White"
+        )
+        self.assertEqual(
+            len(call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list), 2
+        )
 
     @patch("agentbay._sync.agentbay._load_config")
     @patch("agentbay._sync.agentbay.mcp_client")
-    def test_create_with_mobile_blacklist_config(self, mock_mcp_client, mock_load_config):
+    def test_create_with_mobile_blacklist_config(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test creating a session with mobile blacklist configuration"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -387,18 +398,16 @@ class TestAgentBay(unittest.TestCase):
         # Create mobile blacklist configuration
         app_rule = AppManagerRule(
             rule_type="Black",
-            app_package_name_list=["com.malware.app", "com.blocked.service"]
+            app_package_name_list=["com.malware.app", "com.blocked.service"],
         )
         mobile_config = MobileExtraConfig(
-            lock_resolution=False,
-            app_manager_rule=app_rule
+            lock_resolution=False, app_manager_rule=app_rule
         )
         extra_configs = ExtraConfigs(mobile=mobile_config)
 
         agent_bay = AgentBay(api_key="test-key")
         params = CreateSessionParams(
-            labels={"project": "security-testing"},
-            extra_configs=extra_configs
+            labels={"project": "security-testing"}, extra_configs=extra_configs
         )
 
         result = agent_bay.create(params)
@@ -415,15 +424,24 @@ class TestAgentBay(unittest.TestCase):
         self.assertIsNotNone(call_arg.extra_configs)
         self.assertIsNotNone(call_arg.extra_configs.mobile)
         self.assertFalse(call_arg.extra_configs.mobile.lock_resolution)
-        self.assertEqual(call_arg.extra_configs.mobile.app_manager_rule.rule_type, "Black")
-        self.assertIn("com.malware.app", call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list)
+        self.assertEqual(
+            call_arg.extra_configs.mobile.app_manager_rule.rule_type, "Black"
+        )
+        self.assertIn(
+            "com.malware.app",
+            call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list,
+        )
 
     @patch("agentbay._sync.agentbay.extract_request_id")
     @patch("agentbay._sync.agentbay._load_config")
     @patch("agentbay._sync.agentbay.mcp_client")
     @patch("agentbay._sync.agentbay._log_api_response_with_details")
     def test_create_session_logs_full_resource_url(
-        self, mock_log_api_response, mock_mcp_client, mock_load_config, mock_extract_request_id
+        self,
+        mock_log_api_response,
+        mock_mcp_client,
+        mock_load_config,
+        mock_extract_request_id,
     ):
         """Test that resource_url is logged in full without truncation"""
         # Mock configuration and request ID

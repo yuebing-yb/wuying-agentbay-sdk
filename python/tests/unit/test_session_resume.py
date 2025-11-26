@@ -1,14 +1,15 @@
 """Unit tests for Session resume operations."""
-import unittest
-from unittest.mock import MagicMock, patch, AsyncMock
+
 import asyncio
+import unittest
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._async.agentbay import AsyncAgentBay
 from agentbay._async.session import AsyncSession
-from agentbay.model import (
-    SessionResumeResult,
-    GetSessionResult,
+from agentbay._common.models.response import (
     GetSessionData,
+    GetSessionResult,
+    SessionResumeResult,
 )
 from agentbay.api.models import (
     ResumeSessionAsyncResponse,
@@ -33,7 +34,7 @@ class TestSessionResume(unittest.TestCase):
         self.session.resource_url = ""
 
     def test_resume_async_success_immediate(self):
-        """Test successful async session resume with immediate success. """
+        """Test successful async session resume with immediate success."""
         # Mock the ResumeSessionAsync response
         mock_response = ResumeSessionAsyncResponse()
         mock_response.body = ResumeSessionAsyncResponseBody(
@@ -43,7 +44,9 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.resume_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to return RUNNING immediately
         get_session_running = GetSessionResult(
@@ -57,7 +60,7 @@ class TestSessionResume(unittest.TestCase):
         self.agent_bay.get_session = AsyncMock(return_value=get_session_running)
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method (resume not resume_async for polling)
             result = asyncio.run(self.session.resume(timeout=10, poll_interval=1))
 
@@ -82,7 +85,9 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.resume_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to return RESUMING first, then RUNNING
         get_session_resuming = GetSessionResult(
@@ -102,10 +107,12 @@ class TestSessionResume(unittest.TestCase):
                 status="RUNNING",
             ),
         )
-        self.agent_bay.get_session = AsyncMock(side_effect=[get_session_resuming, get_session_running])
+        self.agent_bay.get_session = AsyncMock(
+            side_effect=[get_session_resuming, get_session_running]
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.resume(timeout=10, poll_interval=1))
 
@@ -130,7 +137,9 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.resume_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to always return RESUMING
         get_session_resuming = GetSessionResult(
@@ -144,7 +153,7 @@ class TestSessionResume(unittest.TestCase):
         self.agent_bay.get_session = AsyncMock(return_value=get_session_resuming)
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method with a short timeout
             result = asyncio.run(self.session.resume(timeout=2, poll_interval=1))
 
@@ -166,7 +175,9 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.resume_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to return failure
         get_session_failure = GetSessionResult(
@@ -177,7 +188,7 @@ class TestSessionResume(unittest.TestCase):
         self.agent_bay.get_session = AsyncMock(return_value=get_session_failure)
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.resume(timeout=2, poll_interval=1))
 
@@ -198,10 +209,12 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=404,
         )
-        self.agent_bay.client.resume_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.resume_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.resume())
 
@@ -209,17 +222,21 @@ class TestSessionResume(unittest.TestCase):
             self.assertIsInstance(result, SessionResumeResult)
             self.assertFalse(result.success)
             self.assertEqual(result.request_id, "test-request-id")
-            self.assertEqual(result.error_message, "[SessionNotFound] Session does not exist")
+            self.assertEqual(
+                result.error_message, "[SessionNotFound] Session does not exist"
+            )
 
     def test_resume_async_empty_response_body(self):
         """Test async session resume with empty response body."""
         # Mock the ResumeSessionAsync response with no body
         mock_response = ResumeSessionAsyncResponse(status_code=200)
         mock_response.body = None
-        self.agent_bay.client.resume_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.resume_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.resume())
 
@@ -227,17 +244,19 @@ class TestSessionResume(unittest.TestCase):
             self.assertIsInstance(result, SessionResumeResult)
             self.assertFalse(result.success)
             self.assertEqual(result.error_message, "Invalid response body")
-            self.assertEqual(result.request_id, '')
+            self.assertEqual(result.request_id, "")
 
     def test_resume_async_invalid_response_format(self):
         """Test async session resume with invalid response format."""
         # Mock the ResumeSessionAsync response with invalid format
         mock_response = MagicMock()
         mock_response.to_map.return_value = None
-        self.agent_bay.client.resume_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.resume_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.resume())
 
@@ -245,15 +264,17 @@ class TestSessionResume(unittest.TestCase):
             self.assertIsInstance(result, SessionResumeResult)
             self.assertFalse(result.success)
             self.assertEqual(result.error_message, "Invalid response format")
-            self.assertEqual(result.request_id, '')
+            self.assertEqual(result.request_id, "")
 
     def test_resume_async_client_exception(self):
         """Test async session resume with client exception."""
         # Mock the client to raise an exception
-        self.agent_bay.client.resume_session_async_async.side_effect = Exception("Network error")
+        self.agent_bay.client.resume_session_async_async.side_effect = Exception(
+            "Network error"
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.resume())
 
@@ -274,7 +295,9 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.resume_session_async_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock get_session to return unexpected state, then RUNNING
         get_session_paused = GetSessionResult(
@@ -294,10 +317,12 @@ class TestSessionResume(unittest.TestCase):
                 status="RUNNING",
             ),
         )
-        self.agent_bay.get_session = AsyncMock(side_effect=[get_session_paused, get_session_running])
+        self.agent_bay.get_session = AsyncMock(
+            side_effect=[get_session_paused, get_session_running]
+        )
 
         # Patch asyncio.sleep to avoid waiting
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
             result = asyncio.run(self.session.resume(timeout=10, poll_interval=1))
 
