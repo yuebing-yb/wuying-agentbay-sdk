@@ -105,7 +105,7 @@ These classes are shared by both synchronous and asynchronous APIs:
 - High concurrency (100+ operations)
 - Performance-critical applications
 
-> 📖 See [Sync vs Async Guide](../../../docs/guides/common-features/sync-vs-async.md) for detailed comparison and [Async Patterns](../../../docs/guides/common-features/async-patterns.md) for best practices.
+> 📖 See [Sync vs Async Guide](../../../docs/guides/async-programming/sync-vs-async.md) for detailed comparison and [Async Patterns](../../../docs/guides/async-programming/async-patterns.md) for best practices.
 
 ---
 
@@ -126,7 +126,7 @@ async def my_function():  # was: def my_function()
 asyncio.run(my_function())
 ```
 
-> 📖 Full migration guide: [Sync vs Async Guide](../../../docs/guides/common-features/sync-vs-async.md)
+> 📖 Full migration guide: [Sync vs Async Guide](../../../docs/guides/async-programming/sync-vs-async.md)
 
 ---
 

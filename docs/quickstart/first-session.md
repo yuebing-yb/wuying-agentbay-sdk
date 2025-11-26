@@ -119,9 +119,9 @@ finally:
 ## 💡 Need Async API?
 
 This quickstart uses synchronous API for simplicity. If you're building a web app or need high concurrency, check out:
-- [Sync vs Async API Comparison](../guides/common-features/sync-vs-async.md) - Detailed comparison and decision guide
-- [Async Patterns Guide](../guides/common-features/async-patterns.md) - Production-ready async patterns
-- [Migration Guide](../guides/migration/async-api-migration.md) - Step-by-step migration from sync to async
+- [Sync vs Async API Comparison](../guides/async-programming/sync-vs-async.md) - Detailed comparison and decision guide
+- [Async Patterns Guide](../guides/async-programming/async-patterns.md) - Production-ready async patterns
+- [Migration Guide](../guides/async-programming/migration.md) - Step-by-step migration from sync to async
 
 ---
 

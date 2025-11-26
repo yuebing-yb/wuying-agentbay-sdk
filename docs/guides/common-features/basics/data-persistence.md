@@ -2,7 +2,7 @@
 
 This guide covers AgentBay SDK's data persistence features, including context concepts, context management, and data synchronization strategies for maintaining state across sessions. Both synchronous and asynchronous APIs are supported.
 
-> **💡 Sync or Async?** This guide shows synchronous examples by default. For asynchronous API usage and concurrent context operations, see the [Sync vs Async Guide](../sync-vs-async.md).
+> **💡 Sync or Async?** This guide shows synchronous examples by default. For asynchronous API usage and concurrent context operations, see the [Sync vs Async Guide](../../async-programming/sync-vs-async.md).
 
 ## 📋 Table of Contents
 

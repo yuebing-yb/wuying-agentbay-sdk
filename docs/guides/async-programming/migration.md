@@ -532,8 +532,8 @@ async def benchmark_async():
 
 ## 📚 Related Documentation
 
-- [Sync vs Async Guide](../common-features/sync-vs-async.md) - Comprehensive comparison
-- [Async Patterns](../common-features/async-patterns.md) - Common async patterns
+- [Sync vs Async Guide](sync-vs-async.md) - Comprehensive comparison
+- [Async Patterns](async-patterns.md) - Common async patterns
 - [Session Management](../common-features/basics/session-management.md) - Session lifecycle
 
 ## 🆘 Getting Help

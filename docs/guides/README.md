@@ -24,6 +24,14 @@ Features available across all environments:
 - [Agent Modules](common-features/advanced/agent-modules.md) - AI-driven automation capabilities
 - [OSS Integration](common-features/advanced/oss-integration.md) - Object Storage Service integration
 
+### Async Programming
+
+Core concepts for building high-performance applications:
+
+- [Sync vs Async Guide](async-programming/sync-vs-async.md) - Comprehensive comparison and decision guide
+- [Async Patterns](async-programming/async-patterns.md) - Common patterns and best practices
+- [Migration Guide](async-programming/migration.md) - Migrating from sync to async API
+
 ### Environment-Specific Features
 
 **[Browser Use](browser-use/README.md)**

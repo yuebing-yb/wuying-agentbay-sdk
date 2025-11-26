@@ -3,8 +3,8 @@
 Welcome to the AgentBay AIBrowser Guides! This provides complete functionality introduction and best practices for experienced developers.
 
 > **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
-> - [Sync vs Async Guide](../common-features/sync-vs-async.md)
-> - [Async Patterns Guide](../common-features/async-patterns.md)
+> - [Sync vs Async Guide](../async-programming/sync-vs-async.md)
+> - [Async Patterns Guide](../async-programming/async-patterns.md)
 
 ## 🎯 Quick Navigation
 

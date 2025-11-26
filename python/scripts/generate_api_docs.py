@@ -478,7 +478,7 @@ def get_see_also_section(module_name: str, metadata: dict[str, Any]) -> str:
     lines = ["## See Also\n"]
 
     # Add link to sync vs async guide
-    lines.append(f"- [Synchronous vs Asynchronous API]({up_levels}docs/guides/common-features/sync-vs-async.md)")
+    lines.append(f"- [Synchronous vs Asynchronous API]({up_levels}docs/guides/async-programming/sync-vs-async.md)")
 
     # Add related resources (other API references)
     module_config = metadata.get('modules', {}).get(module_name, {})
@@ -1128,7 +1128,7 @@ def write_readme() -> None:
         "| **Syntax** | `result = agent.create()` | `result = await agent.create()` |",
         "| **Import** | `from agentbay import AgentBay` | `from agentbay import AsyncAgentBay` |",
         "",
-        "See [Synchronous vs Asynchronous Guide](../guides/common-features/sync-vs-async.md) for detailed comparison.",
+        "See [Synchronous vs Asynchronous Guide](../guides/async-programming/sync-vs-async.md) for detailed comparison.",
         "",
         "---",
         "",

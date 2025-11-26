@@ -2,7 +2,7 @@
 
 This guide provides a complete introduction to file operations in the AgentBay SDK, including basic file operations, directory management, batch operations, permission management, and performance optimization. Both synchronous and asynchronous APIs are supported.
 
-> **💡 Sync or Async?** This guide shows synchronous examples by default. For asynchronous API usage, see the [Sync vs Async Guide](../sync-vs-async.md) for comprehensive comparison and migration patterns. File operations work similarly in both APIs, with async providing benefits for concurrent operations.
+> **💡 Sync or Async?** This guide shows synchronous examples by default. For asynchronous API usage, see the [Sync vs Async Guide](../../async-programming/sync-vs-async.md) for comprehensive comparison and migration patterns. File operations work similarly in both APIs, with async providing benefits for concurrent operations.
 
 ## 📋 Table of Contents
 
@@ -190,7 +190,7 @@ asyncio.run(main())
 
 **Best for**: High concurrency, async projects, web applications
 
-> **Note**: File system methods (`write_file`, `read_file`, etc.) are currently synchronous even in `AsyncAgentBay` sessions. For truly asynchronous file operations, consider using command-based approaches. See [Sync vs Async Guide](../sync-vs-async.md) for details.
+> **Note**: File system methods (`write_file`, `read_file`, etc.) are currently synchronous even in `AsyncAgentBay` sessions. For truly asynchronous file operations, consider using command-based approaches. See [Sync vs Async Guide](../../async-programming/sync-vs-async.md) for details.
 
 </details>
 

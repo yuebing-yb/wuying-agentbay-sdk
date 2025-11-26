@@ -4,7 +4,7 @@ This guide covers command execution capabilities in AgentBay SDK. The command mo
 
 > **💡 Async API Support**: This guide uses synchronous API by default. For async/await syntax and concurrent execution patterns, see:
 > - [Async-Specific Patterns](#async-specific-patterns) - Concurrent command execution
-> - [Sync vs Async Guide](../sync-vs-async.md) - Comprehensive comparison
+> - [Sync vs Async Guide](../../async-programming/sync-vs-async.md) - Comprehensive comparison
 
 ## 📋 Table of Contents
 
@@ -343,8 +343,8 @@ asyncio.run(main())
 
 ## 📚 Related Documentation
 
-- [Sync vs Async Guide](../sync-vs-async.md) - Comprehensive comparison and decision guide
-- [Async Patterns Guide](../async-patterns.md) - Advanced async patterns and best practices
+- [Sync vs Async Guide](../../async-programming/sync-vs-async.md) - Comprehensive comparison and decision guide
+- [Async Patterns Guide](../../async-programming/async-patterns.md) - Advanced async patterns and best practices
 - [Code Execution (CodeSpace)](../../codespace/code-execution.md) - Python, JavaScript code execution
 - [File Operations](file-operations.md) - File handling and management
 - [Session Management](session-management.md) - Session lifecycle

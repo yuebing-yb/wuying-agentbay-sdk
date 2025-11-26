@@ -8,7 +8,7 @@ BROWSER_RECORD_PATH = "/home/guest/record"
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/common-features/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 ---
 
