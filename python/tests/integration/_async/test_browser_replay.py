@@ -86,39 +86,20 @@ class TestBrowserRecordIntegration(unittest.TestCase):
 
     def tearDown(self):
         """Tear down test fixtures."""
-        import signal
-        import sys
-
-        def signal_handler(sig, frame):
-            print("\nReceived Ctrl+C, cleaning up: Deleting the session...")
-            try:
-                if self.session:
-                    delete_result = self.agent_bay.delete(self.session)
-                    if delete_result.success:
-                        print("Session deleted successfully")
-                    else:
-                        print(
-                            f"Warning: Error deleting session: {delete_result.error_message}"
-                        )
-                else:
-                    print("No session to delete")
-            except Exception as e:
-                print(f"Warning: Unexpected error deleting session: {e}")
-            sys.exit(0)
-
-        # Register the signal handler for Ctrl+C
-        signal.signal(signal.SIGINT, signal_handler)
-
-        print("Test completed. Session is kept alive.")
-        print("Press Ctrl+C to delete the session and exit...")
-
+        print("Cleaning up: Deleting the session...")
         try:
-            # Sleep continuously until Ctrl+C is received
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            # This should be handled by the signal handler, but just in case
-            signal_handler(signal.SIGINT, None)
+            if self.session:
+                delete_result = self.agent_bay.delete(self.session)
+                if delete_result.success:
+                    print("Session deleted successfully")
+                else:
+                    print(
+                        f"Warning: Error deleting session: {delete_result.error_message}"
+                    )
+            else:
+                print("No session to delete")
+        except Exception as e:
+            print(f"Warning: Unexpected error deleting session: {e}")
 
     def test_browser_record_operations(self):
         """Test browser operations with recording enabled."""
