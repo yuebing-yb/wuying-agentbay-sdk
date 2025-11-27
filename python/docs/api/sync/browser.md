@@ -203,15 +203,6 @@ print(f"CDP Endpoint: {endpoint_url}")
 session.delete()
 ```
 
-### get\_endpoint\_url\_async
-
-```python
-def get_endpoint_url_async() -> str
-```
-
-Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
-When initialized, always fetches the latest CDP url from session.get_link().
-
 ### get\_option
 
 ```python

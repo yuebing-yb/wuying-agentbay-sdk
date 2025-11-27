@@ -178,7 +178,7 @@ Takes a screenshot of the specified page with enhanced options and error handlin
 ### get\_endpoint\_url
 
 ```python
-def get_endpoint_url() -> str
+async def get_endpoint_url() -> str
 ```
 
 Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
@@ -200,19 +200,10 @@ When initialized, always fetches the latest CDP url from session.get_link().
 session = await agent_bay.create().session
 browser_option = BrowserOption()
 await session.browser.initialize(browser_option)
-endpoint_url = session.browser.get_endpoint_url()
+endpoint_url = await session.browser.get_endpoint_url()
 print(f"CDP Endpoint: {endpoint_url}")
 await session.delete()
 ```
-
-### get\_endpoint\_url\_async
-
-```python
-async def get_endpoint_url_async() -> str
-```
-
-Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
-When initialized, always fetches the latest CDP url from session.get_link().
 
 ### get\_option
 

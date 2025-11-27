@@ -74,9 +74,9 @@ async def test_list_nested_directory(test_session):
     # List parent directory
     result = await fs.list_directory("/tmp/list_nest")
     assert result.success
-    assert len(result.files) == 2
+    assert len(result.entries) == 2
 
-    names = {f.name for f in result.files}
+    names = {f["name"] for f in result.entries}
     assert "file1.txt" in names
     assert "subdir" in names
     print("Nested directory listing successful")
