@@ -57,7 +57,7 @@ def test_start_app(session):
     print("\nTest: Starting Settings app...")
 
     # Act - Start Settings app
-    result = session.mobile.start_app("com.android.settings")
+    result = session.mobile.start_app("monkey -p com.android.settings 1")
 
     # Assert
     assert result.success, f"Start app failed: {result.error_message}"

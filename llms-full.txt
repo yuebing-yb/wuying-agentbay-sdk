@@ -21044,7 +21044,7 @@ optional activity.
 
 ```python
 session = agent_bay.create(image="mobile_latest").session
-processes = session.mobile.start_app("com.android.settings")
+processes = session.mobile.start_app("monkey -p com.android.settings 1")
 print(f"Started {len(processes.data)} process(es)")
 session.delete()
 ```

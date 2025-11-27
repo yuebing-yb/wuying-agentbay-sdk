@@ -506,7 +506,7 @@ class Mobile(BaseService):
         Example:
             ```python
             session = await agent_bay.create(image="mobile_latest").session
-            processes = await session.mobile.start_app("com.android.settings")
+            processes = await session.mobile.start_app("monkey -p com.android.settings 1")
             print(f"Started {len(processes.data)} process(es)")
             await session.delete()
             ```
