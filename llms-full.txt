@@ -5914,7 +5914,7 @@ After initialization, upload files from the session to your OSS bucket:
 upload_result = session.oss.upload(
     bucket="my-bucket-name",
     object="data/report.pdf",  # Object key in OSS
-    path="/home/guest/report.pdf"  # Local path in session
+    path="/home/wuying/report.pdf"  # Local path in session
 )
 
 if upload_result.success:
@@ -5944,14 +5944,14 @@ Download files from your OSS bucket to the session:
 download_result = session.oss.download(
     bucket="my-bucket-name",
     object="data/report.pdf",  # Object key in OSS
-    path="/home/guest/downloaded_report.pdf"  # Local path to save
+    path="/home/wuying/downloaded_report.pdf"  # Local path to save
 )
 
 if download_result.success:
     print(f"File downloaded successfully: {download_result.content}")
     print(f"Request ID: {download_result.request_id}")
     
-    file_info = session.file_system.get_file_info("/home/guest/downloaded_report.pdf")
+    file_info = session.file_system.get_file_info("/home/wuying/downloaded_report.pdf")
     if file_info.success:
         print(f"Downloaded file size: {file_info.size} bytes")
 else:
@@ -5981,7 +5981,7 @@ Upload a file to a presigned upload URL:
 ```python
 upload_result = session.oss.upload_anonymous(
     url="https://example.com/upload/file.txt",  # Presigned upload URL
-    path="/home/guest/file.txt"  # Local file to upload
+    path="/home/wuying/file.txt"  # Local file to upload
 )
 
 if upload_result.success:
@@ -6003,7 +6003,7 @@ Download a file from a public URL or presigned download URL:
 ```python
 download_result = session.oss.download_anonymous(
     url="https://example.com/files/document.pdf",  # Public or presigned URL
-    path="/home/guest/document.pdf"  # Local path to save
+    path="/home/wuying/document.pdf"  # Local path to save
 )
 
 if download_result.success:
@@ -6054,7 +6054,7 @@ try:
     print("✓ OSS environment initialized")
     
     session.file_system.write_file(
-        path="/home/guest/data.txt",
+        path="/home/wuying/data.txt",
         content="Hello from AgentBay!",
         mode="overwrite"
     )
@@ -6063,7 +6063,7 @@ try:
     upload_result = session.oss.upload(
         bucket="my-bucket",
         object="agentbay/data.txt",
-        path="/home/guest/data.txt"
+        path="/home/wuying/data.txt"
     )
     
     if upload_result.success:
@@ -6074,13 +6074,13 @@ try:
     download_result = session.oss.download(
         bucket="my-bucket",
         object="agentbay/data.txt",
-        path="/home/guest/downloaded_data.txt"
+        path="/home/wuying/downloaded_data.txt"
     )
     
     if download_result.success:
         print(f"✓ File downloaded from OSS: {download_result.content}")
         
-        content_result = session.file_system.read_file("/home/guest/downloaded_data.txt")
+        content_result = session.file_system.read_file("/home/wuying/downloaded_data.txt")
         if content_result.success:
             print(f"✓ File content: {content_result.content}")
     else:
@@ -6127,16 +6127,16 @@ Upload session data to OSS for long-term storage:
 ```python
 import time
 
-session.file_system.create_directory("/home/guest/backup")
+session.file_system.create_directory("/home/wuying/backup")
 
 json_data = '{"key": "value"}'
-session.file_system.write_file("/home/guest/backup/data.json", json_data, "overwrite")
+session.file_system.write_file("/home/wuying/backup/data.json", json_data, "overwrite")
 
 timestamp = int(time.time())
 upload_result = session.oss.upload(
     bucket="backup-bucket",
     object=f"backups/{timestamp}/data.json",
-    path="/home/guest/backup/data.json"
+    path="/home/wuying/backup/data.json"
 )
 ```
 
@@ -6148,18 +6148,18 @@ Download data from OSS, process it, and upload results:
 session.oss.download(
     bucket="input-bucket",
     object="raw/data.csv",
-    path="/home/guest/input.csv"
+    path="/home/wuying/input.csv"
 )
 
 result = session.code.run_code(
     language="python",
     code="""
-with open('/home/guest/input.csv', 'r') as f:
+with open('/home/wuying/input.csv', 'r') as f:
     lines = f.readlines()
     
 processed_lines = [line.upper() for line in lines]
 
-with open('/home/guest/output.csv', 'w') as f:
+with open('/home/wuying/output.csv', 'w') as f:
     f.writelines(processed_lines)
 """
 )
@@ -6167,7 +6167,7 @@ with open('/home/guest/output.csv', 'w') as f:
 session.oss.upload(
     bucket="output-bucket",
     object="processed/data.csv",
-    path="/home/guest/output.csv"
+    path="/home/wuying/output.csv"
 )
 ```
 
@@ -6178,10 +6178,10 @@ Use anonymous download to access public files:
 ```python
 download_result = session.oss.download_anonymous(
     url="https://public-bucket.oss-cn-hangzhou.aliyuncs.com/dataset.zip",
-    path="/home/guest/dataset.zip"
+    path="/home/wuying/dataset.zip"
 )
 
-session.command.execute_command("unzip /home/guest/dataset.zip -d /home/guest/data/")
+session.command.execute_command("unzip /home/wuying/dataset.zip -d /home/wuying/data/")
 ```
 
 ## Best Practices
@@ -6189,7 +6189,7 @@ session.command.execute_command("unzip /home/guest/dataset.zip -d /home/guest/da
 1. **Use STS Temporary Credentials**: Always use STS temporary credentials with limited validity and minimal permissions
 2. **Always Initialize First**: Call `env_init()` with all three required credentials (`access_key_id`, `access_key_secret`, `securityToken`) before any other OSS operations
 3. **Handle Errors**: Check `success` field and handle `error_message` appropriately
-4. **Use Absolute Paths**: Use absolute paths for file operations (e.g., `/home/guest/file.txt`)
+4. **Use Absolute Paths**: Use absolute paths for file operations (e.g., `/home/wuying/file.txt`)
 5. **Secure Credentials**: Never hardcode credentials; use environment variables or secure vaults
 6. **Token Refresh**: Monitor STS token expiration and refresh tokens before they expire
 7. **Clean Up**: Delete sessions after completing OSS operations to avoid charges

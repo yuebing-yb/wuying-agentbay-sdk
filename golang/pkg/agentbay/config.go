@@ -158,7 +158,7 @@ func loadConfigCompat(cfg *Config) Config {
 
 // BrowserRecordPath is the path constant for browser recording data.
 // This path is used when syncing browser recording context during session deletion.
-const BrowserRecordPath = "/home/guest/record"
+const BrowserRecordPath = "/home/wuying/record"
 
 // configManager implementation for backward compatibility
 type configManager struct{}

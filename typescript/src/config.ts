@@ -20,7 +20,7 @@ const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
 /**
  * Browser recording path constant
  */
-export const BROWSER_RECORD_PATH = "/home/guest/record";
+export const BROWSER_RECORD_PATH = "/home/wuying/record";
 
 /**
  * Returns the default configuration
