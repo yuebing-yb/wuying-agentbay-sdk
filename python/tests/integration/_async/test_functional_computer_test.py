@@ -12,7 +12,7 @@ import pytest_asyncio
 
 from agentbay import AsyncAgentBay
 from agentbay._common.params.session_params import CreateSessionParams
-from ..functional_helpers import (
+from .._common.functional_helpers import (
     FunctionalTestResult,
     default_functional_test_config,
     validate_cursor_position,
