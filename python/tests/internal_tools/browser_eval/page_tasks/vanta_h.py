@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict
 
-from mcp_server.page_agent import PageAgent
+from ..page_agent import PageAgent
 
 
 async def run(

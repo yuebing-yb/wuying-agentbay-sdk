@@ -12,10 +12,10 @@ from agentbay import AgentBay
 from agentbay._common.logger import get_logger
 from agentbay._common.models.response import SessionResult
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.browser import (
+from agentbay._sync.browser import BrowserOption
+from agentbay._sync.browser_agent import (
     ActOptions,
     ActResult,
-    BrowserOption,
     ExtractOptions,
     ObserveOptions,
     ObserveResult,
@@ -116,18 +116,27 @@ class PageAgent:
                         )
                         promise.result()
 
-                    # Get pwd
-                    # Find and modify all py files under page_tasks, replace mcp_server.page_agent with agentbay.browser.eval.page_agent in py files
-                    pwd = os.getcwd()
-                    for file in os.listdir(f"{pwd}/page_tasks"):
+                    # Get the directory of the current script to find the page_tasks directory
+                    # Since we've already updated module paths above to use relative imports,
+                    # we can skip this replacement or update it to keep relative imports
+                    script_dir = os.path.dirname(os.path.abspath(__file__))
+                    page_tasks_dir = os.path.join(script_dir, "page_tasks")
+                    for file in os.listdir(page_tasks_dir):
                         if file.endswith(".py") and file != "__init__.py":
-                            with open(f"{pwd}/page_tasks/{file}", "r") as f:
+                            file_path = os.path.join(page_tasks_dir, file)
+                            with open(file_path, "r") as f:
                                 content = f.read()
+                            # Replace old import style with relative import to maintain consistency
                             content = content.replace(
-                                "mcp_server.page_agent",
-                                "agentbay.browser.eval.page_agent",
+                                "mcp_server.page_agent",  # The original import
+                                "agentbay.browser.eval.page_agent", # But we want relative: "..page_agent"
                             )
-                            with open(f"{pwd}/page_tasks/{file}", "w") as f:
+                            # Actually keep relative imports to avoid circular import issues in this context
+                            content = content.replace(
+                                "agentbay.browser.eval.page_agent",  # Our earlier update
+                                "..page_agent",  # Use relative reference instead
+                            )
+                            with open(file_path, "w") as f:
                                 f.write(content)
 
                     _logger.info("Import page_tasks successfully")

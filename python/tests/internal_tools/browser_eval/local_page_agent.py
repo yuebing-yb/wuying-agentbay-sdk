@@ -11,7 +11,7 @@ from agentbay._common.logger import get_logger
 from agentbay._sync.browser import Browser, BrowserOption
 from agentbay._sync.session import Session
 from agentbay.api.base_service import OperationResult
-from agentbay.browser.browser_agent import BrowserAgent
+from agentbay._sync.browser_agent import BrowserAgent
 
 # Use the AgentBay _logger instead of the standard _logger
 _logger = get_logger("local_page_agent")
@@ -164,6 +164,68 @@ class LocalPageAgent(BrowserAgent):
     def initialize(self):
         self.mcp_client.connect()
 
+    async def act_async(self, action_input, page=None):
+        """Async wrapper for the act method"""
+        # For local execution, we use direct Playwright calls if browser is available
+        # Otherwise fallback to the standard synchronous act method
+        try:
+            if isinstance(action_input, str):
+                action_options = ActOptions(action=action_input)
+            else:
+                action_options = action_input
+
+            result = self.act(action_options, page)
+            return result
+        except Exception as e:
+            # Fallback to synchronous method
+            _logger.warning(f"act_async fallback due to error: {e}")
+            if isinstance(action_input, str):
+                action_options = ActOptions(action=action_input)
+            else:
+                action_options = action_input
+            result = self.act(action_options, page)
+            return result
+
+    async def navigate_async(self, url: str) -> str:
+        """Async wrapper for navigate method"""
+        try:
+            result = self.navigate(url)
+            return result
+        except Exception as e:
+            _logger.warning(f"navigate_async fallback due to error: {e}")
+            result = self.navigate(url)
+            return result
+
+    async def extract_async(self, options, page=None):
+        """Async wrapper for extract method"""
+        try:
+            result = self.extract(options, page)
+            return result
+        except Exception as e:
+            _logger.warning(f"extract_async fallback due to error: {e}")
+            result = self.extract(options, page)
+            return result
+
+    async def observe_async(self, options, page=None):
+        """Async wrapper for observe method"""
+        try:
+            result = self.observe(options, page)
+            return result
+        except Exception as e:
+            _logger.warning(f"observe_async fallback due to error: {e}")
+            result = self.observe(options, page)
+            return result
+
+    async def screenshot_async(self, page=None):
+        """Async wrapper for screenshot method"""
+        try:
+            result = self.screenshot(page)
+            return result
+        except Exception as e:
+            _logger.warning(f"screenshot_async fallback due to error: {e}")
+            result = self.screenshot(page)
+            return result
+
     def _call_mcp_tool(
         self,
         name: str,
@@ -171,23 +233,16 @@ class LocalPageAgent(BrowserAgent):
         read_timeout: int = None,
         connect_timeout: int = None,
     ) -> OperationResult:
-        if not self.mcp_client:
-            # Call session's public method instead of BaseService's deprecated method
-            result = self.session.call_mcp_tool(
-                name, args, read_timeout, connect_timeout
-            )
-            # Convert McpToolResult to OperationResult for compatibility
-            return OperationResult(
-                request_id=result.request_id,
-                success=result.success,
-                data=result.data,
-                error_message=result.error_message,
-            )
+        # If MCP client is not available or local mode, return a failed OperationResult
+        # This avoids issues when no actual MCP server is running
+        error_message = f"Local mode - cannot execute tool: {name}. Browser evaluation is running in local mode."
 
-        target_loop = self.mcp_client._loop
-        coro = self._call_mcp_tool_async(name, args)
-        fut = asyncio.run_coroutine_threadsafe(coro, target_loop)
-        return fut.result()
+        return OperationResult(
+            request_id="local_request_mock_id",
+            success=False,
+            data=None,
+            error_message=error_message
+        )
 
     async def _call_mcp_tool_async(self, name: str, args: dict) -> OperationResult:
         if not self.mcp_client:
@@ -269,8 +324,38 @@ class LocalBrowser(Browser):
 
 class LocalSession(Session):
     def __init__(self):
-        super().__init__(None, "local_session")
+        # Create a mock agent_bay with the required attributes
+        mock_agent_bay = type('MockAgentBay', (), {
+            'api_key': os.environ.get("AGENTBAY_API_KEY", ""),
+            'api_key_configured': bool(os.environ.get("AGENTBAY_API_KEY", ""))
+        })()
+        mock_client = type('MockClient', (), {
+            'api_base_url': '',
+            'get_session_status': lambda request: type('MockSessionStatus', (), {
+                'to_map': lambda: {'success': True, 'data': {'status': 'running'}}
+            })(),
+            'call_mcp_tool': lambda name, args, **kwargs: type('MockMcpToolResult', (), {
+                'request_id': 'mock_request_id',
+                'success': False,
+                'data': None,
+                'error_message': 'Mock mode: Cannot execute tool calls without proper API connection'
+            })()
+        })()
+
+        # Assign the mock client to the mock agent bay
+        mock_agent_bay.client = mock_client
+
+        super().__init__(mock_agent_bay, "local_session")
         self.browser = LocalBrowser(self)
+
+    def call_mcp_tool(self, name: str, args: dict, read_timeout: int = None, connect_timeout: int = None):
+        # Return a mock tool result that indicates the operation isn't supported in local mode
+        return type('OperationResult', (), {
+            'request_id': 'mock_request_id',
+            'success': False,
+            'data': None,
+            'error_message': 'Local mode: Cannot execute MCP tools without connection'
+        })()
 
     def delete(self, sync_context: bool = False) -> None:
         pass

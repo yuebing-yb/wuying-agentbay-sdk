@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from agentbay._common.logger import get_logger
 from agentbay._sync.browser import ActOptions
-from agentbay.browser.eval.page_agent import PageAgent
+from ..page_agent import PageAgent
 
 _logger = get_logger(__name__)
 

@@ -2,7 +2,7 @@ import logging
 import re
 from typing import Any, Dict
 
-from mcp_server.page_agent import PageAgent
+from ..page_agent import PageAgent
 from pydantic import BaseModel, Field
 
 
