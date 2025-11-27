@@ -34,7 +34,7 @@ _BROWSER_DATA_PATH = "/tmp/agentbay_browser"
 # Browser fingerprint persistent path constant
 _BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint"
 # Browser recording path constant
-BROWSER_RECORD_PATH = "/home/guest/record"
+BROWSER_RECORD_PATH = "/home/wuying/record"
 
 
 def _find_dotenv_file(start_path: Optional[Path] = None) -> Optional[Path]:

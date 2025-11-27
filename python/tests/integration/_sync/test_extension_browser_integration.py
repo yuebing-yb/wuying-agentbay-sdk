@@ -800,7 +800,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             # Initialize browser with extensions directory explicitly set
             browser_option = BrowserOption(extension_path="/tmp/extensions/")
 
-            init_success = session.browser.initialize_async(browser_option)
+            init_success = session.browser.initialize(browser_option)
 
             if not init_success:
                 print("  ❌ Browser initialization failed")

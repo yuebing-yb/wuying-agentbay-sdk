@@ -80,7 +80,7 @@ class TestBrowserTypeIntegration(unittest.TestCase):
 
         # Initialize browser
         print("Initializing browser with default options...")
-        success = self.session.browser.initialize_async(browser_option)
+        success = self.session.browser.initialize(browser_option)
         self.assertTrue(success, "Failed to initialize browser")
         print("Browser initialized successfully")
 
@@ -106,7 +106,7 @@ class TestBrowserTypeIntegration(unittest.TestCase):
 
         # Initialize browser
         print("Initializing browser with Chrome type...")
-        success = self.session.browser.initialize_async(browser_option)
+        success = self.session.browser.initialize(browser_option)
         self.assertTrue(success, "Failed to initialize browser with Chrome type")
         print("Browser initialized successfully with Chrome")
 
@@ -132,7 +132,7 @@ class TestBrowserTypeIntegration(unittest.TestCase):
 
         # Initialize browser
         print("Initializing browser with explicit Chromium type...")
-        success = self.session.browser.initialize_async(browser_option)
+        success = self.session.browser.initialize(browser_option)
         self.assertTrue(success, "Failed to initialize browser with Chromium type")
         print("Browser initialized successfully with Chromium")
 
@@ -190,7 +190,7 @@ class TestBrowserTypeIntegration(unittest.TestCase):
 
         # Initialize browser
         print("Initializing browser with Chrome type and other options...")
-        success = self.session.browser.initialize_async(browser_option)
+        success = self.session.browser.initialize(browser_option)
         self.assertTrue(
             success, "Failed to initialize browser with Chrome and other options"
         )
@@ -251,7 +251,7 @@ class TestBrowserTypeIntegration(unittest.TestCase):
             # Test Chrome browser type with standard image (should still work)
             browser_option = BrowserOption(browser_type="chrome")
             print("Initializing browser with Chrome type on standard image...")
-            success = session.browser.initialize_async(browser_option)
+            success = session.browser.initialize(browser_option)
             self.assertTrue(
                 success,
                 "Failed to initialize browser with Chrome type on standard image",

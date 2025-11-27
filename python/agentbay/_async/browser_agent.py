@@ -296,7 +296,7 @@ class AsyncBrowserAgent(AsyncBaseService):
 
         response = await self._call_mcp_tool_timeout("page_use_act_async", args)
         if not response.success:
-            raise BrowserError("Failed to start act task")
+            raise BrowserError(f"Failed to start act task: {response.error_message}")
 
         # Parse task_id from response
         try:

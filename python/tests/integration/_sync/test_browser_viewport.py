@@ -37,7 +37,7 @@ def test_browser_viewport_size(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     page = playwright_browser.new_page()
@@ -62,7 +62,7 @@ def test_browser_mobile_viewport(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     page = playwright_browser.new_page()

@@ -40,7 +40,7 @@ def test_browser_set_cookie(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     context = playwright_browser.contexts[0]
@@ -74,7 +74,7 @@ def test_browser_clear_cookies(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     context = playwright_browser.contexts[0]

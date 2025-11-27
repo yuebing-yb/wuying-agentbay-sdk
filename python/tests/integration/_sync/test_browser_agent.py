@@ -84,7 +84,7 @@ def test_initialize_browser(browser_session):
     init_result = browser.initialize(BrowserOption())
     assert init_result is True
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
@@ -121,7 +121,7 @@ def test_initialize_browser_with_fingerprint(browser_session):
     init_result = browser.initialize(option)
     assert init_result is True
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
@@ -163,7 +163,7 @@ def test_initialize_browser_with_captchas(browser_session):
     )
     browser.initialize(option)
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
@@ -205,7 +205,7 @@ def test_act_success(browser_session):
 
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
@@ -233,7 +233,7 @@ def test_observe_success(browser_session):
 
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
@@ -266,7 +266,7 @@ def test_extract_success(browser_session):
 
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
@@ -308,7 +308,7 @@ def test_restricted_proxy_ip_comparison(browser_session):
     no_proxy_option = BrowserOption()
     browser.initialize(no_proxy_option)
     
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     print(f"endpoint_url = {endpoint_url}")
     assert endpoint_url is not None
     
@@ -371,7 +371,7 @@ def test_restricted_proxy_ip_comparison(browser_session):
         assert saved_option.proxies[0].strategy == "restricted"
         print("✓ proxy config validation success")
         
-        endpoint_url2 = browser2.get_endpoint_url_async()
+        endpoint_url2 = browser2.get_endpoint_url()
         print(f"proxy mode endpoint_url = {endpoint_url2}")
         
         time.sleep(5)
@@ -439,7 +439,7 @@ def test_polling_proxy_multiple_ips(browser_session):
     assert saved_option.proxies[0].pollsize == 10
     print("✓ polling proxy config validation success (pollsize=10)")
     
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     print(f"endpoint_url = {endpoint_url}")
     
     time.sleep(5)

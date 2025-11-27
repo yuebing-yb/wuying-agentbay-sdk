@@ -119,7 +119,7 @@ class TestBrowserContextIntegration(unittest.TestCase):
             print("Step 3: Initializing browser and getting browser object...")
 
             # Initialize browser
-            init_success = session1.browser.initialize_async(BrowserOption())
+            init_success = session1.browser.initialize(BrowserOption())
             self.assertTrue(init_success, "Failed to initialize browser")
             print("Browser initialized successfully")
 
@@ -178,7 +178,7 @@ class TestBrowserContextIntegration(unittest.TestCase):
                 print("Wait completed")
 
         # Run first session operations
-        asyncio.run(first_session_operations())
+        first_session_operations()
 
         # Step 5: Release session with syncContext=True
         print("Step 5: Releasing first session with syncContext=True...")
@@ -212,7 +212,7 @@ class TestBrowserContextIntegration(unittest.TestCase):
             )
 
             # Initialize browser
-            init_success = session2.browser.initialize_async(BrowserOption())
+            init_success = session2.browser.initialize(BrowserOption())
             self.assertTrue(
                 init_success, "Failed to initialize browser in second session"
             )
@@ -289,7 +289,7 @@ class TestBrowserContextIntegration(unittest.TestCase):
                 print("Second session browser operations completed")
 
         # Run second session operations
-        asyncio.run(second_session_operations())
+        second_session_operations()
 
         print("Browser context manual cookie persistence test completed successfully!")
 

@@ -120,7 +120,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
 
             # Sync Windows session to upload data
             print("Syncing Windows session to upload data...")
-            windows_sync_result = asyncio.run(windows_session.context.sync())
+            windows_sync_result = windows_session.context.sync()
             self.assertTrue(windows_sync_result.success)
             print(
                 f"Windows context sync successful (RequestID: {windows_sync_result.request_id})"

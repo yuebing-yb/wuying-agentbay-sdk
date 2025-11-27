@@ -11,7 +11,7 @@ Configuration object for AgentBay client.
 #### BROWSER\_RECORD\_PATH
 
 ```python
-BROWSER_RECORD_PATH = "/home/guest/record"
+BROWSER_RECORD_PATH = "/home/wuying/record"
 ```
 
 ## See Also

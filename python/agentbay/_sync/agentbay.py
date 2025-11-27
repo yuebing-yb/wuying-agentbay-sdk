@@ -550,7 +550,7 @@ class AgentBay:
                 from ..api.models import CreateMcpSessionRequestPersistenceDataList
 
                 # Create browser recording persistence configuration
-                record_path = "/home/guest/record"
+                record_path = "/home/wuying/record"
                 record_context_name = _generate_random_context_name()
                 result = self.context.get(record_context_name, True)
                 record_context_id = result.context_id if result.success else ""

@@ -1,6 +1,7 @@
 import os
 import sys
 import unasync
+import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AGENTBAY_DIR = os.path.join(ROOT, "agentbay")
@@ -50,11 +51,13 @@ def generate_sync():
 
         # Variable/Attribute Renames
         "init_browser_async": "init_browser",
+        "initialize_async": "initialize",
         "call_mcp_tool_async": "call_mcp_tool",
         "call_mcp_tool_with_options_async": "call_mcp_tool_with_options",
         "release_mcp_session_async": "release_mcp_session",
         "create_mcp_session_async": "create_mcp_session",
         "get_cdp_link_async": "get_cdp_link",
+        "get_endpoint_url_async": "get_endpoint_url",
         "get_context_info_async": "get_context_info",
         "sync_context_async": "sync_context",
         "get_mcp_resource_async": "get_mcp_resource",
@@ -77,6 +80,7 @@ def generate_sync():
         "get_context_file_download_url_async": "get_context_file_download_url",
         "get_context_file_upload_url_async": "get_context_file_upload_url",
         "get_cdp_link_async": "get_cdp_link",
+        "get_endpoint_url_async": "get_endpoint_url",
         "get_context_info_async": "get_context_info",
         "get_label_async": "get_label",
         "get_session_async": "get_session",
@@ -101,6 +105,8 @@ def generate_sync():
         "_scroll_to_load_all_content_async": "_scroll_to_load_all_content",
         "page_use_act_async": "page_use_act",
         "page_use_extract_async": "page_use_extract",
+        "page_use_observe_async": "page_use_observe",
+        "page_use_screenshot_async": "page_use_screenshot",
 
         # Agent specific
         "async_execute_task": "async_execute_task",
@@ -183,11 +189,13 @@ def generate_sync():
                     # Custom Replacements
                     # Force replace asyncio.sleep if unasync missed it (common with await removal)
                     content = content.replace("asyncio.sleep", "time.sleep")
-                    content = content.replace("asyncio.gather(*tasks)", "tasks")
+                    # Replace asyncio.gather(*tasks) with a list comprehension to keep the expression valid
+                    content = content.replace("asyncio.gather(*tasks)", "[task for task in tasks]")
+                    # Replace asyncio.run(func()) with func() - simple case for no nested parens
+                    content = re.sub(r'asyncio\.run\(([^)]+\))\)', r'\1', content)
 
                     # Remove asyncio.to_thread() calls - convert to direct function calls
                     # Pattern: asyncio.to_thread(func, arg1, arg2, ...) -> func(arg1, arg2, ...)
-                    import re
                     content = re.sub(r'asyncio\.to_thread\(\s*([^,\)]+),\s*', r'\1(', content)
                     # Also handle asyncio.to_thread with no comma (single arg)
                     content = re.sub(r'asyncio\.to_thread\(([^)]+)\)', r'\1', content)

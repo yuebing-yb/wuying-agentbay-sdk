@@ -40,7 +40,7 @@ def test_browser_navigate_to_url(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     assert endpoint_url is not None
 
     p = sync_playwright().start()
@@ -66,7 +66,7 @@ def test_browser_multiple_pages(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
 
@@ -98,7 +98,7 @@ def test_browser_page_title(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
 
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     p = sync_playwright().start()
     playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
     page = playwright_browser.new_page()

@@ -32,7 +32,7 @@ def test_concurrent_file_operations(agent_bay):
     tasks = [
         fs.write_file(f"/tmp/concurrent_{i}.txt", f"content_{i}") for i in range(5)
     ]
-    results = tasks
+    results = [task for task in tasks]
 
     assert all(r.success for r in results)
     print("Concurrent file operations successful")
@@ -51,7 +51,7 @@ def test_concurrent_commands(agent_bay):
 
     # Concurrent commands
     tasks = [cmd.execute_command(f"echo 'test_{i}'") for i in range(3)]
-    results = tasks
+    results = [task for task in tasks]
 
     assert all(r.success for r in results)
     print("Concurrent commands executed successfully")

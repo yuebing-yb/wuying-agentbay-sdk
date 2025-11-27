@@ -53,7 +53,7 @@ def test_screenshot_with_valid_page(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
     
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
@@ -87,7 +87,7 @@ def test_screenshot_with_full_page(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
     
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
@@ -121,7 +121,7 @@ def test_screenshot_with_custom_options(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
     
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
@@ -160,7 +160,7 @@ def test_screenshot_function_parameter_priority(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
     
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
@@ -234,7 +234,7 @@ def test_screenshot_with_multiple_pages(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
     
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     
     urls = [
         "https://www.aliyun.com",
@@ -286,7 +286,7 @@ def test_screenshot_performance(browser_session):
     browser = browser_session.browser
     browser.initialize(BrowserOption())
     
-    endpoint_url = browser.get_endpoint_url_async()
+    endpoint_url = browser.get_endpoint_url()
     
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)

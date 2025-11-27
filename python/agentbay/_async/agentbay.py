@@ -414,7 +414,7 @@ class AsyncAgentBay:
 
                 file_transfer_context_sync = ContextSync(
                     context_id=context_result.context.id,
-                    path="/temp/file-transfer",
+                    path="/tmp/file-transfer",
                 )
                 if not hasattr(params, "context_syncs") or params.context_syncs is None:
                     params.context_syncs = []
@@ -548,7 +548,7 @@ class AsyncAgentBay:
                 from ..api.models import CreateMcpSessionRequestPersistenceDataList
 
                 # Create browser recording persistence configuration
-                record_path = "/home/guest/record"
+                record_path = "/home/wuying/record"
                 record_context_name = _generate_random_context_name()
                 result = await self.context.get(record_context_name, True)
                 record_context_id = result.context_id if result.success else ""

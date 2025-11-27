@@ -213,7 +213,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"\nStep 3: Resuming session asynchronously...")
         import asyncio
 
-        resume_result = asyncio.run(self.agent_bay.resume_async(session))
+        resume_result = self.agent_bay.resume_async(session)
 
         # Verify async resume result
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -400,7 +400,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # This should return a failed SessionResumeResult
         import asyncio
 
-        resume_result = asyncio.run(self.agent_bay.resume_async(invalid_session))
+        resume_result = self.agent_bay.resume_async(invalid_session)
 
         # Verify that the result is a SessionResumeResult and indicates failure
         self.assertIsInstance(resume_result, SessionResumeResult)
