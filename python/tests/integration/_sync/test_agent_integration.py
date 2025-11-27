@@ -29,7 +29,8 @@ def agent_bay():
 @pytest.fixture(scope="module")
 def agent_session(agent_bay):
     """Create a session for agent testing."""
-    time.sleep(3)  # Ensure a delay to avoid session creation conflicts
+    # Ensure a delay to avoid session creation conflicts
+    time.sleep(3)
     params = CreateSessionParams(
         image_id="windows_latest",
     )
@@ -42,15 +43,15 @@ def agent_session(agent_bay):
 
     # Clean up session
     try:
-        agent_bay.delete(session)
+        session.delete()
     except Exception as e:
         print(f"Warning: Error deleting session: {e}")
 
 
+@pytest.mark.sync
 def test_execute_task_success(agent_session):
     """Test executing a flux task successfully."""
-    # Note: This test assumes synchronous access to the agent, which may need to be adapted
-    agent = agent_session.agent  # Assuming direct access to agent
+    agent = agent_session.agent
 
     task = "create a folder named 'agentbay' in C:\\Window\\Temp"
     max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
@@ -64,10 +65,10 @@ def test_execute_task_success(agent_session):
     print(f"✅ result {result.task_result}")
 
 
+@pytest.mark.sync
 def test_async_execute_task_success(agent_session):
     """Test executing a flux task successfully."""
-    # Note: This test assumes synchronous access to the agent, which may need to be adapted
-    agent = agent_session.agent  # Assuming direct access to agent
+    agent = agent_session.agent
 
     task = "create a folder named 'agentbay' in C:\\Window\\Temp"
     max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
