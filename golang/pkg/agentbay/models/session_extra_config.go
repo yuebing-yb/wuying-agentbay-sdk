@@ -4,6 +4,32 @@ import (
 	"encoding/json"
 )
 
+// MobileSimulateMode represents the mode for mobile simulation
+type MobileSimulateMode string
+
+const (
+	MobileSimulateModePropertiesOnly MobileSimulateMode = "PropertiesOnly"
+	MobileSimulateModeSensorsOnly    MobileSimulateMode = "SensorsOnly"
+	MobileSimulateModePackagesOnly   MobileSimulateMode = "PackagesOnly"
+	MobileSimulateModeServicesOnly   MobileSimulateMode = "ServicesOnly"
+	MobileSimulateModeAll            MobileSimulateMode = "All"
+)
+
+// MobileSimulateConfig contains mobile simulation configuration
+type MobileSimulateConfig struct {
+	// Simulate determines whether to enable mobile simulation
+	Simulate bool `json:"simulate"`
+
+	// SimulatePath is the path of the mobile dev info file
+	SimulatePath string `json:"simulate_path,omitempty"`
+
+	// SimulateMode specifies the simulation mode
+	SimulateMode MobileSimulateMode `json:"simulate_mode,omitempty"`
+
+	// SimulatedContextID is the context ID containing the simulated mobile info
+	SimulatedContextID string `json:"simulated_context_id,omitempty"`
+}
+
 // AppManagerRule defines rules for managing app access on mobile devices
 type AppManagerRule struct {
 	// RuleType specifies the type of rule to apply
@@ -33,6 +59,9 @@ type MobileExtraConfig struct {
 	// UninstallBlacklist contains a list of package names that should be protected from uninstallation
 	// These packages will be added to the system's uninstall protection list
 	UninstallBlacklist []string `json:"uninstall_blacklist,omitempty"`
+
+	// SimulateConfig contains mobile simulation configuration
+	SimulateConfig *MobileSimulateConfig `json:"simulate_config,omitempty"`
 }
 
 // ExtraConfigs contains extra configuration settings for different session types

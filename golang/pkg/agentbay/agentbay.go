@@ -99,6 +99,57 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 	return NewAgentBay(apiKey, nil)
 }
 
+// waitForMobileSimulate waits for mobile simulate command to complete.
+func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string, mobileSimMode models.MobileSimulateMode) error {
+	fmt.Println("⏳ Mobile simulate: Waiting for completion")
+
+	if session.Mobile == nil {
+		logOperationError("MobileSimulate", "Mobile module not found in session, skipping mobile simulate", false)
+		return nil
+	}
+	if session.Command == nil {
+		logOperationError("MobileSimulate", "Command module not found in session, skipping mobile simulate", false)
+		return nil
+	}
+	if mobileSimPath == "" {
+		logOperationError("MobileSimulate", "Mobile simulate path is empty, skipping mobile simulate", false)
+		return nil
+	}
+
+	// Run mobile simulate command
+	startTime := time.Now()
+	devInfoFilePath := mobileSimPath + "/" + MobileInfoFileName
+	wyaApplyOption := ""
+
+	switch mobileSimMode {
+	case models.MobileSimulateModePropertiesOnly, "":
+		wyaApplyOption = ""
+	case models.MobileSimulateModeSensorsOnly:
+		wyaApplyOption = " -sensors"
+	case models.MobileSimulateModePackagesOnly:
+		wyaApplyOption = " -packages"
+	case models.MobileSimulateModeServicesOnly:
+		wyaApplyOption = " -services"
+	case models.MobileSimulateModeAll:
+		wyaApplyOption = " -all"
+	}
+
+	command := fmt.Sprintf("chmod -R a+rwx %s; wya apply%s %s", mobileSimPath, wyaApplyOption, devInfoFilePath)
+	logInfoWithColor(fmt.Sprintf("⏳ Waiting for mobile simulate completion, command: %s", command))
+
+	cmdResult, err := session.Command.ExecuteCommand(command)
+	if err != nil {
+		logOperationError("MobileSimulate", fmt.Sprintf("Failed to execute mobile simulate command: %v", err), false)
+		return nil
+	}
+
+	duration := time.Since(startTime)
+	fmt.Printf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds\n", mobileSimMode, duration.Seconds())
+	fmt.Printf("   Output: %s\n", cmdResult.Output)
+
+	return nil
+}
+
 // Create creates a new session in the AgentBay cloud environment.
 // If params is nil, default parameters will be used.
 // Create creates a new AgentBay session with specified configuration.
@@ -129,6 +180,37 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if params == nil {
 		params = NewCreateSessionParams()
+	}
+
+	// Flag to indicate if we need to wait for mobile simulate
+	needsMobileSim := false
+	var mobileSimMode models.MobileSimulateMode
+	var mobileSimPath string
+
+	// Process mobile simulate configuration
+	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil && params.ExtraConfigs.Mobile.SimulateConfig != nil {
+		// Check if simulated context id is provided
+		mobileSimContextID := params.ExtraConfigs.Mobile.SimulateConfig.SimulatedContextID
+		if mobileSimContextID != "" {
+			mobileSimContextSync := &ContextSync{
+				ContextID: mobileSimContextID,
+				Path:      MobileInfoDefaultPath,
+			}
+			if params.ContextSync == nil {
+				params.ContextSync = []*ContextSync{}
+			}
+			logInfoWithColor(fmt.Sprintf("Adding context sync for mobile simulate: %+v", mobileSimContextSync))
+			params.ContextSync = append(params.ContextSync, mobileSimContextSync)
+		}
+
+		// Check if we need to execute mobile simulate command
+		if params.ExtraConfigs.Mobile.SimulateConfig.Simulate {
+			mobileSimPath = params.ExtraConfigs.Mobile.SimulateConfig.SimulatePath
+			if mobileSimPath != "" {
+				needsMobileSim = true
+				mobileSimMode = params.ExtraConfigs.Mobile.SimulateConfig.SimulateMode
+			}
+		}
 	}
 
 	createSessionRequest := &mcp.CreateMcpSessionRequest{
@@ -397,6 +479,13 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 			fmt.Printf("Waiting for context synchronization, attempt %d/%d\n", retry+1, maxRetries)
 			time.Sleep(retryInterval)
+		}
+	}
+
+	// If we need to do mobile simulate by command, wait for it
+	if needsMobileSim {
+		if err := a.waitForMobileSimulate(session, mobileSimPath, mobileSimMode); err != nil {
+			logOperationError("MobileSimulate", err.Error(), false)
 		}
 	}
 

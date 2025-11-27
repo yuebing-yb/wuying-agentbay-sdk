@@ -78,6 +78,8 @@ from ._sync_context_response import SyncContextResponse
 from ._create_mcp_session_request import CreateMcpSessionRequestPersistenceDataList
 from ._create_mcp_session_request import AppManagerRule
 from ._create_mcp_session_request import MobileExtraConfig
+from ._create_mcp_session_request import MobileSimulateConfig
+from ._create_mcp_session_request import MobileSimulateMode
 from ._create_mcp_session_request import ExtraConfigs
 from ._create_mcp_session_response_body import CreateMcpSessionResponseBodyData
 from ._describe_context_files_response_body import DescribeContextFilesResponseBodyData

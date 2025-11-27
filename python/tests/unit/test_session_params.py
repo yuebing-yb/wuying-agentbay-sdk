@@ -2,7 +2,7 @@ import json
 import unittest
 
 from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule, MobileSimulateConfig, MobileSimulateMode
 
 
 class TestCreateSessionParams(unittest.TestCase):
@@ -188,6 +188,60 @@ class TestCreateSessionParams(unittest.TestCase):
         # Test round-trip serialization (serialize -> deserialize -> serialize)
         round_trip_dict = new_extra_configs.to_map()
         self.assertEqual(round_trip_dict, different_config_dict)
+
+    def test_mobile_simulate_config_basic(self):
+        simulate_config = MobileSimulateConfig(
+            simulate=True,
+            simulate_mode=MobileSimulateMode.ALL,
+            simulated_context_id="test-context-123"
+        )
+        
+        self.assertTrue(simulate_config.simulate)
+        self.assertEqual(simulate_config.simulate_mode, MobileSimulateMode.ALL)
+        self.assertEqual(simulate_config.simulated_context_id, "test-context-123")
+
+    def test_mobile_simulate_config_modes(self):
+        config_properties = MobileSimulateConfig(
+            simulate=True,
+            simulate_mode=MobileSimulateMode.PROPERTIES_ONLY
+        )
+        self.assertEqual(config_properties.simulate_mode, MobileSimulateMode.PROPERTIES_ONLY)
+        
+        config_sensors = MobileSimulateConfig(
+            simulate=True,
+            simulate_mode=MobileSimulateMode.SENSORS_ONLY
+        )
+        self.assertEqual(config_sensors.simulate_mode, MobileSimulateMode.SENSORS_ONLY)
+        
+        config_packages = MobileSimulateConfig(
+            simulate=True,
+            simulate_mode=MobileSimulateMode.PACKAGES_ONLY
+        )
+        self.assertEqual(config_packages.simulate_mode, MobileSimulateMode.PACKAGES_ONLY)
+
+    def test_mobile_extra_config_with_simulate(self):
+        simulate_config = MobileSimulateConfig(
+            simulate=True,
+            simulate_mode=MobileSimulateMode.ALL,
+            simulated_context_id="ctx-456"
+        )
+        
+        mobile_config = MobileExtraConfig(
+            lock_resolution=True,
+            simulate_config=simulate_config
+        )
+        
+        self.assertIsNotNone(mobile_config.simulate_config)
+        self.assertTrue(mobile_config.simulate_config.simulate)
+        self.assertEqual(mobile_config.simulate_config.simulate_mode, MobileSimulateMode.ALL)
+        self.assertEqual(mobile_config.simulate_config.simulated_context_id, "ctx-456")
+
+    def test_mobile_simulate_config_default(self):
+        simulate_config = MobileSimulateConfig()
+        
+        self.assertFalse(simulate_config.simulate)
+        self.assertIsNone(simulate_config.simulate_mode)
+        self.assertIsNone(simulate_config.simulated_context_id)
 
 
 if __name__ == "__main__":

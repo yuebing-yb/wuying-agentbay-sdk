@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
+from http.client import PROCESSING
 from darabonba.model import DaraModel 
 from agentbay.api import models as main_models 
 from typing import List, Optional
+from enum import Enum
 
 
 class CreateMcpSessionRequest(DaraModel):
@@ -208,6 +210,31 @@ class AppManagerRule(DaraModel):
         return self
 
 
+class MobileSimulateMode(Enum):
+    PROPERTIES_ONLY = "PropertiesOnly"
+    SENSORS_ONLY = "SensorsOnly"
+    PACKAGES_ONLY = "PackagesOnly"
+    SERVICES_ONLY = "ServicesOnly"
+    ALL = "All"
+
+
+class MobileSimulateConfig(DaraModel):
+    def __init__(
+        self,
+        simulate: bool = False,
+        simulate_path: str = None,
+        simulate_mode: Optional[MobileSimulateMode] = None,
+        simulated_context_id: Optional[str] = None,
+    ):
+        self.simulate = simulate
+        self.simulate_path = simulate_path
+        self.simulate_mode = simulate_mode
+        self.simulated_context_id = simulated_context_id
+
+    def validate(self):
+        if not self.simulate_path:
+            raise ValueError("simulate_path is required")
+
 class MobileExtraConfig(DaraModel):
     def __init__(
         self,
@@ -215,11 +242,13 @@ class MobileExtraConfig(DaraModel):
         app_manager_rule: Optional[AppManagerRule] = None,
         hide_navigation_bar: Optional[bool] = None,
         uninstall_blacklist: Optional[List[str]] = None,
+        simulate_config: Optional[MobileSimulateConfig] = None,
     ):
         self.lock_resolution = lock_resolution
         self.app_manager_rule = app_manager_rule
         self.hide_navigation_bar = hide_navigation_bar
         self.uninstall_blacklist = uninstall_blacklist
+        self.simulate_config = simulate_config
 
     def validate(self):
         if self.app_manager_rule:
@@ -228,6 +257,8 @@ class MobileExtraConfig(DaraModel):
             for v1 in self.uninstall_blacklist:
                 if v1 and not isinstance(v1, str):
                     raise ValueError("uninstall_blacklist items must be strings")
+        if self.simulate_config:
+            self.simulate_config.validate()
 
     def to_map(self):
         result = dict()

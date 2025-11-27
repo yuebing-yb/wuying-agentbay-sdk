@@ -2,6 +2,7 @@ import json
 import os
 import random
 import string
+import time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
@@ -13,8 +14,10 @@ from agentbay.api.models import (
     CreateMcpSessionRequest,
     GetSessionRequest,
     ListSessionRequest,
+    MobileSimulateMode,
 )
-from agentbay.config import _load_config, BROWSER_RECORD_PATH
+
+from agentbay.config import _load_config, BROWSER_RECORD_PATH, _MOBILE_INFO_DEFAULT_PATH, _MOBILE_INFO_FILE_NAME
 from agentbay.context import ContextService
 from agentbay.model import (
     DeleteResult,
@@ -294,6 +297,54 @@ class AgentBay:
             )
             time.sleep(retry_interval)
 
+    def _wait_for_mobile_simulate(self, session: Session, mobile_sim_path: str, mobile_sim_mode: Optional[MobileSimulateMode] = None) -> None:
+        """
+        Wait for mobile simulate command to complete.
+
+        Args:
+            session: The session to wait for mobile simulate
+            mobile_sim_path: The dev info path to the mobile simulate
+            mobile_sim_mode: The mode of the mobile simulate. If not provided, will use the default mode.
+        """
+        _log_operation_start("Mobile simulate", "Waiting for completion")
+        if not session.mobile:
+            _logger.warning("Mobile module not found in session, skipping mobile simulate")
+            return
+        if not session.command:
+            _logger.warning("Command module not found in session, skipping mobile simulate")
+            return
+        if not mobile_sim_path:
+            _logger.warning("Mobile simulate path is empty, skipping mobile simulate")
+            return
+
+        try:
+            # Run mobile simulate command
+            start_time = time.time()
+            dev_info_file_path = mobile_sim_path + "/" + _MOBILE_INFO_FILE_NAME
+            wya_apply_option = ""
+            if not mobile_sim_mode or mobile_sim_mode == MobileSimulateMode.PROPERTIES_ONLY:
+                wya_apply_option = ""
+            elif mobile_sim_mode == MobileSimulateMode.SENSORS_ONLY:
+                wya_apply_option = "-sensors"
+            elif mobile_sim_mode == MobileSimulateMode.PACKAGES_ONLY:
+                wya_apply_option = "-packages"
+            elif mobile_sim_mode == MobileSimulateMode.SERVICES_ONLY:
+                wya_apply_option = "-services"
+            elif mobile_sim_mode == MobileSimulateMode.ALL:
+                wya_apply_option = "-all"
+
+            command = f"chmod -R a+rwx {mobile_sim_path}; wya apply {wya_apply_option} {dev_info_file_path}"
+            _logger.info(f"⏳ Waiting for mobile simulate completion, command: {command}")
+            cmd_result = session.command.execute_command(command)
+            if cmd_result.success:
+                end_time = time.time()
+                consume_time = end_time - start_time
+                _log_operation_success(f"Mobile simulate with mode: {mobile_sim_mode}, duration: {consume_time:.2f} seconds")
+            else:
+                _logger.warning(f"Failed to execute mobile simulate command: {cmd_result.error_message}")
+        except Exception as e:
+            _logger.warning(f"Error executing mobile simulate command: {e}")
+
     def _log_request_debug_info(self, request: CreateMcpSessionRequest) -> None:
         """
         Log debug information for the request with masked authorization.
@@ -406,6 +457,25 @@ class AgentBay:
         try:
             if params is None:
                 params = CreateSessionParams()
+
+            # Add context syncs for mobile simulate if simulated_context_id is provided
+            if hasattr(params, "extra_configs") and params.extra_configs:
+                if params.extra_configs.mobile and params.extra_configs.mobile.simulate_config:
+                    mobile_sim_context_id = params.extra_configs.mobile.simulate_config.simulated_context_id
+                    if mobile_sim_context_id:
+                        from agentbay.context_sync import ContextSync, SyncPolicy
+
+                        mobile_sim_context_sync = ContextSync(
+                            context_id=mobile_sim_context_id,
+                            path=_MOBILE_INFO_DEFAULT_PATH,
+                            policy=SyncPolicy.default())
+                        if not hasattr(params, "context_syncs") or params.context_syncs is None:
+                            params.context_syncs = []
+                        _logger.info(
+                            f"Adding context sync for mobile simulate: {mobile_sim_context_sync}"
+                        )
+                        params.context_syncs.append(mobile_sim_context_sync)
+
 
             # Create a default context for file transfer operations if none provided
             # and no context_syncs are specified
@@ -574,9 +644,23 @@ class AgentBay:
                     request.persistence_data_list = []
                 request.persistence_data_list.append(record_persistence)
 
+            # Flag to indicate if we need to wait for mobile simulate
+            needs_mobile_sim = False
+            mobile_sim_mode = None
+            mobile_sim_path = None
+
             # Add extra_configs if provided
             if hasattr(params, "extra_configs") and params.extra_configs:
                 request.extra_configs = params.extra_configs
+                # Check mobile simulate config
+                if params.extra_configs.mobile and params.extra_configs.mobile.simulate_config:
+                    if params.extra_configs.mobile.simulate_config.simulate:
+                        mobile_sim_path = params.extra_configs.mobile.simulate_config.simulate_path
+                        if not mobile_sim_path:
+                            _logger.warning("mobile_sim_path is not set now, skip mobile simulate operation")
+                        else:
+                            needs_mobile_sim = True
+                            mobile_sim_mode = params.extra_configs.mobile.simulate_config.simulate_mode
 
             self._log_request_debug_info(request)
 
@@ -676,6 +760,10 @@ class AgentBay:
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:
                 self._wait_for_context_synchronization(session)
+
+            # If we need to do mobile simulate by command, wait for it
+            if needs_mobile_sim:
+                self._wait_for_mobile_simulate(session, mobile_sim_path, mobile_sim_mode)
 
             # Return SessionResult with request ID
             return SessionResult(request_id=request_id, success=True, session=session)

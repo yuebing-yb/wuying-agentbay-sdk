@@ -23,6 +23,12 @@ _BROWSER_DATA_PATH = "/tmp/agentbay_browser"
 _BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint"
 # Browser recording path constant
 BROWSER_RECORD_PATH = "/home/guest/record"
+# Mobile info path constant for internal create context
+_MOBILE_INFO_DEFAULT_PATH = "/data/agentbay_mobile_info"
+# Mobile dev info sub path constant when append to user's context path
+_MOBILE_INFO_SUB_PATH = "/agentbay_mobile_info/"
+# Mobile dev info file name constant
+_MOBILE_INFO_FILE_NAME = "dev_info.json"
 
 
 def _find_dotenv_file(start_path: Optional[Path] = None) -> Optional[Path]:

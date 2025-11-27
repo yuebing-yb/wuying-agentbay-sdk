@@ -15,6 +15,13 @@ type Config struct {
 	TimeoutMs int    `json:"timeout_ms"`
 }
 
+// Mobile info path constants
+const (
+	MobileInfoDefaultPath = "/data/agentbay_mobile_info"
+	MobileInfoSubPath     = "/agentbay_mobile_info/"
+	MobileInfoFileName    = "dev_info.json"
+)
+
 // defaultConfig returns the default configuration
 func defaultConfig() Config {
 	return Config{

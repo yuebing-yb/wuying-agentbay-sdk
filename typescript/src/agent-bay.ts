@@ -15,6 +15,7 @@ import { Session } from "./session";
 import { BrowserContext } from "./session-params";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
+import { MobileSimulateService } from "./mobile-simulate";
 
 import {
   DeleteResult,
@@ -243,6 +244,70 @@ export class AgentBay {
   }
 
   /**
+   * Wait for mobile simulate command to complete.
+   * 
+   * @param session - The session to wait for mobile simulate
+   * @param mobileSimPath - The dev info path to the mobile simulate
+   * @param mobileSimMode - The mode of the mobile simulate. If not provided, will use the default mode.
+   */
+  private async _waitForMobileSimulate(
+    session: Session,
+    mobileSimPath: string,
+    mobileSimMode?: string
+  ): Promise<void> {
+    log("⏳ Mobile simulate: Waiting for completion");
+    
+    if (!(session as any).mobile) {
+      logInfo("Mobile module not found in session, skipping mobile simulate");
+      return;
+    }
+    if (!(session as any).command) {
+      logInfo("Command module not found in session, skipping mobile simulate");
+      return;
+    }
+    if (!mobileSimPath) {
+      logInfo("Mobile simulate path is empty, skipping mobile simulate");
+      return;
+    }
+
+    try {
+      // Run mobile simulate command
+      const startTime = Date.now();
+      const devInfoFilePath = `${mobileSimPath}/dev_info.json`;
+      let wyaApplyOption = "";
+      
+      if (!mobileSimMode || mobileSimMode === "PropertiesOnly") {
+        wyaApplyOption = "";
+      } else if (mobileSimMode === "SensorsOnly") {
+        wyaApplyOption = "-sensors";
+      } else if (mobileSimMode === "PackagesOnly") {
+        wyaApplyOption = "-packages";
+      } else if (mobileSimMode === "ServicesOnly") {
+        wyaApplyOption = "-services";
+      } else if (mobileSimMode === "All") {
+        wyaApplyOption = "-all";
+      }
+
+      const command = `chmod -R a+rwx ${mobileSimPath}; wya apply ${wyaApplyOption} ${devInfoFilePath}`.trim();
+      logInfo(`ℹ️  ⏳ Waiting for mobile simulate completion, command: ${command}`);
+      
+      const cmdResult = await (session as any).command.executeCommand(command);
+      if (cmdResult.success) {
+        const endTime = Date.now();
+        const consumeTime = (endTime - startTime) / 1000;
+        log(`✅ Mobile simulate completed with mode: ${mobileSimMode || 'PropertiesOnly'}, duration: ${consumeTime.toFixed(2)} seconds`);
+        if (cmdResult.output) {
+          log(`   Output: ${cmdResult.output.trim()}`);
+        }
+      } else {
+        logInfo(`Failed to execute mobile simulate command: ${cmdResult.errorMessage}`);
+      }
+    } catch (error) {
+      logInfo(`Error executing mobile simulate command: ${error}`);
+    }
+  }
+
+  /**
    * Update browser replay context with AppInstanceId from response data.
    *
    * @param responseData - Response data containing AppInstanceId
@@ -334,8 +399,26 @@ export class AgentBay {
   async create(params: CreateSessionParams = {}): Promise<SessionResult> {
     try {
       logDebug(`default context syncs length: ${params.contextSync?.length}`);
+      
+      // Add context syncs for mobile simulate if provided
+      if (params.extraConfigs?.mobile?.simulateConfig) {
+        const mobileSimContextId = params.extraConfigs.mobile.simulateConfig.simulatedContextId;
+        if (mobileSimContextId) {
+          const mobileSimContextSync = new ContextSync(
+            mobileSimContextId,
+            "/data/agentbay_mobile_info"
+          );
+          if (!params.contextSync) {
+            params.contextSync = [];
+          }
+          logInfo(`Adding context sync for mobile simulate: ${JSON.stringify(mobileSimContextSync)}`);
+          params.contextSync.push(mobileSimContextSync);
+        }
+      }
+      
       // Create a default context for file transfer operations if none provided
       // and no context_syncs are specified
+      logDebug(`Origin context syncs length: ${params.contextSync?.length}`);
       const contextName = `file-transfer-context-${Date.now()}`;
       const contextResult = await this.context.get(contextName, true);
       if (contextResult.success && contextResult.context) {
@@ -381,6 +464,11 @@ export class AgentBay {
 
       // Flag to indicate if we need to wait for context synchronization
       let needsContextSync = false;
+      
+      // Flag to indicate if we need to wait for mobile simulate
+      let needsMobileSim = false;
+      let mobileSimMode: string | undefined = undefined;
+      let mobileSimPath: string | undefined = undefined;
 
       // Add context sync configurations if provided
       if (params.contextSync && params.contextSync.length > 0) {
@@ -451,6 +539,17 @@ export class AgentBay {
       // Add extra configs if provided
       if (params.extraConfigs) {
         request.extraConfigs = JSON.stringify(params.extraConfigs);
+        
+        // Check mobile simulate config
+        if (params.extraConfigs.mobile?.simulateConfig?.simulate) {
+          mobileSimPath = params.extraConfigs.mobile.simulateConfig.simulatePath;
+          if (!mobileSimPath) {
+            logInfo("mobile_sim_path is not set now, skip mobile simulate operation");
+          } else {
+            needsMobileSim = true;
+            mobileSimMode = params.extraConfigs.mobile.simulateConfig.simulateMode;
+          }
+        }
       }
 
       // Log API request
@@ -680,6 +779,11 @@ export class AgentBay {
             await new Promise(resolve => setTimeout(resolve, retryInterval));
           }
         }
+      }
+
+      // If we need to do mobile simulate by command, wait for it
+      if (needsMobileSim && mobileSimPath) {
+        await this._waitForMobileSimulate(session, mobileSimPath, mobileSimMode);
       }
 
       // Return SessionResult with request ID
