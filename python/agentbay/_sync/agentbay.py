@@ -40,6 +40,7 @@ from .._common.version import __is_release__, __version__
 from ..api.client import Client as mcp_client
 from ..api.models import CreateMcpSessionRequest, GetSessionRequest, ListSessionRequest
 from .context import ContextService
+from .mobile_simulate import SyncMobileSimulateService
 from .session import Session
 from .session_params import CreateSessionParams, ListSessionParams
 
@@ -135,6 +136,9 @@ class AgentBay:
         # Initialize context service
         self.context = ContextService(self)
         self._file_transfer_context: Optional[Any] = None
+        
+        # Initialize mobile simulate service
+        self.mobile_simulate = SyncMobileSimulateService(self)
 
     def _safe_serialize(self, obj):
         """

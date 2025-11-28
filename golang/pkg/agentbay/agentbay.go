@@ -38,9 +38,10 @@ func WithEnvFile(envFile string) Option {
 
 // AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
 type AgentBay struct {
-	APIKey  string
-	Client  *mcp.Client
-	Context *ContextService
+	APIKey         string
+	Client         *mcp.Client
+	Context        *ContextService
+	MobileSimulate *MobileSimulateService
 }
 
 // NewAgentBay creates a new AgentBay client.
@@ -89,6 +90,13 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Initialize context service
 	agentBay.Context = &ContextService{AgentBay: agentBay}
+
+	// Initialize mobile simulate service
+	mobileSimulateService, err := NewMobileSimulateService(agentBay)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize mobile simulate service: %v", err)
+	}
+	agentBay.MobileSimulate = mobileSimulateService
 
 	return agentBay, nil
 }

@@ -1,0 +1,9 @@
+{
+  "properties": {
+    "ro.product.model": "SM-A505F",
+    "ro.product.brand": "samsung",
+    "ro.product.name": "a505f",
+    "ro.product.device": "a505f",
+    "ro.product.manufacturer": "samsung"
+  }
+}

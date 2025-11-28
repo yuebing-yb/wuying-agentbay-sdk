@@ -38,6 +38,7 @@ from .._common.version import __is_release__, __version__
 from ..api.client import Client as mcp_client
 from ..api.models import CreateMcpSessionRequest, GetSessionRequest, ListSessionRequest
 from .context import AsyncContextService
+from .mobile_simulate import AsyncMobileSimulateService
 from .session import AsyncSession
 from .session_params import CreateSessionParams, ListSessionParams
 
@@ -133,6 +134,9 @@ class AsyncAgentBay:
         # Initialize context service
         self.context = AsyncContextService(self)
         self._file_transfer_context: Optional[Any] = None
+        
+        # Initialize mobile simulate service
+        self.mobile_simulate = AsyncMobileSimulateService(self)
 
     def _safe_serialize(self, obj):
         """

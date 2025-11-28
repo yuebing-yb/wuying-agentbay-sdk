@@ -15,6 +15,25 @@ type AppManagerRule struct {
 	AppPackageNameList []string `json:"app_package_name_list"`
 }
 
+// MobileSimulateMode defines the simulate mode for mobile device
+type MobileSimulateMode string
+
+const (
+	MobileSimulateModePropertiesOnly MobileSimulateMode = "PropertiesOnly"
+	MobileSimulateModeSensorsOnly    MobileSimulateMode = "SensorsOnly"
+	MobileSimulateModePackagesOnly   MobileSimulateMode = "PackagesOnly"
+	MobileSimulateModeServicesOnly   MobileSimulateMode = "ServicesOnly"
+	MobileSimulateModeAll            MobileSimulateMode = "All"
+)
+
+// MobileSimulateConfig contains configuration for mobile device simulation
+type MobileSimulateConfig struct {
+	Simulate           bool               `json:"simulate"`
+	SimulatePath       string             `json:"simulate_path,omitempty"`
+	SimulateMode       MobileSimulateMode `json:"simulate_mode"`
+	SimulatedContextID string             `json:"simulated_context_id,omitempty"`
+}
+
 // MobileExtraConfig contains mobile-specific configuration settings
 type MobileExtraConfig struct {
 	// LockResolution determines whether to lock the screen resolution
@@ -33,6 +52,9 @@ type MobileExtraConfig struct {
 	// UninstallBlacklist contains a list of package names that should be protected from uninstallation
 	// These packages will be added to the system's uninstall protection list
 	UninstallBlacklist []string `json:"uninstall_blacklist,omitempty"`
+
+	// SimulateConfig contains configuration for mobile device simulation
+	SimulateConfig *MobileSimulateConfig `json:"simulate_config,omitempty"`
 }
 
 // ExtraConfigs contains extra configuration settings for different session types

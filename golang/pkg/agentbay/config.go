@@ -160,6 +160,15 @@ func loadConfigCompat(cfg *Config) Config {
 // This path is used when syncing browser recording context during session deletion.
 const BrowserRecordPath = "/home/wuying/record"
 
+// MobileInfoDefaultPath is path constant for internal create context
+const MobileInfoDefaultPath = "/data/agentbay_mobile_info"
+
+// MobileInfoSubPath is mobile dev info sub path constant when append to user's context path
+const MobileInfoSubPath = "/agentbay_mobile_info"
+
+// MobileInfoFileName is mobile dev info file name constant
+const MobileInfoFileName = "dev_info.json"
+
 // configManager implementation for backward compatibility
 type configManager struct{}
 

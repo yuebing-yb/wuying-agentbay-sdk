@@ -1,24 +1,12 @@
 import json
 import os
-from pathlib import Path
 from typing import Any, Dict, Optional
-
 import dotenv
-
-from .logger import get_logger
+from pathlib import Path
+from agentbay.logger import get_logger
 
 # Initialize _logger for this module
 _logger = get_logger("config")
-
-
-class Config:
-    """
-    Configuration object for AgentBay client.
-    """
-
-    def __init__(self, endpoint: str, timeout_ms: int):
-        self.endpoint = endpoint
-        self.timeout_ms = timeout_ms
 
 
 def _default_config() -> Dict[str, Any]:
@@ -34,8 +22,7 @@ _BROWSER_DATA_PATH = "/tmp/agentbay_browser"
 # Browser fingerprint persistent path constant
 _BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint"
 # Browser recording path constant
-BROWSER_RECORD_PATH = "/home/wuying/record"
-
+BROWSER_RECORD_PATH = "/home/guest/record"
 # Mobile info path constant for internal create context
 _MOBILE_INFO_DEFAULT_PATH = "/data/agentbay_mobile_info"
 # Mobile dev info sub path constant when append to user's context path
@@ -157,8 +144,6 @@ def _load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
             try:
                 config["timeout_ms"] = int(timeout_ms)
             except ValueError:
-                _logger.warning(
-                    f"Invalid AGENTBAY_TIMEOUT_MS value: {timeout_ms}, using default"
-                )
+                _logger.warning(f"Invalid AGENTBAY_TIMEOUT_MS value: {timeout_ms}, using default")
 
     return config

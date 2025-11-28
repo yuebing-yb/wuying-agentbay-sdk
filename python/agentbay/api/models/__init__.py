@@ -133,6 +133,7 @@ from ._set_label_response_body import SetLabelResponseBody
 from ._sync_context_request import SyncContextRequest
 from ._sync_context_response import SyncContextResponse
 from ._sync_context_response_body import SyncContextResponseBody
+from .mobile_simulate import MobileSimulateConfig, MobileSimulateMode
 
 __all__ = [
     CallMcpToolRequest,
@@ -254,4 +255,6 @@ __all__ = [
     GetAdbLinkResponseBody,
     GetAdbLinkResponseBodyData,
     GetAdbLinkResponse,
+    MobileSimulateConfig,
+    MobileSimulateMode,
 ]

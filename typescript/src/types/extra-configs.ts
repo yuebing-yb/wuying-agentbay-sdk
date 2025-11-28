@@ -19,6 +19,27 @@ export interface AppManagerRule {
 }
 
 /**
+ * Mobile simulate mode enum.
+ */
+export enum MobileSimulateMode {
+  PropertiesOnly = "PropertiesOnly",
+  SensorsOnly = "SensorsOnly",
+  PackagesOnly = "PackagesOnly",
+  ServicesOnly = "ServicesOnly",
+  All = "All",
+}
+
+/**
+ * Mobile simulate configuration.
+ */
+export interface MobileSimulateConfig {
+  simulate: boolean;
+  simulatePath?: string;
+  simulateMode: MobileSimulateMode;
+  simulatedContextId?: string;
+}
+
+/**
  * Mobile-specific configuration settings for session creation.
  * 
  * These settings allow control over mobile device behavior including
@@ -51,6 +72,12 @@ export interface MobileExtraConfig {
    * Example: ["com.android.systemui", "com.android.settings"]
    */
   uninstallBlacklist?: string[];
+
+  /**
+   * Configuration for mobile device simulation.
+   * Used to simulate specific device properties, sensors, etc.
+   */
+  simulateConfig?: MobileSimulateConfig;
 }
 
 /**
@@ -128,6 +155,34 @@ export function validateAppManagerRule(rule: AppManagerRule): void {
 }
 
 /**
+ * Validates a MobileSimulateConfig object.
+ * Throws an error if validation fails.
+ * 
+ * @param config - The config to validate
+ */
+export function validateMobileSimulateConfig(config: MobileSimulateConfig): void {
+  if (typeof config.simulate !== "boolean") {
+    throw new Error("MobileSimulateConfig simulate must be a boolean");
+  }
+  
+  if (!config.simulateMode) {
+    throw new Error("MobileSimulateConfig simulateMode is required");
+  }
+  
+  if (!Object.values(MobileSimulateMode).includes(config.simulateMode)) {
+    throw new Error(`Invalid simulateMode: ${config.simulateMode}`);
+  }
+  
+  if (config.simulatePath !== undefined && typeof config.simulatePath !== "string") {
+    throw new Error("MobileSimulateConfig simulatePath must be a string");
+  }
+  
+  if (config.simulatedContextId !== undefined && typeof config.simulatedContextId !== "string") {
+    throw new Error("MobileSimulateConfig simulatedContextId must be a string");
+  }
+}
+
+/**
  * Validates a MobileExtraConfig object.
  * Throws an error if validation fails.
  * 
@@ -156,6 +211,10 @@ export function validateMobileExtraConfig(config: MobileExtraConfig): void {
         throw new Error("MobileExtraConfig uninstallBlacklist items must be non-empty strings");
       }
     }
+  }
+
+  if (config.simulateConfig) {
+    validateMobileSimulateConfig(config.simulateConfig);
   }
 }
 
