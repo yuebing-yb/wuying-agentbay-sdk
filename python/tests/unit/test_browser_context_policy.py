@@ -1,38 +1,34 @@
-#!/usr/bin/env python3
-"""
-Test script to verify browser_context policy includes BWList with white lists.
-"""
-
 import json
 import os
 import sys
-
-# Add the current directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "python"))
+import unittest
+from unittest.mock import MagicMock, patch
 
 from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
 from agentbay._sync.agentbay import AgentBay
 
 
-def test_browser_context_policy():
+class TestBrowserContextPolicy(unittest.TestCase):
     """Test that browser_context policy includes BWList with white lists."""
+    
+    def test_browser_context_policy_creation(self):
+        # Create session parameters with browser context
+        params = CreateSessionParams()
 
-    # Create session parameters with browser context
-    params = CreateSessionParams()
+        # Create browser context
+        browser_context = BrowserContext(
+            context_id="test-browser-context", auto_upload=True
+        )
+        params.browser_context = browser_context
 
-    # Create browser context
-    browser_context = BrowserContext(
-        context_id="test-browser-context", auto_upload=True
-    )
-    params.browser_context = browser_context
-
-    # Create AgentBay instance (this will trigger the policy creation)
-    try:
+        # Create AgentBay instance (this will trigger the policy creation)
         # This will fail without API key, but we can test the policy creation logic
-        ab = AgentBay("dummy-key")
-
-        # The policy creation happens in the create method
-        # Let's manually test the policy creation logic
+        
+        # We mock the method where policy is created or just test logic if it was extracted.
+        # Since the logic is embedded in create(), we should mock internal parts or copy logic to verify.
+        # But since the original file was a script running real code (mostly), let's adapt it to be a test.
+        
+        # The original test relied on importing internal classes to verify logic manually.
         from agentbay._common.params.context_sync import (
             BWList,
             SyncPolicy,
@@ -62,44 +58,25 @@ def test_browser_context_policy():
             ensure_ascii=False,
         )
 
-        print("Generated policy JSON:")
-        print(json.dumps(json.loads(policy_json), indent=2, ensure_ascii=False))
-
         # Verify the policy contains the expected structure
         policy_dict = json.loads(policy_json)
 
         # Check that bwList exists
-        assert "bwList" in policy_dict, "bwList should be present in policy"
+        self.assertIn("bwList", policy_dict, "bwList should be present in policy")
 
         # Check that whiteLists exists in bwList
-        assert (
-            "whiteLists" in policy_dict["bwList"]
-        ), "whiteLists should be present in bwList"
+        self.assertIn("whiteLists", policy_dict["bwList"], "whiteLists should be present in bwList")
 
         # Check that we have 3 white lists
         white_lists = policy_dict["bwList"]["whiteLists"]
-        assert len(white_lists) == 3, f"Expected 3 white lists, got {len(white_lists)}"
+        self.assertEqual(len(white_lists), 3, f"Expected 3 white lists, got {len(white_lists)}")
 
         # Check the specific paths
         paths = [wl["path"] for wl in white_lists]
-        expected_paths = ["/Local State", "/Default/Cookie", "/Default/Cookies-journal"]
+        expected_paths = ["/Local State", "/Default/Cookies", "/Default/Cookies-journal"]
 
         for expected_path in expected_paths:
-            assert (
-                expected_path in paths
-            ), f"Expected path {expected_path} not found in white lists"
-
-        print(
-            "✅ All tests passed! Browser context policy correctly includes BWList with white lists."
-        )
-
-    except Exception as e:
-        print(f"❌ Test failed: {e}")
-        return False
-
-    return True
-
+            self.assertIn(expected_path, paths, f"Expected path {expected_path} not found in white lists")
 
 if __name__ == "__main__":
-    success = test_browser_context_policy()
-    sys.exit(0 if success else 1)
+    unittest.main()

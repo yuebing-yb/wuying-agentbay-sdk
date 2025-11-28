@@ -32,7 +32,7 @@ from agentbay._sync.browser_agent import (
 from agentbay._sync.fingerprint import FingerprintFormat
 
 
-class TestSchema(BaseModel):
+class SchemaForTest(BaseModel):
     title: str = Field(..., description="Page title")
     content: Optional[str] = Field(None, description="Page content")
 
@@ -322,7 +322,7 @@ class TestBrowser(unittest.TestCase):
         }
         self.browser.initialize(BrowserOption())
         self.browser.agent.extract(
-            ExtractOptions(instruction="Extract the title", schema=TestSchema), page
+            ExtractOptions(instruction="Extract the title", schema=SchemaForTest), page
         )
         self.browser.agent.extract.assert_called()
 
@@ -412,7 +412,7 @@ class TestAsyncBrowser(unittest.TestCase):
 
         asyncio.run(
             self.browser.agent.extract(
-                AsyncExtractOptions(instruction="Extract the title", schema=TestSchema),
+                AsyncExtractOptions(instruction="Extract the title", schema=SchemaForTest),
                 page,
             )
         )

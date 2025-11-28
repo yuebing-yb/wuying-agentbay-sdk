@@ -644,16 +644,23 @@ class AgentBay:
                 
                 # Check mobile simulate config
                 if (
-                    params.extra_configs.mobile 
+                    params.extra_configs.mobile
+                    and hasattr(params.extra_configs.mobile, "simulate_config")
                     and params.extra_configs.mobile.simulate_config
                     and params.extra_configs.mobile.simulate_config.simulate
                 ):
-                    mobile_sim_path = params.extra_configs.mobile.simulate_config.simulate_path
+                    mobile_sim_path = (
+                        params.extra_configs.mobile.simulate_config.simulate_path
+                    )
                     if not mobile_sim_path:
-                        _logger.info("mobile_sim_path is not set now, skip mobile simulate operation")
+                        _logger.info(
+                            "mobile_sim_path is not set now, skip mobile simulate operation"
+                        )
                     else:
                         needs_mobile_sim = True
-                        mobile_sim_mode = params.extra_configs.mobile.simulate_config.simulate_mode
+                        mobile_sim_mode = (
+                            params.extra_configs.mobile.simulate_config.simulate_mode
+                        )
 
             self._log_request_debug_info(request)
 
