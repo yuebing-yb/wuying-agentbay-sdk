@@ -7,7 +7,7 @@ import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
 import { Client } from "./api/client";
 
-import { Config } from "./config";
+import { Config, BROWSER_RECORD_PATH } from "./config";
 import { ContextService } from "./context";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
@@ -15,6 +15,7 @@ import { Session } from "./session";
 import { BrowserContext } from "./session-params";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
+import { MobileSimulateService } from "./mobile-simulate";
 
 import {
   DeleteResult,
@@ -37,6 +38,7 @@ import {
   setRequestId,
   getRequestId,
   logInfoWithColor,
+  logWarn,
 } from "./utils/logger";
 import { VERSION, IS_RELEASE } from "./version";
 
@@ -185,7 +187,6 @@ export class AgentBay {
   private apiKey: string;
   private client: Client;
   private endpoint: string;
-  private sessions: Map<string, Session> = new Map();
   private fileTransferContext: Context | null = null;
 
   /**
@@ -239,6 +240,70 @@ export class AgentBay {
     } catch (error) {
       logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);
+    }
+  }
+
+  /**
+   * Wait for mobile simulate command to complete.
+   * 
+   * @param session - The session to wait for mobile simulate
+   * @param mobileSimPath - The dev info path to the mobile simulate
+   * @param mobileSimMode - The mode of the mobile simulate. If not provided, will use the default mode.
+   */
+  private async _waitForMobileSimulate(
+    session: Session,
+    mobileSimPath: string,
+    mobileSimMode?: string
+  ): Promise<void> {
+    log("⏳ Mobile simulate: Waiting for completion");
+    
+    if (!(session as any).mobile) {
+      logInfo("Mobile module not found in session, skipping mobile simulate");
+      return;
+    }
+    if (!(session as any).command) {
+      logInfo("Command module not found in session, skipping mobile simulate");
+      return;
+    }
+    if (!mobileSimPath) {
+      logInfo("Mobile simulate path is empty, skipping mobile simulate");
+      return;
+    }
+
+    try {
+      // Run mobile simulate command
+      const startTime = Date.now();
+      const devInfoFilePath = `${mobileSimPath}/dev_info.json`;
+      let wyaApplyOption = "";
+      
+      if (!mobileSimMode || mobileSimMode === "PropertiesOnly") {
+        wyaApplyOption = "";
+      } else if (mobileSimMode === "SensorsOnly") {
+        wyaApplyOption = "-sensors";
+      } else if (mobileSimMode === "PackagesOnly") {
+        wyaApplyOption = "-packages";
+      } else if (mobileSimMode === "ServicesOnly") {
+        wyaApplyOption = "-services";
+      } else if (mobileSimMode === "All") {
+        wyaApplyOption = "-all";
+      }
+
+      const command = `chmod -R a+rwx ${mobileSimPath}; wya apply ${wyaApplyOption} ${devInfoFilePath}`.trim();
+      logInfo(`ℹ️  ⏳ Waiting for mobile simulate completion, command: ${command}`);
+      
+      const cmdResult = await (session as any).command.executeCommand(command);
+      if (cmdResult.success) {
+        const endTime = Date.now();
+        const consumeTime = (endTime - startTime) / 1000;
+        log(`✅ Mobile simulate completed with mode: ${mobileSimMode || 'PropertiesOnly'}, duration: ${consumeTime.toFixed(2)} seconds`);
+        if (cmdResult.output) {
+          log(`   Output: ${cmdResult.output.trim()}`);
+        }
+      } else {
+        logInfo(`Failed to execute mobile simulate command: ${cmdResult.errorMessage}`);
+      }
+    } catch (error) {
+      logInfo(`Error executing mobile simulate command: ${error}`);
     }
   }
 
@@ -334,8 +399,26 @@ export class AgentBay {
   async create(params: CreateSessionParams = {}): Promise<SessionResult> {
     try {
       logDebug(`default context syncs length: ${params.contextSync?.length}`);
+      
+      // Add context syncs for mobile simulate if provided
+      if (params.extraConfigs?.mobile?.simulateConfig) {
+        const mobileSimContextId = params.extraConfigs.mobile.simulateConfig.simulatedContextId;
+        if (mobileSimContextId) {
+          const mobileSimContextSync = new ContextSync(
+            mobileSimContextId,
+            "/data/agentbay_mobile_info"
+          );
+          if (!params.contextSync) {
+            params.contextSync = [];
+          }
+          logInfo(`Adding context sync for mobile simulate: ${JSON.stringify(mobileSimContextSync)}`);
+          params.contextSync.push(mobileSimContextSync);
+        }
+      }
+      
       // Create a default context for file transfer operations if none provided
       // and no context_syncs are specified
+      logDebug(`Origin context syncs length: ${params.contextSync?.length}`);
       const contextName = `file-transfer-context-${Date.now()}`;
       const contextResult = await this.context.get(contextName, true);
       if (contextResult.success && contextResult.context) {
@@ -343,7 +426,7 @@ export class AgentBay {
         // Add the context to the session params for file transfer operations
         const fileTransferContextSync = new ContextSync(
           contextResult.context.id,
-          "/temp/file-transfer"
+          "/tmp/file-transfer"
         );
         if (!params.contextSync) {
           params.contextSync = [];
@@ -381,6 +464,11 @@ export class AgentBay {
 
       // Flag to indicate if we need to wait for context synchronization
       let needsContextSync = false;
+      
+      // Flag to indicate if we need to wait for mobile simulate
+      let needsMobileSim = false;
+      let mobileSimMode: string | undefined = undefined;
+      let mobileSimPath: string | undefined = undefined;
 
       // Add context sync configurations if provided
       if (params.contextSync && params.contextSync.length > 0) {
@@ -432,7 +520,7 @@ export class AgentBay {
       let recordContextId = ""; // Initialize record_context_id
       if (params.enableBrowserReplay) {
         // Create browser recording persistence configuration
-        const recordPath = "/home/guest/record";
+        const recordPath = BROWSER_RECORD_PATH;
         const recordContextName = generateRandomContextName();
         const result = await this.context.get(recordContextName, true);
         recordContextId = result.success ? result.contextId : "";
@@ -451,6 +539,17 @@ export class AgentBay {
       // Add extra configs if provided
       if (params.extraConfigs) {
         request.extraConfigs = JSON.stringify(params.extraConfigs);
+        
+        // Check mobile simulate config
+        if (params.extraConfigs.mobile?.simulateConfig?.simulate) {
+          mobileSimPath = params.extraConfigs.mobile.simulateConfig.simulatePath;
+          if (!mobileSimPath) {
+            logInfo("mobile_sim_path is not set now, skip mobile simulate operation");
+          } else {
+            needsMobileSim = true;
+            mobileSimMode = params.extraConfigs.mobile.simulateConfig.simulateMode;
+          }
+        }
       }
 
       // Log API request
@@ -599,9 +698,6 @@ export class AgentBay {
       // Store imageId used for this session
       (session as any).imageId = params.imageId;
 
-
-      this.sessions.set(session.sessionId, session);
-
       // Apply mobile configuration if provided
       if (params.extraConfigs && params.extraConfigs.mobile) {
         log("Applying mobile configuration...");
@@ -683,6 +779,11 @@ export class AgentBay {
             await new Promise(resolve => setTimeout(resolve, retryInterval));
           }
         }
+      }
+
+      // If we need to do mobile simulate by command, wait for it
+      if (needsMobileSim && mobileSimPath) {
+        await this._waitForMobileSimulate(session, mobileSimPath, mobileSimMode);
       }
 
       // Return SessionResult with request ID
@@ -907,8 +1008,6 @@ export class AgentBay {
         { sessionId: session.sessionId }
       );
 
-      this.sessions.delete(session.sessionId);
-
       // Return the DeleteResult obtained from session.delete()
       return deleteResult;
     } catch (error) {
@@ -919,28 +1018,6 @@ export class AgentBay {
         errorMessage: `Failed to delete session ${session.sessionId}: ${error}`,
       };
     }
-  }
-
-  /**
-   * Remove a session from the internal session cache.
-   *
-   * This is an internal utility method that removes a session reference from the AgentBay client's
-   * session cache without actually deleting the session from the cloud. Use this when you need to
-   * clean up local references to a session that was deleted externally or no longer needed.
-   *
-   * @param sessionId - The ID of the session to remove from the cache.
-   *
-   * @internal
-   *
-   * @remarks
-   * **Note:** This method only removes the session from the local cache. It does not delete the
-   * session from the cloud. To delete a session from the cloud, use {@link delete} or
-   * {@link Session.delete}.
-   *
-   * @see {@link delete}, {@link Session.delete}
-   */
-  public removeSession(sessionId: string): void {
-    this.sessions.delete(sessionId);
   }
 
   /**
@@ -992,6 +1069,20 @@ export class AgentBay {
       };
 
       if (body?.data) {
+        // Extract contexts list from response
+        const contextsList = body.data.contexts || [];
+        const contexts: Array<{ name: string; id: string }> = [];
+        if (Array.isArray(contextsList)) {
+          for (const ctx of contextsList) {
+            if (ctx && typeof ctx === 'object' && ctx.name && ctx.id) {
+              contexts.push({
+                name: ctx.name,
+                id: ctx.id,
+              });
+            }
+          }
+        }
+
         result.data = {
           appInstanceId: body.data.appInstanceId || "",
           resourceId: body.data.resourceId || "",
@@ -1002,6 +1093,8 @@ export class AgentBay {
           token: body.data.token || "",
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
+          status: body.data.status || "",
+          contexts: contexts.length > 0 ? contexts : undefined,
         };
 
         logAPIResponseWithDetails(
@@ -1106,14 +1199,51 @@ export class AgentBay {
       session.resourceUrl = getResult.data.resourceUrl;
     }
 
-    // Create a default context for file transfer operations for the recovered session
-    const contextName = `file-transfer-context-${Date.now()}`;
-    const contextResult = await this.context.get(contextName, true);
-    if (contextResult.success && contextResult.context) {
-      session.fileTransferContextId = contextResult.context.id;
-      logInfo(`📁 Created file transfer context for recovered session: ${contextResult.context.id}`);
+    // Extract file transfer context ID from contexts list
+    if (getResult.data && getResult.data.contexts && getResult.data.contexts.length > 0) {
+      const contexts = getResult.data.contexts;
+      // Filter contexts with 'file-transfer-context-' prefix
+      const fileTransferContexts = contexts.filter(
+        (ctx) => ctx.name && ctx.name.startsWith("file-transfer-context-")
+      );
+
+      if (fileTransferContexts.length === 0) {
+        // No file transfer context found
+        const availableContexts = contexts.map((ctx) => ctx.name || "unknown");
+        logWarn(
+          `⚠️  No file-transfer-context- found in contexts list for session ${sessionId}. ` +
+            `Available contexts: ${availableContexts.join(", ")}`
+        );
+        session.fileTransferContextId = null;
+      } else if (fileTransferContexts.length === 1) {
+        // Exactly one file transfer context found
+        const contextId = fileTransferContexts[0].id;
+        if (contextId) {
+          session.fileTransferContextId = contextId;
+          logInfo(`📁 Found file transfer context for recovered session: ${contextId}`);
+        } else {
+          logWarn(
+            `⚠️  File transfer context found but missing 'id' field: ${JSON.stringify(fileTransferContexts[0])}`
+          );
+          session.fileTransferContextId = null;
+        }
+      } else {
+        // Multiple file transfer contexts found
+        const contextNames = fileTransferContexts.map((ctx) => ctx.name || "unknown");
+        logWarn(
+          `⚠️  Multiple file-transfer-context- found in contexts list for session ${sessionId}. ` +
+            `Found ${fileTransferContexts.length} contexts: ${contextNames.join(", ")}. ` +
+            `Not setting fileTransferContextId.`
+        );
+        session.fileTransferContextId = null;
+      }
     } else {
-      logError(`⚠️  Failed to create file transfer context for recovered session: ${contextResult.errorMessage || 'Unknown error'}`);
+      // No contexts list in response
+      logWarn(
+        `⚠️  No contexts list found in GetSession response for session ${sessionId}. ` +
+          `fileTransferContextId will remain null.`
+      );
+      session.fileTransferContextId = null;
     }
 
     return {
@@ -1154,6 +1284,92 @@ export class AgentBay {
    */
   getAPIKey(): string {
     return this.apiKey;
+  }
+
+  /**
+   * Asynchronously pause a session, putting it into a dormant state.
+   *
+   * This method directly calls the PauseSessionAsync API without waiting for the session
+   * to reach the PAUSED state.
+   *
+   * @param session - The session to pause.
+   * @param timeout - Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+   * @param pollInterval - Interval in seconds between status polls. Defaults to 2.0 seconds.
+   * @returns SessionPauseResult indicating success or failure and request ID
+   *
+   * @example
+   * ```typescript
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const session = (await agentBay.create()).session;
+   * const pauseResult = await agentBay.pauseAsync(session);
+   * await agentBay.resumeAsync(session);
+   * await session.delete();
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - This method does not wait for the session to reach the PAUSED state
+   * - It only submits the pause request to the API
+   * - The session state transitions from RUNNING -> PAUSING -> PAUSED
+   * - Paused sessions consume fewer resources but maintain their state
+   *
+   * @see {@link resumeAsync}, {@link Session.pauseAsync}
+   */
+  async pauseAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionPauseResult> {
+    try {
+      // Call session's pause_async method directly
+      return await session.pauseAsync(timeout, pollInterval);
+    } catch (error) {
+      logError("Error calling pause session async:", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Failed to pause session ${session.sessionId}: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * Asynchronously resume a session from a paused state.
+   *
+   * This method directly calls the ResumeSessionAsync API without waiting for the session
+   * to reach the RUNNING state.
+   *
+   * @param session - The session to resume.
+   * @param timeout - Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+   * @param pollInterval - Interval in seconds between status polls. Defaults to 2.0 seconds.
+   * @returns SessionResumeResult indicating success or failure and request ID
+   *
+   * @example
+   * ```typescript
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const session = (await agentBay.create()).session;
+   * await agentBay.pauseAsync(session);
+   * const resumeResult = await agentBay.resumeAsync(session);
+   * await session.delete();
+   * ```
+   *
+   * @remarks
+   * **Behavior:**
+   * - This method does not wait for the session to reach the RUNNING state
+   * - It only submits the resume request to the API
+   * - The session state transitions from PAUSED -> RESUMING -> RUNNING
+   * - Only sessions in PAUSED state can be resumed
+   *
+   * @see {@link pauseAsync}, {@link Session.resumeAsync}
+   */
+  async resumeAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionResumeResult> {
+    try {
+      // Call session's resume_async method directly
+      return await session.resumeAsync(timeout, pollInterval);
+    } catch (error) {
+      logError("Error calling resume session async:", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Failed to resume session ${session.sessionId}: ${error}`,
+      };
+    }
   }
 }
 

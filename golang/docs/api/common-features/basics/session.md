@@ -24,6 +24,12 @@ type Session struct {
 	// File transfer context ID for file operations
 	FileTransferContextID	string
 
+	// Browser recording context ID
+	RecordContextID	string
+
+	// Browser replay enabled flag
+	EnableBrowserReplay	bool
+
 	// File, command and code handlers
 	FileSystem	*filesystem.FileSystem
 	Command		*command.Command
@@ -82,6 +88,14 @@ result, _ := client.Create(nil)
 defer result.Session.Delete()
 deleteResult, _ := result.Session.Delete()
 ```
+
+### GetEnableBrowserReplay
+
+```go
+func (s *Session) GetEnableBrowserReplay() bool
+```
+
+GetEnableBrowserReplay returns whether browser replay is enabled for this session.
 
 ### GetLabels
 
@@ -204,6 +218,83 @@ defer result.Session.Delete()
 toolsResult, _ := result.Session.ListMcpTools()
 ```
 
+### Pause
+
+```go
+func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+```
+
+Pause synchronously pauses this session, putting it into a dormant state to reduce resource
+usage and costs. Pause puts the session into a PAUSED state where computational resources are
+significantly reduced. The session state is preserved and can be resumed later to continue work.
+
+Parameters:
+  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionPauseResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Initiates pause operation through the PauseSessionAsync API - Polls session status until PAUSED
+state or timeout - Returns detailed result with success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+pauseResult, _ := result.Session.Pause(300, 2.0)
+```
+
+### Resume
+
+```go
+func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+```
+
+Resume synchronously resumes this session from a paused state to continue work. Resume restores the
+session from PAUSED state back to RUNNING state. All previous session state and data are preserved
+during resume operation.
+
+Parameters:
+  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionResumeResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Initiates resume operation through the ResumeSessionAsync API - Polls session status until RUNNING
+state or timeout - Returns detailed result with success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+result.Session.Pause(300, 2.0)
+resumeResult, _ := result.Session.Resume(300, 2.0)
+```
+
 ### SetLabels
 
 ```go
@@ -270,6 +361,9 @@ type CreateSessionParams struct {
 
 	// Framework specifies the framework name for tracking (e.g., "langchain"). Empty string means direct call.
 	Framework	string
+
+	// EnableBrowserReplay specifies whether to enable browser recording for this session.
+	EnableBrowserReplay	bool
 }
 ```
 
@@ -317,6 +411,15 @@ func (p *CreateSessionParams) WithContextSync(contextSyncs []*ContextSync) *Crea
 ```
 
 WithContextSync sets the context sync configurations for the session parameters.
+
+### WithEnableBrowserReplay
+
+```go
+func (p *CreateSessionParams) WithEnableBrowserReplay(enableBrowserReplay bool) *CreateSessionParams
+```
+
+WithEnableBrowserReplay sets the browser replay flag for the session parameters and returns the
+updated parameters.
 
 ### WithExtraConfigs
 

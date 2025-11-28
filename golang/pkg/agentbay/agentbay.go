@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	openapiutil "github.com/alibabacloud-go/darabonba-openapi/v2/utils"
@@ -39,10 +38,9 @@ func WithEnvFile(envFile string) Option {
 
 // AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
 type AgentBay struct {
-	APIKey   string
-	Client   *mcp.Client
-	Sessions sync.Map
-	Context  *ContextService
+	APIKey  string
+	Client  *mcp.Client
+	Context *ContextService
 }
 
 // NewAgentBay creates a new AgentBay client.
@@ -101,6 +99,57 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 	return NewAgentBay(apiKey, nil)
 }
 
+// waitForMobileSimulate waits for mobile simulate command to complete.
+func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string, mobileSimMode models.MobileSimulateMode) error {
+	fmt.Println("⏳ Mobile simulate: Waiting for completion")
+
+	if session.Mobile == nil {
+		logOperationError("MobileSimulate", "Mobile module not found in session, skipping mobile simulate", false)
+		return nil
+	}
+	if session.Command == nil {
+		logOperationError("MobileSimulate", "Command module not found in session, skipping mobile simulate", false)
+		return nil
+	}
+	if mobileSimPath == "" {
+		logOperationError("MobileSimulate", "Mobile simulate path is empty, skipping mobile simulate", false)
+		return nil
+	}
+
+	// Run mobile simulate command
+	startTime := time.Now()
+	devInfoFilePath := mobileSimPath + "/" + MobileInfoFileName
+	wyaApplyOption := ""
+
+	switch mobileSimMode {
+	case models.MobileSimulateModePropertiesOnly, "":
+		wyaApplyOption = ""
+	case models.MobileSimulateModeSensorsOnly:
+		wyaApplyOption = " -sensors"
+	case models.MobileSimulateModePackagesOnly:
+		wyaApplyOption = " -packages"
+	case models.MobileSimulateModeServicesOnly:
+		wyaApplyOption = " -services"
+	case models.MobileSimulateModeAll:
+		wyaApplyOption = " -all"
+	}
+
+	command := fmt.Sprintf("chmod -R a+rwx %s; wya apply%s %s", mobileSimPath, wyaApplyOption, devInfoFilePath)
+	logInfoWithColor(fmt.Sprintf("⏳ Waiting for mobile simulate completion, command: %s", command))
+
+	cmdResult, err := session.Command.ExecuteCommand(command)
+	if err != nil {
+		logOperationError("MobileSimulate", fmt.Sprintf("Failed to execute mobile simulate command: %v", err), false)
+		return nil
+	}
+
+	duration := time.Since(startTime)
+	fmt.Printf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds\n", mobileSimMode, duration.Seconds())
+	fmt.Printf("   Output: %s\n", cmdResult.Output)
+
+	return nil
+}
+
 // Create creates a new session in the AgentBay cloud environment.
 // If params is nil, default parameters will be used.
 // Create creates a new AgentBay session with specified configuration.
@@ -125,12 +174,43 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
 func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if params == nil {
 		params = NewCreateSessionParams()
+	}
+
+	// Flag to indicate if we need to wait for mobile simulate
+	needsMobileSim := false
+	var mobileSimMode models.MobileSimulateMode
+	var mobileSimPath string
+
+	// Process mobile simulate configuration
+	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil && params.ExtraConfigs.Mobile.SimulateConfig != nil {
+		// Check if simulated context id is provided
+		mobileSimContextID := params.ExtraConfigs.Mobile.SimulateConfig.SimulatedContextID
+		if mobileSimContextID != "" {
+			mobileSimContextSync := &ContextSync{
+				ContextID: mobileSimContextID,
+				Path:      MobileInfoDefaultPath,
+			}
+			if params.ContextSync == nil {
+				params.ContextSync = []*ContextSync{}
+			}
+			logInfoWithColor(fmt.Sprintf("Adding context sync for mobile simulate: %+v", mobileSimContextSync))
+			params.ContextSync = append(params.ContextSync, mobileSimContextSync)
+		}
+
+		// Check if we need to execute mobile simulate command
+		if params.ExtraConfigs.Mobile.SimulateConfig.Simulate {
+			mobileSimPath = params.ExtraConfigs.Mobile.SimulateConfig.SimulatePath
+			if mobileSimPath != "" {
+				needsMobileSim = true
+				mobileSimMode = params.ExtraConfigs.Mobile.SimulateConfig.SimulateMode
+			}
+		}
 	}
 
 	createSessionRequest := &mcp.CreateMcpSessionRequest{
@@ -202,6 +282,23 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			}
 
 			persistenceDataList = append(persistenceDataList, persistenceItem)
+		}
+	}
+
+	// Add browser recording persistence if enabled
+	var recordContextID string
+	if params.EnableBrowserReplay {
+		// Generate random context name for browser recording
+		recordContextName := fmt.Sprintf("browser-record-%d", time.Now().UnixNano())
+		recordResult, err := a.Context.Get(recordContextName, true)
+		if err == nil && recordResult.Success {
+			recordContextID = recordResult.ContextID
+			// Create browser recording persistence configuration
+			recordPersistence := &mcp.CreateMcpSessionRequestPersistenceDataList{
+				ContextId: tea.String(recordContextID),
+				Path:      tea.String(BrowserRecordPath),
+			}
+			persistenceDataList = append(persistenceDataList, recordPersistence)
 		}
 	}
 
@@ -300,7 +397,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		session.ResourceUrl = *response.Body.Data.ResourceUrl
 	}
 
-	a.Sessions.Store(session.SessionID, *session)
+	// Set browser recording state and context ID
+	session.EnableBrowserReplay = params.EnableBrowserReplay
+	session.RecordContextID = recordContextID
 
 	// Log successful session creation
 	keyFields := map[string]interface{}{
@@ -310,6 +409,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
 	logAPIResponseWithDetails("CreateMcpSession", requestID, true, keyFields, string(responseJSON))
+
+	// Update browser replay context if enabled
+	if params.EnableBrowserReplay && recordContextID != "" {
+		a.updateBrowserReplayContext(response.Body.Data, recordContextID)
+	}
 
 	// Apply mobile configuration if provided
 	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil {
@@ -378,6 +482,13 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 	}
 
+	// If we need to do mobile simulate by command, wait for it
+	if needsMobileSim {
+		if err := a.waitForMobileSimulate(session, mobileSimPath, mobileSimMode); err != nil {
+			logOperationError("MobileSimulate", err.Error(), false)
+		}
+	}
+
 	// Return result with RequestID
 	return &SessionResult{
 		ApiResponse: models.ApiResponse{
@@ -417,8 +528,8 @@ func NewListSessionParams() *ListSessionParams {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.List(nil, nil, nil)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.List(nil, nil, nil)
 func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error) {
 	// Set default values
 	if labels == nil {
@@ -639,14 +750,11 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    client.Delete(result.Session, true)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	client.Delete(result.Session, true)
 func (a *AgentBay) Delete(session *Session, syncContext ...bool) (*DeleteResult, error) {
 	result, err := session.Delete(syncContext...)
-	if err == nil {
-		a.Sessions.Delete(session.SessionID)
-	}
 	return result, err
 }
 
@@ -660,6 +768,12 @@ type GetSessionResult struct {
 	ErrorMessage   string
 }
 
+// ContextInfo represents a context in the GetSession response
+type ContextInfo struct {
+	Name string
+	ID   string
+}
+
 // GetSessionData represents the data returned by GetSession API
 type GetSessionData struct {
 	AppInstanceID      string
@@ -671,6 +785,8 @@ type GetSessionData struct {
 	Token              string
 	VpcResource        bool
 	ResourceUrl        string
+	Status             string
+	Contexts           []ContextInfo
 }
 
 // GetSession retrieves session information by session ID
@@ -745,32 +861,54 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 
 		if response.Body.Data != nil {
 			data := &GetSessionData{}
-			if response.Body.Data.AppInstanceId != nil {
-				data.AppInstanceID = *response.Body.Data.AppInstanceId
+			if response.Body.Data.GetAppInstanceId() != nil {
+				data.AppInstanceID = *response.Body.Data.GetAppInstanceId()
 			}
-			if response.Body.Data.ResourceId != nil {
-				data.ResourceID = *response.Body.Data.ResourceId
+			if response.Body.Data.GetResourceId() != nil {
+				data.ResourceID = *response.Body.Data.GetResourceId()
 			}
-			if response.Body.Data.SessionId != nil {
-				data.SessionID = *response.Body.Data.SessionId
+			if response.Body.Data.GetSessionId() != nil {
+				data.SessionID = *response.Body.Data.GetSessionId()
 			}
-			if response.Body.Data.Success != nil {
-				data.Success = *response.Body.Data.Success
+			if response.Body.Data.GetSuccess() != nil {
+				data.Success = *response.Body.Data.GetSuccess()
 			}
-			if response.Body.Data.HttpPort != nil {
-				data.HttpPort = *response.Body.Data.HttpPort
+			if response.Body.Data.GetHttpPort() != nil {
+				data.HttpPort = *response.Body.Data.GetHttpPort()
 			}
-			if response.Body.Data.NetworkInterfaceIp != nil {
-				data.NetworkInterfaceIP = *response.Body.Data.NetworkInterfaceIp
+			if response.Body.Data.GetNetworkInterfaceIp() != nil {
+				data.NetworkInterfaceIP = *response.Body.Data.GetNetworkInterfaceIp()
 			}
-			if response.Body.Data.Token != nil {
-				data.Token = *response.Body.Data.Token
+			if response.Body.Data.GetToken() != nil {
+				data.Token = *response.Body.Data.GetToken()
 			}
-			if response.Body.Data.VpcResource != nil {
-				data.VpcResource = *response.Body.Data.VpcResource
+			if response.Body.Data.GetVpcResource() != nil {
+				data.VpcResource = *response.Body.Data.GetVpcResource()
 			}
-			if response.Body.Data.ResourceUrl != nil {
-				data.ResourceUrl = *response.Body.Data.ResourceUrl
+			if response.Body.Data.GetResourceUrl() != nil {
+				data.ResourceUrl = *response.Body.Data.GetResourceUrl()
+			}
+			if response.Body.Data.GetStatus() != nil {
+				data.Status = *response.Body.Data.GetStatus()
+			}
+			// Extract contexts list from response
+			if response.Body.Data.GetContexts() != nil {
+				contexts := []ContextInfo{}
+				for _, ctx := range response.Body.Data.GetContexts() {
+					if ctx != nil {
+						contextInfo := ContextInfo{}
+						if ctx.GetName() != nil {
+							contextInfo.Name = *ctx.GetName()
+						}
+						if ctx.GetId() != nil {
+							contextInfo.ID = *ctx.GetId()
+						}
+						if contextInfo.Name != "" || contextInfo.ID != "" {
+							contexts = append(contexts, contextInfo)
+						}
+					}
+				}
+				data.Contexts = contexts
 			}
 			result.Data = data
 
@@ -810,11 +948,11 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    createResult, _ := client.Create(nil)
-//    sessionID := createResult.Session.SessionID
-//    result, _ := client.Get(sessionID)
-//    defer result.Session.Delete()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	createResult, _ := client.Create(nil)
+//	sessionID := createResult.Session.SessionID
+//	result, _ := client.Get(sessionID)
+//	defer result.Session.Delete()
 func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	if sessionID == "" {
 		logOperationError("Get", "session_id is required", false)
@@ -870,23 +1008,55 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 		session.ResourceUrl = getResult.Data.ResourceUrl
 	}
 
-	// Store the session in the local cache
-	a.Sessions.Store(sessionID, *session)
-
-	// Create a default context for file transfer operations for the recovered session
-	contextName := fmt.Sprintf("file-transfer-context-%d", time.Now().Unix())
-	contextResult, err := a.Context.Get(contextName, true)
-	if err == nil && contextResult.Success && contextResult.Context != nil {
-		session.FileTransferContextID = contextResult.Context.ID
-		fmt.Printf("📁 Created file transfer context for recovered session: %s\n", contextResult.Context.ID)
-	} else {
-		errorMsg := "Unknown error"
-		if err != nil {
-			errorMsg = err.Error()
-		} else if contextResult.ErrorMessage != "" {
-			errorMsg = contextResult.ErrorMessage
+	// Extract file transfer context ID from contexts list
+	if getResult.Data != nil && len(getResult.Data.Contexts) > 0 {
+		contexts := getResult.Data.Contexts
+		// Filter contexts with 'file-transfer-context-' prefix
+		fileTransferContexts := []ContextInfo{}
+		for _, ctx := range contexts {
+			if strings.HasPrefix(ctx.Name, "file-transfer-context-") {
+				fileTransferContexts = append(fileTransferContexts, ctx)
+			}
 		}
-		fmt.Printf("⚠️  Failed to create file transfer context for recovered session: %s\n", errorMsg)
+
+		if len(fileTransferContexts) == 0 {
+			// No file transfer context found
+			availableContexts := []string{}
+			for _, ctx := range contexts {
+				if ctx.Name != "" {
+					availableContexts = append(availableContexts, ctx.Name)
+				}
+			}
+			fmt.Printf("⚠️  No file-transfer-context- found in contexts list for session %s. Available contexts: %v\n",
+				sessionID, availableContexts)
+			session.FileTransferContextID = ""
+		} else if len(fileTransferContexts) == 1 {
+			// Exactly one file transfer context found
+			contextID := fileTransferContexts[0].ID
+			if contextID != "" {
+				session.FileTransferContextID = contextID
+				fmt.Printf("📁 Found file transfer context for recovered session: %s\n", contextID)
+			} else {
+				fmt.Printf("⚠️  File transfer context found but missing 'id' field: %+v\n", fileTransferContexts[0])
+				session.FileTransferContextID = ""
+			}
+		} else {
+			// Multiple file transfer contexts found
+			contextNames := []string{}
+			for _, ctx := range fileTransferContexts {
+				if ctx.Name != "" {
+					contextNames = append(contextNames, ctx.Name)
+				}
+			}
+			fmt.Printf("⚠️  Multiple file-transfer-context- found in contexts list for session %s. Found %d contexts: %v. Not setting FileTransferContextID.\n",
+				sessionID, len(fileTransferContexts), contextNames)
+			session.FileTransferContextID = ""
+		}
+	} else {
+		// No contexts list in response
+		fmt.Printf("⚠️  No contexts list found in GetSession response for session %s. FileTransferContextID will remain empty.\n",
+			sessionID)
+		session.FileTransferContextID = ""
 	}
 
 	// Log successful retrieval
@@ -909,4 +1079,134 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 		Success: true,
 		Session: session,
 	}, nil
+}
+
+// Pause synchronously pauses a session, putting it into a dormant state to reduce resource usage and costs.
+// Pause puts the session into a PAUSED state where computational resources are significantly reduced.
+// The session state is preserved and can be resumed later to continue work.
+//
+// Parameters:
+//   - session: The session to pause.
+//   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+//   - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+//
+// Returns:
+//   - *models.SessionPauseResult: Result containing success status, request ID, and error message if any.
+//   - error: Error if the operation fails at the transport level
+//
+// Behavior:
+//
+// - Delegates to session's Pause method for actual implementation
+// - Returns detailed result with success status and request tracking
+//
+// Exceptions:
+//
+// - Returns error result (not Go error) for API-level errors like invalid session ID
+// - Returns error result for timeout conditions
+// - Returns Go error for transport-level failures
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	pauseResult, _ := client.Pause(result.Session, 300, 2.0)
+//	client.Resume(result.Session, 300, 2.0)
+func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
+	// Use default values if not provided
+	if timeout <= 0 {
+		timeout = 600
+	}
+	if pollInterval <= 0 {
+		pollInterval = 2.0
+	}
+
+	// Call session's Pause method with provided parameters
+	return session.Pause(timeout, pollInterval)
+}
+
+// Resume synchronously resumes a session from a paused state to continue work.
+// Resume restores the session from PAUSED state back to RUNNING state.
+// All previous session state and data are preserved during resume operation.
+//
+// Parameters:
+//   - session: The session to resume.
+//   - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+//   - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+//
+// Returns:
+//   - *models.SessionResumeResult: Result containing success status, request ID, and error message if any.
+//   - error: Error if the operation fails at the transport level
+//
+// Behavior:
+//
+// - Delegates to session's Resume method for actual implementation
+// - Returns detailed result with success status and request tracking
+//
+// Exceptions:
+//
+// - Returns error result (not Go error) for API-level errors like invalid session ID
+// - Returns error result for timeout conditions
+// - Returns Go error for transport-level failures
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	client.Pause(result.Session, 300, 2.0)
+//	resumeResult, _ := client.Resume(result.Session, 300, 2.0)
+func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
+	// Use default values if not provided
+	if timeout <= 0 {
+		timeout = 600
+	}
+	if pollInterval <= 0 {
+		pollInterval = 2.0
+	}
+
+	// Call session's Resume method with provided parameters
+	return session.Resume(timeout, pollInterval)
+}
+
+// updateBrowserReplayContext updates browser replay context with AppInstanceId from response data.
+// This method updates the context name to include the AppInstanceId for better tracking.
+func (a *AgentBay) updateBrowserReplayContext(responseData *mcp.CreateMcpSessionResponseBodyData, recordContextID string) {
+	// Check if recordContextID is provided
+	if recordContextID == "" {
+		return
+	}
+
+	// Extract AppInstanceId from response data
+	if responseData == nil || responseData.AppInstanceId == nil || *responseData.AppInstanceId == "" {
+		fmt.Printf("⚠️  AppInstanceId not found in response data, skipping browser replay context update\n")
+		return
+	}
+
+	appInstanceID := *responseData.AppInstanceId
+
+	// Create context name with prefix
+	contextName := fmt.Sprintf("browserreplay-%s", appInstanceID)
+
+	// Create Context object for update
+	contextObj := &Context{
+		ID:   recordContextID,
+		Name: contextName,
+	}
+
+	// Call context.update interface
+	fmt.Printf("Updating browser replay context: %s -> %s\n", contextName, recordContextID)
+	updateResult, err := a.Context.Update(contextObj)
+
+	if err != nil {
+		fmt.Printf("❌ Error updating browser replay context: %v\n", err)
+		// Continue execution even if context update fails
+		return
+	}
+
+	if updateResult.Success {
+		fmt.Printf("✅ Successfully updated browser replay context: %s\n", contextName)
+	} else {
+		fmt.Printf("⚠️  Failed to update browser replay context: %s\n", updateResult.ErrorMessage)
+	}
 }

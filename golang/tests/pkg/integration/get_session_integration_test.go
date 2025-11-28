@@ -79,6 +79,25 @@ func TestGetSessionAPI(t *testing.T) {
 	}
 	t.Logf("ResourceID: %s", getSessionResult.Data.ResourceID)
 
+	// TODO: Don't support file transfer context yet
+	// Validate contexts field
+	// if getSessionResult.Data.Contexts == nil {
+	// 	t.Error("Contexts field should not be nil")
+	// }
+	// if len(getSessionResult.Data.Contexts) == 0 {
+	// 	t.Error("Contexts list should not be empty")
+	// }
+	// t.Logf("Contexts count: %d", len(getSessionResult.Data.Contexts))
+	// for i, ctx := range getSessionResult.Data.Contexts {
+	// 	if ctx.Name == "" {
+	// 		t.Errorf("Context %d should have a non-empty Name field", i)
+	// 	}
+	// 	if ctx.ID == "" {
+	// 		t.Errorf("Context %d should have a non-empty ID field", i)
+	// 	}
+	// 	t.Logf("Context %d: name=%s, id=%s", i, ctx.Name, ctx.ID)
+	// }
+
 	// Clean up: Delete the session
 	fmt.Println("Cleaning up: Deleting the session...")
 	_, err = session.Delete()

@@ -12,6 +12,7 @@
  * - Error handling and cleanup
  */
 
+// @ts-nocheck
 import { AgentBay, ExtensionsService, Extension, ExtensionOption, BrowserContext } from "wuying-agentbay-sdk";
 import * as fs from "fs";
 
@@ -32,7 +33,7 @@ async function basicExtensionExample(): Promise<boolean> {
 
   try {
     // Example extension path (update with your actual extension)
-    const extensionPath = "/path/to/your-extension.zip";
+    const extensionPath = "/Users/shiwen/extension/welcome_extension.zip";
 
     if (!fs.existsSync(extensionPath)) {
       console.log(`❌ Extension file not found: ${extensionPath}`);

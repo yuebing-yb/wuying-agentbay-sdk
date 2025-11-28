@@ -13,9 +13,12 @@ export {
 
 export {
   type AppManagerRule,
+  MobileSimulateMode,
+  type MobileSimulateConfig,
   type MobileExtraConfig,
   type ExtraConfigs,
   validateAppManagerRule,
+  validateMobileSimulateConfig,
   validateMobileExtraConfig,
   validateExtraConfigs,
   extraConfigsToJSON,
