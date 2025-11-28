@@ -24,6 +24,12 @@ type Session struct {
 	// File transfer context ID for file operations
 	FileTransferContextID	string
 
+	// Browser recording context ID
+	RecordContextID	string
+
+	// Browser replay enabled flag
+	EnableBrowserReplay	bool
+
 	// File, command and code handlers
 	FileSystem	*filesystem.FileSystem
 	Command		*command.Command
@@ -82,6 +88,14 @@ result, _ := client.Create(nil)
 defer result.Session.Delete()
 deleteResult, _ := result.Session.Delete()
 ```
+
+### GetEnableBrowserReplay
+
+```go
+func (s *Session) GetEnableBrowserReplay() bool
+```
+
+GetEnableBrowserReplay returns whether browser replay is enabled for this session.
 
 ### GetLabels
 
@@ -347,6 +361,9 @@ type CreateSessionParams struct {
 
 	// Framework specifies the framework name for tracking (e.g., "langchain"). Empty string means direct call.
 	Framework	string
+
+	// EnableBrowserReplay specifies whether to enable browser recording for this session.
+	EnableBrowserReplay	bool
 }
 ```
 
@@ -394,6 +411,15 @@ func (p *CreateSessionParams) WithContextSync(contextSyncs []*ContextSync) *Crea
 ```
 
 WithContextSync sets the context sync configurations for the session parameters.
+
+### WithEnableBrowserReplay
+
+```go
+func (p *CreateSessionParams) WithEnableBrowserReplay(enableBrowserReplay bool) *CreateSessionParams
+```
+
+WithEnableBrowserReplay sets the browser replay flag for the session parameters and returns the
+updated parameters.
 
 ### WithExtraConfigs
 

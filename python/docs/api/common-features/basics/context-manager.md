@@ -91,8 +91,8 @@ This method supports two modes:
 
 **Arguments**:
 
-    context_id: Optional ID of the context to synchronize
-    path: Optional path where the context should be mounted
+    context_id: Optional ID of the context to synchronize. If provided, `path` must also be provided.
+    path: Optional path where the context should be mounted. If provided, `context_id` must also be provided.
     mode: Optional synchronization mode (e.g., "upload", "download")
     callback: Optional callback function that receives success status. If provided, the method
   runs in background and calls callback when complete
@@ -105,9 +105,24 @@ This method supports two modes:
     ContextSyncResult: Result object containing success status and request ID
   
 
+**Raises**:
+
+    ValueError: If `context_id` or `path` is provided without the other parameter.
+  Both must be provided together, or both must be omitted.
+  
+
 **Example**:
 
-Async mode - waits for completion:
+Sync all contexts (no parameters):
+```python
+result = agent_bay.create()
+session = result.session
+sync_result = await session.context.sync()
+print(f"Sync success: {sync_result.success}")
+session.delete()
+```
+
+Sync specific context with path:
 ```python
 result = agent_bay.create()
 session = result.session
