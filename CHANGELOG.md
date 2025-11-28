@@ -2,6 +2,39 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.12.0] - 2025-11-28
+
+### Added
+
+#### 📱 Mobile Simulation
+- **Device Simulation Support**: Added support for mobile device simulation features
+  - Enhanced mobile testing capabilities
+  - Support for simulating various mobile device characteristics
+
+#### ⏸️ Session Pause & Resume
+- **Session Control**: Added support for pausing and resuming sessions
+  - `pause()` / `pause_async()`: Pause a running session to save resources
+  - `resume()` / `resume_async()`: Resume a paused session
+  - Available across Python, TypeScript, and Golang SDKs
+
+### Fixed
+
+#### 🐛 Bug Fixes
+- **Browser Automation**: Fixed browser-use timeout issues
+- **Context Management**: Fixed issue where `get_session` was creating a new context ID instead of returning the real one
+- **Context Sync**: Fixed `sync` call to correctly use `context_id` and `path` together
+- **Session Control**: Fixed return value handling when pause or resume backend operations fail
+- **Local Testing**: Fixed issue preventing browser tests from running locally
+- **Python SDK**: Simplified exception log output for cleaner logs
+- **Infrastructure**: Updated logo fallback path for Aone compatibility
+
+### Documentation
+
+- **Use Cases**: Improved Use Cases section UX in README
+- **Examples**: Updated Quick Start examples to use `CodeSpace` `run_code`
+- **General**: Regenerated API documentation and improved code examples
+- **Golang**: Added new examples for Golang SDK
+
 ## [0.11.0] - 2025-11-18
 
 ### Added
