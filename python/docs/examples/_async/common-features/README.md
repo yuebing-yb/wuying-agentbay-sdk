@@ -180,10 +180,10 @@ params = CreateSessionParams(context_syncs=[context_sync])
 
 ## Related Documentation
 
-- [Session Management Guide](../../../../docs/guides/common-features/basics/session-management.md)
-- [File Operations Guide](../../../../docs/guides/common-features/basics/file-operations.md)
-- [Data Persistence Guide](../../../../docs/guides/common-features/basics/data-persistence.md)
-- [Agent Modules Guide](../../../../docs/guides/common-features/advanced/agent-modules.md)
+- [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md)
+- [File Operations Guide](../../../../../docs/guides/common-features/basics/file-operations.md)
+- [Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md)
+- [Agent Modules Guide](../../../../../docs/guides/common-features/advanced/agent-modules.md)
 
 ## Troubleshooting
 

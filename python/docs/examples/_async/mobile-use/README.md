@@ -339,9 +339,9 @@ session.mobile.tap(x=500, y=800)  # Hold for long press
 
 ## Related Documentation
 
-- [Mobile Use Guide](../../../../docs/guides/mobile-use/README.md)
-- [Mobile Application Management](../../../../docs/guides/mobile-use/mobile-application-management.md)
-- [Mobile UI Automation](../../../../docs/guides/mobile-use/mobile-ui-automation.md)
+- [Mobile Use Guide](../../../../../docs/guides/mobile-use/README.md)
+- [Mobile Application Management](../../../../../docs/guides/mobile-use/mobile-application-management.md)
+- [Mobile UI Automation](../../../../../docs/guides/mobile-use/mobile-ui-automation.md)
 
 ## Troubleshooting
 

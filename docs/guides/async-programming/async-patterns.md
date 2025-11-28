@@ -14,6 +14,7 @@ This guide covers common asynchronous programming patterns when using the AgentB
 - [Rate Limiting](#rate-limiting)
 - [Best Practices](#best-practices)
 
+<a id="overview"></a>
 ## 🎯 Overview
 
 The async API in AgentBay SDK allows you to write efficient, non-blocking code that can handle multiple operations concurrently. This guide demonstrates common patterns and best practices for async programming with AgentBay.
@@ -25,6 +26,7 @@ The async API in AgentBay SDK allows you to write efficient, non-blocking code t
 - **Web Applications**: Building async web services with FastAPI, aiohttp, or Django async views
 - **Real-time Systems**: Applications requiring responsive, non-blocking behavior
 
+<a id="async-context-managers"></a>
 ## 🔧 Async Context Managers
 
 ### Basic Pattern
@@ -125,6 +127,7 @@ async def main():
 asyncio.run(main())
 ```
 
+<a id="error-handling"></a>
 ## ⚠️ Error Handling
 
 ### Try-Except Pattern
@@ -192,6 +195,7 @@ async def main():
 asyncio.run(main())
 ```
 
+<a id="concurrent-operations"></a>
 ## 🚀 Concurrent Operations
 
 ### Parallel Session Creation
@@ -310,6 +314,7 @@ async def main():
 asyncio.run(main())
 ```
 
+<a id="resource-cleanup"></a>
 ## 🧹 Resource Cleanup
 
 ### Proper Cleanup Pattern
@@ -476,6 +481,7 @@ async def main():
 asyncio.run(main())
 ```
 
+<a id="retry-mechanisms"></a>
 ## 🔄 Retry Mechanisms
 
 ### Exponential Backoff
@@ -514,6 +520,7 @@ async def main():
 asyncio.run(main())
 ```
 
+<a id="rate-limiting"></a>
 ## 🚦 Rate Limiting
 
 ### Token Bucket Pattern
@@ -580,6 +587,7 @@ async def main():
 asyncio.run(main())
 ```
 
+<a id="best-practices"></a>
 ## ✅ Best Practices
 
 ### 1. Always Use Finally for Cleanup
@@ -687,8 +695,8 @@ async def main():
 ## 📚 Related Documentation
 
 - [Sync vs Async Guide](sync-vs-async.md) - Comprehensive comparison and decision guide
-- [Session Management](basics/session-management.md) - Session lifecycle and management
-- [Command Execution](basics/command-execution.md) - Command execution patterns
+- [Session Management](../common-features/basics/session-management.md) - Session lifecycle and management
+- [Command Execution](../common-features/basics/command-execution.md) - Command execution patterns
 
 ## 🆘 Getting Help
 

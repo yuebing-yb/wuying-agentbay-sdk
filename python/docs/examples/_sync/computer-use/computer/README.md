@@ -203,9 +203,9 @@ The example uses Notepad which is available on all Windows systems. If you want 
 
 ## Related Documentation
 
-- [Computer Application Management Guide](../../../../../docs/guides/computer-use/computer-application-management.md)
-- [Session Management](../../../../../docs/guides/common-features/basics/session-management.md)
-- [Computer UI Automation](../../../../../docs/guides/computer-use/computer-ui-automation.md)
+- [Computer Application Management Guide](../../../../../../docs/guides/computer-use/computer-application-management.md)
+- [Session Management](../../../../../../docs/guides/common-features/basics/session-management.md)
+- [Computer UI Automation](../../../../../../docs/guides/computer-use/computer-ui-automation.md)
 
 ## License
 

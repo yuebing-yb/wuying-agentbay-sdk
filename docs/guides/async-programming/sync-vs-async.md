@@ -422,11 +422,11 @@ For common issues, pitfalls, and performance debugging tips, please refer to the
 
 ## Related Documentation
 
-- [Session Management](basics/session-management.md)
-- [Command Execution](basics/command-execution.md)
-- [File Operations](basics/file-operations.md)
-- [Python API Reference](../../api/README.md)
-- [Python Examples](../../examples/README.md)
+- [Session Management](../common-features/basics/session-management.md)
+- [Command Execution](../common-features/basics/command-execution.md)
+- [File Operations](../common-features/basics/file-operations.md)
+- [Python API Reference](../../../python/docs/api/README.md)
+- [Python Examples](../../../python/docs/examples/README.md)
 
 ## Need Help?
 

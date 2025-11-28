@@ -155,8 +155,8 @@ Extensions are synchronized to browser sessions at:
 
 ## Related Documentation
 
-- [Extension API Reference](../../../../../typescript/docs/api/browser-use/extension.md) - Complete API documentation
-- [Browser Extensions Guide](../../../../../docs/guides/browser-use/browser-extensions.md) - Tutorial and best practices
+- [Extension API Reference](../../../../../../typescript/docs/api/browser-use/extension.md) - Complete API documentation
+- [Browser Extensions Guide](../../../../../../docs/guides/browser-use/browser-extensions.md) - Tutorial and best practices
 - [Browser Examples](../browser/README.md) - Additional browser automation examples
 
 ## Troubleshooting

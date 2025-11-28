@@ -117,9 +117,9 @@ if result.success:
 
 ## Related Documentation
 
-- [Code Execution Guide](../../../../docs/guides/codespace/code-execution.md)
-- [Session Management](../../../../docs/guides/common-features/basics/session-management.md)
-- [File Operations](../../../../docs/guides/common-features/basics/file-operations.md)
+- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md)
+- [Session Management](../../../../../docs/guides/common-features/basics/session-management.md)
+- [File Operations](../../../../../docs/guides/common-features/basics/file-operations.md)
 
 ## Troubleshooting
 

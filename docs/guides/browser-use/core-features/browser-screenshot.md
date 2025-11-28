@@ -34,11 +34,11 @@ The Python SDK provides two screenshot methods:
    - Provides more control over the screenshot process
 
 #### Detailed Documentation
-- [Python Browser API Documentation](../../../../python/docs/api/browser-use/browser.md#screenshot)
+- [Python Browser API Documentation](../../../../python/docs/api/async/async-browser.md#screenshot)
 
 #### Example Usage
-- [Python Browser Screenshot Example](../../../../python/docs/examples/browser-use/browser/browser_screenshot.py)
-- [Python Integration Tests](../../../../python/tests/integration/test_browser_screenshot.py)
+- [Python Browser Screenshot Example](../../../../python/docs/examples/_async/browser-use/browser/browser_screenshot.py)
+- [Python Integration Tests](../../../../python/tests/integration/_async/test_browser_screenshot.py)
 - [Python Unit Tests](../../../../python/tests/unit/test_browser_screenshot.py)
 
 ### TypeScript Implementation

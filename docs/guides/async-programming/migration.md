@@ -11,6 +11,7 @@ This guide helps you migrate your code between synchronous and asynchronous Agen
 - [Code Transformation Patterns](#code-transformation-patterns)
 - [Performance Improvements](#performance-improvements)
 
+<a id="overview"></a>
 ## 🎯 Overview
 
 The AgentBay Python SDK provides both synchronous (`AgentBay`) and asynchronous (`AsyncAgentBay`) APIs. This guide covers:
@@ -34,6 +35,7 @@ The AgentBay Python SDK provides both synchronous (`AgentBay`) and asynchronous 
 - Sequential operations are sufficient
 - Team lacks async experience
 
+<a id="sync-to-async-migration"></a>
 ## 🔄 Sync to Async Migration
 
 ### Step 1: Change Imports
@@ -150,6 +152,7 @@ if __name__ == "__main__":
     asyncio.run(process_data())
 ```
 
+<a id="async-to-sync-migration"></a>
 ## 🔙 Async to Sync Migration
 
 ### Step 1: Change Imports
@@ -228,6 +231,7 @@ def main():
             sessions.append(result.session)
 ```
 
+<a id="common-pitfalls"></a>
 ## ⚠️ Common Pitfalls
 
 ### 1. Forgetting await
@@ -321,6 +325,7 @@ async def combined():
 asyncio.run(combined())
 ```
 
+<a id="code-transformation-patterns"></a>
 ## 🔧 Code Transformation Patterns
 
 ### Pattern 1: Sequential to Concurrent
@@ -442,6 +447,7 @@ async def batch_process(items):
     return [r.output for r in results if r.success]
 ```
 
+<a id="performance-improvements"></a>
 ## 📊 Performance Improvements
 
 ### Benchmark: Sequential vs Concurrent

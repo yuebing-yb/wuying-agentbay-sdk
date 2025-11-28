@@ -291,7 +291,7 @@ print(f"Extension option: {ext_option}")
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Browser API Reference](./browser.md)
+- [Browser API Reference](./async-browser.md)
 
 ---
 

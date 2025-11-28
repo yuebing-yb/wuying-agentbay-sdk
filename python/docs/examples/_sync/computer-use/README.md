@@ -247,10 +247,10 @@ session.ui.key(KeyCode.CTRL, KeyCode.S)
 
 ## Related Documentation
 
-- [Computer Use Guide](../../../../docs/guides/computer-use/README.md)
-- [Computer Application Management](../../../../docs/guides/computer-use/computer-application-management.md)
-- [Computer UI Automation](../../../../docs/guides/computer-use/computer-ui-automation.md)
-- [Window Management](../../../../docs/guides/computer-use/window-management.md)
+- [Computer Use Guide](../../../../../docs/guides/computer-use/README.md)
+- [Computer Application Management](../../../../../docs/guides/computer-use/computer-application-management.md)
+- [Computer UI Automation](../../../../../docs/guides/computer-use/computer-ui-automation.md)
+- [Window Management](../../../../../docs/guides/computer-use/window-management.md)
 
 ## Troubleshooting
 

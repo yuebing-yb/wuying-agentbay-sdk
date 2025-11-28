@@ -52,4 +52,4 @@ Labels are useful for organizing and categorizing sessions, making it easier to 
 - Indicate session status
 - Filter sessions based on any criteria
 
-For more details on session management, see the [Session API Reference](../../../../../../typescript/docs/api/common-features/basics/session.md) and [Session Management Tutorial](../../../../../../docs/guides/common-features/basics/session-management.md). 
+For more details on session management, see the [Session API Reference](../../../../../../../typescript/docs/api/common-features/basics/session.md) and [Session Management Tutorial](../../../../../../../docs/guides/common-features/basics/session-management.md). 

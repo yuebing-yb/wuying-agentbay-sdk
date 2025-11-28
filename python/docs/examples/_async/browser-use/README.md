@@ -319,11 +319,11 @@ await element.screenshot(path="element.png")
 
 ## Related Documentation
 
-- [Browser Use Guide](../../../../docs/guides/browser-use/README.md)
-- [Core Features](../../../../docs/guides/browser-use/core-features.md)
-- [Advanced Features](../../../../docs/guides/browser-use/advance-features.md)
-- [Browser Extensions](../../../../docs/guides/browser-use/browser-extensions.md)
-- [Browser Replay](../../../../docs/guides/browser-use/browser-replay.md)
+- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md)
+- [Core Features](../../../../../docs/guides/browser-use/core-features.md)
+- [Advanced Features](../../../../../docs/guides/browser-use/advance-features.md)
+- [Browser Extensions](../../../../../docs/guides/browser-use/browser-extensions.md)
+- [Browser Replay](../../../../../docs/guides/browser-use/browser-replay.md)
 
 ## Troubleshooting
 

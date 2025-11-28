@@ -698,8 +698,8 @@ session.delete()
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
-- [Command API Reference](./command.md)
+- [Session API Reference](./async-session.md)
+- [Command API Reference](./async-command.md)
 
 ---
 

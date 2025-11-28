@@ -507,8 +507,8 @@ clear_result = await agent_bay.context.clear(result.context_id, timeout=60)
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
-- [Context Manager API Reference](./context-manager.md)
+- [Session API Reference](./async-session.md)
+- [Context Manager API Reference](./async-context-manager.md)
 
 ---
 
