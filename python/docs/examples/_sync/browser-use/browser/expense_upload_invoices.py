@@ -11,7 +11,7 @@
 import os, asyncio
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 from agentbay.browser.browser_agent import ActOptions
 import time
 
@@ -34,14 +34,14 @@ def main():
         agent = session.browser.agent
 
         agent.navigate("https://work.aliyun-inc.com/")
-        agent.act_async(
+        agent.act(
             ActOptions(
                 action="帮我登陆",
                 variables={"用户名": "xxx", "密码": "123456"},
             )
         )
-        agent.act_async(ActOptions(action="点击报销链接或按钮"))
-        agent.act_async(ActOptions(action="在报销单列表中点击第一个项目"))
+        agent.act(ActOptions(action="点击报销链接或按钮"))
+        agent.act(ActOptions(action="在报销单列表中点击第一个项目"))
 
         invoices = [
             "/Users/user/Desktop/20250711114033.pdf",
@@ -49,18 +49,18 @@ def main():
             "/Users/user/Desktop/20250711114035.pdf",
         ]
         for path in invoices:
-            agent.act_async(
+            agent.act(
                 ActOptions(action="在快速新增费用列表中选择'差旅-餐费'")
             )
-            agent.act_async(ActOptions(action="点击'上传电子发票'按钮"))
-            agent.act_async(ActOptions(action=f"上传位于 '{path}' 的文件"))
-            agent.act_async(ActOptions(action="点击'保存'按钮"))
+            agent.act(ActOptions(action="点击'上传电子发票'按钮"))
+            agent.act(ActOptions(action=f"上传位于 '{path}' 的文件"))
+            agent.act(ActOptions(action="点击'保存'按钮"))
 
-        agent.act_async(ActOptions(action="点击提交报销单"))
+        agent.act(ActOptions(action="点击提交报销单"))
         time.sleep(3)
     finally:
         try:
-            session.browser.agent.close_async()
+            session.browser.agent.close()
         except Exception:
             pass
         agent_bay.delete(session)

@@ -303,8 +303,8 @@ make generate-examples-sync
 ## Need Help?
 
 - Check the [API Documentation](../api/)
-- Visit the [Guides](../../docs/guides/)
-- See the [Quickstart](../../docs/quickstart/)
+- Visit the [Guides](../../../docs/guides/)
+- See the [Quickstart](../../../docs/quickstart/)
 
 ## License
 

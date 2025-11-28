@@ -15,7 +15,7 @@ import json
 import time
 from agentbay import AgentBay, CreateSessionParams, ContextSync, SyncPolicy
 
-async def main():
+def main():
     """Main function"""
     print("🗄️ AgentBay Data Persistence Example")
     

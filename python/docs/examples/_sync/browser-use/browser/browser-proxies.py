@@ -29,7 +29,7 @@ import os
 
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserProxy
+from agentbay import BrowserOption, BrowserProxy
 
 from playwright.async_api import sync_playwright
 

@@ -8,11 +8,10 @@
 重点：ActOptions.variagentbayles 批量字段
 """
 
-import os, asyncio
+import os
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay import BrowserOption, ActOptions
 import time
 
 
@@ -22,7 +21,8 @@ def main():
         print("Error: AGENTBAY_API_KEY not set")
         return
     agentbay = AgentBay(api_key=api_key)
-    session = agentbay.create(CreateSessionParams(image_id="browser_latest")).session
+    session_result = agentbay.create(CreateSessionParams(image_id="browser_latest"))
+    session = session_result.session
     try:
         if not session.browser.initialize(BrowserOption()):
             print("Browser init failed")
@@ -30,8 +30,8 @@ def main():
         agent = session.browser.agent
 
         agent.navigate("http://116.62.195.152:3000")
-        agent.act_async(ActOptions(action="帮我添加商品"))
-        agent.act_async(
+        agent.act(ActOptions(action="帮我添加商品"))
+        agent.act(
             ActOptions(
                 action="填写表单",
                 variables={
@@ -44,11 +44,11 @@ def main():
                 },
             )
         )
-        agent.act_async(ActOptions(action="点击提交/保存按钮"))
+        agent.act(ActOptions(action="点击提交/保存按钮"))
         time.sleep(2)
     finally:
         try:
-            session.browser.agent.close_async()
+            session.browser.agent.close()
         except Exception:
             pass
         agentbay.delete(session)

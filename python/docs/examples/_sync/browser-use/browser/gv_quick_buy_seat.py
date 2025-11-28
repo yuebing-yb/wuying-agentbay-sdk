@@ -10,7 +10,7 @@
 import os, asyncio
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 from agentbay.browser.browser_agent import ActOptions
 import time
 
@@ -27,25 +27,25 @@ def main():
         agent = session.browser.agent
         agent.navigate("https://www.gv.com.sg/")
 
-        agent.act_async(action_input=ActOptions(
+        agent.act(action_input=ActOptions(
             action='点击 "Quick Buy" 按钮', dom_settle_timeout_ms=3000
         ))
-        agent.act_async(action_input=ActOptions(
+        agent.act(action_input=ActOptions(
             action="在 Quick-Buy 面板中选择任意影院、任意影片，日期选择 2025-08-12", dom_settle_timeout_ms=4000
         ))
-        agent.act_async(action_input=ActOptions(
+        agent.act(action_input=ActOptions(
             action='点击 "Go" 进入选座页面', dom_settle_timeout_ms=4000
         ))
-        agent.act_async(action_input=ActOptions(
+        agent.act(action_input=ActOptions(
             action='点击 "12:55 PM" 的场次', dom_settle_timeout_ms=4000
         ))
-        agent.act_async(action_input=ActOptions(
+        agent.act(action_input=ActOptions(
             action="选择任意可用座位，确保只选择一个，如有两座被选中则取消多余的",
             dom_settle_timeout_ms=5000
         ))
         time.sleep(3)
     finally:
-        try: session.browser.agent.close_async()
+        try: session.browser.agent.close()
         except Exception: pass
         agentbay.delete(session)
 

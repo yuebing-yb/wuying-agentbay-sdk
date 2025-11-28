@@ -15,7 +15,7 @@ import random
 
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 from agentbay.browser.browser_agent import ExtractOptions
 
 from playwright.async_api import sync_playwright
@@ -94,7 +94,7 @@ Extract the current game state:
                             use_text_extract=False,
                         )
                         # Calculate time cost， average time cost, min & max time cost
-                        success, gameState = session.browser.agent.extract_async(
+                        success, gameState = session.browser.agent.extract(
                             options=options, page=page
                         )
                         if success:

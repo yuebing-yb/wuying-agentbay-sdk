@@ -13,7 +13,7 @@ import time
 import unittest
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
+from agentbay import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
 from playwright.async_api import sync_playwright
 
 # Global variables for persistent context and fingerprint context

@@ -117,15 +117,14 @@ def context_sync_with_callback_demo(agent_bay):
     
     # Call context.sync() with callback - immediate return
     print("\n📤 Calling session.context.sync() with callback...")
-    sync_result = session.context.sync(callback=lambda success: (
-        # Anonymous callback function - handles everything directly
-        print(f"✅ Callback received: {'SUCCESS' if success else 'FAILED'} in {time.time() - sync_start_time:.2f} seconds") or
-        print(f"   📊 {'All files synchronized successfully' if success else 'Some files may have failed to synchronize'}") or
-        print("🧹 Deleting session after sync completion...") or
-        agent_bay.delete(session) or
-        print("✅ Session deleted successfully") or
+    
+    def sync_callback(success):
+        """Callback function for sync completion"""
+        print(f"✅ Callback received: {'SUCCESS' if success else 'FAILED'} in {time.time() - sync_start_time:.2f} seconds")
+        print(f"   📊 {'All files synchronized successfully' if success else 'Some files may have failed to synchronize'}")
         print("🎉 Callback-based sync completed!")
-    ))
+    
+    sync_result = session.context.sync(callback=sync_callback)
     
     if not sync_result.success:
         print(f"❌ Failed to initiate context sync: {sync_result.error_message}")

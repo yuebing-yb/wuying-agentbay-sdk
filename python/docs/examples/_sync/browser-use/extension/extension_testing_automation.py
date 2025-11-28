@@ -120,7 +120,7 @@ class ExtensionTestRunner:
             )
             
             # Create session
-            session_result = self.agent_bay.create(session_params)
+            session_result = agent_bay.create(session_params)
             if not session_result.success:
                 raise Exception(f"Session creation failed: {session_result.error_message}")
             

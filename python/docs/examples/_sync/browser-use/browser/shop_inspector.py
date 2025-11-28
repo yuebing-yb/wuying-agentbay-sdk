@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import (
+from agentbay import (
     BrowserOption,
     BrowserScreen,
     BrowserProxy,
@@ -79,7 +79,7 @@ def has_valid_products(products: List[ProductInfo], min_items: int = 2) -> bool:
 
 def act(agent, instruction: str) -> bool:
     print(f"Acting: {instruction}")
-    ret = agent.act_async(ActOptions(action=instruction))
+    ret = agent.act(ActOptions(action=instruction))
     return bool(getattr(ret, "success", False))
 
 
@@ -113,7 +113,7 @@ def take_and_save_screenshot(agent, base_url: str, out_dir: str) -> Optional[str
 
 
 def extract_products(agent, base_url: str) -> List[ProductInfo]:
-    ok, data = agent.extract_async(
+    ok, data = agent.extract(
         ExtractOptions(
             instruction=(
                 "请提取本页所有商品。价格可为范围（例如 $199–$299）或“from $199”。"
@@ -194,7 +194,7 @@ def process_site(agent, url: str, out_dir: str = "/tmp") -> None:
     else:
         print(f"{host} -> no products found (name+link/price)")
 
-    agent.close_async()
+    agent.close()
 
 
 SITES = [

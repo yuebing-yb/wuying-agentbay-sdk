@@ -17,7 +17,7 @@ import os
 
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint
+from agentbay import BrowserOption, BrowserFingerprint
 from playwright.async_api import sync_playwright
 import time
 

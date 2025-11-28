@@ -37,7 +37,31 @@ def generate_sync_examples(src_dir: Path, dest_dir: Path):
         rel_path = src_file.relative_to(src_dir)
         dest_file = dest_dir / rel_path
         dest_file.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src_file, dest_file)
+        
+        if src_file.suffix == ".md":
+            convert_markdown(src_file, dest_file)
+        else:
+            shutil.copy2(src_file, dest_file)
+
+def convert_markdown(src_path: Path, dest_path: Path):
+    with open(src_path, "r", encoding="utf-8") as f:
+        content = f.read()
+        
+    # Replace AsyncAgentBay -> AgentBay (Documentation text)
+    content = content.replace("AsyncAgentBay", "AgentBay")
+    content = content.replace("AsyncSession", "Session")
+    
+    # Replace API links: docs/api/async/async-*.md -> docs/api/sync/*.md
+    # Regex to match: docs/api/async/async-([a-z0-9-]+).md
+    content = re.sub(r"docs/api/async/async-([a-z0-9-]+)\.md", r"docs/api/sync/\1.md", content)
+    
+    # Replace example links: _async -> _sync
+    content = content.replace("/_async/", "/_sync/")
+    
+    # Write
+    with open(dest_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    print(f"Generated MD: {dest_path}")
 
 def convert_file(src_path: Path, dest_path: Path):
     with open(src_path, "r", encoding="utf-8") as f:

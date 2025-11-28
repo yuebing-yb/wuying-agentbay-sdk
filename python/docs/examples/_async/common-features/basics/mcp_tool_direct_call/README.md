@@ -137,6 +137,6 @@ This direct MCP tool calling approach is useful when you need to:
 
 ## Related Documentation
 
-- [Session API Reference](../../../../../../python/docs/api/async/async-session.md)
+- [Session API Reference](../../../../../../docs/api/async/async-session.md)
 - [Common Features Guide](../../../../../../../docs/guides/common-features/README.md)
 

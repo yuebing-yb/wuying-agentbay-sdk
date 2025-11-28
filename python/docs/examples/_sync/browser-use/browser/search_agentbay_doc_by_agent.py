@@ -12,7 +12,7 @@ import os
 
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 from agentbay.browser.browser_agent import ActOptions
 import time
 
@@ -45,12 +45,12 @@ def main():
 
             agent.navigate("https://www.aliyun.com")
 
-            agent.act_async(
+            agent.act(
                 ActOptions(action="搜索框输入'AgentBay帮助文档'并回车")
             )
-            agent.act_async(ActOptions(action="点击搜索结果中的第一项"))
-            agent.act_async(ActOptions(action="点击'帮助文档'"))
-            agent.act_async(ActOptions(action="滚动页面到底部"))
+            agent.act(ActOptions(action="点击搜索结果中的第一项"))
+            agent.act(ActOptions(action="点击'帮助文档'"))
+            agent.act(ActOptions(action="滚动页面到底部"))
 
             time.sleep(5)
         else:

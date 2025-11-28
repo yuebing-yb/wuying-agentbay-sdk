@@ -11,7 +11,7 @@
 import os, asyncio
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 from agentbay.browser.browser_agent import ActOptions
 import time
 
@@ -30,13 +30,13 @@ def main():
             return
         agent = session.browser.agent
         agent.navigate("https://meeting.alibaba-inc.com/")
-        agent.act_async(
+        agent.act(
             ActOptions(
                 action="帮我登陆",
                 variables={"用户名": "xxxx", "密码": "123456"},
             )
         )
-        agent.act_async(
+        agent.act(
             ActOptions(
                 action="帮我找下下周三朝阳科技园C3六楼10点到12点有没有可用的会议室，如果有弹窗，帮我关掉",
             )
@@ -44,7 +44,7 @@ def main():
         time.sleep(2)
     finally:
         try:
-            session.browser.agent.close_async()
+            session.browser.agent.close()
         except Exception:
             pass
         agent_bay.delete(session)

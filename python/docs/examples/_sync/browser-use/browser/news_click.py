@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, Browser
+from agentbay import BrowserOption, Browser
 from agentbay.browser.browser_agent import ActOptions, ActResult, ExtractOptions
 
 
@@ -47,7 +47,7 @@ class TestRunner:
             with page.context.expect_page() as new_page_info:
                 action_str = "点击页面顶部的'新闻'链接"
 
-                act_result = browser.agent.act_async(
+                act_result = browser.agent.act(
                     ActOptions(action=action_str), page=page
                 )
                 self.logger.info("点击动作结果: %s", act_result)
@@ -62,7 +62,7 @@ class TestRunner:
                 new_page.wait_for_load_state("networkidle")
                 new_page.wait_for_timeout(1000)
 
-                result, objs = browser.agent.extract_async(
+                result, objs = browser.agent.extract(
                     ExtractOptions(instruction="提取页面标题", schema=DummySchema),
                     page=new_page,
                 )

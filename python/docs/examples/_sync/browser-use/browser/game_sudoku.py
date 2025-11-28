@@ -13,7 +13,7 @@ from typing import List, Optional, Tuple
 
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 from agentbay.browser.browser_agent import ExtractOptions, ActOptions
 
 from playwright.async_api import sync_playwright
@@ -78,7 +78,7 @@ Each cell should be a number (1-9) if filled, or 0 if empty.
                             schema=SudokuBoard,
                             use_text_extract=False,
                         )
-                        success, board_obj = session.browser.agent.extract_async(options=options, page=page)
+                        success, board_obj = session.browser.agent.extract(options=options, page=page)
                         if not success:
                             print("❌ Failed to extract sudoku board, retry extracting")
                             time.sleep(3)

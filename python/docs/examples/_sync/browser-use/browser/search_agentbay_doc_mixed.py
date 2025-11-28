@@ -13,7 +13,7 @@ import os
 
 from agentbay import AgentBay
 from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 from agentbay.browser.browser_agent import ActOptions
 from playwright.async_api import sync_playwright
 
@@ -40,7 +40,7 @@ def main():
             page.goto("https://www.aliyun.com", wait_until="domcontentloaded")
 
             # 让 Agent 跟上当前 Playwright 页面（显式传 page）
-            agent.act_async(
+            agent.act(
                 ActOptions(action="搜索框输入'AgentBay帮助文档'并回车"), page=page
             )
 
@@ -48,7 +48,7 @@ def main():
             page.wait_for_timeout(2000)
 
             # 点击搜索结果（在同一页面导航）
-            agent.act_async(
+            agent.act(
                 ActOptions(action="点击搜索结果中的第一项"),
                 page=page,
             )
@@ -57,7 +57,7 @@ def main():
             page.wait_for_load_state("domcontentloaded", timeout=60000)
 
             # 在当前页面上继续用 Agent
-            agent.act_async(ActOptions(action="滚动页面到底部"), page=page)
+            agent.act(ActOptions(action="滚动页面到底部"), page=page)
 
             print("Successfully completed browser automation with mixed Playwright and PageUse Agent")
 
