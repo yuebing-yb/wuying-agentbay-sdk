@@ -126,86 +126,118 @@ class TestBrowserRecordIntegration(unittest.TestCase):
         try:
             # Connect to browser using Playwright
             print("Connecting to browser via Playwright...")
-            with sync_playwright() as p:
-                playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
-                self.assertIsNotNone(playwright_browser, "Playwright browser connection should succeed")
+            max_retries = 3
+            retry_delay = 2  # seconds
 
-                # Getting the default context to ensure the sessions are recorded.
-                default_context = playwright_browser.contexts[0]
-                # Create a new page
-                page = default_context.new_page()
-                print("New page created")
-
-                # Navigate to a test website
-                print("Navigating to Baidu...")
-                page.goto("http://www.baidu.com")
-                time.sleep(3)  # Wait for page to load
-
-                # Get page title
-                page_title = page.title()
-                print("page.title() =", page_title)
-                self.assertIsNotNone(page_title, "Page title should not be None")
-                self.assertTrue(len(page_title) > 0, "Page title should not be empty")
-
-                # Perform some browser operations that will be recorded
-                print("Performing browser operations for recording...")
-
-                # Take a screenshot
-                screenshot_path = "/tmp/test_screenshot.png"
-                page.screenshot(path=screenshot_path)
-                print(f"Screenshot saved to {screenshot_path}")
-
-                # Try to interact with the page more safely
+            # Retry connection logic - all operations must be inside the with block
+            for attempt in range(max_retries):
                 try:
-                    # Wait for page to be fully loaded
-                    page.wait_for_load_state("networkidle", timeout=10000)
+                    print(f"Attempting to connect (attempt {attempt + 1}/{max_retries})...")
+                    with sync_playwright() as p:
+                        # Add timeout to connect_over_cdp (30 seconds)
+                        playwright_browser = p.chromium.connect_over_cdp(
+                            endpoint_url,
+                            timeout=30000  # 30 seconds timeout
+                        )
+                        print("Browser connected successfully")
+                        self.assertIsNotNone(playwright_browser, "Playwright browser connection should succeed")
 
-                    # Try to find and interact with search input
-                    search_selectors = ["#kw", "input[name='wd']", "input[type='text']"]
-                    search_input = None
+                        # Getting the default context to ensure the sessions are recorded.
+                        default_context = playwright_browser.contexts[0]
+                        # Create a new page
+                        page = default_context.new_page()
+                        print("New page created")
 
-                    for selector in search_selectors:
+                        # Navigate to a test website
+                        print("Navigating to Baidu...")
+                        page.goto("http://www.baidu.com")
+                        time.sleep(3)  # Wait for page to load
+
+                        # Get page title
+                        page_title = page.title()
+                        print("page.title() =", page_title)
+                        self.assertIsNotNone(page_title, "Page title should not be None")
+                        self.assertTrue(len(page_title) > 0, "Page title should not be empty")
+
+                        # Perform some browser operations that will be recorded
+                        print("Performing browser operations for recording...")
+
+                        # Take a screenshot
+                        screenshot_path = "/tmp/test_screenshot.png"
+                        page.screenshot(path=screenshot_path)
+                        print(f"Screenshot saved to {screenshot_path}")
+
+                        # Try to interact with the page more safely
                         try:
-                            search_input = page.wait_for_selector(selector, timeout=5000)
-                            if search_input and search_input.is_visible():
-                                print(f"Found search input with selector: {selector}")
-                                break
-                        except:
-                            continue
+                            # Wait for page to be fully loaded
+                            page.wait_for_load_state("networkidle", timeout=10000)
 
-                    if search_input:
-                        search_input.fill("AgentBay测试")
-                        print("Filled search input")
-                        time.sleep(1)
+                            # Try to find and interact with search input
+                            search_selectors = ["#kw", "input[name='wd']", "input[type='text']"]
+                            search_input = None
 
-                        # Try to find and click search button
-                        button_selectors = ["#su", "input[type='submit']", "button[type='submit']"]
-                        for btn_selector in button_selectors:
-                            try:
-                                search_button = page.wait_for_selector(btn_selector, timeout=3000)
-                                if search_button and search_button.is_visible():
-                                    search_button.click()
-                                    print("Clicked search button")
-                                    time.sleep(2)
-                                    break
-                            except:
-                                continue
+                            for selector in search_selectors:
+                                try:
+                                    search_input = page.wait_for_selector(selector, timeout=5000)
+                                    if search_input and search_input.is_visible():
+                                        print(f"Found search input with selector: {selector}")
+                                        break
+                                except:
+                                    continue
+
+                            if search_input:
+                                search_input.fill("AgentBay测试")
+                                print("Filled search input")
+                                time.sleep(1)
+
+                                # Try to find and click search button
+                                button_selectors = ["#su", "input[type='submit']", "button[type='submit']"]
+                                for btn_selector in button_selectors:
+                                    try:
+                                        search_button = page.wait_for_selector(btn_selector, timeout=3000)
+                                        if search_button and search_button.is_visible():
+                                            search_button.click()
+                                            print("Clicked search button")
+                                            time.sleep(2)
+                                            break
+                                    except:
+                                        continue
+                            else:
+                                print("Search input not found, performing simple navigation instead")
+                                # Just scroll the page to demonstrate interaction
+                                page.evaluate("window.scrollTo(0, 500)")
+                                time.sleep(1)
+                                page.evaluate("window.scrollTo(0, 0)")
+
+                        except Exception as interaction_error:
+                            print(f"Page interaction failed, but that's okay for recording test: {interaction_error}")
+
+                        # Wait a bit more to ensure recording captures all operations
+                        time.sleep(2)
+
+                        # Close the page
+                        page.close()
+                        print("Page closed")
+
+                    # If we reach here, connection and operations were successful
+                    break  # Exit retry loop
+
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f"Connection attempt {attempt + 1} failed: {error_msg}")
+
+                    # Check if it's a connection error that might be retryable
+                    is_retryable = any(keyword in error_msg.lower() for keyword in [
+                        "ebadf", "connection", "timeout", "network", "websocket"
+                    ])
+
+                    if attempt < max_retries - 1 and is_retryable:
+                        print(f"Retrying in {retry_delay} seconds...")
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
                     else:
-                        print("Search input not found, performing simple navigation instead")
-                        # Just scroll the page to demonstrate interaction
-                        page.evaluate("window.scrollTo(0, 500)")
-                        time.sleep(1)
-                        page.evaluate("window.scrollTo(0, 0)")
-
-                except Exception as interaction_error:
-                    print(f"Page interaction failed, but that's okay for recording test: {interaction_error}")
-
-                # Wait a bit more to ensure recording captures all operations
-                time.sleep(2)
-
-                # Close the page
-                page.close()
-                print("Page closed")
+                        print(f"Failed to connect after {attempt + 1} attempts")
+                        raise  # Re-raise the exception if all retries failed
 
         except Exception as e:
             print(f"Browser operations encountered an error: {e}")

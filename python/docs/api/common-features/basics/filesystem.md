@@ -34,8 +34,8 @@ FileTransfer provides pre-signed URL upload/download functionality between local
 with integration to Session Context synchronization.
 
 Prerequisites and Constraints:
-- Session must be associated with the corresponding context_id and path through 
-  CreateSessionParams.context_syncs, and remote_path should fall within that 
+- Session must be associated with the corresponding context_id and path through
+  CreateSessionParams.context_syncs, and remote_path should fall within that
   synchronization path (or conform to backend path rules).
 - Requires available AgentBay context service (agent_bay.context) and session context.
 
@@ -79,7 +79,7 @@ Download workflow:
 1) Trigger session.context.sync(mode="upload") to sync cloud disk data to OSS
 2) Get pre-signed download URL via context.get_file_download_url
 3) Download the file and save to local local_path
-4) If wait=True, wait for download task to reach completion after step 1 
+4) If wait=True, wait for download task to reach completion after step 1
    (ensuring backend has prepared the download object)
 
 Returns DownloadResult containing sync and download request_ids, HTTP status, byte count, etc.

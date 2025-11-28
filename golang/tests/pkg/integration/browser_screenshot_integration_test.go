@@ -76,8 +76,8 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		// Navigate to a page
-		_, err = page.Goto("https://www.aliyun.com", playwright.PageGotoOptions{
-			Timeout: playwright.Float(30000),
+		_, err = page.Goto("https://httpbin.org/html", playwright.PageGotoOptions{
+			Timeout: playwright.Float(10000),
 		})
 		require.NoError(t, err)
 
@@ -88,11 +88,14 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 
 		// Take screenshot with default settings (full_page=false)
 		screenshotData, err := session.Browser.Screenshot(page, nil)
-		// Note: This will fail because we haven't implemented Playwright integration yet
-		// but we're testing that the method properly indicates what needs to be done
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "screenshot functionality requires Playwright Go integration")
-		assert.Nil(t, screenshotData)
+		// Note: This should now work with Playwright integration
+		assert.NoError(t, err)
+		assert.NotNil(t, screenshotData)
+		assert.Greater(t, len(screenshotData), 0)
+
+		// Close page to free resources
+		err = page.Close()
+		assert.NoError(t, err)
 	})
 
 	t.Run("Screenshot with full page option", func(t *testing.T) {
@@ -115,8 +118,8 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		// Navigate to a page
-		_, err = page.Goto("https://www.aliyun.com", playwright.PageGotoOptions{
-			Timeout: playwright.Float(30000),
+		_, err = page.Goto("https://httpbin.org/html", playwright.PageGotoOptions{
+			Timeout: playwright.Float(10000),
 		})
 		require.NoError(t, err)
 
@@ -130,11 +133,14 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 			FullPage: true,
 		}
 		screenshotData, err := session.Browser.Screenshot(page, options)
-		// Note: This will fail because we haven't implemented Playwright integration yet
-		// but we're testing that the method properly indicates what needs to be done
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "screenshot functionality requires Playwright Go integration")
-		assert.Nil(t, screenshotData)
+		// Note: This should now work with Playwright integration
+		assert.NoError(t, err)
+		assert.NotNil(t, screenshotData)
+		assert.Greater(t, len(screenshotData), 0)
+
+		// Close page to free resources
+		err = page.Close()
+		assert.NoError(t, err)
 	})
 
 	t.Run("Screenshot with custom options", func(t *testing.T) {
@@ -157,8 +163,8 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		// Navigate to a page
-		_, err = page.Goto("https://www.aliyun.com", playwright.PageGotoOptions{
-			Timeout: playwright.Float(30000),
+		_, err = page.Goto("https://httpbin.org/html", playwright.PageGotoOptions{
+			Timeout: playwright.Float(10000),
 		})
 		require.NoError(t, err)
 
@@ -175,11 +181,14 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 			Timeout:  30000,
 		}
 		screenshotData, err := session.Browser.Screenshot(page, options)
-		// Note: This will fail because we haven't implemented Playwright integration yet
-		// but we're testing that the method properly indicates what needs to be done
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "screenshot functionality requires Playwright Go integration")
-		assert.Nil(t, screenshotData)
+		// Note: This should now work with Playwright integration
+		assert.NoError(t, err)
+		assert.NotNil(t, screenshotData)
+		assert.Greater(t, len(screenshotData), 0)
+
+		// Close page to free resources
+		err = page.Close()
+		assert.NoError(t, err)
 	})
 
 	t.Run("Screenshot without browser initialization", func(t *testing.T) {
@@ -209,12 +218,16 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "browser must be initialized before calling screenshot")
 		assert.Nil(t, screenshotData)
+
+		// Close page to free resources
+		err = page.Close()
+		assert.NoError(t, err)
 	})
 
 	t.Run("Screenshot with multiple pages", func(t *testing.T) {
 		urls := []string{
-			"https://www.aliyun.com",
-			"https://www.taobao.com",
+			"https://httpbin.org/html",
+			"https://httpbin.org/json",
 		}
 
 		// Start Playwright
@@ -250,11 +263,10 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 
 			// Take screenshot with default settings
 			screenshotData, err := session.Browser.Screenshot(page, nil)
-			// Note: This will fail because we haven't implemented Playwright integration yet
-			// but we're testing that the method properly indicates what needs to be done
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "screenshot functionality requires Playwright Go integration")
-			assert.Nil(t, screenshotData)
+			// Note: This should now work with Playwright integration
+			assert.NoError(t, err)
+			assert.NotNil(t, screenshotData)
+			assert.Greater(t, len(screenshotData), 0)
 
 			// Close page
 			err = page.Close()
@@ -284,8 +296,8 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		// Navigate to a page
-		_, err = page.Goto("https://www.aliyun.com", playwright.PageGotoOptions{
-			Timeout: playwright.Float(30000),
+		_, err = page.Goto("https://httpbin.org/html", playwright.PageGotoOptions{
+			Timeout: playwright.Float(10000),
 		})
 		require.NoError(t, err)
 
@@ -299,16 +311,19 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 
 		// Take screenshot
 		screenshotData, err := session.Browser.Screenshot(page, nil)
-		// Note: This will fail because we haven't implemented Playwright integration yet
-		// but we're testing that the method properly indicates what needs to be done
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "screenshot functionality requires Playwright Go integration")
-		assert.Nil(t, screenshotData)
+		// Note: This should now work with Playwright integration
+		assert.NoError(t, err)
+		assert.NotNil(t, screenshotData)
+		assert.Greater(t, len(screenshotData), 0)
 
 		endTime := time.Now()
 		duration := endTime.Sub(startTime)
 
 		t.Logf("✅ Screenshot attempted in %v", duration)
+
+		// Close page to free resources
+		err = page.Close()
+		assert.NoError(t, err)
 
 		// Performance check (should complete within reasonable time even if it fails)
 		assert.Less(t, duration, 30*time.Second, "Screenshot should complete within 30 seconds")

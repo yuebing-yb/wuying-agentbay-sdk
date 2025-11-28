@@ -2,7 +2,7 @@
 API response models for AgentBay SDK.
 """
 
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from agentbay.session import Session
@@ -25,6 +25,84 @@ class ApiResponse:
     def get_request_id(self) -> str:
         """Returns the unique identifier for the API request."""
         return self.request_id
+
+
+class SessionPauseResult(ApiResponse):
+    """Result of session pause operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        error_message: str = "",
+        code: str = "",
+        message: str = "",
+        http_status_code: int = 0,
+        status: Optional[str] = None,
+    ):
+        """
+        Initialize a SessionPauseResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the pause operation was successful.
+                Defaults to False.
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+            code (str, optional): API error code. Defaults to "".
+            message (str, optional): Detailed error message from API. Defaults to "".
+            http_status_code (int, optional): HTTP status code. Defaults to 0.
+            status (Optional[str], optional): Current status of the session.
+                Possible values: "RUNNING", "PAUSED", "PAUSING".
+                Defaults to None.
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message
+        self.code = code
+        self.message = message
+        self.http_status_code = http_status_code
+        self.status = status
+
+
+class SessionResumeResult(ApiResponse):
+    """Result of session resume operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        error_message: str = "",
+        code: str = "",
+        message: str = "",
+        http_status_code: int = 0,
+        status: Optional[str] = None,
+    ):
+        """
+        Initialize a SessionResumeResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the resume operation was successful.
+                Defaults to False.
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+            code (str, optional): API error code. Defaults to "".
+            message (str, optional): Detailed error message from API. Defaults to "".
+            http_status_code (int, optional): HTTP status code. Defaults to 0.
+            status (Optional[str], optional): Current status of the session.
+                Possible values: "RUNNING", "PAUSED", "RESUMING".
+                Defaults to None.
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message
+        self.code = code
+        self.message = message
+        self.http_status_code = http_status_code
+        self.status = status
 
 
 class SessionResult(ApiResponse):
@@ -137,6 +215,8 @@ class GetSessionData:
         token: str = "",
         vpc_resource: bool = False,
         resource_url: str = "",
+        status: str = "",
+        contexts: Optional[List[Dict[str, str]]] = None,
     ):
         """
         Initialize GetSessionData.
@@ -151,6 +231,9 @@ class GetSessionData:
             token (str): Token for VPC sessions.
             vpc_resource (bool): Whether this session uses VPC resources.
             resource_url (str): Resource URL for accessing the session.
+            status (str): Session status.
+            contexts (Optional[List[Dict[str, str]]]): List of contexts associated with the session.
+                Each context is a dict with 'name' and 'id' keys.
         """
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
@@ -161,6 +244,9 @@ class GetSessionData:
         self.token = token
         self.vpc_resource = vpc_resource
         self.resource_url = resource_url
+        self.status = status
+        self.contexts = contexts or []
+
 
 
 class GetSessionResult(ApiResponse):

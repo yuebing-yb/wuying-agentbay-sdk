@@ -149,6 +149,13 @@ class LocalPageAgent(BrowserAgent):
             raise RuntimeError("mcp_client is not set on LocalBrowserAgent.")
         return await self.mcp_client.call_tool(name, args)
 
+    def _call_mcp_tool_timeout(
+        self, name: str, args: Dict[str, Any]
+    ) -> OperationResult:
+        """
+        Call MCP tool with timeout.
+        """
+        return self._call_mcp_tool(name, args, read_timeout=60000, connect_timeout=60000)
 
 class LocalBrowser(Browser):
     def __init__(self, session=None):

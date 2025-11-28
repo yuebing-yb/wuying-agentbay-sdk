@@ -2,8 +2,8 @@ import json
 import os
 import random
 import string
+import time
 from enum import Enum
-from threading import Lock
 from typing import Any, Dict, List, Optional, Union
 
 from alibabacloud_tea_openapi import models as open_api_models
@@ -14,14 +14,18 @@ from agentbay.api.models import (
     CreateMcpSessionRequest,
     GetSessionRequest,
     ListSessionRequest,
+    MobileSimulateMode,
 )
-from agentbay.config import _load_config
+
+from agentbay.config import _load_config, BROWSER_RECORD_PATH, _MOBILE_INFO_DEFAULT_PATH, _MOBILE_INFO_FILE_NAME
 from agentbay.context import ContextService
 from agentbay.model import (
     DeleteResult,
     GetSessionData,
     GetSessionResult,
     SessionListResult,
+    SessionPauseResult,
+    SessionResumeResult,
     SessionResult,
     extract_request_id,
 )
@@ -130,8 +134,6 @@ class AgentBay:
         config.connect_timeout = config_data["timeout_ms"]
 
         self.client = mcp_client(config)
-        self._sessions = {}
-        self._lock = Lock()
 
         # Initialize context service
         self.context = ContextService(self)
@@ -225,10 +227,6 @@ class AgentBay:
         ):
             session.mobile.configure(params.extra_configs.mobile)
 
-        # Store session in cache
-        with self._lock:
-            self._sessions[session_id] = session
-
         return session
 
     def _fetch_mcp_tools_for_vpc_session(self, session: Session) -> None:
@@ -298,6 +296,54 @@ class AgentBay:
                 f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}"
             )
             time.sleep(retry_interval)
+
+    def _wait_for_mobile_simulate(self, session: Session, mobile_sim_path: str, mobile_sim_mode: Optional[MobileSimulateMode] = None) -> None:
+        """
+        Wait for mobile simulate command to complete.
+
+        Args:
+            session: The session to wait for mobile simulate
+            mobile_sim_path: The dev info path to the mobile simulate
+            mobile_sim_mode: The mode of the mobile simulate. If not provided, will use the default mode.
+        """
+        _log_operation_start("Mobile simulate", "Waiting for completion")
+        if not session.mobile:
+            _logger.warning("Mobile module not found in session, skipping mobile simulate")
+            return
+        if not session.command:
+            _logger.warning("Command module not found in session, skipping mobile simulate")
+            return
+        if not mobile_sim_path:
+            _logger.warning("Mobile simulate path is empty, skipping mobile simulate")
+            return
+
+        try:
+            # Run mobile simulate command
+            start_time = time.time()
+            dev_info_file_path = mobile_sim_path + "/" + _MOBILE_INFO_FILE_NAME
+            wya_apply_option = ""
+            if not mobile_sim_mode or mobile_sim_mode == MobileSimulateMode.PROPERTIES_ONLY:
+                wya_apply_option = ""
+            elif mobile_sim_mode == MobileSimulateMode.SENSORS_ONLY:
+                wya_apply_option = "-sensors"
+            elif mobile_sim_mode == MobileSimulateMode.PACKAGES_ONLY:
+                wya_apply_option = "-packages"
+            elif mobile_sim_mode == MobileSimulateMode.SERVICES_ONLY:
+                wya_apply_option = "-services"
+            elif mobile_sim_mode == MobileSimulateMode.ALL:
+                wya_apply_option = "-all"
+
+            command = f"chmod -R a+rwx {mobile_sim_path}; wya apply {wya_apply_option} {dev_info_file_path}"
+            _logger.info(f"⏳ Waiting for mobile simulate completion, command: {command}")
+            cmd_result = session.command.execute_command(command)
+            if cmd_result.success:
+                end_time = time.time()
+                consume_time = end_time - start_time
+                _log_operation_success(f"Mobile simulate with mode: {mobile_sim_mode}, duration: {consume_time:.2f} seconds")
+            else:
+                _logger.warning(f"Failed to execute mobile simulate command: {cmd_result.error_message}")
+        except Exception as e:
+            _logger.warning(f"Error executing mobile simulate command: {e}")
 
     def _log_request_debug_info(self, request: CreateMcpSessionRequest) -> None:
         """
@@ -412,6 +458,25 @@ class AgentBay:
             if params is None:
                 params = CreateSessionParams()
 
+            # Add context syncs for mobile simulate if simulated_context_id is provided
+            if hasattr(params, "extra_configs") and params.extra_configs:
+                if params.extra_configs.mobile and params.extra_configs.mobile.simulate_config:
+                    mobile_sim_context_id = params.extra_configs.mobile.simulate_config.simulated_context_id
+                    if mobile_sim_context_id:
+                        from agentbay.context_sync import ContextSync, SyncPolicy
+
+                        mobile_sim_context_sync = ContextSync(
+                            context_id=mobile_sim_context_id,
+                            path=_MOBILE_INFO_DEFAULT_PATH,
+                            policy=SyncPolicy.default())
+                        if not hasattr(params, "context_syncs") or params.context_syncs is None:
+                            params.context_syncs = []
+                        _logger.info(
+                            f"Adding context sync for mobile simulate: {mobile_sim_context_sync}"
+                        )
+                        params.context_syncs.append(mobile_sim_context_sync)
+
+
             # Create a default context for file transfer operations if none provided
             # and no context_syncs are specified
             import time
@@ -425,7 +490,7 @@ class AgentBay:
 
                 file_transfer_context_sync = ContextSync(
                     context_id=context_result.context.id,
-                    path="/temp/file-transfer",
+                    path="/tmp/file-transfer",
                 )
                 if not hasattr(params, "context_syncs") or params.context_syncs is None:
                     params.context_syncs = []
@@ -563,7 +628,7 @@ class AgentBay:
                 )
 
                 # Create browser recording persistence configuration
-                record_path = "/home/guest/record"
+                record_path = BROWSER_RECORD_PATH
                 record_context_name = _generate_random_context_name()
                 result = self.context.get(record_context_name, True)
                 record_context_id = result.context_id if result.success else ""
@@ -579,9 +644,23 @@ class AgentBay:
                     request.persistence_data_list = []
                 request.persistence_data_list.append(record_persistence)
 
+            # Flag to indicate if we need to wait for mobile simulate
+            needs_mobile_sim = False
+            mobile_sim_mode = None
+            mobile_sim_path = None
+
             # Add extra_configs if provided
             if hasattr(params, "extra_configs") and params.extra_configs:
                 request.extra_configs = params.extra_configs
+                # Check mobile simulate config
+                if params.extra_configs.mobile and params.extra_configs.mobile.simulate_config:
+                    if params.extra_configs.mobile.simulate_config.simulate:
+                        mobile_sim_path = params.extra_configs.mobile.simulate_config.simulate_path
+                        if not mobile_sim_path:
+                            _logger.warning("mobile_sim_path is not set now, skip mobile simulate operation")
+                        else:
+                            needs_mobile_sim = True
+                            mobile_sim_mode = params.extra_configs.mobile.simulate_config.simulate_mode
 
             self._log_request_debug_info(request)
 
@@ -681,6 +760,10 @@ class AgentBay:
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:
                 self._wait_for_context_synchronization(session)
+
+            # If we need to do mobile simulate by command, wait for it
+            if needs_mobile_sim:
+                self._wait_for_mobile_simulate(session, mobile_sim_path, mobile_sim_mode)
 
             # Return SessionResult with request ID
             return SessionResult(request_id=request_id, success=True, session=session)
@@ -951,9 +1034,6 @@ class AgentBay:
             # Delete the session and get the result
             delete_result = session.delete(sync_context=sync_context)
 
-            with self._lock:
-                self._sessions.pop(session.session_id, None)
-
             # Return the DeleteResult obtained from session.delete()
             return delete_result
 
@@ -1022,6 +1102,7 @@ class AgentBay:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
                 )
+                print(f"get_session Response body: {response_body}")
             except Exception:
                 response_body = str(response)
 
@@ -1047,6 +1128,8 @@ class AgentBay:
                 data = None
                 if body.get("Data"):
                     data_dict = body.get("Data", {})
+                    # Extract contexts list from response
+                    contexts_list = data_dict.get("contexts") or data_dict.get("Contexts") or []
                     data = GetSessionData(
                         app_instance_id=data_dict.get("AppInstanceId", ""),
                         resource_id=data_dict.get("ResourceId", ""),
@@ -1057,6 +1140,8 @@ class AgentBay:
                         token=data_dict.get("Token", ""),
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
+                        status=data_dict.get("Status", ""),
+                        contexts=contexts_list if isinstance(contexts_list, list) else [],
                     )
 
                 # Log API response with key details
@@ -1184,22 +1269,276 @@ class AgentBay:
             session.token = get_result.data.token
             session.resource_url = get_result.data.resource_url
 
-        # Create a default context for file transfer operations for the recovered session
-        import time
-        context_name = f"file-transfer-context-{int(time.time())}"
-        context_result = self.context.get(context_name, create=True)
-        if context_result.success and context_result.context:
-            session.file_transfer_context_id = context_result.context.id
-            _logger.info(
-                f"📁 Created file transfer context for recovered session: {context_result.context.id}"
-            )
+        # Extract file transfer context ID from contexts list
+        if get_result.data and get_result.data.contexts:
+            contexts = get_result.data.contexts
+            # Filter contexts with 'file-transfer-context-' prefix
+            file_transfer_contexts = [
+                ctx for ctx in contexts
+                if isinstance(ctx, dict) and ctx.get("name", "").startswith("file-transfer-context-")
+            ]
+
+            if len(file_transfer_contexts) == 0:
+                # No file transfer context found
+                _logger.warning(
+                    f"⚠️  No file-transfer-context- found in contexts list for session {session_id}. "
+                    f"Available contexts: {[ctx.get('name', 'unknown') for ctx in contexts if isinstance(ctx, dict)]}"
+                )
+                session.file_transfer_context_id = None
+            elif len(file_transfer_contexts) == 1:
+                # Exactly one file transfer context found
+                context_id = file_transfer_contexts[0].get("id", "")
+                if context_id:
+                    session.file_transfer_context_id = context_id
+                    _logger.info(
+                        f"📁 Found file transfer context for recovered session: {context_id}"
+                    )
+                else:
+                    _logger.warning(
+                        f"⚠️  File transfer context found but missing 'id' field: {file_transfer_contexts[0]}"
+                    )
+                    session.file_transfer_context_id = None
+            else:
+                # Multiple file transfer contexts found
+                context_names = [ctx.get("name", "unknown") for ctx in file_transfer_contexts]
+                _logger.warning(
+                    f"⚠️  Multiple file-transfer-context- found in contexts list for session {session_id}. "
+                    f"Found {len(file_transfer_contexts)} contexts: {context_names}. "
+                    f"Not setting file_transfer_context_id."
+                )
+                session.file_transfer_context_id = None
         else:
+            # No contexts list in response
             _logger.warning(
-                f"⚠️  Failed to create file transfer context for recovered session: {context_result.error_message if hasattr(context_result, 'error_message') else 'Unknown error'}"
+                f"⚠️  No contexts list found in GetSession response for session {session_id}. "
+                f"file_transfer_context_id will remain None."
             )
+            session.file_transfer_context_id = None
+
+        _logger.info(f"GetSession session.file_transfer_context_id: {session.file_transfer_context_id}")
 
         return SessionResult(
             request_id=get_result.request_id,
             success=True,
             session=session,
         )
+
+    def pause(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
+        """
+        Synchronously pause a session, putting it into a dormant state.
+
+        This method internally calls the PauseSessionAsync API and then polls the GetSession API
+        to check the session status until it becomes PAUSED or until timeout.
+
+        Args:
+            session (Session): The session to pause.
+            timeout (int, optional): Timeout in seconds to wait for the session to pause.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionPauseResult: Result containing the request ID, success status, and final session status.
+                - success (bool): True if the session was successfully paused
+                - request_id (str): Unique identifier for this API request
+                - status (str): Final session status (should be "PAUSED" if successful)
+                - error_message (str): Error description (if success is False)
+                - code (str): API response code (if available)
+                - message (str): API response message (if available)
+                - http_status_code (int): HTTP status code (if available)
+
+        Raises:
+            ClientException: If the API request fails due to network or authentication issues.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            pause_result = agent_bay.pause(session)
+            agent_bay.resume(session)
+            session.delete()
+            ```
+
+        Note:
+            - The session state transitions from RUNNING -> PAUSING -> PAUSED
+            - Paused sessions consume fewer resources but maintain their state
+            - Use resume() or resume_async() to restore the session to RUNNING state
+            - The timeout parameter controls how long to wait for the PAUSED state
+            - If timeout is exceeded, the method returns with success=False
+
+        See Also:
+            AgentBay.pause_async, AgentBay.resume, AgentBay.resume_async, Session.pause, Session.pause_async
+        """
+        try:
+            # Call session's pause method
+            return session.pause(timeout, poll_interval)
+        except Exception as e:
+            _log_operation_error("pause_session", str(e), exc_info=True)
+            return SessionPauseResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to pause session {session.session_id}: {e}",
+            )
+
+    async def pause_async(self, session: Session) -> SessionPauseResult:
+        """
+        Asynchronously pause a session, putting it into a dormant state.
+
+        This method directly calls the PauseSessionAsync API without waiting for the session
+        to reach the PAUSED state. For synchronous behavior that waits for the PAUSED state,
+        use the pause() method instead.
+
+        Args:
+            session (Session): The session to pause.
+
+        Returns:
+            SessionPauseResult: Result containing the request ID and success status.
+                - success (bool): True if the pause request was accepted by the API
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+                - code (str): API response code (if available)
+                - message (str): API response message (if available)
+                - http_status_code (int): HTTP status code (if available)
+
+        Raises:
+            ClientException: If the API request fails due to network or authentication issues.
+
+        Example:
+            ```python
+            import asyncio
+
+            session = agent_bay.create().session
+            pause_result = await agent_bay.pause_async(session)
+            await agent_bay.resume_async(session)
+            session.delete()
+            ```
+
+        Note:
+            - This method does not wait for the session to reach the PAUSED state
+            - It only submits the pause request to the API
+            - Use pause() for synchronous behavior that waits for completion
+            - The session state transitions from RUNNING -> PAUSING -> PAUSED
+            - Paused sessions consume fewer resources but maintain their state
+
+        See Also:
+            AgentBay.pause, AgentBay.resume, AgentBay.resume_async, Session.pause_async
+        """
+        try:
+            # Call session's pause_async method
+            return await session.pause_async()
+        except Exception as e:
+            _log_operation_error("pause_session_async", str(e), exc_info=True)
+            return SessionPauseResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to pause session {session.session_id}: {e}",
+            )
+
+    def resume(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
+        """
+        Synchronously resume a session from a paused state.
+
+        This method internally calls the ResumeSessionAsync API and then polls the GetSession API
+        to check the session status until it becomes RUNNING or until timeout.
+
+        Args:
+            session (Session): The session to resume.
+            timeout (int, optional): Timeout in seconds to wait for the session to resume.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionResumeResult: Result containing the request ID, success status, and final session status.
+                - success (bool): True if the session was successfully resumed
+                - request_id (str): Unique identifier for this API request
+                - status (str): Final session status (should be "RUNNING" if successful)
+                - error_message (str): Error description (if success is False)
+                - code (str): API response code (if available)
+                - message (str): API response message (if available)
+                - http_status_code (int): HTTP status code (if available)
+
+        Raises:
+            ClientException: If the API request fails due to network or authentication issues.
+
+        Example:
+            ```python
+            session = agent_bay.create().session
+            agent_bay.pause(session)
+            resume_result = agent_bay.resume(session)
+            session.delete()
+            ```
+
+        Note:
+            - The session state transitions from PAUSED -> RESUMING -> RUNNING
+            - Only sessions in PAUSED state can be resumed
+            - Use pause() or pause_async() to put a session into PAUSED state
+            - The timeout parameter controls how long to wait for the RUNNING state
+            - If timeout is exceeded, the method returns with success=False
+
+        See Also:
+            AgentBay.pause, AgentBay.pause_async, AgentBay.resume_async, Session.resume, Session.resume_async
+        """
+        try:
+            # Call session's resume method
+            return session.resume(timeout, poll_interval)
+        except Exception as e:
+            _log_operation_error("resume_session", str(e), exc_info=True)
+            return SessionResumeResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to resume session {session.session_id}: {e}",
+            )
+
+    async def resume_async(self, session: Session) -> SessionResumeResult:
+        """
+        Asynchronously resume a session from a paused state.
+
+        This method directly calls the ResumeSessionAsync API without waiting for the session
+        to reach the RUNNING state. For synchronous behavior that waits for the RUNNING state,
+        use the resume() method instead.
+
+        Args:
+            session (Session): The session to resume.
+
+        Returns:
+            SessionResumeResult: Result containing the request ID and success status.
+                - success (bool): True if the resume request was accepted by the API
+                - request_id (str): Unique identifier for this API request
+                - error_message (str): Error description (if success is False)
+                - code (str): API response code (if available)
+                - message (str): API response message (if available)
+                - http_status_code (int): HTTP status code (if available)
+
+        Raises:
+            ClientException: If the API request fails due to network or authentication issues.
+
+        Example:
+            ```python
+            import asyncio
+
+            session = agent_bay.create().session
+            agent_bay.pause(session)
+            resume_result = await agent_bay.resume_async(session)
+            session.delete()
+            ```
+
+        Note:
+            - This method does not wait for the session to reach the RUNNING state
+            - It only submits the resume request to the API
+            - Use resume() for synchronous behavior that waits for completion
+            - The session state transitions from PAUSED -> RESUMING -> RUNNING
+            - Only sessions in PAUSED state can be resumed
+
+        See Also:
+            AgentBay.pause, AgentBay.pause_async, AgentBay.resume, Session.resume_async
+        """
+        try:
+            # Call session's resume_async method
+            return await session.resume_async()
+        except Exception as e:
+            _log_operation_error("resume_session_async", str(e), exc_info=True)
+            return SessionResumeResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to resume session {session.session_id}: {e}",
+            )

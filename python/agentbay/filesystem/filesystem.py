@@ -46,10 +46,10 @@ class FileTransfer:
     """
     FileTransfer provides pre-signed URL upload/download functionality between local and OSS,
     with integration to Session Context synchronization.
-    
+
     Prerequisites and Constraints:
-    - Session must be associated with the corresponding context_id and path through 
-      CreateSessionParams.context_syncs, and remote_path should fall within that 
+    - Session must be associated with the corresponding context_id and path through
+      CreateSessionParams.context_syncs, and remote_path should fall within that
       synchronization path (or conform to backend path rules).
     - Requires available AgentBay context service (agent_bay.context) and session context.
     """
@@ -64,7 +64,7 @@ class FileTransfer:
     ):
         """
         Initialize FileTransfer with AgentBay client and session.
-        
+
         Args:
             agent_bay: AgentBay instance for context service access
             session: Created session object for context operations
@@ -229,7 +229,7 @@ class FileTransfer:
         1) Trigger session.context.sync(mode="upload") to sync cloud disk data to OSS
         2) Get pre-signed download URL via context.get_file_download_url
         3) Download the file and save to local local_path
-        4) If wait=True, wait for download task to reach completion after step 1 
+        4) If wait=True, wait for download task to reach completion after step 1
            (ensuring backend has prepared the download object)
 
         Returns DownloadResult containing sync and download request_ids, HTTP status, byte count, etc.
@@ -797,7 +797,7 @@ class FileSystem(BaseService):
     def __init__(self, *args, **kwargs):
         """
         Initialize FileSystem with FileTransfer capability.
-        
+
         Args:
             *args: Arguments to pass to BaseService
             **kwargs: Keyword arguments to pass to BaseService
@@ -808,7 +808,7 @@ class FileSystem(BaseService):
     def _ensure_file_transfer(self) -> FileTransfer:
         """
         Ensure FileTransfer is initialized with the current session.
-        
+
         Returns:
             FileTransfer: The FileTransfer instance
         """
@@ -817,14 +817,14 @@ class FileSystem(BaseService):
             agent_bay = getattr(self.session, 'agent_bay', None)
             if agent_bay is None:
                 raise FileError("FileTransfer requires an AgentBay instance")
-            
+
             # Get the session from the service
             session = self.session
             if session is None:
                 raise FileError("FileTransfer requires a session")
-                
+
             self._file_transfer = FileTransfer(agent_bay, session)
-        
+
         return self._file_transfer
 
     # Default chunk size is 50KB
@@ -1672,7 +1672,7 @@ class FileSystem(BaseService):
             upload_result = session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
             session.delete()
             ```
-        """ 
+        """
         try:
             file_transfer = self._ensure_file_transfer()
             loop = asyncio.new_event_loop()
@@ -1690,16 +1690,16 @@ class FileSystem(BaseService):
             )
             loop.close()
             # If upload was successful, delete the file from OSS
-            if result.success and hasattr(self.session, 'file_transfer_context_id'):
-                context_id = self.session.file_transfer_context_id
-                if context_id:
-                    try:
-                        # Delete the uploaded file from OSS
-                        delete_result = self.session.agent_bay.context.delete_file(context_id, remote_path)
-                        if not delete_result.success:
-                            _logger.warning(f"Failed to delete uploaded file from OSS: {delete_result.error_message}")
-                    except Exception as delete_error:
-                        _logger.warning(f"Error deleting uploaded file from OSS: {delete_error}")
+            if result.success and self.session.file_transfer_context_id:
+                try:
+                    # Delete the uploaded file from OSS
+                    delete_result = self.session.agent_bay.context.delete_file(
+                        self.session.file_transfer_context_id, remote_path
+                    )
+                    if not delete_result.success:
+                        _logger.warning(f"Failed to delete uploaded file from OSS: {delete_result.error_message}")
+                except Exception as delete_error:
+                    _logger.warning(f"Error deleting uploaded file from OSS: {delete_error}")
             return result
         except Exception as e:
             return UploadResult(
@@ -1749,7 +1749,7 @@ class FileSystem(BaseService):
             session.delete()
             ```
         """
-            
+
         try:
             file_transfer = self._ensure_file_transfer()
             loop = asyncio.new_event_loop()
@@ -1767,16 +1767,16 @@ class FileSystem(BaseService):
             )
             loop.close()
             # If download was successful, delete the file from OSS
-            if result.success and hasattr(self.session, 'file_transfer_context_id'):
-                context_id = self.session.file_transfer_context_id
-                if context_id:
-                    try:
-                        # Delete the downloaded file from OSS
-                        delete_result = self.session.agent_bay.context.delete_file(context_id, remote_path)
-                        if not delete_result.success:
-                            _logger.warning(f"Failed to delete downloaded file from OSS: {delete_result.error_message}")
-                    except Exception as delete_error:
-                        _logger.warning(f"Error deleting downloaded file from OSS: {delete_error}")
+            if result.success and self.session.file_transfer_context_id:
+                try:
+                    # Delete the downloaded file from OSS
+                    delete_result = self.session.agent_bay.context.delete_file(
+                        self.session.file_transfer_context_id, remote_path
+                    )
+                    if not delete_result.success:
+                        _logger.warning(f"Failed to delete downloaded file from OSS: {delete_result.error_message}")
+                except Exception as delete_error:
+                    _logger.warning(f"Error deleting downloaded file from OSS: {delete_error}")
             return result
         except Exception as e:
             return DownloadResult(
@@ -1828,7 +1828,7 @@ class FileSystem(BaseService):
                 print(f"Raw data: {raw_data}")
             except Exception as e:
                 print(f"Warning: Unexpected error parsing file change data: {e}")
-            
+
             return events
 
         args = {"path": path}
@@ -1907,7 +1907,7 @@ class FileSystem(BaseService):
             """Internal function to monitor directory changes."""
             print(f"Starting directory monitoring for: {path}")
             print(f"Polling interval: {interval} seconds")
-            
+
             while not stop_event.is_set():
                 try:
                     # Check if session is still valid
@@ -1915,24 +1915,24 @@ class FileSystem(BaseService):
                         print(f"Session expired, stopping directory monitoring for: {path}")
                         stop_event.set()
                         break
-                    
+
                     # Get current file changes
                     result = self._get_file_change(path)
-                    
+
                     if result.success:
                         current_events = result.events
-                        
+
                         # Only call callback if there are actual events
                         if current_events:
                             print(f"Detected {len(current_events)} file changes:")
                             for event in current_events:
                                 print(f"  - {event}")
-                            
+
                             try:
                                 callback(current_events)
                             except Exception as e:
                                 print(f"Error in callback function: {e}")
-                    
+
                     else:
                         # Check if error is due to session expiry
                         error_msg = result.error_message or ""
@@ -1941,10 +1941,10 @@ class FileSystem(BaseService):
                             stop_event.set()
                             break
                         print(f"Error monitoring directory: {result.error_message}")
-                    
+
                     # Wait for the next poll
                     stop_event.wait(interval)
-                    
+
                 except Exception as e:
                     print(f"Unexpected error in directory monitoring: {e}")
                     # Check if exception indicates session expiry
@@ -1954,21 +1954,21 @@ class FileSystem(BaseService):
                         stop_event.set()
                         break
                     stop_event.wait(interval)
-            
+
             print(f"Stopped monitoring directory: {path}")
 
         # Create stop event if not provided
         if stop_event is None:
             stop_event = threading.Event()
-        
+
         # Create and configure the monitoring thread
         monitor_thread = threading.Thread(
             target=_monitor_directory,
             name=f"DirectoryWatcher-{path.replace('/', '_')}",
             daemon=True
         )
-        
+
         # Add stop_event as an attribute to the thread for easy access
         monitor_thread.stop_event = stop_event
-        
+
         return monitor_thread

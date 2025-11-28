@@ -30,6 +30,9 @@ type CreateSessionParams struct {
 
 	// Framework specifies the framework name for tracking (e.g., "langchain"). Empty string means direct call.
 	Framework string
+
+	// EnableBrowserReplay specifies whether to enable browser recording for this session.
+	EnableBrowserReplay bool
 }
 
 // NewCreateSessionParams creates a new CreateSessionParams with default values.
@@ -67,6 +70,12 @@ func (p *CreateSessionParams) WithPolicyId(policyId string) *CreateSessionParams
 // WithExtraConfigs sets the extra configurations for the session parameters and returns the updated parameters.
 func (p *CreateSessionParams) WithExtraConfigs(extraConfigs *models.ExtraConfigs) *CreateSessionParams {
 	p.ExtraConfigs = extraConfigs
+	return p
+}
+
+// WithEnableBrowserReplay sets the browser replay flag for the session parameters and returns the updated parameters.
+func (p *CreateSessionParams) WithEnableBrowserReplay(enableBrowserReplay bool) *CreateSessionParams {
+	p.EnableBrowserReplay = enableBrowserReplay
 	return p
 }
 

@@ -15,6 +15,13 @@ type Config struct {
 	TimeoutMs int    `json:"timeout_ms"`
 }
 
+// Mobile info path constants
+const (
+	MobileInfoDefaultPath = "/data/agentbay_mobile_info"
+	MobileInfoSubPath     = "/agentbay_mobile_info/"
+	MobileInfoFileName    = "dev_info.json"
+)
+
 // defaultConfig returns the default configuration
 func defaultConfig() Config {
 	return Config{
@@ -155,6 +162,10 @@ func loadConfig(cfg *Config, customEnvPath string) Config {
 func loadConfigCompat(cfg *Config) Config {
 	return loadConfig(cfg, "")
 }
+
+// BrowserRecordPath is the path constant for browser recording data.
+// This path is used when syncing browser recording context during session deletion.
+const BrowserRecordPath = "/home/guest/record"
 
 // configManager implementation for backward compatibility
 type configManager struct{}

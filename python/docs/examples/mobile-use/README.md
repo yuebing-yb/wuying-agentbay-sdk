@@ -50,6 +50,23 @@ ADB URL retrieval example:
 - Connect external tools to mobile session
 - Remote debugging setup
 
+### mobile_simulate_basic_usage.py
+
+Basic mobile simulate example:
+- Upload mobile device info file
+- Create sessions with mobile simulate configuration
+- Simulate different mobile devices across sessions
+- Verify device properties after simulation
+
+### mobile_simulate_with_ctx.py
+
+Mobile simulate with user specific context example:
+- Get or create user specific context
+- Check and upload mobile device info to context
+- Create session with mobile simulate and context sync
+- Persist device information across sessions
+- Sync context on session deletion
+
 ## Prerequisites
 
 - Python 3.8 or later
@@ -69,6 +86,12 @@ python main.py
 # Run ADB URL example
 cd ..
 python mobile_get_adb_url_example.py
+
+# Run mobile simulate basic usage example
+python mobile_simulate_basic_usage.py
+
+# Run mobile simulate with context example
+python mobile_simulate_with_ctx.py
 ```
 
 ## Usage Examples
@@ -194,6 +217,108 @@ if adb_url_result.success:
     # adb connect {adb_url}
 ```
 
+### Mobile Simulate - Basic Usage
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams, ExtraConfigs
+from agentbay.api.models import MobileExtraConfig, MobileSimulateMode
+from agentbay.mobile_simulate import MobileSimulateService
+
+# Initialize AgentBay client
+agent_bay = AgentBay(api_key="your_api_key")
+
+# Create mobile simulate service and set simulate params
+simulate_service = MobileSimulateService(agent_bay)
+simulate_service.set_simulate_enable(True)
+simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+
+# Upload mobile info file
+with open("mobile_info_model_a.json", "r") as f:
+    mobile_info_content = f.read()
+
+upload_result = simulate_service.upload_mobile_info(mobile_info_content)
+if upload_result.success:
+    mobile_sim_context_id = upload_result.mobile_simulate_context_id
+    
+    # Set the simulate context id for reuse
+    simulate_service.set_simulate_context_id(mobile_sim_context_id)
+    
+    # Create session with mobile simulate
+    params = CreateSessionParams(
+        image_id="mobile_latest",
+        extra_configs=ExtraConfigs(
+            mobile=MobileExtraConfig(
+                simulate_config=simulate_service.get_simulate_config()
+            )
+        )
+    )
+    
+    session_result = agent_bay.create(params)
+    session = session_result.session
+    
+    # Verify device model
+    result = session.command.execute_command("getprop ro.product.model")
+    print(f"Device model: {result.output}")
+    
+    # Cleanup
+    agent_bay.delete(session)
+```
+
+### Mobile Simulate - With User Context
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams, ExtraConfigs
+from agentbay.api.models import MobileExtraConfig, MobileSimulateMode
+from agentbay.mobile_simulate import MobileSimulateService
+from agentbay.context_sync import ContextSync, SyncPolicy, BWList, WhiteList
+
+# Get or create user specific context
+context_result = agent_bay.context.get("13000000000", create=True)
+context = context_result.context
+
+# Create context sync with white list
+sync_policy = SyncPolicy(
+    bw_list=BWList(white_lists=[WhiteList(path="/com.wuying.devinfo", exclude_paths=[])])
+)
+context_sync = ContextSync(
+    context_id=context.id,
+    path="/data/data",
+    policy=sync_policy,
+)
+
+# Create mobile simulate service and set simulate params
+simulate_service = MobileSimulateService(agent_bay)
+simulate_service.set_simulate_enable(True)
+simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+
+# Check and upload mobile info if needed
+has_mobile_info = simulate_service.has_mobile_info(context_sync)
+if not has_mobile_info:
+    with open("mobile_info_model_a.json", "r") as f:
+        mobile_info_content = f.read()
+    upload_result = simulate_service.upload_mobile_info(mobile_info_content, context_sync)
+
+# Create session with context sync
+params = CreateSessionParams(
+    image_id="mobile_latest",
+    context_syncs=[context_sync],
+    extra_configs=ExtraConfigs(
+        mobile=MobileExtraConfig(
+            simulate_config=simulate_service.get_simulate_config()
+        )
+    )
+)
+
+session_result = agent_bay.create(params)
+session = session_result.session
+
+# Device info persists across sessions
+# Delete with context sync to save changes
+agent_bay.delete(session, sync_context=True)
+```
+
 ## Features Demonstrated
 
 ### Application Management
@@ -245,6 +370,13 @@ if adb_url_result.success:
 | `session.mobile.send_key()` | Send key event |
 | `session.mobile.screenshot()` | Take screenshot |
 | `session.mobile.get_adb_url()` | Get ADB connection URL |
+| `MobileSimulateService.upload_mobile_info()` | Upload mobile device info |
+| `MobileSimulateService.has_mobile_info()` | Check if mobile info exists in context |
+| `MobileSimulateService.set_simulate_enable()` | Enable/disable mobile simulate |
+| `MobileSimulateService.set_simulate_mode()` | Set mobile simulate mode |
+| `MobileSimulateService.set_simulate_context_id()` | Set simulate context id for reuse |
+| `MobileSimulateService.get_simulate_config()` | Get mobile simulate configuration |
+| `agent_bay.context.get()` | Get or create user context |
 
 ## Common Use Cases
 

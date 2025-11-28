@@ -18,6 +18,7 @@ export * from "./extension";
 export * from "./filesystem";
 export * from "./oss";
 export { Mobile } from "./mobile";
+export { MobileSimulateService, type MobileSimulateUploadResult } from "./mobile-simulate";
 export { Session } from "./session";
 export { type ListSessionParams } from "./types";
 export * from "./types";

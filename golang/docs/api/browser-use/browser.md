@@ -121,7 +121,7 @@ if session.Browser.IsInitialized() {
 ### Screenshot
 
 ```go
-func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error)
+func (b *Browser) Screenshot(page playwright.Page, options *ScreenshotOptions) ([]byte, error)
 ```
 
 Screenshot takes a screenshot of the specified page with enhanced options and error handling.

@@ -18,6 +18,11 @@ const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
 
 /**
+ * Browser recording path constant
+ */
+export const BROWSER_RECORD_PATH = "/home/guest/record";
+
+/**
  * Returns the default configuration
  */
 function defaultConfig(): Config {
@@ -29,12 +34,12 @@ function defaultConfig(): Config {
 
 /**
  * Find .env file by searching upward from start_path.
- * 
+ *
  * Search order:
  * 1. Current working directory
  * 2. Parent directories (up to root)
  * 3. Git repository root (if found)
- * 
+ *
  * @param startPath Starting directory for search (defaults to current working directory)
  * @returns Path to .env file if found, null otherwise
  */
@@ -69,7 +74,7 @@ function findDotEnvFile(startPath?: string): string | null {
 
 /**
  * Load .env file with improved search strategy.
- * 
+ *
  * @param customEnvPath Custom path to .env file (optional)
  */
 function loadDotEnvWithFallback(customEnvPath?: string): void {
@@ -131,7 +136,7 @@ if (!dotEnvLoaded) {
  */
 /**
  * Load configuration with improved .env file search.
- * 
+ *
  * @param customConfig Configuration object (if provided, skips env loading)
  * @param customEnvPath Custom path to .env file (optional)
  * @returns Configuration object

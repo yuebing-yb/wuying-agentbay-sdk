@@ -69,10 +69,10 @@ func NewContextManager(session interface {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(nil)
-//    defer result.Session.Delete()
-//    info, _ := result.Session.Context.Info()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	info, _ := result.Session.Context.Info()
 func (cm *ContextManager) Info() (*ContextInfoResult, error) {
 	return cm.InfoWithParams("", "", "")
 }
@@ -342,6 +342,18 @@ func (cm *ContextManager) SyncWithCallback(contextId, path, mode string, callbac
 
 // SyncWithParams synchronizes the context for the current session with optional parameters.
 func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*ContextSyncResult, error) {
+	// Validate that contextId and path are provided together or both omitted
+	hasContextId := contextId != ""
+	hasPath := path != ""
+
+	if hasContextId != hasPath {
+		return nil, fmt.Errorf(
+			"contextId and path must be provided together or both omitted. " +
+				"If you want to sync a specific context, both contextId and path are required. " +
+				"If you want to sync all contexts, omit both parameters.",
+		)
+	}
+
 	request := &mcp.SyncContextRequest{
 		Authorization: tea.String("Bearer " + cm.Session.GetAPIKey()),
 		SessionId:     tea.String(cm.Session.GetSessionId()),

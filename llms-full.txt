@@ -4,7 +4,7 @@
 
 <div align="center">
 
-[![PyPI Downloads](https://img.shields.io/pypi/dm/wuying-agentbay-sdk?label=PyPI%20Downloads&logo=python&logoColor=white)](https://pypi.org/project/wuying-agentbay-sdk/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/wuying-agentbay-sdk?label=PyPI%20Downloads&logo=python&logoColor=white&cacheSeconds=86400)](https://pypi.org/project/wuying-agentbay-sdk/)
 [![NPM Downloads](https://img.shields.io/npm/dm/wuying-agentbay-sdk?label=NPM%20Downloads&logo=npm)](https://www.npmjs.com/package/wuying-agentbay-sdk)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aliyun/wuying-agentbay-sdk/golang)](https://goreportcard.com/report/github.com/aliyun/wuying-agentbay-sdk/golang)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/LICENSE)
@@ -12,7 +12,11 @@
 </div>
 
 <p align="center">
-  <img src="./assets/Agentbay.png" alt="AgentBay" width="800px" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/Agentbay-dark.png" width="800px">
+    <source media="(prefers-color-scheme: light)" srcset="./assets/Agentbay-light.png" width="800px">
+    <img src="./assets/Agentbay-light.png" alt="AgentBay" width="800px" />
+  </picture>
 </p>
 
 <p align="center">
@@ -42,26 +46,26 @@ Before using the SDK, you need to:
 2. Get APIKEY credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
 3. Set environment variable:
    - For Linux/MacOS:
-```bash
-    export AGENTBAY_API_KEY=your_api_key_here
-```
+     ```bash
+     export AGENTBAY_API_KEY=your_api_key_here
+     ```
    - For Windows:
-```cmd
-    setx AGENTBAY_API_KEY your_api_key_here
-```
+     ```cmd
+     setx AGENTBAY_API_KEY your_api_key_here
+     ```
 
 ## 🚀 Quick Start
 
 ### Python
 ```python
-from agentbay import AgentBay
+from agentbay import AgentBay, CreateSessionParams
 
-# Create session and execute command
+# Create session and execute code
 agent_bay = AgentBay()
-session_result = agent_bay.create()
-session = session_result.session
-result = session.command.execute_command("echo 'Hello AgentBay'")
-print(result.output)  # Hello AgentBay
+session = agent_bay.create(CreateSessionParams(image_id="code_latest")).session
+result = session.code.run_code("print('Hello AgentBay')", "python")
+if result.success:
+    print(result.result)  # Hello AgentBay
 
 # Clean up
 agent_bay.delete(session)
@@ -71,12 +75,13 @@ agent_bay.delete(session)
 ```typescript
 import { AgentBay } from 'wuying-agentbay-sdk';
 
-// Create session and execute command
+// Create session and execute code
 const agentBay = new AgentBay();
-const sessionResult = await agentBay.create();
-const session = sessionResult.session;
-const result = await session.command.executeCommand("echo 'Hello AgentBay'");
-console.log(result.output);  // Hello AgentBay
+const session = (await agentBay.create({ imageId: "code_latest" })).session;
+const result = await session.code.runCode("print('Hello AgentBay')", "python");
+if (result.success) {
+    console.log(result.result);  // Hello AgentBay
+}
 
 // Clean up
 await agentBay.delete(session);
@@ -86,34 +91,50 @@ await agentBay.delete(session);
 ```go
 import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 
-// Create session and execute command
-client, err := agentbay.NewAgentBay("", nil)
-if err != nil {
-    fmt.Printf("Failed to initialize AgentBay client: %v\n", err)
-    return
-}
+// Create session and execute code
+client, _ := agentbay.NewAgentBay("", nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("code_latest"))
+session := result.Session
 
-sessionResult, err := client.Create(nil)
-if err != nil {
-    fmt.Printf("Failed to create session: %v\n", err)
-    return
-}
-
-session := sessionResult.Session
-result, err := session.Command.ExecuteCommand("echo 'Hello AgentBay'")
-if err != nil {
-    fmt.Printf("Failed to execute command: %v\n", err)
-    return
-}
-fmt.Println(result.Output)  // Hello AgentBay
+res, _ := session.Code.RunCode("print('Hello AgentBay')", "python")
+fmt.Println(res.Output)  // Hello AgentBay
 
 // Clean up
-_, err = client.Delete(session, false)
-if err != nil {
-    fmt.Printf("Failed to delete session: %v\n", err)
-    return
-}
+client.Delete(session, false)
 ```
+
+## 🎯 Use Cases
+
+<table>
+<tr>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Browser Use@2x.png" width="460px" alt="Browser Use"/>
+  <h3>🌐 Browser Use</h3>
+  <p>Automate web operations including content scraping, testing, and workflows. Cross-browser compatible with natural language control and remote access.</p>
+  <p><a href="docs/guides/browser-use/README.md">Learn more →</a></p>
+</td>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Computer Use@2x.png" width="460px" alt="Computer Use"/>
+  <h3>🖥️ Computer Use</h3>
+  <p>Cloud desktop environment for enterprise application automation. Standardized interfaces enable legacy software automation with intelligent resource scheduling.</p>
+  <p><a href="docs/guides/computer-use/README.md">Learn more →</a></p>
+</td>
+</tr>
+<tr>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Mobile Use@2x.png" width="460px" alt="Mobile Use"/>
+  <h3>📱 Mobile Use</h3>
+  <p>Cloud-based mobile environment for intelligent app automation. Precise UI recognition and control with parallel task processing for testing scenarios.</p>
+  <p><a href="docs/guides/mobile-use/README.md">Learn more →</a></p>
+</td>
+<td width="50%" align="center" valign="top">
+  <img src="./assets/Code Space@2x.png" width="460px" alt="Code Space"/>
+  <h3>💻 Code Space</h3>
+  <p>Professional cloud development environment supporting multi-language code generation, compilation, and debugging. Secure, intelligent automated programming experience.</p>
+  <p><a href="docs/guides/codespace/README.md">Learn more →</a></p>
+</td>
+</tr>
+</table>
 
 ## 📚 Documentation
 
@@ -9241,6 +9262,69 @@ For detailed practical examples and use cases of session information, including 
 
 
 
+## Session Pause and Resume
+
+Sessions can be temporarily paused to suspend resource usage and resumed later to continue work. This feature is useful for reducing costs during inactive periods and preserving session state for later continuation.
+
+### Pausing a Session
+
+To pause a session, use the `pause()` method:
+
+```python
+from agentbay import AgentBay
+
+# Initialize the SDK and create a session
+agent_bay = AgentBay(api_key=api_key)
+session_result = agent_bay.create()
+session = session_result.session
+
+# Perform your tasks...
+
+# Pause the session to suspend resource usage
+pause_result = session.pause()
+if pause_result.success:
+    print("Session paused successfully")
+    print(f"Request ID: {pause_result.request_id}")
+else:
+    print(f"Failed to pause session: {pause_result.error_message}")
+```
+
+### Resuming a Session
+
+To resume a paused session, use the `resume()` method:
+
+```python
+from agentbay import AgentBay
+
+# Initialize the SDK and get a paused session
+agent_bay = AgentBay(api_key=api_key)
+# Assuming you have a paused session with session_id
+get_result = agent_bay.get("your_paused_session_id")
+if get_result.success:
+    session = get_result.session
+    
+    # Resume the session to continue work
+    resume_result = session.resume()
+    if resume_result.success:
+        print("Session resumed successfully")
+        print(f"Request ID: {resume_result.request_id}")
+        
+        # Continue with your tasks...
+        result = session.command.execute_command("echo 'Hello after resume!'")
+        print(f"Command output: {result.output}")
+    else:
+        print(f"Failed to resume session: {resume_result.error_message}")
+else:
+    print(f"Failed to get session: {get_result.error_message}")
+```
+
+### Important Notes
+
+- **Resource Usage and Costs**: During pause, both resource usage and costs are lower
+- **Session State**: All session state is preserved during pause and resume operations
+- **Optional Operations**: Pause and resume are optional - you can also directly delete a session
+- **Paused Session Restrictions**: When a session is in a paused state, it cannot perform operations such as deletion, task execution, or other actions. You must resume the session first before performing these operations
+
 ## Session Release
 
 Sessions consume cloud resources while active. Understanding how sessions are released is crucial for resource management.
@@ -12502,6 +12586,7 @@ Mobile Use is AgentBay's mobile device automation environment for Android device
 
 - [Application Management](mobile-application-management.md) - Mobile app lifecycle management
 - [UI Automation](mobile-ui-automation.md) - Touch gestures and UI interaction
+- [Mobile Device Simulation](mobile-simulate.md) - Simulate different mobile devices with specific characteristics
 - [ADB Connection](adb-connection.md) - Connect and control devices via Android Debug Bridge
 
 ## Getting Help
@@ -13657,6 +13742,625 @@ else:
 
 
 
+# Mobile Device Simulation
+
+This guide demonstrates how to use the mobile device simulation feature in AgentBay SDK to simulate different mobile devices with specific hardware characteristics and properties across sessions.
+
+## Table of Contents
+- [Overview](#overview)
+- [What is Mobile Simulate](#what-is-mobile-simulate)
+- [Simulation Modes](#simulation-modes)
+- [Device Info Format](#device-info-format)
+- [Basic Usage](#basic-usage)
+- [Using with User Context](#using-with-user-context)
+- [Best Practices](#best-practices)
+
+## Overview
+
+Mobile device simulation allows you to:
+
+- **Simulate Real Devices**: Mimic the properties and characteristics of real mobile devices
+- **Cross-Session Persistence**: Maintain device identity across multiple sessions
+- **Flexible Configuration**: Choose different level simulate mode for device simulation
+
+**Note:** Due to stability reasons, we recommend using mobile simulate feature in Android 12 image but not Android 14 image.
+
+## What is Mobile Simulate
+
+Mobile Simulate is a feature that allows you to configure a mobile session to mimic a specific mobile device. This includes:
+
+- **Device Properties**: Model name, manufacturer, Android version, build information
+- **Hardware Characteristics**: Screen resolution, CPU architecture, memory configuration
+- **Installed Packages**: Application packages installed on the device
+- **System Services**: System-level services running on the device
+
+The mobile device information is stored in a JSON file that can be obtained from:
+- Real devices info by using DumpSDK tools
+- User maintained mobile info database
+**Note:** For more information, please contact AgentBay support team for assistance
+
+## Simulation Modes
+
+AgentBay supports five simulation modes, allowing you to choose the level of device simulation based on your needs:
+
+### Properties Only Mode
+
+Simulates device properties without modifying hardware characteristics. This mode is most recommended.
+
+```python
+MobileSimulateMode.PROPERTIES_ONLY
+```
+
+### Sensors Only Mode
+
+Simulates only the device sensors information (accelerometer, gyroscope, etc.).
+
+```python
+MobileSimulateMode.SENSORS_ONLY
+```
+
+### Packages Only Mode
+
+Simulates only the installed packages on the device.
+
+```python
+MobileSimulateMode.PACKAGES_ONLY
+```
+
+### Services Only Mode
+
+Simulates only the system services running on the device.
+
+```python
+MobileSimulateMode.SERVICES_ONLY
+```
+
+### All Mode
+
+Provides comprehensive device simulation including all aspects: properties, sensors, packages, and services. This mode offers the most realistic device emulation.
+
+```python
+MobileSimulateMode.ALL
+```
+
+## Device Info Format
+
+Mobile device information files contain detailed device characteristics in JSON format.
+
+Example device info file structure:
+```json
+{
+    "version": 1,
+    "properties": {
+        "ro.product.model": "V2429A",
+        "ro.xxx": "xxx"
+    },
+    "packages": []
+}
+```
+
+## Basic Usage
+We can using a persistence mobile simulate context id to simulate mobile devices across sessions. User only need to store persistence the context id.
+
+- using `upload_mobile_info` interface to upload a user device info and a context id will return.
+- config `MobileSimulateConfig` for `CreateSessionParams` when create session, we can simulate mobile automaticly.
+
+### Python Example
+
+```python
+from agentbay import AgentBay, MobileSimulateService
+from agentbay.session_params import CreateSessionParams, ExtraConfigs
+from agentbay.api.models import MobileExtraConfig, MobileSimulateMode
+
+# Initialize AgentBay client
+agent_bay = AgentBay(api_key="your_api_key")
+
+# Step 1: Create MobileSimulateService and configure
+simulate_service = MobileSimulateService(agent_bay)
+simulate_service.set_simulate_enable(True)
+simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+
+# Step 2: Upload mobile device info file
+with open("mobile_info_model_a.json", "r") as f:
+    mobile_info_content = f.read()
+
+upload_result = simulate_service.upload_mobile_info(mobile_info_content)
+if not upload_result.success:
+    print(f"Failed to upload: {upload_result.error_message}")
+    exit(1)
+
+mobile_sim_context_id = upload_result.mobile_simulate_context_id
+print(f"Mobile simulate context ID: {mobile_sim_context_id}")
+
+# Step 3: Create session with mobile simulate configuration
+params = CreateSessionParams(
+    image_id="mobile_latest",
+    extra_configs=ExtraConfigs(
+        mobile=MobileExtraConfig(
+            simulate_config=simulate_service.get_simulate_config()
+        )
+    )
+)
+
+session_result = agent_bay.create(params)
+if not session_result.success:
+    print(f"Failed to create session: {session_result.error_message}")
+    exit(1)
+
+session = session_result.session
+print(f"Session created with ID: {session.session_id}")
+
+# Step 4: Wait for mobile simulate to complete
+import time
+time.sleep(5)
+
+# Step 5: Verify device simulation
+result = session.command.execute_command("getprop ro.product.model")
+if result.success:
+    print(f"Device model: {result.output.strip()}")
+
+# Step 6: Cleanup
+agent_bay.delete(session)
+```
+
+### TypeScript Example
+
+```typescript
+import { AgentBay, MobileSimulateService, MobileSimulateMode } from 'wuying-agentbay-sdk';
+import { readFileSync } from 'fs';
+
+// Initialize AgentBay client
+const client = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY! });
+
+// Step 1: Create MobileSimulateService and configure
+const simulateService = new MobileSimulateService(client);
+simulateService.setSimulateEnable(true);
+simulateService.setSimulateMode(MobileSimulateMode.PropertiesOnly);
+
+// Step 2: Upload mobile device info file
+const mobileInfoContent = readFileSync('mobile_info_model_a.json', 'utf-8');
+
+const uploadResult = await simulateService.uploadMobileInfo(mobileInfoContent);
+if (!uploadResult.success) {
+  throw new Error(`Failed to upload: ${uploadResult.errorMessage}`);
+}
+
+const mobileSimContextId = uploadResult.mobileSimulateContextId!;
+console.log(`Mobile simulate context ID: ${mobileSimContextId}`);
+
+// Step 3: Create session with mobile simulate configuration
+const sessionResult = await client.create({
+  imageId: 'mobile_latest',
+  extraConfigs: {
+    mobile: {
+      simulateConfig: simulateService.getSimulateConfig(),
+    },
+  },
+});
+
+if (!sessionResult.success || !sessionResult.session) {
+  throw new Error(`Failed to create session: ${sessionResult.errorMessage}`);
+}
+
+const session = sessionResult.session;
+console.log(`Session created with ID: ${session.sessionId}`);
+
+// Step 4: Wait for mobile simulate to complete
+await new Promise(resolve => setTimeout(resolve, 5000));
+
+// Step 5: Verify device simulation
+const result = await session.command.executeCommand('getprop ro.product.model');
+if (result.success) {
+  console.log(`Device model: ${result.output.trim()}`);
+}
+
+// Step 6: Cleanup
+await session.delete();
+```
+
+### Go Example
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
+)
+
+func main() {
+	// Initialize AgentBay client
+	client, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+	if err != nil {
+		panic(err)
+	}
+
+	// Step 1: Create MobileSimulateService and configure
+	simulateService, err := agentbay.NewMobileSimulateService(client)
+	if err != nil {
+		panic(err)
+	}
+	simulateService.SetSimulateEnable(true)
+	simulateService.SetSimulateMode(models.MobileSimulateModePropertiesOnly)
+
+	// Step 2: Upload mobile device info file
+	mobileInfoContent, err := os.ReadFile("mobile_info_model_a.json")
+	if err != nil {
+		panic(err)
+	}
+
+	uploadResult := simulateService.UploadMobileInfo(string(mobileInfoContent), nil)
+	if !uploadResult.Success {
+		panic(uploadResult.ErrorMessage)
+	}
+
+	mobileSimContextID := uploadResult.MobileSimulateContextID
+	fmt.Printf("Mobile simulate context ID: %s\n", mobileSimContextID)
+
+	// Step 3: Create session with mobile simulate configuration
+	params := &agentbay.CreateSessionParams{
+		ImageId: "mobile_latest",
+		ExtraConfigs: &models.ExtraConfigs{
+			Mobile: &models.MobileExtraConfig{
+				SimulateConfig: simulateService.GetSimulateConfig(),
+			},
+		},
+	}
+
+	sessionResult, err := client.Create(params)
+	if err != nil || !sessionResult.Success {
+		panic("Failed to create session")
+	}
+
+	session := sessionResult.Session
+	fmt.Printf("Session created with ID: %s\n", session.SessionID)
+
+	// Step 4: Wait for mobile simulate to complete
+	time.Sleep(5 * time.Second)
+
+	// Step 5: Verify device simulation
+	result, err := session.Command.ExecuteCommand("getprop ro.product.model")
+	if err == nil && result.Success {
+		fmt.Printf("Device model: %s\n", result.Output)
+	}
+
+	// Step 6: Cleanup
+	session.Delete()
+}
+```
+
+## Using with User Context
+
+For persistent device simulation across multiple sessions, use user-specific contexts. This approach allows you to:
+
+- Store device information in a user's context
+- Reuse device configuration across sessions
+
+### Python Example with Context
+
+```python
+from agentbay import AgentBay, MobileSimulateService
+from agentbay.context_sync import ContextSync, SyncPolicy, BWList, WhiteList
+from agentbay.session_params import CreateSessionParams, ExtraConfigs
+from agentbay.api.models import MobileExtraConfig, MobileSimulateMode
+
+# Initialize AgentBay client
+agent_bay = AgentBay(api_key="your_api_key")
+
+# Step 1: Get or create user-specific context
+context_result = agent_bay.context.get("user_phone_number", create=True)
+context = context_result.context
+
+# Step 2: Create context sync configuration
+sync_policy = SyncPolicy(
+    bw_list=BWList(
+        white_lists=[
+            WhiteList(path="/com.wuying.devinfo", exclude_paths=[])
+        ]
+    )
+)
+
+context_sync = ContextSync(
+    context_id=context.id,
+    path="/data/data",
+    policy=sync_policy,
+)
+
+# Step 3: Create MobileSimulateService and configure
+simulate_service = MobileSimulateService(agent_bay)
+simulate_service.set_simulate_enable(True)
+simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+
+# Step 4: Check and upload mobile info if needed
+has_mobile_info = simulate_service.has_mobile_info(context_sync)
+if not has_mobile_info:
+    with open("mobile_info_model_a.json", "r") as f:
+        mobile_info_content = f.read()
+    
+    upload_result = simulate_service.upload_mobile_info(
+        mobile_info_content, 
+        context_sync
+    )
+    if not upload_result.success:
+        print(f"Failed to upload: {upload_result.error_message}")
+        exit(1)
+    print("Mobile device info uploaded successfully")
+else:
+    print("Mobile device info already exists in context")
+
+# Step 5: Create session with context sync
+params = CreateSessionParams(
+    image_id="mobile_latest",
+    context_syncs=[context_sync],
+    extra_configs=ExtraConfigs(
+        mobile=MobileExtraConfig(
+            simulate_config=simulate_service.get_simulate_config()
+        )
+    )
+)
+
+session_result = agent_bay.create(params)
+session = session_result.session
+
+# Step 6: Use the session
+# Device info is automatically loaded from context
+result = session.command.execute_command("getprop ro.product.model")
+print(f"Device model: {result.output.strip()}")
+
+# Step 7: Delete session with context sync
+agent_bay.delete(session, sync_context=True)
+```
+
+### TypeScript Example with Context
+
+```typescript
+import { AgentBay, MobileSimulateService, MobileSimulateMode, ContextSync, SyncPolicy } from 'wuying-agentbay-sdk';
+import { readFileSync } from 'fs';
+
+const client = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY! });
+
+// Step 1: Get or create user-specific context
+const contextResult = await client.context.get('user_phone_number', true);
+const context = contextResult.context!;
+
+// Step 2: Create context sync configuration
+const syncPolicy: SyncPolicy = {
+  bwList: {
+    whiteLists: [
+      { path: '/com.wuying.devinfo', excludePaths: [] }
+    ]
+  }
+};
+
+const contextSync: ContextSync = {
+  contextId: context.id,
+  path: '/data/data',
+  policy: syncPolicy
+};
+
+// Step 3: Create MobileSimulateService and configure
+const simulateService = new MobileSimulateService(client);
+simulateService.setSimulateEnable(true);
+simulateService.setSimulateMode(MobileSimulateMode.PropertiesOnly);
+
+// Step 4: Check and upload mobile info if needed
+const hasMobileInfo = await simulateService.hasMobileInfo(contextSync);
+if (!hasMobileInfo) {
+  const mobileInfoContent = readFileSync('mobile_info_model_a.json', 'utf-8');
+  
+  const uploadResult = await simulateService.uploadMobileInfo(
+    mobileInfoContent,
+    contextSync
+  );
+  if (!uploadResult.success) {
+    throw new Error(`Failed to upload: ${uploadResult.errorMessage}`);
+  }
+  console.log('Mobile device info uploaded successfully');
+} else {
+  console.log('Mobile device info already exists in context');
+}
+
+// Step 5: Create session with context sync
+const sessionResult = await client.create({
+  imageId: 'mobile_latest',
+  contextSync: [contextSync],
+  extraConfigs: {
+    mobile: {
+      simulateConfig: simulateService.getSimulateConfig(),
+    },
+  },
+});
+
+const session = sessionResult.session!;
+
+// Step 6: Use the session
+const result = await session.command.executeCommand('getprop ro.product.model');
+console.log(`Device model: ${result.output.trim()}`);
+
+// Step 7: Delete session with context sync
+await session.delete({ syncContext: true });
+```
+
+### Go Example with Context
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
+)
+
+func main() {
+	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+
+	// Step 1: Get or create user-specific context
+	contextResult, _ := client.Context.Get("user_phone_number", true)
+	context := contextResult.Context
+
+	// Step 2: Create context sync configuration
+	syncPolicy := &agentbay.SyncPolicy{
+		BWList: &agentbay.BWList{
+			WhiteLists: []*agentbay.WhiteList{
+				{Path: "/com.wuying.devinfo", ExcludePaths: []string{}},
+			},
+		},
+	}
+
+	contextSync := &agentbay.ContextSync{
+		ContextID: context.ID,
+		Path:      "/data/data",
+		Policy:    syncPolicy,
+	}
+
+	// Step 3: Create MobileSimulateService and configure
+	simulateService, _ := agentbay.NewMobileSimulateService(client)
+	simulateService.SetSimulateEnable(true)
+	simulateService.SetSimulateMode(models.MobileSimulateModePropertiesOnly)
+
+	// Step 4: Check and upload mobile info if needed
+	hasMobileInfo, _ := simulateService.HasMobileInfo(contextSync)
+	if !hasMobileInfo {
+		mobileInfoContent, _ := os.ReadFile("mobile_info_model_a.json")
+		uploadResult := simulateService.UploadMobileInfo(
+			string(mobileInfoContent),
+			contextSync,
+		)
+		if !uploadResult.Success {
+			panic(uploadResult.ErrorMessage)
+		}
+		fmt.Println("Mobile device info uploaded successfully")
+	} else {
+		fmt.Println("Mobile device info already exists in context")
+	}
+
+	// Step 5: Create session with context sync
+	params := &agentbay.CreateSessionParams{
+		ImageId:     "mobile_latest",
+		ContextSync: []*agentbay.ContextSync{contextSync},
+		ExtraConfigs: &models.ExtraConfigs{
+			Mobile: &models.MobileExtraConfig{
+				SimulateConfig: simulateService.GetSimulateConfig(),
+			},
+		},
+	}
+
+	sessionResult, _ := client.Create(params)
+	session := sessionResult.Session
+
+	// Step 6: Use the session
+	result, _ := session.Command.ExecuteCommand("getprop ro.product.model")
+	fmt.Printf("Device model: %s\n", result.Output)
+
+	// Step 7: Delete session with context sync
+	client.Delete(session, true)
+}
+```
+
+
+## Best Practices
+
+### 1. Simulation Mode Selection
+
+- **Development**: Use `PROPERTIES_ONLY` mode for faster iteration
+- **Production**: Use `FULL` mode for comprehensive simulation
+
+### 2. Verification
+
+- **Always verify**: Check device properties after session creation
+- **Wait time**: Allow 5-10 seconds for simulation to complete
+- **Multiple checks**: Verify multiple properties to ensure complete simulation
+
+```python
+# Verify multiple device properties
+properties_to_check = [
+    "ro.product.model",
+    "ro.product.manufacturer",
+    "ro.build.version.release",
+    "ro.product.brand"
+]
+
+for prop in properties_to_check:
+    result = session.command.execute_command(f"getprop {prop}")
+    print(f"{prop}: {result.output.strip()}")
+```
+
+### 5. Error Handling
+
+Always implement proper error handling:
+
+```python
+simulate_service = None
+session = None
+
+try:
+    # Create and configure simulate service
+    simulate_service = MobileSimulateService(agent_bay)
+    simulate_service.set_simulate_enable(True)
+    simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+    
+    # Upload mobile info
+    upload_result = simulate_service.upload_mobile_info(mobile_info_content)
+    if not upload_result.success:
+        raise Exception(f"Upload failed: {upload_result.error_message}")
+    
+    # Create session
+    session_result = agent_bay.create(params)
+    if not session_result.success:
+        raise Exception(f"Session creation failed: {session_result.error_message}")
+    
+    session = session_result.session
+    # Use session
+    # ...
+    
+except Exception as e:
+    print(f"Error: {e}")
+    # Cleanup if needed
+finally:
+    if session:
+        agent_bay.delete(session)
+```
+
+### 6. Resource Cleanup
+
+Always clean up resources properly:
+
+```python
+# Clean up sessions
+try:
+    agent_bay.delete(session)
+except Exception as e:
+    print(f"Cleanup error: {e}")
+```
+
+## Related Documentation
+
+- [Mobile Session Configuration](./mobile-session-configuration.md) - Additional mobile configuration options
+- [Mobile Application Management](./mobile-application-management.md) - Managing mobile applications
+- [Mobile UI Automation](./mobile-ui-automation.md) - Automating mobile UI interactions
+
+## Example Code
+
+Complete working examples are available in the SDK repository:
+
+- **Python**: `python/docs/examples/mobile-use/mobile_simulate_basic_usage.py`
+- **Python with Context**: `python/docs/examples/mobile-use/mobile_simulate_with_ctx.py`
+- **TypeScript**: `typescript/docs/examples/mobile-use/mobile-simulate-basic-usage.ts`
+- **TypeScript with Context**: `typescript/docs/examples/mobile-use/mobile-simulate-with-ctx.ts`
+- **Go**: `golang/docs/examples/mobile-use/mobile_simulate_basic_usage/main.go`
+- **Go with Context**: `golang/docs/examples/mobile-use/mobile_simulate_with_ctx/main.go`
+
+
+
+
+
 # Mobile UI Automation Guide
 
 This guide covers mobile UI automation capabilities in AgentBay SDK for Android mobile environments, including touch operations, text input, UI element detection, and screen operations.
@@ -14234,11 +14938,39 @@ agent_bay.delete(session)
 
 ### Session Lifecycle:
 ```
-Create Session → Use Session → Delete Session
-      ↓             ↓              ↓
-  Allocate      Execute         Release
-  Resources     Operations      Resources
+Create Session → Use Session → (Pause Session) → (Resume Session) → Delete Session
+      ↓             ↓              ↓                ↓              ↓
+  Allocate      Execute      Suspend Resources  Restore Resources Release
+  Resources     Operations                    Operations         Resources
 ```
+
+### Session Pause and Resume
+
+Sessions can be temporarily paused to suspend resource usage and resumed later to continue work. This is useful for:
+- Reducing costs during inactive periods
+- Preserving session state for later continuation
+
+**Pausing a Session:**
+```python
+# Pause the session to suspend resource usage
+result = session.pause()
+if result.success:
+    print(f"Session paused successfully. Request ID: {result.request_id}")
+else:
+    print(f"Failed to pause session: {result.error_message}")
+```
+
+**Resuming a Session:**
+```python
+# Resume the session to continue work
+result = session.resume()
+if result.success:
+    print(f"Session resumed successfully. Request ID: {result.request_id}")
+else:
+    print(f"Failed to resume session: {result.error_message}")
+```
+
+**Note:** Pause and resume operations are optional. You can also directly delete a session without pausing it. During pause, resource usage and costs will be lower.
 
 ### Session Release
 
@@ -16920,6 +17652,246 @@ session.delete()
 
 AgentBay.create, AgentBay.list, Session.info
 
+### pause
+
+```python
+def pause(session: Session,
+          timeout: int = 600,
+          poll_interval: float = 2.0) -> SessionPauseResult
+```
+
+Synchronously pause a session, putting it into a dormant state.
+
+This method internally calls the PauseSessionAsync API and then polls the GetSession API
+to check the session status until it becomes PAUSED or until timeout.
+
+**Arguments**:
+
+- `session` _Session_ - The session to pause.
+- `timeout` _int, optional_ - Timeout in seconds to wait for the session to pause.
+  Defaults to 600 seconds.
+- `poll_interval` _float, optional_ - Interval in seconds between status polls.
+  Defaults to 2.0 seconds.
+  
+
+**Returns**:
+
+    SessionPauseResult: Result containing the request ID, success status, and final session status.
+  - success (bool): True if the session was successfully paused
+  - request_id (str): Unique identifier for this API request
+  - status (str): Final session status (should be "PAUSED" if successful)
+  - error_message (str): Error description (if success is False)
+  - code (str): API response code (if available)
+  - message (str): API response message (if available)
+  - http_status_code (int): HTTP status code (if available)
+  
+
+**Raises**:
+
+    ClientException: If the API request fails due to network or authentication issues.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+pause_result = agent_bay.pause(session)
+agent_bay.resume(session)
+session.delete()
+```
+
+
+**Notes**:
+
+- The session state transitions from RUNNING -> PAUSING -> PAUSED
+- Paused sessions consume fewer resources but maintain their state
+- Use resume() or resume_async() to restore the session to RUNNING state
+- The timeout parameter controls how long to wait for the PAUSED state
+- If timeout is exceeded, the method returns with success=False
+
+
+**See Also**:
+
+AgentBay.pause_async, AgentBay.resume, AgentBay.resume_async, Session.pause, Session.pause_async
+
+### pause\_async
+
+```python
+async def pause_async(session: Session) -> SessionPauseResult
+```
+
+Asynchronously pause a session, putting it into a dormant state.
+
+This method directly calls the PauseSessionAsync API without waiting for the session
+to reach the PAUSED state. For synchronous behavior that waits for the PAUSED state,
+use the pause() method instead.
+
+**Arguments**:
+
+- `session` _Session_ - The session to pause.
+  
+
+**Returns**:
+
+    SessionPauseResult: Result containing the request ID and success status.
+  - success (bool): True if the pause request was accepted by the API
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  - code (str): API response code (if available)
+  - message (str): API response message (if available)
+  - http_status_code (int): HTTP status code (if available)
+  
+
+**Raises**:
+
+    ClientException: If the API request fails due to network or authentication issues.
+  
+
+**Example**:
+
+```python
+import asyncio
+
+session = agent_bay.create().session
+pause_result = await agent_bay.pause_async(session)
+await agent_bay.resume_async(session)
+session.delete()
+```
+
+
+**Notes**:
+
+- This method does not wait for the session to reach the PAUSED state
+- It only submits the pause request to the API
+- Use pause() for synchronous behavior that waits for completion
+- The session state transitions from RUNNING -> PAUSING -> PAUSED
+- Paused sessions consume fewer resources but maintain their state
+
+
+**See Also**:
+
+AgentBay.pause, AgentBay.resume, AgentBay.resume_async, Session.pause_async
+
+### resume
+
+```python
+def resume(session: Session,
+           timeout: int = 600,
+           poll_interval: float = 2.0) -> SessionResumeResult
+```
+
+Synchronously resume a session from a paused state.
+
+This method internally calls the ResumeSessionAsync API and then polls the GetSession API
+to check the session status until it becomes RUNNING or until timeout.
+
+**Arguments**:
+
+- `session` _Session_ - The session to resume.
+- `timeout` _int, optional_ - Timeout in seconds to wait for the session to resume.
+  Defaults to 600 seconds.
+- `poll_interval` _float, optional_ - Interval in seconds between status polls.
+  Defaults to 2.0 seconds.
+  
+
+**Returns**:
+
+    SessionResumeResult: Result containing the request ID, success status, and final session status.
+  - success (bool): True if the session was successfully resumed
+  - request_id (str): Unique identifier for this API request
+  - status (str): Final session status (should be "RUNNING" if successful)
+  - error_message (str): Error description (if success is False)
+  - code (str): API response code (if available)
+  - message (str): API response message (if available)
+  - http_status_code (int): HTTP status code (if available)
+  
+
+**Raises**:
+
+    ClientException: If the API request fails due to network or authentication issues.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+agent_bay.pause(session)
+resume_result = agent_bay.resume(session)
+session.delete()
+```
+
+
+**Notes**:
+
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
+- Use pause() or pause_async() to put a session into PAUSED state
+- The timeout parameter controls how long to wait for the RUNNING state
+- If timeout is exceeded, the method returns with success=False
+
+
+**See Also**:
+
+AgentBay.pause, AgentBay.pause_async, AgentBay.resume_async, Session.resume, Session.resume_async
+
+### resume\_async
+
+```python
+async def resume_async(session: Session) -> SessionResumeResult
+```
+
+Asynchronously resume a session from a paused state.
+
+This method directly calls the ResumeSessionAsync API without waiting for the session
+to reach the RUNNING state. For synchronous behavior that waits for the RUNNING state,
+use the resume() method instead.
+
+**Arguments**:
+
+- `session` _Session_ - The session to resume.
+  
+
+**Returns**:
+
+    SessionResumeResult: Result containing the request ID and success status.
+  - success (bool): True if the resume request was accepted by the API
+  - request_id (str): Unique identifier for this API request
+  - error_message (str): Error description (if success is False)
+  - code (str): API response code (if available)
+  - message (str): API response message (if available)
+  - http_status_code (int): HTTP status code (if available)
+  
+
+**Raises**:
+
+    ClientException: If the API request fails due to network or authentication issues.
+  
+
+**Example**:
+
+```python
+import asyncio
+
+session = agent_bay.create().session
+agent_bay.pause(session)
+resume_result = await agent_bay.resume_async(session)
+session.delete()
+```
+
+
+**Notes**:
+
+- This method does not wait for the session to reach the RUNNING state
+- It only submits the resume request to the API
+- Use resume() for synchronous behavior that waits for completion
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
+
+
+**See Also**:
+
+AgentBay.pause, AgentBay.pause_async, AgentBay.resume, Session.resume_async
+
 ## Related Resources
 
 - [Session API Reference](session.md)
@@ -17127,8 +18099,8 @@ This method supports two modes:
 
 **Arguments**:
 
-    context_id: Optional ID of the context to synchronize
-    path: Optional path where the context should be mounted
+    context_id: Optional ID of the context to synchronize. If provided, `path` must also be provided.
+    path: Optional path where the context should be mounted. If provided, `context_id` must also be provided.
     mode: Optional synchronization mode (e.g., "upload", "download")
     callback: Optional callback function that receives success status. If provided, the method
   runs in background and calls callback when complete
@@ -17141,9 +18113,24 @@ This method supports two modes:
     ContextSyncResult: Result object containing success status and request ID
   
 
+**Raises**:
+
+    ValueError: If `context_id` or `path` is provided without the other parameter.
+  Both must be provided together, or both must be omitted.
+  
+
 **Example**:
 
-Async mode - waits for completion:
+Sync all contexts (no parameters):
+```python
+result = agent_bay.create()
+session = result.session
+sync_result = await session.context.sync()
+print(f"Sync success: {sync_result.success}")
+session.delete()
+```
+
+Sync specific context with path:
 ```python
 result = agent_bay.create()
 session = result.session
@@ -18234,8 +19221,8 @@ FileTransfer provides pre-signed URL upload/download functionality between local
 with integration to Session Context synchronization.
 
 Prerequisites and Constraints:
-- Session must be associated with the corresponding context_id and path through 
-  CreateSessionParams.context_syncs, and remote_path should fall within that 
+- Session must be associated with the corresponding context_id and path through
+  CreateSessionParams.context_syncs, and remote_path should fall within that
   synchronization path (or conform to backend path rules).
 - Requires available AgentBay context service (agent_bay.context) and session context.
 
@@ -18279,7 +19266,7 @@ Download workflow:
 1) Trigger session.context.sync(mode="upload") to sync cloud disk data to OSS
 2) Get pre-signed download URL via context.get_file_download_url
 3) Download the file and save to local local_path
-4) If wait=True, wait for download task to reach completion after step 1 
+4) If wait=True, wait for download task to reach completion after step 1
    (ensuring backend has prepared the download object)
 
 Returns DownloadResult containing sync and download request_ids, HTTP status, byte count, etc.
@@ -19431,6 +20418,250 @@ result = session.call_mcp_tool("shell", {"command": "invalid_command_12345", "ti
 
 - For press_keys tool, key names are automatically normalized to correct case format
 - This improves case compatibility (e.g., "CTRL" -> "Ctrl", "tab" -> "Tab")
+
+### pause
+
+```python
+def pause(timeout: int = 600,
+          poll_interval: float = 2.0) -> SessionPauseResult
+```
+
+Synchronously pause this session, putting it into a dormant state.
+
+This method internally calls the PauseSessionAsync API and then polls the GetSession API
+to check the session status until it becomes PAUSED or until timeout.
+
+**Arguments**:
+
+- `timeout` _int, optional_ - Timeout in seconds to wait for the session to pause.
+  Defaults to 600 seconds.
+- `poll_interval` _float, optional_ - Interval in seconds between status polls.
+  Defaults to 2.0 seconds.
+  
+
+**Returns**:
+
+    SessionPauseResult: Result containing the request ID, success status, and final session status.
+  - success (bool): True if the session was successfully paused
+  - request_id (str): Unique identifier for this API request
+  - status (str): Final session status (should be "PAUSED" if successful)
+  - error_message (str): Error description (if success is False)
+  - code (str): API response code (if available)
+  - message (str): API response message (if available)
+  - http_status_code (int): HTTP status code (if available)
+  
+
+**Raises**:
+
+    SessionError: If the API request fails or response is invalid.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+pause_result = session.pause()
+session.resume()
+session.delete()
+```
+
+
+**Notes**:
+
+- The session state transitions from RUNNING -> PAUSING -> PAUSED
+- Paused sessions consume fewer resources but maintain their state
+- Use resume() or resume_async() to restore the session to RUNNING state
+- The timeout parameter controls how long to wait for the PAUSED state
+- If timeout is exceeded, the method returns with success=False
+
+
+**See Also**:
+
+Session.pause_async, Session.resume, Session.resume_async, AgentBay.pause, AgentBay.pause_async
+
+### pause\_async
+
+```python
+async def pause_async(timeout: int = 600,
+                      poll_interval: float = 2.0) -> SessionPauseResult
+```
+
+Asynchronously pause this session, putting it into a dormant state.
+
+This method directly calls the PauseSessionAsync API and then polls the GetSession API
+asynchronously to check the session status until it becomes PAUSED or until timeout.
+
+**Arguments**:
+
+- `timeout` _int, optional_ - Timeout in seconds to wait for the session to pause.
+  Defaults to 600 seconds.
+- `poll_interval` _float, optional_ - Interval in seconds between status polls.
+  Defaults to 2.0 seconds.
+  
+
+**Returns**:
+
+    SessionPauseResult: Result containing the request ID, success status, and final session status.
+  - success (bool): True if the session was successfully paused
+  - request_id (str): Unique identifier for this API request
+  - status (str): Final session status (should be "PAUSED" if successful)
+  - error_message (str): Error description (if success is False)
+  - code (str): API response code (if available)
+  - message (str): API response message (if available)
+  - http_status_code (int): HTTP status code (if available)
+  
+
+**Raises**:
+
+    SessionError: If the API request fails or response is invalid.
+  
+
+**Example**:
+
+```python
+import asyncio
+
+session = agent_bay.create().session
+pause_result = await session.pause_async()
+await session.resume_async()
+session.delete()
+```
+
+
+**Notes**:
+
+- The session state transitions from RUNNING -> PAUSING -> PAUSED
+- Paused sessions consume fewer resources but maintain their state
+- Use resume() or resume_async() to restore the session to RUNNING state
+- The timeout parameter controls how long to wait for the PAUSED state
+- If timeout is exceeded, the method returns with success=False
+
+
+**See Also**:
+
+Session.pause, Session.resume, Session.resume_async, AgentBay.pause_async
+
+### resume
+
+```python
+def resume(timeout: int = 600,
+           poll_interval: float = 2.0) -> SessionResumeResult
+```
+
+Synchronously resume this session from a paused state.
+
+This method internally calls the ResumeSessionAsync API and then polls the GetSession API
+to check the session status until it becomes RUNNING or until timeout.
+
+**Arguments**:
+
+- `timeout` _int, optional_ - Timeout in seconds to wait for the session to resume.
+  Defaults to 600 seconds.
+- `poll_interval` _float, optional_ - Interval in seconds between status polls.
+  Defaults to 2.0 seconds.
+  
+
+**Returns**:
+
+    SessionResumeResult: Result containing the request ID, success status, and final session status.
+  - success (bool): True if the session was successfully resumed
+  - request_id (str): Unique identifier for this API request
+  - status (str): Final session status (should be "RUNNING" if successful)
+  - error_message (str): Error description (if success is False)
+  - code (str): API response code (if available)
+  - message (str): API response message (if available)
+  - http_status_code (int): HTTP status code (if available)
+  
+
+**Raises**:
+
+    SessionError: If the API request fails or response is invalid.
+  
+
+**Example**:
+
+```python
+session = agent_bay.create().session
+session.pause()
+resume_result = session.resume()
+session.delete()
+```
+
+
+**Notes**:
+
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
+- Use pause() or pause_async() to put a session into PAUSED state
+- The timeout parameter controls how long to wait for the RUNNING state
+- If timeout is exceeded, the method returns with success=False
+
+
+**See Also**:
+
+Session.pause, Session.pause_async, Session.resume_async, AgentBay.resume, AgentBay.resume_async
+
+### resume\_async
+
+```python
+async def resume_async(timeout: int = 600,
+                       poll_interval: float = 2.0) -> SessionResumeResult
+```
+
+Asynchronously resume this session from a paused state.
+
+This method directly calls the ResumeSessionAsync API and then polls the GetSession API
+asynchronously to check the session status until it becomes RUNNING or until timeout.
+
+**Arguments**:
+
+- `timeout` _int, optional_ - Timeout in seconds to wait for the session to resume.
+  Defaults to 600 seconds.
+- `poll_interval` _float, optional_ - Interval in seconds between status polls.
+  Defaults to 2.0 seconds.
+  
+
+**Returns**:
+
+    SessionResumeResult: Result containing the request ID, success status, and final session status.
+  - success (bool): True if the session was successfully resumed
+  - request_id (str): Unique identifier for this API request
+  - status (str): Final session status (should be "RUNNING" if successful)
+  - error_message (str): Error description (if success is False)
+  - code (str): API response code (if available)
+  - message (str): API response message (if available)
+  - http_status_code (int): HTTP status code (if available)
+  
+
+**Raises**:
+
+    SessionError: If the API request fails or response is invalid.
+  
+
+**Example**:
+
+```python
+import asyncio
+
+session = agent_bay.create().session
+session.pause()
+resume_result = await session.resume_async()
+session.delete()
+```
+
+
+**Notes**:
+
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
+- Use pause() or pause_async() to put a session into PAUSED state
+- The timeout parameter controls how long to wait for the RUNNING state
+- If timeout is exceeded, the method returns with success=False
+
+
+**See Also**:
+
+Session.pause, Session.pause_async, Session.resume, AgentBay.resume_async
 
 ## Related Resources
 
@@ -21354,6 +22585,7 @@ examples/
 ├── common-features/               # Features available across all environments
 │   ├── basics/                    # Essential features
 │   │   ├── session_creation/      # Session lifecycle management
+│   │   ├── session_pause_resume/  # Session pause and resume operations
 │   │   ├── file_system/           # File operations
 │   │   ├── filesystem_example/    # Practical filesystem use cases
 │   │   ├── context_management/    # Context creation and management
@@ -21696,6 +22928,9 @@ result = session.code.run_code(js_code, "javascript")
 - File operations: `common-features/basics/file_system/main.py`
 - Context management: `common-features/basics/context_management/main.py`
 - Data persistence: `common-features/basics/data_persistence/main.py`
+
+**Session Management:**
+- Session pause and resume: `common-features/basics/session_pause_resume/main.py`
 
 **Advanced Features:**
 - AI Agent: `common-features/advanced/agent_module/main.py`
@@ -24977,6 +26212,23 @@ ADB URL retrieval example:
 - Connect external tools to mobile session
 - Remote debugging setup
 
+### mobile_simulate_basic_usage.py
+
+Basic mobile simulate example:
+- Upload mobile device info file
+- Create sessions with mobile simulate configuration
+- Simulate different mobile devices across sessions
+- Verify device properties after simulation
+
+### mobile_simulate_with_ctx.py
+
+Mobile simulate with user specific context example:
+- Get or create user specific context
+- Check and upload mobile device info to context
+- Create session with mobile simulate and context sync
+- Persist device information across sessions
+- Sync context on session deletion
+
 ## Prerequisites
 
 - Python 3.8 or later
@@ -24996,6 +26248,12 @@ python main.py
 # Run ADB URL example
 cd ..
 python mobile_get_adb_url_example.py
+
+# Run mobile simulate basic usage example
+python mobile_simulate_basic_usage.py
+
+# Run mobile simulate with context example
+python mobile_simulate_with_ctx.py
 ```
 
 ## Usage Examples
@@ -25121,6 +26379,108 @@ if adb_url_result.success:
     # adb connect {adb_url}
 ```
 
+### Mobile Simulate - Basic Usage
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams, ExtraConfigs
+from agentbay.api.models import MobileExtraConfig, MobileSimulateMode
+from agentbay.mobile_simulate import MobileSimulateService
+
+# Initialize AgentBay client
+agent_bay = AgentBay(api_key="your_api_key")
+
+# Create mobile simulate service and set simulate params
+simulate_service = MobileSimulateService(agent_bay)
+simulate_service.set_simulate_enable(True)
+simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+
+# Upload mobile info file
+with open("mobile_info_model_a.json", "r") as f:
+    mobile_info_content = f.read()
+
+upload_result = simulate_service.upload_mobile_info(mobile_info_content)
+if upload_result.success:
+    mobile_sim_context_id = upload_result.mobile_simulate_context_id
+    
+    # Set the simulate context id for reuse
+    simulate_service.set_simulate_context_id(mobile_sim_context_id)
+    
+    # Create session with mobile simulate
+    params = CreateSessionParams(
+        image_id="mobile_latest",
+        extra_configs=ExtraConfigs(
+            mobile=MobileExtraConfig(
+                simulate_config=simulate_service.get_simulate_config()
+            )
+        )
+    )
+    
+    session_result = agent_bay.create(params)
+    session = session_result.session
+    
+    # Verify device model
+    result = session.command.execute_command("getprop ro.product.model")
+    print(f"Device model: {result.output}")
+    
+    # Cleanup
+    agent_bay.delete(session)
+```
+
+### Mobile Simulate - With User Context
+
+```python
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams, ExtraConfigs
+from agentbay.api.models import MobileExtraConfig, MobileSimulateMode
+from agentbay.mobile_simulate import MobileSimulateService
+from agentbay.context_sync import ContextSync, SyncPolicy, BWList, WhiteList
+
+# Get or create user specific context
+context_result = agent_bay.context.get("13000000000", create=True)
+context = context_result.context
+
+# Create context sync with white list
+sync_policy = SyncPolicy(
+    bw_list=BWList(white_lists=[WhiteList(path="/com.wuying.devinfo", exclude_paths=[])])
+)
+context_sync = ContextSync(
+    context_id=context.id,
+    path="/data/data",
+    policy=sync_policy,
+)
+
+# Create mobile simulate service and set simulate params
+simulate_service = MobileSimulateService(agent_bay)
+simulate_service.set_simulate_enable(True)
+simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+
+# Check and upload mobile info if needed
+has_mobile_info = simulate_service.has_mobile_info(context_sync)
+if not has_mobile_info:
+    with open("mobile_info_model_a.json", "r") as f:
+        mobile_info_content = f.read()
+    upload_result = simulate_service.upload_mobile_info(mobile_info_content, context_sync)
+
+# Create session with context sync
+params = CreateSessionParams(
+    image_id="mobile_latest",
+    context_syncs=[context_sync],
+    extra_configs=ExtraConfigs(
+        mobile=MobileExtraConfig(
+            simulate_config=simulate_service.get_simulate_config()
+        )
+    )
+)
+
+session_result = agent_bay.create(params)
+session = session_result.session
+
+# Device info persists across sessions
+# Delete with context sync to save changes
+agent_bay.delete(session, sync_context=True)
+```
+
 ## Features Demonstrated
 
 ### Application Management
@@ -25172,6 +26532,13 @@ if adb_url_result.success:
 | `session.mobile.send_key()` | Send key event |
 | `session.mobile.screenshot()` | Take screenshot |
 | `session.mobile.get_adb_url()` | Get ADB connection URL |
+| `MobileSimulateService.upload_mobile_info()` | Upload mobile device info |
+| `MobileSimulateService.has_mobile_info()` | Check if mobile info exists in context |
+| `MobileSimulateService.set_simulate_enable()` | Enable/disable mobile simulate |
+| `MobileSimulateService.set_simulate_mode()` | Set mobile simulate mode |
+| `MobileSimulateService.set_simulate_context_id()` | Set simulate context id for reuse |
+| `MobileSimulateService.get_simulate_config()` | Get mobile simulate configuration |
+| `agent_bay.context.get()` | Get or create user context |
 
 ## Common Use Cases
 
@@ -26435,6 +27802,8 @@ Main class for interacting with the AgentBay cloud runtime environment.
 - [delete](#delete)
 - [get](#get)
 - [list](#list)
+- [pauseAsync](#pauseasync)
+- [resumeAsync](#resumeasync)
 
 ## Properties
 
@@ -26590,6 +27959,100 @@ if (result.success) {
   console.log(`Found ${result.sessionIds.length} sessions`);
 }
 ```
+
+___
+
+### pauseAsync
+
+▸ **pauseAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionPauseResult`\>
+
+Asynchronously pause a session, putting it into a dormant state.
+
+This method directly calls the PauseSessionAsync API without waiting for the session
+to reach the PAUSED state.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `session` | [`Session`](session.md) | `undefined` | The session to pause. |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to pause. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionPauseResult`\>
+
+SessionPauseResult indicating success or failure and request ID
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const session = (await agentBay.create()).session;
+const pauseResult = await agentBay.pauseAsync(session);
+await agentBay.resumeAsync(session);
+await session.delete();
+```
+
+**`Remarks`**
+
+**Behavior:**
+- This method does not wait for the session to reach the PAUSED state
+- It only submits the pause request to the API
+- The session state transitions from RUNNING -> PAUSING -> PAUSED
+- Paused sessions consume fewer resources but maintain their state
+
+**`See`**
+
+[resumeAsync](#resumeasync), [Session.pauseAsync](session.md#pauseasync)
+
+___
+
+### resumeAsync
+
+▸ **resumeAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionResumeResult`\>
+
+Asynchronously resume a session from a paused state.
+
+This method directly calls the ResumeSessionAsync API without waiting for the session
+to reach the RUNNING state.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `session` | [`Session`](session.md) | `undefined` | The session to resume. |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to resume. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionResumeResult`\>
+
+SessionResumeResult indicating success or failure and request ID
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const session = (await agentBay.create()).session;
+await agentBay.pauseAsync(session);
+const resumeResult = await agentBay.resumeAsync(session);
+await session.delete();
+```
+
+**`Remarks`**
+
+**Behavior:**
+- This method does not wait for the session to reach the RUNNING state
+- It only submits the resume request to the API
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
+
+**`See`**
+
+[pauseAsync](#pauseasync), [Session.resumeAsync](session.md#resumeasync)
 
 ## Related Resources
 
@@ -26782,8 +28245,8 @@ Synchronizes a context with the session. Supports both async and callback modes.
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `contextId?` | `string` | `undefined` | Optional context ID to synchronize |
-| `path?` | `string` | `undefined` | Optional path where the context should be mounted |
+| `contextId?` | `string` | `undefined` | Optional context ID to synchronize. If provided, `path` must also be provided. |
+| `path?` | `string` | `undefined` | Optional path where the context should be mounted. If provided, `contextId` must also be provided. |
 | `mode?` | `string` | `undefined` | Optional synchronization mode (e.g., "upload", "download") |
 | `callback?` | ``SyncCallback`` | `undefined` | Optional callback function. If provided, runs in background and calls callback when complete |
 | `maxRetries` | `number` | `150` | Maximum number of retries for polling completion status (default: 150) |
@@ -26799,8 +28262,27 @@ Promise resolving to ContextSyncResult with success status and request ID
 
 Error if the API call fails
 
+**`Throws`**
+
+Error if `contextId` or `path` is provided without the other parameter.
+              Both must be provided together, or both must be omitted.
+
 **`Example`**
 
+Sync all contexts (no parameters):
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const syncResult = await result.session.context.sync();
+  console.log(`Sync: ${syncResult.success}`);
+  await result.session.delete();
+}
+```
+
+**`Example`**
+
+Sync specific context with path:
 ```typescript
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const result = await agentBay.create();
@@ -27835,6 +29317,8 @@ Represents a session in the AgentBay cloud environment.
 - [getLinkAsync](#getlinkasync)
 - [info](#info)
 - [listMcpTools](#listmcptools)
+- [pauseAsync](#pauseasync)
+- [resumeAsync](#resumeasync)
 - [setLabels](#setlabels)
 
 ## Properties
@@ -28179,6 +29663,134 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+___
+
+### pauseAsync
+
+▸ **pauseAsync**(`timeout?`, `pollInterval?`): `Promise`\<`SessionPauseResult`\>
+
+Asynchronously pause this session, putting it into a dormant state.
+
+This method calls the PauseSessionAsync API to initiate the pause operation and then polls
+the GetSession API to check the session status until it becomes PAUSED or until timeout is reached.
+During the paused state, resource usage and costs are reduced while session state is preserved.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to pause. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionPauseResult`\>
+
+Promise resolving to SessionPauseResult containing:
+         - success: Whether the pause operation succeeded
+         - requestId: Unique identifier for this API request
+         - status: Final session status (should be "PAUSED" if successful)
+         - errorMessage: Error description if pause failed
+
+**`Throws`**
+
+Error if the API call fails or network issues occur.
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const pauseResult = await result.session.pauseAsync();
+  if (pauseResult.success) {
+    console.log('Session paused successfully');
+  }
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- Initiates pause operation through PauseSessionAsync API
+- Polls session status until PAUSED state or timeout
+- Session state transitions: RUNNING -> PAUSING -> PAUSED
+- All session state is preserved during pause
+
+**Important Notes:**
+- Paused sessions cannot perform operations (deletion, task execution, etc.)
+- Use [resumeAsync](#resumeasync) to restore the session to RUNNING state
+- During pause, both resource usage and costs are lower
+- If timeout is exceeded, returns with success=false
+
+**`See`**
+
+[resumeAsync](#resumeasync)
+
+___
+
+### resumeAsync
+
+▸ **resumeAsync**(`timeout?`, `pollInterval?`): `Promise`\<`SessionResumeResult`\>
+
+Asynchronously resume this session from a paused state.
+
+This method calls the ResumeSessionAsync API to initiate the resume operation and then polls
+the GetSession API to check the session status until it becomes RUNNING or until timeout is reached.
+After resuming, the session restores full functionality and can perform all operations normally.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to resume. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionResumeResult`\>
+
+Promise resolving to SessionResumeResult containing:
+         - success: Whether the resume operation succeeded
+         - requestId: Unique identifier for this API request
+         - status: Final session status (should be "RUNNING" if successful)
+         - errorMessage: Error description if resume failed
+
+**`Throws`**
+
+Error if the API call fails or network issues occur.
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.get('paused_session_id');
+if (result.success) {
+  const resumeResult = await result.session.resumeAsync();
+  if (resumeResult.success) {
+    console.log('Session resumed successfully');
+  }
+}
+```
+
+**`Remarks`**
+
+**Behavior:**
+- Initiates resume operation through ResumeSessionAsync API
+- Polls session status until RUNNING state or timeout
+- Session state transitions: PAUSED -> RESUMING -> RUNNING
+- All previous session state is restored during resume
+
+**Important Notes:**
+- Only sessions in PAUSED state can be resumed
+- After resume, the session can perform all operations normally
+- Use [pauseAsync](#pauseasync) to put a session into PAUSED state
+- If timeout is exceeded, returns with success=false
+
+**`See`**
+
+[pauseAsync](#pauseasync)
 
 ___
 
@@ -31742,6 +33354,62 @@ Make sure you have set the `AGENTBAY_API_KEY` environment variable or replace th
 
 
 
+# Session Pause and Resume Example
+
+This example demonstrates how to pause and resume sessions using the Wuying AgentBay SDK. Pausing a session puts it into a dormant state, consuming fewer resources while maintaining its state. Resuming a session brings it back to an active state.
+
+## Features Demonstrated
+
+- Pausing and resuming sessions
+- Handling non-existent session operations
+- Using custom timeout and polling interval parameters
+- Checking session status before and after operations
+- Performing work in sessions before and after pause/resume cycles
+
+## Running the Example
+
+```bash
+cd session-pause-resume
+npx ts-node session-pause-resume.ts
+```
+
+Make sure you have set the `AGENTBAY_API_KEY` environment variable or replace the placeholder in the code with your actual API key.
+
+## Prerequisites
+
+- Node.js installed
+- TypeScript installed
+- ts-node installed (`npm install -g ts-node`)
+- Required dependencies installed (`npm install`)
+
+## Understanding Session States
+
+When working with pause and resume operations, sessions can be in different states:
+
+1. **RUNNING**: Session is active and ready to accept commands
+2. **PAUSING**: Session is transitioning to paused state
+3. **PAUSED**: Session is in dormant state, consuming fewer resources
+4. **RESUMING**: Session is transitioning back to running state
+
+The pause and resume operations are asynchronous, meaning they initiate the state transition and then poll for completion.
+
+## Best Practices
+
+1. **Always check operation results**: Verify that pause and resume operations succeeded
+2. **Handle errors gracefully**: Non-existent sessions and other errors should be handled appropriately
+3. **Use appropriate timeouts**: Custom timeout values can be used based on your specific requirements
+4. **Verify session state**: Check session status before and after operations to ensure expected behavior
+5. **Clean up resources**: Always delete sessions when done to avoid resource leaks
+
+## Use Cases
+
+- **Cost optimization**: Pause sessions during idle periods to reduce resource consumption
+- **Long-running workflows**: Suspend sessions overnight or during maintenance windows
+- **Development and testing**: Pause test environments when not actively working on them
+- **Batch processing**: Pause and resume processing jobs based on system load
+
+
+
 # Mobile GetAdbUrl Example
 
 This example demonstrates how to retrieve an ADB (Android Debug Bridge) connection URL for a mobile session.
@@ -32146,7 +33814,7 @@ if session.Browser.IsInitialized() {
 ### Screenshot
 
 ```go
-func (b *Browser) Screenshot(page interface{}, options *ScreenshotOptions) ([]byte, error)
+func (b *Browser) Screenshot(page playwright.Page, options *ScreenshotOptions) ([]byte, error)
 ```
 
 Screenshot takes a screenshot of the specified page with enhanced options and error handling.
@@ -32883,10 +34551,9 @@ AgentBayConfig holds optional configuration for the AgentBay client.
 
 ```go
 type AgentBay struct {
-	APIKey		string
-	Client		*mcp.Client
-	Sessions	sync.Map
-	Context		*ContextService
+	APIKey	string
+	Client	*mcp.Client
+	Context	*ContextService
 }
 ```
 
@@ -33015,6 +34682,86 @@ Returns:
 ```go
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.List(nil, nil, nil)
+```
+
+### Pause
+
+```go
+func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+```
+
+Pause synchronously pauses a session, putting it into a dormant state to reduce resource usage and
+costs. Pause puts the session into a PAUSED state where computational resources are significantly
+reduced. The session state is preserved and can be resumed later to continue work.
+
+Parameters:
+  - session: The session to pause.
+  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionPauseResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Delegates to session's Pause method for actual implementation - Returns detailed result with
+success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+pauseResult, _ := client.Pause(result.Session, 300, 2.0)
+client.Resume(result.Session, 300, 2.0)
+```
+
+### Resume
+
+```go
+func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+```
+
+Resume synchronously resumes a session from a paused state to continue work. Resume restores the
+session from PAUSED state back to RUNNING state. All previous session state and data are preserved
+during resume operation.
+
+Parameters:
+  - session: The session to resume.
+  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionResumeResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Delegates to session's Resume method for actual implementation - Returns detailed result with
+success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+client.Pause(result.Session, 300, 2.0)
+resumeResult, _ := client.Resume(result.Session, 300, 2.0)
 ```
 
 ### Related Functions
@@ -35247,6 +36994,12 @@ type Session struct {
 	// File transfer context ID for file operations
 	FileTransferContextID	string
 
+	// Browser recording context ID
+	RecordContextID	string
+
+	// Browser replay enabled flag
+	EnableBrowserReplay	bool
+
 	// File, command and code handlers
 	FileSystem	*filesystem.FileSystem
 	Command		*command.Command
@@ -35305,6 +37058,14 @@ result, _ := client.Create(nil)
 defer result.Session.Delete()
 deleteResult, _ := result.Session.Delete()
 ```
+
+### GetEnableBrowserReplay
+
+```go
+func (s *Session) GetEnableBrowserReplay() bool
+```
+
+GetEnableBrowserReplay returns whether browser replay is enabled for this session.
 
 ### GetLabels
 
@@ -35427,6 +37188,83 @@ defer result.Session.Delete()
 toolsResult, _ := result.Session.ListMcpTools()
 ```
 
+### Pause
+
+```go
+func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+```
+
+Pause synchronously pauses this session, putting it into a dormant state to reduce resource
+usage and costs. Pause puts the session into a PAUSED state where computational resources are
+significantly reduced. The session state is preserved and can be resumed later to continue work.
+
+Parameters:
+  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionPauseResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Initiates pause operation through the PauseSessionAsync API - Polls session status until PAUSED
+state or timeout - Returns detailed result with success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+pauseResult, _ := result.Session.Pause(300, 2.0)
+```
+
+### Resume
+
+```go
+func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+```
+
+Resume synchronously resumes this session from a paused state to continue work. Resume restores the
+session from PAUSED state back to RUNNING state. All previous session state and data are preserved
+during resume operation.
+
+Parameters:
+  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionResumeResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Initiates resume operation through the ResumeSessionAsync API - Polls session status until RUNNING
+state or timeout - Returns detailed result with success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+result.Session.Pause(300, 2.0)
+resumeResult, _ := result.Session.Resume(300, 2.0)
+```
+
 ### SetLabels
 
 ```go
@@ -35493,6 +37331,9 @@ type CreateSessionParams struct {
 
 	// Framework specifies the framework name for tracking (e.g., "langchain"). Empty string means direct call.
 	Framework	string
+
+	// EnableBrowserReplay specifies whether to enable browser recording for this session.
+	EnableBrowserReplay	bool
 }
 ```
 
@@ -35540,6 +37381,15 @@ func (p *CreateSessionParams) WithContextSync(contextSyncs []*ContextSync) *Crea
 ```
 
 WithContextSync sets the context sync configurations for the session parameters.
+
+### WithEnableBrowserReplay
+
+```go
+func (p *CreateSessionParams) WithEnableBrowserReplay(enableBrowserReplay bool) *CreateSessionParams
+```
+
+WithEnableBrowserReplay sets the browser replay flag for the session parameters and returns the
+updated parameters.
 
 ### WithExtraConfigs
 
@@ -38672,6 +40522,184 @@ For more details on session parameters, see the [Session API Reference](../../..
 
 
 
+# Session Pause and Resume Example
+
+This example demonstrates how to use the `Pause` and `Resume` APIs to manage session lifecycle and reduce resource consumption.
+
+## Description
+
+The pause/resume feature allows you to temporarily suspend a session to reduce computational resource usage and costs, and then restore it later to continue work. This is particularly useful for long-running sessions where work may be intermittent.
+
+## Prerequisites
+
+- Go 1.21 or higher
+- Valid API key set in `AGENTBAY_API_KEY` environment variable
+
+## Usage
+
+```bash
+# Set your API key
+export AGENTBAY_API_KEY="your-api-key-here"
+
+# Run the example
+go run main.go
+```
+
+## Code Example
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+    "time"
+
+    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+)
+
+func main() {
+    // Initialize AgentBay client
+    apiKey := os.Getenv("AGENTBAY_API_KEY")
+    client, err := agentbay.NewAgentBay(apiKey, nil)
+    if err != nil {
+        log.Fatalf("Failed to initialize AgentBay client: %v", err)
+    }
+
+    // Create a session
+    createResult, err := client.Create(nil)
+    if err != nil {
+        log.Fatalf("Failed to create session: %v", err)
+    }
+    session := createResult.Session
+    defer session.Delete()
+
+    // Perform some work
+    commandResult, _ := session.Command.ExecuteCommand("echo 'Hello World'", 30000)
+    fmt.Printf("Command output: %s\n", commandResult.Output)
+
+    // Pause the session to save resources
+    pauseResult, err := client.Pause(session, 300, 2.0)
+    if err != nil {
+        log.Fatalf("Failed to pause session: %v", err)
+    }
+    if !pauseResult.Success {
+        log.Fatalf("Failed to pause session: %s", pauseResult.ErrorMessage)
+    }
+    fmt.Printf("Session paused (RequestID: %s)\n", pauseResult.RequestID)
+
+    // Wait and verify session is paused
+    time.Sleep(2 * time.Second)
+    getResult, _ := client.GetSession(session.SessionID)
+    fmt.Printf("Session status: %s\n", getResult.Data.Status)
+
+    // Resume the session
+    resumeResult, err := client.Resume(session, 300, 2.0)
+    if err != nil {
+        log.Fatalf("Failed to resume session: %v", err)
+    }
+    if !resumeResult.Success {
+        log.Fatalf("Failed to resume session: %s", resumeResult.ErrorMessage)
+    }
+    fmt.Printf("Session resumed (RequestID: %s)\n", resumeResult.RequestID)
+
+    // Continue working with the session
+    commandResult, _ = session.Command.ExecuteCommand("echo 'Hello after resume'", 30000)
+    fmt.Printf("Command output: %s\n", commandResult.Output)
+}
+```
+
+## API Reference
+
+### Pause
+
+```go
+func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+```
+
+Synchronously pauses a session, putting it into a dormant state to reduce resource usage and costs.
+
+**Parameters:**
+- `session` (*Session): The session to pause
+- `timeout` (int): Timeout in seconds to wait for the session to pause. Defaults to 600 seconds
+- `pollInterval` (float64): Interval in seconds between status polls. Defaults to 2.0 seconds
+
+**Returns:**
+- `*models.SessionPauseResult`: Result object containing:
+  - `Success` (bool): Whether the operation succeeded
+  - `RequestID` (string): The API request ID
+  - `ErrorMessage` (string): Error message if failed
+  - `Status` (string): Final session status
+- `error`: An error if a critical operation fails
+
+### Resume
+
+```go
+func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+```
+
+Synchronously resumes a session from a paused state to continue work.
+
+**Parameters:**
+- `session` (*Session): The session to resume
+- `timeout` (int): Timeout in seconds to wait for the session to resume. Defaults to 600 seconds
+- `pollInterval` (float64): Interval in seconds between status polls. Defaults to 2.0 seconds
+
+**Returns:**
+- `*models.SessionResumeResult`: Result object containing:
+  - `Success` (bool): Whether the operation succeeded
+  - `RequestID` (string): The API request ID
+  - `ErrorMessage` (string): Error message if failed
+  - `Status` (string): Final session status
+- `error`: An error if a critical operation fails
+
+## Expected Output
+
+```
+Creating a session...
+Created session with ID: session-xxxxxxxxxxxxx
+
+1. Verifying session is running...
+Session status: RUNNING
+
+2. Performing work on the session...
+Command output: Hello from AgentBay session
+
+3. Pausing the session...
+Session paused successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
+
+4. Verifying session is paused...
+Session status: PAUSED
+
+5. Attempting work on paused session...
+Expected: Command failed on paused session: ...
+
+6. Resuming the session...
+Session resumed successfully (RequestID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
+
+7. Verifying session is running again...
+Session status: RUNNING
+
+8. Performing work on the resumed session...
+Command output: Hello from resumed session
+
+Example completed successfully!
+
+Cleaning up...
+Session session-xxxxxxxxxxxxx deleted successfully
+```
+
+## Notes
+
+- Sessions in PAUSED state consume significantly fewer resources
+- Operations on paused sessions will typically fail or wait until the session is resumed
+- Both Pause and Resume are synchronous operations that wait for the session to reach the target state
+- Use appropriate timeout values based on your workload requirements
+- Always handle errors appropriately in production code
+
+
+
 # Watch Directory Example (Go)
 
 This example demonstrates how to use the `watch_directory` functionality in the AgentBay Go SDK to monitor file system changes in real-time.
@@ -38922,6 +40950,316 @@ The example includes error handling for common scenarios:
 - [Mobile API Documentation](../../../../../typescript/docs/api/mobile-use/mobile.md)
 - [Session Creation Guide](../../common-features/basics/session_creation/README.md)
 - [Basic Usage Example](../../basic_usage/README.md)
+
+
+
+
+
+# Mobile Simulate Example
+
+This example demonstrates how to use the mobile simulate feature to simulate different mobile devices across sessions.
+
+## Features
+
+- Upload mobile device information for simulation
+- Create multiple sessions with the same simulated device configuration
+- Verify device properties after simulation
+- Proper session cleanup
+
+## Prerequisites
+
+- AgentBay API key set as environment variable `AGENTBAY_API_KEY`
+- Mobile device information file (contact support team to obtain)
+
+## Usage
+
+```bash
+# Set your API key
+export AGENTBAY_API_KEY=your_api_key_here
+
+# Navigate to the example directory
+cd golang/docs/examples/mobile-use/mobile_simulate_basic_usage
+
+# Run the example
+go run main.go
+```
+
+## What This Example Does
+
+1. **Upload Mobile Info**: Uploads a mobile device information file to create a simulate context
+2. **First Session**: Creates a mobile session with the simulated device configuration
+3. **Verify Device**: Checks the device model to confirm simulation is working
+4. **Second Session**: Creates another session using the same simulated context
+5. **Verify Consistency**: Confirms both sessions have the same device properties
+6. **Cleanup**: Properly deletes both sessions
+
+## Key Concepts
+
+### Mobile Simulate Service
+
+The `MobileSimulateService` is now part of the main `agentbay` package:
+
+```go
+import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+// Create mobile simulate service
+simulateService, err := agentbay.NewMobileSimulateService(client)
+if err != nil {
+    log.Fatalf("Failed to create mobile simulate service: %v", err)
+}
+```
+
+### Create Session with Mobile Simulate
+Creates a session with mobile simulate configuration and the user's context:
+```go
+params := &agentbay.CreateSessionParams{
+    ImageId:      "mobile_latest",
+    ContextSyncs: []*agentbay.ContextSync{contextSync},
+    ExtraConfigs: &models.ExtraConfigs{
+        Mobile: &models.MobileExtraConfig{
+            SimulateConfig: simulateService.GetSimulateConfig(),
+        },
+    },
+}
+```
+
+### Simulate Modes
+
+- `MobileSimulateModePropertiesOnly`: Only simulate device properties (build.prop)
+- `MobileSimulateModeSensorsOnly`: Only simulate sensors information
+- `MobileSimulateModePackagesOnly`: Only simulate installed packages
+- `MobileSimulateModeServicesOnly`: Only simulate system services
+- `MobileSimulateModeAll`: Simulate all aspects
+
+## Output Example
+
+```
+=== Mobile Simulate Example ===
+
+AgentBay client initialized
+=== First Mobile Session ===
+Uploading mobile info file for first time...
+Mobile simulate context id uploaded successfully: ctx_abc123
+Creating first session...
+Session created with ID: sess_xyz789
+Waiting for mobile simulate to complete...
+Getting device model after mobile simulate...
+First session device model: Pixel 6
+
+Deleting first session...
+First session deleted successfully (RequestID: req_123)
+
+=== Second Mobile Session ===
+Creating second session...
+Session created with ID: sess_def456
+Waiting for mobile simulate to complete...
+Getting device model after mobile simulate...
+Second session device model: Pixel 6
+
+Deleting second session...
+Second session deleted successfully (RequestID: req_456)
+
+=== Example completed successfully ===
+```
+
+## Related Examples
+
+- [Mobile Get ADB URL](../mobile_get_adb_url/README.md) - Get ADB connection URL for mobile sessions
+- [Context Management](../../common-features/basics/context_management/README.md) - Learn about context persistence
+- [Session Creation](../../common-features/basics/session_creation/README.md) - Basic session creation
+
+## Notes
+
+- The mobile info file path is relative to the example directory
+- Wait time after session creation allows the simulation to complete
+- The same context ID can be reused across multiple sessions
+- Device properties persist across sessions using the same context
+
+
+
+
+
+# Mobile Simulate with User Specific Context Example
+
+This example demonstrates how to use the mobile simulate feature with a user specific context to simulate mobile devices across sessions.
+
+## Overview
+
+This example shows:
+1. Getting a user specific context
+2. Checking if the mobile dev info file exists in user's specific context
+3. Uploading mobile dev info file to user's specific context if not exists
+4. Creating a session with mobile simulate configuration and user's specific context
+5. Waiting for mobile simulate to complete
+6. Getting device model after mobile simulate
+7. Deleting session with context sync
+
+## Prerequisites
+
+- Go 1.16 or higher
+- AgentBay API key
+- Mobile info file (contact support team for details)
+
+## Setup
+
+1. Set your API key as an environment variable:
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+```
+
+2. Ensure you have the mobile info file at `resource/mobile_info_model_a.json`
+
+## Running the Example
+
+```bash
+cd golang/docs/examples/mobile-use/mobile_simulate_with_ctx
+go run main.go
+```
+
+## What This Example Does
+
+### 1. Create Mobile Simulate Service
+
+The `MobileSimulateService` is now part of the main `agentbay` package:
+
+```go
+import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+// Create mobile simulate service
+simulateService, err := agentbay.NewMobileSimulateService(client)
+if err != nil {
+    log.Fatalf("Failed to create mobile simulate service: %v", err)
+}
+```
+
+### 2. Get User Specific Context
+The example first gets or creates a user-specific context using a phone number as identifier:
+```go
+contextResult, err := client.Context.Get("13000000002", true)
+```
+
+### 3. Create Context Sync Configuration
+Creates a context sync with a white list policy to sync specific paths:
+```go
+syncPolicy := &agentbay.SyncPolicy{
+    BWList: &agentbay.BWList{
+        WhiteLists: []*agentbay.WhiteList{
+            {
+                Path:         "/com.wuying.devinfo",
+                ExcludePaths: []string{},
+            },
+        },
+    },
+}
+
+contextSync := &agentbay.ContextSync{
+    ContextID: context.ID,
+    Path:      "/data/data",
+    Policy:    syncPolicy,
+}
+```
+
+### 4. Check and Upload Mobile Info
+Checks if mobile dev info exists in the context, and uploads it if not:
+```go
+hasMobileInfo, err := simulateService.HasMobileInfo(contextSync)
+if err != nil {
+    log.Fatalf("Failed to check mobile info: %v", err)
+}
+
+if !hasMobileInfo {
+    uploadResult := simulateService.UploadMobileInfo(string(mobileInfoContent), contextSync)
+    if !uploadResult.Success {
+        log.Fatalf("Failed to upload mobile info: %s", uploadResult.ErrorMessage)
+    }
+}
+```
+
+### 5. Configure Mobile Simulate
+Set up the simulate service with desired configuration:
+```go
+simulateService.SetSimulateEnable(true)
+simulateService.SetSimulateMode(models.MobileSimulateModePropertiesOnly)
+```
+
+### 6. Create Session with Mobile Simulate
+Creates a session with mobile simulate configuration and the user's context:
+```go
+params := &agentbay.CreateSessionParams{
+    ImageId:      "mobile_latest",
+    ContextSyncs: []*agentbay.ContextSync{contextSync},
+    ExtraConfigs: &models.ExtraConfigs{
+        Mobile: &models.MobileExtraConfig{
+            SimulateConfig: simulateService.GetSimulateConfig(),
+        },
+    },
+}
+```
+
+### 7. Verify Mobile Simulate
+Verifies the mobile simulate by checking the device model:
+```go
+result, err := session.Command.ExecuteCommand("getprop ro.product.model")
+```
+
+### 8. Delete Session with Context Sync
+Deletes the session and syncs the context back:
+```go
+deleteResult, err := session.Delete(&agentbay.DeleteSessionParams{
+    SyncContext: true,
+})
+```
+
+## Expected Output
+
+```
+=== Mobile Simulate with User Specific Context Example ===
+
+AgentBay client initialized
+Getting a user specific context...
+context.id = <context_id>, context.name = 13000000000
+Checking or uploading mobile dev info file...
+Mobile dev info uploaded successfully
+Creating session...
+Session created with ID: <session_id>
+Session: <session_details>
+Waiting 5 seconds for mobile simulate to complete...
+Getting device model after mobile simulate...
+Session device model: <device_model>
+
+Deleting session...
+Session deleted successfully (RequestID: <request_id>)
+
+=== Example completed successfully ===
+```
+
+## Key Concepts
+
+### User Specific Context
+- Allows persisting mobile device information across sessions
+- Identified by a unique identifier (e.g., phone number)
+- Can be reused across multiple sessions
+
+### Context Sync
+- Synchronizes specific paths between local and remote contexts
+- Uses white list policy to control what gets synced
+- Supports sync on session creation and deletion
+
+### Mobile Simulate Modes
+- `PropertiesOnly`: Only simulates device properties
+- `Full`: Full device simulation including hardware characteristics
+
+## Notes
+
+- The mobile info file contains device-specific information
+- Contact the support team for guidance on obtaining mobile info files
+- The context sync ensures device information persists across sessions
+- Use `SyncContext: true` when deleting to save changes back to context
+
+## Related Examples
+
+- [Mobile Simulate Basic Usage](../mobile_simulate_basic_usage/README.md) - Basic mobile simulate without user context
+- [Mobile Get ADB URL](../mobile_get_adb_url/README.md) - Getting ADB connection URL
 
 
 

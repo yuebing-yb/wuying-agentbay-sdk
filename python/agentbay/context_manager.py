@@ -214,8 +214,8 @@ class ContextManager:
         - Callback mode: When a callback is provided, it returns immediately and calls the callback when complete
 
         Args:
-            context_id: Optional ID of the context to synchronize
-            path: Optional path where the context should be mounted
+            context_id: Optional ID of the context to synchronize. If provided, `path` must also be provided.
+            path: Optional path where the context should be mounted. If provided, `context_id` must also be provided.
             mode: Optional synchronization mode (e.g., "upload", "download")
             callback: Optional callback function that receives success status. If provided, the method
                      runs in background and calls callback when complete
@@ -225,8 +225,21 @@ class ContextManager:
         Returns:
             ContextSyncResult: Result object containing success status and request ID
 
+        Raises:
+            ValueError: If `context_id` or `path` is provided without the other parameter.
+                       Both must be provided together, or both must be omitted.
+
         Example:
-            Async mode - waits for completion:
+            Sync all contexts (no parameters):
+            ```python
+            result = agent_bay.create()
+            session = result.session
+            sync_result = await session.context.sync()
+            print(f"Sync success: {sync_result.success}")
+            session.delete()
+            ```
+
+            Sync specific context with path:
             ```python
             result = agent_bay.create()
             session = result.session
@@ -249,6 +262,17 @@ class ContextManager:
             session.delete()
             ```
         """
+        # Validate that context_id and path are provided together or both omitted
+        has_context_id = context_id is not None and context_id.strip() != ""
+        has_path = path is not None and path.strip() != ""
+
+        if has_context_id != has_path:
+            raise ValueError(
+                "context_id and path must be provided together or both omitted. "
+                "If you want to sync a specific context, both context_id and path are required. "
+                "If you want to sync all contexts, omit both parameters."
+            )
+
         request = SyncContextRequest(
             authorization=f"Bearer {self.session._get_api_key()}",
             session_id=self.session._get_session_id(),

@@ -31,8 +31,6 @@ class TestAgentBay(unittest.TestCase):
         # Verify results
         self.assertEqual(agent_bay.api_key, "test-api-key")
         self.assertEqual(agent_bay.client, mock_client)
-        self.assertDictEqual(agent_bay._sessions, {})
-        self.assertIsNotNone(agent_bay._lock)
         self.assertIsNotNone(agent_bay.context)
 
     @patch("agentbay.agentbay._load_config")
@@ -111,11 +109,6 @@ class TestAgentBay(unittest.TestCase):
         self.assertEqual(result.request_id, "create-request-id")
         self.assertIsNotNone(result.session)
         self.assertEqual(result.session.session_id, "new-session-id")
-
-
-        # Verify session was added to the internal dictionary
-        self.assertIn("new-session-id", agent_bay._sessions)
-        self.assertEqual(agent_bay._sessions["new-session-id"], result.session)
 
     @patch("agentbay.agentbay._load_config")
     @patch("agentbay.agentbay.mcp_client")
@@ -345,11 +338,11 @@ class TestAgentBay(unittest.TestCase):
         self.assertIsNotNone(result.session)
         if result.session:
             self.assertEqual(result.session.session_id, "mobile-session-id")
-        
+
         # Verify the client was called with extra configs
         mock_client.create_mcp_session.assert_called_once()
         call_arg = mock_client.create_mcp_session.call_args[0][0]
-        
+
         # Check that extra_configs is present in the request
         self.assertIsNotNone(call_arg.extra_configs)
         self.assertIsNotNone(call_arg.extra_configs.mobile)
