@@ -1,8 +1,6 @@
 package integration
 
 import (
-	"crypto/tls"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,11 +19,7 @@ const (
 var mobileSimPersistenceContextID string
 
 func getInsecureClient(t *testing.T, apiKey string) *agentbay.AgentBay {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	httpClient := &http.Client{Transport: tr}
-	client, err := agentbay.NewAgentBay(apiKey, &agentbay.ClientOptions{HTTPClient: httpClient})
+	client, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Failed to create AgentBay client: %v", err)
 	}

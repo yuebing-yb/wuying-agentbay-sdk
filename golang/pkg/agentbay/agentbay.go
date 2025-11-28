@@ -192,11 +192,10 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		if params.ExtraConfigs.Mobile != nil && params.ExtraConfigs.Mobile.SimulateConfig != nil && params.ExtraConfigs.Mobile.SimulateConfig.Simulate {
 			mobileSimPath = params.ExtraConfigs.Mobile.SimulateConfig.SimulatePath
 			if mobileSimPath == "" {
-				fmt.Println("mobile_sim_path is not set now, skip mobile simulate operation")
-			} else {
-				needsMobileSim = true
-				mobileSimMode = string(params.ExtraConfigs.Mobile.SimulateConfig.SimulateMode)
+				mobileSimPath = MobileInfoDefaultPath
 			}
+			needsMobileSim = true
+			mobileSimMode = string(params.ExtraConfigs.Mobile.SimulateConfig.SimulateMode)
 		}
 	}
 
@@ -223,6 +222,33 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			}
 
 			persistenceDataList = append(persistenceDataList, persistenceItem)
+		}
+	}
+
+	// Add mobile simulate context sync if needed
+	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil &&
+		params.ExtraConfigs.Mobile.SimulateConfig != nil &&
+		params.ExtraConfigs.Mobile.SimulateConfig.Simulate &&
+		params.ExtraConfigs.Mobile.SimulateConfig.SimulatedContextID != "" {
+
+		simContextID := params.ExtraConfigs.Mobile.SimulateConfig.SimulatedContextID
+		fmt.Printf("ℹ️  Adding context sync for mobile simulate: &{ContextID:%s Path:%s Policy:<nil>}\n", simContextID, MobileInfoDefaultPath)
+
+		// Check if already exists in persistenceDataList
+		exists := false
+		for _, item := range persistenceDataList {
+			if tea.StringValue(item.ContextId) == simContextID {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			mobilePersistence := &mcp.CreateMcpSessionRequestPersistenceDataList{
+				ContextId: tea.String(simContextID),
+				Path:      tea.String(MobileInfoDefaultPath),
+			}
+			persistenceDataList = append(persistenceDataList, mobilePersistence)
 		}
 	}
 
@@ -472,7 +498,13 @@ func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string,
 		wyaApplyOption = "-all"
 	}
 
-	command := strings.TrimSpace(fmt.Sprintf("chmod -R a+rwx %s; wya apply %s %s", mobileSimPath, wyaApplyOption, devInfoFilePath))
+	cmdParts := []string{"chmod -R a+rwx " + mobileSimPath + ";", "wya", "apply"}
+	if wyaApplyOption != "" {
+		cmdParts = append(cmdParts, wyaApplyOption)
+	}
+	cmdParts = append(cmdParts, devInfoFilePath)
+
+	command := strings.Join(cmdParts, " ")
 	fmt.Printf("ℹ️  ⏳ Waiting for mobile simulate completion, command: %s\n", command)
 
 	cmdResult, err := session.Command.ExecuteCommand(command)
