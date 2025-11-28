@@ -7,9 +7,31 @@
  * - We will encounter a captcha and we will solve it automatically.
  */
 
-import { AgentBay, CreateSessionParams } from 'wuying-agentbay-sdk';
-import { BrowserOption } from 'wuying-agentbay-sdk';
-import { chromium } from 'playwright';
+import { AgentBay, CreateSessionParams } from '../../../src/agent-bay';
+import { BrowserOption } from '../../../src/browser';
+import { chromium, Page, ConsoleMessage } from 'playwright';
+
+// Polling detection function, continuously checks until condition is met or timeout
+async function waitForCondition(
+    page: Page,
+    conditionCode: string | (() => any),
+    timeout: number = 30000,
+    interval: number = 200
+): Promise<boolean> {
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeout) {
+        try {
+            const result = await page.evaluate(conditionCode);
+            if (result) {
+                return true;
+            }
+        } catch (error) {
+            // Ignore errors, continue polling
+        }
+        await new Promise(resolve => setTimeout(resolve, interval));
+    }
+    return false;
+}
 
 async function main(): Promise<void> {
     // Get API key from environment variable
@@ -81,42 +103,52 @@ async function main(): Promise<void> {
         console.log('Clicking next step button...');
         await page.click('#next_step1');
 
-        // Listen for captcha processing messages
-        let captchaSolvingStarted = false;
-        let captchaSolvingFinished = false;
-
         // Listen for console messages
-        const handleConsole = (msg: any) => {
+        page.on('console', async (msg: ConsoleMessage) => {
             console.log(`🔍 Received console message: ${msg.text()}`);
+            
             if (msg.text() === 'wuying-captcha-solving-started') {
-                captchaSolvingStarted = true;
-                console.log('🎯 Setting captchaSolvingStarted = true');
-                page.evaluate('window.captchaSolvingStarted = true; window.captchaSolvingFinished = false;');
+                console.log('🎯 Captcha processing started');
+                await page.evaluate('window.captchaSolvingStarted = true; window.captchaSolvingFinished = false;');
             } else if (msg.text() === 'wuying-captcha-solving-finished') {
-                captchaSolvingFinished = true;
-                console.log('✅ Setting captchaSolvingFinished = true');
-                page.evaluate('window.captchaSolvingFinished = true;');
+                console.log('✅ Captcha processing finished');
+                await page.evaluate('window.captchaSolvingFinished = true;');
             }
-        };
-
-        page.on('console', handleConsole);
+        });
 
         // Wait 1 second first, then check if captcha processing has started
-        try {
-            await page.waitForTimeout(1000);
-            await page.waitForFunction('() => window.captchaSolvingStarted === true', { timeout: 1000 });
+        await page.waitForTimeout(1000);
+        
+        // Use function form like JavaScript version
+        // The function will be serialized and executed in browser context where window exists
+        const started = await waitForCondition(
+            page,
+            () => {
+                // @ts-expect-error - window exists in browser context where this function will be executed
+                return window.captchaSolvingStarted === true;
+            },
+            3000,
+            200
+        );
+        
+        if (started) {
             console.log('🎯 Detected captcha processing started, waiting for completion...');
-            
-            // If start is detected, wait for completion (max 30 seconds)
-            try {
-                await page.waitForFunction('() => window.captchaSolvingFinished === true', { timeout: 30000 });
+            const finished = await waitForCondition(
+                page,
+                () => {
+                    // @ts-expect-error - window exists in browser context where this function will be executed
+                    return window.captchaSolvingFinished === true;
+                },
+                30000,
+                200
+            );
+            if (finished) {
                 console.log('✅ Captcha processing completed');
-            } catch (error) {
-                console.log('⚠️ Captcha processing timeout, may still be in progress');
+            } else {
+                console.log('⚠️ Captcha processing timeout, may still be in progress, continuing execution');
             }
-                
-        } catch (error) {
-            console.log('⏭️ No captcha processing detected, continuing execution');
+        } else {
+            console.log('⏭️ No captcha processing detected, may not need to handle captcha');
         }
         
         await page.waitForTimeout(2000);
