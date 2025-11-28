@@ -40,12 +40,12 @@ export interface MobileSimulateUploadResult {
 export class MobileSimulateService {
   private agentBay: AgentBay;
   private contextService: ContextService;
-  private simulateEnable: boolean = false;
+  private simulateEnable = false;
   private simulateMode: MobileSimulateMode = MobileSimulateMode.PropertiesOnly;
   private contextId?: string;
   private contextSync?: ContextSync;
   private mobileDevInfoPath?: string;
-  private useInternalContext: boolean = true;
+  private useInternalContext = true;
 
   /**
    * Initialize the MobileSimulateService.
