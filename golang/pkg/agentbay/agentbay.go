@@ -175,6 +175,10 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// Add extra configs if provided
+	mobileSimPath := ""
+	needsMobileSim := false
+	mobileSimMode := ""
+
 	if params.ExtraConfigs != nil {
 		extraConfigsJSON, err := params.GetExtraConfigsJSON()
 		if err != nil {
@@ -182,6 +186,17 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 		if extraConfigsJSON != "" {
 			createSessionRequest.ExtraConfigs = tea.String(extraConfigsJSON)
+		}
+
+		// Check mobile simulate config
+		if params.ExtraConfigs.Mobile != nil && params.ExtraConfigs.Mobile.SimulateConfig != nil && params.ExtraConfigs.Mobile.SimulateConfig.Simulate {
+			mobileSimPath = params.ExtraConfigs.Mobile.SimulateConfig.SimulatePath
+			if mobileSimPath == "" {
+				fmt.Println("mobile_sim_path is not set now, skip mobile simulate operation")
+			} else {
+				needsMobileSim = true
+				mobileSimMode = string(params.ExtraConfigs.Mobile.SimulateConfig.SimulateMode)
+			}
 		}
 	}
 
@@ -408,6 +423,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 	}
 
+	// If we need to do mobile simulate by command, wait for it
+	if needsMobileSim && mobileSimPath != "" {
+		a.waitForMobileSimulate(session, mobileSimPath, mobileSimMode)
+	}
+
 	// Return result with RequestID
 	return &SessionResult{
 		ApiResponse: models.ApiResponse{
@@ -416,6 +436,63 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		Session: session,
 		Success: true,
 	}, nil
+}
+
+// waitForMobileSimulate waits for mobile simulate command to complete.
+func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string, mobileSimMode string) {
+	fmt.Println("⏳ Mobile simulate: Waiting for completion")
+
+	if session.Mobile == nil {
+		fmt.Println("Mobile module not found in session, skipping mobile simulate")
+		return
+	}
+	if session.Command == nil {
+		fmt.Println("Command module not found in session, skipping mobile simulate")
+		return
+	}
+	if mobileSimPath == "" {
+		fmt.Println("Mobile simulate path is empty, skipping mobile simulate")
+		return
+	}
+
+	// Run mobile simulate command
+	startTime := time.Now()
+	devInfoFilePath := fmt.Sprintf("%s/dev_info.json", mobileSimPath)
+	wyaApplyOption := ""
+
+	if mobileSimMode == "" || mobileSimMode == "PropertiesOnly" {
+		wyaApplyOption = ""
+	} else if mobileSimMode == "SensorsOnly" {
+		wyaApplyOption = "-sensors"
+	} else if mobileSimMode == "PackagesOnly" {
+		wyaApplyOption = "-packages"
+	} else if mobileSimMode == "ServicesOnly" {
+		wyaApplyOption = "-services"
+	} else if mobileSimMode == "All" {
+		wyaApplyOption = "-all"
+	}
+
+	command := strings.TrimSpace(fmt.Sprintf("chmod -R a+rwx %s; wya apply %s %s", mobileSimPath, wyaApplyOption, devInfoFilePath))
+	fmt.Printf("ℹ️  ⏳ Waiting for mobile simulate completion, command: %s\n", command)
+
+	cmdResult, err := session.Command.ExecuteCommand(command)
+	if err != nil {
+		fmt.Printf("Error executing mobile simulate command: %v\n", err)
+		return
+	}
+
+	if cmdResult.Success {
+		consumeTime := time.Since(startTime).Seconds()
+		if mobileSimMode == "" {
+			mobileSimMode = "PropertiesOnly"
+		}
+		fmt.Printf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds\n", mobileSimMode, consumeTime)
+		if cmdResult.Output != "" {
+			fmt.Printf("   Output: %s\n", strings.TrimSpace(cmdResult.Output))
+		}
+	} else {
+		fmt.Printf("Failed to execute mobile simulate command: %s\n", cmdResult.ErrorMessage)
+	}
 }
 
 // ListSessionParams contains parameters for listing sessions

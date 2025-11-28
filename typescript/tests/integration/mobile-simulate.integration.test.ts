@@ -49,7 +49,7 @@ describe('Mobile Simulate Integration Tests', () => {
       // Here we create a new one as per original test, but we could use agentBay.mobileSimulate
       const simulateService = new MobileSimulateService(agentBay);
       simulateService.setSimulateEnable(true);
-      simulateService.setSimulateMode(MobileSimulateMode.All);
+      simulateService.setSimulateMode(MobileSimulateMode.PropertiesOnly);
 
       // Read mobile info file
       const mobileInfoPath = path.join(__dirname, '..', '..', '..', 'resource', 'mobile_info_model_a.json');
@@ -72,15 +72,7 @@ describe('Mobile Simulate Integration Tests', () => {
           mobile: {
             lockResolution: false,
             hideNavigationBar: false,
-            simulateConfig: {
-              ...simulateService.getSimulateConfig(),
-              simulateMode: MobileSimulateMode.All,
-            }
-            // We need to cast to any because simulateConfig is not in MobileExtraConfig definition yet?
-            // Wait, MobileExtraConfig definition in types/extra-configs.ts DOES NOT have simulateConfig?
-            // Let me check extra-configs.ts again.
-            // I did NOT add simulateConfig to MobileExtraConfig interface in step 7a.
-            // I should check if I missed it.
+            simulateConfig: simulateService.getSimulateConfig()
           } as any
         }
       });

@@ -299,6 +299,70 @@ class AsyncAgentBay:
             )
             await asyncio.sleep(retry_interval)
 
+    async def _wait_for_mobile_simulate(
+        self,
+        session: AsyncSession,
+        mobile_sim_path: str,
+        mobile_sim_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Wait for mobile simulate command to complete asynchronously.
+
+        Args:
+            session: The session to wait for mobile simulate
+            mobile_sim_path: The dev info path to the mobile simulate
+            mobile_sim_mode: The mode of the mobile simulate
+        """
+        _logger.info("⏳ Mobile simulate: Waiting for completion")
+
+        if not hasattr(session, "mobile"):
+            _logger.info("Mobile module not found in session, skipping mobile simulate")
+            return
+        if not hasattr(session, "command"):
+            _logger.info("Command module not found in session, skipping mobile simulate")
+            return
+        if not mobile_sim_path:
+            _logger.info("Mobile simulate path is empty, skipping mobile simulate")
+            return
+
+        try:
+            # Run mobile simulate command
+            start_time = time.time()
+            dev_info_file_path = f"{mobile_sim_path}/dev_info.json"
+            wya_apply_option = ""
+
+            if not mobile_sim_mode or mobile_sim_mode == "PropertiesOnly":
+                wya_apply_option = ""
+            elif mobile_sim_mode == "SensorsOnly":
+                wya_apply_option = "-sensors"
+            elif mobile_sim_mode == "PackagesOnly":
+                wya_apply_option = "-packages"
+            elif mobile_sim_mode == "ServicesOnly":
+                wya_apply_option = "-services"
+            elif mobile_sim_mode == "All":
+                wya_apply_option = "-all"
+
+            command = f"chmod -R a+rwx {mobile_sim_path}; wya apply {wya_apply_option} {dev_info_file_path}".strip()
+            _logger.info(
+                f"ℹ️  ⏳ Waiting for mobile simulate completion, command: {command}"
+            )
+
+            cmd_result = await session.command.execute_command(command)
+            if cmd_result.success:
+                end_time = time.time()
+                consume_time = end_time - start_time
+                _logger.info(
+                    f"✅ Mobile simulate completed with mode: {mobile_sim_mode or 'PropertiesOnly'}, duration: {consume_time:.2f} seconds"
+                )
+                if cmd_result.output:
+                    _logger.info(f"   Output: {cmd_result.output.strip()}")
+            else:
+                _logger.info(
+                    f"Failed to execute mobile simulate command: {cmd_result.error_message}"
+                )
+        except Exception as e:
+            _logger.info(f"Error executing mobile simulate command: {e}")
+
     def _log_request_debug_info(self, request: CreateMcpSessionRequest) -> None:
         """
         Log debug information for the request with masked authorization.
@@ -569,8 +633,25 @@ class AsyncAgentBay:
                 request.persistence_data_list.append(record_persistence)
 
             # Add extra_configs if provided
+            mobile_sim_path = None
+            needs_mobile_sim = False
+            mobile_sim_mode = None
+
             if hasattr(params, "extra_configs") and params.extra_configs:
                 request.extra_configs = params.extra_configs
+                
+                # Check mobile simulate config
+                if (
+                    params.extra_configs.mobile 
+                    and params.extra_configs.mobile.simulate_config
+                    and params.extra_configs.mobile.simulate_config.simulate
+                ):
+                    mobile_sim_path = params.extra_configs.mobile.simulate_config.simulate_path
+                    if not mobile_sim_path:
+                        _logger.info("mobile_sim_path is not set now, skip mobile simulate operation")
+                    else:
+                        needs_mobile_sim = True
+                        mobile_sim_mode = params.extra_configs.mobile.simulate_config.simulate_mode
 
             self._log_request_debug_info(request)
 
@@ -668,6 +749,10 @@ class AsyncAgentBay:
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:
                 await self._wait_for_context_synchronization(session)
+
+            # If we need to do mobile simulate by command, wait for it
+            if needs_mobile_sim and mobile_sim_path:
+                await self._wait_for_mobile_simulate(session, mobile_sim_path, mobile_sim_mode)
 
             # Return SessionResult with request ID
             return SessionResult(request_id=request_id, success=True, session=session)
