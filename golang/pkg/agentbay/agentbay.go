@@ -477,21 +477,17 @@ func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string,
 
 	cmdResult, err := session.Command.ExecuteCommand(command)
 	if err != nil {
-		fmt.Printf("Error executing mobile simulate command: %v\n", err)
+		fmt.Printf("Failed to execute mobile simulate command: %v\n", err)
 		return
 	}
 
-	if cmdResult.Success {
-		consumeTime := time.Since(startTime).Seconds()
-		if mobileSimMode == "" {
-			mobileSimMode = "PropertiesOnly"
-		}
-		fmt.Printf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds\n", mobileSimMode, consumeTime)
-		if cmdResult.Output != "" {
-			fmt.Printf("   Output: %s\n", strings.TrimSpace(cmdResult.Output))
-		}
-	} else {
-		fmt.Printf("Failed to execute mobile simulate command: %s\n", cmdResult.ErrorMessage)
+	consumeTime := time.Since(startTime).Seconds()
+	if mobileSimMode == "" {
+		mobileSimMode = "PropertiesOnly"
+	}
+	fmt.Printf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds\n", mobileSimMode, consumeTime)
+	if cmdResult.Output != "" {
+		fmt.Printf("   Output: %s\n", strings.TrimSpace(cmdResult.Output))
 	}
 }
 
