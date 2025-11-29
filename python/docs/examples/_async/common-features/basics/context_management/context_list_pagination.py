@@ -4,13 +4,11 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from agentbay import AsyncAgentBay
-from agentbay import AgentBayError
+from agentbay import AsyncAgentBay, AgentBayError, ContextListParams
 
 async def list_contexts(agent_bay, max_results=10, next_token=None):
     """列出上下文，支持分页"""
     print(f"Listing contexts (max: {max_results})...")
-    from agentbay._async.context import ContextListParams
     
     params = ContextListParams(max_results=max_results, next_token=next_token)
     result = await agent_bay.context.list(params)
@@ -44,11 +42,11 @@ async def create_context(agent_bay, name):
         print(f"❌ Failed to create context: {result.error_message}")
         return None
 
-async def get_context_details(agent_bay, context_id):
+async def get_context_details(agent_bay, context_name):
     """获取上下文详细信息"""
-    print(f"Getting context details: {context_id}")
+    print(f"Getting context details for: {context_name}")
     
-    result = await agent_bay.context.get(context_id=context_id)
+    result = await agent_bay.context.get(name=context_name)
     
     if result.success:
         ctx = result.context
@@ -86,7 +84,7 @@ async def demo_create_context(agent_bay):
     
     if created_ctx:
         print("\nGetting details of newly created context...")
-        await get_context_details(agent_bay, created_ctx.id)
+        await get_context_details(agent_bay, created_ctx.name)
 
 async def main():
     api_key = os.environ.get("AGENTBAY_API_KEY") or "your_api_key_here"
