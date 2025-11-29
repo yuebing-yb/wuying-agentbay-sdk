@@ -6,11 +6,12 @@ This example demonstrates:
 - Handling task results
 """
 
+import asyncio
 import os
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
-from agentbay.logger import get_logger
+from agentbay import get_logger
 
 logger = get_logger("agentbay-agent-example")
 
@@ -40,7 +41,7 @@ async def main():
         task_description = "创建一个word文件，输入“无影Agentbay”,保存并关闭。"
         logger.info(f"🚀 Executing task: {task_description}")
 
-        execution_result = session.agent.execute_task(
+        execution_result = await session.agent.execute_task(
             task_description, max_try_times=50
         )
 

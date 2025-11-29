@@ -13,7 +13,7 @@ import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-from agentbay.logger import get_logger
+from agentbay import get_logger
 
 logger = get_logger("agentbay-agent-example")
 

@@ -276,6 +276,6 @@ def main_direct():
 
 
 if __name__ == "__main__":
-    # main_sync()
+    main_sync()
     # main_direct()
-    main_async()
+    # main_async()

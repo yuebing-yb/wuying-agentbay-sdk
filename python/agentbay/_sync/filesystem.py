@@ -2003,10 +2003,7 @@ class FileSystem(BaseService):
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            
-            _monitor_directory()
+                            loop.run_until_complete(_monitor_directory())
         
         monitor_thread = threading.Thread(
             target=_sync_monitor,
