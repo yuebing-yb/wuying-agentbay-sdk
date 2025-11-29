@@ -9,10 +9,9 @@
 """
 import os, asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption
 from agentbay.browser.browser_agent import ActOptions
-import time
 
 def main():
     api_key = os.getenv("AGENTBAY_API_KEY")

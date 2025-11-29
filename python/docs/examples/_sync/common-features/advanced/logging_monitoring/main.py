@@ -20,7 +20,7 @@ from typing import Dict, Any, List
 from datetime import datetime
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 class SessionLogger:

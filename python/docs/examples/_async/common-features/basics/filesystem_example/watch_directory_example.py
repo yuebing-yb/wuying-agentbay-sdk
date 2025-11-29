@@ -11,7 +11,7 @@ import asyncio
 import time
 import threading
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 async def main():

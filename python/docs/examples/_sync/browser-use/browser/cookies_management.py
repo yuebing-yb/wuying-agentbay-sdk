@@ -18,10 +18,10 @@ import json
 from typing import List, Dict, Any
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 
 def get_all_cookies(context) -> List[Dict[str, Any]]:

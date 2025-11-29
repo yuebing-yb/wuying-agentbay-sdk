@@ -14,7 +14,7 @@ import os
 from typing import Dict, Any, List
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 class SessionManager:

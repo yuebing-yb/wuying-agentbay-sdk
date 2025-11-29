@@ -18,11 +18,10 @@ import hashlib
 from typing import Tuple
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption
 
-from playwright.async_api import sync_playwright
-import time
+from playwright.sync_api import sync_playwright
 
 
 def take_screenshot_base64(page) -> str:

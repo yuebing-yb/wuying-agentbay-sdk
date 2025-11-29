@@ -18,8 +18,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-import time
+from agentbay import CreateSessionParams
 
 
 @dataclass

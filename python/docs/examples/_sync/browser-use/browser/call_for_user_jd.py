@@ -35,12 +35,12 @@ import base64
 import json
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
-from agentbay import (
+from agentbay.async_api import (
     Browser,
     BrowserOption,
     BrowserViewport,

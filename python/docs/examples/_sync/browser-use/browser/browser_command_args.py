@@ -14,12 +14,10 @@ and go to default navigation URL:
 """
 
 import os
-
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption, BrowserFingerprint
-from playwright.async_api import sync_playwright
-import time
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption, BrowserFingerprint
+from playwright.sync_api import sync_playwright
 
 
 def main():

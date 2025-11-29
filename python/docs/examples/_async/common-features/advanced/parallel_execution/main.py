@@ -15,7 +15,7 @@ import time
 from typing import List, Dict, Any
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 async def parallel_command_execution(session, commands: List[str]) -> List[Dict[str, Any]]:

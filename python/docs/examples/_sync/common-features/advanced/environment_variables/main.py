@@ -15,7 +15,7 @@ This example shows how to:
 import os
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 def set_environment_variable(session, var_name: str, var_value: str):

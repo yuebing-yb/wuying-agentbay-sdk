@@ -15,7 +15,7 @@ import os
 import re
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 async def test_ping(session, host: str, count: int = 4):

@@ -6,11 +6,8 @@ import os
 from typing import Any, Dict, List
 from agentbay import AgentBay
 from agentbay.exceptions import AgentBayError
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.mobile import KeyCode
-
-
-
 def main():
     # Get API key from environment variable or use a default value for testing
     api_key = os.getenv("AGENTBAY_API_KEY")

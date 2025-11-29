@@ -16,15 +16,14 @@ import base64
 from pydantic import BaseModel, Field
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import (
+from agentbay import CreateSessionParams
+from agentbay.async_api import (
     BrowserOption,
     BrowserScreen,
     BrowserProxy,
 )
 from agentbay.browser.browser_agent import ActOptions, ExtractOptions
 from agentbay.model import SessionResult
-import time
 
 
 class ProductInfo(BaseModel):

@@ -12,7 +12,7 @@ from playwright.async_api import async_playwright
 from pydantic import BaseModel
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.async_api import BrowserOption, Browser
 from agentbay.browser.browser_agent import ActOptions, ActResult, ExtractOptions
 

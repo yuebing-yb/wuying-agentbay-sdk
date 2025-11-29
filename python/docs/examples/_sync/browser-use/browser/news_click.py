@@ -10,12 +10,12 @@
 import os
 import logging
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 from pydantic import BaseModel
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption, Browser
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption, Browser
 from agentbay.browser.browser_agent import ActOptions, ActResult, ExtractOptions
 
 

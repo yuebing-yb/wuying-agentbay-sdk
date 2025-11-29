@@ -12,7 +12,7 @@ This example demonstrates how to use AgentBay SDK code execution features:
 import asyncio
 import os
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 async def main():

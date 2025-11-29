@@ -13,7 +13,7 @@ import asyncio
 import base64
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.async_api import BrowserOption
 
 from playwright.async_api import async_playwright

@@ -14,7 +14,7 @@ import os
 from typing import Optional
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.exceptions import AgentBayError
 
 

@@ -12,7 +12,7 @@ import sys
 
 from agentbay import AsyncAgentBay
 from agentbay.exceptions import AgentBayError
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 async def main():

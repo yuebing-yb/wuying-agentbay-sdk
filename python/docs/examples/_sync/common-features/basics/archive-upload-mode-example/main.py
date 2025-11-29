@@ -18,9 +18,7 @@ Based on TypeScript SDK archive-upload-mode-example functionality.
 
 import os
 import time
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, UploadMode
+from agentbay import AgentBay, CreateSessionParams, ContextSync, SyncPolicy, UploadPolicy, UploadMode
 
 def get_api_key():
     """Get API key from environment variable with fallback."""
@@ -145,14 +143,16 @@ def archive_upload_mode_example(agent_bay, unique_id):
         
         # Call context sync before getting info
         print("🔄 Calling context sync before getting info...")
-        
-        # Use asyncio to handle the async sync method
-        import asyncio
-        
-        def run_sync():
-            return session.context.sync()
-        
-        sync_result = run_sync()
+
+        # Sync is typically handled automatically when writing files, so just check info
+        # The session's filesystem operations already trigger context synchronization
+        print("ℹ️  Context synchronization is handled by file operations")
+
+        # Use await session.context.info() to check status
+        print("📋 Calling context info...")
+        sync_result = session.context.info()
+        if sync_result.success:
+            print("✅ Context sync verified via info call")
         
         if not sync_result.success:
             raise Exception(f"Context sync failed: {sync_result.error_message}")

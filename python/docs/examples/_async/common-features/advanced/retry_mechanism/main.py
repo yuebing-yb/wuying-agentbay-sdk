@@ -16,7 +16,7 @@ from typing import Callable, Any, Optional
 from dataclasses import dataclass
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.exceptions import AgentBayError
 
 

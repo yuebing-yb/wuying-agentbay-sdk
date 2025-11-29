@@ -16,7 +16,7 @@ import os
 from typing import List, Dict, Any
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 def create_sessions_batch(
@@ -85,7 +85,7 @@ def batch_execute_commands(sessions: List[Any], command: str):
         for i, session in enumerate(sessions)
     ]
     
-    results = asyncio.gather(*tasks)
+    results = [task for task in tasks]
     
     # Print results
     successful = sum(1 for r in results if r["success"])
@@ -130,7 +130,7 @@ def batch_file_operations(sessions: List[Any]):
             return {"session_index": index, "success": False, "error": str(e)}
     
     tasks = [write_and_read(session, i) for i, session in enumerate(sessions)]
-    results = asyncio.gather(*tasks)
+    results = [task for task in tasks]
     
     successful = sum(1 for r in results if r.get("success") and r.get("content_matches"))
     print(f"✅ File operations successful: {successful}/{len(sessions)}")

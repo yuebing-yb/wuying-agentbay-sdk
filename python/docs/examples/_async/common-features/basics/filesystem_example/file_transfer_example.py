@@ -11,7 +11,7 @@ import os
 import tempfile
 import time
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import CreateSessionParams, BrowserContext
 
 
 async def create_test_file(content: str, suffix: str = ".txt") -> str:

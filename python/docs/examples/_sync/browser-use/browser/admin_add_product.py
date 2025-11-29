@@ -10,9 +10,8 @@
 
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption, ActOptions
-import time
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption, ActOptions
 
 
 def main():

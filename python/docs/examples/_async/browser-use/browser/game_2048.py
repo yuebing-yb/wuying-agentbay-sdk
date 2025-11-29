@@ -12,7 +12,7 @@ from collections import deque
 import random
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.async_api import BrowserOption
 from agentbay.browser.browser_agent import ExtractOptions
 

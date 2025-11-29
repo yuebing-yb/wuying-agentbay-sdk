@@ -19,10 +19,9 @@ Note: The browser_type option is only available for computer use images.
 
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption, BrowserViewport
-from playwright.async_api import sync_playwright
-import time
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption, BrowserViewport
+from playwright.sync_api import sync_playwright
 
 
 def test_browser_type(browser_type: str | None, description: str):

@@ -17,13 +17,11 @@ import asyncio
 from typing import Optional
 from playwright.async_api import async_playwright
 
-from agentbay import AsyncAgentBay
-from agentbay.session import Session
-from agentbay.session_params import CreateSessionParams
-from agentbay.async_api import BrowserOption
+from agentbay import AsyncAgentBay, CreateSessionParams, BrowserOption
+from agentbay.async_api import AsyncSession
 
 
-async def take_agent_screenshots(session: Session):
+async def take_agent_screenshots(session: AsyncSession):
     """Take screenshots using the browser agent (returns base64 data)."""
     print("📸 Taking screenshots using browser agent...")
     
@@ -66,7 +64,7 @@ async def take_agent_screenshots(session: Session):
     print("✅ Agent full page screenshot saved as agent_full_page_screenshot.png")
 
 
-async def take_browser_screenshots(session: Session):
+async def take_browser_screenshots(session: AsyncSession):
     """Take screenshots using direct Playwright integration (returns bytes data)."""
     print("📸 Taking screenshots using direct Playwright integration...")
     
@@ -141,7 +139,7 @@ async def main():
         print(f"Failed to create session: {session_result.error_message}")
         return
 
-    session: Optional[Session] = session_result.session
+    session: Optional[AsyncSession] = session_result.session
     if session is None:
         print("Failed to create session: session is None")
         return

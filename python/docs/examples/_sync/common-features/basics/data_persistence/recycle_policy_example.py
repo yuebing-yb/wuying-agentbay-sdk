@@ -76,8 +76,9 @@ Expected Output:
 """
 
 import os
-from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import (
+from agentbay import (
+    AgentBay, 
+    CreateSessionParams,
     ContextSync,
     SyncPolicy,
     RecyclePolicy,

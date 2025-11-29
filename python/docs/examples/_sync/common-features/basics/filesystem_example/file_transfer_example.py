@@ -13,7 +13,7 @@ import os
 import tempfile
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import CreateSessionParams, BrowserContext
 
 
 def create_test_file(content: str, suffix: str = ".txt") -> str:

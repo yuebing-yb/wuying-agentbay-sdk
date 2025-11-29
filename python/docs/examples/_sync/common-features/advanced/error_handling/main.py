@@ -16,9 +16,8 @@ import os
 from typing import Optional
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.exceptions import AgentBayError
-import time
 
 
 def create_session_with_retry(

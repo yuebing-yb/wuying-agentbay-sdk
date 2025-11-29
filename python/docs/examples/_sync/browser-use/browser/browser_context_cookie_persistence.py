@@ -17,9 +17,9 @@ across multiple sessions. It shows the complete workflow of:
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay import BrowserOption
-from playwright.async_api import sync_playwright
+from agentbay import CreateSessionParams, BrowserContext
+from agentbay.async_api import BrowserOption
+from playwright.sync_api import sync_playwright
 
 def main():
     """Demonstrate browser context cookie persistence."""

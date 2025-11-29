@@ -16,7 +16,7 @@ import json
 from typing import Dict, Any
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 async def test_get_request(session, url: str) -> Dict[str, Any]:

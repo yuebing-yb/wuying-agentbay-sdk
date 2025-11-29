@@ -18,7 +18,7 @@ import json
 from typing import Dict, Any
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 def test_get_request(session, url: str) -> Dict[str, Any]:

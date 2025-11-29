@@ -11,7 +11,7 @@ returns the ADB connection URL that can be used with the `adb connect` command.
 
 import os
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 async def main():

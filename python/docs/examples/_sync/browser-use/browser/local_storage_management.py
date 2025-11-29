@@ -17,10 +17,10 @@ import os
 import json
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 
 def get_local_storage(page) -> dict:

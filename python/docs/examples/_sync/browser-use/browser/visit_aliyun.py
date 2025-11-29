@@ -11,12 +11,11 @@ This example shows how to use AIBrowser to visit aliyun.com, including:
 
 import os
 import time
-
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 def main():
     # Get API key from environment variable

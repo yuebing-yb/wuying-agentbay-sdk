@@ -11,7 +11,7 @@ This example demonstrates:
 
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 from agentbay.logger import get_logger
 

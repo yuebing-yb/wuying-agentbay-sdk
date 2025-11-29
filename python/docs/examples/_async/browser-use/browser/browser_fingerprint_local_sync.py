@@ -16,7 +16,7 @@ import os
 import asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.async_api import BrowserOption
 from agentbay.browser.fingerprint import BrowserFingerprintGenerator
 

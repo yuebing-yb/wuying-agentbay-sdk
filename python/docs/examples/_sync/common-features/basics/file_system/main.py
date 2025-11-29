@@ -19,8 +19,7 @@ This example shows how to use various file system operations including:
 import os
 import time
 
-from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import AgentBay, CreateSessionParams
 
 
 def main():

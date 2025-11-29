@@ -6,7 +6,7 @@ import os
 from agentbay import AgentBay
 from agentbay.exceptions import OssError
 from agentbay.oss.oss import Oss
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 def get_oss_credentials():

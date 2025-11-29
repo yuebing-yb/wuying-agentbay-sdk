@@ -14,13 +14,12 @@ from collections import deque
 import random
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption
 from agentbay.browser.browser_agent import ExtractOptions
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 from pydantic import BaseModel, Field
-import time
 
 
 def main():

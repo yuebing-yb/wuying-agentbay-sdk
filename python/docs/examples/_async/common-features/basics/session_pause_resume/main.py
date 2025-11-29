@@ -15,7 +15,7 @@ import time
 import asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from dotenv import load_dotenv
 load_dotenv()
 

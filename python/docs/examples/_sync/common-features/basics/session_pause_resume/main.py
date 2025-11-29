@@ -15,9 +15,8 @@ This example shows how to:
 
 import os
 import time
-
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from dotenv import load_dotenv
 load_dotenv()
 

@@ -3,7 +3,7 @@ import os
 from typing import Any, Dict, List
 from agentbay import AsyncAgentBay
 from agentbay.exceptions import AgentBayError
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.mobile import KeyCode
 import asyncio
 

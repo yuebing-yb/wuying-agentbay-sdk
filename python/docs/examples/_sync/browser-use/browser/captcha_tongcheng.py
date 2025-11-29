@@ -15,12 +15,12 @@ import time
 import base64
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
-from agentbay import (
+from agentbay.async_api import (
     Browser,
     BrowserOption,
     BrowserViewport,
@@ -28,6 +28,21 @@ from agentbay import (
     BrowserFingerprint,
     BrowserProxy
 )
+
+# Polling detection function, continuously checks until condition is met or timeout
+def wait_for_condition(page, condition_code, timeout=30000, interval=200):
+    """Polling detection function, continuously checks until condition is met or timeout"""
+    start_time = time.time()
+    while time.time() - start_time < timeout / 1000:  # timeout is in milliseconds, convert to seconds
+        try:
+            result = page.evaluate(condition_code)
+            if result:
+                return True
+        except Exception:
+            # Ignore errors, continue polling
+            pass
+        time.sleep(interval / 1000)  # interval is in milliseconds, convert to seconds
+    return False
 
 def main():
     # Get API key from environment variable
@@ -87,42 +102,42 @@ def main():
                 print("Clicking next step button...")
                 page.click('#next_step1')
 
-                # Listen for captcha processing messages
-                captcha_solving_started = False
-                captcha_solving_finished = False
-
                 # Listen for console messages
                 def handle_console(msg):
-                    nonlocal captcha_solving_started, captcha_solving_finished
                     print(f"🔍 Received console message: {msg.text}")
                     if msg.text == "wuying-captcha-solving-started":
-                        captcha_solving_started = True
-                        print("🎯 Setting captchaSolvingStarted = true")
-                        # Use asyncio.create_task for async execution
+                        print("🎯 Captcha processing started")
                         asyncio.create_task(page.evaluate("window.captchaSolvingStarted = true; window.captchaSolvingFinished = false;"))
                     elif msg.text == "wuying-captcha-solving-finished":
-                        captcha_solving_finished = True
-                        print("✅ Setting captchaSolvingFinished = true")
-                        # Use asyncio.create_task for async execution
+                        print("✅ Captcha processing finished")
                         asyncio.create_task(page.evaluate("window.captchaSolvingFinished = true;"))
 
                 page.on("console", handle_console)
 
-                # Wait 1 second first, then check if captcha processing has started
-                try:
-                    time.sleep(1)
-                    page.wait_for_function("() => window.captchaSolvingStarted === true", timeout=1000)
+                # wait for 1 second
+                time.sleep(1)
+                
+                started = wait_for_condition(
+                    page,
+                    "() => window.captchaSolvingStarted === true",
+                    3000,
+                    200
+                )
+                
+                if started:
                     print("🎯 Detected captcha processing started, waiting for completion...")
-
-                    # If start is detected, wait for completion (max 30 seconds)
-                    try:
-                        page.wait_for_function("() => window.captchaSolvingFinished === true", timeout=30000)
+                    finished = wait_for_condition(
+                        page,
+                        "() => window.captchaSolvingFinished === true",
+                        30000,
+                        200
+                    )
+                    if finished:
                         print("✅ Captcha processing completed")
-                    except:
-                        print("⚠️ Captcha processing timeout, may still be in progress")
-
-                except:
-                    print("⏭️ No captcha processing detected, continuing execution")
+                    else:
+                        print("⚠️ Captcha processing timeout, may still be in progress, continuing execution")
+                else:
+                    print("⏭️ No captcha processing detected, may not need to handle captcha")
 
                 time.sleep(2)
                 print("Test completed")

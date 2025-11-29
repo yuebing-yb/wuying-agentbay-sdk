@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 @dataclass

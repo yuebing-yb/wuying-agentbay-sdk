@@ -12,13 +12,12 @@ import os
 from typing import List, Optional, Tuple
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay.async_api import BrowserOption
 from agentbay.browser.browser_agent import ExtractOptions, ActOptions
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 from pydantic import BaseModel, Field
-import time
 
 class SudokuBoard(BaseModel):
     board: List[List[int]] = Field(..., description="9x9 sudoku board, 0 for empty")

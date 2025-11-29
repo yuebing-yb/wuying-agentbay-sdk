@@ -10,7 +10,7 @@ import asyncio
 from typing import List, Optional, Tuple
 
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.async_api import BrowserOption
 from agentbay.browser.browser_agent import ExtractOptions, ActOptions
 

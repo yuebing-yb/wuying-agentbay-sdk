@@ -16,7 +16,7 @@ import os
 from typing import Dict, Any, List
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 class SessionManager:

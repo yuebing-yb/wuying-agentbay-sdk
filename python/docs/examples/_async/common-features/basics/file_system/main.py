@@ -17,8 +17,7 @@ import asyncio
 import os
 import time
 
-from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import AsyncAgentBay, CreateSessionParams
 
 
 async def main():
