@@ -96,7 +96,7 @@ async def main():
             else:
                 print(f"   ❌ Failed to create {filename}: {write_result.error_message}")
             
-            asyncio.sleep(1.5)  # Give time for monitoring to detect changes
+            await asyncio.sleep(1.5)  # Give time for monitoring to detect changes
         
         # Modify a file
         print("\n   Modifying example1.txt...")
@@ -111,7 +111,7 @@ async def main():
         
         # Wait a bit more to capture all events
         print("\n⏳ Waiting for final events...")
-        asyncio.sleep(3)
+        await asyncio.sleep(3)
         
         # Stop monitoring
         print("\n🛑 Stopping directory monitoring...")
