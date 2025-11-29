@@ -9,6 +9,7 @@ This example demonstrates:
 """
 
 from agentbay import AsyncAgentBay
+import asyncio
 import json
 
 
@@ -33,7 +34,7 @@ async def main():
     try:
         # List all available MCP tools
         print("\n2. Listing available MCP tools...")
-        tools_result = session.list_mcp_tools()
+        tools_result = await session.list_mcp_tools()
         print(f"✓ Found {len(tools_result.tools)} MCP tools")
         print(f"  Request ID: {tools_result.request_id}")
 
@@ -67,7 +68,7 @@ async def main():
 
         # Call the shell tool
         print("\n4. Calling 'shell' tool...")
-        result = session.call_mcp_tool("shell", {
+        result = await session.call_mcp_tool("shell", {
             "command": "echo 'Hello from MCP Tool!'",
             "timeout_ms": 1000
         })
@@ -84,7 +85,7 @@ async def main():
 
         # Call another command to demonstrate flexibility
         print("\n5. Calling 'shell' tool with different command...")
-        result2 = session.call_mcp_tool("shell", {
+        result2 = await session.call_mcp_tool("shell", {
             "command": "pwd",
             "timeout_ms": 1000
         })
@@ -100,7 +101,7 @@ async def main():
 
         # Demonstrate error handling
         print("\n6. Demonstrating error handling (invalid command)...")
-        result3 = session.call_mcp_tool("shell", {
+        result3 = await session.call_mcp_tool("shell", {
             "command": "this_command_does_not_exist_12345",
             "timeout_ms": 1000
         })

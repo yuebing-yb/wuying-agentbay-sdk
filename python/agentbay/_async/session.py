@@ -610,7 +610,7 @@ class AsyncSession:
         List MCP tools available for this session asynchronously.
         """
         from .._common.models.response import McpToolsResult
-        from ..models.mcp_tool import McpTool
+        from .._common.models.mcp_tool import McpTool
 
         # Use provided image_id, session's image_id, or default
         if image_id is None:
