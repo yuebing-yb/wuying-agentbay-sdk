@@ -10,6 +10,7 @@ from .._common.exceptions import AgentBayError, BrowserError
 from .._common.logger import get_logger
 from .._common.models import OperationResult
 from .base_service import BaseService
+import time
 
 _logger = get_logger("browser_agent")
 

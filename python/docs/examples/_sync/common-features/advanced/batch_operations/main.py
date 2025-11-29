@@ -34,7 +34,7 @@ def create_sessions_batch(
     
     # Create all sessions concurrently
     tasks = [agent_bay.create(params) for _ in range(count)]
-    results = asyncio.gather(*tasks, return_exceptions=True)
+    results = [task for task in tasks]
     
     sessions = []
     for i, result in enumerate(results):
@@ -143,7 +143,7 @@ def delete_sessions_batch(agent_bay: AgentBay, sessions: List[Any]):
     print(f"\n🧹 Deleting {len(sessions)} sessions...")
     
     tasks = [agent_bay.delete(session) for session in sessions]
-    results = asyncio.gather(*tasks, return_exceptions=True)
+    results = [task for task in tasks]
     
     successful = 0
     for i, result in enumerate(results):

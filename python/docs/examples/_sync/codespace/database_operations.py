@@ -40,10 +40,11 @@ def main():
         session = session_result.session
         print(f"Session created: {session.session_id}")
 
-        # Check SQLite version
+        # Check SQLite version using Python
         print("\n1. Checking SQLite version...")
-        result = session.command.execute_command("sqlite3 --version")
-        print(f"SQLite version: {result.output}")
+        version_script = """import sqlite3; print(f"SQLite version: {sqlite3.sqlite_version}")"""
+        result = session.command.execute_command(f"python3 -c '{version_script}'")
+        print(result.output)
 
         # Create a Python script for database operations
         print("\n2. Creating database operations script...")
@@ -113,18 +114,32 @@ print("\\nDatabase operations completed successfully")
         result = session.command.execute_command("ls -lh /tmp/mydb.sqlite")
         print(f"Database file:\n{result.output}")
 
-        # Query database directly with SQLite CLI
-        print("\n5. Querying database with SQLite CLI...")
-        result = session.command.execute_command(
-            "sqlite3 /tmp/mydb.sqlite 'SELECT name, age FROM users ORDER BY age DESC;'"
-        )
+        # Query database with Python script
+        print("\n5. Querying database with Python...")
+        query_script = """#!/usr/bin/env python3
+import sqlite3
+conn = sqlite3.connect('/tmp/mydb.sqlite')
+cursor = conn.cursor()
+cursor.execute('SELECT name, age FROM users ORDER BY age DESC')
+for row in cursor.fetchall():
+    print(f"{row[0]}|{row[1]}")
+conn.close()"""
+        session.file_system.write_file("/tmp/query_db.py", query_script)
+        result = session.command.execute_command("python3 /tmp/query_db.py")
         print(f"Query result:\n{result.output}")
 
-        # Get table schema
+        # Get table schema with Python
         print("\n6. Getting table schema...")
-        result = session.command.execute_command(
-            "sqlite3 /tmp/mydb.sqlite '.schema users'"
-        )
+        schema_script = """#!/usr/bin/env python3
+import sqlite3
+conn = sqlite3.connect('/tmp/mydb.sqlite')
+cursor = conn.cursor()
+cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'")
+schema = cursor.fetchone()[0]
+print(schema)
+conn.close()"""
+        session.file_system.write_file("/tmp/schema_db.py", schema_script)
+        result = session.command.execute_command("python3 /tmp/schema_db.py")
         print(f"Table schema:\n{result.output}")
 
         # Create an update script
@@ -154,19 +169,33 @@ conn.close()
         result = session.command.execute_command("python3 /tmp/update_db.py")
         print(f"Update output:\n{result.output}")
 
-        # Verify the update
+        # Verify the update with Python
         print("\n9. Verifying update...")
-        result = session.command.execute_command(
-            "sqlite3 /tmp/mydb.sqlite 'SELECT * FROM users WHERE name = \"Alice\";'"
-        )
+        verify_script = """#!/usr/bin/env python3
+import sqlite3
+conn = sqlite3.connect('/tmp/mydb.sqlite')
+cursor = conn.cursor()
+cursor.execute("SELECT * FROM users WHERE name = 'Alice'")
+row = cursor.fetchone()
+print(f"{row[0]}|{row[1]}|{row[2]}|{row[3]}")
+conn.close()"""
+        session.file_system.write_file("/tmp/verify_db.py", verify_script)
+        result = session.command.execute_command("python3 /tmp/verify_db.py")
         print(f"Updated record:\n{result.output}")
 
         # Export database to SQL
         print("\n10. Exporting database to SQL...")
-        result = session.command.execute_command(
-            "sqlite3 /tmp/mydb.sqlite .dump > /tmp/mydb_backup.sql"
-        )
-        print("Database exported to /tmp/mydb_backup.sql")
+        export_script = """#!/usr/bin/env python3
+import sqlite3
+conn = sqlite3.connect('/tmp/mydb.sqlite')
+with open('/tmp/mydb_backup.sql', 'w') as f:
+    for line in conn.iterdump():
+        f.write(f"{line}\\n")
+conn.close()
+print("Database exported successfully")"""
+        session.file_system.write_file("/tmp/export_db.py", export_script)
+        result = session.command.execute_command("python3 /tmp/export_db.py")
+        print(f"Export result:\n{result.output}")
 
         # Verify export
         result = session.command.execute_command("wc -l /tmp/mydb_backup.sql")

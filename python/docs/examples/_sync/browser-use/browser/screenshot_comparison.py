@@ -22,6 +22,7 @@ from agentbay import CreateSessionParams
 from agentbay.async_api import BrowserOption
 
 from playwright.sync_api import sync_playwright
+import time
 
 
 def take_screenshot_base64(page) -> str:

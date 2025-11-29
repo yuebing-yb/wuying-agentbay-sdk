@@ -21,6 +21,7 @@ from agentbay import CreateSessionParams
 from agentbay.async_api import BrowserOption
 
 from playwright.sync_api import sync_playwright
+import time
 
 
 def scrape_basic_data(page) -> Dict[str, Any]:

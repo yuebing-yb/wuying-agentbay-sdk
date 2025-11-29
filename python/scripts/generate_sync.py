@@ -212,8 +212,14 @@ def generate_sync():
                     # Custom Replacements
                     # Force replace asyncio.sleep if unasync missed it (common with await removal)
                     content = content.replace("asyncio.sleep", "time.sleep")
+                    # Replace asyncio.Lock() with threading.Lock() for sync code
+                    content = content.replace("asyncio.Lock()", "threading.Lock()")
                     # Replace asyncio.gather(*tasks) with a list comprehension to keep the expression valid
                     content = content.replace("asyncio.gather(*tasks)", "[task for task in tasks]")
+                    # Also handle asyncio.gather with return_exceptions parameter
+                    content = content.replace("asyncio.gather(*tasks, return_exceptions=True)", "[task for task in tasks]")
+                    # Handle asyncio.gather with any variable name (e.g., *workers, *coroutines, etc.)
+                    content = re.sub(r'asyncio\.gather\(\*([^)]+)\)', r'[task for task in \1]', content)
                     # Replace asyncio.run(func()) with func() - simple case for no nested parens
                     content = re.sub(r'asyncio\.run\(([^)]+\))\)', r'\1', content)
 
@@ -238,6 +244,34 @@ def generate_sync():
                     # Remove import asyncio from sync files (but keep it in imports section)
                     # We need to be careful to only remove standalone "import asyncio" lines
                     content = re.sub(r'^import asyncio\s*\n', '', content, flags=re.MULTILINE)
+                    
+                    # Add threading import if threading.Lock() is used
+                    if 'threading.Lock()' in content and 'import threading' not in content:
+                        # Find the last import statement and add threading import after it
+                        import_pattern = r'^(import [^\n]+\n|from [^\n]+ import [^\n]+\n)'
+                        imports = re.findall(import_pattern, content, flags=re.MULTILINE)
+                        if imports:
+                            # Find the position after the last import
+                            last_import_match = None
+                            for match in re.finditer(import_pattern, content, flags=re.MULTILINE):
+                                last_import_match = match
+                            if last_import_match:
+                                insert_pos = last_import_match.end()
+                                content = content[:insert_pos] + 'import threading\n' + content[insert_pos:]
+                    
+                    # Add time import if time.sleep is used
+                    if 'time.sleep' in content and 'import time' not in content:
+                        # Find the last import statement and add time import after it
+                        import_pattern = r'^(import [^\n]+\n|from [^\n]+ import [^\n]+\n)'
+                        imports = re.findall(import_pattern, content, flags=re.MULTILINE)
+                        if imports:
+                            # Find the position after the last import
+                            last_import_match = None
+                            for match in re.finditer(import_pattern, content, flags=re.MULTILINE):
+                                last_import_match = match
+                            if last_import_match:
+                                insert_pos = last_import_match.end()
+                                content = content[:insert_pos] + 'import time\n' + content[insert_pos:]
 
                     # Apply custom replacements
                     content = _apply_custom_replacements(content, path)

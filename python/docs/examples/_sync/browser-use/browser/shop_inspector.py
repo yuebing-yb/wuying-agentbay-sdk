@@ -24,6 +24,7 @@ from agentbay.async_api import (
 )
 from agentbay.browser.browser_agent import ActOptions, ExtractOptions
 from agentbay.model import SessionResult
+import time
 
 
 class ProductInfo(BaseModel):

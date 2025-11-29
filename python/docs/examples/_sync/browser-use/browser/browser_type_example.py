@@ -22,6 +22,7 @@ from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay.async_api import BrowserOption, BrowserViewport
 from playwright.sync_api import sync_playwright
+import time
 
 
 def test_browser_type(browser_type: str | None, description: str):

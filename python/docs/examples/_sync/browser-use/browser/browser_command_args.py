@@ -18,6 +18,7 @@ from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay.async_api import BrowserOption, BrowserFingerprint
 from playwright.sync_api import sync_playwright
+import time
 
 
 def main():

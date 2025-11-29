@@ -18,6 +18,7 @@ from agentbay.browser.browser_agent import ExtractOptions, ActOptions
 
 from playwright.sync_api import sync_playwright
 from pydantic import BaseModel, Field
+import time
 
 class SudokuBoard(BaseModel):
     board: List[List[int]] = Field(..., description="9x9 sudoku board, 0 for empty")

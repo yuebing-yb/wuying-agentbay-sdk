@@ -20,6 +20,7 @@ from agentbay.browser.browser_agent import ExtractOptions
 
 from playwright.sync_api import sync_playwright
 from pydantic import BaseModel, Field
+import time
 
 
 def main():
