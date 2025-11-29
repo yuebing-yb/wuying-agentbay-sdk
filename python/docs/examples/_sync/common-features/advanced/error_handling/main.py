@@ -17,7 +17,7 @@ from typing import Optional
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay.exceptions import AgentBayError
+from agentbay._common.exceptions import AgentBayError
 
 
 def create_session_with_retry(
