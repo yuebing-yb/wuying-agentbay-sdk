@@ -176,7 +176,7 @@ async def file_transfer_example():
             print(f"⚠️  Error deleting session: {e}")
         
         try:
-            agentbay.context.delete(context)
+            await agentbay.context.delete(context)
             print("✅ Context deleted")
         except Exception as e:
             print(f"⚠️  Error deleting context: {e}")
@@ -200,7 +200,7 @@ async def file_transfer_with_progress_example():
     
     # Create a context for file operations
     context_name = f"file-transfer-progress-example-{int(time.time())}"
-    context_result = agentbay.context.get(context_name, create=True)
+    context_result = await agentbay.context.get(context_name, create=True)
     if not context_result.success or not context_result.context:
         error_msg = getattr(context_result, 'error_message', 'Unknown error')
         print(f"❌ Failed to create context: {error_msg}")
@@ -342,7 +342,7 @@ async def file_transfer_with_progress_example():
             print(f"⚠️  Error deleting session: {e}")
         
         try:
-            agentbay.context.delete(context)
+            await agentbay.context.delete(context)
             print("✅ Context deleted")
         except Exception as e:
             print(f"⚠️  Error deleting context: {e}")
