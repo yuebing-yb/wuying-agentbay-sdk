@@ -7,9 +7,7 @@ import asyncio
 import time
 from typing import Dict, Optional
 
-from agentbay import AsyncAgentBay
-from agentbay.context_sync import ContextSync, SyncPolicy
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import AsyncAgentBay, ContextSync, SyncPolicy, CreateSessionParams, BrowserContext
 from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 
@@ -150,13 +148,13 @@ async def create_session_with_context_sync() -> None:
             print(f"Request ID: {session_result.request_id}")
 
             # List the synchronized contexts
-            asyncio.sleep(2)  # Wait for context to be synchronized
+            await asyncio.sleep(2)  # Wait for context to be synchronized
             list_result = await agent_bay.context.list()
             if list_result.success and list_result.contexts:
                 contexts = list_result.contexts
                 print(f"Found {len(contexts)} synchronized contexts:")
                 for ctx in contexts:
-                    print(f"  Context ID: {ctx.id}, Name: {ctx.name}, State: {ctx.state}")
+                    print(f"  Context ID: {ctx.id}, Name: {ctx.name}")
 
             # Clean up
             delete_result = await agent_bay.delete(session)
@@ -286,17 +284,17 @@ async def create_session_with_mobile_config() -> None:
 async def main() -> None:
     """Run all examples."""
     print("1. Creating session with default parameters...")
-    create_session_with_default_params()
+    await create_session_with_default_params()
     print("\n2. Creating session with labels...")
-    create_session_with_labels()
+    await create_session_with_labels()
     print("\n3. Creating session with context...")
-    create_session_with_context()
+    await create_session_with_context()
     print("\n4. Creating session with context synchronization...")
-    create_session_with_context_sync()
+    await create_session_with_context_sync()
     print("\n5. Creating session with browser context...")
-    create_session_with_browser_context()
+    await create_session_with_browser_context()
     print("\n6. Creating session with mobile configuration...")
-    create_session_with_mobile_config()
+    await create_session_with_mobile_config()
 
 
 if __name__ == "__main__":
