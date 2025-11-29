@@ -8,6 +8,7 @@ This example demonstrates real data persistence functionality:
 - Context synchronization and file sharing
 """
 
+import asyncio
 import json
 import time
 from agentbay import AsyncAgentBay, CreateSessionParams, ContextSync, SyncPolicy
@@ -21,7 +22,7 @@ async def main():
     
     try:
         # Run the complete data persistence demonstration
-        data_persistence_demo(agent_bay)
+        await data_persistence_demo(agent_bay)
         
     except Exception as e:
         print(f"❌ Example execution failed: {e}")
@@ -76,8 +77,8 @@ async def data_persistence_demo(agent_bay):
         print("\n💾 Step 3: Writing persistent data in first session...")
         
         # Create directory structure
-        session1.command.execute_command("mkdir -p /tmp/persistent_data/config")
-        session1.command.execute_command("mkdir -p /tmp/persistent_data/logs")
+        await session1.command.execute_command("mkdir -p /tmp/persistent_data/config")
+        await session1.command.execute_command("mkdir -p /tmp/persistent_data/logs")
         
         # Write configuration file
         config_data = {
@@ -89,7 +90,7 @@ async def data_persistence_demo(agent_bay):
         }
         config_content = json.dumps(config_data, indent=2)
         
-        config_result = session1.file_system.write_file("/tmp/persistent_data/config/app.json", config_content)
+        config_result = await session1.file_system.write_file("/tmp/persistent_data/config/app.json", config_content)
         if config_result.success:
             print("✅ Configuration file written successfully")
         else:
@@ -103,7 +104,7 @@ Operation: Data persistence demonstration
 Status: Files created successfully
 """
         
-        log_result = session1.file_system.write_file("/tmp/persistent_data/logs/session1.log", log_content)
+        log_result = await session1.file_system.write_file("/tmp/persistent_data/logs/session1.log", log_content)
         if log_result.success:
             print("✅ Log file written successfully")
         else:
@@ -112,7 +113,7 @@ Status: Files created successfully
         # Write a data file
         data_content = "This is persistent data that should be available across sessions.\nIt demonstrates the context synchronization functionality."
         
-        data_result = session1.file_system.write_file("/tmp/persistent_data/shared_data.txt", data_content)
+        data_result = await session1.file_system.write_file("/tmp/persistent_data/shared_data.txt", data_content)
         if data_result.success:
             print("✅ Data file written successfully")
         else:
@@ -120,7 +121,7 @@ Status: Files created successfully
         
         # List files to verify
         print("\n📋 Files created in first session:")
-        list_result = session1.command.execute_command("find /tmp/persistent_data -type f -ls")
+        list_result = await session1.command.execute_command("find /tmp/persistent_data -type f -ls")
         if list_result.success:
             print(list_result.output)
         
@@ -166,7 +167,7 @@ Status: Files created successfully
         
         for file_path in files_to_check:
             print(f"\n🔍 Checking file: {file_path}")
-            read_result = session2.file_system.read_file(file_path)
+            read_result = await session2.file_system.read_file(file_path)
             
             if read_result.success:
                 print(f"✅ File found and readable!")
@@ -193,7 +194,7 @@ Persistent files found: {persistent_files_found}/{len(files_to_check)}
 Status: Persistence verification completed
 """
         
-        session2_result = session2.file_system.write_file("/tmp/persistent_data/logs/session2.log", session2_log)
+        session2_result = await session2.file_system.write_file("/tmp/persistent_data/logs/session2.log", session2_log)
         if session2_result.success:
             print("✅ Second session log written successfully")
         

@@ -72,9 +72,11 @@ Expected Output:
     ======================================================================
 """
 
+import asyncio
 import os
-from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay.context_sync import (
+from agentbay import (
+    AsyncAgentBay, 
+    CreateSessionParams,
     ContextSync,
     SyncPolicy,
     RecyclePolicy,
@@ -136,7 +138,7 @@ async def example_1_default_recycle_policy():
     print("✅ Session deleted")
 
     # Clean up context
-    agent_bay.context.delete(context)
+    await agent_bay.context.delete(context)
     print("✅ Context deleted")
 
 
@@ -207,7 +209,7 @@ async def example_2_one_day_lifecycle():
     print("✅ Session deleted")
 
     # Clean up context
-    agent_bay.context.delete(context)
+    await agent_bay.context.delete(context)
     print("✅ Context deleted")
 
 
@@ -262,11 +264,11 @@ async def example_3_specific_paths():
     print("✅ Session deleted")
 
     # Clean up context
-    agent_bay.context.delete(context)
+    await agent_bay.context.delete(context)
     print("✅ Context deleted")
 
 
-def example_4_different_lifecycles():
+async def example_4_different_lifecycles():
     """Example 4: Demonstrate different lifecycle options"""
     print("\n" + "="*70)
     print("Example 4: Different Lifecycle Options")
@@ -290,7 +292,7 @@ def example_4_different_lifecycles():
     print("\n✅ All lifecycle options validated successfully")
 
 
-def example_5_error_handling():
+async def example_5_error_handling():
     """Example 5: Error handling - wildcard patterns not supported"""
     print("\n" + "="*70)
     print("Example 5: Error Handling - Wildcard Patterns")
@@ -362,11 +364,11 @@ async def main():
 
     try:
         # Run examples
-        example_1_default_recycle_policy()
-        example_2_one_day_lifecycle()
-        example_3_specific_paths()
-        example_4_different_lifecycles()
-        example_5_error_handling()
+        await example_1_default_recycle_policy()
+        await example_2_one_day_lifecycle()
+        await example_3_specific_paths()
+        await example_4_different_lifecycles()
+        await example_5_error_handling()
 
         print("\n" + "="*70)
         print("✅ All RecyclePolicy examples completed successfully!")
