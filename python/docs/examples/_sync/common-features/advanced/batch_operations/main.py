@@ -32,9 +32,14 @@ def create_sessions_batch(
         labels={"batch": "example", "purpose": "batch_operations"}
     )
     
-    # Create all sessions concurrently
-    tasks = [agent_bay.create(params) for _ in range(count)]
-    results = asyncio.gather(*tasks, return_exceptions=True)
+    # Create all sessions sequentially in sync version
+    results = []
+    for i in range(count):
+        try:
+            result = agent_bay.create(params)
+            results.append(result)
+        except Exception as e:
+            results.append(e)
     
     sessions = []
     for i, result in enumerate(results):
@@ -80,12 +85,10 @@ def batch_execute_commands(sessions: List[Any], command: str):
     """Execute the same command on multiple sessions in parallel."""
     print(f"\nExecuting command on {len(sessions)} sessions: {command}")
     
-    tasks = [
+    results = [
         execute_command_on_session(session, command, i)
         for i, session in enumerate(sessions)
     ]
-    
-    results = [task for task in tasks]
     
     # Print results
     successful = sum(1 for r in results if r["success"])
@@ -129,8 +132,7 @@ def batch_file_operations(sessions: List[Any]):
         except Exception as e:
             return {"session_index": index, "success": False, "error": str(e)}
     
-    tasks = [write_and_read(session, i) for i, session in enumerate(sessions)]
-    results = [task for task in tasks]
+    results = [write_and_read(session, i) for i, session in enumerate(sessions)]
     
     successful = sum(1 for r in results if r.get("success") and r.get("content_matches"))
     print(f"✅ File operations successful: {successful}/{len(sessions)}")
@@ -142,8 +144,13 @@ def delete_sessions_batch(agent_bay: AgentBay, sessions: List[Any]):
     """Delete multiple sessions in parallel."""
     print(f"\n🧹 Deleting {len(sessions)} sessions...")
     
-    tasks = [agent_bay.delete(session) for session in sessions]
-    results = asyncio.gather(*tasks, return_exceptions=True)
+    results = []
+    for session in sessions:
+        try:
+            result = agent_bay.delete(session)
+            results.append(result)
+        except Exception as e:
+            results.append(e)
     
     successful = 0
     for i, result in enumerate(results):
