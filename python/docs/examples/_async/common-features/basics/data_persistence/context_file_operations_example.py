@@ -241,13 +241,11 @@ async def example_3_file_listing(agent_bay: AsyncAgentBay, context):
         # List files in the context using real API
         files_result = await agent_bay.context.list_files(context.id, "/")
 
-        if files_result.success:
-            print(f"✅ Retrieved file list ({len(files_result.files)} files):")
-            for i, file_entry in enumerate(files_result.files, 1):
-                print(f" {i}. {file_entry.path.lstrip('/')} ({file_entry.size} bytes)")
+        print(f"✅ Retrieved file list ({len(files_result.entries)} files):")
+            for i, file_entry in enumerate(files_result.entries, 1):
+                print(f" {i}. {file_entry.file_path} ({file_entry.size} bytes) - Modified: {file_entry.gmt_modified}")
 
-            # Return list of file names without leading slash
-            return [file_entry.path.lstrip('/') for file_entry in files_result.files]
+            return [file_entry.file_name for file_entry in files_result.entries]
         else:
             print(f"❌ Failed to list files: {files_result.error_message}")
             return []
@@ -383,8 +381,8 @@ async def example_6_selective_deletion(agent_bay: AsyncAgentBay, context):
     try:
         files_result = await agent_bay.context.list_files(context.id, "/")
         if files_result.success:
-            for i, file_entry in enumerate(files_result.files, 1):
-                print(f" {i}. {file_entry.path.lstrip('/')} ({file_entry.size} bytes)")
+            for i, file_entry in enumerate(files_result.entries, 1):
+                print(f" {i}. {file_entry.file_path.lstrip('/')} ({file_entry.size} bytes)")
         else:
             print(f"⚠️  Failed to list remaining files: {files_result.error_message}")
     except Exception as e:
@@ -408,10 +406,10 @@ async def example_7_cleanup(agent_bay: AsyncAgentBay, context, temp_dir: str, do
         files_result = await agent_bay.context.list_files(context.id, "/")
         if files_result.success:
             deleted_files = 0
-            for file_entry in files_result.files:
-                file_name = file_entry.path.lstrip('/')
+            for file_entry in files_result.entries:
+                file_name = file_entry.file_path.lstrip('/')
                 try:
-                    delete_result = await agent_bay.context.delete_file(context.id, file_entry.path)
+                    delete_result = await agent_bay.context.delete_file(context.id, file_entry.file_path)
                     if delete_result.success:
                         print(f"✅ Deleted file: {file_name}")
                         deleted_files += 1

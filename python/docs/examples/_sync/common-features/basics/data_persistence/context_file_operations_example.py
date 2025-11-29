@@ -240,14 +240,13 @@ def example_3_file_listing(agent_bay: AgentBay, context):
     print("📋 Listing files in context...")
 
     try:
-        # List files in the context
-        files_result = agent_bay.context.list_files(context.id, "")
-        
-        if files_result.success:
-            print(f"✅ Retrieved file list ({len(files_result.entries)} files):")
+        # List files in the context using real API
+        files_result = agent_bay.context.list_files(context.id, "/")
+
+        print(f"✅ Retrieved file list ({len(files_result.entries)} files):")
             for i, file_entry in enumerate(files_result.entries, 1):
                 print(f" {i}. {file_entry.file_path} ({file_entry.size} bytes) - Modified: {file_entry.gmt_modified}")
-            
+
             return [file_entry.file_name for file_entry in files_result.entries]
         else:
             print(f"❌ Failed to list files: {files_result.error_message}")
@@ -382,7 +381,7 @@ def example_6_selective_deletion(agent_bay: AgentBay, context):
     # Show remaining files
     print("📋 Remaining files after deletion:")
     try:
-        files_result = agent_bay.context.list_files(context.id, "")
+        files_result = agent_bay.context.list_files(context.id, "/")
         if files_result.success:
             for i, file_entry in enumerate(files_result.entries, 1):
                 print(f" {i}. {file_entry.file_path.lstrip('/')} ({file_entry.size} bytes)")
@@ -406,7 +405,7 @@ def example_7_cleanup(agent_bay: AgentBay, context, temp_dir: str, download_dir:
 
     # Get list of remaining files
     try:
-        files_result = agent_bay.context.list_files(context.id, "")
+        files_result = agent_bay.context.list_files(context.id, "/")
         if files_result.success:
             deleted_files = 0
             for file_entry in files_result.entries:

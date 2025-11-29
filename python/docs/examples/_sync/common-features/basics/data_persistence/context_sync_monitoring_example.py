@@ -11,7 +11,7 @@ from typing import Dict, List, Any, Optional
 import httpx
 
 from agentbay import AgentBay
-from agentbay.api.models import Context
+from agentbay._async.context import Context
 from agentbay._common.exceptions import AgentBayError
 
 # Configure logging
@@ -74,7 +74,7 @@ class ContextFileMonitor:
         # 2. Monitor List
         try:
             start_time = time.time()
-            list_result = self.agent_bay.context.list_files(context_id, "/")
+            list_result = self.agent_bay.context.list_files(context_id, "")
             duration = time.time() - start_time
             
             if list_result.success:
@@ -127,7 +127,7 @@ class ContextFileMonitor:
         """
         logger.info("Checking file sync status...")
         try:
-            result = self.agent_bay.context.list_files(context_id, "/")
+            result = self.agent_bay.context.list_files(context_id, "")
             if not result.success:
                 raise Exception(f"Failed to list files: {result.error_message}")
             
@@ -159,7 +159,7 @@ class ContextFileMonitor:
         """
         logger.info("Monitoring storage usage...")
         try:
-            result = self.agent_bay.context.list_files(context_id, "/")
+            result = self.agent_bay.context.list_files(context_id, "")
             if not result.success:
                 raise Exception(f"Failed to list files: {result.error_message}")
             
@@ -216,70 +216,70 @@ def create_random_content(size_kb: int) -> bytes:
 def main():
     """Main monitoring flow"""
     # 1. Initialize AgentBay
-    with AgentBay() as agent_bay:
-        monitor = ContextFileMonitor(agent_bay)
-        context_name = f"monitor-test-{int(time.time())}"
-        context_id = None
-        files_to_clean = []
+    agent_bay = AgentBay()
+    monitor = ContextFileMonitor(agent_bay)
+    context_name = f"monitor-test-{int(time.time())}"
+    context_id = None
+    files_to_clean = []
 
-        try:
-            # 1. Create Test Context
-            logger.info(f"Creating context: {context_name}")
-            ctx_result = agent_bay.context.create(context_name)
-            if not ctx_result.success:
-                raise Exception(f"Failed to create context: {ctx_result.error_message}")
-            
-            context_id = ctx_result.context_id
-            logger.info(f"Context created with ID: {context_id}")
+    try:
+        # 1. Create Test Context
+        logger.info(f"Creating context: {context_name}")
+        ctx_result = agent_bay.context.create(context_name)
+        if not ctx_result.success:
+            raise Exception(f"Failed to create context: {ctx_result.error_message}")
+        
+        context_id = ctx_result.context_id
+        logger.info(f"Context created with ID: {context_id}")
 
-            # 2. Upload files and monitor performance
-            test_files = {
-                "small_file.txt": create_random_content(1),    # 1KB
-                "medium_file.bin": create_random_content(100), # 100KB
-            }
+        # 2. Upload files and monitor performance
+        test_files = {
+            "small_file.txt": create_random_content(1),    # 1KB
+            "medium_file.bin": create_random_content(100), # 100KB
+        }
 
-            for filename, content in test_files.items():
-                monitor.monitor_file_operations(context_id, filename, content)
-                files_to_clean.append(filename)
+        for filename, content in test_files.items():
+            monitor.monitor_file_operations(context_id, filename, content)
+            files_to_clean.append(filename)
 
-            # 3. Check Sync Status
-            monitor.check_file_sync_status(context_id, list(test_files.keys()))
+        # 3. Check Sync Status
+        monitor.check_file_sync_status(context_id, list(test_files.keys()))
 
-            # 4. Monitor Storage Usage
-            monitor.monitor_storage_usage(context_id)
+        # 4. Monitor Storage Usage
+        monitor.monitor_storage_usage(context_id)
 
-            # 5. Health Check
-            monitor.health_check_context(context_id)
-            
-            # Report Metrics
-            logger.info("=== Monitoring Report ===")
-            logger.info(f"Upload Times: {monitor.metrics['upload_times']}")
-            logger.info(f"Download Times: {monitor.metrics['download_times']}")
-            logger.info(f"Errors: {monitor.metrics['error_counts']}")
+        # 5. Health Check
+        monitor.health_check_context(context_id)
+        
+        # Report Metrics
+        logger.info("=== Monitoring Report ===")
+        logger.info(f"Upload Times: {monitor.metrics['upload_times']}")
+        logger.info(f"Download Times: {monitor.metrics['download_times']}")
+        logger.info(f"Errors: {monitor.metrics['error_counts']}")
 
-        except Exception as e:
-            logger.error(f"An error occurred during monitoring: {e}")
-            
-        finally:
-            # 7. Cleanup Resources
-            if context_id:
-                logger.info("Cleaning up resources...")
-                # Delete files
-                for filename in files_to_clean:
-                    try:
-                        agent_bay.context.delete_file(context_id, filename)
-                    except Exception as e:
-                        logger.warning(f"Failed to delete file {filename}: {e}")
-                
-                # Delete context
+    except Exception as e:
+        logger.error(f"An error occurred during monitoring: {e}")
+        
+    finally:
+        # 7. Cleanup Resources
+        if context_id:
+            logger.info("Cleaning up resources...")
+            # Delete files
+            for filename in files_to_clean:
                 try:
-                    # We need the context object to delete
-                    get_res = agent_bay.context.get(context_id=context_id)
-                    if get_res.success and get_res.context:
-                        agent_bay.context.delete(get_res.context)
-                        logger.info("Context deleted.")
+                    agent_bay.context.delete_file(context_id, filename)
                 except Exception as e:
-                    logger.warning(f"Failed to delete context: {e}")
+                    logger.warning(f"Failed to delete file {filename}: {e}")
+            
+            # Delete context
+            try:
+                # We need the context object to delete
+                get_res = agent_bay.context.get(context_id=context_id)
+                if get_res.success and get_res.context:
+                    agent_bay.context.delete(get_res.context)
+                    logger.info("Context deleted.")
+            except Exception as e:
+                logger.warning(f"Failed to delete context: {e}")
 
 if __name__ == "__main__":
     main()
