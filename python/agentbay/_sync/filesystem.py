@@ -1737,21 +1737,7 @@ class FileSystem(BaseService):
                 poll_interval=poll_interval,
                 progress_cb=progress_cb,
             )
-            # If upload was successful, delete the file from OSS
-            if result.success and self.session.file_transfer_context_id:
-                try:
-                    # Delete the uploaded file from OSS
-                    delete_result = self.session.agent_bay.context.delete_file(
-                        self.session.file_transfer_context_id, remote_path
-                    )
-                    if not delete_result.success:
-                        _logger.warning(
-                            f"Failed to delete uploaded file from OSS: {delete_result.error_message}"
-                        )
-                except Exception as delete_error:
-                    _logger.warning(
-                        f"Error deleting uploaded file from OSS: {delete_error}"
-                    )
+            # Upload completed successfully
             return result
         except Exception as e:
             return UploadResult(
@@ -1811,21 +1797,7 @@ class FileSystem(BaseService):
                 poll_interval=poll_interval,
                 progress_cb=progress_cb,
             )
-            # If download was successful, delete the file from OSS
-            if result.success and self.session.file_transfer_context_id:
-                try:
-                    # Delete the downloaded file from OSS
-                    delete_result = self.session.agent_bay.context.delete_file(
-                        self.session.file_transfer_context_id, remote_path
-                    )
-                    if not delete_result.success:
-                        _logger.warning(
-                            f"Failed to delete downloaded file from OSS: {delete_result.error_message}"
-                        )
-                except Exception as delete_error:
-                    _logger.warning(
-                        f"Error deleting downloaded file from OSS: {delete_error}"
-                    )
+            # Download completed successfully
             return result
         except Exception as e:
             return DownloadResult(
@@ -2025,8 +1997,19 @@ class FileSystem(BaseService):
             stop_event = threading.Event()
 
         # Create and configure the monitoring thread
+        def _sync_monitor():
+            """Synchronous wrapper for async monitoring function."""
+            import asyncio
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            _monitor_directory()
+        
         monitor_thread = threading.Thread(
-            target=_monitor_directory,
+            target=_sync_monitor,
             name=f"DirectoryWatcher-{path.replace('/', '_')}",
             daemon=True,
         )
