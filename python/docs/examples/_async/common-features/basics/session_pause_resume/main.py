@@ -60,7 +60,7 @@ async def main_sync():
 
         # Pause the session
         print("\nPausing the session...")
-        pause_result = agent_bay.pause(session, timeout=300)  # 5 minute timeout
+        pause_result = await agent_bay.pause(session, timeout=300)  # 5 minute timeout
         if pause_result.success:
             print(f"Session paused successfully with status: {pause_result.status}")
             print(f"Request ID: {pause_result.request_id}")
@@ -70,12 +70,12 @@ async def main_sync():
 
         # Simulate some time passing while session is paused (e.g., waiting for user input)
         print("\nSession is paused. Simulating work being done elsewhere...")
-        asyncio.sleep(5)
+        await asyncio.sleep(5)
         print("Work completed. Resuming session...")
 
         # Resume the session
         print("\nResuming the session...")
-        resume_result = agent_bay.resume(session, timeout=300)  # 5 minute timeout
+        resume_result = await agent_bay.resume(session, timeout=300)  # 5 minute timeout
         if resume_result.success:
             print(f"Session resumed successfully with status: {resume_result.status}")
             print(f"Request ID: {resume_result.request_id}")
@@ -232,7 +232,7 @@ async def main_direct():
 
         # Pause the session directly using session methods
         print("\nPausing the session directly...")
-        pause_result = session.pause(timeout=300)  # 5 minute timeout
+        pause_result = await session.pause(timeout=300)  # 5 minute timeout
         if pause_result.success:
             print(f"Session paused successfully with status: {pause_result.status}")
             print(f"Request ID: {pause_result.request_id}")
@@ -242,12 +242,12 @@ async def main_direct():
 
         # Simulate some time passing while session is paused
         print("\nSession is paused. Simulating work being done elsewhere...")
-        asyncio.sleep(5)
+        await asyncio.sleep(5)
         print("Work completed. Resuming session...")
 
         # Resume the session directly using session methods
         print("\nResuming the session directly...")
-        resume_result = session.resume(timeout=300)  # 5 minute timeout
+        resume_result = await session.resume(timeout=300)  # 5 minute timeout
         if resume_result.success:
             print(f"Session resumed successfully with status: {resume_result.status}")
             print(f"Request ID: {resume_result.request_id}")
@@ -275,6 +275,6 @@ async def main_direct():
 
 
 if __name__ == "__main__":
-    # main_sync()
+    asyncio.run(main_sync())
     # main_direct()
-    asyncio.run(main_async())
+    # asyncio.run(main_async())
