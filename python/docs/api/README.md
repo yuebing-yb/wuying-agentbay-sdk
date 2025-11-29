@@ -19,7 +19,7 @@ AgentBay provides both synchronous and asynchronous APIs with identical interfac
 | **Syntax** | `result = agent.create()` | `result = await agent.create()` |
 | **Import** | `from agentbay import AgentBay` | `from agentbay import AsyncAgentBay` |
 
-See [Synchronous vs Asynchronous Guide](../../../docs/guides/async-programming/sync-vs-async.md) for detailed comparison.
+See [Synchronous vs Asynchronous Guide](../guides/async-programming/sync-vs-async.md) for detailed comparison.
 
 ---
 
