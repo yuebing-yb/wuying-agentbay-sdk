@@ -14,7 +14,7 @@ from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams, BrowserContext
 
 
-async def create_test_file(content: str, suffix: str = ".txt") -> str:
+def create_test_file(content: str, suffix: str = ".txt") -> str:
     """Create a temporary test file with the given content."""
     with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=suffix) as f:
         f.write(content)
@@ -39,7 +39,7 @@ async def file_transfer_example():
     
     # Create a context for file operations
     context_name = f"file-transfer-example-{int(time.time())}"
-    context_result = agentbay.context.get(context_name, create=True)
+    context_result = await agentbay.context.get(context_name, create=True)
     if not context_result.success or not context_result.context:
         error_msg = getattr(context_result, 'error_message', 'Unknown error')
         print(f"❌ Failed to create context: {error_msg}")
@@ -359,10 +359,10 @@ async def main():
         return
     
     # Run basic file transfer example
-    success1 = file_transfer_example()
+    success1 = await file_transfer_example()
     
     # Run file transfer with progress tracking example
-    success2 = file_transfer_with_progress_example()
+    success2 = await file_transfer_with_progress_example()
     
     print("\n" + "=" * 50)
     if success1 and success2:

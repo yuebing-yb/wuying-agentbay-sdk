@@ -241,12 +241,13 @@ def example_3_file_listing(agent_bay: AgentBay, context):
 
     try:
         # List files in the context using real API
-        files_result = agent_bay.context.list_files(context.id, "/")
-
-        print(f"✅ Retrieved file list ({len(files_result.entries)} files):")
+        files_result = agent_bay.context.list_files(context.id, "")
+        
+        if files_result.success:
+            print(f"✅ Retrieved file list ({len(files_result.entries)} files):")
             for i, file_entry in enumerate(files_result.entries, 1):
                 print(f" {i}. {file_entry.file_path} ({file_entry.size} bytes) - Modified: {file_entry.gmt_modified}")
-
+            
             return [file_entry.file_name for file_entry in files_result.entries]
         else:
             print(f"❌ Failed to list files: {files_result.error_message}")

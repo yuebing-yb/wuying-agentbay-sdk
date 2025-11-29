@@ -1,84 +1,85 @@
-# Context Sync Anonymous Callback Example
+# Context Sync Demo Example
 
-This example demonstrates the `context.sync()` method with anonymous callback functionality, showing how to use the new asynchronous sync capabilities in AgentBay SDK.
+This example demonstrates the `session.context.sync_context()` method for synchronizing context data with the AgentBay cloud environment.
 
 ## Overview
 
 The example showcases:
 
-- **Anonymous Callback Functions**: Using lambda functions for callback implementation
-- **Async Context Sync**: Using `context.sync()` with callback functions
+- **Context Creation**: Creating persistent contexts for data storage
+- **Context Synchronization**: Using `sync_context()` to sync data to cloud storage
 - **Timing Analysis**: Measuring sync operation duration
-- **Session Deletion in Callback**: Deleting session within callback without sync_context
-- **Error Handling**: Managing sync failures and timeouts
+- **File Management**: Creating and managing test files in the context
+- **Error Handling**: Managing sync failures and API errors
 
 ## Key Features Demonstrated
 
-### 1. Dual-Mode Sync Function
+### 1. Context Sync Function
 
-The `context.sync()` function now supports both async and sync calling patterns:
+The `session.context.sync_context()` method provides asynchronous context synchronization:
 
 ```python
-# Pattern 1: Async call - wait for completion
-result = await session.context.sync()
-if result.success:
-    print("✅ Async sync completed successfully")
-
-# Pattern 2: Sync call with callback - immediate return
-session.context.sync(callback=lambda success: (
-    print(f"✅ Anonymous sync callback: {'SUCCESS' if success else 'FAILED'}") or
-    print("🧹 Deleting session after sync completion...") or
-    agent_bay.delete(session) or
-    print("✅ Session deleted successfully")
-))
+# Async call - wait for completion
+sync_result = await session.context.sync_context()
+if sync_result.success:
+    print("✅ Sync completed successfully")
+    print(f"Duration: {sync_duration:.2f} seconds")
 ```
 
 ### 2. Timing Analysis
 
-The example includes detailed timing analysis for different file sizes:
+The example includes timing analysis for sync operations:
 
-- **Small files** (< 1KB): Typically 2-5 seconds
-- **Medium files** (1-10KB): Typically 5-15 seconds
-- **Large files** (> 10KB): Typically 15-60 seconds
+- **Small files** (< 1KB): Typically under 1 second
+- **Medium files** (1-10KB): Typically 1-5 seconds
+- **Multiple files**: Duration depends on total size and file count
 
-### 3. Session Deletion in Callback
+### 3. Test Data Creation
 
-Demonstrates deleting the session within the callback function without sync_context:
+Creates structured test data to demonstrate sync functionality:
 
 ```python
-# Session deletion happens automatically in the callback
-agent_bay.delete(session, sync_context=False)
+test_files = [
+    ("/tmp/sync_data/test_files/small.txt", "Small test file content\n" * 10),
+    ("/tmp/sync_data/test_files/medium.txt", "Medium test file content\n" * 100),
+    ("/tmp/sync_data/config.json", json.dumps({...}, indent=2))
+]
 ```
 
-### 4. Automatic Handling
+### 4. Session Management
 
-The callback handles everything automatically without needing to wait:
+Demonstrates proper session lifecycle management:
 
 ```python
-# Callback handles success, failure, and cleanup automatically
-# No need for manual waiting or timeout handling
+# Create session with context sync
+params = CreateSessionParams()
+params.context_syncs = [context_sync]
+session_result = await agent_bay.create(params)
+
+# Clean up session after use
+delete_result = await agent_bay.delete(session)
 ```
 
 ## Example Structure
 
 ### Step 1: Context Creation
 
-- Creates a persistent context for data storage
+- Creates a persistent context for data storage using `agent_bay.context.get()`
 - Configures sync policy and context sync settings
 
 ### Step 2: Session Setup
 
-- Creates session with context synchronization
-- Mounts context to `/tmp/sync_data` path
+- Creates session with context synchronization enabled
+- Mounts context to `/tmp/sync_data` path in the session environment
 
 ### Step 3: Test Data Creation
 
 - Creates multiple test files of different sizes
-- Sets up directory structure for organized testing
+- Sets up directory structure for organized file management
+- Writes configuration and log files to demonstrate various data types
 
-### Step 4: Anonymous Callback Sync Demonstration
+### Step 4: Context Synchronization
 
-- Shows async sync with anonymous callback functionality
-- Demonstrates timing measurement and status monitoring
-- Includes session deletion within callback (no sync_context)
-- Automatic handling without manual waiting
+- Calls `session.context.sync_context()` to sync all data to cloud storage
+- Measures and reports sync timing and success status
+- Handles both success and failure scenarios with appropriate logging
