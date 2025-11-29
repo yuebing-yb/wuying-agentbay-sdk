@@ -1,10 +1,7 @@
 import asyncio
 import os
 
-from agentbay import AsyncAgentBay
-from agentbay.exceptions import OssError
-from agentbay.oss.oss import Oss
-from agentbay import CreateSessionParams
+from agentbay import AsyncAgentBay, OssError, CreateSessionParams, AsyncOss
 
 
 def get_oss_credentials():
@@ -46,12 +43,12 @@ async def test_oss_integration():
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
 
-        oss = Oss(session)
+        oss = AsyncOss(session)
 
         # env_init
         print("\nTesting env_init...")
         credentials = get_oss_credentials()
-        result = oss.env_init(
+        result = await oss.env_init(
             credentials["access_key_id"],
             credentials["access_key_secret"],
             credentials["security_token"],
@@ -75,7 +72,7 @@ async def test_oss_integration():
         # upload
         print("\nTesting upload...")
         bucket = os.getenv("OSS_TEST_BUCKET", "test-bucket")
-        upload_result = oss.upload(
+        upload_result = await oss.upload(
             bucket=bucket, object="test-object.txt", path=test_file_path
         )
         print(f"Upload result: {upload_result}")
@@ -91,7 +88,7 @@ async def test_oss_integration():
         upload_url = os.getenv(
             "OSS_TEST_UPLOAD_URL", "https://example.com/upload/test-file.txt"
         )
-        upload_anon_result = oss.upload_anonymous(upload_url, test_file_path)
+        upload_anon_result = await oss.upload_anonymous(upload_url, test_file_path)
         print(f"Upload anonymous result: {upload_anon_result}")
         print(f"Request ID: {upload_anon_result.request_id}")
         print(f"Success: {upload_anon_result.success}")
@@ -102,7 +99,7 @@ async def test_oss_integration():
 
         # download test
         print("\nTesting download...")
-        download_result = oss.download(
+        download_result = await oss.download(
             bucket=os.getenv("OSS_TEST_BUCKET", "test-bucket"),
             object="test-object.txt",
             path="/tmp/test_oss_download.txt",
@@ -117,7 +114,7 @@ async def test_oss_integration():
 
         # download_anonymous
         print("\nTesting download_anonymous...")
-        download_anon_result = oss.download_anonymous(
+        download_anon_result = await oss.download_anonymous(
             url=os.getenv("OSS_TEST_DOWNLOAD_URL", "https://oss-test-download-url.com"),
             path="/tmp/test_oss_download_anon.txt",
         )

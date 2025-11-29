@@ -1,5 +1,5 @@
 from ._common.config import Config
-from ._common.exceptions import AgentBayError, APIError, AuthenticationError
+from ._common.exceptions import AgentBayError, APIError, AuthenticationError, OssError
 from ._common.logger import AgentBayLogger, get_logger, log
 from ._common.params.context_sync import (
     BWList,
@@ -64,6 +64,7 @@ __all__ = [
     "AgentBayError",
     "AuthenticationError",
     "APIError",
+    "OssError",
     "Browser",
     "BrowserOption",
     "BrowserViewport",

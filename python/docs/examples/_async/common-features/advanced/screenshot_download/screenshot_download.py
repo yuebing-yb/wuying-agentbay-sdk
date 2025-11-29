@@ -24,10 +24,11 @@ Expected output:
     Request ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 """
 
+import asyncio
 import os
 import requests
 from agentbay import AsyncAgentBay
-from agentbay.exceptions import AgentBayError
+from agentbay import AgentBayError
 from agentbay import CreateSessionParams
 
 
@@ -53,7 +54,7 @@ async def main():
 
         # Take screenshot and get URL
         print("\nTaking screenshot...")
-        screenshot_result = session.mobile.screenshot()
+        screenshot_result = await session.mobile.screenshot()
         
         if not screenshot_result.success:
             print(f"Failed to take screenshot: {screenshot_result.error_message}")

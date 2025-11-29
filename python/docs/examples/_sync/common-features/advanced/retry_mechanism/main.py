@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay.exceptions import AgentBayError
+from agentbay import AgentBayError
 
 
 @dataclass
