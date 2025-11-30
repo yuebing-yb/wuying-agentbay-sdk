@@ -15,7 +15,8 @@ This project demonstrates how to integrate AgentBay with OpenAI to perform autom
 
 This project is structured to support multiple agent frameworks. Please refer to the specific framework integration guide for detailed setup and usage instructions:
 
-- [OpenAI Integration Guide](./openai/README.md) - Complete setup and usage instructions for OpenAI function calling
+- [OpenAI Integration Guide (Sync)](./sync/openai/README.md) - Complete setup and usage instructions for OpenAI function calling (synchronous version)
+- [OpenAI Integration Guide (Async)](./async/openai/README.md) - Complete setup and usage instructions for OpenAI function calling (asynchronous version)
 
 ## Project Structure
 
@@ -24,28 +25,34 @@ This project follows a modular structure that separates core functionality from 
 ```
 ├── README.md              # This documentation
 ├── .env.example           # Environment variable template
-├── common/                # Shared resources
-│   ├── data/              # Sample datasets
-│   │   └── ecommerce_sales.csv    # E-commerce sales dataset
-│   └── src/               # Data generation scripts
-│       └── generate_ecommerce_data.py  # Synthetic data generator
-└── openai/                # OpenAI integration
-    ├── README.md          # OpenAI-specific documentation
-    ├── requirements.txt   # Python dependencies
-    └── src/               # OpenAI-specific code
-        └── agentbay_openai_sales_analysis.py  # Main analysis script
+├── sync/                  # Synchronous implementation
+│   ├── common/            # Sync shared resources
+│   │   ├── data/          # Sample datasets
+│   │   └── src/           # Data generation scripts
+│   └── openai/            # Sync OpenAI integration
+│       ├── README.md      # Integration documentation
+│       ├── requirements.txt # Dependencies
+│       └── src/           # OpenAI-specific code
+└── async/                 # Asynchronous implementation
+    ├── common/            # Async shared resources
+    │   ├── data/          # Sample datasets
+    │   └── src/           # Data generation scripts
+    └── openai/            # Async OpenAI integration
+        ├── README.md      # Integration documentation
+        ├── requirements.txt # Dependencies
+        └── src/           # OpenAI-specific code
 ```
 
 ### Common Module
 
-The [common](./common/) directory contains shared resources that can be used across different framework integrations:
+The `common/` directories contain shared resources that can be used across different framework integrations, with separate implementations for synchronous and asynchronous patterns:
 
 - **Sample dataset**: Synthetic e-commerce sales data with 5000+ orders
 - **Data generator**: Script to create custom datasets with configurable parameters
 
 ### Framework Integration Modules
 
-Framework-specific directories (like [openai](./openai/)) contain integration code that demonstrates how to use AgentBay with specific AI frameworks and tools.
+Framework-specific directories (like `sync/openai/` and `async/openai/`) contain integration code that demonstrates how to use AgentBay with specific AI frameworks and tools using different execution patterns.
 
 ## Use Case
 

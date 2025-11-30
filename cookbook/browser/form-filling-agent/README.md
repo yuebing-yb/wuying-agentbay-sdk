@@ -13,7 +13,8 @@ This project demonstrates how to create a form-filling agent using the Agent-Bay
 
 This project is structured to support multiple agent frameworks. Please refer to the specific framework integration guide for detailed setup and usage instructions:
 
-- [LangChain Integration Guide](./langchain/README.md) - Complete setup and usage instructions for LangChain framework
+- [LangChain Integration Guide (Sync)](./sync/langchain/README.md) - Complete setup and usage instructions for LangChain framework (synchronous version)
+- [LangChain Integration Guide (Async)](./async/langchain/README.md) - Complete setup and usage instructions for LangChain framework (asynchronous version)
 
 ## Project Structure
 
@@ -21,26 +22,29 @@ This project follows a modular structure that separates core functionality from 
 
 ```
 ├── README.md            # Documentation
-├── common/              # Public core functionality
-│   └── src/             # Framework-agnostic code
-│       └── __init__.py  # Python package initializer
-└── langchain/           # LangChain integration
-    ├── README.md        # LangChain integration documentation
-    ├── requirements.txt # Python dependencies
-    └── src/             # LangChain-specific code
-        ├── __init__.py                # Python package initializer
-        ├── browser_tools.py           # Browser automation tools
-        ├── form_filling_agent.py      # Main form filling agent implementation
-        └── form_filling_agent_example.py # Example usage script
+├── sync/                # Synchronous implementation
+│   ├── common/          # Sync core functionality
+│   │   └── src/         # Framework-agnostic code
+│   └── langchain/       # Sync LangChain integration
+│       ├── README.md    # Integration documentation
+│       ├── requirements.txt # Dependencies
+│       └── src/         # LangChain-specific code
+└── async/               # Asynchronous implementation
+    ├── common/          # Async core functionality
+    │   └── src/         # Framework-agnostic code
+    └── langchain/       # Async LangChain integration
+        ├── README.md    # Integration documentation
+        ├── requirements.txt # Dependencies
+        └── src/         # LangChain-specific code
 ```
 
 ### Common Module
 
-The [common](./common/) directory is intended for all the core functionality that can be used across different agent frameworks.
+The `common/` directories contain core functionality that can be used across different agent frameworks, with separate implementations for synchronous and asynchronous patterns.
 
 ### Framework Integration Modules
 
-Framework-specific directories (like [langchain](./langchain/)) contain the integration code that implements form filling functionality using specific agent frameworks.
+Framework-specific directories (like `sync/langchain/` and `async/langchain/`) contain the integration code that implements form filling functionality using specific agent frameworks with different execution patterns.
 
 ## Customization
 

@@ -14,7 +14,8 @@ This project demonstrates how to create a testing agent using LangChain and Agen
 
 This project is structured to support multiple agent frameworks. Please refer to the specific framework integration guide for detailed setup and usage instructions:
 
-- [LangChain Integration Guide](./langchain/README.md) - Complete setup and usage instructions for LangChain framework
+- [LangChain Integration Guide (Sync)](./sync/langchain/README.md) - Complete setup and usage instructions for LangChain framework (synchronous version)
+- [LangChain Integration Guide (Async)](./async/langchain/README.md) - Complete setup and usage instructions for LangChain framework (asynchronous version)
 
 ## Project Structure
 
@@ -22,22 +23,27 @@ This project follows a modular structure that separates core functionality from 
 
 ```
 ├── README.md              # Documentation
-├── .env                   # Environment variables
-├── common/                # Public core functionality
-│   ├── sample_project/    # Sample project for testing
-│   └── src/               # Framework-agnostic code
-│       └── base_auto_testing_agent.py # Base testing agent class
-├── langchain/             # LangChain integration
-│   ├── data/              # Data directory for outputs (test results, etc.)
-│   ├── src/               # LangChain-specific code
-│   │   ├── auto_testing_agent.py          # LangChain-specific implementation
-│   │   └── auto_testing_agent_example.py  # Example script for LangChain orchestration
-│   └── requirements.txt   # Python dependencies
+├── sync/                  # Synchronous implementation
+│   ├── common/            # Sync core functionality
+│   │   ├── sample_project/ # Sample project for testing
+│   │   └── src/           # Framework-agnostic code
+│   └── langchain/         # Sync LangChain integration
+│       ├── data/          # Output directory
+│       ├── src/           # LangChain-specific code
+│       └── requirements.txt # Dependencies
+└── async/                 # Asynchronous implementation
+    ├── common/            # Async core functionality
+    │   ├── sample_project/ # Sample project for testing
+    │   └── src/           # Framework-agnostic code
+    └── langchain/         # Async LangChain integration
+        ├── data/          # Output directory
+        ├── src/           # LangChain-specific code
+        └── requirements.txt # Dependencies
 ```
 
 ### Common Module
 
-The [common](./common/) directory contains all the core functionality that can be used across different agent frameworks. This includes:
+The `common/` directories contain all the core functionality that can be used across different agent frameworks, with separate implementations for synchronous and asynchronous patterns. This includes:
 
 - Base testing agent class with shared functionality
 - Project scanning and analysis capabilities
@@ -47,11 +53,11 @@ The [common](./common/) directory contains all the core functionality that can b
 
 ### Framework Integration Modules
 
-Framework-specific directories (like [langchain](./langchain/)) contain the integration code that uses the core functionality from the common module and wraps it in framework-specific components.
+Framework-specific directories (like `sync/langchain/` and `async/langchain/`) contain the integration code that uses the core functionality from the common module and wraps it in framework-specific components.
 
 ## Customization
 
-You can modify the code in the [common/sample_project/](./common/sample_project/) directory to test with your own Python projects, and update the instructions in the example script to match your specific testing requirements.
+You can modify the code in the `common/sample_project/` directories to test with your own Python projects, and update the instructions in the example scripts to match your specific testing requirements.
 
 ## Agent-Bay SDK Features Used
 
