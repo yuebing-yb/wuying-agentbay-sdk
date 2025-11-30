@@ -315,8 +315,21 @@ from pathlib import Path
 
 import requests
 from browser_use import ActionResult, Agent, BrowserProfile, BrowserSession, Controller
-from browser_use.agent.memory import MemoryConfig
-from browser_use.agent.views import AgentHistoryList
+# MemoryConfig和AgentHistoryList在当前版本中不可用，使用替代方案
+try:
+    from browser_use.agent.memory import MemoryConfig
+except ImportError:
+    # 创建兼容的MemoryConfig类
+    class MemoryConfig:
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+try:
+    from browser_use.agent.views import AgentHistoryList
+except ImportError:
+    # 创建兼容的AgentHistoryList类
+    AgentHistoryList = list
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -1334,7 +1347,7 @@ def run_task_with_semaphore(
     max_steps_per_task: int,
     headless: bool,
     use_vision: bool,
-    semaphore_runs: asyncio.Semaphore,  # Pass semaphore as argument
+    semaphore_runs,  # Pass semaphore as argument (threading.Semaphore in sync version)
     fresh_start: bool = True,
     use_serp: bool = False,
     enable_memory: bool = False,

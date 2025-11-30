@@ -313,8 +313,21 @@ from pathlib import Path
 
 import requests
 from browser_use import ActionResult, Agent, BrowserProfile, BrowserSession, Controller
-from browser_use.agent.memory import MemoryConfig
-from browser_use.agent.views import AgentHistoryList
+# MemoryConfig和AgentHistoryList在当前版本中不可用，使用替代方案
+try:
+    from browser_use.agent.memory import MemoryConfig
+except ImportError:
+    # 创建兼容的MemoryConfig类
+    class MemoryConfig:
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+try:
+    from browser_use.agent.views import AgentHistoryList
+except ImportError:
+    # 创建兼容的AgentHistoryList类
+    AgentHistoryList = list
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models.chat_models import BaseChatModel

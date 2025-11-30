@@ -5,7 +5,8 @@ import time
 import concurrent.futures
 import json
 import os
-from typing import Any, Dict
+import sys
+from typing import Any, Dict, Optional
 
 from mcp import ClientSession, StdioServerParameters, stdio_client
 from playwright.sync_api import sync_playwright
@@ -160,12 +161,17 @@ class LocalPageAgent(BrowserAgent):
 
         mcp_script = os.environ.get("PAGE_TASK_MCP_SERVER_SCRIPT", "")
 
-        self.mcp_client: LocalMCPClient | None = LocalMCPClient(
-            server="PageUseAgent", command="python", args=[mcp_script]
-        )
+        if mcp_script:
+            self.mcp_client: LocalMCPClient | None = LocalMCPClient(
+                server="PageUseAgent", command=sys.executable, args=[mcp_script]
+            )
+        else:
+            self.mcp_client = None
+            _logger.warning("PAGE_TASK_MCP_SERVER_SCRIPT not set. MCP client will not be initialized.")
 
     def initialize(self):
-        self.mcp_client.connect()
+        if self.mcp_client:
+            self.mcp_client.connect()
 
     def act(self, action_input, page=None):
         """Async wrapper for the act method"""
@@ -285,13 +291,19 @@ class LocalBrowser(Browser):
                                 )
 
                             # Launch headless browser and create a page for all tests
+                            # use absolute path for user_data_dir
+                            cwd = os.getcwd()
+                            user_data_dir = os.path.join(cwd, "tmp/browser_user_data")
+                            
                             self._browser = p.chromium.launch_persistent_context(
-                                headless=False,
+                                headless=True,
                                 viewport={"width": 1280, "height": 1200},
                                 args=[
                                     f"--remote-debugging-port={self._cdp_port}",
+                                    "--disable-gpu",
+                                    "--disable-software-rasterizer",
                                 ],
-                                user_data_dir="/tmp/browser_user_data",
+                                user_data_dir=user_data_dir,
                             )
 
                             _logger.info("Local browser launched successfully:")
@@ -308,13 +320,18 @@ class LocalBrowser(Browser):
             self._worker_thread = concurrent.futures.ThreadPoolExecutor().submit(
                 thread_target
             )
-            promise.result()
+            if not promise.result():
+                _logger.error("Failed to launch local browser")
+                return False
 
         self.agent.initialize()
         return True
 
+    def initialize(self, option: Optional["BrowserOption"] = None) -> bool:
+        return self.initialize(option)
+
     def is_initialized(self) -> bool:
-        return True
+        return self._worker_thread is not None
 
     def get_endpoint_url(self) -> str:
         return f"http://localhost:{self._cdp_port}"

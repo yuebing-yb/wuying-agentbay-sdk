@@ -24,7 +24,7 @@ from agentbay._sync.browser_agent import (
     ObserveResult,
 )
 
-from local_page_agent import LocalSession
+from .local_page_agent import LocalSession
 
 # Initialize _logger for this module
 _logger = get_logger("page_agent")
