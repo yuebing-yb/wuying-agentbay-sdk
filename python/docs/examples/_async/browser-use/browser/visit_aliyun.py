@@ -38,9 +38,9 @@ async def main():
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
 
-        if await session.browser.initialize_async(BrowserOption()):
+        if await session.browser.initialize(BrowserOption()):
             print("Browser initialized successfully")
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
 
             async with async_playwright() as p:

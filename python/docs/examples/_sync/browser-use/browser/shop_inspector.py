@@ -22,8 +22,8 @@ from agentbay._sync.browser import (
     BrowserScreen,
     BrowserProxy,
 )
-from agentbay._sync.browser import ActOptions, ExtractOptions
-from agentbay.model import SessionResult
+from agentbay._sync.browser_agent import ActOptions, ExtractOptions
+from agentbay._common.models.response import SessionResult
 import time
 
 
