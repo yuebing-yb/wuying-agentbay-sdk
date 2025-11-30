@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._async.agentbay import AsyncAgentBay
-from agentbay._async.session import AsyncSession
+from agentbay._async.session import AsyncAsyncSession
 from agentbay._common.models.response import (
     GetSessionData,
     GetSessionResult,
@@ -26,7 +26,7 @@ class TestSessionResume(unittest.TestCase):
         self.agent_bay.client = MagicMock()
 
         # Create a mock session
-        self.session = AsyncSession(self.agent_bay, "session-123")
+        self.session = AsyncAsyncSession(self.agent_bay, "session-123")
         self.session.is_vpc = False
         self.session.network_interface_ip = ""
         self.session.http_port = ""
