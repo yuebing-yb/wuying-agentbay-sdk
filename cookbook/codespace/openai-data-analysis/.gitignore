@@ -16,6 +16,8 @@ common/data/*.csv
 # Generated visualizations
 openai/src/*.png
 *.png
+# Allow assets images
+!*/assets/*.png
 
 # Environment variables
 .env
