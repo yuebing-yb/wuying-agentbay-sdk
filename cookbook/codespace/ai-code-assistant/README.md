@@ -52,7 +52,7 @@ Before you begin, ensure you have:
 ### 1. Clone and Navigate
 
 ```bash
-cd /path/to/wuying-agentbay-sdk/cookbook/envs/codespace/ai-code-assistant
+cd /path/to/wuying-agentbay-sdk/cookbook/codespace/ai-code-assistant
 ```
 
 ### 2. Install Dependencies

@@ -144,7 +144,7 @@ The testing agent can be orchestrated using LangChain's agent framework. This pr
 To run the LangChain orchestration example:
 
 ```bash
-cd YOUR_PREFIX_PATH/cookbook/envs/codespace/auto-testing-agent/langchain/
+cd YOUR_PREFIX_PATH/cookbook/codespace/auto-testing-agent/langchain/
 python src/auto_testing_agent_example.py
 ```
 

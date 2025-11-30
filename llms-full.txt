@@ -17627,7 +17627,7 @@ AgentBay provides both synchronous and asynchronous APIs with identical interfac
 | **Syntax** | `result = agent.create()` | `result = await agent.create()` |
 | **Import** | `from agentbay import AgentBay` | `from agentbay import AsyncAgentBay` |
 
-See [Synchronous vs Asynchronous Guide](../../../docs/guides/async-programming/sync-vs-async.md) for detailed comparison.
+See [Synchronous vs Asynchronous Guide](../guides/async-programming/sync-vs-async.md) for detailed comparison.
 
 ---
 
@@ -17849,7 +17849,7 @@ await session.delete()
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
+- [Session API Reference](./session.md)
 
 ---
 
@@ -18105,8 +18105,8 @@ use the resume() method instead.
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
-- [Context API Reference](./async-context.md)
+- [Session API Reference](./session.md)
+- [Context API Reference](./context.md)
 
 ---
 
@@ -18383,7 +18383,7 @@ await session.delete()
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
+- [Session API Reference](./session.md)
 
 ---
 
@@ -18495,7 +18495,7 @@ await result.session.delete()
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
+- [Session API Reference](./session.md)
 
 ---
 
@@ -18584,8 +18584,8 @@ print(result.output)
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
-- [FileSystem API Reference](./async-filesystem.md)
+- [Session API Reference](./session.md)
+- [FileSystem API Reference](./filesystem.md)
 
 ---
 
@@ -20477,8 +20477,8 @@ clear_result = await agent_bay.context.clear(result.context_id, timeout=60)
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
-- [Context Manager API Reference](./async-context-manager.md)
+- [Session API Reference](./session.md)
+- [Context Manager API Reference](./context-manager.md)
 
 ---
 
@@ -20780,7 +20780,7 @@ print(f"Extension option: {ext_option}")
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Browser API Reference](./async-browser.md)
+- [Browser API Reference](./browser.md)
 
 ---
 
@@ -21489,8 +21489,8 @@ session.delete()
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
-- [Command API Reference](./async-command.md)
+- [Session API Reference](./session.md)
+- [Command API Reference](./command.md)
 
 ---
 
@@ -22120,7 +22120,7 @@ await session.delete()
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
+- [Session API Reference](./session.md)
 
 ---
 
@@ -22355,8 +22355,8 @@ await session.delete()
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
-- [FileSystem API Reference](./async-filesystem.md)
+- [Session API Reference](./session.md)
+- [FileSystem API Reference](./filesystem.md)
 
 ---
 
@@ -22506,11 +22506,11 @@ Asynchronously initiate the resume session operation without waiting for complet
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [FileSystem API Reference](./async-filesystem.md)
-- [Command API Reference](./async-command.md)
-- [Context API Reference](./async-context.md)
-- [Context Manager API Reference](./async-context-manager.md)
-- [OSS API Reference](./async-oss.md)
+- [FileSystem API Reference](./filesystem.md)
+- [Command API Reference](./command.md)
+- [Context API Reference](./context.md)
+- [Context Manager API Reference](./context-manager.md)
+- [OSS API Reference](./oss.md)
 
 ---
 
@@ -28444,7 +28444,7 @@ The sync examples are auto-generated from async examples. To regenerate:
 
 ```bash
 cd python
-python scripts/generate_examples_sync.py
+python scripts/generate_sync.py
 ```
 
 Or use the Makefile:
@@ -30112,97 +30112,104 @@ Both examples provide detailed console output showing:
 
 
 
-# Context Sync Anonymous Callback Example
+# Context Sync Demo Example
 
-This example demonstrates the `context.sync()` method with anonymous callback functionality, showing how to use the new asynchronous sync capabilities in AgentBay SDK.
+This example demonstrates the `session.context.sync_context()` method for synchronizing context data with the AgentBay cloud environment.
 
 ## Overview
 
 The example showcases:
 
-- **Anonymous Callback Functions**: Using lambda functions for callback implementation
-- **Async Context Sync**: Using `context.sync()` with callback functions
+- **Context Creation**: Creating persistent contexts for data storage
+- **Context Synchronization**: Using `sync_context()` to sync data to cloud storage
 - **Timing Analysis**: Measuring sync operation duration
-- **Session Deletion in Callback**: Deleting session within callback without sync_context
-- **Error Handling**: Managing sync failures and timeouts
+- **File Management**: Creating and managing test files in the context
+- **Error Handling**: Managing sync failures and API errors
 
 ## Key Features Demonstrated
 
-### 1. Dual-Mode Sync Function
+### 1. Context Sync Function
 
-The `context.sync()` function now supports both async and sync calling patterns:
+The `session.context.sync_context()` method provides asynchronous context synchronization:
 
 ```python
-# Pattern 1: Async call - wait for completion
-result = await session.context.sync()
-if result.success:
-    print("✅ Async sync completed successfully")
-
-# Pattern 2: Sync call with callback - immediate return
-session.context.sync(callback=lambda success: (
-    print(f"✅ Anonymous sync callback: {'SUCCESS' if success else 'FAILED'}") or
-    print("🧹 Deleting session after sync completion...") or
-    agent_bay.delete(session) or
-    print("✅ Session deleted successfully")
-))
+# Async call - wait for completion
+sync_result = await session.context.sync_context()
+if sync_result.success:
+    print("✅ Sync completed successfully")
+    print(f"Duration: {sync_duration:.2f} seconds")
 ```
 
 ### 2. Timing Analysis
 
-The example includes detailed timing analysis for different file sizes:
+The example includes timing analysis for sync operations:
 
-- **Small files** (< 1KB): Typically 2-5 seconds
-- **Medium files** (1-10KB): Typically 5-15 seconds
-- **Large files** (> 10KB): Typically 15-60 seconds
+- **Small files** (< 1KB): Typically under 1 second
+- **Medium files** (1-10KB): Typically 1-5 seconds
+- **Multiple files**: Duration depends on total size and file count
 
-### 3. Session Deletion in Callback
+### 3. Test Data Creation
 
-Demonstrates deleting the session within the callback function without sync_context:
+Creates structured test data to demonstrate sync functionality:
 
 ```python
-# Session deletion happens automatically in the callback
-agent_bay.delete(session, sync_context=False)
+test_files = [
+    ("/tmp/sync_data/test_files/small.txt", "Small test file content\n" * 10),
+    ("/tmp/sync_data/test_files/medium.txt", "Medium test file content\n" * 100),
+    ("/tmp/sync_data/config.json", json.dumps({...}, indent=2))
+]
 ```
 
-### 4. Automatic Handling
+### 4. Session Management
 
-The callback handles everything automatically without needing to wait:
+Demonstrates proper session lifecycle management:
 
 ```python
-# Callback handles success, failure, and cleanup automatically
-# No need for manual waiting or timeout handling
+# Create session with context sync
+params = CreateSessionParams()
+params.context_syncs = [context_sync]
+session_result = await agent_bay.create(params)
+
+# Clean up session after use
+delete_result = await agent_bay.delete(session)
 ```
 
 ## Example Structure
 
 ### Step 1: Context Creation
 
-- Creates a persistent context for data storage
+- Creates a persistent context for data storage using `agent_bay.context.get()`
 - Configures sync policy and context sync settings
 
 ### Step 2: Session Setup
 
-- Creates session with context synchronization
-- Mounts context to `/tmp/sync_data` path
+- Creates session with context synchronization enabled
+- Mounts context to `/tmp/sync_data` path in the session environment
 
 ### Step 3: Test Data Creation
 
 - Creates multiple test files of different sizes
-- Sets up directory structure for organized testing
+- Sets up directory structure for organized file management
+- Writes configuration and log files to demonstrate various data types
 
-### Step 4: Anonymous Callback Sync Demonstration
+### Step 4: Context Synchronization
 
-- Shows async sync with anonymous callback functionality
-- Demonstrates timing measurement and status monitoring
-- Includes session deletion within callback (no sync_context)
-- Automatic handling without manual waiting
-
-
+- Calls `session.context.sync_context()` to sync all data to cloud storage
+- Measures and reports sync timing and success status
+- Handles both success and failure scenarios with appropriate logging
 
 
-# FileSystem Operations Example
 
-This example demonstrates how to use the FileSystem features of the Wuying AgentBay SDK. It covers a comprehensive set of file system operations, including:
+
+# FileSystem Examples
+
+This directory contains comprehensive examples demonstrating the FileSystem functionality in the AgentBay SDK for Python. It covers both basic file operations and advanced features like file monitoring and transfers.
+
+## Examples
+
+### Basic Operations Example ([main.py](./main.py))
+
+Demonstrates fundamental file system operations:
 
 - Basic file reading and writing
 - Directory creation and listing
@@ -30212,7 +30219,27 @@ This example demonstrates how to use the FileSystem features of the Wuying Agent
 - Multiple file reading
 - Large file operations with automatic chunking
 
-This example is particularly useful for understanding how to work with files and directories efficiently in the AgentBay cloud environment.
+### Watch Directory Example ([watch_directory_example.py](./watch_directory_example.py))
+
+Demonstrates how to monitor file changes in a directory:
+
+- Creating directories for monitoring
+- Setting up file change monitoring with callbacks
+- Performing file operations to trigger events
+- Processing different types of file events (create, modify, delete)
+- Proper resource cleanup
+
+### File Transfer Example ([file_transfer_example.py](./file_transfer_example.py))
+
+Demonstrates file upload and download operations:
+
+- Creating contexts and sessions with file transfer capabilities
+- Using the simplified FileSystem API for file transfers
+- Uploading files from local storage to the cloud
+- Downloading files from the cloud to local storage
+- Tracking file transfer progress with callbacks
+- Verifying file content integrity after transfers
+- Proper resource cleanup
 
 ## Features Demonstrated
 
@@ -30244,6 +30271,11 @@ This example is particularly useful for understanding how to work with files and
 - **Custom Chunk Size**: Specify custom chunk sizes for both reading and writing operations
 - **Performance Measurement**: Measure and compare operation times with different chunk sizes
 
+### Advanced Features
+- **Real-time File Monitoring**: Monitor directory changes with event callbacks
+- **File Transfer Operations**: Upload and download files with progress tracking
+- **Context Synchronization**: Use contexts for persistent file operations
+
 ## Prerequisites
 
 - Python 3.10 or later
@@ -30252,18 +30284,32 @@ This example is particularly useful for understanding how to work with files and
   pip install wuying-agentbay-sdk
   ```
 
-## Running the Example
+## Running the Examples
+
+1. Make sure you have set the `AGENTBAY_API_KEY` environment variable:
 
 ```bash
-cd file_system
-python main.py
+export AGENTBAY_API_KEY=your_api_key_here
 ```
 
-Make sure you have set the `AGENTBAY_API_KEY` environment variable or replace the placeholder in the code with your actual API key.
+2. Run any of the examples:
 
-## How It Works
+```bash
+# Basic file operations
+python main.py
 
-The example demonstrates the following workflow:
+# Directory monitoring
+python watch_directory_example.py
+
+# File transfers
+python file_transfer_example.py
+```
+
+## Code Explanation
+
+### Basic Operations Example (main.py)
+
+The basic operations example demonstrates the following workflow:
 
 1. **Session Creation**: Creates a new session with the specified image ID
 2. **Basic File Operations**: Demonstrates writing, reading, and appending to files
@@ -30276,70 +30322,6 @@ The example demonstrates the following workflow:
 9. **Large File Operations**: Demonstrates reading and writing large files with both default and custom chunk sizes
 10. **Content Verification**: Verifies that file operations maintain content integrity
 11. **Performance Comparison**: Measures and reports the time taken for large file operations
-
-Each section of the example is clearly marked and includes verification steps to ensure operations are working correctly.
-
-## API Reference
-
-For more detailed information on the FileSystem API methods, refer to the SDK documentation.
-
-
-
-# FileSystem Examples
-
-This directory contains examples demonstrating the FileSystem functionality in the AgentBay SDK for Python.
-
-## Examples
-
-### Watch Directory Example ([watch_directory_example.py](./watch_directory_example.py))
-
-Demonstrates how to monitor file changes in a directory:
-
-- Creating directories for monitoring
-- Setting up file change monitoring with callbacks
-- Performing file operations to trigger events
-- Processing different types of file events (create, modify, delete)
-- Proper resource cleanup
-
-### File Transfer Example ([file_transfer_example.py](./file_transfer_example.py))
-
-Demonstrates file upload and download operations:
-
-- Creating contexts and sessions with file transfer capabilities
-- Using the simplified FileSystem API for file transfers
-- Uploading files from local storage to the cloud
-- Downloading files from the cloud to local storage
-- Tracking file transfer progress with callbacks
-- Verifying file content integrity after transfers
-- Proper resource cleanup
-
-## Running the Examples
-
-1. Make sure you have installed the AgentBay SDK:
-
-```bash
-pip install wuying-agentbay-sdk
-```
-
-2. Set your API key as an environment variable (recommended):
-
-```bash
-export AGENTBAY_API_KEY=your_api_key_here
-```
-
-3. Run an example:
-
-```bash
-python watch_directory_example.py
-```
-
-or
-
-```bash
-python file_transfer_example.py
-```
-
-## Code Explanation
 
 ### Watch Directory Example
 
@@ -30367,10 +30349,11 @@ The file transfer example demonstrates uploading and downloading files:
 8. Verify file content integrity
 9. Clean up resources properly
 
+Each section of the examples is clearly marked and includes verification steps to ensure operations are working correctly.
+
 ## API Reference
 
-For detailed information about the FileSystem API, see the [FileSystem API Reference](../../../../../../../typescript/docs/api/common-features/basics/filesystem.md).
-
+For more detailed information on the FileSystem API methods, refer to the SDK documentation.
 
 
 
@@ -33732,97 +33715,104 @@ Both examples provide detailed console output showing:
 
 
 
-# Context Sync Anonymous Callback Example
+# Context Sync Demo Example
 
-This example demonstrates the `context.sync()` method with anonymous callback functionality, showing how to use the new asynchronous sync capabilities in AgentBay SDK.
+This example demonstrates the `session.context.sync_context()` method for synchronizing context data with the AgentBay cloud environment.
 
 ## Overview
 
 The example showcases:
 
-- **Anonymous Callback Functions**: Using lambda functions for callback implementation
-- **Async Context Sync**: Using `context.sync()` with callback functions
+- **Context Creation**: Creating persistent contexts for data storage
+- **Context Synchronization**: Using `sync_context()` to sync data to cloud storage
 - **Timing Analysis**: Measuring sync operation duration
-- **Session Deletion in Callback**: Deleting session within callback without sync_context
-- **Error Handling**: Managing sync failures and timeouts
+- **File Management**: Creating and managing test files in the context
+- **Error Handling**: Managing sync failures and API errors
 
 ## Key Features Demonstrated
 
-### 1. Dual-Mode Sync Function
+### 1. Context Sync Function
 
-The `context.sync()` function now supports both async and sync calling patterns:
+The `session.context.sync_context()` method provides asynchronous context synchronization:
 
 ```python
-# Pattern 1: Async call - wait for completion
-result = await session.context.sync()
-if result.success:
-    print("✅ Async sync completed successfully")
-
-# Pattern 2: Sync call with callback - immediate return
-session.context.sync(callback=lambda success: (
-    print(f"✅ Anonymous sync callback: {'SUCCESS' if success else 'FAILED'}") or
-    print("🧹 Deleting session after sync completion...") or
-    agent_bay.delete(session) or
-    print("✅ Session deleted successfully")
-))
+# Async call - wait for completion
+sync_result = await session.context.sync_context()
+if sync_result.success:
+    print("✅ Sync completed successfully")
+    print(f"Duration: {sync_duration:.2f} seconds")
 ```
 
 ### 2. Timing Analysis
 
-The example includes detailed timing analysis for different file sizes:
+The example includes timing analysis for sync operations:
 
-- **Small files** (< 1KB): Typically 2-5 seconds
-- **Medium files** (1-10KB): Typically 5-15 seconds
-- **Large files** (> 10KB): Typically 15-60 seconds
+- **Small files** (< 1KB): Typically under 1 second
+- **Medium files** (1-10KB): Typically 1-5 seconds
+- **Multiple files**: Duration depends on total size and file count
 
-### 3. Session Deletion in Callback
+### 3. Test Data Creation
 
-Demonstrates deleting the session within the callback function without sync_context:
+Creates structured test data to demonstrate sync functionality:
 
 ```python
-# Session deletion happens automatically in the callback
-agent_bay.delete(session, sync_context=False)
+test_files = [
+    ("/tmp/sync_data/test_files/small.txt", "Small test file content\n" * 10),
+    ("/tmp/sync_data/test_files/medium.txt", "Medium test file content\n" * 100),
+    ("/tmp/sync_data/config.json", json.dumps({...}, indent=2))
+]
 ```
 
-### 4. Automatic Handling
+### 4. Session Management
 
-The callback handles everything automatically without needing to wait:
+Demonstrates proper session lifecycle management:
 
 ```python
-# Callback handles success, failure, and cleanup automatically
-# No need for manual waiting or timeout handling
+# Create session with context sync
+params = CreateSessionParams()
+params.context_syncs = [context_sync]
+session_result = await agent_bay.create(params)
+
+# Clean up session after use
+delete_result = await agent_bay.delete(session)
 ```
 
 ## Example Structure
 
 ### Step 1: Context Creation
 
-- Creates a persistent context for data storage
+- Creates a persistent context for data storage using `agent_bay.context.get()`
 - Configures sync policy and context sync settings
 
 ### Step 2: Session Setup
 
-- Creates session with context synchronization
-- Mounts context to `/tmp/sync_data` path
+- Creates session with context synchronization enabled
+- Mounts context to `/tmp/sync_data` path in the session environment
 
 ### Step 3: Test Data Creation
 
 - Creates multiple test files of different sizes
-- Sets up directory structure for organized testing
+- Sets up directory structure for organized file management
+- Writes configuration and log files to demonstrate various data types
 
-### Step 4: Anonymous Callback Sync Demonstration
+### Step 4: Context Synchronization
 
-- Shows async sync with anonymous callback functionality
-- Demonstrates timing measurement and status monitoring
-- Includes session deletion within callback (no sync_context)
-- Automatic handling without manual waiting
-
-
+- Calls `session.context.sync_context()` to sync all data to cloud storage
+- Measures and reports sync timing and success status
+- Handles both success and failure scenarios with appropriate logging
 
 
-# FileSystem Operations Example
 
-This example demonstrates how to use the FileSystem features of the Wuying AgentBay SDK. It covers a comprehensive set of file system operations, including:
+
+# FileSystem Examples
+
+This directory contains comprehensive examples demonstrating the FileSystem functionality in the AgentBay SDK for Python. It covers both basic file operations and advanced features like file monitoring and transfers.
+
+## Examples
+
+### Basic Operations Example ([main.py](./main.py))
+
+Demonstrates fundamental file system operations:
 
 - Basic file reading and writing
 - Directory creation and listing
@@ -33832,7 +33822,27 @@ This example demonstrates how to use the FileSystem features of the Wuying Agent
 - Multiple file reading
 - Large file operations with automatic chunking
 
-This example is particularly useful for understanding how to work with files and directories efficiently in the AgentBay cloud environment.
+### Watch Directory Example ([watch_directory_example.py](./watch_directory_example.py))
+
+Demonstrates how to monitor file changes in a directory:
+
+- Creating directories for monitoring
+- Setting up file change monitoring with callbacks
+- Performing file operations to trigger events
+- Processing different types of file events (create, modify, delete)
+- Proper resource cleanup
+
+### File Transfer Example ([file_transfer_example.py](./file_transfer_example.py))
+
+Demonstrates file upload and download operations:
+
+- Creating contexts and sessions with file transfer capabilities
+- Using the simplified FileSystem API for file transfers
+- Uploading files from local storage to the cloud
+- Downloading files from the cloud to local storage
+- Tracking file transfer progress with callbacks
+- Verifying file content integrity after transfers
+- Proper resource cleanup
 
 ## Features Demonstrated
 
@@ -33864,6 +33874,11 @@ This example is particularly useful for understanding how to work with files and
 - **Custom Chunk Size**: Specify custom chunk sizes for both reading and writing operations
 - **Performance Measurement**: Measure and compare operation times with different chunk sizes
 
+### Advanced Features
+- **Real-time File Monitoring**: Monitor directory changes with event callbacks
+- **File Transfer Operations**: Upload and download files with progress tracking
+- **Context Synchronization**: Use contexts for persistent file operations
+
 ## Prerequisites
 
 - Python 3.10 or later
@@ -33872,18 +33887,32 @@ This example is particularly useful for understanding how to work with files and
   pip install wuying-agentbay-sdk
   ```
 
-## Running the Example
+## Running the Examples
+
+1. Make sure you have set the `AGENTBAY_API_KEY` environment variable:
 
 ```bash
-cd file_system
-python main.py
+export AGENTBAY_API_KEY=your_api_key_here
 ```
 
-Make sure you have set the `AGENTBAY_API_KEY` environment variable or replace the placeholder in the code with your actual API key.
+2. Run any of the examples:
 
-## How It Works
+```bash
+# Basic file operations
+python main.py
 
-The example demonstrates the following workflow:
+# Directory monitoring
+python watch_directory_example.py
+
+# File transfers
+python file_transfer_example.py
+```
+
+## Code Explanation
+
+### Basic Operations Example (main.py)
+
+The basic operations example demonstrates the following workflow:
 
 1. **Session Creation**: Creates a new session with the specified image ID
 2. **Basic File Operations**: Demonstrates writing, reading, and appending to files
@@ -33896,70 +33925,6 @@ The example demonstrates the following workflow:
 9. **Large File Operations**: Demonstrates reading and writing large files with both default and custom chunk sizes
 10. **Content Verification**: Verifies that file operations maintain content integrity
 11. **Performance Comparison**: Measures and reports the time taken for large file operations
-
-Each section of the example is clearly marked and includes verification steps to ensure operations are working correctly.
-
-## API Reference
-
-For more detailed information on the FileSystem API methods, refer to the SDK documentation.
-
-
-
-# FileSystem Examples
-
-This directory contains examples demonstrating the FileSystem functionality in the AgentBay SDK for Python.
-
-## Examples
-
-### Watch Directory Example ([watch_directory_example.py](./watch_directory_example.py))
-
-Demonstrates how to monitor file changes in a directory:
-
-- Creating directories for monitoring
-- Setting up file change monitoring with callbacks
-- Performing file operations to trigger events
-- Processing different types of file events (create, modify, delete)
-- Proper resource cleanup
-
-### File Transfer Example ([file_transfer_example.py](./file_transfer_example.py))
-
-Demonstrates file upload and download operations:
-
-- Creating contexts and sessions with file transfer capabilities
-- Using the simplified FileSystem API for file transfers
-- Uploading files from local storage to the cloud
-- Downloading files from the cloud to local storage
-- Tracking file transfer progress with callbacks
-- Verifying file content integrity after transfers
-- Proper resource cleanup
-
-## Running the Examples
-
-1. Make sure you have installed the AgentBay SDK:
-
-```bash
-pip install wuying-agentbay-sdk
-```
-
-2. Set your API key as an environment variable (recommended):
-
-```bash
-export AGENTBAY_API_KEY=your_api_key_here
-```
-
-3. Run an example:
-
-```bash
-python watch_directory_example.py
-```
-
-or
-
-```bash
-python file_transfer_example.py
-```
-
-## Code Explanation
 
 ### Watch Directory Example
 
@@ -33987,10 +33952,11 @@ The file transfer example demonstrates uploading and downloading files:
 8. Verify file content integrity
 9. Clean up resources properly
 
+Each section of the examples is clearly marked and includes verification steps to ensure operations are working correctly.
+
 ## API Reference
 
-For detailed information about the FileSystem API, see the [FileSystem API Reference](../../../../../../../typescript/docs/api/common-features/basics/filesystem.md).
-
+For more detailed information on the FileSystem API methods, refer to the SDK documentation.
 
 
 
@@ -49873,9 +49839,9 @@ The example includes error handling for common scenarios:
 
 The AgentBay SDK Cookbook is a collection of practical examples and use cases demonstrating how to leverage the AgentBay SDK for various automation scenarios. Each cookbook showcases a specific application of the SDK, providing both basic implementations and integrations with popular frameworks like LangChain.
 
-## Session Environments (envs)
+## Session Environments
 
-The `envs` directory contains examples organized by session environments. A session environment in AgentBay refers to an isolated cloud computing environment where specific types of operations can be performed safely and efficiently. Each environment provides specialized capabilities for different use cases.
+Examples are organized by session environments. A session environment in AgentBay refers to an isolated cloud computing environment where specific types of operations can be performed safely and efficiently. Each environment provides specialized capabilities for different use cases.
 
 Currently, two distinct session environments are implemented:
 
@@ -49886,14 +49852,14 @@ Currently, two distinct session environments are implemented:
 
 ### Browser Environment
 
-1. [Form-Filling Agent](./envs/browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
-2. [E-commerce Inspector](./envs/browser/e-commerce-inspector/) - Automated product information extraction from e-commerce websites with AI-powered navigation
+1. [Form-Filling Agent](./browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
+2. [E-commerce Inspector](./browser/e-commerce-inspector/) - Automated product information extraction from e-commerce websites with AI-powered navigation
 
 ### Codespace Environment
 
-3. [Auto Testing Agent](./envs/codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
-4. [OpenAI Data Analysis](./envs/codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
-5. [AI Code Assistant](./envs/codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
+3. [Auto Testing Agent](./codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
+4. [OpenAI Data Analysis](./codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
+5. [AI Code Assistant](./codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
 
 ## Overview
 
@@ -50351,7 +50317,7 @@ The e-commerce inspector agent is orchestrated using LangChain's agent framework
 To run the LangChain orchestration example:
 
 ```bash
-cd YOUR_PREFIX_PATH/cookbook/envs/browser/e-commerce-inspector/langchain/
+cd YOUR_PREFIX_PATH/cookbook/browser/e-commerce-inspector/langchain/
 python src/e_commerce_inspector_example.py
 ```
 
@@ -50713,7 +50679,151 @@ The form filling agent can be orchestrated using LangChain's agent framework. Th
 To run the LangChain orchestration example:
 
 ```bash
-cd YOUR_PREFIX_PATH/cookbook/envs/browser/form-filling-agent/langchain/
+cd YOUR_PREFIX_PATH/cookbook/browser/form-filling-agent/langchain/
+python src/form_filling_agent_example.py
+```
+
+This example script demonstrates:
+1. Creating a LangChain form filling agent
+2. Analyzing a form and suggesting filling instructions
+3. Filling the form with custom data
+4. Executing the form filling process
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. Ensure your API key is correct and properly set in the `.env` file
+2. Check that you have network connectivity to Agent-Bay services
+3. Verify that all required packages are installed:
+   ```bash
+   pip list | grep -E "(wuying-agentbay-sdk|langchain)"
+   ```
+4. Check that you've activated your virtual environment before running the scripts
+
+
+
+# LangChain Integration
+
+This directory contains the LangChain-specific integration for the form-filling agent.
+
+## Sample Output
+
+When the agent successfully fills a form, you will see output similar to the following:
+
+```
+Creating LangChain form filling agent...
+Creating AgentBay browser session...
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.context:get:400 | 🔗 API Call: GetContext
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.context:get:400 |   └─ AllowCreate=True, Name=[CONTEXT_NAME]
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.context:get:413 | ✅ API Response received
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.agentbay:create:400 | Adding context sync for file transfer operations: ContextSync(context_id='[CONTEXT_ID]', path='[PATH]', policy=None)
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.agentbay:create:625 | ✅ API Response: CreateSession, RequestId=[REQUEST_ID]
+...
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.session:_call_mcp_tool_api:1063 | ✅ API Response: CallMcpTool, RequestId=[REQUEST_ID]
+[DATE] [TIME] | AgentBay | INFO | [PID]:[TID] | agentbay.session:_call_mcp_tool_api:1063 |   └─ tool=page_use_screenshot
+[browser_screenshot] Output: {"success": true, "message": "Screenshot captured successfully", "file_path": "./data/filled_page_screenshot.png"}
+Final result: I've completed all the requested steps:
+
+1. Navigated to https://data.stats.gov.cn/easyquery.htm?cn=C01
+2. Clicked the vertical bar chart icon
+3. Waited for 2 seconds
+4. Selected the column option
+5. Waited for another 2 seconds
+6. Saved a screenshot of the resulting page to ./data/filled_page_screenshot.png
+
+The screenshot has been successfully captured and saved to the specified location.
+```
+
+## Setup
+
+### 1. Create Virtual Environment
+
+First, create a virtual environment to isolate project dependencies:
+
+```bash
+# Create virtual environment
+python -m venv form-filling-agent-env
+
+# Activate virtual environment
+# On Windows:
+form-filling-agent-env\Scripts\activate
+# On macOS/Linux:
+source form-filling-agent-env/bin/activate
+```
+
+### 2. Install Dependencies
+
+Install the required packages:
+
+```bash
+# Update pip
+pip install --upgrade pip
+```
+
+You can install dependencies using the requirements file:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment Variables
+
+Set your API keys as environment variables:
+
+```bash
+export AGENTBAY_API_KEY="YOUR_AGENTBAY_API_KEY"
+export DASHSCOPE_API_KEY="YOUR_DASHSCOPE_API_KEY"
+```
+
+You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
+1. Visit [Agent-Bay Console](https://agentbay.console.aliyun.com/service-management)
+2. Sign up or log in to your Alibaba Cloud account
+3. Navigate to the Service Management section
+4. Create a new API KEY or select an existing one
+5. Copy the API Key and set it as the value of `AGENTBAY_API_KEY`
+
+For the DashScope API key, you need to register on the Alibaba Cloud DashScope platform:
+1. Visit [DashScope Platform](https://bailian.console.aliyun.com/#/home)
+2. Sign up or log in to your account
+3. Navigate to the API Key management section
+4. Copy the API Key and set it as the value of `DASHSCOPE_API_KEY`
+
+## Structure
+
+- [src/](./src/): Contains the LangChain-specific implementation
+- [README.md](./README.md): This documentation file
+
+## Integration Details
+
+The LangChain integration uses the core functionality from the [common](../common/) directory and wraps it in LangChain-specific components.
+
+This demonstrates how to:
+1. Use LangChain agents with Agent-Bay SDK
+2. Structure the code to separate core functionality from framework-specific integration
+3. Maintain clean separation of concerns between core logic and framework integration
+4. Orchestrate form filling tasks using LangChain's agent framework
+
+## LangChain Orchestration
+
+The form filling agent can be orchestrated using LangChain's agent framework. This provides a more flexible way to interact with the form filling functionality:
+
+1. **Tool-based approach**: The agent exposes tools for analyzing forms, setting filling instructions, and executing the filling process
+2. **Natural language interface**: Users can interact with the agent using natural language commands
+3. **Sequential workflow**: The agent can automatically determine the correct sequence of operations
+
+### Available Tools
+
+1. `analyze_form`: Analyze a form and suggest filling instructions
+2. `fill_form_fields`: Prepare to fill form fields with provided instructions
+3. `execute_form_filling`: Execute the form filling process
+
+### Running the Example Script
+
+To run the LangChain orchestration example:
+
+```bash
+cd YOUR_PREFIX_PATH/cookbook/browser/form-filling-agent/langchain/
 python src/form_filling_agent_example.py
 ```
 
@@ -50791,7 +50901,7 @@ Before you begin, ensure you have:
 ### 1. Clone and Navigate
 
 ```bash
-cd /path/to/wuying-agentbay-sdk/cookbook/envs/codespace/ai-code-assistant
+cd /path/to/wuying-agentbay-sdk/cookbook/codespace/ai-code-assistant
 ```
 
 ### 2. Install Dependencies
@@ -51421,7 +51531,181 @@ The testing agent can be orchestrated using LangChain's agent framework. This pr
 To run the LangChain orchestration example:
 
 ```bash
-cd YOUR_PREFIX_PATH/cookbook/envs/codespace/auto-testing-agent/langchain/
+cd YOUR_PREFIX_PATH/cookbook/codespace/auto-testing-agent/langchain/
+python src/auto_testing_agent_example.py
+```
+
+This example script demonstrates:
+1. Creating a LangChain testing agent
+2. Scanning a project structure
+3. Generating tests using LLM
+4. Executing the tests in AgentBay session
+5. Saving the results to a log file
+
+```
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. Ensure your API key is correct and properly set in the `.env` file
+2. Check that you have network connectivity to Agent-Bay services
+3. Verify that all required packages are installed:
+   ```bash
+   pip list | grep -E "(wuying-agentbay-sdk|langchain)"
+   ```
+4. Check that you've activated your virtual environment before running the scripts
+5. Make sure the project path specified in PROJECT_PATH exists and contains Python files
+
+
+
+# LangChain Integration
+
+This directory contains the LangChain-specific integration for the testing agent.
+
+## Sample Output
+
+When the agent successfully tests a Python project, you will see output similar to the following:
+
+```
+> Entering new AgentExecutor chain...
+
+Invoking: `scan_project` with `/path/to/sample_project`
+
+Project root: /path/to/sample_project
+
+Directories:
+
+Python files:
+  calculator.py
+    Classes:
+      - Calculator (methods: add, subtract, multiply, divide)
+    Functions: add, subtract, multiply, divide, is_even
+
+Invoking: `generate_tests` with `Project root: /path/to/sample_project...`
+
+Generated 1 test case files:
+test_calculator.py
+
+Invoking: `execute_tests` with `test_calculator.py`
+
+Session created with ID: session-xxxxxxxxxxxxxxxxx
+Uploaded calculator.py to AgentBay environment at calculator.py
+Executing test case test_calculator.py
+
+.......................
+----------------------------------------------------------------------
+Ran 23 tests in 0.001s
+
+OK
+
+Final result: The testing process for the Python project has been completed successfully:
+
+1. **Project Scanning**: I scanned the project structure at the specified path and found a single Python file `calculator.py` containing:
+   - A `Calculator` class with methods: `add`, `subtract`, `multiply`, `divide`
+   - Standalone functions: `add`, `subtract`, `multiply`, `divide`, `is_even`
+
+2. **Test Generation**: Based on the project structure, I generated a test file `test_calculator.py` that covers all the functions and class methods.
+
+3. **Test Execution**: All tests passed successfully:
+   - 23 tests were executed in 0.001 seconds
+   - All tests passed (1/1 test files passed)
+   - No failures or errors were detected
+
+The project's calculator functionality is working correctly according to the generated test cases.
+```
+
+## Setup
+
+### 1. Create Virtual Environment
+
+First, create a virtual environment to isolate project dependencies:
+
+```bash
+# Create virtual environment
+python -m venv auto-testing-agent-env
+
+# Activate virtual environment
+# On Windows:
+auto-testing-agent-env\Scripts\activate
+# On macOS/Linux:
+source auto-testing-agent-env/bin/activate
+```
+
+### 2. Install Dependencies
+
+Install the required packages:
+
+```bash
+# Upgrade pip
+pip install --upgrade pip
+```
+
+You can install dependencies using the requirements file:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment Variables
+
+Set your API keys as environment variables:
+
+```bash
+export AGENTBAY_API_KEY="YOUR_AGENTBAY_API_KEY"
+export DASHSCOPE_API_KEY="YOUR_DASHSCOPE_API_KEY"
+```
+
+You can get your Agent-Bay API key from the Agent-Bay platform dashboard:
+1. Visit [Agent-Bay Console](https://agentbay.console.aliyun.com/service-management)
+2. Sign up or log in to your Alibaba Cloud account
+3. Navigate to the Service Management section
+4. Create a new API KEY or select an existing one
+5. Copy the API Key and set it as the value of `AGENTBAY_API_KEY`
+
+For the DashScope API key, you need to register on the Alibaba Cloud DashScope platform:
+1. Visit [DashScope Platform](https://bailian.console.aliyun.com/#/home)
+2. Sign up or log in to your account
+3. Navigate to the API Key management section
+4. Create a new API Key and copy it for use as `DASHSCOPE_API_KEY`
+
+## Structure
+
+- [src/](./src/): Contains the LangChain-specific implementation
+- `data/`: Data directory for outputs (test results, etc.) - created automatically when running tests
+- [README.md](./README.md): This documentation file
+
+## Integration Details
+
+The LangChain integration uses the core functionality from the [common](../common/) directory and wraps it in LangChain-specific components.
+
+This demonstrates how to:
+1. Use LangChain agents with Agent-Bay SDK
+2. Structure the code to separate core functionality from framework-specific integration
+3. Maintain clean separation of concerns between core logic and framework integration
+4. Orchestrate testing tasks using LangChain's agent framework
+
+## LangChain Orchestration
+
+The testing agent can be orchestrated using LangChain's agent framework. This provides a more flexible way to interact with the testing functionality:
+
+1. **Tool-based approach**: The agent exposes tools for scanning projects, generating tests, and executing them
+2. **Natural language interface**: Users can interact with the agent using natural language commands
+3. **Sequential workflow**: The agent can automatically determine the correct sequence of operations
+
+### Available Tools
+
+1. `scan_project`: Scan a project directory to identify Python files that need testing
+2. `generate_tests`: Generate test cases for the loaded project using LLM
+3. `execute_tests`: Execute generated test cases in AgentBay session
+4. `save_results`: Save test results to a local log file
+
+### Running the Example Script
+
+To run the LangChain orchestration example:
+
+```bash
+cd YOUR_PREFIX_PATH/cookbook/codespace/auto-testing-agent/langchain/
 python src/auto_testing_agent_example.py
 ```
 
@@ -51896,129 +52180,348 @@ This example is provided as-is for demonstration purposes.
 
 
 
-Copyright © 2020, [Encode OSS Ltd](https://www.encode.io/).
-All rights reserved.
+# Alibaba Cloud Bailian Integration for AgentBay Data Analysis
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+## 🎯 What This Example Demonstrates
 
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
+This integration showcases the power of combining Alibaba Cloud Bailian's (DashScope) function calling capabilities with AgentBay's cloud runtime environment to perform automated data analysis. The example demonstrates how to:
 
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+- Upload a sales dataset to AgentBay's cloud environment
+- Use Bailian LLM to analyze the data and generate Python code dynamically
+- Execute the generated code in the cloud without any local setup
+- Retrieve and visualize the analysis results automatically
 
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
+### 📊 Example Output
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Below is an actual visualization generated by this example, showing the top 5 e-commerce product categories by revenue:
 
+![Sales Analysis Result](./assets/sales_analysis.png)
 
+**What you're seeing:** This horizontal bar chart was automatically generated by asking Alibaba Cloud Bailian to analyze the e-commerce sales dataset. The AI wrote the Python code, executed it in AgentBay's cloud environment, and returned this visualization—all without any manual coding or local environment setup.
 
+**Key Metrics from This Analysis:**
+- **Total Revenue:** $1,058,080.92
+- **Total Orders:** 5,000
+- **Average Order Value:** $211.62
+- **Top Category:** Home & Garden ($337,763.90)
 
-Copyright © 2019, [Encode OSS Ltd](https://www.encode.io/).
-All rights reserved.
+---
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+This integration demonstrates how to use Alibaba Cloud Bailian's function calling feature with AgentBay to perform automated data analysis in cloud environments.
 
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+## Overview
 
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+This example shows how to:
 
-* Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+1. Create an AgentBay CodeSpace environment for Python code execution
+2. Upload datasets to the cloud environment
+3. Use Bailian's function calling to generate Python code dynamically
+4. Execute the generated code in the remote CodeSpace
+5. Capture and download visualization results automatically
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+## Prerequisites
 
+- Python 3.8 or higher
+- AgentBay API key (get it from [AgentBay Console](https://agentbay.console.aliyun.com/service-management))
+- Alibaba Cloud DashScope API key (get it from [DashScope Console](https://dashscope.console.aliyun.com/))
 
+## Installation
 
+1. **Set up a Python virtual environment** (recommended):
 
-BSD 3-Clause License
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-Copyright (c) 2013-2025, Kim Davies and contributors.
-All rights reserved.
+2. **Install dependencies**:
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
+```bash
+pip install -r requirements.txt
+```
 
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+Or install manually:
 
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+```bash
+pip install openai wuying-agentbay-sdk
+```
 
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
+**Note**: For local development, you can install the SDK from the local path:
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```bash
+pip install /path/to/wuying-agentbay-sdk/python
+```
 
+## Configuration
 
+1. **Copy the environment template**:
 
+```bash
+cd ..  # Go to openai-data-analysis directory
+cp .env.example .env
+```
 
-BSD 3-Clause License
+2. **Edit `.env` and add your API keys**:
 
-Copyright (c) 2013-2024, Kim Davies and contributors.
-All rights reserved.
+```bash
+AGENTBAY_API_KEY=your_agentbay_api_key_here
+DASHSCOPE_API_KEY=your_dashscope_api_key_here
+DASHSCOPE_MODEL=qwen3-max
+```
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
+3. **Load environment variables**:
 
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+```bash
+export $(cat .env | xargs)
+```
 
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+Or source them in your shell:
 
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
+```bash
+source .env  # If your .env uses export statements
+```
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+## Usage
 
+### 1. Generate Sample Data
 
+First, generate the synthetic e-commerce dataset:
 
+```bash
+cd ../common/src
+python generate_ecommerce_data.py
+```
 
-macosx_11_0_arm64.whl driver package
+This will create `ecommerce_sales.csv` in the current directory with 5000 sample orders.
 
+### 2. Run the Analysis
 
+Execute the main analysis script:
 
-# playwright-core
+```bash
+cd ../../openai/src
+python agentbay_openai_sales_analysis.py
+```
 
-This package contains the no-browser flavor of [Playwright](http://github.com/microsoft/playwright).
+The script will:
+1. Initialize AgentBay and OpenAI clients
+2. Create a new AgentBay CodeSpace environment
+3. Upload the dataset to the CodeSpace
+4. Send an analysis request to OpenAI
+5. Execute the generated Python code in the remote CodeSpace
+6. Download and save the visualization as `sales_analysis.png`
+7. Clean up the session
+
+### Expected Output
+
+```
+================================================================================
+AgentBay + Alibaba Cloud Bailian Integration: E-commerce Sales Analysis
+================================================================================
+
+🚀 Initializing AgentBay client...
+📦 Creating AgentBay CodeSpace environment...
+✓ Session created: sess_xxxxx
+
+📤 Uploading dataset to AgentBay session...
+✓ Uploaded to /home/user/ecommerce_sales.csv
+
+🔍 Validating dataset...
+✓ Dataset validation results:
+  Total rows: 5000
+  Total columns: 15
+  Date range: 2023-01-01 to 2024-12-31
+  Total revenue: $1,089,178.68
+  Categories: Electronics, Clothing, Home & Garden, Books, Sports, Toys
+
+🤖 Starting AI-powered sales analysis...
+================================================================================
+User Request: Analyze the e-commerce sales dataset...
+================================================================================
+
+Waiting for the LLM to respond...
+
+LLM Response: (tool call)
+
+Tool Used: execute_python
+Code to Execute:
+--------------------------------------------------------------------------------
+import pandas as pd
+import matplotlib.pyplot as plt
+...
+--------------------------------------------------------------------------------
+
+🔧 Executing Python code in AgentBay session...
+
+================================================================================
+Analysis Results:
+================================================================================
+✓ Visualization saved to sales_analysis.png
+
+Analysis Output:
+Total revenue: $1089178.68
+Total orders: 5000
+Average order value: $217.84
+...
+
+🧹 Cleaning up...
+✓ Session deleted
+
+✓ Demo completed successfully!
+```
+
+## Code Walkthrough
+
+### Main Components
+
+#### 1. System Prompt
+
+The system prompt provides context to the LLM about:
+- Its role as a data analyst
+- Dataset structure and columns
+- Execution environment (AgentBay CodeSpace with pre-installed data science packages)
+- Available packages (pandas, numpy, matplotlib, etc.)
+- Guidelines for code generation
+
+#### 2. Function Definition
+
+The `execute_python` function is defined in the Bailian tools schema, allowing the LLM to generate code that will be executed remotely.
+
+#### 3. Code Execution
+
+The `execute_python_code()` function uses AgentBay's native `run_code` API:
+- Appends matplotlib save commands to the generated code
+- Executes code using `session.code.run_code()` API
+- Detects saved plots and downloads them using `session.file_system.download_file()`
+- Returns structured results (result, error, png_path)
+
+#### 4. Workflow
+
+```python
+# 1. Create CodeSpace session
+params = CreateSessionParams(image_id="code_latest")  # CodeSpace environment
+result = agentbay.create(params)
+session = result.session
+
+# 2. Upload dataset
+session.file_system.upload_file(local_path, remote_path)
+
+# 3. Call Bailian with function calling
+completion = llm_client.chat.completions.create(
+    model=MODEL_NAME,
+    messages=[...],
+    tools=TOOLS,
+    tool_choice="auto"
+)
+
+# 4. Execute generated code using run_code API
+result = session.code.run_code(code_with_save, "python", timeout_s=60)
+
+# 5. Download visualization if generated
+if "PLOT_SAVED:" in result.result:
+    download_result = session.file_system.download_file(
+        '/tmp/output.png',
+        'sales_analysis.png'
+    )
+
+# 6. Cleanup
+session.delete()
+```
+
+## Customization
+
+### Modify Analysis Query
+
+You can change the analysis request in `agentbay_openai_sales_analysis.py`:
+
+```python
+analysis_request = (
+    'Your custom analysis request here...'
+)
+```
+
+### Change Dataset
+
+To use a different dataset:
+
+1. Modify `generate_ecommerce_data.py` to generate your desired data structure
+2. Update the system prompt to reflect the new dataset structure
+3. Regenerate the data and run the analysis
+
+### Adjust LLM Model
+
+Set the `DASHSCOPE_MODEL` environment variable or modify the default in the script:
+
+```python
+MODEL_NAME = os.environ.get("DASHSCOPE_MODEL", "qwen3-max")
+```
+
+Available Bailian models:
+- `qwen3-max`: Most capable model (default)
+- `qwen-turbo`: Faster responses
+- `qwen-plus`: Balanced performance
+
+## Troubleshooting
+
+### Issue: "Failed to create session"
+
+**Solution**: Check that your AGENTBAY_API_KEY is valid and you have sufficient quota.
+
+### Issue: "Bailian API error"
+
+**Solution**: Verify your DASHSCOPE_API_KEY is correctly set and you have access to the DashScope service.
+
+### Issue: "Dataset file not found"
+
+**Solution**: Make sure you've run `generate_ecommerce_data.py` first to create the dataset.
+
+### Issue: "No visualization was generated"
+
+**Solution**: Check the code execution output for errors. Ensure the LLM-generated code includes matplotlib plotting commands.
+
+### Issue: "Code execution timeout"
+
+**Solution**: The script has a 60-second timeout. For larger datasets or complex analyses, you may need to increase the `timeout_s` parameter in `session.code.run_code()`.
+
+## Technical Details
+
+### Remote Code Execution
+
+The code execution mechanism uses AgentBay's native `run_code` API:
+
+1. Appends matplotlib save commands to the user's code
+2. Executes code using `session.code.run_code(code, "python", timeout_s=60)`
+3. Checks execution result for success/failure
+4. Detects saved plots by looking for "PLOT_SAVED:" marker in output
+5. Downloads visualization files using `session.file_system.download_file()`
+6. Returns structured output with result text, error (if any), and local PNG path
+
+### File Upload
+
+Files are uploaded using the AgentBay SDK's `file_system.upload_file()` method:
+
+```python
+result = session.file_system.upload_file(
+    local_path="./ecommerce_sales.csv",
+    remote_path="/home/user/ecommerce_sales.csv"
+)
+```
+
+### Session Management
+
+Sessions are automatically managed:
+- Created as isolated CodeSpace environments for secure code execution
+- Cleaned up in a `finally` block to ensure resource release
+- Each session is isolated from others for security
+
+## Learn More
+
+- [AgentBay SDK Documentation](https://help.aliyun.com/zh/agentbay/)
+- [Alibaba Cloud Bailian (DashScope) Documentation](https://help.aliyun.com/zh/dashscope/)
+- [AgentBay Python SDK Reference](https://github.com/aliyun/alibabacloud-agentbay-sdk)
+
+## License
+
+This example is provided as-is for demonstration purposes.
 
 

@@ -118,7 +118,7 @@ The form filling agent can be orchestrated using LangChain's agent framework. Th
 To run the LangChain orchestration example:
 
 ```bash
-cd YOUR_PREFIX_PATH/cookbook/envs/browser/form-filling-agent/langchain/
+cd YOUR_PREFIX_PATH/cookbook/browser/form-filling-agent/langchain/
 python src/form_filling_agent_example.py
 ```
 
