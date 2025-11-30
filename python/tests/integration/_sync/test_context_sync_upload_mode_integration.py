@@ -64,7 +64,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         print("\n=== Testing basic functionality with default File upload mode ===")
 
         # Step 1: Use context.get method to generate contextId
-        context_name = f"test-context-{self.unique_id}"
+        context_name = f"test-context-{self.__class__.unique_id}"
         print(f"Creating context with name: {context_name}")
 
         context_result = self.agent_bay.context.get(context_name, True)
@@ -87,7 +87,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
 
         session_params = CreateSessionParams(
             labels={
-                "test": f"upload-mode-{self.unique_id}",
+                "test": f"upload-mode-{self.__class__.unique_id}",
                 "type": "basic-functionality",
             },
             context_syncs=[context_sync],
@@ -141,7 +141,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
             "\n=== Testing contextId and path usage with Archive mode and file operations ==="
         )
 
-        context_name = f"archive-mode-context-{self.unique_id}"
+        context_name = f"archive-mode-context-{self.__class__.unique_id}"
         context_result = self.agent_bay.context.get(context_name, True)
 
         self.assertTrue(
@@ -176,7 +176,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         # Create session with the contextSync
         session_params = CreateSessionParams(
             labels={
-                "test": f"archive-mode-{self.unique_id}",
+                "test": f"archive-mode-{self.__class__.unique_id}",
                 "type": "contextId-path-validation",
             },
             context_syncs=[context_sync],
@@ -244,7 +244,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
 
         # Use asyncio.run to handle the async sync method
         def run_sync():
-            return session.context.sync()
+            return session.context.sync_context()
 
         sync_result = run_sync()
 
@@ -341,7 +341,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         """Test error handling when using invalid uploadMode with policy assignment."""
         print("\n=== Testing invalid uploadMode with policy assignment ===")
 
-        context_name = f"invalid-policy-context-{self.unique_id}"
+        context_name = f"invalid-policy-context-{self.__class__.unique_id}"
         context_result = self.agent_bay.context.get(context_name, True)
         self.assertTrue(
             context_result.success,
@@ -391,7 +391,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         """Test that valid uploadMode values are accepted."""
         print("\n=== Testing valid uploadMode values ===")
 
-        context_name = f"valid-context-{self.unique_id}"
+        context_name = f"valid-context-{self.__class__.unique_id}"
         context_result = self.agent_bay.context.get(context_name, True)
         self.assertTrue(
             context_result.success,

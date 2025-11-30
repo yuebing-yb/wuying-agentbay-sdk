@@ -183,13 +183,17 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
 
         # Additionally, attempt to download after delete and log the status.
         # Some backends may keep presigned URLs valid until expiry even if the file is deleted.
-        post_dl = self.agent_bay.context.get_file_download_url(
-            self.context.id, test_path
-        )
-        if post_dl.success and isinstance(post_dl.url, str) and len(post_dl.url) > 0:
-            post_resp = httpx.get(post_dl.url, timeout=30.0)
-            print(
-                f"Post-delete download status (informational): {post_resp.status_code}"
+        try:
+            post_dl = self.agent_bay.context.get_file_download_url(
+                self.context.id, test_path
             )
-        else:
-            print("Post-delete: download URL not available, treated as deleted")
+            if post_dl.success and isinstance(post_dl.url, str) and len(post_dl.url) > 0:
+                with httpx.Client() as client:
+                    post_resp = client.get(post_dl.url, timeout=30.0)
+                print(
+                    f"Post-delete download status (informational): {post_resp.status_code}"
+                )
+            else:
+                print("Post-delete: download URL not available, treated as deleted")
+        except Exception as e:
+            print(f"Post-delete: download URL request failed as expected: {type(e).__name__}")
