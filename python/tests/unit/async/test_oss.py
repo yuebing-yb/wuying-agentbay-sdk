@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock
 
 from agentbay._common.models.response import McpToolResult, OperationResult
-from agentbay._async.oss import Oss
+from agentbay._async.oss import AsyncOss
 
 
 class TestAsyncOss(unittest.IsolatedAsyncioTestCase):

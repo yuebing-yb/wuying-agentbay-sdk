@@ -1347,7 +1347,7 @@ def run_task_with_semaphore(
     max_steps_per_task: int,
     headless: bool,
     use_vision: bool,
-    semaphore_runs,  # Pass semaphore as argument (threading.Semaphore in sync version)
+    semaphore_runs: asyncio.Semaphore,  # Pass semaphore as argument
     fresh_start: bool = True,
     use_serp: bool = False,
     enable_memory: bool = False,

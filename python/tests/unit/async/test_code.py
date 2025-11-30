@@ -1,21 +1,22 @@
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
-from agentbay._async.code import Code, CodeExecutionResult
+from agentbay._async.code import AsyncCode, CodeExecutionResult
 
 
 class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
     """Unit tests for Code module."""
 
-    async def setUp(self):
+    def setUp(self):
         """Set up test fixtures."""
         self.mock_session = Mock()
         self.session = self.mock_session  # Add session reference
         self.mock_session.get_api_key.return_value = "test-api-key"
         self.mock_session.get_session_id.return_value = "test-session-id"
         self.mock_session.get_client.return_value = Mock()
+        self.mock_session.call_mcp_tool = AsyncMock()
 
-        self.code = Code(self.mock_session)
+        self.code = AsyncCode(self.mock_session)
 
     async def test_run_code_success_python(self):
         """
@@ -29,7 +30,7 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         self.session.call_mcp_tool.return_value = mock_result
 
         code = "print('Hello, world!')\nx = 1 + 1\nprint(x)"
-        result = self.code.run_code(code, "python")
+        result = await self.code.run_code(code, "python")
 
         # Verify the call
         self.session.call_mcp_tool.assert_called_once_with(
@@ -56,7 +57,7 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         code = "console.log('Hello, world!');\nconst x = 1 + 1;\nconsole.log(x);"
         custom_timeout = 120
 
-        result = self.code.run_code(code, "javascript", timeout_s=custom_timeout)
+        result = await self.code.run_code(code, "javascript", timeout_s=custom_timeout)
 
         # Verify the call
         self.session.call_mcp_tool.assert_called_once_with(
@@ -74,7 +75,7 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         """
         Test run_code method with invalid language.
         """
-        result = self.code.run_code("print('test')", "invalid_language")
+        result = await self.code.run_code("print('test')", "invalid_language")
 
         self.assertIsInstance(result, CodeExecutionResult)
         self.assertFalse(result.success)
@@ -91,7 +92,7 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         mock_result.request_id = "test-request-id"
         self.session.call_mcp_tool.return_value = mock_result
 
-        result = self.code.run_code("print('test')", "python")
+        result = await self.code.run_code("print('test')", "python")
 
         self.assertIsInstance(result, CodeExecutionResult)
         self.assertFalse(result.success)
@@ -104,7 +105,7 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         """
         self.session.call_mcp_tool.side_effect = Exception("Network error")
 
-        result = self.code.run_code("print('test')", "python")
+        result = await self.code.run_code("print('test')", "python")
 
         self.assertIsInstance(result, CodeExecutionResult)
         self.assertFalse(result.success)

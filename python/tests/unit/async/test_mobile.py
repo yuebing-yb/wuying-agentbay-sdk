@@ -320,7 +320,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        await result = await self.mobile.screenshot()
+        result = await self.mobile.screenshot()
 
         # Assert
         assert isinstance(result, OperationResult)

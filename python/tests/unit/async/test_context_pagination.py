@@ -5,7 +5,7 @@ from agentbay._async.context import (
     Context,
     ContextListParams,
     ContextListResult,
-    ContextService,
+    AsyncContextService,
 )
 
 

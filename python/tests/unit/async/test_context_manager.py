@@ -174,7 +174,7 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
             )
 
             # Call the method directly (synchronously)
-            await result = await self.context_manager.sync_context()
+            result = await self.context_manager.sync_context()
 
             # Verify the results
             self.assertEqual(result.request_id, "test-request-id")
@@ -199,7 +199,7 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
             )
 
             # Call the method with parameters directly (synchronously)
-            await result = await self.context_manager.sync_context(
+            result = await self.context_manager.sync_context(
                 "ctx-123", "/home/user", "upload"
             )
 

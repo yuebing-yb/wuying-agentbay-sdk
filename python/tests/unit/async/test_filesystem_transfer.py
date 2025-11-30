@@ -170,7 +170,7 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
 
     def _run_async_test(self, coro):
         """Helper method to run async tests."""
-        return await asyncio.run(coro)
+        return asyncio.run(coro)
 
     @patch("os.path.isfile")
     async def test_upload_success(self, mock_isfile):

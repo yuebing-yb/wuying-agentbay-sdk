@@ -154,7 +154,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        await result = await self.computer.scroll(300, 300)
+        result = await self.computer.scroll(300, 300)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -173,7 +173,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        await result = await self.computer.scroll(300, 300, direction="down", amount=3)
+        result = await self.computer.scroll(300, 300, direction="down", amount=3)
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
@@ -306,7 +306,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        await result = await self.computer.screenshot()
+        result = await self.computer.screenshot()
 
         # Assert
         assert isinstance(result, OperationResult)
@@ -362,7 +362,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        await result = await self.computer.scroll(
+        result = await self.computer.scroll(
             300, 300, direction=ScrollDirection.DOWN, amount=5
         )
 

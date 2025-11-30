@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._common.logger import get_logger
 from agentbay._common.models.response import McpToolResult, OperationResult
-from agentbay._async.agent import Agent, ExecutionResult
+from agentbay._async.agent import AsyncAgent, ExecutionResult
 
 logger = get_logger("agentbay-unit-test")
 
@@ -16,7 +16,7 @@ class DummySession:
         self.session_id = "dummy_session"
         self.client = MagicMock()
         # Add call_mcp_tool method for new API
-        self.call_mcp_tool = MagicMock()
+        self.call_mcp_tool = AsyncMock()
 
     def get_api_key(self):
         return self.api_key
@@ -29,9 +29,9 @@ class DummySession:
 
 
 class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
-    async def setUp(self):
-        self.session = DummyAsyncAsyncSession()
-        self.agent = Agent(self.session)
+    def setUp(self):
+        self.session = DummySession()
+        self.agent = AsyncAgent(self.session)
         self.max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
         if not self.max_try_times:
             self.max_try_times = 5
@@ -49,7 +49,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        result = self.agent.execute_task("Say hello", int(self.max_try_times))
+        result = await self.agent.execute_task("Say hello", int(self.max_try_times))
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -75,7 +75,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
             data="""{"task_id": "task-123", "status": "failed", "result":"", "product": "Task Failed"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
-        result = self.agent.execute_task("Say hello", self.max_try_times)
+        result = await self.agent.execute_task("Say hello", self.max_try_times)
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -98,7 +98,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        result = self.agent.terminate_task("task-123")
+        result = await self.agent.terminate_task("task-123")
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -123,7 +123,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        result = self.agent.async_execute_task("Say hello")
+        result = await self.agent.async_execute_task("Say hello")
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -142,7 +142,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
                 data="""{"task_id": "task-123", "status": "running", "result":"", "product": "Task is runnning."}""",
             )
             self.session.call_mcp_tool.return_value = mock_query_result
-            query_result = self.agent.get_task_status(result.task_id)
+            query_result = await self.agent.get_task_status(result.task_id)
             self.assertTrue(query_result.success)
             logger.info(
                 f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_product}."
@@ -166,7 +166,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        result = self.agent.async_execute_task("Say hello")
+        result = await self.agent.async_execute_task("Say hello")
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -187,7 +187,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        result = self.agent.terminate_task("task-123")
+        result = await self.agent.terminate_task("task-123")
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")

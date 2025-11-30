@@ -2,7 +2,7 @@ import pytest
 
 from agentbay._async.agentbay import AsyncAgentBay
 from agentbay._common.models.response import SessionResult
-from agentbay._async.session import AsyncAsyncSession
+from agentbay._async.session import AsyncSession
 
 
 class TestAgentBayGet:

@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 from agentbay._async.context import (
     ContextFileEntry,
     ContextFileListResult,
-    ContextService,
+    AsyncContextService,
 )
 
 

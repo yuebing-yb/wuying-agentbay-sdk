@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock
 
-from agentbay._async.context import Context, ContextService
+from agentbay._async.context import Context, AsyncContextService
 
 
 class TestAsyncContext(unittest.IsolatedAsyncioTestCase):

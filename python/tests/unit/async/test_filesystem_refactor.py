@@ -76,7 +76,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
     # Test new unified read_file method
     @patch("agentbay._async.filesystem.FileSystem.get_file_info")
     @patch("agentbay._async.filesystem.FileSystem._read_file_chunk")
-    def test_read_file_small_file_direct_read(
+    async def test_read_file_small_file_direct_read(
         self, mock_read_chunk, mock_get_file_info
     ):
         """
@@ -95,7 +95,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
             request_id="request-123-1", success=True, content="small file content"
         )
 
-        await result = await self.fs.read_file("/path/to/small_file.txt")
+        result = await self.fs.read_file("/path/to/small_file.txt")
 
         self.assertIsInstance(result, FileContentResult)
         self.assertTrue(result.success)
@@ -105,7 +105,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.filesystem.FileSystem.get_file_info")
     @patch("agentbay._async.filesystem.FileSystem._read_file_chunk")
-    def test_read_file_large_file_chunked_read(
+    async def test_read_file_large_file_chunked_read(
         self, mock_read_chunk, mock_get_file_info
     ):
         """
@@ -132,7 +132,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
             ),
         ]
 
-        await result = await self.fs.read_file("/path/to/large_file.txt")
+        result = await self.fs.read_file("/path/to/large_file.txt")
 
         self.assertIsInstance(result, FileContentResult)
         self.assertTrue(result.success)
@@ -153,7 +153,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         )
         mock_get_file_info.return_value = file_info_result
 
-        await result = await self.fs.read_file("/path/to/empty_file.txt")
+        result = await self.fs.read_file("/path/to/empty_file.txt")
 
         self.assertIsInstance(result, FileContentResult)
         self.assertTrue(result.success)
@@ -173,7 +173,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         )
         mock_get_file_info.return_value = file_info_result
 
-        await result = await self.fs.read_file("/path/to/directory")
+        result = await self.fs.read_file("/path/to/directory")
 
         self.assertIsInstance(result, FileContentResult)
         self.assertFalse(result.success)
@@ -190,7 +190,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         )
 
         small_content = "small content"
-        await result = await self.fs.write_file("/path/to/file.txt", small_content)
+        result = await self.fs.write_file("/path/to/file.txt", small_content)
 
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
@@ -212,7 +212,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
 
         # Create content larger than default chunk size (50KB)
         large_content = "x" * (150 * 1024)  # 150KB content
-        await result = await self.fs.write_file("/path/to/large_file.txt", large_content)
+        result = await self.fs.write_file("/path/to/large_file.txt", large_content)
 
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
@@ -240,7 +240,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         )
 
         small_content = "append content"
-        await result = await self.fs.write_file("/path/to/file.txt", small_content, "append")
+        result = await self.fs.write_file("/path/to/file.txt", small_content, "append")
 
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
@@ -260,7 +260,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
 
         # Create content larger than default chunk size
         large_content = "x" * (100 * 1024)  # 100KB content
-        await result = await self.fs.write_file("/path/to/large_file.txt", large_content, "append")
+        result = await self.fs.write_file("/path/to/large_file.txt", large_content, "append")
 
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
@@ -286,7 +286,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
             request_id="request-123", success=False, error_message="Write failed"
         )
 
-        await result = await self.fs.write_file("/path/to/file.txt", "content")
+        result = await self.fs.write_file("/path/to/file.txt", "content")
 
         self.assertIsInstance(result, BoolResult)
         self.assertFalse(result.success)
@@ -301,7 +301,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
             request_id="request-123", success=False, error_message="File not found"
         )
 
-        await result = await self.fs.read_file("/path/to/nonexistent.txt")
+        result = await self.fs.read_file("/path/to/nonexistent.txt")
 
         self.assertIsInstance(result, FileContentResult)
         self.assertFalse(result.success)

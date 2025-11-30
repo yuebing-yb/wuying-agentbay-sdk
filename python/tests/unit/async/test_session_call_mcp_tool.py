@@ -31,7 +31,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
 
     async def setUp(self):
         """Set up test fixtures."""
-        from agentbay._async.session import AsyncAsyncSession
+        from agentbay._async.session import AsyncSession
 
         self.agent_bay = DummyAsyncAgentBay()
         self.session_id = "test_session_id"

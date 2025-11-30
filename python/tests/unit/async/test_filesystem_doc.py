@@ -5,7 +5,7 @@ import time
 
 from agentbay._async.agentbay import AsyncAgentBay, CreateSessionParams
 
-def main():
+async def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         print("AGENTBAY_API_KEY environment variable not set")
@@ -25,34 +25,34 @@ def main():
     try:
         print("=== Test 1: Create Directory ===")
         test_dir = "/tmp/agentbay_test"
-        await create_result = await filesystem.create_directory(test_dir)
+        create_result = await filesystem.create_directory(test_dir)
         print(f"Success: {create_result.success}, Data: {create_result.data}, RequestID: {create_result.request_id}")
         
         print("\n=== Test 2: Write File ===")
         test_file = "/tmp/agentbay_test/test.txt"
-        await write_result = await filesystem.write_file(test_file, "Hello, AgentBay!", mode="overwrite")
+        write_result = await filesystem.write_file(test_file, "Hello, AgentBay!", mode="overwrite")
         print(f"Success: {write_result.success}, Data: {write_result.data}, RequestID: {write_result.request_id}")
         
         print("\n=== Test 3: Read File ===")
-        await read_result = await filesystem.read_file(test_file)
+        read_result = await filesystem.read_file(test_file)
         print(f"Success: {read_result.success}")
         print(f"Content: {read_result.content}")
         print(f"RequestID: {read_result.request_id}")
         
         print("\n=== Test 4: Edit File ===")
         edits = [{"oldText": "Hello", "newText": "Hi"}]
-        await edit_result = await filesystem.edit_file(test_file, edits, dry_run=False)
+        edit_result = await filesystem.edit_file(test_file, edits, dry_run=False)
         print(f"Success: {edit_result.success}, Data: {edit_result.data}, RequestID: {edit_result.request_id}")
         
         print("\n=== Test 5: Get File Info ===")
-        await info_result = await filesystem.get_file_info(test_file)
+        info_result = await filesystem.get_file_info(test_file)
         print(f"Success: {info_result.success}")
         if info_result.file_info:
             print(f"File Info: {info_result.file_info}")
         print(f"RequestID: {info_result.request_id}")
         
         print("\n=== Test 6: List Directory ===")
-        await list_result = await filesystem.list_directory(test_dir)
+        list_result = await filesystem.list_directory(test_dir)
         print(f"Success: {list_result.success}")
         print(f"Entries (Total: {len(list_result.entries) if list_result.entries else 0}):")
         if list_result.entries:
@@ -63,7 +63,7 @@ def main():
         
         print("\n=== Test 7: Move File ===")
         new_path = "/tmp/agentbay_test/moved.txt"
-        await move_result = await filesystem.move_file(test_file, new_path)
+        move_result = await filesystem.move_file(test_file, new_path)
         print(f"Success: {move_result.success}, Data: {move_result.data}, RequestID: {move_result.request_id}")
         
         print("\n=== Test 8: Read Multiple Files ===")
@@ -71,7 +71,7 @@ def main():
         await filesystem.write_file("/tmp/agentbay_test/file2.txt", "Content 2", mode="overwrite")
         
         paths = ["/tmp/agentbay_test/file1.txt", "/tmp/agentbay_test/file2.txt"]
-        await multi_read_result = await filesystem.read_multiple_files(paths)
+        multi_read_result = await filesystem.read_multiple_files(paths)
         print(f"Success: {multi_read_result.success}")
         print(f"Files read: {len(multi_read_result.contents) if multi_read_result.contents else 0}")
         if multi_read_result.contents:
@@ -79,7 +79,7 @@ def main():
                 print(f"  - {path}: {content}")
         
         print("\n=== Test 9: Search Files ===")
-        await search_result = await filesystem.search_files(test_dir, ".txt")
+        search_result = await filesystem.search_files(test_dir, ".txt")
         print(f"Success: {search_result.success}")
         print(f"Found {len(search_result.matches) if search_result.matches else 0} files:")
         if search_result.matches:
@@ -128,4 +128,5 @@ def main():
         agent_bay.delete(session)
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())

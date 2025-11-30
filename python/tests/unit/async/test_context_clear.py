@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._common.exceptions import AgentBayError, ClearanceTimeoutError
-from agentbay._async.context import ClearContextResult, ContextService
+from agentbay._async.context import ClearContextResult, AsyncContextService
 from agentbay.api.models import (
     ClearContextResponse,
     ClearContextResponseBody,

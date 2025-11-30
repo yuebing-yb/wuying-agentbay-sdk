@@ -55,7 +55,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             request_id="request-123", success=True, content="file content"
         )
 
-        await result = await self.fs.read_file("/path/to/file.txt")
+        result = await self.fs.read_file("/path/to/file.txt")
         self.assertIsInstance(result, FileContentResult)
         self.assertTrue(result.success)
         self.assertEqual(result.content, "file content")
@@ -73,7 +73,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         mock_get_file_info.return_value = error_result
 
-        await result = await self.fs.read_file("/path/to/file.txt")
+        result = await self.fs.read_file("/path/to/file.txt")
         self.assertIsInstance(result, FileContentResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -101,7 +101,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             error_message="Invalid response body",
         )
 
-        await result = await self.fs.read_file("/path/to/file.txt")
+        result = await self.fs.read_file("/path/to/file.txt")
         self.assertIsInstance(result, FileContentResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -116,7 +116,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.create_directory("/path/to/directory")
+        result = await self.fs.create_directory("/path/to/directory")
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -134,7 +134,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.create_directory("/path/to/directory")
+        result = await self.fs.create_directory("/path/to/directory")
         self.assertIsInstance(result, BoolResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -149,7 +149,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.edit_file(
+        result = await self.fs.edit_file(
             "/path/to/file.txt", [{"oldText": "foo", "newText": "bar"}]
         )
         self.assertIsInstance(result, BoolResult)
@@ -170,7 +170,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.edit_file(
+        result = await self.fs.edit_file(
             "/path/to/file.txt", [{"oldText": "foo", "newText": "bar"}]
         )
         self.assertIsInstance(result, BoolResult)
@@ -187,7 +187,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             request_id="request-123", success=True, data=True
         )
 
-        await result = await self.fs.write_file(
+        result = await self.fs.write_file(
             "/path/to/file.txt", "content to write", "overwrite"
         )
         self.assertIsInstance(result, BoolResult)
@@ -209,7 +209,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             error_message="Write failed",
         )
 
-        await result = await self.fs.write_file(
+        result = await self.fs.write_file(
             "/path/to/file.txt", "content to write", "overwrite"
         )
         self.assertIsInstance(result, BoolResult)
@@ -230,7 +230,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.get_file_info("/path/to/file.txt")
+        result = await self.fs.get_file_info("/path/to/file.txt")
         self.assertIsInstance(result, FileInfoResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -252,7 +252,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.get_file_info("/path/to/file.txt")
+        result = await self.fs.get_file_info("/path/to/file.txt")
         self.assertIsInstance(result, FileInfoResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -271,7 +271,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.list_directory("/path/to/directory")
+        result = await self.fs.list_directory("/path/to/directory")
         self.assertIsInstance(result, DirectoryListResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -296,7 +296,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.list_directory("/path/to/directory")
+        result = await self.fs.list_directory("/path/to/directory")
         self.assertIsInstance(result, DirectoryListResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -312,7 +312,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.move_file("/path/to/source.txt", "/path/to/dest.txt")
+        result = await self.fs.move_file("/path/to/source.txt", "/path/to/dest.txt")
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -331,7 +331,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.move_file("/path/to/source.txt", "/path/to/dest.txt")
+        result = await self.fs.move_file("/path/to/source.txt", "/path/to/dest.txt")
         self.assertIsInstance(result, BoolResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -350,7 +350,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.read_multiple_files(
+        result = await self.fs.read_multiple_files(
             ["/path/to/file1.txt", "/path/to/file2.txt"]
         )
         self.assertIsInstance(result, MultipleFileContentResult)
@@ -373,7 +373,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.search_files("/path/to", "pattern")
+        result = await self.fs.search_files("/path/to", "pattern")
         self.assertIsInstance(result, FileSearchResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -392,7 +392,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        await result = await self.fs.search_files(
+        result = await self.fs.search_files(
             "/path/to", "pattern", exclude_patterns=["*.py", "node_modules"]
         )
         self.assertIsInstance(result, FileSearchResult)
@@ -428,7 +428,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             ),
         ]
 
-        await result = await self.fs.read_file("/path/to/large_file.txt")
+        result = await self.fs.read_file("/path/to/large_file.txt")
         self.assertIsInstance(result, FileContentResult)
         self.assertTrue(result.success)
         self.assertEqual(result.content, "chunk1chunk2chunk3")
@@ -447,7 +447,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
         mock_get_file_info.return_value = error_result
 
-        await result = await self.fs.read_file("/path/to/large_file.txt")
+        result = await self.fs.read_file("/path/to/large_file.txt")
         self.assertIsInstance(result, FileContentResult)
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "File not found")
@@ -465,7 +465,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         ]
 
         content = "a" * (150 * 1024)  # 150KB content
-        await result = await self.fs.write_file("/path/to/large_file.txt", content)
+        result = await self.fs.write_file("/path/to/large_file.txt", content)
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
         self.assertTrue(result.data)
@@ -487,7 +487,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
 
         content = "small content"
-        await result = await self.fs.write_file("/path/to/file.txt", content)
+        result = await self.fs.write_file("/path/to/file.txt", content)
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
         self.assertTrue(result.data)
@@ -507,7 +507,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         )
 
         content = "a" * (100 * 1024)  # 100KB content
-        await result = await self.fs.write_file("/path/to/large_file.txt", content)
+        result = await self.fs.write_file("/path/to/large_file.txt", content)
         self.assertIsInstance(result, BoolResult)
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Write error")
@@ -524,7 +524,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             error_message="Invalid write mode: invalid_mode. Must be 'overwrite' or 'append'.",
         )
 
-        await result = await self.fs.write_file("/path/to/file.txt", "content", "invalid_mode")
+        result = await self.fs.write_file("/path/to/file.txt", "content", "invalid_mode")
         self.assertIsInstance(result, BoolResult)
         self.assertFalse(result.success)
         self.assertIn("Invalid write mode", result.error_message)

@@ -82,7 +82,7 @@ class TestGetCdpLink:
             assert response.body.data.url == "ws://test-cdp-url:9222"
 
     @pytest.mark.asyncio
-    async async def test_get_cdp_link_async(self, client):
+    async def test_get_cdp_link_async(self, client):
         """Test get_cdp_link_async"""
         mock_response = {
             "headers": {"x-request-id": "test-request-id"},
@@ -210,7 +210,7 @@ class TestGetAdbLink:
             assert response.body.data.url == "adb://test-adb-url:5555"
 
     @pytest.mark.asyncio
-    async async def test_get_adb_link_async(self, client):
+    async def test_get_adb_link_async(self, client):
         """Test get_adb_link_async"""
         mock_response = {
             "headers": {"x-request-id": "test-request-id"},
