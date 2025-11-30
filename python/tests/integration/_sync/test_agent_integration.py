@@ -19,7 +19,7 @@ logger = get_logger("agentbay-integration-test")
 
 @pytest.fixture(scope="module")
 def agent_bay():
-    """Create an AsyncAgentBay instance."""
+    """Create an AgentBay instance."""
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         pytest.skip("AGENTBAY_API_KEY environment variable not set")

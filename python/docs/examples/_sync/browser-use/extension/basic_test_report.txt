@@ -1,0 +1,25 @@
+Extension Test Report
+==================================================
+
+[FAIL] ext_c40fd987ae7146eebe78ebfd317c3387.zip - extension_loaded
+   Duration: 0.17s
+   Error: 'Command' object has no attribute 'execute'
+
+[FAIL] ext_c40fd987ae7146eebe78ebfd317c3387.zip - manifest_valid
+   Duration: 0.13s
+   Error: 'Command' object has no attribute 'execute'
+
+[PASS] ext_c40fd987ae7146eebe78ebfd317c3387.zip - extension_functional
+   Duration: 1.17s
+
+[FAIL] ext_1cbb9895b95d423b939ae0d502d8451e.zip - extension_loaded
+   Duration: 0.12s
+   Error: 'Command' object has no attribute 'execute'
+
+[FAIL] ext_1cbb9895b95d423b939ae0d502d8451e.zip - manifest_valid
+   Duration: 0.12s
+   Error: 'Command' object has no attribute 'execute'
+
+[PASS] ext_1cbb9895b95d423b939ae0d502d8451e.zip - extension_functional
+   Duration: 1.18s
+

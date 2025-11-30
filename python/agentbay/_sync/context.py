@@ -252,7 +252,7 @@ class ContextService:
         Initialize the ContextService.
 
         Args:
-            agent_bay (AsyncAgentBay): The AgentBay instance.
+            agent_bay (AgentBay): The AgentBay instance.
         """
         self.agent_bay = agent_bay
 

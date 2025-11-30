@@ -60,7 +60,7 @@ class SyncMobileSimulateService:
         Initialize the MobileSimulateService.
 
         Args:
-            agent_bay (AsyncAgentBay): The AsyncAgentBay instance.
+            agent_bay (AgentBay): The AgentBay instance.
         """
         # validate parameters
         if not agent_bay:

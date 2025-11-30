@@ -12,9 +12,8 @@ import os
 import time
 from typing import List, Dict, Any
 from dataclasses import dataclass
-from agentbay import AgentBay
-from agentbay.extension import ExtensionsService
-from agentbay import CreateSessionParams, BrowserContext
+from agentbay import AgentBay, ExtensionsService, CreateSessionParams
+from agentbay import BrowserContext
 
 
 @dataclass
@@ -120,7 +119,7 @@ class ExtensionTestRunner:
             )
             
             # Create session
-            session_result = agent_bay.create(session_params)
+            session_result = self.agent_bay.create(session_params)
             if not session_result.success:
                 raise Exception(f"Session creation failed: {session_result.error_message}")
             
@@ -400,8 +399,8 @@ def basic_test_automation_example():
         test_suite = TestSuite(
             name="basic_extension_tests",
             extension_paths=[
-                "/path/to/test-extension-1.zip",  # Update these paths
-                "/path/to/test-extension-2.zip"
+                "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip",  # Test extension paths
+                "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension-v2.zip"
             ],
             test_cases=[
                 "extension_loaded",
@@ -449,21 +448,21 @@ def ci_cd_integration_example():
         test_suites = [
             TestSuite(
                 name="smoke_tests",
-                extension_paths=["/path/to/main-extension.zip"],
+                extension_paths=["/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"],
                 test_cases=["extension_loaded", "manifest_valid"],
                 timeout=60
             ),
             TestSuite(
                 name="functional_tests",
-                extension_paths=["/path/to/main-extension.zip"],
+                extension_paths=["/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"],
                 test_cases=["extension_functional"],
                 timeout=300
             ),
             TestSuite(
                 name="compatibility_tests",
                 extension_paths=[
-                    "/path/to/extension-v1.zip",
-                    "/path/to/extension-v2.zip"
+                    "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip",
+                    "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension-v2.zip"
                 ],
                 test_cases=["extension_loaded", "manifest_valid"],
                 timeout=180
@@ -505,23 +504,28 @@ def ci_cd_integration_example():
 
 
 if __name__ == "__main__":
-    print("Extension Testing Automation Examples")
-    print("=" * 70)
+    import asyncio
     
-    print("\n1. Basic Test Automation Example")
-    print("-" * 50)
-    basic_success = basic_test_automation_example()
+    def main():
+        print("Extension Testing Automation Examples")
+        print("=" * 70)
+        
+        print("\n1. Basic Test Automation Example")
+        print("-" * 50)
+        basic_success = basic_test_automation_example()
+        
+        print("\n2. CI/CD Integration Example")
+        print("-" * 50)
+        ci_success = ci_cd_integration_example()
+        
+        print("\n🎯 Testing automation examples completed!")
+        print(f"   Basic tests: {'✅ PASSED' if basic_success else '❌ FAILED'}")
+        print(f"   CI/CD tests: {'✅ PASSED' if ci_success else '❌ FAILED'}")
+        
+        print("\n💡 Tips for extension testing:")
+        print("   - Update extension paths with your actual test files")
+        print("   - Customize test cases based on your extension functionality")
+        print("   - Use meaningful test suite names for better organization")
+        print("   - Integrate with your CI/CD pipeline using exit codes")
     
-    print("\n2. CI/CD Integration Example")
-    print("-" * 50)
-    ci_success = ci_cd_integration_example()
-    
-    print("\n🎯 Testing automation examples completed!")
-    print(f"   Basic tests: {'✅ PASSED' if basic_success else '❌ FAILED'}")
-    print(f"   CI/CD tests: {'✅ PASSED' if ci_success else '❌ FAILED'}")
-    
-    print("\n💡 Tips for extension testing:")
-    print("   - Update extension paths with your actual test files")
-    print("   - Customize test cases based on your extension functionality")
-    print("   - Use meaningful test suite names for better organization")
-    print("   - Integrate with your CI/CD pipeline using exit codes")
+    main()

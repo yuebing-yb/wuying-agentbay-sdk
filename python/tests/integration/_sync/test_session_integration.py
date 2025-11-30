@@ -22,7 +22,7 @@ def get_test_api_key():
 
 @pytest.fixture(scope="module")
 def agent_bay():
-    """Create an AsyncAgentBay instance."""
+    """Create an AgentBay instance."""
     api_key = get_test_api_key()
     return AgentBay(api_key=api_key)
 

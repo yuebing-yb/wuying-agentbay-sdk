@@ -260,17 +260,14 @@ def generate_sync():
                     
                     # Add time import if time.sleep is used
                     if 'time.sleep' in content and 'import time' not in content:
-                        # Find the last import statement and add time import after it
-                        import_pattern = r'^(import [^\n]+\n|from [^\n]+ import [^\n]+\n)'
-                        imports = re.findall(import_pattern, content, flags=re.MULTILINE)
-                        if imports:
-                            # Find the position after the last import
-                            last_import_match = None
-                            for match in re.finditer(import_pattern, content, flags=re.MULTILINE):
-                                last_import_match = match
-                            if last_import_match:
-                                insert_pos = last_import_match.end()
-                                content = content[:insert_pos] + 'import time\n' + content[insert_pos:]
+                        content = "import time\n" + content
+                    
+                    # Fix import statements for sync versions
+                    # Convert agentbay.async_api imports to agentbay imports for sync versions
+                    content = content.replace('from agentbay.async_api import', 'from agentbay import')
+                    # Convert AsyncExtensionsService to ExtensionsService in imports
+                    content = content.replace('AsyncExtensionsService', 'ExtensionsService')
+                    content = content.replace('AsyncAgentBay', 'AgentBay')
 
                     # Apply custom replacements
                     content = _apply_custom_replacements(content, path)

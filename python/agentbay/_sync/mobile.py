@@ -843,7 +843,7 @@ class Mobile(BaseService):
             # Call get_adb_link API
             # NOTE: We need to use the async version of the client method here, but it's on session.agent_bay.client
             # The session.agent_bay.client is the sync/async client.
-            # In async session, session.agent_bay is AsyncAgentBay, and client is AsyncClient.
+            # In async session, session.agent_bay is AgentBay, and client is AsyncClient.
             # So we should await the method call.
 
             request = GetAdbLinkRequest(

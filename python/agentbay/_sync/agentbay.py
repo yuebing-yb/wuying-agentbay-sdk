@@ -93,7 +93,7 @@ class Config:
 
 class AgentBay:
     """
-    AsyncAgentBay represents the main client for interacting with the AgentBay cloud runtime
+    AgentBay represents the main client for interacting with the AgentBay cloud runtime
     environment asynchronously.
     """
 
@@ -104,7 +104,7 @@ class AgentBay:
         env_file: Optional[str] = None,
     ):
         """
-        Initialize AsyncAgentBay client.
+        Initialize AgentBay client.
 
         Args:
             api_key: API key for authentication. If not provided, will read from AGENTBAY_API_KEY environment variable.
@@ -1243,7 +1243,7 @@ class AgentBay:
         # Let's check `_async/session.py` again.
         # I implemented `pause` and `resume` in `AsyncSession`.
         # I did NOT implement `pause_async` and `resume_async` in `AsyncSession`.
-        # So `AsyncAgentBay.pause_async` should implement the logic or call client directly?
+        # So `AgentBay.pause_async` should implement the logic or call client directly?
         # `AgentBay.pause_async` called `session.pause_async`.
         # I should probably add `pause_async` to `AsyncSession` as well, or implement it here.
         # Implementing here is fine as `AsyncSession` holds `client` via `agent_bay`.

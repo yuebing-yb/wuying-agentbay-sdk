@@ -16,7 +16,7 @@ from agentbay._sync.browser import BrowserOption
 
 @pytest.fixture(scope="module")
 def agent_bay():
-    """Create AsyncAgentBay instance."""
+    """Create AgentBay instance."""
     api_key = os.environ.get("AGENTBAY_API_KEY")
     if not api_key:
         pytest.skip("AGENTBAY_API_KEY environment variable not set")

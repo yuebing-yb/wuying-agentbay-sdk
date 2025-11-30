@@ -8,7 +8,8 @@ including uploading, testing, updating, and iterative development.
 import os
 import time
 from typing import Optional
-from agentbay import AsyncAgentBay, ExtensionsService, CreateSessionParams, BrowserContext
+from agentbay.async_api import AsyncAgentBay, AsyncExtensionsService, CreateSessionParams
+from agentbay import BrowserContext
 
 
 class ExtensionDevelopmentWorkflow:
@@ -25,14 +26,14 @@ class ExtensionDevelopmentWorkflow:
     def __init__(self, api_key: str, project_name: str = "dev_extensions"):
         """Initialize the development workflow."""
         self.agent_bay = AsyncAgentBay(api_key=api_key)
-        self.extensions_service = ExtensionsService(self.agent_bay, project_name)
+        self.extensions_service = AsyncExtensionsService(self.agent_bay, project_name)
         self.extension_id: Optional[str] = None
         self.project_name = project_name
         
         print(f"🛠️  Extension Development Workflow initialized")
         print(f"   - Project: {project_name}")
     
-    def upload_extension(self, extension_path: str) -> str:
+    async def upload_extension(self, extension_path: str) -> str:
         """
         Upload an extension for development testing.
         
@@ -49,7 +50,7 @@ class ExtensionDevelopmentWorkflow:
                 raise FileNotFoundError(f"Extension file not found: {extension_path}")
             
             # Upload extension
-            extension = self.extensions_service.create(extension_path)
+            extension = await self.extensions_service.create(extension_path)
             self.extension_id = extension.id
             
             print(f"✅ Extension uploaded successfully!")
@@ -62,7 +63,7 @@ class ExtensionDevelopmentWorkflow:
             print(f"❌ Upload failed: {e}")
             raise
     
-    def update_extension(self, new_extension_path: str) -> str:
+    async def update_extension(self, new_extension_path: str) -> str:
         """
         Update existing extension during development.
         
@@ -79,7 +80,7 @@ class ExtensionDevelopmentWorkflow:
             print(f"🔄 Updating extension: {os.path.basename(new_extension_path)}")
             
             # Update extension with new file
-            updated_ext = self.extensions_service.update(self.extension_id, new_extension_path)
+            updated_ext = await self.extensions_service.update(self.extension_id, new_extension_path)
             
             print(f"✅ Extension updated successfully!")
             print(f"   - Name: {updated_ext.name}")
@@ -130,7 +131,7 @@ class ExtensionDevelopmentWorkflow:
             )
             
             # Create session
-            session_result = await agent_bay.create(session_params)
+            session_result = await self.agent_bay.create(session_params)
             if not session_result.success:
                 raise Exception(f"Session creation failed: {session_result.error_message}")
             
@@ -160,7 +161,7 @@ class ExtensionDevelopmentWorkflow:
             
             # Step 1: Upload initial version
             print("\n📋 Step 1: Upload initial extension")
-            self.upload_extension(initial_extension_path)
+            await self.upload_extension(initial_extension_path)
             
             # Step 2: Create test session for v1
             print("\n📋 Step 2: Create test session for initial version")
@@ -171,7 +172,7 @@ class ExtensionDevelopmentWorkflow:
             
             # Step 3: Update extension
             print("\n📋 Step 3: Update extension to new version")
-            self.update_extension(updated_extension_path)
+            await self.update_extension(updated_extension_path)
             
             # Step 4: Create test session for v2
             print("\n📋 Step 4: Create test session for updated version")
@@ -188,10 +189,10 @@ class ExtensionDevelopmentWorkflow:
             print(f"❌ Development cycle failed: {e}")
             raise
     
-    def list_extensions(self):
+    async def list_extensions(self):
         """List all extensions in the development context."""
         try:
-            extensions = self.extensions_service.list()
+            extensions = await self.extensions_service.list()
             
             print(f"📋 Extensions in '{self.project_name}' context:")
             if not extensions:
@@ -207,21 +208,21 @@ class ExtensionDevelopmentWorkflow:
             print(f"❌ Failed to list extensions: {e}")
             return []
     
-    def cleanup(self):
+    async def cleanup(self):
         """Clean up development resources."""
         try:
             print("🧹 Cleaning up development resources...")
             
             # Delete current extension if exists
             if self.extension_id:
-                deleted = self.extensions_service.delete(self.extension_id)
+                deleted = await self.extensions_service.delete(self.extension_id)
                 if deleted:
                     print(f"   ✅ Deleted extension: {self.extension_id}")
                 else:
                     print(f"   ⚠️  Failed to delete extension: {self.extension_id}")
             
             # Cleanup context
-            self.extensions_service.cleanup()
+            await self.extensions_service.cleanup()
             print("✅ Cleanup completed")
             
         except Exception as e:
@@ -241,9 +242,9 @@ async def development_workflow_example():
     workflow = ExtensionDevelopmentWorkflow(api_key, "my_extension_project")
     
     try:
-        # Example extension paths (update with your actual files)
-        initial_extension = "/path/to/my-extension-v1.0.zip"
-        updated_extension = "/path/to/my-extension-v1.1.zip"
+        # Example extension paths (using test files)
+        initial_extension = "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"
+        updated_extension = "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension-v2.zip"
         
         # Check if files exist
         if not os.path.exists(initial_extension):
@@ -256,7 +257,7 @@ async def development_workflow_example():
             print("💡 Will demonstrate single version workflow")
             
             # Single version workflow
-            workflow.upload_extension(initial_extension)
+            await workflow.upload_extension(initial_extension)
             session = await workflow.create_test_session("single_version_test")
             
             print("\n🎯 Single version development completed!")
@@ -275,7 +276,7 @@ async def development_workflow_example():
         
         # List all extensions
         print("\n📋 Current extensions:")
-        workflow.list_extensions()
+        await workflow.list_extensions()
         
         return True
         
@@ -284,7 +285,7 @@ async def development_workflow_example():
         return False
     finally:
         # Always cleanup
-        workflow.cleanup()
+        await workflow.cleanup()
 
 
 async def quick_test_workflow_example():
@@ -301,7 +302,7 @@ async def quick_test_workflow_example():
         print("🚀 Quick test workflow...")
         
         # Quick test with single extension
-        extension_path = "/path/to/test-extension.zip"  # Update this
+        extension_path = "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"  # Test extension
         
         if not os.path.exists(extension_path):
             print(f"❌ Extension not found: {extension_path}")
@@ -309,7 +310,7 @@ async def quick_test_workflow_example():
             return False
         
         # Upload and create test session
-        workflow.upload_extension(extension_path)
+        await workflow.upload_extension(extension_path)
         session = await workflow.create_test_session("quick_test")
         
         print(f"\n✅ Quick test session ready!")
@@ -322,7 +323,7 @@ async def quick_test_workflow_example():
         print(f"❌ Quick test failed: {e}")
         return False
     finally:
-        workflow.cleanup()
+        await workflow.cleanup()
 
 
 if __name__ == "__main__":

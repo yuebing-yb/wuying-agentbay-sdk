@@ -5,7 +5,8 @@ This example demonstrates the fundamental usage of browser extensions with Agent
 """
 
 import os
-from agentbay import AsyncAgentBay, ExtensionsService, CreateSessionParams, BrowserContext
+from agentbay.async_api import AsyncAgentBay, AsyncExtensionsService, CreateSessionParams
+from agentbay import BrowserContext
 
 
 async def basic_extension_example():
@@ -15,13 +16,13 @@ async def basic_extension_example():
     agent_bay = AsyncAgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
     
     # Initialize extensions service (auto-creates context)
-    extensions_service = ExtensionsService(agent_bay)
+    extensions_service = AsyncExtensionsService(agent_bay)
     
     try:
         print("🚀 Starting basic extension example...")
         
-        # Upload extension (replace with your extension path)
-        extension_path = "/path/to/your-extension.zip"  # Update this path
+        # Upload extension (using test extension)
+        extension_path = "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"  # Test extension path
         
         if not os.path.exists(extension_path):
             print(f"❌ Extension file not found: {extension_path}")
@@ -30,7 +31,7 @@ async def basic_extension_example():
         
         # Upload extension to cloud
         print(f"📦 Uploading extension: {extension_path}")
-        extension = extensions_service.create(extension_path)
+        extension = await extensions_service.create(extension_path)
         print(f"✅ Extension uploaded successfully!")
         print(f"   - Name: {extension.name}")
         print(f"   - ID: {extension.id}")
@@ -63,7 +64,7 @@ async def basic_extension_example():
         
         # List available extensions in context
         print("\n📋 Listing available extensions:")
-        extensions = extensions_service.list()
+        extensions = await extensions_service.list()
         for ext in extensions:
             print(f"   - {ext.name} (ID: {ext.id})")
         
@@ -78,7 +79,7 @@ async def basic_extension_example():
     finally:
         # Clean up resources
         print("\n🧹 Cleaning up resources...")
-        extensions_service.cleanup()
+        await extensions_service.cleanup()
         print("✅ Cleanup completed")
 
 
@@ -86,16 +87,15 @@ async def multiple_extensions_example():
     """Example with multiple extensions."""
     
     agent_bay = AsyncAgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
-    extensions_service = ExtensionsService(agent_bay, "multi_ext_demo")
+    extensions_service = AsyncExtensionsService(agent_bay, "multi_ext_demo")
     
     try:
         print("🚀 Starting multiple extensions example...")
         
-        # List of extension paths (update with your actual extensions)
+        # List of extension paths (using test extensions)
         extension_paths = [
-            "/path/to/extension1.zip",
-            "/path/to/extension2.zip",
-            "/path/to/extension3.zip"
+            "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip",
+            "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension-v2.zip"
         ]
         
         # Filter existing files
@@ -109,7 +109,7 @@ async def multiple_extensions_example():
         # Upload all extensions
         extension_ids = []
         for path in existing_paths:
-            ext = extensions_service.create(path)
+            ext = await extensions_service.create(path)
             extension_ids.append(ext.id)
             print(f"   ✅ {ext.name} uploaded (ID: {ext.id})")
         
@@ -138,7 +138,7 @@ async def multiple_extensions_example():
         print(f"❌ Error: {e}")
         return False
     finally:
-        extensions_service.cleanup()
+        await extensions_service.cleanup()
 
 
 if __name__ == "__main__":

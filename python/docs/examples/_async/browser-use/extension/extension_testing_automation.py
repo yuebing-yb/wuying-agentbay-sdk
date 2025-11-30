@@ -10,7 +10,8 @@ import asyncio
 import time
 from typing import List, Dict, Any
 from dataclasses import dataclass
-from agentbay import AsyncAgentBay, ExtensionsService, CreateSessionParams, BrowserContext
+from agentbay.async_api import AsyncAgentBay, AsyncExtensionsService, CreateSessionParams
+from agentbay import BrowserContext
 
 
 @dataclass
@@ -47,14 +48,14 @@ class ExtensionTestRunner:
     def __init__(self, api_key: str, test_project_name: str = "extension_tests"):
         """Initialize the test runner."""
         self.agent_bay = AsyncAgentBay(api_key=api_key)
-        self.extensions_service = ExtensionsService(self.agent_bay, test_project_name)
+        self.extensions_service = AsyncExtensionsService(self.agent_bay, test_project_name)
         self.test_results: List[TestResult] = []
         self.project_name = test_project_name
         
         print(f"🧪 Extension Test Runner initialized")
         print(f"   - Project: {test_project_name}")
     
-    def upload_test_extensions(self, extension_paths: List[str]) -> List[str]:
+    async def upload_test_extensions(self, extension_paths: List[str]) -> List[str]:
         """
         Upload multiple extensions for testing.
         
@@ -73,7 +74,7 @@ class ExtensionTestRunner:
                     print(f"⚠️  Extension not found: {path}")
                     continue
                 
-                ext = self.extensions_service.create(path)
+                ext = await self.extensions_service.create(path)
                 extension_ids.append(ext.id)
                 print(f"   ✅ {ext.name} uploaded (ID: {ext.id})")
                 
@@ -116,7 +117,7 @@ class ExtensionTestRunner:
             )
             
             # Create session
-            session_result = await agent_bay.create(session_params)
+            session_result = await self.agent_bay.create(session_params)
             if not session_result.success:
                 raise Exception(f"Session creation failed: {session_result.error_message}")
             
@@ -129,7 +130,7 @@ class ExtensionTestRunner:
             print(f"❌ Failed to create test session: {e}")
             raise
     
-    def run_extension_test(self, session: 'Session', extension_id: str, test_case: str) -> TestResult:
+    async def run_extension_test(self, session: 'Session', extension_id: str, test_case: str) -> TestResult:
         """
         Run a single test case on an extension.
         
@@ -147,11 +148,11 @@ class ExtensionTestRunner:
             print(f"   🧪 Running test: {test_case}")
             
             # Get extension info
-            extensions = self.extensions_service.list()
+            extensions = await self.extensions_service.list()
             extension_name = next((ext.name for ext in extensions if ext.id == extension_id), extension_id)
             
             # Simulate test execution (replace with actual test logic)
-            success = self._execute_test_case(session, extension_id, test_case)
+            success = await self._execute_test_case(session, extension_id, test_case)
             
             duration = time.time() - start_time
             
@@ -183,7 +184,7 @@ class ExtensionTestRunner:
             print(f"   ❌ ERROR {test_case}: {e}")
             return result
     
-    def _execute_test_case(self, session: 'Session', extension_id: str, test_case: str) -> bool:
+    async def _execute_test_case(self, session: 'Session', extension_id: str, test_case: str) -> bool:
         """
         Execute a specific test case (placeholder implementation).
         
@@ -231,7 +232,7 @@ class ExtensionTestRunner:
         
         try:
             # Upload test extensions
-            extension_ids = self.upload_test_extensions(test_suite.extension_paths)
+            extension_ids = await self.upload_test_extensions(test_suite.extension_paths)
             if not extension_ids:
                 raise Exception("No extensions uploaded successfully")
             
@@ -249,7 +250,7 @@ class ExtensionTestRunner:
                 print(f"\n📋 Testing extension: {extension_id}")
                 
                 for test_case in test_suite.test_cases:
-                    result = self.run_extension_test(session, extension_id, test_case)
+                    result = await self.run_extension_test(session, extension_id, test_case)
                     suite_results.append(result)
                     self.test_results.append(result)
             
@@ -371,11 +372,11 @@ class ExtensionTestRunner:
         except Exception as e:
             print(f"❌ Failed to generate report: {e}")
     
-    def cleanup(self):
+    async def cleanup(self):
         """Clean up test resources."""
         try:
             print("🧹 Cleaning up test resources...")
-            self.extensions_service.cleanup()
+            await self.extensions_service.cleanup()
             print("✅ Test cleanup completed")
         except Exception as e:
             print(f"❌ Cleanup failed: {e}")
@@ -396,8 +397,8 @@ async def basic_test_automation_example():
         test_suite = TestSuite(
             name="basic_extension_tests",
             extension_paths=[
-                "/path/to/test-extension-1.zip",  # Update these paths
-                "/path/to/test-extension-2.zip"
+                "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip",  # Test extension paths
+                "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension-v2.zip"
             ],
             test_cases=[
                 "extension_loaded",
@@ -427,7 +428,7 @@ async def basic_test_automation_example():
         print(f"❌ Test automation failed: {e}")
         return False
     finally:
-        test_runner.cleanup()
+        await test_runner.cleanup()
 
 
 async def ci_cd_integration_example():
@@ -445,21 +446,21 @@ async def ci_cd_integration_example():
         test_suites = [
             TestSuite(
                 name="smoke_tests",
-                extension_paths=["/path/to/main-extension.zip"],
+                extension_paths=["/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"],
                 test_cases=["extension_loaded", "manifest_valid"],
                 timeout=60
             ),
             TestSuite(
                 name="functional_tests",
-                extension_paths=["/path/to/main-extension.zip"],
+                extension_paths=["/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"],
                 test_cases=["extension_functional"],
                 timeout=300
             ),
             TestSuite(
                 name="compatibility_tests",
                 extension_paths=[
-                    "/path/to/extension-v1.zip",
-                    "/path/to/extension-v2.zip"
+                    "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip",
+                    "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension-v2.zip"
                 ],
                 test_cases=["extension_loaded", "manifest_valid"],
                 timeout=180
@@ -497,7 +498,7 @@ async def ci_cd_integration_example():
         print(f"❌ CI/CD test failed: {e}")
         return False
     finally:
-        test_runner.cleanup()
+        await test_runner.cleanup()
 
 
 if __name__ == "__main__":

@@ -8,9 +8,8 @@ This example demonstrates the fundamental usage of browser extensions with Agent
 """
 
 import os
-from agentbay import AgentBay
-from agentbay.extension import ExtensionsService
-from agentbay import CreateSessionParams, BrowserContext
+from agentbay import AgentBay, ExtensionsService, CreateSessionParams
+from agentbay import BrowserContext
 
 
 def basic_extension_example():
@@ -25,8 +24,8 @@ def basic_extension_example():
     try:
         print("🚀 Starting basic extension example...")
         
-        # Upload extension (replace with your extension path)
-        extension_path = "/path/to/your-extension.zip"  # Update this path
+        # Upload extension (using test extension)
+        extension_path = "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"  # Test extension path
         
         if not os.path.exists(extension_path):
             print(f"❌ Extension file not found: {extension_path}")
@@ -96,11 +95,10 @@ def multiple_extensions_example():
     try:
         print("🚀 Starting multiple extensions example...")
         
-        # List of extension paths (update with your actual extensions)
+        # List of extension paths (using test extensions)
         extension_paths = [
-            "/path/to/extension1.zip",
-            "/path/to/extension2.zip",
-            "/path/to/extension3.zip"
+            "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip",
+            "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension-v2.zip"
         ]
         
         # Filter existing files
@@ -147,24 +145,29 @@ def multiple_extensions_example():
 
 
 if __name__ == "__main__":
-    print("AgentBay Extension Examples")
-    print("=" * 50)
+    import asyncio
     
-    # Check API key
-    if not os.getenv("AGENTBAY_API_KEY"):
-        print("❌ Please set AGENTBAY_API_KEY environment variable")
-        exit(1)
+    def main():
+        print("AgentBay Extension Examples")
+        print("=" * 50)
+        
+        # Check API key
+        if not os.getenv("AGENTBAY_API_KEY"):
+            print("❌ Please set AGENTBAY_API_KEY environment variable")
+            exit(1)
+        
+        print("\n1. Basic Extension Example")
+        print("-" * 30)
+        basic_extension_example()
+        
+        print("\n2. Multiple Extensions Example")
+        print("-" * 30)
+        multiple_extensions_example()
+        
+        print("\n🎯 Examples completed!")
+        print("\n💡 Next steps:")
+        print("   - Update extension paths with your actual ZIP files")
+        print("   - Check extension_development_workflow.py for advanced usage")
+        print("   - See browser automation examples for integration patterns")
     
-    print("\n1. Basic Extension Example")
-    print("-" * 30)
-    basic_extension_example()
-    
-    print("\n2. Multiple Extensions Example")
-    print("-" * 30)
-    multiple_extensions_example()
-    
-    print("\n🎯 Examples completed!")
-    print("\n💡 Next steps:")
-    print("   - Update extension paths with your actual ZIP files")
-    print("   - Check extension_development_workflow.py for advanced usage")
-    print("   - See browser automation examples for integration patterns")
+    main()

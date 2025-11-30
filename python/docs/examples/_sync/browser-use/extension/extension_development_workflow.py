@@ -11,9 +11,8 @@ including uploading, testing, updating, and iterative development.
 import os
 import time
 from typing import Optional
-from agentbay import AgentBay
-from agentbay.extension import ExtensionsService
-from agentbay import CreateSessionParams, BrowserContext
+from agentbay import AgentBay, ExtensionsService, CreateSessionParams
+from agentbay import BrowserContext
 
 
 class ExtensionDevelopmentWorkflow:
@@ -135,7 +134,7 @@ class ExtensionDevelopmentWorkflow:
             )
             
             # Create session
-            session_result = agent_bay.create(session_params)
+            session_result = self.agent_bay.create(session_params)
             if not session_result.success:
                 raise Exception(f"Session creation failed: {session_result.error_message}")
             
@@ -246,9 +245,9 @@ def development_workflow_example():
     workflow = ExtensionDevelopmentWorkflow(api_key, "my_extension_project")
     
     try:
-        # Example extension paths (update with your actual files)
-        initial_extension = "/path/to/my-extension-v1.0.zip"
-        updated_extension = "/path/to/my-extension-v1.1.zip"
+        # Example extension paths (using test files)
+        initial_extension = "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"
+        updated_extension = "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension-v2.zip"
         
         # Check if files exist
         if not os.path.exists(initial_extension):
@@ -306,7 +305,7 @@ def quick_test_workflow_example():
         print("🚀 Quick test workflow...")
         
         # Quick test with single extension
-        extension_path = "/path/to/test-extension.zip"  # Update this
+        extension_path = "/Users/liyuebing/Projects/wuying-agentbay-sdk/tmp/test-extension.zip"  # Test extension
         
         if not os.path.exists(extension_path):
             print(f"❌ Extension not found: {extension_path}")
@@ -331,20 +330,25 @@ def quick_test_workflow_example():
 
 
 if __name__ == "__main__":
-    print("Extension Development Workflow Examples")
-    print("=" * 60)
+    import asyncio
     
-    print("\n1. Full Development Cycle Example")
-    print("-" * 40)
-    development_workflow_example()
+    def main():
+        print("Extension Development Workflow Examples")
+        print("=" * 60)
+        
+        print("\n1. Full Development Cycle Example")
+        print("-" * 40)
+        development_workflow_example()
+        
+        print("\n2. Quick Test Workflow Example")
+        print("-" * 40)
+        quick_test_workflow_example()
+        
+        print("\n🎯 Development workflow examples completed!")
+        print("\n💡 Tips for extension development:")
+        print("   - Use descriptive project names for different extensions")
+        print("   - Test each version thoroughly before updating")
+        print("   - Keep backup copies of working extension versions")
+        print("   - Use the cleanup() method to manage resources properly")
     
-    print("\n2. Quick Test Workflow Example")
-    print("-" * 40)
-    quick_test_workflow_example()
-    
-    print("\n🎯 Development workflow examples completed!")
-    print("\n💡 Tips for extension development:")
-    print("   - Use descriptive project names for different extensions")
-    print("   - Test each version thoroughly before updating")
-    print("   - Keep backup copies of working extension versions")
-    print("   - Use the cleanup() method to manage resources properly")
+    main()
