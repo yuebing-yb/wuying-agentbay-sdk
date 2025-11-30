@@ -1,0 +1,98 @@
+{
+  "root": "/Users/liyuebing/Projects/wuying-agentbay-sdk/cookbook/envs/codespace/auto-testing-agent/async/common/sample_project",
+  "files": [
+    {
+      "name": "calculator.py",
+      "path": "/Users/liyuebing/Projects/wuying-agentbay-sdk/cookbook/envs/codespace/auto-testing-agent/async/common/sample_project/calculator.py",
+      "relative_path": "calculator.py",
+      "analysis": {
+        "classes": [
+          {
+            "name": "Calculator",
+            "docstring": "Calculator class that provides basic mathematical operations",
+            "methods": [
+              {
+                "name": "add",
+                "docstring": "Calculate the sum of two numbers\n\nArgs:\n    a (int/float): First number\n    b (int/float): Second number\n\nReturns:\n    int/float: Sum of the two numbers",
+                "args": [
+                  "self",
+                  "a",
+                  "b"
+                ]
+              },
+              {
+                "name": "subtract",
+                "docstring": "Calculate the difference of two numbers\n\nArgs:\n    a (int/float): Minuend\n    b (int/float): Subtrahend\n\nReturns:\n    int/float: Difference of the two numbers",
+                "args": [
+                  "self",
+                  "a",
+                  "b"
+                ]
+              },
+              {
+                "name": "multiply",
+                "docstring": "Calculate the product of two numbers\n\nArgs:\n    a (int/float): First number\n    b (int/float): Second number\n\nReturns:\n    int/float: Product of the two numbers",
+                "args": [
+                  "self",
+                  "a",
+                  "b"
+                ]
+              },
+              {
+                "name": "divide",
+                "docstring": "Calculate the quotient of two numbers\n\nArgs:\n    a (int/float): Dividend\n    b (int/float): Divisor\n\nReturns:\n    float: Quotient of the two numbers\n\nRaises:\n    ValueError: When divisor is zero",
+                "args": [
+                  "self",
+                  "a",
+                  "b"
+                ]
+              }
+            ]
+          }
+        ],
+        "functions": [
+          {
+            "name": "add",
+            "docstring": "Calculate the sum of two numbers\n\nArgs:\n    a (int/float): First number\n    b (int/float): Second number\n\nReturns:\n    int/float: Sum of the two numbers",
+            "args": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "name": "subtract",
+            "docstring": "Calculate the difference of two numbers\n\nArgs:\n    a (int/float): Minuend\n    b (int/float): Subtrahend\n\nReturns:\n    int/float: Difference of the two numbers",
+            "args": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "name": "multiply",
+            "docstring": "Calculate the product of two numbers\n\nArgs:\n    a (int/float): First number\n    b (int/float): Second number\n\nReturns:\n    int/float: Product of the two numbers",
+            "args": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "name": "divide",
+            "docstring": "Calculate the quotient of two numbers\n\nArgs:\n    a (int/float): Dividend\n    b (int/float): Divisor\n\nReturns:\n    float: Quotient of the two numbers\n\nRaises:\n    ZeroDivisionError: When divisor is zero",
+            "args": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "name": "is_even",
+            "docstring": "Check if a number is even\n\nArgs:\n    number (int): Number to check\n\nReturns:\n    bool: True if the number is even, False otherwise",
+            "args": [
+              "number"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "directories": []
+}
