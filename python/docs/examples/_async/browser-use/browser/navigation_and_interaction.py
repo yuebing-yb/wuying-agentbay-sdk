@@ -17,7 +17,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay._async.browser import BrowserOption
-from agentbay._async.browser_agent import ActOptions
+from agentbay._async.browser_agent import ActOptions, ExtractOptions
+from pydantic import BaseModel, Field
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 async def main():
@@ -76,13 +82,25 @@ async def main():
 
         # Get current URL
         print("\n7. Extracting current URL...")
-        url_result = await session.browser.agent.extract("What is the current page URL?")
-        print(f"Current URL: {url_result.extracted_content}")
+        success, url_result = await session.browser.agent.extract(ExtractOptions(
+            instruction="What is the current page URL?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Current URL: {url_result.content}")
+        else:
+            print("Failed to extract current URL")
 
         # Verify page state
         print("\n8. Verifying page state...")
-        state_result = await session.browser.agent.extract("Is there a form on this page?")
-        print(f"Page state: {state_result.extracted_content}")
+        success2, state_result = await session.browser.agent.extract(ExtractOptions(
+            instruction="Is there a form on this page?",
+            schema=TextContent
+        ))
+        if success2:
+            print(f"Page state: {state_result.content}")
+        else:
+            print("Failed to extract page state")
 
         print("\n=== Example completed successfully ===")
 

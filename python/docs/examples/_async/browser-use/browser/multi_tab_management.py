@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay._async.browser import BrowserOption
-from agentbay._async.browser_agent import ExtractOptions
+from agentbay._async.browser_agent import ExtractOptions, ActOptions
 from pydantic import BaseModel, Field
 
 
@@ -63,7 +63,7 @@ async def main():
 
         # Open second tab by navigating to a new URL
         print("\n2. Opening second tab (httpbin.org)...)")
-        await session.browser.agent.act("Open a new tab and navigate to https://httpbin.org")
+        await session.browser.agent.act(ActOptions("Open a new tab and navigate to https://httpbin.org"))
         success, tab2_result = await session.browser.agent.extract(ExtractOptions(
             instruction="What is the page title?",
             schema=TextContent
@@ -80,13 +80,13 @@ async def main():
 
         # Switch back to first tab
         print("\n4. Switching back to first tab...")
-        await session.browser.agent.act("Switch to the first tab")
+        await session.browser.agent.act(ActOptions("Switch to the first tab"))
         current_result = await session.browser.agent.extract("What is the current page URL?")
         print(f"Current URL: {current_result.extracted_content}")
 
         # Open third tab
         print("\n5. Opening third tab (github.com)...")
-        await session.browser.agent.act("Open a new tab and navigate to https://github.com")
+        await session.browser.agent.act(ActOptions("Open a new tab and navigate to https://github.com"))
         tab3_result = await session.browser.agent.extract("What is the page title?")
         print(f"Tab 3 title: {tab3_result.extracted_content}")
 
@@ -97,7 +97,7 @@ async def main():
 
         # Close a specific tab
         print("\n7. Closing the second tab...")
-        await session.browser.agent.act("Close the tab with httpbin.org")
+        await session.browser.agent.act(ActOptions("Close the tab with httpbin.org"))
         remaining_result = await session.browser.agent.extract("How many tabs are now open?")
         print(f"Remaining tabs: {remaining_result.extracted_content}")
 

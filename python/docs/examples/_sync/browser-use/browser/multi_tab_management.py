@@ -19,7 +19,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from agentbay import AgentBay, CreateSessionParams
 from agentbay._sync.browser import BrowserOption
-from agentbay._sync.browser_agent import ExtractOptions
+from agentbay._sync.browser_agent import ExtractOptions, ActOptions
+from pydantic import BaseModel, Field
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 def main():
@@ -48,14 +54,26 @@ def main():
         # Open first tab
         print("\n1. Opening first tab (example.com)...")
         session.browser.agent.navigate("https://example.com")
-        tab1_result = session.browser.agent.extract(ExtractOptions("What is the page title?"))
-        print(f"Tab 1 title: {tab1_result.extracted_content}")
+        success, tab1_result = session.browser.agent.extract(ExtractOptions(
+            instruction="What is the page title?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Tab 1 title: {tab1_result.content}")
+        else:
+            print("Failed to extract tab 1 title")
 
         # Open second tab by navigating to a new URL
-        print("\n2. Opening second tab (httpbin.org)...")
-        session.browser.agent.act("Open a new tab and navigate to https://httpbin.org")
-        tab2_result = session.browser.agent.extract(ExtractOptions("What is the page title?"))
-        print(f"Tab 2 title: {tab2_result.extracted_content}")
+        print("\n2. Opening second tab (httpbin.org)...)")
+        session.browser.agent.act(ActOptions("Open a new tab and navigate to https://httpbin.org"))
+        success, tab2_result = session.browser.agent.extract(ExtractOptions(
+            instruction="What is the page title?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Tab 2 title: {tab2_result.content}")
+        else:
+            print("Failed to extract tab 2 title")
 
         # Extract information from current tab
         print("\n3. Extracting information from current tab...")
@@ -64,13 +82,13 @@ def main():
 
         # Switch back to first tab
         print("\n4. Switching back to first tab...")
-        session.browser.agent.act("Switch to the first tab")
+        session.browser.agent.act(ActOptions("Switch to the first tab"))
         current_result = session.browser.agent.extract("What is the current page URL?")
         print(f"Current URL: {current_result.extracted_content}")
 
         # Open third tab
         print("\n5. Opening third tab (github.com)...")
-        session.browser.agent.act("Open a new tab and navigate to https://github.com")
+        session.browser.agent.act(ActOptions("Open a new tab and navigate to https://github.com"))
         tab3_result = session.browser.agent.extract("What is the page title?")
         print(f"Tab 3 title: {tab3_result.extracted_content}")
 
@@ -81,7 +99,7 @@ def main():
 
         # Close a specific tab
         print("\n7. Closing the second tab...")
-        session.browser.agent.act("Close the tab with httpbin.org")
+        session.browser.agent.act(ActOptions("Close the tab with httpbin.org"))
         remaining_result = session.browser.agent.extract("How many tabs are now open?")
         print(f"Remaining tabs: {remaining_result.extracted_content}")
 

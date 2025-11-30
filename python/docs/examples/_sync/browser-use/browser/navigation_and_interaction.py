@@ -19,6 +19,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from agentbay import AgentBay, CreateSessionParams
 from agentbay._sync.browser import BrowserOption
+from agentbay._sync.browser_agent import ActOptions, ExtractOptions
+from pydantic import BaseModel, Field
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 def main():
@@ -60,9 +67,9 @@ def main():
 
         # Interact with form elements
         print("\n4. Filling form...")
-        session.browser.agent.act("Fill in the customer name field with 'John Doe'")
-        session.browser.agent.act("Fill in the telephone field with '1234567890'")
-        session.browser.agent.act("Fill in the email field with 'john@example.com'")
+        session.browser.agent.act(ActOptions("Fill in the customer name field with 'John Doe'"))
+        session.browser.agent.act(ActOptions("Fill in the telephone field with '1234567890'"))
+        session.browser.agent.act(ActOptions("Fill in the email field with 'john@example.com'"))
         print("Form filled successfully")
 
         # Navigate back
@@ -77,13 +84,25 @@ def main():
 
         # Get current URL
         print("\n7. Extracting current URL...")
-        url_result = session.browser.agent.extract("What is the current page URL?")
-        print(f"Current URL: {url_result.extracted_content}")
+        success, url_result = session.browser.agent.extract(ExtractOptions(
+            instruction="What is the current page URL?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Current URL: {url_result.content}")
+        else:
+            print("Failed to extract current URL")
 
         # Verify page state
         print("\n8. Verifying page state...")
-        state_result = session.browser.agent.extract("Is there a form on this page?")
-        print(f"Page state: {state_result.extracted_content}")
+        success2, state_result = session.browser.agent.extract(ExtractOptions(
+            instruction="Is there a form on this page?",
+            schema=TextContent
+        ))
+        if success2:
+            print(f"Page state: {state_result.content}")
+        else:
+            print("Failed to extract page state")
 
         print("\n=== Example completed successfully ===")
 
