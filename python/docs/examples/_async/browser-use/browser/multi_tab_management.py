@@ -18,6 +18,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay._async.browser import BrowserOption
 from agentbay._async.browser_agent import ExtractOptions
+from pydantic import BaseModel, Field
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 async def main():
@@ -46,14 +52,26 @@ async def main():
         # Open first tab
         print("\n1. Opening first tab (example.com)...")
         await session.browser.agent.navigate("https://example.com")
-        tab1_result = await session.browser.agent.extract(ExtractOptions("What is the page title?"))
-        print(f"Tab 1 title: {tab1_result.extracted_content}")
+        success, tab1_result = await session.browser.agent.extract(ExtractOptions(
+            instruction="What is the page title?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Tab 1 title: {tab1_result.content}")
+        else:
+            print("Failed to extract tab 1 title")
 
         # Open second tab by navigating to a new URL
-        print("\n2. Opening second tab (httpbin.org)...")
+        print("\n2. Opening second tab (httpbin.org)...)")
         await session.browser.agent.act("Open a new tab and navigate to https://httpbin.org")
-        tab2_result = await session.browser.agent.extract(ExtractOptions("What is the page title?"))
-        print(f"Tab 2 title: {tab2_result.extracted_content}")
+        success, tab2_result = await session.browser.agent.extract(ExtractOptions(
+            instruction="What is the page title?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Tab 2 title: {tab2_result.content}")
+        else:
+            print("Failed to extract tab 2 title")
 
         # Extract information from current tab
         print("\n3. Extracting information from current tab...")

@@ -5,9 +5,7 @@ This example demonstrates the fundamental usage of browser extensions with Agent
 """
 
 import os
-from agentbay import AsyncAgentBay
-from agentbay.extension import ExtensionsService
-from agentbay import CreateSessionParams, BrowserContext
+from agentbay import AsyncAgentBay, ExtensionsService, CreateSessionParams, BrowserContext
 
 
 async def basic_extension_example():
@@ -144,24 +142,29 @@ async def multiple_extensions_example():
 
 
 if __name__ == "__main__":
-    print("AgentBay Extension Examples")
-    print("=" * 50)
+    import asyncio
     
-    # Check API key
-    if not os.getenv("AGENTBAY_API_KEY"):
-        print("❌ Please set AGENTBAY_API_KEY environment variable")
-        exit(1)
+    async def main():
+        print("AgentBay Extension Examples")
+        print("=" * 50)
+        
+        # Check API key
+        if not os.getenv("AGENTBAY_API_KEY"):
+            print("❌ Please set AGENTBAY_API_KEY environment variable")
+            exit(1)
+        
+        print("\n1. Basic Extension Example")
+        print("-" * 30)
+        await basic_extension_example()
+        
+        print("\n2. Multiple Extensions Example")
+        print("-" * 30)
+        await multiple_extensions_example()
+        
+        print("\n🎯 Examples completed!")
+        print("\n💡 Next steps:")
+        print("   - Update extension paths with your actual ZIP files")
+        print("   - Check extension_development_workflow.py for advanced usage")
+        print("   - See browser automation examples for integration patterns")
     
-    print("\n1. Basic Extension Example")
-    print("-" * 30)
-    basic_extension_example()
-    
-    print("\n2. Multiple Extensions Example")
-    print("-" * 30)
-    multiple_extensions_example()
-    
-    print("\n🎯 Examples completed!")
-    print("\n💡 Next steps:")
-    print("   - Update extension paths with your actual ZIP files")
-    print("   - Check extension_development_workflow.py for advanced usage")
-    print("   - See browser automation examples for integration patterns")
+    asyncio.run(main())

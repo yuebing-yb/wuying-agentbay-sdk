@@ -10,9 +10,7 @@ import asyncio
 import time
 from typing import List, Dict, Any
 from dataclasses import dataclass
-from agentbay import AsyncAgentBay
-from agentbay.extension import ExtensionsService
-from agentbay import CreateSessionParams, BrowserContext
+from agentbay import AsyncAgentBay, ExtensionsService, CreateSessionParams, BrowserContext
 
 
 @dataclass
@@ -209,14 +207,14 @@ class ExtensionTestRunner:
             # - Navigate to test pages
             # - Interact with extension
             # - Verify expected behavior
-            asyncio.sleep(1)  # Simulate test time
+            await asyncio.sleep(1)  # Simulate test time
             return True
         
         else:
             print(f"   ⚠️  Unknown test case: {test_case}")
             return False
     
-    def run_test_suite(self, test_suite: TestSuite) -> Dict[str, Any]:
+    async def run_test_suite(self, test_suite: TestSuite) -> Dict[str, Any]:
         """
         Run a complete test suite on multiple extensions.
         
@@ -239,11 +237,11 @@ class ExtensionTestRunner:
             
             # Create test session
             session_name = f"test_{test_suite.name}_{int(time.time())}"
-            session = self.create_test_session(extension_ids, session_name)
+            session = await self.create_test_session(extension_ids, session_name)
             
             # Wait for extension synchronization
             print("⏳ Waiting for extension synchronization...")
-            asyncio.sleep(5)  # Give time for extensions to sync
+            await asyncio.sleep(5)  # Give time for extensions to sync
             
             # Run tests for each extension
             suite_results = []
@@ -295,7 +293,7 @@ class ExtensionTestRunner:
                 "duration": time.time() - start_time
             }
     
-    def run_multiple_test_suites(self, test_suites: List[TestSuite]) -> Dict[str, Any]:
+    async def run_multiple_test_suites(self, test_suites: List[TestSuite]) -> Dict[str, Any]:
         """
         Run multiple test suites.
         
@@ -315,12 +313,12 @@ class ExtensionTestRunner:
             print(f"\n📋 Test Suite {i}/{len(test_suites)}: {test_suite.name}")
             print("-" * 50)
             
-            summary = self.run_test_suite(test_suite)
+            summary = await self.run_test_suite(test_suite)
             suite_summaries.append(summary)
             
             # Brief pause between suites
             if i < len(test_suites):
-                asyncio.sleep(2)
+                await asyncio.sleep(2)
         
         # Overall summary
         total_duration = time.time() - start_time
@@ -383,7 +381,7 @@ class ExtensionTestRunner:
             print(f"❌ Cleanup failed: {e}")
 
 
-def basic_test_automation_example():
+async def basic_test_automation_example():
     """Basic automated testing example."""
     
     api_key = os.getenv("AGENTBAY_API_KEY")
@@ -418,7 +416,7 @@ def basic_test_automation_example():
         test_suite.extension_paths = existing_extensions
         
         # Run test suite
-        summary = test_runner.run_test_suite(test_suite)
+        summary = await test_runner.run_test_suite(test_suite)
         
         # Generate report
         test_runner.generate_test_report("basic_test_report.txt")
@@ -432,7 +430,7 @@ def basic_test_automation_example():
         test_runner.cleanup()
 
 
-def ci_cd_integration_example():
+async def ci_cd_integration_example():
     """Example for CI/CD integration."""
     
     api_key = os.getenv("AGENTBAY_API_KEY")
@@ -483,7 +481,7 @@ def ci_cd_integration_example():
             return False
         
         # Run all test suites
-        overall_summary = test_runner.run_multiple_test_suites(valid_suites)
+        overall_summary = await test_runner.run_multiple_test_suites(valid_suites)
         
         # Generate CI/CD compatible report
         test_runner.generate_test_report("ci_test_report.txt")
@@ -503,23 +501,28 @@ def ci_cd_integration_example():
 
 
 if __name__ == "__main__":
-    print("Extension Testing Automation Examples")
-    print("=" * 70)
+    import asyncio
     
-    print("\n1. Basic Test Automation Example")
-    print("-" * 50)
-    basic_success = basic_test_automation_example()
+    async def main():
+        print("Extension Testing Automation Examples")
+        print("=" * 70)
+        
+        print("\n1. Basic Test Automation Example")
+        print("-" * 50)
+        basic_success = await basic_test_automation_example()
+        
+        print("\n2. CI/CD Integration Example")
+        print("-" * 50)
+        ci_success = await ci_cd_integration_example()
+        
+        print("\n🎯 Testing automation examples completed!")
+        print(f"   Basic tests: {'✅ PASSED' if basic_success else '❌ FAILED'}")
+        print(f"   CI/CD tests: {'✅ PASSED' if ci_success else '❌ FAILED'}")
+        
+        print("\n💡 Tips for extension testing:")
+        print("   - Update extension paths with your actual test files")
+        print("   - Customize test cases based on your extension functionality")
+        print("   - Use meaningful test suite names for better organization")
+        print("   - Integrate with your CI/CD pipeline using exit codes")
     
-    print("\n2. CI/CD Integration Example")
-    print("-" * 50)
-    ci_success = ci_cd_integration_example()
-    
-    print("\n🎯 Testing automation examples completed!")
-    print(f"   Basic tests: {'✅ PASSED' if basic_success else '❌ FAILED'}")
-    print(f"   CI/CD tests: {'✅ PASSED' if ci_success else '❌ FAILED'}")
-    
-    print("\n💡 Tips for extension testing:")
-    print("   - Update extension paths with your actual test files")
-    print("   - Customize test cases based on your extension functionality")
-    print("   - Use meaningful test suite names for better organization")
-    print("   - Integrate with your CI/CD pipeline using exit codes")
+    asyncio.run(main())

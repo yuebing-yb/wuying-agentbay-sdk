@@ -20,8 +20,8 @@ from agentbay._async.browser import (
     BrowserScreen,
     BrowserProxy,
 )
-from agentbay._async.browser import ActOptions, ExtractOptions
-from agentbay.model import SessionResult
+from agentbay._async.browser_agent import ActOptions, ExtractOptions
+from agentbay._common.models.response import SessionResult
 
 
 class ProductInfo(BaseModel):

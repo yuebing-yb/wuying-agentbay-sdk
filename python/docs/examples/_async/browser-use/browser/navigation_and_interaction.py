@@ -17,6 +17,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay._async.browser import BrowserOption
+from agentbay._async.browser_agent import ActOptions
 
 
 async def main():
@@ -58,9 +59,9 @@ async def main():
 
         # Interact with form elements
         print("\n4. Filling form...")
-        await session.browser.agent.act("Fill in the customer name field with 'John Doe'")
-        await session.browser.agent.act("Fill in the telephone field with '1234567890'")
-        await session.browser.agent.act("Fill in the email field with 'john@example.com'")
+        await session.browser.agent.act(ActOptions("Fill in the customer name field with 'John Doe'"))
+        await session.browser.agent.act(ActOptions("Fill in the telephone field with '1234567890'"))
+        await session.browser.agent.act(ActOptions("Fill in the email field with 'john@example.com'"))
         print("Form filled successfully")
 
         # Navigate back
