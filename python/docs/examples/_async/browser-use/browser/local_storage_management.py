@@ -216,7 +216,7 @@ async def main():
         print("✅ Browser initialized")
         
         # Get browser endpoint
-        endpoint_url = session.browser.get_endpoint_url()
+        endpoint_url = await session.browser.get_endpoint_url()
         
         async with async_playwright() as p:
             browser = await p.chromium.connect_over_cdp(endpoint_url)

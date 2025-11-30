@@ -14,7 +14,7 @@ import random
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay._async.browser import BrowserOption
-from agentbay._async.browser import ExtractOptions
+from agentbay._async.browser_agent import ExtractOptions
 
 from playwright.async_api import async_playwright
 from pydantic import BaseModel, Field
@@ -43,7 +43,7 @@ async def main():
         print(f"Session created with ID: {session.session_id}")
         if await session.browser.initialize(BrowserOption()):
             print("Browser initialized successfully")
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
             page = None
 

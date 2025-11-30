@@ -60,7 +60,7 @@ async def test_browser_type(browser_type: str | None, description: str):
         print(f"   ✓ Browser initialized successfully")
 
         # Get endpoint URL
-        endpoint_url = session.browser.get_endpoint_url()
+        endpoint_url = await session.browser.get_endpoint_url()
         print(f"\n3. CDP endpoint: {endpoint_url[:50]}...")
 
         # Connect Playwright and verify browser
@@ -169,7 +169,7 @@ async def quick_example():
             print("✓ Chrome browser initialized successfully")
 
             # Get endpoint and use with Playwright
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             async with async_playwright() as p:
                 browser = await p.chromium.connect_over_cdp(endpoint_url)
                 page = await browser.contexts[0].new_page()

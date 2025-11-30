@@ -10,7 +10,7 @@ import os, asyncio
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay._async.browser import BrowserOption
-from agentbay._async.browser import ActOptions
+from agentbay._async.browser_agent import ActOptions
 
 
 async def main():

@@ -12,7 +12,7 @@ import asyncio
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay._async.browser import BrowserOption
-from agentbay._async.browser import ActOptions
+from agentbay._async.browser_agent import ActOptions
 from playwright.async_api import async_playwright
 
 
@@ -24,7 +24,7 @@ async def main():
         assert await session.browser.initialize(BrowserOption())
         agent = session.browser.agent
 
-        endpoint_url = session.browser.get_endpoint_url()
+        endpoint_url = await session.browser.get_endpoint_url()
         async with async_playwright() as p:
             playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
             context = (
