@@ -13,10 +13,10 @@ from typing import List, Optional, Tuple
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay.async_api import BrowserOption
+from agentbay import BrowserOption
 from agentbay.browser.browser_agent import ExtractOptions, ActOptions
 
-from playwright.sync_api import sync_playwright
+from playwright.async_api import sync_playwright
 from pydantic import BaseModel, Field
 import time
 

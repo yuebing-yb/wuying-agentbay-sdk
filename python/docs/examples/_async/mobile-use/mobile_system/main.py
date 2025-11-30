@@ -2,9 +2,9 @@ import json
 import os
 from typing import Any, Dict, List
 from agentbay import AsyncAgentBay
-from agentbay.exceptions import AgentBayError
+from agentbay._common.exceptions import AgentBayError
 from agentbay import CreateSessionParams
-from agentbay.mobile import KeyCode
+from agentbay._async.mobile import KeyCode
 import asyncio
 
 

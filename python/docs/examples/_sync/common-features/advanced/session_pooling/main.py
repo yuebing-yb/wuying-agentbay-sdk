@@ -19,7 +19,6 @@ from datetime import datetime
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-import threading
 import time
 
 
@@ -47,7 +46,7 @@ class SessionPool:
         self.max_size = max_size
         self.image_id = image_id
         self.pool: List[PooledSession] = []
-        self.lock = threading.Lock()
+        self.lock = asyncio.Lock()
     
     def initialize(self):
         """Initialize the pool with minimum number of sessions."""
@@ -229,7 +228,7 @@ def main():
             worker_task(pool, 3, 3),
         ]
         
-        [task for task in workers]
+        asyncio.gather(*workers)
         
         pool.print_stats()
         

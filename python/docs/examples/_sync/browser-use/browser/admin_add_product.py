@@ -11,7 +11,7 @@
 import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay.async_api import BrowserOption, ActOptions
+from agentbay import BrowserOption, ActOptions
 import time
 
 

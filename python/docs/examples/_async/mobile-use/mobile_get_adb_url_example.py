@@ -9,6 +9,7 @@ The get_adb_url method requires an ADB public key for authentication and
 returns the ADB connection URL that can be used with the `adb connect` command.
 """
 
+import asyncio
 import os
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams

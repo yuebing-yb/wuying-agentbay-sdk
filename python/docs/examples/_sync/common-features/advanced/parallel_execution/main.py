@@ -36,7 +36,7 @@ def parallel_command_execution(session, commands: List[str]) -> List[Dict[str, A
         }
     
     tasks = [execute_single_command(cmd, i) for i, cmd in enumerate(commands)]
-    results = [task for task in tasks]
+    results = asyncio.gather(*tasks)
     
     elapsed_time = time.time() - start_time
     
@@ -78,7 +78,7 @@ def parallel_file_operations(session, file_count: int) -> List[Dict[str, Any]]:
         }
     
     tasks = [write_and_read_file(i) for i in range(file_count)]
-    results = [task for task in tasks]
+    results = asyncio.gather(*tasks)
     
     elapsed_time = time.time() - start_time
     
@@ -113,7 +113,7 @@ def parallel_data_processing(session, data_items: List[str]) -> List[Dict[str, A
         }
     
     tasks = [process_single_item(item, i) for i, item in enumerate(data_items)]
-    results = [task for task in tasks]
+    results = asyncio.gather(*tasks)
     
     elapsed_time = time.time() - start_time
     
@@ -145,7 +145,7 @@ def compare_sequential_vs_parallel(session):
     print("\n  Running in parallel...")
     start_time = time.time()
     tasks = [session.command.execute_command(cmd) for cmd in commands]
-    [task for task in tasks]
+    asyncio.gather(*tasks)
     parallel_time = time.time() - start_time
     print(f"  Parallel time: {parallel_time:.2f} seconds")
     

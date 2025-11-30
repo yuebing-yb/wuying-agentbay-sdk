@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay.async_api import (
+from agentbay import (
     BrowserOption,
     BrowserScreen,
     BrowserProxy,

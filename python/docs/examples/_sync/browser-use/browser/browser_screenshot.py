@@ -17,10 +17,10 @@ Features demonstrated:
 import os
 import base64
 from typing import Optional
-from playwright.sync_api import sync_playwright
+from playwright.async_api import sync_playwright
 
 from agentbay import AgentBay, CreateSessionParams, BrowserOption
-from agentbay.async_api import Session
+from agentbay import Session
 
 
 def take_agent_screenshots(session: Session):

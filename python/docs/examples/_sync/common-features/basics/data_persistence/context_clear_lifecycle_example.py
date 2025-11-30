@@ -44,7 +44,7 @@ def upload_file_to_context(
             return False
 
         # Upload file content (no headers - presigned URL is already signed)
-        with httpx.Client() as client:
+        with httpx.AsyncClient() as client:
             response = client.put(
                 url_result.url,
                 content=content.encode('utf-8'),

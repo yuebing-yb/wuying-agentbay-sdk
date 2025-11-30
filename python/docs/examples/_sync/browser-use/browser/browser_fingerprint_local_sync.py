@@ -16,12 +16,13 @@ This example will:
 """
 
 import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay.async_api import BrowserOption
+from agentbay import BrowserOption
 from agentbay.browser.fingerprint import BrowserFingerprintGenerator
 
-from playwright.sync_api import sync_playwright
+from playwright.async_api import sync_playwright
 
 
 def main():
