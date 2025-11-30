@@ -207,7 +207,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             async def sync_mock(*args, **kwargs):
                 return mock_sync_result
 
-            self.mock_session.context.sync_context = Mock(side_effect=sync_mock)
+            self.mock_session.context.sync = Mock(side_effect=sync_mock)
 
             # Mock wait for task
             async def wait_mock(*args, **kwargs):
@@ -233,7 +233,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             self.mock_context_svc.get_file_upload_url.assert_called_once_with(
                 "ctx_123", "/remote/file.txt"
             )
-            self.mock_session.context.sync_context.assert_called_once_with(
+            self.mock_session.context.sync.assert_called_once_with(
                 mode="download", path="/remote/file.txt", context_id="ctx_123"
             )
             self.file_transfer._wait_for_task.assert_called()
@@ -333,7 +333,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             async def sync_mock(*args, **kwargs):
                 return mock_sync_result
 
-            self.mock_session.context.sync_context = Mock(side_effect=sync_mock)
+            self.mock_session.context.sync = Mock(side_effect=sync_mock)
 
             # Mock wait for task
             async def wait_mock(*args, **kwargs):
@@ -374,7 +374,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             self.assertEqual(result.bytes_received, 2048)
 
             # Verify calls were made
-            self.mock_session.context.sync_context.assert_called_once_with(
+            self.mock_session.context.sync.assert_called_once_with(
                 mode="upload", path="/remote/file.txt", context_id="ctx_123"
             )
             self.file_transfer._wait_for_task.assert_called()
@@ -402,7 +402,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
             async def sync_mock(*args, **kwargs):
                 return mock_sync_result
 
-            self.mock_session.context.sync_context = Mock(side_effect=sync_mock)
+            self.mock_session.context.sync = Mock(side_effect=sync_mock)
 
             # Mock wait for task
             async def wait_mock(*args, **kwargs):

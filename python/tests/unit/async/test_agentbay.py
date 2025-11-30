@@ -101,6 +101,18 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
+        
+        # Mock context info response
+        mock_context_response = MagicMock()
+        mock_context_response.to_map.return_value = {
+            "body": {
+                "Data": {
+                    "ContextStatusDataList": []
+                },
+                "Success": True
+            }
+        }
+        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance and session parameters
@@ -142,6 +154,18 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             "body": {"Data": None}  # Invalid Data field
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
+        
+        # Mock context info response
+        mock_context_response = MagicMock()
+        mock_context_response.to_map.return_value = {
+            "body": {
+                "Data": {
+                    "ContextStatusDataList": []
+                },
+                "Success": True
+            }
+        }
+        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance
@@ -311,6 +335,18 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
+        
+        # Mock context info response
+        mock_context_response = MagicMock()
+        mock_context_response.to_map.return_value = {
+            "body": {
+                "Data": {
+                    "ContextStatusDataList": []
+                },
+                "Success": True
+            }
+        }
+        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
         mock_mcp_client.return_value = mock_client
 
         agent_bay = AsyncAgentBay(api_key="test-key")
@@ -357,6 +393,18 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
+        
+        # Mock context info response
+        mock_context_response = MagicMock()
+        mock_context_response.to_map.return_value = {
+            "body": {
+                "Data": {
+                    "ContextStatusDataList": []
+                },
+                "Success": True
+            }
+        }
+        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
         mock_mcp_client.return_value = mock_client
 
         # Create mobile configuration
@@ -431,6 +479,18 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
+        
+        # Mock context info response
+        mock_context_response = MagicMock()
+        mock_context_response.to_map.return_value = {
+            "body": {
+                "Data": {
+                    "ContextStatusDataList": []
+                },
+                "Success": True
+            }
+        }
+        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
         mock_mcp_client.return_value = mock_client
 
         # Create mobile blacklist configuration
@@ -510,6 +570,18 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
+        
+        # Mock context info response
+        mock_context_response = MagicMock()
+        mock_context_response.to_map.return_value = {
+            "body": {
+                "Data": {
+                    "ContextStatusDataList": []
+                },
+                "Success": True
+            }
+        }
+        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance

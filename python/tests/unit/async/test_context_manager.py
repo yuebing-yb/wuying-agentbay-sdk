@@ -12,7 +12,7 @@ from agentbay._async.context_manager import (
 
 
 class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
-    async def setUp(self):
+    def setUp(self):
         """Set up test fixtures."""
         self.mock_session = MagicMock()
         self.mock_session._get_api_key.return_value = "test-api-key"

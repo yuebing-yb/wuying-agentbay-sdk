@@ -7,7 +7,10 @@ import pytest
 # We'll import from the package after refactoring
 # For now, we expect these imports to work once refactored
 try:
-    from agentbay._async.agentbay import AsyncAgentBay, AsyncAgentBay, AsyncSession, Session
+    from agentbay._async.agentbay import AsyncAgentBay
+    from agentbay._async.session import AsyncSession
+    from agentbay._sync.agentbay import AgentBay
+    from agentbay._sync.session import Session
 except ImportError:
     pass
 
@@ -20,7 +23,7 @@ async def test_async_agentbay_structure():
 
     # Mock client
     with patch("agentbay.api.client.Client") as MockClient:
-        agent = AsyncAsyncAgentBay(api_key="test")
+        agent = AgentBay(api_key="test")
         assert agent is not None
 
 

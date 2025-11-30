@@ -108,7 +108,7 @@ class TestBrowser(unittest.TestCase):
             open(
                 os.path.join(
                     os.path.dirname(__file__),
-                    "../../../resource/fingerprint.example.json",
+                    "../../../../resource/fingerprint.example.json",
                 ),
                 "r",
             ).read()
@@ -273,7 +273,7 @@ class TestBrowser(unittest.TestCase):
             open(
                 os.path.join(
                     os.path.dirname(__file__),
-                    "../../../resource/fingerprint.example.json",
+                    "../../../../resource/fingerprint.example.json",
                 ),
                 "r",
             ).read()

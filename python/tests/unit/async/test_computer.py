@@ -17,13 +17,13 @@ class TestComputer:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.mock_session = Mock()
-        self.mock_session.call_mcp_tool = AsyncMock()
-        self.computer = AsyncComputer(self.mock_session)
+        self.session = Mock()
+        self.session.call_mcp_tool = AsyncMock()
+        self.computer = AsyncComputer(self.session)
 
     async def test_computer_initialization(self):
         """Test Computer module initialization."""
-        assert self.computer.session == self.mock_session
+        assert self.computer.session == self.session
 
     # Mouse Operations Tests
     async def test_click_mouse_success(self):
@@ -34,7 +34,7 @@ class TestComputer:
         mock_result.request_id = "test-123"
         mock_result.error_message = ""
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.click_mouse(100, 200)
@@ -54,7 +54,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.click_mouse(100, 200, button="right")
@@ -77,7 +77,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.click_mouse(100, 200, button=MouseButton.RIGHT)
@@ -95,7 +95,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.click_mouse(100, 200, button=MouseButton.DOUBLE_LEFT)
@@ -112,7 +112,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.move_mouse(150, 250)
@@ -131,7 +131,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.drag_mouse(100, 100, 200, 200)
@@ -151,7 +151,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.scroll(300, 300)
@@ -170,7 +170,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.scroll(300, 300, direction="down", amount=3)
@@ -188,7 +188,7 @@ class TestComputer:
         mock_result.request_id = "test-123"
         mock_result.data = {"x": 150, "y": 250}
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.get_cursor_position()
@@ -207,7 +207,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.input_text("Hello World")
@@ -226,7 +226,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.press_keys(["Ctrl", "a"])
@@ -245,7 +245,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.press_keys(["Shift"], hold=True)
@@ -262,7 +262,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.release_keys(["Shift"])
@@ -283,7 +283,7 @@ class TestComputer:
         mock_result.request_id = "test-123"
         mock_result.data = {"width": 1920, "height": 1080, "dpiScalingFactor": 1.0}
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.get_screen_size()
@@ -303,7 +303,7 @@ class TestComputer:
         mock_result.request_id = "test-123"
         mock_result.data = "/path/to/screenshot.png"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.screenshot()
@@ -323,7 +323,7 @@ class TestComputer:
         mock_result.request_id = "test-123"
         mock_result.error_message = "MCP tool failed"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.click_mouse(100, 200)
@@ -336,7 +336,7 @@ class TestComputer:
     async def test_click_mouse_exception(self):
         """Test mouse click when exception occurs."""
         # Arrange
-        self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
+        self.session.call_mcp_tool = AsyncMock(side_effect=Exception("Network error"))
 
         # Act
         result = await self.computer.click_mouse(100, 200)
@@ -359,7 +359,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.scroll(
@@ -379,7 +379,7 @@ class TestComputer:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
         result = await self.computer.drag_mouse(100, 100, 200, 200, button=MouseButton.MIDDLE)
@@ -400,7 +400,7 @@ class TestComputer:
     # Application Management Operations Tests
     async def test_list_visible_apps_success(self):
         """Test list_visible_apps success."""
-        self.mock_session.call_mcp_tool.return_value = Mock(
+        self.session.call_mcp_tool.return_value = Mock(
             success=True,
             request_id="test-request-id",
             data='[{"pname":"Calculator","pid":1234}]',
@@ -411,11 +411,11 @@ class TestComputer:
         assert result.success is True
         assert len(result.data) == 1
         assert result.data[0].pname == "Calculator"
-        self.mock_session.call_mcp_tool.assert_called_once_with("list_visible_apps", {})
+        self.session.call_mcp_tool.assert_called_once_with("list_visible_apps", {})
 
     async def test_get_installed_apps_success(self):
         """Test get_installed_apps success."""
-        self.mock_session.call_mcp_tool.return_value = Mock(
+        self.session.call_mcp_tool.return_value = Mock(
             success=True,
             request_id="test-request-id",
             data='[{"name":"Notepad","start_cmd":"notepad.exe"},{"name":"Calculator","start_cmd":"calc.exe"}]',
@@ -430,7 +430,7 @@ class TestComputer:
 
     async def test_start_app_success(self):
         """Test start_app success."""
-        self.mock_session.call_mcp_tool.return_value = Mock(
+        self.session.call_mcp_tool.return_value = Mock(
             success=True,
             request_id="test-request-id",
             data='[{"pname":"notepad","pid":1234}]',
@@ -445,7 +445,7 @@ class TestComputer:
 
     async def test_start_app_with_working_directory(self):
         """Test start_app with working directory."""
-        self.mock_session.call_mcp_tool.return_value = Mock(
+        self.session.call_mcp_tool.return_value = Mock(
             success=True, request_id="test-request-id", data="[]"
         )
 
@@ -455,7 +455,7 @@ class TestComputer:
 
     async def test_stop_app_by_pname_success(self):
         """Test stop_app_by_pname success."""
-        self.mock_session.call_mcp_tool.return_value = Mock(
+        self.session.call_mcp_tool.return_value = Mock(
             success=True, request_id="test-request-id"
         )
 
@@ -465,7 +465,7 @@ class TestComputer:
 
     async def test_stop_app_by_pid_success(self):
         """Test stop_app_by_pid success."""
-        self.mock_session.call_mcp_tool.return_value = Mock(
+        self.session.call_mcp_tool.return_value = Mock(
             success=True, request_id="test-request-id"
         )
 
@@ -475,7 +475,7 @@ class TestComputer:
 
     async def test_stop_app_by_cmd_success(self):
         """Test stop_app_by_cmd success."""
-        self.mock_session.call_mcp_tool.return_value = Mock(
+        self.session.call_mcp_tool.return_value = Mock(
             success=True, request_id="test-request-id"
         )
 

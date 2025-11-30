@@ -15,7 +15,7 @@ class DummySession:
         self.api_key = "dummy_key"
         self.session_id = "dummy_session"
         self.client = MagicMock()
-        self.call_mcp_tool = MagicMock()
+        self.call_mcp_tool = AsyncMock()
 
     def get_api_key(self):
         return self.api_key
@@ -34,8 +34,8 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
     work correctly with automatic chunking for large files.
     """
 
-    async def setUp(self):
-        self.session = DummyAsyncAsyncSession()
+    def setUp(self):
+        self.session = DummySession()
         self.fs = AsyncFileSystem(self.session)
 
     # Test internal chunk methods exist and work correctly
@@ -51,7 +51,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         # Test internal method exists
         self.assertTrue(hasattr(self.fs, "_read_file_chunk"))
 
-        result = self.fs._read_file_chunk("/path/to/file.txt", 0, 100)
+        result = await self.fs._read_file_chunk("/path/to/file.txt", 0, 100)
         self.assertIsInstance(result, FileContentResult)
         self.assertTrue(result.success)
         self.assertEqual(result.content, "chunk content")
@@ -67,15 +67,15 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         # Test internal method exists
         self.assertTrue(hasattr(self.fs, "_write_file_chunk"))
 
-        result = self.fs._write_file_chunk("/path/to/file.txt", "content", "overwrite")
+        result = await self.fs._write_file_chunk("/path/to/file.txt", "content", "overwrite")
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
         self.assertTrue(result.data)
         self.assertEqual(result.request_id, "request-123")
 
     # Test new unified read_file method
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
-    @patch("agentbay._async.filesystem.FileSystem._read_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
     async def test_read_file_small_file_direct_read(
         self, mock_read_chunk, mock_get_file_info
     ):
@@ -103,8 +103,8 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         mock_get_file_info.assert_called_once_with("/path/to/small_file.txt")
         mock_read_chunk.assert_called_once_with("/path/to/small_file.txt", 0, 1024)
 
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
-    @patch("agentbay._async.filesystem.FileSystem._read_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
     async def test_read_file_large_file_chunked_read(
         self, mock_read_chunk, mock_get_file_info
     ):
@@ -140,7 +140,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         mock_get_file_info.assert_called_once_with("/path/to/large_file.txt")
         self.assertEqual(mock_read_chunk.call_count, 3)
 
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
     async def test_read_file_empty_file(self, mock_get_file_info):
         """
         Test that read_file handles empty files correctly.
@@ -160,7 +160,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.content, "")
         mock_get_file_info.assert_called_once_with("/path/to/empty_file.txt")
 
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
     async def test_read_file_directory_error(self, mock_get_file_info):
         """
         Test that read_file returns error when path is a directory.
@@ -180,7 +180,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         self.assertIn("directory", result.error_message.lower())
 
     # Test new unified write_file method
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_small_content_direct_write(self, mock_write_chunk):
         """
         Test that write_file handles small content efficiently (single chunk).
@@ -199,7 +199,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
             "/path/to/file.txt", small_content, "overwrite"
         )
 
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_large_content_chunked_write(self, mock_write_chunk):
         """
         Test that write_file handles large content with automatic chunking.
@@ -230,7 +230,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
             call = mock_write_chunk.call_args_list[i]
             self.assertEqual(call[0][2], "append")  # mode parameter
 
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_append_mode_small_content(self, mock_write_chunk):
         """
         Test that write_file respects append mode for small content.
@@ -248,7 +248,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
             "/path/to/file.txt", small_content, "append"
         )
 
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_append_mode_large_content(self, mock_write_chunk):
         """
         Test that write_file respects append mode for large content.
@@ -277,7 +277,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second_call[0][2], "append")  # mode parameter
 
     # Test error handling
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_chunk_error_propagation(self, mock_write_chunk):
         """
         Test that write_file properly propagates errors from chunk operations.
@@ -292,7 +292,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Write failed")
 
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
     async def test_read_file_file_info_error_propagation(self, mock_get_file_info):
         """
         Test that read_file properly propagates errors from get_file_info.

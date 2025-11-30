@@ -12,7 +12,7 @@ class TestAgentBayGet:
         """Test get with empty session ID."""
         agentbay = AsyncAgentBay(api_key="test-api-key")
 
-        result = agentbay.get("")
+        result = await agentbay.get("")
 
         assert isinstance(result, SessionResult)
         assert not result.success
@@ -22,7 +22,7 @@ class TestAgentBayGet:
         """Test get with None session ID."""
         agentbay = AsyncAgentBay(api_key="test-api-key")
 
-        result = agentbay.get(None)
+        result = await agentbay.get(None)
 
         assert isinstance(result, SessionResult)
         assert not result.success
@@ -32,7 +32,7 @@ class TestAgentBayGet:
         """Test get with whitespace-only session ID."""
         agentbay = AsyncAgentBay(api_key="test-api-key")
 
-        result = agentbay.get("   ")
+        result = await agentbay.get("   ")
 
         assert isinstance(result, SessionResult)
         assert not result.success
@@ -56,7 +56,7 @@ class TestAgentBayGet:
         assert callable(get_method)
 
         # Test with invalid input to verify it returns SessionResult
-        result = agentbay.get("")
+        result = await agentbay.get("")
         assert isinstance(result, SessionResult)
 
     async def test_get_error_message_format(self):
@@ -70,7 +70,7 @@ class TestAgentBayGet:
         ]
 
         for session_id, expected_error in test_cases:
-            result = agentbay.get(session_id)
+            result = await agentbay.get(session_id)
             assert isinstance(result, SessionResult)
             assert not result.success
             assert expected_error in result.error_message

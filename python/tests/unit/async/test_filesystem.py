@@ -19,7 +19,7 @@ class DummySession:
         self.session_id = "dummy_session"
         self.client = MagicMock()
         # Add call_mcp_tool method for new API
-        self.call_mcp_tool = MagicMock()
+        self.call_mcp_tool = AsyncMock()
 
     def get_api_key(self):
         return self.api_key
@@ -32,12 +32,12 @@ class DummySession:
 
 
 class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
-    async def setUp(self):
+    def setUp(self):
         self.session = DummySession()
         self.fs = AsyncFileSystem(self.session)
 
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
-    @patch("agentbay._async.filesystem.FileSystem._read_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
     async def test_read_file_success(self, mock_read_file_chunk, mock_get_file_info):
         """
         Test read_file method with successful response (small file).
@@ -61,7 +61,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.content, "file content")
         self.assertEqual(result.request_id, "request-123")
 
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
     async def test_read_file_get_info_error(self, mock_get_file_info):
         """
         Test read_file method with error in get_file_info.
@@ -80,8 +80,8 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.error_message, "Error in response: some error message")
         self.assertEqual(result.content, "")
 
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
-    @patch("agentbay._async.filesystem.FileSystem._read_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
     async def test_read_file_chunk_error(self, mock_read_file_chunk, mock_get_file_info):
         """
         Test read_file method with error in chunk reading.
@@ -178,7 +178,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.error_message, "Edit failed")
 
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_success(self, mock_write_file_chunk):
         """
         Test write_file method with successful response (small content).
@@ -198,7 +198,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             "/path/to/file.txt", "content to write", "overwrite"
         )
 
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_error(self, mock_write_file_chunk):
         """
         Test write_file method with error response.
@@ -401,8 +401,8 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(result.matches), 1)
         self.assertEqual(result.matches[0], "/path/to/file1.txt")
 
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
-    @patch("agentbay._async.filesystem.FileSystem._read_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
     async def test_read_file_large_success(self, mock_read_file_chunk, mock_get_file_info):
         """
         Test read_file method with large file (automatic chunking).
@@ -435,7 +435,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         mock_get_file_info.assert_called_once()
         self.assertEqual(mock_read_file_chunk.call_count, 3)
 
-    @patch("agentbay._async.filesystem.FileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
     async def test_read_file_error(self, mock_get_file_info):
         """
         Test read_file method with error in get_file_info.
@@ -453,7 +453,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.error_message, "File not found")
         mock_get_file_info.assert_called_once()
 
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_large_success(self, mock_write_file_chunk):
         """
         Test write_file method with large content (automatic chunking).
@@ -477,7 +477,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(calls[1][0][2], "append")  # Second call mode
         self.assertEqual(calls[2][0][2], "append")  # Third call mode
 
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_small_content(self, mock_write_file_chunk):
         """
         Test write_file method with content smaller than chunk size.
@@ -495,7 +495,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             "/path/to/file.txt", content, "overwrite"
         )
 
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_large_error(self, mock_write_file_chunk):
         """
         Test write_file method with error in first write.
@@ -513,7 +513,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.error_message, "Write error")
         mock_write_file_chunk.assert_called_once()
 
-    @patch("agentbay._async.filesystem.FileSystem._write_file_chunk")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
     async def test_write_file_invalid_mode(self, mock_write_file_chunk):
         """
         Test write_file method with invalid mode.

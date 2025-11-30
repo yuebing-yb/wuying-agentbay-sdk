@@ -24,9 +24,9 @@ class DummySession:
 
 
 class TestAsyncCommand(unittest.IsolatedAsyncioTestCase):
-    async def setUp(self):
-        self.session = DummyAsyncAsyncSession()
-        self.command = Command(self.session)
+    def setUp(self):
+        self.session = DummySession()
+        self.command = AsyncCommand(self.session)
 
     async def test_execute_command_success(self):
         """
@@ -37,9 +37,9 @@ class TestAsyncCommand(unittest.IsolatedAsyncioTestCase):
         mock_result = McpToolResult(
             request_id="request-123", success=True, data="line1\nline2\n"
         )
-        self.session.call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.command.execute_command("ls -la")
+        result = await self.command.execute_command("ls -la")
         self.assertIsInstance(result, CommandResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -61,10 +61,10 @@ class TestAsyncCommand(unittest.IsolatedAsyncioTestCase):
         mock_result = McpToolResult(
             request_id="request-123", success=True, data="line1\nline2\n"
         )
-        self.session.call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         custom_timeout = 2000
-        result = self.command.execute_command("ls -la", timeout_ms=custom_timeout)
+        result = await self.command.execute_command("ls -la", timeout_ms=custom_timeout)
         self.assertIsInstance(result, CommandResult)
         self.assertTrue(result.success)
         self.assertEqual(result.output, "line1\nline2\n")
@@ -85,9 +85,9 @@ class TestAsyncCommand(unittest.IsolatedAsyncioTestCase):
             success=False,
             error_message="Command execution failed",
         )
-        self.session.call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.command.execute_command("ls -la")
+        result = await self.command.execute_command("ls -la")
         self.assertIsInstance(result, CommandResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -98,9 +98,9 @@ class TestAsyncCommand(unittest.IsolatedAsyncioTestCase):
         """
         Test execute_command method with exception.
         """
-        self.session.call_mcp_tool.side_effect = Exception("mock error")
+        self.session.call_mcp_tool = AsyncMock(side_effect=Exception("mock error"))
 
-        result = self.command.execute_command("ls -la")
+        result = await self.command.execute_command("ls -la")
         self.assertIsInstance(result, CommandResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "")

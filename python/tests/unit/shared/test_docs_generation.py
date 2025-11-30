@@ -5,20 +5,23 @@ from pathlib import Path
 
 
 def test_generate_python_api_docs():
-    project_root = Path(__file__).resolve().parents[2]
+    project_root = Path(__file__).resolve().parents[3]  # Go up to python directory
     docs_dir = project_root / "docs" / "api"
 
     if docs_dir.exists():
         shutil.rmtree(docs_dir)
 
+    # Use the current Python executable (should be from virtual environment)
+    python_executable = sys.executable
+    
     result = subprocess.run(
-        [sys.executable, "scripts/generate_api_docs.py"],
+        [python_executable, "scripts/generate_api_docs.py"],
         cwd=project_root,
         capture_output=True,
         text=True,
     )
 
-    assert result.returncode == 0, result.stderr or result.stdout
+    assert result.returncode == 0, f"Script failed with return code {result.returncode}\nStdout: {result.stdout}\nStderr: {result.stderr}"
 
     # Check sync API docs
     sync_session_file = docs_dir / "sync" / "session.md"

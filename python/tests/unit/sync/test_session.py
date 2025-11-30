@@ -165,18 +165,18 @@ class TestSession(unittest.TestCase):
         # Set up context mock object
         self.session.context = MagicMock()
 
-        # Mock context.sync_context return value (sync result)
+        # Mock context.sync return value (sync result)
         sync_result = MagicMock()
         sync_result.success = True
-        self.session.context.sync_context.return_value = sync_result
+        self.session.context.sync.return_value = sync_result
 
         # Call delete method with sync_context=True
         result = self.session.delete(sync_context=True)
         self.assertIsInstance(result, DeleteResult)
         self.assertTrue(result.success)
 
-        # Verify sync_context was called
-        self.session.context.sync_context.assert_called_once()
+        # Verify sync was called
+        self.session.context.sync.assert_called_once()
 
         # Verify API call is correct
         MockReleaseMcpSessionRequest.assert_called_once_with(

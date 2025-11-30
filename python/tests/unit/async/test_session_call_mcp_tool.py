@@ -29,22 +29,22 @@ class DummyAgentBay:
 class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
     """Test cases for Session.call_mcp_tool() public API."""
 
-    async def setUp(self):
+    def setUp(self):
         """Set up test fixtures."""
         from agentbay._async.session import AsyncSession
 
-        self.agent_bay = DummyAsyncAgentBay()
+        self.agent_bay = DummyAgentBay()
         self.session_id = "test_session_id"
-        self.session = AsyncAsyncSession(self.agent_bay, self.session_id)
+        self.session = AsyncSession(self.agent_bay, self.session_id)
 
-    async def test_call_mcp_tool_method_exists(self):
+    def test_call_mcp_tool_method_exists(self):
         """Test that call_mcp_tool method exists and is public."""
         self.assertTrue(hasattr(self.session, "call_mcp_tool"))
         self.assertTrue(callable(getattr(self.session, "call_mcp_tool")))
 
     @patch("agentbay._async.session.CallMcpToolRequest")
     @patch("agentbay._async.session.extract_request_id")
-    def test_call_mcp_tool_success_non_vpc(
+    async def test_call_mcp_tool_success_non_vpc(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
         """Test successful MCP tool call in non-VPC mode."""
@@ -53,7 +53,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-123"
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
 
         # Mock response structure
         mock_response.to_map.return_value = {
@@ -69,7 +69,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         }
 
         # Call the method
-        result = self.session.call_mcp_tool(
+        result = await self.session.call_mcp_tool(
             "shell", {"command": "ls", "timeout_ms": 1000}
         )
 
@@ -92,7 +92,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.session.CallMcpToolRequest")
     @patch("agentbay._async.session.extract_request_id")
-    def test_call_mcp_tool_with_error_response(
+    async def test_call_mcp_tool_with_error_response(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
         """Test MCP tool call with error response."""
@@ -101,7 +101,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-456"
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
 
         # Mock error response
         mock_response.to_map.return_value = {
@@ -119,7 +119,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         }
 
         # Call the method
-        result = self.session.call_mcp_tool("shell", {"command": "invalid_cmd"})
+        result = await self.session.call_mcp_tool("shell", {"command": "invalid_cmd"})
 
         # Assertions
         self.assertIsNotNone(result)
@@ -129,7 +129,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.session.CallMcpToolRequest")
     @patch("agentbay._async.session.extract_request_id")
-    def test_call_mcp_tool_api_exception(
+    async def test_call_mcp_tool_api_exception(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
         """Test MCP tool call when API raises exception."""
@@ -137,17 +137,17 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_request = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-789"
-        self.agent_bay.client.call_mcp_tool.side_effect = Exception("Network error")
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(side_effect=Exception("Network error"))
 
         # Call the method
-        result = self.session.call_mcp_tool("shell", {"command": "ls"})
+        result = await self.session.call_mcp_tool("shell", {"command": "ls"})
 
         # Assertions
         self.assertIsNotNone(result)
         self.assertFalse(result.success)
         self.assertIn("Network error", result.error_message)
 
-    @patch("httpx.Client")
+    @patch("httpx.AsyncClient")
     async def test_call_mcp_tool_vpc_mode_success(self, mock_httpx_client):
         """Test successful MCP tool call in VPC mode."""
         # Setup VPC session
@@ -169,14 +169,15 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
             "isError": False,
         }
 
-        # Setup httpx client mock
-        # with httpx.Client() as client: client.get(...)
+        # Setup httpx async client mock
+        # async with httpx.AsyncClient() as client: await client.get(...)
         mock_client_instance = MagicMock()
-        mock_httpx_client.return_value.__enter__.return_value = mock_client_instance
-        mock_client_instance.get.return_value = mock_response
+        mock_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
+        mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
+        mock_client_instance.get = AsyncMock(return_value=mock_response)
 
         # Call the method
-        result = self.session.call_mcp_tool("shell", {"command": "pwd"})
+        result = await self.session.call_mcp_tool("shell", {"command": "pwd"})
 
         # Assertions
         self.assertIsNotNone(result)
@@ -199,7 +200,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         self.session.mcp_tools = []  # No tools available
 
         # Call the method
-        result = self.session.call_mcp_tool("nonexistent_tool", {})
+        result = await self.session.call_mcp_tool("nonexistent_tool", {})
 
         # Assertions
         self.assertIsNotNone(result)
@@ -220,7 +221,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         self.session.mcp_tools = [mock_tool]
 
         # Call the method
-        result = self.session.call_mcp_tool("shell", {"command": "ls"})
+        result = await self.session.call_mcp_tool("shell", {"command": "ls"})
 
         # Assertions
         self.assertIsNotNone(result)
@@ -229,7 +230,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.session.CallMcpToolRequest")
     @patch("agentbay._async.session.extract_request_id")
-    def test_call_mcp_tool_with_custom_timeouts(
+    async def test_call_mcp_tool_with_custom_timeouts(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
         """Test MCP tool call with custom timeout parameters."""
@@ -238,7 +239,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-999"
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
 
         # Mock response
         mock_response.to_map.return_value = {
@@ -254,7 +255,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         }
 
         # Call with custom timeouts
-        result = self.session.call_mcp_tool(
+        result = await self.session.call_mcp_tool(
             "shell", {"command": "ls"}, read_timeout=60, connect_timeout=10
         )
 
@@ -262,14 +263,14 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result.success)
 
         # Verify timeouts were passed to client
-        self.agent_bay.client.call_mcp_tool.assert_called_once()
-        call_kwargs = self.agent_bay.client.call_mcp_tool.call_args[1]
+        self.agent_bay.client.call_mcp_tool_async.assert_called_once()
+        call_kwargs = self.agent_bay.client.call_mcp_tool_async.call_args[1]
         self.assertEqual(call_kwargs.get("read_timeout"), 60)
         self.assertEqual(call_kwargs.get("connect_timeout"), 10)
 
     @patch("agentbay._async.session.CallMcpToolRequest")
     @patch("agentbay._async.session.extract_request_id")
-    def test_call_mcp_tool_with_complex_args(
+    async def test_call_mcp_tool_with_complex_args(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
         """Test MCP tool call with complex nested arguments."""
@@ -278,7 +279,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-complex"
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
 
         # Mock response
         mock_response.to_map.return_value = {
@@ -305,7 +306,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         }
 
         # Call the method
-        result = self.session.call_mcp_tool("data_processor", complex_args)
+        result = await self.session.call_mcp_tool("data_processor", complex_args)
 
         # Assertions
         self.assertTrue(result.success)
@@ -335,10 +336,10 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
                 "Success": True,
             }
         }
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
 
         # Call the method
-        result = self.session.call_mcp_tool("shell", {"command": "ls"})
+        result = await self.session.call_mcp_tool("shell", {"command": "ls"})
 
         # Verify return type
         self.assertIsInstance(result, McpToolResult)
@@ -351,7 +352,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
 class TestAsyncMcpToolResult(unittest.IsolatedAsyncioTestCase):
     """Test cases for McpToolResult model."""
 
-    async def test_mcp_tool_result_initialization(self):
+    def test_mcp_tool_result_initialization(self):
         """Test McpToolResult can be initialized with all fields."""
         from agentbay._common.models.response import McpToolResult
 
@@ -364,7 +365,7 @@ class TestAsyncMcpToolResult(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.data, "test data")
         self.assertEqual(result.error_message, "")
 
-    async def test_mcp_tool_result_defaults(self):
+    def test_mcp_tool_result_defaults(self):
         """Test McpToolResult default values."""
         from agentbay._common.models.response import McpToolResult
 

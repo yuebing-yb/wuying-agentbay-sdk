@@ -56,14 +56,14 @@ Get information about context synchronization status asynchronously.
 
     ContextInfoResult: Result object containing context status data and request ID
 
-### sync\_context
+### sync
 
 ```python
-async def sync_context(context_id: Optional[str] = None,
-                       path: Optional[str] = None,
-                       mode: Optional[str] = None,
-                       max_retries: int = 150,
-                       retry_interval: int = 1500) -> ContextSyncResult
+async def sync(context_id: Optional[str] = None,
+               path: Optional[str] = None,
+               mode: Optional[str] = None,
+               max_retries: int = 150,
+               retry_interval: int = 1500) -> ContextSyncResult
 ```
 
 Synchronize a context with the session asynchronously.
@@ -80,6 +80,18 @@ Synchronize a context with the session asynchronously.
 **Returns**:
 
     ContextSyncResult: Result object containing success status and request ID
+
+### sync\_context
+
+```python
+async def sync_context(context_id: Optional[str] = None,
+                       path: Optional[str] = None,
+                       mode: Optional[str] = None,
+                       max_retries: int = 150,
+                       retry_interval: int = 1500) -> ContextSyncResult
+```
+
+Backward compatibility alias for sync().
 
 ## See Also
 

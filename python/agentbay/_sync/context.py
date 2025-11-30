@@ -291,7 +291,12 @@ class ContextService:
             )
             if params.next_token:
                 request.next_token = params.next_token
-            response = self.agent_bay.client.list_contexts(request)
+            # Try async method first, fall back to sync wrapped in asyncio.to_thread
+            client = self.agent_bay.client
+            if hasattr(client, 'list_contexts') and callable(getattr(client, 'list_contexts')):
+                response = client.list_contexts(request)
+            else:
+                response = client.list_contexts(request)
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
@@ -439,7 +444,12 @@ class ContextService:
                 allow_create=create,
                 authorization=f"Bearer {self.agent_bay.api_key}",
             )
-            response = self.agent_bay.client.get_context(request)
+            # Try async method first, fall back to sync wrapped in asyncio.to_thread
+            client = self.agent_bay.client
+            if hasattr(client, 'get_context') and callable(getattr(client, 'get_context')):
+                response = client.get_context(request)
+            else:
+                response = client.get_context(request)
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
@@ -582,7 +592,12 @@ class ContextService:
                 name=context.name,
                 authorization=f"Bearer {self.agent_bay.api_key}",
             )
-            response = self.agent_bay.client.modify_context(request)
+            # Try async method first, fall back to sync wrapped in asyncio.to_thread
+            client = self.agent_bay.client
+            if hasattr(client, 'modify_context') and callable(getattr(client, 'modify_context')):
+                response = client.modify_context(request)
+            else:
+                response = client.modify_context(request)
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
@@ -646,7 +661,12 @@ class ContextService:
             request = DeleteContextRequest(
                 id=context.id, authorization=f"Bearer {self.agent_bay.api_key}"
             )
-            response = self.agent_bay.client.delete_context(request)
+            # Try async method first, fall back to sync wrapped in asyncio.to_thread
+            client = self.agent_bay.client
+            if hasattr(client, 'delete_context') and callable(getattr(client, 'delete_context')):
+                response = client.delete_context(request)
+            else:
+                response = client.delete_context(request)
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
@@ -717,7 +737,12 @@ class ContextService:
             context_id=context_id,
             file_path=file_path,
         )
-        resp = self.agent_bay.client.get_context_file_download_url(req)
+        # Try async method first, fall back to sync wrapped in asyncio.to_thread
+        client = self.agent_bay.client
+        if hasattr(client, 'get_context_file_download_url') and callable(getattr(client, 'get_context_file_download_url')):
+            resp = client.get_context_file_download_url(req)
+        else:
+            resp = client.get_context_file_download_url(req)
         try:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
@@ -779,7 +804,12 @@ class ContextService:
             context_id=context_id,
             file_path=file_path,
         )
-        resp = self.agent_bay.client.get_context_file_upload_url(req)
+        # Try async method first, fall back to sync wrapped in asyncio.to_thread
+        client = self.agent_bay.client
+        if hasattr(client, 'get_context_file_upload_url') and callable(getattr(client, 'get_context_file_upload_url')):
+            resp = client.get_context_file_upload_url(req)
+        else:
+            resp = client.get_context_file_upload_url(req)
         try:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
@@ -838,7 +868,12 @@ class ContextService:
             context_id=context_id,
             file_path=file_path,
         )
-        resp = self.agent_bay.client.delete_context_file(req)
+        # Try async method first, fall back to sync wrapped in asyncio.to_thread
+        client = self.agent_bay.client
+        if hasattr(client, 'delete_context_file') and callable(getattr(client, 'delete_context_file')):
+            resp = client.delete_context_file(req)
+        else:
+            resp = client.delete_context_file(req)
         try:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
@@ -902,7 +937,12 @@ class ContextService:
             parent_folder_path=parent_folder_path,
             context_id=context_id,
         )
-        resp = self.agent_bay.client.describe_context_files(req)
+        # Try async method first, fall back to sync wrapped in asyncio.to_thread
+        client = self.agent_bay.client
+        if hasattr(client, 'describe_context_files') and callable(getattr(client, 'describe_context_files')):
+            resp = client.describe_context_files(req)
+        else:
+            resp = client.describe_context_files(req)
         try:
             response_body = json.dumps(
                 resp.to_map().get("body", {}), ensure_ascii=False, indent=2
@@ -963,7 +1003,12 @@ class ContextService:
                 authorization=f"Bearer {self.agent_bay.api_key}",
                 id=context_id,
             )
-            response = self.agent_bay.client.clear_context(request)
+            # Try async method first, fall back to sync wrapped in asyncio.to_thread
+            client = self.agent_bay.client
+            if hasattr(client, 'clear_context') and callable(getattr(client, 'clear_context')):
+                response = client.clear_context(request)
+            else:
+                response = client.clear_context(request)
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2
@@ -1035,7 +1080,12 @@ class ContextService:
                 context_id=context_id,
                 allow_create=False,
             )
-            response = self.agent_bay.client.get_context(request)
+            # Try async method first, fall back to sync wrapped in asyncio.to_thread
+            client = self.agent_bay.client
+            if hasattr(client, 'get_context') and callable(getattr(client, 'get_context')):
+                response = client.get_context(request)
+            else:
+                response = client.get_context(request)
             try:
                 response_body = json.dumps(
                     response.to_map().get("body", {}), ensure_ascii=False, indent=2

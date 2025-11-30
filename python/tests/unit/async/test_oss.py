@@ -6,10 +6,10 @@ from agentbay._async.oss import AsyncOss
 
 
 class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
-    async def setUp(self):
+    def setUp(self):
         self.mock_session = MagicMock()
         self.session = self.mock_session  # Add session reference
-        self.oss = Oss(self.mock_session)
+        self.oss = AsyncOss(self.mock_session)
 
     async def test_env_init_success(self):
         # Create a mock OperationResult
@@ -19,9 +19,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data="Set oss config successfully",
             error_message="",
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.env_init(
+        result = await self.oss.env_init(
             "key_id", "key_secret", "security_token", endpoint="test_endpoint"
         )
 
@@ -38,9 +38,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data=None,
             error_message="Failed to create OSS client",
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.env_init("key_id", "key_secret", "security_token")
+        result = await self.oss.env_init("key_id", "key_secret", "security_token")
 
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -59,9 +59,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data="Upload success",
             error_message="",
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.upload("test_bucket", "test_object", "test_path")
+        result = await self.oss.upload("test_bucket", "test_object", "test_path")
 
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -79,9 +79,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data=None,
             error_message=error_msg,
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.upload("test_bucket", "test_object", "test_path")
+        result = await self.oss.upload("test_bucket", "test_object", "test_path")
 
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -95,9 +95,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data="upload_anon_success",
             error_message="",
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.upload_anonymous("test_url", "test_path")
+        result = await self.oss.upload_anonymous("test_url", "test_path")
 
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -111,9 +111,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data=None,
             error_message="Failed to upload anonymously",
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.upload_anonymous("test_url", "test_path")
+        result = await self.oss.upload_anonymous("test_url", "test_path")
 
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -127,9 +127,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data="download_success",
             error_message="",
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.download("test_bucket", "test_object", "test_path")
+        result = await self.oss.download("test_bucket", "test_object", "test_path")
 
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -143,9 +143,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data=None,
             error_message="Failed to download from OSS",
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.download("test_bucket", "test_object", "test_path")
+        result = await self.oss.download("test_bucket", "test_object", "test_path")
 
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -159,9 +159,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data="download_anon_success",
             error_message="",
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.download_anonymous("test_url", "test_path")
+        result = await self.oss.download_anonymous("test_url", "test_path")
 
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "test-request-id")
@@ -175,9 +175,9 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
             data=None,
             error_message="Failed to download anonymously",
         )
-        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        result = self.oss.download_anonymous("test_url", "test_path")
+        result = await self.oss.download_anonymous("test_url", "test_path")
 
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "test-request-id")

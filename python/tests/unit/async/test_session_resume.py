@@ -26,7 +26,7 @@ class TestSessionResume(unittest.TestCase):
         self.agent_bay.client = MagicMock()
 
         # Create a mock session
-        self.session = AsyncAsyncSession(self.agent_bay, "session-123")
+        self.session = AsyncSession(self.agent_bay, "session-123")
         self.session.is_vpc = False
         self.session.network_interface_ip = ""
         self.session.http_port = ""

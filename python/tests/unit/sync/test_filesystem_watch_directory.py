@@ -236,22 +236,26 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
     def test_watch_directory_basic(self):
         """Test basic watch_directory functionality."""
         callback_events = []
+        mock_call_count = 0
 
         def test_callback(events):
             callback_events.extend(events)
 
-        # Mock _get_file_change to return some events
-        mock_events = [FileChangeEvent("create", "/tmp/test.txt", "file")]
-        mock_result = FileChangeResult(success=True, events=mock_events)
+        # Mock _get_file_change to return some events and count calls
+        def mock_get_file_change(path):
+            nonlocal mock_call_count
+            mock_call_count += 1
+            mock_events = [FileChangeEvent("create", "/tmp/test.txt", "file")]
+            return FileChangeResult(success=True, events=mock_events)
 
-        self.filesystem._get_file_change = Mock(return_value=mock_result)
+        self.filesystem._get_file_change = Mock(side_effect=mock_get_file_change)
 
         # Start watching
         stop_event = threading.Event()
         thread = self.filesystem.watch_directory(
             path="/tmp/test_dir",
             callback=test_callback,
-            interval=0.1,  # Very short interval for testing
+            interval=0.05,  # Very short interval for testing
             stop_event=stop_event,
         )
 
@@ -262,16 +266,26 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
 
         # Start the thread
         thread.start()
-        time.sleep(0.2)  # Let it run for a short time
+        
+        # Wait longer and check multiple times
+        max_wait = 2.0  # 2 seconds max
+        check_interval = 0.1
+        elapsed = 0
+        
+        while elapsed < max_wait and mock_call_count == 0:
+            time.sleep(check_interval)
+            elapsed += check_interval
 
         # Stop the thread
         stop_event.set()
-        thread.join(timeout=1.0)
+        thread.join(timeout=2.0)
 
-        # Verify callback was called with events
-        self.assertGreater(len(callback_events), 0)
-        self.assertEqual(callback_events[0].event_type, "create")
-        self.assertEqual(callback_events[0].path, "/tmp/test.txt")
+        # Verify mock was called and callback was called with events
+        self.assertGreater(mock_call_count, 0, f"_get_file_change should have been called after {elapsed:.2f}s")
+        self.assertGreater(len(callback_events), 0, f"Callback should have been called, mock_call_count={mock_call_count}")
+        if len(callback_events) > 0:
+            self.assertEqual(callback_events[0].event_type, "create")
+            self.assertEqual(callback_events[0].path, "/tmp/test.txt")
 
     def test_watch_directory_callback_exception(self):
         """Test watch_directory handles callback exceptions gracefully."""

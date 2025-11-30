@@ -152,7 +152,7 @@ class TestAsyncFileChangeResult(unittest.IsolatedAsyncioTestCase):
 class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
     """Test FileSystem watch_directory functionality."""
 
-    async def setUp(self):
+    def setUp(self):
         """Set up test fixtures."""
         self.mock_session = Mock()
         self.session = self.mock_session  # Add session reference
@@ -161,7 +161,7 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
         # Mock _is_expired to return False so the watch thread doesn't stop prematurely
         self.mock_session._is_expired.return_value = False
 
-        self.filesystem = FileSystem(self.mock_session)
+        self.filesystem = AsyncFileSystem(self.mock_session)
 
     async def test_get_file_change_success(self):
         """Test _get_file_change method with successful response."""
@@ -176,10 +176,10 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
             ]
         )
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Test the method
-        result = self.filesystem._get_file_change("/tmp/test_dir")
+        result = await self.filesystem._get_file_change("/tmp/test_dir")
 
         # Verify the call
         self.session.call_mcp_tool.assert_called_once_with(
@@ -204,10 +204,10 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
         mock_result.error_message = "Directory not found"
         mock_result.data = ""
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Test the method
-        result = self.filesystem._get_file_change("/tmp/nonexistent")
+        result = await self.filesystem._get_file_change("/tmp/nonexistent")
 
         # Verify the result
         self.assertFalse(result.success)
@@ -223,10 +223,10 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
         mock_result.request_id = "test-789"
         mock_result.data = "invalid json data"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Test the method
-        result = self.filesystem._get_file_change("/tmp/test_dir")
+        result = await self.filesystem._get_file_change("/tmp/test_dir")
 
         # Verify the result - should still succeed but with empty events
         self.assertTrue(result.success)
@@ -244,7 +244,7 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
         mock_events = [FileChangeEvent("create", "/tmp/test.txt", "file")]
         mock_result = FileChangeResult(success=True, events=mock_events)
 
-        self.filesystem._get_file_change = Mock(return_value=mock_result)
+        self.filesystem._get_file_change = AsyncMock(return_value=mock_result)
 
         # Start watching
         stop_event = threading.Event()
@@ -283,7 +283,7 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
         mock_events = [FileChangeEvent("create", "/tmp/test.txt", "file")]
         mock_result = FileChangeResult(success=True, events=mock_events)
 
-        self.filesystem._get_file_change = Mock(return_value=mock_result)
+        self.filesystem._get_file_change = AsyncMock(return_value=mock_result)
 
         # Start watching
         stop_event = threading.Event()
