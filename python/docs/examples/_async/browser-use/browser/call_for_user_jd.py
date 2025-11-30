@@ -39,7 +39,7 @@ from agentbay._async.browser import BrowserOption
 from playwright.async_api import async_playwright
 
 from agentbay._async.browser import (
-    Browser,
+    AsyncBrowser,
     BrowserOption,
     BrowserViewport,
     BrowserScreen,
