@@ -10,7 +10,7 @@ import pytest
 from agentbay._common.exceptions import AgentBayError
 from agentbay._common.models import BoolResult, OperationResult
 from agentbay._async.computer import AppOperationResult, ProcessListResult
-from agentbay._async.mobile import Mobile
+from agentbay._async.mobile import AsyncMobile
 
 
 class TestMobile:
@@ -19,8 +19,13 @@ class TestMobile:
     def setup_method(self):
         """Set up test fixtures."""
         self.mock_session = Mock()
+        self.mock_session.call_mcp_tool = AsyncMock()
+        # Setup agent_bay.client mock for get_adb_url
+        self.mock_session.agent_bay = Mock()
+        self.mock_session.agent_bay.client = Mock()
+        self.mock_session.agent_bay.client.get_adb_link_async = AsyncMock()
         self.session = self.mock_session  # Add session reference for tests
-        self.mobile = Mobile(self.mock_session)
+        self.mobile = AsyncMobile(self.mock_session)
 
     async def test_mobile_initialization(self):
         """Test Mobile module initialization."""
@@ -38,7 +43,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.tap(100, 200)
+        result = await self.mobile.tap(100, 200)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -56,7 +61,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.swipe(100, 100, 200, 200)
+        result = await self.mobile.swipe(100, 100, 200, 200)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -82,7 +87,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.swipe(100, 100, 200, 200, duration_ms=500)
+        result = await self.mobile.swipe(100, 100, 200, 200, duration_ms=500)
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
@@ -106,7 +111,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.input_text("Hello Mobile")
+        result = await self.mobile.input_text("Hello Mobile")
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -125,7 +130,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.send_key(4)  # BACK key
+        result = await self.mobile.send_key(4)  # BACK key
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -144,7 +149,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.get_clickable_ui_elements()
+        result = await self.mobile.get_clickable_ui_elements()
 
         # Assert
         assert result.success is True
@@ -165,7 +170,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.get_clickable_ui_elements(timeout_ms=5000)
+        result = await self.mobile.get_clickable_ui_elements(timeout_ms=5000)
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
@@ -184,7 +189,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.get_all_ui_elements()
+        result = await self.mobile.get_all_ui_elements()
 
         # Assert
         assert result.success is True
@@ -216,7 +221,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.get_installed_apps(
+        result = await self.mobile.get_installed_apps(
             start_menu=False, desktop=True, ignore_system_apps=True
         )
 
@@ -239,7 +244,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.get_installed_apps(
+        result = await self.mobile.get_installed_apps(
             start_menu=True, desktop=False, ignore_system_apps=False
         )
 
@@ -260,7 +265,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.start_app("com.android.calculator2")
+        result = await self.mobile.start_app("com.android.calculator2")
 
         # Assert
         assert isinstance(result, ProcessListResult)
@@ -280,7 +285,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.start_app("com.android.settings", activity=".MainActivity")
+        result = await self.mobile.start_app("com.android.settings", activity=".MainActivity")
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
@@ -299,7 +304,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.stop_app_by_cmd("com.android.calculator2")
+        result = await self.mobile.stop_app_by_cmd("com.android.calculator2")
 
         # Assert
         assert isinstance(result, AppOperationResult)
@@ -348,7 +353,7 @@ class TestMobile:
 
         # Act
         adbkey_pub = "test_adb_key..."
-        result = self.mobile.get_adb_url(adbkey_pub)
+        result = await self.mobile.get_adb_url(adbkey_pub)
 
         # Assert
         from agentbay._common.models.response import AdbUrlResult
@@ -381,7 +386,7 @@ class TestMobile:
 
         # Act
         adbkey_pub = "test_adb_key..."
-        result = self.mobile.get_adb_url(adbkey_pub)
+        result = await self.mobile.get_adb_url(adbkey_pub)
 
         # Assert - Should return AdbUrlResult with success=False
         assert isinstance(result, AdbUrlResult)
@@ -409,7 +414,7 @@ class TestMobile:
 
         # Act
         adbkey_pub = "test_key_123"
-        result = self.mobile.get_adb_url(adbkey_pub)
+        result = await self.mobile.get_adb_url(adbkey_pub)
 
         # Assert
         self.mobile.session.agent_bay.client.get_adb_link.assert_called_once()
@@ -438,7 +443,7 @@ class TestMobile:
         self.mobile.session.get_link = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.get_adb_url("key_xyz")
+        result = await self.mobile.get_adb_url("key_xyz")
 
         # Assert - verify result structure
         from agentbay._common.models.response import AdbUrlResult
@@ -461,7 +466,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.mobile.tap(100, 200)
+        result = await self.mobile.tap(100, 200)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -474,7 +479,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
 
         # Act
-        result = self.mobile.tap(100, 200)
+        result = await self.mobile.tap(100, 200)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -487,7 +492,7 @@ class TestMobile:
         self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
 
         # Act
-        result = self.mobile.get_clickable_ui_elements()
+        result = await self.mobile.get_clickable_ui_elements()
 
         # Assert
         assert result.success is False

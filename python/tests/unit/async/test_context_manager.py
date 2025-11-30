@@ -4,8 +4,8 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._async.context_manager import (
+    AsyncContextManager,
     ContextInfoResult,
-    ContextManager,
     ContextStatusData,
     ContextSyncResult,
 )
@@ -16,11 +16,11 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
         """Set up test fixtures."""
         self.mock_session = MagicMock()
         self.mock_session._get_api_key.return_value = "test-api-key"
-        self.mock_session.get_session_id.return_value = "test-session-id"
+        self.mock_session._get_session_id.return_value = "test-session-id"
         self.mock_client = MagicMock()
         self.mock_session._get_client.return_value = self.mock_client
 
-        self.context_manager = ContextManager(self.mock_session)
+        self.context_manager = AsyncContextManager(self.mock_session)
 
     async def test_info_with_empty_response(self):
         """Test info method with empty response."""
@@ -29,17 +29,17 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
         mock_response.to_map.return_value = {
             "body": {"RequestId": "test-request-id", "Data": {}}
         }
-        self.mock_client.get_context_info.return_value = mock_response
+        self.mock_client.get_context_info_async = AsyncMock(return_value=mock_response)
 
         # Call the method
-        result = self.context_manager.info()
+        result = await self.context_manager.info()
 
         # Verify the results
         self.assertEqual(result.request_id, "test-request-id")
         self.assertEqual(len(result.context_status_data), 0)
 
         # Verify the API was called correctly
-        self.mock_client.get_context_info.assert_called_once()
+        self.mock_client.get_context_info_async.assert_called_once()
 
     async def test_info_with_valid_response(self):
         """Test info method with valid response containing context status data."""
@@ -54,10 +54,10 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
                 "Data": {"ContextStatus": context_status_str},
             }
         }
-        self.mock_client.get_context_info.return_value = mock_response
+        self.mock_client.get_context_info_async = AsyncMock(return_value=mock_response)
 
         # Call the method
-        result = self.context_manager.info()
+        result = await self.context_manager.info()
 
         # Verify the results
         self.assertEqual(result.request_id, "test-request-id")
@@ -86,10 +86,10 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
                 "Data": {"ContextStatus": context_status_str},
             }
         }
-        self.mock_client.get_context_info.return_value = mock_response
+        self.mock_client.get_context_info_async = AsyncMock(return_value=mock_response)
 
         # Call the method
-        result = self.context_manager.info()
+        result = await self.context_manager.info()
 
         # Verify the results
         self.assertEqual(result.request_id, "test-request-id")
@@ -120,10 +120,10 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
                 "Data": {"ContextStatus": context_status_str},
             }
         }
-        self.mock_client.get_context_info.return_value = mock_response
+        self.mock_client.get_context_info_async = AsyncMock(return_value=mock_response)
 
         # Call the method
-        result = self.context_manager.info()
+        result = await self.context_manager.info()
 
         # Verify the results - should not raise exception but return empty list
         self.assertEqual(result.request_id, "test-request-id")
@@ -142,18 +142,18 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
                 "Data": {"ContextStatus": context_status_str},
             }
         }
-        self.mock_client.get_context_info.return_value = mock_response
+        self.mock_client.get_context_info_async = AsyncMock(return_value=mock_response)
 
         # Call the method with parameters
-        result = self.context_manager.info("ctx-123", "/home/user", "download")
+        result = await self.context_manager.info("ctx-123", "/home/user", "download")
 
         # Verify the results
         self.assertEqual(result.request_id, "test-request-id")
         self.assertEqual(len(result.context_status_data), 1)
 
         # Verify the API was called with the correct parameters
-        self.mock_client.get_context_info.assert_called_once()
-        call_args = self.mock_client.get_context_info.call_args[0][0]
+        self.mock_client.get_context_info_async.assert_called_once()
+        call_args = self.mock_client.get_context_info_async.call_args[0][0]
         self.assertEqual(call_args.context_id, "ctx-123")
         self.assertEqual(call_args.path, "/home/user")
         self.assertEqual(call_args.task_type, "download")
@@ -165,7 +165,7 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
         mock_response.to_map.return_value = {
             "body": {"RequestId": "test-request-id", "Success": True}
         }
-        self.mock_client.sync_context.return_value = mock_response
+        self.mock_client.sync_context_async = AsyncMock(return_value=mock_response)
 
         # Mock the info method to return completed status
         with patch.object(self.context_manager, "info") as mock_info:
@@ -174,14 +174,14 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
             )
 
             # Call the method directly (synchronously)
-            result = await self.context_manager.sync_context()
+            result = await self.context_manager.sync()
 
             # Verify the results
             self.assertEqual(result.request_id, "test-request-id")
             self.assertTrue(result.success)
 
             # Verify the API was called correctly
-            self.mock_client.sync_context.assert_called_once()
+            self.mock_client.sync_context_async.assert_called_once()
 
     async def test_sync_context_with_params(self):
         """Test sync_context method with optional parameters."""
@@ -190,7 +190,7 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
         mock_response.to_map.return_value = {
             "body": {"RequestId": "test-request-id", "Success": True}
         }
-        self.mock_client.sync_context.return_value = mock_response
+        self.mock_client.sync_context_async = AsyncMock(return_value=mock_response)
 
         # Mock the info method to return completed status
         with patch.object(self.context_manager, "info") as mock_info:
@@ -199,7 +199,7 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
             )
 
             # Call the method with parameters directly (synchronously)
-            result = await self.context_manager.sync_context(
+            result = await self.context_manager.sync(
                 "ctx-123", "/home/user", "upload"
             )
 
@@ -208,8 +208,8 @@ class TestAsyncContextManager(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(result.success)
 
             # Verify the API was called with the correct parameters
-            self.mock_client.sync_context.assert_called_once()
-            call_args = self.mock_client.sync_context.call_args[0][0]
+            self.mock_client.sync_context_async.assert_called_once()
+            call_args = self.mock_client.sync_context_async.call_args[0][0]
             self.assertEqual(call_args.context_id, "ctx-123")
             self.assertEqual(call_args.path, "/home/user")
             self.assertEqual(call_args.mode, "upload")

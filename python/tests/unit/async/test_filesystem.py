@@ -3,12 +3,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._common.models.response import McpToolResult, OperationResult
 from agentbay._async.filesystem import (
+    AsyncFileSystem,
     BoolResult,
     DirectoryListResult,
     FileContentResult,
     FileInfoResult,
     FileSearchResult,
-    FileSystem,
     MultipleFileContentResult,
 )
 
@@ -33,8 +33,8 @@ class DummySession:
 
 class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
     async def setUp(self):
-        self.session = DummyAsyncAsyncSession()
-        self.fs = FileSystem(self.session)
+        self.session = DummySession()
+        self.fs = AsyncFileSystem(self.session)
 
     @patch("agentbay._async.filesystem.FileSystem.get_file_info")
     @patch("agentbay._async.filesystem.FileSystem._read_file_chunk")

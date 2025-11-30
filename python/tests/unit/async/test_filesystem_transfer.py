@@ -17,9 +17,9 @@ from agentbay._async.filesystem import AsyncFileTransfer
 
 # Import the classes we're testing
 from agentbay._async.filesystem import (
+    AsyncFileSystem,
+    AsyncFileTransfer,
     DownloadResult,
-    FileSystem,
-    FileTransfer,
     UploadResult,
 )
 
@@ -27,7 +27,7 @@ from agentbay._async.filesystem import (
 # Since attach_file_transfer doesn't exist, we'll create a helper function for tests
 def attach_file_transfer(agent_bay, session):
     """Helper function to create a FileTransfer instance for testing."""
-    return FileTransfer(agent_bay, session)
+    return AsyncFileTransfer(agent_bay, session)
 
 
 class TestAsyncFileTransferResultClasses(unittest.IsolatedAsyncioTestCase):
@@ -121,12 +121,14 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
         self.mock_session.context = Mock()
         self.mock_session.file_transfer_context_id = "ctx_123"
 
-        self.file_transfer = FileTransfer(self.mock_agent_bay, self.mock_session)
+        self.file_transfer = AsyncFileTransfer(self.mock_agent_bay, self.mock_session)
 
     async def test_file_transfer_initialization(self):
         """Test FileTransfer initialization."""
         # Test default parameters
-        ft = FileTransfer(self.mock_agent_bay, self.mock_session)
+        ft = AsyncFileTransfer(
+            self.mock_agent_bay, self.mock_session, http_timeout=30.0
+        )
         self.assertEqual(ft._http_timeout, 60.0)
         self.assertTrue(ft._follow_redirects)
 

@@ -9,7 +9,7 @@ import pytest
 
 from agentbay._common.exceptions import AgentBayError
 from agentbay._common.models import BoolResult, OperationResult
-from agentbay._async.computer import Computer, MouseButton, ScrollDirection
+from agentbay._async.computer import AsyncComputer, MouseButton, ScrollDirection
 
 
 class TestComputer:
@@ -18,8 +18,8 @@ class TestComputer:
     def setup_method(self):
         """Set up test fixtures."""
         self.mock_session = Mock()
-        self.session = self.mock_session  # Add session reference
-        self.computer = Computer(self.mock_session)
+        self.mock_session.call_mcp_tool = AsyncMock()
+        self.computer = AsyncComputer(self.mock_session)
 
     async def test_computer_initialization(self):
         """Test Computer module initialization."""
@@ -37,7 +37,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.click_mouse(100, 200)
+        result = await self.computer.click_mouse(100, 200)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -57,7 +57,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.click_mouse(100, 200, button="right")
+        result = await self.computer.click_mouse(100, 200, button="right")
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
@@ -68,7 +68,7 @@ class TestComputer:
         """Test mouse click with invalid button."""
         # Act & Assert
         with pytest.raises(ValueError, match="Invalid button"):
-            self.computer.click_mouse(100, 200, button="invalid")
+            await self.computer.click_mouse(100, 200, button="invalid")
 
     async def test_click_mouse_with_enum(self):
         """Test mouse click with MouseButton enum."""
@@ -80,7 +80,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.click_mouse(100, 200, button=MouseButton.RIGHT)
+        result = await self.computer.click_mouse(100, 200, button=MouseButton.RIGHT)
 
         # Assert
         assert result.success is True
@@ -98,7 +98,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.click_mouse(100, 200, button=MouseButton.DOUBLE_LEFT)
+        result = await self.computer.click_mouse(100, 200, button=MouseButton.DOUBLE_LEFT)
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
@@ -115,7 +115,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.move_mouse(150, 250)
+        result = await self.computer.move_mouse(150, 250)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -134,7 +134,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.drag_mouse(100, 100, 200, 200)
+        result = await self.computer.drag_mouse(100, 100, 200, 200)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -191,7 +191,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.get_cursor_position()
+        result = await self.computer.get_cursor_position()
 
         # Assert
         assert isinstance(result, OperationResult)
@@ -210,7 +210,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.input_text("Hello World")
+        result = await self.computer.input_text("Hello World")
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -229,7 +229,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.press_keys(["Ctrl", "a"])
+        result = await self.computer.press_keys(["Ctrl", "a"])
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -248,7 +248,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.press_keys(["Shift"], hold=True)
+        result = await self.computer.press_keys(["Shift"], hold=True)
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
@@ -265,7 +265,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.release_keys(["Shift"])
+        result = await self.computer.release_keys(["Shift"])
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -286,7 +286,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.get_screen_size()
+        result = await self.computer.get_screen_size()
 
         # Assert
         assert isinstance(result, OperationResult)
@@ -326,7 +326,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.click_mouse(100, 200)
+        result = await self.computer.click_mouse(100, 200)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -339,7 +339,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
 
         # Act
-        result = self.computer.click_mouse(100, 200)
+        result = await self.computer.click_mouse(100, 200)
 
         # Assert
         assert isinstance(result, BoolResult)
@@ -382,7 +382,7 @@ class TestComputer:
         self.session.call_mcp_tool = Mock(return_value=mock_result)
 
         # Act
-        result = self.computer.drag_mouse(100, 100, 200, 200, button=MouseButton.MIDDLE)
+        result = await self.computer.drag_mouse(100, 100, 200, 200, button=MouseButton.MIDDLE)
 
         # Assert
         assert result.success is True
@@ -406,7 +406,7 @@ class TestComputer:
             data='[{"pname":"Calculator","pid":1234}]',
         )
 
-        result = self.computer.list_visible_apps()
+        result = await self.computer.list_visible_apps()
 
         assert result.success is True
         assert len(result.data) == 1
@@ -421,7 +421,7 @@ class TestComputer:
             data='[{"name":"Notepad","start_cmd":"notepad.exe"},{"name":"Calculator","start_cmd":"calc.exe"}]',
         )
 
-        result = self.computer.get_installed_apps()
+        result = await self.computer.get_installed_apps()
 
         assert result.success is True
         assert len(result.data) == 2
@@ -436,7 +436,7 @@ class TestComputer:
             data='[{"pname":"notepad","pid":1234}]',
         )
 
-        result = self.computer.start_app("notepad.exe")
+        result = await self.computer.start_app("notepad.exe")
 
         assert result.success is True
         assert len(result.data) == 1
@@ -449,7 +449,7 @@ class TestComputer:
             success=True, request_id="test-request-id", data="[]"
         )
 
-        result = self.computer.start_app("notepad.exe", "/home/user/documents")
+        result = await self.computer.start_app("notepad.exe", "/home/user/documents")
 
         assert result.success is True
 
@@ -459,7 +459,7 @@ class TestComputer:
             success=True, request_id="test-request-id"
         )
 
-        result = self.computer.stop_app_by_pname("notepad")
+        result = await self.computer.stop_app_by_pname("notepad")
 
         assert result.success is True
 
@@ -469,7 +469,7 @@ class TestComputer:
             success=True, request_id="test-request-id"
         )
 
-        result = self.computer.stop_app_by_pid(1234)
+        result = await self.computer.stop_app_by_pid(1234)
 
         assert result.success is True
 
@@ -479,7 +479,7 @@ class TestComputer:
             success=True, request_id="test-request-id"
         )
 
-        result = self.computer.stop_app_by_cmd("pkill notepad")
+        result = await self.computer.stop_app_by_cmd("pkill notepad")
 
         assert result.success is True
 

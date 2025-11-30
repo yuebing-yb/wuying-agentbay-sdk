@@ -100,15 +100,21 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
                 }
             }
         }
-        mock_client.create_mcp_session.return_value = mock_response
+        mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance and session parameters
-        agent_bay = AgentBay(api_key="test-key")
+        agent_bay = AsyncAgentBay(api_key="test-key")
+        
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        agent_bay.context = mock_context
+        
         params = CreateSessionParams(labels={"env": "test"})
 
         # Test creating a session
-        result = agent_bay.create(params)
+        result = await agent_bay.create(params)
 
         # Verify results
         self.assertEqual(result.request_id, "create-request-id")
@@ -119,9 +125,9 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         self.assertIn("new-session-id", agent_bay._sessions)
         self.assertEqual(agent_bay._sessions["new-session-id"], result.session)
 
-    @patch("agentbay._sync.agentbay._load_config")
-    @patch("agentbay._sync.agentbay.mcp_client")
-    def test_create_session_invalid_response(self, mock_mcp_client, mock_load_config):
+    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._async.agentbay.mcp_client")
+    async def test_create_session_invalid_response(self, mock_mcp_client, mock_load_config):
         """Test handling invalid response when creating a session"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -135,24 +141,34 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         mock_response.to_map.return_value = {
             "body": {"Data": None}  # Invalid Data field
         }
-        mock_client.create_mcp_session.return_value = mock_response
+        mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance
-        agent_bay = AgentBay(api_key="test-key")
+        agent_bay = AsyncAgentBay(api_key="test-key")
+        
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        agent_bay.context = mock_context
+        
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        agent_bay.context = mock_context
 
         # Test session creation with invalid response
-        result = agent_bay.create()
+        result = await agent_bay.create()
 
         # Verify the result indicates failure
         self.assertFalse(result.success)
         self.assertIsNone(result.session)
         self.assertIn("Invalid response format", result.error_message)
 
-    @patch("agentbay._sync.agentbay.extract_request_id")
-    @patch("agentbay._sync.agentbay._load_config")
-    @patch("agentbay._sync.agentbay.mcp_client")
-    def test_list(self, mock_mcp_client, mock_load_config, mock_extract_request_id):
+    @patch("agentbay._async.agentbay.extract_request_id")
+    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._async.agentbay.mcp_client")
+    async def test_list(self, mock_mcp_client, mock_load_config, mock_extract_request_id):
         """Test listing sessions using the new list API"""
         # Mock configuration and request ID
         mock_load_config.return_value = {
@@ -177,33 +193,38 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
                 "MaxResults": 10,
             }
         }
-        mock_client.list_session.return_value = mock_response
+        mock_client.list_session_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance
-        agent_bay = AgentBay(api_key="test-key")
+        agent_bay = AsyncAgentBay(api_key="test-key")
+        
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        agent_bay.context = mock_context
 
         # Test listing all sessions (no labels)
-        result = agent_bay.list()
+        result = await agent_bay.list()
         self.assertEqual(result.request_id, "list-request-id")
         self.assertEqual(len(result.session_ids), 3)
         self.assertEqual(result.total_count, 3)
         self.assertTrue(result.success)
 
         # Test listing sessions with labels
-        result = agent_bay.list(labels={"env": "prod"})
+        result = await agent_bay.list(labels={"env": "prod"})
         self.assertEqual(result.request_id, "list-request-id")
         self.assertEqual(len(result.session_ids), 3)
 
         # Test listing sessions with pagination
-        result = agent_bay.list(labels={"env": "prod"}, page=1, limit=2)
+        result = await agent_bay.list(labels={"env": "prod"}, page=1, limit=2)
         self.assertEqual(result.request_id, "list-request-id")
         self.assertEqual(len(result.session_ids), 3)
 
-    @patch("agentbay._sync.agentbay.extract_request_id")
-    @patch("agentbay._sync.agentbay._load_config")
-    @patch("agentbay._sync.agentbay.mcp_client")
-    def test_list_pagination(
+    @patch("agentbay._async.agentbay.extract_request_id")
+    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._async.agentbay.mcp_client")
+    async def test_list_pagination(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
     ):
         """Test list API pagination logic"""
@@ -243,26 +264,31 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         }
 
         # Set up mock to return different responses
-        mock_client.list_session.side_effect = [
+        mock_client.list_session_async = AsyncMock(side_effect=[
             mock_response_page1,
             mock_response_page2,
-        ]
+        ])
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance
-        agent_bay = AgentBay(api_key="test-key")
+        agent_bay = AsyncAgentBay(api_key="test-key")
+        
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        agent_bay.context = mock_context
 
         # Test getting page 2
-        result = agent_bay.list(labels={"env": "prod"}, page=2, limit=2)
+        result = await agent_bay.list(labels={"env": "prod"}, page=2, limit=2)
         self.assertEqual(result.request_id, "list-request-id")
         self.assertEqual(len(result.session_ids), 2)
         self.assertEqual(result.session_ids[0], "session-3")
         self.assertEqual(result.session_ids[1], "session-4")
 
-    @patch("agentbay._sync.agentbay.extract_request_id")
-    @patch("agentbay._sync.agentbay._load_config")
-    @patch("agentbay._sync.agentbay.mcp_client")
-    def test_create_session_with_policy_id(
+    @patch("agentbay._async.agentbay.extract_request_id")
+    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._async.agentbay.mcp_client")
+    async def test_create_session_with_policy_id(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
     ):
         """Ensure policy_id is passed to create_mcp_session body"""
@@ -284,16 +310,22 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
                 "RequestId": "create-request-id",
             }
         }
-        mock_client.create_mcp_session.return_value = mock_response
+        mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
-        agent_bay = AgentBay(api_key="test-key")
+        agent_bay = AsyncAgentBay(api_key="test-key")
+        
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        agent_bay.context = mock_context
+        
         params = CreateSessionParams(policy_id="policy-xyz")
 
-        result = agent_bay.create(params)
+        result = await agent_bay.create(params)
         self.assertTrue(result.success)
-        mock_client.create_mcp_session.assert_called_once()
-        call_arg = mock_client.create_mcp_session.call_args[0][0]
+        mock_client.create_mcp_session_async.assert_called_once()
+        call_arg = mock_client.create_mcp_session_async.call_args[0][0]
         # Ensure policy_id is carried on the request object; client will include it in request body
         self.assertEqual(
             getattr(call_arg, "mcp_policy_id", None)
@@ -302,9 +334,9 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         )
         # Basic success assertion remains; deep body behavior is validated in client integration tests
 
-    @patch("agentbay._sync.agentbay._load_config")
-    @patch("agentbay._sync.agentbay.mcp_client")
-    def test_create_with_mobile_extra_configs(self, mock_mcp_client, mock_load_config):
+    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._async.agentbay.mcp_client")
+    async def test_create_with_mobile_extra_configs(self, mock_mcp_client, mock_load_config):
         """Test creating a session with mobile extra configurations"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -324,7 +356,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
                 "RequestId": "mobile-create-request-id",
             }
         }
-        mock_client.create_mcp_session.return_value = mock_response
+        mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
         # Create mobile configuration
@@ -340,20 +372,26 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         )
         extra_configs = ExtraConfigs(mobile=mobile_config)
 
-        agent_bay = AgentBay(api_key="test-key")
+        agent_bay = AsyncAgentBay(api_key="test-key")
+        
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        agent_bay.context = mock_context
+        
         params = CreateSessionParams(
             labels={"project": "mobile-testing"}, extra_configs=extra_configs
         )
 
-        result = agent_bay.create(params)
+        result = await agent_bay.create(params)
         self.assertTrue(result.success)
         self.assertIsNotNone(result.session)
         if result.session:
             self.assertEqual(result.session.session_id, "mobile-session-id")
 
         # Verify the client was called with extra configs
-        mock_client.create_mcp_session.assert_called_once()
-        call_arg = mock_client.create_mcp_session.call_args[0][0]
+        mock_client.create_mcp_session_async.assert_called_once()
+        call_arg = mock_client.create_mcp_session_async.call_args[0][0]
 
         # Check that extra_configs is present in the request
         self.assertIsNotNone(call_arg.extra_configs)
@@ -368,9 +406,9 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             len(call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list), 2
         )
 
-    @patch("agentbay._sync.agentbay._load_config")
-    @patch("agentbay._sync.agentbay.mcp_client")
-    def test_create_with_mobile_blacklist_config(
+    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._async.agentbay.mcp_client")
+    async def test_create_with_mobile_blacklist_config(
         self, mock_mcp_client, mock_load_config
     ):
         """Test creating a session with mobile blacklist configuration"""
@@ -392,7 +430,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
                 "RequestId": "secure-create-request-id",
             }
         }
-        mock_client.create_mcp_session.return_value = mock_response
+        mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
         # Create mobile blacklist configuration
@@ -405,20 +443,26 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         )
         extra_configs = ExtraConfigs(mobile=mobile_config)
 
-        agent_bay = AgentBay(api_key="test-key")
+        agent_bay = AsyncAgentBay(api_key="test-key")
+        
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        agent_bay.context = mock_context
+        
         params = CreateSessionParams(
             labels={"project": "security-testing"}, extra_configs=extra_configs
         )
 
-        result = agent_bay.create(params)
+        result = await agent_bay.create(params)
         self.assertTrue(result.success)
         self.assertIsNotNone(result.session)
         if result.session:
             self.assertEqual(result.session.session_id, "secure-session-id")
 
         # Verify the client was called with blacklist extra configs
-        mock_client.create_mcp_session.assert_called_once()
-        call_arg = mock_client.create_mcp_session.call_args[0][0]
+        mock_client.create_mcp_session_async.assert_called_once()
+        call_arg = mock_client.create_mcp_session_async.call_args[0][0]
 
         # Check that extra_configs with blacklist is present in the request
         self.assertIsNotNone(call_arg.extra_configs)
@@ -432,11 +476,11 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list,
         )
 
-    @patch("agentbay._sync.agentbay.extract_request_id")
-    @patch("agentbay._sync.agentbay._load_config")
-    @patch("agentbay._sync.agentbay.mcp_client")
-    @patch("agentbay._sync.agentbay._log_api_response_with_details")
-    def test_create_session_logs_full_resource_url(
+    @patch("agentbay._async.agentbay.extract_request_id")
+    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._async.agentbay._log_api_response_with_details")
+    async def test_create_session_logs_full_resource_url(
         self,
         mock_log_api_response,
         mock_mcp_client,
@@ -465,15 +509,20 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
                 }
             }
         }
-        mock_client.create_mcp_session.return_value = mock_response
+        mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance
-        agent_bay = AgentBay(api_key="test-key")
+        agent_bay = AsyncAgentBay(api_key="test-key")
+        
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        agent_bay.context = mock_context
         params = CreateSessionParams()
 
         # Test creating a session
-        result = agent_bay.create(params)
+        result = await agent_bay.create(params)
 
         # Verify results
         self.assertTrue(result.success)

@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._common.models.response import McpToolResult, OperationResult
 from agentbay._async.filesystem import (
+    AsyncFileSystem,
     BoolResult,
     FileContentResult,
     FileInfoResult,
-    FileSystem,
 )
 
 
@@ -36,7 +36,7 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
 
     async def setUp(self):
         self.session = DummyAsyncAsyncSession()
-        self.fs = FileSystem(self.session)
+        self.fs = AsyncFileSystem(self.session)
 
     # Test internal chunk methods exist and work correctly
     async def test_read_file_chunk_internal_method_exists(self):
