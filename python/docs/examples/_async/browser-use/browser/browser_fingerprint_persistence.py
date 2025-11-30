@@ -225,9 +225,9 @@ async def run_as_second_time():
 
 async def main():
     """Test browser fingerprint persist across sessions with the same browser and fingerprint context."""
-    run_as_first_time()
-    asyncio.sleep(3)
-    run_as_second_time()
+    await run_as_first_time()
+    await asyncio.sleep(3)
+    await run_as_second_time()
 
 if __name__ == "__main__":
     asyncio.run(main())
