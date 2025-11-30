@@ -22,7 +22,7 @@ def test_context_sync_monitoring_example():
     # Determine mode based on directory name of this file
     # python/tests/integration/_async/test.py -> mode=_async
     current_dir = Path(__file__).parent.name
-    mode = "_sync" if current_dir == "_sync" else "_async"
+    mode = "_sync" if current_dir == "_sync" else "_sync"
     
     # Path to the example file
     example_path = PROJECT_ROOT / f"python/docs/examples/{mode}/common-features/basics/data_persistence/context_sync_monitoring_example.py"
@@ -37,7 +37,7 @@ def test_context_sync_monitoring_example():
     
     # Run the main function
     try:
-        if mode == "_async":
+        if mode == "_sync":
             module.main()
         else:
             module.main()

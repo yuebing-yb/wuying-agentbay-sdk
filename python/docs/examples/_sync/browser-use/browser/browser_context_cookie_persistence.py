@@ -19,7 +19,7 @@ import time
 from agentbay import AgentBay
 from agentbay import CreateSessionParams, BrowserContext
 from agentbay._sync.browser import BrowserOption
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 def main():
     """Demonstrate browser context cookie persistence."""
@@ -253,13 +253,11 @@ def main():
 
     finally:
         # Clean up context
-        def clear_context():
-            try:
-                agent_bay.context.delete(context)
-                print(f"Context '{context_name}' deleted")
-            except Exception as e:
-                print(f"Warning: Failed to delete context: {e}")
-        clear_context()
+        try:
+            agent_bay.context.delete(context)
+            print(f"Context '{context_name}' deleted")
+        except Exception as e:
+            print(f"Warning: Failed to delete context: {e}")
     print("\nBrowser Context Cookie Persistence Demo completed!")
 
 

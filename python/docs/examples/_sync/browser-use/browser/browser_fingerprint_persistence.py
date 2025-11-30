@@ -14,7 +14,7 @@ import unittest
 from agentbay import AgentBay
 from agentbay import CreateSessionParams, BrowserContext
 from agentbay._sync.browser import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 # Global variables for persistent context and fingerprint context
 persistent_context = None

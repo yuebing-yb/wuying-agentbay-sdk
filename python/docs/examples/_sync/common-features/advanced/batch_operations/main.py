@@ -34,7 +34,7 @@ def create_sessions_batch(
     
     # Create all sessions concurrently
     tasks = [agent_bay.create(params) for _ in range(count)]
-    results = asyncio.gather(*tasks, return_exceptions=True)
+    results = [task for task in tasks]
     
     sessions = []
     for i, result in enumerate(results):
@@ -85,7 +85,7 @@ def batch_execute_commands(sessions: List[Any], command: str):
         for i, session in enumerate(sessions)
     ]
     
-    results = asyncio.gather(*tasks)
+    results = [task for task in tasks]
     
     # Print results
     successful = sum(1 for r in results if r["success"])
@@ -130,7 +130,7 @@ def batch_file_operations(sessions: List[Any]):
             return {"session_index": index, "success": False, "error": str(e)}
     
     tasks = [write_and_read(session, i) for i, session in enumerate(sessions)]
-    results = asyncio.gather(*tasks)
+    results = [task for task in tasks]
     
     successful = sum(1 for r in results if r.get("success") and r.get("content_matches"))
     print(f"✅ File operations successful: {successful}/{len(sessions)}")
@@ -143,7 +143,7 @@ def delete_sessions_batch(agent_bay: AgentBay, sessions: List[Any]):
     print(f"\n🧹 Deleting {len(sessions)} sessions...")
     
     tasks = [agent_bay.delete(session) for session in sessions]
-    results = asyncio.gather(*tasks, return_exceptions=True)
+    results = [task for task in tasks]
     
     successful = 0
     for i, result in enumerate(results):

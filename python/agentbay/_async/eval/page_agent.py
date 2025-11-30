@@ -8,12 +8,12 @@ from typing import Any, Dict, List, Literal, Optional, Type, TypeVar, Union
 from playwright.async_api import Page, async_playwright
 from pydantic import BaseModel
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay._common.logger import get_logger
 from agentbay._common.models.response import SessionResult
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.browser import BrowserOption
-from agentbay._sync.browser_agent import (
+from agentbay._async.browser import BrowserOption
+from agentbay._async.browser_agent import (
     ActOptions,
     ActResult,
     ExtractOptions,
@@ -21,7 +21,7 @@ from agentbay._sync.browser_agent import (
     ObserveResult,
 )
 
-from .local_page_agent import LocalSession
+from local_page_agent import LocalSession
 
 # Initialize _logger for this module
 _logger = get_logger("page_agent")
@@ -61,14 +61,14 @@ class PageAgent:
             if not run_local:
                 api_key = self.get_test_api_key()
                 _logger.info(f"api_key = {api_key}")
-                self.agent_bay = AgentBay(api_key=api_key)
+                self.agent_bay = AsyncAgentBay(api_key=api_key)
 
                 # Create a session
                 _logger.info("Creating a new session for browser agent testing...")
                 params = CreateSessionParams(
                     image_id="browser_latest",  # Specify the image ID
                 )
-                result = self.agent_bay.create(params)
+                result = await self.agent_bay.create(params)
             else:
                 result.session = LocalSession()
                 result.success = True
@@ -76,9 +76,9 @@ class PageAgent:
             if result.success and result.session is not None:
                 self.session = result.session
                 _logger.info(f"Session created with ID: {self.session.session_id}")
-                if await self.session.browser.initialize_async(BrowserOption()):
+                if await self.session.browser.initialize(BrowserOption()):
                     _logger.info("Browser initialized successfully")
-                    endpoint_url = self.session.browser.get_endpoint_url()
+                    endpoint_url = await self.session.browser.get_endpoint_url()
                     _logger.info(f"endpoint_url = {endpoint_url}")
                     if self._worker_thread is None:
                         promise: concurrent.futures.Future[bool] = (
@@ -95,7 +95,7 @@ class PageAgent:
                                         self._loop = asyncio.get_running_loop()
                                         self.browser = (
                                             await p.chromium.connect_over_cdp(
-                                                endpoint_url
+                                                str(endpoint_url)
                                             )
                                         )
                                         _logger.info("Browser connected successfully")

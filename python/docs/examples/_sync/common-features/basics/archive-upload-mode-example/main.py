@@ -148,7 +148,7 @@ def archive_upload_mode_example(agent_bay, unique_id):
         # The session's filesystem operations already trigger context synchronization
         print("ℹ️  Context synchronization is handled by file operations")
 
-        # Use session.context.info() to check status
+        # Use await session.context.info() to check status
         print("📋 Calling context info...")
         sync_result = session.context.info()
         if sync_result.success:

@@ -94,7 +94,7 @@ async def main():
         print("Step 3: Initializing browser and setting test cookies...")
         async def first_session_operations():
             # Initialize browser
-            init_success = await session1.browser.initialize_async(BrowserOption())
+            init_success = await session1.browser.initialize(BrowserOption())
             if not init_success:
                 print("Failed to initialize browser")
                 return
@@ -102,7 +102,7 @@ async def main():
             print("Browser initialized successfully")
 
             # Get endpoint URL
-            endpoint_url = session1.browser.get_endpoint_url()
+            endpoint_url = await session1.browser.get_endpoint_url()
             if not endpoint_url:
                 print("Failed to get browser endpoint URL")
                 return
@@ -147,7 +147,7 @@ async def main():
                 await browser.close()
                 print("First session browser operations completed")
         # Run first session operations
-        asyncio.run(first_session_operations())
+        await first_session_operations()
         # Step 4: Delete first session with context synchronization
         print("Step 4: Deleting first session with context synchronization...")
         delete_result = await agent_bay.delete(session1, sync_context=True)
@@ -160,7 +160,7 @@ async def main():
 
         # Wait for context sync to complete
         print("Waiting for context synchronization to complete...")
-        asyncio.sleep(3)
+        await asyncio.sleep(3)
 
         # Step 5: Create second session with same Browser Context
         print("Step 5: Creating second session with same Browser Context...")
@@ -179,7 +179,7 @@ async def main():
         async def second_session_operations():
 
             # Initialize browser in second session
-            init_success2 = await session2.browser.initialize_async(BrowserOption())
+            init_success2 = await session2.browser.initialize(BrowserOption())
             if not init_success2:
                 print("Failed to initialize browser in second session")
                 return
@@ -187,7 +187,7 @@ async def main():
             print("Second session browser initialized successfully")
 
             # Get endpoint URL for second session
-            endpoint_url2 = session2.browser.get_endpoint_url()
+            endpoint_url2 = await session2.browser.get_endpoint_url()
             if not endpoint_url2:
                 print("Failed to get browser endpoint URL for second session")
                 return
@@ -236,7 +236,7 @@ async def main():
 
                 await browser2.close()
                 print("Second session browser operations completed")
-        asyncio.run(second_session_operations())
+        await second_session_operations()
         # Step 7: Clean up second session
         print("Step 7: Cleaning up second session...")
         delete_result2 = await agent_bay.delete(session2)
@@ -251,13 +251,11 @@ async def main():
 
     finally:
         # Clean up context
-        async def clear_context():
-            try:
-                agent_bay.context.delete(context)
-                print(f"Context '{context_name}' deleted")
-            except Exception as e:
-                print(f"Warning: Failed to delete context: {e}")
-        asyncio.run(clear_context())
+        try:
+            await agent_bay.context.delete(context)
+            print(f"Context '{context_name}' deleted")
+        except Exception as e:
+            print(f"Warning: Failed to delete context: {e}")
     print("\nBrowser Context Cookie Persistence Demo completed!")
 
 

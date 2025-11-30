@@ -58,7 +58,7 @@ class ContextFileMonitor:
             upload_url = url_result.url
             
             # Perform upload
-            with httpx.AsyncClient() as client:
+            with httpx.Client() as client:
                 response = client.put(upload_url, content=file_content)
                 response.raise_for_status()
                 
@@ -99,7 +99,7 @@ class ContextFileMonitor:
             download_url = url_result.url
             
             # Perform download
-            with httpx.AsyncClient() as client:
+            with httpx.Client() as client:
                 response = client.get(download_url)
                 response.raise_for_status()
                 downloaded_content = response.content

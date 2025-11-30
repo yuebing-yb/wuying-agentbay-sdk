@@ -17,7 +17,7 @@ Features demonstrated:
 import os
 import base64
 from typing import Optional
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 from agentbay import AgentBay, CreateSessionParams, BrowserOption
 from agentbay._sync.session import Session

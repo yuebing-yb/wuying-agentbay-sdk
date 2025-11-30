@@ -2,6 +2,7 @@ import os
 import sys
 import unasync
 import re
+import shutil
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AGENTBAY_DIR = os.path.join(ROOT, "agentbay")
@@ -116,10 +117,8 @@ def generate_sync():
         # Agent specific
         "async_execute_task": "async_execute_task",
 
-        # Import fixes
-        "from agentbay._async": "from agentbay._sync",
-        "from ._async": "from ._sync",
-        "from .._async": "from .._sync",
+        # Import fixes (token-level replacements)
+        "_async": "_sync",
 
         # Asyncio replacements
         "asyncio.sleep": "time.sleep",
@@ -336,8 +335,54 @@ def generate_sync():
                     with open(path, "w") as f:
                         f.write(content)
 
+def process_examples_non_python_files():
+    """Process non-Python files in examples directory (Markdown, images, etc.)"""
+    if not os.path.exists(EXAMPLES_ASYNC_DIR):
+        return
+        
+    print("Processing non-Python files in examples...")
+    
+    for root, dirs, files in os.walk(EXAMPLES_ASYNC_DIR):
+        for file in files:
+            if file.endswith('.py') or file == '__pycache__':
+                continue
+                
+            src_path = os.path.join(root, file)
+            rel_path = os.path.relpath(src_path, EXAMPLES_ASYNC_DIR)
+            dest_path = os.path.join(EXAMPLES_SYNC_DIR, rel_path)
+            
+            # Ensure destination directory exists
+            os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+            
+            if file.endswith('.md'):
+                # Process Markdown files
+                convert_markdown_file(src_path, dest_path)
+            else:
+                # Copy other files as-is
+                shutil.copy2(src_path, dest_path)
+
+def convert_markdown_file(src_path: str, dest_path: str):
+    """Convert Markdown files from async to sync versions"""
+    with open(src_path, "r", encoding="utf-8") as f:
+        content = f.read()
+        
+    # Replace AsyncAgentBay -> AgentBay (Documentation text)
+    content = content.replace("AsyncAgentBay", "AgentBay")
+    content = content.replace("AsyncSession", "Session")
+    
+    # Replace API links: docs/api/async/async-*.md -> docs/api/sync/*.md
+    content = re.sub(r"docs/api/async/async-([a-z0-9-]+)\.md", r"docs/api/sync/\1.md", content)
+    
+    # Replace example links: _async -> _sync
+    content = content.replace("/_async/", "/_sync/")
+    
+    # Write converted content
+    with open(dest_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
 if __name__ == "__main__":
     print(f"Generating sync code from {ASYNC_DIR} to {SYNC_DIR}...")
     print(f"Generating sync tests from {TEST_ASYNC_DIR} to {TEST_SYNC_DIR}...")
     generate_sync()
+    process_examples_non_python_files()
     print("Done.")

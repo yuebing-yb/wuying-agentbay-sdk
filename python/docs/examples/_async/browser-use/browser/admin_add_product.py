@@ -27,22 +27,20 @@ async def main():
             return
         agent = session.browser.agent
 
-        await agent.navigate("http://116.62.195.152:3000")
-        await agent.act(ActOptions(action="帮我添加商品"))
+        await agent.navigate("https://httpbin.org/forms/post")
         await agent.act(
             ActOptions(
-                action="填写表单",
+                action="填写披萨订单表单并提交",
                 variables={
-                    "商品": "iPhone 16 Pro",
-                    "品牌": "iphone",
-                    "价格": "7999.0",
-                    "URL": "https://streaming-tests-h5.oss-cn-hangzhou.aliyuncs.com/image/iPhone-16-Pro.jpg",
-                    "描述": "6.3英寸显示，A18 Pro，4800万像素摄像头，120Hz ProMotion",
-                    "库存": "230.0",
+                    "Customer name": "John Doe",
+                    "Telephone": "1234567890", 
+                    "E-mail address": "john@example.com",
+                    "Pizza Size": "large",
+                    "Pizza Toppings": "bacon,cheese",
+                    "Delivery instructions": "Please ring the doorbell",
                 },
             )
         )
-        await agent.act(ActOptions(action="点击提交/保存按钮"))
         await asyncio.sleep(2)
     finally:
         try:

@@ -12,12 +12,11 @@ This example shows how to initialize the browser with custom viewport and user-a
 """
 
 import os
-
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay._sync.browser import BrowserOption, BrowserViewport, BrowserScreen
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 
 def main():

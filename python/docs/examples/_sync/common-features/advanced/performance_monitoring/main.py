@@ -227,7 +227,7 @@ def benchmark_parallel_operations(session, monitor: PerformanceMonitor):
             session.command.execute_command("echo 'test 2'"),
             session.command.execute_command("echo 'test 3'"),
         ]
-        asyncio.gather(*tasks)
+        [task for task in tasks]
     
     monitor.measure("parallel_commands", parallel_commands)
     

@@ -20,7 +20,7 @@ from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay._sync.browser import BrowserOption
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 
 def get_local_storage(page) -> dict:

@@ -8,9 +8,6 @@ from agentbay import AgentBay
 from agentbay._common.exceptions import AgentBayError
 from agentbay import CreateSessionParams
 from agentbay._sync.mobile import KeyCode
-
-
-
 def main():
     # Get API key from environment variable or use a default value for testing
     api_key = os.getenv("AGENTBAY_API_KEY")

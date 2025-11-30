@@ -290,7 +290,7 @@ The sync examples are auto-generated from async examples. To regenerate:
 
 ```bash
 cd python
-python scripts/generate_examples_sync.py
+python scripts/generate_sync.py
 ```
 
 Or use the Makefile:

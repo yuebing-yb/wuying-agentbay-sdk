@@ -16,13 +16,12 @@ This example will:
 """
 
 import os
-
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay._sync.browser import BrowserOption
 from agentbay._sync.browser import BrowserFingerprintGenerator, FingerprintFormat
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 def generate_fingerprint_by_file() -> FingerprintFormat:
     """Generate fingerprint by file."""

@@ -14,7 +14,7 @@ from playwright.sync_api import sync_playwright
 from pydantic import BaseModel
 
 from agentbay import AgentBay
-from agentbay._async.browser_agent import ActOptions, ExtractOptions, ObserveOptions
+from agentbay._sync.browser_agent import ActOptions, ExtractOptions, ObserveOptions
 from agentbay._common.params.session_params import CreateSessionParams
 from agentbay._sync.browser import BrowserFingerprint, BrowserOption, BrowserProxy
 

@@ -3,7 +3,7 @@
 
 import os
 
-from agentbay import AgentBay, OssError, CreateSessionParams, AsyncOss
+from agentbay import AgentBay, OssError, CreateSessionParams, Oss
 
 
 def get_oss_credentials():
@@ -45,7 +45,7 @@ def test_oss_integration():
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
 
-        oss = AsyncOss(session)
+        oss = Oss(session)
 
         # env_init
         print("\nTesting env_init...")

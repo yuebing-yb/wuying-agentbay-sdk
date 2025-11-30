@@ -20,8 +20,6 @@ import os
 import sys
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-
-
 def main():
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")

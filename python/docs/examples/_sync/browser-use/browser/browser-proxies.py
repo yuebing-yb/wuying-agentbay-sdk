@@ -26,12 +26,11 @@ This example demonstrates:
 """
 
 import os
-
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay._sync.browser import BrowserOption, BrowserProxy
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
 def main():
     """Main function demonstrating browser proxy functionality."""

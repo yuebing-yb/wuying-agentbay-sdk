@@ -10,7 +10,7 @@
 import os
 import logging
 
-from playwright.async_api import sync_playwright
+from playwright.sync_api import sync_playwright
 from pydantic import BaseModel
 
 from agentbay import AgentBay

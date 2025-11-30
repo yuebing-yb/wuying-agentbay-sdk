@@ -29,10 +29,8 @@ clean:
 
 # Generate sync code from async code
 generate-sync:
-	@echo "Generating sync code..."
+	@echo "Generating sync code and examples..."
 	poetry run python scripts/generate_sync.py
-	@echo "Generating sync examples..."
-	poetry run python scripts/generate_examples_sync.py
 
 # Build package
 build: clean generate-sync format test
