@@ -118,7 +118,7 @@ class FileTransfer:
         Upload workflow:
         1) Get OSS pre-signed URL via context.get_file_upload_url
         2) Upload local file to OSS using the URL (HTTP PUT)
-        3) Trigger session.context.sync(mode="upload") to sync OSS objects to cloud disk
+        * 1) Trigger session.context.sync(mode="upload") to sync cloud disk data to OSS
         4) If wait=True, poll session.context.info until upload task reaches completion or timeout
 
         Returns UploadResult containing request_ids, HTTP status, ETag and other information.
@@ -415,7 +415,7 @@ class FileTransfer:
         """
         mode = mode.lower().strip()
 
-        sync_fn = getattr(self._session.context, "sync_context")
+        sync_fn = getattr(self._session.context, "sync")
         print(
             f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})"
         )

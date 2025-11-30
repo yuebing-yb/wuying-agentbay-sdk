@@ -1,13 +1,13 @@
 # Context Sync Demo Example
 
-This example demonstrates the `session.context.sync_context()` method for synchronizing context data with the AgentBay cloud environment.
+This example demonstrates the `session.context.sync()` method for synchronizing context data with the AgentBay cloud environment.
 
 ## Overview
 
 The example showcases:
 
 - **Context Creation**: Creating persistent contexts for data storage
-- **Context Synchronization**: Using `sync_context()` to sync data to cloud storage
+- **Context Synchronization**: Using `sync()` to sync data to cloud storage
 - **Timing Analysis**: Measuring sync operation duration
 - **File Management**: Creating and managing test files in the context
 - **Error Handling**: Managing sync failures and API errors
@@ -16,11 +16,11 @@ The example showcases:
 
 ### 1. Context Sync Function
 
-The `session.context.sync_context()` method provides asynchronous context synchronization:
+The `session.context.sync()` method provides asynchronous context synchronization:
 
 ```python
 # Async call - wait for completion
-sync_result = await session.context.sync_context()
+sync_result = await session.context.sync()
 if sync_result.success:
     print("✅ Sync completed successfully")
     print(f"Duration: {sync_duration:.2f} seconds")
@@ -80,6 +80,6 @@ delete_result = await agent_bay.delete(session)
 
 ### Step 4: Context Synchronization
 
-- Calls `session.context.sync_context()` to sync all data to cloud storage
+- Calls `session.context.sync()` to sync all data to cloud storage
 - Measures and reports sync timing and success status
 - Handles both success and failure scenarios with appropriate logging

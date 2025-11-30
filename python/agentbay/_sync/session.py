@@ -211,15 +211,15 @@ class Session:
                 try:
                     if sync_context_id:
                         # Sync specific context (browser recording)
-                        sync_result = self.context.sync_context(
-                            context_id=sync_context_id
-                        )
+                        sync_result = self.context.sync(
+                context_id=sync_context_id
+            )
                         _logger.info(
                             f"🎥 Synced browser recording context: {sync_context_id}"
                         )
                     else:
                         # Sync all contexts
-                        sync_result = self.context.sync_context()
+                        sync_result = self.context.sync()
                         _logger.info("🔄 Synced all contexts")
 
                     sync_duration = time.time() - sync_start_time

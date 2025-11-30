@@ -103,8 +103,8 @@ async def context_sync_demo(agent_bay):
     sync_start_time = time.time()
     
     # Call context sync with await - wait for completion
-    print("\n📤 Calling await session.context.sync_context()...")
-    sync_result = await session.context.sync_context()
+    print("\n📤 Calling await session.context.sync()...")
+    sync_result = await session.context.sync()
     
     sync_duration = time.time() - sync_start_time
     

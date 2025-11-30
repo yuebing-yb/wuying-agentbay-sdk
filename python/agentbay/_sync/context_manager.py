@@ -183,7 +183,7 @@ class ContextManager:
             error_message="",
         )
 
-    def sync_context(
+    def sync(
         self,
         context_id: Optional[str] = None,
         path: Optional[str] = None,
@@ -346,3 +346,15 @@ class ContextManager:
         # If we've exhausted all retries, return failure
         _logger.error(f"❌ Context sync polling timed out after {max_retries} attempts")
         return False
+
+    # Backward compatibility alias
+    def sync_context(
+        self,
+        context_id: Optional[str] = None,
+        path: Optional[str] = None,
+        mode: Optional[str] = None,
+        max_retries: int = 150,
+        retry_interval: int = 1500,
+    ) -> ContextSyncResult:
+        """Backward compatibility alias for sync()."""
+        return self.sync(context_id, path, mode, max_retries, retry_interval)

@@ -34,7 +34,7 @@ def generate_unique_id():
     return f"{timestamp}-{random_part}"
 
 
-class TestContextSyncUploadModeIntegration(unittest.TestCase):
+class TestContextSyncUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
     """Context Sync Upload Mode Integration Tests"""
 
     @classmethod
@@ -95,8 +95,6 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
 
         print("Creating session with default File upload mode...")
         session_result = self.agent_bay.create(session_params)
-
-        # Step 3: Verify session creation success
         self.assertTrue(
             session_result.success,
             f"Failed to create session: {session_result.error_message}",
@@ -242,11 +240,8 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         # Call context sync before getting info
         print("Calling context sync before getting info...")
 
-        # Use asyncio.run to handle the async sync method
-        def run_sync():
-            return session.context.sync_context()
-
-        sync_result = run_sync()
+        # Call the async sync method directly
+        sync_result = session.context.sync()
 
         self.assertTrue(
             sync_result.success, f"Failed to sync context: {sync_result.error_message}"

@@ -174,7 +174,7 @@ class TestContextManager(unittest.TestCase):
             )
 
             # Call the method directly (synchronously)
-            result = self.context_manager.sync_context()
+            result = self.context_manager.sync()
 
             # Verify the results
             self.assertEqual(result.request_id, "test-request-id")
@@ -199,7 +199,7 @@ class TestContextManager(unittest.TestCase):
             )
 
             # Call the method with parameters directly (synchronously)
-            result = self.context_manager.sync_context(
+            result = self.context_manager.sync(
                 "ctx-123", "/home/user", "upload"
             )
 

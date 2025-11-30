@@ -4,7 +4,7 @@ import random
 import time
 import unittest
 
-from agentbay import AgentBay, CreateSessionParams
+from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay._common.params.context_sync import (
     BWList,
     ContextSync,
@@ -17,7 +17,7 @@ from agentbay._common.params.context_sync import (
     UploadPolicy,
     WhiteList,
 )
-from agentbay._sync.session import Session
+from agentbay._async.session import AsyncSession
 
 
 def get_test_api_key():
@@ -32,7 +32,7 @@ def generate_unique_id():
     return f"{timestamp}-{random_part}"
 
 
-class TestContextSyncUploadModeIntegration(unittest.TestCase):
+class TestContextSyncUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
     """Context Sync Upload Mode Integration Tests"""
 
     @classmethod
@@ -43,8 +43,8 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         if not api_key:
             raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
 
-        # Initialize AgentBay client
-        cls.agent_bay = AgentBay(api_key=api_key)
+        # Initialize AsyncAgentBay client
+        cls.agent_bay = AsyncAgentBay(api_key=api_key)
 
         cls.unique_id = generate_unique_id()
         cls.test_sessions = []
@@ -57,7 +57,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         # Note: Sessions should be cleaned up in individual tests
         # This is a safety net for any remaining sessions
 
-    def test_create_session_with_default_file_upload_mode(self):
+    async def test_create_session_with_default_file_upload_mode(self):
         """Test creating session with default File upload mode and write file."""
         print("\n=== Testing basic functionality with default File upload mode ===")
 
@@ -65,7 +65,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         context_name = f"test-context-{self.__class__.unique_id}"
         print(f"Creating context with name: {context_name}")
 
-        context_result = self.agent_bay.context.get(context_name, True)
+        context_result = await self.agent_bay.context.get(context_name, True)
         self.assertTrue(
             context_result.success,
             f"Failed to create context: {context_result.error_message}",
@@ -92,9 +92,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         )
 
         print("Creating session with default File upload mode...")
-        session_result = self.agent_bay.create(session_params)
-
-        # Step 3: Verify session creation success
+        session_result = await self.agent_bay.create(session_params)
         self.assertTrue(
             session_result.success,
             f"Failed to create session: {session_result.error_message}",
@@ -111,7 +109,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         print(f"Session creation request ID: {session_result.request_id}")
 
         # Get session info to verify appInstanceId
-        session_info = self.agent_bay.get_session(session.session_id)
+        session_info = await self.agent_bay.get_session(session.session_id)
         self.assertTrue(
             session_info.success,
             f"Failed to get session info: {session_info.error_message}",
@@ -125,7 +123,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
 
         # Cleanup
         print("Cleaning up: Deleting the session...")
-        delete_result = self.agent_bay.delete(session, sync_context=True)
+        delete_result = await self.agent_bay.delete(session, sync_context=True)
         self.assertTrue(
             delete_result.success,
             f"Failed to delete session: {delete_result.error_message}",
@@ -133,14 +131,14 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         print(f"Session {session.session_id} deleted successfully")
         self.test_sessions.remove(session)
 
-    def test_context_sync_with_archive_mode_and_file_operations(self):
+    async def test_context_sync_with_archive_mode_and_file_operations(self):
         """Test contextId and path usage with Archive mode and file operations."""
         print(
             "\n=== Testing contextId and path usage with Archive mode and file operations ==="
         )
 
         context_name = f"archive-mode-context-{self.__class__.unique_id}"
-        context_result = self.agent_bay.context.get(context_name, True)
+        context_result = await self.agent_bay.context.get(context_name, True)
 
         self.assertTrue(
             context_result.success,
@@ -181,7 +179,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         )
 
         print("Creating session with Archive mode contextSync...")
-        session_result = self.agent_bay.create(session_params)
+        session_result = await self.agent_bay.create(session_params)
 
         self.assertTrue(
             session_result.success,
@@ -194,7 +192,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         self.test_sessions.append(session)
 
         # Get session info to verify appInstanceId
-        session_info = self.agent_bay.get_session(session.session_id)
+        session_info = await self.agent_bay.get_session(session.session_id)
         self.assertTrue(
             session_info.success,
             f"Failed to get session info: {session_info.error_message}",
@@ -221,7 +219,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         print(f"Creating file: {file_path}")
         print(f"File content size: {len(file_content)} bytes")
 
-        write_result = session.file_system.write_file(
+        write_result = await session.file_system.write_file(
             file_path, file_content, "overwrite"
         )
 
@@ -240,11 +238,8 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         # Call context sync before getting info
         print("Calling context sync before getting info...")
 
-        # Use asyncio.run to handle the async sync method
-        async def run_sync():
-            return await session.context.sync_context()
-
-        sync_result = asyncio.run(run_sync())
+        # Call the async sync method directly
+        sync_result = await session.context.sync()
 
         self.assertTrue(
             sync_result.success, f"Failed to sync context: {sync_result.error_message}"
@@ -256,7 +251,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
 
         # Now call context info after sync
         print("Calling context info after sync...")
-        info_result = session.context.info()
+        info_result = await session.context.info()
 
         self.assertTrue(
             info_result.success,
@@ -283,7 +278,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         # Use the sync directory path
         sync_dir_path = "/tmp/archive-mode-test"
 
-        list_result = self.agent_bay.context.list_files(
+        list_result = await self.agent_bay.context.list_files(
             context_result.context_id, sync_dir_path, page_number=1, page_size=10
         )
 
@@ -327,7 +322,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
 
         # Cleanup
         print("Cleaning up: Deleting the session...")
-        delete_result = self.agent_bay.delete(session, sync_context=True)
+        delete_result = await self.agent_bay.delete(session, sync_context=True)
         self.assertTrue(
             delete_result.success,
             f"Failed to delete session: {delete_result.error_message}",
@@ -335,12 +330,12 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         print(f"Session {session.session_id} deleted successfully")
         self.test_sessions.remove(session)
 
-    def test_invalid_upload_mode_with_policy_assignment(self):
+    async def test_invalid_upload_mode_with_policy_assignment(self):
         """Test error handling when using invalid uploadMode with policy assignment."""
         print("\n=== Testing invalid uploadMode with policy assignment ===")
 
         context_name = f"invalid-policy-context-{self.__class__.unique_id}"
-        context_result = self.agent_bay.context.get(context_name, True)
+        context_result = await self.agent_bay.context.get(context_name, True)
         self.assertTrue(
             context_result.success,
             f"Failed to create context: {context_result.error_message}",
@@ -385,12 +380,12 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
             "✅ Complete ContextSync flow correctly threw error for invalid uploadMode"
         )
 
-    def test_valid_upload_mode_values(self):
+    async def test_valid_upload_mode_values(self):
         """Test that valid uploadMode values are accepted."""
         print("\n=== Testing valid uploadMode values ===")
 
         context_name = f"valid-context-{self.__class__.unique_id}"
-        context_result = self.agent_bay.context.get(context_name, True)
+        context_result = await self.agent_bay.context.get(context_name, True)
         self.assertTrue(
             context_result.success,
             f"Failed to create context: {context_result.error_message}",
