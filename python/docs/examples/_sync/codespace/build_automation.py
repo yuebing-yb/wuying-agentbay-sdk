@@ -203,7 +203,7 @@ echo "=== Build Complete ==="
 
         # Verify clean
         print("\n13. Verifying clean...")
-        result = session.command.execute_command("ls -la /tmp/myproject/build/ 2>&1")
+        result = session.command.execute_command("if [ -d /tmp/myproject/build ]; then ls -la /tmp/myproject/build/; else echo 'Build directory successfully removed'; fi")
         print(f"Build directory after clean:\n{result.output}")
 
         # Rebuild
