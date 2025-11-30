@@ -1998,8 +1998,12 @@ class FileSystem(BaseService):
 
         # Create and configure the monitoring thread
         def _sync_monitor():
-            """Synchronous wrapper for monitoring function."""
-            _monitor_directory()
+            """Synchronous wrapper for async monitoring function."""
+            import asyncio
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                            loop.run_until_complete(_monitor_directory())
         
         monitor_thread = threading.Thread(
             target=_sync_monitor,

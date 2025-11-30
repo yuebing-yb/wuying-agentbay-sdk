@@ -224,8 +224,8 @@ await session.delete()
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
-- [FileSystem API Reference](./async-filesystem.md)
+- [Session API Reference](./session.md)
+- [FileSystem API Reference](./filesystem.md)
 
 ---
 

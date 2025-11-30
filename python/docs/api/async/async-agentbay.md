@@ -245,8 +245,8 @@ use the resume() method instead.
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./async-session.md)
-- [Context API Reference](./async-context.md)
+- [Session API Reference](./session.md)
+- [Context API Reference](./context.md)
 
 ---
 

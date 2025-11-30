@@ -139,11 +139,11 @@ Asynchronously initiate the resume session operation without waiting for complet
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [FileSystem API Reference](./async-filesystem.md)
-- [Command API Reference](./async-command.md)
-- [Context API Reference](./async-context.md)
-- [Context Manager API Reference](./async-context-manager.md)
-- [OSS API Reference](./async-oss.md)
+- [FileSystem API Reference](./filesystem.md)
+- [Command API Reference](./command.md)
+- [Context API Reference](./context.md)
+- [Context Manager API Reference](./context-manager.md)
+- [OSS API Reference](./oss.md)
 
 ---
 

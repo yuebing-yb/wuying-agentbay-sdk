@@ -81,18 +81,6 @@ Synchronize a context with the session asynchronously.
 
     ContextSyncResult: Result object containing success status and request ID
 
-### sync\_context
-
-```python
-async def sync_context(context_id: Optional[str] = None,
-                       path: Optional[str] = None,
-                       mode: Optional[str] = None,
-                       max_retries: int = 150,
-                       retry_interval: int = 1500) -> ContextSyncResult
-```
-
-Backward compatibility alias for sync().
-
 ## See Also
 
 - [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
