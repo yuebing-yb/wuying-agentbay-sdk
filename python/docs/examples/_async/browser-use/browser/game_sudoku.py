@@ -11,8 +11,8 @@ from typing import List, Optional, Tuple
 
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay.async_api import BrowserOption
-from agentbay.browser.browser_agent import ExtractOptions, ActOptions
+from agentbay._async.browser import BrowserOption
+from agentbay._async.browser import ExtractOptions, ActOptions
 
 from playwright.async_api import async_playwright
 from pydantic import BaseModel, Field

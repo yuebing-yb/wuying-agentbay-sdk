@@ -15,8 +15,8 @@ import sys
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
-from agentbay.async_api import AsyncAgentBay, CreateSessionParams
-from agentbay.browser import BrowserOption
+from agentbay import AsyncAgentBay, CreateSessionParams
+from agentbay._async.browser import BrowserOption
 
 
 async def main():

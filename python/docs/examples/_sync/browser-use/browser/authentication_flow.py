@@ -18,6 +18,14 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AgentBay, CreateSessionParams
+from agentbay._sync.browser import BrowserOption
+from agentbay._sync.browser_agent import ActOptions, ExtractOptions
+from pydantic import BaseModel, Field
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 def main():
@@ -49,8 +57,8 @@ def main():
 
         # Fill in login credentials (demonstration only)
         print("\n2. Filling in authentication form...")
-        session.browser.agent.act("Fill in the customer name field with 'testuser'")
-        session.browser.agent.act("Fill in the email field with 'test@example.com'")
+        session.browser.agent.act(ActOptions("Fill in the customer name field with 'testuser'"))
+        session.browser.agent.act(ActOptions("Fill in the email field with 'test@example.com'"))
         print("Form filled with test credentials")
 
         # Take screenshot of filled form
@@ -60,42 +68,66 @@ def main():
 
         # Verify form state
         print("\n4. Verifying form state...")
-        form_result = session.browser.agent.extract(
-            "What values are filled in the form fields?"
+        success, form_result = session.browser.agent.extract(
+            ExtractOptions(
+                instruction="What values are filled in the form fields?",
+                schema=TextContent
+            )
         )
-        print(f"Form state:\n{form_result.extracted_content}")
+        if success:
+            print(f"Form state:\n{form_result.content}")
+        else:
+            print("Failed to extract form state")
 
         # Simulate checking authentication state
         print("\n5. Checking authentication state...")
-        auth_result = session.browser.agent.extract(
-            "Is there a submit button on this form?"
+        success, auth_result = session.browser.agent.extract(
+            ExtractOptions(
+                instruction="Is there a submit button on this form?",
+                schema=TextContent
+            )
         )
-        print(f"Authentication form status: {auth_result.extracted_content}")
+        if success:
+            print(f"Authentication form status: {auth_result.content}")
+        else:
+            print("Failed to check authentication state")
 
         # Navigate to a page that might require authentication
         print("\n6. Testing authenticated navigation...")
         session.browser.agent.navigate("https://httpbin.org/basic-auth/user/passwd")
         
         # Check if authentication is required
-        auth_check = session.browser.agent.extract(
-            "Does this page require authentication? What is displayed?"
+        success, auth_check = session.browser.agent.extract(
+            ExtractOptions(
+                instruction="Does this page require authentication? What is displayed?",
+                schema=TextContent
+            )
         )
-        print(f"Authentication check: {auth_check.extracted_content}")
+        if success:
+            print(f"Authentication check: {auth_check.content}")
+        else:
+            print("Failed to check authentication requirement")
 
         # Demonstrate cookie-based authentication
         print("\n7. Setting authentication cookie...")
-        session.browser.agent.act(
+        session.browser.agent.act(ActOptions(
             "Execute JavaScript to set a cookie: "
             "document.cookie = 'auth_token=demo_token_12345; path=/'"
-        )
+        ))
         print("Authentication cookie set")
 
         # Verify cookie was set
         print("\n8. Verifying cookie...")
-        cookie_result = session.browser.agent.extract(
-            "What cookies are set for this page?"
+        success, cookie_result = session.browser.agent.extract(
+            ExtractOptions(
+                instruction="What cookies are set for this page?",
+                schema=TextContent
+            )
         )
-        print(f"Cookies: {cookie_result.extracted_content}")
+        if success:
+            print(f"Cookies: {cookie_result.content}")
+        else:
+            print("Failed to verify cookies")
 
         # Navigate back to main page
         print("\n9. Navigating to main page...")
@@ -103,10 +135,16 @@ def main():
 
         # Verify authentication persists
         print("\n10. Verifying authentication persistence...")
-        persist_result = session.browser.agent.extract(
-            "Are there any cookies set for this domain?"
+        success, persist_result = session.browser.agent.extract(
+            ExtractOptions(
+                instruction="Are there any cookies set for this domain?",
+                schema=TextContent
+            )
         )
-        print(f"Persistent authentication: {persist_result.extracted_content}")
+        if success:
+            print(f"Persistent authentication: {persist_result.content}")
+        else:
+            print("Failed to verify authentication persistence")
 
         print("\n=== Example completed successfully ===")
 

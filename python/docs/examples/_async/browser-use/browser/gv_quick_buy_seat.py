@@ -8,15 +8,15 @@ import asyncio
 import os, asyncio
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay.async_api import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay._async.browser import BrowserOption
+from agentbay._async.browser import ActOptions
 
 async def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         print("Error: AGENTBAY_API_KEY not set"); return
     agentbay = AsyncAgentBay(api_key=api_key)
-    session = await agentbay.create(CreateSessionParams(image_id="browser_latest")).session
+    session = await agentbay.create(CreateSessionParams(image_id="browser_latest"))
     try:
         if not await session.browser.initialize(BrowserOption()):
             print("Browser init failed"); 

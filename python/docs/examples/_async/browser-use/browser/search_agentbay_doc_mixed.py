@@ -11,15 +11,15 @@ import asyncio
 
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay.async_api import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay._async.browser import BrowserOption
+from agentbay._async.browser import ActOptions
 from playwright.async_api import async_playwright
 
 
 async def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     agent_bay = AsyncAgentBay(api_key=api_key)
-    session = await agent_bay.create(CreateSessionParams(image_id="browser_latest")).session
+    session = await agent_bay.create(CreateSessionParams(image_id="browser_latest"))
     try:
         assert await session.browser.initialize(BrowserOption())
         agent = session.browser.agent

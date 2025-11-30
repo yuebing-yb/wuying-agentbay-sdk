@@ -9,8 +9,8 @@ from pydantic import BaseModel, Field
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from agentbay import AgentBay, CreateSessionParams
-from agentbay import ActOptions, ExtractOptions
-from agentbay.exceptions import AgentBayError
+from agentbay._sync.browser_agent import ActOptions, ExtractOptions
+from agentbay._common.exceptions import AgentBayError
 import time
 
 class SearchResult(BaseModel):

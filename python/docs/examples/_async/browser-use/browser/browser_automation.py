@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay.async_api import ActOptions, ExtractOptions
-from agentbay.exceptions import AgentBayError
+from agentbay._async.browser_agent import ActOptions, ExtractOptions
+from agentbay._common.exceptions import AgentBayError
 
 class SearchResult(BaseModel):
     title: str = Field(description="The title of the search result")

@@ -18,7 +18,7 @@ import os
 import time
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay.browser import BrowserOption
+from agentbay._sync.browser import BrowserOption
 from playwright.sync_api import sync_playwright
 
 

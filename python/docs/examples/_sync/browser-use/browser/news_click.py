@@ -15,8 +15,8 @@ from pydantic import BaseModel
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay import BrowserOption, Browser
-from agentbay.browser.browser_agent import ActOptions, ActResult, ExtractOptions
+from agentbay._sync.browser import BrowserOption, Browser
+from agentbay._sync.browser import ActOptions, ActResult, ExtractOptions
 
 
 class DummySchema(BaseModel):

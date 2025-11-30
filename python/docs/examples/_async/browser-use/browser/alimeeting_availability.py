@@ -9,8 +9,8 @@ import asyncio
 import os, asyncio
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay.async_api import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay._async.browser import BrowserOption
+from agentbay._async.browser_agent import ActOptions
 
 
 async def main():
@@ -20,7 +20,7 @@ async def main():
         return
     agent_bay = AsyncAgentBay(api_key=api_key)
 
-    session = await agent_bay.create(CreateSessionParams(image_id="browser_latest")).session
+    session = await agent_bay.create(CreateSessionParams(image_id="browser_latest"))
     try:
         if not await session.browser.initialize(BrowserOption()):
             print("Browser init failed")

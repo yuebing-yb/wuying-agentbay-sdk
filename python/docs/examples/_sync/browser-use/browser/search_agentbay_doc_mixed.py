@@ -13,15 +13,15 @@ import os
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay._sync.browser import BrowserOption
+from agentbay._sync.browser import ActOptions
 from playwright.async_api import sync_playwright
 
 
 def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     agent_bay = AgentBay(api_key=api_key)
-    session = agent_bay.create(CreateSessionParams(image_id="browser_latest")).session
+    session = agent_bay.create(CreateSessionParams(image_id="browser_latest"))
     try:
         assert session.browser.initialize(BrowserOption())
         agent = session.browser.agent

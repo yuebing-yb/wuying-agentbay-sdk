@@ -15,8 +15,8 @@ import random
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay import BrowserOption
-from agentbay.browser.browser_agent import ExtractOptions
+from agentbay._sync.browser import BrowserOption
+from agentbay._sync.browser import ExtractOptions
 
 from playwright.async_api import sync_playwright
 from pydantic import BaseModel, Field

@@ -15,7 +15,7 @@ import os
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay import BrowserOption, BrowserViewport, BrowserScreen
+from agentbay._sync.browser import BrowserOption, BrowserViewport, BrowserScreen
 
 from playwright.async_api import sync_playwright
 

@@ -18,7 +18,7 @@ import os
 import asyncio
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay.async_api import BrowserOption, BrowserViewport
+from agentbay._async.browser import BrowserOption, BrowserViewport
 from playwright.async_api import async_playwright
 
 

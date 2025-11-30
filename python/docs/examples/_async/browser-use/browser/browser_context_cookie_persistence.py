@@ -16,7 +16,7 @@ import os
 import time
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams, BrowserContext
-from agentbay.async_api import BrowserOption
+from agentbay._async.browser import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():

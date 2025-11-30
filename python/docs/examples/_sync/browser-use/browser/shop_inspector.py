@@ -17,12 +17,12 @@ from pydantic import BaseModel, Field
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay import (
+from agentbay._sync.browser import (
     BrowserOption,
     BrowserScreen,
     BrowserProxy,
 )
-from agentbay.browser.browser_agent import ActOptions, ExtractOptions
+from agentbay._sync.browser import ActOptions, ExtractOptions
 from agentbay.model import SessionResult
 import time
 
