@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 from agentbay._common.config import _BROWSER_DATA_PATH
 from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
-from agentbay._sync.agentbay import AgentBay
+from agentbay import AgentBay
 
 
 class TestBrowserContextConfig(unittest.TestCase):

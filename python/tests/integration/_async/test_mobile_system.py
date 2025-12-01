@@ -5,8 +5,8 @@ from agentbay import AgentBay
 from agentbay._common.exceptions import AgentBayError
 from agentbay._common.models import BoolResult, OperationResult
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.computer import InstalledAppListResult, ProcessListResult
-from agentbay._sync.mobile import KeyCode, UIElementListResult
+from agentbay import InstalledAppListResult, ProcessListResult
+from agentbay import KeyCode, UIElementListResult
 
 
 class TestMobileSystemIntegration(unittest.TestCase):

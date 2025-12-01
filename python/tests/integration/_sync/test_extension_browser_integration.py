@@ -649,9 +649,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
             # Phase 2: Browser Initialization with Extensions
             print("\nPhase 2: Browser Initialization with Extensions")
-            browser_initialized = asyncio.run(
-                self._initialize_browser_with_extensions(session)
-            )
+            browser_initialized = self._initialize_browser_with_extensions(session)
             self.assertTrue(
                 browser_initialized, "Browser initialization with extensions failed"
             )
@@ -666,9 +664,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
             # Phase 3: Real Extension ID Extraction via CDP
             print("\nPhase 3: Real Extension ID Extraction (CDP-based)")
-            real_extension_ids = asyncio.run(
-                self._extract_and_validate_real_extension_ids(session)
-            )
+            real_extension_ids = self._extract_and_validate_real_extension_ids(session)
             self.assertGreater(
                 len(real_extension_ids),
                 0,
@@ -683,7 +679,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
             # Phase 4: Comprehensive Extension Verification using Real IDs
             print("\nPhase 4: Extension Verification with Real IDs")
-            verification_results = asyncio.run(
+            verification_results = (
                 self._comprehensive_browser_extension_verification_with_real_ids(
                     session, extension_ids, real_extension_ids
                 )
@@ -911,14 +907,14 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
             # Phase 4: Extension Context Validation using Real IDs
             print("    Phase 4: Extension Context Validation (Real IDs)")
-            results["extension_context_validation"] = (
-                self._validate_extension_contexts(session, real_extension_ids)
+            results["extension_context_validation"] = self._validate_extension_contexts(
+                session, real_extension_ids
             )
 
             # Phase 5: Functional Validation
             print("    Phase 5: Extension Functional Validation")
-            results["functional_validation"] = (
-                self._test_browser_basic_functionality(session)
+            results["functional_validation"] = self._test_browser_basic_functionality(
+                session
             )
 
             return results
@@ -955,9 +951,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = (
-                    browser.contexts[0]
-                    if browser.contexts
-                    else browser.new_context()
+                    browser.contexts[0] if browser.contexts else browser.new_context()
                 )
                 page = context.new_page()
 
@@ -976,10 +970,8 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                             )
 
                             # Check basic extension environment
-                            validation_result = (
-                                self._check_basic_extension_environment(
-                                    page, ext_id
-                                )
+                            validation_result = self._check_basic_extension_environment(
+                                page, ext_id
                             )
 
                             if validation_result:
@@ -1145,9 +1137,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
         return extracted_ids
 
-    def _detect_loaded_extensions(
-        self, session, extension_ids: List[str]
-    ) -> bool:
+    def _detect_loaded_extensions(self, session, extension_ids: List[str]) -> bool:
         """Detect loaded extensions using real extension IDs from CDP.
 
         IMPORTANT: This method uses REAL extension IDs extracted from the browser via CDP.
@@ -1184,9 +1174,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = (
-                    browser.contexts[0]
-                    if browser.contexts
-                    else browser.new_context()
+                    browser.contexts[0] if browser.contexts else browser.new_context()
                 )
                 page = context.new_page()
 
@@ -1201,31 +1189,25 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                             f"    Testing extension environment in extension context..."
                         )
                         # Test the first extension's environment
-                        detected_via_basic = (
-                            self._check_basic_extension_environment(
-                                page, chrome_extension_ids[0]
-                            )
+                        detected_via_basic = self._check_basic_extension_environment(
+                            page, chrome_extension_ids[0]
                         )
                     else:
                         # Fallback to general page check
                         print(
                             f"    Testing extension environment in general page context..."
                         )
-                        detected_via_basic = (
-                            self._check_basic_extension_environment(page)
+                        detected_via_basic = self._check_basic_extension_environment(
+                            page
                         )
 
                     # Method 2: Extension storage API availability (basic check)
-                    detected_via_storage = self._check_extension_storage_basic(
-                        page
-                    )
+                    detected_via_storage = self._check_extension_storage_basic(page)
 
                     # Method 3: Check for extension content scripts
 
                     # Method 4: Check extension environment via DevTools
-                    detected_via_devtools = self._check_extension_via_devtools(
-                        page
-                    )
+                    detected_via_devtools = self._check_extension_via_devtools(page)
 
                     # Consider detection successful if any method works
                     detection_success = (
@@ -1481,9 +1463,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = (
-                    browser.contexts[0]
-                    if browser.contexts
-                    else browser.new_context()
+                    browser.contexts[0] if browser.contexts else browser.new_context()
                 )
                 page = context.new_page()
 
@@ -1533,9 +1513,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = (
-                    browser.contexts[0]
-                    if browser.contexts
-                    else browser.new_context()
+                    browser.contexts[0] if browser.contexts else browser.new_context()
                 )
                 page = context.new_page()
 
@@ -1548,9 +1526,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                     for url in test_urls:
                         try:
                             page.goto(url, timeout=10000)
-                            page.wait_for_timeout(
-                                1500
-                            )  # Allow extensions to process
+                            page.wait_for_timeout(1500)  # Allow extensions to process
 
                             # Check if page loaded successfully with extensions
                             page_state = page.evaluate(

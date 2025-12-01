@@ -18,7 +18,7 @@ from typing import Optional
 from playwright.async_api import async_playwright
 
 from agentbay import AsyncAgentBay, CreateSessionParams, BrowserOption
-from agentbay._async.session import AsyncSession
+from agentbay import AsyncSession
 
 
 async def take_agent_screenshots(session: AsyncSession):

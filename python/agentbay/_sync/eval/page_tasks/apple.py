@@ -7,9 +7,7 @@ from typing import Any, Dict
 from ..page_agent import PageAgent
 
 
-def run(
-    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
-) -> dict:
+def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     agent.goto("https://www.apple.com/iphone-16-pro/")
 
     actions = [

@@ -7,9 +7,7 @@ from typing import Any, Dict
 from ..page_agent import PageAgent
 
 
-def run(
-    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
-) -> dict:
+def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     agent.goto("https://www.vanta.com/")
 
     instruction = "click the buy now button if it is available"

@@ -56,20 +56,22 @@ async def safe_screenshot_async(computer, test_name: str):
 async def computer_session():
     api_key = get_test_api_key()
     agent_bay = AsyncAgentBay(api_key=api_key)
-    
+
     print("Creating a new session for computer functional testing...")
     session_params = CreateSessionParams(image_id="linux_latest")
     result = await agent_bay.create(session_params)
     assert result.success
     assert result.session is not None
-    
-    print(f"Created Computer functional validation session: {result.session.session_id}")
-    
+
+    print(
+        f"Created Computer functional validation session: {result.session.session_id}"
+    )
+
     # Wait for session to be ready
     await asyncio.sleep(5)
-    
+
     yield result.session
-    
+
     print(f"Cleaning up session {result.session.session_id}...")
     try:
         await result.session.delete()
@@ -101,16 +103,18 @@ async def test_mouse_movement_validation(computer_session):
             elif cursor_data is None:
                 result.set_failure("No cursor position data received")
         except json.JSONDecodeError:
-            result.set_failure(
-                f"Failed to parse cursor position data: {cursor_data}"
-            )
+            result.set_failure(f"Failed to parse cursor position data: {cursor_data}")
 
         if not result.message:  # No error yet
             result.add_detail(
                 "initial_cursor",
                 {
-                    "x": cursor_data.get("x") if isinstance(cursor_data, dict) else None,
-                    "y": cursor_data.get("y") if isinstance(cursor_data, dict) else None,
+                    "x": (
+                        cursor_data.get("x") if isinstance(cursor_data, dict) else None
+                    ),
+                    "y": (
+                        cursor_data.get("y") if isinstance(cursor_data, dict) else None
+                    ),
                 },
             )
 
@@ -131,17 +135,27 @@ async def test_mouse_movement_validation(computer_session):
                 elif screen_data is None:
                     result.set_failure("No screen size data received")
             except json.JSONDecodeError:
-                result.set_failure(
-                    f"Failed to parse screen size data: {screen_data}"
-                )
+                result.set_failure(f"Failed to parse screen size data: {screen_data}")
 
         if not result.message:
             result.add_detail(
                 "screen_size",
                 {
-                    "width": screen_data.get("width") if isinstance(screen_data, dict) else None,
-                    "height": screen_data.get("height") if isinstance(screen_data, dict) else None,
-                    "dpi": screen_data.get("dpiScalingFactor") if isinstance(screen_data, dict) else None,
+                    "width": (
+                        screen_data.get("width")
+                        if isinstance(screen_data, dict)
+                        else None
+                    ),
+                    "height": (
+                        screen_data.get("height")
+                        if isinstance(screen_data, dict)
+                        else None
+                    ),
+                    "dpi": (
+                        screen_data.get("dpiScalingFactor")
+                        if isinstance(screen_data, dict)
+                        else None
+                    ),
                 },
             )
 
@@ -180,8 +194,16 @@ async def test_mouse_movement_validation(computer_session):
             result.add_detail(
                 "new_cursor",
                 {
-                    "x": new_cursor_data.get("x") if isinstance(new_cursor_data, dict) else None,
-                    "y": new_cursor_data.get("y") if isinstance(new_cursor_data, dict) else None,
+                    "x": (
+                        new_cursor_data.get("x")
+                        if isinstance(new_cursor_data, dict)
+                        else None
+                    ),
+                    "y": (
+                        new_cursor_data.get("y")
+                        if isinstance(new_cursor_data, dict)
+                        else None
+                    ),
                 },
             )
             result.add_detail("target_position", {"x": target_x, "y": target_y})
@@ -307,9 +329,7 @@ async def test_keyboard_input_validation(computer_session):
         # Test 1: input_text
         input_result = await computer.input_text(test_text)
         if not input_result.success:
-            result.set_failure(
-                f"Failed to input text: {input_result.error_message}"
-            )
+            result.set_failure(f"Failed to input text: {input_result.error_message}")
         else:
             result.add_detail("input_text_success", True)
 
@@ -491,9 +511,7 @@ async def test_complete_workflow_validation(computer_session):
 
         # Step 3: Click mouse
         if not result.message:
-            click_result = await computer.click_mouse(
-                center_x, center_y, "left"
-            )
+            click_result = await computer.click_mouse(center_x, center_y, "left")
             if click_result.success:
                 workflow_steps.append("Clicked at center")
             else:
@@ -541,9 +559,7 @@ async def test_complete_workflow_validation(computer_session):
 
         # Step 9: Take screenshot
         if not result.message:
-            screenshot, error = await safe_screenshot_async(
-                computer, "workflow_end"
-            )
+            screenshot, error = await safe_screenshot_async(computer, "workflow_end")
             if error or not screenshot:
                 result.set_failure("Failed to take screenshot")
             else:

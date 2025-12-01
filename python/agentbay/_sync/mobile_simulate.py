@@ -279,9 +279,7 @@ class SyncMobileSimulateService:
         _logger.debug(f"upload_url = {upload_url.url}")
         try:
             with httpx.Client() as client:
-                response = client.put(
-                    upload_url.url, content=mobile_dev_info_content
-                )
+                response = client.put(upload_url.url, content=mobile_dev_info_content)
                 response.raise_for_status()
         except Exception as e:
             _logger.error(f"An error occurred while uploading the file: {e}")
@@ -343,4 +341,3 @@ class SyncMobileSimulateService:
             f"created mobile simulate context, context_id = {context.id}, context_name = {context.name}"
         )
         return context
-

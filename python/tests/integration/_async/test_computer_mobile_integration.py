@@ -8,8 +8,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from agentbay import AgentBay, Session
-from agentbay._sync.computer import Computer
-from agentbay._sync.mobile import Mobile
+from agentbay import Computer
+from agentbay import Mobile
 
 
 class TestComputerMobileIntegration:

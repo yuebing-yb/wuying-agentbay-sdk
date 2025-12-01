@@ -86,9 +86,7 @@ def test_command_error_handling(command):
     assert invalid_result.error_message is not None
 
     # Test command with permission issues (trying to write to protected directory)
-    permission_result = command.execute_command(
-        'echo "test" > /root/protected.txt'
-    )
+    permission_result = command.execute_command('echo "test" > /root/protected.txt')
     # This might succeed or fail depending on the environment, but should not crash
     assert isinstance(permission_result.success, bool)
 

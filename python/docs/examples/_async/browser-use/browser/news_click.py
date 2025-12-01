@@ -13,8 +13,8 @@ from pydantic import BaseModel
 
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay._async.browser import BrowserOption
-from agentbay._async.browser_agent import ActOptions, ActResult, ExtractOptions
+from agentbay import BrowserOption
+from agentbay import ActOptions, ActResult, ExtractOptions
 
 
 class DummySchema(BaseModel):

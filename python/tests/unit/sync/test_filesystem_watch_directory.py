@@ -9,7 +9,7 @@ import unittest
 from typing import Any, Dict, List
 from unittest.mock import Mock, patch
 
-from agentbay._sync.filesystem import FileChangeEvent, FileChangeResult, FileSystem
+from agentbay import FileChangeEvent, FileChangeResult, FileSystem
 
 
 class TestFileChangeEvent(unittest.TestCase):
@@ -266,12 +266,12 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
 
         # Start the thread
         thread.start()
-        
+
         # Wait longer and check multiple times
         max_wait = 2.0  # 2 seconds max
         check_interval = 0.1
         elapsed = 0
-        
+
         while elapsed < max_wait and mock_call_count == 0:
             time.sleep(check_interval)
             elapsed += check_interval
@@ -281,8 +281,16 @@ class TestFileSystemWatchDirectory(unittest.TestCase):
         thread.join(timeout=2.0)
 
         # Verify mock was called and callback was called with events
-        self.assertGreater(mock_call_count, 0, f"_get_file_change should have been called after {elapsed:.2f}s")
-        self.assertGreater(len(callback_events), 0, f"Callback should have been called, mock_call_count={mock_call_count}")
+        self.assertGreater(
+            mock_call_count,
+            0,
+            f"_get_file_change should have been called after {elapsed:.2f}s",
+        )
+        self.assertGreater(
+            len(callback_events),
+            0,
+            f"Callback should have been called, mock_call_count={mock_call_count}",
+        )
         if len(callback_events) > 0:
             self.assertEqual(callback_events[0].event_type, "create")
             self.assertEqual(callback_events[0].path, "/tmp/test.txt")

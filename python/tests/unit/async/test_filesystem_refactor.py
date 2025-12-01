@@ -2,12 +2,8 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._common.models.response import McpToolResult, OperationResult
-from agentbay._async.filesystem import (
-    AsyncFileSystem,
-    BoolResult,
-    FileContentResult,
-    FileInfoResult,
-)
+from agentbay import AsyncFileSystem, BoolResult
+from agentbay._async.filesystem import FileContentResult, FileInfoResult
 
 
 class DummySession:
@@ -67,7 +63,9 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
         # Test internal method exists
         self.assertTrue(hasattr(self.fs, "_write_file_chunk"))
 
-        result = await self.fs._write_file_chunk("/path/to/file.txt", "content", "overwrite")
+        result = await self.fs._write_file_chunk(
+            "/path/to/file.txt", "content", "overwrite"
+        )
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)
         self.assertTrue(result.data)
@@ -260,7 +258,9 @@ class TestAsyncFileSystemRefactor(unittest.IsolatedAsyncioTestCase):
 
         # Create content larger than default chunk size
         large_content = "x" * (100 * 1024)  # 100KB content
-        result = await self.fs.write_file("/path/to/large_file.txt", large_content, "append")
+        result = await self.fs.write_file(
+            "/path/to/large_file.txt", large_content, "append"
+        )
 
         self.assertIsInstance(result, BoolResult)
         self.assertTrue(result.success)

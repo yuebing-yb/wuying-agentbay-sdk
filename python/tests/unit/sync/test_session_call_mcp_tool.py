@@ -31,7 +31,7 @@ class TestSessionCallMcpTool(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        from agentbay._sync.session import Session
+        from agentbay import Session
 
         self.agent_bay = DummyAgentBay()
         self.session_id = "test_session_id"

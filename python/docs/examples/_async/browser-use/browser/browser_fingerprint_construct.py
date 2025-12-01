@@ -17,8 +17,8 @@ import asyncio
 
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay._async.browser import BrowserOption
-from agentbay._async.fingerprint import BrowserFingerprintGenerator, FingerprintFormat
+from agentbay import BrowserOption
+from agentbay import BrowserFingerprintGenerator, FingerprintFormat
 
 from playwright.async_api import async_playwright
 

@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from agentbay._common.models.response import OperationResult
-from agentbay._sync.session import DeleteResult, Session
+from agentbay import DeleteResult, Session
 
 
 class DummyAgentBay:

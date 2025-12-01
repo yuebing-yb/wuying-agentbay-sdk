@@ -137,10 +137,10 @@ if result.success:
 
 ```python
 # Write file
-result = session.file_system.write_file("/tmp/test.txt", "content")
+result = await session.file_system.write_file("/tmp/test.txt", "content")
 
 # Read file
-result = session.file_system.read_file("/tmp/test.txt")
+result = await session.file_system.read_file("/tmp/test.txt")
 if result.success:
     print(result.content)
 ```

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock
 
-from agentbay._async.context import (
+from agentbay import (
     ContextFileEntry,
     ContextFileListResult,
     AsyncContextService,
@@ -27,7 +27,9 @@ class TestAsyncContextFileUrls(unittest.IsolatedAsyncioTestCase):
         mock_body.data = mock_data
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-upload-1"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.get_context_file_upload_url_async = AsyncMock(return_value=mock_resp)
+        self.agent_bay.client.get_context_file_upload_url_async = AsyncMock(
+            return_value=mock_resp
+        )
 
         result = await self.context.get_file_upload_url(self.context_id, self.test_path)
 
@@ -45,9 +47,13 @@ class TestAsyncContextFileUrls(unittest.IsolatedAsyncioTestCase):
         mock_body.data = mock_data
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-download-1"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.get_context_file_download_url_async = AsyncMock(return_value=mock_resp)
+        self.agent_bay.client.get_context_file_download_url_async = AsyncMock(
+            return_value=mock_resp
+        )
 
-        result = await self.context.get_file_download_url(self.context_id, self.test_path)
+        result = await self.context.get_file_download_url(
+            self.context_id, self.test_path
+        )
 
         self.assertTrue(result.success)
         self.assertEqual(result.url, "https://oss.example.com/download-url")
@@ -60,9 +66,13 @@ class TestAsyncContextFileUrls(unittest.IsolatedAsyncioTestCase):
         mock_body.data = None
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-download-2"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.get_context_file_download_url_async = AsyncMock(return_value=mock_resp)
+        self.agent_bay.client.get_context_file_download_url_async = AsyncMock(
+            return_value=mock_resp
+        )
 
-        result = await self.context.get_file_download_url(self.context_id, self.test_path)
+        result = await self.context.get_file_download_url(
+            self.context_id, self.test_path
+        )
 
         self.assertFalse(result.success)
         self.assertEqual(result.url, "")
@@ -82,7 +92,9 @@ class TestAsyncContextFileUrls(unittest.IsolatedAsyncioTestCase):
         mock_body.data = [entry]
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-list-1"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.describe_context_files_async = AsyncMock(return_value=mock_resp)
+        self.agent_bay.client.describe_context_files_async = AsyncMock(
+            return_value=mock_resp
+        )
 
         result = await self.context.list_files(
             self.context_id, "/tmp", page_number=1, page_size=50
@@ -103,7 +115,9 @@ class TestAsyncContextFileUrls(unittest.IsolatedAsyncioTestCase):
         mock_body.data = []
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-list-2"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.describe_context_files_async = AsyncMock(return_value=mock_resp)
+        self.agent_bay.client.describe_context_files_async = AsyncMock(
+            return_value=mock_resp
+        )
 
         result = await self.context.list_files(
             self.context_id, "/tmp", page_number=1, page_size=50
@@ -119,7 +133,9 @@ class TestAsyncContextFileUrls(unittest.IsolatedAsyncioTestCase):
         mock_body.success = True
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-del-1"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.delete_context_file_async = AsyncMock(return_value=mock_resp)
+        self.agent_bay.client.delete_context_file_async = AsyncMock(
+            return_value=mock_resp
+        )
 
         result = await self.context.delete_file(self.context_id, self.test_path)
 

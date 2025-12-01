@@ -5,7 +5,7 @@ This example demonstrates the fundamental usage of browser extensions with Agent
 """
 
 import os
-from agentbay.async_api import AsyncAgentBay, AsyncExtensionsService, CreateSessionParams
+from agentbay import AsyncAgentBay, AsyncExtensionsService, CreateSessionParams
 from agentbay import BrowserContext
 
 

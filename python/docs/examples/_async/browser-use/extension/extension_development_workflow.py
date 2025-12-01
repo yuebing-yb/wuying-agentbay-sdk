@@ -8,7 +8,7 @@ including uploading, testing, updating, and iterative development.
 import os
 import time
 from typing import Optional
-from agentbay.async_api import AsyncAgentBay, AsyncExtensionsService, CreateSessionParams
+from agentbay import AsyncAgentBay, AsyncExtensionsService, CreateSessionParams
 from agentbay import BrowserContext
 
 

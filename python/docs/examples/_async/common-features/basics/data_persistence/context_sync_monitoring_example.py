@@ -9,7 +9,7 @@ from typing import Dict, List, Any, Optional
 import httpx
 
 from agentbay import AsyncAgentBay
-from agentbay._async.context import Context
+from agentbay import Context
 from agentbay._common.exceptions import AgentBayError
 
 # Configure logging

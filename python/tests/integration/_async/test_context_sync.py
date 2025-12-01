@@ -21,7 +21,7 @@ from agentbay._common.params.context_sync import (
     WhiteList,
 )
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.context_manager import ContextStatusData
+from agentbay import ContextStatusData
 
 
 @pytest_asyncio.fixture(scope="module")

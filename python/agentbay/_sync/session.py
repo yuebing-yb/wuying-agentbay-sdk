@@ -211,9 +211,7 @@ class Session:
                 try:
                     if sync_context_id:
                         # Sync specific context (browser recording)
-                        sync_result = self.context.sync(
-                context_id=sync_context_id
-            )
+                        sync_result = self.context.sync(context_id=sync_context_id)
                         _logger.info(
                             f"🎥 Synced browser recording context: {sync_context_id}"
                         )
@@ -250,7 +248,9 @@ class Session:
             )
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'release_mcp_session') and callable(getattr(client, 'release_mcp_session')):
+            if hasattr(client, "release_mcp_session") and callable(
+                getattr(client, "release_mcp_session")
+            ):
                 response = client.release_mcp_session(request)
             else:
                 response = client.release_mcp_session(request)
@@ -373,7 +373,7 @@ class Session:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'set_label') and callable(getattr(client, 'set_label')):
+            if hasattr(client, "set_label") and callable(getattr(client, "set_label")):
                 response = client.set_label(request)
             else:
                 response = client.set_label(request)
@@ -409,7 +409,7 @@ class Session:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'get_label') and callable(getattr(client, 'get_label')):
+            if hasattr(client, "get_label") and callable(getattr(client, "get_label")):
                 response = client.get_label(request)
             else:
                 response = client.get_label(request)
@@ -456,7 +456,9 @@ class Session:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'get_mcp_resource') and callable(getattr(client, 'get_mcp_resource')):
+            if hasattr(client, "get_mcp_resource") and callable(
+                getattr(client, "get_mcp_resource")
+            ):
                 response = client.get_mcp_resource(request)
             else:
                 response = client.get_mcp_resource(request)
@@ -573,7 +575,7 @@ class Session:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
-            if hasattr(client, 'get_link') and callable(getattr(client, 'get_link')):
+            if hasattr(client, "get_link") and callable(getattr(client, "get_link")):
                 response = client.get_link(request)
             else:
                 response = client.get_link(request)
@@ -646,7 +648,9 @@ class Session:
 
         # Try async method first, fall back to sync wrapped in asyncio.to_thread
         client = self._get_client()
-        if hasattr(client, 'list_mcp_tools') and callable(getattr(client, 'list_mcp_tools')):
+        if hasattr(client, "list_mcp_tools") and callable(
+            getattr(client, "list_mcp_tools")
+        ):
             response = client.list_mcp_tools(request)
         else:
             response = client.list_mcp_tools(request)
@@ -875,14 +879,15 @@ class Session:
         try:
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'call_mcp_tool') and callable(getattr(client, 'call_mcp_tool')):
+            if hasattr(client, "call_mcp_tool") and callable(
+                getattr(client, "call_mcp_tool")
+            ):
                 response = client.call_mcp_tool(
                     request, read_timeout=read_timeout, connect_timeout=connect_timeout
                 )
             else:
-                response = client.call_mcp_tool(request,
-                    read_timeout=read_timeout,
-                    connect_timeout=connect_timeout
+                response = client.call_mcp_tool(
+                    request, read_timeout=read_timeout, connect_timeout=connect_timeout
                 )
 
             # Extract request ID
@@ -1081,7 +1086,9 @@ class Session:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'pause_session_async') and callable(getattr(client, 'pause_session_async')):
+            if hasattr(client, "pause_session_async") and callable(
+                getattr(client, "pause_session_async")
+            ):
                 response = client.pause_session_async(request)
             else:
                 response = client.pause_session_async(request)
@@ -1242,7 +1249,9 @@ class Session:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'resume_session_async') and callable(getattr(client, 'resume_session_async')):
+            if hasattr(client, "resume_session_async") and callable(
+                getattr(client, "resume_session_async")
+            ):
                 response = client.resume_session_async(request)
             else:
                 response = client.resume_session_async(request)

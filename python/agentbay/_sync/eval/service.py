@@ -41,6 +41,7 @@
 #  year = {2023}
 # }
 # ==============================================================================================================
+import asyncio
 import base64
 import io
 import re
@@ -315,6 +316,7 @@ from pathlib import Path
 
 import requests
 from browser_use import ActionResult, Agent, BrowserProfile, BrowserSession, Controller
+
 # MemoryConfig和AgentHistoryList在当前版本中不可用，使用替代方案
 try:
     from browser_use.agent.memory import MemoryConfig
@@ -324,6 +326,7 @@ except ImportError:
         def __init__(self, **kwargs):
             for k, v in kwargs.items():
                 setattr(self, k, v)
+
 
 try:
     from browser_use.agent.views import AgentHistoryList
@@ -781,9 +784,7 @@ class Task:
         return self.__str__()
 
 
-def judge_task_result(
-    model, task_folder: Path, score_threshold: float = 3
-) -> dict:
+def judge_task_result(model, task_folder: Path, score_threshold: float = 3) -> dict:
     """
     Judge a single task result based on the success value of the final action.
 
@@ -1513,7 +1514,8 @@ def run_task_with_semaphore(
                     _logger.info(f"Task {task.task_id}: Saving result to server.")
                     run_stage(
                         Stage.SAVE_SERVER,
-                        lambda: save_result_to_server(convex_url,
+                        lambda: save_result_to_server(
+                            convex_url,
                             secret_key,
                             task_result.server_payload,
                         ),
@@ -1542,7 +1544,8 @@ def run_task_with_semaphore(
                     )
                     run_stage(
                         Stage.SAVE_SERVER,
-                        lambda: save_result_to_server(convex_url,
+                        lambda: save_result_to_server(
+                            convex_url,
                             secret_key,
                             task_result.server_payload,
                         ),
@@ -1566,7 +1569,8 @@ def run_task_with_semaphore(
                     )
                     run_stage(
                         Stage.SAVE_SERVER,
-                        lambda: save_result_to_server(convex_url,
+                        lambda: save_result_to_server(
+                            convex_url,
                             secret_key,
                             task_result.server_payload,
                         ),
@@ -1592,7 +1596,8 @@ def run_task_with_semaphore(
                     )
                     run_stage(
                         Stage.SAVE_SERVER,
-                        lambda: save_result_to_server(convex_url,
+                        lambda: save_result_to_server(
+                            convex_url,
                             secret_key,
                             task_result.server_payload,
                         ),
@@ -1640,7 +1645,8 @@ def run_task_with_semaphore(
                 _logger.info(
                     f"Task {task.task_id}: Attempting emergency server save after initialization error."
                 )
-                save_result_to_server(convex_url,
+                save_result_to_server(
+                    convex_url,
                     secret_key,
                     task_result.server_payload,
                 )
@@ -2284,29 +2290,27 @@ if __name__ == "__main__":
                 exit(1)
         # -----------------
 
-        results = asyncio.run(
-            run_multiple_tasks(
-                tasks=tasks,
-                llm=llm,
-                run_id=run_id,
-                convex_url=CONVEX_URL,
-                secret_key=SECRET_KEY,
-                eval_model=eval_model,
-                max_parallel_runs=args.parallel_runs,
-                max_steps_per_task=args.max_steps,
-                start_index=args.start,
-                end_index=args.end,
-                headless=args.headless,
-                use_vision=not args.no_vision,
-                fresh_start=args.fresh_start,
-                use_serp=args.use_serp,
-                enable_memory=args.enable_memory,
-                memory_interval=args.memory_interval,
-                max_actions_per_step=args.max_actions_per_step,
-                validate_output=args.validate_output,
-                planner_llm=planner_llm,
-                planner_interval=args.planner_interval,
-            )
+        results = run_multiple_tasks(
+            tasks=tasks,
+            llm=llm,
+            run_id=run_id,
+            convex_url=CONVEX_URL,
+            secret_key=SECRET_KEY,
+            eval_model=eval_model,
+            max_parallel_runs=args.parallel_runs,
+            max_steps_per_task=args.max_steps,
+            start_index=args.start,
+            end_index=args.end,
+            headless=args.headless,
+            use_vision=not args.no_vision,
+            fresh_start=args.fresh_start,
+            use_serp=args.use_serp,
+            enable_memory=args.enable_memory,
+            memory_interval=args.memory_interval,
+            max_actions_per_step=args.max_actions_per_step,
+            validate_output=args.validate_output,
+            planner_llm=planner_llm,
+            planner_interval=args.planner_interval,
         )
 
         _logger.info("Task completed. Saving results...")

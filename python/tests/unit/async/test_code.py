@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
-from agentbay._async.code import AsyncCode, CodeExecutionResult
+from agentbay import AsyncCode
+from agentbay._async.code import CodeExecutionResult
 
 
 class TestAsyncCode(unittest.IsolatedAsyncioTestCase):

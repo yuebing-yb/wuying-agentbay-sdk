@@ -50,9 +50,7 @@ def test_context_file_operations(test_session):
         assert response.status_code == 200
 
     # List files in context
-    files_result = test_session.agent_bay.context.list_files(
-        ctx_result.context_id, "/"
-    )
+    files_result = test_session.agent_bay.context.list_files(ctx_result.context_id, "/")
     assert files_result.success
 
     # Get download URL

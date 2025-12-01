@@ -74,10 +74,10 @@ if result.success:
 
 ```python
 # Write file
-session.file_system.write_file("/tmp/test.txt", "Hello World")
+await session.file_system.write_file("/tmp/test.txt", "Hello World")
 
 # Read file
-result = session.file_system.read_file("/tmp/test.txt")
+result = await session.file_system.read_file("/tmp/test.txt")
 print(result.content)
 ```
 

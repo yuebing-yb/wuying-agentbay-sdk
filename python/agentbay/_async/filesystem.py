@@ -2023,15 +2023,16 @@ class AsyncFileSystem(BaseService):
         def _sync_monitor():
             """Synchronous wrapper for async monitoring function."""
             import asyncio
+
             # Create a new event loop for this thread
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             try:
                 loop.run_until_complete(_monitor_directory())
             finally:
                 loop.close()
-        
+
         monitor_thread = threading.Thread(
             target=_sync_monitor,
             name=f"DirectoryWatcher-{path.replace('/', '_')}",

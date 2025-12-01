@@ -11,7 +11,7 @@ from typing import Dict, List, Any, Optional
 import httpx
 
 from agentbay import AgentBay
-from agentbay._sync.context import Context
+from agentbay import Context
 from agentbay._common.exceptions import AgentBayError
 
 # Configure logging

@@ -4,8 +4,8 @@ import asyncio
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay._async.agentbay import AsyncAgentBay
-from agentbay._async.session import AsyncSession
+from agentbay import AsyncAgentBay
+from agentbay import AsyncSession
 from agentbay._common.models.response import (
     GetSessionData,
     GetSessionResult,

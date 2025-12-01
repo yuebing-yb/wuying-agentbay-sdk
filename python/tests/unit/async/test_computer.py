@@ -9,7 +9,7 @@ import pytest
 
 from agentbay._common.exceptions import AgentBayError
 from agentbay._common.models import BoolResult, OperationResult
-from agentbay._async.computer import AsyncComputer, MouseButton, ScrollDirection
+from agentbay import AsyncComputer, MouseButton, ScrollDirection
 
 
 class TestComputer:
@@ -98,7 +98,9 @@ class TestComputer:
         self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
-        result = await self.computer.click_mouse(100, 200, button=MouseButton.DOUBLE_LEFT)
+        result = await self.computer.click_mouse(
+            100, 200, button=MouseButton.DOUBLE_LEFT
+        )
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
@@ -382,7 +384,9 @@ class TestComputer:
         self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
-        result = await self.computer.drag_mouse(100, 100, 200, 200, button=MouseButton.MIDDLE)
+        result = await self.computer.drag_mouse(
+            100, 100, 200, 200, button=MouseButton.MIDDLE
+        )
 
         # Assert
         assert result.success is True

@@ -10,7 +10,7 @@ import pytest
 from agentbay._common.exceptions import AgentBayError
 from agentbay._common.models import BoolResult, OperationResult
 from agentbay._async.computer import AppOperationResult, ProcessListResult
-from agentbay._async.mobile import AsyncMobile
+from agentbay import AsyncMobile
 
 
 class TestMobile:
@@ -285,7 +285,9 @@ class TestMobile:
         self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
-        result = await self.mobile.start_app("com.android.settings", activity=".MainActivity")
+        result = await self.mobile.start_app(
+            "com.android.settings", activity=".MainActivity"
+        )
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(

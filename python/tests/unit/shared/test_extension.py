@@ -3,7 +3,7 @@ Unit tests for extension management functionality.
 
 This module contains comprehensive unit tests for:
 - ExtensionsService class
-- ExtensionOption class  
+- ExtensionOption class
 - Extension class
 - Error handling and validation
 """

@@ -72,7 +72,7 @@ def has_valid_products(products: List[ProductInfo], min_items: int = 2) -> bool:
 
 async def act(agent, instruction: str) -> bool:
     """Execute an action using the browser agent."""
-    from agentbay._async.browser_agent import ActOptions
+    from agentbay import ActOptions
 
     print(f"Acting: {instruction}")
     ret = await agent.act(ActOptions(action=instruction))
@@ -129,7 +129,7 @@ async def take_and_save_screenshot(agent, base_url: str, out_dir: str, session=N
 
 async def extract_products(agent, base_url: str) -> Optional[List[ProductInfo]]:
     """Extract products from the current page."""
-    from agentbay._async.browser_agent import ExtractOptions
+    from agentbay import ExtractOptions
 
     ok, data = await agent.extract(
         ExtractOptions(

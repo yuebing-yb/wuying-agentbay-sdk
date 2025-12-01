@@ -7,7 +7,7 @@ import pytest_asyncio
 
 from agentbay import AsyncAgentBay
 from agentbay.api.models import MobileSimulateMode
-from agentbay._async.context import Context
+from agentbay import Context
 from agentbay._common.params.context_sync import BWList, ContextSync, SyncPolicy
 
 
@@ -87,4 +87,3 @@ async def test_mobile_simulate_external_context(agent_bay):
 
     finally:
         await agent_bay.context.delete(context)
-

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from agentbay._sync.context import (
+from agentbay import (
     ContextFileEntry,
     ContextFileListResult,
     ContextService,

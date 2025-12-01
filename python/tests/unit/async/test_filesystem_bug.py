@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from agentbay._async.filesystem import AsyncFileSystem
+from agentbay import AsyncFileSystem
 
 
 class TestAsyncFileSystemBugVerification:

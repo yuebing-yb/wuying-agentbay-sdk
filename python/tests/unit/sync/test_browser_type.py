@@ -1,6 +1,6 @@
 import unittest
 
-from agentbay._sync.browser import BrowserOption
+from agentbay import BrowserOption
 
 
 class TestBrowserTypeUnit(unittest.TestCase):
@@ -202,7 +202,7 @@ class TestBrowserTypeUnit(unittest.TestCase):
 
     def test_browser_type_with_viewport_and_screen(self):
         """Test browser_type with viewport and screen options."""
-        from agentbay._sync.browser import BrowserScreen, BrowserViewport
+        from agentbay import BrowserScreen, BrowserViewport
 
         viewport = BrowserViewport(width=1920, height=1080)
         screen = BrowserScreen(width=1920, height=1080)

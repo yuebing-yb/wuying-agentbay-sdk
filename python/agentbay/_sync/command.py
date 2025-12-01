@@ -42,9 +42,7 @@ class Command(BaseService):
     Handles command execution operations in the AgentBay cloud environment.
     """
 
-    def execute_command(
-        self, command: str, timeout_ms: int = 60000
-    ) -> CommandResult:
+    def execute_command(self, command: str, timeout_ms: int = 60000) -> CommandResult:
         """
         Execute a shell command with a timeout.
 

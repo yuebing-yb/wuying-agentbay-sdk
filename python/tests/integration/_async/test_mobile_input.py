@@ -7,7 +7,7 @@ import pytest_asyncio
 
 from agentbay import AsyncAgentBay
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.mobile import KeyCode
+from agentbay import KeyCode
 
 
 @pytest_asyncio.fixture(scope="module")

@@ -7,7 +7,7 @@ import pytest_asyncio
 
 from agentbay import AsyncAgentBay
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.computer import MouseButton
+from agentbay import MouseButton
 
 
 @pytest_asyncio.fixture(scope="module")

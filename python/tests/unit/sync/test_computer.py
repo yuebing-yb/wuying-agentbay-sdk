@@ -9,7 +9,7 @@ import pytest
 
 from agentbay._common.exceptions import AgentBayError
 from agentbay._common.models import BoolResult, OperationResult
-from agentbay._sync.computer import Computer, MouseButton, ScrollDirection
+from agentbay import Computer, MouseButton, ScrollDirection
 
 
 class TestComputer:

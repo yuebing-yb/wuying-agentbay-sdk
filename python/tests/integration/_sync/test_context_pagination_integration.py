@@ -13,7 +13,7 @@ import unittest
 from typing import List
 
 from agentbay import AgentBay
-from agentbay._sync.context import Context, ContextListParams
+from agentbay import Context, ContextListParams
 
 
 class TestContextPaginationIntegration(unittest.TestCase):

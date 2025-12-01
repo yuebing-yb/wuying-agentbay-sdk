@@ -16,7 +16,7 @@ This example will:
 import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay._sync.browser import BrowserOption, BrowserFingerprint
+from agentbay import BrowserOption, BrowserFingerprint
 
 from playwright.sync_api import sync_playwright
 

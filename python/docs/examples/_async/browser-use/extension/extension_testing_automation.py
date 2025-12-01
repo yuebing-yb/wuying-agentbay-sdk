@@ -10,7 +10,7 @@ import asyncio
 import time
 from typing import List, Dict, Any
 from dataclasses import dataclass
-from agentbay.async_api import AsyncAgentBay, AsyncExtensionsService, CreateSessionParams
+from agentbay import AsyncAgentBay, AsyncExtensionsService, CreateSessionParams
 from agentbay import BrowserContext
 
 

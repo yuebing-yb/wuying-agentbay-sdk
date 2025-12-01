@@ -40,7 +40,7 @@ Keyboard modifier keys: Ctrl, Alt, Shift, Win
 
 
 Computer module for desktop UI automation.
-Handles mouse operations, keyboard operations, window management, 
+Handles mouse operations, keyboard operations, window management,
 application management, and screen operations.
 
 ## MouseButton
@@ -1267,7 +1267,7 @@ get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 ---
 

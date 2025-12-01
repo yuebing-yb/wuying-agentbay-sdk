@@ -3,7 +3,7 @@ import json
 import unittest
 from unittest.mock import MagicMock, patch
 
-from agentbay._sync.context_manager import (
+from agentbay import (
     ContextInfoResult,
     ContextManager,
     ContextStatusData,
@@ -199,9 +199,7 @@ class TestContextManager(unittest.TestCase):
             )
 
             # Call the method with parameters directly (synchronously)
-            result = self.context_manager.sync(
-                "ctx-123", "/home/user", "upload"
-            )
+            result = self.context_manager.sync("ctx-123", "/home/user", "upload")
 
             # Verify the results
             self.assertEqual(result.request_id, "test-request-id")

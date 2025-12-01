@@ -16,7 +16,7 @@ import asyncio
 import time
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay._async.browser import BrowserOption
+from agentbay import BrowserOption
 from playwright.sync_api import sync_playwright
 
 

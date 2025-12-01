@@ -121,9 +121,7 @@ def test_sequential_execution(session):
     print(f"Step 1: {py_result.result}")
 
     # 2. JavaScript
-    js_result = session.code.run_code(
-        "console.log('Step 2: JavaScript')", "javascript"
-    )
+    js_result = session.code.run_code("console.log('Step 2: JavaScript')", "javascript")
     assert js_result.success, "JavaScript step failed"
     print(f"Step 2: {js_result.result}")
 

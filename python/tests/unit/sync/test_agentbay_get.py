@@ -2,7 +2,7 @@ import pytest
 
 from agentbay import AgentBay
 from agentbay._common.models.response import SessionResult
-from agentbay._sync.session import Session
+from agentbay import Session
 
 
 class TestAgentBayGet:

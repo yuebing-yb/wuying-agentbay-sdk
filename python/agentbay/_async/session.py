@@ -210,8 +210,8 @@ class AsyncSession:
                     if sync_context_id:
                         # Sync specific context (browser recording)
                         sync_result = await self.context.sync(
-                context_id=sync_context_id
-            )
+                            context_id=sync_context_id
+                        )
                         _logger.info(
                             f"🎥 Synced browser recording context: {sync_context_id}"
                         )
@@ -248,7 +248,9 @@ class AsyncSession:
             )
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'release_mcp_session_async') and callable(getattr(client, 'release_mcp_session_async')):
+            if hasattr(client, "release_mcp_session_async") and callable(
+                getattr(client, "release_mcp_session_async")
+            ):
                 response = await client.release_mcp_session_async(request)
             else:
                 response = await asyncio.to_thread(client.release_mcp_session, request)
@@ -371,7 +373,9 @@ class AsyncSession:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'set_label_async') and callable(getattr(client, 'set_label_async')):
+            if hasattr(client, "set_label_async") and callable(
+                getattr(client, "set_label_async")
+            ):
                 response = await client.set_label_async(request)
             else:
                 response = await asyncio.to_thread(client.set_label, request)
@@ -407,7 +411,9 @@ class AsyncSession:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'get_label_async') and callable(getattr(client, 'get_label_async')):
+            if hasattr(client, "get_label_async") and callable(
+                getattr(client, "get_label_async")
+            ):
                 response = await client.get_label_async(request)
             else:
                 response = await asyncio.to_thread(client.get_label, request)
@@ -454,7 +460,9 @@ class AsyncSession:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'get_mcp_resource_async') and callable(getattr(client, 'get_mcp_resource_async')):
+            if hasattr(client, "get_mcp_resource_async") and callable(
+                getattr(client, "get_mcp_resource_async")
+            ):
                 response = await client.get_mcp_resource_async(request)
             else:
                 response = await asyncio.to_thread(client.get_mcp_resource, request)
@@ -571,7 +579,9 @@ class AsyncSession:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
-            if hasattr(client, 'get_link_async') and callable(getattr(client, 'get_link_async')):
+            if hasattr(client, "get_link_async") and callable(
+                getattr(client, "get_link_async")
+            ):
                 response = await client.get_link_async(request)
             else:
                 response = await asyncio.to_thread(client.get_link, request)
@@ -644,7 +654,9 @@ class AsyncSession:
 
         # Try async method first, fall back to sync wrapped in asyncio.to_thread
         client = self._get_client()
-        if hasattr(client, 'list_mcp_tools_async') and callable(getattr(client, 'list_mcp_tools_async')):
+        if hasattr(client, "list_mcp_tools_async") and callable(
+            getattr(client, "list_mcp_tools_async")
+        ):
             response = await client.list_mcp_tools_async(request)
         else:
             response = await asyncio.to_thread(client.list_mcp_tools, request)
@@ -873,7 +885,9 @@ class AsyncSession:
         try:
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'call_mcp_tool_async') and callable(getattr(client, 'call_mcp_tool_async')):
+            if hasattr(client, "call_mcp_tool_async") and callable(
+                getattr(client, "call_mcp_tool_async")
+            ):
                 response = await client.call_mcp_tool_async(
                     request, read_timeout=read_timeout, connect_timeout=connect_timeout
                 )
@@ -882,7 +896,7 @@ class AsyncSession:
                     client.call_mcp_tool,
                     request,
                     read_timeout=read_timeout,
-                    connect_timeout=connect_timeout
+                    connect_timeout=connect_timeout,
                 )
 
             # Extract request ID
@@ -1081,7 +1095,9 @@ class AsyncSession:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'pause_session_async_async') and callable(getattr(client, 'pause_session_async_async')):
+            if hasattr(client, "pause_session_async_async") and callable(
+                getattr(client, "pause_session_async_async")
+            ):
                 response = await client.pause_session_async_async(request)
             else:
                 response = await asyncio.to_thread(client.pause_session_async, request)
@@ -1242,7 +1258,9 @@ class AsyncSession:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, 'resume_session_async_async') and callable(getattr(client, 'resume_session_async_async')):
+            if hasattr(client, "resume_session_async_async") and callable(
+                getattr(client, "resume_session_async_async")
+            ):
                 response = await client.resume_session_async_async(request)
             else:
                 response = await asyncio.to_thread(client.resume_session_async, request)

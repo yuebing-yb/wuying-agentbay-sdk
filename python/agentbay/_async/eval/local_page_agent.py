@@ -13,6 +13,7 @@ from agentbay._async.browser import AsyncBrowser as Browser, BrowserOption
 from agentbay._async.session import AsyncSession
 from agentbay.api.base_service import OperationResult
 from agentbay._async.browser_agent import AsyncBrowserAgent
+from agentbay import ActOptions
 
 # Use the AgentBay _logger instead of the standard _logger
 _logger = get_logger("local_page_agent")
@@ -164,7 +165,9 @@ class LocalPageAgent(AsyncBrowserAgent):
             )
         else:
             self.mcp_client = None
-            _logger.warning("PAGE_TASK_MCP_SERVER_SCRIPT not set. MCP client will not be initialized.")
+            _logger.warning(
+                "PAGE_TASK_MCP_SERVER_SCRIPT not set. MCP client will not be initialized."
+            )
 
     def initialize(self):
         if self.mcp_client:
@@ -247,7 +250,7 @@ class LocalPageAgent(AsyncBrowserAgent):
             request_id="local_request_mock_id",
             success=False,
             data=None,
-            error_message=error_message
+            error_message=error_message,
         )
 
     async def _call_mcp_tool_async(self, name: str, args: dict) -> OperationResult:
@@ -291,7 +294,7 @@ class LocalBrowser(Browser):
                             # use absolute path for user_data_dir
                             cwd = os.getcwd()
                             user_data_dir = os.path.join(cwd, "tmp/browser_user_data")
-                            
+
                             self._browser = await p.chromium.launch_persistent_context(
                                 headless=True,
                                 viewport={"width": 1280, "height": 1200},
@@ -342,22 +345,41 @@ class LocalBrowser(Browser):
 class LocalSession(AsyncSession):
     def __init__(self):
         # Create a mock agent_bay with the required attributes
-        mock_agent_bay = type('MockAgentBay', (), {
-            'api_key': os.environ.get("AGENTBAY_API_KEY", ""),
-            'api_key_configured': bool(os.environ.get("AGENTBAY_API_KEY", ""))
-        })()
-        mock_client = type('MockClient', (), {
-            'api_base_url': '',
-            'get_session_status': lambda request: type('MockSessionStatus', (), {
-                'to_map': lambda: {'success': True, 'data': {'status': 'running'}}
-            })(),
-            'call_mcp_tool': lambda name, args, **kwargs: type('MockMcpToolResult', (), {
-                'request_id': 'mock_request_id',
-                'success': False,
-                'data': None,
-                'error_message': 'Mock mode: Cannot execute tool calls without proper API connection'
-            })()
-        })()
+        mock_agent_bay = type(
+            "MockAgentBay",
+            (),
+            {
+                "api_key": os.environ.get("AGENTBAY_API_KEY", ""),
+                "api_key_configured": bool(os.environ.get("AGENTBAY_API_KEY", "")),
+            },
+        )()
+        mock_client = type(
+            "MockClient",
+            (),
+            {
+                "api_base_url": "",
+                "get_session_status": lambda request: type(
+                    "MockSessionStatus",
+                    (),
+                    {
+                        "to_map": lambda: {
+                            "success": True,
+                            "data": {"status": "running"},
+                        }
+                    },
+                )(),
+                "call_mcp_tool": lambda name, args, **kwargs: type(
+                    "MockMcpToolResult",
+                    (),
+                    {
+                        "request_id": "mock_request_id",
+                        "success": False,
+                        "data": None,
+                        "error_message": "Mock mode: Cannot execute tool calls without proper API connection",
+                    },
+                )(),
+            },
+        )()
 
         # Assign the mock client to the mock agent bay
         mock_agent_bay.client = mock_client
@@ -365,14 +387,24 @@ class LocalSession(AsyncSession):
         super().__init__(mock_agent_bay, "local_session")
         self.browser = LocalBrowser(self)
 
-    def call_mcp_tool(self, name: str, args: dict, read_timeout: int = None, connect_timeout: int = None):
+    def call_mcp_tool(
+        self,
+        name: str,
+        args: dict,
+        read_timeout: int = None,
+        connect_timeout: int = None,
+    ):
         # Return a mock tool result that indicates the operation isn't supported in local mode
-        return type('OperationResult', (), {
-            'request_id': 'mock_request_id',
-            'success': False,
-            'data': None,
-            'error_message': 'Local mode: Cannot execute MCP tools without connection'
-        })()
+        return type(
+            "OperationResult",
+            (),
+            {
+                "request_id": "mock_request_id",
+                "success": False,
+                "data": None,
+                "error_message": "Local mode: Cannot execute MCP tools without connection",
+            },
+        )()
 
     def delete(self, sync_context: bool = False) -> None:
         pass

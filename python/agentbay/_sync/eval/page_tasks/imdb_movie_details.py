@@ -15,9 +15,7 @@ class CountryRatings(BaseModel):
     )
 
 
-def run(
-    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
-) -> dict:
+def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     agent.goto("https://www.imdb.com/title/tt0111161/")
     agent.act("click on the movie ratings")
     extract_method = config.get("extract_method", "domExtract")

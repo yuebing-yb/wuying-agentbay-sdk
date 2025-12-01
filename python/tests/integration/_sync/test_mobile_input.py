@@ -10,7 +10,7 @@ import pytest
 
 from agentbay import AgentBay
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.mobile import KeyCode
+from agentbay import KeyCode
 
 
 @pytest.fixture(scope="module")

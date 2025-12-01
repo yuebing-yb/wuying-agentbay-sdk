@@ -256,9 +256,7 @@ class ContextService:
         """
         self.agent_bay = agent_bay
 
-    def list(
-        self, params: Optional[ContextListParams] = None
-    ) -> ContextListResult:
+    def list(self, params: Optional[ContextListParams] = None) -> ContextListResult:
         """
         Lists all available contexts with pagination support.
 
@@ -293,7 +291,9 @@ class ContextService:
                 request.next_token = params.next_token
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
-            if hasattr(client, 'list_contexts') and callable(getattr(client, 'list_contexts')):
+            if hasattr(client, "list_contexts") and callable(
+                getattr(client, "list_contexts")
+            ):
                 response = client.list_contexts(request)
             else:
                 response = client.list_contexts(request)
@@ -447,7 +447,9 @@ class ContextService:
             )
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
-            if hasattr(client, 'get_context') and callable(getattr(client, 'get_context')):
+            if hasattr(client, "get_context") and callable(
+                getattr(client, "get_context")
+            ):
                 response = client.get_context(request)
             else:
                 response = client.get_context(request)
@@ -595,7 +597,9 @@ class ContextService:
             )
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
-            if hasattr(client, 'modify_context') and callable(getattr(client, 'modify_context')):
+            if hasattr(client, "modify_context") and callable(
+                getattr(client, "modify_context")
+            ):
                 response = client.modify_context(request)
             else:
                 response = client.modify_context(request)
@@ -660,12 +664,14 @@ class ContextService:
         try:
             _log_api_call("DeleteContext", f"Id={context.id}")
             request = DeleteContextRequest(
-                id=context.id, 
+                id=context.id,
                 authorization=f"Bearer {self.agent_bay.api_key}",
             )
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
-            if hasattr(client, 'delete_context') and callable(getattr(client, 'delete_context')):
+            if hasattr(client, "delete_context") and callable(
+                getattr(client, "delete_context")
+            ):
                 response = client.delete_context(request)
             else:
                 response = client.delete_context(request)
@@ -711,9 +717,7 @@ class ContextService:
             _logger.exception(f"Error calling DeleteContext: {e}")
             raise AgentBayError(f"Failed to delete context {context.id}: {e}")
 
-    def get_file_download_url(
-        self, context_id: str, file_path: str
-    ) -> FileUrlResult:
+    def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
         """
         Get a presigned download URL for a file in a context.
 
@@ -741,7 +745,9 @@ class ContextService:
         )
         # Try async method first, fall back to sync wrapped in asyncio.to_thread
         client = self.agent_bay.client
-        if hasattr(client, 'get_context_file_download_url') and callable(getattr(client, 'get_context_file_download_url')):
+        if hasattr(client, "get_context_file_download_url") and callable(
+            getattr(client, "get_context_file_download_url")
+        ):
             resp = client.get_context_file_download_url(req)
         else:
             resp = client.get_context_file_download_url(req)
@@ -778,9 +784,7 @@ class ContextService:
             error_message="",
         )
 
-    def get_file_upload_url(
-        self, context_id: str, file_path: str
-    ) -> FileUrlResult:
+    def get_file_upload_url(self, context_id: str, file_path: str) -> FileUrlResult:
         """
         Get a presigned upload URL for a file in a context.
 
@@ -808,7 +812,9 @@ class ContextService:
         )
         # Try async method first, fall back to sync wrapped in asyncio.to_thread
         client = self.agent_bay.client
-        if hasattr(client, 'get_context_file_upload_url') and callable(getattr(client, 'get_context_file_upload_url')):
+        if hasattr(client, "get_context_file_upload_url") and callable(
+            getattr(client, "get_context_file_upload_url")
+        ):
             resp = client.get_context_file_upload_url(req)
         else:
             resp = client.get_context_file_upload_url(req)
@@ -872,7 +878,9 @@ class ContextService:
         )
         # Try async method first, fall back to sync wrapped in asyncio.to_thread
         client = self.agent_bay.client
-        if hasattr(client, 'delete_context_file') and callable(getattr(client, 'delete_context_file')):
+        if hasattr(client, "delete_context_file") and callable(
+            getattr(client, "delete_context_file")
+        ):
             resp = client.delete_context_file(req)
         else:
             resp = client.delete_context_file(req)
@@ -941,7 +949,9 @@ class ContextService:
         )
         # Try async method first, fall back to sync wrapped in asyncio.to_thread
         client = self.agent_bay.client
-        if hasattr(client, 'describe_context_files') and callable(getattr(client, 'describe_context_files')):
+        if hasattr(client, "describe_context_files") and callable(
+            getattr(client, "describe_context_files")
+        ):
             resp = client.describe_context_files(req)
         else:
             resp = client.describe_context_files(req)
@@ -1007,7 +1017,9 @@ class ContextService:
             )
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
-            if hasattr(client, 'clear_context') and callable(getattr(client, 'clear_context')):
+            if hasattr(client, "clear_context") and callable(
+                getattr(client, "clear_context")
+            ):
                 response = client.clear_context(request)
             else:
                 response = client.clear_context(request)
@@ -1084,7 +1096,9 @@ class ContextService:
             )
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
-            if hasattr(client, 'get_context') and callable(getattr(client, 'get_context')):
+            if hasattr(client, "get_context") and callable(
+                getattr(client, "get_context")
+            ):
                 response = client.get_context(request)
             else:
                 response = client.get_context(request)

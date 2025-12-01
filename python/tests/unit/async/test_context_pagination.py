@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock
 
-from agentbay._async.context import (
+from agentbay import (
     Context,
     ContextListParams,
     ContextListResult,
@@ -46,7 +46,9 @@ class TestAsyncContextPagination(unittest.IsolatedAsyncioTestCase):
                 "TotalCount": 15,
             }
         }
-        self.agent_bay.client.list_contexts_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.list_contexts_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Call the method with default params (None)
         result = await self.context_service.list(None)
@@ -105,7 +107,9 @@ class TestAsyncContextPagination(unittest.IsolatedAsyncioTestCase):
                 "TotalCount": 15,
             }
         }
-        self.agent_bay.client.list_contexts_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.list_contexts_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Create custom params
         params = ContextListParams(max_results=5, next_token="page-token")
@@ -150,7 +154,9 @@ class TestAsyncContextPagination(unittest.IsolatedAsyncioTestCase):
                 "TotalCount": 1,
             }
         }
-        self.agent_bay.client.list_contexts_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.list_contexts_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Create default params object
         params = ContextListParams()
@@ -175,7 +181,9 @@ class TestAsyncContextPagination(unittest.IsolatedAsyncioTestCase):
     async def test_list_contexts_error_handling(self):
         """Test error handling in list contexts method."""
         # Mock the API to raise an exception
-        self.agent_bay.client.list_contexts_async = AsyncMock(side_effect=Exception("API Error"))
+        self.agent_bay.client.list_contexts_async = AsyncMock(
+            side_effect=Exception("API Error")
+        )
 
         # Call the method
         result = await self.context_service.list(None)

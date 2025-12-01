@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._common.models.response import OperationResult
-from agentbay._async.session import DeleteResult, AsyncSession
+from agentbay import DeleteResult, AsyncSession
 
 
 class DummyAgentBay:
@@ -94,7 +94,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockReleaseMcpSessionRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-123"
-        self.agent_bay.client.release_mcp_session_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.release_mcp_session_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock the response.to_map() method
         mock_response.to_map.return_value = {
@@ -109,7 +111,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         MockReleaseMcpSessionRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(mock_request)
+        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(
+            mock_request
+        )
 
     @patch("agentbay._async.session.extract_request_id")
     @patch("agentbay._async.session.ReleaseMcpSessionRequest")
@@ -121,7 +125,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockReleaseMcpSessionRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-123"
-        self.agent_bay.client.release_mcp_session_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.release_mcp_session_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock the response.to_map() method
         mock_response.to_map.return_value = {
@@ -143,7 +149,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         MockReleaseMcpSessionRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(mock_request)
+        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(
+            mock_request
+        )
 
     @patch("agentbay._async.session.extract_request_id")
     @patch("agentbay._async.session.ReleaseMcpSessionRequest")
@@ -155,7 +163,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockReleaseMcpSessionRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-123"
-        self.agent_bay.client.release_mcp_session_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.release_mcp_session_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock the response.to_map() method
         mock_response.to_map.return_value = {
@@ -182,7 +192,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         MockReleaseMcpSessionRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(mock_request)
+        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(
+            mock_request
+        )
 
     @patch("agentbay._async.session.extract_request_id")
     @patch("agentbay._async.session.ReleaseMcpSessionRequest")
@@ -192,7 +204,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         mock_request = MagicMock()
         MockReleaseMcpSessionRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-123"
-        self.agent_bay.client.release_mcp_session_async = AsyncMock(side_effect=Exception("Test error"))
+        self.agent_bay.client.release_mcp_session_async = AsyncMock(
+            side_effect=Exception("Test error")
+        )
 
         result = await self.session.delete()
         self.assertIsInstance(result, DeleteResult)
@@ -205,7 +219,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         MockReleaseMcpSessionRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(mock_request)
+        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(
+            mock_request
+        )
 
     @patch("agentbay._async.session.extract_request_id")
     @patch("agentbay._async.session.ReleaseMcpSessionRequest")
@@ -216,7 +232,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockReleaseMcpSessionRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-123"
-        self.agent_bay.client.release_mcp_session_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.release_mcp_session_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock the response.to_map() method to return a failure response
         mock_response.to_map.return_value = {
@@ -231,11 +249,15 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
         MockReleaseMcpSessionRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(mock_request)
+        self.agent_bay.client.release_mcp_session_async.assert_called_once_with(
+            mock_request
+        )
 
     @patch("agentbay._async.session.extract_request_id")
     @patch("agentbay._async.session.SetLabelRequest")
-    async def test_set_labels_success(self, MockSetLabelRequest, mock_extract_request_id):
+    async def test_set_labels_success(
+        self, MockSetLabelRequest, mock_extract_request_id
+    ):
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockSetLabelRequest.return_value = mock_request
@@ -260,11 +282,15 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.session.extract_request_id")
     @patch("agentbay._async.session.SetLabelRequest")
-    async def test_set_labels_api_failure(self, MockSetLabelRequest, mock_extract_request_id):
+    async def test_set_labels_api_failure(
+        self, MockSetLabelRequest, mock_extract_request_id
+    ):
         mock_request = MagicMock()
         MockSetLabelRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-789"
-        self.agent_bay.client.set_label_async = AsyncMock(side_effect=Exception("API Error"))
+        self.agent_bay.client.set_label_async = AsyncMock(
+            side_effect=Exception("API Error")
+        )
 
         labels = {"key1": "value1"}
         with self.assertRaises(Exception) as context:
@@ -281,7 +307,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.session.extract_request_id")
     @patch("agentbay._async.session.GetLabelRequest")
-    async def test_get_labels_success(self, MockGetLabelRequest, mock_extract_request_id):
+    async def test_get_labels_success(
+        self, MockGetLabelRequest, mock_extract_request_id
+    ):
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockGetLabelRequest.return_value = mock_request
@@ -307,11 +335,15 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.session.extract_request_id")
     @patch("agentbay._async.session.GetLabelRequest")
-    async def test_get_labels_api_failure(self, MockGetLabelRequest, mock_extract_request_id):
+    async def test_get_labels_api_failure(
+        self, MockGetLabelRequest, mock_extract_request_id
+    ):
         mock_request = MagicMock()
         MockGetLabelRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-102"
-        self.agent_bay.client.get_label_async = AsyncMock(side_effect=Exception("API Error"))
+        self.agent_bay.client.get_label_async = AsyncMock(
+            side_effect=Exception("API Error")
+        )
 
         with self.assertRaises(Exception) as context:
             await self.session.get_labels()
@@ -391,7 +423,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
                     port=port,
                     options=None,
                 )
-                self.agent_bay.client.get_link_async.assert_called_once_with(mock_request)
+                self.agent_bay.client.get_link_async.assert_called_once_with(
+                    mock_request
+                )
 
     async def test_get_link_with_invalid_port_below_range(self):
         """Test get_link with port below valid range raises SessionError"""
@@ -461,7 +495,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
             }
         }
 
-        self.session.agent_bay.client.get_link_async = AsyncMock(return_value=mock_response)
+        self.session.agent_bay.client.get_link_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Call get_link with options parameter
         options_json = '{"adbkey_pub": "test_key"}'
@@ -482,7 +518,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
             }
         }
 
-        self.session.agent_bay.client.get_link_async = AsyncMock(return_value=mock_response)
+        self.session.agent_bay.client.get_link_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Call get_link with options
         options_json = '{"adbkey_pub": "test_key"}'
@@ -510,7 +548,9 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
             }
         }
 
-        self.session.agent_bay.client.get_link_async = AsyncMock(return_value=mock_response)
+        self.session.agent_bay.client.get_link_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Call get_link with adb protocol and options
         options_json = '{"adbkey_pub": "test_adb_key..."}'
@@ -542,7 +582,7 @@ class TestAsyncAgentBayDelete(unittest.IsolatedAsyncioTestCase):
         self.session.enableBrowserReplay = False
 
         # Import AgentBay class
-        from agentbay._async.agentbay import AsyncAgentBay
+        from agentbay import AsyncAgentBay
 
         # Monkey patch AgentBay instance
         self.agent_bay.__class__ = AsyncAgentBay
@@ -561,7 +601,7 @@ class TestAsyncAgentBayDelete(unittest.IsolatedAsyncioTestCase):
         self.session.delete = AsyncMock(return_value=delete_result)
 
         # Import AgentBay class
-        from agentbay._async.agentbay import AsyncAgentBay
+        from agentbay import AsyncAgentBay
 
         # Monkey patch AgentBay instance
         self.agent_bay.__class__ = AsyncAgentBay

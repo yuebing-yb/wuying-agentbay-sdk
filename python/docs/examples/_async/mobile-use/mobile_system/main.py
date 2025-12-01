@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 from agentbay import AsyncAgentBay
 from agentbay._common.exceptions import AgentBayError
 from agentbay import CreateSessionParams
-from agentbay._async.mobile import KeyCode
+from agentbay import KeyCode
 import asyncio
 
 

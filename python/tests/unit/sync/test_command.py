@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from agentbay._common.models.response import OperationResult
-from agentbay._sync.command import Command, CommandResult
+from agentbay import Command, CommandResult
 
 
 class DummySession:

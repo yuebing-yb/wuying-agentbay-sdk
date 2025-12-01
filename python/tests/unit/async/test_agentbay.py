@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay._async.agentbay import AsyncAgentBay
+from agentbay import AsyncAgentBay
 from agentbay._common.params.session_params import (
     CreateSessionParams,
     ListSessionParams,
@@ -40,7 +40,9 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_initialization_with_provided_key(self, mock_mcp_client, mock_load_config):
+    async def test_initialization_with_provided_key(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test initializing AgentBay with a provided API key"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -101,28 +103,27 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
-        
+
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
-            "body": {
-                "Data": {
-                    "ContextStatusDataList": []
-                },
-                "Success": True
-            }
+            "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
+        mock_client.get_context_info_async = AsyncMock(
+            return_value=mock_context_response
+        )
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance and session parameters
         agent_bay = AsyncAgentBay(api_key="test-key")
-        
+
         # Mock context service
         mock_context = MagicMock()
-        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        mock_context.get = AsyncMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
         agent_bay.context = mock_context
-        
+
         params = CreateSessionParams(labels={"env": "test"})
 
         # Test creating a session
@@ -139,7 +140,9 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_create_session_invalid_response(self, mock_mcp_client, mock_load_config):
+    async def test_create_session_invalid_response(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test handling invalid response when creating a session"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -154,31 +157,32 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             "body": {"Data": None}  # Invalid Data field
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
-        
+
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
-            "body": {
-                "Data": {
-                    "ContextStatusDataList": []
-                },
-                "Success": True
-            }
+            "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
+        mock_client.get_context_info_async = AsyncMock(
+            return_value=mock_context_response
+        )
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance
         agent_bay = AsyncAgentBay(api_key="test-key")
-        
+
         # Mock context service
         mock_context = MagicMock()
-        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        mock_context.get = AsyncMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
         agent_bay.context = mock_context
-        
+
         # Mock context service
         mock_context = MagicMock()
-        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        mock_context.get = AsyncMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
         agent_bay.context = mock_context
 
         # Test session creation with invalid response
@@ -192,7 +196,9 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
     @patch("agentbay._async.agentbay.extract_request_id")
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_list(self, mock_mcp_client, mock_load_config, mock_extract_request_id):
+    async def test_list(
+        self, mock_mcp_client, mock_load_config, mock_extract_request_id
+    ):
         """Test listing sessions using the new list API"""
         # Mock configuration and request ID
         mock_load_config.return_value = {
@@ -222,10 +228,12 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
 
         # Create AgentBay instance
         agent_bay = AsyncAgentBay(api_key="test-key")
-        
+
         # Mock context service
         mock_context = MagicMock()
-        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        mock_context.get = AsyncMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
         agent_bay.context = mock_context
 
         # Test listing all sessions (no labels)
@@ -288,18 +296,22 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         }
 
         # Set up mock to return different responses
-        mock_client.list_session_async = AsyncMock(side_effect=[
-            mock_response_page1,
-            mock_response_page2,
-        ])
+        mock_client.list_session_async = AsyncMock(
+            side_effect=[
+                mock_response_page1,
+                mock_response_page2,
+            ]
+        )
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance
         agent_bay = AsyncAgentBay(api_key="test-key")
-        
+
         # Mock context service
         mock_context = MagicMock()
-        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        mock_context.get = AsyncMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
         agent_bay.context = mock_context
 
         # Test getting page 2
@@ -335,27 +347,26 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
-        
+
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
-            "body": {
-                "Data": {
-                    "ContextStatusDataList": []
-                },
-                "Success": True
-            }
+            "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
+        mock_client.get_context_info_async = AsyncMock(
+            return_value=mock_context_response
+        )
         mock_mcp_client.return_value = mock_client
 
         agent_bay = AsyncAgentBay(api_key="test-key")
-        
+
         # Mock context service
         mock_context = MagicMock()
-        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        mock_context.get = AsyncMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
         agent_bay.context = mock_context
-        
+
         params = CreateSessionParams(policy_id="policy-xyz")
 
         result = await agent_bay.create(params)
@@ -372,7 +383,9 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_create_with_mobile_extra_configs(self, mock_mcp_client, mock_load_config):
+    async def test_create_with_mobile_extra_configs(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test creating a session with mobile extra configurations"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -393,18 +406,15 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
-        
+
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
-            "body": {
-                "Data": {
-                    "ContextStatusDataList": []
-                },
-                "Success": True
-            }
+            "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
+        mock_client.get_context_info_async = AsyncMock(
+            return_value=mock_context_response
+        )
         mock_mcp_client.return_value = mock_client
 
         # Create mobile configuration
@@ -421,12 +431,14 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         extra_configs = ExtraConfigs(mobile=mobile_config)
 
         agent_bay = AsyncAgentBay(api_key="test-key")
-        
+
         # Mock context service
         mock_context = MagicMock()
-        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        mock_context.get = AsyncMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
         agent_bay.context = mock_context
-        
+
         params = CreateSessionParams(
             labels={"project": "mobile-testing"}, extra_configs=extra_configs
         )
@@ -479,18 +491,15 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
-        
+
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
-            "body": {
-                "Data": {
-                    "ContextStatusDataList": []
-                },
-                "Success": True
-            }
+            "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
+        mock_client.get_context_info_async = AsyncMock(
+            return_value=mock_context_response
+        )
         mock_mcp_client.return_value = mock_client
 
         # Create mobile blacklist configuration
@@ -504,12 +513,14 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         extra_configs = ExtraConfigs(mobile=mobile_config)
 
         agent_bay = AsyncAgentBay(api_key="test-key")
-        
+
         # Mock context service
         mock_context = MagicMock()
-        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        mock_context.get = AsyncMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
         agent_bay.context = mock_context
-        
+
         params = CreateSessionParams(
             labels={"project": "security-testing"}, extra_configs=extra_configs
         )
@@ -570,26 +581,25 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
-        
+
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
-            "body": {
-                "Data": {
-                    "ContextStatusDataList": []
-                },
-                "Success": True
-            }
+            "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = AsyncMock(return_value=mock_context_response)
+        mock_client.get_context_info_async = AsyncMock(
+            return_value=mock_context_response
+        )
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance
         agent_bay = AsyncAgentBay(api_key="test-key")
-        
+
         # Mock context service
         mock_context = MagicMock()
-        mock_context.get = AsyncMock(return_value=MagicMock(success=True, context_id="test-context"))
+        mock_context.get = AsyncMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
         agent_bay.context = mock_context
         params = CreateSessionParams()
 

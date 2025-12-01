@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay._async.browser import AsyncBrowser, BrowserOption
+from agentbay import AsyncBrowser, BrowserOption
 from agentbay._common.exceptions import BrowserError
 
 

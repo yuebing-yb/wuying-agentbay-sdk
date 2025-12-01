@@ -14,9 +14,7 @@ class RecipeDetails(BaseModel):
     total_ratings: int | None
 
 
-def run(
-    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
-) -> dict:
+def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
     agent.goto("https://www.allrecipes.com/")
     agent.act('Type "chocolate chip cookies" in the search bar')
     agent.act("press enter")

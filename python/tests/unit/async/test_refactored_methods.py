@@ -3,7 +3,7 @@ import sys
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
-from agentbay._async.agentbay import AsyncAgentBay
+from agentbay import AsyncAgentBay
 from agentbay._common.params.session_params import CreateSessionParams
 
 # Add the parent directory to the path so we can import the agentbay package

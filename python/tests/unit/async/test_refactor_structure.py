@@ -7,10 +7,10 @@ import pytest
 # We'll import from the package after refactoring
 # For now, we expect these imports to work once refactored
 try:
-    from agentbay._async.agentbay import AsyncAgentBay
-    from agentbay._async.session import AsyncSession
-    from agentbay._sync.agentbay import AgentBay
-    from agentbay._sync.session import Session
+    from agentbay import AsyncAgentBay
+    from agentbay import AsyncSession
+    from agentbay import AgentBay
+    from agentbay import Session
 except ImportError:
     pass
 

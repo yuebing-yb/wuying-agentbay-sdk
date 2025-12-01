@@ -13,8 +13,8 @@ import random
 
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay._async.browser import BrowserOption
-from agentbay._async.browser_agent import ExtractOptions
+from agentbay import BrowserOption
+from agentbay import ExtractOptions
 
 from playwright.async_api import async_playwright
 from pydantic import BaseModel, Field

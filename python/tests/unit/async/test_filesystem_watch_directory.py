@@ -9,7 +9,7 @@ import unittest
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, Mock, patch
 
-from agentbay._async.filesystem import FileChangeEvent, FileChangeResult, AsyncFileSystem
+from agentbay import FileChangeEvent, FileChangeResult, AsyncFileSystem
 
 
 class TestAsyncFileChangeEvent(unittest.IsolatedAsyncioTestCase):

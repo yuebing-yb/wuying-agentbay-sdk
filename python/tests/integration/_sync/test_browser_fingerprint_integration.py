@@ -131,16 +131,12 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = (
-                    browser.contexts[0]
-                    if browser.contexts
-                    else browser.new_context()
+                    browser.contexts[0] if browser.contexts else browser.new_context()
                 )
 
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate(
-                    "() => JSON.parse(document.body.textContent)"
-                )
+                response = page.evaluate("() => JSON.parse(document.body.textContent)")
                 user_agent = response["user-agent"]
                 print("user_agent =", user_agent)
                 self.assertTrue(user_agent is not None)
@@ -215,16 +211,12 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = (
-                    browser.contexts[0]
-                    if browser.contexts
-                    else browser.new_context()
+                    browser.contexts[0] if browser.contexts else browser.new_context()
                 )
 
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate(
-                    "() => JSON.parse(document.body.textContent)"
-                )
+                response = page.evaluate("() => JSON.parse(document.body.textContent)")
                 user_agent = response["user-agent"]
                 print("user_agent =", user_agent)
                 self.assertTrue(user_agent is not None)
@@ -296,15 +288,11 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
                 )
 
                 context = (
-                    browser.contexts[0]
-                    if browser.contexts
-                    else browser.new_context()
+                    browser.contexts[0] if browser.contexts else browser.new_context()
                 )
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate(
-                    "() => JSON.parse(document.body.textContent)"
-                )
+                response = page.evaluate("() => JSON.parse(document.body.textContent)")
                 user_agent = response["user-agent"]
                 print("user_agent =", user_agent)
                 self.assertTrue(user_agent is not None)
@@ -328,7 +316,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
         print("Browser fingerprint persistence test completed successfully!")
 
-    @unittest.skip("Skipping local sync test due to environment issues with Chrome launch")
+    @unittest.skip(
+        "Skipping local sync test due to environment issues with Chrome launch"
+    )
     def test_browser_fingerprint_local_sync(self):
         """Test browser fingerprint local sync functionality."""
         print("===== Test browser fingerprint local sync =====")
@@ -375,16 +365,12 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = (
-                    browser.contexts[0]
-                    if browser.contexts
-                    else browser.new_context()
+                    browser.contexts[0] if browser.contexts else browser.new_context()
                 )
 
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate(
-                    "() => JSON.parse(document.body.textContent)"
-                )
+                response = page.evaluate("() => JSON.parse(document.body.textContent)")
                 user_agent = response["user-agent"]
                 print(f"Remote user agent: {user_agent}")
                 print(
@@ -470,16 +456,12 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = (
-                    browser.contexts[0]
-                    if browser.contexts
-                    else browser.new_context()
+                    browser.contexts[0] if browser.contexts else browser.new_context()
                 )
 
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
-                response = page.evaluate(
-                    "() => JSON.parse(document.body.textContent)"
-                )
+                response = page.evaluate("() => JSON.parse(document.body.textContent)")
                 user_agent = response["user-agent"]
                 print(f"Remote user agent: {user_agent}")
                 print(

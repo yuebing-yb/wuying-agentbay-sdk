@@ -8,7 +8,7 @@ from langchain.tools import tool, ToolRuntime
 
 try:
     from agentbay import AgentBay
-    from agentbay._async.browser_agent import ActOptions
+    from agentbay import ActOptions
     AGENTBAY_AVAILABLE = True
 except ImportError:
     AGENTBAY_AVAILABLE = False

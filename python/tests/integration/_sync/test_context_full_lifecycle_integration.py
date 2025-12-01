@@ -20,7 +20,7 @@ from agentbay import AgentBay
 from agentbay._common.exceptions import AgentBayError
 from agentbay._common.params.context_sync import ContextSync
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.agentbay import Config
+from agentbay import Config
 
 
 def get_test_api_key():

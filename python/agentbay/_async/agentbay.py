@@ -135,7 +135,7 @@ class AsyncAgentBay:
         # Initialize context service
         self.context = AsyncContextService(self)
         self._file_transfer_context: Optional[Any] = None
-        
+
         # Initialize mobile simulate service
         self.mobile_simulate = AsyncMobileSimulateService(self)
 
@@ -320,7 +320,9 @@ class AsyncAgentBay:
             _logger.info("Mobile module not found in session, skipping mobile simulate")
             return
         if not hasattr(session, "command"):
-            _logger.info("Command module not found in session, skipping mobile simulate")
+            _logger.info(
+                "Command module not found in session, skipping mobile simulate"
+            )
             return
         if not mobile_sim_path:
             _logger.info("Mobile simulate path is empty, skipping mobile simulate")
@@ -644,7 +646,7 @@ class AsyncAgentBay:
 
             if hasattr(params, "extra_configs") and params.extra_configs:
                 request.extra_configs = params.extra_configs
-                
+
                 # Check mobile simulate config
                 if (
                     params.extra_configs.mobile
@@ -764,7 +766,9 @@ class AsyncAgentBay:
 
             # If we need to do mobile simulate by command, wait for it
             if needs_mobile_sim and mobile_sim_path:
-                await self._wait_for_mobile_simulate(session, mobile_sim_path, mobile_sim_mode)
+                await self._wait_for_mobile_simulate(
+                    session, mobile_sim_path, mobile_sim_mode
+                )
 
             # Return SessionResult with request ID
             return SessionResult(request_id=request_id, success=True, session=session)

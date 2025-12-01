@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from agentbay._sync.context import Context, ContextService
+from agentbay import Context, ContextService
 
 
 class TestContext(unittest.TestCase):

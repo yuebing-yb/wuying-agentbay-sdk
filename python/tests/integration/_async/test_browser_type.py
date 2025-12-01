@@ -4,7 +4,7 @@ import sys
 import time
 import unittest
 
-from agentbay._sync.browser import Browser, BrowserOption
+from agentbay import Browser, BrowserOption
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

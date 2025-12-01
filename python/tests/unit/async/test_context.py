@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock
 
-from agentbay._async.context import Context, AsyncContextService
+from agentbay import Context, AsyncContextService
 
 
 class TestAsyncContext(unittest.IsolatedAsyncioTestCase):
@@ -54,7 +54,9 @@ class TestAsyncContextService(unittest.IsolatedAsyncioTestCase):
                 ]
             }
         }
-        self.agent_bay.client.list_contexts_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.list_contexts_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Call the method
         result = await self.context_service.list()
@@ -71,7 +73,9 @@ class TestAsyncContextService(unittest.IsolatedAsyncioTestCase):
         # Mock the response from the API
         mock_get_response = MagicMock()
         mock_get_response.to_map.return_value = {"body": {"Data": {"Id": "context-1"}}}
-        self.agent_bay.client.get_context_async = AsyncMock(return_value=mock_get_response)
+        self.agent_bay.client.get_context_async = AsyncMock(
+            return_value=mock_get_response
+        )
 
         # Mock the list response to get full context details
         mock_list_response = MagicMock()
@@ -89,7 +93,9 @@ class TestAsyncContextService(unittest.IsolatedAsyncioTestCase):
                 ]
             }
         }
-        self.agent_bay.client.list_contexts_async = AsyncMock(return_value=mock_list_response)
+        self.agent_bay.client.list_contexts_async = AsyncMock(
+            return_value=mock_list_response
+        )
 
         # Call the method
         result = await self.context_service.get("test-context")
@@ -107,7 +113,9 @@ class TestAsyncContextService(unittest.IsolatedAsyncioTestCase):
         mock_get_response.to_map.return_value = {
             "body": {"Data": {"Id": "new-context-id"}}
         }
-        self.agent_bay.client.get_context_async = AsyncMock(return_value=mock_get_response)
+        self.agent_bay.client.get_context_async = AsyncMock(
+            return_value=mock_get_response
+        )
 
         # Mock the list response to get full context details
         mock_list_response = MagicMock()
@@ -125,7 +133,9 @@ class TestAsyncContextService(unittest.IsolatedAsyncioTestCase):
                 ]
             }
         }
-        self.agent_bay.client.list_contexts_async = AsyncMock(return_value=mock_list_response)
+        self.agent_bay.client.list_contexts_async = AsyncMock(
+            return_value=mock_list_response
+        )
 
         # Call the method
         result = await self.context_service.create("new-context")
@@ -151,7 +161,9 @@ class TestAsyncContextService(unittest.IsolatedAsyncioTestCase):
                 "Success": True,
             }
         }
-        self.agent_bay.client.modify_context_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.modify_context_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Call the method
         result = await self.context_service.update(context)
@@ -177,7 +189,9 @@ class TestAsyncContextService(unittest.IsolatedAsyncioTestCase):
                 "Success": True,
             }
         }
-        self.agent_bay.client.delete_context_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.delete_context_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Call the method
         result = await self.context_service.delete(context)

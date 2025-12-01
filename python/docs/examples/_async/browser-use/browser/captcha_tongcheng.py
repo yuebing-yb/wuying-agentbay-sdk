@@ -14,11 +14,11 @@ import base64
 
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay._async.browser import BrowserOption
+from agentbay import BrowserOption
 
 from playwright.async_api import async_playwright
 
-from agentbay._async.browser import (
+from agentbay import (
     AsyncBrowser,
     BrowserOption,
     BrowserViewport,

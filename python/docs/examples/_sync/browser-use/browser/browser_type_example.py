@@ -21,7 +21,7 @@ Note: The browser_type option is only available for computer use images.
 import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay._sync.browser import BrowserOption, BrowserViewport
+from agentbay import BrowserOption, BrowserViewport
 from playwright.sync_api import sync_playwright
 
 

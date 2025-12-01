@@ -160,7 +160,7 @@ session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)

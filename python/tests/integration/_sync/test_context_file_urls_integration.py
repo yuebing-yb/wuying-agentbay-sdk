@@ -4,39 +4,35 @@
 import os
 import time
 import unittest
-
 import httpx
-
 from agentbay import AgentBay
 
 
-class TestContextFileUrlsIntegration(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
+class TestContextFileUrlsIntegration(unittest.IsolatedAsyncioTestCase):
+    def asyncSetUp(self):
         api_key = os.environ.get("AGENTBAY_API_KEY")
         if not api_key or os.environ.get("CI"):
             raise unittest.SkipTest(
                 "Skipping integration test: No API key available or running in CI"
             )
-        cls.agent_bay = AgentBay(api_key)
+        self.agent_bay = AgentBay(api_key)
 
         # Create a test context
-        cls.context_name = f"test-file-url-py-{int(time.time())}"
-        context_result = cls.agent_bay.context.create(cls.context_name)
+        self.context_name = f"test-file-url-py-{int(time.time())}"
+        context_result = self.agent_bay.context.create(self.context_name)
         if not context_result.success or not context_result.context:
             raise unittest.SkipTest("Failed to create context for file URL test")
-        cls.context = context_result.context
-        print(f"Created context: {cls.context.name} (ID: {cls.context.id})")
+        self.context = context_result.context
+        print(f"Created context: {self.context.name} (ID: {self.context.id})")
 
-    @classmethod
-    def tearDownClass(cls):
+    def asyncTearDown(self):
         # Clean up created context
-        if hasattr(cls, "context"):
+        if hasattr(self, "context"):
             try:
-                cls.agent_bay.context.delete(cls.context)
-                print(f"Deleted context: {cls.context.name} (ID: {cls.context.id})")
+                self.agent_bay.context.delete(self.context)
+                print(f"Deleted context: {self.context.name} (ID: {self.context.id})")
             except Exception as e:
-                print(f"Warning: Failed to delete context {cls.context.name}: {e}")
+                print(f"Warning: Failed to delete context {self.context.name}: {e}")
 
     def test_get_file_upload_url(self):
         """
@@ -54,7 +50,6 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
             isinstance(result.url, str) and len(result.url) > 0,
             "URL should be non-empty",
         )
-        # Expire time may be optional depending on backend; if present, should be int-like
         if result.expire_time is not None:
             self.assertTrue(isinstance(result.expire_time, int))
 
@@ -64,7 +59,9 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         upload_content = (
             f"agentbay integration upload test at {int(time.time())}\n".encode("utf-8")
         )
-        response = httpx.put(result.url, content=upload_content, timeout=30.0)
+        with httpx.Client() as client:
+            response = client.put(result.url, content=upload_content, timeout=30.0)
+
         self.assertIn(
             response.status_code,
             (200, 204),
@@ -88,7 +85,9 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
             f"Download URL: {dl_result.url[:80]}... (RequestID: {dl_result.request_id})"
         )
 
-        dl_resp = httpx.get(dl_result.url, timeout=30.0)
+        with httpx.Client() as client:
+            dl_resp = client.get(dl_result.url, timeout=30.0)
+
         self.assertEqual(
             dl_resp.status_code,
             200,
@@ -101,7 +100,7 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         )
         print(f"Downloaded {len(dl_resp.content)} bytes, content matches uploaded data")
 
-        # List files to verify presence of the uploaded file under /tmp (with small retry)
+        # List files to verify presence of the uploaded file under /tmp
         file_name = os.path.basename(test_path)
 
         def list_contains():
@@ -128,7 +127,7 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
             if found:
                 break
             retries_presence += 1
-            time.sleep(2.0)
+            time.sleep(2.0)  # Use time.sleep
         print(f"List files retry attempts (presence check): {retries_presence}")
 
         if last_lf_res and chosen_parent:
@@ -143,11 +142,10 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         else:
             print("List files: no listing result available")
 
-        # Only assert presence if listing returned entries; otherwise skip presence assert due to backend limitations
         if last_lf_res and len(last_lf_res.entries) > 0:
             self.assertTrue(found, "Uploaded file should appear in list_files")
 
-        # Delete the file and verify it disappears from listing (with small retry)
+        # Delete the file and verify it disappears
         op = self.agent_bay.context.delete_file(self.context.id, test_path)
         self.assertTrue(op.success, "delete_file should be successful")
         print(f"Deleted file: {test_path}")
@@ -181,13 +179,15 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
                 f"List files: {file_name} absent after delete (listing availability: {prev})"
             )
 
-        # Additionally, attempt to download after delete and log the status.
-        # Some backends may keep presigned URLs valid until expiry even if the file is deleted.
         try:
             post_dl = self.agent_bay.context.get_file_download_url(
                 self.context.id, test_path
             )
-            if post_dl.success and isinstance(post_dl.url, str) and len(post_dl.url) > 0:
+            if (
+                post_dl.success
+                and isinstance(post_dl.url, str)
+                and len(post_dl.url) > 0
+            ):
                 with httpx.Client() as client:
                     post_resp = client.get(post_dl.url, timeout=30.0)
                 print(
@@ -196,4 +196,12 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
             else:
                 print("Post-delete: download URL not available, treated as deleted")
         except Exception as e:
-            print(f"Post-delete: download URL request failed as expected: {type(e).__name__}")
+            print(
+                f"Post-delete: download URL request failed as expected: {type(e).__name__}"
+            )
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    unittest.main()

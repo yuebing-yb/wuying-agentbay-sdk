@@ -12,9 +12,9 @@ from playwright.async_api import async_playwright
 from pydantic import BaseModel
 
 from agentbay import AsyncAgentBay
-from agentbay._async.browser_agent import ActOptions, ExtractOptions, ObserveOptions
+from agentbay import ActOptions, ExtractOptions, ObserveOptions
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.browser import BrowserFingerprint, BrowserOption, BrowserProxy
+from agentbay import BrowserFingerprint, BrowserOption, BrowserProxy
 
 
 class DummySchema(BaseModel):
@@ -56,16 +56,16 @@ async def browser_session():
     api_key = get_test_api_key()
     print("api_key =", _mask_secret(api_key))
     agent_bay = AsyncAgentBay(api_key=api_key)
-    
+
     print("Creating a new session for browser agent testing...")
     session_param = CreateSessionParams(image_id="browser_latest")
     result = await agent_bay.create(session_param)
     assert result.success
     session = result.session
     print(f"Session created with ID: {session.session_id}")
-    
+
     yield session
-    
+
     print("Cleaning up: Deleting the session...")
     try:
         await session.delete()
@@ -77,7 +77,7 @@ async def browser_session():
 async def test_initialize_browser(browser_session):
     browser = browser_session.browser
     assert browser is not None
-    
+
     # Use default options
     init_result = await browser.initialize(BrowserOption())
     assert init_result is True
@@ -157,7 +157,7 @@ async def test_initialize_browser_with_captchas(browser_session):
             devices=["desktop"],
             operating_systems=["windows"],
             locales=["zh-CN"],
-        )
+        ),
     )
     await browser.initialize(option)
 
@@ -187,7 +187,9 @@ async def test_initialize_browser_with_captchas(browser_session):
         # Wait for potential captcha handling and navigation
         await asyncio.sleep(30)
         # href changed indicates captcha solved
-        current_url_location = await page.evaluate("() => window.location && window.location.href")
+        current_url_location = await page.evaluate(
+            "() => window.location && window.location.href"
+        )
         print("current_url(window.location.href) =", current_url_location)
         assert current_url_location != captcha_url
 
@@ -219,7 +221,7 @@ async def test_act_success(browser_session):
         print("result =", result)
 
         assert result.success
-        
+
         await page.close()
         await playwright_browser.close()
 
@@ -294,24 +296,24 @@ async def test_restricted_proxy_ip_comparison(browser_session):
     """Test restricted proxy by comparing IP addresses before and after proxy setup."""
     # This test requires creating two sessions, so we might not use the fixture for everything
     # Or we use the fixture for the first session and create a second manually.
-    
+
     # Use the session from fixture for Phase 1
     browser = browser_session.browser
     assert browser is not None
-    
+
     print("=== test restricted proxy IP comparison ===")
-    
+
     # Phase 1: Initialize browser without proxy and get original IP
     print("phase 1: initialize browser without proxy...")
     no_proxy_option = BrowserOption()
     await browser.initialize(no_proxy_option)
-    
+
     endpoint_url = await browser.get_endpoint_url()
     print(f"endpoint_url = {endpoint_url}")
     assert endpoint_url is not None
-    
+
     await asyncio.sleep(5)
-    
+
     # Get original IP
     original_ip = None
     async with async_playwright() as p:
@@ -323,44 +325,43 @@ async def test_restricted_proxy_ip_comparison(browser_session):
         await page.goto("https://httpbin.org/ip")
 
         try:
-            response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+            response = await page.evaluate(
+                "() => JSON.parse(document.body.textContent)"
+            )
             original_ip = response.get("origin", "").strip()
             print(f"original IP: {original_ip}")
         except Exception as e:
             print(f"get original IP failed: {e}")
-        
+
         await page.close()
         await playwright_browser.close()
 
-    # We need to delete the first session to clean up? 
+    # We need to delete the first session to clean up?
     # The fixture will clean it up at the end, but we can delete it now manually?
     # The fixture yield handles teardown. Calling delete() twice is usually fine (idempotent) or throws.
     # But best to just leave it and create a NEW session for Phase 2.
-    
+
     # Wait a bit
     await asyncio.sleep(3)
-    
+
     # Phase 2: Create new session with restricted proxy
     print("phase 2: create new session with restricted proxy...")
     api_key = get_test_api_key()
     agent_bay = AsyncAgentBay(api_key=api_key)
-    
-    restricted_proxy = BrowserProxy(
-        proxy_type="wuying",
-        strategy="restricted"
-    )
-    
+
+    restricted_proxy = BrowserProxy(proxy_type="wuying", strategy="restricted")
+
     proxy_option = BrowserOption(proxies=[restricted_proxy])
     session_param2 = CreateSessionParams(image_id="browser_latest")
     result2 = await agent_bay.create(session_param2)
     assert result2.success
     session2 = result2.session
-    
+
     try:
         browser2 = session2.browser
         init_result2 = await browser2.initialize(proxy_option)
         assert init_result2 is True
-        
+
         # Verify proxy configuration
         saved_option = browser2.get_option()
         assert saved_option.proxies is not None
@@ -368,12 +369,12 @@ async def test_restricted_proxy_ip_comparison(browser_session):
         assert saved_option.proxies[0].type == "wuying"
         assert saved_option.proxies[0].strategy == "restricted"
         print("✓ proxy config validation success")
-        
+
         endpoint_url2 = await browser2.get_endpoint_url_async()
         print(f"proxy mode endpoint_url = {endpoint_url2}")
-        
+
         await asyncio.sleep(5)
-        
+
         # Get proxy IP
         proxy_ip = None
         async with async_playwright() as p2:
@@ -385,25 +386,31 @@ async def test_restricted_proxy_ip_comparison(browser_session):
             await page2.goto("https://httpbin.org/ip")
 
             try:
-                response2 = await page2.evaluate("() => JSON.parse(document.body.textContent)")
+                response2 = await page2.evaluate(
+                    "() => JSON.parse(document.body.textContent)"
+                )
                 proxy_ip = response2.get("origin", "").strip()
                 print(f"proxy IP: {proxy_ip}")
             except Exception as e:
                 print(f"get proxy IP failed: {e}")
-            
+
             await page2.close()
             await playwright_browser2.close()
-            
+
         # Compare IPs
         if original_ip and proxy_ip:
             if original_ip != proxy_ip:
-                print(f"✅ static proxy test success! IP changed: {original_ip} -> {proxy_ip}")
+                print(
+                    f"✅ static proxy test success! IP changed: {original_ip} -> {proxy_ip}"
+                )
             else:
-                print(f"⚠️  warning: proxy IP is the same, maybe proxy not working: {original_ip}")
+                print(
+                    f"⚠️  warning: proxy IP is the same, maybe proxy not working: {original_ip}"
+                )
                 pytest.fail("proxy IP is the same, maybe proxy not working")
         else:
             print("⚠️  failed to compare IP, but proxy config applied")
-            
+
     finally:
         # Clean up session2
         await session2.delete()
@@ -414,20 +421,16 @@ async def test_polling_proxy_multiple_ips(browser_session):
     """Test polling proxy with multiple pages to observe different IPs."""
     browser = browser_session.browser
     assert browser is not None
-    
+
     print("=== test polling proxy with multiple IPs ===")
-    
+
     # Initialize browser with polling proxy
-    polling_proxy = BrowserProxy(
-        proxy_type="wuying",
-        strategy="polling",
-        pollsize=10
-    )
-    
+    polling_proxy = BrowserProxy(proxy_type="wuying", strategy="polling", pollsize=10)
+
     option = BrowserOption(proxies=[polling_proxy])
     init_result = await browser.initialize(option)
     assert init_result is True
-    
+
     # Verify proxy configuration
     saved_option = browser.get_option()
     assert saved_option.proxies is not None
@@ -436,28 +439,28 @@ async def test_polling_proxy_multiple_ips(browser_session):
     assert saved_option.proxies[0].strategy == "polling"
     assert saved_option.proxies[0].pollsize == 10
     print("✓ polling proxy config validation success (pollsize=10)")
-    
+
     endpoint_url = await browser.get_endpoint_url()
     print(f"endpoint_url = {endpoint_url}")
-    
+
     await asyncio.sleep(5)
-    
+
     # Create multiple pages and collect IPs
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
         assert playwright_browser is not None
-        
+
         context = playwright_browser.contexts[0]
         ips_collected = []
-        
+
         print("create multiple pages and collect IPs...")
-        
+
         try:
             await context.clear_cookies()
             await context.clear_permissions()
         except Exception as e:
             print(f"clear context failed: {e}")
-        
+
         for i in range(5):
             page = await context.new_page()
             try:
@@ -466,31 +469,36 @@ async def test_polling_proxy_multiple_ips(browser_session):
                     await context.clear_permissions()
                 except Exception:
                     pass
-                
+
                 #  to avoid cache
                 cache_buster = random.randint(1000000, 9999999)
                 timestamp = int(time.time() * 1000)
-                random_str = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=8))
+                random_str = "".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=8))
                 url = f"https://ifconfig.me?_cb={cache_buster}&_t={timestamp}&_r={i}&_rand={random_str}"
                 # set headers to avoid cache
-                await page.set_extra_http_headers({
-                    "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-                    "Pragma": "no-cache",
-                    "Expires": "0",
-                    "User-Agent": f"ProxyTest-{i}-{random.randint(1000, 9999)}",
-                    "X-Request-ID": f"req-{timestamp}-{i}"
-                })
-                
-                print(f"page {i+1} requesting with cache-busting: ifconfig.me?_cb={cache_buster}&_t={timestamp}...")
-                
+                await page.set_extra_http_headers(
+                    {
+                        "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                        "Pragma": "no-cache",
+                        "Expires": "0",
+                        "User-Agent": f"ProxyTest-{i}-{random.randint(1000, 9999)}",
+                        "X-Request-ID": f"req-{timestamp}-{i}",
+                    }
+                )
+
+                print(
+                    f"page {i+1} requesting with cache-busting: ifconfig.me?_cb={cache_buster}&_t={timestamp}..."
+                )
+
                 # use reload to force reload
                 await page.goto(url, timeout=30000, wait_until="networkidle")
-                
+
                 # wait for page to load
                 await asyncio.sleep(1)
-                
+
                 # extract IP from ifconfig.me
-                ip = await page.evaluate("""
+                ip = await page.evaluate(
+                    """
                     () => {
                         // method 1: get IP by ID
                         const ipElement = document.getElementById('ip_address');
@@ -500,13 +508,18 @@ async def test_polling_proxy_multiple_ips(browser_session):
                         
                         return null;
                     }
-                """)
-                
+                """
+                )
+
                 if not ip:
                     # if javascript parsing failed, try to get page content and extract IP with regex
                     page_content = await page.content()
                     import re
-                    ip_match = re.search(r'<strong id="ip_address">\s*([0-9.]+)\s*</strong>', page_content)
+
+                    ip_match = re.search(
+                        r'<strong id="ip_address">\s*([0-9.]+)\s*</strong>',
+                        page_content,
+                    )
                     if ip_match:
                         ip = ip_match.group(1).strip()
                     else:
@@ -520,22 +533,24 @@ async def test_polling_proxy_multiple_ips(browser_session):
                 ips_collected.append(None)
             finally:
                 await page.close()
-        
+
         await playwright_browser.close()
-        
+
         # Analyze results
         valid_ips = [ip for ip in ips_collected if ip]
         unique_ips = list(set(valid_ips))
-        
+
         print(f"\nresult analysis:")
         print(f"  collected valid IP count: {len(valid_ips)}")
         print(f"  unique IP count: {len(unique_ips)}")
         print(f"  unique IP list: {unique_ips}")
-        
+
         if len(unique_ips) > 1:
-            print(f"✅ polling proxy test success! detected {len(unique_ips)} different IPs")
+            print(
+                f"✅ polling proxy test success! detected {len(unique_ips)} different IPs"
+            )
         else:
             print("❌ failed to get valid IP")
-        
+
         # At least verify we got some valid responses
         assert len(unique_ips) > 1, "at least two valid ip"

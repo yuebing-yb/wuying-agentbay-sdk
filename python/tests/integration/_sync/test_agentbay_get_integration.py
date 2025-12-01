@@ -6,7 +6,7 @@ import os
 import pytest
 
 from agentbay import AgentBay, CreateSessionParams
-from agentbay._sync.session import Session
+from agentbay import Session
 
 
 @pytest.fixture(scope="module")

@@ -20,7 +20,7 @@ from typing import Optional
 from playwright.sync_api import sync_playwright
 
 from agentbay import AgentBay, CreateSessionParams, BrowserOption
-from agentbay._sync.session import Session
+from agentbay import Session
 
 
 def take_agent_screenshots(session: Session):

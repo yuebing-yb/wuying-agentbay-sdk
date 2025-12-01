@@ -8,7 +8,7 @@ from playwright.async_api import async_playwright
 
 from agentbay import AsyncAgentBay
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.browser import BrowserOption
+from agentbay import BrowserOption
 
 
 @pytest_asyncio.fixture(scope="module")

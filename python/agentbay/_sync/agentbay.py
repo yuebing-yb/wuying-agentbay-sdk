@@ -137,7 +137,7 @@ class AgentBay:
         # Initialize context service
         self.context = ContextService(self)
         self._file_transfer_context: Optional[Any] = None
-        
+
         # Initialize mobile simulate service
         self.mobile_simulate = SyncMobileSimulateService(self)
 
@@ -322,7 +322,9 @@ class AgentBay:
             _logger.info("Mobile module not found in session, skipping mobile simulate")
             return
         if not hasattr(session, "command"):
-            _logger.info("Command module not found in session, skipping mobile simulate")
+            _logger.info(
+                "Command module not found in session, skipping mobile simulate"
+            )
             return
         if not mobile_sim_path:
             _logger.info("Mobile simulate path is empty, skipping mobile simulate")
@@ -438,9 +440,7 @@ class AgentBay:
             _logger.error(f"❌ Error updating browser replay context: {e}")
             # Continue execution even if context update fails
 
-    def create(
-        self, params: Optional[CreateSessionParams] = None
-    ) -> SessionResult:
+    def create(self, params: Optional[CreateSessionParams] = None) -> SessionResult:
         """
         Create a new session in the AgentBay cloud environment asynchronously.
 
@@ -646,7 +646,7 @@ class AgentBay:
 
             if hasattr(params, "extra_configs") and params.extra_configs:
                 request.extra_configs = params.extra_configs
-                
+
                 # Check mobile simulate config
                 if (
                     params.extra_configs.mobile
@@ -766,7 +766,9 @@ class AgentBay:
 
             # If we need to do mobile simulate by command, wait for it
             if needs_mobile_sim and mobile_sim_path:
-                self._wait_for_mobile_simulate(session, mobile_sim_path, mobile_sim_mode)
+                self._wait_for_mobile_simulate(
+                    session, mobile_sim_path, mobile_sim_mode
+                )
 
             # Return SessionResult with request ID
             return SessionResult(request_id=request_id, success=True, session=session)
@@ -975,9 +977,7 @@ class AgentBay:
                 error_message=f"Failed to list sessions: {e}",
             )
 
-    def delete(
-        self, session: Session, sync_context: bool = False
-    ) -> DeleteResult:
+    def delete(self, session: Session, sync_context: bool = False) -> DeleteResult:
         """
         Delete a session by session object asynchronously.
 

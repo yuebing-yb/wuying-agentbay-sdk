@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from agentbay import AgentBay
 from agentbay._common.exceptions import ClearanceTimeoutError
-from agentbay._sync.agentbay import Config
+from agentbay import Config
 
 
 def get_test_api_key():

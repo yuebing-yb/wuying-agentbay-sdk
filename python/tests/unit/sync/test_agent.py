@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 from agentbay._common.logger import get_logger
 from agentbay._common.models.response import McpToolResult, OperationResult
-from agentbay._sync.agent import Agent, ExecutionResult
+from agentbay import Agent, ExecutionResult
 
 logger = get_logger("agentbay-unit-test")
 

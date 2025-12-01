@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from pydantic import BaseModel, Field
 
-from agentbay._async.browser import AsyncBrowser
-from agentbay._async.browser_agent import ActOptions as AsyncActOptions
-from agentbay._async.browser_agent import AsyncBrowserAgent
-from agentbay._async.browser_agent import ExtractOptions as AsyncExtractOptions
-from agentbay._async.browser_agent import ObserveOptions as AsyncObserveOptions
+from agentbay import AsyncBrowser
+from agentbay import ActOptions as AsyncActOptions
+from agentbay import AsyncBrowserAgent
+from agentbay import ExtractOptions as AsyncExtractOptions
+from agentbay import ObserveOptions as AsyncObserveOptions
 from agentbay._common.exceptions import BrowserError
-from agentbay._sync.browser import (
+from agentbay import (
     Browser,
     BrowserFingerprint,
     BrowserOption,
@@ -21,7 +21,7 @@ from agentbay._sync.browser import (
     BrowserScreen,
     BrowserViewport,
 )
-from agentbay._sync.browser_agent import (
+from agentbay import (
     ActOptions,
     ActResult,
     BrowserAgent,
@@ -29,7 +29,7 @@ from agentbay._sync.browser_agent import (
     ObserveOptions,
     ObserveResult,
 )
-from agentbay._sync.fingerprint import FingerprintFormat
+from agentbay import FingerprintFormat
 
 
 class SchemaForTest(BaseModel):
@@ -412,7 +412,9 @@ class TestAsyncBrowser(unittest.TestCase):
 
         asyncio.run(
             self.browser.agent.extract(
-                AsyncExtractOptions(instruction="Extract the title", schema=SchemaForTest),
+                AsyncExtractOptions(
+                    instruction="Extract the title", schema=SchemaForTest
+                ),
                 page,
             )
         )

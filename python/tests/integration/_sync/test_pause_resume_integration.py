@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from agentbay import AgentBay, CreateSessionParams
 from agentbay._common.exceptions import AgentBayError
 from agentbay._common.models.response import SessionPauseResult, SessionResumeResult
-from agentbay._sync.agentbay import Config
+from agentbay import Config
 
 
 def get_test_api_key():
@@ -339,7 +339,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("=" * 60)
 
         # Create a mock session object with invalid session ID
-        from agentbay._sync.session import Session
+        from agentbay import Session
 
         invalid_session = Session(self.agent_bay, "non-existent-session-12345")
 
@@ -364,7 +364,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("=" * 60)
 
         # Create a mock session object with invalid session ID
-        from agentbay._sync.session import Session
+        from agentbay import Session
 
         invalid_session = Session(self.agent_bay, "non-existent-session-12345")
 
@@ -389,7 +389,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("=" * 60)
 
         # Create a mock session object with invalid session ID
-        from agentbay._sync.session import Session
+        from agentbay import Session
 
         invalid_session = Session(self.agent_bay, "non-existent-session-12345")
 

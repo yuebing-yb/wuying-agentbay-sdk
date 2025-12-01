@@ -326,7 +326,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
         print("Browser fingerprint persistence test completed successfully!")
 
-    @unittest.skip("Skipping local sync test due to environment issues with Chrome launch")
+    @unittest.skip(
+        "Skipping local sync test due to environment issues with Chrome launch"
+    )
     def test_browser_fingerprint_local_sync(self):
         """Test browser fingerprint local sync functionality."""
         print("===== Test browser fingerprint local sync =====")

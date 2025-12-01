@@ -13,7 +13,7 @@ def test_generate_python_api_docs():
 
     # Use the current Python executable (should be from virtual environment)
     python_executable = sys.executable
-    
+
     result = subprocess.run(
         [python_executable, "scripts/generate_api_docs.py"],
         cwd=project_root,
@@ -21,7 +21,9 @@ def test_generate_python_api_docs():
         text=True,
     )
 
-    assert result.returncode == 0, f"Script failed with return code {result.returncode}\nStdout: {result.stdout}\nStderr: {result.stderr}"
+    assert (
+        result.returncode == 0
+    ), f"Script failed with return code {result.returncode}\nStdout: {result.stdout}\nStderr: {result.stderr}"
 
     # Check sync API docs
     sync_session_file = docs_dir / "sync" / "session.md"

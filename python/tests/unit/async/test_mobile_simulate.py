@@ -2,12 +2,12 @@ import json
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay._async.mobile_simulate import (
+from agentbay import (
     AsyncMobileSimulateService,
     MobileSimulateUploadResult,
 )
 from agentbay.api.models import MobileSimulateConfig, MobileSimulateMode
-from agentbay._async.context import Context
+from agentbay import Context
 from agentbay._common.params.context_sync import BWList, ContextSync, SyncPolicy
 
 
@@ -384,4 +384,3 @@ class TestAsyncMobileSimulateService(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

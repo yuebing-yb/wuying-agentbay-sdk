@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 from agentbay._common.config import _BROWSER_DATA_PATH
 from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
-from agentbay._async.agentbay import AsyncAgentBay
+from agentbay import AsyncAgentBay
 
 
 class TestAsyncBrowserContextConfig(unittest.IsolatedAsyncioTestCase):

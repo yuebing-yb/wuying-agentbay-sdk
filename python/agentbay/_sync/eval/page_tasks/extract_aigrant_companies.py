@@ -17,12 +17,8 @@ class CompanyList(BaseModel):
     batches: List[Batch]
 
 
-def run(
-    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
-) -> dict:
-    agent.goto(
-        "https://browserbase.github.io/stagehand-eval-sites/sites/aigrant/"
-    )
+def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+    agent.goto("https://browserbase.github.io/stagehand-eval-sites/sites/aigrant/")
 
     instruction = (
         "Extract all companies that received the AI grant and group them with their "

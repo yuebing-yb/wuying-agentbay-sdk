@@ -1,6 +1,6 @@
 """
 Computer module for desktop UI automation.
-Handles mouse operations, keyboard operations, window management, 
+Handles mouse operations, keyboard operations, window management,
 application management, and screen operations.
 """
 

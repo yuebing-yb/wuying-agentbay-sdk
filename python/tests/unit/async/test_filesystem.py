@@ -2,9 +2,8 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay._common.models.response import McpToolResult, OperationResult
+from agentbay import AsyncFileSystem, BoolResult
 from agentbay._async.filesystem import (
-    AsyncFileSystem,
-    BoolResult,
     DirectoryListResult,
     FileContentResult,
     FileInfoResult,
@@ -82,7 +81,9 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
     @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
-    async def test_read_file_chunk_error(self, mock_read_file_chunk, mock_get_file_info):
+    async def test_read_file_chunk_error(
+        self, mock_read_file_chunk, mock_get_file_info
+    ):
         """
         Test read_file method with error in chunk reading.
         """
@@ -403,7 +404,9 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
 
     @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
     @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
-    async def test_read_file_large_success(self, mock_read_file_chunk, mock_get_file_info):
+    async def test_read_file_large_success(
+        self, mock_read_file_chunk, mock_get_file_info
+    ):
         """
         Test read_file method with large file (automatic chunking).
         """
@@ -524,7 +527,9 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             error_message="Invalid write mode: invalid_mode. Must be 'overwrite' or 'append'.",
         )
 
-        result = await self.fs.write_file("/path/to/file.txt", "content", "invalid_mode")
+        result = await self.fs.write_file(
+            "/path/to/file.txt", "content", "invalid_mode"
+        )
         self.assertIsInstance(result, BoolResult)
         self.assertFalse(result.success)
         self.assertIn("Invalid write mode", result.error_message)

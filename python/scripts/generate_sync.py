@@ -221,6 +221,12 @@ def generate_sync():
                     content = re.sub(r'asyncio\.gather\(\*([^)]+)\)', r'[task for task in \1]', content)
                     # Replace asyncio.run(func()) with func() - simple case for no nested parens
                     content = re.sub(r'asyncio\.run\(([^)]+\))\)', r'\1', content)
+                    
+                    # Handle multiline asyncio.run calls
+                    content = re.sub(r'asyncio\.run\(\s*\n\s*([^)]+\))\s*\n\s*\)', r'\1', content)
+
+                    # Replace asyncio.get_event_loop().time() with time.time()
+                    content = content.replace("asyncio.get_event_loop().time()", "time.time()")
 
                     # Remove asyncio.to_thread() calls - convert to direct function calls
                     # Pattern: asyncio.to_thread(func, arg1, arg2, ...) -> func(arg1, arg2, ...)
@@ -242,7 +248,9 @@ def generate_sync():
 
                     # Remove import asyncio from sync files (but keep it in imports section)
                     # We need to be careful to only remove standalone "import asyncio" lines
-                    content = re.sub(r'^import asyncio\s*\n', '', content, flags=re.MULTILINE)
+                    # Skip for eval module which uses asyncio internally even in sync mode
+                    if "eval/" not in path:
+                        content = re.sub(r'^import asyncio\s*\n', '', content, flags=re.MULTILINE)
                     
                     # Add threading import if threading.Lock() is used
                     if 'threading.Lock()' in content and 'import threading' not in content:
@@ -258,13 +266,11 @@ def generate_sync():
                                 insert_pos = last_import_match.end()
                                 content = content[:insert_pos] + 'import threading\n' + content[insert_pos:]
                     
-                    # Add time import if time.sleep is used
-                    if 'time.sleep' in content and 'import time' not in content:
+                    # Add time import if time.sleep or time.time is used
+                    if ('time.sleep' in content or 'time.time' in content) and 'import time' not in content:
                         content = "import time\n" + content
                     
                     # Fix import statements for sync versions
-                    # Convert agentbay.async_api imports to agentbay imports for sync versions
-                    content = content.replace('from agentbay.async_api import', 'from agentbay import')
                     # Convert AsyncExtensionsService to ExtensionsService in imports
                     content = content.replace('AsyncExtensionsService', 'ExtensionsService')
                     content = content.replace('AsyncAgentBay', 'AgentBay')

@@ -10,7 +10,7 @@ import pytest
 
 from agentbay import AgentBay
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.computer import MouseButton
+from agentbay import MouseButton
 
 
 @pytest.fixture(scope="module")

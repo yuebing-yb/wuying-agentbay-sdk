@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from agentbay._sync.code import Code, CodeExecutionResult
+from agentbay import Code, CodeExecutionResult
 
 
 class TestCode(unittest.TestCase):

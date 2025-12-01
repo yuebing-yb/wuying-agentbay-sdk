@@ -9,8 +9,8 @@ import pytest
 
 from agentbay._common.exceptions import AgentBayError
 from agentbay._common.models import BoolResult, OperationResult
-from agentbay._sync.computer import AppOperationResult, ProcessListResult
-from agentbay._sync.mobile import Mobile
+from agentbay import AppOperationResult, ProcessListResult
+from agentbay import Mobile
 
 
 class TestMobile:

@@ -61,9 +61,9 @@ async def main():
         cmd_result = await session.command.execute_command("ls -la")
         print(cmd_result.output)
 
-        # File operations (note: write_file and read_file are synchronous in async sessions)
-        session.file_system.write_file("/tmp/test.txt", "Hello World")
-        content = session.file_system.read_file("/tmp/test.txt")
+        # File operations
+        await session.file_system.write_file("/tmp/test.txt", "Hello World")
+        content = await session.file_system.read_file("/tmp/test.txt")
         print(content.content)  # Hello World
 
         # Clean up
@@ -235,9 +235,9 @@ files = session.file_system.list_directory("/path")
 
 #### Asynchronous
 ```python
-# Read/write files (note: write_file and read_file are synchronous in async sessions)
-session.file_system.write_file("/path/file.txt", "content")
-content = session.file_system.read_file("/path/file.txt")
+# Read/write files
+await session.file_system.write_file("/path/file.txt", "content")
+content = await session.file_system.read_file("/path/file.txt")
 print(content.content)
 
 # List directory
@@ -301,7 +301,7 @@ asyncio.run(main())
 #### Synchronous
 ```python
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy
+from agentbay import ContextSync, SyncPolicy
 
 agent_bay = AgentBay()
 
@@ -322,7 +322,7 @@ agent_bay.delete(session)
 ```python
 import asyncio
 from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy
+from agentbay import ContextSync, SyncPolicy
 
 async def main():
     agent_bay = AsyncAgentBay()
@@ -335,8 +335,7 @@ async def main():
     session = (await agent_bay.create(CreateSessionParams(context_syncs=[context_sync]))).session
 
     # Data in /tmp/data will be synchronized to the context
-    # Note: write_file is synchronous in async sessions
-    session.file_system.write_file("/tmp/data/config.json", '{"key": "value"}')
+    await session.file_system.write_file("/tmp/data/config.json", '{"key": "value"}')
 
     await agent_bay.delete(session)
 

@@ -3,7 +3,7 @@
 
 """
 Computer module for desktop UI automation.
-Handles mouse operations, keyboard operations, window management, 
+Handles mouse operations, keyboard operations, window management,
 application management, and screen operations.
 """
 
@@ -1208,9 +1208,7 @@ class Computer(BaseService):
                 error_message=f"Failed to restore window: {str(e)}",
             )
 
-    def resize_window(
-        self, window_id: int, width: int, height: int
-    ) -> BoolResult:
+    def resize_window(self, window_id: int, width: int, height: int) -> BoolResult:
         """
         Resizes the specified window.
 

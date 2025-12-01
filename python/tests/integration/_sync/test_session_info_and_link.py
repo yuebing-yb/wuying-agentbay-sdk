@@ -9,7 +9,7 @@ import unittest
 from agentbay import AgentBay
 from agentbay._common.exceptions import SessionError
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.session import Session
+from agentbay import Session
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

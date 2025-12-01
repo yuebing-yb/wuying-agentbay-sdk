@@ -13,10 +13,10 @@ import os
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
-from agentbay._async.filesystem import AsyncFileTransfer
+from agentbay import AsyncFileTransfer
 
 # Import the classes we're testing
-from agentbay._sync.filesystem import (
+from agentbay import (
     DownloadResult,
     FileSystem,
     FileTransfer,

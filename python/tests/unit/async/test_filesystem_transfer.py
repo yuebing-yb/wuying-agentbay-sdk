@@ -13,10 +13,10 @@ import os
 import unittest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-from agentbay._async.filesystem import AsyncFileTransfer
+from agentbay import AsyncFileTransfer
 
 # Import the classes we're testing
-from agentbay._async.filesystem import (
+from agentbay import (
     AsyncFileSystem,
     AsyncFileTransfer,
     DownloadResult,
@@ -191,7 +191,9 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
             async def get_upload_url_mock(*args, **kwargs):
                 return mock_upload_url_result
 
-            self.mock_context_svc.get_file_upload_url = AsyncMock(side_effect=get_upload_url_mock)
+            self.mock_context_svc.get_file_upload_url = AsyncMock(
+                side_effect=get_upload_url_mock
+            )
 
             # Mock internal methods
             # Mock _put_file_sync to bypass HTTP call
@@ -258,7 +260,9 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
             async def get_upload_url_mock(*args, **kwargs):
                 return mock_upload_url_result
 
-            self.mock_context_svc.get_file_upload_url = AsyncMock(side_effect=get_upload_url_mock)
+            self.mock_context_svc.get_file_upload_url = AsyncMock(
+                side_effect=get_upload_url_mock
+            )
 
             # Test upload
             result = await self.file_transfer.upload(
@@ -291,7 +295,9 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
             async def get_upload_url_mock(*args, **kwargs):
                 return mock_upload_url_result
 
-            self.mock_context_svc.get_file_upload_url = AsyncMock(side_effect=get_upload_url_mock)
+            self.mock_context_svc.get_file_upload_url = AsyncMock(
+                side_effect=get_upload_url_mock
+            )
 
             # Mock HTTP upload failure
             def put_file_sync_mock(*args, **kwargs):
@@ -388,7 +394,9 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
     @patch("os.path.exists")
     @patch("os.path.getsize")
     @patch("os.makedirs")
-    async def test_download_get_url_failure(self, mock_makedirs, mock_getsize, mock_exists):
+    async def test_download_get_url_failure(
+        self, mock_makedirs, mock_getsize, mock_exists
+    ):
         """Test download failure when getting download URL fails."""
 
         async def async_test():

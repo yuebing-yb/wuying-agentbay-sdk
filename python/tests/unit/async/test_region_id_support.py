@@ -2,8 +2,8 @@ import os
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay._async.agentbay import AsyncAgentBay
-from agentbay._async.context import AsyncContextService, Context, ContextResult
+from agentbay import AsyncAgentBay
+from agentbay import AsyncContextService, Context, ContextResult
 from agentbay._common.params.session_params import CreateSessionParams
 from agentbay.api.models import CreateMcpSessionRequest, GetContextRequest
 
@@ -14,7 +14,9 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_agentbay_initialization_with_region_id(self, mock_mcp_client, mock_load_config):
+    async def test_agentbay_initialization_with_region_id(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test initializing AgentBay with region_id parameter"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -36,7 +38,9 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_agentbay_initialization_without_region_id(self, mock_mcp_client, mock_load_config):
+    async def test_agentbay_initialization_without_region_id(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test initializing AgentBay without region_id parameter (should default to None)"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -57,7 +61,9 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_session_create_with_region_id(self, mock_mcp_client, mock_load_config):
+    async def test_session_create_with_region_id(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test session creation passes LoginRegionId when region_id is set"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -74,20 +80,24 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
                 "Data": {
                     "Success": True,
                     "SessionId": "test-session-id",
-                    "ResourceUrl": "test-resource-url"
-                }
+                    "ResourceUrl": "test-resource-url",
+                },
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
         # Mock context service and session methods
-        with patch.object(AsyncContextService, 'get') as mock_context_get:
-            with patch('agentbay._async.agentbay.AsyncAgentBay._wait_for_context_synchronization') as mock_wait:
-                with patch('agentbay._async.agentbay.AsyncAgentBay._fetch_mcp_tools_for_vpc_session') as mock_fetch:
+        with patch.object(AsyncContextService, "get") as mock_context_get:
+            with patch(
+                "agentbay._async.agentbay.AsyncAgentBay._wait_for_context_synchronization"
+            ) as mock_wait:
+                with patch(
+                    "agentbay._async.agentbay.AsyncAgentBay._fetch_mcp_tools_for_vpc_session"
+                ) as mock_fetch:
                     mock_context_result = ContextResult(
                         success=True,
-                        context=Context(id="test-context-id", name="test-context")
+                        context=Context(id="test-context-id", name="test-context"),
                     )
                     mock_context_get.return_value = mock_context_result
                     mock_wait.return_value = None
@@ -109,7 +119,9 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_session_create_without_region_id(self, mock_mcp_client, mock_load_config):
+    async def test_session_create_without_region_id(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test session creation doesn't pass LoginRegionId when region_id is not set"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -126,20 +138,24 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
                 "Data": {
                     "Success": True,
                     "SessionId": "test-session-id",
-                    "ResourceUrl": "test-resource-url"
-                }
+                    "ResourceUrl": "test-resource-url",
+                },
             }
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
         # Mock context service and session methods
-        with patch.object(AsyncContextService, 'get') as mock_context_get:
-            with patch('agentbay._async.agentbay.AsyncAgentBay._wait_for_context_synchronization') as mock_wait:
-                with patch('agentbay._async.agentbay.AsyncAgentBay._fetch_mcp_tools_for_vpc_session') as mock_fetch:
+        with patch.object(AsyncContextService, "get") as mock_context_get:
+            with patch(
+                "agentbay._async.agentbay.AsyncAgentBay._wait_for_context_synchronization"
+            ) as mock_wait:
+                with patch(
+                    "agentbay._async.agentbay.AsyncAgentBay._fetch_mcp_tools_for_vpc_session"
+                ) as mock_fetch:
                     mock_context_result = ContextResult(
                         success=True,
-                        context=Context(id="test-context-id", name="test-context")
+                        context=Context(id="test-context-id", name="test-context"),
                     )
                     mock_context_get.return_value = mock_context_result
                     mock_wait.return_value = None
@@ -157,12 +173,14 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
             call_args = mock_client.create_mcp_session_async.call_args[0][0]
             self.assertIsInstance(call_args, CreateMcpSessionRequest)
             # LoginRegionId should be None or not set when region_id is not provided
-            self.assertIsNone(getattr(call_args, 'login_region_id', None))
+            self.assertIsNone(getattr(call_args, "login_region_id", None))
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_context_create_with_region_id(self, mock_mcp_client, mock_load_config):
+    async def test_context_create_with_region_id(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test context.get with create=True passes LoginRegionId when region_id is set"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -176,10 +194,7 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "Success": True,
-                "Data": {
-                    "ContextId": "test-context-id",
-                    "Name": "test-context-name"
-                }
+                "Data": {"ContextId": "test-context-id", "Name": "test-context-name"},
             }
         }
         mock_client.get_context_async = AsyncMock(return_value=mock_response)
@@ -200,7 +215,9 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
-    async def test_context_get_without_create_no_region_id(self, mock_mcp_client, mock_load_config):
+    async def test_context_get_without_create_no_region_id(
+        self, mock_mcp_client, mock_load_config
+    ):
         """Test context.get without create=True doesn't pass LoginRegionId even when region_id is set"""
         # Mock configuration
         mock_load_config.return_value = {
@@ -214,10 +231,7 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "Success": True,
-                "Data": {
-                    "ContextId": "test-context-id",
-                    "Name": "test-context-name"
-                }
+                "Data": {"ContextId": "test-context-id", "Name": "test-context-name"},
             }
         }
         mock_client.get_context_async = AsyncMock(return_value=mock_response)

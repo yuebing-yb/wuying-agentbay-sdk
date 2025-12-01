@@ -17,7 +17,7 @@ from agentbay._common.params.context_sync import (
     UploadPolicy,
     WhiteList,
 )
-from agentbay._async.session import AsyncSession
+from agentbay import AsyncSession
 
 
 def get_test_api_key():

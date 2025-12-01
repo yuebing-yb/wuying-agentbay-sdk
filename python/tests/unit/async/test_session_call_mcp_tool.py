@@ -31,7 +31,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        from agentbay._async.session import AsyncSession
+        from agentbay import AsyncSession
 
         self.agent_bay = DummyAgentBay()
         self.session_id = "test_session_id"
@@ -53,7 +53,9 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-123"
-        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock response structure
         mock_response.to_map.return_value = {
@@ -101,7 +103,9 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-456"
-        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock error response
         mock_response.to_map.return_value = {
@@ -137,7 +141,9 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_request = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-789"
-        self.agent_bay.client.call_mcp_tool_async = AsyncMock(side_effect=Exception("Network error"))
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(
+            side_effect=Exception("Network error")
+        )
 
         # Call the method
         result = await self.session.call_mcp_tool("shell", {"command": "ls"})
@@ -172,7 +178,9 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         # Setup httpx async client mock
         # async with httpx.AsyncClient() as client: await client.get(...)
         mock_client_instance = MagicMock()
-        mock_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
+        mock_httpx_client.return_value.__aenter__ = AsyncMock(
+            return_value=mock_client_instance
+        )
         mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
         mock_client_instance.get = AsyncMock(return_value=mock_response)
 
@@ -239,7 +247,9 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-999"
-        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock response
         mock_response.to_map.return_value = {
@@ -279,7 +289,9 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-complex"
-        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Mock response
         mock_response.to_map.return_value = {
@@ -336,7 +348,9 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
                 "Success": True,
             }
         }
-        self.agent_bay.client.call_mcp_tool_async = AsyncMock(return_value=mock_response)
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(
+            return_value=mock_response
+        )
 
         # Call the method
         result = await self.session.call_mcp_tool("shell", {"command": "ls"})

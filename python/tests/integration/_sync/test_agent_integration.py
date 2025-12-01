@@ -12,7 +12,7 @@ import pytest
 from agentbay import AgentBay
 from agentbay._common.logger import get_logger
 from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._sync.agent import Agent
+from agentbay import Agent
 
 logger = get_logger("agentbay-integration-test")
 

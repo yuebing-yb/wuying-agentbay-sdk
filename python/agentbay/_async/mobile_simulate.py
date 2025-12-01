@@ -340,4 +340,3 @@ class AsyncMobileSimulateService:
             f"created mobile simulate context, context_id = {context.id}, context_name = {context.name}"
         )
         return context
-

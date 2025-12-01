@@ -37,7 +37,7 @@ class PageAgent:
         self._metrics: Dict[str, int] = {}
         self.reset_metrics()
         self.session: Optional[Any] = None
-        self.agent_bay: Optional[AgentBay] = None
+        self.agent_bay: Optional[AsyncAgentBay] = None
         self.browser: Optional[Any] = None
         self.current_page: Optional[Page] = None
         self._worker_thread: Optional[concurrent.futures.Future] = None
@@ -129,7 +129,7 @@ class PageAgent:
                             # Replace old import style with relative import to maintain consistency
                             content = content.replace(
                                 "mcp_server.page_agent",  # The original import
-                                "agentbay.browser.eval.page_agent", # But we want relative: "..page_agent"
+                                "agentbay.browser.eval.page_agent",  # But we want relative: "..page_agent"
                             )
                             # Actually keep relative imports to avoid circular import issues in this context
                             content = content.replace(
