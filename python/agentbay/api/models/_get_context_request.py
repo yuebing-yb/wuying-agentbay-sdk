@@ -12,11 +12,13 @@ class GetContextRequest(DaraModel):
         authorization: str = None,
         context_id: str = None,
         name: str = None,
+        login_region_id: str = None,
     ):
         self.allow_create = allow_create
         self.authorization = authorization
         self.context_id = context_id
         self.name = name
+        self.login_region_id = login_region_id
 
     def validate(self):
         pass
@@ -38,6 +40,9 @@ class GetContextRequest(DaraModel):
         if self.context_id is not None:
             result["ContextId"] = self.context_id
 
+        if self.login_region_id is not None:
+            result["LoginRegionId"] = self.login_region_id
+
         return result
 
     def from_map(self, m: dict = None):
@@ -53,5 +58,8 @@ class GetContextRequest(DaraModel):
 
         if m.get("Name") is not None:
             self.name = m.get("Name")
+
+        if m.get("LoginRegionId") is not None:
+            self.login_region_id = m.get("LoginRegionId")
 
         return self

@@ -289,6 +289,8 @@ class Client(OpenApiClient):
             body["ExtraConfigs"] = request.extra_configs
         if not DaraCore.is_null(request.sdk_stats):
             body["SdkStats"] = request.sdk_stats
+        if not DaraCore.is_null(request.login_region_id):
+            body["LoginRegionId"] = request.login_region_id
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="CreateMcpSession",
@@ -342,6 +344,8 @@ class Client(OpenApiClient):
             body["ExtraConfigs"] = request.extra_configs
         if not DaraCore.is_null(request.sdk_stats):
             body["SdkStats"] = request.sdk_stats
+        if not DaraCore.is_null(request.login_region_id):
+            body["LoginRegionId"] = request.login_region_id
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="CreateMcpSession",
@@ -457,6 +461,8 @@ class Client(OpenApiClient):
             body["ContextId"] = request.context_id
         if not DaraCore.is_null(request.name):
             body["Name"] = request.name
+        if not DaraCore.is_null(request.login_region_id):
+            body["LoginRegionId"] = request.login_region_id
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="GetContext",
@@ -484,8 +490,12 @@ class Client(OpenApiClient):
             body["AllowCreate"] = request.allow_create
         if not DaraCore.is_null(request.authorization):
             body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.context_id):
+            body["ContextId"] = request.context_id
         if not DaraCore.is_null(request.name):
             body["Name"] = request.name
+        if not DaraCore.is_null(request.login_region_id):
+            body["LoginRegionId"] = request.login_region_id
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="GetContext",

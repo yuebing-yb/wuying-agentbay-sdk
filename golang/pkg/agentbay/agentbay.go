@@ -18,8 +18,9 @@ type Option func(*AgentBayConfig)
 
 // AgentBayConfig holds optional configuration for the AgentBay client.
 type AgentBayConfig struct {
-	cfg     *Config
-	envFile string
+	cfg      *Config
+	envFile  string
+	regionID string
 }
 
 // WithConfig returns an Option that sets the configuration for the AgentBay client.
@@ -36,9 +37,17 @@ func WithEnvFile(envFile string) Option {
 	}
 }
 
+// WithRegionID returns an Option that sets the region ID for the AgentBay client.
+func WithRegionID(regionID string) Option {
+	return func(c *AgentBayConfig) {
+		c.regionID = regionID
+	}
+}
+
 // AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
 type AgentBay struct {
 	APIKey         string
+	RegionID       string
 	Client         *mcp.Client
 	Context        *ContextService
 	MobileSimulate *MobileSimulateService
@@ -83,9 +92,10 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Create AgentBay instance
 	agentBay := &AgentBay{
-		APIKey:  apiKey,
-		Client:  client,
-		Context: nil, // Will be initialized after creation
+		APIKey:   apiKey,
+		RegionID: config_option.regionID,
+		Client:   client,
+		Context:  nil, // Will be initialized after creation
 	}
 
 	// Initialize context service
@@ -151,6 +161,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 	sdkStatsJSON := fmt.Sprintf(`{"source":"sdk","sdk_language":"golang","sdk_version":"%s","is_release":%t,"framework":"%s"}`, Version, isRelease, framework)
 	createSessionRequest.SdkStats = tea.String(sdkStatsJSON)
+
+	// Add LoginRegionId if region_id is set
+	if a.RegionID != "" {
+		createSessionRequest.LoginRegionId = tea.String(a.RegionID)
+	}
 
 	// Add image_id if provided
 	if params.ImageId != "" {

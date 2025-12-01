@@ -10,9 +10,11 @@ class ClearContextRequest(DaraModel):
         self,
         authorization: str = None,
         id: str = None,
+        login_region_id: str = None,
     ):
         self.authorization = authorization
         self.id = id
+        self.login_region_id = login_region_id
 
     def validate(self):
         pass
@@ -28,6 +30,9 @@ class ClearContextRequest(DaraModel):
         if self.id is not None:
             result["Id"] = self.id
 
+        if self.login_region_id is not None:
+            result["LoginRegionId"] = self.login_region_id
+
         return result
 
     def from_map(self, m: dict = None):
@@ -37,5 +42,8 @@ class ClearContextRequest(DaraModel):
 
         if m.get("Id") is not None:
             self.id = m.get("Id")
+
+        if m.get("LoginRegionId") is not None:
+            self.login_region_id = m.get("LoginRegionId")
 
         return self

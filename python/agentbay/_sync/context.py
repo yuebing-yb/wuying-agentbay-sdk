@@ -443,6 +443,7 @@ class ContextService:
                 context_id=context_id,
                 allow_create=create,
                 authorization=f"Bearer {self.agent_bay.api_key}",
+                login_region_id=self.agent_bay.region_id if create else None,
             )
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
@@ -659,7 +660,8 @@ class ContextService:
         try:
             _log_api_call("DeleteContext", f"Id={context.id}")
             request = DeleteContextRequest(
-                id=context.id, authorization=f"Bearer {self.agent_bay.api_key}"
+                id=context.id, 
+                authorization=f"Bearer {self.agent_bay.api_key}",
             )
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client

@@ -185,6 +185,7 @@ export interface CreateSessionParams {
  */
 export class AgentBay {
   private apiKey: string;
+  private regionId?: string;
   private client: Client;
   private endpoint: string;
   private fileTransferContext: Context | null = null;
@@ -206,18 +207,21 @@ export class AgentBay {
    * @param options.apiKey - API key for authentication. If not provided, will look for AGENTBAY_API_KEY environment variable.
    * @param options.config - Custom configuration object. If not provided, will use environment-based configuration.
    * @param options.envFile - Custom path to .env file. If not provided, will search upward from current directory.
+   * @param options.regionId - Region ID for cloud resources. This will be passed as LoginRegionId in API requests.
    */
   constructor(
     options: {
       apiKey?: string;
       config?: Config;
       envFile?: string;
+      regionId?: string;
     } = {}
   ) {
     // Load .env file first to ensure AGENTBAY_API_KEY is available
     loadDotEnvWithFallback(options.envFile);
 
     this.apiKey = options.apiKey || process.env.AGENTBAY_API_KEY || "";
+    this.regionId = options.regionId;
 
     if (!this.apiKey) {
       throw new AuthenticationError(
@@ -249,6 +253,14 @@ export class AgentBay {
       logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);
     }
+  }
+
+  /**
+   * Get the region ID.
+   * @returns The region ID or undefined if not set.
+   */
+  getRegionId(): string | undefined {
+    return this.regionId;
   }
 
   /**
@@ -450,6 +462,11 @@ export class AgentBay {
       const framework = params?.framework || "";
       const sdkStatsJson = `{"source":"sdk","sdk_language":"typescript","sdk_version":"${VERSION}","is_release":${IS_RELEASE},"framework":"${framework}"}`;
       request.sdkStats = sdkStatsJson;
+
+      // Add LoginRegionId if region_id is set
+      if (this.regionId) {
+        request.loginRegionId = this.regionId;
+      }
 
       // Add labels if provided
       if (params.labels) {

@@ -8,7 +8,7 @@ import string
 import time
 from enum import Enum
 from threading import Lock
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_tea_openapi.exceptions._client import ClientException
@@ -16,14 +16,12 @@ from alibabacloud_tea_openapi.exceptions._client import ClientException
 from .._common.config import _BROWSER_DATA_PATH, _load_config
 from .._common.logger import (
     _log_api_call,
-    _log_api_response,
     _log_api_response_with_details,
     _log_info_with_color,
     _log_operation_error,
     _log_operation_start,
     _log_operation_success,
     _log_warning,
-    _mask_sensitive_data,
     get_logger,
 )
 from .._common.models import (
@@ -42,7 +40,7 @@ from ..api.models import CreateMcpSessionRequest, GetSessionRequest, ListSession
 from .context import ContextService
 from .mobile_simulate import SyncMobileSimulateService
 from .session import Session
-from .session_params import CreateSessionParams, ListSessionParams
+from .session_params import CreateSessionParams
 
 # Initialize logger for this module
 _logger = get_logger("agentbay")
@@ -102,6 +100,7 @@ class AgentBay:
         api_key: str = "",
         cfg: Optional[Config] = None,
         env_file: Optional[str] = None,
+        region_id: Optional[str] = None,
     ):
         """
         Initialize AgentBay client.
@@ -110,6 +109,7 @@ class AgentBay:
             api_key: API key for authentication. If not provided, will read from AGENTBAY_API_KEY environment variable.
             cfg: Configuration object. If not provided, will load from environment variables and .env file.
             env_file: Custom path to .env file. If not provided, will search upward from current directory.
+            region_id: Region ID for cloud resources. This will be passed as LoginRegionId in API requests.
         """
         if not api_key:
             api_key = os.getenv("AGENTBAY_API_KEY") or ""
@@ -123,6 +123,7 @@ class AgentBay:
         config_data = _load_config(cfg, env_file)
 
         self.api_key = api_key
+        self.region_id = region_id
 
         config = open_api_models.Config()
         config.endpoint = config_data["endpoint"]
@@ -501,6 +502,10 @@ class AgentBay:
             )
             sdk_stats_json = f'{{"source":"sdk","sdk_language":"python","sdk_version":"{__version__}","is_release":{str(__is_release__).lower()},"framework":"{framework}"}}'
             request.sdk_stats = sdk_stats_json
+
+            # Add LoginRegionId if region_id is set
+            if self.region_id:
+                request.login_region_id = self.region_id
 
             # Add PolicyId if specified
             if hasattr(params, "policy_id") and params.policy_id:

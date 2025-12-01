@@ -11,10 +11,12 @@ class ModifyContextRequest(DaraModel):
         authorization: str = None,
         id: str = None,
         name: str = None,
+        login_region_id: str = None,
     ):
         self.authorization = authorization
         self.id = id
         self.name = name
+        self.login_region_id = login_region_id
 
     def validate(self):
         pass
@@ -33,6 +35,9 @@ class ModifyContextRequest(DaraModel):
         if self.name is not None:
             result["Name"] = self.name
 
+        if self.login_region_id is not None:
+            result["LoginRegionId"] = self.login_region_id
+
         return result
 
     def from_map(self, m: dict = None):
@@ -45,5 +50,8 @@ class ModifyContextRequest(DaraModel):
 
         if m.get("Name") is not None:
             self.name = m.get("Name")
+
+        if m.get("LoginRegionId") is not None:
+            self.login_region_id = m.get("LoginRegionId")
 
         return self

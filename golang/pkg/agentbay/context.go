@@ -248,6 +248,11 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 		Authorization: tea.String("Bearer " + cs.AgentBay.APIKey),
 	}
 
+	// Add LoginRegionId only when creating (create=true)
+	if create && cs.AgentBay.RegionID != "" {
+		request.LoginRegionId = tea.String(cs.AgentBay.RegionID)
+	}
+
 	// Log API request
 	logAPICall("GetContext", fmt.Sprintf("Name=%s, AllowCreate=%t", name, create))
 
