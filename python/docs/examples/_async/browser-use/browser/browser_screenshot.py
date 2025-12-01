@@ -33,13 +33,18 @@ async def take_agent_screenshots(session: AsyncSession):
     print(f"✅ Agent screenshot captured (base64 length: {len(screenshot_b64)})")
     
     # Save the screenshot to a file
-    if screenshot_b64.startswith("data:image/"):
-        # Extract the base64 data from data URL
-        _, encoded = screenshot_b64.split(",", 1)
-        image_data = base64.b64decode(encoded)
-    else:
-        # Assume it's raw base64
-        image_data = base64.b64decode(screenshot_b64)
+    try:
+        if screenshot_b64.startswith("data:image/"):
+            # Extract the base64 data from data URL
+            _, encoded = screenshot_b64.split(",", 1)
+            image_data = base64.b64decode(encoded)
+        else:
+            # Assume it's raw base64
+            image_data = base64.b64decode(screenshot_b64)
+    except Exception as e:
+        print(f"❌ Failed to decode agent screenshot: {e}")
+        print(f"Raw response: {screenshot_b64}")
+        return
     
     with open("agent_screenshot.png", "wb") as f:
         f.write(image_data)
@@ -53,11 +58,16 @@ async def take_agent_screenshots(session: AsyncSession):
     print(f"✅ Agent full page screenshot captured (base64 length: {len(full_page_b64)})")
     
     # Save the full page screenshot
-    if full_page_b64.startswith("data:image/"):
-        _, encoded = full_page_b64.split(",", 1)
-        image_data = base64.b64decode(encoded)
-    else:
-        image_data = base64.b64decode(full_page_b64)
+    try:
+        if full_page_b64.startswith("data:image/"):
+            _, encoded = full_page_b64.split(",", 1)
+            image_data = base64.b64decode(encoded)
+        else:
+            image_data = base64.b64decode(full_page_b64)
+    except Exception as e:
+        print(f"❌ Failed to decode agent full page screenshot: {e}")
+        print(f"Raw response: {full_page_b64}")
+        return
     
     with open("agent_full_page_screenshot.png", "wb") as f:
         f.write(image_data)
@@ -69,7 +79,7 @@ async def take_browser_screenshots(session: AsyncSession):
     print("📸 Taking screenshots using direct Playwright integration...")
     
     # Get the browser endpoint and connect with Playwright
-    endpoint_url = session.browser.get_endpoint_url()
+    endpoint_url = await session.browser.get_endpoint_url()
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(endpoint_url)
         context = browser.contexts[0]
