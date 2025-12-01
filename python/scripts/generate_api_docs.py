@@ -468,7 +468,7 @@ def calculate_resource_path(resource: dict[str, Any], module_config: dict[str, A
     return relative_path
 
 
-def get_see_also_section(module_name: str, metadata: dict[str, Any]) -> str:
+def get_see_also_section(module_name: str, metadata: dict[str, Any], is_async: bool = False) -> str:
     """Generate See Also section with links to guides and related APIs."""
     # Flat structure: api/sync/{file}.md or api/async/{file}.md
     # Go up 4 levels to reach project root: sync/async -> api -> docs -> python -> root
@@ -487,10 +487,18 @@ def get_see_also_section(module_name: str, metadata: dict[str, Any]) -> str:
         lines.append("")
         lines.append("**Related APIs:**")
         for resource in resources:
-            # In flat structure, all API docs are at the same level
-            # Just use simple relative paths
-            module_name = resource.get("module", "")
-            resource_path = resource.get("path", f"./{module_name}.md")
+            # Map simple module names to actual file names with prefixes
+            resource_module = resource.get("module", "")
+            # Determine correct file name based on whether this is async docs or not
+            if resource_module in ['session', 'command', 'filesystem', 'context', 'context-manager', 'browser', 'extension', 'oss', 'agent', 'code', 'computer', 'mobile']:
+                # These modules have both sync and async versions
+                if is_async:
+                    resource_path = f"./async-{resource_module}.md"
+                else:
+                    resource_path = f"./{resource_module}.md"
+            else:
+                # For other modules, use the path as specified or default
+                resource_path = resource.get("path", f"./{resource_module}.md")
             lines.append(f"- [{resource['name']}]({resource_path})")
 
     return "\n".join(lines) + "\n\n"
@@ -1096,7 +1104,7 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
         content = content.rstrip() + "\n\n" + best_practices_section
 
     # Add see also section (replaces related resources)
-    see_also_section = get_see_also_section(module_name, metadata)
+    see_also_section = get_see_also_section(module_name, metadata, is_async)
     if see_also_section:
         content = content.rstrip() + "\n\n" + see_also_section
 
