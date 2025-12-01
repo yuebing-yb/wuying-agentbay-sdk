@@ -3,8 +3,6 @@
 Computer Use is AgentBay's desktop automation environment for Windows and Linux systems.
 
 > **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
-> - [Sync vs Async Guide](../async-programming/sync-vs-async.md)
-> - [Async Patterns Guide](../async-programming/async-patterns.md)
 
 ## Documentation
 

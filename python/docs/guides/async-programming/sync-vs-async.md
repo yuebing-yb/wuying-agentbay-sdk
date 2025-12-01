@@ -83,4 +83,4 @@ To migrate from synchronous to asynchronous code:
 3. Add `await` keyword before SDK method calls
 4. Use `asyncio.run()` to execute the main function
 
-For more details, see the [async programming guides](../) in the main documentation.
+For migrating from backup versions or between sync/async, see [Migration Guide](migration-guide.md).

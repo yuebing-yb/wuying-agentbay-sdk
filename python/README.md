@@ -157,7 +157,7 @@ if __name__ == "__main__":
 ### 🆕 New Users
 - [📚 Quick Start Tutorial](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/README.md) - Get started in 5 minutes
 - [🎯 Core Concepts](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/basic-concepts.md) - Understand cloud environments and sessions
-- [🔄 Sync vs Async Guide](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/async-programming/sync-vs-async.md) - Detailed guide on choosing between sync and async APIs
+- [🔄 Sync vs Async Guide](docs/guides/async-programming/sync-vs-async.md) - Detailed guide on choosing between sync and async APIs
 
 ### 🚀 Experienced Users
 **Choose Your Cloud Environment:**

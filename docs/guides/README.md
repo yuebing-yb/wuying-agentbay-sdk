@@ -28,9 +28,6 @@ Features available across all environments:
 
 Core concepts for building high-performance applications:
 
-- [Sync vs Async Guide](async-programming/sync-vs-async.md) - Comprehensive comparison and decision guide
-- [Async Patterns](async-programming/async-patterns.md) - Common patterns and best practices
-- [Migration Guide](async-programming/migration.md) - Migrating from sync to async API
 
 ### Environment-Specific Features
 

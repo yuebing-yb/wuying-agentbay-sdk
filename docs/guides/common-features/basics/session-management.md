@@ -2,7 +2,6 @@
 
 This document provides comprehensive guidance on using the session management capabilities of the AgentBay SDK. Both synchronous and asynchronous APIs are fully supported.
 
-> **💡 Sync or Async?** This guide shows both synchronous and asynchronous examples. For detailed comparison and choosing guidance, see the [Sync vs Async Guide](../../async-programming/sync-vs-async.md).
 
 ## Overview
 
@@ -120,7 +119,6 @@ asyncio.run(main())
 
 **Best for**: High concurrency, async projects, web applications
 
-> **Note**: The async API allows you to create multiple sessions concurrently using `asyncio.gather()`. See [Sync vs Async Guide](../../async-programming/sync-vs-async.md) for concurrent session creation patterns.
 
 </details>
 

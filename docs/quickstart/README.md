@@ -31,7 +31,6 @@ After completing this quick start guide, you will be able to:
 - Understanding the differences
 
 ### Step 4: Choosing Your API Style (5 minutes)
-- [Sync vs Async Guide](../guides/async-programming/sync-vs-async.md)
 - When to use synchronous API
 - When to use asynchronous API
 - Performance considerations
@@ -93,7 +92,6 @@ asyncio.run(main())
 | Simple automation tasks | **Sync** |
 | Real-time data processing | **Async** |
 
-**📖 Learn More:** See the [comprehensive Sync vs Async guide](../guides/async-programming/sync-vs-async.md) for detailed comparisons, migration guides, and best practices.
 
 ## 🚀 Next Steps After Completion
 
@@ -104,7 +102,6 @@ asyncio.run(main())
 - **[Data Persistence](../guides/common-features/basics/data-persistence.md)** - Save and reuse your work
 
 ### Advanced Topics
-- **[Sync vs Async](../guides/async-programming/sync-vs-async.md)** - Comprehensive guide on API choices
 - **[Browser Automation](../guides/computer-use/computer-ui-automation.md)** - Web scraping and testing
 - **[Mobile Testing](../guides/mobile-use/mobile-ui-automation.md)** - Android app automation
 

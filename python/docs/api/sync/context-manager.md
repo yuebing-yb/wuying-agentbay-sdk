@@ -81,7 +81,7 @@ Synchronize a context with the session synchronously.
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../guides/async-programming/sync-vs-async.md)
 
 ---
 
