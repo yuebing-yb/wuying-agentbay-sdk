@@ -271,6 +271,30 @@ def generate_sync():
 
                     # Apply custom replacements
                     content = _apply_custom_replacements(content, path)
+                    
+                    # Final fix for filesystem.py _sync_monitor function
+                    if "filesystem.py" in file and "def _sync_monitor():" in content:
+                        # Pattern to match the broken function
+                        pattern = r'def _sync_monitor\(\):\s*\n\s*"""[^"]*"""\s*\n\s*import asyncio\s*\n\s*# Create a new event loop for this thread\s*\n[^}]*?finally:\s*\n[^}]*?\n'
+                        replacement = '''def _sync_monitor():
+            """Synchronous wrapper for monitoring function."""
+            _monitor_directory()
+'''
+                        content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+                        
+                        # Fix the missing monitor_thread assignment
+                        content = content.replace(
+                            '''def _sync_monitor():
+            """Synchronous wrapper for monitoring function."""
+            _monitor_directory()
+            target=_sync_monitor,''',
+                            '''def _sync_monitor():
+            """Synchronous wrapper for monitoring function."""
+            _monitor_directory()
+        
+        monitor_thread = threading.Thread(
+            target=_sync_monitor,'''
+                        )
 
                     if "filesystem.py" in file:
                         # Fix asyncio.wait_for with stop_event.wait() in monitor loop
@@ -278,6 +302,26 @@ def generate_sync():
                             "                    try:\n                        asyncio.wait_for(stop_event.wait(), timeout=interval)\n                    except asyncio.TimeoutError:\n                        pass",
                             "                    stop_event.wait(timeout=interval)"
                         )
+                        
+                        # Fix _sync_monitor function - replace asyncio version with direct call
+                        # This needs to happen after all other replacements to avoid interference
+                        sync_monitor_old = '''def _sync_monitor():
+            """Synchronous wrapper for async monitoring function."""
+            import asyncio
+            # Create a new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                loop.run_until_complete(_monitor_directory())
+            finally:
+                loop.close()'''
+                        
+                        sync_monitor_new = '''def _sync_monitor():
+            """Synchronous wrapper for monitoring function."""
+            _monitor_directory()'''
+                        
+                        content = content.replace(sync_monitor_old, sync_monitor_new)
 
                         # _wait_for_event replacement
                         if "def _wait_for_event(self, event, timeout):" in content:
