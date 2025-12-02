@@ -1,9 +1,9 @@
 {
-  "root": "/Users/liyuebing/Projects/wuying-agentbay-sdk/cookbook/envs/codespace/auto-testing-agent/async/common/sample_project",
+  "root": "/Users/liyuebing/Projects/wuying-agentbay-sdk/cookbook/codespace/auto-testing-agent/async/common/sample_project",
   "files": [
     {
       "name": "calculator.py",
-      "path": "/Users/liyuebing/Projects/wuying-agentbay-sdk/cookbook/envs/codespace/auto-testing-agent/async/common/sample_project/calculator.py",
+      "path": "/Users/liyuebing/Projects/wuying-agentbay-sdk/cookbook/codespace/auto-testing-agent/async/common/sample_project/calculator.py",
       "relative_path": "calculator.py",
       "analysis": {
         "classes": [
