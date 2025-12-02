@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 
 
 class TestGetCdpLinkIntegration:
@@ -18,7 +18,7 @@ class TestGetCdpLinkIntegration:
         api_key = os.getenv("AGENTBAY_API_KEY")
         if not api_key:
             pytest.skip("AGENTBAY_API_KEY environment variable not set")
-        return AgentBay(api_key=api_key)
+        return AsyncAgentBay(api_key=api_key)
 
     def test_get_cdp_link_with_browser_session(self, agentbay):
         """Test get_cdp_link with a real browser session"""

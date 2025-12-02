@@ -9,7 +9,7 @@ import time
 import unittest
 from typing import List
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import Context, ContextListParams
 
 
@@ -24,7 +24,7 @@ class TestContextPaginationIntegration(unittest.TestCase):
             )
 
         # Initialize AgentBay client
-        cls.agent_bay = AgentBay(api_key)
+        cls.agent_bay = AsyncAgentBay(api_key)
 
         # Create multiple contexts for testing pagination
         cls.context_names = []

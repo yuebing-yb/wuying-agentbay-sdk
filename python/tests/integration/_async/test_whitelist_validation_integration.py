@@ -3,7 +3,7 @@ import os
 import pytest
 
 from agentbay import (
-    AgentBay,
+    AsyncAgentBay,
     BWList,
     ContextSync,
     CreateSessionParams,
@@ -23,7 +23,7 @@ class TestWhiteListValidationIntegration:
     @pytest.fixture
     def agent_bay(self):
         api_key = get_test_api_key()
-        return AgentBay(api_key=api_key)
+        return AsyncAgentBay(api_key=api_key)
 
     @pytest.fixture
     def test_context(self, agent_bay):

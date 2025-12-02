@@ -4,7 +4,7 @@ import sys
 import time
 import unittest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
 # Add the parent directory to the path so we can import the agentbay package
@@ -30,13 +30,13 @@ def generate_unique_id():
 
 
 class TestAgentBayList(unittest.TestCase):
-    """Integration tests for AgentBay.list() API."""
+    """Integration tests for AsyncAgentBay.list() API."""
 
     @classmethod
     def setUpClass(cls):
         """Set up test fixtures once for the entire test class."""
         api_key = get_test_api_key()
-        cls.agent_bay = AgentBay(api_key=api_key)
+        cls.agent_bay = AsyncAgentBay(api_key=api_key)
 
         # Generate a unique identifier for this test run
         cls.unique_id = generate_unique_id()

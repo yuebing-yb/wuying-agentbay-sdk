@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import (
     BWList,
     ContextSync,
@@ -33,13 +33,13 @@ def get_test_api_key():
     return api_key
 
 
-class TestAgentBay(unittest.TestCase):
-    """Test cases for the AgentBay class."""
+class TestAsyncAgentBay(unittest.TestCase):
+    """Test cases for the AsyncAgentBay class."""
 
     def test_init_with_api_key(self):
         """Test initialization with API key."""
         api_key = get_test_api_key()
-        agent_bay = AgentBay(api_key=api_key)
+        agent_bay = AsyncAgentBay(api_key=api_key)
         self.assertEqual(agent_bay.api_key, api_key)
         self.assertIsNotNone(agent_bay.client)
 
@@ -50,7 +50,7 @@ class TestAgentBay(unittest.TestCase):
 
         os.environ["AGENTBAY_API_KEY"] = "env_api_key"
         try:
-            agent_bay = AgentBay()
+            agent_bay = AsyncAgentBay()
             self.assertEqual(agent_bay.api_key, "env_api_key")
         finally:
             # Restore original API key
@@ -68,7 +68,7 @@ class TestAgentBay(unittest.TestCase):
             if "AGENTBAY_API_KEY" in os.environ:
                 del os.environ["AGENTBAY_API_KEY"]
             with self.assertRaises(ValueError):
-                AgentBay()
+                AsyncAgentBay()
         finally:
             # Restore original API key
             if original_key is not None:
@@ -77,7 +77,7 @@ class TestAgentBay(unittest.TestCase):
     def test_create_list_delete(self):
         """Test create, list, and delete methods."""
         api_key = get_test_api_key()
-        agent_bay = AgentBay(api_key=api_key)
+        agent_bay = AsyncAgentBay(api_key=api_key)
 
         # Create a session
         print("Creating a new session...")
@@ -109,7 +109,7 @@ class TestSession(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         api_key = get_test_api_key()
-        self.agent_bay = AgentBay(api_key=api_key)
+        self.agent_bay = AsyncAgentBay(api_key=api_key)
 
         # Create a session with default windows image
         print("Creating a new session for testing...")
@@ -223,7 +223,7 @@ class TestRecyclePolicy(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         api_key = get_test_api_key()
-        self.agent_bay = AgentBay(api_key=api_key)
+        self.agent_bay = AsyncAgentBay(api_key=api_key)
         self.session = None
 
     def tearDown(self):
@@ -380,7 +380,7 @@ class TestBrowserContext(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         api_key = get_test_api_key()
-        self.agent_bay = AgentBay(api_key=api_key)
+        self.agent_bay = AsyncAgentBay(api_key=api_key)
         self.session = None
 
     def tearDown(self):

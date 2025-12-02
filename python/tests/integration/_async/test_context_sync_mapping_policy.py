@@ -9,7 +9,7 @@ import os
 import time
 import unittest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import (
     ContextSync,
     DeletePolicy,
@@ -35,7 +35,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             )
 
         # Initialize the AgentBay client
-        self.ab = AgentBay(self.api_key)
+        self.ab = AsyncAgentBay(self.api_key)
 
     def test_context_sync_with_mapping_policy(self):
         """Test that context sync works with MappingPolicy for cross-platform persistence."""

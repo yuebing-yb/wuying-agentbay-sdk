@@ -4,7 +4,7 @@ import sys
 import time
 import unittest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -35,7 +35,7 @@ class TestSessionLabels(unittest.TestCase):
     def setUpClass(cls):
         """Set up test fixtures once for the entire test class."""
         api_key = get_test_api_key()
-        cls.agent_bay = AgentBay(api_key=api_key)
+        cls.agent_bay = AsyncAgentBay(api_key=api_key)
 
         # Create a session
         print("Creating a new session for labels testing...")

@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import AgentBayError
 from agentbay import CreateSessionParams
 from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
@@ -21,8 +21,8 @@ class TestSessionExtraConfigsIntegration(unittest.TestCase):
         if not cls.api_key:
             raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
 
-        cls.agent_bay = AgentBay(api_key=cls.api_key)
-        print(f"AgentBay client initialized for extra configs testing")
+        cls.agent_bay = AsyncAgentBay(api_key=cls.api_key)
+        print(f"AsyncAgentBay client initialized for extra configs testing")
 
     def setUp(self):
         """Set up for each test method."""

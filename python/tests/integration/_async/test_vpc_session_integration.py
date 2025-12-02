@@ -10,7 +10,7 @@ parent_dir = os.path.dirname(os.path.dirname(current_dir))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
 
@@ -37,8 +37,8 @@ class TestVPCSessionIntegration(unittest.TestCase):
 
         print(f"Using API key: {cls.api_key}")
 
-        cls.agent_bay = AgentBay(cls.api_key)
-        print(f"AgentBay client initialized successfully")
+        cls.agent_bay = AsyncAgentBay(cls.api_key)
+        print(f"AsyncAgentBay client initialized successfully")
 
     def test_vpc_session_basic_tools(self):
         """Test VPC session creation and filesystem write/read functionality"""

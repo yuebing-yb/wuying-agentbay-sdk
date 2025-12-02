@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
 
@@ -14,7 +14,7 @@ class TestCodeIntegration(unittest.TestCase):
         if not self.api_key:
             self.skipTest("AGENTBAY_API_KEY environment variable not set")
 
-        self.agent_bay = AgentBay(api_key=self.api_key)
+        self.agent_bay = AsyncAgentBay(api_key=self.api_key)
         params = CreateSessionParams(image_id="code_latest")
         # Use code_latest image for code execution tests
         session_result = self.agent_bay.create(params)

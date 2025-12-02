@@ -3,7 +3,7 @@ import time
 import unittest
 from uuid import uuid4
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import ContextSync
 from agentbay import CreateSessionParams
 
@@ -24,7 +24,7 @@ class TestDeleteIntegration(unittest.TestCase):
             raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
 
         # Initialize AgentBay client
-        cls.agent_bay = AgentBay(api_key=api_key)
+        cls.agent_bay = AsyncAgentBay(api_key=api_key)
 
     def test_delete_without_params(self):
         """Test session deletion functionality without parameters"""
@@ -125,7 +125,7 @@ class TestDeleteIntegration(unittest.TestCase):
             print(f"Warning: Error deleting context: {e}")
 
     def test_agentbay_delete_with_sync_context(self):
-        """Test AgentBay.delete functionality with sync_context parameter"""
+        """Test AsyncAgentBay.delete functionality with sync_context parameter"""
         # Create context
         context_name = f"test-context-{uuid4().hex[:8]}"
         print(f"Creating context: {context_name}...")

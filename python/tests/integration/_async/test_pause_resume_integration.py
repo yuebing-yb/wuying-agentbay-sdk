@@ -7,9 +7,9 @@ from uuid import uuid4
 
 from dotenv import load_dotenv
 
-from agentbay import AgentBay, CreateSessionParams
+from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay import AgentBayError
-from agentbay import SessionPauseResult, SessionResumeResult
+from agentbay import AsyncSessionPauseResult, SessionResumeResult
 from agentbay import Config
 
 
@@ -42,10 +42,10 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Initialize AgentBay client
         if endpoint:
             config = Config(endpoint=endpoint, timeout_ms=60000)
-            cls.agent_bay = AgentBay(api_key=api_key, cfg=config)
+            cls.agent_bay = AsyncAgentBay(api_key=api_key, cfg=config)
             print(f"Using endpoint: {endpoint}")
         else:
-            cls.agent_bay = AgentBay(api_key=api_key)
+            cls.agent_bay = AsyncAgentBay(api_key=api_key)
             print("Using default endpoint")
 
     def setUp(self):
@@ -336,7 +336,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("=" * 60)
 
         # Create a mock session object with invalid session ID
-        from agentbay import Session
+        from agentbay import AsyncSession
 
         invalid_session = Session(self.agent_bay, "non-existent-session-12345")
 
@@ -361,7 +361,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("=" * 60)
 
         # Create a mock session object with invalid session ID
-        from agentbay import Session
+        from agentbay import AsyncSession
 
         invalid_session = Session(self.agent_bay, "non-existent-session-12345")
 
@@ -386,7 +386,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("=" * 60)
 
         # Create a mock session object with invalid session ID
-        from agentbay import Session
+        from agentbay import AsyncSession
 
         invalid_session = Session(self.agent_bay, "non-existent-session-12345")
 
@@ -527,9 +527,9 @@ class TestSessionPauseResumeEdgeCases(unittest.TestCase):
         endpoint = get_test_endpoint()
         if endpoint:
             config = Config(endpoint=endpoint, timeout_ms=60000)
-            cls.agent_bay = AgentBay(api_key=api_key, cfg=config)
+            cls.agent_bay = AsyncAgentBay(api_key=api_key, cfg=config)
         else:
-            cls.agent_bay = AgentBay(api_key=api_key)
+            cls.agent_bay = AsyncAgentBay(api_key=api_key)
 
     def setUp(self):
         """Set up test fixtures for each test method."""

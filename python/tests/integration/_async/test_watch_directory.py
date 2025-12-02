@@ -6,7 +6,7 @@ import os
 import threading
 import time
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
 
@@ -33,8 +33,8 @@ def test_watch_directory():
 
     # Initialize AgentBay client
     api_key = get_api_key()
-    agentbay = AgentBay(api_key=api_key)
-    print("✅ AgentBay client initialized")
+    agentbay = AsyncAgentBay(api_key=api_key)
+    print("✅ AsyncAgentBay client initialized")
 
     # Create session with code_latest ImageId
     session_params = CreateSessionParams(image_id="code_latest")
@@ -239,7 +239,7 @@ def test_watch_directory_file_modification():
 
     # Initialize AgentBay client
     api_key = get_api_key()
-    agentbay = AgentBay(api_key=api_key)
+    agentbay = AsyncAgentBay(api_key=api_key)
     print("✅ AgentBay client initialized")
 
     # Create session with code_latest ImageId

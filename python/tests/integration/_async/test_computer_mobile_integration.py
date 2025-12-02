@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from agentbay import AgentBay, Session
+from agentbay import AsyncAgentBay, AsyncSession
 from agentbay import Computer
 from agentbay import Mobile
 
@@ -21,7 +21,7 @@ class TestComputerMobileIntegration:
 
     def test_session_has_computer_and_mobile_modules(self):
         """Test that Session includes Computer and Mobile modules."""
-        # Arrange - Create a mock AgentBay instance
+        # Arrange - Create a mock AsyncAgentBay instance
         mock_agent_bay = Mock()
 
         # Act - Create a Session directly

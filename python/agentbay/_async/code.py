@@ -59,10 +59,10 @@ class AsyncCode(AsyncBaseService):
         Example:
             Execute Python code in a code execution environment::
 
-                from agentbay import AgentBay
+                from agentbay import AsyncAgentBay
                 from .._common.params.session_params import CreateSessionParams
 
-                agent_bay = AgentBay(api_key="your_api_key")
+                agent_bay = AsyncAgentBay(api_key="your_api_key")
                 result = await agent_bay.create(CreateSessionParams(image_id="code_latest"))
                 code_result = await result.session.code.run_code("print('Hello')", "python")
                 print(code_result.result)

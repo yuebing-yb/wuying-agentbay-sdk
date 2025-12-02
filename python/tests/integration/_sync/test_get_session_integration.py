@@ -113,7 +113,7 @@ def test_get_session_api():
         assert (
             "resourceId=" in retrieved_session.resource_url
         ), "Session.resource_url should contain resourceId"
-        print("AgentBay.get() method test passed")
+        print("SyncAgentBay.get() method test passed")
 
         print("\nGetSession API test passed successfully")
 

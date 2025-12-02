@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-from agentbay import AgentBay, CreateSessionParams
-from agentbay import Session
+from agentbay import AsyncAgentBay, CreateSessionParams
+from agentbay import AsyncSession
 
 
 @pytest.fixture(scope="module")
@@ -11,10 +11,10 @@ def agentbay_client():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         pytest.fail("AGENTBAY_API_KEY environment variable is not set")
-    return AgentBay(api_key=api_key)
+    return AsyncAgentBay(api_key=api_key)
 
 
-def test_get_api(agentbay_client: AgentBay):
+def test_get_api(agentbay_client: AsyncAgentBay):
     """Test Get API with a real session."""
     print("Creating a new session for Get API testing...")
 

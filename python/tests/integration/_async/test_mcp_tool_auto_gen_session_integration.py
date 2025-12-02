@@ -2,7 +2,7 @@ import os
 import time
 import unittest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 
 
 def get_test_api_key():
@@ -21,7 +21,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
             raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
 
         # Initialize AgentBay client
-        cls.agent_bay = AgentBay(api_key=api_key)
+        cls.agent_bay = AsyncAgentBay(api_key=api_key)
 
     def test_mcp_tool_call_with_active_session(self):
         """Test MCP tool call succeeds when session is active"""

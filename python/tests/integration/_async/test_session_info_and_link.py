@@ -3,8 +3,8 @@ import sys
 import typing
 import unittest
 
-from agentbay import AgentBay
-from agentbay import SessionError
+from agentbay import AsyncAgentBay
+from agentbay import AsyncSessionError
 from agentbay import CreateSessionParams
 from agentbay import Session
 
@@ -28,7 +28,7 @@ class TestSessionInfoAndLink(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         api_key = get_test_api_key()
-        cls.agent_bay = AgentBay(api_key=api_key)
+        cls.agent_bay = AsyncAgentBay(api_key=api_key)
         print("Creating a new session for info/link testing...")
         # Use browser_latest image for get_link compatibility
         params = CreateSessionParams(image_id="browser_latest")

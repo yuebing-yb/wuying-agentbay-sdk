@@ -5,7 +5,7 @@ import time
 import unittest
 from uuid import uuid4
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import ClearanceTimeoutError
 from agentbay import Config
 
@@ -36,10 +36,10 @@ class TestContextClearIntegration(unittest.TestCase):
         # Initialize AgentBay client
         if endpoint:
             config = Config(endpoint=endpoint, timeout_ms=60000)
-            cls.agent_bay = AgentBay(api_key=api_key, cfg=config)
+            cls.agent_bay = AsyncAgentBay(api_key=api_key, cfg=config)
             print(f"Using endpoint: {endpoint}")
         else:
-            cls.agent_bay = AgentBay(api_key=api_key)
+            cls.agent_bay = AsyncAgentBay(api_key=api_key)
             print("Using default endpoint")
 
         cls.test_contexts = []  # Track contexts for cleanup
@@ -340,9 +340,9 @@ class TestContextClearEdgeCases(unittest.TestCase):
         endpoint = get_test_endpoint()
         if endpoint:
             config = Config(endpoint=endpoint, timeout_ms=60000)
-            cls.agent_bay = AgentBay(api_key=api_key, cfg=config)
+            cls.agent_bay = AsyncAgentBay(api_key=api_key, cfg=config)
         else:
-            cls.agent_bay = AgentBay(api_key=api_key)
+            cls.agent_bay = AsyncAgentBay(api_key=api_key)
 
     def test_clear_with_custom_poll_interval(self):
         """Test clear with different poll intervals."""

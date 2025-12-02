@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import AgentBayError
 from agentbay import BoolResult, OperationResult
 from agentbay import CreateSessionParams
@@ -23,7 +23,7 @@ class TestMobileSystemIntegration(unittest.TestCase):
         api_key = os.getenv(
             "AGENTBAY_API_KEY", "your_api_key"
         )  # Replace with your actual API key
-        cls.agent_bay = AgentBay(api_key=api_key)
+        cls.agent_bay = AsyncAgentBay(api_key=api_key)
         params = CreateSessionParams(
             image_id="mobile_latest",
         )

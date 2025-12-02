@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 
 
 def test_get_session_api():
@@ -18,7 +18,7 @@ def test_get_session_api():
         pytest.fail("AGENTBAY_API_KEY environment variable is not set")
 
     # Initialize AgentBay client
-    agent_bay = AgentBay(api_key=api_key)
+    agent_bay = AsyncAgentBay(api_key=api_key)
 
     # Create a session first
     print("Creating a new session for GetSession testing...")
@@ -83,7 +83,7 @@ def test_get_session_api():
         print(f"ResourceUrl: {get_session_result.data.resource_url}")
 
         # Test get() method which should populate session fields from GetSession
-        print("\nTesting AgentBay.get() method...")
+        print("\nTesting AsyncAgentBay.get() method...")
         get_result = agent_bay.get(session_id)
         assert get_result.success, f"get() should succeed: {get_result.error_message}"
         assert get_result.request_id, "get() should return request_id"
@@ -110,7 +110,7 @@ def test_get_session_api():
         assert (
             "resourceId=" in retrieved_session.resource_url
         ), "Session.resource_url should contain resourceId"
-        print("AgentBay.get() method test passed")
+        print("AsyncAgentBay.get() method test passed")
 
         print("\nGetSession API test passed successfully")
 

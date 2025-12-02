@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
 
@@ -29,7 +29,7 @@ class TestOssIntegration(unittest.TestCase):
             raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
 
         # Initialize AgentBay client
-        cls.agent_bay = AgentBay(cls.api_key)
+        cls.agent_bay = AsyncAgentBay(cls.api_key)
 
         # Create a session
         print("Creating a new session for OSS testing...")

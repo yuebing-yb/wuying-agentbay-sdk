@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
 
@@ -16,7 +16,7 @@ class TestGetFileTransferContext:
         api_key = os.getenv("AGENTBAY_API_KEY")
         if not api_key:
             pytest.skip("AGENTBAY_API_KEY not set")
-        return AgentBay(api_key=api_key)
+        return AsyncAgentBay(api_key=api_key)
 
     @pytest.fixture
     def test_session(self, agent_bay):
