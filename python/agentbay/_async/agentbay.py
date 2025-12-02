@@ -98,7 +98,6 @@ class AsyncAgentBay:
         api_key: str = "",
         cfg: Optional[Config] = None,
         env_file: Optional[str] = None,
-        region_id: Optional[str] = None,
     ):
         """
         Initialize AsyncAgentBay client.
@@ -107,7 +106,6 @@ class AsyncAgentBay:
             api_key: API key for authentication. If not provided, will read from AGENTBAY_API_KEY environment variable.
             cfg: Configuration object. If not provided, will load from environment variables and .env file.
             env_file: Custom path to .env file. If not provided, will search upward from current directory.
-            region_id: Region ID for cloud resources. This will be passed as LoginRegionId in API requests.
         """
         if not api_key:
             api_key = os.getenv("AGENTBAY_API_KEY") or ""
@@ -121,7 +119,7 @@ class AsyncAgentBay:
         config_data = _load_config(cfg, env_file)
 
         self.api_key = api_key
-        self.region_id = region_id
+        self.region_id = config_data["region_id"]
 
         config = open_api_models.Config()
         config.endpoint = config_data["endpoint"]

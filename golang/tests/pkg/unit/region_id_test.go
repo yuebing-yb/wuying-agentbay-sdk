@@ -9,15 +9,20 @@ import (
 // TestRegionIDSupport tests region_id functionality in AgentBay client
 func TestRegionIDSupport(t *testing.T) {
 	t.Run("NewAgentBayWithRegionID", func(t *testing.T) {
-		// Test creating AgentBay client with region_id using WithRegionID option
-		client, err := agentbay.NewAgentBay("test-api-key", agentbay.WithRegionID("cn-hangzhou"))
+		// Test creating AgentBay client with region_id in config
+		config := &agentbay.Config{
+			Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
+			TimeoutMs: 60000,
+			RegionID:  "cn-hangzhou",
+		}
+		client, err := agentbay.NewAgentBay("test-api-key", agentbay.WithConfig(config))
 		if err != nil {
 			t.Fatalf("Failed to create AgentBay client: %v", err)
 		}
 
-		// Verify region_id is set correctly
-		if client.RegionID != "cn-hangzhou" {
-			t.Errorf("Expected RegionID to be 'cn-hangzhou', got '%s'", client.RegionID)
+		// Verify region_id is set correctly through config
+		if client.GetRegionID() != "cn-hangzhou" {
+			t.Errorf("Expected RegionID to be 'cn-hangzhou', got '%s'", client.GetRegionID())
 		}
 
 		// Verify other fields are set correctly
@@ -38,8 +43,8 @@ func TestRegionIDSupport(t *testing.T) {
 		}
 
 		// Verify region_id is empty when not provided
-		if client.RegionID != "" {
-			t.Errorf("Expected RegionID to be empty, got '%s'", client.RegionID)
+		if client.GetRegionID() != "" {
+			t.Errorf("Expected RegionID to be empty, got '%s'", client.GetRegionID())
 		}
 
 		// Verify other fields are set correctly
@@ -55,17 +60,17 @@ func TestRegionIDSupport(t *testing.T) {
 			TimeoutMs: 60000,
 		}
 
+		config.RegionID = "cn-hangzhou"
 		client, err := agentbay.NewAgentBay("test-api-key",
 			agentbay.WithConfig(config),
-			agentbay.WithRegionID("cn-beijing"),
 			agentbay.WithEnvFile(".env.test"))
 		if err != nil {
 			t.Fatalf("Failed to create AgentBay client: %v", err)
 		}
 
 		// Verify region_id is set correctly
-		if client.RegionID != "cn-beijing" {
-			t.Errorf("Expected RegionID to be 'cn-beijing', got '%s'", client.RegionID)
+		if client.GetRegionID() != "cn-hangzhou" {
+			t.Errorf("Expected RegionID to be 'cn-hangzhou', got '%s'", client.GetRegionID())
 		}
 
 		// Verify API key is set correctly
@@ -75,15 +80,20 @@ func TestRegionIDSupport(t *testing.T) {
 	})
 
 	t.Run("EmptyRegionID", func(t *testing.T) {
-		// Test creating AgentBay client with empty region_id
-		client, err := agentbay.NewAgentBay("test-api-key", agentbay.WithRegionID(""))
+		// Test creating AgentBay client with empty region_id in config
+		config := &agentbay.Config{
+			Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
+			TimeoutMs: 60000,
+			RegionID:  "",
+		}
+		client, err := agentbay.NewAgentBay("test-api-key", agentbay.WithConfig(config))
 		if err != nil {
 			t.Fatalf("Failed to create AgentBay client: %v", err)
 		}
 
 		// Verify region_id is empty
-		if client.RegionID != "" {
-			t.Errorf("Expected RegionID to be empty, got '%s'", client.RegionID)
+		if client.GetRegionID() != "" {
+			t.Errorf("Expected RegionID to be empty, got '%s'", client.GetRegionID())
 		}
 	})
 }

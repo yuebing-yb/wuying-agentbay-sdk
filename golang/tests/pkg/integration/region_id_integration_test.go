@@ -16,15 +16,20 @@ func TestRegionIDIntegration(t *testing.T) {
 	}
 
 	t.Run("CreateAgentBayWithRegionID", func(t *testing.T) {
-		// Test creating AgentBay client with region_id
-		client, err := agentbay.NewAgentBay(apiKey, agentbay.WithRegionID("cn-hangzhou"))
+		// Test creating AgentBay client with region_id in config
+		config := &agentbay.Config{
+			Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
+			TimeoutMs: 60000,
+			RegionID:  "cn-hangzhou",
+		}
+		client, err := agentbay.NewAgentBay(apiKey, agentbay.WithConfig(config))
 		if err != nil {
 			t.Fatalf("Failed to create AgentBay client: %v", err)
 		}
 
 		// Verify region_id is set
-		if client.RegionID != "cn-hangzhou" {
-			t.Errorf("Expected RegionID to be 'cn-hangzhou', got '%s'", client.RegionID)
+		if client.GetRegionID() != "cn-hangzhou" {
+			t.Errorf("Expected RegionID to be 'cn-hangzhou', got '%s'", client.GetRegionID())
 		}
 	})
 
@@ -36,14 +41,19 @@ func TestRegionIDIntegration(t *testing.T) {
 		}
 
 		// Verify region_id is empty
-		if client.RegionID != "" {
-			t.Errorf("Expected RegionID to be empty, got '%s'", client.RegionID)
+		if client.GetRegionID() != "" {
+			t.Errorf("Expected RegionID to be empty, got '%s'", client.GetRegionID())
 		}
 	})
 
 	t.Run("CreateSessionWithRegionID", func(t *testing.T) {
-		// Test session creation with region_id
-		client, err := agentbay.NewAgentBay(apiKey, agentbay.WithRegionID("cn-beijing"))
+		// Test session creation with region_id in config
+		config := &agentbay.Config{
+			Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
+			TimeoutMs: 60000,
+			RegionID:  "cn-hangzhou",
+		}
+		client, err := agentbay.NewAgentBay(apiKey, agentbay.WithConfig(config))
 		if err != nil {
 			t.Fatalf("Failed to create AgentBay client: %v", err)
 		}
@@ -71,12 +81,17 @@ func TestRegionIDIntegration(t *testing.T) {
 			}
 		}()
 
-		t.Logf("✅ Successfully created session %s with region_id cn-beijing", result.Session.SessionID)
+		t.Logf("✅ Successfully created session %s with region_id cn-hangzhou", result.Session.SessionID)
 	})
 
 	t.Run("CreateContextWithRegionID", func(t *testing.T) {
-		// Test context creation with region_id
-		client, err := agentbay.NewAgentBay(apiKey, agentbay.WithRegionID("cn-shenzhen"))
+		// Test context creation with region_id in config
+		config := &agentbay.Config{
+			Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
+			TimeoutMs: 60000,
+			RegionID:  "cn-hangzhou",
+		}
+		client, err := agentbay.NewAgentBay(apiKey, agentbay.WithConfig(config))
 		if err != nil {
 			t.Fatalf("Failed to create AgentBay client: %v", err)
 		}
@@ -104,12 +119,17 @@ func TestRegionIDIntegration(t *testing.T) {
 			}
 		}()
 
-		t.Logf("✅ Successfully created context %s with region_id cn-shenzhen", contextResult.Context.ID)
+		t.Logf("✅ Successfully created context %s with region_id cn-hangzhou", contextResult.Context.ID)
 	})
 
 	t.Run("GetContextWithoutCreate", func(t *testing.T) {
 		// Test context get without create (should not pass LoginRegionId)
-		client, err := agentbay.NewAgentBay(apiKey, agentbay.WithRegionID("cn-shenzhen"))
+		config := &agentbay.Config{
+			Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
+			TimeoutMs: 60000,
+			RegionID:  "cn-hangzhou",
+		}
+		client, err := agentbay.NewAgentBay(apiKey, agentbay.WithConfig(config))
 		if err != nil {
 			t.Fatalf("Failed to create AgentBay client: %v", err)
 		}

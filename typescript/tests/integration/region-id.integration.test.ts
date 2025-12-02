@@ -10,9 +10,14 @@ describe("Region ID Integration Tests", () => {
 
   describe("AgentBay initialization", () => {
     test("should create AgentBay client with region_id", () => {
+      const config = {
+        endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+        timeout_ms: 60000,
+        region_id: "cn-hangzhou"
+      };
       const client = new AgentBay({
         apiKey,
-        regionId: "cn-hangzhou"
+        config: config
       });
 
       expect(client.getRegionId()).toBe("cn-hangzhou");
@@ -25,9 +30,14 @@ describe("Region ID Integration Tests", () => {
     });
 
     test("should handle empty region_id", () => {
+      const config = {
+        endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+        timeout_ms: 60000,
+        region_id: ""
+      };
       const client = new AgentBay({
         apiKey,
-        regionId: ""
+        config: config
       });
 
       expect(client.getRegionId()).toBe("");
@@ -36,9 +46,14 @@ describe("Region ID Integration Tests", () => {
 
   describe("Session creation with region_id", () => {
     test("should create session successfully with region_id", async () => {
+      const config = {
+        endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+        timeout_ms: 60000,
+        region_id: "cn-hangzhou"
+      };
       const client = new AgentBay({
         apiKey,
-        regionId: "cn-beijing"
+        config: config
       });
 
       const sessionResult = await client.create({});
@@ -71,9 +86,14 @@ describe("Region ID Integration Tests", () => {
 
   describe("Context operations with region_id", () => {
     test("should create context successfully with region_id", async () => {
+      const config = {
+        endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+        timeout_ms: 60000,
+        region_id: "cn-hangzhou"
+      };
       const client = new AgentBay({
         apiKey,
-        regionId: "cn-shenzhen"
+        config: config
       });
 
       const contextName = `test-context-typescript-region-id-${Date.now()}`;
@@ -91,9 +111,14 @@ describe("Region ID Integration Tests", () => {
     }, 30000);
 
     test("should get existing context without create (no LoginRegionId)", async () => {
+      const config = {
+        endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+        timeout_ms: 60000,
+        region_id: "cn-hangzhou"
+      };
       const client = new AgentBay({
         apiKey,
-        regionId: "cn-shenzhen"
+        config: config
       });
 
       // Try to get non-existent context without create
@@ -124,9 +149,14 @@ describe("Region ID Integration Tests", () => {
 
   describe("End-to-end workflow with region_id", () => {
     test("should complete full workflow with region_id", async () => {
+      const config = {
+        endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+        timeout_ms: 60000,
+        region_id: "cn-hangzhou"
+      };
       const client = new AgentBay({
         apiKey,
-        regionId: "cn-hangzhou"
+        config: config
       });
 
       // 1. Create context

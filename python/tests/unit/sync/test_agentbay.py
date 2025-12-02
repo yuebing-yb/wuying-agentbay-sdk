@@ -83,7 +83,7 @@ class TestAgentBay(unittest.TestCase):
         """Test successfully creating a session"""
         # Mock configuration and request ID
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
+            "region_id": "cn-hangzhou",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -156,7 +156,7 @@ class TestAgentBay(unittest.TestCase):
         """Test listing sessions using the new list API"""
         # Mock configuration and request ID
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
+            "region_id": "cn-hangzhou",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -209,7 +209,7 @@ class TestAgentBay(unittest.TestCase):
         """Test list API pagination logic"""
         # Mock configuration and request ID
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
+            "region_id": "cn-hangzhou",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }
@@ -267,7 +267,7 @@ class TestAgentBay(unittest.TestCase):
     ):
         """Ensure policy_id is passed to create_mcp_session body"""
         mock_load_config.return_value = {
-            "region_id": "cn-shanghai",
+            "region_id": "cn-hangzhou",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
         }

@@ -249,8 +249,8 @@ func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) 
 	}
 
 	// Add LoginRegionId only when creating (create=true)
-	if create && cs.AgentBay.RegionID != "" {
-		request.LoginRegionId = tea.String(cs.AgentBay.RegionID)
+	if create && cs.AgentBay.config.RegionID != "" {
+		request.LoginRegionId = tea.String(cs.AgentBay.config.RegionID)
 	}
 
 	// Log API request

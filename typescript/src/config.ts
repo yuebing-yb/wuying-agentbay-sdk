@@ -5,6 +5,7 @@ import * as dotenv from "dotenv";
 interface Config {
   endpoint: string;
   timeout_ms: number;
+  region_id?: string;
 }
 
 /**
@@ -29,6 +30,7 @@ function defaultConfig(): Config {
   return {
     endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
     timeout_ms: 60000,
+    region_id: undefined,
   };
 }
 
@@ -169,7 +171,11 @@ function loadConfig(customConfig?: Config, customEnvPath?: string): Config {
     }
   }
 
+  if (process.env.AGENTBAY_REGION_ID) {
+    config.region_id = process.env.AGENTBAY_REGION_ID;
+  }
+
   return config;
 }
 
-export { Config };
+export { Config, loadConfig, loadDotEnvWithFallback };

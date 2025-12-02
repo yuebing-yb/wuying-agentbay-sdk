@@ -18,9 +18,8 @@ type Option func(*AgentBayConfig)
 
 // AgentBayConfig holds optional configuration for the AgentBay client.
 type AgentBayConfig struct {
-	cfg      *Config
-	envFile  string
-	regionID string
+	cfg     *Config
+	envFile string
 }
 
 // WithConfig returns an Option that sets the configuration for the AgentBay client.
@@ -37,20 +36,15 @@ func WithEnvFile(envFile string) Option {
 	}
 }
 
-// WithRegionID returns an Option that sets the region ID for the AgentBay client.
-func WithRegionID(regionID string) Option {
-	return func(c *AgentBayConfig) {
-		c.regionID = regionID
-	}
-}
+
 
 // AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
 type AgentBay struct {
 	APIKey         string
-	RegionID       string
 	Client         *mcp.Client
 	Context        *ContextService
 	MobileSimulate *MobileSimulateService
+	config         Config
 }
 
 // NewAgentBay creates a new AgentBay client.
@@ -92,10 +86,10 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Create AgentBay instance
 	agentBay := &AgentBay{
-		APIKey:   apiKey,
-		RegionID: config_option.regionID,
-		Client:   client,
-		Context:  nil, // Will be initialized after creation
+		APIKey:  apiKey,
+		Client:  client,
+		Context: nil, // Will be initialized after creation
+		config:  config,
 	}
 
 	// Initialize context service
@@ -163,8 +157,8 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	createSessionRequest.SdkStats = tea.String(sdkStatsJSON)
 
 	// Add LoginRegionId if region_id is set
-	if a.RegionID != "" {
-		createSessionRequest.LoginRegionId = tea.String(a.RegionID)
+	if a.config.RegionID != "" {
+		createSessionRequest.LoginRegionId = tea.String(a.config.RegionID)
 	}
 
 	// Add image_id if provided
@@ -1243,9 +1237,10 @@ func (a *AgentBay) updateBrowserReplayContext(responseData *mcp.CreateMcpSession
 		return
 	}
 
-	if updateResult.Success {
-		fmt.Printf("✅ Successfully updated browser replay context: %s\n", contextName)
-	} else {
-		fmt.Printf("⚠️  Failed to update browser replay context: %s\n", updateResult.ErrorMessage)
-	}
+	_ = updateResult // Ignore result
+}
+
+// GetRegionID returns the region ID from config
+func (a *AgentBay) GetRegionID() string {
+	return a.config.RegionID
 }

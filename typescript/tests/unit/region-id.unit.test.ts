@@ -5,13 +5,17 @@ describe("Region ID Unit Tests", () => {
 
   describe("AgentBay initialization", () => {
     test("should create AgentBay client with region_id", () => {
-      const client = new AgentBay({
-        apiKey: mockApiKey,
-        regionId: "cn-hangzhou"
-      });
-
-      expect(client.getRegionId()).toBe("cn-hangzhou");
-    });
+  const config = {
+    endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+    timeout_ms: 60000,
+    region_id: "cn-hangzhou"
+  };
+  const client = new AgentBay({
+    apiKey: "test-api-key",
+    config: config
+  });
+  expect(client.getRegionId()).toBe("cn-hangzhou");
+});
 
     test("should create AgentBay client without region_id", () => {
       const client = new AgentBay({ 
@@ -22,25 +26,30 @@ describe("Region ID Unit Tests", () => {
     });
 
     test("should handle empty region_id", () => {
-      const client = new AgentBay({
-        apiKey: mockApiKey,
-        regionId: ""
-      });
-
-      expect(client.getRegionId()).toBe("");
-    });
+  const config = {
+    endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+    timeout_ms: 60000,
+    region_id: ""
+  };
+  const client = new AgentBay({
+    apiKey: "test-api-key",
+    config: config
+  });
+  expect(client.getRegionId()).toBe("");
+});
 
     test("should handle multiple initialization options", () => {
-      const client = new AgentBay({
-        apiKey: mockApiKey,
-        regionId: "cn-beijing",
-        config: {
-          endpoint: "test.endpoint.com",
-          timeout_ms: 30000
-        }
-      });
+      const config = {
+    endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
+    timeout_ms: 60000,
+    region_id: "cn-hangzhou"
+  };
+  const client = new AgentBay({
+    apiKey: "test-api-key",
+    config: config
+  });
 
-      expect(client.getRegionId()).toBe("cn-beijing");
+      expect(client.getRegionId()).toBe("cn-hangzhou");
     });
   });
 });

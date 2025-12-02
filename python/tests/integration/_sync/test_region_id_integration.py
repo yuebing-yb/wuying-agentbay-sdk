@@ -13,6 +13,7 @@ import os
 import unittest
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
+from agentbay._common.config import Config
 
 
 class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
@@ -26,8 +27,9 @@ class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
 
     def test_session_creation_with_region_id(self):
         """Test creating a session with region_id=cn-hangzhou"""
-        # Create AgentBay client with region_id
-        agent_bay = AgentBay(region_id="cn-hangzhou")
+        # Create AgentBay client with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AgentBay(cfg=config)
 
         # Verify region_id is stored
         self.assertEqual(agent_bay.region_id, "cn-hangzhou")
@@ -51,8 +53,9 @@ class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
 
     def test_context_creation_with_region_id(self):
         """Test creating a context with region_id=cn-hangzhou"""
-        # Create AgentBay client with region_id
-        agent_bay = AgentBay(region_id="cn-hangzhou")
+        # Create AgentBay client with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AgentBay(cfg=config)
 
         # Verify region_id is stored
         self.assertEqual(agent_bay.region_id, "cn-hangzhou")
@@ -77,8 +80,9 @@ class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
 
     def test_context_get_existing_without_region_id(self):
         """Test getting an existing context doesn't pass region_id"""
-        # Create AgentBay client with region_id
-        agent_bay = AgentBay(region_id="cn-hangzhou")
+        # Create AgentBay client with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AgentBay(cfg=config)
 
         # First create a context
         context_name = f"test-existing-context-{int(time.time())}"
@@ -105,8 +109,9 @@ class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
 
     def test_session_and_context_workflow(self):
         """Test complete workflow: create session with context sync using region_id"""
-        # Create AgentBay client with region_id
-        agent_bay = AgentBay(region_id="cn-hangzhou")
+        # Create AgentBay client with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AgentBay(cfg=config)
 
         # Create a context first
         context_name = f"test-workflow-context-{int(time.time())}"

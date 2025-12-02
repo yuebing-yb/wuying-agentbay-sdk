@@ -13,6 +13,7 @@ import (
 type Config struct {
 	Endpoint  string `json:"endpoint"`
 	TimeoutMs int    `json:"timeout_ms"`
+	RegionID  string `json:"region_id"`
 }
 
 // defaultConfig returns the default configuration
@@ -20,6 +21,7 @@ func defaultConfig() Config {
 	return Config{
 		Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
 		TimeoutMs: 60000,
+		RegionID:  "",
 	}
 }
 
@@ -129,6 +131,7 @@ func loadConfig(cfg *Config, customEnvPath string) Config {
 		return Config{
 			Endpoint:  cfg.Endpoint,
 			TimeoutMs: cfg.TimeoutMs,
+			RegionID:  cfg.RegionID,
 		}
 	}
 
@@ -144,8 +147,11 @@ func loadConfig(cfg *Config, customEnvPath string) Config {
 	if timeoutMS := os.Getenv("AGENTBAY_TIMEOUT_MS"); timeoutMS != "" {
 		_, err := fmt.Sscanf(timeoutMS, "%d", &config.TimeoutMs)
 		if err != nil {
-			fmt.Printf("Warning: Failed to parse AGENTBAY_TIMEOUT_MS as integer: %v, using default value %d\n", err, config.TimeoutMs)
+			// Warning: Failed to parse AGENTBAY_TIMEOUT_MS as integer, using default
 		}
+	}
+	if regionID := os.Getenv("AGENTBAY_REGION_ID"); regionID != "" {
+		config.RegionID = regionID
 	}
 
 	return config

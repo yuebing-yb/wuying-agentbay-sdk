@@ -1,11 +1,9 @@
-import os
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay import AsyncAgentBay
-from agentbay import AsyncContextService, Context, ContextResult
-from agentbay import CreateSessionParams
+from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay.api.models import CreateMcpSessionRequest, GetContextRequest
+from agentbay._common.config import Config
 
 
 class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
@@ -28,8 +26,9 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_client = MagicMock()
         mock_mcp_client.return_value = mock_client
 
-        # Create AsyncAgentBay instance with region_id
-        agent_bay = AsyncAgentBay(region_id="cn-hangzhou")
+        # Create AsyncAgentBay instance with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AsyncAgentBay(cfg=config)
 
         # Verify region_id is stored
         self.assertEqual(agent_bay.region_id, "cn-hangzhou")
@@ -103,8 +102,9 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
                     mock_wait.return_value = None
                     mock_fetch.return_value = None
 
-                    # Create AsyncAgentBay instance with region_id
-                    agent_bay = AsyncAgentBay(region_id="cn-beijing")
+                    # Create AsyncAgentBay instance with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AsyncAgentBay(cfg=config)
 
                     # Create session
                     params = CreateSessionParams()
@@ -114,7 +114,7 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
             mock_client.create_mcp_session_async.assert_called_once()
             call_args = mock_client.create_mcp_session_async.call_args[0][0]
             self.assertIsInstance(call_args, CreateMcpSessionRequest)
-            self.assertEqual(call_args.login_region_id, "cn-beijing")
+            self.assertEqual(call_args.login_region_id, "cn-hangzhou")
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
@@ -200,8 +200,9 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_client.get_context_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
-        # Create AsyncAgentBay instance with region_id
-        agent_bay = AsyncAgentBay(region_id="cn-shenzhen")
+        # Create AsyncAgentBay instance with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AsyncAgentBay(cfg=config)
 
         # Create context (get with create=True)
         result = await agent_bay.context.get("test-context-name", create=True)
@@ -210,7 +211,7 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_client.get_context_async.assert_called_once()
         call_args = mock_client.get_context_async.call_args[0][0]
         self.assertIsInstance(call_args, GetContextRequest)
-        self.assertEqual(call_args.login_region_id, "cn-shenzhen")
+        self.assertEqual(call_args.login_region_id, "cn-hangzhou")
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
@@ -237,8 +238,9 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_client.get_context_async = AsyncMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
-        # Create AsyncAgentBay instance with region_id
-        agent_bay = AsyncAgentBay(region_id="cn-shenzhen")
+        # Create AsyncAgentBay instance with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AsyncAgentBay(cfg=config)
 
         # Get existing context (create=False, which is default)
         result = await agent_bay.context.get("test-context-name")

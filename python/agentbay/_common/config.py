@@ -16,9 +16,10 @@ class Config:
     Configuration object for AgentBay client.
     """
 
-    def __init__(self, endpoint: str, timeout_ms: int):
+    def __init__(self, endpoint: str, timeout_ms: int, region_id: Optional[str] = None):
         self.endpoint = endpoint
         self.timeout_ms = timeout_ms
+        self.region_id = region_id
 
 
 def _default_config() -> Dict[str, Any]:
@@ -26,6 +27,7 @@ def _default_config() -> Dict[str, Any]:
     return {
         "endpoint": "wuyingai.cn-shanghai.aliyuncs.com",
         "timeout_ms": 60000,
+        "region_id": None,
     }
 
 
@@ -140,6 +142,7 @@ def _load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
         config = {
             "endpoint": cfg.endpoint,
             "timeout_ms": cfg.timeout_ms,
+            "region_id": cfg.region_id,
         }
     else:
         config = _default_config()
@@ -160,5 +163,7 @@ def _load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
                 _logger.warning(
                     f"Invalid AGENTBAY_TIMEOUT_MS value: {timeout_ms}, using default"
                 )
+        if region_id := os.getenv("AGENTBAY_REGION_ID"):
+            config["region_id"] = region_id
 
     return config

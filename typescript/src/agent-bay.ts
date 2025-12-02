@@ -7,7 +7,7 @@ import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
 import { Client } from "./api/client";
 
-import { Config, BROWSER_RECORD_PATH } from "./config";
+import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
 import { ContextService } from "./context";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
@@ -45,109 +45,9 @@ import { VERSION, IS_RELEASE } from "./version";
 // Browser data path constant (moved from config.ts)
 const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 
-/**
- * Returns the default configuration
- */
-function defaultConfig(): Config {
-  return {
-    endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
-    timeout_ms: 60000,
-  };
-}
 
-/**
- * Find .env file by searching upward from start_path.
- */
-function findDotEnvFile(startPath?: string): string | null {
-  const currentPath = startPath ? path.resolve(startPath) : process.cwd();
-  let searchPath = currentPath;
 
-  while (searchPath !== path.dirname(searchPath)) {
-    const envFile = path.join(searchPath, ".env");
-    if (fs.existsSync(envFile)) {
-      return envFile;
-    }
 
-    const gitDir = path.join(searchPath, ".git");
-    if (fs.existsSync(gitDir)) {
-      // Found git root, continue searching
-    }
-
-    searchPath = path.dirname(searchPath);
-  }
-
-  const rootEnv = path.join(searchPath, ".env");
-  if (fs.existsSync(rootEnv)) {
-    return rootEnv;
-  }
-
-  return null;
-}
-
-/**
- * Load .env file with improved search strategy.
- */
-function loadDotEnvWithFallback(customEnvPath?: string): void {
-  if (customEnvPath) {
-    if (fs.existsSync(customEnvPath)) {
-      try {
-        const envConfig = dotenv.parse(fs.readFileSync(customEnvPath));
-        for (const k in envConfig) {
-          if (!process.env.hasOwnProperty(k)) {
-            process.env[k] = envConfig[k];
-          }
-        }
-        return;
-      } catch (error) {
-        // Silently fail - .env loading is optional
-      }
-    }
-  }
-
-  const envFile = findDotEnvFile();
-  if (envFile) {
-    try {
-      const envConfig = dotenv.parse(fs.readFileSync(envFile));
-      for (const k in envConfig) {
-        if (!process.env.hasOwnProperty(k)) {
-          process.env[k] = envConfig[k];
-        }
-      }
-    } catch (error) {
-      // Silently fail - .env loading is optional
-    }
-  }
-}
-
-/**
- * Load configuration with improved .env file search.
- */
-function loadConfig(customConfig?: Config, customEnvPath?: string): Config {
-  if (customConfig) {
-    return customConfig;
-  }
-
-  const config = defaultConfig();
-
-  try {
-    loadDotEnvWithFallback(customEnvPath);
-  } catch (error) {
-    // Silently fail - .env loading is optional
-  }
-
-  if (process.env.AGENTBAY_ENDPOINT) {
-    config.endpoint = process.env.AGENTBAY_ENDPOINT;
-  }
-
-  if (process.env.AGENTBAY_TIMEOUT_MS) {
-    const timeout = parseInt(process.env.AGENTBAY_TIMEOUT_MS, 10);
-    if (!isNaN(timeout) && timeout > 0) {
-      config.timeout_ms = timeout;
-    }
-  }
-
-  return config;
-}
 
 /**
  * Generate a random context name using alphanumeric characters with timestamp.
@@ -185,10 +85,10 @@ export interface CreateSessionParams {
  */
 export class AgentBay {
   private apiKey: string;
-  private regionId?: string;
   private client: Client;
   private endpoint: string;
   private fileTransferContext: Context | null = null;
+  private config: Config;
 
   /**
    * Context service for managing persistent contexts.
@@ -207,27 +107,26 @@ export class AgentBay {
    * @param options.apiKey - API key for authentication. If not provided, will look for AGENTBAY_API_KEY environment variable.
    * @param options.config - Custom configuration object. If not provided, will use environment-based configuration.
    * @param options.envFile - Custom path to .env file. If not provided, will search upward from current directory.
-   * @param options.regionId - Region ID for cloud resources. This will be passed as LoginRegionId in API requests.
    */
   constructor(
     options: {
       apiKey?: string;
       config?: Config;
       envFile?: string;
-      regionId?: string;
     } = {}
   ) {
     // Load .env file first to ensure AGENTBAY_API_KEY is available
     loadDotEnvWithFallback(options.envFile);
 
     this.apiKey = options.apiKey || process.env.AGENTBAY_API_KEY || "";
-    this.regionId = options.regionId;
 
     if (!this.apiKey) {
       throw new AuthenticationError(
         "API key is required. Provide it as a parameter or set the AGENTBAY_API_KEY environment variable."
       );
     }
+
+    this.config = loadConfig(options.config, options.envFile);
 
     // Load configuration using the enhanced loadConfig function
     const configData = loadConfig(options.config, options.envFile);
@@ -260,7 +159,7 @@ export class AgentBay {
    * @returns The region ID or undefined if not set.
    */
   getRegionId(): string | undefined {
-    return this.regionId;
+    return this.config.region_id;
   }
 
   /**
@@ -464,8 +363,8 @@ export class AgentBay {
       request.sdkStats = sdkStatsJson;
 
       // Add LoginRegionId if region_id is set
-      if (this.regionId) {
-        request.loginRegionId = this.regionId;
+      if (this.config.region_id) {
+        request.loginRegionId = this.config.region_id;
       }
 
       // Add labels if provided
