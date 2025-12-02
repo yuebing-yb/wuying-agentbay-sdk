@@ -110,11 +110,11 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
                     params = CreateSessionParams()
                     result = await agent_bay.create(params)
 
-            # Verify the API call was made with LoginRegionId
-            mock_client.create_mcp_session_async.assert_called_once()
-            call_args = mock_client.create_mcp_session_async.call_args[0][0]
-            self.assertIsInstance(call_args, CreateMcpSessionRequest)
-            self.assertEqual(call_args.login_region_id, "cn-hangzhou")
+                    # Verify the API call was made with LoginRegionId
+                    mock_client.create_mcp_session_async.assert_called_once()
+                    call_args = mock_client.create_mcp_session_async.call_args[0][0]
+                    self.assertIsInstance(call_args, CreateMcpSessionRequest)
+                    self.assertEqual(call_args.login_region_id, "cn-hangzhou")
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
