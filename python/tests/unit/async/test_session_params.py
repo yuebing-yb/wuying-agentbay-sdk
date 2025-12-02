@@ -1,8 +1,7 @@
 import json
 import unittest
 
-from agentbay import CreateSessionParams
-from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
+from agentbay import CreateSessionParams, AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 
 class TestAsyncCreateSessionParams(unittest.IsolatedAsyncioTestCase):

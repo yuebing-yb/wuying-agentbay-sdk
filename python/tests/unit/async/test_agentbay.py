@@ -4,10 +4,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay import AsyncAgentBay
 from agentbay import (
+    AsyncAgentBay,
     CreateSessionParams,
     ListSessionParams,
+    AppManagerRule,
+    ExtraConfigs,
+    MobileExtraConfig,
 )
-from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 
 class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):

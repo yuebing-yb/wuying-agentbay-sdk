@@ -11,9 +11,7 @@ when creating sessions and contexts.
 
 import os
 import unittest
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-from agentbay._common.config import Config
+from agentbay import AgentBay, CreateSessionParams, Config
 
 
 class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):

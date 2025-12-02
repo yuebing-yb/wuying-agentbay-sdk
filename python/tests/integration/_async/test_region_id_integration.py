@@ -8,9 +8,7 @@ when creating sessions and contexts.
 import os
 import unittest
 import asyncio
-from agentbay import AsyncAgentBay
-from agentbay import CreateSessionParams
-from agentbay._common.config import Config
+from agentbay import AsyncAgentBay, CreateSessionParams, Config
 
 
 class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
