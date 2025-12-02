@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
@@ -12,7 +12,7 @@ sys.path.append(
 )
 
 
-class TestRefactoredMethods(unittest.TestCase):
+class TestAsyncRefactoredMethods(unittest.TestCase):
     """Test cases for refactored methods in AgentBay class."""
 
     def setUp(self):
@@ -38,7 +38,7 @@ class TestRefactoredMethods(unittest.TestCase):
         params.extra_configs = None
 
         # Mock session - need to patch the correct path after refactoring
-        with patch("agentbay._sync.agentbay.Session") as mock_session_class:
+        with patch("agentbay._async.agentbay.AsyncSession") as mock_session_class:
             mock_session = Mock()
             mock_session_class.return_value = mock_session
 
@@ -68,7 +68,7 @@ class TestRefactoredMethods(unittest.TestCase):
         mock_tools_result = Mock()
         mock_tools_result.tools = ["tool1", "tool2", "tool3"]
         mock_tools_result.request_id = "test-request-123"
-        mock_session.list_mcp_tools.return_value = mock_tools_result
+        mock_session.list_mcp_tools = MagicMock(return_value=mock_tools_result)
 
         # Call the method
         self.agent_bay._fetch_mcp_tools_for_vpc_session(mock_session)
@@ -80,7 +80,7 @@ class TestRefactoredMethods(unittest.TestCase):
         """Test _fetch_mcp_tools_for_vpc_session method with error."""
         # Mock session that raises an exception
         mock_session = Mock()
-        mock_session.list_mcp_tools.side_effect = Exception("Test error")
+        mock_session.list_mcp_tools = MagicMock(side_effect=Exception("Test error"))
 
         # Call the method - should not raise an exception
         self.agent_bay._fetch_mcp_tools_for_vpc_session(mock_session)
@@ -104,7 +104,7 @@ class TestRefactoredMethods(unittest.TestCase):
 
         mock_info_result = Mock()
         mock_info_result.context_status_data = [mock_context_item]
-        mock_context.info.return_value = mock_info_result
+        mock_context.info = MagicMock(return_value=mock_info_result)
 
         # Call the method
         self.agent_bay._wait_for_context_synchronization(mock_session)
@@ -171,7 +171,7 @@ class TestRefactoredMethods(unittest.TestCase):
 
         # Mock context service
         with patch.object(self.agent_bay, "context") as mock_context:
-            mock_context.update.return_value = mock_update_result
+            mock_context.update = MagicMock(return_value=mock_update_result)
 
             # Call the method
             self.agent_bay._update_browser_replay_context(
@@ -238,7 +238,7 @@ class TestRefactoredMethods(unittest.TestCase):
 
         # Mock context service
         with patch.object(self.agent_bay, "context") as mock_context:
-            mock_context.update.return_value = mock_update_result
+            mock_context.update = MagicMock(return_value=mock_update_result)
 
             # Call the method - should not raise an exception
             self.agent_bay._update_browser_replay_context(
@@ -264,7 +264,7 @@ class TestRefactoredMethods(unittest.TestCase):
 
         # Mock context service that raises an exception
         with patch.object(self.agent_bay, "context") as mock_context:
-            mock_context.update.side_effect = Exception("Test error")
+            mock_context.update = MagicMock(side_effect=Exception("Test error"))
 
             # Call the method - should not raise an exception
             self.agent_bay._update_browser_replay_context(

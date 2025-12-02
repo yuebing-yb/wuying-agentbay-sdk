@@ -1,8 +1,9 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import OperationResult
-from agentbay import Command, CommandResult
+from agentbay import SyncCommand
+from agentbay import CommandResult
 
 
 class DummySession:
@@ -23,10 +24,10 @@ class DummySession:
         return self.client
 
 
-class TestCommand(unittest.TestCase):
+class TestAsyncCommand(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
-        self.command = Command(self.session)
+        self.command = SyncCommand(self.session)
 
     def test_execute_command_success(self):
         """
@@ -37,7 +38,7 @@ class TestCommand(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123", success=True, data="line1\nline2\n"
         )
-        self.session.call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         result = self.command.execute_command("ls -la")
         self.assertIsInstance(result, CommandResult)
@@ -61,7 +62,7 @@ class TestCommand(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123", success=True, data="line1\nline2\n"
         )
-        self.session.call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         custom_timeout = 2000
         result = self.command.execute_command("ls -la", timeout_ms=custom_timeout)
@@ -85,7 +86,7 @@ class TestCommand(unittest.TestCase):
             success=False,
             error_message="Command execution failed",
         )
-        self.session.call_mcp_tool.return_value = mock_result
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         result = self.command.execute_command("ls -la")
         self.assertIsInstance(result, CommandResult)
@@ -98,7 +99,7 @@ class TestCommand(unittest.TestCase):
         """
         Test execute_command method with exception.
         """
-        self.session.call_mcp_tool.side_effect = Exception("mock error")
+        self.session.call_mcp_tool = MagicMock(side_effect=Exception("mock error"))
 
         result = self.command.execute_command("ls -la")
         self.assertIsInstance(result, CommandResult)

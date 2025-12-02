@@ -3,7 +3,7 @@ import unittest
 from agentbay import BrowserOption
 
 
-class TestBrowserTypeUnit(unittest.TestCase):
+class TestAsyncBrowserTypeUnit(unittest.TestCase):
     """Unit tests for browser type functionality."""
 
     def test_browser_type_default(self):

@@ -3,14 +3,14 @@ Unit tests for Mobile module.
 Following TDD principles - tests first, then implementation.
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from agentbay import AgentBayError
 from agentbay import BoolResult, OperationResult
 from agentbay import AppOperationResult, ProcessListResult
-from agentbay import Mobile
+from agentbay import SyncMobile
 
 
 class TestMobile:
@@ -19,8 +19,13 @@ class TestMobile:
     def setup_method(self):
         """Set up test fixtures."""
         self.mock_session = Mock()
+        self.mock_session.call_mcp_tool = MagicMock()
+        # Setup agent_bay.client mock for get_adb_url
+        self.mock_session.agent_bay = Mock()
+        self.mock_session.agent_bay.client = Mock()
+        self.mock_session.agent_bay.client.get_adb_link_async = MagicMock()
         self.session = self.mock_session  # Add session reference for tests
-        self.mobile = Mobile(self.mock_session)
+        self.mobile = SyncMobile(self.mock_session)
 
     def test_mobile_initialization(self):
         """Test Mobile module initialization."""
@@ -35,7 +40,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.error_message = ""
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.tap(100, 200)
@@ -53,7 +58,7 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.swipe(100, 100, 200, 200)
@@ -79,7 +84,7 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.swipe(100, 100, 200, 200, duration_ms=500)
@@ -103,7 +108,7 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.input_text("Hello Mobile")
@@ -122,7 +127,7 @@ class TestMobile:
         mock_result.success = True
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.send_key(4)  # BACK key
@@ -141,7 +146,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.data = '[{"id": "button1", "text": "Click me"}]'  # JSON string
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.get_clickable_ui_elements()
@@ -162,7 +167,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.data = "[]"  # JSON string
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.get_clickable_ui_elements(timeout_ms=5000)
@@ -181,7 +186,7 @@ class TestMobile:
         # Mock data with proper UI element structure including children
         mock_result.data = '[{"bounds": "[0,0][100,100]", "className": "Button", "text": "Click me", "type": "button", "resourceId": "btn1", "index": 0, "isParent": true, "children": [{"bounds": "[10,10][90,90]", "className": "Text", "text": "Label", "type": "text", "resourceId": "txt1", "index": 0, "isParent": false}]}, {"bounds": "[0,100][100,200]", "className": "TextView", "text": "Hello", "type": "text", "resourceId": "txt2", "index": 1, "isParent": false}]'
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.get_all_ui_elements()
@@ -213,7 +218,7 @@ class TestMobile:
         mock_result.data = '[{"name": "Calculator", "package_name": "com.calculator"}]'
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.get_installed_apps(
@@ -236,7 +241,7 @@ class TestMobile:
         mock_result.data = "[]"
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.get_installed_apps(
@@ -257,7 +262,7 @@ class TestMobile:
         mock_result.data = '[{"pid": 1234, "name": "calculator"}]'
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.start_app("com.android.calculator2")
@@ -277,10 +282,12 @@ class TestMobile:
         mock_result.data = '[{"pid": 1234, "name": "settings"}]'
         mock_result.request_id = "test-123"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
-        result = self.mobile.start_app("com.android.settings", activity=".MainActivity")
+        result = self.mobile.start_app(
+            "com.android.settings", activity=".MainActivity"
+        )
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
@@ -296,7 +303,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.error_message = ""
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.stop_app_by_cmd("com.android.calculator2")
@@ -317,7 +324,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.data = "/path/to/mobile_screenshot.png"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.screenshot()
@@ -342,7 +349,7 @@ class TestMobile:
         mock_response.body.data = Mock()
         mock_response.body.data.url = "adb connect 47.99.76.99:54848"
 
-        self.mobile.session.agent_bay.client.get_adb_link = Mock(
+        self.mobile.session.agent_bay.client.get_adb_link_async = MagicMock(
             return_value=mock_response
         )
 
@@ -375,7 +382,7 @@ class TestMobile:
         )
         mock_response.body.data = None
 
-        self.mobile.session.agent_bay.client.get_adb_link = Mock(
+        self.mobile.session.agent_bay.client.get_adb_link_async = MagicMock(
             return_value=mock_response
         )
 
@@ -403,7 +410,7 @@ class TestMobile:
         mock_response.body.data = Mock()
         mock_response.body.data.url = "adb connect 192.168.1.1:5555"
 
-        self.mobile.session.agent_bay.client.get_adb_link = Mock(
+        self.mobile.session.agent_bay.client.get_adb_link_async = MagicMock(
             return_value=mock_response
         )
 
@@ -412,8 +419,8 @@ class TestMobile:
         result = self.mobile.get_adb_url(adbkey_pub)
 
         # Assert
-        self.mobile.session.agent_bay.client.get_adb_link.assert_called_once()
-        call_args = self.mobile.session.agent_bay.client.get_adb_link.call_args
+        self.mobile.session.agent_bay.client.get_adb_link_async.assert_called_once()
+        call_args = self.mobile.session.agent_bay.client.get_adb_link_async.call_args
 
         # Verify the request object
         request = call_args[0][0]
@@ -458,7 +465,7 @@ class TestMobile:
         mock_result.request_id = "test-123"
         mock_result.error_message = "MCP tool failed"
 
-        self.session.call_mcp_tool = Mock(return_value=mock_result)
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
         result = self.mobile.tap(100, 200)
@@ -471,7 +478,7 @@ class TestMobile:
     def test_tap_exception(self):
         """Test tap when exception occurs."""
         # Arrange
-        self.session.call_mcp_tool = Mock(side_effect=Exception("Network error"))
+        self.session.call_mcp_tool = MagicMock(side_effect=Exception("Network error"))
 
         # Act
         result = self.mobile.tap(100, 200)

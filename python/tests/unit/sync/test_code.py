@@ -1,10 +1,11 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
-from agentbay import Code, CodeExecutionResult
+from agentbay import SyncCode
+from agentbay import CodeExecutionResult
 
 
-class TestCode(unittest.TestCase):
+class TestAsyncCode(unittest.TestCase):
     """Unit tests for Code module."""
 
     def setUp(self):
@@ -14,8 +15,9 @@ class TestCode(unittest.TestCase):
         self.mock_session.get_api_key.return_value = "test-api-key"
         self.mock_session.get_session_id.return_value = "test-session-id"
         self.mock_session.get_client.return_value = Mock()
+        self.mock_session.call_mcp_tool = MagicMock()
 
-        self.code = Code(self.mock_session)
+        self.code = SyncCode(self.mock_session)
 
     def test_run_code_success_python(self):
         """

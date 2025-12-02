@@ -1,15 +1,15 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, MagicMock
 
 from agentbay import McpToolResult, OperationResult
-from agentbay import Oss
+from agentbay import SyncOss
 
 
-class TestOss(unittest.TestCase):
+class TestAsyncOss(unittest.TestCase):
     def setUp(self):
         self.mock_session = MagicMock()
         self.session = self.mock_session  # Add session reference
-        self.oss = Oss(self.mock_session)
+        self.oss = SyncOss(self.mock_session)
 
     def test_env_init_success(self):
         # Create a mock OperationResult

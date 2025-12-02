@@ -1,10 +1,10 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, MagicMock
 
-from agentbay import Context, ContextService
+from agentbay import Context, SyncContextService
 
 
-class TestContext(unittest.TestCase):
+class TestAsyncContext(unittest.TestCase):
     def test_context_initialization(self):
         """Test that Context initializes with the correct attributes."""
         context = Context(
@@ -20,13 +20,13 @@ class TestContext(unittest.TestCase):
         self.assertEqual(context.last_used_at, "2025-05-29T12:30:00Z")
 
 
-class TestContextService(unittest.TestCase):
+class TestAsyncContextService(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.agent_bay = MagicMock()
         self.agent_bay.api_key = "test-api-key"
         self.agent_bay.client = MagicMock()
-        self.context_service = ContextService(self.agent_bay)
+        self.context_service = SyncContextService(self.agent_bay)
 
     def test_list_contexts(self):
         """Test listing contexts."""
@@ -54,7 +54,9 @@ class TestContextService(unittest.TestCase):
                 ]
             }
         }
-        self.agent_bay.client.list_contexts.return_value = mock_response
+        self.agent_bay.client.list_contexts_async = MagicMock(
+            return_value=mock_response
+        )
 
         # Call the method
         result = self.context_service.list()
@@ -71,7 +73,9 @@ class TestContextService(unittest.TestCase):
         # Mock the response from the API
         mock_get_response = MagicMock()
         mock_get_response.to_map.return_value = {"body": {"Data": {"Id": "context-1"}}}
-        self.agent_bay.client.get_context.return_value = mock_get_response
+        self.agent_bay.client.get_context_async = MagicMock(
+            return_value=mock_get_response
+        )
 
         # Mock the list response to get full context details
         mock_list_response = MagicMock()
@@ -89,7 +93,9 @@ class TestContextService(unittest.TestCase):
                 ]
             }
         }
-        self.agent_bay.client.list_contexts.return_value = mock_list_response
+        self.agent_bay.client.list_contexts_async = MagicMock(
+            return_value=mock_list_response
+        )
 
         # Call the method
         result = self.context_service.get("test-context")
@@ -107,7 +113,9 @@ class TestContextService(unittest.TestCase):
         mock_get_response.to_map.return_value = {
             "body": {"Data": {"Id": "new-context-id"}}
         }
-        self.agent_bay.client.get_context.return_value = mock_get_response
+        self.agent_bay.client.get_context_async = MagicMock(
+            return_value=mock_get_response
+        )
 
         # Mock the list response to get full context details
         mock_list_response = MagicMock()
@@ -125,7 +133,9 @@ class TestContextService(unittest.TestCase):
                 ]
             }
         }
-        self.agent_bay.client.list_contexts.return_value = mock_list_response
+        self.agent_bay.client.list_contexts_async = MagicMock(
+            return_value=mock_list_response
+        )
 
         # Call the method
         result = self.context_service.create("new-context")
@@ -151,13 +161,15 @@ class TestContextService(unittest.TestCase):
                 "Success": True,
             }
         }
-        self.agent_bay.client.modify_context.return_value = mock_response
+        self.agent_bay.client.modify_context_async = MagicMock(
+            return_value=mock_response
+        )
 
         # Call the method
         result = self.context_service.update(context)
 
         # Verify the API was called correctly
-        self.agent_bay.client.modify_context.assert_called_once()
+        self.agent_bay.client.modify_context_async.assert_called_once()
 
         # Verify the results - should return the original context if update successful
         self.assertTrue(result.success)
@@ -177,13 +189,15 @@ class TestContextService(unittest.TestCase):
                 "Success": True,
             }
         }
-        self.agent_bay.client.delete_context.return_value = mock_response
+        self.agent_bay.client.delete_context_async = MagicMock(
+            return_value=mock_response
+        )
 
         # Call the method
         result = self.context_service.delete(context)
 
         # Verify the API was called correctly
-        self.agent_bay.client.delete_context.assert_called_once()
+        self.agent_bay.client.delete_context_async.assert_called_once()
 
         # Verify the results
         self.assertTrue(result.success)

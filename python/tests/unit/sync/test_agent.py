@@ -1,11 +1,12 @@
 import os
 import time
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import get_logger
 from agentbay import McpToolResult, OperationResult
-from agentbay import Agent, ExecutionResult
+from agentbay import SyncAgent
+from agentbay import ExecutionResult
 
 logger = get_logger("agentbay-unit-test")
 
@@ -28,10 +29,10 @@ class DummySession:
         return self.client
 
 
-class TestAgent(unittest.TestCase):
+class TestAsyncAgent(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
-        self.agent = Agent(self.session)
+        self.agent = SyncAgent(self.session)
         self.max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
         if not self.max_try_times:
             self.max_try_times = 5

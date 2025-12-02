@@ -1,0 +1,234 @@
+import os
+import unittest
+from unittest.mock import MagicMock, MagicMock, patch
+
+from agentbay import AgentBay, CreateSessionParams, Context, ContextResult, SyncContextService, Config
+from agentbay.api.models import CreateMcpSessionRequest, GetContextRequest
+
+
+class TestRegionIdSupport(unittest.TestCase):
+    """Test region_id support in AgentBay client"""
+
+    @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
+    @patch("agentbay._async.agentbay.mcp_client")
+    def test_agentbay_initialization_with_region_id(
+        self, mock_mcp_client
+    ):
+        """Test initializing AgentBay with region_id parameter"""
+        # Mock client
+        mock_client = MagicMock()
+        mock_mcp_client.return_value = mock_client
+
+        # Create AsyncAgentBay instance with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AgentBay(cfg=config)
+
+        # Verify region_id is stored
+        self.assertEqual(agent_bay.region_id, "cn-hangzhou")
+        self.assertEqual(agent_bay.api_key, "test-api-key")
+
+    @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
+    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._async.agentbay.mcp_client")
+    def test_agentbay_initialization_without_region_id(
+        self, mock_mcp_client, mock_load_config
+    ):
+        """Test initializing AgentBay without region_id parameter (should default to None)"""
+        # Mock configuration
+        mock_load_config.return_value = {
+            "endpoint": "test.endpoint.com",
+            "timeout_ms": 30000,
+            "region_id": None,
+        }
+
+        # Mock client
+        mock_client = MagicMock()
+        mock_mcp_client.return_value = mock_client
+
+        # Create AsyncAgentBay instance without region_id
+        agent_bay = AgentBay()
+
+        # Verify region_id defaults to None
+        self.assertIsNone(agent_bay.region_id)
+
+    @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
+    @patch("agentbay._async.agentbay.mcp_client")
+    def test_session_create_with_region_id(
+        self, mock_mcp_client
+    ):
+        """Test session creation passes LoginRegionId when region_id is set"""
+
+        # Mock client and response
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "Success": True,
+                "Data": {
+                    "Success": True,
+                    "SessionId": "test-session-id",
+                    "ResourceUrl": "test-resource-url",
+                },
+            }
+        }
+        mock_client.create_mcp_session_async = MagicMock(return_value=mock_response)
+        mock_mcp_client.return_value = mock_client
+
+        # Mock context service and session methods
+        with patch.object(SyncContextService, "get") as mock_context_get:
+            with patch(
+                "agentbay._async.agentbay.AsyncAgentBay._wait_for_context_synchronization"
+            ) as mock_wait:
+                with patch(
+                    "agentbay._async.agentbay.AsyncAgentBay._fetch_mcp_tools_for_vpc_session"
+                ) as mock_fetch:
+                    mock_context_result = ContextResult(
+                        success=True,
+                        context=Context(id="test-context-id", name="test-context"),
+                    )
+                    mock_context_get.return_value = mock_context_result
+                    mock_wait.return_value = None
+                    mock_fetch.return_value = None
+
+                    # Create AsyncAgentBay instance with region_id in config
+                    config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+                    agent_bay = AgentBay(cfg=config)
+
+                    # Create session
+                    params = CreateSessionParams()
+                    result = agent_bay.create(params)
+
+                    # Verify the API call was made with LoginRegionId
+                    mock_client.create_mcp_session_async.assert_called_once()
+                    call_args = mock_client.create_mcp_session_async.call_args[0][0]
+                    self.assertIsInstance(call_args, CreateMcpSessionRequest)
+                    self.assertEqual(call_args.login_region_id, "cn-hangzhou")
+
+    @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
+    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._async.agentbay.mcp_client")
+    def test_session_create_without_region_id(
+        self, mock_mcp_client, mock_load_config
+    ):
+        """Test session creation doesn't pass LoginRegionId when region_id is not set"""
+        # Mock configuration
+        mock_load_config.return_value = {
+            "endpoint": "test.endpoint.com",
+            "timeout_ms": 30000,
+            "region_id": None,
+        }
+
+        # Mock client and response
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "Success": True,
+                "Data": {
+                    "Success": True,
+                    "SessionId": "test-session-id",
+                    "ResourceUrl": "test-resource-url",
+                },
+            }
+        }
+        mock_client.create_mcp_session_async = MagicMock(return_value=mock_response)
+        mock_mcp_client.return_value = mock_client
+
+        # Mock context service and session methods
+        with patch.object(SyncContextService, "get") as mock_context_get:
+            with patch(
+                "agentbay._async.agentbay.AsyncAgentBay._wait_for_context_synchronization"
+            ) as mock_wait:
+                with patch(
+                    "agentbay._async.agentbay.AsyncAgentBay._fetch_mcp_tools_for_vpc_session"
+                ) as mock_fetch:
+                    mock_context_result = ContextResult(
+                        success=True,
+                        context=Context(id="test-context-id", name="test-context"),
+                    )
+                    mock_context_get.return_value = mock_context_result
+                    mock_wait.return_value = None
+                    mock_fetch.return_value = None
+
+                    # Create AsyncAgentBay instance without region_id
+                    agent_bay = AgentBay()
+
+                    # Create session
+                    params = CreateSessionParams()
+                    result = agent_bay.create(params)
+
+            # Verify the API call was made without LoginRegionId
+            mock_client.create_mcp_session_async.assert_called_once()
+            call_args = mock_client.create_mcp_session_async.call_args[0][0]
+            self.assertIsInstance(call_args, CreateMcpSessionRequest)
+            # LoginRegionId should be None or not set when region_id is not provided
+            self.assertIsNone(getattr(call_args, "login_region_id", None))
+
+    @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
+    @patch("agentbay._async.agentbay.mcp_client")
+    def test_context_create_with_region_id(
+        self, mock_mcp_client
+    ):
+        """Test context.get with create=True passes LoginRegionId when region_id is set"""
+
+        # Mock client and response
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "Success": True,
+                "Data": {"ContextId": "test-context-id", "Name": "test-context-name"},
+            }
+        }
+        mock_client.get_context_async = MagicMock(return_value=mock_response)
+        mock_mcp_client.return_value = mock_client
+
+        # Create AsyncAgentBay instance with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AgentBay(cfg=config)
+
+        # Create context (get with create=True)
+        result = agent_bay.context.get("test-context-name", create=True)
+
+        # Verify the API call was made with LoginRegionId
+        mock_client.get_context_async.assert_called_once()
+        call_args = mock_client.get_context_async.call_args[0][0]
+        self.assertIsInstance(call_args, GetContextRequest)
+        self.assertEqual(call_args.login_region_id, "cn-hangzhou")
+
+    @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
+    @patch("agentbay._async.agentbay.mcp_client")
+    def test_context_get_without_create_no_region_id(
+        self, mock_mcp_client
+    ):
+        """Test context.get without create=True doesn't pass LoginRegionId even when region_id is set"""
+
+        # Mock client and response
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "Success": True,
+                "Data": {"ContextId": "test-context-id", "Name": "test-context-name"},
+            }
+        }
+        mock_client.get_context_async = MagicMock(return_value=mock_response)
+        mock_mcp_client.return_value = mock_client
+
+        # Create AsyncAgentBay instance with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AgentBay(cfg=config)
+
+        # Get existing context (create=False, which is default)
+        result = agent_bay.context.get("test-context-name")
+
+        # Verify the API call was made without LoginRegionId
+        mock_client.get_context_async.assert_called_once()
+        call_args = mock_client.get_context_async.call_args[0][0]
+        self.assertIsInstance(call_args, GetContextRequest)
+        # LoginRegionId should be None when create=False
+        self.assertIsNone(call_args.login_region_id)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -19,7 +19,7 @@ from agentbay import (
 )
 
 
-class TestSyncPolicy(unittest.TestCase):
+class TestAsyncSyncPolicy(unittest.TestCase):
     """Test SyncPolicy class functionality."""
 
     def test_sync_policy_with_partial_parameters(self):
@@ -136,7 +136,7 @@ class TestSyncPolicy(unittest.TestCase):
         self.assertEqual(result["bwList"]["whiteLists"][0]["excludePaths"], [])
 
 
-class TestMappingPolicy(unittest.TestCase):
+class TestAsyncMappingPolicy(unittest.TestCase):
     """Test MappingPolicy class functionality."""
 
     def test_mapping_policy_default(self):
@@ -160,7 +160,7 @@ class TestMappingPolicy(unittest.TestCase):
         self.assertEqual(result["path"], windows_path)
 
 
-class TestSyncPolicyWithMappingPolicy(unittest.TestCase):
+class TestAsyncSyncPolicyWithMappingPolicy(unittest.TestCase):
     """Test SyncPolicy with MappingPolicy functionality."""
 
     def test_sync_policy_with_mapping_policy(self):
@@ -192,7 +192,7 @@ class TestSyncPolicyWithMappingPolicy(unittest.TestCase):
         self.assertEqual(result["mappingPolicy"]["path"], windows_path)
 
 
-class TestContextSyncWithMappingPolicy(unittest.TestCase):
+class TestAsyncContextSyncWithMappingPolicy(unittest.TestCase):
     """Test ContextSync with MappingPolicy functionality."""
 
     def test_context_sync_with_mapping_policy(self):

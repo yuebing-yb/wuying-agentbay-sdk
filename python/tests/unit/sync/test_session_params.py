@@ -1,11 +1,10 @@
 import json
 import unittest
 
-from agentbay import CreateSessionParams
-from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
+from agentbay import CreateSessionParams, AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 
-class TestCreateSessionParams(unittest.TestCase):
+class TestAsyncCreateSessionParams(unittest.TestCase):
     def test_default_initialization(self):
         """Test that CreateSessionParams initializes with default values."""
         params = CreateSessionParams()

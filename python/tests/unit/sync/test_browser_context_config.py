@@ -1,13 +1,13 @@
 import json
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, MagicMock, Mock, patch
 
 from agentbay import _BROWSER_DATA_PATH
 from agentbay import BrowserContext, CreateSessionParams
 from agentbay import AgentBay
 
 
-class TestBrowserContextConfig(unittest.TestCase):
+class TestAsyncBrowserContextConfig(unittest.TestCase):
     """Test browser context configuration and constant usage."""
 
     def test_browser_data_path_constant(self):

@@ -2,13 +2,13 @@ import json
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import BrowserContext, CreateSessionParams
 from agentbay import AgentBay
 
 
-class TestBrowserContextPolicy(unittest.TestCase):
+class TestAsyncBrowserContextPolicy(unittest.TestCase):
     """Test that browser_context policy includes BWList with white lists."""
 
     def test_browser_context_policy_creation(self):

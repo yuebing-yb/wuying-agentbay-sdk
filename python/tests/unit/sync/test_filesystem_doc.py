@@ -126,7 +126,9 @@ def main():
 
         print("Creating a test file in watched directory...")
         test_watch_file = watch_dir + "/watch_test.txt"
-        filesystem.write_file(test_watch_file, "Watch test content", mode="overwrite")
+        filesystem.write_file(
+            test_watch_file, "Watch test content", mode="overwrite"
+        )
 
         time.sleep(2)
 
@@ -150,4 +152,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import time
+
+    time.run(main())

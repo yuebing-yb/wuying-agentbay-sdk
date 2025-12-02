@@ -19,7 +19,7 @@ from agentbay import (
 )
 
 
-class TestContextSyncUnit(unittest.TestCase):
+class TestAsyncContextSyncUnit(unittest.TestCase):
     """Unit tests for context synchronization functionality."""
 
     def test_01_basic_context_sync_creation(self):

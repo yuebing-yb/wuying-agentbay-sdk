@@ -2,7 +2,7 @@ import pytest
 
 from agentbay import AgentBay
 from agentbay import SessionResult
-from agentbay import Session
+from agentbay import SyncSession
 
 
 class TestAgentBayGet:

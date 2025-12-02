@@ -9,7 +9,7 @@ This test suite follows TDD principles:
 
 import json
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, MagicMock, Mock, patch
 
 
 class DummyAgentBay:
@@ -26,24 +26,24 @@ class DummyAgentBay:
         return self.client
 
 
-class TestSessionCallMcpTool(unittest.TestCase):
+class TestAsyncSessionCallMcpTool(unittest.TestCase):
     """Test cases for Session.call_mcp_tool() public API."""
 
     def setUp(self):
         """Set up test fixtures."""
-        from agentbay import Session
+        from agentbay import SyncSession
 
         self.agent_bay = DummyAgentBay()
         self.session_id = "test_session_id"
-        self.session = Session(self.agent_bay, self.session_id)
+        self.session = SyncSession(self.agent_bay, self.session_id)
 
     def test_call_mcp_tool_method_exists(self):
         """Test that call_mcp_tool method exists and is public."""
         self.assertTrue(hasattr(self.session, "call_mcp_tool"))
         self.assertTrue(callable(getattr(self.session, "call_mcp_tool")))
 
-    @patch("agentbay._sync.session.CallMcpToolRequest")
-    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._async.session.CallMcpToolRequest")
+    @patch("agentbay._async.session.extract_request_id")
     def test_call_mcp_tool_success_non_vpc(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -53,7 +53,9 @@ class TestSessionCallMcpTool(unittest.TestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-123"
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = MagicMock(
+            return_value=mock_response
+        )
 
         # Mock response structure
         mock_response.to_map.return_value = {
@@ -90,8 +92,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertEqual(args_dict["command"], "ls")
         self.assertEqual(args_dict["timeout_ms"], 1000)
 
-    @patch("agentbay._sync.session.CallMcpToolRequest")
-    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._async.session.CallMcpToolRequest")
+    @patch("agentbay._async.session.extract_request_id")
     def test_call_mcp_tool_with_error_response(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -101,7 +103,9 @@ class TestSessionCallMcpTool(unittest.TestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-456"
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = MagicMock(
+            return_value=mock_response
+        )
 
         # Mock error response
         mock_response.to_map.return_value = {
@@ -127,8 +131,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("Error", result.error_message)
 
-    @patch("agentbay._sync.session.CallMcpToolRequest")
-    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._async.session.CallMcpToolRequest")
+    @patch("agentbay._async.session.extract_request_id")
     def test_call_mcp_tool_api_exception(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -137,7 +141,9 @@ class TestSessionCallMcpTool(unittest.TestCase):
         mock_request = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-789"
-        self.agent_bay.client.call_mcp_tool.side_effect = Exception("Network error")
+        self.agent_bay.client.call_mcp_tool_async = MagicMock(
+            side_effect=Exception("Network error")
+        )
 
         # Call the method
         result = self.session.call_mcp_tool("shell", {"command": "ls"})
@@ -147,7 +153,7 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("Network error", result.error_message)
 
-    @patch("httpx.Client")
+    @patch("httpx.AsyncClient")
     def test_call_mcp_tool_vpc_mode_success(self, mock_httpx_client):
         """Test successful MCP tool call in VPC mode."""
         # Setup VPC session
@@ -169,11 +175,14 @@ class TestSessionCallMcpTool(unittest.TestCase):
             "isError": False,
         }
 
-        # Setup httpx client mock
-        # with httpx.Client() as client: client.get(...)
+        # Setup httpx async client mock
+        # async with httpx.AsyncClient() as client: await client.get(...)
         mock_client_instance = MagicMock()
-        mock_httpx_client.return_value.__enter__.return_value = mock_client_instance
-        mock_client_instance.get.return_value = mock_response
+        mock_httpx_client.return_value.__enter__ = MagicMock(
+            return_value=mock_client_instance
+        )
+        mock_httpx_client.return_value.__exit__ = MagicMock(return_value=None)
+        mock_client_instance.get = MagicMock(return_value=mock_response)
 
         # Call the method
         result = self.session.call_mcp_tool("shell", {"command": "pwd"})
@@ -227,8 +236,8 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("network configuration", result.error_message.lower())
 
-    @patch("agentbay._sync.session.CallMcpToolRequest")
-    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._async.session.CallMcpToolRequest")
+    @patch("agentbay._async.session.extract_request_id")
     def test_call_mcp_tool_with_custom_timeouts(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -238,7 +247,9 @@ class TestSessionCallMcpTool(unittest.TestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-999"
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = MagicMock(
+            return_value=mock_response
+        )
 
         # Mock response
         mock_response.to_map.return_value = {
@@ -262,13 +273,13 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertTrue(result.success)
 
         # Verify timeouts were passed to client
-        self.agent_bay.client.call_mcp_tool.assert_called_once()
-        call_kwargs = self.agent_bay.client.call_mcp_tool.call_args[1]
+        self.agent_bay.client.call_mcp_tool_async.assert_called_once()
+        call_kwargs = self.agent_bay.client.call_mcp_tool_async.call_args[1]
         self.assertEqual(call_kwargs.get("read_timeout"), 60)
         self.assertEqual(call_kwargs.get("connect_timeout"), 10)
 
-    @patch("agentbay._sync.session.CallMcpToolRequest")
-    @patch("agentbay._sync.session.extract_request_id")
+    @patch("agentbay._async.session.CallMcpToolRequest")
+    @patch("agentbay._async.session.extract_request_id")
     def test_call_mcp_tool_with_complex_args(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
@@ -278,7 +289,9 @@ class TestSessionCallMcpTool(unittest.TestCase):
         mock_response = MagicMock()
         MockCallMcpToolRequest.return_value = mock_request
         mock_extract_request_id.return_value = "request-complex"
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = MagicMock(
+            return_value=mock_response
+        )
 
         # Mock response
         mock_response.to_map.return_value = {
@@ -335,7 +348,9 @@ class TestSessionCallMcpTool(unittest.TestCase):
                 "Success": True,
             }
         }
-        self.agent_bay.client.call_mcp_tool.return_value = mock_response
+        self.agent_bay.client.call_mcp_tool_async = MagicMock(
+            return_value=mock_response
+        )
 
         # Call the method
         result = self.session.call_mcp_tool("shell", {"command": "ls"})
@@ -348,7 +363,7 @@ class TestSessionCallMcpTool(unittest.TestCase):
         self.assertTrue(hasattr(result, "error_message"))
 
 
-class TestMcpToolResult(unittest.TestCase):
+class TestAsyncMcpToolResult(unittest.TestCase):
     """Test cases for McpToolResult model."""
 
     def test_mcp_tool_result_initialization(self):

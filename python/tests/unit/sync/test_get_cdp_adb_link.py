@@ -2,7 +2,7 @@
 """
 Unit tests for GetCdpLink and GetAdbLink API methods
 """
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, MagicMock, Mock, patch
 
 import pytest
 from alibabacloud_tea_openapi import utils_models as open_api_util_models
@@ -81,8 +81,8 @@ class TestGetCdpLink:
             assert response.status_code == 200
             assert response.body.data.url == "ws://test-cdp-url:9222"
 
-    @pytest.mark.asyncio
-    async def test_get_cdp_link_async(self, client):
+    @pytest.mark.time
+    def test_get_cdp_link_async(self, client):
         """Test get_cdp_link_async"""
         mock_response = {
             "headers": {"x-request-id": "test-request-id"},
@@ -99,7 +99,7 @@ class TestGetCdpLink:
             request = models.GetCdpLinkRequest(
                 authorization="test-auth-token", session_id="test-session-id"
             )
-            response = await client.get_cdp_link_async(request)
+            response = client.get_cdp_link_async(request)
 
             assert response is not None
             assert response.status_code == 200
@@ -209,8 +209,8 @@ class TestGetAdbLink:
             assert response.status_code == 200
             assert response.body.data.url == "adb://test-adb-url:5555"
 
-    @pytest.mark.asyncio
-    async def test_get_adb_link_async(self, client):
+    @pytest.mark.time
+    def test_get_adb_link_async(self, client):
         """Test get_adb_link_async"""
         mock_response = {
             "headers": {"x-request-id": "test-request-id"},
@@ -232,7 +232,7 @@ class TestGetAdbLink:
                 session_id="test-session-id",
                 option=options,
             )
-            response = await client.get_adb_link_async(request)
+            response = client.get_adb_link_async(request)
 
             assert response is not None
             assert response.status_code == 200
