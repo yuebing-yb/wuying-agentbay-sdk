@@ -11,7 +11,7 @@ import os
 import sys
 
 from agentbay import AsyncAgentBay
-from agentbay.exceptions import AgentBayError
+from agentbay import AgentBayError
 from agentbay import CreateSessionParams
 
 

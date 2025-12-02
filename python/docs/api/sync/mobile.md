@@ -404,11 +404,13 @@ manually to reconfigure mobile settings during a session.
 **Example**:
 
 ```python
-from agentbay import MobileExtraConfig
-session = agent_bay.create(image="mobile_latest").session
+from agentbay import AgentBay, CreateSessionParams, MobileExtraConfig
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create(CreateSessionParams(image_id="mobile_latest"))
+session = result.session
 mobile_config = MobileExtraConfig(lock_resolution=True)
 session.mobile.configure(mobile_config)
-session.delete()
+agent_bay.delete(session)
 ```
 
 

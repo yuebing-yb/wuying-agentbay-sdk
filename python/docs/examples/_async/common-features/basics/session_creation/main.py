@@ -8,7 +8,7 @@ import time
 from typing import Dict, Optional
 
 from agentbay import AsyncAgentBay, ContextSync, SyncPolicy, CreateSessionParams, BrowserContext
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 
 async def create_session_with_default_params() -> None:

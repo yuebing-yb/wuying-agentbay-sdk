@@ -637,11 +637,13 @@ class AsyncMobile(AsyncBaseService):
 
         Example:
             ```python
-            from agentbay import MobileExtraConfig
-            session = await agent_bay.create(image="mobile_latest").session
+            from agentbay import AsyncAgentBay, CreateSessionParams, MobileExtraConfig
+            agent_bay = AsyncAgentBay(api_key="your_api_key")
+            result = await agent_bay.create(CreateSessionParams(image_id="mobile_latest"))
+            session = result.session
             mobile_config = MobileExtraConfig(lock_resolution=True)
             await session.mobile.configure(mobile_config)
-            await session.delete()
+            await agent_bay.delete(session)
             ```
 
         Note:

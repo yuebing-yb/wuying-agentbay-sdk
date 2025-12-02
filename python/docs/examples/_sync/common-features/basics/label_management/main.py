@@ -13,7 +13,7 @@ import os
 import sys
 
 from agentbay import AgentBay
-from agentbay.exceptions import AgentBayError
+from agentbay import AgentBayError
 from agentbay import CreateSessionParams
 
 
