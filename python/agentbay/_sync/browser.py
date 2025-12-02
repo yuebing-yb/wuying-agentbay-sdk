@@ -705,7 +705,9 @@ class Browser(BaseService):
             # Wait a bit for images to load
             page.wait_for_timeout(1500)
             final_height = page.evaluate("document.body.scrollHeight")
-            page.set_viewport_size({"width": 1920, "height": min(final_height, 10000)})
+            page.set_viewport_size(
+                {"width": 1920, "height": min(final_height, 10000)}
+            )
 
             # Take the screenshot
             screenshot_bytes = page.screenshot(**enhanced_options)
@@ -785,7 +787,9 @@ class Browser(BaseService):
                     session_id=self.session.session_id,
                 )
                 # Async call
-                response = self.session.agent_bay.client.get_cdp_link(request)
+                response = self.session.agent_bay.client.get_cdp_link(
+                    request
+                )
                 if response.body and response.body.success and response.body.data:
                     self._endpoint_url = response.body.data.url
                 else:

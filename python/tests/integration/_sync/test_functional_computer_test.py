@@ -13,7 +13,7 @@ import pytest
 import pytest
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from .._common.functional_helpers import (
     FunctionalTestResult,
     default_functional_test_config,
@@ -269,7 +269,9 @@ def test_screenshot_content_validation(computer_session):
                     time.sleep(config.wait_time_after_action)
 
                     # Step 3: Take second screenshot
-                    screenshot2, error2 = safe_screenshot_async(computer, "after_move")
+                    screenshot2, error2 = safe_screenshot_async(
+                        computer, "after_move"
+                    )
                     if error2 or not screenshot2:
                         result.set_failure("Failed to take second screenshot")
                     else:

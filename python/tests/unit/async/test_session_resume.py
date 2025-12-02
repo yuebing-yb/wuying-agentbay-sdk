@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay import AsyncAgentBay
 from agentbay import AsyncSession
-from agentbay._common.models.response import (
+from agentbay import (
     GetSessionData,
     GetSessionResult,
     SessionResumeResult,

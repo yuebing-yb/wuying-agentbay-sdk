@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay import MouseButton
 
 

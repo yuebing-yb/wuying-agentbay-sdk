@@ -279,7 +279,9 @@ class Mobile(BaseService):
             )
 
     # UI Element Operations
-    def get_clickable_ui_elements(self, timeout_ms: int = 2000) -> UIElementListResult:
+    def get_clickable_ui_elements(
+        self, timeout_ms: int = 2000
+    ) -> UIElementListResult:
         """
         Retrieves all clickable UI elements within the specified timeout.
 
@@ -947,4 +949,6 @@ class Mobile(BaseService):
         operation_name = (
             f"Uninstall blacklist configuration ({len(package_names)} packages)"
         )
-        self._execute_template_command("uninstall_blacklist", params, operation_name)
+        self._execute_template_command(
+            "uninstall_blacklist", params, operation_name
+        )

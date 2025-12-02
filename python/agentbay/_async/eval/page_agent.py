@@ -9,11 +9,11 @@ from playwright.async_api import Page, async_playwright
 from pydantic import BaseModel
 
 from agentbay import AsyncAgentBay
-from agentbay._common.logger import get_logger
-from agentbay._common.models.response import SessionResult
-from agentbay._common.params.session_params import CreateSessionParams
-from agentbay._async.browser import BrowserOption
-from agentbay._async.browser_agent import (
+from agentbay import get_logger
+from agentbay import SessionResult
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import (
     ActOptions,
     ActResult,
     ExtractOptions,

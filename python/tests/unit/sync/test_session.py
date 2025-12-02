@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from agentbay._common.models.response import OperationResult
+from agentbay import OperationResult
 from agentbay import DeleteResult, Session
 
 
@@ -395,7 +395,7 @@ class TestSession(unittest.TestCase):
 
     def test_get_link_with_invalid_port_below_range(self):
         """Test get_link with port below valid range raises SessionError"""
-        from agentbay._common.exceptions import SessionError
+        from agentbay import SessionError
 
         invalid_port = 30099
 
@@ -408,7 +408,7 @@ class TestSession(unittest.TestCase):
 
     def test_get_link_with_invalid_port_above_range(self):
         """Test get_link with port above valid range raises SessionError"""
-        from agentbay._common.exceptions import SessionError
+        from agentbay import SessionError
 
         invalid_port = 30200
 
@@ -421,7 +421,7 @@ class TestSession(unittest.TestCase):
 
     def test_get_link_with_invalid_port_non_integer(self):
         """Test get_link with non-integer port raises SessionError"""
-        from agentbay._common.exceptions import SessionError
+        from agentbay import SessionError
 
         invalid_ports = [30150.5, "30150"]
 
@@ -436,7 +436,7 @@ class TestSession(unittest.TestCase):
 
     def test_get_link_with_invalid_port_boundary_values(self):
         """Test get_link with boundary values outside valid range"""
-        from agentbay._common.exceptions import SessionError
+        from agentbay import SessionError
 
         # Test boundary values just outside the valid range
         invalid_ports = [30099, 30200, 0, -1, 65536]

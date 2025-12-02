@@ -8,7 +8,7 @@ from agentbay import (
 )
 from agentbay.api.models import MobileSimulateConfig, MobileSimulateMode
 from agentbay import Context
-from agentbay._common.params.context_sync import BWList, ContextSync, SyncPolicy
+from agentbay import BWList, ContextSync, SyncPolicy
 
 
 class TestMobileSimulateUploadResult(unittest.TestCase):

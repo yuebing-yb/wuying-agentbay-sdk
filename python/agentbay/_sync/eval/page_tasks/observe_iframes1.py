@@ -7,7 +7,9 @@ from typing import Any, Dict
 from ..page_agent import PageAgent
 
 
-def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     agent.goto("https://tucowsdomains.com/abuse-form/phishing/")
 
     _logger.info("Observing for the main header of the page...")
@@ -44,9 +46,9 @@ def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> di
 
     for observation in observations:
         try:
-            observation_handle = page.locator(observation.selector).element_handle(
-                timeout=5000
-            )
+            observation_handle = page.locator(
+                observation.selector
+            ).element_handle(timeout=5000)
             if not observation_handle:
                 continue
 

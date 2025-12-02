@@ -40,7 +40,9 @@ class TestContextFileUrlsIntegration(unittest.IsolatedAsyncioTestCase):
         Validate that a URL is returned.
         """
         test_path = "/tmp/integration_upload_test.txt"
-        result = self.agent_bay.context.get_file_upload_url(self.context.id, test_path)
+        result = self.agent_bay.context.get_file_upload_url(
+            self.context.id, test_path
+        )
 
         self.assertTrue(
             result.request_id is not None and isinstance(result.request_id, str)
@@ -60,7 +62,9 @@ class TestContextFileUrlsIntegration(unittest.IsolatedAsyncioTestCase):
             f"agentbay integration upload test at {int(time.time())}\n".encode("utf-8")
         )
         with httpx.Client() as client:
-            response = client.put(result.url, content=upload_content, timeout=30.0)
+            response = client.put(
+                result.url, content=upload_content, timeout=30.0
+            )
 
         self.assertIn(
             response.status_code,

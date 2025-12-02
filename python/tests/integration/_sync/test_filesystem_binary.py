@@ -34,7 +34,9 @@ def test_binary_file_creation(test_session):
     fs = test_session.file_system
 
     # Create binary file
-    result = cmd.execute_command("dd if=/dev/zero of=/tmp/binary_test bs=1024 count=10")
+    result = cmd.execute_command(
+        "dd if=/dev/zero of=/tmp/binary_test bs=1024 count=10"
+    )
     assert result.success
 
     # Check file info

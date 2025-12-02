@@ -9,7 +9,7 @@ import os
 import unittest
 import asyncio
 from agentbay import AsyncAgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):

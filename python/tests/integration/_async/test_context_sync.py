@@ -8,7 +8,7 @@ import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay._common.params.context_sync import (
+from agentbay import (
     BWList,
     ContextSync,
     DeletePolicy,
@@ -20,7 +20,7 @@ from agentbay._common.params.context_sync import (
     UploadPolicy,
     WhiteList,
 )
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay import ContextStatusData
 
 

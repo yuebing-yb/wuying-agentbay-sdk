@@ -2,8 +2,8 @@ import json
 import unittest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-from agentbay._common.config import _BROWSER_DATA_PATH
-from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay import _BROWSER_DATA_PATH
+from agentbay import BrowserContext, CreateSessionParams
 from agentbay import AsyncAgentBay
 
 

@@ -125,7 +125,7 @@ class AgentBayLogger:
         Example:
             Configure logging for different scenarios::
 
-                from agentbay._common.logger import AgentBayLogger, get_logger
+                from .logger import AgentBayLogger, get_logger
 
                 # Basic setup with debug level
                 AgentBayLogger.setup(level="DEBUG")
@@ -279,7 +279,7 @@ class AgentBayLogger:
         Example:
             Change log level during runtime::
 
-                from agentbay._common.logger import AgentBayLogger, get_logger
+                from .logger import AgentBayLogger, get_logger
 
                 # Start with INFO level
                 AgentBayLogger.setup(level="INFO")
@@ -365,7 +365,7 @@ def _mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
     Example:
         Mask sensitive information in various data structures::
 
-            from agentbay._common.logger import mask_sensitive_data
+            from .logger import mask_sensitive_data
 
             # Mask API keys and passwords in a dictionary
             user_data = {

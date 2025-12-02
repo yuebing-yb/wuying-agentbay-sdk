@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from agentbay import AgentBay
 from agentbay import ActOptions, ExtractOptions, ObserveOptions
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay import BrowserFingerprint, BrowserOption, BrowserProxy
 
 
@@ -327,7 +327,9 @@ def test_restricted_proxy_ip_comparison(browser_session):
         page.goto("https://httpbin.org/ip")
 
         try:
-            response = page.evaluate("() => JSON.parse(document.body.textContent)")
+            response = page.evaluate(
+                "() => JSON.parse(document.body.textContent)"
+            )
             original_ip = response.get("origin", "").strip()
             print(f"original IP: {original_ip}")
         except Exception as e:

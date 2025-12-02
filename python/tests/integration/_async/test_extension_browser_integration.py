@@ -26,7 +26,7 @@ from typing import List, Optional
 from urllib.parse import urlparse
 
 from agentbay import AgentBay
-from agentbay._common.params.context_sync import (
+from agentbay import (
     BWList,
     ContextSync,
     ExtractPolicy,
@@ -34,12 +34,12 @@ from agentbay._common.params.context_sync import (
     UploadPolicy,
     WhiteList,
 )
-from agentbay._common.params.extension import (
+from agentbay import (
     Extension,
     ExtensionOption,
     ExtensionsService,
 )
-from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay import BrowserContext, CreateSessionParams
 from agentbay import BrowserOption
 
 # Optional Playwright import

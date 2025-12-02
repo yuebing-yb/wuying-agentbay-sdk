@@ -14,7 +14,7 @@ if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 class TestVPCSessionIntegration(unittest.TestCase):

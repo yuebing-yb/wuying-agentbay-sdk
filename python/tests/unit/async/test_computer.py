@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from agentbay._common.exceptions import AgentBayError
-from agentbay._common.models import BoolResult, OperationResult
+from agentbay import AgentBayError
+from agentbay import BoolResult, OperationResult
 from agentbay import AsyncComputer, MouseButton, ScrollDirection
 
 

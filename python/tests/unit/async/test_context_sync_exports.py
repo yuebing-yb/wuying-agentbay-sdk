@@ -108,7 +108,7 @@ class TestContextSyncExports:
         from agentbay import Lifecycle as Lifecycle2
         from agentbay import RecyclePolicy as RecyclePolicy2
         from agentbay import UploadMode as UploadMode2
-        from agentbay._common.params.context_sync import (
+        from agentbay import (
             Lifecycle,
             RecyclePolicy,
             UploadMode,

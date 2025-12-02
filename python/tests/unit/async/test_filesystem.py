@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay._common.models.response import McpToolResult, OperationResult
+from agentbay import McpToolResult, OperationResult
 from agentbay import AsyncFileSystem, BoolResult
-from agentbay._async.filesystem import (
+from agentbay import (
     DirectoryListResult,
     FileContentResult,
     FileInfoResult,
@@ -112,7 +112,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test create_directory method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
@@ -145,7 +145,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test edit_file method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
@@ -162,7 +162,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test edit_file method with error response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -222,7 +222,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test get_file_info method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -244,7 +244,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test get_file_info method with error response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -263,7 +263,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test list_directory method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -288,7 +288,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test list_directory method with error response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -308,7 +308,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test move_file method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(request_id="request-123", success=True, data="True")
         self.session.call_mcp_tool.return_value = mock_result
@@ -323,7 +323,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test move_file method with error response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -342,7 +342,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test read_multiple_files method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -365,7 +365,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test search_files method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -386,7 +386,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         """
         Test search_files method with exclude patterns.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123", success=True, data="/path/to/file1.txt"

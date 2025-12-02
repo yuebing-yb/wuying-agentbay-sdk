@@ -3,36 +3,12 @@
 
 from .._common.exceptions import AgentBayError, CommandError
 from .._common.logger import get_logger
+from .._common.models.code import CodeExecutionResult
 from .._common.models.response import ApiResponse
 from .base_service import BaseService
 
 # Initialize _logger for this module
 _logger = get_logger("code")
-
-
-class CodeExecutionResult(ApiResponse):
-    """Result of code execution operations."""
-
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        result: str = "",
-        error_message: str = "",
-    ):
-        """
-        Initialize a CodeExecutionResult.
-
-        Args:
-            request_id (str, optional): Unique identifier for the API request.
-            success (bool, optional): Whether the operation was successful.
-            result (str, optional): The execution result.
-            error_message (str, optional): Error message if the operation failed.
-        """
-        super().__init__(request_id)
-        self.success = success
-        self.result = result
-        self.error_message = error_message
 
 
 class Code(BaseService):
@@ -87,7 +63,7 @@ class Code(BaseService):
             Execute Python code in a code execution environment::
 
                 from agentbay import AgentBay
-                from agentbay._common.params.session_params import CreateSessionParams
+                from .._common.params.session_params import CreateSessionParams
 
                 agent_bay = AgentBay(api_key="your_api_key")
                 result = await agent_bay.create(CreateSessionParams(image_id="code_latest"))

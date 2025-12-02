@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, List, Optional
 
 import httpx
 
-from agentbay._common.exceptions import AgentBayError
-from agentbay._common.logger import get_logger
-from agentbay._common.models.response import OperationResult
+from .._common.exceptions import AgentBayError
+from .._common.logger import get_logger
+from .._common.models.response import OperationResult
 
 if TYPE_CHECKING:
     from .agentbay import AsyncAgentBay

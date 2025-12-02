@@ -10,9 +10,9 @@ import pytest
 from playwright.sync_api import sync_playwright
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay._common.exceptions import BrowserError
+from agentbay import BrowserError
 
 
 def get_test_api_key():

@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay import AsyncBrowser, BrowserOption
-from agentbay._common.exceptions import BrowserError
+from agentbay import BrowserError
 
 
 class TestBrowserScreenshot(unittest.TestCase):

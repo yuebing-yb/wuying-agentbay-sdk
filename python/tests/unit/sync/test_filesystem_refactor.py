@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from agentbay._common.models.response import McpToolResult, OperationResult
+from agentbay import McpToolResult, OperationResult
 from agentbay import (
     BoolResult,
     FileContentResult,

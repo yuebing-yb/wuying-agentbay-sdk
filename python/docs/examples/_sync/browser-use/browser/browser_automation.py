@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from agentbay import AgentBay, CreateSessionParams
 from agentbay import ActOptions, ExtractOptions
-from agentbay._common.exceptions import AgentBayError
+from agentbay import AgentBayError
 
 class SearchResult(BaseModel):
     title: str = Field(description="The title of the search result")

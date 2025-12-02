@@ -5,7 +5,7 @@ import os
 import unittest
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 class TestCodeIntegration(unittest.TestCase):

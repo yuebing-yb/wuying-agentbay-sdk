@@ -10,9 +10,20 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import httpx
 
-from agentbay._common.exceptions import AgentBayError, FileError
-from agentbay._common.models import ApiResponse, BoolResult
-from agentbay.api.base_service import BaseService
+from .._common.exceptions import AgentBayError, FileError
+from .._common.models.filesystem import (
+    DirectoryListResult,
+    DownloadResult,
+    FileChangeEvent,
+    FileChangeResult,
+    FileContentResult,
+    FileInfoResult,
+    FileSearchResult,
+    MultipleFileContentResult,
+    UploadResult,
+)
+from .._common.models import ApiResponse, BoolResult
+from ..api.base_service import BaseService
 
 from .._common.logger import (
     _log_api_response,
@@ -23,35 +34,6 @@ from .._common.logger import (
 
 # Initialize logger for this module
 _logger = get_logger("filesystem")
-
-
-# Result structures
-@dataclass
-class UploadResult:
-    """Result structure for file upload operations."""
-
-    success: bool
-    request_id_upload_url: Optional[str]
-    request_id_sync: Optional[str]
-    http_status: Optional[int]
-    etag: Optional[str]
-    bytes_sent: int
-    path: str
-    error: Optional[str] = None
-
-
-@dataclass
-class DownloadResult:
-    """Result structure for file download operations."""
-
-    success: bool
-    request_id_download_url: Optional[str]
-    request_id_sync: Optional[str]
-    http_status: Optional[int]
-    bytes_received: int
-    path: str
-    local_path: str
-    error: Optional[str] = None
 
 
 class FileTransfer:
@@ -147,7 +129,9 @@ class FileTransfer:
                 error="No context ID",
             )
         # 1. Get pre-signed upload URL
-        url_res = self._context_svc.get_file_upload_url(self._context_id, remote_path)
+        url_res = self._context_svc.get_file_upload_url(
+            self._context_id, remote_path
+        )
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
             return UploadResult(
                 success=False,
@@ -167,8 +151,7 @@ class FileTransfer:
 
         # 2. PUT upload to pre-signed URL
         try:
-            http_status, etag, bytes_sent = self._put_file_sync(
-                upload_url,
+            http_status, etag, bytes_sent = self._put_file_sync(upload_url,
                 local_path,
                 self._http_timeout,
                 self._follow_redirects,
@@ -203,7 +186,9 @@ class FileTransfer:
         req_id_sync = None
         try:
             print("Triggering sync to cloud disk")
-            req_id_sync = self._await_sync("download", remote_path, self._context_id)
+            req_id_sync = self._await_sync(
+                "download", remote_path, self._context_id
+            )
         except Exception as e:
             return UploadResult(
                 success=False,
@@ -287,7 +272,9 @@ class FileTransfer:
         # 1. Trigger cloud disk to OSS download sync
         req_id_sync = None
         try:
-            req_id_sync = self._await_sync("upload", remote_path, self._context_id)
+            req_id_sync = self._await_sync(
+                "upload", remote_path, self._context_id
+            )
         except Exception as e:
             return DownloadResult(
                 success=False,
@@ -322,7 +309,9 @@ class FileTransfer:
                 )
 
         # 2. Get pre-signed download URL
-        url_res = self._context_svc.get_file_download_url(self._context_id, remote_path)
+        url_res = self._context_svc.get_file_download_url(
+            self._context_id, remote_path
+        )
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
             return DownloadResult(
                 success=False,
@@ -353,8 +342,7 @@ class FileTransfer:
                     error=f"Destination exists and overwrite=False: {local_path}",
                 )
 
-            http_status, bytes_received = self._get_file_sync(
-                download_url,
+            http_status, bytes_received = self._get_file_sync(download_url,
                 local_path,
                 self._http_timeout,
                 self._follow_redirects,
@@ -420,16 +408,16 @@ class FileTransfer:
                 path=remote_path if remote_path else None,
                 context_id=context_id if context_id else None,
             )
-            out = sync_fn(
-                mode=mode,
-                path=remote_path if remote_path else None,
-                context_id=context_id if context_id else None,
-            )
+            out = sync_fn(mode=mode,
+                    path=remote_path if remote_path else None,
+                    context_id=context_id if context_id else None,
+                )
         except TypeError:
             # Backend may not support all parameters, try with mode and path only
             try:
                 result = sync_fn(mode=mode, path=remote_path if remote_path else None)
-                out = sync_fn(mode=mode, path=remote_path if remote_path else None)
+                out = sync_fn(mode=mode, path=remote_path if remote_path else None
+                    )
             except TypeError:
                 # Backend may not support mode or path parameter
                 try:
@@ -555,287 +543,6 @@ class FileTransfer:
                                 except Exception:
                                     pass
         return 200, bytes_recv
-
-
-class FileChangeEvent:
-    """Represents a single file change event."""
-
-    def __init__(
-        self,
-        event_type: str = "",
-        path: str = "",
-        path_type: str = "",
-    ):
-        """
-        Initialize a FileChangeEvent.
-
-        Args:
-            event_type (str): Type of the file change event (e.g., "modify", "create", "delete").
-            path (str): Path of the file or directory that changed.
-            path_type (str): Type of the path ("file" or "directory").
-        """
-        self.event_type = event_type
-        self.path = path
-        self.path_type = path_type
-
-    def __repr__(self):
-        return f"FileChangeEvent(event_type='{self.event_type}', path='{self.path}', path_type='{self.path_type}')"
-
-    def _to_dict(self) -> Dict[str, str]:
-        """Convert to dictionary representation."""
-        return {
-            "eventType": self.event_type,
-            "path": self.path,
-            "pathType": self.path_type,
-        }
-
-    @classmethod
-    def _from_dict(cls, data: Dict[str, str]) -> "FileChangeEvent":
-        """Create FileChangeEvent from dictionary."""
-        return cls(
-            event_type=data.get("eventType", ""),
-            path=data.get("path", ""),
-            path_type=data.get("pathType", ""),
-        )
-
-
-class FileChangeResult(ApiResponse):
-    """
-    Result of file change detection operations.
-
-    This class provides methods to check and filter file change events detected
-    in a directory. It is typically returned by file monitoring operations.
-
-    Example:
-        ```python
-        session = agent_bay.create().session
-        session.file_system.create_directory("/tmp/change_test")
-        session.file_system.write_file("/tmp/change_test/file1.txt", "original content")
-        session.file_system.write_file("/tmp/change_test/file2.txt", "original content")
-        session.file_system.write_file("/tmp/change_test/file1.txt", "modified content")
-        session.file_system.write_file("/tmp/change_test/file3.txt", "new file")
-        change_result = session.file_system._get_file_change("/tmp/change_test")
-        session.delete()
-        ```
-    """
-
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        events: Optional[List[FileChangeEvent]] = None,
-        raw_data: str = "",
-        error_message: str = "",
-    ):
-        """
-        Initialize a FileChangeResult.
-
-        Args:
-            request_id (str, optional): Unique identifier for the API request.
-                Defaults to "".
-            success (bool, optional): Whether the operation was successful.
-                Defaults to False.
-            events (List[FileChangeEvent], optional): List of file change events.
-                Defaults to None.
-            raw_data (str, optional): Raw response data for debugging. Defaults to "".
-            error_message (str, optional): Error message if the operation failed.
-                Defaults to "".
-        """
-        super().__init__(request_id)
-        self.success = success
-        self.events = events or []
-        self.raw_data = raw_data
-        self.error_message = error_message
-
-    def has_changes(self) -> bool:
-        """
-        Check if there are any file changes.
-
-        Returns:
-            bool: True if there are any file change events, False otherwise.
-        """
-        return len(self.events) > 0
-
-    def get_modified_files(self) -> List[str]:
-        """
-        Get list of modified file paths.
-
-        Returns:
-            List[str]: List of file paths that were modified.
-        """
-        return [
-            event.path
-            for event in self.events
-            if event.event_type == "modify" and event.path_type == "file"
-        ]
-
-    def get_created_files(self) -> List[str]:
-        """
-        Get list of created file paths.
-
-        Returns:
-            List[str]: List of file paths that were created.
-        """
-        return [
-            event.path
-            for event in self.events
-            if event.event_type == "create" and event.path_type == "file"
-        ]
-
-    def get_deleted_files(self) -> List[str]:
-        """
-        Get list of deleted file paths.
-
-        Returns:
-            List[str]: List of file paths that were deleted.
-        """
-        return [
-            event.path
-            for event in self.events
-            if event.event_type == "delete" and event.path_type == "file"
-        ]
-
-
-class FileInfoResult(ApiResponse):
-    """Result of file info operations."""
-
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        file_info: Optional[Dict[str, Any]] = None,
-        error_message: str = "",
-    ):
-        """
-        Initialize a FileInfoResult.
-
-        Args:
-            request_id (str, optional): Unique identifier for the API request.
-                Defaults to "".
-            success (bool, optional): Whether the operation was successful.
-                Defaults to False.
-            file_info (Dict[str, Any], optional): File information. Defaults to None.
-            error_message (str, optional): Error message if the operation failed.
-                Defaults to "".
-        """
-        super().__init__(request_id)
-        self.success = success
-        self.file_info = file_info or {}
-        self.error_message = error_message
-
-
-class DirectoryListResult(ApiResponse):
-    """Result of directory listing operations."""
-
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        entries: Optional[List[Dict[str, Any]]] = None,
-        error_message: str = "",
-    ):
-        """
-        Initialize a DirectoryListResult.
-
-        Args:
-            request_id (str, optional): Unique identifier for the API request.
-                Defaults to "".
-            success (bool, optional): Whether the operation was successful.
-                Defaults to False.
-            entries (List[Dict[str, Any]], optional): Directory entries. Defaults to
-                None.
-            error_message (str, optional): Error message if the operation failed.
-                Defaults to "".
-        """
-        super().__init__(request_id)
-        self.success = success
-        self.entries = entries or []
-        self.error_message = error_message
-
-
-class FileContentResult(ApiResponse):
-    """Result of file read operations."""
-
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        content: str = "",
-        error_message: str = "",
-    ):
-        """
-        Initialize a FileContentResult.
-
-        Args:
-            request_id (str, optional): Unique identifier for the API request.
-                Defaults to "".
-            success (bool, optional): Whether the operation was successful.
-                Defaults to False.
-            content (str, optional): File content. Defaults to "".
-            error_message (str, optional): Error message if the operation failed.
-                Defaults to "".
-        """
-        super().__init__(request_id)
-        self.success = success
-        self.content = content
-        self.error_message = error_message
-
-
-class MultipleFileContentResult(ApiResponse):
-    """Result of multiple file read operations."""
-
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        contents: Optional[Dict[str, str]] = None,
-        error_message: str = "",
-    ):
-        """
-        Initialize a MultipleFileContentResult.
-
-        Args:
-            request_id (str, optional): Unique identifier for the API request.
-                Defaults to "".
-            success (bool, optional): Whether the operation was successful.
-                Defaults to False.
-            contents (Dict[str, str], optional): Dictionary of file paths to file
-                contents. Defaults to None.
-            error_message (str, optional): Error message if the operation failed.
-                Defaults to "".
-        """
-        super().__init__(request_id)
-        self.success = success
-        self.contents = contents or {}
-        self.error_message = error_message
-
-
-class FileSearchResult(ApiResponse):
-    """Result of file search operations."""
-
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        matches: Optional[List[str]] = None,
-        error_message: str = "",
-    ):
-        """
-        Initialize a FileSearchResult.
-
-        Args:
-            request_id (str, optional): Unique identifier for the API request.
-                Defaults to "".
-            success (bool, optional): Whether the operation was successful.
-                Defaults to False.
-            matches (List[str], optional): Matching file paths. Defaults to None.
-            error_message (str, optional): Error message if the operation failed.
-                Defaults to "".
-        """
-        super().__init__(request_id)
-        self.success = success
-        self.matches = matches or []
-        self.error_message = error_message
 
 
 class FileSystem(BaseService):
@@ -1994,7 +1701,7 @@ class FileSystem(BaseService):
         def _sync_monitor():
             """Synchronous wrapper for monitoring function."""
             _monitor_directory()
-
+        
         monitor_thread = threading.Thread(
             target=_sync_monitor,
             name=f"DirectoryWatcher-{path.replace('/', '_')}",

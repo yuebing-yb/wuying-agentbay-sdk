@@ -8,9 +8,9 @@ import pytest_asyncio
 from playwright.async_api import async_playwright
 
 from agentbay import AsyncAgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay._common.exceptions import BrowserError
+from agentbay import BrowserError
 
 
 def get_test_api_key():

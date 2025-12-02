@@ -12,7 +12,7 @@ import httpx
 
 from agentbay import AgentBay
 from agentbay import Context
-from agentbay._common.exceptions import AgentBayError
+from agentbay import AgentBayError
 
 # Configure logging
 logging.basicConfig(

@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(

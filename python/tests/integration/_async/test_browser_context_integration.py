@@ -13,7 +13,7 @@ import unittest
 from playwright.async_api import async_playwright
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay import BrowserContext, CreateSessionParams
 from agentbay import BrowserOption
 
 

@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 

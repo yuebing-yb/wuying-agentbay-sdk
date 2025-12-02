@@ -3,8 +3,8 @@ import sys
 import unittest
 
 from agentbay import AgentBay
-from agentbay._common.exceptions import AgentBayError
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import AgentBayError
+from agentbay import CreateSessionParams
 from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 # Add the parent directory to the path so we can import the agentbay package

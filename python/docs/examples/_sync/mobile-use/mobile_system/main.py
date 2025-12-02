@@ -5,7 +5,7 @@ import json
 import os
 from typing import Any, Dict, List
 from agentbay import AgentBay
-from agentbay._common.exceptions import AgentBayError
+from agentbay import AgentBayError
 from agentbay import CreateSessionParams
 from agentbay import KeyCode
 def main():

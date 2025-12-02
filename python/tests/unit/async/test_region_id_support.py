@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay import AsyncAgentBay
 from agentbay import AsyncContextService, Context, ContextResult
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay.api.models import CreateMcpSessionRequest, GetContextRequest
 
 

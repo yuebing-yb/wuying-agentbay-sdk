@@ -17,7 +17,9 @@ class ApartmentListings(BaseModel):
     listings: List[Listing]
 
 
-def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     _logger.info("Navigating to apartments.com with extended timeout...")
     agent.goto("https://www.apartments.com/san-francisco-ca/2-bedrooms/")
     _logger.info("Page navigation completed.")

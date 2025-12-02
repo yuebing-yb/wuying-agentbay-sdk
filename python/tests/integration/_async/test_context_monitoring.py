@@ -11,7 +11,7 @@ PROJECT_ROOT = (
 )  # Adjusted for deeper path: python/tests/integration/_async/
 sys.path.append(str(PROJECT_ROOT))
 
-from agentbay._common.exceptions import AgentBayError
+from agentbay import AgentBayError
 
 
 @pytest.mark.asyncio

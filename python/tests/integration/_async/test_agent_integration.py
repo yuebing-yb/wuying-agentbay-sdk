@@ -8,8 +8,8 @@ import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay._common.logger import get_logger
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import get_logger
+from agentbay import CreateSessionParams
 from agentbay import Agent
 
 logger = get_logger("agentbay-integration-test")

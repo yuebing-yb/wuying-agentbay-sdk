@@ -3,7 +3,7 @@ import sys
 import unittest
 
 from agentbay import AgentBay
-from agentbay._common.params.context_sync import (
+from agentbay import (
     BWList,
     ContextSync,
     DeletePolicy,
@@ -15,7 +15,7 @@ from agentbay._common.params.context_sync import (
     UploadPolicy,
     WhiteList,
 )
-from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay import BrowserContext, CreateSessionParams
 from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 # Add the parent directory to the path so we can import the agentbay package

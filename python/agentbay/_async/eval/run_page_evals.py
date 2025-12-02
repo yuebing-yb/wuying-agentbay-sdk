@@ -8,7 +8,7 @@ from typing import Any, Dict
 
 from dotenv import load_dotenv
 
-from agentbay._common.logger import get_logger
+from agentbay import get_logger
 from .page_agent import PageAgent
 
 _logger = get_logger("run_page_evals")

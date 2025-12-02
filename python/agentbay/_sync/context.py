@@ -5,13 +5,13 @@ import json
 import time
 from typing import TYPE_CHECKING, Any, List, Optional
 
-from agentbay._common.exceptions import AgentBayError, ClearanceTimeoutError
-from agentbay._common.models.response import (
+from .._common.exceptions import AgentBayError, ClearanceTimeoutError
+from .._common.models.response import (
     ApiResponse,
     OperationResult,
     extract_request_id,
 )
-from agentbay.api.models import (
+from ..api.models import (
     ClearContextRequest,
     DeleteContextFileRequest,
     DeleteContextRequest,
@@ -256,7 +256,9 @@ class ContextService:
         """
         self.agent_bay = agent_bay
 
-    def list(self, params: Optional[ContextListParams] = None) -> ContextListResult:
+    def list(
+        self, params: Optional[ContextListParams] = None
+    ) -> ContextListResult:
         """
         Lists all available contexts with pagination support.
 
@@ -717,7 +719,9 @@ class ContextService:
             _logger.exception(f"Error calling DeleteContext: {e}")
             raise AgentBayError(f"Failed to delete context {context.id}: {e}")
 
-    def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
+    def get_file_download_url(
+        self, context_id: str, file_path: str
+    ) -> FileUrlResult:
         """
         Get a presigned download URL for a file in a context.
 
@@ -784,7 +788,9 @@ class ContextService:
             error_message="",
         )
 
-    def get_file_upload_url(self, context_id: str, file_path: str) -> FileUrlResult:
+    def get_file_upload_url(
+        self, context_id: str, file_path: str
+    ) -> FileUrlResult:
         """
         Get a presigned upload URL for a file in a context.
 

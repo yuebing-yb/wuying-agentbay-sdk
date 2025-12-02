@@ -10,22 +10,6 @@
 
 
 
-## QueryResult
-
-```python
-class QueryResult(ApiResponse)
-```
-
-Result of query operations.
-
-## ExecutionResult
-
-```python
-class ExecutionResult(ApiResponse)
-```
-
-Result of task execution.
-
 ## AsyncAgent
 
 ```python

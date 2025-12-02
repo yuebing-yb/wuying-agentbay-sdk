@@ -12,8 +12,8 @@ import os
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
-from agentbay._common.exceptions import AgentBayError
-from agentbay._common.params.extension import (
+from agentbay import AgentBayError
+from agentbay import (
     Extension,
     ExtensionOption,
     ExtensionsService,

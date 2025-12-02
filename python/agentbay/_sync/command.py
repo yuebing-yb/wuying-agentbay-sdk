@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 
 from .._common.exceptions import AgentBayError, CommandError
 from .._common.logger import get_logger
+from .._common.models.command import CommandResult
 from .._common.models.response import ApiResponse
 from .base_service import BaseService
 
@@ -12,37 +13,14 @@ from .base_service import BaseService
 _logger = get_logger("command")
 
 
-class CommandResult(ApiResponse):
-    """Result of command execution operations."""
-
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        output: str = "",
-        error_message: str = "",
-    ):
-        """
-        Initialize a CommandResult.
-
-        Args:
-            request_id (str, optional): Unique identifier for the API request.
-            success (bool, optional): Whether the operation was successful.
-            output (str, optional): The command execution output (stdout).
-            error_message (str, optional): Error message if the operation failed (stderr or system error).
-        """
-        super().__init__(request_id)
-        self.success = success
-        self.output = output
-        self.error_message = error_message
-
-
 class Command(BaseService):
     """
     Handles command execution operations in the AgentBay cloud environment.
     """
 
-    def execute_command(self, command: str, timeout_ms: int = 60000) -> CommandResult:
+    def execute_command(
+        self, command: str, timeout_ms: int = 60000
+    ) -> CommandResult:
         """
         Execute a shell command with a timeout.
 

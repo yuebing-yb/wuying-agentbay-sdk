@@ -10,8 +10,8 @@ from agentbay import Browser, BrowserOption
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from agentbay import AgentBay
-from agentbay._common.exceptions import AgentBayError
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import AgentBayError
+from agentbay import CreateSessionParams
 
 
 def get_test_api_key():

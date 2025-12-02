@@ -8,8 +8,8 @@ from uuid import uuid4
 from dotenv import load_dotenv
 
 from agentbay import AgentBay, CreateSessionParams
-from agentbay._common.exceptions import AgentBayError
-from agentbay._common.models.response import SessionPauseResult, SessionResumeResult
+from agentbay import AgentBayError
+from agentbay import SessionPauseResult, SessionResumeResult
 from agentbay import Config
 
 

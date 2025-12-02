@@ -6,7 +6,7 @@ from unittest import TestCase
 from unittest.mock import mock_open, patch
 
 from agentbay import Config
-from agentbay._common.config import _default_config, _load_config
+from agentbay import _default_config, _load_config
 
 
 class LoadConfigTestCase(unittest.TestCase):

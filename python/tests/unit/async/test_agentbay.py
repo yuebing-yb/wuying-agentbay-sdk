@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay import AsyncAgentBay
-from agentbay._common.params.session_params import (
+from agentbay import (
     CreateSessionParams,
     ListSessionParams,
 )

@@ -4,7 +4,7 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay import BrowserContext, CreateSessionParams
 from agentbay import AgentBay
 
 
@@ -29,7 +29,7 @@ class TestBrowserContextPolicy(unittest.TestCase):
         # But since the original file was a script running real code (mostly), let's adapt it to be a test.
 
         # The original test relied on importing internal classes to verify logic manually.
-        from agentbay._common.params.context_sync import (
+        from agentbay import (
             BWList,
             SyncPolicy,
             UploadPolicy,

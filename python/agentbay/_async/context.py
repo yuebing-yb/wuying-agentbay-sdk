@@ -3,13 +3,13 @@ import json
 import time
 from typing import TYPE_CHECKING, Any, List, Optional
 
-from agentbay._common.exceptions import AgentBayError, ClearanceTimeoutError
-from agentbay._common.models.response import (
+from .._common.exceptions import AgentBayError, ClearanceTimeoutError
+from .._common.models.response import (
     ApiResponse,
     OperationResult,
     extract_request_id,
 )
-from agentbay.api.models import (
+from ..api.models import (
     ClearContextRequest,
     DeleteContextFileRequest,
     DeleteContextRequest,

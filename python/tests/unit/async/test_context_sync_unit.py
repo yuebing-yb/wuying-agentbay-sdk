@@ -6,7 +6,7 @@ Tests data structures and API without network calls.
 
 import unittest
 
-from agentbay._common.params.context_sync import (
+from agentbay import (
     BWList,
     ContextSync,
     DeletePolicy,

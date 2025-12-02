@@ -9,7 +9,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sys.path.append(str(PROJECT_ROOT))
 
-from agentbay._common.exceptions import AgentBayError
+from agentbay import AgentBayError
 
 
 @pytest.mark.asyncio

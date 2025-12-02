@@ -47,7 +47,7 @@ import shutil
 import anyio
 from PIL import Image
 
-from agentbay._common.logger import get_logger
+from agentbay import get_logger
 
 MAX_IMAGE = 5
 

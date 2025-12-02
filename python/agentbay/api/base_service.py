@@ -6,8 +6,8 @@ from typing import Any, Dict
 
 import requests
 
-from agentbay._common.exceptions import AgentBayError
-from agentbay._common.logger import (
+from .._common.exceptions import AgentBayError
+from .._common.logger import (
     _log_api_call,
     _log_api_response,
     _log_api_response_with_details,
@@ -15,8 +15,8 @@ from agentbay._common.logger import (
     _log_operation_error,
     get_logger,
 )
-from agentbay._common.models import OperationResult, extract_request_id
-from agentbay.api.models import CallMcpToolRequest
+from .._common.models import OperationResult, extract_request_id
+from .models import CallMcpToolRequest
 
 # Initialize _logger for this module
 _logger = get_logger("base_service")

@@ -10,7 +10,7 @@ import pytest
 from playwright.sync_api import sync_playwright
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay import BrowserOption
 
 

@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from agentbay._common.config import (
+from agentbay import (
     _find_dotenv_file,
     _load_config,
     _load_dotenv_with_fallback,

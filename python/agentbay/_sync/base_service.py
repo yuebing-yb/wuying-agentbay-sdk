@@ -99,8 +99,7 @@ class BaseService:
         try:
             # Send HTTP request
             # Use asyncio.to_thread for blocking requests.get
-            response = requests.get(
-                base_url, params=params, headers=headers, timeout=30
+            response = requests.get(base_url, params=params, headers=headers, timeout=30
             )
             response.raise_for_status()
 

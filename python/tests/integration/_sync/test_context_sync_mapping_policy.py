@@ -12,7 +12,7 @@ import time
 import unittest
 
 from agentbay import AgentBay
-from agentbay._common.params.context_sync import (
+from agentbay import (
     ContextSync,
     DeletePolicy,
     DownloadPolicy,
@@ -21,7 +21,7 @@ from agentbay._common.params.context_sync import (
     SyncPolicy,
     UploadPolicy,
 )
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):

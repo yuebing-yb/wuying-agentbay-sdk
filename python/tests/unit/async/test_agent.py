@@ -3,10 +3,10 @@ import time
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay._common.logger import get_logger
-from agentbay._common.models.response import McpToolResult, OperationResult
+from agentbay import get_logger
+from agentbay import McpToolResult, OperationResult
 from agentbay import AsyncAgent
-from agentbay._async.agent import ExecutionResult
+from agentbay import ExecutionResult
 
 logger = get_logger("agentbay-unit-test")
 
@@ -41,7 +41,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         """
         Test flux_execute_task method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -67,7 +67,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         """
         Test execute_task method with error response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -90,7 +90,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         """
         Test terminate_task method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -115,7 +115,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         """
         Test flux_execute_task method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -158,7 +158,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         """
         Test flux_execute_task method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",
@@ -179,7 +179,7 @@ class TestAsyncAgent(unittest.IsolatedAsyncioTestCase):
         """
         Test terminate_task method with successful response.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="request-123",

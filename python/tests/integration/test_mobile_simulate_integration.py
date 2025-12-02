@@ -8,7 +8,7 @@ import pytest_asyncio
 from agentbay import AsyncAgentBay
 from agentbay.api.models import MobileSimulateMode
 from agentbay import Context
-from agentbay._common.params.context_sync import BWList, ContextSync, SyncPolicy
+from agentbay import BWList, ContextSync, SyncPolicy
 
 
 @pytest_asyncio.fixture(scope="module")

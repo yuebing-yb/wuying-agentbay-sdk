@@ -20,14 +20,6 @@ It supports multiple programming languages including Python, JavaScript, and mor
 
 
 
-## CodeExecutionResult
-
-```python
-class CodeExecutionResult(ApiResponse)
-```
-
-Result of code execution operations.
-
 ## AsyncCode
 
 ```python

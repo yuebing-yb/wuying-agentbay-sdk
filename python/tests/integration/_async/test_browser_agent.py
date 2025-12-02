@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from agentbay import AsyncAgentBay
 from agentbay import ActOptions, ExtractOptions, ObserveOptions
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay import BrowserFingerprint, BrowserOption, BrowserProxy
 
 

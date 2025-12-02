@@ -21,7 +21,7 @@ from agentbay import (
     BrowserProxy,
 )
 from agentbay import ActOptions, ExtractOptions
-from agentbay._common.models.response import SessionResult
+from agentbay import SessionResult
 
 
 class ProductInfo(BaseModel):

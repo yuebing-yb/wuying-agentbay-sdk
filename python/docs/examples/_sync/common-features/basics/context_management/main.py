@@ -5,7 +5,7 @@
 
 import os
 from agentbay import AgentBay, ContextSync, SyncPolicy, CreateSessionParams
-from agentbay._common.exceptions import AgentBayError, ClearanceTimeoutError
+from agentbay import AgentBayError, ClearanceTimeoutError
 
 def main():
     # Initialize the AgentBay client

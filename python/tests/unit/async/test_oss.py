@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock
 
-from agentbay._common.models.response import McpToolResult, OperationResult
+from agentbay import McpToolResult, OperationResult
 from agentbay import AsyncOss
 
 
@@ -51,7 +51,7 @@ class TestAsyncOss(unittest.IsolatedAsyncioTestCase):
         """
         Test the upload method to ensure it succeeds with valid input.
         """
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         mock_result = McpToolResult(
             request_id="test-request-id",

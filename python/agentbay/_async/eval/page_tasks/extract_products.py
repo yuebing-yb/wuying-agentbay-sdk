@@ -9,8 +9,8 @@ from urllib.parse import urljoin, urlparse
 
 from pydantic import BaseModel, Field
 
-from agentbay._common.logger import get_logger
-from agentbay._async.browser_agent import ActOptions
+from agentbay import get_logger
+from agentbay import ActOptions
 from ..page_agent import PageAgent
 
 _logger = get_logger(__name__)

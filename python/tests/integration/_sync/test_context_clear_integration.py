@@ -9,7 +9,7 @@ import unittest
 from uuid import uuid4
 
 from agentbay import AgentBay
-from agentbay._common.exceptions import ClearanceTimeoutError
+from agentbay import ClearanceTimeoutError
 from agentbay import Config
 
 
@@ -96,8 +96,8 @@ class TestContextClearIntegration(unittest.TestCase):
         if with_data:
             print(f"  Adding data to context via session...")
             # Create a session with this context to generate some data
-            from agentbay._common.params.context_sync import ContextSync
-            from agentbay._common.params.session_params import CreateSessionParams
+            from agentbay import ContextSync
+            from agentbay import CreateSessionParams
 
             params = CreateSessionParams(
                 context_syncs=[
@@ -229,7 +229,7 @@ class TestContextClearIntegration(unittest.TestCase):
         print(f"\nAttempting to clear non-existent context: {invalid_context_id}")
 
         # This should raise AgentBayError
-        from agentbay._common.exceptions import AgentBayError
+        from agentbay import AgentBayError
 
         with self.assertRaises(AgentBayError) as context:
             self.agent_bay.context.clear_async(invalid_context_id)
@@ -300,8 +300,8 @@ class TestContextClearIntegration(unittest.TestCase):
 
         # Try to use the context again
         print(f"\nStep 3: Creating new session with cleared context...")
-        from agentbay._common.params.context_sync import ContextSync
-        from agentbay._common.params.session_params import CreateSessionParams
+        from agentbay import ContextSync
+        from agentbay import CreateSessionParams
 
         params = CreateSessionParams(
             context_syncs=[

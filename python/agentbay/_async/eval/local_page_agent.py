@@ -8,11 +8,11 @@ from typing import Any, Dict, Optional
 from mcp import ClientSession, StdioServerParameters, stdio_client
 from playwright.async_api import async_playwright
 
-from agentbay._common.logger import get_logger
-from agentbay._async.browser import AsyncBrowser as Browser, BrowserOption
-from agentbay._async.session import AsyncSession
+from agentbay import get_logger
+from agentbay import AsyncBrowser as Browser, BrowserOption
+from agentbay import AsyncSession
 from agentbay.api.base_service import OperationResult
-from agentbay._async.browser_agent import AsyncBrowserAgent
+from agentbay import AsyncBrowserAgent
 from agentbay import ActOptions
 
 # Use the AgentBay _logger instead of the standard _logger

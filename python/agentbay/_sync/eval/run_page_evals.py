@@ -11,13 +11,15 @@ from typing import Any, Dict
 
 from dotenv import load_dotenv
 
-from agentbay._common.logger import get_logger
+from agentbay import get_logger
 from .page_agent import PageAgent
 
 _logger = get_logger("run_page_evals")
 
 
-def run_single_task(task_name: str, task_config: Dict[str, Any]) -> Dict[str, Any]:
+def run_single_task(
+    task_name: str, task_config: Dict[str, Any]
+) -> Dict[str, Any]:
     _logger.info(f"🚀 Starting task: {task_name}")
     overall_start = time.perf_counter()
 

@@ -211,7 +211,9 @@ class Session:
                 try:
                     if sync_context_id:
                         # Sync specific context (browser recording)
-                        sync_result = self.context.sync(context_id=sync_context_id)
+                        sync_result = self.context.sync(
+                            context_id=sync_context_id
+                        )
                         _logger.info(
                             f"🎥 Synced browser recording context: {sync_context_id}"
                         )
@@ -373,7 +375,9 @@ class Session:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, "set_label") and callable(getattr(client, "set_label")):
+            if hasattr(client, "set_label") and callable(
+                getattr(client, "set_label")
+            ):
                 response = client.set_label(request)
             else:
                 response = client.set_label(request)
@@ -409,7 +413,9 @@ class Session:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self._get_client()
-            if hasattr(client, "get_label") and callable(getattr(client, "get_label")):
+            if hasattr(client, "get_label") and callable(
+                getattr(client, "get_label")
+            ):
                 response = client.get_label(request)
             else:
                 response = client.get_label(request)
@@ -575,7 +581,9 @@ class Session:
 
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
             client = self.agent_bay.client
-            if hasattr(client, "get_link") and callable(getattr(client, "get_link")):
+            if hasattr(client, "get_link") and callable(
+                getattr(client, "get_link")
+            ):
                 response = client.get_link(request)
             else:
                 response = client.get_link(request)
@@ -886,8 +894,9 @@ class Session:
                     request, read_timeout=read_timeout, connect_timeout=connect_timeout
                 )
             else:
-                response = client.call_mcp_tool(
-                    request, read_timeout=read_timeout, connect_timeout=connect_timeout
+                response = client.call_mcp_tool(request,
+                    read_timeout=read_timeout,
+                    connect_timeout=connect_timeout,
                 )
 
             # Extract request ID

@@ -10,7 +10,7 @@ import pytest
 import pytest
 
 from agentbay import AgentBay
-from agentbay._common.params.context_sync import (
+from agentbay import (
     BWList,
     ContextSync,
     DeletePolicy,
@@ -22,7 +22,7 @@ from agentbay._common.params.context_sync import (
     UploadPolicy,
     WhiteList,
 )
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay import ContextStatusData
 
 
@@ -145,7 +145,9 @@ def test_context_info_returns_context_status_data(agent_bay, context_for_test):
 
 
 @pytest.mark.sync
-def test_context_sync_with_recycle_policy_integration(agent_bay, context_for_test):
+def test_context_sync_with_recycle_policy_integration(
+    agent_bay, context_for_test
+):
     """Test creating a session with ContextSync that has custom RecyclePolicy."""
 
     # Create custom RecyclePolicy with Lifecycle_3Days

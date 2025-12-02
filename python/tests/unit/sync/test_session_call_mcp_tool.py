@@ -320,7 +320,7 @@ class TestSessionCallMcpTool(unittest.TestCase):
 
     def test_call_mcp_tool_return_type(self):
         """Test that call_mcp_tool returns McpToolResult type."""
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         # Mock the client
         mock_response = MagicMock()
@@ -353,7 +353,7 @@ class TestMcpToolResult(unittest.TestCase):
 
     def test_mcp_tool_result_initialization(self):
         """Test McpToolResult can be initialized with all fields."""
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         result = McpToolResult(
             request_id="req-123", success=True, data="test data", error_message=""
@@ -366,7 +366,7 @@ class TestMcpToolResult(unittest.TestCase):
 
     def test_mcp_tool_result_defaults(self):
         """Test McpToolResult default values."""
-        from agentbay._common.models.response import McpToolResult
+        from agentbay import McpToolResult
 
         result = McpToolResult()
 

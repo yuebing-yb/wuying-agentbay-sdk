@@ -12,7 +12,7 @@ from agentbay import ActOptions as AsyncActOptions
 from agentbay import AsyncBrowserAgent
 from agentbay import ExtractOptions as AsyncExtractOptions
 from agentbay import ObserveOptions as AsyncObserveOptions
-from agentbay._common.exceptions import BrowserError
+from agentbay import BrowserError
 from agentbay import (
     Browser,
     BrowserFingerprint,

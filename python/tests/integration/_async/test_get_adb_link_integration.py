@@ -23,7 +23,7 @@ class TestGetAdbLinkIntegration:
 
     def test_get_adb_link_with_mobile_session(self, agentbay):
         """Test get_adb_link with a real mobile session"""
-        from agentbay._common.params.session_params import CreateSessionParams
+        from agentbay import CreateSessionParams
 
         # Create a mobile session
         params = CreateSessionParams(image_id="mobile_latest")

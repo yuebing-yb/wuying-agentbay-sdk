@@ -13,7 +13,9 @@ class LoginCredentials(BaseModel):
     password: str = Field(..., description="The password for all users.")
 
 
-def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     agent.goto("https://www.saucedemo.com/")
 
     _logger.info("Extracting login credentials...")

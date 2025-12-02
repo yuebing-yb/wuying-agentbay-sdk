@@ -4,7 +4,7 @@ import time
 import pytest
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 class TestGetFileTransferContext:

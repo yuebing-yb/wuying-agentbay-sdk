@@ -14,14 +14,6 @@ It supports both synchronous command execution with configurable timeouts.
 
 
 
-## CommandResult
-
-```python
-class CommandResult(ApiResponse)
-```
-
-Result of command execution operations.
-
 ## Command
 
 ```python

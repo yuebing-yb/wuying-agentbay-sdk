@@ -5,7 +5,7 @@ Unit tests for context_sync module.
 
 import unittest
 
-from agentbay._common.params.context_sync import (
+from agentbay import (
     BWList,
     ContextSync,
     DeletePolicy,

@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay._common.models.response import McpToolResult, OperationResult
+from agentbay import McpToolResult, OperationResult
 from agentbay import AsyncFileSystem, BoolResult
-from agentbay._async.filesystem import FileContentResult, FileInfoResult
+from agentbay import FileContentResult, FileInfoResult
 
 
 class DummySession:

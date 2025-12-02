@@ -13,7 +13,8 @@ def pytest_configure(config):
     # Import after environment variables are set
     from loguru import logger
 
-    from agentbay._common.logger import AgentBayLogger, _colorize_log_message
+    from agentbay import AgentBayLogger
+    from agentbay import _colorize_log_message
 
     # Reset the logger initialization flag
     AgentBayLogger._initialized = False

@@ -132,8 +132,8 @@ def test_context_update(agent_bay):
 @pytest.mark.sync
 def test_context_with_session(agent_bay):
     """Test using context with a session."""
-    from agentbay._common.params.context_sync import ContextSync
-    from agentbay._common.params.session_params import CreateSessionParams
+    from agentbay import ContextSync
+    from agentbay import CreateSessionParams
 
     context_name = f"test-session-ctx-{uuid4().hex[:8]}"
 

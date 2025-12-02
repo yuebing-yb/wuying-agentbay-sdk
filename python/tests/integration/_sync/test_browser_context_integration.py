@@ -15,7 +15,7 @@ import unittest
 from playwright.sync_api import sync_playwright
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay import BrowserContext, CreateSessionParams
 from agentbay import BrowserOption
 
 
@@ -136,7 +136,9 @@ class TestBrowserContextIntegration(unittest.TestCase):
                 cdp_session = browser.new_browser_cdp_session()
 
                 context = (
-                    browser.contexts[0] if browser.contexts else browser.new_context()
+                    browser.contexts[0]
+                    if browser.contexts
+                    else browser.new_context()
                 )
                 page = context.new_page()
 
@@ -229,7 +231,9 @@ class TestBrowserContextIntegration(unittest.TestCase):
                 )
 
                 context = (
-                    browser.contexts[0] if browser.contexts else browser.new_context()
+                    browser.contexts[0]
+                    if browser.contexts
+                    else browser.new_context()
                 )
 
                 # Read cookies directly from context without opening any page

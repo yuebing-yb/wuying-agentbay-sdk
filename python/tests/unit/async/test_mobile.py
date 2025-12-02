@@ -7,9 +7,9 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from agentbay._common.exceptions import AgentBayError
-from agentbay._common.models import BoolResult, OperationResult
-from agentbay._async.computer import AppOperationResult, ProcessListResult
+from agentbay import AgentBayError
+from agentbay import BoolResult, OperationResult
+from agentbay import AppOperationResult, ProcessListResult
 from agentbay import AsyncMobile
 
 
@@ -358,7 +358,7 @@ class TestMobile:
         result = await self.mobile.get_adb_url(adbkey_pub)
 
         # Assert
-        from agentbay._common.models.response import AdbUrlResult
+        from agentbay import AdbUrlResult
 
         assert isinstance(result, AdbUrlResult)
         assert result.success is True
@@ -371,7 +371,7 @@ class TestMobile:
         self.mock_session.image_id = "browser_latest"
 
         # Mock get_adb_link to return error response
-        from agentbay._common.models.response import AdbUrlResult
+        from agentbay import AdbUrlResult
 
         mock_response = Mock()
         mock_response.body = Mock()
@@ -448,7 +448,7 @@ class TestMobile:
         result = await self.mobile.get_adb_url("key_xyz")
 
         # Assert - verify result structure
-        from agentbay._common.models.response import AdbUrlResult
+        from agentbay import AdbUrlResult
 
         assert isinstance(result, AdbUrlResult)
         assert hasattr(result, "success")

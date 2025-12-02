@@ -440,7 +440,9 @@ class AgentBay:
             _logger.error(f"❌ Error updating browser replay context: {e}")
             # Continue execution even if context update fails
 
-    def create(self, params: Optional[CreateSessionParams] = None) -> SessionResult:
+    def create(
+        self, params: Optional[CreateSessionParams] = None
+    ) -> SessionResult:
         """
         Create a new session in the AgentBay cloud environment asynchronously.
 
@@ -977,7 +979,9 @@ class AgentBay:
                 error_message=f"Failed to list sessions: {e}",
             )
 
-    def delete(self, session: Session, sync_context: bool = False) -> DeleteResult:
+    def delete(
+        self, session: Session, sync_context: bool = False
+    ) -> DeleteResult:
         """
         Delete a session by session object asynchronously.
 

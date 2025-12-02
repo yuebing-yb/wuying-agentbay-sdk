@@ -10,7 +10,7 @@ import threading
 import time
 
 from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 
 def get_api_key():

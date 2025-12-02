@@ -12,7 +12,7 @@ import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay._common.params.session_params import BrowserContext, CreateSessionParams
+from agentbay import BrowserContext, CreateSessionParams
 
 
 @pytest_asyncio.fixture(scope="module")

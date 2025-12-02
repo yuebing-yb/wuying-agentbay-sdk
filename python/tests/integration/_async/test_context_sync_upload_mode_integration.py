@@ -5,7 +5,7 @@ import time
 import unittest
 
 from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay._common.params.context_sync import (
+from agentbay import (
     BWList,
     ContextSync,
     DeletePolicy,

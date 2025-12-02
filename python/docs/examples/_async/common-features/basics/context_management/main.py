@@ -4,7 +4,7 @@ import os
 import asyncio
 
 from agentbay import AsyncAgentBay, ContextSync, SyncPolicy, CreateSessionParams
-from agentbay._common.exceptions import AgentBayError, ClearanceTimeoutError
+from agentbay import AgentBayError, ClearanceTimeoutError
 
 async def main():
     # Initialize the AgentBay client

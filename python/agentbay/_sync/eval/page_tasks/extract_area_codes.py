@@ -185,7 +185,9 @@ def validate_extracted_data(extracted_data: Dict[str, Any]) -> tuple[bool, str]:
     return True, "Validation passed"
 
 
-def run(agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]) -> dict:
+def run(
+    agent: PageAgent, _logger: logging.Logger, config: Dict[str, Any]
+) -> dict:
     agent.goto(
         "https://browserbase.github.io/stagehand-eval-sites/sites/ncc-area-codes/"
     )
