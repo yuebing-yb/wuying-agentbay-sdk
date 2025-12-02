@@ -20,56 +20,6 @@ screenshot capture, and content extraction. It enables automated testing and web
 
 
 
-## BrowserFingerprintContext
-
-```python
-class BrowserFingerprintContext()
-```
-
-Browser fingerprint context configuration.
-
-## BrowserProxy
-
-```python
-class BrowserProxy()
-```
-
-Browser proxy configuration.
-Supports two types of proxy: custom proxy, wuying proxy.
-wuying proxy support two strategies: restricted and polling.
-
-## BrowserViewport
-
-```python
-class BrowserViewport()
-```
-
-Browser viewport options.
-
-## BrowserScreen
-
-```python
-class BrowserScreen()
-```
-
-Browser screen options.
-
-## BrowserFingerprint
-
-```python
-class BrowserFingerprint()
-```
-
-Browser fingerprint options.
-
-## BrowserOption
-
-```python
-class BrowserOption()
-```
-
-browser initialization options.
-
 ## AsyncBrowser
 
 ```python
