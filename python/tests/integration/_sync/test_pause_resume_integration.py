@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 from agentbay import AgentBay, CreateSessionParams
 from agentbay import AgentBayError
-from agentbay import SyncSessionPauseResult, SessionResumeResult
+from agentbay import SessionPauseResult, SessionResumeResult
 from agentbay import Config
 
 

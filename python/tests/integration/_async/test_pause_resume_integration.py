@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay import AgentBayError
-from agentbay import AsyncSessionPauseResult, SessionResumeResult
+from agentbay import SessionPauseResult, SessionResumeResult
 from agentbay import Config
 
 
