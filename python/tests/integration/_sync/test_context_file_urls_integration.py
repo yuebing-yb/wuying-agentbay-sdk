@@ -9,7 +9,7 @@ from agentbay import AgentBay
 
 
 class TestContextFileUrlsIntegration(unittest.IsolatedAsyncioTestCase):
-    def asyncSetUp(self):
+    def setUp(self):
         api_key = os.environ.get("AGENTBAY_API_KEY")
         if not api_key or os.environ.get("CI"):
             raise unittest.SkipTest(
@@ -25,7 +25,7 @@ class TestContextFileUrlsIntegration(unittest.IsolatedAsyncioTestCase):
         self.context = context_result.context
         print(f"Created context: {self.context.name} (ID: {self.context.id})")
 
-    def asyncTearDown(self):
+    def tearDown(self):
         # Clean up created context
         if hasattr(self, "context"):
             try:

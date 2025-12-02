@@ -134,6 +134,11 @@ def generate_sync():
 
         # Test specific
         "@pytest.mark.asyncio": "",
+        "unittest.IsolatedAsyncioTestCase": "unittest.TestCase",
+        "async def asyncSetUp": "def setUp",
+        "async def asyncTearDown": "def tearDown",
+        "asyncSetUp": "setUp",
+        "asyncTearDown": "tearDown",
     }
 
     rules = [
