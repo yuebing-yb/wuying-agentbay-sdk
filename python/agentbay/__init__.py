@@ -59,6 +59,7 @@ from ._common.models.response import (
     extract_request_id,
 )
 from ._sync.fingerprint import BrowserFingerprintGenerator, FingerprintFormat
+from .api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Sync API (Default)
 from ._sync.agentbay import AgentBay, _generate_random_context_name
@@ -278,4 +279,8 @@ __all__ = [
     "UploadResult",
     "FileSearchResult",
     "MultipleFileContentResult",
+    # API Models
+    "ExtraConfigs",
+    "MobileExtraConfig", 
+    "AppManagerRule",
 ]
