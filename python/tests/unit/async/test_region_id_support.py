@@ -103,8 +103,8 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
                     mock_fetch.return_value = None
 
                     # Create AsyncAgentBay instance with region_id in config
-        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
-        agent_bay = AsyncAgentBay(cfg=config)
+                    config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+                    agent_bay = AsyncAgentBay(cfg=config)
 
                     # Create session
                     params = CreateSessionParams()
