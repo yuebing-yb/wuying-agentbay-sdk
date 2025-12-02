@@ -35,8 +35,8 @@ def test_get_api(agentbay_client: AsyncAgentBay):
     session = result.session
     assert session is not None, "Get returned None session"
     assert isinstance(
-        session, Session
-    ), f"Expected Session instance, got {type(session)}"
+        session, AsyncSession
+    ), f"Expected AsyncSession instance, got {type(session)}"
     assert (
         session.session_id == session_id
     ), f"Expected SessionID {session_id}, got {session.session_id}"
@@ -51,7 +51,7 @@ def test_get_api(agentbay_client: AsyncAgentBay):
     print(f"Session {session_id} deleted successfully")
 
 
-def test_get_non_existent_session(agentbay_client: AgentBay):
+def test_get_non_existent_session(agentbay_client: AsyncAgentBay):
     """Test Get API with a non-existent session ID."""
     print("Testing Get API with non-existent session ID...")
     non_existent_session_id = "session-nonexistent-12345"
@@ -63,7 +63,7 @@ def test_get_non_existent_session(agentbay_client: AgentBay):
     print("Get API non-existent session test passed successfully")
 
 
-def test_get_empty_session_id(agentbay_client: AgentBay):
+def test_get_empty_session_id(agentbay_client: AsyncAgentBay):
     """Test Get API with empty session ID."""
     print("Testing Get API with empty session ID...")
 
@@ -74,7 +74,7 @@ def test_get_empty_session_id(agentbay_client: AgentBay):
     print("Get API empty session ID test passed successfully")
 
 
-def test_get_whitespace_session_id(agentbay_client: AgentBay):
+def test_get_whitespace_session_id(agentbay_client: AsyncAgentBay):
     """Test Get API with whitespace-only session ID."""
     print("Testing Get API with whitespace session ID...")
 

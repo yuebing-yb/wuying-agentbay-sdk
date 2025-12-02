@@ -39,7 +39,7 @@ def test_get_api(agentbay_client: AgentBay):
     assert session is not None, "Get returned None session"
     assert isinstance(
         session, Session
-    ), f"Expected Session instance, got {type(session)}"
+    ), f"Expected AsyncSession instance, got {type(session)}"
     assert (
         session.session_id == session_id
     ), f"Expected SessionID {session_id}, got {session.session_id}"

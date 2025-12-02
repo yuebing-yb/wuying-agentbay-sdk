@@ -4,10 +4,10 @@ import typing
 import unittest
 
 from agentbay import AsyncAgentBay
-from agentbay import AsyncSessionError
+from agentbay import SessionError
 from agentbay import AdbUrlResult
 from agentbay import CreateSessionParams
-from agentbay import Session
+from agentbay import AsyncSession
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -55,7 +55,7 @@ class TestMobileGetAdbUrl(unittest.TestCase):
     def test_get_adb_url_e2e_with_valid_key(self):
         """Test session.mobile.get_adb_url() returns AdbUrlResult with valid adbkey_pub."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
-        session: Session = typing.cast(Session, self.session)
+        session: AsyncSession = typing.cast(AsyncSession, self.session)
 
         # Create a test ADB key
         adbkey_pub = "test_adb_key_123"
@@ -82,7 +82,7 @@ class TestMobileGetAdbUrl(unittest.TestCase):
     def test_get_adb_url_returns_valid_adb_url(self):
         """Test session.mobile.get_adb_url() returns properly formatted URL."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
-        session: Session = typing.cast(Session, self.session)
+        session: AsyncSession = typing.cast(AsyncSession, self.session)
 
         adbkey_pub = "test_key_123"
         print(f"Calling session.mobile.get_adb_url()...")
@@ -111,7 +111,7 @@ class TestMobileGetAdbUrl(unittest.TestCase):
     def test_get_adb_url_request_id_exists(self):
         """Test session.mobile.get_adb_url() result has valid request_id."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
-        session: Session = typing.cast(Session, self.session)
+        session: AsyncSession = typing.cast(AsyncSession, self.session)
 
         adbkey_pub = "test_key_xyz"
         print(f"Calling session.mobile.get_adb_url()...")

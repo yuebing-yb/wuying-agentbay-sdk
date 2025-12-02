@@ -7,7 +7,7 @@ import typing
 import unittest
 
 from agentbay import AgentBay
-from agentbay import SyncSessionError
+from agentbay import SessionError
 from agentbay import CreateSessionParams
 from agentbay import Session
 

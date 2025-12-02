@@ -4,9 +4,9 @@ import typing
 import unittest
 
 from agentbay import AsyncAgentBay
-from agentbay import AsyncSessionError
+from agentbay import SessionError
 from agentbay import CreateSessionParams
-from agentbay import Session
+from agentbay import AsyncSession
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -54,7 +54,7 @@ class TestSessionInfoAndLink(unittest.TestCase):
     def test_info(self):
         """Test session.info() returns expected fields."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
-        session: Session = typing.cast(Session, self.session)
+        session: AsyncSession = typing.cast(AsyncSession, self.session)
         print("Calling session.info()...")
         result = session.info()
         self.assertTrue(result.success, "session.info() did not succeed")
@@ -75,7 +75,7 @@ class TestSessionInfoAndLink(unittest.TestCase):
     def test_get_link(self):
         """Test session.get_link() returns a valid URL."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
-        session: Session = typing.cast(Session, self.session)
+        session: AsyncSession = typing.cast(AsyncSession, self.session)
         print("Calling session.get_link()...")
         result = session.get_link()
         self.assertTrue(result.success, "session.get_link() did not succeed")
@@ -90,7 +90,7 @@ class TestSessionInfoAndLink(unittest.TestCase):
     def test_get_link_with_valid_port(self):
         """Test session.get_link() with valid port returns a valid URL."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
-        session: Session = typing.cast(Session, self.session)
+        session: AsyncSession = typing.cast(AsyncSession, self.session)
         print("Calling session.get_link()...")
         result = session.get_link()
         self.assertTrue(result.success, "session.get_link() did not succeed")
@@ -125,7 +125,7 @@ class TestSessionInfoAndLink(unittest.TestCase):
     def test_get_link_with_invalid_port_below_range(self):
         """Test session.get_link() with port below valid range raises SessionError."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
-        session: Session = typing.cast(Session, self.session)
+        session: AsyncSession = typing.cast(AsyncSession, self.session)
 
         # Test with port below valid range
         invalid_port = 30099
@@ -155,7 +155,7 @@ class TestSessionInfoAndLink(unittest.TestCase):
     def test_get_link_with_invalid_port_above_range(self):
         """Test session.get_link() with port above valid range raises SessionError."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
-        session: Session = typing.cast(Session, self.session)
+        session: AsyncSession = typing.cast(AsyncSession, self.session)
 
         # Test with port above valid range
         invalid_port = 30200
@@ -174,7 +174,7 @@ class TestSessionInfoAndLink(unittest.TestCase):
     def test_get_link_with_invalid_port_non_integer(self):
         """Test session.get_link() with non-integer port raises SessionError."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
-        session: Session = typing.cast(Session, self.session)
+        session: AsyncSession = typing.cast(AsyncSession, self.session)
 
         # Test with non-integer port
         invalid_port = 30150.5

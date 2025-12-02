@@ -338,7 +338,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Create a mock session object with invalid session ID
         from agentbay import AsyncSession
 
-        invalid_session = Session(self.agent_bay, "non-existent-session-12345")
+        invalid_session = AsyncSession(self.agent_bay, "non-existent-session-12345")
 
         print(
             f"\nAttempting to pause non-existent session: {invalid_session.session_id}"
@@ -363,7 +363,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Create a mock session object with invalid session ID
         from agentbay import AsyncSession
 
-        invalid_session = Session(self.agent_bay, "non-existent-session-12345")
+        invalid_session = AsyncSession(self.agent_bay, "non-existent-session-12345")
 
         print(
             f"\nAttempting to resume non-existent session: {invalid_session.session_id}"
@@ -388,7 +388,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Create a mock session object with invalid session ID
         from agentbay import AsyncSession
 
-        invalid_session = Session(self.agent_bay, "non-existent-session-12345")
+        invalid_session = AsyncSession(self.agent_bay, "non-existent-session-12345")
 
         print(
             f"\nAttempting to async resume non-existent session: {invalid_session.session_id}"

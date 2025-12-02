@@ -25,7 +25,7 @@ class TestComputerMobileIntegration:
         mock_agent_bay = Mock()
 
         # Act - Create a Session directly
-        session = Session(mock_agent_bay, "test-session-123")
+        session = AsyncSession(mock_agent_bay, "test-session-123")
 
         # Assert
         assert hasattr(session, "computer")
@@ -37,7 +37,7 @@ class TestComputerMobileIntegration:
         """Test Computer module usage through Session."""
         # Arrange
         mock_agent_bay = Mock()
-        session = Session(mock_agent_bay, "test-session-123")
+        session = AsyncSession(mock_agent_bay, "test-session-123")
 
         # Mock the call_mcp_tool method at the session level
         with patch.object(session, "call_mcp_tool") as mock_mcp:
@@ -60,7 +60,7 @@ class TestComputerMobileIntegration:
         """Test Mobile module usage through Session."""
         # Arrange
         mock_agent_bay = Mock()
-        session = Session(mock_agent_bay, "test-session-123")
+        session = AsyncSession(mock_agent_bay, "test-session-123")
 
         # Mock the call_mcp_tool method at the session level
         with patch.object(session, "call_mcp_tool") as mock_mcp:
@@ -81,7 +81,7 @@ class TestComputerMobileIntegration:
         """Test that Computer module can call get_installed_apps."""
         # Arrange
         mock_agent_bay = Mock()
-        session = Session(mock_agent_bay, "test-session-123")
+        session = AsyncSession(mock_agent_bay, "test-session-123")
 
         # Mock the call_mcp_tool method at the session level
         with patch.object(session, "call_mcp_tool") as mock_mcp:
@@ -101,7 +101,7 @@ class TestComputerMobileIntegration:
         """Test that Mobile module can call get_installed_apps."""
         # Arrange
         mock_agent_bay = Mock()
-        session = Session(mock_agent_bay, "test-session-123")
+        session = AsyncSession(mock_agent_bay, "test-session-123")
 
         # Mock the call_mcp_tool method at the session level
         with patch.object(session, "call_mcp_tool") as mock_mcp:
