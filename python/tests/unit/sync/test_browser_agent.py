@@ -1,4 +1,3 @@
-import time
 import json
 import os
 import unittest
@@ -7,9 +6,9 @@ from unittest.mock import MagicMock, MagicMock, patch
 
 from pydantic import BaseModel, Field
 
-from agentbay import SyncBrowser
+from agentbay import Browser
 from agentbay import ActOptions as SyncActOptions
-from agentbay import SyncBrowserAgent
+from agentbay import BrowserAgent
 from agentbay import ExtractOptions as SyncExtractOptions
 from agentbay import ObserveOptions as SyncObserveOptions
 from agentbay import BrowserError
@@ -333,22 +332,22 @@ class TestAsyncBrowser(unittest.TestCase):
         self.mock_session = MagicMock()
         # Configure async mock for init_browser_async
         mock_client = MagicMock()
-        mock_client.init_browser_async = MagicMock()
-        mock_client.init_browser_async.return_value = MagicMock()
-        mock_client.init_browser_async.return_value.to_map.return_value = {
+        mock_client.init_browser = MagicMock()
+        mock_client.init_browser.return_value = MagicMock()
+        mock_client.init_browser.return_value.to_map.return_value = {
             "body": {"Data": {"Port": 9333}}
         }
         self.mock_session._get_client.return_value = mock_client
         # Mock session.call_mcp_tool as it is used by agent
         self.mock_session.call_mcp_tool = MagicMock()
 
-        self.browser = SyncBrowser(self.mock_session)
+        self.browser = Browser(self.mock_session)
         # We are testing real AsyncBrowserAgent, so we don't mock self.browser.agent
         # But we need to ensure dependencies work.
 
     def test_initialize_async(self):
         """Test initialize method (async)."""
-        result = time.run(self.browser.initialize(BrowserOption()))
+        result = self.browser.initialize(BrowserOption())
         self.assertTrue(result)
 
     def test_act_async(self):
@@ -356,7 +355,7 @@ class TestAsyncBrowser(unittest.TestCase):
         page = MagicMock()
         page.context.new_cdp_session = MagicMock()
 
-        time.run(self.browser.initialize(BrowserOption()))
+        self.browser.initialize(BrowserOption())
 
         # Mock the MCP tool response for act
         # act calls _execute_act -> _call_mcp_tool_timeout
@@ -371,9 +370,7 @@ class TestAsyncBrowser(unittest.TestCase):
 
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        time.run(
-            self.browser.agent.act(SyncActOptions(action="Click search button"), page)
-        )
+        self.browser.agent.act(SyncActOptions(action="Click search button"), page)
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_observe_async(self):
@@ -381,17 +378,13 @@ class TestAsyncBrowser(unittest.TestCase):
         page = MagicMock()
         page.context.new_cdp_session = MagicMock()
 
-        time.run(self.browser.initialize(BrowserOption()))
+        self.browser.initialize(BrowserOption())
         # observe calls page_use_observe -> returns list of items
         self.mock_session.call_mcp_tool.return_value = MagicMock(
             success=True, data=json.dumps([{"selector": "#search"}])
         )
 
-        time.run(
-            self.browser.agent.observe(
-                SyncObserveOptions(instruction="Find the search button"), page
-            )
-        )
+        self.browser.agent.observe(SyncObserveOptions(instruction="Find the search button"), page)
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_extract_async(self):
@@ -399,7 +392,7 @@ class TestAsyncBrowser(unittest.TestCase):
         page = MagicMock()
         page.context.new_cdp_session = MagicMock()
 
-        time.run(self.browser.initialize(BrowserOption()))
+        self.browser.initialize(BrowserOption())
 
         # extract calls page_use_extract_async -> returns task_id
         # then page_use_get_extract_result -> returns result
@@ -410,14 +403,8 @@ class TestAsyncBrowser(unittest.TestCase):
 
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        time.run(
-            self.browser.agent.extract(
-                SyncExtractOptions(
-                    instruction="Extract the title", schema=SchemaForTest
-                ),
-                page,
-            )
-        )
+        self.browser.agent.extract(
+            SyncExtractOptions(instruction="Extract the title", schema=SchemaForTest), page)
         self.mock_session.call_mcp_tool.assert_called()
 
 

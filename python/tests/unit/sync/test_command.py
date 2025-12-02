@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import OperationResult
-from agentbay import SyncCommand
+from agentbay import Command
 from agentbay import CommandResult
 
 
@@ -27,7 +27,7 @@ class DummySession:
 class TestAsyncCommand(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
-        self.command = SyncCommand(self.session)
+        self.command = Command(self.session)
 
     def test_execute_command_success(self):
         """

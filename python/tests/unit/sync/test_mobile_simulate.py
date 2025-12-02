@@ -200,7 +200,7 @@ class TestAsyncMobileSimulateService(unittest.TestCase):
             self.mobile_simulate_service.has_mobile_info(context_sync)
         self.assertIn("context_sync.path is required", str(context.exception))
 
-    @patch("httpx.AsyncClient")
+    @patch("httpx.Client")
     def test_upload_mobile_info_success_without_context(self, mock_client_cls):
         """Test uploading mobile info without providing context sync"""
         mobile_dev_info = json.dumps({"device": "test", "model": "test-model"})
@@ -233,7 +233,7 @@ class TestAsyncMobileSimulateService(unittest.TestCase):
             "https://test-upload-url.com", content=mobile_dev_info
         )
 
-    @patch("httpx.AsyncClient")
+    @patch("httpx.Client")
     def test_upload_mobile_info_success_with_context(self, mock_client_cls):
         """Test uploading mobile info with existing context sync"""
         mobile_dev_info = json.dumps({"device": "test"})

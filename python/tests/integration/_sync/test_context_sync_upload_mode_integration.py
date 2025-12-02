@@ -34,7 +34,7 @@ def generate_unique_id():
     return f"{timestamp}-{random_part}"
 
 
-class TestContextSyncUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
+class TestContextSyncUploadModeIntegration(unittest.TestCase):
     """Context Sync Upload Mode Integration Tests"""
 
     @classmethod

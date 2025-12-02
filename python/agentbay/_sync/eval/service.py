@@ -821,7 +821,7 @@ def judge_task_result(
 
         # Use the retry wrapper for evaluation
         try:
-            # Await the async function directly instead of using asyncio.run()
+            # Await the async function directly instead of using 
             eval_result = Online_Mind2Web_eval_with_retry(
                 task_description,
                 action_history,
@@ -2287,7 +2287,8 @@ if __name__ == "__main__":
                 exit(1)
         # -----------------
 
-        results = run_multiple_tasks(
+        results = 
+            run_multiple_tasks(
                 tasks=tasks,
                 llm=llm,
                 run_id=run_id,
@@ -2309,6 +2310,7 @@ if __name__ == "__main__":
                 planner_llm=planner_llm,
                 planner_interval=args.planner_interval,
             )
+        
 
         _logger.info("Task completed. Saving results...")
         # Save results

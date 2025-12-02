@@ -8,7 +8,7 @@ import httpx
 from agentbay import AgentBay
 
 
-class TestContextFileUrlsIntegration(unittest.IsolatedAsyncioTestCase):
+class TestContextFileUrlsIntegration(unittest.TestCase):
     def setUp(self):
         api_key = os.environ.get("AGENTBAY_API_KEY")
         if not api_key or os.environ.get("CI"):

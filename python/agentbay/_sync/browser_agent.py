@@ -141,7 +141,7 @@ class BrowserAgent(BaseService):
 
         Note:
             - The browser must be initialized before calling this method
-            - This is an async method and must be awaited or run with `asyncio.run()`
+            - This is an async method and must be awaited or run with ``
             - For synchronous usage, consider using browser automation frameworks directly
 
         See Also:

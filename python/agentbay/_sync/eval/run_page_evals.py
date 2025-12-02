@@ -33,7 +33,7 @@ def run_single_task(
     try:
         try:
             task_module = importlib.import_module(
-                f"agentbay._async.eval.page_tasks.{task_name}"
+                f"agentbay._sync.eval.page_tasks.{task_name}"
             )
         except ImportError:
             task_module = importlib.import_module(f"page_tasks.{task_name}")

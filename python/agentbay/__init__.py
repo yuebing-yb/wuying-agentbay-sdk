@@ -126,7 +126,7 @@ from ._sync.context import (
     ContextService,
 )
 from ._sync.code import Code, CodeExecutionResult
-from ._sync.mobile_simulate import MobileSimulateUploadResult
+from ._sync.mobile_simulate import MobileSimulateUploadResult, SyncMobileSimulateService
 
 # Async API (Explicitly marked)
 from ._async.agentbay import AsyncAgentBay
@@ -270,6 +270,7 @@ __all__ = [
     "AppOperationResult",
     "UIElementListResult",
     "AsyncMobileSimulateService",
+    "SyncMobileSimulateService",
     "MobileSimulateUploadResult",
     # Filesystem related
     "FileChangeEvent",

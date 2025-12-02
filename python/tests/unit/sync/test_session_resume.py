@@ -1,11 +1,11 @@
+import time
 """Unit tests for Session resume operations."""
 
-import time
 import unittest
 from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import AgentBay
-from agentbay import SyncSession
+from agentbay import Session
 from agentbay import (
     GetSessionData,
     GetSessionResult,
@@ -26,7 +26,7 @@ class TestSessionResume(unittest.TestCase):
         self.agent_bay.client = MagicMock()
 
         # Create a mock session
-        self.session = SyncSession(self.agent_bay, "session-123")
+        self.session = Session(self.agent_bay, "session-123")
         self.session.is_vpc = False
         self.session.network_interface_ip = ""
         self.session.http_port = ""
@@ -44,7 +44,7 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = MagicMock(
+        self.agent_bay.client.resume_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -59,10 +59,10 @@ class TestSessionResume(unittest.TestCase):
         )
         self.agent_bay.get_session = MagicMock(return_value=get_session_running)
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method (resume not resume_async for polling)
-            result = time.run(self.session.resume(timeout=10, poll_interval=1))
+            result = self.session.resume(timeout=10, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -85,7 +85,7 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = MagicMock(
+        self.agent_bay.client.resume_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -111,10 +111,10 @@ class TestSessionResume(unittest.TestCase):
             side_effect=[get_session_resuming, get_session_running]
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.resume(timeout=10, poll_interval=1))
+            result = self.session.resume(timeout=10, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -137,7 +137,7 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = MagicMock(
+        self.agent_bay.client.resume_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -152,10 +152,10 @@ class TestSessionResume(unittest.TestCase):
         )
         self.agent_bay.get_session = MagicMock(return_value=get_session_resuming)
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method with a short timeout
-            result = time.run(self.session.resume(timeout=2, poll_interval=1))
+            result = self.session.resume(timeout=2, poll_interval=1)
 
             # Verify the result
             # The implementation now returns failure on timeout
@@ -175,7 +175,7 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = MagicMock(
+        self.agent_bay.client.resume_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -187,10 +187,10 @@ class TestSessionResume(unittest.TestCase):
         )
         self.agent_bay.get_session = MagicMock(return_value=get_session_failure)
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.resume(timeout=2, poll_interval=1))
+            result = self.session.resume(timeout=2, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -209,14 +209,14 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=404,
         )
-        self.agent_bay.client.resume_session_async_async = MagicMock(
+        self.agent_bay.client.resume_session_async = MagicMock(
             return_value=mock_response
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.resume())
+            result = self.session.resume()
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -231,14 +231,14 @@ class TestSessionResume(unittest.TestCase):
         # Mock the ResumeSessionAsync response with no body
         mock_response = ResumeSessionAsyncResponse(status_code=200)
         mock_response.body = None
-        self.agent_bay.client.resume_session_async_async = MagicMock(
+        self.agent_bay.client.resume_session_async = MagicMock(
             return_value=mock_response
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.resume())
+            result = self.session.resume()
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -251,14 +251,14 @@ class TestSessionResume(unittest.TestCase):
         # Mock the ResumeSessionAsync response with invalid format
         mock_response = MagicMock()
         mock_response.to_map.return_value = None
-        self.agent_bay.client.resume_session_async_async = MagicMock(
+        self.agent_bay.client.resume_session_async = MagicMock(
             return_value=mock_response
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.resume())
+            result = self.session.resume()
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -269,14 +269,14 @@ class TestSessionResume(unittest.TestCase):
     def test_resume_async_client_exception(self):
         """Test async session resume with client exception."""
         # Mock the client to raise an exception
-        self.agent_bay.client.resume_session_async_async.side_effect = Exception(
+        self.agent_bay.client.resume_session_async.side_effect = Exception(
             "Network error"
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.resume())
+            result = self.session.resume()
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -295,7 +295,7 @@ class TestSessionResume(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.resume_session_async_async = MagicMock(
+        self.agent_bay.client.resume_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -321,10 +321,10 @@ class TestSessionResume(unittest.TestCase):
             side_effect=[get_session_paused, get_session_running]
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.resume(timeout=10, poll_interval=1))
+            result = self.session.resume(timeout=10, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)

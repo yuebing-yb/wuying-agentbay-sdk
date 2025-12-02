@@ -81,7 +81,7 @@ class TestGetCdpLink:
             assert response.status_code == 200
             assert response.body.data.url == "ws://test-cdp-url:9222"
 
-    @pytest.mark.time
+    @pytest.mark.sync
     def test_get_cdp_link_async(self, client):
         """Test get_cdp_link_async"""
         mock_response = {
@@ -95,11 +95,11 @@ class TestGetCdpLink:
             },
         }
 
-        with patch.object(client, "do_rpcrequest_async", return_value=mock_response):
+        with patch.object(client, "do_rpcrequest", return_value=mock_response):
             request = models.GetCdpLinkRequest(
                 authorization="test-auth-token", session_id="test-session-id"
             )
-            response = client.get_cdp_link_async(request)
+            response = client.get_cdp_link(request)
 
             assert response is not None
             assert response.status_code == 200
@@ -209,7 +209,7 @@ class TestGetAdbLink:
             assert response.status_code == 200
             assert response.body.data.url == "adb://test-adb-url:5555"
 
-    @pytest.mark.time
+    @pytest.mark.sync
     def test_get_adb_link_async(self, client):
         """Test get_adb_link_async"""
         mock_response = {
@@ -223,7 +223,7 @@ class TestGetAdbLink:
             },
         }
 
-        with patch.object(client, "do_rpcrequest_async", return_value=mock_response):
+        with patch.object(client, "do_rpcrequest", return_value=mock_response):
             import json
 
             options = json.dumps({"adbkey_pub": "test-public-key"})
@@ -232,7 +232,7 @@ class TestGetAdbLink:
                 session_id="test-session-id",
                 option=options,
             )
-            response = client.get_adb_link_async(request)
+            response = client.get_adb_link(request)
 
             assert response is not None
             assert response.status_code == 200

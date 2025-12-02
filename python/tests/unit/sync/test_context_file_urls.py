@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, MagicMock
 from agentbay import (
     ContextFileEntry,
     ContextFileListResult,
-    SyncContextService,
+    ContextService,
 )
 
 
@@ -13,7 +13,7 @@ class TestAsyncContextFileUrls(unittest.TestCase):
         self.agent_bay = MagicMock()
         self.agent_bay.api_key = "test-api-key"
         self.agent_bay.client = MagicMock()
-        self.context = SyncContextService(self.agent_bay)
+        self.context = ContextService(self.agent_bay)
         self.context_id = "ctx-123"
         self.test_path = "/tmp/integration_upload_test.txt"
 
@@ -27,7 +27,7 @@ class TestAsyncContextFileUrls(unittest.TestCase):
         mock_body.data = mock_data
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-upload-1"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.get_context_file_upload_url_async = MagicMock(
+        self.agent_bay.client.get_context_file_upload_url = MagicMock(
             return_value=mock_resp
         )
 
@@ -47,7 +47,7 @@ class TestAsyncContextFileUrls(unittest.TestCase):
         mock_body.data = mock_data
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-download-1"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.get_context_file_download_url_async = MagicMock(
+        self.agent_bay.client.get_context_file_download_url = MagicMock(
             return_value=mock_resp
         )
 
@@ -66,7 +66,7 @@ class TestAsyncContextFileUrls(unittest.TestCase):
         mock_body.data = None
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-download-2"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.get_context_file_download_url_async = MagicMock(
+        self.agent_bay.client.get_context_file_download_url = MagicMock(
             return_value=mock_resp
         )
 
@@ -92,7 +92,7 @@ class TestAsyncContextFileUrls(unittest.TestCase):
         mock_body.data = [entry]
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-list-1"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.describe_context_files_async = MagicMock(
+        self.agent_bay.client.describe_context_files = MagicMock(
             return_value=mock_resp
         )
 
@@ -115,7 +115,7 @@ class TestAsyncContextFileUrls(unittest.TestCase):
         mock_body.data = []
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-list-2"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.describe_context_files_async = MagicMock(
+        self.agent_bay.client.describe_context_files = MagicMock(
             return_value=mock_resp
         )
 
@@ -133,7 +133,7 @@ class TestAsyncContextFileUrls(unittest.TestCase):
         mock_body.success = True
         mock_resp.to_map.return_value = {"body": {"RequestId": "req-del-1"}}
         mock_resp.body = mock_body
-        self.agent_bay.client.delete_context_file_async = MagicMock(
+        self.agent_bay.client.delete_context_file = MagicMock(
             return_value=mock_resp
         )
 

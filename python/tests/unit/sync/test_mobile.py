@@ -10,7 +10,7 @@ import pytest
 from agentbay import AgentBayError
 from agentbay import BoolResult, OperationResult
 from agentbay import AppOperationResult, ProcessListResult
-from agentbay import SyncMobile
+from agentbay import Mobile
 
 
 class TestMobile:
@@ -23,9 +23,9 @@ class TestMobile:
         # Setup agent_bay.client mock for get_adb_url
         self.mock_session.agent_bay = Mock()
         self.mock_session.agent_bay.client = Mock()
-        self.mock_session.agent_bay.client.get_adb_link_async = MagicMock()
+        self.mock_session.agent_bay.client.get_adb_link = MagicMock()
         self.session = self.mock_session  # Add session reference for tests
-        self.mobile = SyncMobile(self.mock_session)
+        self.mobile = Mobile(self.mock_session)
 
     def test_mobile_initialization(self):
         """Test Mobile module initialization."""
@@ -349,7 +349,7 @@ class TestMobile:
         mock_response.body.data = Mock()
         mock_response.body.data.url = "adb connect 47.99.76.99:54848"
 
-        self.mobile.session.agent_bay.client.get_adb_link_async = MagicMock(
+        self.mobile.session.agent_bay.client.get_adb_link = MagicMock(
             return_value=mock_response
         )
 
@@ -382,7 +382,7 @@ class TestMobile:
         )
         mock_response.body.data = None
 
-        self.mobile.session.agent_bay.client.get_adb_link_async = MagicMock(
+        self.mobile.session.agent_bay.client.get_adb_link = MagicMock(
             return_value=mock_response
         )
 
@@ -410,7 +410,7 @@ class TestMobile:
         mock_response.body.data = Mock()
         mock_response.body.data.url = "adb connect 192.168.1.1:5555"
 
-        self.mobile.session.agent_bay.client.get_adb_link_async = MagicMock(
+        self.mobile.session.agent_bay.client.get_adb_link = MagicMock(
             return_value=mock_response
         )
 
@@ -419,8 +419,8 @@ class TestMobile:
         result = self.mobile.get_adb_url(adbkey_pub)
 
         # Assert
-        self.mobile.session.agent_bay.client.get_adb_link_async.assert_called_once()
-        call_args = self.mobile.session.agent_bay.client.get_adb_link_async.call_args
+        self.mobile.session.agent_bay.client.get_adb_link.assert_called_once()
+        call_args = self.mobile.session.agent_bay.client.get_adb_link.call_args
 
         # Verify the request object
         request = call_args[0][0]

@@ -5,7 +5,7 @@ from agentbay import (
     Context,
     ContextListParams,
     ContextListResult,
-    SyncContextService,
+    ContextService,
 )
 
 
@@ -15,7 +15,7 @@ class TestAsyncContextPagination(unittest.TestCase):
         self.agent_bay = MagicMock()
         self.agent_bay.api_key = "test-api-key"
         self.agent_bay.client = MagicMock()
-        self.context_service = SyncContextService(self.agent_bay)
+        self.context_service = ContextService(self.agent_bay)
 
     def test_list_contexts_with_default_params(self):
         """Test listing contexts with default pagination parameters."""
@@ -46,7 +46,7 @@ class TestAsyncContextPagination(unittest.TestCase):
                 "TotalCount": 15,
             }
         }
-        self.agent_bay.client.list_contexts_async = MagicMock(
+        self.agent_bay.client.list_contexts = MagicMock(
             return_value=mock_response
         )
 
@@ -54,8 +54,8 @@ class TestAsyncContextPagination(unittest.TestCase):
         result = self.context_service.list(None)
 
         # Verify the API was called with default parameters
-        self.agent_bay.client.list_contexts_async.assert_called_once()
-        call_args = self.agent_bay.client.list_contexts_async.call_args[0][0]
+        self.agent_bay.client.list_contexts.assert_called_once()
+        call_args = self.agent_bay.client.list_contexts.call_args[0][0]
         self.assertEqual(call_args.max_results, 10)
         self.assertIsNone(call_args.next_token)
 
@@ -107,7 +107,7 @@ class TestAsyncContextPagination(unittest.TestCase):
                 "TotalCount": 15,
             }
         }
-        self.agent_bay.client.list_contexts_async = MagicMock(
+        self.agent_bay.client.list_contexts = MagicMock(
             return_value=mock_response
         )
 
@@ -118,8 +118,8 @@ class TestAsyncContextPagination(unittest.TestCase):
         result = self.context_service.list(params)
 
         # Verify the API was called with custom parameters
-        self.agent_bay.client.list_contexts_async.assert_called_once()
-        call_args = self.agent_bay.client.list_contexts_async.call_args[0][0]
+        self.agent_bay.client.list_contexts.assert_called_once()
+        call_args = self.agent_bay.client.list_contexts.call_args[0][0]
         self.assertEqual(call_args.max_results, 5)
         self.assertEqual(call_args.next_token, "page-token")
 
@@ -154,7 +154,7 @@ class TestAsyncContextPagination(unittest.TestCase):
                 "TotalCount": 1,
             }
         }
-        self.agent_bay.client.list_contexts_async = MagicMock(
+        self.agent_bay.client.list_contexts = MagicMock(
             return_value=mock_response
         )
 
@@ -165,8 +165,8 @@ class TestAsyncContextPagination(unittest.TestCase):
         result = self.context_service.list(params)
 
         # Verify the API was called with default parameters
-        self.agent_bay.client.list_contexts_async.assert_called_once()
-        call_args = self.agent_bay.client.list_contexts_async.call_args[0][0]
+        self.agent_bay.client.list_contexts.assert_called_once()
+        call_args = self.agent_bay.client.list_contexts.call_args[0][0]
         self.assertEqual(call_args.max_results, 10)
         self.assertIsNone(call_args.next_token)
 
@@ -181,7 +181,7 @@ class TestAsyncContextPagination(unittest.TestCase):
     def test_list_contexts_error_handling(self):
         """Test error handling in list contexts method."""
         # Mock the API to raise an exception
-        self.agent_bay.client.list_contexts_async = MagicMock(
+        self.agent_bay.client.list_contexts = MagicMock(
             side_effect=Exception("API Error")
         )
 

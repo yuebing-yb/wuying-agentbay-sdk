@@ -1,11 +1,11 @@
+import time
 """Unit tests for Session pause operations."""
 
-import time
 import unittest
 from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import AgentBay
-from agentbay import SyncSession
+from agentbay import Session
 from agentbay import (
     GetSessionData,
     GetSessionResult,
@@ -23,7 +23,7 @@ class TestSessionPause(unittest.TestCase):
         self.agent_bay.client = MagicMock()
 
         # Create a mock session
-        self.session = SyncSession(self.agent_bay, "session-123")
+        self.session = Session(self.agent_bay, "session-123")
         self.session.is_vpc = False
         self.session.network_interface_ip = ""
         self.session.http_port = ""
@@ -41,7 +41,7 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = MagicMock(
+        self.agent_bay.client.pause_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -56,10 +56,10 @@ class TestSessionPause(unittest.TestCase):
         )
         self.agent_bay.get_session = MagicMock(return_value=get_session_paused)
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method (pause not pause_async for polling)
-            result = time.run(self.session.pause(timeout=10, poll_interval=1))
+            result = self.session.pause(timeout=10, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -82,7 +82,7 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = MagicMock(
+        self.agent_bay.client.pause_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -108,10 +108,10 @@ class TestSessionPause(unittest.TestCase):
             side_effect=[get_session_pausing, get_session_paused]
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.pause(timeout=10, poll_interval=1))
+            result = self.session.pause(timeout=10, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -134,7 +134,7 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = MagicMock(
+        self.agent_bay.client.pause_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -149,10 +149,10 @@ class TestSessionPause(unittest.TestCase):
         )
         self.agent_bay.get_session = MagicMock(return_value=get_session_pausing)
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method with a short timeout
-            result = time.run(self.session.pause(timeout=2, poll_interval=1))
+            result = self.session.pause(timeout=2, poll_interval=1)
 
             # Verify the result
             # The implementation now returns failure on timeout
@@ -172,7 +172,7 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = MagicMock(
+        self.agent_bay.client.pause_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -184,10 +184,10 @@ class TestSessionPause(unittest.TestCase):
         )
         self.agent_bay.get_session = MagicMock(return_value=get_session_failure)
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.pause(timeout=2, poll_interval=1))
+            result = self.session.pause(timeout=2, poll_interval=1)
 
             # Verify the result
             # If get_session fails (success=False), the loop continues (exception handling covers general exceptions, but logic checks result.success)
@@ -210,14 +210,14 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=404,
         )
-        self.agent_bay.client.pause_session_async_async = MagicMock(
+        self.agent_bay.client.pause_session_async = MagicMock(
             return_value=mock_response
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.pause())
+            result = self.session.pause()
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -232,14 +232,14 @@ class TestSessionPause(unittest.TestCase):
         # Mock the PauseSessionAsync response with no body
         mock_response = PauseSessionAsyncResponse(status_code=200)
         mock_response.body = None
-        self.agent_bay.client.pause_session_async_async = MagicMock(
+        self.agent_bay.client.pause_session_async = MagicMock(
             return_value=mock_response
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.pause())
+            result = self.session.pause()
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -252,14 +252,14 @@ class TestSessionPause(unittest.TestCase):
         # Mock the PauseSessionAsync response with invalid format
         mock_response = MagicMock()
         mock_response.to_map.return_value = None
-        self.agent_bay.client.pause_session_async_async = MagicMock(
+        self.agent_bay.client.pause_session_async = MagicMock(
             return_value=mock_response
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.pause())
+            result = self.session.pause()
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -270,14 +270,14 @@ class TestSessionPause(unittest.TestCase):
     def test_pause_client_exception(self):
         """Test session pause with client exception."""
         # Mock the client to raise an exception
-        self.agent_bay.client.pause_session_async_async.side_effect = Exception(
+        self.agent_bay.client.pause_session_async.side_effect = Exception(
             "Network error"
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.pause())
+            result = self.session.pause()
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -296,7 +296,7 @@ class TestSessionPause(unittest.TestCase):
             request_id="test-request-id",
             http_status_code=200,
         )
-        self.agent_bay.client.pause_session_async_async = MagicMock(
+        self.agent_bay.client.pause_session_async = MagicMock(
             return_value=mock_response
         )
 
@@ -322,10 +322,10 @@ class TestSessionPause(unittest.TestCase):
             side_effect=[get_session_running, get_session_paused]
         )
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep to avoid waiting
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = time.run(self.session.pause(timeout=10, poll_interval=1))
+            result = self.session.pause(timeout=10, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -342,9 +342,9 @@ class TestSessionPause(unittest.TestCase):
         # Mock the session.pause to raise an exception
         self.session.pause = MagicMock(side_effect=Exception("Session pause error"))
 
-        # Call the method with session object (AsyncAgentBay.pause is async)
+        # Call the method with session object (AgentBay.pause is async)
         # We need to await it.
-        result = time.run(self.agent_bay.pause(self.session))
+        result = self.agent_bay.pause(self.session)
 
         # Verify the result
         self.assertIsInstance(result, SessionPauseResult)

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
-from agentbay import SyncCode
+from agentbay import Code
 from agentbay import CodeExecutionResult
 
 
@@ -17,7 +17,7 @@ class TestAsyncCode(unittest.TestCase):
         self.mock_session.get_client.return_value = Mock()
         self.mock_session.call_mcp_tool = MagicMock()
 
-        self.code = SyncCode(self.mock_session)
+        self.code = Code(self.mock_session)
 
     def test_run_code_success_python(self):
         """

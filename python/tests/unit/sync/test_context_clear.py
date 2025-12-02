@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import AgentBayError, ClearanceTimeoutError
-from agentbay import ClearContextResult, SyncContextService
+from agentbay import ClearContextResult, ContextService
 from agentbay.api.models import (
     ClearContextResponse,
     ClearContextResponseBody,
@@ -23,7 +23,7 @@ class TestAsyncContextClear(unittest.TestCase):
         self.agent_bay = MagicMock()
         self.agent_bay.api_key = "test-api-key"
         self.agent_bay.client = MagicMock()
-        self.context_service = SyncContextService(self.agent_bay)
+        self.context_service = ContextService(self.agent_bay)
 
     def test_clear_async_success(self):
         """Test successful async clear initiation."""
@@ -35,12 +35,12 @@ class TestAsyncContextClear(unittest.TestCase):
             message=None,
             request_id="test-request-id",
         )
-        self.agent_bay.client.clear_context_async = MagicMock(
+        self.agent_bay.client.clear_context = MagicMock(
             return_value=mock_response
         )
 
         # Call the method
-        result = self.context_service.start_clear("context-123")
+        result = self.context_service.clear_async("context-123")
 
         # Verify the result
         self.assertTrue(result.success)
@@ -59,12 +59,12 @@ class TestAsyncContextClear(unittest.TestCase):
             message="Context not found",
             request_id="test-request-id",
         )
-        self.agent_bay.client.clear_context_async = MagicMock(
+        self.agent_bay.client.clear_context = MagicMock(
             return_value=mock_response
         )
 
         # Call the method
-        result = self.context_service.start_clear("invalid-context")
+        result = self.context_service.clear_async("invalid-context")
 
         # Verify the result
         self.assertFalse(result.success)
@@ -76,12 +76,12 @@ class TestAsyncContextClear(unittest.TestCase):
         # Mock the ClearContext response with no body
         mock_response = ClearContextResponse()
         mock_response.body = None
-        self.agent_bay.client.clear_context_async = MagicMock(
+        self.agent_bay.client.clear_context = MagicMock(
             return_value=mock_response
         )
 
         # Call the method
-        result = self.context_service.start_clear("context-123")
+        result = self.context_service.clear_async("context-123")
 
         # Verify the result
         self.assertFalse(result.success)
@@ -90,13 +90,13 @@ class TestAsyncContextClear(unittest.TestCase):
     def test_clear_async_exception(self):
         """Test async clear with exception."""
         # Mock the client to raise an exception
-        self.agent_bay.client.clear_context_async = MagicMock(
+        self.agent_bay.client.clear_context = MagicMock(
             side_effect=Exception("Network error")
         )
 
         # Call the method and expect AgentBayError
         with self.assertRaises(AgentBayError) as context:
-            self.context_service.start_clear("context-123")
+            self.context_service.clear_async("context-123")
 
         self.assertIn("Network error", str(context.exception))
 
@@ -115,7 +115,7 @@ class TestAsyncContextClear(unittest.TestCase):
                 state="clearing",
             ),
         )
-        self.agent_bay.client.get_context_async = MagicMock(return_value=mock_response)
+        self.agent_bay.client.get_context = MagicMock(return_value=mock_response)
 
         # Call the method with context_id
         result = self.context_service.get_clear_status("context-123")
@@ -140,7 +140,7 @@ class TestAsyncContextClear(unittest.TestCase):
                 state="available",
             ),
         )
-        self.agent_bay.client.get_context_async = MagicMock(return_value=mock_response)
+        self.agent_bay.client.get_context = MagicMock(return_value=mock_response)
 
         # Call the method with context_id
         result = self.context_service.get_clear_status("context-123")
@@ -161,7 +161,7 @@ class TestAsyncContextClear(unittest.TestCase):
             request_id="test-request-id",
             data=None,
         )
-        self.agent_bay.client.get_context_async = MagicMock(return_value=mock_response)
+        self.agent_bay.client.get_context = MagicMock(return_value=mock_response)
 
         # Call the method with context_id
         result = self.context_service.get_clear_status("context-123")
@@ -175,7 +175,7 @@ class TestAsyncContextClear(unittest.TestCase):
         # Mock the GetContext response with no body
         mock_response = GetContextResponse()
         mock_response.body = None
-        self.agent_bay.client.get_context_async = MagicMock(return_value=mock_response)
+        self.agent_bay.client.get_context = MagicMock(return_value=mock_response)
 
         # Call the method with context_id
         result = self.context_service.get_clear_status("context-123")
@@ -195,7 +195,7 @@ class TestAsyncContextClear(unittest.TestCase):
             request_id="test-request-id",
             data=None,
         )
-        self.agent_bay.client.get_context_async = MagicMock(return_value=mock_response)
+        self.agent_bay.client.get_context = MagicMock(return_value=mock_response)
 
         # Call the method with context_id
         result = self.context_service.get_clear_status("context-123")
@@ -204,10 +204,10 @@ class TestAsyncContextClear(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "No data in response")
 
-    @patch("asyncio.sleep")  # Mock asyncio.sleep to speed up the test
+    @patch("time.sleep")  # Mock time.sleep to speed up the test
     def test_clear_sync_success(self, mock_sleep):
         """Test successful synchronous clear operation."""
-        # Mock asyncio.sleep to be a no-op
+        # Mock time.sleep to be a no-op
         mock_sleep.return_value = None
 
         # Mock start_clear
@@ -236,7 +236,7 @@ class TestAsyncContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, "start_clear", return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ), patch.object(
             self.context_service,
             "get_clear_status",
@@ -253,10 +253,10 @@ class TestAsyncContextClear(unittest.TestCase):
             self.assertEqual(result.status, "available")
             self.assertEqual(mock_sleep.call_count, 2)
 
-    @patch("asyncio.sleep")
+    @patch("time.sleep")
     def test_clear_sync_timeout(self, mock_sleep):
         """Test synchronous clear operation timeout."""
-        # Mock asyncio.sleep to be a no-op
+        # Mock time.sleep to be a no-op
         mock_sleep.return_value = None
 
         # Mock start_clear
@@ -278,7 +278,7 @@ class TestAsyncContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, "start_clear", return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ), patch.object(
             self.context_service, "get_clear_status", return_value=status_clearing
         ):
@@ -290,10 +290,10 @@ class TestAsyncContextClear(unittest.TestCase):
 
             self.assertIn("timed out", str(context.exception))
 
-    @patch("asyncio.sleep")
+    @patch("time.sleep")
     def test_clear_sync_status_check_failure(self, mock_sleep):
         """Test synchronous clear when status check fails."""
-        # Mock asyncio.sleep to be a no-op
+        # Mock time.sleep to be a no-op
         mock_sleep.return_value = None
 
         # Mock start_clear
@@ -313,7 +313,7 @@ class TestAsyncContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, "start_clear", return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ), patch.object(
             self.context_service, "get_clear_status", return_value=status_failure
         ):
@@ -334,7 +334,7 @@ class TestAsyncContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, "start_clear", return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ):
             # Call the method
             result = self.context_service.clear("context-123")
@@ -343,10 +343,10 @@ class TestAsyncContextClear(unittest.TestCase):
             self.assertFalse(result.success)
             self.assertIn("Failed to start clearing", result.error_message)
 
-    @patch("asyncio.sleep")
+    @patch("time.sleep")
     def test_clear_sync_unexpected_state(self, mock_sleep):
         """Test synchronous clear with unexpected state."""
-        # Mock asyncio.sleep to be a no-op
+        # Mock time.sleep to be a no-op
         mock_sleep.return_value = None
 
         # Mock start_clear
@@ -375,7 +375,7 @@ class TestAsyncContextClear(unittest.TestCase):
         )
 
         with patch.object(
-            self.context_service, "start_clear", return_value=clear_async_result
+            self.context_service, "clear_async", return_value=clear_async_result
         ), patch.object(
             self.context_service,
             "get_clear_status",

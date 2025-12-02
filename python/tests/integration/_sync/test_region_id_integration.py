@@ -14,7 +14,7 @@ import unittest
 from agentbay import AgentBay, CreateSessionParams, Config
 
 
-class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
+class TestRegionIdIntegration(unittest.TestCase):
     """Integration tests for region_id functionality"""
 
     def setUp(self):

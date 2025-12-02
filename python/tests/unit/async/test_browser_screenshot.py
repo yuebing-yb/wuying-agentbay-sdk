@@ -121,11 +121,8 @@ class TestBrowserScreenshot(unittest.TestCase):
         mock_page.screenshot = AsyncMock(return_value=b"fake_custom_screenshot_data")
 
         # Call the screenshot method with custom options
-        result = asyncio.run(
-            self.browser.screenshot(
-                mock_page, full_page=False, type="jpeg", quality=80, timeout=30000
-            )
-        )
+        result = asyncio.run(self.browser.screenshot(
+            mock_page, full_page=False, type="jpeg", quality=80, timeout=30000))
 
         # Assertions
         self.assertIsInstance(result, bytes)

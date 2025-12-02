@@ -13,11 +13,11 @@ from agentbay import (
 
 
 class TestAgentBay(unittest.TestCase):
-    """Test the functionality of the main AsyncAgentBay class"""
+    """Test the functionality of the main AgentBay class"""
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
     def test_initialization_with_env_var(self, mock_mcp_client, mock_load_config):
         """Test initializing AgentBay with an API key from environment variable"""
         # Mock configuration
@@ -31,7 +31,7 @@ class TestAgentBay(unittest.TestCase):
         mock_client = MagicMock()
         mock_mcp_client.return_value = mock_client
 
-        # Create AsyncAgentBay instance
+        # Create AgentBay instance
         agent_bay = AgentBay()
 
         # Verify results
@@ -41,8 +41,8 @@ class TestAgentBay(unittest.TestCase):
         self.assertIsNotNone(agent_bay._lock)
         self.assertIsNotNone(agent_bay.context)
 
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
     def test_initialization_with_provided_key(
         self, mock_mcp_client, mock_load_config
     ):
@@ -58,14 +58,14 @@ class TestAgentBay(unittest.TestCase):
         mock_client = MagicMock()
         mock_mcp_client.return_value = mock_client
 
-        # Create AsyncAgentBay instance
+        # Create AgentBay instance
         agent_bay = AgentBay(api_key="provided-api-key")
 
         # Verify results
         self.assertEqual(agent_bay.api_key, "provided-api-key")
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch("agentbay._async.agentbay._load_config")
+    @patch("agentbay._sync.agentbay._load_config")
     def test_initialization_without_api_key(self, mock_load_config):
         """Test initialization failure when no API key is available"""
         # Mock configuration
@@ -81,9 +81,9 @@ class TestAgentBay(unittest.TestCase):
 
         self.assertIn("API key is required", str(context.exception))
 
-    @patch("agentbay._async.agentbay.extract_request_id")
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay.extract_request_id")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
     def test_create_session_success(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
     ):
@@ -108,14 +108,14 @@ class TestAgentBay(unittest.TestCase):
                 }
             }
         }
-        mock_client.create_mcp_session_async = MagicMock(return_value=mock_response)
+        mock_client.create_mcp_session = MagicMock(return_value=mock_response)
 
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
             "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = MagicMock(
+        mock_client.get_context_info = MagicMock(
             return_value=mock_context_response
         )
         mock_mcp_client.return_value = mock_client
@@ -144,8 +144,8 @@ class TestAgentBay(unittest.TestCase):
         self.assertIn("new-session-id", agent_bay._sessions)
         self.assertEqual(agent_bay._sessions["new-session-id"], result.session)
 
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
     def test_create_session_invalid_response(
         self, mock_mcp_client, mock_load_config
     ):
@@ -163,14 +163,14 @@ class TestAgentBay(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {"Data": None}  # Invalid Data field
         }
-        mock_client.create_mcp_session_async = MagicMock(return_value=mock_response)
+        mock_client.create_mcp_session = MagicMock(return_value=mock_response)
 
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
             "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = MagicMock(
+        mock_client.get_context_info = MagicMock(
             return_value=mock_context_response
         )
         mock_mcp_client.return_value = mock_client
@@ -200,9 +200,9 @@ class TestAgentBay(unittest.TestCase):
         self.assertIsNone(result.session)
         self.assertIn("Invalid response format", result.error_message)
 
-    @patch("agentbay._async.agentbay.extract_request_id")
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay.extract_request_id")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
     def test_list(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
     ):
@@ -231,7 +231,7 @@ class TestAgentBay(unittest.TestCase):
                 "MaxResults": 10,
             }
         }
-        mock_client.list_session_async = MagicMock(return_value=mock_response)
+        mock_client.list_session = MagicMock(return_value=mock_response)
         mock_mcp_client.return_value = mock_client
 
         # Create AgentBay instance
@@ -261,9 +261,9 @@ class TestAgentBay(unittest.TestCase):
         self.assertEqual(result.request_id, "list-request-id")
         self.assertEqual(len(result.session_ids), 3)
 
-    @patch("agentbay._async.agentbay.extract_request_id")
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay.extract_request_id")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
     def test_list_pagination(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
     ):
@@ -305,7 +305,7 @@ class TestAgentBay(unittest.TestCase):
         }
 
         # Set up mock to return different responses
-        mock_client.list_session_async = MagicMock(
+        mock_client.list_session = MagicMock(
             side_effect=[
                 mock_response_page1,
                 mock_response_page2,
@@ -330,9 +330,9 @@ class TestAgentBay(unittest.TestCase):
         self.assertEqual(result.session_ids[0], "session-3")
         self.assertEqual(result.session_ids[1], "session-4")
 
-    @patch("agentbay._async.agentbay.extract_request_id")
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay.extract_request_id")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
     def test_create_session_with_policy_id(
         self, mock_mcp_client, mock_load_config, mock_extract_request_id
     ):
@@ -356,14 +356,14 @@ class TestAgentBay(unittest.TestCase):
                 "RequestId": "create-request-id",
             }
         }
-        mock_client.create_mcp_session_async = MagicMock(return_value=mock_response)
+        mock_client.create_mcp_session = MagicMock(return_value=mock_response)
 
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
             "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = MagicMock(
+        mock_client.get_context_info = MagicMock(
             return_value=mock_context_response
         )
         mock_mcp_client.return_value = mock_client
@@ -381,8 +381,8 @@ class TestAgentBay(unittest.TestCase):
 
         result = agent_bay.create(params)
         self.assertTrue(result.success)
-        mock_client.create_mcp_session_async.assert_called_once()
-        call_arg = mock_client.create_mcp_session_async.call_args[0][0]
+        mock_client.create_mcp_session.assert_called_once()
+        call_arg = mock_client.create_mcp_session.call_args[0][0]
         # Ensure policy_id is carried on the request object; client will include it in request body
         self.assertEqual(
             getattr(call_arg, "mcp_policy_id", None)
@@ -391,8 +391,8 @@ class TestAgentBay(unittest.TestCase):
         )
         # Basic success assertion remains; deep body behavior is validated in client integration tests
 
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
     def test_create_with_mobile_extra_configs(
         self, mock_mcp_client, mock_load_config
     ):
@@ -416,14 +416,14 @@ class TestAgentBay(unittest.TestCase):
                 "RequestId": "mobile-create-request-id",
             }
         }
-        mock_client.create_mcp_session_async = MagicMock(return_value=mock_response)
+        mock_client.create_mcp_session = MagicMock(return_value=mock_response)
 
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
             "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = MagicMock(
+        mock_client.get_context_info = MagicMock(
             return_value=mock_context_response
         )
         mock_mcp_client.return_value = mock_client
@@ -461,8 +461,8 @@ class TestAgentBay(unittest.TestCase):
             self.assertEqual(result.session.session_id, "mobile-session-id")
 
         # Verify the client was called with extra configs
-        mock_client.create_mcp_session_async.assert_called_once()
-        call_arg = mock_client.create_mcp_session_async.call_args[0][0]
+        mock_client.create_mcp_session.assert_called_once()
+        call_arg = mock_client.create_mcp_session.call_args[0][0]
 
         # Check that extra_configs is present in the request
         self.assertIsNotNone(call_arg.extra_configs)
@@ -477,8 +477,8 @@ class TestAgentBay(unittest.TestCase):
             len(call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list), 2
         )
 
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
     def test_create_with_mobile_blacklist_config(
         self, mock_mcp_client, mock_load_config
     ):
@@ -502,14 +502,14 @@ class TestAgentBay(unittest.TestCase):
                 "RequestId": "secure-create-request-id",
             }
         }
-        mock_client.create_mcp_session_async = MagicMock(return_value=mock_response)
+        mock_client.create_mcp_session = MagicMock(return_value=mock_response)
 
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
             "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = MagicMock(
+        mock_client.get_context_info = MagicMock(
             return_value=mock_context_response
         )
         mock_mcp_client.return_value = mock_client
@@ -544,8 +544,8 @@ class TestAgentBay(unittest.TestCase):
             self.assertEqual(result.session.session_id, "secure-session-id")
 
         # Verify the client was called with blacklist extra configs
-        mock_client.create_mcp_session_async.assert_called_once()
-        call_arg = mock_client.create_mcp_session_async.call_args[0][0]
+        mock_client.create_mcp_session.assert_called_once()
+        call_arg = mock_client.create_mcp_session.call_args[0][0]
 
         # Check that extra_configs with blacklist is present in the request
         self.assertIsNotNone(call_arg.extra_configs)
@@ -559,10 +559,10 @@ class TestAgentBay(unittest.TestCase):
             call_arg.extra_configs.mobile.app_manager_rule.app_package_name_list,
         )
 
-    @patch("agentbay._async.agentbay.extract_request_id")
-    @patch("agentbay._async.agentbay._load_config")
-    @patch("agentbay._async.agentbay.mcp_client")
-    @patch("agentbay._async.agentbay._log_api_response_with_details")
+    @patch("agentbay._sync.agentbay.extract_request_id")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
+    @patch("agentbay._sync.agentbay._log_api_response_with_details")
     def test_create_session_logs_full_resource_url(
         self,
         mock_log_api_response,
@@ -593,14 +593,14 @@ class TestAgentBay(unittest.TestCase):
                 }
             }
         }
-        mock_client.create_mcp_session_async = MagicMock(return_value=mock_response)
+        mock_client.create_mcp_session = MagicMock(return_value=mock_response)
 
         # Mock context info response
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
             "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
         }
-        mock_client.get_context_info_async = MagicMock(
+        mock_client.get_context_info = MagicMock(
             return_value=mock_context_response
         )
         mock_mcp_client.return_value = mock_client

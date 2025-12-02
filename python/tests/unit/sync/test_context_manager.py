@@ -1,10 +1,9 @@
-import time
 import json
 import unittest
 from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import (
-    SyncContextManager,
+    ContextManager,
     ContextInfoResult,
     ContextStatusData,
     ContextSyncResult,
@@ -20,7 +19,7 @@ class TestAsyncContextManager(unittest.TestCase):
         self.mock_client = MagicMock()
         self.mock_session._get_client.return_value = self.mock_client
 
-        self.context_manager = SyncContextManager(self.mock_session)
+        self.context_manager = ContextManager(self.mock_session)
 
     def test_info_with_empty_response(self):
         """Test info method with empty response."""
@@ -29,7 +28,7 @@ class TestAsyncContextManager(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {"RequestId": "test-request-id", "Data": {}}
         }
-        self.mock_client.get_context_info_async = MagicMock(return_value=mock_response)
+        self.mock_client.get_context_info = MagicMock(return_value=mock_response)
 
         # Call the method
         result = self.context_manager.info()
@@ -39,7 +38,7 @@ class TestAsyncContextManager(unittest.TestCase):
         self.assertEqual(len(result.context_status_data), 0)
 
         # Verify the API was called correctly
-        self.mock_client.get_context_info_async.assert_called_once()
+        self.mock_client.get_context_info.assert_called_once()
 
     def test_info_with_valid_response(self):
         """Test info method with valid response containing context status data."""
@@ -54,7 +53,7 @@ class TestAsyncContextManager(unittest.TestCase):
                 "Data": {"ContextStatus": context_status_str},
             }
         }
-        self.mock_client.get_context_info_async = MagicMock(return_value=mock_response)
+        self.mock_client.get_context_info = MagicMock(return_value=mock_response)
 
         # Call the method
         result = self.context_manager.info()
@@ -86,7 +85,7 @@ class TestAsyncContextManager(unittest.TestCase):
                 "Data": {"ContextStatus": context_status_str},
             }
         }
-        self.mock_client.get_context_info_async = MagicMock(return_value=mock_response)
+        self.mock_client.get_context_info = MagicMock(return_value=mock_response)
 
         # Call the method
         result = self.context_manager.info()
@@ -120,7 +119,7 @@ class TestAsyncContextManager(unittest.TestCase):
                 "Data": {"ContextStatus": context_status_str},
             }
         }
-        self.mock_client.get_context_info_async = MagicMock(return_value=mock_response)
+        self.mock_client.get_context_info = MagicMock(return_value=mock_response)
 
         # Call the method
         result = self.context_manager.info()
@@ -142,7 +141,7 @@ class TestAsyncContextManager(unittest.TestCase):
                 "Data": {"ContextStatus": context_status_str},
             }
         }
-        self.mock_client.get_context_info_async = MagicMock(return_value=mock_response)
+        self.mock_client.get_context_info = MagicMock(return_value=mock_response)
 
         # Call the method with parameters
         result = self.context_manager.info("ctx-123", "/home/user", "download")
@@ -152,8 +151,8 @@ class TestAsyncContextManager(unittest.TestCase):
         self.assertEqual(len(result.context_status_data), 1)
 
         # Verify the API was called with the correct parameters
-        self.mock_client.get_context_info_async.assert_called_once()
-        call_args = self.mock_client.get_context_info_async.call_args[0][0]
+        self.mock_client.get_context_info.assert_called_once()
+        call_args = self.mock_client.get_context_info.call_args[0][0]
         self.assertEqual(call_args.context_id, "ctx-123")
         self.assertEqual(call_args.path, "/home/user")
         self.assertEqual(call_args.task_type, "download")
@@ -165,7 +164,7 @@ class TestAsyncContextManager(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {"RequestId": "test-request-id", "Success": True}
         }
-        self.mock_client.sync_context_async = MagicMock(return_value=mock_response)
+        self.mock_client.sync_context = MagicMock(return_value=mock_response)
 
         # Mock the info method to return completed status
         with patch.object(self.context_manager, "info") as mock_info:
@@ -181,7 +180,7 @@ class TestAsyncContextManager(unittest.TestCase):
             self.assertTrue(result.success)
 
             # Verify the API was called correctly
-            self.mock_client.sync_context_async.assert_called_once()
+            self.mock_client.sync_context.assert_called_once()
 
     def test_sync_context_with_params(self):
         """Test sync_context method with optional parameters."""
@@ -190,7 +189,7 @@ class TestAsyncContextManager(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {"RequestId": "test-request-id", "Success": True}
         }
-        self.mock_client.sync_context_async = MagicMock(return_value=mock_response)
+        self.mock_client.sync_context = MagicMock(return_value=mock_response)
 
         # Mock the info method to return completed status
         with patch.object(self.context_manager, "info") as mock_info:
@@ -206,8 +205,8 @@ class TestAsyncContextManager(unittest.TestCase):
             self.assertTrue(result.success)
 
             # Verify the API was called with the correct parameters
-            self.mock_client.sync_context_async.assert_called_once()
-            call_args = self.mock_client.sync_context_async.call_args[0][0]
+            self.mock_client.sync_context.assert_called_once()
+            call_args = self.mock_client.sync_context.call_args[0][0]
             self.assertEqual(call_args.context_id, "ctx-123")
             self.assertEqual(call_args.path, "/home/user")
             self.assertEqual(call_args.mode, "upload")

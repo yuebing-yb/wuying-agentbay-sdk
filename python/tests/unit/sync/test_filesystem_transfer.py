@@ -8,17 +8,16 @@ This module contains comprehensive unit tests for:
 - Error handling and validation
 """
 
-import time
 import os
 import unittest
 from unittest.mock import MagicMock, MagicMock, Mock, patch
 
-from agentbay import SyncFileTransfer
+from agentbay import FileTransfer
 
 # Import the classes we're testing
 from agentbay import (
     FileSystem,
-    SyncFileTransfer,
+    FileTransfer,
     DownloadResult,
     UploadResult,
 )
@@ -27,7 +26,7 @@ from agentbay import (
 # Since attach_file_transfer doesn't exist, we'll create a helper function for tests
 def attach_file_transfer(agent_bay, session):
     """Helper function to create a FileTransfer instance for testing."""
-    return SyncFileTransfer(agent_bay, session)
+    return FileTransfer(agent_bay, session)
 
 
 class TestAsyncFileTransferResultClasses(unittest.TestCase):
@@ -121,19 +120,19 @@ class TestAsyncFileTransfer(unittest.TestCase):
         self.mock_session.context = Mock()
         self.mock_session.file_transfer_context_id = "ctx_123"
 
-        self.file_transfer = SyncFileTransfer(self.mock_agent_bay, self.mock_session)
+        self.file_transfer = FileTransfer(self.mock_agent_bay, self.mock_session)
 
     def test_file_transfer_initialization(self):
         """Test FileTransfer initialization."""
         # Test default parameters
-        ft = SyncFileTransfer(
+        ft = FileTransfer(
             self.mock_agent_bay, self.mock_session, http_timeout=30.0
         )
         self.assertEqual(ft._http_timeout, 60.0)
         self.assertTrue(ft._follow_redirects)
 
         # Test custom parameters
-        ft = SyncFileTransfer(
+        ft = FileTransfer(
             self.mock_agent_bay,
             self.mock_session,
             http_timeout=120.0,
@@ -168,11 +167,11 @@ class TestAsyncFileTransfer(unittest.TestCase):
         self.mock_session.context = Mock()
         self.mock_session.file_transfer_context_id = "ctx_123"
 
-        self.file_transfer = SyncFileTransfer(self.mock_agent_bay, self.mock_session)
+        self.file_transfer = FileTransfer(self.mock_agent_bay, self.mock_session)
 
     def _run_async_test(self, coro):
         """Helper method to run async tests."""
-        return time.run(coro)
+        return coro
 
     @patch("os.path.isfile")
     def test_upload_success(self, mock_isfile):
@@ -569,7 +568,7 @@ class TestAsyncFileSystemFileTransfer(unittest.TestCase):
         self.mock_session.agent_bay.context = Mock()
         self.file_system = FileSystem(session=self.mock_session)
 
-    @patch("agentbay._async.filesystem.AsyncFileTransfer")
+    @patch("agentbay._sync.filesystem.FileTransfer")
     def test_upload_file(self, mock_file_transfer_cls):
         """Test FileSystem.upload_file method."""
         # Mock FileTransfer instance
@@ -606,7 +605,7 @@ class TestAsyncFileSystemFileTransfer(unittest.TestCase):
             progress_cb=None,
         )
 
-    @patch("agentbay._async.filesystem.AsyncFileTransfer")
+    @patch("agentbay._sync.filesystem.FileTransfer")
     def test_download_file(self, mock_file_transfer_cls):
         """Test FileSystem.download_file method."""
         # Mock FileTransfer instance

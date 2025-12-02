@@ -33,7 +33,7 @@ def get_test_endpoint():
     return os.environ.get("AGENTBAY_ENDPOINT")
 
 
-class TestContextFullLifecycle(unittest.IsolatedAsyncioTestCase):
+class TestContextFullLifecycle(unittest.TestCase):
     """Integration tests for Context full lifecycle operations."""
 
     @classmethod

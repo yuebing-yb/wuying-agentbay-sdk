@@ -9,7 +9,7 @@ import pytest
 
 from agentbay import AgentBayError
 from agentbay import BoolResult, OperationResult
-from agentbay import SyncComputer, MouseButton, ScrollDirection
+from agentbay import Computer, MouseButton, ScrollDirection
 
 
 class TestComputer:
@@ -19,7 +19,7 @@ class TestComputer:
         """Set up test fixtures."""
         self.session = Mock()
         self.session.call_mcp_tool = MagicMock()
-        self.computer = SyncComputer(self.session)
+        self.computer = Computer(self.session)
 
     def test_computer_initialization(self):
         """Test Computer module initialization."""

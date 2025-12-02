@@ -38,7 +38,7 @@ class TestAsyncRefactoredMethods(unittest.TestCase):
         params.extra_configs = None
 
         # Mock session - need to patch the correct path after refactoring
-        with patch("agentbay._async.agentbay.AsyncSession") as mock_session_class:
+        with patch("agentbay._sync.agentbay.Session") as mock_session_class:
             mock_session = Mock()
             mock_session_class.return_value = mock_session
 
