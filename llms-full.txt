@@ -432,9 +432,6 @@ Features available across all environments:
 
 Core concepts for building high-performance applications:
 
-- [Sync vs Async Guide](async-programming/sync-vs-async.md) - Comprehensive comparison and decision guide
-- [Async Patterns](async-programming/async-patterns.md) - Common patterns and best practices
-- [Migration Guide](async-programming/migration.md) - Migrating from sync to async API
 
 ### Environment-Specific Features
 
@@ -474,1718 +471,11 @@ Core concepts for building high-performance applications:
 
 
 
-# Async Patterns Guide
-
-This guide covers common asynchronous programming patterns when using the AgentBay Python SDK's async API.
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Async Context Managers](#async-context-managers)
-- [Error Handling](#error-handling)
-- [Concurrent Operations](#concurrent-operations)
-- [Resource Cleanup](#resource-cleanup)
-- [Timeout Handling](#timeout-handling)
-- [Retry Mechanisms](#retry-mechanisms)
-- [Rate Limiting](#rate-limiting)
-- [Best Practices](#best-practices)
-
-<a id="overview"></a>
-## 🎯 Overview
-
-The async API in AgentBay SDK allows you to write efficient, non-blocking code that can handle multiple operations concurrently. This guide demonstrates common patterns and best practices for async programming with AgentBay.
-
-### When to Use Async Patterns
-
-- **High Concurrency**: Need to manage multiple sessions or operations simultaneously
-- **I/O-Bound Operations**: Working with network requests, file operations, or external APIs
-- **Web Applications**: Building async web services with FastAPI, aiohttp, or Django async views
-- **Real-time Systems**: Applications requiring responsive, non-blocking behavior
-
-<a id="async-context-managers"></a>
-## 🔧 Async Context Managers
-
-### Basic Pattern
-
-While AgentBay doesn't provide built-in async context managers, you can create your own:
-
-```python
-import asyncio
-from agentbay import AsyncAgentBay
-
-class AsyncSessionManager:
-    def __init__(self, agent_bay):
-        self.agent_bay = agent_bay
-        self.session = None
-
-    async def __aenter__(self):
-        result = await self.agent_bay.create()
-        if not result.success:
-            raise Exception(f"Failed to create session: {result.error_message}")
-        self.session = result.session
-        return self.session
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.session:
-            await self.agent_bay.delete(self.session)
-        return False
-
-# Usage
-async def main():
-    agent_bay = AsyncAgentBay()
-    async with AsyncSessionManager(agent_bay) as session:
-        result = await session.command.execute_command("echo 'Hello'")
-        print(result.output)
-
-asyncio.run(main())
-```
-
-### Session Pool Pattern
-
-```python
-import asyncio
-from agentbay import AsyncAgentBay
-from asyncio import Queue
-
-class AsyncSessionPool:
-    def __init__(self, agent_bay, pool_size=5):
-        self.agent_bay = agent_bay
-        self.pool_size = pool_size
-        self.pool = Queue(maxsize=pool_size)
-        self._initialized = False
-
-    async def initialize(self):
-        """Pre-create sessions in the pool"""
-        if self._initialized:
-            return
-
-        sessions = await asyncio.gather(*[
-            self.agent_bay.create()
-            for _ in range(self.pool_size)
-        ])
-
-        for result in sessions:
-            if result.success:
-                await self.pool.put(result.session)
-
-        self._initialized = True
-
-    async def acquire(self):
-        """Get a session from the pool"""
-        if not self._initialized:
-            await self.initialize()
-        return await self.pool.get()
-
-    async def release(self, session):
-        """Return a session to the pool"""
-        await self.pool.put(session)
-
-    async def cleanup(self):
-        """Clean up all sessions in the pool"""
-        while not self.pool.empty():
-            session = await self.pool.get()
-            await self.agent_bay.delete(session)
-
-# Usage
-async def main():
-    agent_bay = AsyncAgentBay()
-    pool = AsyncSessionPool(agent_bay, pool_size=3)
-
-    try:
-        # Use sessions from pool
-        session = await pool.acquire()
-        result = await session.command.execute_command("echo 'Hello'")
-        print(result.output)
-        await pool.release(session)
-    finally:
-        await pool.cleanup()
-
-asyncio.run(main())
-```
-
-<a id="error-handling"></a>
-## ⚠️ Error Handling
-
-### Try-Except Pattern
-
-```python
-async def safe_execute_command(session, command):
-    """Execute command with proper error handling"""
-    try:
-        result = await session.command.execute_command(command)
-        if result.success:
-            return result.output
-        else:
-            print(f"Command failed: {result.error_message}")
-            return None
-    except Exception as e:
-        print(f"Exception occurred: {e}")
-        return None
-
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    try:
-        output = await safe_execute_command(session, "ls -la")
-        if output:
-            print(output)
-    finally:
-        await agent_bay.delete(session)
-
-asyncio.run(main())
-```
-
-### Exception Groups (Python 3.11+)
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-
-    async def create_and_use_session(task_id):
-        session = (await agent_bay.create()).session
-        try:
-            result = await session.command.execute_command(f"echo 'Task {task_id}'")
-            if not result.success:
-                raise Exception(f"Task {task_id} failed: {result.error_message}")
-            return result.output
-        finally:
-            await agent_bay.delete(session)
-
-    try:
-        results = await asyncio.gather(
-            create_and_use_session(1),
-            create_and_use_session(2),
-            create_and_use_session(3),
-            return_exceptions=True  # Return exceptions instead of raising
-        )
-
-        for i, result in enumerate(results, 1):
-            if isinstance(result, Exception):
-                print(f"Task {i} failed: {result}")
-            else:
-                print(f"Task {i} succeeded: {result.strip()}")
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-
-asyncio.run(main())
-```
-
-<a id="concurrent-operations"></a>
-## 🚀 Concurrent Operations
-
-### Parallel Session Creation
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-
-    # Create multiple sessions concurrently
-    session_results = await asyncio.gather(*[
-        agent_bay.create()
-        for _ in range(5)
-    ])
-
-    sessions = [r.session for r in session_results if r.success]
-    print(f"Created {len(sessions)} sessions concurrently")
-
-    # Use sessions concurrently
-    results = await asyncio.gather(*[
-        session.command.execute_command("hostname")
-        for session in sessions
-    ])
-
-    for i, result in enumerate(results, 1):
-        if result.success:
-            print(f"Session {i}: {result.output.strip()}")
-
-    # Clean up concurrently
-    await asyncio.gather(*[
-        agent_bay.delete(session)
-        for session in sessions
-    ])
-
-asyncio.run(main())
-```
-
-### Task Queue Pattern
-
-```python
-import asyncio
-from agentbay import AsyncAgentBay
-
-class AsyncTaskQueue:
-    def __init__(self, max_concurrent=5):
-        self.queue = asyncio.Queue()
-        self.semaphore = asyncio.Semaphore(max_concurrent)
-        self.agent_bay = AsyncAgentBay()
-        self.results = []
-
-    async def add_task(self, command):
-        """Add a task to the queue"""
-        await self.queue.put(command)
-
-    async def process_task(self):
-        """Process a single task"""
-        while True:
-            try:
-                command = await asyncio.wait_for(
-                    self.queue.get(),
-                    timeout=1.0
-                )
-            except asyncio.TimeoutError:
-                break
-
-            async with self.semaphore:
-                session = (await self.agent_bay.create()).session
-                try:
-                    result = await session.command.execute_command(command)
-                    self.results.append({
-                        'command': command,
-                        'output': result.output if result.success else None,
-                        'error': result.error_message if not result.success else None
-                    })
-                finally:
-                    await self.agent_bay.delete(session)
-
-            self.queue.task_done()
-
-    async def run(self, num_workers=3):
-        """Run the task queue with multiple workers"""
-        workers = [
-            asyncio.create_task(self.process_task())
-            for _ in range(num_workers)
-        ]
-
-        await self.queue.join()
-
-        for worker in workers:
-            worker.cancel()
-
-        await asyncio.gather(*workers, return_exceptions=True)
-
-# Usage
-async def main():
-    queue = AsyncTaskQueue(max_concurrent=3)
-
-    # Add tasks
-    commands = [
-        "echo 'Task 1'",
-        "echo 'Task 2'",
-        "echo 'Task 3'",
-        "echo 'Task 4'",
-        "echo 'Task 5'"
-    ]
-
-    for cmd in commands:
-        await queue.add_task(cmd)
-
-    # Process tasks
-    await queue.run(num_workers=2)
-
-    # Print results
-    for result in queue.results:
-        print(f"{result['command']}: {result['output'].strip() if result['output'] else result['error']}")
-
-asyncio.run(main())
-```
-
-<a id="resource-cleanup"></a>
-## 🧹 Resource Cleanup
-
-### Proper Cleanup Pattern
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    sessions = []
-
-    try:
-        # Create sessions
-        for i in range(3):
-            result = await agent_bay.create()
-            if result.success:
-                sessions.append(result.session)
-
-        # Use sessions
-        results = await asyncio.gather(*[
-            session.command.execute_command("echo 'Hello'")
-            for session in sessions
-        ])
-
-        for result in results:
-            if result.success:
-                print(result.output.strip())
-
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        # Always clean up sessions
-        if sessions:
-            await asyncio.gather(*[
-                agent_bay.delete(session)
-                for session in sessions
-            ], return_exceptions=True)
-
-asyncio.run(main())
-```
-
-### Graceful Shutdown
-
-```python
-import signal
-import asyncio
-from agentbay import AsyncAgentBay
-
-class GracefulShutdown:
-    def __init__(self):
-        self.agent_bay = AsyncAgentBay()
-        self.sessions = []
-        self.shutdown_event = asyncio.Event()
-
-    def signal_handler(self, signum, frame):
-        """Handle shutdown signals"""
-        print(f"\nReceived signal {signum}, shutting down gracefully...")
-        self.shutdown_event.set()
-
-    async def cleanup(self):
-        """Clean up all resources"""
-        if self.sessions:
-            print(f"Cleaning up {len(self.sessions)} sessions...")
-            await asyncio.gather(*[
-                self.agent_bay.delete(session)
-                for session in self.sessions
-            ], return_exceptions=True)
-            self.sessions.clear()
-
-    async def run(self):
-        """Main application loop"""
-        # Register signal handlers
-        signal.signal(signal.SIGINT, self.signal_handler)
-        signal.signal(signal.SIGTERM, self.signal_handler)
-
-        try:
-            # Create sessions
-            for i in range(3):
-                result = await self.agent_bay.create()
-                if result.success:
-                    self.sessions.append(result.session)
-
-            # Main work loop
-            while not self.shutdown_event.is_set():
-                # Do work
-                await asyncio.sleep(1)
-
-        finally:
-            await self.cleanup()
-
-# Usage
-async def main():
-    app = GracefulShutdown()
-    await app.run()
-
-asyncio.run(main())
-```
-
-## ⏱️ Timeout Handling
-
-### Operation Timeout
-
-```python
-async def execute_with_timeout(session, command, timeout=10.0):
-    """Execute command with timeout"""
-    try:
-        result = await asyncio.wait_for(
-            session.command.execute_command(command),
-            timeout=timeout
-        )
-        return result
-    except asyncio.TimeoutError:
-        print(f"Command timed out after {timeout} seconds")
-        return None
-
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    try:
-        # This will timeout
-        result = await execute_with_timeout(
-            session,
-            "sleep 20",
-            timeout=5.0
-        )
-
-        if result and result.success:
-            print(result.output)
-    finally:
-        await agent_bay.delete(session)
-
-asyncio.run(main())
-```
-
-### Multiple Operations with Timeout
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-
-    async def create_and_execute(task_id):
-        session = (await agent_bay.create()).session
-        try:
-            result = await session.command.execute_command(f"echo 'Task {task_id}'")
-            return result.output if result.success else None
-        finally:
-            await agent_bay.delete(session)
-
-    try:
-        # All tasks must complete within 30 seconds
-        results = await asyncio.wait_for(
-            asyncio.gather(*[
-                create_and_execute(i)
-                for i in range(5)
-            ]),
-            timeout=30.0
-        )
-
-        for i, result in enumerate(results, 1):
-            if result:
-                print(f"Task {i}: {result.strip()}")
-    except asyncio.TimeoutError:
-        print("Operations timed out")
-
-asyncio.run(main())
-```
-
-<a id="retry-mechanisms"></a>
-## 🔄 Retry Mechanisms
-
-### Exponential Backoff
-
-```python
-async def retry_with_backoff(func, max_retries=3, base_delay=1.0):
-    """Retry function with exponential backoff"""
-    for attempt in range(max_retries):
-        try:
-            return await func()
-        except Exception as e:
-            if attempt == max_retries - 1:
-                raise
-
-            delay = base_delay * (2 ** attempt)
-            print(f"Attempt {attempt + 1} failed: {e}")
-            print(f"Retrying in {delay} seconds...")
-            await asyncio.sleep(delay)
-
-async def main():
-    agent_bay = AsyncAgentBay()
-
-    async def create_session():
-        result = await agent_bay.create()
-        if not result.success:
-            raise Exception(result.error_message)
-        return result.session
-
-    try:
-        session = await retry_with_backoff(create_session, max_retries=3)
-        print(f"Session created: {session.session_id}")
-        await agent_bay.delete(session)
-    except Exception as e:
-        print(f"Failed after retries: {e}")
-
-asyncio.run(main())
-```
-
-<a id="rate-limiting"></a>
-## 🚦 Rate Limiting
-
-### Token Bucket Pattern
-
-```python
-import time
-import asyncio
-from agentbay import AsyncAgentBay
-
-class RateLimiter:
-    def __init__(self, rate, per):
-        """
-        rate: number of operations
-        per: time period in seconds
-        """
-        self.rate = rate
-        self.per = per
-        self.allowance = rate
-        self.last_check = time.time()
-
-    async def acquire(self):
-        """Wait if necessary to stay within rate limit"""
-        current = time.time()
-        time_passed = current - self.last_check
-        self.last_check = current
-        self.allowance += time_passed * (self.rate / self.per)
-
-        if self.allowance > self.rate:
-            self.allowance = self.rate
-
-        if self.allowance < 1.0:
-            sleep_time = (1.0 - self.allowance) * (self.per / self.rate)
-            await asyncio.sleep(sleep_time)
-            self.allowance = 0.0
-        else:
-            self.allowance -= 1.0
-
-# Usage
-async def main():
-    agent_bay = AsyncAgentBay()
-    limiter = RateLimiter(rate=5, per=1.0)  # 5 operations per second
-
-    async def rate_limited_create():
-        await limiter.acquire()
-        return await agent_bay.create()
-
-    # Create 10 sessions with rate limiting
-    start = time.time()
-    results = await asyncio.gather(*[
-        rate_limited_create()
-        for _ in range(10)
-    ])
-    elapsed = time.time() - start
-
-    sessions = [r.session for r in results if r.success]
-    print(f"Created {len(sessions)} sessions in {elapsed:.2f} seconds")
-
-    # Cleanup
-    await asyncio.gather(*[
-        agent_bay.delete(session)
-        for session in sessions
-    ])
-
-asyncio.run(main())
-```
-
-<a id="best-practices"></a>
-## ✅ Best Practices
-
-### 1. Always Use Finally for Cleanup
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = None
-
-    try:
-        session = (await agent_bay.create()).session
-        # Do work
-    finally:
-        if session:
-            await agent_bay.delete(session)
-```
-
-### 2. Use Semaphores to Limit Concurrency
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    semaphore = asyncio.Semaphore(5)  # Max 5 concurrent operations
-
-    async def limited_operation(task_id):
-        async with semaphore:
-            session = (await agent_bay.create()).session
-            try:
-                result = await session.command.execute_command(f"echo 'Task {task_id}'")
-                return result.output
-            finally:
-                await agent_bay.delete(session)
-
-    results = await asyncio.gather(*[
-        limited_operation(i)
-        for i in range(20)
-    ])
-```
-
-### 3. Handle Exceptions in Gather
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-
-    results = await asyncio.gather(
-        agent_bay.create(),
-        agent_bay.create(),
-        agent_bay.create(),
-        return_exceptions=True  # Don't fail all if one fails
-    )
-
-    for i, result in enumerate(results, 1):
-        if isinstance(result, Exception):
-            print(f"Session {i} failed: {result}")
-        elif result.success:
-            print(f"Session {i} created: {result.session.session_id}")
-            await agent_bay.delete(result.session)
-```
-
-### 4. Use Timeouts
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-
-    try:
-        result = await asyncio.wait_for(
-            agent_bay.create(),
-            timeout=30.0
-        )
-        if result.success:
-            await agent_bay.delete(result.session)
-    except asyncio.TimeoutError:
-        print("Operation timed out")
-```
-
-### 5. Batch Operations
-
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-
-    # Create sessions in batches
-    batch_size = 5
-    all_sessions = []
-
-    for i in range(0, 20, batch_size):
-        batch_results = await asyncio.gather(*[
-            agent_bay.create()
-            for _ in range(batch_size)
-        ])
-        sessions = [r.session for r in batch_results if r.success]
-        all_sessions.extend(sessions)
-
-    print(f"Created {len(all_sessions)} sessions in batches")
-
-    # Cleanup
-    await asyncio.gather(*[
-        agent_bay.delete(session)
-        for session in all_sessions
-    ])
-```
-
-## 📚 Related Documentation
-
-- [Sync vs Async Guide](sync-vs-async.md) - Comprehensive comparison and decision guide
-- [Session Management](../common-features/basics/session-management.md) - Session lifecycle and management
-- [Command Execution](../common-features/basics/command-execution.md) - Command execution patterns
-
-## 🆘 Getting Help
-
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
-- [Documentation Home](../README.md)
-
-Happy async programming with AgentBay! 🚀
-
-
-
-
-
-# Async API Migration Guide
-
-This guide helps you migrate your code between synchronous and asynchronous AgentBay SDK APIs.
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Sync to Async Migration](#sync-to-async-migration)
-- [Async to Sync Migration](#async-to-sync-migration)
-- [Common Pitfalls](#common-pitfalls)
-- [Code Transformation Patterns](#code-transformation-patterns)
-- [Performance Improvements](#performance-improvements)
-
-<a id="overview"></a>
-## 🎯 Overview
-
-The AgentBay Python SDK provides both synchronous (`AgentBay`) and asynchronous (`AsyncAgentBay`) APIs. This guide covers:
-
-- When and why to migrate
-- Step-by-step migration process
-- Common patterns and transformations
-- Performance considerations
-
-### When to Migrate
-
-**Migrate to Async When:**
-- Building web applications (FastAPI, Django async)
-- Need to handle 100+ concurrent operations
-- Performance bottlenecks in I/O operations
-- Integrating with async frameworks
-
-**Migrate to Sync When:**
-- Simplifying codebase
-- Building CLI tools or scripts
-- Sequential operations are sufficient
-- Team lacks async experience
-
-<a id="sync-to-async-migration"></a>
-## 🔄 Sync to Async Migration
-
-### Step 1: Change Imports
-
-**Before (Sync):**
-```python
-from agentbay import AgentBay
-```
-
-**After (Async):**
-```python
-import asyncio
-from agentbay import AsyncAgentBay
-```
-
-### Step 2: Update Client Initialization
-
-**Before (Sync):**
-```python
-agent_bay = AgentBay(api_key="your-api-key")
-```
-
-**After (Async):**
-```python
-agent_bay = AsyncAgentBay(api_key="your-api-key")
-```
-
-### Step 3: Add async/await Keywords
-
-**Before (Sync):**
-```python
-def create_session():
-    agent_bay = AgentBay()
-    result = agent_bay.create()
-    if result.success:
-        session = result.session
-        cmd_result = session.command.execute_command("echo 'Hello'")
-        print(cmd_result.output)
-        agent_bay.delete(session)
-```
-
-**After (Async):**
-```python
-async def create_session():
-    agent_bay = AsyncAgentBay()
-    result = await agent_bay.create()
-    if result.success:
-        session = result.session
-        cmd_result = await session.command.execute_command("echo 'Hello'")
-        print(cmd_result.output)
-        await agent_bay.delete(session)
-```
-
-### Step 4: Update Function Calls
-
-**Before (Sync):**
-```python
-create_session()
-```
-
-**After (Async):**
-```python
-# If calling from non-async code
-asyncio.run(create_session())
-
-# If calling from async code
-await create_session()
-```
-
-### Complete Example
-
-**Before (Sync):**
-```python
-from agentbay import AgentBay
-
-def process_data():
-    agent_bay = AgentBay()
-    session = agent_bay.create().session
-
-    # Upload file
-    session.file_system.write_file("/tmp/data.txt", "Hello World")
-
-    # Execute command
-    result = session.command.execute_command("cat /tmp/data.txt")
-    print(result.output)
-
-    # Cleanup
-    agent_bay.delete(session)
-
-if __name__ == "__main__":
-    process_data()
-```
-
-**After (Async):**
-```python
-import asyncio
-from agentbay import AsyncAgentBay
-
-async def process_data():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    # Upload file (Note: file operations are currently sync)
-    session.file_system.write_file("/tmp/data.txt", "Hello World")
-
-    # Execute command
-    result = await session.command.execute_command("cat /tmp/data.txt")
-    print(result.output)
-
-    # Cleanup
-    await agent_bay.delete(session)
-
-if __name__ == "__main__":
-    asyncio.run(process_data())
-```
-
-<a id="async-to-sync-migration"></a>
-## 🔙 Async to Sync Migration
-
-### Step 1: Change Imports
-
-**Before (Async):**
-```python
-import asyncio
-from agentbay import AsyncAgentBay
-```
-
-**After (Sync):**
-```python
-from agentbay import AgentBay
-```
-
-### Step 2: Remove async/await Keywords
-
-**Before (Async):**
-```python
-async def create_session():
-    agent_bay = AsyncAgentBay()
-    result = await agent_bay.create()
-    if result.success:
-        session = result.session
-        await agent_bay.delete(session)
-```
-
-**After (Sync):**
-```python
-def create_session():
-    agent_bay = AgentBay()
-    result = agent_bay.create()
-    if result.success:
-        session = result.session
-        agent_bay.delete(session)
-```
-
-### Step 3: Update Function Calls
-
-**Before (Async):**
-```python
-asyncio.run(create_session())
-```
-
-**After (Sync):**
-```python
-create_session()
-```
-
-### Step 4: Replace Concurrent Operations
-
-**Before (Async):**
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-
-    # Concurrent operations
-    results = await asyncio.gather(*[
-        agent_bay.create()
-        for _ in range(5)
-    ])
-
-    sessions = [r.session for r in results if r.success]
-```
-
-**After (Sync):**
-```python
-def main():
-    agent_bay = AgentBay()
-
-    # Sequential operations
-    sessions = []
-    for _ in range(5):
-        result = agent_bay.create()
-        if result.success:
-            sessions.append(result.session)
-```
-
-<a id="common-pitfalls"></a>
-## ⚠️ Common Pitfalls
-
-### 1. Forgetting await
-
-**❌ Wrong:**
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    result = agent_bay.create()  # Missing await!
-```
-
-**✅ Correct:**
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    result = await agent_bay.create()
-```
-
-### 2. Mixing Sync and Async
-
-**❌ Wrong:**
-```python
-def sync_function():
-    agent_bay = AsyncAgentBay()
-    result = await agent_bay.create()  # Can't use await in sync function!
-```
-
-**✅ Correct:**
-```python
-async def async_function():
-    agent_bay = AsyncAgentBay()
-    result = await agent_bay.create()
-
-def sync_wrapper():
-    asyncio.run(async_function())
-```
-
-### 3. File Operations in Async
-
-**⚠️ Note:** File system operations (`write_file`, `read_file`) are currently synchronous even in `AsyncAgentBay`.
-
-**Current Behavior:**
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    # These are synchronous (no await needed)
-    session.file_system.write_file("/tmp/file.txt", "content")
-    result = session.file_system.read_file("/tmp/file.txt")
-
-    await agent_bay.delete(session)
-```
-
-**Workaround for Truly Async File Operations:**
-```python
-async def main():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    # Use command-based approach
-    import base64
-    content = "Hello World"
-    encoded = base64.b64encode(content.encode()).decode()
-    await session.command.execute_command(
-        f"echo '{encoded}' | base64 -d > /tmp/file.txt"
-    )
-
-    await agent_bay.delete(session)
-```
-
-### 4. Event Loop Issues
-
-**❌ Wrong:**
-```python
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.run_until_complete(another_main())  # May fail
-```
-
-**✅ Correct:**
-```python
-asyncio.run(main())
-asyncio.run(another_main())
-
-# Or use single event loop
-async def combined():
-    await main()
-    await another_main()
-
-asyncio.run(combined())
-```
-
-<a id="code-transformation-patterns"></a>
-## 🔧 Code Transformation Patterns
-
-### Pattern 1: Sequential to Concurrent
-
-**Before (Sync - Sequential):**
-```python
-def process_multiple():
-    agent_bay = AgentBay()
-
-    for i in range(5):
-        session = agent_bay.create().session
-        result = session.command.execute_command(f"echo 'Task {i}'")
-        print(result.output)
-        agent_bay.delete(session)
-```
-
-**After (Async - Concurrent):**
-```python
-async def process_multiple():
-    agent_bay = AsyncAgentBay()
-
-    async def process_task(i):
-        session = (await agent_bay.create()).session
-        result = await session.command.execute_command(f"echo 'Task {i}'")
-        print(result.output)
-        await agent_bay.delete(session)
-
-    await asyncio.gather(*[process_task(i) for i in range(5)])
-```
-
-### Pattern 2: Error Handling
-
-**Before (Sync):**
-```python
-def create_session():
-    agent_bay = AgentBay()
-    try:
-        result = agent_bay.create()
-        if result.success:
-            session = result.session
-            # Use session
-            agent_bay.delete(session)
-    except Exception as e:
-        print(f"Error: {e}")
-```
-
-**After (Async):**
-```python
-async def create_session():
-    agent_bay = AsyncAgentBay()
-    try:
-        result = await agent_bay.create()
-        if result.success:
-            session = result.session
-            # Use session
-            await agent_bay.delete(session)
-    except Exception as e:
-        print(f"Error: {e}")
-```
-
-### Pattern 3: Context Management
-
-**Before (Sync):**
-```python
-def use_session():
-    agent_bay = AgentBay()
-    session = agent_bay.create().session
-    try:
-        # Use session
-        result = session.command.execute_command("echo 'Hello'")
-        return result.output
-    finally:
-        agent_bay.delete(session)
-```
-
-**After (Async):**
-```python
-async def use_session():
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-    try:
-        # Use session
-        result = await session.command.execute_command("echo 'Hello'")
-        return result.output
-    finally:
-        await agent_bay.delete(session)
-```
-
-### Pattern 4: Batch Processing
-
-**Before (Sync):**
-```python
-def batch_process(items):
-    agent_bay = AgentBay()
-    session = agent_bay.create().session
-
-    results = []
-    for item in items:
-        result = session.command.execute_command(f"process {item}")
-        results.append(result.output)
-
-    agent_bay.delete(session)
-    return results
-```
-
-**After (Async - Concurrent):**
-```python
-async def batch_process(items):
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create()).session
-
-    # Process all items concurrently
-    results = await asyncio.gather(*[
-        session.command.execute_command(f"process {item}")
-        for item in items
-    ])
-
-    await agent_bay.delete(session)
-    return [r.output for r in results if r.success]
-```
-
-<a id="performance-improvements"></a>
-## 📊 Performance Improvements
-
-### Benchmark: Sequential vs Concurrent
-
-**Scenario:** Create 10 sessions and execute a command in each
-
-**Sync (Sequential):**
-```python
-import time
-from agentbay import AgentBay
-
-def benchmark_sync():
-    agent_bay = AgentBay()
-    start = time.time()
-
-    for i in range(10):
-        session = agent_bay.create().session
-        session.command.execute_command(f"echo 'Task {i}'")
-        agent_bay.delete(session)
-
-    elapsed = time.time() - start
-    print(f"Sync: {elapsed:.2f} seconds")
-
-# Result: ~30-40 seconds (sequential)
-```
-
-**Async (Concurrent):**
-```python
-import time
-import asyncio
-from agentbay import AsyncAgentBay
-
-async def benchmark_async():
-    agent_bay = AsyncAgentBay()
-    start = time.time()
-
-    async def process(i):
-        session = (await agent_bay.create()).session
-        await session.command.execute_command(f"echo 'Task {i}'")
-        await agent_bay.delete(session)
-
-    await asyncio.gather(*[process(i) for i in range(10)])
-
-    elapsed = time.time() - start
-    print(f"Async: {elapsed:.2f} seconds")
-
-# Result: ~5-8 seconds (concurrent)
-```
-
-**Performance Gain:** 4-6x faster for concurrent operations
-
-### When You'll See Performance Improvements
-
-- **High Concurrency**: 10+ concurrent operations
-- **I/O-Bound**: Network requests, file operations
-- **Long-Running**: Operations taking > 1 second each
-
-### When You Won't See Improvements
-
-- **Single Operations**: No concurrency benefit
-- **CPU-Bound**: Computation-heavy tasks
-- **Sequential Logic**: Operations must run in order
-
-## ✅ Migration Checklist
-
-### Pre-Migration
-
-- [ ] Identify performance bottlenecks
-- [ ] Determine if async is needed
-- [ ] Review team's async experience
-- [ ] Plan migration strategy
-
-### During Migration
-
-- [ ] Update imports
-- [ ] Add async/await keywords
-- [ ] Update function calls
-- [ ] Handle file operations
-- [ ] Add proper error handling
-- [ ] Test thoroughly
-
-### Post-Migration
-
-- [ ] Measure performance improvements
-- [ ] Update documentation
-- [ ] Train team on async patterns
-- [ ] Monitor for issues
-
-## 📚 Related Documentation
-
-- [Sync vs Async Guide](sync-vs-async.md) - Comprehensive comparison
-- [Async Patterns](async-patterns.md) - Common async patterns
-- [Session Management](../common-features/basics/session-management.md) - Session lifecycle
-
-## 🆘 Getting Help
-
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
-- [Documentation Home](../../README.md)
-
-Happy migrating! 🚀
-
-
-
-
-
-# Synchronous vs Asynchronous API Guide
-
-This guide helps you choose between the synchronous and asynchronous APIs in the AgentBay Python SDK and shows you how to use each effectively.
-
-## Table of Contents
-
-- [Quick Comparison](#quick-comparison)
-- [When to Use Sync API](#when-to-use-sync-api)
-- [When to Use Async API](#when-to-use-async-api)
-- [Performance Considerations](#performance-considerations)
-- [Migration Guide](#migration-guide)
-- [Best Practices](#best-practices)
-- [Common Patterns](#common-patterns)
-- [Troubleshooting](#troubleshooting)
-
-## Quick Comparison
-
-| Aspect | Sync API (`AgentBay`) | Async API (`AsyncAgentBay`) |
-|--------|----------------------|----------------------------|
-| **Import** | `from agentbay import AgentBay` | `from agentbay import AsyncAgentBay` |
-| **Execution Model** | Blocking, sequential | Non-blocking, concurrent |
-| **Best For** | Scripts, CLI tools, simple automation | Web servers, high-concurrency apps |
-| **Concurrency** | One operation at a time | Multiple operations simultaneously |
-| **Learning Curve** | Simple, straightforward | Requires async/await knowledge |
-| **Thread Safety** | One thread per operation | Single thread, event loop |
-| **Error Handling** | Try/except | Try/except with async context |
-| **Resource Usage** | Higher (one thread per operation) | Lower (single thread, event loop) |
-
-## When to Use Sync API
-
-### Ideal Use Cases
-
-#### 1. Simple Scripts and Automation
-
-Use sync API when writing straightforward automation scripts that process tasks sequentially.
-
-**Example: Batch File Processing**
-
-```python
-from agentbay import AgentBay, CreateSessionParams
-
-def process_files(file_list):
-    agent_bay = AgentBay()
-    session = agent_bay.create(CreateSessionParams(image_id="code_latest")).session
-    
-    results = []
-    for file_path in file_list:
-        # Read file
-        content = session.file_system.read_file(file_path)
-        
-        # Process
-        processed = content.content.upper()
-        
-        # Write back
-        session.file_system.write_file(f"{file_path}.processed", processed)
-        results.append(f"Processed: {file_path}")
-    
-    agent_bay.delete(session)
-    return results
-
-# Usage
-files = ["/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt"]
-results = process_files(files)
-for result in results:
-    print(result)
-```
-
-#### 2. Command-Line Tools
-
-Perfect for CLI applications where operations happen one after another.
-
-**Example: CLI Tool**
-
-```python
-import argparse
-from agentbay import AgentBay, CreateSessionParams
-
-def main():
-    parser = argparse.ArgumentParser(description='Run code in AgentBay')
-    parser.add_argument('code', help='Code to execute')
-    parser.add_argument('--language', default='python', help='Programming language')
-    args = parser.parse_args()
-    
-    agent_bay = AgentBay()
-    session = agent_bay.create(CreateSessionParams(image_id="code_latest")).session
-    
-    result = session.code.run_code(args.code, args.language)
-    
-    if result.success:
-        print(result.result)
-    else:
-        print(f"Error: {result.error_message}")
-    
-    agent_bay.delete(session)
-
-if __name__ == "__main__":
-    main()
-```
-
-#### 3. Learning and Prototyping
-
-When you're learning AgentBay or quickly prototyping ideas, sync API is easier to understand.
-
-**Example: Quick Prototype**
-
-```python
-from agentbay import AgentBay
-
-# Simple and straightforward
-agent_bay = AgentBay()
-session = agent_bay.create().session
-
-# Execute command
-result = session.command.execute_command("echo 'Hello World'")
-print(result.output)
-
-# Clean up
-agent_bay.delete(session)
-```
-
-### Advantages
-
-- **Simplicity**: Code reads top-to-bottom, easy to understand
-- **Debugging**: Simpler stack traces, easier to debug
-- **No async complexity**: No need to understand event loops, coroutines, or async/await
-- **Immediate results**: Each operation completes before moving to the next
-
-### Limitations
-
-- **Blocking**: Each operation blocks until complete
-- **No concurrency**: Can't run multiple operations simultaneously
-- **Resource intensive**: Uses more threads for concurrent operations
-
-## When to Use Async API
-
-### Ideal Use Cases
-
-#### 1. Web Applications
-
-Use async API in web frameworks like FastAPI, Django (async views), or aiohttp.
-
-**Example: FastAPI Endpoint**
-
-```python
-from fastapi import FastAPI
-from agentbay import AsyncAgentBay, CreateSessionParams
-
-app = FastAPI()
-agent_bay = AsyncAgentBay()
-
-@app.post("/execute")
-async def execute_code(code: str, language: str = "python"):
-    session = (await agent_bay.create(CreateSessionParams(image_id="code_latest"))).session
-    
-    try:
-        result = await session.code.run_code(code, language)
-        return {
-            "success": result.success,
-            "result": result.result if result.success else result.error_message
-        }
-    finally:
-        await agent_bay.delete(session)
-```
-
-#### 2. High-Concurrency Applications
-
-When you need to handle many operations simultaneously.
-
-**Example: Concurrent Task Processing**
-
-```python
-import asyncio
-from agentbay import AsyncAgentBay, CreateSessionParams
-
-async def process_task(task_id: str, code: str):
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create(CreateSessionParams(image_id="code_latest"))).session
-    
-    result = await session.code.run_code(code, "python")
-    
-    await agent_bay.delete(session)
-    return {"task_id": task_id, "result": result.result}
-
-async def process_multiple_tasks(tasks):
-    # Process all tasks concurrently
-    results = await asyncio.gather(*[
-        process_task(task["id"], task["code"])
-        for task in tasks
-    ])
-    return results
-
-# Usage
-async def main():
-    tasks = [
-        {"id": "task1", "code": "print('Task 1')"},
-        {"id": "task2", "code": "print('Task 2')"},
-        {"id": "task3", "code": "print('Task 3')"},
-    ]
-    
-    results = await process_multiple_tasks(tasks)
-    for result in results:
-        print(f"{result['task_id']}: {result['result']}")
-
-asyncio.run(main())
-```
-
-#### 3. Real-Time Systems
-
-Applications that need to respond quickly without blocking.
-
-**Example: Real-Time Monitoring**
-
-```python
-import asyncio
-from agentbay import AsyncAgentBay, CreateSessionParams
-
-async def monitor_session(session_id: str, agent_bay: AsyncAgentBay):
-    """Monitor a session's status"""
-    while True:
-        # Check session status (non-blocking)
-        info = await agent_bay.get(session_id)
-        
-        if info.success:
-            print(f"Session {session_id}: Active")
-        else:
-            print(f"Session {session_id}: Terminated")
-            break
-        
-        # Wait before next check (allows other tasks to run)
-        await asyncio.sleep(5)
-
-async def main():
-    agent_bay = AsyncAgentBay()
-    
-    # Create multiple sessions
-    sessions = []
-    for i in range(3):
-        result = await agent_bay.create(CreateSessionParams(image_id="code_latest"))
-        sessions.append(result.session)
-    
-    # Monitor all sessions concurrently
-    await asyncio.gather(*[
-        monitor_session(session.session_id, agent_bay)
-        for session in sessions
-    ])
-
-asyncio.run(main())
-```
-
-### Advantages
-
-- **High concurrency**: Handle thousands of operations simultaneously
-- **Non-blocking**: Operations don't block the event loop
-- **Resource efficient**: Single thread handles many operations
-- **Scalability**: Better performance under high load
-
-### Limitations
-
-- **Complexity**: Requires understanding of async/await
-- **Debugging**: Async stack traces can be harder to read
-- **Compatibility**: Must use async-compatible libraries
-
-## Performance Considerations
-
-### Throughput Comparison
-
-**Scenario: Execute 10 tasks**
-
-#### Sync API (Sequential)
-```python
-# Time: ~10 seconds (1 second per task)
-from agentbay import AgentBay, CreateSessionParams
-
-agent_bay = AgentBay()
-for i in range(10):
-    session = agent_bay.create(CreateSessionParams(image_id="code_latest")).session
-    result = session.code.run_code(f"print('Task {i}')", "python")
-    agent_bay.delete(session)
-```
-
-#### Async API (Concurrent)
-```python
-# Time: ~1-2 seconds (all tasks run concurrently)
-import asyncio
-from agentbay import AsyncAgentBay, CreateSessionParams
-
-async def run_task(i):
-    agent_bay = AsyncAgentBay()
-    session = (await agent_bay.create(CreateSessionParams(image_id="code_latest"))).session
-    result = await session.code.run_code(f"print('Task {i}')", "python")
-    await agent_bay.delete(session)
-    return result
-
-async def main():
-    await asyncio.gather(*[run_task(i) for i in range(10)])
-
-asyncio.run(main())
-```
-
-### Resource Usage
-
-| Metric | Sync API | Async API |
-|--------|----------|-----------|
-| **Memory per operation** | Higher (thread overhead) | Lower (shared event loop) |
-| **CPU usage** | Higher (context switching) | Lower (single thread) |
-| **Network connections** | One per thread | Reused efficiently |
-| **Scalability limit** | ~1000 concurrent ops | ~10,000+ concurrent ops |
-
-### When Performance Matters
-
-- **Use Async** if you need to:
-  - Handle > 100 concurrent operations
-  - Minimize latency in web applications
-  - Maximize throughput with limited resources
-
-- **Use Sync** if you:
-  - Have < 10 concurrent operations
-  - Prioritize code simplicity
-  - Are building one-off scripts
-
-## Migration Guide
- 
-For a detailed guide on migrating between synchronous and asynchronous APIs, including step-by-step instructions and code transformation patterns, please refer to the [Migration Guide](migration.md).
-
-## Best Practices
-
-### Sync API Best Practices
-
-#### 1. Use Context Managers (When Available)
-
-```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay()
-session = agent_bay.create().session
-
-try:
-    # Your operations
-    result = session.code.run_code("code", "python")
-finally:
-    # Always clean up
-    agent_bay.delete(session)
-```
-
-#### 2. Handle Errors Gracefully
-
-```python
-from agentbay import AgentBay
-from agentbay.exceptions import AgentBayError
-
-agent_bay = AgentBay()
-
-try:
-    session = agent_bay.create().session
-    result = session.code.run_code("code", "python")
-    
-    if not result.success:
-        print(f"Execution failed: {result.error_message}")
-    
-except AgentBayError as e:
-    print(f"AgentBay error: {e}")
-except Exception as e:
-    print(f"Unexpected error: {e}")
-finally:
-    if 'session' in locals():
-        agent_bay.delete(session)
-```
-
-#### 3. Reuse Sessions
-
-```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay()
-session = agent_bay.create().session
-
-# Reuse session for multiple operations
-for i in range(10):
-    result = session.code.run_code(f"print({i})", "python")
-    print(result.result)
-
-agent_bay.delete(session)
-```
-
-### Async API Best Practices
- 
-For comprehensive best practices, patterns, and error handling strategies for the Async API, please refer to the [Async Patterns Guide](async-patterns.md).
-
-## Common Patterns
- 
-For common asynchronous programming patterns such as Session Pools, Task Queues, and Retry Mechanisms, please refer to the [Async Patterns Guide](async-patterns.md).
-
-## Troubleshooting
- 
-For common issues, pitfalls, and performance debugging tips, please refer to the [Migration Guide - Common Pitfalls](migration.md#common-pitfalls) and [Async Patterns - Error Handling](async-patterns.md#error-handling).
-
-## Summary
-
-### Quick Decision Guide
-
-**Choose Sync API if:**
-- ✓ Building scripts or CLI tools
-- ✓ Processing tasks sequentially
-- ✓ Learning AgentBay
-- ✓ Simplicity is priority
-- ✓ < 10 concurrent operations
-
-**Choose Async API if:**
-- ✓ Building web applications
-- ✓ Need high concurrency (> 100 ops)
-- ✓ Performance is critical
-- ✓ Using async frameworks (FastAPI, aiohttp)
-- ✓ Building real-time systems
-
-### Key Takeaways
-
-1. **Both APIs are fully featured** - Choose based on your use case, not features
-2. **Async is not always faster** - Only benefits concurrent operations
-3. **Start simple** - Use sync API first, migrate to async if needed
-4. **Test performance** - Measure actual performance in your use case
-5. **Mix carefully** - Don't mix sync and async code without proper bridges
-
-## Related Documentation
-
-- [Session Management](../common-features/basics/session-management.md)
-- [Command Execution](../common-features/basics/command-execution.md)
-- [File Operations](../common-features/basics/file-operations.md)
-- [Python API Reference](../../../python/docs/api/README.md)
-- [Python Examples](../../../python/docs/examples/README.md)
-
-## Need Help?
-
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
-- [Documentation](../../README.md)
-
-
-
-
-
 # AgentBay AIBrowser Guide
 
 Welcome to the AgentBay AIBrowser Guides! This provides complete functionality introduction and best practices for experienced developers.
 
 > **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
-> - [Sync vs Async Guide](../async-programming/sync-vs-async.md)
-> - [Async Patterns Guide](../async-programming/async-patterns.md)
 
 ## 🎯 Quick Navigation
 
@@ -2222,8 +512,8 @@ Prerequisites:
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():
@@ -2383,8 +673,8 @@ Sometimes the web needs a different mask and a different stage. By shaping the b
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserViewport
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserViewport
 from playwright.async_api import async_playwright
 
 CUSTOM_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
@@ -2536,8 +826,8 @@ By default, the browser initializes with Chromium, but when using computer use i
 
 **Python:**
 ```python
-from agentbay.browser.browser import BrowserOption
-from agentbay.session_params import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import CreateSessionParams
 
 # Create session with computer use image
 params = CreateSessionParams(image_id="browser_latest")
@@ -2630,9 +920,9 @@ Below we’ll search for a book on Google. First we bring a browser to life and 
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import ActOptions
 from playwright.async_api import async_playwright
 
 BOOK_QUERY = "The Pragmatic Programmer"
@@ -2753,9 +1043,9 @@ import os
 import asyncio
 from pydantic import BaseModel, Field
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import BrowserAgent, ActOptions, ExtractOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import BrowserAgent, ActOptions, ExtractOptions
 
 class Product(BaseModel):
     name: str = Field(..., description="Product name")
@@ -3010,7 +1300,7 @@ async def close_async(self) -> bool
 
 ```python
 from pydantic import BaseModel, Field
-from agentbay.browser.browser_agent import ActOptions, ExtractOptions
+from agentbay import ActOptions, ExtractOptions
 
 class RecipeDetails(BaseModel):
     title: str = Field(..., description="Recipe title")
@@ -3049,7 +1339,7 @@ for a in actions:
 ### 3) Amazon Demo (Observe → Act → Assert)
 
 ```python
-from agentbay.browser.browser_agent import ObserveOptions
+from agentbay import ObserveOptions
 
 ok, obs1 = await agent.observe_async(
     options=ObserveOptions(instruction="Find and click the 'Add to Cart' button")
@@ -3167,8 +1457,8 @@ The AgentBay SDK provides comprehensive browser extension management capabilitie
 
 ```python
 from agentbay import AgentBay
-from agentbay.extension import ExtensionsService
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import ExtensionsService
+from agentbay import CreateSessionParams, BrowserContext
 
 # Initialize AgentBay and Extensions Service
 agent_bay = AgentBay(api_key="your_api_key")
@@ -3422,7 +1712,7 @@ print(f"Test result: {'✅ PASSED' if success else '❌ FAILED'}")
 ### 4. Error Handling
 
 ```python
-from agentbay.exceptions import AgentBayError
+from agentbay import AgentBayError
 
 def robust_extension_workflow():
     extensions_service = None
@@ -3586,7 +1876,7 @@ To enable browser replay, set `enable_browser_replay=True` when creating a sessi
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Create session with browser replay enabled
 params = CreateSessionParams(
@@ -3603,7 +1893,7 @@ session = result.session
 Once browser replay is enabled, all browser interactions will be automatically captured:
 
 ```python
-from agentbay.browser import BrowserOption
+from agentbay import BrowserOption
 from playwright.sync_api import sync_playwright
 
 # Initialize browser
@@ -3788,8 +2078,8 @@ Here's a complete example that demonstrates the full browser replay workflow:
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 from playwright.sync_api import sync_playwright
 
 def complete_replay_workflow():
@@ -4056,8 +2346,8 @@ import os
 import asyncio
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():
@@ -4312,7 +2602,7 @@ A Browser Context represents a persistent browser environment that stores browse
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import CreateSessionParams, BrowserContext
 
 # Initialize AgentBay client
 agent_bay = AgentBay(api_key="your_api_key")
@@ -4341,8 +2631,8 @@ session = session_result.session
 ```python
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams, BrowserContext
+from agentbay import BrowserOption
 from playwright.sync_api import sync_playwright
 
 # Initialize AgentBay
@@ -4517,7 +2807,7 @@ await browser2.close();
 You can customize how browser data is synchronized:
 
 ```python
-from agentbay.context_sync import SyncPolicy
+from agentbay import SyncPolicy
 
 # Create custom sync policy
 policy = SyncPolicy(
@@ -4616,8 +2906,8 @@ Generate random fingerprints based on specified criteria such as device type, op
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserFingerprint
 from playwright.async_api import async_playwright
 
 async def random_fingerprint_example():
@@ -4799,9 +3089,9 @@ Capture fingerprint characteristics from your local Chrome browser and apply the
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.fingerprint import BrowserFingerprintGenerator
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import BrowserFingerprintGenerator
 from playwright.async_api import async_playwright
 
 async def local_sync_fingerprint_example():
@@ -4971,9 +3261,9 @@ Load and apply custom fingerprint data from JSON files or construct fingerprints
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.fingerprint import FingerprintFormat
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import FingerprintFormat
 from playwright.async_api import async_playwright
 
 async def custom_fingerprint_example():
@@ -5172,8 +3462,8 @@ import os
 import time
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
+from agentbay import CreateSessionParams, BrowserContext
+from agentbay import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
 from playwright.async_api import async_playwright
 
 async def fingerprint_persistence_example():
@@ -5811,8 +4101,8 @@ Provided by the Wuying Proxy Service integrated in AgentBay SDK
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserProxy
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserProxy
 from playwright.async_api import async_playwright
 
 async def proxy_example():
@@ -6519,8 +4809,8 @@ Extensions are automatically synchronized to browser sessions at:
 
 ```python
 from agentbay import AgentBay
-from agentbay.extension import ExtensionsService
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import ExtensionsService
+from agentbay import CreateSessionParams, BrowserContext
 
 # Initialize AgentBay and Extensions Service
 agent_bay = AgentBay(api_key="your_api_key")
@@ -6915,8 +5205,6 @@ session = agent_bay.create(session_params).session
 CodeSpace is AgentBay's development environment for code execution and scripting.
 
 > **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
-> - [Sync vs Async Guide](../async-programming/sync-vs-async.md)
-> - [Async Patterns Guide](../async-programming/async-patterns.md)
 
 ## Documentation
 
@@ -6962,7 +5250,7 @@ To use code execution features, create a session with the `code_latest` image:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-api-key")
 
@@ -6985,7 +5273,7 @@ else:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-api-key")
 
@@ -7062,7 +5350,7 @@ print(f"Squares: {squares}")
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-api-key")
 
@@ -7215,7 +5503,7 @@ print(json.dumps(data, indent=2))
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-api-key")
 
@@ -7366,8 +5654,6 @@ Advanced capabilities for complex use cases.
 Agent modules are specialized AI task execution units running in AgentBay windows environment to execute tasks described in natural language.
 
 > **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
-> - [Sync vs Async Guide](../../async-programming/sync-vs-async.md)
-> - [Async Patterns Guide](../../async-programming/async-patterns.md)
 
 ## 🤖 Agent Module Overview
 
@@ -7497,7 +5783,7 @@ The **Image ID** is a unique identifier for each image (both system and custom i
 **Example usage:**
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 
@@ -7590,7 +5876,7 @@ The `xxxx_latest` system images are automatically updated to newer versions, whi
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 
@@ -7648,7 +5934,7 @@ Before performing any OSS operations, you must initialize the OSS environment wi
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-agentbay-api-key")
 
@@ -7803,7 +6089,7 @@ Here's a complete workflow demonstrating OSS integration:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-agentbay-api-key")
 
@@ -8446,8 +6732,6 @@ Remember: Session Link Access is your gateway to cloud session connectivity! �
 VPC (Virtual Private Cloud) sessions provide a secure communication mechanism where the SDK directly connects to cloud environments within the same VPC after session creation.
 
 > **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
-> - [Sync vs Async Guide](../../async-programming/sync-vs-async.md)
-> - [Async Patterns Guide](../../async-programming/async-patterns.md)
 
 ## Overview
 
@@ -8533,7 +6817,6 @@ This guide covers command execution capabilities in AgentBay SDK. The command mo
 
 > **💡 Async API Support**: This guide uses synchronous API by default. For async/await syntax and concurrent execution patterns, see:
 > - [Async-Specific Patterns](#async-specific-patterns) - Concurrent command execution
-> - [Sync vs Async Guide](../../async-programming/sync-vs-async.md) - Comprehensive comparison
 
 ## 📋 Table of Contents
 
@@ -8872,8 +7155,6 @@ asyncio.run(main())
 
 ## 📚 Related Documentation
 
-- [Sync vs Async Guide](../../async-programming/sync-vs-async.md) - Comprehensive comparison and decision guide
-- [Async Patterns Guide](../../async-programming/async-patterns.md) - Advanced async patterns and best practices
 - [Code Execution (CodeSpace)](../../codespace/code-execution.md) - Python, JavaScript code execution
 - [File Operations](file-operations.md) - File handling and management
 - [Session Management](session-management.md) - Session lifecycle
@@ -8892,7 +7173,6 @@ Happy automating with AgentBay! 🚀
 
 This guide covers AgentBay SDK's data persistence features, including context concepts, context management, and data synchronization strategies for maintaining state across sessions. Both synchronous and asynchronous APIs are supported.
 
-> **💡 Sync or Async?** This guide shows synchronous examples by default. For asynchronous API usage and concurrent context operations, see the [Sync vs Async Guide](../../async-programming/sync-vs-async.md).
 
 ## 📋 Table of Contents
 
@@ -9074,7 +7354,7 @@ else:
     print(f"Failed to list contexts: {contexts_result.error_message}")
 
 # List contexts with pagination
-from agentbay.context import ContextListParams
+from agentbay import ContextListParams
 
 params = ContextListParams(max_results=20)
 result = agent_bay.context.list(params)
@@ -9326,7 +7606,7 @@ The simplest way to clear a context is using the synchronous `clear()` method, w
 
 ```python
 from agentbay import AgentBay
-from agentbay.exceptions import ClearanceTimeoutError
+from agentbay import ClearanceTimeoutError
 
 agent_bay = AgentBay()
 
@@ -9415,7 +7695,7 @@ The clearing operation follows this state machine:
 
 ```python
 from agentbay import AgentBay
-from agentbay.exceptions import ClearanceTimeoutError, AgentBayError
+from agentbay import ClearanceTimeoutError, AgentBayError
 
 agent_bay = AgentBay()
 
@@ -9665,7 +7945,7 @@ AgentBay SDK provides file compression capabilities to optimize storage space an
 
 ```python
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, UploadMode
+from agentbay import ContextSync, SyncPolicy, UploadPolicy, UploadMode
 import asyncio
 
 # Initialize AgentBay client
@@ -9756,7 +8036,7 @@ agent_bay.delete(session, sync_context=True)
 **Basic Usage:**
 
 ```python
-from agentbay.context_sync import RecyclePolicy, Lifecycle, SyncPolicy, ContextSync
+from agentbay import RecyclePolicy, Lifecycle, SyncPolicy, ContextSync
 
 # Example 1: Keep data for 1 day
 recycle_policy = RecyclePolicy(
@@ -9817,7 +8097,7 @@ recycle_policy = RecyclePolicy(
 
 ```python
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import (
+from agentbay import (
     ContextSync, SyncPolicy, RecyclePolicy, Lifecycle,
     UploadPolicy, DownloadPolicy, BWList, WhiteList
 )
@@ -10143,7 +8423,6 @@ else:
 
 This guide provides a complete introduction to file operations in the AgentBay SDK, including basic file operations, directory management, batch operations, permission management, and performance optimization. Both synchronous and asynchronous APIs are supported.
 
-> **💡 Sync or Async?** This guide shows synchronous examples by default. For asynchronous API usage, see the [Sync vs Async Guide](../../async-programming/sync-vs-async.md) for comprehensive comparison and migration patterns. File operations work similarly in both APIs, with async providing benefits for concurrent operations.
 
 ## 📋 Table of Contents
 
@@ -10331,7 +8610,6 @@ asyncio.run(main())
 
 **Best for**: High concurrency, async projects, web applications
 
-> **Note**: File system methods (`write_file`, `read_file`, etc.) are currently synchronous even in `AsyncAgentBay` sessions. For truly asynchronous file operations, consider using command-based approaches. See [Sync vs Async Guide](../../async-programming/sync-vs-async.md) for details.
 
 </details>
 
@@ -10457,7 +8735,7 @@ import os
 import time
 import threading
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Initialize AgentBay
 api_key = os.getenv("AGENTBAY_API_KEY")
@@ -10985,7 +9263,6 @@ Remember: File operations are fundamental to most cloud workflows. Master these 
 
 This document provides comprehensive guidance on using the session management capabilities of the AgentBay SDK. Both synchronous and asynchronous APIs are fully supported.
 
-> **💡 Sync or Async?** This guide shows both synchronous and asynchronous examples. For detailed comparison and choosing guidance, see the [Sync vs Async Guide](../../async-programming/sync-vs-async.md).
 
 ## Overview
 
@@ -11103,7 +9380,6 @@ asyncio.run(main())
 
 **Best for**: High concurrency, async projects, web applications
 
-> **Note**: The async API allows you to create multiple sessions concurrently using `asyncio.gather()`. See [Sync vs Async Guide](../../async-programming/sync-vs-async.md) for concurrent session creation patterns.
 
 </details>
 
@@ -11113,7 +9389,7 @@ You can customize sessions by specifying parameters such as [image ID](../../../
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -11497,7 +9773,7 @@ Create sessions with comprehensive error handling:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 def create_session_safely(image_id="linux_latest"):
     agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
@@ -11524,7 +9800,7 @@ Implement automatic cleanup using Python's context manager protocol:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 class SessionManager:
     def __init__(self, image_id="linux_latest"):
@@ -11666,7 +9942,7 @@ python your_script.py
 ### Set Log Level in Code
 
 ```python
-from agentbay.logger import AgentBayLogger, get_logger
+from agentbay import AgentBayLogger, get_logger
 
 # Configure logging level with setup()
 AgentBayLogger.setup(level="DEBUG")
@@ -11692,7 +9968,7 @@ logger.info("Info message")
 The Python SDK supports file logging with automatic log rotation and retention. By default, logs are written to `python/agentbay.log`.
 
 ```python
-from agentbay.logger import AgentBayLogger
+from agentbay import AgentBayLogger
 
 # Configure file logging with rotation
 AgentBayLogger.setup(
@@ -11724,8 +10000,6 @@ No configuration needed - it works automatically.
 This guide explains how to configure the AgentBay SDK for different environments and requirements.
 
 > **💡 Async API Support**: Configuration works identically for both sync and async APIs. For async patterns, see:
-> - [Sync vs Async Guide](../../async-programming/sync-vs-async.md)
-> - [Async Patterns Guide](../../async-programming/async-patterns.md)
 
 > **Important:** The `endpoint` configuration specifies the **API Gateway location** used for SDK-backend communication. This determines which regional gateway your SDK connects to, but does not necessarily determine where your cloud sessions will be created. A future feature may allow selecting the cloud environment region separately when creating sessions.
 
@@ -12135,7 +10409,7 @@ func main() {
 
 ```python
 from agentbay import AgentBay
-from agentbay.context_sync import (
+from agentbay import (
     MappingPolicy,
     SyncPolicy,
     UploadPolicy,
@@ -12143,7 +10417,7 @@ from agentbay.context_sync import (
     DeletePolicy,
     ExtractPolicy
 )
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Initialize AgentBay client
 ab = AgentBay("your-api-key")
@@ -12599,7 +10873,7 @@ Call `get_link()` **with no parameters**. It returns a browser control address (
 ```python
 import asyncio
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():
@@ -12819,7 +11093,7 @@ async def browser_automation_example():
         
         # 3. Initialize browser
         print("\nInitializing browser...")
-        from agentbay.browser.browser import BrowserOption
+        from agentbay import BrowserOption
         init_ok = await session.browser.initialize_async(BrowserOption())
         if not init_ok:
             print("❌ Browser initialization failed")
@@ -13109,8 +11383,6 @@ Remember: Session Link Access is your gateway to cloud session connectivity! �
 Computer Use is AgentBay's desktop automation environment for Windows and Linux systems.
 
 > **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
-> - [Sync vs Async Guide](../async-programming/sync-vs-async.md)
-> - [Async Patterns Guide](../async-programming/async-patterns.md)
 
 ## Documentation
 
@@ -13211,7 +11483,7 @@ Different image types provide different levels of browser automation capabilitie
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = "your_api_key"
 agent_bay = AgentBay(api_key=api_key)
@@ -13354,7 +11626,7 @@ First, create a session with a desktop environment:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:
@@ -13671,7 +11943,7 @@ Complete example showing how to find, launch, and control a desktop application:
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:
@@ -13887,7 +12159,7 @@ Computer UI automation requires creating a session with a computer use system im
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 # Use windows_latest or linux_latest
@@ -13903,7 +12175,7 @@ session = agent_bay.create(session_params).session
 The `click_mouse()` method supports multiple click types. You can use the `MouseButton` enum for type safety:
 
 ```python
-from agentbay.computer import MouseButton
+from agentbay import MouseButton
 
 session_params = CreateSessionParams(image_id="windows_latest")
 session = agent_bay.create(session_params).session
@@ -13958,7 +12230,7 @@ agent_bay.delete(session)
 Drag the mouse from one point to another using the `MouseButton` enum:
 
 ```python
-from agentbay.computer import MouseButton
+from agentbay import MouseButton
 
 session_params = CreateSessionParams(image_id="windows_latest")
 session = agent_bay.create(session_params).session
@@ -13985,7 +12257,7 @@ agent_bay.delete(session)
 Scroll the mouse wheel at specific coordinates using the `ScrollDirection` enum:
 
 ```python
-from agentbay.computer import ScrollDirection
+from agentbay import ScrollDirection
 
 session_params = CreateSessionParams(image_id="windows_latest")
 session = agent_bay.create(session_params).session
@@ -14198,7 +12470,7 @@ First, create a session with a desktop environment:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:
@@ -14506,7 +12778,7 @@ Complete example showing how to launch an application and control its window:
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:
@@ -14693,8 +12965,6 @@ These features enable you to build sophisticated desktop automation solutions th
 Mobile Use is AgentBay's mobile device automation environment for Android devices.
 
 > **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
-> - [Sync vs Async Guide](../async-programming/sync-vs-async.md)
-> - [Async Patterns Guide](../async-programming/async-patterns.md)
 
 ## Documentation
 
@@ -15183,7 +13453,7 @@ First, create a session with a mobile environment:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:
@@ -15354,7 +13624,7 @@ Complete example showing how to launch and control a mobile application:
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:
@@ -15590,8 +13860,8 @@ The navigation bar control feature allows you to create immersive mobile experie
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -15632,8 +13902,8 @@ The uninstall protection feature prevents critical applications from being accid
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -15675,8 +13945,8 @@ Use whitelists in production environments to ensure only approved applications c
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -15732,8 +14002,8 @@ Use blacklists in development and testing to block known problematic application
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -15788,8 +14058,8 @@ This example demonstrates all available mobile configuration options working tog
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -15890,7 +14160,7 @@ Mobile UI automation requires creating a session with a mobile system image (thi
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")
@@ -15980,7 +14250,7 @@ agent_bay.delete(session)
 Send Android hardware key events using KeyCode constants:
 
 ```python
-from agentbay.mobile.mobile import KeyCode
+from agentbay import KeyCode
 
 session_params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(session_params).session
@@ -16121,7 +14391,7 @@ else:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")
@@ -16158,7 +14428,7 @@ finally:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")
@@ -16193,7 +14463,7 @@ finally:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")
@@ -16229,7 +14499,7 @@ finally:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")
@@ -16348,7 +14618,6 @@ After completing this quick start guide, you will be able to:
 - Understanding the differences
 
 ### Step 4: Choosing Your API Style (5 minutes)
-- [Sync vs Async Guide](../guides/async-programming/sync-vs-async.md)
 - When to use synchronous API
 - When to use asynchronous API
 - Performance considerations
@@ -16410,7 +14679,6 @@ asyncio.run(main())
 | Simple automation tasks | **Sync** |
 | Real-time data processing | **Async** |
 
-**📖 Learn More:** See the [comprehensive Sync vs Async guide](../guides/async-programming/sync-vs-async.md) for detailed comparisons, migration guides, and best practices.
 
 ## 🚀 Next Steps After Completion
 
@@ -16421,7 +14689,6 @@ asyncio.run(main())
 - **[Data Persistence](../guides/common-features/basics/data-persistence.md)** - Save and reuse your work
 
 ### Advanced Topics
-- **[Sync vs Async](../guides/async-programming/sync-vs-async.md)** - Comprehensive guide on API choices
 - **[Browser Automation](../guides/computer-use/computer-ui-automation.md)** - Web scraping and testing
 - **[Mobile Testing](../guides/mobile-use/mobile-ui-automation.md)** - Android app automation
 
@@ -16606,7 +14873,7 @@ The following table shows the latest official system images provided by AgentBay
 
 **Windows Environment Example:**
 ```python
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Create Windows environment and automate notepad
 params = CreateSessionParams(image_id="windows_latest")
@@ -16630,7 +14897,7 @@ params = CreateSessionParams(image_id="browser_latest")
 session = agent_bay.create(params).session
 
 # Initialize and navigate
-from agentbay.browser import BrowserOption
+from agentbay import BrowserOption
 session.browser.initialize(BrowserOption())
 session.browser.agent.navigate("https://www.baidu.com")
 print("Web navigation successful")
@@ -16659,7 +14926,7 @@ params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(params).session
 
 # Press HOME key to return to home screen
-from agentbay.mobile import KeyCode
+from agentbay import KeyCode
 session.mobile.send_key(KeyCode.HOME)
 # Returns: BoolResult with success status
 # Example: result.success = True (returns to Android home screen)
@@ -16889,9 +15156,6 @@ finally:
 ## 💡 Need Async API?
 
 This quickstart uses synchronous API for simplicity. If you're building a web app or need high concurrency, check out:
-- [Sync vs Async API Comparison](../guides/async-programming/sync-vs-async.md) - Detailed comparison and decision guide
-- [Async Patterns Guide](../guides/async-programming/async-patterns.md) - Production-ready async patterns
-- [Migration Guide](../guides/async-programming/migration.md) - Step-by-step migration from sync to async
 
 ---
 
@@ -17312,9 +15576,9 @@ async def main():
         cmd_result = await session.command.execute_command("ls -la")
         print(cmd_result.output)
 
-        # File operations (note: write_file and read_file are synchronous in async sessions)
-        session.file_system.write_file("/tmp/test.txt", "Hello World")
-        content = session.file_system.read_file("/tmp/test.txt")
+        # File operations
+        await session.file_system.write_file("/tmp/test.txt", "Hello World")
+        content = await session.file_system.read_file("/tmp/test.txt")
         print(content.content)  # Hello World
 
         # Clean up
@@ -17408,7 +15672,7 @@ if __name__ == "__main__":
 ### 🆕 New Users
 - [📚 Quick Start Tutorial](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/README.md) - Get started in 5 minutes
 - [🎯 Core Concepts](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/basic-concepts.md) - Understand cloud environments and sessions
-- [🔄 Sync vs Async Guide](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/async-programming/sync-vs-async.md) - Detailed guide on choosing between sync and async APIs
+- [🔄 Sync vs Async Guide](docs/guides/async-programming/sync-vs-async.md) - Detailed guide on choosing between sync and async APIs
 
 ### 🚀 Experienced Users
 **Choose Your Cloud Environment:**
@@ -17486,9 +15750,9 @@ files = session.file_system.list_directory("/path")
 
 #### Asynchronous
 ```python
-# Read/write files (note: write_file and read_file are synchronous in async sessions)
-session.file_system.write_file("/path/file.txt", "content")
-content = session.file_system.read_file("/path/file.txt")
+# Read/write files
+await session.file_system.write_file("/path/file.txt", "content")
+content = await session.file_system.read_file("/path/file.txt")
 print(content.content)
 
 # List directory
@@ -17552,7 +15816,7 @@ asyncio.run(main())
 #### Synchronous
 ```python
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy
+from agentbay import ContextSync, SyncPolicy
 
 agent_bay = AgentBay()
 
@@ -17573,7 +15837,7 @@ agent_bay.delete(session)
 ```python
 import asyncio
 from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy
+from agentbay import ContextSync, SyncPolicy
 
 async def main():
     agent_bay = AsyncAgentBay()
@@ -17586,8 +15850,7 @@ async def main():
     session = (await agent_bay.create(CreateSessionParams(context_syncs=[context_sync]))).session
 
     # Data in /tmp/data will be synchronized to the context
-    # Note: write_file is synchronous in async sessions
-    session.file_system.write_file("/tmp/data/config.json", '{"key": "value"}')
+    await session.file_system.write_file("/tmp/data/config.json", '{"key": "value"}')
 
     await agent_bay.delete(session)
 
@@ -17693,22 +15956,6 @@ Shared classes used by both sync and async APIs are in the `common/` directory:
 - [Agent Modules Guide](../../../../docs/guides/common-features/advanced/agent-modules.md) - Learn about agent modules and custom agents
 
 
-
-## QueryResult
-
-```python
-class QueryResult(ApiResponse)
-```
-
-Result of query operations.
-
-## ExecutionResult
-
-```python
-class ExecutionResult(ApiResponse)
-```
-
-Result of task execution.
 
 ## AsyncAgent
 
@@ -17846,10 +16093,10 @@ await session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
+- [Session API Reference](./async-session.md)
 
 ---
 
@@ -18102,11 +16349,11 @@ use the resume() method instead.
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
-- [Context API Reference](./context.md)
+- [Session API Reference](./async-session.md)
+- [Context API Reference](./async-context.md)
 
 ---
 
@@ -18380,10 +16627,10 @@ await session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
+- [Session API Reference](./async-session.md)
 
 ---
 
@@ -18413,14 +16660,6 @@ It supports multiple programming languages including Python, JavaScript, and mor
 - Requires `code_latest` image for code execution features
 
 
-
-## CodeExecutionResult
-
-```python
-class CodeExecutionResult(ApiResponse)
-```
-
-Result of code execution operations.
 
 ## AsyncCode
 
@@ -18472,10 +16711,9 @@ Execute code in the specified language with a timeout.
 Execute Python code in a code execution environment
 
 ```python
-from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import AsyncAgentBay, CreateSessionParams
 
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AsyncAgentBay(api_key="your_api_key")
 result = await agent_bay.create(CreateSessionParams(image_id="code_latest"))
 code_result = await result.session.code.run_code("print('Hello')", "python")
 print(code_result.result)
@@ -18492,10 +16730,10 @@ await result.session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
+- [Session API Reference](./async-session.md)
 
 ---
 
@@ -18521,14 +16759,6 @@ It supports both synchronous command execution with configurable timeouts.
 
 
 
-
-## CommandResult
-
-```python
-class CommandResult(ApiResponse)
-```
-
-Result of command execution operations.
 
 ## AsyncCommand
 
@@ -18581,11 +16811,11 @@ print(result.output)
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
-- [FileSystem API Reference](./filesystem.md)
+- [Session API Reference](./async-session.md)
+- [FileSystem API Reference](./async-filesystem.md)
 
 ---
 
@@ -18638,136 +16868,8 @@ Keyboard modifier keys: Ctrl, Alt, Shift, Win
 
 
 Computer module for desktop UI automation.
-Handles mouse operations, keyboard operations, window management, 
+Handles mouse operations, keyboard operations, window management,
 application management, and screen operations.
-
-## MouseButton
-
-```python
-class MouseButton(str, Enum)
-```
-
-Mouse button types for click and drag operations.
-
-#### LEFT
-
-```python
-LEFT = "left"
-```
-
-#### RIGHT
-
-```python
-RIGHT = "right"
-```
-
-#### MIDDLE
-
-```python
-MIDDLE = "middle"
-```
-
-#### DOUBLE\_LEFT
-
-```python
-DOUBLE_LEFT = "double_left"
-```
-
-## ScrollDirection
-
-```python
-class ScrollDirection(str, Enum)
-```
-
-Scroll direction for scroll operations.
-
-#### UP
-
-```python
-UP = "up"
-```
-
-#### DOWN
-
-```python
-DOWN = "down"
-```
-
-#### LEFT
-
-```python
-LEFT = "left"
-```
-
-#### RIGHT
-
-```python
-RIGHT = "right"
-```
-
-## InstalledApp
-
-```python
-class InstalledApp()
-```
-
-Represents an installed application.
-
-## Process
-
-```python
-class Process()
-```
-
-Represents a running process.
-
-## Window
-
-```python
-class Window()
-```
-
-Represents a window in the system.
-
-## InstalledAppListResult
-
-```python
-class InstalledAppListResult(ApiResponse)
-```
-
-Result of operations returning a list of InstalledApps.
-
-## ProcessListResult
-
-```python
-class ProcessListResult(ApiResponse)
-```
-
-Result of operations returning a list of Processes.
-
-## AppOperationResult
-
-```python
-class AppOperationResult(ApiResponse)
-```
-
-Result of application operations like start/stop.
-
-## WindowListResult
-
-```python
-class WindowListResult(ApiResponse)
-```
-
-Result of window listing operations.
-
-## WindowInfoResult
-
-```python
-class WindowInfoResult(ApiResponse)
-```
-
-Result of window info operations.
 
 ## AsyncComputer
 
@@ -19865,7 +17967,7 @@ get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 ---
 
@@ -19932,14 +18034,14 @@ Get information about context synchronization status asynchronously.
 
     ContextInfoResult: Result object containing context status data and request ID
 
-### sync\_context
+### sync
 
 ```python
-async def sync_context(context_id: Optional[str] = None,
-                       path: Optional[str] = None,
-                       mode: Optional[str] = None,
-                       max_retries: int = 150,
-                       retry_interval: int = 1500) -> ContextSyncResult
+async def sync(context_id: Optional[str] = None,
+               path: Optional[str] = None,
+               mode: Optional[str] = None,
+               max_retries: int = 150,
+               retry_interval: int = 1500) -> ContextSyncResult
 ```
 
 Synchronize a context with the session asynchronously.
@@ -19959,7 +18061,7 @@ Synchronize a context with the session asynchronously.
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 ---
 
@@ -20474,11 +18576,11 @@ clear_result = await agent_bay.context.clear(result.context_id, timeout=60)
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
-- [Context Manager API Reference](./context-manager.md)
+- [Session API Reference](./async-session.md)
+- [Context Manager API Reference](./async-context-manager.md)
 
 ---
 
@@ -20777,10 +18879,10 @@ print(f"Extension option: {ext_option}")
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Browser API Reference](./browser.md)
+- [Browser API Reference](./async-browser.md)
 
 ---
 
@@ -20800,24 +18902,6 @@ print(f"Extension option: {ext_option}")
 - [File Operations Guide](../../../../docs/guides/common-features/basics/file-operations.md) - Complete guide to file system operations
 
 
-
-## UploadResult
-
-```python
-@dataclass
-class UploadResult()
-```
-
-Result structure for file upload operations.
-
-## DownloadResult
-
-```python
-@dataclass
-class DownloadResult()
-```
-
-Result structure for file download operations.
 
 ## AsyncFileTransfer
 
@@ -20851,7 +18935,7 @@ async def upload(
 Upload workflow:
 1) Get OSS pre-signed URL via context.get_file_upload_url
 2) Upload local file to OSS using the URL (HTTP PUT)
-3) Trigger session.context.sync(mode="upload") to sync OSS objects to cloud disk
+* 1) Trigger session.context.sync(mode="upload") to sync cloud disk data to OSS
 4) If wait=True, poll session.context.info until upload task reaches completion or timeout
 
 Returns UploadResult containing request_ids, HTTP status, ETag and other information.
@@ -20878,126 +18962,6 @@ Download workflow:
    (ensuring backend has prepared the download object)
 
 Returns DownloadResult containing sync and download request_ids, HTTP status, byte count, etc.
-
-## FileChangeEvent
-
-```python
-class FileChangeEvent()
-```
-
-Represents a single file change event.
-
-## FileChangeResult
-
-```python
-class FileChangeResult(ApiResponse)
-```
-
-Result of file change detection operations.
-
-This class provides methods to check and filter file change events detected
-in a directory. It is typically returned by file monitoring operations.
-
-**Example**:
-
-```python
-session = agent_bay.create().session
-session.file_system.create_directory("/tmp/change_test")
-session.file_system.write_file("/tmp/change_test/file1.txt", "original content")
-session.file_system.write_file("/tmp/change_test/file2.txt", "original content")
-session.file_system.write_file("/tmp/change_test/file1.txt", "modified content")
-session.file_system.write_file("/tmp/change_test/file3.txt", "new file")
-change_result = session.file_system._get_file_change("/tmp/change_test")
-session.delete()
-```
-
-### has\_changes
-
-```python
-def has_changes() -> bool
-```
-
-Check if there are any file changes.
-
-**Returns**:
-
-    bool: True if there are any file change events, False otherwise.
-
-### get\_modified\_files
-
-```python
-def get_modified_files() -> List[str]
-```
-
-Get list of modified file paths.
-
-**Returns**:
-
-    List[str]: List of file paths that were modified.
-
-### get\_created\_files
-
-```python
-def get_created_files() -> List[str]
-```
-
-Get list of created file paths.
-
-**Returns**:
-
-    List[str]: List of file paths that were created.
-
-### get\_deleted\_files
-
-```python
-def get_deleted_files() -> List[str]
-```
-
-Get list of deleted file paths.
-
-**Returns**:
-
-    List[str]: List of file paths that were deleted.
-
-## FileInfoResult
-
-```python
-class FileInfoResult(ApiResponse)
-```
-
-Result of file info operations.
-
-## DirectoryListResult
-
-```python
-class DirectoryListResult(ApiResponse)
-```
-
-Result of directory listing operations.
-
-## FileContentResult
-
-```python
-class FileContentResult(ApiResponse)
-```
-
-Result of file read operations.
-
-## MultipleFileContentResult
-
-```python
-class MultipleFileContentResult(ApiResponse)
-```
-
-Result of multiple file read operations.
-
-## FileSearchResult
-
-```python
-class FileSearchResult(ApiResponse)
-```
-
-Result of file search operations.
 
 ## AsyncFileSystem
 
@@ -21486,11 +19450,11 @@ session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
-- [Command API Reference](./command.md)
+- [Session API Reference](./async-session.md)
+- [Command API Reference](./async-command.md)
 
 ---
 
@@ -21909,11 +19873,13 @@ manually to reconfigure mobile settings during a session.
 **Example**:
 
 ```python
-from agentbay import MobileExtraConfig
-session = await agent_bay.create(image="mobile_latest").session
+from agentbay import AsyncAgentBay, CreateSessionParams, MobileExtraConfig
+agent_bay = AsyncAgentBay(api_key="your_api_key")
+result = await agent_bay.create(CreateSessionParams(image_id="mobile_latest"))
+session = result.session
 mobile_config = MobileExtraConfig(lock_resolution=True)
 await session.mobile.configure(mobile_config)
-await session.delete()
+await agent_bay.delete(session)
 ```
 
 
@@ -22117,10 +20083,10 @@ await session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
+- [Session API Reference](./async-session.md)
 
 ---
 
@@ -22352,11 +20318,11 @@ await session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [Session API Reference](./session.md)
-- [FileSystem API Reference](./filesystem.md)
+- [Session API Reference](./async-session.md)
+- [FileSystem API Reference](./async-filesystem.md)
 
 ---
 
@@ -22503,88 +20469,18 @@ Asynchronously initiate the resume session operation without waiting for complet
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
-- [FileSystem API Reference](./filesystem.md)
-- [Command API Reference](./command.md)
-- [Context API Reference](./context.md)
-- [Context Manager API Reference](./context-manager.md)
-- [OSS API Reference](./oss.md)
+- [FileSystem API Reference](./async-filesystem.md)
+- [Command API Reference](./async-command.md)
+- [Context API Reference](./async-context.md)
+- [Context Manager API Reference](./async-context-manager.md)
+- [OSS API Reference](./async-oss.md)
 
 ---
 
 *Documentation generated automatically from source code using pydoc-markdown.*
-
-
-
-
-# browser API Reference (Async)
-
-This file is automatically generated. Please refer to the sync version for detailed documentation.
-
-See: [../sync/browser.md](../sync/browser.md)
-
-
-
-
-
-# command API Reference (Async)
-
-This file is automatically generated. Please refer to the sync version for detailed documentation.
-
-See: [../sync/command.md](../sync/command.md)
-
-
-
-
-
-# context manager API Reference (Async)
-
-This file is automatically generated. Please refer to the sync version for detailed documentation.
-
-See: [../sync/context-manager.md](../sync/context-manager.md)
-
-
-
-
-
-# context API Reference (Async)
-
-This file is automatically generated. Please refer to the sync version for detailed documentation.
-
-See: [../sync/context.md](../sync/context.md)
-
-
-
-
-
-# filesystem API Reference (Async)
-
-This file is automatically generated. Please refer to the sync version for detailed documentation.
-
-See: [../sync/filesystem.md](../sync/filesystem.md)
-
-
-
-
-
-# oss API Reference (Async)
-
-This file is automatically generated. Please refer to the sync version for detailed documentation.
-
-See: [../sync/oss.md](../sync/oss.md)
-
-
-
-
-
-# session API Reference (Async)
-
-This file is automatically generated. Please refer to the sync version for detailed documentation.
-
-See: [../sync/session.md](../sync/session.md)
-
 
 
 
@@ -22607,7 +20503,7 @@ BROWSER_RECORD_PATH = "/home/wuying/record"
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 ---
 
@@ -23127,7 +21023,7 @@ Sets the policy
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 ---
 
@@ -23220,7 +21116,7 @@ Raised when context clearing operation times out.
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 ---
 
@@ -23284,7 +21180,7 @@ to override existing configuration.
 Configure logging for different scenarios
 
 ```python
-from agentbay._common.logger import AgentBayLogger, get_logger
+from .logger import AgentBayLogger, get_logger
 
 # Basic setup with debug level
 AgentBayLogger.setup(level="DEBUG")
@@ -23363,7 +21259,7 @@ Set the logging level.
 Change log level during runtime
 
 ```python
-from agentbay._common.logger import AgentBayLogger, get_logger
+from .logger import AgentBayLogger, get_logger
 
 # Start with INFO level
 AgentBayLogger.setup(level="INFO")
@@ -23412,7 +21308,7 @@ log = get_logger("agentbay")
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 ---
 
@@ -23430,22 +21326,6 @@ log = get_logger("agentbay")
 - [Agent Modules Guide](../../../../docs/guides/common-features/advanced/agent-modules.md) - Learn about agent modules and custom agents
 
 
-
-## QueryResult
-
-```python
-class QueryResult(ApiResponse)
-```
-
-Result of query operations.
-
-## ExecutionResult
-
-```python
-class ExecutionResult(ApiResponse)
-```
-
-Result of task execution.
 
 ## Agent
 
@@ -23583,7 +21463,7 @@ session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)
@@ -23835,7 +21715,7 @@ use the resume() method instead.
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)
@@ -24111,7 +21991,7 @@ session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)
@@ -24142,14 +22022,6 @@ It supports multiple programming languages including Python, JavaScript, and mor
 - Requires `code_latest` image for code execution features
 
 
-
-## CodeExecutionResult
-
-```python
-class CodeExecutionResult(ApiResponse)
-```
-
-Result of code execution operations.
 
 ## Code
 
@@ -24201,8 +22073,7 @@ Execute code in the specified language with a timeout.
 Execute Python code in a code execution environment
 
 ```python
-from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import AgentBay, CreateSessionParams
 
 agent_bay = AgentBay(api_key="your_api_key")
 result = agent_bay.create(CreateSessionParams(image_id="code_latest"))
@@ -24221,7 +22092,7 @@ result.session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)
@@ -24248,14 +22119,6 @@ It supports both synchronous command execution with configurable timeouts.
 
 
 
-
-## CommandResult
-
-```python
-class CommandResult(ApiResponse)
-```
-
-Result of command execution operations.
 
 ## Command
 
@@ -24307,7 +22170,7 @@ print(result.output)
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)
@@ -24362,136 +22225,8 @@ Keyboard modifier keys: Ctrl, Alt, Shift, Win
 
 
 Computer module for desktop UI automation.
-Handles mouse operations, keyboard operations, window management, 
+Handles mouse operations, keyboard operations, window management,
 application management, and screen operations.
-
-## MouseButton
-
-```python
-class MouseButton(str, Enum)
-```
-
-Mouse button types for click and drag operations.
-
-#### LEFT
-
-```python
-LEFT = "left"
-```
-
-#### RIGHT
-
-```python
-RIGHT = "right"
-```
-
-#### MIDDLE
-
-```python
-MIDDLE = "middle"
-```
-
-#### DOUBLE\_LEFT
-
-```python
-DOUBLE_LEFT = "double_left"
-```
-
-## ScrollDirection
-
-```python
-class ScrollDirection(str, Enum)
-```
-
-Scroll direction for scroll operations.
-
-#### UP
-
-```python
-UP = "up"
-```
-
-#### DOWN
-
-```python
-DOWN = "down"
-```
-
-#### LEFT
-
-```python
-LEFT = "left"
-```
-
-#### RIGHT
-
-```python
-RIGHT = "right"
-```
-
-## InstalledApp
-
-```python
-class InstalledApp()
-```
-
-Represents an installed application.
-
-## Process
-
-```python
-class Process()
-```
-
-Represents a running process.
-
-## Window
-
-```python
-class Window()
-```
-
-Represents a window in the system.
-
-## InstalledAppListResult
-
-```python
-class InstalledAppListResult(ApiResponse)
-```
-
-Result of operations returning a list of InstalledApps.
-
-## ProcessListResult
-
-```python
-class ProcessListResult(ApiResponse)
-```
-
-Result of operations returning a list of Processes.
-
-## AppOperationResult
-
-```python
-class AppOperationResult(ApiResponse)
-```
-
-Result of application operations like start/stop.
-
-## WindowListResult
-
-```python
-class WindowListResult(ApiResponse)
-```
-
-Result of window listing operations.
-
-## WindowInfoResult
-
-```python
-class WindowInfoResult(ApiResponse)
-```
-
-Result of window info operations.
 
 ## Computer
 
@@ -25589,7 +23324,7 @@ get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 ---
 
@@ -25654,14 +23389,14 @@ Get information about context synchronization status synchronously.
 
     ContextInfoResult: Result object containing context status data and request ID
 
-### sync\_context
+### sync
 
 ```python
-def sync_context(context_id: Optional[str] = None,
-                 path: Optional[str] = None,
-                 mode: Optional[str] = None,
-                 max_retries: int = 150,
-                 retry_interval: int = 1500) -> ContextSyncResult
+def sync(context_id: Optional[str] = None,
+         path: Optional[str] = None,
+         mode: Optional[str] = None,
+         max_retries: int = 150,
+         retry_interval: int = 1500) -> ContextSyncResult
 ```
 
 Synchronize a context with the session synchronously.
@@ -25681,7 +23416,7 @@ Synchronize a context with the session synchronously.
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 ---
 
@@ -26191,7 +23926,7 @@ clear_result = agent_bay.context.clear(result.context_id, timeout=60)
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)
@@ -26492,7 +24227,7 @@ print(f"Extension option: {ext_option}")
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Browser API Reference](./browser.md)
@@ -26513,24 +24248,6 @@ print(f"Extension option: {ext_option}")
 - [File Operations Guide](../../../../docs/guides/common-features/basics/file-operations.md) - Complete guide to file system operations
 
 
-
-## UploadResult
-
-```python
-@dataclass
-class UploadResult()
-```
-
-Result structure for file upload operations.
-
-## DownloadResult
-
-```python
-@dataclass
-class DownloadResult()
-```
-
-Result structure for file download operations.
 
 ## FileTransfer
 
@@ -26564,7 +24281,7 @@ def upload(
 Upload workflow:
 1) Get OSS pre-signed URL via context.get_file_upload_url
 2) Upload local file to OSS using the URL (HTTP PUT)
-3) Trigger session.context.sync(mode="upload") to sync OSS objects to cloud disk
+* 1) Trigger session.context.sync(mode="upload") to sync cloud disk data to OSS
 4) If wait=True, poll session.context.info until upload task reaches completion or timeout
 
 Returns UploadResult containing request_ids, HTTP status, ETag and other information.
@@ -26591,126 +24308,6 @@ Download workflow:
    (ensuring backend has prepared the download object)
 
 Returns DownloadResult containing sync and download request_ids, HTTP status, byte count, etc.
-
-## FileChangeEvent
-
-```python
-class FileChangeEvent()
-```
-
-Represents a single file change event.
-
-## FileChangeResult
-
-```python
-class FileChangeResult(ApiResponse)
-```
-
-Result of file change detection operations.
-
-This class provides methods to check and filter file change events detected
-in a directory. It is typically returned by file monitoring operations.
-
-**Example**:
-
-```python
-session = agent_bay.create().session
-session.file_system.create_directory("/tmp/change_test")
-session.file_system.write_file("/tmp/change_test/file1.txt", "original content")
-session.file_system.write_file("/tmp/change_test/file2.txt", "original content")
-session.file_system.write_file("/tmp/change_test/file1.txt", "modified content")
-session.file_system.write_file("/tmp/change_test/file3.txt", "new file")
-change_result = session.file_system._get_file_change("/tmp/change_test")
-session.delete()
-```
-
-### has\_changes
-
-```python
-def has_changes() -> bool
-```
-
-Check if there are any file changes.
-
-**Returns**:
-
-    bool: True if there are any file change events, False otherwise.
-
-### get\_modified\_files
-
-```python
-def get_modified_files() -> List[str]
-```
-
-Get list of modified file paths.
-
-**Returns**:
-
-    List[str]: List of file paths that were modified.
-
-### get\_created\_files
-
-```python
-def get_created_files() -> List[str]
-```
-
-Get list of created file paths.
-
-**Returns**:
-
-    List[str]: List of file paths that were created.
-
-### get\_deleted\_files
-
-```python
-def get_deleted_files() -> List[str]
-```
-
-Get list of deleted file paths.
-
-**Returns**:
-
-    List[str]: List of file paths that were deleted.
-
-## FileInfoResult
-
-```python
-class FileInfoResult(ApiResponse)
-```
-
-Result of file info operations.
-
-## DirectoryListResult
-
-```python
-class DirectoryListResult(ApiResponse)
-```
-
-Result of directory listing operations.
-
-## FileContentResult
-
-```python
-class FileContentResult(ApiResponse)
-```
-
-Result of file read operations.
-
-## MultipleFileContentResult
-
-```python
-class MultipleFileContentResult(ApiResponse)
-```
-
-Result of multiple file read operations.
-
-## FileSearchResult
-
-```python
-class FileSearchResult(ApiResponse)
-```
-
-Result of file search operations.
 
 ## FileSystem
 
@@ -27197,7 +24794,7 @@ session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)
@@ -27616,11 +25213,13 @@ manually to reconfigure mobile settings during a session.
 **Example**:
 
 ```python
-from agentbay import MobileExtraConfig
-session = agent_bay.create(image="mobile_latest").session
+from agentbay import AgentBay, CreateSessionParams, MobileExtraConfig
+agent_bay = AgentBay(api_key="your_api_key")
+result = agent_bay.create(CreateSessionParams(image_id="mobile_latest"))
+session = result.session
 mobile_config = MobileExtraConfig(lock_resolution=True)
 session.mobile.configure(mobile_config)
-session.delete()
+agent_bay.delete(session)
 ```
 
 
@@ -27824,7 +25423,7 @@ session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)
@@ -28057,7 +25656,7 @@ session.delete()
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [Session API Reference](./session.md)
@@ -28206,7 +25805,7 @@ Synchronously initiate the resume session operation without waiting for completi
 
 ## See Also
 
-- [Synchronous vs Asynchronous API](../../../../docs/guides/async-programming/sync-vs-async.md)
+- [Synchronous vs Asynchronous API](../../../../python/docs/guides/async-programming/sync-vs-async.md)
 
 **Related APIs:**
 - [FileSystem API Reference](./filesystem.md)
@@ -28441,7 +26040,7 @@ export AGENTBAY_API_KEY="your_api_key_here"
 ```python
 import asyncio
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 async def main():
     client = AsyncAgentBay()
@@ -28470,7 +26069,7 @@ if __name__ == "__main__":
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 def main():
     client = AgentBay()
@@ -28687,8 +26286,8 @@ Automated extension testing:
 ```python
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():
@@ -28732,7 +26331,7 @@ result = await session.browser.agent.act_async(
 ## Browser Type Selection
 
 ```python
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 
 # Use Chrome
 option = BrowserOption(browser_type="chrome")
@@ -28750,7 +26349,7 @@ await session.browser.initialize_async(option)
 ## Stealth Configuration
 
 ```python
-from agentbay.browser.browser import (
+from agentbay import (
     BrowserOption,
     BrowserViewport,
     BrowserFingerprint
@@ -28771,7 +26370,7 @@ option = BrowserOption(
 ## Cookie Persistence
 
 ```python
-from agentbay.session_params import BrowserContext
+from agentbay import BrowserContext
 
 # Create browser context
 context_result = agent_bay.context.get("my-browser-context", create=True)
@@ -29140,7 +26739,7 @@ python extension_testing_automation.py
 ### Basic Extension Management
 ```python
 from agentbay import AgentBay
-from agentbay.extension import ExtensionsService
+from agentbay import ExtensionsService
 
 agent_bay = AgentBay(api_key="your_api_key")
 extensions_service = ExtensionsService(agent_bay)
@@ -29316,10 +26915,10 @@ if result.success:
 
 ```python
 # Write file
-session.file_system.write_file("/tmp/test.txt", "Hello World")
+await session.file_system.write_file("/tmp/test.txt", "Hello World")
 
 # Read file
-result = session.file_system.read_file("/tmp/test.txt")
+result = await session.file_system.read_file("/tmp/test.txt")
 print(result.content)
 ```
 
@@ -29514,7 +27113,7 @@ python main.py
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your_api_key")
 params = CreateSessionParams(image_id="linux_latest")
@@ -29530,10 +27129,10 @@ if result.success:
 
 ```python
 # Write file
-result = session.file_system.write_file("/tmp/test.txt", "content")
+result = await session.file_system.write_file("/tmp/test.txt", "content")
 
 # Read file
-result = session.file_system.read_file("/tmp/test.txt")
+result = await session.file_system.read_file("/tmp/test.txt")
 if result.success:
     print(result.content)
 ```
@@ -29553,7 +27152,7 @@ if result.success:
 context_result = agent_bay.context.get("my-context", create=True)
 
 # Use context with session
-from agentbay.context_sync import ContextSync, SyncPolicy
+from agentbay import ContextSync, SyncPolicy
 
 context_sync = ContextSync.new(
     context_id=context_result.context.id,
@@ -30862,7 +28461,7 @@ The new `list()` API offers several advantages:
 
 ### Old way (list_by_labels):
 ```python
-from agentbay.session_params import ListSessionParams
+from agentbay import ListSessionParams
 
 params = ListSessionParams(
     labels={"project": "demo"},
@@ -31226,7 +28825,7 @@ python windows_app_management_example.py
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Create Windows session
 agent_bay = AgentBay(api_key="your_api_key")
@@ -31307,7 +28906,7 @@ click_result = session.ui.click(x=100, y=200)
 type_result = session.ui.type("Hello, World!")
 
 # Send key
-from agentbay.mobile import KeyCode
+from agentbay import KeyCode
 key_result = session.ui.key(KeyCode.ENTER)
 ```
 
@@ -31758,8 +29357,8 @@ python mobile_get_adb_url_example.py
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.mobile import KeyCode
+from agentbay import CreateSessionParams
+from agentbay import KeyCode
 
 # Create mobile session
 agent_bay = AgentBay(api_key="your_api_key")
@@ -32290,8 +29889,8 @@ Automated extension testing:
 ```python
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():
@@ -32335,7 +29934,7 @@ result = await session.browser.agent.act_async(
 ## Browser Type Selection
 
 ```python
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 
 # Use Chrome
 option = BrowserOption(browser_type="chrome")
@@ -32353,7 +29952,7 @@ await session.browser.initialize_async(option)
 ## Stealth Configuration
 
 ```python
-from agentbay.browser.browser import (
+from agentbay import (
     BrowserOption,
     BrowserViewport,
     BrowserFingerprint
@@ -32374,7 +29973,7 @@ option = BrowserOption(
 ## Cookie Persistence
 
 ```python
-from agentbay.session_params import BrowserContext
+from agentbay import BrowserContext
 
 # Create browser context
 context_result = agent_bay.context.get("my-browser-context", create=True)
@@ -32743,7 +30342,7 @@ python extension_testing_automation.py
 ### Basic Extension Management
 ```python
 from agentbay import AgentBay
-from agentbay.extension import ExtensionsService
+from agentbay import ExtensionsService
 
 agent_bay = AgentBay(api_key="your_api_key")
 extensions_service = ExtensionsService(agent_bay)
@@ -32919,10 +30518,10 @@ if result.success:
 
 ```python
 # Write file
-session.file_system.write_file("/tmp/test.txt", "Hello World")
+await session.file_system.write_file("/tmp/test.txt", "Hello World")
 
 # Read file
-result = session.file_system.read_file("/tmp/test.txt")
+result = await session.file_system.read_file("/tmp/test.txt")
 print(result.content)
 ```
 
@@ -33117,7 +30716,7 @@ python main.py
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your_api_key")
 params = CreateSessionParams(image_id="linux_latest")
@@ -33133,10 +30732,10 @@ if result.success:
 
 ```python
 # Write file
-result = session.file_system.write_file("/tmp/test.txt", "content")
+result = await session.file_system.write_file("/tmp/test.txt", "content")
 
 # Read file
-result = session.file_system.read_file("/tmp/test.txt")
+result = await session.file_system.read_file("/tmp/test.txt")
 if result.success:
     print(result.content)
 ```
@@ -33156,7 +30755,7 @@ if result.success:
 context_result = agent_bay.context.get("my-context", create=True)
 
 # Use context with session
-from agentbay.context_sync import ContextSync, SyncPolicy
+from agentbay import ContextSync, SyncPolicy
 
 context_sync = ContextSync.new(
     context_id=context_result.context.id,
@@ -33803,11 +31402,11 @@ The example showcases:
 
 ### 1. Context Sync Function
 
-The `session.context.sync()` method provides context synchronization:
+The `session.context.sync()` method provides asynchronous context synchronization:
 
 ```python
 # Async call - wait for completion
-sync_result = session.context.sync()
+sync_result = await session.context.sync()
 if sync_result.success:
     print("✅ Sync completed successfully")
     print(f"Duration: {sync_duration:.2f} seconds")
@@ -34465,7 +32064,7 @@ The new `list()` API offers several advantages:
 
 ### Old way (list_by_labels):
 ```python
-from agentbay.session_params import ListSessionParams
+from agentbay import ListSessionParams
 
 params = ListSessionParams(
     labels={"project": "demo"},
@@ -34829,7 +32428,7 @@ python windows_app_management_example.py
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Create Windows session
 agent_bay = AgentBay(api_key="your_api_key")
@@ -34910,7 +32509,7 @@ click_result = session.ui.click(x=100, y=200)
 type_result = session.ui.type("Hello, World!")
 
 # Send key
-from agentbay.mobile import KeyCode
+from agentbay import KeyCode
 key_result = session.ui.key(KeyCode.ENTER)
 ```
 
@@ -35361,8 +32960,8 @@ python mobile_get_adb_url_example.py
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.mobile import KeyCode
+from agentbay import CreateSessionParams
+from agentbay import KeyCode
 
 # Create mobile session
 agent_bay = AgentBay(api_key="your_api_key")
@@ -35743,6 +33342,257 @@ For more details on mobile system features, see the [Application API Reference](
 
 
 
+# Migration Guide
+
+Migrate from AgentBay Python SDK v0.12.x to v0.13.0+ with sync/async separated architecture.
+
+## Overview
+
+**Version Change**: v0.12.0 → v0.13.0+
+
+In v0.12.x and earlier, the SDK used async APIs extensively. Starting from v0.13.0, the SDK provides separate sync (`AgentBay`) and async (`AsyncAgentBay`) APIs.
+
+**Migration scope**: 69 async methods across 26 files need updating.
+
+## Quick Migration Steps
+
+### 1. Import Changes
+
+**Key Change**: The import structure has been completely refactored from a single API to a dual sync/async API system.
+
+```python
+# Before (v0.12.x) - Single API, flat module structure
+from agentbay import AgentBay, Config, Session, Command
+# Only one AgentBay class, was async-based
+
+# After (v0.13.0+) - Dual API, unified imports
+from agentbay import AgentBay, AsyncAgentBay  # Two separate APIs
+from agentbay import Session, AsyncSession    # Separate sync/async classes
+from agentbay import Browser, AsyncBrowser    # All modules have both versions
+```
+
+### 2. Choose Your API
+
+**For scripts/CLI**: Use sync API
+```python
+# Before (v0.12.x)
+from agentbay import AgentBay
+async with AgentBay() as agent_bay:
+    # operations
+
+# After (v0.13.0+)
+from agentbay import AgentBay
+agent_bay = AgentBay()
+# operations
+```
+
+**For web servers**: Use async API
+```python
+# Before (v0.12.x)
+from agentbay import AgentBay
+async with AgentBay() as agent_bay:
+    # operations
+
+# After (v0.13.0+)
+from agentbay import AsyncAgentBay
+agent_bay = AsyncAgentBay()
+# operations (still async)
+```
+
+### 2. Method Name Changes
+
+Remove `_async` suffix from all method names:
+
+```python
+# Before (v0.12.x)
+await session.browser.agent.navigate_async(url)
+await session.command.execute_command("ls")
+
+# After (v0.13.0+ sync)
+session.browser.agent.navigate(url)
+session.command.execute_command("ls")
+
+# After (v0.13.0+ async)
+await session.browser.agent.navigate(url)
+await session.command.execute_command("ls")
+```
+
+## Module Import Mapping
+
+### Core Modules
+```python
+# v0.12.x (flat structure)
+from agentbay import AgentBay, Session, Command, Computer, Mobile
+
+# v0.13.0+ (unified imports with sync/async variants)
+from agentbay import (
+    AgentBay, AsyncAgentBay,           # Main client classes
+    Session, AsyncSession,             # Session management
+    Command, AsyncCommand,             # Command execution
+    Computer, AsyncComputer,           # Computer automation
+    Mobile, AsyncMobile,               # Mobile automation
+    Browser, AsyncBrowser,             # Browser automation
+    FileSystem, AsyncFileSystem,       # File operations
+    Agent, AsyncAgent,                 # AI agent functionality
+)
+```
+
+### Shared Components (No Change)
+```python
+# These imports remain the same
+from agentbay import (
+    Config, AgentBayError, APIError,
+    CreateSessionParams, ListSessionParams,
+    ContextSync, SyncPolicy, UploadPolicy
+)
+```
+
+## Complete Method Mapping
+
+### Core Session Methods
+```python
+# v0.12.x → v0.13.0+
+pause_async() → pause()
+resume_async() → resume()
+get_link_async() → get_link()
+```
+
+### Browser Methods
+```python
+# v0.12.x → v0.13.0+
+initialize_async() → initialize()
+navigate_async() → navigate()
+screenshot_async() → screenshot()
+act_async() → act()
+observe_async() → observe()
+extract_async() → extract()
+close_async() → close()
+```
+
+### File System Methods
+```python
+# v0.12.x → v0.13.0+
+upload_async() → upload()
+download_async() → download()
+```
+
+
+
+## Error Handling Changes
+
+### Sync API
+```python
+# Current sync approach
+result = session.command.execute_command("ls")
+if result.success:
+    print(result.output)
+else:
+    print(f"Error: {result.error_message}")
+```
+
+### Async API
+```python
+# Current async approach
+result = await session.command.execute_command("ls")
+if result.success:
+    print(result.output)
+else:
+    print(f"Error: {result.error_message}")
+```
+
+## Context Manager Changes
+
+### v0.12.x Version
+```python
+# Context manager approach (deprecated in v0.13.0+)
+async with AgentBay() as agent_bay:
+    session = await agent_bay.create(params)
+```
+
+### v0.13.0+ Version
+```python
+# Sync approach
+agent_bay = AgentBay()
+result = agent_bay.create(params)
+session = result.session
+# ... use session
+agent_bay.delete(session)
+
+# Async approach
+agent_bay = AsyncAgentBay()
+result = await agent_bay.create(params)
+session = result.session
+# ... use session
+await agent_bay.delete(session)
+```
+
+## Common Migration Patterns
+
+### Pattern 1: Simple Script Migration
+```python
+# Before (v0.12.x)
+import asyncio
+from agentbay import AgentBay
+
+async def main():
+    async with AgentBay() as agent_bay:
+        session = await agent_bay.create(params)
+        result = await session.command.execute_command("ls")
+        print(result.output)
+
+asyncio.run(main())
+
+# After (v0.13.0+ sync)
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
+result = agent_bay.create(params)
+session = result.session
+result = session.command.execute_command("ls")
+print(result.output)
+agent_bay.delete(session)
+```
+
+### Pattern 2: Web Server Migration
+```python
+# Before (v0.12.x)
+async def handle_request():
+    async with AgentBay() as agent_bay:
+        session = await agent_bay.create(params)
+        result = await session.command.execute_command(cmd)
+        return result.output
+
+# After (v0.13.0+ async)
+async def handle_request():
+    agent_bay = AsyncAgentBay()
+    result = await agent_bay.create(params)
+    session = result.session
+    result = await session.command.execute_command(cmd)
+    await agent_bay.delete(session)
+    return result.output
+```
+
+## Validation Steps
+
+After migration:
+
+1. **Remove all `_async` suffixes** from method names
+2. **Update imports** (`AgentBay` for sync, `AsyncAgentBay` for async)
+3. **Test basic operations** (create session, run command, delete session)
+4. **Verify error handling** uses `result.success` pattern
+5. **Check context management** follows new patterns
+
+## Notes
+
+- **File operations** remain synchronous in both APIs
+- **API compatibility** maintained except for async/sync differences
+- **New features** available in current version not in backup
+- **Performance** may differ due to architectural changes
+
+For API comparison, see [Sync vs Async Guide](sync-vs-async.md).
+
+
+
 # Synchronous vs Asynchronous Guide
 
 This guide explains the differences between synchronous and asynchronous programming patterns in the AgentBay Python SDK.
@@ -35828,7 +33678,7 @@ To migrate from synchronous to asynchronous code:
 3. Add `await` keyword before SDK method calls
 4. Use `asyncio.run()` to execute the main function
 
-For more details, see the [async programming guides](../) in the main documentation.
+For migrating from backup versions or between sync/async, see [Migration Guide](migration-guide.md).
 
 
 
