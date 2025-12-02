@@ -5,29 +5,32 @@ import os
 import sys
 import unittest
 
+import pytest
+
 from agentbay import AgentBay, CreateSessionParams, AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-class TestSessionExtraConfigsIntegration(unittest.TestCase):
+class TestSessionExtraConfigsIntegration:
     """Integration test cases for session creation with extra configurations using real API."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         """Set up test environment with real API key."""
         cls.api_key = os.getenv("AGENTBAY_API_KEY")
         if not cls.api_key:
-            raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
+            pytest.skip("AGENTBAY_API_KEY environment variable not set")
 
         cls.agent_bay = AgentBay(api_key=cls.api_key)
         print(f"AgentBay client initialized for extra configs testing")
 
-    def setUp(self):
+    def setup_method(self):
         """Set up for each test method."""
         self.session = None
 
+    @pytest.mark.sync
     def test_create_session_with_mobile_extra_configs_integration(self):
         """Integration test for creating a mobile session with extra configurations."""
         print("=" * 80)
@@ -75,15 +78,12 @@ class TestSessionExtraConfigsIntegration(unittest.TestCase):
         create_result = self.__class__.agent_bay.create(params)
 
         # Verify SessionResult structure
-        self.assertTrue(
-            create_result.success,
-            f"Session creation failed: {create_result.error_message}",
-        )
-        self.assertIsNotNone(create_result.request_id)
-        self.assertIsInstance(create_result.request_id, str)
-        self.assertGreater(len(create_result.request_id), 0)
-        self.assertIsNotNone(create_result.session)
-        self.assertFalse(create_result.error_message)
+        assert create_result.success, f"Session creation failed: {create_result.error_message}"
+        assert create_result.request_id is not None
+        assert isinstance(create_result.request_id, str)
+        assert len(create_result.request_id) > 0
+        assert create_result.session is not None
+        assert not create_result.error_message
 
         self.session = create_result.session
         print(
@@ -93,10 +93,8 @@ class TestSessionExtraConfigsIntegration(unittest.TestCase):
         try:
             # Step 4: Verify session properties
             print("Step 3: Verifying session properties...")
-            self.assertIsNotNone(self.session.session_id)
-            self.assertTrue(
-                len(self.session.session_id) > 0, "Session ID should not be empty"
-            )
+            assert self.session.session_id is not None
+            assert len(self.session.session_id) > 0, "Session ID should not be empty"
             print(f"✓ Session properties verified: ID={self.session.session_id}")
 
             # Step 5: Verify mobile environment
@@ -104,10 +102,8 @@ class TestSessionExtraConfigsIntegration(unittest.TestCase):
             info_result = self.session.info()
             if info_result.success:
                 resource_url = info_result.data.resource_url.lower()
-                self.assertTrue(
-                    "android" in resource_url or "mobile" in resource_url,
-                    f"Session should be mobile-based, got URL: {info_result.data.resource_url}",
-                )
+                assert "android" in resource_url or "mobile" in resource_url, \
+                    f"Session should be mobile-based, got URL: {info_result.data.resource_url}"
                 print(
                     f"✓ Mobile environment verified (RequestID: {info_result.request_id})"
                 )
@@ -119,9 +115,7 @@ class TestSessionExtraConfigsIntegration(unittest.TestCase):
             labels_result = self.session.get_labels()
             if labels_result.success:
                 labels = labels_result.data
-                self.assertEqual(
-                    labels.get("test_type"), "mobile_extra_configs_integration"
-                )
+                assert labels.get("test_type") == "mobile_extra_configs_integration"
                 print(
                     f"✓ Labels verified: {labels} (RequestID: {labels_result.request_id})"
                 )
@@ -134,7 +128,7 @@ class TestSessionExtraConfigsIntegration(unittest.TestCase):
             # Test screenshot functionality
             screenshot_result = self.session.mobile.screenshot()
             if screenshot_result.success:
-                self.assertIsNotNone(screenshot_result.data)
+                assert screenshot_result.data is not None
                 print(
                     f"✓ Mobile screenshot working (RequestID: {screenshot_result.request_id})"
                 )
@@ -165,18 +159,18 @@ class TestSessionExtraConfigsIntegration(unittest.TestCase):
 
         print("✓ Mobile extra configs integration test completed successfully")
 
-    def tearDown(self):
+    def teardown_method(self):
         """Clean up after each test method."""
         if self.session:
             try:
                 delete_result = self.__class__.agent_bay.delete(self.session)
                 if not delete_result.success:
                     print(
-                        f"Warning: Failed to clean up session in tearDown: {delete_result.error_message}"
+                        f"Warning: Failed to clean up session in teardown_method: {delete_result.error_message}"
                     )
             except Exception as e:
-                print(f"Warning: Error during tearDown cleanup: {e}")
+                print(f"Warning: Error during teardown_method cleanup: {e}")
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main([__file__])

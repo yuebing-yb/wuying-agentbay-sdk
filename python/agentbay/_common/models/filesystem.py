@@ -227,7 +227,8 @@ class DirectoryEntry:
     @property
     def is_directory(self) -> bool:
         """Check if entry is a directory."""
-        return self._data.get("is_directory", False)
+        # Support both key formats for compatibility
+        return self._data.get("is_directory", self._data.get("isDirectory", False))
     
     @property
     def size(self) -> int:
