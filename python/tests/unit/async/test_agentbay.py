@@ -2,7 +2,6 @@ import os
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay import AsyncAgentBay
 from agentbay import (
     AsyncAgentBay,
     CreateSessionParams,
