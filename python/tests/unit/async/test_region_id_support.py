@@ -2,9 +2,8 @@ import os
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentbay import AsyncAgentBay, CreateSessionParams, Context, ContextResult, AsyncContextService
+from agentbay import AsyncAgentBay, CreateSessionParams, Context, ContextResult, AsyncContextService, Config
 from agentbay.api.models import CreateMcpSessionRequest, GetContextRequest
-from agentbay._common.config import Config
 
 
 class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
