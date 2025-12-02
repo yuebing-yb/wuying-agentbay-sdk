@@ -277,7 +277,7 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(len(result.entries), 3)
-        self.assertEqual(result.entries[0]["name"], "file1.txt")
+        self.assertEqual(result.entries[0].name, "file1.txt")
         self.assertEqual(result.entries[0]["isDirectory"], False)
         self.assertEqual(result.entries[1]["name"], "dir1")
         self.assertEqual(result.entries[1]["isDirectory"], True)

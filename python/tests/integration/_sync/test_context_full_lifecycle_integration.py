@@ -33,11 +33,11 @@ def get_test_endpoint():
     return os.environ.get("AGENTBAY_ENDPOINT")
 
 
-class TestContextFullLifecycle(unittest.TestCase):
+class TestContextFullLifecycle(unittest.IsolatedAsyncioTestCase):
     """Integration tests for Context full lifecycle operations."""
 
     @classmethod
-    def setUpClass(cls):
+    def asyncSetUpClass(cls):
         """Set up test fixtures for the entire test class."""
         # Get API Key and Endpoint
         api_key = get_test_api_key()
@@ -58,7 +58,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         cls.test_contexts = []  # Track contexts for cleanup
 
     @classmethod
-    def tearDownClass(cls):
+    def asyncTearDownClass(cls):
         """Clean up any remaining test contexts."""
         print("\nCleaning up test contexts...")
         for context_info in cls.test_contexts:

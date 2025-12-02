@@ -7,7 +7,8 @@ import pytest
 from agentbay import AsyncAgentBay
 
 
-def test_get_session_api():
+@pytest.mark.asyncio
+async def test_get_session_api():
     """
     Integration test for GetSession API.
     Tests that the API correctly retrieves session information.
@@ -22,7 +23,7 @@ def test_get_session_api():
 
     # Create a session first
     print("Creating a new session for GetSession testing...")
-    create_result = agent_bay.create()
+    create_result = await agent_bay.create()
     assert (
         create_result.success
     ), f"Failed to create session: {create_result.error_message}"
@@ -33,7 +34,7 @@ def test_get_session_api():
     try:
         # Test GetSession API
         print("Testing GetSession API...")
-        get_session_result = agent_bay.get_session(session_id)
+        get_session_result = await agent_bay.get_session(session_id)
 
         # Validate response
         assert get_session_result.request_id, "RequestID should not be empty"
@@ -84,7 +85,7 @@ def test_get_session_api():
 
         # Test get() method which should populate session fields from GetSession
         print("\nTesting AsyncAgentBay.get() method...")
-        get_result = agent_bay.get(session_id)
+        get_result = await agent_bay.get(session_id)
         assert get_result.success, f"get() should succeed: {get_result.error_message}"
         assert get_result.request_id, "get() should return request_id"
         print(f"get() RequestID: {get_result.request_id}")
@@ -117,7 +118,7 @@ def test_get_session_api():
     finally:
         # Clean up: Delete the session
         print("Cleaning up: Deleting the session...")
-        delete_result = session.delete()
+        delete_result = await session.delete()
         if delete_result.success:
             print(f"Session {session_id} deleted successfully")
         else:

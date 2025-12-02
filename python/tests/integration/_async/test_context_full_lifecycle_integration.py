@@ -6,6 +6,7 @@ This module tests the complete context lifecycle including:
 - Cross-session context synchronization
 """
 
+import asyncio
 import os
 import tempfile
 import time
@@ -30,11 +31,11 @@ def get_test_endpoint():
     return os.environ.get("AGENTBAY_ENDPOINT")
 
 
-class TestContextFullLifecycle(unittest.TestCase):
+class TestContextFullLifecycle(unittest.IsolatedAsyncioTestCase):
     """Integration tests for Context full lifecycle operations."""
 
     @classmethod
-    def setUpClass(cls):
+    async def asyncSetUpClass(cls):
         """Set up test fixtures for the entire test class."""
         # Get API Key and Endpoint
         api_key = get_test_api_key()
@@ -55,7 +56,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         cls.test_contexts = []  # Track contexts for cleanup
 
     @classmethod
-    def tearDownClass(cls):
+    async def asyncTearDownClass(cls):
         """Clean up any remaining test contexts."""
         print("\nCleaning up test contexts...")
         for context_info in cls.test_contexts:
@@ -68,9 +69,9 @@ class TestContextFullLifecycle(unittest.TestCase):
 
                 # Get context object first
                 if context_name:
-                    get_result = cls.agent_bay.context.get(context_name)
+                    get_result = await cls.agent_bay.context.get(context_name)
                     if get_result.success and get_result.context:
-                        result = cls.agent_bay.context.delete(get_result.context)
+                        result = await cls.agent_bay.context.delete(get_result.context)
                         if result.success:
                             print(f"  ✓ Deleted context: {context_id}")
                         else:
@@ -80,7 +81,7 @@ class TestContextFullLifecycle(unittest.TestCase):
             except Exception as e:
                 print(f"  ✗ Error cleaning up context: {e}")
 
-    def test_context_full_lifecycle_single_session(self):
+    async def test_context_full_lifecycle_single_session(self):
         """
         Scenario 1: Complete context lifecycle within a single session.
 
@@ -99,7 +100,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         # Step 1: Create a context
         print("\nStep 1: Creating a test context...")
         context_name = f"test-lifecycle-{uuid4().hex[:8]}"
-        context_result = self.agent_bay.context.create(context_name)
+        context_result = await self.agent_bay.context.create(context_name)
         self.assertTrue(
             context_result.success,
             f"Failed to create context: {context_result.error_message}",
@@ -115,7 +116,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         params = CreateSessionParams(
             context_syncs=[ContextSync(context_id=context.id, path=test_path)]
         )
-        session_result = self.agent_bay.create(params=params)
+        session_result = await self.agent_bay.create(params=params)
         self.assertTrue(
             session_result.success,
             f"Failed to create session: {session_result.error_message}",
@@ -129,28 +130,28 @@ class TestContextFullLifecycle(unittest.TestCase):
 
         # Step 4: List files in context to verify context sync works
         print("\nStep 4: Listing files in context...")
-        list_files_result = self.agent_bay.context.list_files(
+        list_files_result = await self.agent_bay.context.list_files(
             context_id=context.id, parent_folder_path=test_path, page_size=10
         )
         print(f"  ✓ Found {list_files_result.count or 0} files in context")
 
         # Step 5: Verify we can get context details
         print("\nStep 5: Verifying context details...")
-        get_result = self.agent_bay.context.get(context.name)
+        get_result = await self.agent_bay.context.get(context.name)
         self.assertTrue(get_result.success, "Failed to get context details")
         self.assertEqual(get_result.context.id, context.id)
         print(f"  ✓ Context details verified")
 
         # Step 6: Delete session
         print("\nStep 6: Deleting session...")
-        delete_result = session.delete()
+        delete_result = await session.delete()
         self.assertTrue(delete_result.success, "Failed to delete session")
         print(f"  ✓ Session deleted")
         time.sleep(2)  # Wait for session to be fully deleted
 
         # Step 7: Clear the context
         print("\nStep 7: Clearing context data...")
-        clear_result = self.agent_bay.context.clear(
+        clear_result = await self.agent_bay.context.clear(
             context.id, timeout=60, poll_interval=2
         )
         self.assertTrue(
@@ -165,7 +166,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         # Step 8: Verify context is cleared by listing files again
         print("\nStep 8: Verifying context is cleared (listing files)...")
         time.sleep(2)  # Wait for clearing to propagate
-        list_files_after_result = self.agent_bay.context.list_files(
+        list_files_after_result = await self.agent_bay.context.list_files(
             context_id=context.id, parent_folder_path=test_path, page_size=10
         )
         print(f"  ✓ After clearing, found {list_files_after_result.count or 0} files")
@@ -176,7 +177,7 @@ class TestContextFullLifecycle(unittest.TestCase):
 
         # Step 9: Verify context still exists (clearing doesn't delete the context)
         print("\nStep 9: Verifying context still exists after clearing...")
-        get_after_result = self.agent_bay.context.get(context.name)
+        get_after_result = await self.agent_bay.context.get(context.name)
         self.assertTrue(
             get_after_result.success, "Context should still exist after clearing"
         )
@@ -186,7 +187,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         print("✅ Single session lifecycle test completed successfully")
         print("=" * 70)
 
-    def test_context_cross_session_persistence(self):
+    async def test_context_cross_session_persistence(self):
         """
         Scenario 2: Cross-session context persistence and deletion.
 
@@ -206,7 +207,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         # Step 1: Create a context
         print("\nStep 1: Creating a test context...")
         context_name = f"test-cross-session-{uuid4().hex[:8]}"
-        context_result = self.agent_bay.context.create(context_name)
+        context_result = await self.agent_bay.context.create(context_name)
         self.assertTrue(
             context_result.success,
             f"Failed to create context: {context_result.error_message}",
@@ -222,7 +223,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         params1 = CreateSessionParams(
             context_syncs=[ContextSync(context_id=context.id, path=session1_path)]
         )
-        session1_result = self.agent_bay.create(params=params1)
+        session1_result = await self.agent_bay.create(params=params1)
         self.assertTrue(
             session1_result.success,
             f"Failed to create Session 1: {session1_result.error_message}",
@@ -235,7 +236,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         time.sleep(3)  # Wait for context sync to complete
 
         print("\nStep 4: Listing files created by Session 1...")
-        list_files_s1_result = self.agent_bay.context.list_files(
+        list_files_s1_result = await self.agent_bay.context.list_files(
             context_id=context.id, parent_folder_path=session1_path, page_size=10
         )
         file_count_s1 = list_files_s1_result.count or 0
@@ -243,7 +244,7 @@ class TestContextFullLifecycle(unittest.TestCase):
 
         # Step 4: Delete Session 1
         print("\nStep 5: Deleting Session 1...")
-        delete_s1_result = session1.delete()
+        delete_s1_result = await session1.delete()
         self.assertTrue(delete_s1_result.success, "Failed to delete Session 1")
         print(f"  ✓ Session 1 deleted")
         time.sleep(2)
@@ -253,7 +254,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         params2 = CreateSessionParams(
             context_syncs=[ContextSync(context_id=context.id, path=session1_path)]
         )
-        session2_result = self.agent_bay.create(params=params2)
+        session2_result = await self.agent_bay.create(params=params2)
         self.assertTrue(
             session2_result.success,
             f"Failed to create Session 2: {session2_result.error_message}",
@@ -265,7 +266,7 @@ class TestContextFullLifecycle(unittest.TestCase):
         print("\nStep 7: Verifying files from Session 1 are present in Session 2...")
         time.sleep(3)  # Wait for Session 2 to sync context
 
-        list_files_s2_result = self.agent_bay.context.list_files(
+        list_files_s2_result = await self.agent_bay.context.list_files(
             context_id=context.id, parent_folder_path=session1_path, page_size=10
         )
         file_count_s2 = list_files_s2_result.count or 0
@@ -278,14 +279,14 @@ class TestContextFullLifecycle(unittest.TestCase):
 
         # Step 7: Delete Session 2
         print("\nStep 8: Deleting Session 2...")
-        delete_s2_result = session2.delete()
+        delete_s2_result = await session2.delete()
         self.assertTrue(delete_s2_result.success, "Failed to delete Session 2")
         print(f"  ✓ Session 2 deleted")
         time.sleep(2)
 
         # Step 8: Clear the context
         print("\nStep 9: Clearing context data...")
-        clear_result = self.agent_bay.context.clear(
+        clear_result = await self.agent_bay.context.clear(
             context.id, timeout=60, poll_interval=2
         )
         self.assertTrue(
@@ -304,14 +305,14 @@ class TestContextFullLifecycle(unittest.TestCase):
         params3 = CreateSessionParams(
             context_syncs=[ContextSync(context_id=context.id, path=session1_path)]
         )
-        session3_result = self.agent_bay.create(params=params3)
+        session3_result = await self.agent_bay.create(params=params3)
         self.assertTrue(session3_result.success, "Failed to create Session 3")
         session3 = session3_result.session
         print(f"  ✓ Session 3 created: {session3.session_id}")
 
         # Check files after clearing
         time.sleep(3)
-        list_files_s3_result = self.agent_bay.context.list_files(
+        list_files_s3_result = await self.agent_bay.context.list_files(
             context_id=context.id, parent_folder_path=session1_path, page_size=10
         )
         file_count_s3 = list_files_s3_result.count or 0
@@ -325,7 +326,7 @@ class TestContextFullLifecycle(unittest.TestCase):
 
         # Clean up Session 3
         print("\nStep 11: Cleaning up Session 3...")
-        session3.delete()
+        await session3.delete()
         time.sleep(1)
         print(f"  ✓ Session 3 deleted")
 

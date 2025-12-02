@@ -14,12 +14,12 @@ def agentbay_client():
     return AsyncAgentBay(api_key=api_key)
 
 
-def test_get_api(agentbay_client: AsyncAgentBay):
+async def test_get_api(agentbay_client: AsyncAgentBay):
     """Test Get API with a real session."""
     print("Creating a new session for Get API testing...")
 
     # Create session
-    create_result = agentbay_client.create()
+    create_result = await agentbay_client.create()
     assert (
         create_result.success
     ), f"Failed to create session: {create_result.error_message}"
@@ -28,7 +28,7 @@ def test_get_api(agentbay_client: AsyncAgentBay):
     print(f"Session created with ID: {session_id}")
 
     print("Testing Get API...")
-    result = agentbay_client.get(session_id)
+    result = await agentbay_client.get(session_id)
 
     assert result is not None, "Get returned None result"
     assert result.success, f"Failed to get session: {result.error_message}"
@@ -46,39 +46,39 @@ def test_get_api(agentbay_client: AsyncAgentBay):
     print("Get API test passed successfully")
 
     print("Cleaning up: Deleting the session...")
-    delete_result = session.delete()
+    delete_result = await session.delete()
     assert delete_result.success, f"Failed to delete session: {delete_result.success}"
     print(f"Session {session_id} deleted successfully")
 
 
-def test_get_non_existent_session(agentbay_client: AsyncAgentBay):
+async def test_get_non_existent_session(agentbay_client: AsyncAgentBay):
     """Test Get API with a non-existent session ID."""
     print("Testing Get API with non-existent session ID...")
     non_existent_session_id = "session-nonexistent-12345"
 
-    result = agentbay_client.get(non_existent_session_id)
+    result = await agentbay_client.get(non_existent_session_id)
     assert not result.success, "Expected get() to fail for non-existent session"
     assert "Failed to get session" in result.error_message
     print(f"Correctly received error for non-existent session: {result.error_message}")
     print("Get API non-existent session test passed successfully")
 
 
-def test_get_empty_session_id(agentbay_client: AsyncAgentBay):
+async def test_get_empty_session_id(agentbay_client: AsyncAgentBay):
     """Test Get API with empty session ID."""
     print("Testing Get API with empty session ID...")
 
-    result = agentbay_client.get("")
+    result = await agentbay_client.get("")
     assert not result.success, "Expected get() to fail for empty session ID"
     assert "session_id is required" in result.error_message
     print(f"Correctly received error for empty session ID: {result.error_message}")
     print("Get API empty session ID test passed successfully")
 
 
-def test_get_whitespace_session_id(agentbay_client: AsyncAgentBay):
+async def test_get_whitespace_session_id(agentbay_client: AsyncAgentBay):
     """Test Get API with whitespace-only session ID."""
     print("Testing Get API with whitespace session ID...")
 
-    result = agentbay_client.get("   ")
+    result = await agentbay_client.get("   ")
     assert not result.success, "Expected get() to fail for whitespace session ID"
     assert "session_id is required" in result.error_message
     print(f"Correctly received error for whitespace session ID: {result.error_message}")

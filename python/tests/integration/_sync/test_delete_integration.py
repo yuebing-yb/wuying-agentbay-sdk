@@ -16,11 +16,11 @@ def get_test_api_key():
     return os.environ.get("AGENTBAY_API_KEY")
 
 
-class TestDeleteIntegration(unittest.TestCase):
+class TestDeleteIntegration(unittest.IsolatedAsyncioTestCase):
     """Integration test for session deletion functionality"""
 
     @classmethod
-    def setUpClass(cls):
+    def asyncSetUpClass(cls):
         # Get API Key
         api_key = get_test_api_key()
         if not api_key:

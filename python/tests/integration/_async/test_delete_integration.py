@@ -1,3 +1,4 @@
+import asyncio
 import os
 import time
 import unittest
@@ -13,11 +14,11 @@ def get_test_api_key():
     return os.environ.get("AGENTBAY_API_KEY")
 
 
-class TestDeleteIntegration(unittest.TestCase):
+class TestDeleteIntegration(unittest.IsolatedAsyncioTestCase):
     """Integration test for session deletion functionality"""
 
     @classmethod
-    def setUpClass(cls):
+    async def asyncSetUpClass(cls):
         # Get API Key
         api_key = get_test_api_key()
         if not api_key:
@@ -26,11 +27,11 @@ class TestDeleteIntegration(unittest.TestCase):
         # Initialize AgentBay client
         cls.agent_bay = AsyncAgentBay(api_key=api_key)
 
-    def test_delete_without_params(self):
+    async def test_delete_without_params(self):
         """Test session deletion functionality without parameters"""
         # Create a session
         print("Creating session for parameter-less deletion test...")
-        result = self.agent_bay.create()
+        result = await self.agent_bay.create()
         self.assertTrue(result.success)
         self.assertIsNotNone(result.session)
         session = result.session
@@ -38,7 +39,7 @@ class TestDeleteIntegration(unittest.TestCase):
 
         # Delete session using default parameters
         print("Deleting session using parameter-less delete method...")
-        delete_result = session.delete()
+        delete_result = await session.delete()
         self.assertTrue(delete_result.success)
         print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
@@ -47,7 +48,7 @@ class TestDeleteIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Use list to get latest session list from server
-        list_result = self.agent_bay.list()
+        list_result = await self.agent_bay.list()
         self.assertTrue(list_result.success)
 
         # Check if session has been deleted
@@ -57,12 +58,12 @@ class TestDeleteIntegration(unittest.TestCase):
             f"Session ID {session.session_id} still exists after deletion",
         )
 
-    def test_delete_with_sync_context(self):
+    async def test_delete_with_sync_context(self):
         """Test session deletion functionality with sync_context parameter"""
         # Create context
         context_name = f"test-context-{uuid4().hex[:8]}"
         print(f"Creating context: {context_name}...")
-        context_result = self.agent_bay.context.create(context_name)
+        context_result = await self.agent_bay.context.create(context_name)
         self.assertTrue(context_result.success)
         self.assertIsNotNone(context_result.context)
         context = context_result.context
@@ -79,7 +80,7 @@ class TestDeleteIntegration(unittest.TestCase):
         )
 
         print("Creating session with context...")
-        result = self.agent_bay.create(params)
+        result = await self.agent_bay.create(params)
         self.assertTrue(result.success)
         self.assertIsNotNone(result.session)
         session = result.session
@@ -88,14 +89,14 @@ class TestDeleteIntegration(unittest.TestCase):
         # Create test file in session
         test_cmd = "echo 'test file content' > /home/wuying/test/testfile.txt"
         try:
-            cmd_result = session.command.execute_command(test_cmd)
+            cmd_result = await session.command.execute_command(test_cmd)
             print(f"Create test file: {cmd_result}")
         except Exception as e:
             print(f"Warning: Failed to create test file: {e}")
 
         # Delete session using sync_context=True
         print("Deleting session using sync_context=True...")
-        delete_result = session.delete(sync_context=True)
+        delete_result = await session.delete(sync_context=True)
         self.assertTrue(delete_result.success)
         print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
@@ -104,7 +105,7 @@ class TestDeleteIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Use list to get latest session list from server
-        list_result = self.agent_bay.list()
+        list_result = await self.agent_bay.list()
         self.assertTrue(list_result.success)
 
         # Check if session has been deleted
@@ -116,7 +117,7 @@ class TestDeleteIntegration(unittest.TestCase):
 
         # Clean up context
         try:
-            delete_context_result = self.agent_bay.context.delete(context)
+            delete_context_result = await self.agent_bay.context.delete(context)
             if delete_context_result.success:
                 print(f"Context {context.id} deleted")
             else:
@@ -124,12 +125,12 @@ class TestDeleteIntegration(unittest.TestCase):
         except Exception as e:
             print(f"Warning: Error deleting context: {e}")
 
-    def test_agentbay_delete_with_sync_context(self):
+    async def test_agentbay_delete_with_sync_context(self):
         """Test AsyncAgentBay.delete functionality with sync_context parameter"""
         # Create context
         context_name = f"test-context-{uuid4().hex[:8]}"
         print(f"Creating context: {context_name}...")
-        context_result = self.agent_bay.context.create(context_name)
+        context_result = await self.agent_bay.context.create(context_name)
         self.assertTrue(context_result.success)
         self.assertIsNotNone(context_result.context)
         context = context_result.context
@@ -146,7 +147,7 @@ class TestDeleteIntegration(unittest.TestCase):
         )
 
         print("Creating session with context...")
-        result = self.agent_bay.create(params)
+        result = await self.agent_bay.create(params)
         self.assertTrue(result.success)
         self.assertIsNotNone(result.session)
         session = result.session
@@ -157,14 +158,14 @@ class TestDeleteIntegration(unittest.TestCase):
             "echo 'test file for agentbay delete' > /home/wuying/test2/testfile2.txt"
         )
         try:
-            cmd_result = session.command.execute_command(test_cmd)
+            cmd_result = await session.command.execute_command(test_cmd)
             print(f"Create test file: {cmd_result}")
         except Exception as e:
             print(f"Warning: Failed to create test file: {e}")
 
         # Delete session using agent_bay.delete with sync_context=True
         print("Deleting session using agent_bay.delete with sync_context=True...")
-        delete_result = self.agent_bay.delete(session, sync_context=True)
+        delete_result = await self.agent_bay.delete(session, sync_context=True)
         self.assertTrue(delete_result.success)
         print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
@@ -173,7 +174,7 @@ class TestDeleteIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Use list to get latest session list from server
-        list_result = self.agent_bay.list()
+        list_result = await self.agent_bay.list()
         self.assertTrue(list_result.success)
 
         # Check if session has been deleted

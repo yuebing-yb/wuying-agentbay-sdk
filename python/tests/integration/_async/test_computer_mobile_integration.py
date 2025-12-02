@@ -8,8 +8,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from agentbay import AsyncAgentBay, AsyncSession
-from agentbay import Computer
-from agentbay import Mobile
+from agentbay import AsyncComputer
+from agentbay import AsyncMobile
 
 
 class TestComputerMobileIntegration:
@@ -30,10 +30,11 @@ class TestComputerMobileIntegration:
         # Assert
         assert hasattr(session, "computer")
         assert hasattr(session, "mobile")
-        assert isinstance(session.computer, Computer)
-        assert isinstance(session.mobile, Mobile)
+        assert isinstance(session.computer, AsyncComputer)
+        assert isinstance(session.mobile, AsyncMobile)
 
-    def test_computer_module_usage_in_session(self):
+    @pytest.mark.asyncio
+    async def test_computer_module_usage_in_session(self):
         """Test Computer module usage through Session."""
         # Arrange
         mock_agent_bay = Mock()
@@ -48,7 +49,7 @@ class TestComputerMobileIntegration:
             mock_mcp.return_value = mock_mcp_result
 
             # Act
-            result = session.computer.click_mouse(100, 200)
+            result = await session.computer.click_mouse(100, 200)
 
             # Assert
             assert result.success is True
@@ -56,7 +57,8 @@ class TestComputerMobileIntegration:
                 "click_mouse", {"x": 100, "y": 200, "button": "left"}
             )
 
-    def test_mobile_module_usage_in_session(self):
+    @pytest.mark.asyncio
+    async def test_mobile_module_usage_in_session(self):
         """Test Mobile module usage through Session."""
         # Arrange
         mock_agent_bay = Mock()
@@ -71,13 +73,14 @@ class TestComputerMobileIntegration:
             mock_mcp.return_value = mock_mcp_result
 
             # Act
-            result = session.mobile.tap(150, 250)
+            result = await session.mobile.tap(150, 250)
 
             # Assert
             assert result.success is True
             mock_mcp.assert_called_once_with("tap", {"x": 150, "y": 250})
 
-    def test_computer_get_installed_apps(self):
+    @pytest.mark.asyncio
+    async def test_computer_get_installed_apps(self):
         """Test that Computer module can call get_installed_apps."""
         # Arrange
         mock_agent_bay = Mock()
@@ -92,12 +95,13 @@ class TestComputerMobileIntegration:
             mock_mcp.return_value = mock_mcp_result
 
             # Act
-            result = session.computer.get_installed_apps()
+            result = await session.computer.get_installed_apps()
 
             # Assert
             assert result.success is True
 
-    def test_mobile_get_installed_apps(self):
+    @pytest.mark.asyncio
+    async def test_mobile_get_installed_apps(self):
         """Test that Mobile module can call get_installed_apps."""
         # Arrange
         mock_agent_bay = Mock()
@@ -112,7 +116,7 @@ class TestComputerMobileIntegration:
             mock_mcp.return_value = mock_mcp_result
 
             # Act - Mobile requires all three parameters
-            result = session.mobile.get_installed_apps(True, False, True)
+            result = await session.mobile.get_installed_apps(True, False, True)
 
             # Assert
             assert result.success is True

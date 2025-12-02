@@ -49,7 +49,7 @@ async def filesystem_session(agent_bay):
         print(f"Warning: Failed to delete session: {e}")
 
 
-def test_read_file(filesystem_session):
+async def test_read_file(filesystem_session):
     """Test reading a file."""
     fs = (
         filesystem_session.file_system
@@ -68,7 +68,7 @@ def test_read_file(filesystem_session):
     assert result.content == test_content
 
 
-def test_write_file(filesystem_session):
+async def test_write_file(filesystem_session):
     """Test writing to a file."""
     fs = (
         filesystem_session.file_system
@@ -87,7 +87,7 @@ def test_write_file(filesystem_session):
     assert read_result.content == test_content
 
 
-def test_create_directory(filesystem_session):
+async def test_create_directory(filesystem_session):
     """Test creating a directory."""
     fs = (
         filesystem_session.file_system
@@ -106,7 +106,7 @@ def test_create_directory(filesystem_session):
     assert "test_directory" in entry_names
 
 
-def test_edit_file(filesystem_session):
+async def test_edit_file(filesystem_session):
     """Test editing a file."""
     fs = (
         filesystem_session.file_system
@@ -138,7 +138,7 @@ def test_edit_file(filesystem_session):
     assert read_result.content == expected_content
 
 
-def test_get_file_info(filesystem_session):
+async def test_get_file_info(filesystem_session):
     """Test getting file information."""
     fs = (
         filesystem_session.file_system
@@ -161,7 +161,7 @@ def test_get_file_info(filesystem_session):
     assert size > 0, f"File size should be positive, got {size}"
 
 
-def test_list_directory(filesystem_session):
+async def test_list_directory(filesystem_session):
     """Test listing a directory."""
     fs = (
         filesystem_session.file_system
@@ -176,7 +176,7 @@ def test_list_directory(filesystem_session):
     assert "isDirectory" in entries[0]
 
 
-def test_move_file(filesystem_session):
+async def test_move_file(filesystem_session):
     """Test moving a file."""
     fs = (
         filesystem_session.file_system
@@ -204,7 +204,7 @@ def test_move_file(filesystem_session):
     assert not get_file_info_result.success
 
 
-def test_read_multiple_files(filesystem_session):
+async def test_read_multiple_files(filesystem_session):
     """Test reading multiple files."""
     fs = (
         filesystem_session.file_system
@@ -228,7 +228,7 @@ def test_read_multiple_files(filesystem_session):
     assert contents[test_file2_path] == file2_content
 
 
-def test_search_files(filesystem_session):
+async def test_search_files(filesystem_session):
     """Test searching for files using wildcard patterns."""
     fs = (
         filesystem_session.file_system
@@ -262,7 +262,7 @@ def test_search_files(filesystem_session):
     assert any(search_file3_path in match for match in matches)
 
 
-def test_write_and_read_large_file(filesystem_session):
+async def test_write_and_read_large_file(filesystem_session):
     """Test writing and reading a large file using automatic chunking."""
     fs = (
         filesystem_session.file_system
@@ -328,7 +328,7 @@ def test_write_and_read_large_file(filesystem_session):
     print("Test 5: Consistency verification successful")
 
 
-def test_write_and_read_small_file(filesystem_session):
+async def test_write_and_read_small_file(filesystem_session):
     """Test writing and reading a small file (should use direct write, not chunking)."""
     fs = (
         filesystem_session.file_system

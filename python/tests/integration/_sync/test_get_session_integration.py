@@ -10,6 +10,7 @@ import pytest
 from agentbay import AgentBay
 
 
+@pytest.mark.sync
 def test_get_session_api():
     """
     Integration test for GetSession API.

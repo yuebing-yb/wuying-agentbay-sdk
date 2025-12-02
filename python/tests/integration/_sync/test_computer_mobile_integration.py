@@ -36,6 +36,7 @@ class TestComputerMobileIntegration:
         assert isinstance(session.computer, Computer)
         assert isinstance(session.mobile, Mobile)
 
+    @pytest.mark.sync
     def test_computer_module_usage_in_session(self):
         """Test Computer module usage through Session."""
         # Arrange
@@ -59,6 +60,7 @@ class TestComputerMobileIntegration:
                 "click_mouse", {"x": 100, "y": 200, "button": "left"}
             )
 
+    @pytest.mark.sync
     def test_mobile_module_usage_in_session(self):
         """Test Mobile module usage through Session."""
         # Arrange
@@ -80,6 +82,7 @@ class TestComputerMobileIntegration:
             assert result.success is True
             mock_mcp.assert_called_once_with("tap", {"x": 150, "y": 250})
 
+    @pytest.mark.sync
     def test_computer_get_installed_apps(self):
         """Test that Computer module can call get_installed_apps."""
         # Arrange
@@ -100,6 +103,7 @@ class TestComputerMobileIntegration:
             # Assert
             assert result.success is True
 
+    @pytest.mark.sync
     def test_mobile_get_installed_apps(self):
         """Test that Mobile module can call get_installed_apps."""
         # Arrange

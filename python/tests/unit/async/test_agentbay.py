@@ -24,6 +24,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client
@@ -50,6 +51,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "another.endpoint.com",
             "timeout_ms": 60000,
+            "region_id": None,
         }
 
         # Mock client
@@ -70,6 +72,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Test initialization failure
@@ -90,6 +93,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             "region_id": "cn-hangzhou",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
         mock_extract_request_id.return_value = "create-request-id"
 
@@ -150,6 +154,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client and invalid response
@@ -207,6 +212,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             "region_id": "cn-hangzhou",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
         mock_extract_request_id.return_value = "list-request-id"
 
@@ -267,6 +273,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             "region_id": "cn-hangzhou",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
         mock_extract_request_id.return_value = "list-request-id"
 
@@ -334,6 +341,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
             "region_id": "cn-hangzhou",
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
         mock_extract_request_id.return_value = "create-request-id"
 
@@ -393,6 +401,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client and response
@@ -478,6 +487,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client and response
@@ -565,6 +575,7 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
         mock_extract_request_id.return_value = "create-request-id"
 
