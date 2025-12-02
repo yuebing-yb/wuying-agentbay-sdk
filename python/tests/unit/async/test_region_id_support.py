@@ -12,19 +12,11 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
     """Test region_id support in AgentBay client"""
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
-    @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
     async def test_agentbay_initialization_with_region_id(
-        self, mock_mcp_client, mock_load_config
+        self, mock_mcp_client
     ):
         """Test initializing AgentBay with region_id parameter"""
-        # Mock configuration - not used when Config object is provided
-        mock_load_config.return_value = {
-            "endpoint": "test.endpoint.com",
-            "timeout_ms": 30000,
-            "region_id": None,
-        }
-
         # Mock client
         mock_client = MagicMock()
         mock_mcp_client.return_value = mock_client
@@ -62,18 +54,11 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(agent_bay.region_id)
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
-    @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
     async def test_session_create_with_region_id(
-        self, mock_mcp_client, mock_load_config
+        self, mock_mcp_client
     ):
         """Test session creation passes LoginRegionId when region_id is set"""
-        # Mock configuration - not used when Config object is provided
-        mock_load_config.return_value = {
-            "endpoint": "test.endpoint.com",
-            "timeout_ms": 30000,
-            "region_id": None,
-        }
 
         # Mock client and response
         mock_client = MagicMock()
@@ -182,18 +167,11 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(getattr(call_args, "login_region_id", None))
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
-    @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
     async def test_context_create_with_region_id(
-        self, mock_mcp_client, mock_load_config
+        self, mock_mcp_client
     ):
         """Test context.get with create=True passes LoginRegionId when region_id is set"""
-        # Mock configuration
-        mock_load_config.return_value = {
-            "endpoint": "test.endpoint.com",
-            "timeout_ms": 30000,
-            "region_id": None,
-        }
 
         # Mock client and response
         mock_client = MagicMock()
@@ -221,18 +199,11 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(call_args.login_region_id, "cn-hangzhou")
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
-    @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
     async def test_context_get_without_create_no_region_id(
-        self, mock_mcp_client, mock_load_config
+        self, mock_mcp_client
     ):
         """Test context.get without create=True doesn't pass LoginRegionId even when region_id is set"""
-        # Mock configuration
-        mock_load_config.return_value = {
-            "endpoint": "test.endpoint.com",
-            "timeout_ms": 30000,
-            "region_id": None,
-        }
 
         # Mock client and response
         mock_client = MagicMock()
