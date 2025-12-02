@@ -41,7 +41,7 @@ The **Image ID** is a unique identifier for each image (both system and custom i
 **Example usage:**
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 
@@ -134,7 +134,7 @@ The `xxxx_latest` system images are automatically updated to newer versions, whi
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 

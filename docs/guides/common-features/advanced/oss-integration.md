@@ -27,7 +27,7 @@ Before performing any OSS operations, you must initialize the OSS environment wi
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-agentbay-api-key")
 
@@ -182,7 +182,7 @@ Here's a complete workflow demonstrating OSS integration:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-agentbay-api-key")
 

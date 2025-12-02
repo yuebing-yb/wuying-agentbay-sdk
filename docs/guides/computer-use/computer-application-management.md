@@ -33,7 +33,7 @@ First, create a session with a desktop environment:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:
@@ -350,7 +350,7 @@ Complete example showing how to find, launch, and control a desktop application:
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:

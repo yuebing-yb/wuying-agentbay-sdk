@@ -25,7 +25,7 @@ A Browser Context represents a persistent browser environment that stores browse
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import CreateSessionParams, BrowserContext
 
 # Initialize AgentBay client
 agent_bay = AgentBay(api_key="your_api_key")
@@ -54,8 +54,8 @@ session = session_result.session
 ```python
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams, BrowserContext
+from agentbay import BrowserOption
 from playwright.sync_api import sync_playwright
 
 # Initialize AgentBay
@@ -230,7 +230,7 @@ await browser2.close();
 You can customize how browser data is synchronized:
 
 ```python
-from agentbay.context_sync import SyncPolicy
+from agentbay import SyncPolicy
 
 # Create custom sync policy
 policy = SyncPolicy(

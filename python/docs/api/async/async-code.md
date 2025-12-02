@@ -70,10 +70,9 @@ Execute code in the specified language with a timeout.
 Execute Python code in a code execution environment
 
 ```python
-from agentbay import AgentBay
-from agentbay._common.params.session_params import CreateSessionParams
+from agentbay import AsyncAgentBay, CreateSessionParams
 
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AsyncAgentBay(api_key="your_api_key")
 result = await agent_bay.create(CreateSessionParams(image_id="code_latest"))
 code_result = await result.session.code.run_code("print('Hello')", "python")
 print(code_result.result)

@@ -217,7 +217,7 @@ export AGENTBAY_API_KEY="your_api_key_here"
 ```python
 import asyncio
 from agentbay import AsyncAgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 async def main():
     client = AsyncAgentBay()
@@ -246,7 +246,7 @@ if __name__ == "__main__":
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 def main():
     client = AgentBay()

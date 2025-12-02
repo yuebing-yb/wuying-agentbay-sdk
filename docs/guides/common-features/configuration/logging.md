@@ -68,7 +68,7 @@ python your_script.py
 ### Set Log Level in Code
 
 ```python
-from agentbay.logger import AgentBayLogger, get_logger
+from agentbay import AgentBayLogger, get_logger
 
 # Configure logging level with setup()
 AgentBayLogger.setup(level="DEBUG")
@@ -94,7 +94,7 @@ logger.info("Info message")
 The Python SDK supports file logging with automatic log rotation and retention. By default, logs are written to `python/agentbay.log`.
 
 ```python
-from agentbay.logger import AgentBayLogger
+from agentbay import AgentBayLogger
 
 # Configure file logging with rotation
 AgentBayLogger.setup(

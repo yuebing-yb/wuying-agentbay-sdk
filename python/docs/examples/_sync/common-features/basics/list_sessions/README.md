@@ -241,7 +241,7 @@ The new `list()` API offers several advantages:
 
 ### Old way (list_by_labels):
 ```python
-from agentbay.session_params import ListSessionParams
+from agentbay import ListSessionParams
 
 params = ListSessionParams(
     labels={"project": "demo"},

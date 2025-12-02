@@ -183,7 +183,7 @@ else:
     print(f"Failed to list contexts: {contexts_result.error_message}")
 
 # List contexts with pagination
-from agentbay.context import ContextListParams
+from agentbay import ContextListParams
 
 params = ContextListParams(max_results=20)
 result = agent_bay.context.list(params)
@@ -435,7 +435,7 @@ The simplest way to clear a context is using the synchronous `clear()` method, w
 
 ```python
 from agentbay import AgentBay
-from agentbay.exceptions import ClearanceTimeoutError
+from agentbay import ClearanceTimeoutError
 
 agent_bay = AgentBay()
 
@@ -524,7 +524,7 @@ The clearing operation follows this state machine:
 
 ```python
 from agentbay import AgentBay
-from agentbay.exceptions import ClearanceTimeoutError, AgentBayError
+from agentbay import ClearanceTimeoutError, AgentBayError
 
 agent_bay = AgentBay()
 
@@ -774,7 +774,7 @@ AgentBay SDK provides file compression capabilities to optimize storage space an
 
 ```python
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, UploadMode
+from agentbay import ContextSync, SyncPolicy, UploadPolicy, UploadMode
 import asyncio
 
 # Initialize AgentBay client
@@ -865,7 +865,7 @@ agent_bay.delete(session, sync_context=True)
 **Basic Usage:**
 
 ```python
-from agentbay.context_sync import RecyclePolicy, Lifecycle, SyncPolicy, ContextSync
+from agentbay import RecyclePolicy, Lifecycle, SyncPolicy, ContextSync
 
 # Example 1: Keep data for 1 day
 recycle_policy = RecyclePolicy(
@@ -926,7 +926,7 @@ recycle_policy = RecyclePolicy(
 
 ```python
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import (
+from agentbay import (
     ContextSync, SyncPolicy, RecyclePolicy, Lifecycle,
     UploadPolicy, DownloadPolicy, BWList, WhiteList
 )

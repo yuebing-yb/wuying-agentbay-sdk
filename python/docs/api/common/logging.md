@@ -53,7 +53,7 @@ to override existing configuration.
 Configure logging for different scenarios
 
 ```python
-from agentbay._common.logger import AgentBayLogger, get_logger
+from .logger import AgentBayLogger, get_logger
 
 # Basic setup with debug level
 AgentBayLogger.setup(level="DEBUG")
@@ -132,7 +132,7 @@ Set the logging level.
 Change log level during runtime
 
 ```python
-from agentbay._common.logger import AgentBayLogger, get_logger
+from .logger import AgentBayLogger, get_logger
 
 # Start with INFO level
 AgentBayLogger.setup(level="INFO")

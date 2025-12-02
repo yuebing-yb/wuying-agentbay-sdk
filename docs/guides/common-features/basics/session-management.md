@@ -128,7 +128,7 @@ You can customize sessions by specifying parameters such as [image ID](../../../
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -512,7 +512,7 @@ Create sessions with comprehensive error handling:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 def create_session_safely(image_id="linux_latest"):
     agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
@@ -539,7 +539,7 @@ Implement automatic cleanup using Python's context manager protocol:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 class SessionManager:
     def __init__(self, image_id="linux_latest"):

@@ -32,7 +32,7 @@ First, create a session with a mobile environment:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:
@@ -203,7 +203,7 @@ Complete example showing how to launch and control a mobile application:
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = os.getenv("AGENTBAY_API_KEY")
 if not api_key:

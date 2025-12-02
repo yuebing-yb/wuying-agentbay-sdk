@@ -60,7 +60,7 @@ python windows_app_management_example.py
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Create Windows session
 agent_bay = AgentBay(api_key="your_api_key")
@@ -141,7 +141,7 @@ click_result = session.ui.click(x=100, y=200)
 type_result = session.ui.type("Hello, World!")
 
 # Send key
-from agentbay.mobile import KeyCode
+from agentbay import KeyCode
 key_result = session.ui.key(KeyCode.ENTER)
 ```
 

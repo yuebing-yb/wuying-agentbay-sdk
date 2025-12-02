@@ -121,7 +121,7 @@ python main.py
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your_api_key")
 params = CreateSessionParams(image_id="linux_latest")
@@ -160,7 +160,7 @@ if result.success:
 context_result = agent_bay.context.get("my-context", create=True)
 
 # Use context with session
-from agentbay.context_sync import ContextSync, SyncPolicy
+from agentbay import ContextSync, SyncPolicy
 
 context_sync = ContextSync.new(
     context_id=context_result.context.id,

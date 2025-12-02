@@ -77,8 +77,8 @@ python mobile_get_adb_url_example.py
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.mobile import KeyCode
+from agentbay import CreateSessionParams
+from agentbay import KeyCode
 
 # Create mobile session
 agent_bay = AgentBay(api_key="your_api_key")

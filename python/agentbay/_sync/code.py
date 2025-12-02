@@ -62,8 +62,7 @@ class Code(BaseService):
         Example:
             Execute Python code in a code execution environment::
 
-                from agentbay import AgentBay
-                from .._common.params.session_params import CreateSessionParams
+                from agentbay import AgentBay, CreateSessionParams
 
                 agent_bay = AgentBay(api_key="your_api_key")
                 result = await agent_bay.create(CreateSessionParams(image_id="code_latest"))

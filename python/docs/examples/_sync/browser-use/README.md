@@ -148,8 +148,8 @@ Automated extension testing:
 ```python
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():
@@ -193,7 +193,7 @@ result = await session.browser.agent.act_async(
 ## Browser Type Selection
 
 ```python
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 
 # Use Chrome
 option = BrowserOption(browser_type="chrome")
@@ -211,7 +211,7 @@ await session.browser.initialize_async(option)
 ## Stealth Configuration
 
 ```python
-from agentbay.browser.browser import (
+from agentbay import (
     BrowserOption,
     BrowserViewport,
     BrowserFingerprint
@@ -232,7 +232,7 @@ option = BrowserOption(
 ## Cookie Persistence
 
 ```python
-from agentbay.session_params import BrowserContext
+from agentbay import BrowserContext
 
 # Create browser context
 context_result = agent_bay.context.get("my-browser-context", create=True)
