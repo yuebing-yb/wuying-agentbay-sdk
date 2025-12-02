@@ -18,7 +18,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AgentBay, CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import BrowserOption, ActOptions
 
 
 def main():
@@ -51,7 +51,7 @@ def main():
         # Test desktop viewport
         print("\n2. Testing desktop viewport (1920x1080)...")
         session.browser.agent.act(
-            "Set the browser viewport size to 1920x1080 pixels"
+            ActOptions(action="Set the browser viewport size to 1920x1080 pixels")
         )
         desktop_screenshot = session.browser.agent.screenshot()
         print(f"Desktop screenshot saved: {desktop_screenshot}")
@@ -65,7 +65,7 @@ def main():
         # Test tablet viewport
         print("\n3. Testing tablet viewport (768x1024)...")
         session.browser.agent.act(
-            "Set the browser viewport size to 768x1024 pixels"
+            ActOptions(action="Set the browser viewport size to 768x1024 pixels")
         )
         tablet_screenshot = session.browser.agent.screenshot()
         print(f"Tablet screenshot saved: {tablet_screenshot}")
@@ -79,7 +79,7 @@ def main():
         # Test mobile viewport
         print("\n4. Testing mobile viewport (375x667)...")
         session.browser.agent.act(
-            "Set the browser viewport size to 375x667 pixels"
+            ActOptions(action="Set the browser viewport size to 375x667 pixels")
         )
         mobile_screenshot = session.browser.agent.screenshot()
         print(f"Mobile screenshot saved: {mobile_screenshot}")
@@ -97,7 +97,7 @@ def main():
         # Mobile view
         print("\n6. Checking mobile view...")
         session.browser.agent.act(
-            "Set the browser viewport size to 375x667 pixels"
+            ActOptions(action="Set the browser viewport size to 375x667 pixels")
         )
         mobile_news_screenshot = session.browser.agent.screenshot()
         print(f"Mobile news screenshot saved: {mobile_news_screenshot}")
@@ -110,7 +110,7 @@ def main():
         # Desktop view
         print("\n7. Checking desktop view...")
         session.browser.agent.act(
-            "Set the browser viewport size to 1920x1080 pixels"
+            ActOptions(action="Set the browser viewport size to 1920x1080 pixels")
         )
         desktop_news_screenshot = session.browser.agent.screenshot()
         print(f"Desktop news screenshot saved: {desktop_news_screenshot}")
@@ -123,7 +123,7 @@ def main():
         # Test orientation change
         print("\n8. Testing landscape orientation...")
         session.browser.agent.act(
-            "Set the browser viewport size to 667x375 pixels (landscape)"
+            ActOptions(action="Set the browser viewport size to 667x375 pixels (landscape)")
         )
         landscape_screenshot = session.browser.agent.screenshot()
         print(f"Landscape screenshot saved: {landscape_screenshot}")
@@ -138,7 +138,7 @@ def main():
         # Clean up
         if session:
             print("\nCleaning up session...")
-            client.delete(session)
+            client.delete(session_result)
             print("Session closed")
 
 

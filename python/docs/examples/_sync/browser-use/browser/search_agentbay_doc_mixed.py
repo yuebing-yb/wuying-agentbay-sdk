@@ -20,7 +20,8 @@ from playwright.sync_api import sync_playwright
 def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     agent_bay = AgentBay(api_key=api_key)
-    session = agent_bay.create(CreateSessionParams(image_id="browser_latest"))
+    session_result = agent_bay.create(CreateSessionParams(image_id="browser_latest"))
+    session = session_result.session
     try:
         assert session.browser.initialize(BrowserOption())
         agent = session.browser.agent
@@ -62,7 +63,7 @@ def main():
 
             playwright_browser.close()
     finally:
-        agent_bay.delete(session)
+        agent_bay.delete(session_result)
 
 
 if __name__ == "__main__":

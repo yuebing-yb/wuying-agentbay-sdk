@@ -244,7 +244,7 @@ def main():
 
     finally:
         try:
-            session.delete()
+            agent_bay.delete(session_result)
         except Exception:
             pass
 

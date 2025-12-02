@@ -19,7 +19,8 @@ from playwright.async_api import async_playwright
 async def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     agent_bay = AsyncAgentBay(api_key=api_key)
-    session = await agent_bay.create(CreateSessionParams(image_id="browser_latest"))
+    session_result = await agent_bay.create(CreateSessionParams(image_id="browser_latest"))
+    session = session_result.session
     try:
         assert await session.browser.initialize(BrowserOption())
         agent = session.browser.agent
@@ -61,7 +62,7 @@ async def main():
 
             await playwright_browser.close()
     finally:
-        await agent_bay.delete(session)
+        await agent_bay.delete(session_result)
 
 
 if __name__ == "__main__":

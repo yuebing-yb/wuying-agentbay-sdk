@@ -47,7 +47,7 @@ def main():
         # Create a test file to upload
         print("\n1. Creating test file...")
         test_content = "This is a test file for upload demonstration."
-        session.filesystem.write_file("/tmp/test_upload.txt", test_content)
+        session.file_system.write_file("/tmp/test_upload.txt", test_content)
         print("Test file created: /tmp/test_upload.txt")
 
         # Navigate to file upload test page
@@ -104,7 +104,7 @@ def main():
         # Clean up
         if session:
             print("\nCleaning up session...")
-            client.delete(session)
+            client.delete(session_result)
             print("Session closed")
 
 

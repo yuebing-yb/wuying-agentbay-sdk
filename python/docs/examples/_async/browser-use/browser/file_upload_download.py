@@ -45,7 +45,7 @@ async def main():
         # Create a test file to upload
         print("\n1. Creating test file...")
         test_content = "This is a test file for upload demonstration."
-        await session.filesystem.write_file("/tmp/test_upload.txt", test_content)
+        await session.file_system.write_file("/tmp/test_upload.txt", test_content)
         print("Test file created: /tmp/test_upload.txt")
 
         # Navigate to file upload test page
@@ -102,7 +102,7 @@ async def main():
         # Clean up
         if session:
             print("\nCleaning up session...")
-            await client.delete(session)
+            await client.delete(session_result)
             print("Session closed")
 
 
