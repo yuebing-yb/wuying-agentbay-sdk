@@ -278,11 +278,11 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertEqual(len(result.entries), 3)
         self.assertEqual(result.entries[0].name, "file1.txt")
-        self.assertEqual(result.entries[0]["isDirectory"], False)
-        self.assertEqual(result.entries[1]["name"], "dir1")
-        self.assertEqual(result.entries[1]["isDirectory"], True)
-        self.assertEqual(result.entries[2]["name"], "file2.txt")
-        self.assertEqual(result.entries[2]["isDirectory"], False)
+        self.assertEqual(result.entries[0].is_directory, False)
+        self.assertEqual(result.entries[1].name, "dir1")
+        self.assertEqual(result.entries[1].is_directory, True)
+        self.assertEqual(result.entries[2].name, "file2.txt")
+        self.assertEqual(result.entries[2].is_directory, False)
 
     def test_list_directory_error(self):
         """
