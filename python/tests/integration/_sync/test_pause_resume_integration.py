@@ -60,6 +60,13 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("\nCleaning up test sessions for this test...")
         for session in self.test_sessions:
             try:
+                # Try to resume session first in case it's paused
+                try:
+                    session.resume()
+                    print(f"  ✓ Resumed session: {session.session_id}")
+                except Exception as resume_error:
+                    print(f"  ⚠ Could not resume session {session.session_id}: {resume_error}")
+                
                 # Delete session
                 result = self.agent_bay.delete(session)
                 if result.success:
@@ -543,6 +550,13 @@ class TestSessionPauseResumeEdgeCases(unittest.TestCase):
         print("\nCleaning up test sessions for this test...")
         for session in self.test_sessions:
             try:
+                # Try to resume session first in case it's paused
+                try:
+                    session.resume()
+                    print(f"  ✓ Resumed session: {session.session_id}")
+                except Exception as resume_error:
+                    print(f"  ⚠ Could not resume session {session.session_id}: {resume_error}")
+                
                 # Delete session
                 result = self.agent_bay.delete(session)
                 if result.success:

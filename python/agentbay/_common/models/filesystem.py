@@ -186,6 +186,53 @@ class FileInfoResult(ApiResponse):
         self.success = success
         self.file_info = file_info or {}
         self.error_message = error_message
+    
+    @property
+    def is_file(self) -> bool:
+        """Check if the path is a file."""
+        return self.file_info.get("is_file", False)
+    
+    @property
+    def is_directory(self) -> bool:
+        """Check if the path is a directory."""
+        return self.file_info.get("is_directory", False)
+    
+    @property
+    def size(self) -> int:
+        """Get file size in bytes."""
+        return self.file_info.get("size", 0)
+    
+    @property
+    def permissions(self) -> str:
+        """Get file permissions."""
+        return self.file_info.get("permissions", "")
+
+
+class DirectoryEntry:
+    """Wrapper for directory entry with attribute access."""
+    
+    def __init__(self, entry_dict: Dict[str, Any]):
+        self._data = entry_dict
+    
+    @property
+    def name(self) -> str:
+        """Get entry name."""
+        return self._data.get("name", "")
+    
+    @property
+    def is_file(self) -> bool:
+        """Check if entry is a file."""
+        return self._data.get("is_file", False)
+    
+    @property
+    def is_directory(self) -> bool:
+        """Check if entry is a directory."""
+        return self._data.get("is_directory", False)
+    
+    @property
+    def size(self) -> int:
+        """Get entry size."""
+        return self._data.get("size", 0)
 
 
 class DirectoryListResult(ApiResponse):
@@ -213,8 +260,13 @@ class DirectoryListResult(ApiResponse):
         """
         super().__init__(request_id)
         self.success = success
-        self.entries = entries or []
+        self._entries = entries or []
         self.error_message = error_message
+    
+    @property
+    def entries(self) -> List[DirectoryEntry]:
+        """Get directory entries with attribute access."""
+        return [DirectoryEntry(entry) for entry in self._entries]
 
 
 class FileContentResult(ApiResponse):
