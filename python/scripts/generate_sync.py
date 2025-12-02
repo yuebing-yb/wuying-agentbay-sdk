@@ -52,6 +52,7 @@ def generate_sync():
         "AsyncOss": "Oss",
         "AsyncAgent": "Agent",
         "AsyncBrowserAgent": "BrowserAgent",
+        "AsyncBrowserFingerprintGenerator": "BrowserFingerprintGenerator",
         "AsyncBaseService": "BaseService",
         "AsyncExtensionsService": "ExtensionsService",
 

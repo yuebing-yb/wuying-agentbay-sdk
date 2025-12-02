@@ -32,7 +32,7 @@ class TestRunner:
         # assert isinstance(browser, Browser), "浏览器实例类型错误"
         assert browser.initialize(BrowserOption()), "浏览器初始化失败"
 
-        endpoint_url = browser.get_endpoint_url()
+        endpoint_url = await browser.get_endpoint_url()
         assert endpoint_url is not None, "无法获取浏览器端点URL"
 
         async with async_playwright() as p:

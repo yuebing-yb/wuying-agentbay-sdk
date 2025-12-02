@@ -75,7 +75,7 @@ async def main():
         print(f"Session created with ID: {session.session_id}")
         if await session.browser.initialize(BrowserOption()):
             print("Browser initialized successfully")
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
             result = session.info()
             info = result.data

@@ -15,7 +15,7 @@ import asyncio
 
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
-from agentbay import BrowserOption, BrowserFingerprint
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 
@@ -55,7 +55,7 @@ async def main():
             print("Browser initialized successfully")
             
             # Get browser endpoint URL
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print(f"endpoint_url = {endpoint_url}")
 
             # Use Playwright to connect and validate

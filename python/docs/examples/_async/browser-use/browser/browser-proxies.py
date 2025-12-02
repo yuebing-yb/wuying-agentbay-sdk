@@ -86,7 +86,7 @@ async def main():
         # Initialize browser instance
         if await session.browser.initialize(browser_option):
             # Get browser CDP connection endpoint
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print(f"Browser CDP endpoint: {endpoint_url}")
 
             # Use Playwright to connect to remote browser instance

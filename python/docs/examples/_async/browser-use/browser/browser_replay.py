@@ -60,7 +60,7 @@ async def main():
             print("❌ Failed to initialize browser")
             return
 
-        endpoint_url = browser.get_endpoint_url()
+        endpoint_url = await browser.get_endpoint_url()
         print(f"🔗 Browser endpoint: {endpoint_url}")
 
         # Wait for browser to be ready

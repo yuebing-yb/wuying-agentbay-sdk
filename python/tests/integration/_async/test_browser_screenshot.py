@@ -51,12 +51,12 @@ async def test_screenshot_with_valid_page(browser_session):
     browser = browser_session.browser
     await browser.initialize(BrowserOption())
 
-    endpoint_url = await browser.get_endpoint_url_async()
+    endpoint_url = await browser.get_endpoint_url()
 
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
         page = await playwright_browser.new_page()
-        await page.goto("https://www.aliyun.com", timeout=30000)
+        await page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Take screenshot with default full_page=False
@@ -87,12 +87,12 @@ async def test_screenshot_with_full_page(browser_session):
     browser = browser_session.browser
     await browser.initialize(BrowserOption())
 
-    endpoint_url = await browser.get_endpoint_url_async()
+    endpoint_url = await browser.get_endpoint_url()
 
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
         page = await playwright_browser.new_page()
-        await page.goto("https://www.aliyun.com", timeout=30000)
+        await page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Take screenshot with full_page=True
@@ -123,12 +123,12 @@ async def test_screenshot_with_custom_options(browser_session):
     browser = browser_session.browser
     await browser.initialize(BrowserOption())
 
-    endpoint_url = await browser.get_endpoint_url_async()
+    endpoint_url = await browser.get_endpoint_url()
 
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
         page = await playwright_browser.new_page()
-        await page.goto("https://www.aliyun.com", timeout=30000)
+        await page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Take screenshot with custom options
@@ -164,12 +164,12 @@ async def test_screenshot_function_parameter_priority(browser_session):
     browser = browser_session.browser
     await browser.initialize(BrowserOption())
 
-    endpoint_url = await browser.get_endpoint_url_async()
+    endpoint_url = await browser.get_endpoint_url()
 
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
         page = await playwright_browser.new_page()
-        await page.goto("https://www.aliyun.com", timeout=30000)
+        await page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Take screenshot with function parameter full_page=False
@@ -240,9 +240,9 @@ async def test_screenshot_with_multiple_pages(browser_session):
     browser = browser_session.browser
     await browser.initialize(BrowserOption())
 
-    endpoint_url = await browser.get_endpoint_url_async()
+    endpoint_url = await browser.get_endpoint_url()
 
-    urls = ["https://www.aliyun.com", "https://www.taobao.com"]
+    urls = ["https://www.baidu.com", "https://www.taobao.com"]
 
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
@@ -297,12 +297,12 @@ async def test_screenshot_performance(browser_session):
     browser = browser_session.browser
     await browser.initialize(BrowserOption())
 
-    endpoint_url = await browser.get_endpoint_url_async()
+    endpoint_url = await browser.get_endpoint_url()
 
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
         page = await playwright_browser.new_page()
-        await page.goto("https://www.aliyun.com", timeout=30000)
+        await page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Measure screenshot time

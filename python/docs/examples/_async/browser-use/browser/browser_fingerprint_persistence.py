@@ -111,7 +111,7 @@ async def run_as_first_time():
         print("First session browser initialized successfully")
 
         # Get endpoint URL
-        endpoint_url = session.browser.get_endpoint_url()
+        endpoint_url = await session.browser.get_endpoint_url()
         if not endpoint_url:
             print("Failed to get browser endpoint URL")
             return
@@ -137,7 +137,7 @@ async def run_as_first_time():
             print("First session browser fingerprint check completed")
 
     # Run first session operations
-    asyncio.run(first_session_operations())
+    await first_session_operations()
 
     # Delete first session with syncContext=True
     print("Deleting first session with syncContext=True...")
@@ -190,7 +190,7 @@ async def run_as_second_time():
         print("Second session browser initialized successfully")
 
         # Get endpoint URL
-        endpoint_url = session.browser.get_endpoint_url()
+        endpoint_url = await session.browser.get_endpoint_url()
         if not endpoint_url:
             print("Failed to get browser endpoint URL in second session")
             return
@@ -215,7 +215,7 @@ async def run_as_second_time():
             print("Second session browser fingerprint check completed")
 
     # Run second session operations
-    asyncio.run(second_session_operations())
+    await second_session_operations()
 
     # Delete second session with syncContext=True
     print("Deleting second session with syncContext=True...")

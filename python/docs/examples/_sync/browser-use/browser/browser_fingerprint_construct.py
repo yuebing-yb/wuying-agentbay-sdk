@@ -2,30 +2,28 @@
 # This file is auto-generated from the _async directory.
 
 """
-Example demonstrating Browser Fingerprint local sync feature with AgentBay SDK.
+Example demonstrating Browser Fingerprint construction with AgentBay SDK.
 
-This example shows how to sync local browser fingerprint to remote browser fingerprint.
-BrowserFingerprintGenerator has ability to dump local installed chrome browser fingerprint,
-and then you can sync it to remote browser fingerprint by using BrowserOption.fingerprint_format.
+This example shows how to construct browser fingerprint by yourself.
 
 This example will:
-1. Generate local chrome browser fingerprint by BrowserFingerprintGenerator
-2. Sync local browser fingerprint to remote browser fingerprint
-3. Verify remote browser fingerprint
-4. Clean up session
+1. Construct browser fingerprint by yourself
+2. Create AIBrowser session with constructed browser fingerprint
+3. Use playwright to connect to AIBrowser instance through CDP protocol
+4. Verify browser fingerprint
 """
 
 import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import BrowserFingerprintGenerator, FingerprintFormat
+from agentbay import FingerprintFormat
 
 from playwright.sync_api import sync_playwright
 
 def generate_fingerprint_by_file() -> FingerprintFormat:
     """Generate fingerprint by file."""
-    with open(os.path.join(os.path.dirname(__file__), "../../../../../resource/fingerprint.example.json"), "r") as f:
+    with open(os.path.join(os.path.dirname(__file__), "../../../../../../resource/fingerprint.example.json"), "r") as f:
         fingerprint_format = FingerprintFormat.load(f.read())
     return fingerprint_format
 

@@ -17,7 +17,7 @@ and go to default navigation URL:
 import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
-from agentbay import BrowserOption, BrowserFingerprint
+from agentbay import BrowserOption
 from playwright.sync_api import sync_playwright
 
 

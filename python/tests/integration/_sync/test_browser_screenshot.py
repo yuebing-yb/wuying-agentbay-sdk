@@ -58,7 +58,7 @@ def test_screenshot_with_valid_page(browser_session):
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
         page = playwright_browser.new_page()
-        page.goto("https://www.aliyun.com", timeout=30000)
+        page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Take screenshot with default full_page=False
@@ -94,7 +94,7 @@ def test_screenshot_with_full_page(browser_session):
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
         page = playwright_browser.new_page()
-        page.goto("https://www.aliyun.com", timeout=30000)
+        page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Take screenshot with full_page=True
@@ -130,7 +130,7 @@ def test_screenshot_with_custom_options(browser_session):
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
         page = playwright_browser.new_page()
-        page.goto("https://www.aliyun.com", timeout=30000)
+        page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Take screenshot with custom options
@@ -171,7 +171,7 @@ def test_screenshot_function_parameter_priority(browser_session):
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
         page = playwright_browser.new_page()
-        page.goto("https://www.aliyun.com", timeout=30000)
+        page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Take screenshot with function parameter full_page=False
@@ -244,7 +244,7 @@ def test_screenshot_with_multiple_pages(browser_session):
 
     endpoint_url = browser.get_endpoint_url()
 
-    urls = ["https://www.aliyun.com", "https://www.taobao.com"]
+    urls = ["https://www.baidu.com", "https://www.taobao.com"]
 
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
@@ -304,7 +304,7 @@ def test_screenshot_performance(browser_session):
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
         page = playwright_browser.new_page()
-        page.goto("https://www.aliyun.com", timeout=30000)
+        page.goto("https://www.baidu.com", timeout=30000)
 
         try:
             # Measure screenshot time

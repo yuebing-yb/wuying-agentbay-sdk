@@ -18,7 +18,7 @@ import asyncio
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import BrowserFingerprintGenerator
+from agentbay import AsyncBrowserFingerprintGenerator
 
 from playwright.async_api import async_playwright
 
@@ -46,7 +46,7 @@ async def main():
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
 
-        fingerprint_generator = BrowserFingerprintGenerator()
+        fingerprint_generator = AsyncBrowserFingerprintGenerator()
         fingerprint_format = await fingerprint_generator.generate_fingerprint()
 
         # Create browser option with fingerprint format.
@@ -58,7 +58,7 @@ async def main():
         )
 
         if await session.browser.initialize(browser_option):
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
 
             async with async_playwright() as p:

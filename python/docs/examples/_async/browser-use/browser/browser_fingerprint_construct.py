@@ -1,15 +1,13 @@
 """
-Example demonstrating Browser Fingerprint local sync feature with AgentBay SDK.
+Example demonstrating Browser Fingerprint construction with AgentBay SDK.
 
-This example shows how to sync local browser fingerprint to remote browser fingerprint.
-BrowserFingerprintGenerator has ability to dump local installed chrome browser fingerprint,
-and then you can sync it to remote browser fingerprint by using BrowserOption.fingerprint_format.
+This example shows how to construct browser fingerprint by yourself.
 
 This example will:
-1. Generate local chrome browser fingerprint by BrowserFingerprintGenerator
-2. Sync local browser fingerprint to remote browser fingerprint
-3. Verify remote browser fingerprint
-4. Clean up session
+1. Construct browser fingerprint by yourself
+2. Create AIBrowser session with constructed browser fingerprint
+3. Use playwright to connect to AIBrowser instance through CDP protocol
+4. Verify browser fingerprint
 """
 
 import os
@@ -18,13 +16,13 @@ import asyncio
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import BrowserFingerprintGenerator, FingerprintFormat
+from agentbay import FingerprintFormat
 
 from playwright.async_api import async_playwright
 
 async def generate_fingerprint_by_file() -> FingerprintFormat:
     """Generate fingerprint by file."""
-    with open(os.path.join(os.path.dirname(__file__), "../../../../../resource/fingerprint.example.json"), "r") as f:
+    with open(os.path.join(os.path.dirname(__file__), "../../../../../../resource/fingerprint.example.json"), "r") as f:
         fingerprint_format = FingerprintFormat.load(f.read())
     return fingerprint_format
 
@@ -63,7 +61,7 @@ async def main():
         )
 
         if await session.browser.initialize(browser_option):
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
 
             async with async_playwright() as p:

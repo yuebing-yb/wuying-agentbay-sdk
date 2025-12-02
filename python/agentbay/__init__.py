@@ -58,7 +58,7 @@ from ._common.models.response import (
     GetSessionData,
     extract_request_id,
 )
-from ._sync.fingerprint import BrowserFingerprintGenerator, FingerprintFormat
+from ._sync.fingerprint import BrowserFingerprintGenerator
 from .api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Sync API (Default)
@@ -67,12 +67,15 @@ from ._sync.session import Session
 from ._sync.browser import (
     Browser,
     BrowserAgent,
+)
+from ._common.models import (
+    FingerprintFormat,
+    BrowserOption,
+    BrowserViewport,
+    BrowserScreen,
+    BrowserProxy,
     BrowserFingerprint,
     BrowserFingerprintContext,
-    BrowserOption,
-    BrowserProxy,
-    BrowserScreen,
-    BrowserViewport,
 )
 from ._sync.browser_agent import (
     ActOptions,
@@ -130,6 +133,7 @@ from ._async.agentbay import AsyncAgentBay
 from ._async.session import AsyncSession
 from ._async.browser import AsyncBrowser
 from ._async.browser_agent import AsyncBrowserAgent
+from ._async.fingerprint import AsyncBrowserFingerprintGenerator
 from ._async.computer import AsyncComputer
 from ._async.mobile import AsyncMobile
 from ._async.agent import AsyncAgent

@@ -70,7 +70,7 @@ async def main():
         )
         if await session.browser.initialize(browser_option):
             print("Browser initialized successfully")
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
 
             async with async_playwright() as p:

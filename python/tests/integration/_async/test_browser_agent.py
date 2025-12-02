@@ -370,7 +370,7 @@ async def test_restricted_proxy_ip_comparison(browser_session):
         assert saved_option.proxies[0].strategy == "restricted"
         print("✓ proxy config validation success")
 
-        endpoint_url2 = await browser2.get_endpoint_url_async()
+        endpoint_url2 = await browser2.get_endpoint_url()
         print(f"proxy mode endpoint_url = {endpoint_url2}")
 
         await asyncio.sleep(5)
