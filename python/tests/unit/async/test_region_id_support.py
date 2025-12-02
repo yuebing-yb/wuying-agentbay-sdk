@@ -1,9 +1,11 @@
+import os
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay.api.models import CreateMcpSessionRequest, GetContextRequest
 from agentbay._common.config import Config
+from agentbay._async.context import Context, ContextResult, AsyncContextService
 
 
 class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
@@ -16,10 +18,11 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         self, mock_mcp_client, mock_load_config
     ):
         """Test initializing AgentBay with region_id parameter"""
-        # Mock configuration
+        # Mock configuration - not used when Config object is provided
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client
@@ -45,6 +48,7 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client
@@ -64,10 +68,11 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         self, mock_mcp_client, mock_load_config
     ):
         """Test session creation passes LoginRegionId when region_id is set"""
-        # Mock configuration
+        # Mock configuration - not used when Config object is provided
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client and response
@@ -127,6 +132,7 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client and response
@@ -186,6 +192,7 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client and response
@@ -224,6 +231,7 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         mock_load_config.return_value = {
             "endpoint": "test.endpoint.com",
             "timeout_ms": 30000,
+            "region_id": None,
         }
 
         # Mock client and response
