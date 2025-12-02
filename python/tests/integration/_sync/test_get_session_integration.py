@@ -129,4 +129,5 @@ def test_get_session_api():
 
 
 if __name__ == "__main__":
+    import asyncio
     test_get_session_api()
