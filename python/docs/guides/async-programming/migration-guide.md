@@ -12,7 +12,22 @@ In v0.12.x and earlier, the SDK used async APIs extensively. Starting from v0.13
 
 ## Quick Migration Steps
 
-### 1. Choose Your API
+### 1. Import Changes
+
+**Key Change**: The import structure has been completely refactored from a single API to a dual sync/async API system.
+
+```python
+# Before (v0.12.x) - Single API, flat module structure
+from agentbay import AgentBay, Config, Session, Command
+# Only one AgentBay class, was async-based
+
+# After (v0.13.0+) - Dual API, unified imports
+from agentbay import AgentBay, AsyncAgentBay  # Two separate APIs
+from agentbay import Session, AsyncSession    # Separate sync/async classes
+from agentbay import Browser, AsyncBrowser    # All modules have both versions
+```
+
+### 2. Choose Your API
 
 **For scripts/CLI**: Use sync API
 ```python
@@ -58,6 +73,36 @@ await session.browser.agent.navigate(url)
 await session.command.execute_command("ls")
 ```
 
+## Module Import Mapping
+
+### Core Modules
+```python
+# v0.12.x (flat structure)
+from agentbay import AgentBay, Session, Command, Computer, Mobile
+
+# v0.13.0+ (unified imports with sync/async variants)
+from agentbay import (
+    AgentBay, AsyncAgentBay,           # Main client classes
+    Session, AsyncSession,             # Session management
+    Command, AsyncCommand,             # Command execution
+    Computer, AsyncComputer,           # Computer automation
+    Mobile, AsyncMobile,               # Mobile automation
+    Browser, AsyncBrowser,             # Browser automation
+    FileSystem, AsyncFileSystem,       # File operations
+    Agent, AsyncAgent,                 # AI agent functionality
+)
+```
+
+### Shared Components (No Change)
+```python
+# These imports remain the same
+from agentbay import (
+    Config, AgentBayError, APIError,
+    CreateSessionParams, ListSessionParams,
+    ContextSync, SyncPolicy, UploadPolicy
+)
+```
+
 ## Complete Method Mapping
 
 ### Core Session Methods
@@ -79,8 +124,6 @@ observe_async() → observe()
 extract_async() → extract()
 close_async() → close()
 ```
-
-
 
 ### File System Methods
 ```python
