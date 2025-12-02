@@ -77,9 +77,9 @@ class TestMobileSystemIntegration:
         Test starting and stopping an application.
         """
         try:
-            # Start an application
+            # Start an application (using Android Settings which should be available)
             start_cmd = (
-                "monkey -p com.autonavi.minimap -c android.intent.category.LAUNCHER 1"
+                "monkey -p com.android.settings -c android.intent.category.LAUNCHER 1"
             )
             start_result = mobile_session.application.start_app(start_cmd)
             assert isinstance(start_result, ProcessListResult)
@@ -89,7 +89,7 @@ class TestMobileSystemIntegration:
             print("\nStart App Result:", processes)
 
             # Stop the application
-            stop_cmd = "am force-stop com.autonavi.minimap"
+            stop_cmd = "am force-stop com.android.settings"
             stop_result = mobile_session.application.stop_app_by_cmd(stop_cmd)
             assert stop_result.success, f"Failed to stop app: {stop_result.error_message}"
             print("\nApplication stopped successfully.")
@@ -114,18 +114,18 @@ class TestMobileSystemIntegration:
             pytest.fail(f"get_clickable_ui_elements failed with error: {e}")
 
     @pytest.mark.sync
-    def test_click(self, mobile_session):
+    def test_tap(self, mobile_session):
         """
-        Test clicking on a specific coordinate.
+        Test tapping on a specific coordinate.
         """
         try:
             x, y = 100, 200
-            result = mobile_session.ui.click(x, y, button="left")
+            result = mobile_session.ui.tap(x, y)
             assert isinstance(result, BoolResult)
-            assert result.success, f"Failed to click: {result.error_message}"
-            print(f"\nClicked on coordinates ({x}, {y}) successfully.")
+            assert result.success, f"Failed to tap: {result.error_message}"
+            print(f"\nTapped on coordinates ({x}, {y}) successfully.")
         except AgentBayError as e:
-            pytest.fail(f"click failed with error: {e}")
+            pytest.fail(f"tap failed with error: {e}")
 
     @pytest.mark.sync
     def test_send_key(self, mobile_session):
