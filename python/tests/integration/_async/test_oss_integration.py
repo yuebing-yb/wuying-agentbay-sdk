@@ -6,13 +6,18 @@ from agentbay import CreateSessionParams
 
 
 def get_oss_credentials():
-    """Helper function to get OSS credentials from environment variables or use defaults."""
+    """Helper function to get OSS credentials from environment variables."""
+    # Check if real OSS credentials are available
+    access_key_id = os.getenv("OSS_ACCESS_KEY_ID")
+    access_key_secret = os.getenv("OSS_ACCESS_KEY_SECRET")
+    
+    if not access_key_id or not access_key_secret:
+        return None
+    
     credentials = {
-        "access_key_id": os.getenv("OSS_ACCESS_KEY_ID", "test-access-key-id"),
-        "access_key_secret": os.getenv(
-            "OSS_ACCESS_KEY_SECRET", "test-access-key-secret"
-        ),
-        "security_token": os.getenv("OSS_SECURITY_TOKEN", "test-security-token"),
+        "access_key_id": access_key_id,
+        "access_key_secret": access_key_secret,
+        "security_token": os.getenv("OSS_SECURITY_TOKEN", ""),
         "endpoint": os.getenv("OSS_ENDPOINT", "https://oss-cn-hangzhou.aliyuncs.com"),
         "region": os.getenv("OSS_REGION", "cn-hangzhou"),
     }
@@ -54,8 +59,11 @@ class TestOssIntegration(unittest.TestCase):
         if not self.session.oss:
             self.skipTest("OSS interface is not available")
 
-        print("Initializing OSS environment...")
         credentials = get_oss_credentials()
+        if not credentials:
+            self.skipTest("OSS credentials not available - set OSS_ACCESS_KEY_ID and OSS_ACCESS_KEY_SECRET environment variables")
+
+        print("Initializing OSS environment...")
         result = self.session.oss.env_init(
             credentials["access_key_id"],
             credentials["access_key_secret"],
@@ -73,8 +81,11 @@ class TestOssIntegration(unittest.TestCase):
         if not self.session.oss or not self.session.file_system:
             self.skipTest("OSS or FileSystem interface is not available")
 
-        # Initialize OSS environment first
         credentials = get_oss_credentials()
+        if not credentials:
+            self.skipTest("OSS credentials not available - set OSS_ACCESS_KEY_ID and OSS_ACCESS_KEY_SECRET environment variables")
+
+        # Initialize OSS environment first
         init_result = self.session.oss.env_init(
             credentials["access_key_id"],
             credentials["access_key_secret"],
@@ -125,8 +136,11 @@ class TestOssIntegration(unittest.TestCase):
         if not self.session.oss or not self.session.file_system:
             self.skipTest("OSS or FileSystem interface is not available")
 
-        # Initialize OSS environment first
         credentials = get_oss_credentials()
+        if not credentials:
+            self.skipTest("OSS credentials not available - set OSS_ACCESS_KEY_ID and OSS_ACCESS_KEY_SECRET environment variables")
+
+        # Initialize OSS environment first
         init_result = self.session.oss.env_init(
             credentials["access_key_id"],
             credentials["access_key_secret"],

@@ -649,9 +649,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
             # Phase 2: Browser Initialization with Extensions
             print("\nPhase 2: Browser Initialization with Extensions")
-            browser_initialized = 
-                self._initialize_browser_with_extensions(session)
-            
+            browser_initialized = self._initialize_browser_with_extensions(session)
             self.assertTrue(
                 browser_initialized, "Browser initialization with extensions failed"
             )
@@ -666,9 +664,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
             # Phase 3: Real Extension ID Extraction via CDP
             print("\nPhase 3: Real Extension ID Extraction (CDP-based)")
-            real_extension_ids = 
-                self._extract_and_validate_real_extension_ids(session)
-            
+            real_extension_ids = self._extract_and_validate_real_extension_ids(session)
             self.assertGreater(
                 len(real_extension_ids),
                 0,
@@ -683,11 +679,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
             # Phase 4: Comprehensive Extension Verification using Real IDs
             print("\nPhase 4: Extension Verification with Real IDs")
-            verification_results = 
-                self._comprehensive_browser_extension_verification_with_real_ids(
-                    session, extension_ids, real_extension_ids
-                )
-            
+            verification_results = self._comprehensive_browser_extension_verification_with_real_ids(session, extension_ids, real_extension_ids)
 
             # Validate verification results
             self.assertTrue(

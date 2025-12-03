@@ -80,8 +80,10 @@ def test_initialize_browser(browser_session):
     browser = browser_session.browser
     assert browser is not None
 
-    # Use default options
-    init_result = browser.initialize(BrowserOption())
+    # Use default options with optimized settings for faster testing
+    option = BrowserOption()
+    option.headless = True  # Run in headless mode for faster execution
+    init_result = browser.initialize(option)
     assert init_result is True
 
     endpoint_url = browser.get_endpoint_url()
