@@ -18,7 +18,7 @@ from .context_sync import (
 _logger = get_logger("session_params")
 
 if TYPE_CHECKING:
-    from .._common.params.extension import ExtensionOption
+    from .extension import ExtensionOption
     from .browser import BrowserFingerprintContext
 
 
