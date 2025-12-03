@@ -4,7 +4,7 @@ import sys
 # Set environment variables for IDE testing
 os.environ["FORCE_COLOR"] = "1"
 os.environ["TERM"] = "xterm-256color"
-os.environ.setdefault("AGENTBAY_LOG_LEVEL", "INFO")
+os.environ.setdefault("AGENTBAY_LOG_LEVEL", "WARNING")
 os.environ["PYTHONUNBUFFERED"] = "1"
 
 
@@ -31,7 +31,7 @@ def pytest_configure(config):
         "<yellow>{process.id}:{thread.id}</yellow> | "
         "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
         "<level>{message}</level>",
-        level=os.getenv("AGENTBAY_LOG_LEVEL", "INFO"),
+        level=os.getenv("AGENTBAY_LOG_LEVEL", "WARNING"),
         filter=_colorize_log_message,
         colorize=True,
         backtrace=True,
@@ -49,7 +49,7 @@ def pytest_configure(config):
     logger.add(
         log_file,
         format="{time:YYYY-MM-DD HH:mm:ss.SSS} | AgentBay | {level: <8} | {process.id}:{thread.id} | {name}:{function}:{line} | {message}",
-        level=os.getenv("AGENTBAY_LOG_LEVEL", "INFO"),
+        level=os.getenv("AGENTBAY_LOG_LEVEL", "WARNING"),
         colorize=False,
         backtrace=True,
         diagnose=True,

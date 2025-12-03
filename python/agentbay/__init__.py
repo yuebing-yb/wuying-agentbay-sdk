@@ -92,7 +92,8 @@ from ._sync.computer import (
     ProcessListResult,
     AppOperationResult,
 )
-from ._sync.mobile import Mobile, KeyCode, UIElementListResult
+from ._sync.mobile import Mobile
+from ._common.models.mobile import KeyCode, UIElementListResult
 from ._sync.mobile_simulate import MobileSimulateService
 from ._sync.agent import Agent, ExecutionResult
 from ._sync.command import Command, CommandResult
@@ -110,12 +111,9 @@ from ._sync.filesystem import (
     MultipleFileContentResult,
 )
 from ._sync.oss import Oss
-from ._sync.context_manager import (
-    ContextManager,
-    ContextInfoResult,
-    ContextSyncResult,
-    ContextStatusData,
-)
+from ._sync.context_manager import ContextManager
+from ._common.models.context import ContextInfoResult, ContextSyncResult
+from ._common.models.context import ContextStatusData
 from ._sync.context import (
     ContextListParams,
     Context,
