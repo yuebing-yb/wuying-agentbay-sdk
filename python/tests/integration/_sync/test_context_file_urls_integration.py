@@ -4,6 +4,7 @@
 import os
 import time
 import unittest
+import pytest
 import httpx
 from agentbay import AgentBay
 
@@ -34,6 +35,7 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
             except Exception as e:
                 print(f"Warning: Failed to delete context {self.context.name}: {e}")
 
+    @pytest.mark.sync
     def test_get_file_upload_url(self):
         """
         Create a context and request a presigned upload URL for a test path.
@@ -206,6 +208,4 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    import asyncio
-
     unittest.main()
