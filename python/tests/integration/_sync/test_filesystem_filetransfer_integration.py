@@ -93,7 +93,7 @@ def test_file_upload_integration():
     
     # Create a simple session - let AgentBay handle context creation automatically
     params = CreateSessionParams(
-        image_id="browser_latest",  # Use browser image for comprehensive testing
+        image_id="linux_latest",  # Use linux image for stable file transfer testing
     )
 
     session_result = agent_bay.create(params)
@@ -192,7 +192,7 @@ def test_file_download_integration():
     
     # Create a simple session - let AgentBay handle context creation automatically
     params = CreateSessionParams(
-        image_id="browser_latest",  # Use browser image for comprehensive testing
+        image_id="linux_latest",  # Use linux image for stable file transfer testing
     )
 
     session_result = agent_bay.create(params)
