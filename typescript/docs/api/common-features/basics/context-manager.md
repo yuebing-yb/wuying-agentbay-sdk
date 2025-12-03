@@ -93,8 +93,8 @@ Synchronizes a context with the session. Supports both async and callback modes.
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `contextId?` | `string` | `undefined` | Optional context ID to synchronize |
-| `path?` | `string` | `undefined` | Optional path where the context should be mounted |
+| `contextId?` | `string` | `undefined` | Optional context ID to synchronize. If provided, `path` must also be provided. |
+| `path?` | `string` | `undefined` | Optional path where the context should be mounted. If provided, `contextId` must also be provided. |
 | `mode?` | `string` | `undefined` | Optional synchronization mode (e.g., "upload", "download") |
 | `callback?` | ``SyncCallback`` | `undefined` | Optional callback function. If provided, runs in background and calls callback when complete |
 | `maxRetries` | `number` | `150` | Maximum number of retries for polling completion status (default: 150) |
@@ -110,8 +110,27 @@ Promise resolving to ContextSyncResult with success status and request ID
 
 Error if the API call fails
 
+**`Throws`**
+
+Error if `contextId` or `path` is provided without the other parameter.
+              Both must be provided together, or both must be omitted.
+
 **`Example`**
 
+Sync all contexts (no parameters):
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const syncResult = await result.session.context.sync();
+  console.log(`Sync: ${syncResult.success}`);
+  await result.session.delete();
+}
+```
+
+**`Example`**
+
+Sync specific context with path:
 ```typescript
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const result = await agentBay.create();
