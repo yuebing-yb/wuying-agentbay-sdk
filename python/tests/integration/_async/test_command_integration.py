@@ -40,10 +40,10 @@ async def command_session(agent_bay):
         print(f"Warning: Error deleting session: {e}")
 
 
-def test_execute_command_success(command_session):
+async def test_execute_command_success(command_session):
     """Test executing a shell command successfully."""
     command = command_session.command  # Assuming direct access to command interface
-    result = command.execute_command("echo 'Hello, AgentBay!'")
+    result = await command.execute_command("echo 'Hello, AgentBay!'")
     print(f"Command execution result: {result.output}")
     assert result.success
     assert result.output.strip() == "Hello, AgentBay!"
@@ -51,12 +51,12 @@ def test_execute_command_success(command_session):
     assert result.error_message == ""
 
 
-def test_execute_command_with_timeout(command_session):
+async def test_execute_command_with_timeout(command_session):
     """Test executing a shell command with a timeout."""
     command = command_session.command  # Assuming direct access to command interface
     command_str = "sleep 5"
     timeout_ms = 1000  # 1 second timeout
-    result = command.execute_command(command_str, timeout_ms)
+    result = await command.execute_command(command_str, timeout_ms)
     print(f"Command execution result with timeout: {result}")
     assert not result.success
     assert result.request_id != ""
@@ -64,12 +64,12 @@ def test_execute_command_with_timeout(command_session):
     assert result.output == ""
 
 
-def test_command_error_handling(command_session):
+async def test_command_error_handling(command_session):
     """3.1 Command Error Handling - should handle command errors and edge cases"""
     command = command_session.command  # Assuming direct access to command interface
 
     # Test invalid command
-    invalid_result = command.execute_command("invalid_command_12345")
+    invalid_result = await command.execute_command("invalid_command_12345")
     assert not invalid_result.success
     assert invalid_result.error_message is not None
 

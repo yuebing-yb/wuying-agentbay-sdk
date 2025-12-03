@@ -21,13 +21,14 @@ class TestGetAdbLinkIntegration:
             pytest.skip("AGENTBAY_API_KEY environment variable not set")
         return AsyncAgentBay(api_key=api_key)
 
-    def test_get_adb_link_with_mobile_session(self, agentbay):
+    @pytest.mark.asyncio
+    async def test_get_adb_link_with_mobile_session(self, agentbay):
         """Test get_adb_link with a real mobile session"""
         from agentbay import CreateSessionParams
 
         # Create a mobile session
         params = CreateSessionParams(image_id="mobile_latest")
-        session_result = agentbay.create(params)
+        session_result = await agentbay.create(params)
         assert session_result is not None
         assert session_result.success is True
         assert session_result.session is not None

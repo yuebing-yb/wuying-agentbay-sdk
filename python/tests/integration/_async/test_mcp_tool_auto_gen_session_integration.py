@@ -1,6 +1,7 @@
 import os
 import time
 import unittest
+import pytest
 
 from agentbay import AsyncAgentBay
 
@@ -23,11 +24,12 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         # Initialize AgentBay client
         cls.agent_bay = AsyncAgentBay(api_key=api_key)
 
-    def test_mcp_tool_call_with_active_session(self):
+    @pytest.mark.asyncio
+    async def test_mcp_tool_call_with_active_session(self):
         """Test MCP tool call succeeds when session is active"""
         # Create a session
         print("Creating session for MCP tool call test...")
-        result = self.agent_bay.create()
+        result = await self.agent_bay.create()
         self.assertTrue(result.success)
         self.assertIsNotNone(result.session)
         session = result.session
@@ -35,7 +37,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
 
         # Call MCP tool with active session (auto_gen_session=False)
         print("Calling MCP tool with active session...")
-        tool_result = session.call_mcp_tool(
+        tool_result = await session.call_mcp_tool(
             tool_name="shell",
             args={"command": "echo 'test'", "timeout_ms": 5000},
             auto_gen_session=False,
@@ -47,15 +49,16 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
 
         # Clean up
         print("Deleting session...")
-        delete_result = session.delete()
+        delete_result = await session.delete()
         self.assertTrue(delete_result.success)
         print("Session deleted successfully")
 
-    def test_mcp_tool_call_with_deleted_session_auto_gen_false(self):
+    @pytest.mark.asyncio
+    async def test_mcp_tool_call_with_deleted_session_auto_gen_false(self):
         """Test MCP tool call fails when session is deleted and auto_gen_session=False"""
         # Create a session
         print("Creating session for deletion test...")
-        result = self.agent_bay.create()
+        result = await self.agent_bay.create()
         self.assertTrue(result.success)
         self.assertIsNotNone(result.session)
         session = result.session
@@ -64,7 +67,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
 
         # Delete the session
         print("Deleting session...")
-        delete_result = session.delete()
+        delete_result = await session.delete()
         self.assertTrue(delete_result.success)
         print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
@@ -72,7 +75,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Verify session is deleted
-        list_result = self.agent_bay.list()
+        list_result = await self.agent_bay.list()
         self.assertTrue(list_result.success)
         self.assertNotIn(
             session_id,
@@ -82,7 +85,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
 
         # Try to call MCP tool with deleted session (auto_gen_session=False)
         print("Calling MCP tool with deleted session (auto_gen_session=False)...")
-        tool_result = session.call_mcp_tool(
+        tool_result = await session.call_mcp_tool(
             tool_name="shell",
             args={"command": "echo 'test'", "timeout_ms": 5000},
             auto_gen_session=False,
@@ -95,11 +98,12 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         self.assertTrue(len(tool_result.error_message) > 0)
         print(f"MCP tool call failed as expected: {tool_result.error_message}")
 
-    def test_mcp_tool_call_with_deleted_session_auto_gen_true(self):
+    @pytest.mark.asyncio
+    async def test_mcp_tool_call_with_deleted_session_auto_gen_true(self):
         """Test MCP tool call behavior when session is deleted and auto_gen_session=True"""
         # Create a session
         print("Creating session for auto-gen test...")
-        result = self.agent_bay.create()
+        result = await self.agent_bay.create()
         self.assertTrue(result.success)
         self.assertIsNotNone(result.session)
         session = result.session
@@ -108,7 +112,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
 
         # Delete the session
         print("Deleting session...")
-        delete_result = session.delete()
+        delete_result = await session.delete()
         self.assertTrue(delete_result.success)
         print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
@@ -116,7 +120,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Verify session is deleted
-        list_result = self.agent_bay.list()
+        list_result = await self.agent_bay.list()
         self.assertTrue(list_result.success)
         self.assertNotIn(
             session_id,
@@ -126,7 +130,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
 
         # Try to call MCP tool with deleted session (auto_gen_session=True)
         print("Calling MCP tool with deleted session (auto_gen_session=True)...")
-        tool_result = session.call_mcp_tool(
+        tool_result = await session.call_mcp_tool(
             tool_name="shell",
             args={"command": "echo 'test'", "timeout_ms": 5000},
             auto_gen_session=True,

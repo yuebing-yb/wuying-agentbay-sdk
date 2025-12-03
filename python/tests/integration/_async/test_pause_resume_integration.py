@@ -90,7 +90,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
     #         except Exception as e:
     #             print(f"  ✗ Error deleting session {session.session_id}: {e}")
 
-    def _create_test_session(self):
+    async def _create_test_session(self):
         """Helper method to create a test session."""
         session_name = f"test-pause-resume-{uuid4().hex[:8]}"
         print(f"\nCreating test session: {session_name}")
@@ -102,7 +102,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
             # is_vpc=True,
             labels={"project": "piaoyun-demo", "environment": "testing"},
         )
-        result = self.agent_bay.create(params)
+        result = await self.agent_bay.create(params)
         self.assertTrue(
             result.success, f"Failed to create session: {result.error_message}"
         )
@@ -114,14 +114,15 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         return session
 
-    def test_pause_and_resume_session_success(self):
+    @pytest.mark.asyncio
+    async def test_pause_and_resume_session_success(self):
         """Test successful pause and resume operations on a session."""
         print("\n" + "=" * 60)
         print("TEST: Pause and Resume Session Success")
         print("=" * 60)
 
         # Create a test session
-        session = self._create_test_session()
+        session = await self._create_test_session()
 
         # Verify session is initially in RUNNING state
         print(f"\nStep 1: Verifying session is initially RUNNING...")
@@ -134,7 +135,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Pause the session
         print(f"\nStep 2: Pausing session...")
-        pause_result = self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.pause(session)
 
         # Verify pause result
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -166,7 +167,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Resume the session (synchronous)
         print(f"\nStep 4: Resuming session...")
-        resume_result = self.agent_bay.resume(session, timeout=120, poll_interval=3)
+        resume_result = await self.agent_bay.resume(session, timeout=120, poll_interval=3)
 
         # Verify resume result
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -186,18 +187,19 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertEqual(get_result.data.status, "RUNNING")
         print(f"  ✓ Session is RUNNING after resume: {session.session_id}")
 
-    def test_resume_async_session_success(self):
+    @pytest.mark.asyncio
+    async def test_resume_async_session_success(self):
         """Test successful async resume operation on a session."""
         print("\n" + "=" * 60)
         print("TEST: Async Resume Session Success")
         print("=" * 60)
 
         # Create a test session
-        session = self._create_test_session()
+        session = await self._create_test_session()
 
         # Pause the session first
         print(f"\nStep 1: Pausing session...")
-        pause_result = self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.pause(session)
         self.assertTrue(
             pause_result.success, f"Pause failed: {pause_result.error_message}"
         )
@@ -240,14 +242,15 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertIn(get_result.data.status, ["RUNNING", "RESUMING"])
         print(f"  ✓ Session status after async resume: {get_result.data.status}")
 
-    def test_pause_and_delete_session_success(self):
+    @pytest.mark.asyncio
+    async def test_pause_and_delete_session_success(self):
         """Test successful pause and delete operations on a session."""
         print("\n" + "=" * 60)
         print("TEST: Pause and Delete Session Success")
         print("=" * 60)
 
         # Create a test session
-        session = self._create_test_session()
+        session = await self._create_test_session()
 
         # Verify session is initially in RUNNING state
         print(f"\nStep 1: Verifying session is initially RUNNING...")
@@ -260,7 +263,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Pause the session
         print(f"\nStep 2: Pausing session...")
-        pause_result = self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.pause(session)
 
         # Verify pause result
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -309,18 +312,19 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # self.assertEqual(get_result.data.status, "RUNNING")
         # print(f"  ✓ Session is RUNNING after resume: {session.session_id}")
 
-    def test_resume_async_session_success(self):
+    @pytest.mark.asyncio
+    async def test_resume_async_session_success(self):
         """Test successful async resume operation on a session."""
         print("\n" + "=" * 60)
         print("TEST: Async Resume Session Success")
         print("=" * 60)
 
         # Create a test session
-        session = self._create_test_session()
+        session = await self._create_test_session()
 
         # Pause the session first
         print(f"\nStep 1: Pausing session...")
-        pause_result = self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.pause(session)
         self.assertTrue(
             pause_result.success, f"Pause failed: {pause_result.error_message}"
         )
@@ -336,7 +340,8 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
         print(f"  ✓ Session status: {get_result.data.status}")
 
-    def test_pause_nonexistent_session(self):
+    @pytest.mark.asyncio
+    async def test_pause_nonexistent_session(self):
         """Test pause operation on non-existent session."""
         print("\n" + "=" * 60)
         print("TEST: Pause Non-Existent Session")
@@ -352,7 +357,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         )
 
         # This should return a failed SessionPauseResult
-        pause_result = self.agent_bay.pause(invalid_session)
+        pause_result = await self.agent_bay.pause(invalid_session)
 
         # Verify that the result is a SessionPauseResult and indicates failure
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -361,7 +366,8 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"    Error: {pause_result.error_message}")
         self.assertIn("session", pause_result.error_message.lower())
 
-    def test_resume_nonexistent_session(self):
+    @pytest.mark.asyncio
+    async def test_resume_nonexistent_session(self):
         """Test resume operation on non-existent session."""
         print("\n" + "=" * 60)
         print("TEST: Resume Non-Existent Session")
@@ -377,7 +383,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         )
 
         # This should return a failed SessionResumeResult
-        resume_result = self.agent_bay.resume(invalid_session)
+        resume_result = await self.agent_bay.resume(invalid_session)
 
         # Verify that the result is a SessionResumeResult and indicates failure
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -386,7 +392,8 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"    Error: {resume_result.error_message}")
         self.assertIn("session", resume_result.error_message.lower())
 
-    def test_resume_async_nonexistent_session(self):
+    @pytest.mark.asyncio
+    async def test_resume_async_nonexistent_session(self):
         """Test async resume operation on non-existent session."""
         print("\n" + "=" * 60)
         print("TEST: Async Resume Non-Existent Session")
@@ -402,9 +409,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         )
 
         # This should return a failed SessionResumeResult
-        import asyncio
-
-        resume_result = asyncio.run(self.agent_bay.resume_async(invalid_session))
+        resume_result = await self.agent_bay.resume(invalid_session)
 
         # Verify that the result is a SessionResumeResult and indicates failure
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -413,14 +418,15 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"    Error: {resume_result.error_message}")
         self.assertIn("session", resume_result.error_message.lower())
 
-    def test_pause_already_paused_session(self):
+    @pytest.mark.asyncio
+    async def test_pause_already_paused_session(self):
         """Test pausing a session that is already paused."""
         print("\n" + "=" * 60)
         print("TEST: Pause Already Paused Session")
         print("=" * 60)
 
         # Create a test session
-        session = self._create_test_session()
+        session = await self._create_test_session()
 
         # Pause the session
         print(f"\nStep 1: Pausing session...")
@@ -445,14 +451,15 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         pause_result2 = self.agent_bay.pause(session)
         self.assertFalse(pause_result2.success)
 
-    def test_resume_already_running_session(self):
+    @pytest.mark.asyncio
+    async def test_resume_already_running_session(self):
         """Test resuming a session that is already running."""
         print("\n" + "=" * 60)
         print("TEST: Resume Already Running Session")
         print("=" * 60)
 
         # Create a test session (initially running)
-        session = self._create_test_session()
+        session = await self._create_test_session()
 
         # Verify session is RUNNING
         get_result = self.agent_bay.get_session(session.session_id)
@@ -462,7 +469,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Try to resume the already running session
         print(f"\nAttempting to resume already running session...")
-        resume_result = self.agent_bay.resume(session, timeout=30, poll_interval=2)
+        resume_result = await self.agent_bay.resume(session, timeout=30, poll_interval=2)
 
         # Resume of already running session may succeed or have specific behavior
         # Just verify it doesn't crash and returns a proper result object
@@ -470,18 +477,19 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertFalse(resume_result.success)
         print(f"  ✓ Resume completed")
 
-    def test_pause_resume_with_custom_parameters(self):
+    @pytest.mark.asyncio
+    async def test_pause_resume_with_custom_parameters(self):
         """Test pause and resume operations with custom timeout and poll interval."""
         print("\n" + "=" * 60)
         print("TEST: Pause and Resume with Custom Parameters")
         print("=" * 60)
 
         # Create a test session
-        session = self._create_test_session()
+        session = await self._create_test_session()
 
         # Pause with custom parameters (using agent_bay method)
         print(f"\nStep 1: Pausing session with custom parameters...")
-        pause_result = self.agent_bay.pause(session, timeout=300, poll_interval=3.0)
+        pause_result = await self.agent_bay.pause(session, timeout=300, poll_interval=3.0)
 
         self.assertIsInstance(pause_result, SessionPauseResult)
         self.assertTrue(
@@ -502,7 +510,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Resume with custom parameters
         print(f"\nStep 3: Resuming session with custom parameters...")
-        resume_result = self.agent_bay.resume(session, timeout=300, poll_interval=3.0)
+        resume_result = await self.agent_bay.resume(session, timeout=300, poll_interval=3.0)
 
         self.assertIsInstance(resume_result, SessionResumeResult)
         self.assertTrue(
@@ -593,11 +601,11 @@ class TestSessionPauseResumeEdgeCases(unittest.TestCase):
         print("=" * 60)
 
         # Create session
-        session = self._create_test_session()
+        session = await self._create_test_session()
 
         # Pause with short timeout (using agent_bay method)
         print(f"\nPausing session with short timeout...")
-        pause_result = self.agent_bay.pause(session, timeout=10, poll_interval=1)
+        pause_result = await self.agent_bay.pause(session, timeout=10, poll_interval=1)
 
         # Pause should succeed regardless of timeout parameter
         self.assertIsInstance(pause_result, SessionPauseResult)

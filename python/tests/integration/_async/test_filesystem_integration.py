@@ -59,11 +59,11 @@ async def test_read_file(filesystem_session):
     test_file_path = "/tmp/test_read.txt"
 
     # Write the test file
-    write_result = fs.write_file(test_file_path, test_content, "overwrite")
+    write_result = await fs.write_file(test_file_path, test_content, "overwrite")
     assert write_result.success
 
     # Read the file
-    result = fs.read_file(test_file_path)
+    result = await fs.read_file(test_file_path)
     assert result.success
     assert result.content == test_content
 
@@ -78,11 +78,11 @@ async def test_write_file(filesystem_session):
     test_file_path = "/tmp/test_write.txt"
 
     # Write the file
-    result = fs.write_file(test_file_path, test_content, "overwrite")
+    result = await fs.write_file(test_file_path, test_content, "overwrite")
     assert result.success
 
     # Verify the file content
-    read_result = fs.read_file(test_file_path)
+    read_result = await fs.read_file(test_file_path)
     assert read_result.success
     assert read_result.content == test_content
 
@@ -96,11 +96,11 @@ async def test_create_directory(filesystem_session):
     test_dir_path = "/tmp/test_directory"
 
     # Create the directory
-    result = fs.create_directory(test_dir_path)
+    result = await fs.create_directory(test_dir_path)
     assert result.success
 
     # Verify the directory exists
-    list_result = fs.list_directory("/tmp/")
+    list_result = await fs.list_directory("/tmp/")
     assert list_result.success
     entry_names = [entry.name for entry in list_result.entries]
     assert "test_directory" in entry_names
@@ -118,7 +118,7 @@ async def test_edit_file(filesystem_session):
     test_file_path = "/tmp/test_edit.txt"
 
     # Write the initial file
-    write_result = fs.write_file(test_file_path, initial_content, "overwrite")
+    write_result = await fs.write_file(test_file_path, initial_content, "overwrite")
     assert write_result.success
 
     # Edit the file
@@ -128,12 +128,12 @@ async def test_edit_file(filesystem_session):
             "newText": "This line has been edited.",
         }
     ]
-    result = fs.edit_file(test_file_path, edits, False)
+    result = await fs.edit_file(test_file_path, edits, False)
     assert result.success
 
     # Verify the file content
     expected_content = "This is the original content.\nThis line has been edited.\nThis is the final line."
-    read_result = fs.read_file(test_file_path)
+    read_result = await fs.read_file(test_file_path)
     assert read_result.success
     assert read_result.content == expected_content
 
@@ -148,11 +148,11 @@ async def test_get_file_info(filesystem_session):
     test_file_path = "/tmp/test_info.txt"
 
     # Write the test file
-    write_result = fs.write_file(test_file_path, test_content, "overwrite")
+    write_result = await fs.write_file(test_file_path, test_content, "overwrite")
     assert write_result.success
 
     # Get file info
-    result = fs.get_file_info(test_file_path)
+    result = await fs.get_file_info(test_file_path)
     assert result.success
 
     file_info = result.file_info
@@ -167,7 +167,7 @@ async def test_list_directory(filesystem_session):
         filesystem_session.file_system
     )  # Assuming direct access to file system interface
 
-    result = fs.list_directory("/tmp/")
+    result = await fs.list_directory("/tmp/")
     assert result.success
 
     entries = result.entries
@@ -187,11 +187,11 @@ async def test_move_file(filesystem_session):
     dest_file_path = "/tmp/test_destination.txt"
 
     # Write the source file
-    write_result = fs.write_file(source_file_path, test_content, "overwrite")
+    write_result = await fs.write_file(source_file_path, test_content, "overwrite")
     assert write_result.success
 
     # Move the file
-    result = fs.move_file(source_file_path, dest_file_path)
+    result = await fs.move_file(source_file_path, dest_file_path)
     assert result.success
 
     # Verify the destination file content
@@ -200,7 +200,7 @@ async def test_move_file(filesystem_session):
     assert read_result.content == test_content
 
     # Verify the source file no longer exists
-    get_file_info_result = fs.get_file_info(source_file_path)
+    get_file_info_result = await fs.get_file_info(source_file_path)
     assert not get_file_info_result.success
 
 
@@ -216,11 +216,11 @@ async def test_read_multiple_files(filesystem_session):
     test_file2_path = "/tmp/test_file2.txt"
 
     # Write the test files
-    fs.write_file(test_file1_path, file1_content, "overwrite")
-    fs.write_file(test_file2_path, file2_content, "overwrite")
+    await fs.write_file(test_file1_path, file1_content, "overwrite")
+    await fs.write_file(test_file2_path, file2_content, "overwrite")
 
     # Read multiple files
-    result = fs.read_multiple_files([test_file1_path, test_file2_path])
+    result = await fs.read_multiple_files([test_file1_path, test_file2_path])
     assert result.success
 
     contents = result.contents
@@ -235,7 +235,7 @@ async def test_search_files(filesystem_session):
     )  # Assuming direct access to file system interface
 
     test_subdir_path = "/tmp/search_test_dir"
-    create_dir_result = fs.create_directory(test_subdir_path)
+    create_dir_result = await fs.create_directory(test_subdir_path)
     assert create_dir_result.success
 
     file1_content = "This is test file 1 content."
@@ -246,14 +246,14 @@ async def test_search_files(filesystem_session):
     search_file3_path = f"{test_subdir_path}/SEARCHABLE_PATTERN_file3.txt"
 
     # Write the test files
-    fs.write_file(search_file1_path, file1_content, "overwrite")
-    fs.write_file(search_file2_path, file2_content, "overwrite")
-    fs.write_file(search_file3_path, file3_content, "overwrite")
+    await fs.write_file(search_file1_path, file1_content, "overwrite")
+    await fs.write_file(search_file2_path, file2_content, "overwrite")
+    await fs.write_file(search_file3_path, file3_content, "overwrite")
 
     # Search for files using wildcard pattern
     search_pattern = "*SEARCHABLE_PATTERN*"
     exclude_patterns = ["ignored_pattern"]
-    result = fs.search_files(test_subdir_path, search_pattern, exclude_patterns)
+    result = await fs.search_files(test_subdir_path, search_pattern, exclude_patterns)
     assert result.success
 
     matches = result.matches
@@ -277,13 +277,13 @@ async def test_write_and_read_large_file(filesystem_session):
 
     # Test 1: Write large file (automatic chunking)
     print("Test 1: Writing large file with automatic chunking...")
-    result = fs.write_file(test_file_path, large_content)
+    result = await fs.write_file(test_file_path, large_content)
     assert result.success
     print("Test 1: Large file write successful")
 
     # Test 2: Read large file (automatic chunking)
     print("Test 2: Reading large file with automatic chunking...")
-    result = fs.read_file(test_file_path)
+    result = await fs.read_file(test_file_path)
     assert result.success
 
     # Verify content
@@ -315,7 +315,7 @@ async def test_write_and_read_large_file(filesystem_session):
 
     # Test 5: Re-read the first file to ensure consistency
     print("Test 5: Re-reading the first file to ensure consistency...")
-    result = fs.read_file(test_file_path)
+    result = await fs.read_file(test_file_path)
     assert result.success
 
     # Verify content
@@ -339,10 +339,10 @@ async def test_write_and_read_small_file(filesystem_session):
     test_file_path = "/tmp/test_small_file.txt"
 
     # Use write_file method to write small file
-    result = fs.write_file(test_file_path, small_content)
+    result = await fs.write_file(test_file_path, small_content)
     assert result.success
 
     # Read and verify content
-    result = fs.read_file(test_file_path)
+    result = await fs.read_file(test_file_path)
     assert result.success
     assert result.content == small_content

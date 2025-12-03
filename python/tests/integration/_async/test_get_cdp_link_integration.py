@@ -20,6 +20,7 @@ class TestGetCdpLinkIntegration:
             pytest.skip("AGENTBAY_API_KEY environment variable not set")
         return AsyncAgentBay(api_key=api_key)
 
+    @pytest.mark.asyncio
     async def test_get_cdp_link_with_browser_session(self, agentbay):
         """Test get_cdp_link with a real browser session"""
         from agentbay import CreateSessionParams

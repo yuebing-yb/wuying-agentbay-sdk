@@ -8,6 +8,7 @@ from agentbay import SessionError
 from agentbay import AdbUrlResult
 from agentbay import CreateSessionParams
 from agentbay import AsyncSession
+import pytest
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -27,23 +28,23 @@ class TestMobileGetAdbUrl(unittest.TestCase):
     """Integration test for mobile.get_adb_url API."""
 
     @classmethod
-    def setUpClass(cls):
+    async def setUpClass(cls):
         api_key = get_test_api_key()
         cls.agent_bay = AsyncAgentBay(api_key=api_key)
         print("Creating a new session for mobile ADB URL testing...")
         # Use mobile_latest image for mobile environment
         params = CreateSessionParams(image_id="mobile_latest")
-        result = cls.agent_bay.create(params=params)
+        result = await cls.agent_bay.create(params=params)
         cls.session = getattr(result, "session", None)
         print(f"Session created with ID: {getattr(cls.session, 'session_id', None)}")
         print(f"Request ID: {getattr(result, 'request_id', None)}")
 
     @classmethod
-    def tearDownClass(cls):
+    async def tearDownClass(cls):
         print("Cleaning up: Deleting the session...")
         try:
             if cls.session is not None:
-                result = cls.agent_bay.delete(cls.session)
+                result = await cls.agent_bay.delete(cls.session)
                 print(
                     f"Session deleted. Success: {getattr(result, 'success', None)}, Request ID: {getattr(result, 'request_id', None)}"
                 )
@@ -52,7 +53,8 @@ class TestMobileGetAdbUrl(unittest.TestCase):
         except Exception as e:
             print(f"Warning: Error deleting session: {e}")
 
-    def test_get_adb_url_e2e_with_valid_key(self):
+    @pytest.mark.asyncio
+    async def test_get_adb_url_e2e_with_valid_key(self):
         """Test session.mobile.get_adb_url() returns AdbUrlResult with valid adbkey_pub."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
         session: AsyncSession = typing.cast(AsyncSession, self.session)
@@ -79,7 +81,8 @@ class TestMobileGetAdbUrl(unittest.TestCase):
             f"Returned ADB URL should start with 'adb connect', got: {adb_url}",
         )
 
-    def test_get_adb_url_returns_valid_adb_url(self):
+    @pytest.mark.asyncio
+    async def test_get_adb_url_returns_valid_adb_url(self):
         """Test session.mobile.get_adb_url() returns properly formatted URL."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
         session: AsyncSession = typing.cast(AsyncSession, self.session)
@@ -108,7 +111,8 @@ class TestMobileGetAdbUrl(unittest.TestCase):
             len(address_parts), 2, f"Address should be <IP>:<Port>, got: {parts[2]}"
         )
 
-    def test_get_adb_url_request_id_exists(self):
+    @pytest.mark.asyncio
+    async def test_get_adb_url_request_id_exists(self):
         """Test session.mobile.get_adb_url() result has valid request_id."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
         session: AsyncSession = typing.cast(AsyncSession, self.session)
@@ -122,12 +126,13 @@ class TestMobileGetAdbUrl(unittest.TestCase):
         self.assertTrue(len(result.request_id) > 0, "Request ID should not be empty")
         print(f"Request ID: {result.request_id}")
 
-    def test_get_adb_url_fails_on_non_mobile_image(self):
+    @pytest.mark.asyncio
+    async def test_get_adb_url_fails_on_non_mobile_image(self):
         """Test session.mobile.get_adb_url() fails when session uses non-mobile image."""
         # Create a new browser session
         print("Creating browser session for negative test...")
         params = CreateSessionParams(image_id="browser_latest")
-        result = self.agent_bay.create(params=params)
+        result = await self.agent_bay.create(params=params)
         browser_session = getattr(result, "session", None)
 
         self.assertIsNotNone(

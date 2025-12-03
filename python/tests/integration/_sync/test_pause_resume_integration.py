@@ -117,6 +117,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         return session
 
+    @pytest.mark.sync
     def test_pause_and_resume_session_success(self):
         """Test successful pause and resume operations on a session."""
         print("\n" + "=" * 60)
@@ -189,6 +190,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertEqual(get_result.data.status, "RUNNING")
         print(f"  ✓ Session is RUNNING after resume: {session.session_id}")
 
+    @pytest.mark.sync
     def test_resume_async_session_success(self):
         """Test successful async resume operation on a session."""
         print("\n" + "=" * 60)
@@ -243,6 +245,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertIn(get_result.data.status, ["RUNNING", "RESUMING"])
         print(f"  ✓ Session status after async resume: {get_result.data.status}")
 
+    @pytest.mark.sync
     def test_pause_and_delete_session_success(self):
         """Test successful pause and delete operations on a session."""
         print("\n" + "=" * 60)
@@ -312,6 +315,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # self.assertEqual(get_result.data.status, "RUNNING")
         # print(f"  ✓ Session is RUNNING after resume: {session.session_id}")
 
+    @pytest.mark.sync
     def test_resume_async_session_success(self):
         """Test successful async resume operation on a session."""
         print("\n" + "=" * 60)
@@ -339,6 +343,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
         print(f"  ✓ Session status: {get_result.data.status}")
 
+    @pytest.mark.sync
     def test_pause_nonexistent_session(self):
         """Test pause operation on non-existent session."""
         print("\n" + "=" * 60)
@@ -364,6 +369,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"    Error: {pause_result.error_message}")
         self.assertIn("session", pause_result.error_message.lower())
 
+    @pytest.mark.sync
     def test_resume_nonexistent_session(self):
         """Test resume operation on non-existent session."""
         print("\n" + "=" * 60)
@@ -389,6 +395,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"    Error: {resume_result.error_message}")
         self.assertIn("session", resume_result.error_message.lower())
 
+    @pytest.mark.sync
     def test_resume_async_nonexistent_session(self):
         """Test async resume operation on non-existent session."""
         print("\n" + "=" * 60)
@@ -405,9 +412,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         )
 
         # This should return a failed SessionResumeResult
-        import asyncio
-
-        resume_result = self.agent_bay.resume_async(invalid_session)
+        resume_result = self.agent_bay.resume(invalid_session)
 
         # Verify that the result is a SessionResumeResult and indicates failure
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -416,6 +421,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"    Error: {resume_result.error_message}")
         self.assertIn("session", resume_result.error_message.lower())
 
+    @pytest.mark.sync
     def test_pause_already_paused_session(self):
         """Test pausing a session that is already paused."""
         print("\n" + "=" * 60)
@@ -448,6 +454,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         pause_result2 = self.agent_bay.pause(session)
         self.assertFalse(pause_result2.success)
 
+    @pytest.mark.sync
     def test_resume_already_running_session(self):
         """Test resuming a session that is already running."""
         print("\n" + "=" * 60)
@@ -473,6 +480,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertFalse(resume_result.success)
         print(f"  ✓ Resume completed")
 
+    @pytest.mark.sync
     def test_pause_resume_with_custom_parameters(self):
         """Test pause and resume operations with custom timeout and poll interval."""
         print("\n" + "=" * 60)

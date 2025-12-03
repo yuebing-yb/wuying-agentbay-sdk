@@ -11,6 +11,7 @@ from agentbay import SessionError
 from agentbay import AdbUrlResult
 from agentbay import CreateSessionParams
 from agentbay import Session
+import pytest
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -55,6 +56,7 @@ class TestMobileGetAdbUrl(unittest.TestCase):
         except Exception as e:
             print(f"Warning: Error deleting session: {e}")
 
+    @pytest.mark.sync
     def test_get_adb_url_e2e_with_valid_key(self):
         """Test session.mobile.get_adb_url() returns AdbUrlResult with valid adbkey_pub."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
@@ -82,6 +84,7 @@ class TestMobileGetAdbUrl(unittest.TestCase):
             f"Returned ADB URL should start with 'adb connect', got: {adb_url}",
         )
 
+    @pytest.mark.sync
     def test_get_adb_url_returns_valid_adb_url(self):
         """Test session.mobile.get_adb_url() returns properly formatted URL."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
@@ -111,6 +114,7 @@ class TestMobileGetAdbUrl(unittest.TestCase):
             len(address_parts), 2, f"Address should be <IP>:<Port>, got: {parts[2]}"
         )
 
+    @pytest.mark.sync
     def test_get_adb_url_request_id_exists(self):
         """Test session.mobile.get_adb_url() result has valid request_id."""
         self.assertIsNotNone(self.session, "Session was not created successfully.")
@@ -125,6 +129,7 @@ class TestMobileGetAdbUrl(unittest.TestCase):
         self.assertTrue(len(result.request_id) > 0, "Request ID should not be empty")
         print(f"Request ID: {result.request_id}")
 
+    @pytest.mark.sync
     def test_get_adb_url_fails_on_non_mobile_image(self):
         """Test session.mobile.get_adb_url() fails when session uses non-mobile image."""
         # Create a new browser session

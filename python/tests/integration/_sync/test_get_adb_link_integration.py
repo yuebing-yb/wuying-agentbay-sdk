@@ -24,6 +24,7 @@ class TestGetAdbLinkIntegration:
             pytest.skip("AGENTBAY_API_KEY environment variable not set")
         return AgentBay(api_key=api_key)
 
+    @pytest.mark.sync
     def test_get_adb_link_with_mobile_session(self, agentbay):
         """Test get_adb_link with a real mobile session"""
         from agentbay import CreateSessionParams

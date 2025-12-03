@@ -56,6 +56,7 @@ def session_fixture():
 class TestSessionInfoAndLink:
     """Integration test for session info and get_link APIs."""
 
+    @pytest.mark.sync
     def test_info(self, session_fixture):
         """Test session.info() returns expected fields."""
         assert session_fixture is not None, "Session was not created successfully."
@@ -77,6 +78,7 @@ class TestSessionInfoAndLink:
         assert hasattr(info, "resource_id")
         assert hasattr(info, "resource_type")
 
+    @pytest.mark.sync
     def test_get_link(self, session_fixture):
         """Test session.get_link() returns a valid URL."""
         assert session_fixture is not None, "Session was not created successfully."
@@ -91,6 +93,7 @@ class TestSessionInfoAndLink:
             url.startswith("http") or url.startswith("wss") or url.startswith("ws")
         ), "Returned link does not look like a URL"
 
+    @pytest.mark.sync
     def test_get_link_with_valid_port(self, session_fixture):
         """Test session.get_link() with valid port returns a valid URL."""
         assert session_fixture is not None, "Session was not created successfully."
@@ -121,6 +124,7 @@ class TestSessionInfoAndLink:
                 or url.startswith("ws")
             ), f"Returned link with port {port} does not look like a URL"
 
+    @pytest.mark.sync
     def test_get_link_with_invalid_port_below_range(self, session_fixture):
         """Test session.get_link() with port below valid range raises SessionError."""
         assert session_fixture is not None, "Session was not created successfully."
@@ -140,6 +144,7 @@ class TestSessionInfoAndLink:
         expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
         assert expected_message in error_message
 
+    @pytest.mark.sync
     def test_get_link_with_invalid_port_above_range(self, session_fixture):
         """Test session.get_link() with port above valid range raises SessionError."""
         assert session_fixture is not None, "Session was not created successfully."
@@ -159,6 +164,7 @@ class TestSessionInfoAndLink:
         expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
         assert expected_message in error_message
 
+    @pytest.mark.sync
     def test_get_link_with_invalid_port_non_integer(self, session_fixture):
         """Test session.get_link() with non-integer port raises SessionError."""
         assert session_fixture is not None, "Session was not created successfully."

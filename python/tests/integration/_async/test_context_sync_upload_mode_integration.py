@@ -18,6 +18,7 @@ from agentbay import (
     WhiteList,
 )
 from agentbay import AsyncSession
+import pytest
 
 
 def get_test_api_key():
@@ -57,6 +58,7 @@ class TestContextSyncUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         # Note: Sessions should be cleaned up in individual tests
         # This is a safety net for any remaining sessions
 
+    @pytest.mark.asyncio
     async def test_create_session_with_default_file_upload_mode(self):
         """Test creating session with default File upload mode and write file."""
         print("\n=== Testing basic functionality with default File upload mode ===")
@@ -131,6 +133,7 @@ class TestContextSyncUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         print(f"Session {session.session_id} deleted successfully")
         self.test_sessions.remove(session)
 
+    @pytest.mark.asyncio
     async def test_context_sync_with_archive_mode_and_file_operations(self):
         """Test contextId and path usage with Archive mode and file operations."""
         print(
@@ -330,6 +333,7 @@ class TestContextSyncUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         print(f"Session {session.session_id} deleted successfully")
         self.test_sessions.remove(session)
 
+    @pytest.mark.asyncio
     async def test_invalid_upload_mode_with_policy_assignment(self):
         """Test error handling when using invalid uploadMode with policy assignment."""
         print("\n=== Testing invalid uploadMode with policy assignment ===")
@@ -380,6 +384,7 @@ class TestContextSyncUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             "✅ Complete ContextSync flow correctly threw error for invalid uploadMode"
         )
 
+    @pytest.mark.asyncio
     async def test_valid_upload_mode_values(self):
         """Test that valid uploadMode values are accepted."""
         print("\n=== Testing valid uploadMode values ===")

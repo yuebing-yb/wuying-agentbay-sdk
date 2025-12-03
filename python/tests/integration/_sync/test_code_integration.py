@@ -20,6 +20,7 @@ class TestCodeIntegration(unittest.TestCase):
         self.agent_bay = AgentBay(api_key=self.api_key)
         params = CreateSessionParams(image_id="code_latest")
         # Use code_latest image for code execution tests
+        import asyncio
         session_result = self.agent_bay.create(params)
         if not session_result.success or not session_result.session:
             self.skipTest(f"Failed to create session: {session_result.error_message}")
@@ -29,6 +30,7 @@ class TestCodeIntegration(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         if hasattr(self, "session"):
+            import asyncio
             self.session.delete()
 
     def test_run_code_python_success(self):

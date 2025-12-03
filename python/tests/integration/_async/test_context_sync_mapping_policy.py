@@ -20,6 +20,7 @@ from agentbay import (
     UploadPolicy,
 )
 from agentbay import CreateSessionParams
+import pytest
 
 
 class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
@@ -37,6 +38,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
         # Initialize the AgentBay client
         self.ab = AsyncAgentBay(self.api_key)
 
+    @pytest.mark.asyncio
     async def test_context_sync_with_mapping_policy(self):
         """Test that context sync works with MappingPolicy for cross-platform persistence."""
         # 1. Create a unique context name

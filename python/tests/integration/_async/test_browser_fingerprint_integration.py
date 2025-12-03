@@ -91,6 +91,7 @@ async def fingerprint_context(agent_bay):
 class TestBrowserFingerprintIntegration:
     """Integration tests for browser fingerprint persistence functionality."""
 
+    @pytest.mark.asyncio
     async def test_browser_fingerprint_basic_usage(self, agent_bay):
         print("===== Test browser fingerprint basic usage =====")
 
@@ -133,10 +134,43 @@ class TestBrowserFingerprintIntegration:
 
             page = await context.new_page()
             await page.goto("https://httpbin.org/user-agent", timeout=60000)
-            response = await page.evaluate(
-                "() => JSON.parse(document.querySelector('pre').textContent)"
-            )
-            user_agent = response["user-agent"]
+            
+            # Wait for page to load and try different selectors
+            await page.wait_for_load_state("networkidle", timeout=30000)
+            
+            # Try to get the response text using different methods
+            response_text = None
+            try:
+                # First try the pre tag
+                response_text = await page.evaluate("() => document.querySelector('pre')?.textContent")
+            except Exception:
+                pass
+                
+            if not response_text:
+                try:
+                    # Try getting the body text
+                    response_text = await page.evaluate("() => document.body.textContent")
+                except Exception:
+                    pass
+            
+            if not response_text:
+                # Fallback: get page content
+                response_text = await page.content()
+                
+            print(f"Response text: {response_text[:200]}...")
+            
+            # Parse JSON from response text
+            import json
+            import re
+            
+            # Try to extract JSON from the response
+            json_match = re.search(r'\{[^}]+\}', response_text)
+            if json_match:
+                response = json.loads(json_match.group())
+                user_agent = response.get("user-agent")
+            else:
+                # If no JSON found, assume the whole response is the user agent
+                user_agent = response_text.strip()
             print("user_agent =", user_agent)
             assert user_agent is not None
             assert is_windows_user_agent(user_agent)
@@ -148,6 +182,7 @@ class TestBrowserFingerprintIntegration:
         assert delete_result.success, "Failed to delete session"
         print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
+    @pytest.mark.asyncio
     async def test_browser_fingerprint_persistence(self, agent_bay, browser_context, fingerprint_context):
         """Test browser fingerprint persist across sessions with the same browser and fingerprint context."""
         print("===== Test browser fingerprint persistence =====")
@@ -301,6 +336,7 @@ class TestBrowserFingerprintIntegration:
 
         print("Browser fingerprint persistence test completed successfully!")
 
+    @pytest.mark.asyncio
     async def test_browser_fingerprint_local_sync(self, agent_bay):
         """Test browser fingerprint local sync functionality."""
         print("===== Test browser fingerprint local sync =====")
@@ -373,6 +409,7 @@ class TestBrowserFingerprintIntegration:
 
         print("Browser fingerprint local sync test completed successfully!")
 
+    @pytest.mark.asyncio
     async def test_browser_fingerprint_construct(self, agent_bay):
         """Test browser fingerprint construction from file."""
         print("===== Test browser fingerprint construct =====")

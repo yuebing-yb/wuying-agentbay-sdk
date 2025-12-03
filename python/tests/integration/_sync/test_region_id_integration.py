@@ -23,6 +23,7 @@ class TestRegionIdIntegration(unittest.TestCase):
         if not self.api_key:
             self.skipTest("AGENTBAY_API_KEY environment variable not set")
 
+    @pytest.mark.sync
     def test_session_creation_with_region_id(self):
         """Test creating a session with region_id=cn-hangzhou"""
         # Create AgentBay client with region_id in config
@@ -49,6 +50,7 @@ class TestRegionIdIntegration(unittest.TestCase):
         # Clean up
         result.session.delete()
 
+    @pytest.mark.sync
     def test_context_creation_with_region_id(self):
         """Test creating a context with region_id=cn-hangzhou"""
         # Create AgentBay client with region_id in config
@@ -76,6 +78,7 @@ class TestRegionIdIntegration(unittest.TestCase):
         # Clean up
         agent_bay.context.delete(result.context)
 
+    @pytest.mark.sync
     def test_context_get_existing_without_region_id(self):
         """Test getting an existing context doesn't pass region_id"""
         # Create AgentBay client with region_id in config
@@ -105,6 +108,7 @@ class TestRegionIdIntegration(unittest.TestCase):
         # Clean up
         agent_bay.context.delete(get_result.context)
 
+    @pytest.mark.sync
     def test_session_and_context_workflow(self):
         """Test complete workflow: create session with context sync using region_id"""
         # Create AgentBay client with region_id in config
@@ -118,7 +122,7 @@ class TestRegionIdIntegration(unittest.TestCase):
 
         # Create session with context sync
         from agentbay import ContextSync
-
+        
         params = CreateSessionParams()
         params.context_syncs = [
             ContextSync(
@@ -140,6 +144,7 @@ class TestRegionIdIntegration(unittest.TestCase):
         session_result.session.delete()
         agent_bay.context.delete(context_result.context)
 
+    @pytest.mark.sync
     def test_agentbay_without_region_id(self):
         """Test AgentBay works normally without region_id"""
         # Create AgentBay client without region_id

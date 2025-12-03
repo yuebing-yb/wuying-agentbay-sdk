@@ -20,6 +20,7 @@ from agentbay import (
 )
 from agentbay import BrowserContext, CreateSessionParams
 from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
+import pytest
 
 # Add the parent directory to the path so we can import the agentbay package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -77,6 +78,7 @@ class TestAgentBay(unittest.TestCase):
             if original_key is not None:
                 os.environ["AGENTBAY_API_KEY"] = original_key
 
+    @pytest.mark.sync
     def test_create_list_delete(self):
         """Test create, list, and delete methods."""
         api_key = get_test_api_key()
@@ -131,6 +133,7 @@ class TestSession(unittest.TestCase):
         """Tear down test fixtures."""
         print("Cleaning up: Deleting the session...")
         try:
+            import asyncio
             self.agent_bay.delete(self.session)
         except Exception as e:
             print(f"Warning: Error deleting session: {e}")
@@ -149,6 +152,7 @@ class TestSession(unittest.TestCase):
         session_id = self.session.session_id
         self.assertEqual(session_id, self.session.session_id)
 
+    @pytest.mark.sync
     def test_delete(self):
         """Test session delete method."""
         # Create a new session specifically for this test
@@ -235,6 +239,7 @@ class TestRecyclePolicy(unittest.TestCase):
         if self.session:
             try:
                 print("Cleaning up session with custom recyclePolicy...")
+                import asyncio
                 delete_result = self.agent_bay.delete(self.session)
                 print(
                     f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
@@ -242,6 +247,7 @@ class TestRecyclePolicy(unittest.TestCase):
             except Exception as e:
                 print(f"Warning: Error deleting session: {e}")
 
+    @pytest.mark.sync
     def test_create_session_with_custom_recycle_policy(self):
         """Test creating session with custom recyclePolicy using Lifecycle_1Day."""
         # Create custom recyclePolicy with Lifecycle_1Day and default paths

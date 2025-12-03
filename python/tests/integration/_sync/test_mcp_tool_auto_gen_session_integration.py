@@ -4,6 +4,7 @@
 import os
 import time
 import unittest
+import pytest
 
 from agentbay import AgentBay
 
@@ -26,6 +27,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         # Initialize AgentBay client
         cls.agent_bay = AgentBay(api_key=api_key)
 
+    @pytest.mark.sync
     def test_mcp_tool_call_with_active_session(self):
         """Test MCP tool call succeeds when session is active"""
         # Create a session
@@ -54,6 +56,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         self.assertTrue(delete_result.success)
         print("Session deleted successfully")
 
+    @pytest.mark.sync
     def test_mcp_tool_call_with_deleted_session_auto_gen_false(self):
         """Test MCP tool call fails when session is deleted and auto_gen_session=False"""
         # Create a session
@@ -98,6 +101,7 @@ class TestMcpToolAutoGenSessionIntegration(unittest.TestCase):
         self.assertTrue(len(tool_result.error_message) > 0)
         print(f"MCP tool call failed as expected: {tool_result.error_message}")
 
+    @pytest.mark.sync
     def test_mcp_tool_call_with_deleted_session_auto_gen_true(self):
         """Test MCP tool call behavior when session is deleted and auto_gen_session=True"""
         # Create a session
