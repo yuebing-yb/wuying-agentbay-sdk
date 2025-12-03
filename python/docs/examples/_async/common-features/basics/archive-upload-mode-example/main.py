@@ -141,7 +141,7 @@ async def archive_upload_mode_example(agent_bay, unique_id):
         
         # Call context sync before getting info
         print("🔄 Calling context sync before getting info...")
-        sync_result = session.context.sync()
+        sync_result = await session.context.sync()
         if sync_result.success:
             print("✅ Context sync verified via info call")
         
@@ -150,16 +150,6 @@ async def archive_upload_mode_example(agent_bay, unique_id):
 
         print(f"✅ Context sync successful!")
         print(f"   Sync Request ID: {sync_result.request_id}")
-
-
-        # Use await session.context.info() to check status
-        print("📋 Calling context info...")
-        sync_result = await session.context.info()
-        if sync_result.success:
-            print("✅ Context sync verified via info call")
-        
-        if not sync_result.success:
-            raise Exception(f"Context sync failed: {sync_result.error_message}")
 
         print(f"✅ Context sync successful!")
         print(f"   Sync Request ID: {sync_result.request_id}")
