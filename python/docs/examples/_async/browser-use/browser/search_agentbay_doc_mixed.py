@@ -62,7 +62,7 @@ async def main():
 
             await playwright_browser.close()
     finally:
-        await agent_bay.delete(session_result)
+        await agent_bay.delete(session)
 
 
 if __name__ == "__main__":

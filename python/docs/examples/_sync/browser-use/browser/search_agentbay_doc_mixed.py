@@ -63,7 +63,7 @@ def main():
 
             playwright_browser.close()
     finally:
-        agent_bay.delete(session_result)
+        agent_bay.delete(session)
 
 
 if __name__ == "__main__":

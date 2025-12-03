@@ -241,7 +241,7 @@ async def main():
 
     finally:
         try:
-            await agent_bay.delete(session_result)
+            await agent_bay.delete(session)
         except Exception:
             pass
 

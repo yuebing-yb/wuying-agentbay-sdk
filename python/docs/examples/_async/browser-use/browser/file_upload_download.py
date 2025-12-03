@@ -102,7 +102,7 @@ async def main():
         # Clean up
         if session:
             print("\nCleaning up session...")
-            await client.delete(session_result)
+            await client.delete(session)
             print("Session closed")
 
 

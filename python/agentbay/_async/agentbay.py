@@ -976,13 +976,13 @@ class AsyncAgentBay:
             )
 
     async def delete(
-        self, session_or_result, sync_context: bool = False
+        self, session: AsyncSession, sync_context: bool = False
     ) -> DeleteResult:
         """
-        Delete a session by session object or session result asynchronously.
+        Delete a session by session object asynchronously.
 
         Args:
-            session_or_result: The session or session result to delete.
+            session (AsyncSession): The session to delete.
             sync_context (bool): Whether to sync context data (trigger file uploads)
                 before deleting the session. Defaults to False.
 
@@ -990,14 +990,6 @@ class AsyncAgentBay:
             DeleteResult: Result indicating success or failure and request ID.
         """
         try:
-            # Handle both SessionResult and Session objects
-            if hasattr(session_or_result, 'session'):
-                # It's a SessionResult
-                session = session_or_result.session
-            else:
-                # It's a Session
-                session = session_or_result
-            
             # Delete the session and get the result
             delete_result = await session.delete(sync_context=sync_context)
 
@@ -1009,19 +1001,10 @@ class AsyncAgentBay:
 
         except Exception as e:
             _log_operation_error("delete_session", str(e), exc_info=True)
-            # Try to get session_id for error message
-            try:
-                if hasattr(session_or_result, 'session'):
-                    session_id = session_or_result.session.session_id
-                else:
-                    session_id = session_or_result.session_id
-            except:
-                session_id = "unknown"
-            
             return DeleteResult(
                 request_id="",
                 success=False,
-                error_message=f"Failed to delete session {session_id}: {e}",
+                error_message=f"Failed to delete session {session.session_id}: {e}",
             )
 
     async def get_session(self, session_id: str) -> GetSessionResult:

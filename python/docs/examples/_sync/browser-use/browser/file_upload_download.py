@@ -104,7 +104,7 @@ def main():
         # Clean up
         if session:
             print("\nCleaning up session...")
-            client.delete(session_result)
+            client.delete(session)
             print("Session closed")
 
 
