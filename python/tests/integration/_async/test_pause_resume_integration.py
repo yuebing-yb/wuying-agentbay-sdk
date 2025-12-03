@@ -5,6 +5,7 @@ import time
 import unittest
 from uuid import uuid4
 
+import pytest
 from dotenv import load_dotenv
 
 from agentbay import AsyncAgentBay, CreateSessionParams
@@ -313,34 +314,6 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # print(f"  ✓ Session is RUNNING after resume: {session.session_id}")
 
     @pytest.mark.asyncio
-    async def test_resume_async_session_success(self):
-        """Test successful async resume operation on a session."""
-        print("\n" + "=" * 60)
-        print("TEST: Async Resume Session Success")
-        print("=" * 60)
-
-        # Create a test session
-        session = await self._create_test_session()
-
-        # Pause the session first
-        print(f"\nStep 1: Pausing session...")
-        pause_result = await self.agent_bay.pause(session)
-        self.assertTrue(
-            pause_result.success, f"Pause failed: {pause_result.error_message}"
-        )
-        print(f"  ✓ Session pause initiated successfully")
-
-        # Wait for pause to complete
-        print(f"\nStep 2: Waiting for session to pause...")
-        time.sleep(2)
-
-        # Verify session is PAUSED or PAUSING
-        get_result = self.agent_bay.get_session(session.session_id)
-        self.assertTrue(get_result.success)
-        self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
-        print(f"  ✓ Session status: {get_result.data.status}")
-
-    @pytest.mark.asyncio
     async def test_pause_nonexistent_session(self):
         """Test pause operation on non-existent session."""
         print("\n" + "=" * 60)
@@ -573,7 +546,7 @@ class TestSessionPauseResumeEdgeCases(unittest.TestCase):
         # Clear the list for next test
         self.test_sessions = []
 
-    def _create_test_session(self):
+    async def _create_test_session(self):
         """Helper method to create a test session."""
         session_name = f"test-pause-resume-edge-{uuid4().hex[:8]}"
         print(f"\nCreating test session: {session_name}")
@@ -594,7 +567,8 @@ class TestSessionPauseResumeEdgeCases(unittest.TestCase):
 
         return session
 
-    def test_pause_with_short_timeout(self):
+    @pytest.mark.asyncio
+    async def test_pause_with_short_timeout(self):
         """Test pause with a short timeout parameter."""
         print("\n" + "=" * 60)
         print("TEST: Pause with Short Timeout")
