@@ -31,33 +31,7 @@ from .computer import (
 _logger = get_logger("mobile")
 
 
-class UIElementListResult(ApiResponse):
-    """Result of UI element listing operations."""
-
-    def __init__(
-        self,
-        request_id: str = "",
-        success: bool = False,
-        elements: Optional[List[Dict[str, Any]]] = None,
-        error_message: str = "",
-    ):
-        super().__init__(request_id)
-        self.success = success
-        self.elements = elements or []
-        self.error_message = error_message
-
-
-class KeyCode:
-    """
-    Key codes for mobile device input.
-    """
-
-    HOME = 3
-    BACK = 4
-    VOLUME_UP = 24
-    VOLUME_DOWN = 25
-    POWER = 26
-    MENU = 82
+from .._common.models.mobile import UIElementListResult, KeyCode
 
 
 class Mobile(BaseService):
