@@ -16,7 +16,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import BrowserOption, ActOptions, ExtractOptions
 
 
 async def main():
@@ -47,15 +47,15 @@ async def main():
         await session.browser.agent.navigate("https://example.com")
         
         # Add iframe via JavaScript
-        await session.browser.agent.act(
-            "Execute JavaScript to add an iframe: "
+        await session.browser.agent.act(ActOptions(
+            action="Execute JavaScript to add an iframe: "
             "var iframe = document.createElement('iframe'); "
             "iframe.src = 'https://httpbin.org/html'; "
             "iframe.style.width = '600px'; "
             "iframe.style.height = '400px'; "
             "iframe.style.border = '2px solid blue'; "
             "document.body.appendChild(iframe)"
-        )
+        ))
         print("iFrame added to page")
 
         # Take screenshot
@@ -65,38 +65,38 @@ async def main():
 
         # Detect iframes
         print("\n3. Detecting iframes on page...")
-        iframe_result = await session.browser.agent.extract(
-            "Are there any iframes on this page? How many?"
-        )
+        iframe_result = await session.browser.agent.extract(ExtractOptions(
+            instruction="Are there any iframes on this page? How many?"
+        ))
         print(f"iFrame detection: {iframe_result.extracted_content}")
 
         # Get iframe information
         print("\n4. Getting iframe information...")
-        iframe_info = await session.browser.agent.extract(
-            "What is the source URL of the iframe?"
-        )
+        iframe_info = await session.browser.agent.extract(ExtractOptions(
+            instruction="What is the source URL of the iframe?"
+        ))
         print(f"iFrame info: {iframe_info.extracted_content}")
 
         # Switch to iframe context
         print("\n5. Switching to iframe context...")
-        await session.browser.agent.act("Focus on the iframe content")
+        await session.browser.agent.act(ActOptions(action="Focus on the iframe content"))
         print("Switched to iframe context")
 
         # Extract content from iframe
         print("\n6. Extracting content from iframe...")
-        iframe_content = await session.browser.agent.extract(
-            "What content is displayed inside the iframe?"
-        )
+        iframe_content = await session.browser.agent.extract(ExtractOptions(
+            instruction="What content is displayed inside the iframe?"
+        ))
         print(f"iFrame content:\n{iframe_content.extracted_content}")
 
         # Interact with iframe content
         print("\n7. Interacting with iframe content...")
-        await session.browser.agent.act("Scroll down within the iframe")
+        await session.browser.agent.act(ActOptions(action="Scroll down within the iframe"))
         print("Scrolled within iframe")
 
         # Switch back to main context
         print("\n8. Switching back to main context...")
-        await session.browser.agent.act("Switch focus back to the main page")
+        await session.browser.agent.act(ActOptions(action="Switch focus back to the main page"))
         print("Switched back to main context")
 
         # Verify we're back in main context

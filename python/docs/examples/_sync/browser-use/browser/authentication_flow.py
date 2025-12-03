@@ -57,8 +57,8 @@ def main():
 
         # Fill in login credentials (demonstration only)
         print("\n2. Filling in authentication form...")
-        session.browser.agent.act(ActOptions("Fill in the customer name field with 'testuser'"))
-        session.browser.agent.act(ActOptions("Fill in the email field with 'test@example.com'"))
+        session.browser.agent.act(ActOptions(action="Fill in the customer name field with 'testuser'"))
+        session.browser.agent.act(ActOptions(action="Fill in the email field with 'test@example.com'"))
         print("Form filled with test credentials")
 
         # Take screenshot of filled form
@@ -111,7 +111,7 @@ def main():
         # Demonstrate cookie-based authentication
         print("\n7. Setting authentication cookie...")
         session.browser.agent.act(ActOptions(
-            "Execute JavaScript to set a cookie: "
+            action="Execute JavaScript to set a cookie: "
             "document.cookie = 'auth_token=demo_token_12345; path=/'"
         ))
         print("Authentication cookie set")

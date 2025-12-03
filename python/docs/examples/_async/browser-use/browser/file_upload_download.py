@@ -16,7 +16,13 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import BrowserOption, ActOptions, ExtractOptions
+from pydantic import BaseModel, Field
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 async def main():
@@ -56,7 +62,7 @@ async def main():
         print("\n3. Preparing file for upload...")
         # In a real scenario, you would use the browser's file upload mechanism
         # This is a demonstration of the workflow
-        await session.browser.agent.act("Locate the file upload input field")
+        await session.browser.agent.act(ActOptions(action="Locate the file upload input field"))
         print("File upload field located")
 
         # Download a file
@@ -77,14 +83,19 @@ async def main():
         # Test downloading text content
         print("\n7. Testing text content download...")
         await session.browser.agent.navigate("https://httpbin.org/robots.txt")
-        content_result = await session.browser.agent.extract("What is the content of this page?")
-        print(f"Downloaded content:\n{content_result.extracted_content}")
+        success, content_result = await session.browser.agent.extract(ExtractOptions(instruction="What is the content of this page?", schema=TextContent))
+        if success:
+            print(f"Downloaded content:\n{content_result.content}")
+            content_to_save = content_result.content
+        else:
+            print("Failed to extract content")
+            content_to_save = "Failed to extract content"
 
         # Save extracted content to file
         print("\n8. Saving extracted content to file...")
         await session.filesystem.write_file(
             "/tmp/downloaded_robots.txt",
-            content_result.extracted_content
+            content_to_save
         )
         print("Content saved to: /tmp/downloaded_robots.txt")
 

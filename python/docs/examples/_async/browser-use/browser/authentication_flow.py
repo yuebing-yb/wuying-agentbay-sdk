@@ -55,8 +55,8 @@ async def main():
 
         # Fill in login credentials (demonstration only)
         print("\n2. Filling in authentication form...")
-        await session.browser.agent.act(ActOptions("Fill in the customer name field with 'testuser'"))
-        await session.browser.agent.act(ActOptions("Fill in the email field with 'test@example.com'"))
+        await session.browser.agent.act(ActOptions(action="Fill in the customer name field with 'testuser'"))
+        await session.browser.agent.act(ActOptions(action="Fill in the email field with 'test@example.com'"))
         print("Form filled with test credentials")
 
         # Take screenshot of filled form
@@ -109,7 +109,7 @@ async def main():
         # Demonstrate cookie-based authentication
         print("\n7. Setting authentication cookie...")
         await session.browser.agent.act(ActOptions(
-            "Execute JavaScript to set a cookie: "
+            action="Execute JavaScript to set a cookie: "
             "document.cookie = 'auth_token=demo_token_12345; path=/'"
         ))
         print("Authentication cookie set")

@@ -67,9 +67,9 @@ def main():
 
         # Interact with form elements
         print("\n4. Filling form...")
-        session.browser.agent.act(ActOptions("Fill in the customer name field with 'John Doe'"))
-        session.browser.agent.act(ActOptions("Fill in the telephone field with '1234567890'"))
-        session.browser.agent.act(ActOptions("Fill in the email field with 'john@example.com'"))
+        session.browser.agent.act(ActOptions(action="Fill in the customer name field with 'John Doe'"))
+        session.browser.agent.act(ActOptions(action="Fill in the telephone field with '1234567890'"))
+        session.browser.agent.act(ActOptions(action="Fill in the email field with 'john@example.com'"))
         print("Form filled successfully")
 
         # Navigate back

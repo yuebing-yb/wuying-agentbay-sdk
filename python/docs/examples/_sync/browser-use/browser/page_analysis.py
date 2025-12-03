@@ -18,7 +18,13 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AgentBay, CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import BrowserOption, ExtractOptions
+from pydantic import BaseModel, Field
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 def main():
@@ -50,13 +56,19 @@ def main():
 
         # Extract page title
         print("\n2. Extracting page title...")
-        title_result = session.browser.agent.extract("What is the page title?")
-        print(f"Page title: {title_result.extracted_content}")
+        success, title_result = session.browser.agent.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent))
+        if success:
+            print(f"Page title: {title_result.content}")
+        else:
+            print("Failed to extract page title")
 
         # Extract page description
         print("\n3. Extracting page description...")
-        desc_result = session.browser.agent.extract("What is the main content or description on this page?")
-        print(f"Page description: {desc_result.extracted_content}")
+        success, desc_result = session.browser.agent.extract(ExtractOptions(instruction="What is the main content or description on this page?", schema=TextContent))
+        if success:
+            print(f"Page description: {desc_result.content}")
+        else:
+            print("Failed to extract page description")
 
         # Navigate to a more complex page
         print("\n4. Navigating to news.ycombinator.com...")
@@ -64,31 +76,47 @@ def main():
 
         # Extract structured data
         print("\n5. Extracting top 5 story titles...")
-        stories_result = session.browser.agent.extract(
-            "List the titles of the top 5 stories on the page"
-        )
-        print(f"Top stories:\n{stories_result.extracted_content}")
+        success, stories_result = session.browser.agent.extract(ExtractOptions(
+            instruction="List the titles of the top 5 stories on the page",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Top stories:\n{stories_result.content}")
+        else:
+            print("Failed to extract top stories")
 
         # Analyze page structure
         print("\n6. Analyzing page structure...")
-        structure_result = session.browser.agent.extract(
-            "Describe the main sections and layout of this page"
-        )
-        print(f"Page structure:\n{structure_result.extracted_content}")
+        success, structure_result = session.browser.agent.extract(ExtractOptions(
+            instruction="Describe the main sections and layout of this page",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Page structure:\n{structure_result.content}")
+        else:
+            print("Failed to extract page structure")
 
         # Find specific elements
         print("\n7. Finding navigation elements...")
-        nav_result = session.browser.agent.extract(
-            "What navigation options are available on this page?"
-        )
-        print(f"Navigation elements:\n{nav_result.extracted_content}")
+        success, nav_result = session.browser.agent.extract(ExtractOptions(
+            instruction="What navigation options are available on this page?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Navigation elements:\n{nav_result.content}")
+        else:
+            print("Failed to extract navigation elements")
 
         # Extract metadata
         print("\n8. Extracting page metadata...")
-        meta_result = session.browser.agent.extract(
-            "What is the page URL and any visible metadata?"
-        )
-        print(f"Metadata:\n{meta_result.extracted_content}")
+        success, meta_result = session.browser.agent.extract(ExtractOptions(
+            instruction="What is the page URL and any visible metadata?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Metadata:\n{meta_result.content}")
+        else:
+            print("Failed to extract metadata")
 
         print("\n=== Example completed successfully ===")
 

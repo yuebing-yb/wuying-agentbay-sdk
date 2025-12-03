@@ -23,7 +23,8 @@ def main():
         return
 
     agent_bay = AgentBay(api_key=api_key)
-    session = (agent_bay.create(CreateSessionParams(image_id="browser_latest")))
+    session_result = agent_bay.create(CreateSessionParams(image_id="browser_latest"))
+    session = session_result.session
 
     try:
         ok = session.browser.initialize(BrowserOption())

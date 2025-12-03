@@ -18,7 +18,13 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AgentBay, CreateSessionParams
-from agentbay import BrowserOption, ActOptions
+from agentbay import BrowserOption, ActOptions, ExtractOptions
+from pydantic import BaseModel, Field
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 def main():
@@ -57,10 +63,13 @@ def main():
         print(f"Desktop screenshot saved: {desktop_screenshot}")
 
         # Extract desktop layout info
-        desktop_result = session.browser.agent.extract(
-            "Describe the layout and visible elements on this page"
+        success, desktop_result = session.browser.agent.extract(
+            ExtractOptions(instruction="Describe the layout and visible elements on this page", schema=TextContent)
         )
-        print(f"Desktop layout:\n{desktop_result.extracted_content}")
+        if success:
+            print(f"Desktop layout:\n{desktop_result.content}")
+        else:
+            print("Failed to extract desktop layout")
 
         # Test tablet viewport
         print("\n3. Testing tablet viewport (768x1024)...")
@@ -71,10 +80,13 @@ def main():
         print(f"Tablet screenshot saved: {tablet_screenshot}")
 
         # Extract tablet layout info
-        tablet_result = session.browser.agent.extract(
-            "Describe the layout and visible elements on this page"
+        success, tablet_result = session.browser.agent.extract(
+            ExtractOptions(instruction="Describe the layout and visible elements on this page", schema=TextContent)
         )
-        print(f"Tablet layout:\n{tablet_result.extracted_content}")
+        if success:
+            print(f"Tablet layout:\n{tablet_result.content}")
+        else:
+            print("Failed to extract tablet layout")
 
         # Test mobile viewport
         print("\n4. Testing mobile viewport (375x667)...")
@@ -85,10 +97,13 @@ def main():
         print(f"Mobile screenshot saved: {mobile_screenshot}")
 
         # Extract mobile layout info
-        mobile_result = session.browser.agent.extract(
-            "Describe the layout and visible elements on this page"
+        success, mobile_result = session.browser.agent.extract(
+            ExtractOptions(instruction="Describe the layout and visible elements on this page", schema=TextContent)
         )
-        print(f"Mobile layout:\n{mobile_result.extracted_content}")
+        if success:
+            print(f"Mobile layout:\n{mobile_result.content}")
+        else:
+            print("Failed to extract mobile layout")
 
         # Test a more complex responsive site
         print("\n5. Testing responsive design on news site...")
@@ -102,10 +117,13 @@ def main():
         mobile_news_screenshot = session.browser.agent.screenshot()
         print(f"Mobile news screenshot saved: {mobile_news_screenshot}")
 
-        mobile_news_result = session.browser.agent.extract(
-            "How many story items are visible on the mobile view?"
+        success, mobile_news_result = session.browser.agent.extract(
+            ExtractOptions(instruction="How many story items are visible on the mobile view?", schema=TextContent)
         )
-        print(f"Mobile view stories: {mobile_news_result.extracted_content}")
+        if success:
+            print(f"Mobile view stories: {mobile_news_result.content}")
+        else:
+            print("Failed to extract mobile view stories")
 
         # Desktop view
         print("\n7. Checking desktop view...")
@@ -115,10 +133,13 @@ def main():
         desktop_news_screenshot = session.browser.agent.screenshot()
         print(f"Desktop news screenshot saved: {desktop_news_screenshot}")
 
-        desktop_news_result = session.browser.agent.extract(
-            "How many story items are visible on the desktop view?"
+        success, desktop_news_result = session.browser.agent.extract(
+            ExtractOptions(instruction="How many story items are visible on the desktop view?", schema=TextContent)
         )
-        print(f"Desktop view stories: {desktop_news_result.extracted_content}")
+        if success:
+            print(f"Desktop view stories: {desktop_news_result.content}")
+        else:
+            print("Failed to extract desktop view stories")
 
         # Test orientation change
         print("\n8. Testing landscape orientation...")

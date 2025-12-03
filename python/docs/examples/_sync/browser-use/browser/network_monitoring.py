@@ -18,6 +18,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AgentBay, CreateSessionParams
+from agentbay import BrowserOption, ActOptions, ExtractOptions
 
 
 def main():
@@ -51,7 +52,7 @@ def main():
         # Analyze network activity
         print("\n2. Analyzing network activity...")
         network_result = session.browser.agent.extract(
-            "What resources were loaded on this page? (images, scripts, stylesheets)"
+            ExtractOptions(instruction="What resources were loaded on this page? (images, scripts, stylesheets)")
         )
         print(f"Network activity:\n{network_result.extracted_content}")
 
@@ -62,7 +63,7 @@ def main():
         # Check for API calls
         print("\n4. Checking for API calls...")
         api_result = session.browser.agent.extract(
-            "Are there any API or AJAX requests being made?"
+            ExtractOptions(instruction="Are there any API or AJAX requests being made?")
         )
         print(f"API calls: {api_result.extracted_content}")
 
@@ -71,7 +72,7 @@ def main():
         session.browser.agent.navigate("https://httpbin.org/image/png")
         
         resource_result = session.browser.agent.extract(
-            "What type of resource is displayed on this page?"
+            ExtractOptions(instruction="What type of resource is displayed on this page?")
         )
         print(f"Resource type: {resource_result.extracted_content}")
 
@@ -80,7 +81,7 @@ def main():
         session.browser.agent.navigate("https://httpbin.org/json")
         
         json_result = session.browser.agent.extract(
-            "What is the content type and structure of the response?"
+            ExtractOptions(instruction="What is the content type and structure of the response?")
         )
         print(f"JSON response:\n{json_result.extracted_content}")
 
@@ -89,7 +90,7 @@ def main():
         session.browser.agent.navigate("https://httpbin.org/redirect/1")
         
         redirect_result = session.browser.agent.extract(
-            "What is the final URL after redirect?"
+            ExtractOptions(instruction="What is the final URL after redirect?")
         )
         print(f"Redirect result: {redirect_result.extracted_content}")
 
@@ -98,7 +99,7 @@ def main():
         session.browser.agent.navigate("https://httpbin.org/status/200")
         
         status_result = session.browser.agent.extract(
-            "What is displayed on this page?"
+            ExtractOptions(instruction="What is displayed on this page?")
         )
         print(f"Status 200 result: {status_result.extracted_content}")
 
@@ -107,7 +108,7 @@ def main():
         session.browser.agent.navigate("https://example.com")
         
         perf_result = session.browser.agent.extract(
-            "How long did it take for the page to load? (if timing info is visible)"
+            ExtractOptions(instruction="How long did it take for the page to load? (if timing info is visible)")
         )
         print(f"Performance: {perf_result.extracted_content}")
 

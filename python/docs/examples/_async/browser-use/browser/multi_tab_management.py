@@ -63,7 +63,7 @@ async def main():
 
         # Open second tab by navigating to a new URL
         print("\n2. Opening second tab (httpbin.org)...)")
-        await session.browser.agent.act(ActOptions("Open a new tab and navigate to https://httpbin.org"))
+        await session.browser.agent.act(ActOptions(action="Open a new tab and navigate to https://httpbin.org"))
         success, tab2_result = await session.browser.agent.extract(ExtractOptions(
             instruction="What is the page title?",
             schema=TextContent
@@ -75,31 +75,46 @@ async def main():
 
         # Extract information from current tab
         print("\n3. Extracting information from current tab...")
-        info_result = await session.browser.agent.extract("What HTTP testing endpoints are available?")
-        print(f"Available endpoints:\n{info_result.extracted_content}")
+        success, info_result = await session.browser.agent.extract(ExtractOptions(instruction="What HTTP testing endpoints are available?", schema=TextContent))
+        if success:
+            print(f"Available endpoints:\n{info_result.content}")
+        else:
+            print("Failed to extract endpoints")
 
         # Switch back to first tab
         print("\n4. Switching back to first tab...")
-        await session.browser.agent.act(ActOptions("Switch to the first tab"))
-        current_result = await session.browser.agent.extract("What is the current page URL?")
-        print(f"Current URL: {current_result.extracted_content}")
+        await session.browser.agent.act(ActOptions(action="Switch to the first tab"))
+        success, current_result = await session.browser.agent.extract(ExtractOptions(instruction="What is the current page URL?", schema=TextContent))
+        if success:
+            print(f"Current URL: {current_result.content}")
+        else:
+            print("Failed to extract current URL")
 
         # Open third tab
         print("\n5. Opening third tab (github.com)...")
-        await session.browser.agent.act(ActOptions("Open a new tab and navigate to https://github.com"))
-        tab3_result = await session.browser.agent.extract("What is the page title?")
-        print(f"Tab 3 title: {tab3_result.extracted_content}")
+        await session.browser.agent.act(ActOptions(action="Open a new tab and navigate to https://github.com"))
+        success, tab3_result = await session.browser.agent.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent))
+        if success:
+            print(f"Tab 3 title: {tab3_result.content}")
+        else:
+            print("Failed to extract tab 3 title")
 
         # List all tabs
         print("\n6. Listing all open tabs...")
-        tabs_result = await session.browser.agent.extract("How many tabs are open and what are their URLs?")
-        print(f"Open tabs:\n{tabs_result.extracted_content}")
+        success, tabs_result = await session.browser.agent.extract(ExtractOptions(instruction="How many tabs are open and what are their URLs?", schema=TextContent))
+        if success:
+            print(f"Open tabs:\n{tabs_result.content}")
+        else:
+            print("Failed to extract tabs information")
 
         # Close a specific tab
         print("\n7. Closing the second tab...")
-        await session.browser.agent.act(ActOptions("Close the tab with httpbin.org"))
-        remaining_result = await session.browser.agent.extract("How many tabs are now open?")
-        print(f"Remaining tabs: {remaining_result.extracted_content}")
+        await session.browser.agent.act(ActOptions(action="Close the tab with httpbin.org"))
+        success, remaining_result = await session.browser.agent.extract(ExtractOptions(instruction="How many tabs are now open?", schema=TextContent))
+        if success:
+            print(f"Remaining tabs: {remaining_result.content}")
+        else:
+            print("Failed to extract remaining tabs information")
 
         print("\n=== Example completed successfully ===")
 
@@ -117,4 +132,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

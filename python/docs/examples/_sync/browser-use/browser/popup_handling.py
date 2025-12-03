@@ -18,6 +18,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AgentBay, CreateSessionParams
+from agentbay import BrowserOption, ActOptions, ExtractOptions
 
 
 def main():
@@ -50,44 +51,44 @@ def main():
         # Trigger an alert (via JavaScript)
         print("\n2. Testing alert dialog...")
         session.browser.agent.act(
-            "Execute JavaScript: alert('This is a test alert')"
+            ActOptions(action="Execute JavaScript: alert('This is a test alert')")
         )
         print("Alert triggered")
 
         # Handle the alert
-        session.browser.agent.act("Accept the alert dialog")
+        session.browser.agent.act(ActOptions(action="Accept the alert dialog"))
         print("Alert handled")
 
         # Test confirm dialog
         print("\n3. Testing confirm dialog...")
         session.browser.agent.act(
-            "Execute JavaScript: confirm('Do you want to continue?')"
+            ActOptions(action="Execute JavaScript: confirm('Do you want to continue?')")
         )
         print("Confirm dialog triggered")
 
         # Accept confirm
-        session.browser.agent.act("Accept the confirm dialog")
+        session.browser.agent.act(ActOptions(action="Accept the confirm dialog"))
         print("Confirm dialog accepted")
 
         # Test prompt dialog
         print("\n4. Testing prompt dialog...")
         session.browser.agent.act(
-            "Execute JavaScript: prompt('Please enter your name:', 'John Doe')"
+            ActOptions(action="Execute JavaScript: prompt('Please enter your name:', 'John Doe')")
         )
         print("Prompt dialog triggered")
 
         # Handle prompt
-        session.browser.agent.act("Enter 'Test User' in the prompt and submit")
+        session.browser.agent.act(ActOptions(action="Enter 'Test User' in the prompt and submit"))
         print("Prompt handled")
 
         # Test modal-like overlay
         print("\n5. Testing modal overlay...")
         session.browser.agent.act(
-            "Execute JavaScript to create a modal overlay: "
+            ActOptions(action="Execute JavaScript to create a modal overlay: "
             "var modal = document.createElement('div'); "
             "modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:2px solid black;z-index:1000'; "
-            "modal.innerHTML = '<h2>Modal Dialog</h2><p>This is a modal</p><button onclick=\"this.parentElement.remove()\">Close</button>'; "
-            "document.body.appendChild(modal)"
+            "modal.innerHTML = '<h2>Modal Dialog</h2><p>This is a modal</p><button onclick="this.parentElement.remove()">Close</button>'; "
+            "document.body.appendChild(modal)")
         )
         print("Modal created")
 
@@ -98,28 +99,28 @@ def main():
 
         # Close modal
         print("\n7. Closing modal...")
-        session.browser.agent.act("Click the Close button in the modal")
+        session.browser.agent.act(ActOptions(action="Click the Close button in the modal"))
         print("Modal closed")
 
         # Verify modal is closed
         print("\n8. Verifying modal is closed...")
         verify_result = session.browser.agent.extract(
-            "Is there a modal dialog visible on the page?"
+            ExtractOptions(instruction="Is there a modal dialog visible on the page?")
         )
         print(f"Modal status: {verify_result.extracted_content}")
 
         # Test new window/tab popup
         print("\n9. Testing new window popup...")
         session.browser.agent.act(
-            "Execute JavaScript to open a new window: "
-            "window.open('https://httpbin.org', '_blank', 'width=600,height=400')"
+            ActOptions(action="Execute JavaScript to open a new window: "
+            "window.open('https://httpbin.org', '_blank', 'width=600,height=400')")
         )
         print("New window opened")
 
         # Check for new windows
         print("\n10. Checking for new windows...")
         windows_result = session.browser.agent.extract(
-            "How many browser windows or tabs are open?"
+            ExtractOptions(instruction="How many browser windows or tabs are open?")
         )
         print(f"Open windows: {windows_result.extracted_content}")
 

@@ -16,7 +16,13 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay import BrowserOption
+from agentbay import BrowserOption, ActOptions, ExtractOptions
+from pydantic import BaseModel, Field
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 async def main():
@@ -48,22 +54,25 @@ async def main():
 
         # Execute simple JavaScript
         print("\n2. Executing JavaScript to get page title...")
-        await session.browser.agent.act("Execute JavaScript: console.log(document.title)")
-        title_result = await session.browser.agent.extract("What is the document title?")
-        print(f"Page title: {title_result.extracted_content}")
+        await session.browser.agent.act(ActOptions(action="Execute JavaScript: console.log(document.title)"))
+        success, title_result = await session.browser.agent.extract(ExtractOptions(instruction="What is the document title?", schema=TextContent))
+        if success:
+            print(f"Page title: {title_result.content}")
+        else:
+            print("Failed to extract page title")
 
         # Get window dimensions
         print("\n3. Getting window dimensions via JavaScript...")
-        await session.browser.agent.act(
-            "Execute JavaScript to log window dimensions: "
+        await session.browser.agent.act(ActOptions(
+            action="Execute JavaScript to log window dimensions: "
             "console.log('Width:', window.innerWidth, 'Height:', window.innerHeight)"
-        )
+        ))
 
         # Manipulate DOM
         print("\n4. Manipulating DOM with JavaScript...")
-        await session.browser.agent.act(
-            "Execute JavaScript to change the page background color to light blue"
-        )
+        await session.browser.agent.act(ActOptions(
+            action="Execute JavaScript to change the page background color to light blue"
+        ))
         print("Background color changed")
 
         # Take screenshot to verify change
@@ -73,10 +82,14 @@ async def main():
 
         # Extract computed styles
         print("\n6. Extracting computed styles...")
-        style_result = await session.browser.agent.extract(
-            "What is the background color of the page body?"
-        )
-        print(f"Background color: {style_result.extracted_content}")
+        success, style_result = await session.browser.agent.extract(ExtractOptions(
+            instruction="What is the background color of the page body?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Background color: {style_result.content}")
+        else:
+            print("Failed to extract background color")
 
         # Navigate to a page with more content
         print("\n7. Navigating to a page with more content...")
@@ -84,25 +97,33 @@ async def main():
 
         # Count elements using JavaScript
         print("\n8. Counting story elements...")
-        await session.browser.agent.act(
-            "Execute JavaScript to count the number of story links on the page"
-        )
-        count_result = await session.browser.agent.extract(
-            "How many story items are on the page?"
-        )
-        print(f"Story count: {count_result.extracted_content}")
+        await session.browser.agent.act(ActOptions(
+            action="Execute JavaScript to count the number of story links on the page"
+        ))
+        success, count_result = await session.browser.agent.extract(ExtractOptions(
+            instruction="How many story items are on the page?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Story count: {count_result.content}")
+        else:
+            print("Failed to extract story count")
 
         # Scroll page using JavaScript
         print("\n9. Scrolling page with JavaScript...")
-        await session.browser.agent.act("Scroll down the page by 500 pixels")
+        await session.browser.agent.act(ActOptions(action="Scroll down the page by 500 pixels"))
         print("Page scrolled")
 
         # Get scroll position
         print("\n10. Getting scroll position...")
-        scroll_result = await session.browser.agent.extract(
-            "What is the current scroll position of the page?"
-        )
-        print(f"Scroll position: {scroll_result.extracted_content}")
+        success, scroll_result = await session.browser.agent.extract(ExtractOptions(
+            instruction="What is the current scroll position of the page?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Scroll position: {scroll_result.content}")
+        else:
+            print("Failed to extract scroll position")
 
         print("\n=== Example completed successfully ===")
 
