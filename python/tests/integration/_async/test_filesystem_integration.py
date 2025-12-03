@@ -102,7 +102,7 @@ async def test_create_directory(filesystem_session):
     # Verify the directory exists
     list_result = fs.list_directory("/tmp/")
     assert list_result.success
-    entry_names = [entry["name"] for entry in list_result.entries]
+    entry_names = [entry.name for entry in list_result.entries]
     assert "test_directory" in entry_names
 
 
@@ -172,8 +172,8 @@ async def test_list_directory(filesystem_session):
 
     entries = result.entries
     assert len(entries) > 0
-    assert "name" in entries[0]
-    assert "isDirectory" in entries[0]
+    assert hasattr(entries[0], 'name')
+    assert hasattr(entries[0], 'is_directory')
 
 
 async def test_move_file(filesystem_session):

@@ -133,7 +133,7 @@ class TestMobileSystemIntegration:
         Test sending a key press event.
         """
         try:
-            result = mobile_session.ui.send_key(KeyCode.HOME)
+            result = mobile_session.ui.send_key(KeyCode.KEYCODE_HOME)
             assert isinstance(result, BoolResult)
             assert result.success, f"Failed to send key: {result.error_message}"
             print("\nSent HOME key successfully.")

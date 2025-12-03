@@ -37,11 +37,11 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
         # Initialize the AgentBay client
         self.ab = AsyncAgentBay(self.api_key)
 
-    def test_context_sync_with_mapping_policy(self):
+    async def test_context_sync_with_mapping_policy(self):
         """Test that context sync works with MappingPolicy for cross-platform persistence."""
         # 1. Create a unique context name
         context_name = f"test-mapping-policy-{int(time.time())}"
-        context_result = self.ab.context.get(name=context_name, create=True)
+        context_result = await self.ab.context.get(name=context_name, create=True)
         self.assertIsNotNone(context_result.context)
 
         context = context_result.context
@@ -78,7 +78,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             )
 
             # Create Windows session
-            windows_session_result = self.ab.create(windows_session_params)
+            windows_session_result = await self.ab.create(windows_session_params)
             self.assertIsNotNone(windows_session_result.session)
 
             windows_session = windows_session_result.session
@@ -130,7 +130,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
 
             # Delete Windows session
             print("Deleting Windows session...")
-            windows_delete_result = self.ab.delete(windows_session)
+            windows_delete_result = await self.ab.delete(windows_session)
             print(
                 f"Windows session deleted: {windows_session.session_id} (RequestID: {windows_delete_result.request_id})"
             )
@@ -163,7 +163,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             )
 
             # Create Linux session
-            linux_session_result = self.ab.create(linux_session_params)
+            linux_session_result = await self.ab.create(linux_session_params)
             self.assertIsNotNone(linux_session_result.session)
 
             linux_session = linux_session_result.session
@@ -239,14 +239,14 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
 
             finally:
                 # Ensure Linux session is deleted
-                delete_result = self.ab.delete(linux_session)
+                delete_result = await self.ab.delete(linux_session)
                 print(
                     f"Linux session deleted: {linux_session.session_id} (RequestID: {delete_result.request_id})"
                 )
 
         finally:
             # Ensure context is deleted
-            delete_context_result = self.ab.context.delete(context)
+            delete_context_result = await self.ab.context.delete(context)
             print(
                 f"Context deleted: {context.id} (RequestID: {delete_context_result.request_id})"
             )

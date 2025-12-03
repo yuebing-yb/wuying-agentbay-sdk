@@ -89,7 +89,7 @@ def test_press_key(session):
     print("\nTest: Press HOME key...")
 
     # Act - Press HOME key
-    result = session.mobile.send_key(KeyCode.HOME)
+    result = session.mobile.send_key(KeyCode.KEYCODE_HOME)
 
     # Assert
     assert result.success, f"Press key failed: {result.error_message}"

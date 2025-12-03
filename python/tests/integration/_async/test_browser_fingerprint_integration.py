@@ -134,7 +134,7 @@ class TestBrowserFingerprintIntegration:
             page = await context.new_page()
             await page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = await page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
@@ -212,7 +212,7 @@ class TestBrowserFingerprintIntegration:
             page = await context.new_page()
             await page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = await page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
@@ -280,7 +280,7 @@ class TestBrowserFingerprintIntegration:
             page = await context.new_page()
             await page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = await page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
@@ -350,7 +350,7 @@ class TestBrowserFingerprintIntegration:
             page = await context.new_page()
             await page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = await page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print(f"Remote user agent: {user_agent}")
@@ -436,7 +436,7 @@ class TestBrowserFingerprintIntegration:
             page = await context.new_page()
             await page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = await page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print(f"Remote user agent: {user_agent}")

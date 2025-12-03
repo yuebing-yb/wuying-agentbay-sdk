@@ -137,7 +137,7 @@ class TestBrowserFingerprintIntegration:
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
@@ -215,7 +215,7 @@ class TestBrowserFingerprintIntegration:
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
@@ -283,7 +283,7 @@ class TestBrowserFingerprintIntegration:
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
@@ -353,7 +353,7 @@ class TestBrowserFingerprintIntegration:
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print(f"Remote user agent: {user_agent}")
@@ -439,7 +439,7 @@ class TestBrowserFingerprintIntegration:
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
             response = page.evaluate(
-                "() => JSON.parse(document.body.textContent)"
+                "() => JSON.parse(document.querySelector('pre').textContent)"
             )
             user_agent = response["user-agent"]
             print(f"Remote user agent: {user_agent}")

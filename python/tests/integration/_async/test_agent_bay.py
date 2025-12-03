@@ -74,14 +74,14 @@ class TestAsyncAgentBay(unittest.TestCase):
             if original_key is not None:
                 os.environ["AGENTBAY_API_KEY"] = original_key
 
-    def test_create_list_delete(self):
+    async def test_create_list_delete(self):
         """Test create, list, and delete methods."""
         api_key = get_test_api_key()
         agent_bay = AsyncAgentBay(api_key=api_key)
 
         # Create a session
         print("Creating a new session...")
-        result = agent_bay.create()
+        result = await agent_bay.create()
 
         # Check if session creation was successful
         self.assertTrue(
@@ -98,7 +98,7 @@ class TestAsyncAgentBay(unittest.TestCase):
 
         # Delete the session
         print("Deleting the session...")
-        agent_bay.delete(session)
+        await agent_bay.delete(session)
 
         # Session deletion completed
 
@@ -106,14 +106,14 @@ class TestAsyncAgentBay(unittest.TestCase):
 class TestSession(unittest.TestCase):
     """Test cases for the Session class."""
 
-    def setUp(self):
+    async def setUp(self):
         """Set up test fixtures."""
         api_key = get_test_api_key()
         self.agent_bay = AsyncAgentBay(api_key=api_key)
 
         # Create a session with default windows image
         print("Creating a new session for testing...")
-        self.result = self.agent_bay.create()
+        self.result = await self.agent_bay.create()
 
         # Check if session creation was successful
         if not self.result.success:
@@ -128,7 +128,7 @@ class TestSession(unittest.TestCase):
         """Tear down test fixtures."""
         print("Cleaning up: Deleting the session...")
         try:
-            self.agent_bay.delete(self.session)
+            await self.agent_bay.delete(self.session)
         except Exception as e:
             print(f"Warning: Error deleting session: {e}")
 
@@ -150,7 +150,7 @@ class TestSession(unittest.TestCase):
         """Test session delete method."""
         # Create a new session specifically for this test
         print("Creating a new session for delete testing...")
-        result = self.agent_bay.create()
+        result = await self.agent_bay.create()
         session = result.session
         print(f"Session created with ID: {session.session_id}")
 
@@ -232,7 +232,7 @@ class TestRecyclePolicy(unittest.TestCase):
         if self.session:
             try:
                 print("Cleaning up session with custom recyclePolicy...")
-                delete_result = self.agent_bay.delete(self.session)
+                delete_result = await self.agent_bay.delete(self.session)
                 print(
                     f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
                 )
@@ -276,7 +276,7 @@ class TestRecyclePolicy(unittest.TestCase):
         )
 
         # Create session with custom recyclePolicy
-        create_result = self.agent_bay.create(params)
+        create_result = await self.agent_bay.create(params)
 
         # Verify SessionResult structure
         self.assertTrue(create_result.success)
@@ -389,7 +389,7 @@ class TestBrowserContext(unittest.TestCase):
         if self.session:
             try:
                 print("Cleaning up session with BrowserContext...")
-                delete_result = self.agent_bay.delete(self.session)
+                delete_result = await self.agent_bay.delete(self.session)
                 print(
                     f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
                 )
@@ -415,7 +415,7 @@ class TestBrowserContext(unittest.TestCase):
         )
 
         # Create session with BrowserContext
-        create_result = self.agent_bay.create(params)
+        create_result = await self.agent_bay.create(params)
 
         # Verify SessionResult structure
         self.assertTrue(create_result.success)
