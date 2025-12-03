@@ -153,8 +153,9 @@ describe("FileSystem Watch Directory Tests", () => {
         mockController.signal
       );
 
-      // Let it run to capture all events
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Let it run to capture all events - need enough time for 3 polling cycles
+      // Each cycle takes 50ms + processing time, so 300ms should be sufficient
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Stop watching
       mockController.abort();
