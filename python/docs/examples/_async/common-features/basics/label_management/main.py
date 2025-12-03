@@ -45,7 +45,7 @@ async def main():
 
         # Get labels for the session
         print("\nGetting labels for the session...")
-        labels_result = session1.get_labels()
+        labels_result = await session1.get_labels()
         print(f"Session labels: {labels_result.data}")
         print(f"Request ID: {labels_result.request_id}")
 
@@ -76,7 +76,7 @@ async def main():
 
         # Get updated labels for the second session
         print("\nGetting updated labels for the second session...")
-        labels_result = session2.get_labels()
+        labels_result = await session2.get_labels()
         print(f"Updated session labels: {labels_result.data}")
         print(f"Request ID: {labels_result.request_id}")
 
