@@ -72,10 +72,14 @@ class ObserveResult:
 
     def __init__(
         self,
+        selector: str,
+        description: str,
         method: str,
         arguments: Union[str, Dict[str, Any]],
         success: bool = True,
     ):
+        self.selector = selector
+        self.description = description
         self.method = method
         self.arguments = arguments
         self.success = success
