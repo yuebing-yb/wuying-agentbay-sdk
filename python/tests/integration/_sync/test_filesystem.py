@@ -96,7 +96,7 @@ def test_create_directory(fs):
     # Verify the directory exists
     list_result = fs.list_directory("/tmp/")
     assert list_result.success
-    entry_names = [entry["name"] for entry in list_result.entries]
+    entry_names = [entry.name for entry in list_result.entries]
     assert "test_directory" in entry_names
 
 
@@ -157,8 +157,11 @@ def test_list_directory(fs):
 
     entries = result.entries
     assert len(entries) > 0
-    assert "name" in entries[0]
-    assert "isDirectory" in entries[0]
+    # Check that we have DirectoryEntry objects with proper attributes
+    assert hasattr(entries[0], 'name')
+    assert hasattr(entries[0], 'is_directory')
+    assert isinstance(entries[0].name, str)
+    assert isinstance(entries[0].is_directory, bool)
 
 
 @pytest.mark.sync

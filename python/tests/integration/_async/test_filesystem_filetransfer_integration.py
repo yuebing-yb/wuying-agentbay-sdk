@@ -87,21 +87,10 @@ async def test_file_upload_integration():
         pytest.skip("AGENTBAY_API_KEY environment variable not set")
 
     agent_bay = AsyncAgentBay(api_key=api_key)
-    # Create a unique context for testing
-    context_name = f"file-transfer-test-upload-{int(time.time())}"
-    context_result = await agent_bay.context.get(context_name, True)
-    if not context_result.success or not context_result.context:
-        pytest.skip("Failed to create context")
-
-    context = context_result.context
-    print(f"Context created with ID: {context.id}")
-
-    # Create browser session with context for testing
-    browser_context = BrowserContext(context_id=context.id, auto_upload=True)
-
+    
+    # Create a simple session - let AgentBay handle context creation automatically
     params = CreateSessionParams(
-        image_id="browser_latest",  # Use browser image for more comprehensive testing
-        browser_context=browser_context,
+        image_id="browser_latest",  # Use browser image for comprehensive testing
     )
 
     session_result = await agent_bay.create(params)
@@ -109,7 +98,8 @@ async def test_file_upload_integration():
         pytest.skip("Failed to create session")
 
     session = session_result.session
-    print(f"Browser session created with ID: {session.session_id}")
+    print(f"Session created with ID: {session.session_id}")
+    print(f"File transfer context ID: {session.file_transfer_context_id}")
 
     try:
         print("Testing file upload...")
@@ -122,12 +112,14 @@ async def test_file_upload_integration():
                 * 10
             )
             temp_file.write(test_content)
+            temp_file.flush()  # Ensure content is written to disk
             temp_file_path = temp_file.name
 
         try:
-            # Upload the file
-            remote_path = "/tmp/file_transfer_test/upload_test.txt"
-            upload_result = session.file_system.upload_file(
+            # Upload the file - use path that matches the auto-created file_transfer context
+            remote_path = "/tmp/file-transfer/upload_test.txt"  # Use the same path as auto-created context sync
+            
+            upload_result = await session.file_system.upload_file(
                 local_path=temp_file_path,
                 remote_path=remote_path,
             )
@@ -138,18 +130,18 @@ async def test_file_upload_integration():
             assert upload_result.request_id_upload_url is not None
             assert upload_result.request_id_sync is not None
 
-            ls_result = session.command.execute_command(
-                "ls -la /tmp/file_transfer_test/"
+            ls_result = await session.command.execute_command(
+                "ls -la /tmp/file-transfer/"
             )
             if not ls_result.success:
                 print("    ❌ fileTransfer directory not found")
                 assert False
 
-            print(f"    ✅ fileTransfer directory exists: /tmp/file_transfer_test/")
+            print(f"    ✅ fileTransfer directory exists: /tmp/file-transfer/")
             print(f"    Directory content:\n{ls_result.output}")
 
             # Verify file exists in remote location by listing directory
-            list_result = session.file_system.list_directory("/tmp/file_transfer_test/")
+            list_result = await session.file_system.list_directory("/tmp/file-transfer/")
             assert (
                 list_result.success
             ), f"Failed to list directory: {list_result.error_message}"
@@ -157,14 +149,14 @@ async def test_file_upload_integration():
             # Check if our uploaded file is in the directory listing
             file_found = False
             for entry in list_result.entries:
-                if entry.get("name") == "upload_test.txt":
+                if entry.name == "upload_test.txt":
                     file_found = True
                     break
 
             assert file_found, "Uploaded file not found in remote directory"
 
             # Verify file content by reading it back
-            read_result = session.file_system.read_file(remote_path)
+            read_result = await session.file_system.read_file(remote_path)
             assert (
                 read_result.success
             ), f"Failed to read uploaded file: {read_result.error_message}"
@@ -177,45 +169,27 @@ async def test_file_upload_integration():
     finally:
         # Clean up session and context
         try:
-            result = await agent_bay.delete(session, sync_context=True)
+            result = await session.delete()
             if result.success:
-                print("Session successfully deleted with context sync")
+                print("Session successfully deleted")
             else:
                 print(f"Warning: Error deleting session: {result.error_message}")
         except Exception as e:
             print(f"Warning: Error deleting session: {e}")
 
-        try:
-            await agent_bay.context.delete(context)
-            print("Context successfully deleted")
-        except Exception as e:
-            print(f"Warning: Error deleting context: {e}")
-
 
 @pytest.mark.asyncio
 async def test_file_download_integration():
     """Test complete file download workflow with real session and verification."""
-    # Create an agent bay instance
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         pytest.skip("AGENTBAY_API_KEY environment variable not set")
 
     agent_bay = AsyncAgentBay(api_key=api_key)
-    # Create a unique context for testing
-    context_name = f"file-transfer-test-download-{int(time.time())}"
-    context_result = await agent_bay.context.get(context_name, True)
-    if not context_result.success or not context_result.context:
-        pytest.skip("Failed to create context")
-
-    context = context_result.context
-    print(f"Context created with ID: {context.id}")
-
-    # Create browser session with context for testing
-    browser_context = BrowserContext(context_id=context.id, auto_upload=True)
-
+    
+    # Create a simple session - let AgentBay handle context creation automatically
     params = CreateSessionParams(
-        image_id="browser_latest",  # Use browser image for more comprehensive testing
-        browser_context=browser_context,
+        image_id="browser_latest",  # Use browser image for comprehensive testing
     )
 
     session_result = await agent_bay.create(params)
@@ -223,32 +197,34 @@ async def test_file_download_integration():
         pytest.skip("Failed to create session")
 
     session = session_result.session
-    print(f"Browser session created with ID: {session.session_id}")
+    print(f"Session created with ID: {session.session_id}")
+    print(f"File transfer context ID: {session.file_transfer_context_id}")
 
     try:
         # First, create a file in the remote location
-        remote_path = "/tmp/file_transfer_test/download_test.txt"
+        remote_path = "/tmp/file-transfer/download_test.txt"
         test_content = (
             "This is a test file for AgentBay FileTransfer download integration test.\n"
             * 15
         )
         print("\n Creating test directory...")
-        create_dir_result = session.file_system.create_directory(
-            "/tmp/file_transfer_test/"
+        
+        create_dir_result = await session.file_system.create_directory(
+            "/tmp/file-transfer/"
         )
         print(f"Create directory result: {create_dir_result.success}")
         assert create_dir_result.success
-        write_result = session.file_system.write_file(remote_path, test_content)
+        write_result = await session.file_system.write_file(remote_path, test_content)
         assert (
             write_result.success
         ), f"Failed to create remote file: {write_result.error_message}"
 
-        ls_result = session.command.execute_command("ls -la /tmp/file_transfer_test/")
+        ls_result = await session.command.execute_command("ls -la /tmp/file-transfer/")
         if not ls_result.success:
             print("    ❌ fileTransfer directory not found")
             return False
 
-        print(f"    ✅ fileTransfer directory exists: /tmp/file_transfer_test/")
+        print(f"    ✅ fileTransfer directory exists: /tmp/file-transfer/")
         print(f"    Directory content:\n{ls_result.output}")
         # Create a temporary file path for download
         with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as temp_file:
@@ -256,7 +232,7 @@ async def test_file_download_integration():
 
         try:
             # Download the file
-            download_result = session.file_system.download_file(
+            download_result = await session.file_system.download_file(
                 remote_path=remote_path,
                 local_path=temp_file_path,
             )
@@ -284,16 +260,10 @@ async def test_file_download_integration():
     finally:
         # Clean up session and context
         try:
-            result = await agent_bay.delete(session, sync_context=True)
+            result = await session.delete()
             if result.success:
-                print("Session successfully deleted with context sync")
+                print("Session successfully deleted")
             else:
                 print(f"Warning: Error deleting session: {result.error_message}")
         except Exception as e:
             print(f"Warning: Error deleting session: {e}")
-
-        try:
-            await agent_bay.context.delete(context)
-            print("Context successfully deleted")
-        except Exception as e:
-            print(f"Warning: Error deleting context: {e}")

@@ -88,7 +88,7 @@ async def test_initialize_browser(browser_session):
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
-    await asyncio.sleep(10)
+    await asyncio.sleep(1)  # Reduced for faster testing  # Reduced for faster testing
 
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
@@ -125,7 +125,7 @@ async def test_initialize_browser_with_fingerprint(browser_session):
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
-    await asyncio.sleep(10)
+    await asyncio.sleep(3)  # Reduced for faster testing
 
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
@@ -147,6 +147,7 @@ async def test_initialize_browser_with_fingerprint(browser_session):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(120)  # 2 minute timeout for captcha test
 async def test_initialize_browser_with_captchas(browser_session):
     print("solve captchas begin")
     browser = browser_session.browser
@@ -167,7 +168,7 @@ async def test_initialize_browser_with_captchas(browser_session):
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
-    await asyncio.sleep(10)
+    await asyncio.sleep(3)  # Reduced for faster testing
 
     async with async_playwright() as p:
         playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
@@ -187,7 +188,7 @@ async def test_initialize_browser_with_captchas(browser_session):
         await page.click("#next_step1")
 
         # Wait for potential captcha handling and navigation
-        await asyncio.sleep(30)
+        await asyncio.sleep(10)  # Reduced from 30s for faster testing
         # href changed indicates captcha solved
         current_url_location = await page.evaluate(
             "() => window.location && window.location.href"
@@ -294,6 +295,7 @@ async def test_extract_success(browser_session):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(180)  # 3 minute timeout for proxy test
 async def test_restricted_proxy_ip_comparison(browser_session):
     """Test restricted proxy by comparing IP addresses before and after proxy setup."""
     # This test requires creating two sessions, so we might not use the fixture for everything
@@ -314,7 +316,7 @@ async def test_restricted_proxy_ip_comparison(browser_session):
     print(f"endpoint_url = {endpoint_url}")
     assert endpoint_url is not None
 
-    await asyncio.sleep(5)
+    await asyncio.sleep(2)  # Reduced for faster testing
 
     # Get original IP
     original_ip = None
@@ -375,7 +377,7 @@ async def test_restricted_proxy_ip_comparison(browser_session):
         endpoint_url2 = await browser2.get_endpoint_url()
         print(f"proxy mode endpoint_url = {endpoint_url2}")
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)  # Reduced for faster testing
 
         # Get proxy IP
         proxy_ip = None
@@ -419,6 +421,7 @@ async def test_restricted_proxy_ip_comparison(browser_session):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(240)  # 4 minute timeout for polling proxy test
 async def test_polling_proxy_multiple_ips(browser_session):
     """Test polling proxy with multiple pages to observe different IPs."""
     browser = browser_session.browser
@@ -445,7 +448,7 @@ async def test_polling_proxy_multiple_ips(browser_session):
     endpoint_url = await browser.get_endpoint_url()
     print(f"endpoint_url = {endpoint_url}")
 
-    await asyncio.sleep(5)
+    await asyncio.sleep(2)  # Reduced for faster testing
 
     # Create multiple pages and collect IPs
     async with async_playwright() as p:
@@ -529,7 +532,7 @@ async def test_polling_proxy_multiple_ips(browser_session):
                         ip = None
                 ips_collected.append(ip)
                 print(f"page {i+1} IP: {ip}")
-                await asyncio.sleep(2)  # wait for proxy to change
+                await asyncio.sleep(1)  # wait for proxy to change - reduced for faster testing
             except Exception as e:
                 print(f"page {i+1} get IP failed: {e}")
                 ips_collected.append(None)

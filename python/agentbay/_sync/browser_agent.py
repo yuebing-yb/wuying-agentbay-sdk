@@ -73,11 +73,31 @@ class ObserveResult:
     Result of the observe method.
     """
 
-    def __init__(self, selector: str, description: str, method: str, arguments: dict):
-        self.selector = selector
-        self.description = description
+    def __init__(
+        self,
+        method: str,
+        arguments: Union[str, Dict[str, Any]],
+        success: bool = True,
+    ):
         self.method = method
         self.arguments = arguments
+        self.success = success
+
+
+class ExtractResult:
+    """
+    Result of the extract method for simple string-based extractions.
+    """
+
+    def __init__(
+        self,
+        success: bool,
+        extracted_content: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
+        self.success = success
+        self.extracted_content = extracted_content
+        self.metadata = metadata or {}
 
 
 class ExtractOptions(Generic[T]):
@@ -237,7 +257,7 @@ class BrowserAgent(BaseService):
 
     def act(
         self,
-        action_input: Union[ObserveResult, ActOptions],
+        action_input: Union[str, ObserveResult, ActOptions],
         page=None,
     ) -> "ActResult":
         """
@@ -246,7 +266,8 @@ class BrowserAgent(BaseService):
         Args:
             page (Optional[Page]): The Playwright Page object to act on. If None, the agent's
                                    currently focused page will be used automatically.
-            action_input (Union[ObserveResult, ActOptions]): The action to perform.
+            action_input (Union[str, ObserveResult, ActOptions]): The action to perform.
+                        If str, it will be converted to ActOptions automatically.
 
         Returns:
             ActResult: The result of the action.
@@ -254,6 +275,10 @@ class BrowserAgent(BaseService):
         if not self.browser.is_initialized():
             raise BrowserError("Browser must be initialized before calling act.")
         try:
+            # Convert string to ActOptions if needed
+            if isinstance(action_input, str):
+                action_input = ActOptions(action_input)
+            
             page_id, context_id = self._get_page_and_context_index(page)
             return self._execute_act(action_input, context_id, page_id)
         except Exception as e:
@@ -481,28 +506,88 @@ class BrowserAgent(BaseService):
 
     def extract(
         self,
-        options: ExtractOptions,
+        options: Union[str, ExtractOptions],
         page=None,
-    ) -> Tuple[bool, T]:
+    ) -> Union["ExtractResult", Tuple[bool, T]]:
         """
         Asynchronously extract information from a web page.
 
         Args:
             page (Optional[Page]): The Playwright Page object to extract from. If None, the agent's
                                    currently focused page will be used.
-            options (ExtractOptions): Options to configure the extraction, including schema.
+            options (Union[str, ExtractOptions]): Options to configure the extraction.
+                   If str, it will be treated as an instruction for simple text extraction.
 
         Returns:
-            Tuple[bool, T]: A tuple containing a success boolean and the extracted data as a
-                            Pydantic model instance, or None on failure.
+            Union[ExtractResult, Tuple[bool, T]]: For string input, returns ExtractResult.
+                                                 For ExtractOptions input, returns Tuple[bool, T].
         """
         if not self.browser.is_initialized():
             raise BrowserError("Browser must be initialized before calling extract.")
         try:
             page_id, context_id = self._get_page_and_context_index(page)
+            
+            # Handle string input for simple extraction
+            if isinstance(options, str):
+                return self._execute_simple_extract(options, context_id, page_id)
+            
             return self._execute_extract(options, context_id, page_id)
         except Exception as e:
             raise BrowserError(f"Failed to extract: {e}")
+
+    def _execute_simple_extract(
+        self,
+        instruction: str,
+        context_id: int,
+        page_id: Optional[str],
+    ) -> "ExtractResult":
+        """Execute simple text extraction with string instruction."""
+        _logger.debug(f"Simple extracting page_id: {page_id}, context_id: {context_id}")
+        
+        # Create a simple text schema for basic extraction
+        simple_schema = {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "description": "The extracted text content"
+                }
+            },
+            "required": ["content"]
+        }
+        
+        args = {
+            "instruction": instruction,
+            "context_id": context_id,
+            "page_id": page_id,
+            "field_schema": "schema: " + json.dumps(simple_schema),
+            "use_text_extract": True,
+        }
+        args = {k: v for k, v in args.items() if v is not None}
+
+        response = self._call_mcp_tool_timeout("page_use_extract", args)
+        if not response.success:
+            raise BrowserError(f"Failed to start extract task: {response.error_message}")
+
+        _logger.info("Extract completed immediately, validating response")
+        
+        # Extract content from response
+        content = ""
+        if hasattr(response, 'result') and response.result:
+            if isinstance(response.result, dict):
+                content = response.result.get("content", "")
+            elif isinstance(response.result, str):
+                try:
+                    result_data = json.loads(response.result)
+                    content = result_data.get("content", "")
+                except:
+                    content = response.result
+        
+        return ExtractResult(
+            success=True,
+            extracted_content=content,
+            metadata={"instruction": instruction}
+        )
 
     def _execute_extract(
         self,

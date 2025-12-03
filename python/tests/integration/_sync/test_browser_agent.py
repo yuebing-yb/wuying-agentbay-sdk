@@ -90,7 +90,7 @@ def test_initialize_browser(browser_session):
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
-    time.sleep(10)
+    time.sleep(1)  # Reduced for faster testing  # Reduced for faster testing
 
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
@@ -127,7 +127,7 @@ def test_initialize_browser_with_fingerprint(browser_session):
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
-    time.sleep(10)
+    time.sleep(3)  # Reduced for faster testing
 
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
@@ -149,6 +149,7 @@ def test_initialize_browser_with_fingerprint(browser_session):
 
 
 @pytest.mark.sync
+@pytest.mark.timeout(120)  # 2 minute timeout for captcha test
 def test_initialize_browser_with_captchas(browser_session):
     print("solve captchas begin")
     browser = browser_session.browser
@@ -169,7 +170,7 @@ def test_initialize_browser_with_captchas(browser_session):
     print("endpoint_url =", endpoint_url)
     assert endpoint_url is not None
 
-    time.sleep(10)
+    time.sleep(3)  # Reduced for faster testing
 
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
@@ -189,7 +190,7 @@ def test_initialize_browser_with_captchas(browser_session):
         page.click("#next_step1")
 
         # Wait for potential captcha handling and navigation
-        time.sleep(30)
+        time.sleep(10)  # Reduced from 30s for faster testing
         # href changed indicates captcha solved
         current_url_location = page.evaluate(
             "() => window.location && window.location.href"
@@ -296,6 +297,7 @@ def test_extract_success(browser_session):
 
 
 @pytest.mark.sync
+@pytest.mark.timeout(180)  # 3 minute timeout for proxy test
 def test_restricted_proxy_ip_comparison(browser_session):
     """Test restricted proxy by comparing IP addresses before and after proxy setup."""
     # This test requires creating two sessions, so we might not use the fixture for everything
@@ -316,7 +318,7 @@ def test_restricted_proxy_ip_comparison(browser_session):
     print(f"endpoint_url = {endpoint_url}")
     assert endpoint_url is not None
 
-    time.sleep(5)
+    time.sleep(2)  # Reduced for faster testing
 
     # Get original IP
     original_ip = None
@@ -377,7 +379,7 @@ def test_restricted_proxy_ip_comparison(browser_session):
         endpoint_url2 = browser2.get_endpoint_url()
         print(f"proxy mode endpoint_url = {endpoint_url2}")
 
-        time.sleep(5)
+        time.sleep(2)  # Reduced for faster testing
 
         # Get proxy IP
         proxy_ip = None
@@ -421,6 +423,7 @@ def test_restricted_proxy_ip_comparison(browser_session):
 
 
 @pytest.mark.sync
+@pytest.mark.timeout(240)  # 4 minute timeout for polling proxy test
 def test_polling_proxy_multiple_ips(browser_session):
     """Test polling proxy with multiple pages to observe different IPs."""
     browser = browser_session.browser
@@ -447,7 +450,7 @@ def test_polling_proxy_multiple_ips(browser_session):
     endpoint_url = browser.get_endpoint_url()
     print(f"endpoint_url = {endpoint_url}")
 
-    time.sleep(5)
+    time.sleep(2)  # Reduced for faster testing
 
     # Create multiple pages and collect IPs
     with sync_playwright() as p:
@@ -531,7 +534,7 @@ def test_polling_proxy_multiple_ips(browser_session):
                         ip = None
                 ips_collected.append(ip)
                 print(f"page {i+1} IP: {ip}")
-                time.sleep(2)  # wait for proxy to change
+                time.sleep(1)  # wait for proxy to change - reduced for faster testing
             except Exception as e:
                 print(f"page {i+1} get IP failed: {e}")
                 ips_collected.append(None)
