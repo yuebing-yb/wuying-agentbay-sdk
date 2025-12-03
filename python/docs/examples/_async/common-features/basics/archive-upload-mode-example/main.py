@@ -141,10 +141,16 @@ async def archive_upload_mode_example(agent_bay, unique_id):
         
         # Call context sync before getting info
         print("🔄 Calling context sync before getting info...")
+        sync_result = session.context.sync()
+        if sync_result.success:
+            print("✅ Context sync verified via info call")
+        
+        if not sync_result.success:
+            raise Exception(f"Context sync failed: {sync_result.error_message}")
 
-        # Sync is typically handled automatically when writing files, so just check info
-        # The session's filesystem operations already trigger context synchronization
-        print("ℹ️  Context synchronization is handled by file operations")
+        print(f"✅ Context sync successful!")
+        print(f"   Sync Request ID: {sync_result.request_id}")
+
 
         # Use await session.context.info() to check status
         print("📋 Calling context info...")
