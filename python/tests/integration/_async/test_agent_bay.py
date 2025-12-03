@@ -105,10 +105,10 @@ class TestAsyncAgentBay(unittest.TestCase):
         # Session deletion completed
 
 
-class TestSession(unittest.TestCase):
+class TestSession(unittest.IsolatedAsyncioTestCase):
     """Test cases for the Session class."""
 
-    async def setUp(self):
+    async def asyncSetUp(self):
         """Set up test fixtures."""
         api_key = get_test_api_key()
         self.agent_bay = AsyncAgentBay(api_key=api_key)
@@ -126,12 +126,11 @@ class TestSession(unittest.TestCase):
         self.session = self.result.session
         print(f"Session created with ID: {self.session.session_id}")
 
-    def tearDown(self):
+    async def asyncTearDown(self):
         """Tear down test fixtures."""
         print("Cleaning up: Deleting the session...")
         try:
-            import asyncio
-            asyncio.run(self.agent_bay.delete(self.session))
+            await self.agent_bay.delete(self.session)
         except Exception as e:
             print(f"Warning: Error deleting session: {e}")
 
@@ -221,23 +220,22 @@ class TestSession(unittest.TestCase):
             print("Note: FileSystem interface is nil, skipping file test")
 
 
-class TestRecyclePolicy(unittest.TestCase):
+class TestRecyclePolicy(unittest.IsolatedAsyncioTestCase):
     """Test cases for RecyclePolicy functionality."""
 
-    def setUp(self):
+    async def asyncSetUp(self):
         """Set up test fixtures."""
         api_key = get_test_api_key()
         self.agent_bay = AsyncAgentBay(api_key=api_key)
         self.session = None
 
-    def tearDown(self):
+    async def asyncTearDown(self):
         """Tear down test fixtures."""
         # Clean up session
         if self.session:
             try:
                 print("Cleaning up session with custom recyclePolicy...")
-                import asyncio
-                delete_result = asyncio.run(self.agent_bay.delete(self.session))
+                delete_result = await self.agent_bay.delete(self.session)
                 print(
                     f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
                 )
@@ -380,16 +378,16 @@ class TestRecyclePolicy(unittest.TestCase):
         print("Combined invalid configuration test completed successfully")
 
 
-class TestBrowserContext(unittest.TestCase):
+class TestBrowserContext(unittest.IsolatedAsyncioTestCase):
     """Test cases for BrowserContext functionality."""
 
-    def setUp(self):
+    async def asyncSetUp(self):
         """Set up test fixtures."""
         api_key = get_test_api_key()
         self.agent_bay = AsyncAgentBay(api_key=api_key)
         self.session = None
 
-    def tearDown(self):
+    async def asyncTearDown(self):
         """Tear down test fixtures."""
         # Clean up session
         if self.session:
@@ -402,7 +400,8 @@ class TestBrowserContext(unittest.TestCase):
             except Exception as e:
                 print(f"Warning: Error deleting session: {e}")
 
-    def test_create_session_with_browser_context_default_recycle_policy(self):
+    @pytest.mark.asyncio
+    async def test_create_session_with_browser_context_default_recycle_policy(self):
         """Test creating session with BrowserContext using default RecyclePolicy."""
         print("Testing session creation with BrowserContext (default RecyclePolicy)...")
 

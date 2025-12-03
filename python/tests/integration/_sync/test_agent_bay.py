@@ -133,7 +133,6 @@ class TestSession(unittest.TestCase):
         """Tear down test fixtures."""
         print("Cleaning up: Deleting the session...")
         try:
-            import asyncio
             self.agent_bay.delete(self.session)
         except Exception as e:
             print(f"Warning: Error deleting session: {e}")
@@ -239,7 +238,6 @@ class TestRecyclePolicy(unittest.TestCase):
         if self.session:
             try:
                 print("Cleaning up session with custom recyclePolicy...")
-                import asyncio
                 delete_result = self.agent_bay.delete(self.session)
                 print(
                     f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
@@ -405,6 +403,7 @@ class TestBrowserContext(unittest.TestCase):
             except Exception as e:
                 print(f"Warning: Error deleting session: {e}")
 
+    @pytest.mark.sync
     def test_create_session_with_browser_context_default_recycle_policy(self):
         """Test creating session with BrowserContext using default RecyclePolicy."""
         print("Testing session creation with BrowserContext (default RecyclePolicy)...")
