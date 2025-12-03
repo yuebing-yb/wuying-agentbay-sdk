@@ -22,58 +22,6 @@ Mobile module for mobile device UI automation and configuration.
 Handles touch operations, UI element interactions, application management, screenshot capabilities,
 and mobile environment configuration operations.
 
-## UIElementListResult
-
-```python
-class UIElementListResult(ApiResponse)
-```
-
-Result of UI element listing operations.
-
-## KeyCode
-
-```python
-class KeyCode()
-```
-
-Key codes for mobile device input.
-
-#### HOME
-
-```python
-HOME = 3
-```
-
-#### BACK
-
-```python
-BACK = 4
-```
-
-#### VOLUME\_UP
-
-```python
-VOLUME_UP = 24
-```
-
-#### VOLUME\_DOWN
-
-```python
-VOLUME_DOWN = 25
-```
-
-#### POWER
-
-```python
-POWER = 26
-```
-
-#### MENU
-
-```python
-MENU = 82
-```
-
 ## Mobile
 
 ```python

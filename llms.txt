@@ -289,6 +289,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - [ADB Connection Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/mobile-use/adb-connection.md)
 - [Application Management for Mobile Use](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/mobile-use/mobile-application-management.md)
 - [Mobile Session Configuration](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/mobile-use/mobile-session-configuration.md)
+- [Mobile Device Simulation](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/mobile-use/mobile-simulate.md)
 - [Mobile UI Automation Guide](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/guides/mobile-use/mobile-ui-automation.md)
 - [Quick Start Guide for Beginners](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/quickstart/README.md)
 - [Core Concepts](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/docs/quickstart/basic-concepts.md)
