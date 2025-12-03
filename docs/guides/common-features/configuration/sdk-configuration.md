@@ -229,10 +229,11 @@ find . -name ".env" -o -name ".git" -type d 2>/dev/null | head -10
 **Example:** Error shows `'HostId': 'wuyingai.ap-southeast-1.aliyuncs.com'` but you expected to connect to Shanghai gateway.
 
 **Solution:**
-- Check if your API key belongs to the correct gateway region
-- Ensure `AGENTBAY_ENDPOINT` matches your API key's gateway region
-- Shanghai API keys work with `wuyingai.cn-shanghai.aliyuncs.com` gateway endpoint
-- Singapore API keys work with `wuyingai.ap-southeast-1.aliyuncs.com` gateway endpoint
+- Check if your API key matches the gateway region you're trying to use
+- Ensure `AGENTBAY_ENDPOINT` matches your API key's region
+- Domestic (China) API keys typically work with China mainland gateway endpoints (e.g., `wuyingai.cn-shanghai.aliyuncs.com`)
+- International API keys typically work with international gateway endpoints (e.g., `wuyingai.ap-southeast-1.aliyuncs.com`)
+- API keys are region-specific and cannot be used across different gateway regions
 
 #### 4. Wrong Endpoint/Network Issues
 **Error:** `Failed to resolve 'invalid-endpoint.com'` or `NameResolutionError`
