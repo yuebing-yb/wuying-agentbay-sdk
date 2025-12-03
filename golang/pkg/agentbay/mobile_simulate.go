@@ -136,7 +136,7 @@ func (m *MobileSimulateService) HasMobileInfo(contextSync *ContextSync) (bool, e
 		return false, fmt.Errorf("contextSync.Path is required")
 	}
 
-	mobileDevInfoPath := contextSync.Path + MobileInfoSubPath + "/"
+	mobileDevInfoPath := contextSync.Path + MobileInfoSubPath
 	result, err := m.contextService.ListFiles(contextSync.ContextID, mobileDevInfoPath, 1, 50)
 
 	if err != nil {

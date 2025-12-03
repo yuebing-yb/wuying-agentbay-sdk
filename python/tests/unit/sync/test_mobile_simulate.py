@@ -3,10 +3,10 @@ import unittest
 from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import (
-    SyncMobileSimulateService,
+    MobileSimulateService,
     MobileSimulateUploadResult,
 )
-from agentbay.api.models import MobileSimulateConfig, MobileSimulateMode
+from agentbay import MobileSimulateConfig, MobileSimulateMode
 from agentbay import Context
 from agentbay import BWList, ContextSync, SyncPolicy
 
@@ -33,7 +33,7 @@ class TestAsyncMobileSimulateService(unittest.TestCase):
     def setUp(self):
         self.agent_bay = MagicMock()
         self.agent_bay.context = MagicMock()
-        self.mobile_simulate_service = SyncMobileSimulateService(self.agent_bay)
+        self.mobile_simulate_service = MobileSimulateService(self.agent_bay)
 
     def test_initialization(self):
         """Test service initialization with default values"""
@@ -51,7 +51,7 @@ class TestAsyncMobileSimulateService(unittest.TestCase):
     def test_initialization_without_agent_bay(self):
         """Test initialization fails without agent_bay"""
         with self.assertRaises(ValueError) as context:
-            SyncMobileSimulateService(None)
+            MobileSimulateService(None)
         self.assertIn("agent_bay is required", str(context.exception))
 
     def test_initialization_without_context(self):
@@ -59,7 +59,7 @@ class TestAsyncMobileSimulateService(unittest.TestCase):
         agent_bay = MagicMock()
         agent_bay.context = None
         with self.assertRaises(ValueError) as context:
-            SyncMobileSimulateService(agent_bay)
+            MobileSimulateService(agent_bay)
         self.assertIn("agent_bay.context is required", str(context.exception))
 
     def test_set_and_get_simulate_enable(self):

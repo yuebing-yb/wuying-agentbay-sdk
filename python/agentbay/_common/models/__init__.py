@@ -8,6 +8,7 @@ from .browser import *
 from .fingerprint import *
 from .filesystem import *
 from .mcp_tool import *
+from .mobile_simulate import *
 from .response import *
 
 # Re-export all from submodules

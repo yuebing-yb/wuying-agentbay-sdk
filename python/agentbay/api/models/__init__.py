@@ -14,6 +14,8 @@ from ._create_mcp_session_request import (
     CreateMcpSessionRequestPersistenceDataList,
     ExtraConfigs,
     MobileExtraConfig,
+    MobileSimulateConfig,
+    MobileSimulateMode,
 )
 from ._create_mcp_session_response import CreateMcpSessionResponse
 from ._create_mcp_session_response_body import (
@@ -133,7 +135,6 @@ from ._set_label_response_body import SetLabelResponseBody
 from ._sync_context_request import SyncContextRequest
 from ._sync_context_response import SyncContextResponse
 from ._sync_context_response_body import SyncContextResponseBody
-from .mobile_simulate import MobileSimulateConfig, MobileSimulateMode
 
 __all__ = [
     CallMcpToolRequest,

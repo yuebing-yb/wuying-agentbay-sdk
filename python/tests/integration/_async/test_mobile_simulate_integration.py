@@ -1,89 +1,187 @@
-import json
 import os
-from uuid import uuid4
+import asyncio
 
 import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
-from agentbay.api.models import MobileSimulateMode
-from agentbay import Context
-from agentbay import BWList, ContextSync, SyncPolicy
+from agentbay import MobileExtraConfig, MobileSimulateMode
+from agentbay import AsyncSession
+from agentbay import CreateSessionParams, ExtraConfigs
+from agentbay import AsyncMobileSimulateService
+
+
+MOBILE_INFO_MODEL_A = "SM-A505F"
+MOBILE_INFO_MODEL_B = "moto g stylus 5G - 2024"
+
+mobile_sim_persistence_context_id = None
 
 
 @pytest_asyncio.fixture(scope="module")
 async def agent_bay():
-    """Create AsyncAgentBay instance."""
-    api_key = os.environ.get("AGENTBAY_API_KEY")
-    if not api_key:
-        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    """
+    Set up the test environment by creating an AsyncAgentBay instance.
+    """
+    api_key = os.getenv(
+        "AGENTBAY_API_KEY", "your_api_key"
+    )  # Replace with your actual API key
     return AsyncAgentBay(api_key=api_key)
 
 
 @pytest.mark.asyncio
-async def test_mobile_simulate_basic_flow(agent_bay):
-    """Test basic mobile simulate flow."""
-    service = agent_bay.mobile_simulate
+async def test_mobile_simulate_for_model_a(agent_bay):
+    """
+    Test device properties after mobile simulate for model a.
+    """
+    global mobile_sim_persistence_context_id
+    # Get a mobile dev info file from DumpSDK or real device library
+    print("Upload mobile dev info file...")
+    mobile_sim_persistence_context_id = None
+    mobile_info_file_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))), 
+            "resource", "mobile_info_model_a.json"
+    )
+    with open(mobile_info_file_path, "r") as f:
+        mobile_info_content = f.read()
+    
+    # Create mobile simulate service and set simulate params
+    simulate_service = AsyncMobileSimulateService(agent_bay)
+    simulate_service.set_simulate_enable(True)
+    simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+    
+    upload_result = await simulate_service.upload_mobile_info(mobile_info_content)
+    assert upload_result.success, f"Failed to upload mobile dev info file: {upload_result.error_message}"
+    mobile_sim_persistence_context_id = upload_result.mobile_simulate_context_id
+    print(f"Mobile dev info uploaded successfully: {mobile_sim_persistence_context_id}")
 
-    # 1. Set configs
-    service.set_simulate_enable(True)
-    service.set_simulate_mode(MobileSimulateMode.ALL)
-    assert service.get_simulate_enable() is True
-    assert service.get_simulate_mode() == MobileSimulateMode.ALL
+    params = CreateSessionParams(
+        image_id="mobile_latest",
+        extra_configs=ExtraConfigs(
+            mobile=MobileExtraConfig(
+                simulate_config=simulate_service.get_simulate_config()
+            )
+        )
+    )
+    result = await agent_bay.create(params)
+    session = None
+    assert result.success, "Failed to create session"
+    assert result.session is not None, "Session should not be None"
+    session = result.session
+    print(f"Session created successfully: {session.session_id}")
 
-    # 2. Upload mobile info (internal context)
-    mobile_info = json.dumps({"device": "pixel_6", "os_version": "12"})
-    upload_result = await service.upload_mobile_info(mobile_info)
-    assert upload_result.success is True
-    context_id = upload_result.mobile_simulate_context_id
-    assert context_id is not None
-    print(f"Uploaded mobile info to internal context: {context_id}")
+    # Wait for mobile simulate to complete
+    await asyncio.sleep(5)
+    print("Getting device model after mobile simulate for model a...")
+    result = await session.command.execute_command("getprop ro.product.model")
+    assert result.success, "Failed to get device model"
+    model_a_product_model = result.output.strip()
+    print(f"Simulated model a mobile product model: {model_a_product_model}")
+    assert model_a_product_model == MOBILE_INFO_MODEL_A, f"Device model should be {MOBILE_INFO_MODEL_A}"
 
-    # 3. Verify config has context id
-    config = service.get_simulate_config()
-    assert config.simulate is True
-    assert config.simulate_mode == MobileSimulateMode.ALL
-    assert config.simulated_context_id == context_id
+    await asyncio.sleep(2)
+    print("Deleting session...")
+    delete_result = await agent_bay.delete(session)
+    assert delete_result.success, "Failed to delete session"
+    print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
-    # Cleanup context
-    await agent_bay.context.delete(Context(id=context_id, name=""))
 
 
 @pytest.mark.asyncio
-async def test_mobile_simulate_external_context(agent_bay):
-    """Test mobile simulate with external context."""
-    service = agent_bay.mobile_simulate
+async def test_mobile_simulate_for_model_b(agent_bay):
+    """
+    Test device properties after mobile simulate for model b.
+    """
+    # Get a mobile dev info file from DumpSDK or real device library
+    print("Upload mobile model b dev info file...")
+    mobile_sim_context_id = None
+    mobile_info_file_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))), 
+            "resource", "mobile_info_model_b.json"
+    )
+    with open(mobile_info_file_path, "r") as f:
+        mobile_info_content = f.read()
+    
+    # Create mobile simulate service and set simulate params
+    simulate_service = AsyncMobileSimulateService(agent_bay)
+    simulate_service.set_simulate_enable(True)
+    simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+    
+    upload_result = await simulate_service.upload_mobile_info(mobile_info_content)
+    assert upload_result.success, f"Failed to upload mobile dev info file: {upload_result.error_message}"
+    mobile_sim_context_id = upload_result.mobile_simulate_context_id
+    print(f"Mobile model b dev info uploaded successfully: {mobile_sim_context_id}")
 
-    # Create a context first
-    context_name = f"mobile-sim-ext-{uuid4().hex[:8]}"
-    context_result = await agent_bay.context.create(context_name)
-    assert context_result.success is True
-    context = context_result.context
-
-    try:
-        # Create context sync
-        context_sync = ContextSync(
-            context_id=context.id,
-            path="/tmp/mobile_sim_test",
-            policy=SyncPolicy(bw_list=BWList(white_lists=[])),
+    params = CreateSessionParams(
+        image_id="mobile_latest",
+        extra_configs=ExtraConfigs(
+            mobile=MobileExtraConfig(
+                simulate_config=simulate_service.get_simulate_config()
+            )
         )
+    )
+    result = await agent_bay.create(params)
+    session = None
+    assert result.success, "Failed to create session"
+    assert result.session is not None, "Session should not be None"
+    session = result.session
+    print(f"Session created successfully: {session.session_id}")
 
-        # Upload mobile info
-        mobile_info = json.dumps({"device": "iphone_13", "os_version": "15"})
-        upload_result = await service.upload_mobile_info(
-            mobile_info, context_sync=context_sync
+    # Wait for mobile simulate to complete
+    await asyncio.sleep(5)
+    print("Getting device model after mobile simulate for model b...")
+    result = await session.command.execute_command("getprop ro.product.model")
+    assert result.success, "Failed to get device model"
+    model_b_product_model = result.output.strip()
+    print(f"Simulated model b mobile product model: {model_b_product_model}")
+    assert model_b_product_model == MOBILE_INFO_MODEL_B, f"Device model should be {MOBILE_INFO_MODEL_B}"
+
+    await asyncio.sleep(2)
+    print("Deleting session...")
+    delete_result = await agent_bay.delete(session)
+    assert delete_result.success, "Failed to delete session"
+    print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
+
+
+
+@pytest.mark.asyncio
+async def test_mobile_simulate_persistence(agent_bay):
+    """
+    Using model a simulate context to test persistence mobile simulate across sessions.
+    """
+    global mobile_sim_persistence_context_id
+    # Directly use model a simulate context id to do mobile simulate across sessions.
+    # Create mobile simulate service and set simulate params
+    simulate_service = AsyncMobileSimulateService(agent_bay)
+    simulate_service.set_simulate_enable(True)
+    simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
+    simulate_service.set_simulate_context_id(mobile_sim_persistence_context_id)
+    
+    params = CreateSessionParams(
+        image_id="mobile_latest",
+        extra_configs=ExtraConfigs(
+            mobile=MobileExtraConfig(
+                simulate_config=simulate_service.get_simulate_config()
+            )
         )
-        assert upload_result.success is True
-        assert upload_result.mobile_simulate_context_id == context.id
+    )
+    result = await agent_bay.create(params)
+    session = None
+    assert result.success, "Failed to create session"
+    assert result.session is not None, "Session should not be None"
+    session = result.session
+    print(f"Session created successfully: {session.session_id}")
 
-        # Check has_mobile_info
-        has_info = await service.has_mobile_info(context_sync)
-        assert has_info is True
+    # Wait for mobile simulate to complete
+    await asyncio.sleep(5)
+    print("Getting device model after mobile simulate...")
+    result = await session.command.execute_command("getprop ro.product.model")
+    assert result.success, "Failed to get device model"
+    persistence_product_model = result.output.strip()
+    print(f"Persistent simulated mobile product model: {persistence_product_model}")
+    assert persistence_product_model == MOBILE_INFO_MODEL_A, f"Device model should be {MOBILE_INFO_MODEL_A}"
 
-        # Verify config
-        config = service.get_simulate_config()
-        # For external context, simulated_context_id is None in config (it is managed by user)
-        assert config.simulated_context_id is None
-
-    finally:
-        await agent_bay.context.delete(context)
+    await asyncio.sleep(2)
+    print("Deleting session...")
+    delete_result = await agent_bay.delete(session)
+    assert delete_result.success, "Failed to delete session"
+    print(f"Session deleted successfully (RequestID: {delete_result.request_id})")

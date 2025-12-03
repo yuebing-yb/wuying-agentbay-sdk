@@ -11,6 +11,7 @@ from .._common.config import (
     _MOBILE_INFO_SUB_PATH,
 )
 from .._common.logger import get_logger
+from .._common.models import MobileSimulateUploadResult
 from ..api.models import MobileSimulateConfig, MobileSimulateMode
 from .context_sync import WhiteList
 
@@ -22,29 +23,6 @@ if TYPE_CHECKING:
 
 # Initialize logger for this module
 _logger = get_logger("mobile_simulate")
-
-
-class MobileSimulateUploadResult:
-    """
-    Result of the upload mobile info for mobile simulate.
-
-    Args:
-        success (bool): Whether the operation was successful.
-        mobile_simulate_context_id (str): The context ID of the mobile info.
-            Defaults to "".
-        error_message (str): The error message if the operation failed.
-            Defaults to "".
-    """
-
-    def __init__(
-        self,
-        success: bool,
-        mobile_simulate_context_id: str = "",
-        error_message: str = "",
-    ):
-        self.success = success
-        self.mobile_simulate_context_id = mobile_simulate_context_id
-        self.error_message = error_message
 
 
 class AsyncMobileSimulateService:

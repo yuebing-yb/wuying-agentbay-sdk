@@ -59,6 +59,7 @@ def generate_sync():
         "AsyncBrowserAgent": "BrowserAgent",
         "AsyncBrowserFingerprintGenerator": "BrowserFingerprintGenerator",
         "AsyncBaseService": "BaseService",
+        "AsyncMobileSimulateService": "MobileSimulateService",
         "AsyncExtensionsService": "ExtensionsService",
 
         # Variable/Attribute Renames

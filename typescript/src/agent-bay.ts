@@ -15,7 +15,6 @@ import { Session } from "./session";
 import { BrowserContext } from "./session-params";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
-import { MobileSimulateService } from "./mobile-simulate";
 
 import {
   DeleteResult,
@@ -96,11 +95,6 @@ export class AgentBay {
   context: ContextService;
 
   /**
-   * Mobile simulate service for managing mobile simulation configuration.
-   */
-  mobileSimulate: MobileSimulateService;
-
-  /**
    * Initialize the AgentBay client.
    *
    * @param options - Configuration options
@@ -145,9 +139,6 @@ export class AgentBay {
 
       // Initialize context service
       this.context = new ContextService(this);
-      
-      // Initialize mobile simulate service
-      this.mobileSimulate = new MobileSimulateService(this);
     } catch (error) {
       logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);

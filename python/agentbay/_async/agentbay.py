@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_tea_openapi.exceptions._client import ClientException
 
-from .._common.config import _BROWSER_DATA_PATH, _load_config
+from .._common.config import _BROWSER_DATA_PATH, _MOBILE_INFO_DEFAULT_PATH, _load_config
 from .._common.logger import (
     _log_api_call,
     _log_api_response_with_details,
@@ -36,7 +36,6 @@ from .._common.version import __is_release__, __version__
 from ..api.client import Client as mcp_client
 from ..api.models import CreateMcpSessionRequest, GetSessionRequest, ListSessionRequest
 from .context import AsyncContextService
-from .mobile_simulate import AsyncMobileSimulateService
 from .session import AsyncSession
 from .session_params import CreateSessionParams
 
@@ -133,9 +132,6 @@ class AsyncAgentBay:
         # Initialize context service
         self.context = AsyncContextService(self)
         self._file_transfer_context: Optional[Any] = None
-
-        # Initialize mobile simulate service
-        self.mobile_simulate = AsyncMobileSimulateService(self)
 
     def _safe_serialize(self, obj):
         """
@@ -469,6 +465,23 @@ class AsyncAgentBay:
         try:
             if params is None:
                 params = CreateSessionParams()
+
+            # Add context syncs for mobile simulate if simulated_context_id is provided
+            if hasattr(params, "extra_configs") and params.extra_configs:
+                if params.extra_configs.mobile and params.extra_configs.mobile.simulate_config:
+                    mobile_sim_context_id = params.extra_configs.mobile.simulate_config.simulated_context_id
+                    if mobile_sim_context_id:
+                        from .context_sync import ContextSync
+
+                        mobile_sim_context_sync = ContextSync(
+                            context_id=mobile_sim_context_id,
+                            path=_MOBILE_INFO_DEFAULT_PATH)
+                        if not hasattr(params, "context_syncs") or params.context_syncs is None:
+                            params.context_syncs = []
+                        _logger.info(
+                            f"Adding context sync for mobile simulate: {mobile_sim_context_sync}"
+                        )
+                        params.context_syncs.append(mobile_sim_context_sync)
 
             # Create a default context for file transfer operations if none provided
             # and no context_syncs are specified

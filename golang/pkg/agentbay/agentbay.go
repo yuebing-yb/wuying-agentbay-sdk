@@ -95,13 +95,6 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 	// Initialize context service
 	agentBay.Context = &ContextService{AgentBay: agentBay}
 
-	// Initialize mobile simulate service
-	mobileSimulateService, err := NewMobileSimulateService(agentBay)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize mobile simulate service: %v", err)
-	}
-	agentBay.MobileSimulate = mobileSimulateService
-
 	return agentBay, nil
 }
 
@@ -141,6 +134,37 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if params == nil {
 		params = NewCreateSessionParams()
+	}
+
+	// Flag to indicate if we need to wait for mobile simulate
+	needsMobileSim := false
+	var mobileSimMode models.MobileSimulateMode
+	var mobileSimPath string
+
+	// Process mobile simulate configuration
+	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil && params.ExtraConfigs.Mobile.SimulateConfig != nil {
+		// Check if simulated context id is provided
+		mobileSimContextID := params.ExtraConfigs.Mobile.SimulateConfig.SimulatedContextID
+		if mobileSimContextID != "" {
+			mobileSimContextSync := &ContextSync{
+				ContextID: mobileSimContextID,
+				Path:      MobileInfoDefaultPath,
+			}
+			if params.ContextSync == nil {
+				params.ContextSync = []*ContextSync{}
+			}
+			fmt.Printf("Adding context sync for mobile simulate: %+v\n", mobileSimContextSync)
+			params.ContextSync = append(params.ContextSync, mobileSimContextSync)
+		}
+
+		// Check if we need to execute mobile simulate command
+		if params.ExtraConfigs.Mobile.SimulateConfig.Simulate {
+			mobileSimPath = params.ExtraConfigs.Mobile.SimulateConfig.SimulatePath
+			if mobileSimPath != "" {
+				needsMobileSim = true
+				mobileSimMode = params.ExtraConfigs.Mobile.SimulateConfig.SimulateMode
+			}
+		}
 	}
 
 	createSessionRequest := &mcp.CreateMcpSessionRequest{
@@ -184,10 +208,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// Add extra configs if provided
-	mobileSimPath := ""
-	needsMobileSim := false
-	mobileSimMode := ""
-
 	if params.ExtraConfigs != nil {
 		extraConfigsJSON, err := params.GetExtraConfigsJSON()
 		if err != nil {
@@ -195,16 +215,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 		if extraConfigsJSON != "" {
 			createSessionRequest.ExtraConfigs = tea.String(extraConfigsJSON)
-		}
-
-		// Check mobile simulate config
-		if params.ExtraConfigs.Mobile != nil && params.ExtraConfigs.Mobile.SimulateConfig != nil && params.ExtraConfigs.Mobile.SimulateConfig.Simulate {
-			mobileSimPath = params.ExtraConfigs.Mobile.SimulateConfig.SimulatePath
-			if mobileSimPath == "" {
-				mobileSimPath = MobileInfoDefaultPath
-			}
-			needsMobileSim = true
-			mobileSimMode = string(params.ExtraConfigs.Mobile.SimulateConfig.SimulateMode)
 		}
 	}
 
@@ -474,62 +484,54 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 }
 
 // waitForMobileSimulate waits for mobile simulate command to complete.
-func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string, mobileSimMode string) {
+func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string, mobileSimMode models.MobileSimulateMode) error {
 	fmt.Println("⏳ Mobile simulate: Waiting for completion")
 
 	if session.Mobile == nil {
 		fmt.Println("Mobile module not found in session, skipping mobile simulate")
-		return
+		return nil
 	}
 	if session.Command == nil {
 		fmt.Println("Command module not found in session, skipping mobile simulate")
-		return
+		return nil
 	}
 	if mobileSimPath == "" {
 		fmt.Println("Mobile simulate path is empty, skipping mobile simulate")
-		return
+		return nil
 	}
 
 	// Run mobile simulate command
 	startTime := time.Now()
-	devInfoFilePath := fmt.Sprintf("%s/dev_info.json", mobileSimPath)
+	devInfoFilePath := mobileSimPath + "/" + MobileInfoFileName
 	wyaApplyOption := ""
 
-	if mobileSimMode == "" || mobileSimMode == "PropertiesOnly" {
+	switch mobileSimMode {
+	case models.MobileSimulateModePropertiesOnly, "":
 		wyaApplyOption = ""
-	} else if mobileSimMode == "SensorsOnly" {
-		wyaApplyOption = "-sensors"
-	} else if mobileSimMode == "PackagesOnly" {
-		wyaApplyOption = "-packages"
-	} else if mobileSimMode == "ServicesOnly" {
-		wyaApplyOption = "-services"
-	} else if mobileSimMode == "All" {
-		wyaApplyOption = "-all"
+	case models.MobileSimulateModeSensorsOnly:
+		wyaApplyOption = " -sensors"
+	case models.MobileSimulateModePackagesOnly:
+		wyaApplyOption = " -packages"
+	case models.MobileSimulateModeServicesOnly:
+		wyaApplyOption = " -services"
+	case models.MobileSimulateModeAll:
+		wyaApplyOption = " -all"
 	}
 
-	cmdParts := []string{"chmod -R a+rwx " + mobileSimPath + ";", "wya", "apply"}
-	if wyaApplyOption != "" {
-		cmdParts = append(cmdParts, wyaApplyOption)
-	}
-	cmdParts = append(cmdParts, devInfoFilePath)
-
-	command := strings.Join(cmdParts, " ")
-	fmt.Printf("ℹ️  ⏳ Waiting for mobile simulate completion, command: %s\n", command)
+	command := fmt.Sprintf("chmod -R a+rwx %s; wya apply%s %s", mobileSimPath, wyaApplyOption, devInfoFilePath)
+	fmt.Printf("⏳ Waiting for mobile simulate completion, command: %s\n", command)
 
 	cmdResult, err := session.Command.ExecuteCommand(command)
 	if err != nil {
 		fmt.Printf("Failed to execute mobile simulate command: %v\n", err)
-		return
+		return nil
 	}
 
-	consumeTime := time.Since(startTime).Seconds()
-	if mobileSimMode == "" {
-		mobileSimMode = "PropertiesOnly"
-	}
-	fmt.Printf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds\n", mobileSimMode, consumeTime)
-	if cmdResult.Output != "" {
-		fmt.Printf("   Output: %s\n", strings.TrimSpace(cmdResult.Output))
-	}
+	duration := time.Since(startTime)
+	fmt.Printf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds\n", mobileSimMode, duration.Seconds())
+	fmt.Printf("   Output: %s\n", cmdResult.Output)
+
+	return nil
 }
 
 // ListSessionParams contains parameters for listing sessions

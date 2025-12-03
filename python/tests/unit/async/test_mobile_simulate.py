@@ -6,7 +6,7 @@ from agentbay import (
     AsyncMobileSimulateService,
     MobileSimulateUploadResult,
 )
-from agentbay.api.models import MobileSimulateConfig, MobileSimulateMode
+from agentbay import MobileSimulateConfig, MobileSimulateMode
 from agentbay import Context
 from agentbay import BWList, ContextSync, SyncPolicy
 

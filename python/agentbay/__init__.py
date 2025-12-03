@@ -58,12 +58,12 @@ from ._common.models.response import (
     GetSessionData,
     extract_request_id,
 )
-from ._sync.fingerprint import BrowserFingerprintGenerator
-from .api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from .api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule, MobileSimulateMode, MobileSimulateConfig
 
 # Sync API (Default)
 from ._sync.agentbay import AgentBay, _generate_random_context_name
 from ._sync.session import Session
+from ._sync.fingerprint import BrowserFingerprintGenerator
 from ._sync.browser import (
     Browser,
     BrowserAgent,
@@ -93,6 +93,7 @@ from ._sync.computer import (
     AppOperationResult,
 )
 from ._sync.mobile import Mobile, KeyCode, UIElementListResult
+from ._sync.mobile_simulate import MobileSimulateService
 from ._sync.agent import Agent, ExecutionResult
 from ._sync.command import Command, CommandResult
 from ._sync.filesystem import (
@@ -126,7 +127,7 @@ from ._sync.context import (
     ContextService,
 )
 from ._sync.code import Code, CodeExecutionResult
-from ._sync.mobile_simulate import MobileSimulateUploadResult, SyncMobileSimulateService
+from ._common.models import MobileSimulateUploadResult
 
 # Async API (Explicitly marked)
 from ._async.agentbay import AsyncAgentBay
@@ -270,7 +271,7 @@ __all__ = [
     "AppOperationResult",
     "UIElementListResult",
     "AsyncMobileSimulateService",
-    "SyncMobileSimulateService",
+    "MobileSimulateService",
     "MobileSimulateUploadResult",
     # Filesystem related
     "FileChangeEvent",
@@ -288,4 +289,6 @@ __all__ = [
     "ExtraConfigs",
     "MobileExtraConfig", 
     "AppManagerRule",
+    "MobileSimulateMode",
+    "MobileSimulateConfig",
 ]

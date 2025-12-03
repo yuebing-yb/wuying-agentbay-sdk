@@ -170,7 +170,7 @@ const BrowserRecordPath = "/home/wuying/record"
 const MobileInfoDefaultPath = "/data/agentbay_mobile_info"
 
 // MobileInfoSubPath is mobile dev info sub path constant when append to user's context path
-const MobileInfoSubPath = "/agentbay_mobile_info"
+const MobileInfoSubPath = "/agentbay_mobile_info/"
 
 // MobileInfoFileName is mobile dev info file name constant
 const MobileInfoFileName = "dev_info.json"
