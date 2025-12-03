@@ -190,12 +190,12 @@ class FileInfoResult(ApiResponse):
     @property
     def is_file(self) -> bool:
         """Check if the path is a file."""
-        return self.file_info.get("is_file", False)
+        return self.file_info.get("isFile", False)
     
     @property
     def is_directory(self) -> bool:
         """Check if the path is a directory."""
-        return self.file_info.get("is_directory", False)
+        return self.file_info.get("isDirectory", False)
     
     @property
     def size(self) -> int:
@@ -222,7 +222,8 @@ class DirectoryEntry:
     @property
     def is_file(self) -> bool:
         """Check if entry is a file."""
-        return self._data.get("is_file", False)
+        # Support both key formats for compatibility
+        return self._data.get("isFile", self._data.get("is_file", False))
     
     @property
     def is_directory(self) -> bool:
