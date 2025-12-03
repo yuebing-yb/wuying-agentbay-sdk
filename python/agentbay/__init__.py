@@ -36,7 +36,7 @@ from ._common.params.context_sync import (
     UploadStrategy,
     WhiteList,
 )
-from ._common.params.extension import Extension, ExtensionOption, ExtensionsService
+from ._sync.extension import Extension, ExtensionOption, ExtensionsService
 from ._common.params.session_params import (
     BrowserContext,
     CreateSessionParams,
