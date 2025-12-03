@@ -177,6 +177,7 @@ export AGENTBAY_REGION_ID=cn-hangzhou  # For Hangzhou region
 - `region_id` is optional - if not specified, AgentBay will use the default region
 - This setting determines where your actual cloud sessions run, which can affect performance and data locality
 - Choose a region close to your users or data sources for optimal performance
+- Available region IDs can be found in the [AgentBay Console](https://agentbay.console.aliyun.com/)
 - The `region_id` is automatically passed to session and context creation APIs when configured
 
 
