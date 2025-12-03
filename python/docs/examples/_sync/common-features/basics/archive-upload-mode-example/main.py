@@ -153,6 +153,9 @@ def archive_upload_mode_example(agent_bay, unique_id):
         print(f"✅ Context sync successful!")
         print(f"   Sync Request ID: {sync_result.request_id}")
 
+        print(f"✅ Context sync successful!")
+        print(f"   Sync Request ID: {sync_result.request_id}")
+
         # Now call context info after sync
         print("📋 Calling context info after sync...")
         info_result = session.context.info()

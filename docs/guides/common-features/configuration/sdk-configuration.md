@@ -52,14 +52,14 @@ Set configuration using shell commands:
 ```bash
 export AGENTBAY_API_KEY=your-api-key-here
 export AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
-export AGENTBAY_REGION_ID=cn-hangzhou
+export AGENTBAY_REGION_ID=ap-southeast-1
 ```
 
 **Windows:**
 ```cmd
 set AGENTBAY_API_KEY=your-api-key-here
 set AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
-set AGENTBAY_REGION_ID=cn-hangzhou
+set AGENTBAY_REGION_ID=ap-southeast-1
 ```
 
 ### Method 2: .env File
@@ -75,7 +75,7 @@ The SDK automatically searches for `.env` files using the following strategy:
 # .env file (can be placed in project root or any parent directory)
 AGENTBAY_API_KEY=your-api-key-here
 AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
-AGENTBAY_REGION_ID=cn-hangzhou
+AGENTBAY_REGION_ID=ap-southeast-1
 ```
 
 **File locations examples:**
@@ -119,7 +119,7 @@ from agentbay import AgentBay, Config
 # Hard-coded configuration (not recommended for production)
 config = Config(
     endpoint="wuyingai.ap-southeast-1.aliyuncs.com",
-    region_id="cn-hangzhou"
+    region_id="ap-southeast-1"
 )
 agent_bay = AgentBay(api_key="your-api-key-here", cfg=config)
 ```
@@ -134,7 +134,7 @@ async def main():
     # Hard-coded configuration (not recommended for production)
     config = Config(
         endpoint="wuyingai.ap-southeast-1.aliyuncs.com",
-        region_id="cn-hangzhou"
+        region_id="ap-southeast-1"
     )
     agent_bay = AsyncAgentBay(api_key="your-api-key-here", cfg=config)
     # Use agent_bay...
@@ -168,9 +168,9 @@ export AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
 To specify the region where your AgentBay sessions and contexts will be created:
 
 ```bash
-export AGENTBAY_REGION_ID=cn-hangzhou  # For Hangzhou region
-# or
 export AGENTBAY_REGION_ID=ap-southeast-1  # For Singapore region
+# or
+export AGENTBAY_REGION_ID=cn-hangzhou  # For Hangzhou region
 ```
 
 **Important Notes:**
