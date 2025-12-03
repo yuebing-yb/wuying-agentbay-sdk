@@ -121,7 +121,7 @@ class TestDeleteIntegration:
 
         # Delete using agentbay.delete method
         print("Deleting session using agentbay.delete method...")
-        delete_result = agent_bay.delete(session.session_id, sync_context=True)
+        delete_result = agent_bay.delete(session, sync_context=True)
         assert delete_result.success
         print(f"Session deleted successfully (RequestID: {delete_result.request_id})")
 
