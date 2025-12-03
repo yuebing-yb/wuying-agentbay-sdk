@@ -20,13 +20,13 @@ class TestGetCdpLinkIntegration:
             pytest.skip("AGENTBAY_API_KEY environment variable not set")
         return AsyncAgentBay(api_key=api_key)
 
-    def test_get_cdp_link_with_browser_session(self, agentbay):
+    async def test_get_cdp_link_with_browser_session(self, agentbay):
         """Test get_cdp_link with a real browser session"""
         from agentbay import CreateSessionParams
 
         # Create a browser session
         params = CreateSessionParams(image_id="browser_latest")
-        session_result = agentbay.create(params)
+        session_result = await agentbay.create(params)
         assert session_result is not None
         assert session_result.success is True
         assert session_result.session is not None
@@ -65,7 +65,7 @@ class TestGetCdpLinkIntegration:
 
         finally:
             # Clean up
-            session.delete()
+            await session.delete()
 
     def test_get_cdp_link_with_invalid_session(self, agentbay):
         """Test get_cdp_link with invalid session ID"""
