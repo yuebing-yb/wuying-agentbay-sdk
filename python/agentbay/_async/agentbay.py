@@ -34,7 +34,7 @@ from .._common.models import (
 )
 from .._common.version import __is_release__, __version__
 from ..api.client import Client as mcp_client
-from ..api.models import CreateMcpSessionRequest, GetSessionRequest, ListSessionRequest
+from ..api.models import CreateMcpSessionRequest, GetSessionRequest, ListSessionRequest, ResumeSessionAsyncRequest
 from .context import AsyncContextService
 from .session import AsyncSession
 from .session_params import CreateSessionParams
@@ -1355,7 +1355,7 @@ class AsyncAgentBay:
             SessionResumeResult: Result containing the request ID and success status.
         """
         try:
-            request = open_api_models.ResumeSessionAsyncRequest(
+            request = ResumeSessionAsyncRequest(
                 authorization=f"Bearer {self.api_key}",
                 session_id=session.session_id,
             )
