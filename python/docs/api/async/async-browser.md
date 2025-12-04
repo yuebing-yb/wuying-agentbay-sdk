@@ -81,7 +81,7 @@ Destroy the browser instance.
 session = await agent_bay.create().session
 browser_option = BrowserOption()
 await session.browser.initialize(browser_option)
-session.browser.destroy()
+await session.browser.destroy()
 await session.delete()
 ```
 

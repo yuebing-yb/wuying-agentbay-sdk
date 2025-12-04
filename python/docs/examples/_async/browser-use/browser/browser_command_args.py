@@ -101,7 +101,7 @@ async def main():
                     await asyncio.sleep(3)
                 finally:
                     await browser.close()
-                    session.browser.destroy()
+                    await session.browser.destroy()
         else:
             print("Failed to initialize browser")
 

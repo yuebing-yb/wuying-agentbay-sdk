@@ -117,34 +117,7 @@ class Browser(BaseService):
 
     def destroy(self):
         """
-        Destroy the browser instance.
-
-        Example:
-            ```python
-            session = await agent_bay.create().session
-            browser_option = BrowserOption()
-            await session.browser.initialize(browser_option)
-            session.browser.destroy()
-            await session.delete()
-            ```
-        """
-        # Destroy calls _stop_browser which calls call_mcp_tool.
-        # Since destroy is usually called in cleanup/finally, and call_mcp_tool is async,
-        # we should probably make destroy async too.
-        # However, destructors cannot be async.
-        # But this is an explicit destroy method.
-        # The original sync code used call_mcp_tool (sync).
-        # Here we should probably use fire and forget or force sync execution if it's critical?
-        # Or just make it async. The example shows session.browser.destroy() without await,
-        # but in async world everything interacting with IO should be async.
-        # I will make it async.
-        # Wait, I cannot change the signature if I want to keep consistency?
-        # But this is a new AsyncBrowser class.
-        pass
-
-    def destroy_async(self):
-        """
-        Destroy the browser instance asynchronously.
+        Destroy the browser instance manually.
         """
         self._stop_browser()
 
