@@ -20,7 +20,7 @@ def get_api_key():
     return api_key
 
 
-def test_watch_directory():
+async def test_watch_directory():
     """
     Test the watch_directory functionality by:
     1. Creating a session with code_latest ImageId
@@ -38,7 +38,7 @@ def test_watch_directory():
 
     # Create session with code_latest ImageId
     session_params = CreateSessionParams(image_id="code_latest")
-    session_result = agentbay.create(session_params)
+    session_result = await agentbay.create(session_params)
 
     if not session_result.success:
         print(f"❌ Failed to create session: {session_result.error_message}")
@@ -62,7 +62,7 @@ def test_watch_directory():
     try:
         # Create the test directory
         print("\n1. Creating test directory...")
-        create_dir_result = session.file_system.create_directory("/tmp/watch_test")
+        create_dir_result = await session.file_system.create_directory("/tmp/watch_test")
         print(f"Create directory result: {create_dir_result.success}")
 
         # Start directory monitoring
@@ -80,9 +80,9 @@ def test_watch_directory():
 
         # Test 1: Create a new file
         print("\n3. Creating a new file...")
-        write_result = session.file_system.write_file(
-            "/tmp/watch_test/test1.txt", "Initial content"
-        )
+        write_result = await session.file_system.write_file(
+        "/tmp/watch_test/test_file.txt", "Hello, World!"
+    )
         print(f"Write file result: {write_result.success}")
 
         # Wait for detection
@@ -90,9 +90,9 @@ def test_watch_directory():
 
         # Test 2: Modify the file
         print("\n4. Modifying the file...")
-        modify_result = session.file_system.write_file(
-            "/tmp/watch_test/test1.txt", "Modified content"
-        )
+        modify_result = await session.file_system.write_file(
+        "/tmp/watch_test/test_file.txt", "Modified content"
+    )
         print(f"Modify file result: {modify_result.success}")
 
         # Wait for detection
@@ -100,9 +100,9 @@ def test_watch_directory():
 
         # Test 3: Create another file
         print("\n5. Creating another file...")
-        write_result2 = session.file_system.write_file(
-            "/tmp/watch_test/test2.txt", "Second file content"
-        )
+        write_result2 = await session.file_system.write_file(
+        "/tmp/watch_test/another_file.txt", "Another file content"
+    )
         print(f"Write second file result: {write_result2.success}")
 
         # Wait for detection
@@ -217,14 +217,14 @@ def test_watch_directory():
     finally:
         # Clean up
         print("\n7. Cleaning up session...")
-        delete_result = agentbay.delete(session)
+        delete_result = await agentbay.delete(session)
         if delete_result.success:
             print("✅ Session deleted successfully")
         else:
             print(f"❌ Failed to delete session: {delete_result.error_message}")
 
 
-def test_watch_directory_file_modification():
+async def test_watch_directory_file_modification():
     """
     Test monitoring file modification events in a directory.
 
@@ -244,7 +244,7 @@ def test_watch_directory_file_modification():
 
     # Create session with code_latest ImageId
     session_params = CreateSessionParams(image_id="code_latest")
-    session_result = agentbay.create(session_params)
+    session_result = await agentbay.create(session_params)
 
     if not session_result.success:
         print(f"❌ Failed to create session: {session_result.error_message}")
@@ -256,7 +256,7 @@ def test_watch_directory_file_modification():
     # Create test directory and initial file
     test_dir = f"/tmp/test_modify_watch_{int(time.time())}"
     print(f"\n1. Creating test directory: {test_dir}")
-    create_dir_result = session.file_system.create_directory(test_dir)
+    create_dir_result = await session.file_system.create_directory(test_dir)
     if not create_dir_result.success:
         print(f"❌ Failed to create directory: {create_dir_result.error_message}")
         return
@@ -265,7 +265,7 @@ def test_watch_directory_file_modification():
     # Create initial file
     test_file = f"{test_dir}/modify_test.txt"
     print(f"\n2. Creating initial file: {test_file}")
-    write_result = session.file_system.write_file(test_file, "Initial content")
+    write_result = await session.file_system.write_file(test_file, "Initial content")
     if not write_result.success:
         print(f"❌ Failed to create initial file: {write_result.error_message}")
         return
@@ -300,7 +300,7 @@ def test_watch_directory_file_modification():
         for i in range(3):
             content = f"Modified content version {i + 1}"
             print(f"   Modification {i + 1}: Writing '{content}'")
-            modify_result = session.file_system.write_file(test_file, content)
+            modify_result = await session.file_system.write_file(test_file, content)
             if not modify_result.success:
                 print(
                     f"❌ Failed to modify file (attempt {i + 1}): {modify_result.error_message}"
@@ -380,7 +380,7 @@ def test_watch_directory_file_modification():
 
         # Clean up session
         print(f"\n7. Cleaning up session...")
-        delete_result = agentbay.delete(session)
+        delete_result = await agentbay.delete(session)
         if delete_result.success:
             print("✅ Session deleted successfully")
         else:

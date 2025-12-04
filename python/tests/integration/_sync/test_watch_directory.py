@@ -84,8 +84,8 @@ def test_watch_directory():
         # Test 1: Create a new file
         print("\n3. Creating a new file...")
         write_result = session.file_system.write_file(
-            "/tmp/watch_test/test1.txt", "Initial content"
-        )
+        "/tmp/watch_test/test_file.txt", "Hello, World!"
+    )
         print(f"Write file result: {write_result.success}")
 
         # Wait for detection
@@ -94,8 +94,8 @@ def test_watch_directory():
         # Test 2: Modify the file
         print("\n4. Modifying the file...")
         modify_result = session.file_system.write_file(
-            "/tmp/watch_test/test1.txt", "Modified content"
-        )
+        "/tmp/watch_test/test_file.txt", "Modified content"
+    )
         print(f"Modify file result: {modify_result.success}")
 
         # Wait for detection
@@ -104,8 +104,8 @@ def test_watch_directory():
         # Test 3: Create another file
         print("\n5. Creating another file...")
         write_result2 = session.file_system.write_file(
-            "/tmp/watch_test/test2.txt", "Second file content"
-        )
+        "/tmp/watch_test/another_file.txt", "Another file content"
+    )
         print(f"Write second file result: {write_result2.success}")
 
         # Wait for detection

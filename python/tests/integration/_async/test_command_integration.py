@@ -74,13 +74,13 @@ async def test_command_error_handling(command_session):
     assert invalid_result.error_message is not None
 
     # Test command with permission issues (trying to write to protected directory)
-    permission_result = command.execute_command('echo "test" > /root/protected.txt')
+    permission_result = await command.execute_command('echo "test" > /root/protected.txt')
     # This might succeed or fail depending on the environment, but should not crash
     assert isinstance(permission_result.success, bool)
 
     # Test long-running command with timeout considerations
     time_command = 'echo "completed"'
-    time_result = command.execute_command(time_command)
+    time_result = await command.execute_command(time_command)
     print(f"Command output: {time_result}")
     assert time_result.success
     assert "completed" in time_result.output

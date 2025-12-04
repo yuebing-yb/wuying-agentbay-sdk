@@ -555,7 +555,7 @@ class TestSessionPauseResumeEdgeCases(unittest.TestCase):
         params = CreateSessionParams(
             labels={"project": "piaoyun-demo", "environment": "testing"},
         )
-        result = self.agent_bay.create(params)
+        result = await self.agent_bay.create(params)
         self.assertTrue(
             result.success, f"Failed to create session: {result.error_message}"
         )
