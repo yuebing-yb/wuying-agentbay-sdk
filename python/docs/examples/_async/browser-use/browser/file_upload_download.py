@@ -39,6 +39,11 @@ async def main():
         session_result = await client.create(
             CreateSessionParams(image_id="browser_latest")
         )
+        print(f"Session result: {session_result}")
+        print(f"Session result success: {session_result.success}")
+        if not session_result.success:
+            print(f"Session creation failed: {session_result}")
+            return
         session = session_result.session
         print(f"Session created: {session.session_id}")
 
@@ -77,7 +82,7 @@ async def main():
 
         # Verify file operations
         print("\n6. Verifying file operations...")
-        files_result = await session.filesystem.list_files("/tmp")
+        files_result = await session.file_system.list_directory("/tmp")
         print(f"Files in /tmp: {files_result}")
 
         # Test downloading text content
@@ -93,15 +98,15 @@ async def main():
 
         # Save extracted content to file
         print("\n8. Saving extracted content to file...")
-        await session.filesystem.write_file(
+        await session.file_system.write_file(
             "/tmp/downloaded_robots.txt",
             content_to_save
         )
         print("Content saved to: /tmp/downloaded_robots.txt")
 
         # Verify saved file
-        saved_content = await session.filesystem.read_file("/tmp/downloaded_robots.txt")
-        print(f"Verified saved content length: {len(saved_content)} bytes")
+        saved_content = await session.file_system.read_file("/tmp/downloaded_robots.txt")
+        print(f"Verified saved content length: {len(saved_content.content)} bytes")
 
         print("\n=== Example completed successfully ===")
 
