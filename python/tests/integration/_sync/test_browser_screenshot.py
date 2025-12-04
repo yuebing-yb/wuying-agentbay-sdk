@@ -9,6 +9,9 @@ import pytest
 import pytest
 from playwright.sync_api import sync_playwright
 
+# Ensure tmp directory exists for screenshots
+os.makedirs("./tmp", exist_ok=True)
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
@@ -69,7 +72,7 @@ def test_screenshot_with_valid_page(browser_session):
             assert len(screenshot_data) > 0, "Screenshot data should not be empty"
 
             # Save screenshot to local file
-            filename = "screenshot_valid_page_async.png"
+            filename = "./tmp/screenshot_valid_page_async.png"
             with open(filename, "wb") as f:
                 f.write(screenshot_data)
             print(f"✅ Screenshot saved to {filename}")
@@ -105,7 +108,7 @@ def test_screenshot_with_full_page(browser_session):
             assert len(screenshot_data) > 0, "Screenshot data should not be empty"
 
             # Save screenshot to local file
-            filename = "screenshot_full_page_async.png"
+            filename = "./tmp/screenshot_full_page_async.png"
             with open(filename, "wb") as f:
                 f.write(screenshot_data)
             print(f"✅ Full page screenshot saved to {filename}")
@@ -146,7 +149,7 @@ def test_screenshot_with_custom_options(browser_session):
             assert len(screenshot_data) > 0, "Screenshot data should not be empty"
 
             # Save screenshot to local file
-            filename = "screenshot_custom_options_async.jpg"
+            filename = "./tmp/screenshot_custom_options_async.jpg"
             with open(filename, "wb") as f:
                 f.write(screenshot_data)
             print(f"✅ Custom options screenshot saved to {filename}")
@@ -188,7 +191,7 @@ def test_screenshot_function_parameter_priority(browser_session):
             assert len(screenshot_data) > 0, "Screenshot data should not be empty"
 
             # Save screenshot to local file
-            filename = "screenshot_function_priority_async.png"
+            filename = "./tmp/screenshot_function_priority_async.png"
             with open(filename, "wb") as f:
                 f.write(screenshot_data)
             print(f"✅ Function priority screenshot saved to {filename}")
@@ -269,7 +272,7 @@ def test_screenshot_with_multiple_pages(browser_session):
                     ), f"Screenshot {i+1} data should not be empty"
 
                     # Save screenshot to local file
-                    filename = f"screenshot_page_{i+1}_async.png"
+                    filename = f"./tmp/screenshot_page_{i+1}_async.png"
                     with open(filename, "wb") as f:
                         f.write(screenshot_data)
                     print(f"✅ Screenshot {i+1} saved to {filename}")
@@ -323,7 +326,7 @@ def test_screenshot_performance(browser_session):
             assert len(screenshot_data) > 0, "Screenshot data should not be empty"
 
             # Save screenshot to local file
-            filename = "screenshot_performance_test_async.png"
+            filename = "./tmp/screenshot_performance_test_async.png"
             with open(filename, "wb") as f:
                 f.write(screenshot_data)
             print(f"✅ Performance test screenshot saved to {filename}")
