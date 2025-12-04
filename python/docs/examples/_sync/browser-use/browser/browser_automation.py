@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from agentbay import AgentBay, CreateSessionParams
-from agentbay import ActOptions, ExtractOptions
+from agentbay import ActOptions as ActOptions, ExtractOptions as ExtractOptions
 from agentbay import AgentBayError
 
 class SearchResult(BaseModel):

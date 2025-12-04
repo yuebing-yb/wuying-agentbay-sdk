@@ -16,7 +16,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay import BrowserOption, ActOptions, ExtractOptions
+from agentbay import BrowserOption, AsyncActOptions as ActOptions, AsyncExtractOptions as ExtractOptions
 
 
 async def main():
@@ -85,7 +85,7 @@ async def main():
             ActOptions(action="Execute JavaScript to create a modal overlay: "
             "var modal = document.createElement('div'); "
             "modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:2px solid black;z-index:1000'; "
-            "modal.innerHTML = '<h2>Modal Dialog</h2><p>This is a modal</p><button onclick="this.parentElement.remove()">Close</button>'; "
+            "modal.innerHTML = '<h2>Modal Dialog</h2><p>This is a modal</p><button onclick=\"this.parentElement.remove()\">Close</button>'; "
             "document.body.appendChild(modal)")
         )
         print("Modal created")

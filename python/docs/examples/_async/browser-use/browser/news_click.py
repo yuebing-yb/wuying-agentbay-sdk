@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import ActOptions, ActResult, ExtractOptions
+from agentbay import AsyncActOptions as ActOptions, AsyncActResult as ActResult, AsyncExtractOptions as ExtractOptions
 
 
 class DummySchema(BaseModel):

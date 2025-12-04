@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import ExtractOptions, ActOptions
+from agentbay import ExtractOptions as ExtractOptions, ActOptions as ActOptions
 
 from playwright.sync_api import sync_playwright
 from pydantic import BaseModel, Field

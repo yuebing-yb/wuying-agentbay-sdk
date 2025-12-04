@@ -20,7 +20,7 @@ from agentbay import (
     BrowserScreen,
     BrowserProxy,
 )
-from agentbay import ActOptions, ExtractOptions
+from agentbay import AsyncActOptions as ActOptions, AsyncExtractOptions as ExtractOptions
 from agentbay import SessionResult
 
 

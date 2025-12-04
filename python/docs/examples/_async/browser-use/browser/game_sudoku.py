@@ -12,7 +12,7 @@ from typing import List, Optional, Tuple
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import ExtractOptions, ActOptions
+from agentbay import AsyncExtractOptions as ExtractOptions, AsyncActOptions as ActOptions
 
 from playwright.async_api import async_playwright
 from pydantic import BaseModel, Field

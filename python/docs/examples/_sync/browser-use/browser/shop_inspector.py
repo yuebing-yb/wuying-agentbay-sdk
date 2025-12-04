@@ -23,7 +23,7 @@ from agentbay import (
     BrowserScreen,
     BrowserProxy,
 )
-from agentbay import ActOptions, ExtractOptions
+from agentbay import ActOptions as ActOptions, ExtractOptions as ExtractOptions
 from agentbay import SessionResult
 
 
