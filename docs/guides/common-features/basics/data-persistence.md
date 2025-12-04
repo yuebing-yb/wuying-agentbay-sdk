@@ -775,7 +775,6 @@ AgentBay SDK provides file compression capabilities to optimize storage space an
 ```python
 from agentbay import AgentBay, CreateSessionParams
 from agentbay import ContextSync, SyncPolicy, UploadPolicy, UploadMode
-import asyncio
 
 # Initialize AgentBay client
 agent_bay = AgentBay(api_key="your-api-key")
@@ -811,11 +810,8 @@ session = session_result.session
 session.file_system.write_file("/tmp/data/large-file.txt", large_content, mode="overwrite")
 session.file_system.write_file("/tmp/data/config.json", config_data, mode="overwrite")
 
-# Perform context sync before getting info (async operation)
-async def run_sync():
-    return await session.context.sync()
-
-sync_result = asyncio.run(run_sync())
+# Perform context sync before getting info (synchronous operation)
+sync_result = session.context.sync()
 if sync_result.success:
     print("Context sync successful!")
     
