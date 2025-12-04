@@ -4,6 +4,7 @@
 import os
 
 import pytest
+import pytest
 
 from agentbay import (
     AgentBay,
@@ -35,6 +36,7 @@ class TestWhiteListValidationIntegration:
         yield context_result.context
         agent_bay.context.delete(context_result.context)
 
+    @pytest.mark.sync
     def test_create_session_with_wildcard_in_path_should_fail(
         self, agent_bay, test_context
     ):
@@ -46,6 +48,7 @@ class TestWhiteListValidationIntegration:
         assert "Wildcard patterns are not supported in path" in str(exc_info.value)
         assert "*.json" in str(exc_info.value)
 
+    @pytest.mark.sync
     def test_create_session_with_wildcard_in_exclude_paths_should_fail(
         self, agent_bay, test_context
     ):
@@ -63,6 +66,7 @@ class TestWhiteListValidationIntegration:
         )
         assert "*.log" in str(exc_info.value)
 
+    @pytest.mark.sync
     def test_create_session_with_glob_pattern_should_fail(
         self, agent_bay, test_context
     ):
@@ -74,6 +78,7 @@ class TestWhiteListValidationIntegration:
         assert "Wildcard patterns are not supported in path" in str(exc_info.value)
         assert "/data/*" in str(exc_info.value)
 
+    @pytest.mark.sync
     def test_create_session_with_double_asterisk_should_fail(
         self, agent_bay, test_context
     ):
@@ -86,6 +91,7 @@ class TestWhiteListValidationIntegration:
 
         assert "Wildcard patterns are not supported in path" in str(exc_info.value)
 
+    @pytest.mark.sync
     def test_create_session_with_valid_paths_should_succeed(
         self, agent_bay, test_context
     ):
@@ -106,6 +112,7 @@ class TestWhiteListValidationIntegration:
 
         agent_bay.delete(session_result.session)
 
+    @pytest.mark.sync
     def test_validation_happens_before_api_call(self, agent_bay, test_context):
         with pytest.raises(ValueError) as exc_info:
             policy = SyncPolicy(bw_list=BWList(white_lists=[WhiteList(path="*.txt")]))
