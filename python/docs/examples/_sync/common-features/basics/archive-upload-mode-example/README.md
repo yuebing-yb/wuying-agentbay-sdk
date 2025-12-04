@@ -71,8 +71,8 @@ write_result = session.file_system.write_file(file_path, file_content, mode="ove
 # Call context sync before getting info (async operation)
 import asyncio
 
-async def run_sync():
-    return await session.context.sync()
+def run_sync():
+    return session.context.sync()
 
 sync_result = asyncio.run(run_sync())
 

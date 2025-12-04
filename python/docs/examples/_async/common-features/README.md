@@ -115,60 +115,9 @@ cd ../file_system
 python main.py
 ```
 
-## Common Patterns
+## Usage
 
-### Basic Session Creation
-
-```python
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="linux_latest")
-result = agent_bay.create(params)
-
-if result.success:
-    session = result.session
-    # Use session...
-    agent_bay.delete(session)
-```
-
-### File Operations
-
-```python
-# Write file
-result = await session.file_system.write_file("/tmp/test.txt", "content")
-
-# Read file
-result = await session.file_system.read_file("/tmp/test.txt")
-if result.success:
-    print(result.content)
-```
-
-### Command Execution
-
-```python
-result = session.command.execute_command("ls -la")
-if result.success:
-    print(result.output)
-```
-
-### Context Management
-
-```python
-# Get or create context
-context_result = agent_bay.context.get("my-context", create=True)
-
-# Use context with session
-from agentbay import ContextSync, SyncPolicy
-
-context_sync = ContextSync.new(
-    context_id=context_result.context.id,
-    path="/tmp/data",
-    policy=SyncPolicy.default()
-)
-params = CreateSessionParams(context_syncs=[context_sync])
-```
+Each subdirectory contains specific examples with detailed documentation. Check the individual README files and Python scripts for complete usage examples.
 
 ## Best Practices
 

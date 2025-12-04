@@ -54,97 +54,6 @@ cd computer
 python windows_app_management_example.py
 ```
 
-## Usage Examples
-
-### Basic Application Management
-
-```python
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-
-# Create Windows session
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="windows_latest")
-result = agent_bay.create(params)
-session = result.session
-
-# Get installed applications
-apps_result = session.computer.get_installed_apps(
-    start_menu=True,
-    desktop=False,
-    ignore_system_apps=True
-)
-
-if apps_result.success:
-    for app in apps_result.data:
-        print(f"App: {app.name}")
-        print(f"Command: {app.start_cmd}")
-
-# Start an application
-start_result = session.computer.start_app("C:\\Windows\\System32\\notepad.exe")
-if start_result.success:
-    for process in start_result.data:
-        print(f"Started: {process.pname} (PID: {process.pid})")
-
-# List visible applications
-visible_result = session.computer.list_visible_apps()
-if visible_result.success:
-    for app in visible_result.data:
-        print(f"Visible: {app.pname} (PID: {app.pid})")
-
-# Stop application by PID
-stop_result = session.computer.stop_app_by_pid(process.pid)
-
-# Stop application by name
-stop_result = session.computer.stop_app_by_pname("notepad.exe")
-
-# Cleanup
-agent_bay.delete(session)
-```
-
-### Window Management
-
-```python
-# List all windows
-windows_result = session.window.list_windows()
-if windows_result.success:
-    for window in windows_result.data:
-        print(f"Window: {window.title}")
-        print(f"Handle: {window.handle}")
-
-# Focus a window
-focus_result = session.window.focus_window(window_handle)
-
-# Maximize window
-maximize_result = session.window.maximize_window(window_handle)
-
-# Minimize window
-minimize_result = session.window.minimize_window(window_handle)
-
-# Close window
-close_result = session.window.close_window(window_handle)
-```
-
-### UI Automation
-
-```python
-# Take screenshot
-screenshot_result = session.ui.screenshot()
-if screenshot_result.success:
-    with open("screenshot.png", "wb") as f:
-        f.write(screenshot_result.data)
-
-# Click at coordinates
-click_result = session.ui.click(x=100, y=200)
-
-# Type text
-type_result = session.ui.type("Hello, World!")
-
-# Send key
-from agentbay import KeyCode
-key_result = session.ui.key(KeyCode.ENTER)
-```
-
 ## Features Demonstrated
 
 ### Application Discovery
@@ -194,46 +103,19 @@ key_result = session.ui.key(KeyCode.ENTER)
 ## Common Use Cases
 
 ### 1. Automated Testing
-```python
-# Start application
-session.computer.start_app("C:\\MyApp\\app.exe")
-
-# Wait for window
-import time
-time.sleep(2)
-
-# Interact with UI
-session.ui.click(x=200, y=300)
-session.ui.type("test data")
-session.ui.key(KeyCode.ENTER)
-
-# Verify results
-screenshot = session.ui.screenshot()
-```
+- Start application and wait for window
+- Interact with UI elements
+- Verify results with screenshots
 
 ### 2. Application Monitoring
-```python
-# Monitor running applications
-while True:
-    visible_apps = session.computer.list_visible_apps()
-    if visible_apps.success:
-        print(f"Running apps: {len(visible_apps.data)}")
-    time.sleep(60)
-```
+- Monitor running applications
+- Track application lifecycle
+- Performance monitoring
 
 ### 3. Automated Workflows
-```python
-# Open Excel
-session.computer.start_app("excel.exe")
-time.sleep(3)
-
-# Type data
-session.ui.type("=SUM(A1:A10)")
-session.ui.key(KeyCode.ENTER)
-
-# Save
-session.ui.key(KeyCode.CTRL, KeyCode.S)
-```
+- Open applications in sequence
+- Perform data entry tasks
+- Generate reports and save files
 
 ## Best Practices
 
@@ -292,4 +174,3 @@ If UI interactions fail:
 - Add delays between actions
 - Verify coordinates are correct
 - Check for popup dialogs blocking interaction
-

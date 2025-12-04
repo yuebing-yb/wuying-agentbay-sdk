@@ -73,49 +73,6 @@ python extension_testing_automation.py
 - Extensions must include a valid `manifest.json` file
 - Extensions are synchronized to `/tmp/extensions/{extension_id}/` in browser sessions
 
-## Usage Patterns
-
-### Basic Extension Management
-```python
-from agentbay import AgentBay
-from agentbay import ExtensionsService
-
-agent_bay = AgentBay(api_key="your_api_key")
-extensions_service = ExtensionsService(agent_bay)
-
-# Upload extension
-extension = extensions_service.create("/path/to/extension.zip")
-
-# Create browser session with extension
-ext_option = extensions_service.create_extension_option([extension.id])
-# ... use with BrowserContext
-```
-
-### Development Workflow
-```python
-from extension_development_workflow import ExtensionDevelopmentWorkflow
-
-workflow = ExtensionDevelopmentWorkflow("your_api_key", "my_project")
-workflow.upload_extension("/path/to/extension-v1.zip")
-session = workflow.create_test_session()
-# Test extension...
-workflow.update_extension("/path/to/extension-v2.zip")
-# Test updated version...
-```
-
-### Automated Testing
-```python
-from extension_testing_automation import ExtensionTestRunner, TestSuite
-
-test_runner = ExtensionTestRunner("your_api_key")
-test_suite = TestSuite(
-    name="my_tests",
-    extension_paths=["/path/to/test-extension.zip"],
-    test_cases=["extension_loaded", "manifest_valid"]
-)
-results = test_runner.run_test_suite(test_suite)
-```
-
 ## Best Practices
 
 1. **Context Management**:

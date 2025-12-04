@@ -20,7 +20,7 @@ The `session.context.sync()` method provides asynchronous context synchronizatio
 
 ```python
 # Async call - wait for completion
-sync_result = await session.context.sync()
+sync_result = session.context.sync()
 if sync_result.success:
     print("✅ Sync completed successfully")
     print(f"Duration: {sync_duration:.2f} seconds")
@@ -54,10 +54,10 @@ Demonstrates proper session lifecycle management:
 # Create session with context sync
 params = CreateSessionParams()
 params.context_syncs = [context_sync]
-session_result = await agent_bay.create(params)
+session_result = agent_bay.create(params)
 
 # Clean up session after use
-delete_result = await agent_bay.delete(session)
+delete_result = agent_bay.delete(session)
 ```
 
 ## Example Structure

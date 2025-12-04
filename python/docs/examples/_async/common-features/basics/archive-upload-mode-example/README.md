@@ -55,7 +55,7 @@ session_params = CreateSessionParams(
     context_syncs=[context_sync]
 )
 
-session_result = agent_bay.create(session_params)
+session_result = await agent_bay.create(session_params)
 ```
 
 ### File Operations
@@ -91,7 +91,7 @@ for index, status in enumerate(info_result.context_status_data):
 
 ```python
 # List files in context sync directory
-list_result = agent_bay.context.list_files(context_id, sync_dir_path, page_number=1, page_size=10)
+list_result = await agent_bay.context.list_files(context_id, sync_dir_path, page_number=1, page_size=10)
 
 # Display file entries
 for index, entry in enumerate(list_result.entries):

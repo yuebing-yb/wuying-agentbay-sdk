@@ -143,112 +143,22 @@ Automated extension testing:
 
 ## Quick Start
 
-### Basic Browser Automation
+```bash
+# Set your API key
+export AGENTBAY_API_KEY=your_api_key_here
 
-```python
-import asyncio
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-from agentbay import BrowserOption
-from playwright.async_api import async_playwright
-
-async def main():
-    # Create session
-    agent_bay = AgentBay(api_key="your_api_key")
-    params = CreateSessionParams(image_id="browser_latest")
-    result = agent_bay.create(params)
-    session = result.session
-    
-    # Initialize browser
-    option = BrowserOption()
-    await session.browser.initialize_async(option)
-    
-    # Connect Playwright
-    endpoint_url = session.browser.get_endpoint_url()
-    async with async_playwright() as p:
-        browser = await p.chromium.connect_over_cdp(endpoint_url)
-        context = browser.contexts[0]
-        page = await context.new_page()
-        
-        # Automate...
-        await page.goto("https://example.com")
-        
-        await browser.close()
-    
-    # Cleanup
-    agent_bay.delete(session)
-
-asyncio.run(main())
+# Run any example
+cd browser
+python browser_automation.py
 ```
 
-### AI-Powered Automation
+## Browser Configuration
 
-```python
-# Use Agent for intelligent automation
-result = await session.browser.agent.act_async(
-    "Search for AgentBay on the page and click the first result"
-)
-```
-
-## Browser Type Selection
-
-```python
-from agentbay import BrowserOption
-
-# Use Chrome
-option = BrowserOption(browser_type="chrome")
-await session.browser.initialize_async(option)
-
-# Use Chromium
-option = BrowserOption(browser_type="chromium")
-await session.browser.initialize_async(option)
-
-# Use default
-option = BrowserOption()
-await session.browser.initialize_async(option)
-```
-
-## Stealth Configuration
-
-```python
-from agentbay import (
-    BrowserOption,
-    BrowserViewport,
-    BrowserFingerprint
-)
-
-option = BrowserOption(
-    browser_type="chrome",
-    use_stealth=True,
-    viewport=BrowserViewport(1920, 1080),
-    fingerprint=BrowserFingerprint(
-        devices=["desktop"],
-        operating_systems=["windows", "macos"],
-        locales=["en-US"]
-    )
-)
-```
-
-## Cookie Persistence
-
-```python
-from agentbay import BrowserContext
-
-# Create browser context
-context_result = agent_bay.context.get("my-browser-context", create=True)
-
-browser_context = BrowserContext(
-    context_id=context_result.context.id,
-    auto_upload=True
-)
-
-params = CreateSessionParams(
-    image_id="browser_latest",
-    browser_context=browser_context
-)
-
-# Cookies will persist across sessions
-```
+- **Browser Types**: Chrome, Chromium, Default
+- **Stealth Mode**: Fingerprint randomization and anti-detection
+- **Cookie Persistence**: Browser Context for session continuity
+- **Proxy Support**: HTTP/HTTPS and SOCKS proxy configuration
+- **Extension Support**: Load and manage browser extensions
 
 ## Best Practices
 
@@ -259,63 +169,6 @@ params = CreateSessionParams(
 5. **Unique context names**: Use unique context names to avoid conflicts
 6. **Stealth mode**: Use stealth mode for production web scraping
 7. **Rate limiting**: Respect website rate limits and robots.txt
-
-## Common Patterns
-
-### Error Handling
-
-```python
-try:
-    success = await session.browser.initialize_async(option)
-    if not success:
-        raise RuntimeError("Initialization failed")
-    
-    # Use browser...
-    
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    agent_bay.delete(session)
-```
-
-### Waiting for Elements
-
-```python
-# Wait for element
-await page.wait_for_selector("#my-element", timeout=5000)
-
-# Wait for navigation
-await page.wait_for_load_state("networkidle")
-```
-
-### Taking Screenshots
-
-```python
-# Full page screenshot
-await page.screenshot(path="screenshot.png", full_page=True)
-
-# Element screenshot
-element = await page.query_selector("#my-element")
-await element.screenshot(path="element.png")
-```
-
-## Browser Context vs Regular Sessions
-
-| Feature | Regular Browser Session | Browser Context Session |
-|---------|------------------------|-------------------------|
-| Cookie Persistence | No, cookies lost after session ends | Yes, cookies persist across sessions |
-| Setup Complexity | Simple | Requires context creation |
-| Use Case | One-time automation | Multi-session workflows |
-| Data Synchronization | None | Automatic with `auto_upload=True` |
-
-## API Methods Used
-
-| Method | Purpose |
-|--------|---------|
-| `session.browser.initialize_async()` | Initialize browser with options |
-| `session.browser.get_endpoint_url()` | Get CDP endpoint for Playwright |
-| `session.browser.agent.act_async()` | AI-powered browser automation |
-| `session.browser.close()` | Close browser connection |
 
 ## Related Documentation
 
@@ -355,4 +208,3 @@ If websites detect automation:
 - Randomize fingerprints
 - Add delays between actions
 - Use residential proxies
-

@@ -497,6 +497,16 @@ def convert_markdown_file(src_path: str, dest_path: str):
     content = content.replace("AsyncAgentBay", "AgentBay")
     content = content.replace("AsyncSession", "Session")
     
+    # Remove await keywords from code blocks
+    content = re.sub(r'await\s+', '', content)
+    
+    # Replace async def with def in code blocks
+    content = content.replace("async def ", "def ")
+    
+    # Replace asyncio.sleep with time.sleep
+    content = content.replace("await asyncio.sleep(", "time.sleep(")
+    content = content.replace("asyncio.sleep(", "time.sleep(")
+    
     # Replace API links: docs/api/async/async-*.md -> docs/api/sync/*.md
     content = re.sub(r"docs/api/async/async-([a-z0-9-]+)\.md", r"docs/api/sync/\1.md", content)
     

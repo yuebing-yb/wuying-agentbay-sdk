@@ -37,94 +37,6 @@ cd /path/to/wuying-agentbay-sdk/python/docs/examples/list_sessions
 python main.py
 ```
 
-## Code Walkthrough
-
-### 1. List All Sessions
-
-```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key=api_key)
-
-# List all sessions without any filter
-result = agent_bay.list()
-
-if result.success:
-    print(f"Total sessions: {result.total_count}")
-    print(f"Sessions on this page: {len(result.sessions)}")
-    print(f"Request ID: {result.request_id}")
-```
-
-### 2. Filter by Single Label
-
-```python
-# Find all sessions with project='my-project'
-result = agent_bay.list(labels={"project": "my-project"})
-
-if result.success:
-    for session in result.sessions:
-        print(f"Session ID: {session.session_id}")
-```
-
-### 3. Filter by Multiple Labels
-
-```python
-# Find sessions that match ALL specified labels
-result = agent_bay.list(
-    labels={
-        "project": "my-project",
-        "environment": "production"
-    }
-)
-```
-
-### 4. Pagination
-
-```python
-# Get first page with 10 items per page
-result = agent_bay.list(
-    labels={"project": "my-project"},
-    page=1,
-    limit=10
-)
-
-# Get second page
-if result.next_token:
-    result_page2 = agent_bay.list(
-        labels={"project": "my-project"},
-        page=2,
-        limit=10
-    )
-```
-
-### 5. Iterate All Pages
-
-```python
-all_sessions = []
-page = 1
-limit = 10
-
-while True:
-    result = agent_bay.list(
-        labels={"project": "my-project"},
-        page=page,
-        limit=limit
-    )
-
-    if not result.success:
-        break
-
-    all_sessions.extend(result.sessions)
-
-    # Break if no more pages
-    if not result.next_token:
-        break
-
-    page += 1
-
-print(f"Total sessions: {len(all_sessions)}")
-```
-
 ## API Reference
 
 ### Method Signature
@@ -166,66 +78,16 @@ Returns a `SessionListResult` object with:
 ## Use Cases
 
 ### 1. Session Inventory
-
-List all sessions to get an overview of your current session inventory:
-
-```python
-result = agent_bay.list()
-print(f"You have {result.total_count} active sessions")
-```
+List all sessions to get an overview of your current session inventory.
 
 ### 2. Project Management
-
-Find all sessions for a specific project:
-
-```python
-result = agent_bay.list(labels={"project": "website-automation"})
-for session in result.sessions:
-    print(f"Session: {session.session_id}")
-```
+Find all sessions for a specific project.
 
 ### 3. Environment-Specific Queries
-
-Query sessions by environment (dev, staging, prod):
-
-```python
-dev_sessions = agent_bay.list(labels={"environment": "dev"})
-prod_sessions = agent_bay.list(labels={"environment": "prod"})
-
-print(f"Dev sessions: {len(dev_sessions.sessions)}")
-print(f"Prod sessions: {len(prod_sessions.sessions)}")
-```
+Query sessions by environment (dev, staging, prod).
 
 ### 4. Bulk Operations
-
-Retrieve all matching sessions and perform batch operations:
-
-```python
-# Get all sessions for a project
-all_sessions = []
-page = 1
-
-while True:
-    result = agent_bay.list(
-        labels={"project": "old-project"},
-        page=page,
-        limit=50
-    )
-
-    if not result.success:
-        break
-
-    all_sessions.extend(result.sessions)
-
-    if not result.next_token:
-        break
-
-    page += 1
-
-# Perform bulk cleanup
-for session in all_sessions:
-    agent_bay.delete(session)
-```
+Retrieve all matching sessions and perform batch operations.
 
 ## Key Advantages over list_by_labels()
 
@@ -236,29 +98,6 @@ The new `list()` API offers several advantages:
 3. **Request Tracking**: All responses include `request_id` for debugging
 4. **Cleaner Code**: More readable and maintainable code
 5. **Type Safety**: Better IDE autocomplete support
-
-## Comparison with Deprecated API
-
-### Old way (list_by_labels):
-```python
-from agentbay import ListSessionParams
-
-params = ListSessionParams(
-    labels={"project": "demo"},
-    max_results=10,
-    next_token=""
-)
-result = agent_bay.list_by_labels(params)
-```
-
-### New way (list):
-```python
-result = agent_bay.list(
-    labels={"project": "demo"},
-    page=1,
-    limit=10
-)
-```
 
 ## Expected Output
 
@@ -320,12 +159,7 @@ Found 0 sessions with specified labels
 3. All specified labels must match (AND logic, not OR)
 
 ### Rate Limiting
-If you encounter rate limiting, add delays between requests:
-```python
-import time
-result = agent_bay.list(labels={"project": "demo"})
-time.sleep(1)  # Wait 1 second between requests
-```
+If you encounter rate limiting, add delays between requests.
 
 ## Related Documentation
 
@@ -338,4 +172,3 @@ time.sleep(1)  # Wait 1 second between requests
 For issues or questions:
 - GitHub Issues: https://github.com/aliyun/wuying-agentbay-sdk/issues
 - Documentation: https://github.com/aliyun/wuying-agentbay-sdk
-

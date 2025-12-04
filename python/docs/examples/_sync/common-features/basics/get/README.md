@@ -28,30 +28,6 @@ export AGENTBAY_API_KEY="your-api-key-here"
 python main.py
 ```
 
-## Code Example
-
-```python
-import os
-from agentbay import AgentBay
-
-# Initialize AgentBay client
-api_key = os.getenv("AGENTBAY_API_KEY")
-agentbay = AgentBay(api_key=api_key)
-
-# Retrieve a session by ID
-session_id = "your-session-id"
-result = agentbay.get(session_id)
-
-if result.success:
-    session = result.session
-    print(f"Retrieved session: {session.session_id}")
-    print(f"Request ID: {result.request_id}")
-    # Use the session for further operations
-    # ...
-else:
-    print(f"Failed to get session: {result.error_message}")
-```
-
 ## API Reference
 
 ### get
@@ -106,25 +82,5 @@ Error message: Failed to get session: session not found or has been deleted
 The `get` method returns a `SessionResult` object with error information:
 
 1. **Empty session_id**: Result will have `success=False`
-   ```python
-   result = agentbay.get("")
-   if not result.success:
-       print(f"Error: {result.error_message}")  # "session_id is required"
-   ```
-
 2. **Non-existent session**: Result will have `success=False`
-   ```python
-   result = agentbay.get("non-existent-session-id")
-   if not result.success:
-       print(f"Error: {result.error_message}")  # "Failed to get session..."
-   ```
-
 3. **Deleted session**: Result will have `success=False`
-   ```python
-   # After deleting a session
-   session.delete()
-   result = agentbay.get(session_id)
-   if not result.success:
-       print(f"Error: {result.error_message}")  # "Failed to get session: session not found or has been deleted"
-   ```
-
