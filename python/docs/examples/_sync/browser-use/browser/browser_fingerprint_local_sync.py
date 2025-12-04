@@ -71,7 +71,9 @@ def main():
                 print("\n--- Check User Agent ---")
                 page.goto("https://httpbin.org/user-agent")
 
-                response = page.evaluate("() => JSON.parse(document.body.textContent)")
+                response_text = page.evaluate("() => document.body.innerText.trim()")
+                import json
+                response = json.loads(response_text)
                 user_agent = response.get("user-agent", "")
                 print(f"User Agent: {user_agent}")
 

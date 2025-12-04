@@ -70,7 +70,9 @@ async def main():
                 print("\n--- Check User Agent ---")
                 await page.goto("https://httpbin.org/user-agent")
 
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+                response_text = await page.evaluate("() => document.body.innerText.trim()")
+                import json
+                response = json.loads(response_text)
                 user_agent = response.get("user-agent", "")
                 print(f"User Agent: {user_agent}")
 
