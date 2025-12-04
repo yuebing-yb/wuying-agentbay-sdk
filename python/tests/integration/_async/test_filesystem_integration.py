@@ -195,7 +195,7 @@ async def test_move_file(filesystem_session):
     assert result.success
 
     # Verify the destination file content
-    read_result = fs.read_file(dest_file_path)
+    read_result = await fs.read_file(dest_file_path)
     assert read_result.success
     assert read_result.content == test_content
 
@@ -297,13 +297,13 @@ async def test_write_and_read_large_file(filesystem_session):
     test_file_path2 = "/tmp/test_large_file2.txt"
     print("Test 3: Writing another large file...")
 
-    result = fs.write_file(test_file_path2, large_content)
+    result = await fs.write_file(test_file_path2, large_content)
     assert result.success
     print("Test 3: Second large file write successful")
 
     # Test 4: Read the second large file
     print("Test 4: Reading the second large file...")
-    result = fs.read_file(test_file_path2)
+    result = await fs.read_file(test_file_path2)
     assert result.success
 
     # Verify content
