@@ -19,10 +19,10 @@ class TestGetFileTransferContext:
         return AsyncAgentBay(api_key=api_key)
 
     @pytest.fixture
-    def test_session(self, agent_bay):
+    async def test_session(self, agent_bay):
         """Create a test session and clean up after test"""
         params = CreateSessionParams(image_id="code_latest")
-        result = agent_bay.create(params)
+        result = await agent_bay.create(params)
         if not result.success:
             pytest.fail(f"Failed to create session: {result.error_message}")
 
@@ -31,11 +31,11 @@ class TestGetFileTransferContext:
 
         # Cleanup: delete the session after test
         try:
-            session.delete()
+            await session.delete()
         except Exception as e:
             print(f"Warning: Failed to cleanup session {session.session_id}: {e}")
 
-    def test_get_method_creates_file_transfer_context(self, agent_bay, test_session):
+    async def test_get_method_creates_file_transfer_context(self, agent_bay, test_session):
         """
         Test that get method creates file transfer context automatically.
 
@@ -46,7 +46,7 @@ class TestGetFileTransferContext:
         session_id = test_session.session_id
 
         # Use get method to recover the session
-        get_result = agent_bay.get(session_id)
+        get_result = await agent_bay.get(session_id)
 
         # Verify get was successful
         assert get_result.success, f"Get failed: {get_result.error_message}"
@@ -65,7 +65,7 @@ class TestGetFileTransferContext:
             recovered_session.file_transfer_context_id != ""
         ), "Recovered session should have a non-empty file_transfer_context_id"
 
-    def test_recovered_session_can_perform_file_operations(
+    async def test_recovered_session_can_perform_file_operations(
         self, agent_bay, test_session
     ):
         """
@@ -81,7 +81,7 @@ class TestGetFileTransferContext:
         time.sleep(5)
 
         # Use get method to recover the session
-        get_result = agent_bay.get(session_id)
+        get_result = await agent_bay.get(session_id)
         assert get_result.success, f"Get failed: {get_result.error_message}"
 
         recovered_session = get_result.session
@@ -94,7 +94,7 @@ class TestGetFileTransferContext:
         # This should work if file transfer context is properly set up
         try:
             # Write file to the session
-            write_result = recovered_session.file_system.write_file(
+            write_result = await recovered_session.file_system.write_file(
                 f"/tmp/{test_filename}", test_content
             )
 
@@ -104,7 +104,7 @@ class TestGetFileTransferContext:
             ), f"File write failed: {write_result.error_message}"
 
             # Read back the file to verify
-            read_result = recovered_session.file_system.read_file(
+            read_result = await recovered_session.file_system.read_file(
                 f"/tmp/{test_filename}"
             )
             assert read_result.success, f"File read failed: {read_result.error_message}"
@@ -115,7 +115,7 @@ class TestGetFileTransferContext:
         except Exception as e:
             pytest.fail(f"File operations failed on recovered session: {e}")
 
-    def test_original_and_recovered_session_both_work(self, agent_bay, test_session):
+    async def test_original_and_recovered_session_both_work(self, agent_bay, test_session):
         """
         Test that both original session and recovered session can perform file operations.
 
@@ -133,7 +133,7 @@ class TestGetFileTransferContext:
         test_content_1 = f"Original session test at {time.time()}"
         test_filename_1 = f"original_test_{int(time.time())}.txt"
 
-        write_result_1 = test_session.file_system.write_file(
+        write_result_1 = await test_session.file_system.write_file(
             f"/tmp/{test_filename_1}", test_content_1
         )
         assert (
@@ -141,7 +141,7 @@ class TestGetFileTransferContext:
         ), f"Original session file write failed: {write_result_1.error_message}"
 
         # Test 2: Recover the session
-        get_result = agent_bay.get(session_id)
+        get_result = await agent_bay.get(session_id)
         assert get_result.success, f"Get failed: {get_result.error_message}"
         recovered_session = get_result.session
 
@@ -149,7 +149,7 @@ class TestGetFileTransferContext:
         test_content_2 = f"Recovered session test at {time.time()}"
         test_filename_2 = f"recovered_test_{int(time.time())}.txt"
 
-        write_result_2 = recovered_session.file_system.write_file(
+        write_result_2 = await recovered_session.file_system.write_file(
             f"/tmp/{test_filename_2}", test_content_2
         )
         assert (
@@ -157,12 +157,12 @@ class TestGetFileTransferContext:
         ), f"Recovered session file write failed: {write_result_2.error_message}"
 
         # Test 4: Verify both files exist and have correct content
-        read_result_1 = recovered_session.file_system.read_file(
+        read_result_1 = await recovered_session.file_system.read_file(
             f"/tmp/{test_filename_1}"
         )
         assert read_result_1.success and read_result_1.content == test_content_1
 
-        read_result_2 = recovered_session.file_system.read_file(
+        read_result_2 = await recovered_session.file_system.read_file(
             f"/tmp/{test_filename_2}"
         )
         assert read_result_2.success and read_result_2.content == test_content_2
