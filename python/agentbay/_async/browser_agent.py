@@ -296,6 +296,10 @@ class AsyncBrowserAgent(AsyncBaseService):
             }
             args["action"] = json.dumps(action_dict)
             task_name = action_input.method
+        elif isinstance(action_input, str):
+            # Handle string input directly
+            args["action"] = action_input
+            task_name = action_input
         # Filter None values but preserve essential parameters
         filtered_args = {}
         for k, v in args.items():

@@ -13,7 +13,7 @@ import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import ActOptions
+from agentbay import ActOptions as ActOptions
 
 
 def main():

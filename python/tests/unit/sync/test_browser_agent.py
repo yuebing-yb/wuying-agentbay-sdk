@@ -7,10 +7,10 @@ from unittest.mock import MagicMock, MagicMock, patch
 from pydantic import BaseModel, Field
 
 from agentbay import Browser
-from agentbay import ActOptions as SyncActOptions
+from agentbay import ActOptions as ActOptions
 from agentbay import BrowserAgent
-from agentbay import ExtractOptions as SyncExtractOptions
-from agentbay import ObserveOptions as SyncObserveOptions
+from agentbay import ExtractOptions as ExtractOptions
+from agentbay import ObserveOptions as ObserveOptions
 from agentbay import BrowserError
 from agentbay import (
     Browser,
@@ -370,7 +370,7 @@ class TestAsyncBrowser(unittest.TestCase):
 
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        self.browser.agent.act(SyncActOptions(action="Click search button"), page)
+        self.browser.agent.act(ActOptions(action="Click search button"), page)
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_observe_async(self):
@@ -384,7 +384,7 @@ class TestAsyncBrowser(unittest.TestCase):
             success=True, data=json.dumps([{"selector": "#search"}])
         )
 
-        self.browser.agent.observe(SyncObserveOptions(instruction="Find the search button"), page)
+        self.browser.agent.observe(ObserveOptions(instruction="Find the search button"), page)
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_extract_async(self):
@@ -404,7 +404,7 @@ class TestAsyncBrowser(unittest.TestCase):
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
         self.browser.agent.extract(
-            SyncExtractOptions(instruction="Extract the title", schema=SchemaForTest), page)
+            ExtractOptions(instruction="Extract the title", schema=SchemaForTest), page)
         self.mock_session.call_mcp_tool.assert_called()
 
 

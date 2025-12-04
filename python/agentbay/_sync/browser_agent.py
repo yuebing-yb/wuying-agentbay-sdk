@@ -299,6 +299,10 @@ class BrowserAgent(BaseService):
             }
             args["action"] = json.dumps(action_dict)
             task_name = action_input.method
+        elif isinstance(action_input, str):
+            # Handle string input directly
+            args["action"] = action_input
+            task_name = action_input
         # Filter None values but preserve essential parameters
         filtered_args = {}
         for k, v in args.items():
@@ -307,7 +311,7 @@ class BrowserAgent(BaseService):
         args = filtered_args
         _logger.info(f"{task_name}")
 
-        response = self._call_mcp_tool_timeout("page_use_act", args)
+        response = self._call_mcp_tool_timeout("page_use_act_async", args)
         if not response.success:
             raise BrowserError(f"Failed to start act task: {response.error_message}")
 

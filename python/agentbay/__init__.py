@@ -144,6 +144,13 @@ from ._async.context import AsyncContextService
 from ._async.extension import AsyncExtensionsService
 from ._async.code import AsyncCode
 from ._async.mobile_simulate import AsyncMobileSimulateService
+from ._async.browser_agent import (
+    ActOptions as AsyncActOptions,
+    ActResult as AsyncActResult,
+    ExtractOptions as AsyncExtractOptions,
+    ObserveResult as AsyncObserveResult,
+    ObserveOptions as AsyncObserveOptions,
+)
 
 __all__ = [
     # Core API
@@ -236,6 +243,12 @@ __all__ = [
     "ExtractOptions",
     "ObserveResult",
     "ObserveOptions",
+    # Async versions
+    "AsyncActOptions",
+    "AsyncActResult",
+    "AsyncExtractOptions",
+    "AsyncObserveResult",
+    "AsyncObserveOptions",
     "ApiResponse",
     "OperationResult",
     "SessionResult",

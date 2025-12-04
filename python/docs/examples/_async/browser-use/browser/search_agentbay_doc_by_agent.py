@@ -11,7 +11,7 @@ import asyncio
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import ActOptions
+from agentbay import AsyncActOptions as ActOptions
 
 
 async def main():
