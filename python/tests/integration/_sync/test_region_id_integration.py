@@ -11,6 +11,7 @@ when creating sessions and contexts.
 
 import os
 import unittest
+import pytest
 from agentbay import AgentBay, CreateSessionParams, Config
 
 

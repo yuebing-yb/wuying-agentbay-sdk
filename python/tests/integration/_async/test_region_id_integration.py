@@ -8,6 +8,7 @@ when creating sessions and contexts.
 import os
 import unittest
 import asyncio
+import pytest
 from agentbay import AsyncAgentBay, CreateSessionParams, Config
 
 
