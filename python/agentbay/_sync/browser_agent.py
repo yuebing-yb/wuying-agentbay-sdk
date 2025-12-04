@@ -275,16 +275,18 @@ class BrowserAgent(BaseService):
         }
         task_name = "act"
         if isinstance(action_input, ActOptions):
-            args.update(
-                {
-                    "action": action_input.action,
-                    "variables": action_input.variables,
-                    "timeout_ms": action_input.timeoutMS,
-                    "iframes": action_input.iframes,
-                    "dom_settle_timeout_ms": action_input.dom_settle_timeout_ms,
-                    "use_vision": action_input.use_vision,
-                }
-            )
+            # Always include action parameter, filter others only if not None
+            args["action"] = action_input.action
+            if action_input.variables is not None:
+                args["variables"] = action_input.variables
+            if action_input.timeoutMS is not None:
+                args["timeout_ms"] = action_input.timeoutMS
+            if action_input.iframes is not None:
+                args["iframes"] = action_input.iframes
+            if action_input.dom_settle_timeout_ms is not None:
+                args["dom_settle_timeout_ms"] = action_input.dom_settle_timeout_ms
+            if action_input.use_vision is not None:
+                args["use_vision"] = action_input.use_vision
             task_name = action_input.action
         elif isinstance(action_input, ObserveResult):
             action_dict = {
@@ -297,7 +299,12 @@ class BrowserAgent(BaseService):
             }
             args["action"] = json.dumps(action_dict)
             task_name = action_input.method
-        args = {k: v for k, v in args.items() if v is not None}
+        # Filter None values but preserve essential parameters
+        filtered_args = {}
+        for k, v in args.items():
+            if k in ["context_id", "page_id", "action"] or v is not None:
+                filtered_args[k] = v
+        args = filtered_args
         _logger.info(f"{task_name}")
 
         response = self._call_mcp_tool_timeout("page_use_act", args)
