@@ -158,7 +158,71 @@ class TestContextFullLifecycle:
         test_contexts.append({"id": context.id, "name": context.name})
         print(f"  ✓ Context created: {context.name} (ID: {context.id})")
         
-        # Test basic context operations
-        print("\nStep 2: Testing basic context operations...")
-        # Add more test logic here if needed
-        print("  ✓ Context cross-session test completed")
+        # Step 2: Create first session and write test data
+        print("\nStep 2: Creating first session and writing test data...")
+        test_path = "/tmp/cross_session_test"
+        test_file_path = f"{test_path}/persistence_test.txt"
+        test_content = f"Cross-session test data created at {time.time()}"
+        
+        context_sync = ContextSync(context_id=context.id, path=test_path)
+        session1_params = CreateSessionParams(context_syncs=[context_sync])
+        
+        session1_result = agent_bay_instance.create(params=session1_params)
+        assert session1_result.success, f"Failed to create session1: {session1_result.error_message}"
+        
+        session1 = session1_result.session
+        print(f"  ✓ Session1 created: {session1.session_id}")
+        
+        # Write test data to session1
+        write_result = session1.file_system.write_file(test_file_path, test_content)
+        assert write_result.success, f"Failed to write test file: {write_result.error_message}"
+        print(f"  ✓ Test data written to: {test_file_path}")
+        
+        # Step 3: Delete session1 with sync_context=True to ensure data persistence
+        print("\nStep 3: Deleting session1 with sync_context=True...")
+        session1_delete_result = agent_bay_instance.delete(session1, sync_context=True)
+        assert session1_delete_result.success, f"Failed to delete session1: {session1_delete_result.error_message}"
+        print(f"  ✓ Session1 deleted with context sync completed")
+        
+        # Step 4: Re-get context by ID to simulate fresh context retrieval
+        print("\nStep 4: Re-getting context by ID...")
+        context_reget_result = agent_bay_instance.context.get(context_id=context.id)
+        assert context_reget_result.success, f"Failed to re-get context: {context_reget_result.error_message}"
+        
+        reget_context = context_reget_result.context
+        assert reget_context.id == context.id, "Context ID should match"
+        print(f"  ✓ Context re-retrieved: {reget_context.id}")
+        
+        # Step 5: Create second session with the same context
+        print("\nStep 5: Creating second session with re-retrieved context...")
+        context_sync2 = ContextSync(context_id=reget_context.id, path=test_path)
+        session2_params = CreateSessionParams(context_syncs=[context_sync2])
+        
+        session2_result = agent_bay_instance.create(params=session2_params)
+        assert session2_result.success, f"Failed to create session2: {session2_result.error_message}"
+        
+        session2 = session2_result.session
+        print(f"  ✓ Session2 created: {session2.session_id}")
+        
+        # Step 6: Verify that data persisted from session1 is accessible in session2
+        print("\nStep 6: Verifying data persistence across sessions...")
+        read_result = session2.file_system.read_file(test_file_path)
+        assert read_result.success, f"Failed to read test file in session2: {read_result.error_message}"
+        
+        # Verify content matches what was written in session1
+        assert read_result.content == test_content, f"Content mismatch: expected '{test_content}', got '{read_result.content}'"
+        print(f"  ✓ Data successfully persisted and retrieved")
+        print(f"  ✓ Content verified: {read_result.content}")
+        
+        # Step 7: Clean up session2
+        print("\nStep 7: Cleaning up session2...")
+        session2_delete_result = agent_bay_instance.delete(session2)
+        assert session2_delete_result.success, f"Failed to delete session2: {session2_delete_result.error_message}"
+        print(f"  ✓ Session2 deleted successfully")
+        
+        print("\n" + "=" * 70)
+        print("✅ Context Cross-Session Persistence Test PASSED")
+        print("  • Data written in session1 was successfully persisted")
+        print("  • Context re-retrieval by ID worked correctly") 
+        print("  • Data was accessible in session2 after context sync")
+        print("=" * 70)
