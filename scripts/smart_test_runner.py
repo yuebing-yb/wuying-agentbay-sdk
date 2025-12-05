@@ -18,7 +18,20 @@ try:
     print("✅ langchain_openai imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import langchain_openai: {e}")
-    sys.exit(1)
+    print("🔍 Trying alternative import methods...")
+    try:
+        import langchain_openai
+        print("✅ Alternative import successful: import langchain_openai")
+    except ImportError as e2:
+        print(f"❌ Alternative import also failed: {e2}")
+        
+        # List available packages
+        import pkgutil
+        print("📋 Available packages containing 'langchain':")
+        for _, name, _ in pkgutil.iter_modules():
+            if 'langchain' in name.lower():
+                print(f"  - {name}")
+        sys.exit(1)
 
 try:
     print("📦 Importing langgraph...")

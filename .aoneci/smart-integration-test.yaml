@@ -49,9 +49,14 @@ jobs:
           python -m pip install -e python/
           
           echo "✅ Verifying installations..."
-          python -c "import langchain_openai; print('✅ langchain-openai imported successfully')"
-          python -c "import langgraph; print('✅ langgraph imported successfully')"
-          python -c "import langchain_core; print('✅ langchain-core imported successfully')"
+          echo "🔍 Checking installed langchain packages..."
+          pip show langchain-openai
+          pip show langgraph  
+          pip show langchain-core
+          
+          echo "🔍 Trying different import methods..."
+          python -c "import sys; print('Python paths:'); [print(p) for p in sys.path]"
+          python -c "import pkgutil; print('Available packages:'); [print(name) for _, name, _ in pkgutil.iter_modules() if 'langchain' in name]"
           
           echo "📋 Installed packages:"
           pip list | grep -E "(langchain|langgraph)"
