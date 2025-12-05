@@ -6,56 +6,56 @@ from typing import List, Dict, Any, Optional, TypedDict
 import json
 
 # Ensure we can import standard libraries. Langchain/Langgraph availability depends on environment.
-print("🔍 Checking Python environment and dependencies...")
-print(f"Python executable: {sys.executable}")
-print(f"Python version: {sys.version}")
-print(f"Python path: {sys.path}")
+    print("🔍 正在检查Python环境和依赖...")
+    print(f"Python可执行文件: {sys.executable}")
+    print(f"Python版本: {sys.version}")
+    print(f"Python路径: {sys.path}")
 
-# Check each import individually for better error reporting
-try:
-    print("📦 Importing langchain_openai...")
-    from langchain_openai import ChatOpenAI
-    print("✅ langchain_openai imported successfully")
-except ImportError as e:
-    print(f"❌ Failed to import langchain_openai: {e}")
-    print("🔍 Trying alternative import methods...")
+    # Check each import individually for better error reporting
     try:
-        import langchain_openai
-        print("✅ Alternative import successful: import langchain_openai")
-    except ImportError as e2:
-        print(f"❌ Alternative import also failed: {e2}")
-        
-        # List available packages
-        import pkgutil
-        print("📋 Available packages containing 'langchain':")
-        for _, name, _ in pkgutil.iter_modules():
-            if 'langchain' in name.lower():
-                print(f"  - {name}")
+        print("📦 正在导入langchain_openai...")
+        from langchain_openai import ChatOpenAI
+        print("✅ langchain_openai导入成功")
+    except ImportError as e:
+        print(f"❌ langchain_openai导入失败: {e}")
+        print("🔍 尝试替代导入方法...")
+        try:
+            import langchain_openai
+            print("✅ 替代导入成功: import langchain_openai")
+        except ImportError as e2:
+            print(f"❌ 替代导入也失败了: {e2}")
+            
+            # List available packages
+            import pkgutil
+            print("📋 包含'langchain'的可用包:")
+            for _, name, _ in pkgutil.iter_modules():
+                if 'langchain' in name.lower():
+                    print(f"  - {name}")
+            sys.exit(1)
+
+    try:
+        print("📦 正在导入langgraph...")
+        from langgraph.graph import StateGraph, END
+        print("✅ langgraph导入成功")
+    except ImportError as e:
+        print(f"❌ langgraph导入失败: {e}")
         sys.exit(1)
 
-try:
-    print("📦 Importing langgraph...")
-    from langgraph.graph import StateGraph, END
-    print("✅ langgraph imported successfully")
-except ImportError as e:
-    print(f"❌ Failed to import langgraph: {e}")
-    sys.exit(1)
+    try:
+        print("📦 正在导入langchain_core...")
+        from langchain_core.prompts import ChatPromptTemplate
+        print("✅ langchain_core导入成功")
+    except ImportError as e:
+        print(f"❌ langchain_core导入失败: {e}")
+        sys.exit(1)
 
-try:
-    print("📦 Importing langchain_core...")
-    from langchain_core.prompts import ChatPromptTemplate
-    print("✅ langchain_core imported successfully")
-except ImportError as e:
-    print(f"❌ Failed to import langchain_core: {e}")
-    sys.exit(1)
-
-    print("✅ All required libraries imported successfully!")
-    
-    print("🔍 Checking environment variables...")
-    agentbay_key = os.environ.get("AGENTBAY_API_KEY")
-    dashscope_key = os.environ.get("DASHSCOPE_API_KEY")
-    print(f"AGENTBAY_API_KEY: {'✅ Set' if agentbay_key else '❌ Missing'}")
-    print(f"DASHSCOPE_API_KEY: {'✅ Set' if dashscope_key else '❌ Missing'}")
+        print("✅ 所有必需的库都导入成功!")
+        
+        print("🔍 正在检查环境变量...")
+        agentbay_key = os.environ.get("AGENTBAY_API_KEY")
+        dashscope_key = os.environ.get("DASHSCOPE_API_KEY")
+        print(f"AGENTBAY_API_KEY: {'✅ 已设置' if agentbay_key else '❌ 缺失'}")
+        print(f"DASHSCOPE_API_KEY: {'✅ 已设置' if dashscope_key else '❌ 缺失'}")
 
 # Configuration
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -88,7 +88,7 @@ def get_model():
     """Initializes the Qwen model via ChatOpenAI interface compatible with DashScope."""
     api_key = os.environ.get("DASHSCOPE_API_KEY")
     if not api_key:
-        print("Warning: DASHSCOPE_API_KEY not found. AI Analysis will be skipped.")
+        print("警告: 未找到DASHSCOPE_API_KEY，将跳过AI分析。")
         return None
     
     # Using qwen-max for better reasoning capabilities on complex error logs
@@ -103,7 +103,7 @@ def get_model():
 
 def discover_tests(state: AgentState) -> AgentState:
     """Discover integration tests using pytest --collect-only."""
-    print("🔍 Discovering tests...")
+    print("🔍 正在发现测试...")
     pattern = state.get("specific_test_pattern")
     
     try:
@@ -111,29 +111,29 @@ def discover_tests(state: AgentState) -> AgentState:
         env = os.environ.copy()
         env["PYTHONPATH"] = cwd
         
-        print(f"📂 PROJECT_ROOT: {PROJECT_ROOT}")
-        print(f"📂 Working directory: {cwd}")
+        print(f"📂 项目根目录: {PROJECT_ROOT}")
+        print(f"📂 工作目录: {cwd}")
         print(f"📂 PYTHONPATH: {env.get('PYTHONPATH')}")
-        print(f"🔍 Directory exists: {os.path.exists(cwd)}")
+        print(f"🔍 目录存在: {os.path.exists(cwd)}")
         if os.path.exists(cwd):
-            print(f"📋 Contents: {os.listdir(cwd)}") 
+            print(f"📋 内容: {os.listdir(cwd)}") 
         
         # Base command
         cmd = [sys.executable, "-m", "pytest", "tests/integration", "--collect-only", "-q", "-c", "/dev/null"]
         
         # Add specific test pattern if provided (passed to pytest directly for filtering)
         if pattern:
-            print(f"   Filtering tests with pattern: {pattern}")
+            print(f"   使用模式过滤测试: {pattern}")
             cmd.append("-k")
             cmd.append(pattern)
             
-        print(f"Executing: {' '.join(cmd)} in {cwd}")
-        print("⏳ Running pytest command...")
+        print(f"执行命令: {' '.join(cmd)} 在目录 {cwd}")
+        print("⏳ 正在运行pytest命令...")
         result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
-        print(f"✅ Command completed with return code: {result.returncode}")
+        print(f"✅ 命令完成，返回码: {result.returncode}")
         if result.stderr:
-            print(f"⚠️ Stderr: {result.stderr}")
-        print(f"📄 Stdout length: {len(result.stdout)} chars")
+            print(f"⚠️ 标准错误: {result.stderr}")
+        print(f"📄 标准输出长度: {len(result.stdout)} 字符")
         
         test_ids = []
         for line in result.stdout.splitlines():
@@ -146,9 +146,9 @@ def discover_tests(state: AgentState) -> AgentState:
                     test_id = os.path.join("tests", "integration", test_id)
                 test_ids.append(test_id)
         
-        print(f"✅ Found {len(test_ids)} tests.")
+        print(f"✅ 找到 {len(test_ids)} 个测试。")
         if len(test_ids) == 0 and result.stderr:
-             print(f"Debug Output:\n{result.stderr}")
+             print(f"调试输出:\n{result.stderr}")
         
         # Load SDK Context
         context = ""
@@ -156,11 +156,11 @@ def discover_tests(state: AgentState) -> AgentState:
             try:
                 with open(LLMS_FULL_PATH, "r", encoding="utf-8") as f:
                     context = f.read()
-                print(f"📚 Loaded SDK context ({len(context)} chars)")
+                print(f"📚 已加载SDK上下文 ({len(context)} 字符)")
             except Exception as e:
-                print(f"⚠️ Failed to read llms-full.txt: {e}")
+                print(f"⚠️ 读取llms-full.txt失败: {e}")
         else:
-            print(f"⚠️ llms-full.txt not found at {LLMS_FULL_PATH}")
+            print(f"⚠️ 在 {LLMS_FULL_PATH} 未找到llms-full.txt")
 
         return {
             "test_queue": test_ids,
@@ -171,7 +171,7 @@ def discover_tests(state: AgentState) -> AgentState:
             "specific_test_pattern": pattern
         }
     except Exception as e:
-        print(f"❌ Error discovering tests: {e}")
+        print(f"❌ 发现测试时出错: {e}")
         return {"test_queue": [], "current_test_index": 0, "results": [], "sdk_context": "", "is_finished": True, "specific_test_pattern": pattern}
 
 def execute_next_test(state: AgentState) -> AgentState:
@@ -183,7 +183,7 @@ def execute_next_test(state: AgentState) -> AgentState:
         return state 
 
     test_id = queue[idx]
-    print(f"▶️ Running test ({idx+1}/{len(queue)}): {test_id}")
+    print(f"▶️ 正在运行测试 ({idx+1}/{len(queue)}): {test_id}")
     
     cwd = os.path.join(PROJECT_ROOT, "python")
     env = os.environ.copy()
@@ -191,7 +191,7 @@ def execute_next_test(state: AgentState) -> AgentState:
     
     # Ensure AGENTBAY_API_KEY is present (it should be injected by CI/Aone)
     if "AGENTBAY_API_KEY" not in env:
-        print("⚠️ Warning: AGENTBAY_API_KEY not found in environment variables.")
+        print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
 
     # Run specific test
     cmd = [sys.executable, "-m", "pytest", test_id, "-vv"]
@@ -200,7 +200,7 @@ def execute_next_test(state: AgentState) -> AgentState:
     status = "passed" if result.returncode == 0 else "failed"
     output = result.stdout + "\n" + result.stderr
     
-    print(f"   Result: {status.upper()}")
+    print(f"   结果: {status.upper()}")
     
     new_result: TestResult = {
         "test_id": test_id,
@@ -211,7 +211,7 @@ def execute_next_test(state: AgentState) -> AgentState:
     
     return {
         "results": state["results"] + [new_result],
-        "current_test_index": idx, # Index stays same, incremented later
+        "current_test_index": state["current_test_index"], # Keep current index, will be incremented later
         "test_queue": state["test_queue"],
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
@@ -224,11 +224,11 @@ def analyze_failure(state: AgentState) -> AgentState:
     if last_result["status"] == "passed":
         return state 
         
-    print(f"🤖 Analyzing failure for {last_result['test_id']}...")
+    print(f"🤖 正在分析失败测试 {last_result['test_id']}...")
     
     model = get_model()
     if not model:
-        last_result["error_analysis"] = "Analysis skipped (no DASHSCOPE_API_KEY)."
+        last_result["error_analysis"] = "跳过分析 (无DASHSCOPE_API_KEY)。"
         return {"results": state["results"][:-1] + [last_result], **{k:v for k,v in state.items() if k != "results"}}
 
     # Prepare context
@@ -288,11 +288,11 @@ IMPORTANT: 请务必使用中文回答，不要使用英文。
         })
         
         last_result["error_analysis"] = response.content
-        print("   ✅ Analysis complete.")
+        print("   ✅ 分析完成。")
         
     except Exception as e:
-        print(f"   ❌ Analysis failed: {e}")
-        last_result["error_analysis"] = f"Analysis failed: {e}"
+        print(f"   ❌ 分析失败: {e}")
+        last_result["error_analysis"] = f"分析失败: {e}"
 
     return {
         "results": state["results"][:-1] + [last_result],
@@ -305,8 +305,10 @@ IMPORTANT: 请务必使用中文回答，不要使用英文。
 
 def increment_index(state: AgentState) -> AgentState:
     """Increments the test index."""
+    new_index = state["current_test_index"] + 1
+    print(f"🔢 增加索引: {state['current_test_index']} -> {new_index}")
     return {
-        "current_test_index": state["current_test_index"] + 1,
+        "current_test_index": new_index,
         "results": state["results"],
         "test_queue": state["test_queue"],
         "sdk_context": state["sdk_context"],
@@ -369,13 +371,13 @@ workflow.set_entry_point("discover_tests")
 def check_completion(state: AgentState):
     current_idx = state["current_test_index"]
     total_tests = len(state["test_queue"])
-    print(f"🔍 Check completion: {current_idx}/{total_tests}")
+    print(f"🔍 检查完成状态: {current_idx}/{total_tests}")
     
     if current_idx >= total_tests:
-        print("✅ All tests completed, generating report...")
+        print("✅ 所有测试已完成，正在生成报告...")
         return "generate_report"
     
-    print(f"➡️ Continue with next test ({current_idx + 1}/{total_tests})")
+    print(f"➡️ 继续下一个测试 ({current_idx + 1}/{total_tests})")
     return "execute_test"
 
 workflow.add_conditional_edges(
@@ -389,8 +391,11 @@ workflow.add_conditional_edges(
 
 def check_test_result(state: AgentState):
     last_result = state["results"][-1]
+    print(f"🔍 检查测试结果: {last_result['test_id']} -> {last_result['status']}")
     if last_result["status"] == "failed":
+        print("❌ 测试失败，进行AI分析...")
         return "analyze_failure"
+    print("✅ 测试通过，增加索引...")
     return "increment_index"
 
 workflow.add_conditional_edges(
@@ -451,14 +456,13 @@ def main():
     try:
         print("📍 About to invoke app...")
         # Set recursion limit to prevent infinite loops
-        config = {"recursion_limit": 50}
+        config = {"recursion_limit": 1000}
         result = app.invoke(initial_state, config=config)
         print(f"✅ Workflow completed: {result}")
     except Exception as e:
-        print(f"\n💥 Execution Failed: {e}")
+        print(f"\n💥 执行失败: {e}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)
         sys.exit(1)
 
 if __name__ == "__main__":
