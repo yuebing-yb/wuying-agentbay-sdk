@@ -15,6 +15,7 @@ export class CreateMcpSessionRequest extends $dara.Model {
   vpcResource?: boolean;
   extraConfigs?: string;
   sdkStats?: string;
+  loginRegionId?: string;
   static names(): { [key: string]: string } {
     return {
       authorization: 'Authorization',
@@ -28,6 +29,7 @@ export class CreateMcpSessionRequest extends $dara.Model {
       vpcResource: 'VpcResource',
       extraConfigs: 'ExtraConfigs',
       sdkStats: 'SdkStats',
+      loginRegionId: 'LoginRegionId',
     };
   }
 
@@ -44,6 +46,7 @@ export class CreateMcpSessionRequest extends $dara.Model {
       vpcResource: 'boolean',
       extraConfigs: 'string',
       sdkStats: 'string',
+      loginRegionId: 'string',
     };
   }
 

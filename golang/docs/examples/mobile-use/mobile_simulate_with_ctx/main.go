@@ -14,7 +14,7 @@ var session *agentbay.Session
 
 func runOnMobileSession(client *agentbay.AgentBay) error {
 	fmt.Println("Getting a user specific context...")
-	contextResult, err := client.Context.Get("13000000002", true)
+	contextResult, err := client.Context.Get("13000000012", true)
 	if err != nil {
 		return fmt.Errorf("failed to get context: %v", err)
 	}

@@ -22,6 +22,14 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+venv/
+.venv/
+env/
+.env/
+venv_*/
+!venv_bailian_test/
+!venv_cookbook_test/
+*.log
 
 # TypeScript
 node_modules/
@@ -67,3 +75,19 @@ CLAUDE.md
 .tmp_usr/
 .history
 IFLOW.md
+tmp/
+
+# Example result files
+**/results_*/
+**/screenshots/
+**/test_results/
+
+# Temporary files (with specific prefixes to avoid ignoring legitimate images)
+temp_*.png
+temp_*.jpg
+temp_*.jpeg
+temp_*.gif
+screenshot_*.png
+result_*.png
+current_page.*
+after_wait.*

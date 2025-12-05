@@ -73,27 +73,27 @@ for student in data["students"]:
 
 print(json.dumps(results, indent=2))
 '''
-    
+
     # 2. Upload script to cloud
     session.file_system.write_file("/tmp/process_data.py", script_content)
     print("✅ Script uploaded to cloud")
-    
+
     # 3. Execute the script in cloud environment
     result = session.command.execute_command("python3 /tmp/process_data.py")
     print(f"\n📊 Processing results:\n{result.output}")
-    
+
     # Expected output:
     # [
     #   {"name": "Alice", "average": 88.33, "grade": "B"},
     #   {"name": "Bob", "average": 81.0, "grade": "B"},
     #   {"name": "Charlie", "average": 95.0, "grade": "A"}
     # ]
-    
+
     print("\n💡 What happened:")
     print("  1. Uploaded Python script to cloud environment")
     print("  2. Executed script with pre-installed Python")
     print("  3. Got results back - all without local setup!")
-    
+
 finally:
     agent_bay.delete(session)
     print("\n✅ Session cleaned up")
@@ -104,15 +104,23 @@ finally:
 ## 💡 What You Learned
 
 **The AgentBay Workflow:**
-1. **Create** - Get a fresh cloud environment
+1. **Create** - Get a fresh cloud environment (`agent_bay.create()`)
 2. **Use** - Execute commands, upload/download files
-3. **Cleanup** - Delete session to free resources
+3. **Cleanup** - Delete session to free resources (`agent_bay.delete()`)
 
-**Key Concepts:**
-- `agent_bay.create()` - Creates a new cloud session
-- `session.command.execute_command()` - Runs commands in the cloud
-- `session.file_system.write_file()` - Uploads files to cloud
-- `agent_bay.delete(session)` - Cleans up when done
+**Key Operations:**
+- `agent_bay.create()` - Create a new cloud session
+- `session.command.execute_command()` - Run shell commands
+- `session.file_system.write_file()` - Upload files
+- `agent_bay.delete(session)` - Clean up resources
+
+---
+
+## 💡 Need Async API?
+
+This quickstart uses synchronous API for simplicity. If you're building a web app or need high concurrency, check out:
+
+---
 
 ## 🚀 Next Steps
 

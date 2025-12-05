@@ -83,7 +83,7 @@ Different image types provide different levels of browser automation capabilitie
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 api_key = "your_api_key"
 agent_bay = AgentBay(api_key=api_key)

@@ -30,7 +30,7 @@ To use code execution features, create a session with the `code_latest` image:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-api-key")
 
@@ -53,7 +53,7 @@ else:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-api-key")
 
@@ -130,7 +130,7 @@ print(f"Squares: {squares}")
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-api-key")
 
@@ -283,7 +283,7 @@ print(json.dumps(data, indent=2))
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay(api_key="your-api-key")
 

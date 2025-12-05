@@ -24,8 +24,8 @@ The AgentBay SDK provides comprehensive browser extension management capabilitie
 
 ```python
 from agentbay import AgentBay
-from agentbay.extension import ExtensionsService
-from agentbay.session_params import CreateSessionParams, BrowserContext
+from agentbay import ExtensionsService
+from agentbay import CreateSessionParams, BrowserContext
 
 # Initialize AgentBay and Extensions Service
 agent_bay = AgentBay(api_key="your_api_key")
@@ -279,7 +279,7 @@ print(f"Test result: {'✅ PASSED' if success else '❌ FAILED'}")
 ### 4. Error Handling
 
 ```python
-from agentbay.exceptions import AgentBayError
+from agentbay import AgentBayError
 
 def robust_extension_workflow():
     extensions_service = None

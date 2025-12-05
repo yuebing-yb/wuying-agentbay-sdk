@@ -31,6 +31,8 @@ type iCreateMcpSessionRequest interface {
 	GetExtraConfigs() *string
 	SetSdkStats(v string) *CreateMcpSessionRequest
 	GetSdkStats() *string
+	SetLoginRegionId(v string) *CreateMcpSessionRequest
+	GetLoginRegionId() *string
 }
 
 type CreateMcpSessionRequest struct {
@@ -45,6 +47,7 @@ type CreateMcpSessionRequest struct {
 	VpcResource         *bool                                         `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
 	ExtraConfigs        *string                                       `json:"ExtraConfigs,omitempty" xml:"ExtraConfigs,omitempty"`
 	SdkStats            *string                                       `json:"SdkStats,omitempty" xml:"SdkStats,omitempty"`
+	LoginRegionId       *string                                       `json:"LoginRegionId,omitempty" xml:"LoginRegionId,omitempty"`
 }
 
 func (s CreateMcpSessionRequest) String() string {
@@ -152,6 +155,15 @@ func (s *CreateMcpSessionRequest) SetSdkStats(v string) *CreateMcpSessionRequest
 
 func (s *CreateMcpSessionRequest) GetSdkStats() *string {
 	return s.SdkStats
+}
+
+func (s *CreateMcpSessionRequest) SetLoginRegionId(v string) *CreateMcpSessionRequest {
+	s.LoginRegionId = &v
+	return s
+}
+
+func (s *CreateMcpSessionRequest) GetLoginRegionId() *string {
+	return s.LoginRegionId
 }
 
 func (s *CreateMcpSessionRequest) Validate() error {

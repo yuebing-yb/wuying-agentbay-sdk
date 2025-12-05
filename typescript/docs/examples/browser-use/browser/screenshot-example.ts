@@ -75,8 +75,8 @@ async function main() {
     // console.log(`✅ Browser screenshot captured (${screenshotData.length} bytes)`);
     
     // Save the screenshot to a file
-    // await writeFile("browser_screenshot.png", Buffer.from(screenshotData));
-    // console.log("✅ Browser screenshot saved as browser_screenshot.png");
+    // await writeFile("temp_browser_screenshot.png", Buffer.from(screenshotData));
+// console.log("✅ Browser screenshot saved as temp_browser_screenshot.png");
     
     // Take a full page screenshot with custom options
     // const fullPageData = await session.browser.screenshot(
@@ -90,8 +90,8 @@ async function main() {
     // console.log(`✅ Browser full page screenshot captured (${fullPageData.length} bytes)`);
     
     // Save the full page screenshot
-    // await writeFile("browser_full_page_screenshot.jpg", Buffer.from(fullPageData));
-    // console.log("✅ Browser full page screenshot saved as browser_full_page_screenshot.jpg");
+    // await writeFile("temp_browser_full_page_screenshot.jpg", Buffer.from(fullPageData));
+// console.log("✅ Browser full page screenshot saved as temp_browser_full_page_screenshot.jpg");
     
     // Take a screenshot with custom viewport settings
     // const customScreenshot = await session.browser.screenshot(
@@ -105,8 +105,8 @@ async function main() {
     // console.log(`✅ Browser custom screenshot captured (${customScreenshot.length} bytes)`);
     
     // Save the custom screenshot
-    // await writeFile("browser_custom_screenshot.png", Buffer.from(customScreenshot));
-    // console.log("✅ Browser custom screenshot saved as browser_custom_screenshot.png");
+    // await writeFile("temp_browser_custom_screenshot.png", Buffer.from(customScreenshot));
+// console.log("✅ Browser custom screenshot saved as temp_browser_custom_screenshot.png");
     
     await browser.close();
     

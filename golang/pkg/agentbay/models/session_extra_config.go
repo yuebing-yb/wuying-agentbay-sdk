@@ -4,7 +4,18 @@ import (
 	"encoding/json"
 )
 
-// MobileSimulateMode represents the mode for mobile simulation
+// AppManagerRule defines rules for managing app access on mobile devices
+type AppManagerRule struct {
+	// RuleType specifies the type of rule to apply
+	// "White" for whitelist mode (only allow specified apps)
+	// "Black" for blacklist mode (block specified apps)
+	RuleType string `json:"rule_type"`
+
+	// AppPackageNameList contains the list of Android package names to apply the rule to
+	AppPackageNameList []string `json:"app_package_name_list"`
+}
+
+// MobileSimulateMode defines the simulate mode for mobile device
 type MobileSimulateMode string
 
 const (
@@ -15,30 +26,12 @@ const (
 	MobileSimulateModeAll            MobileSimulateMode = "All"
 )
 
-// MobileSimulateConfig contains mobile simulation configuration
+// MobileSimulateConfig contains configuration for mobile device simulation
 type MobileSimulateConfig struct {
-	// Simulate determines whether to enable mobile simulation
-	Simulate bool `json:"simulate"`
-
-	// SimulatePath is the path of the mobile dev info file
-	SimulatePath string `json:"simulate_path,omitempty"`
-
-	// SimulateMode specifies the simulation mode
-	SimulateMode MobileSimulateMode `json:"simulate_mode,omitempty"`
-
-	// SimulatedContextID is the context ID containing the simulated mobile info
-	SimulatedContextID string `json:"simulated_context_id,omitempty"`
-}
-
-// AppManagerRule defines rules for managing app access on mobile devices
-type AppManagerRule struct {
-	// RuleType specifies the type of rule to apply
-	// "White" for whitelist mode (only allow specified apps)
-	// "Black" for blacklist mode (block specified apps)
-	RuleType string `json:"rule_type"`
-
-	// AppPackageNameList contains the list of Android package names to apply the rule to
-	AppPackageNameList []string `json:"app_package_name_list"`
+	Simulate           bool               `json:"simulate"`
+	SimulatePath       string             `json:"simulate_path,omitempty"`
+	SimulateMode       MobileSimulateMode `json:"simulate_mode"`
+	SimulatedContextID string             `json:"simulated_context_id,omitempty"`
 }
 
 // MobileExtraConfig contains mobile-specific configuration settings
@@ -60,7 +53,7 @@ type MobileExtraConfig struct {
 	// These packages will be added to the system's uninstall protection list
 	UninstallBlacklist []string `json:"uninstall_blacklist,omitempty"`
 
-	// SimulateConfig contains mobile simulation configuration
+	// SimulateConfig contains configuration for mobile device simulation
 	SimulateConfig *MobileSimulateConfig `json:"simulate_config,omitempty"`
 }
 

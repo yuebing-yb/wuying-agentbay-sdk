@@ -17,6 +17,8 @@ type iGetContextRequest interface {
 	GetContextId() *string
 	SetName(v string) *GetContextRequest
 	GetName() *string
+	SetLoginRegionId(v string) *GetContextRequest
+	GetLoginRegionId() *string
 }
 
 type GetContextRequest struct {
@@ -24,6 +26,7 @@ type GetContextRequest struct {
 	Authorization *string `json:"Authorization,omitempty" xml:"Authorization,omitempty"`
 	ContextId     *string `json:"ContextId,omitempty" xml:"ContextId,omitempty"`
 	Name          *string `json:"Name,omitempty" xml:"Name,omitempty"`
+	LoginRegionId *string `json:"LoginRegionId,omitempty" xml:"LoginRegionId,omitempty"`
 }
 
 func (s GetContextRequest) String() string {
@@ -68,6 +71,15 @@ func (s *GetContextRequest) SetContextId(v string) *GetContextRequest {
 
 func (s *GetContextRequest) SetName(v string) *GetContextRequest {
 	s.Name = &v
+	return s
+}
+
+func (s *GetContextRequest) GetLoginRegionId() *string {
+	return s.LoginRegionId
+}
+
+func (s *GetContextRequest) SetLoginRegionId(v string) *GetContextRequest {
+	s.LoginRegionId = &v
 	return s
 }
 

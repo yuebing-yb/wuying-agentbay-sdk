@@ -1,0 +1,170 @@
+"""
+Integration tests for region_id support in AgentBay SDK.
+
+This test verifies that region_id is correctly passed to the backend
+when creating sessions and contexts.
+"""
+
+import os
+import unittest
+import asyncio
+import pytest
+from agentbay import AsyncAgentBay, CreateSessionParams, Config
+
+
+class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
+    """Integration tests for region_id functionality"""
+
+    def setUp(self):
+        """Set up test environment"""
+        self.api_key = os.getenv("AGENTBAY_API_KEY")
+        if not self.api_key:
+            self.skipTest("AGENTBAY_API_KEY environment variable not set")
+
+    @pytest.mark.asyncio
+    async def test_session_creation_with_region_id(self):
+        """Test creating a session with region_id=cn-hangzhou"""
+        # Create AgentBay client with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AsyncAgentBay(cfg=config)
+
+        # Verify region_id is stored
+        self.assertEqual(agent_bay.region_id, "cn-hangzhou")
+
+        # Create session - user doesn't need to pass region_id again
+        params = CreateSessionParams()
+        result = await agent_bay.create(params)
+
+        # Verify session creation succeeded
+        self.assertTrue(
+            result.success, f"Session creation failed: {result.error_message}"
+        )
+        self.assertIsNotNone(result.session)
+
+        print(f"✅ Session created successfully with region_id=cn-hangzhou")
+        print(f"   Session ID: {result.session.session_id}")
+        print(f"   Request ID: {result.request_id}")
+
+        # Clean up
+        await result.session.delete()
+
+    @pytest.mark.asyncio
+    async def test_context_creation_with_region_id(self):
+        """Test creating a context with region_id=cn-hangzhou"""
+        # Create AgentBay client with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AsyncAgentBay(cfg=config)
+
+        # Verify region_id is stored
+        self.assertEqual(agent_bay.region_id, "cn-hangzhou")
+
+        # Create context - user doesn't need to pass region_id again
+        context_name = f"test-region-context-{int(asyncio.get_event_loop().time())}"
+        result = await agent_bay.context.get(context_name, create=True)
+
+        # Verify context creation succeeded
+        self.assertTrue(
+            result.success, f"Context creation failed: {result.error_message}"
+        )
+        self.assertIsNotNone(result.context)
+
+        print(f"✅ Context created successfully with region_id=cn-hangzhou")
+        print(f"   Context ID: {result.context.id}")
+        print(f"   Context Name: {result.context.name}")
+        print(f"   Request ID: {result.request_id}")
+
+        # Clean up
+        await agent_bay.context.delete(result.context)
+
+    @pytest.mark.asyncio
+    async def test_context_get_existing_without_region_id(self):
+        """Test getting an existing context doesn't pass region_id"""
+        # Create AgentBay client with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AsyncAgentBay(cfg=config)
+
+        # First create a context
+        context_name = f"test-existing-context-{int(asyncio.get_event_loop().time())}"
+        create_result = await agent_bay.context.get(context_name, create=True)
+        self.assertTrue(create_result.success)
+
+        # Now get the existing context (should not pass region_id)
+        get_result = await agent_bay.context.get(context_name, create=False)
+
+        # Verify getting existing context succeeded
+        self.assertTrue(
+            get_result.success,
+            f"Getting existing context failed: {get_result.error_message}",
+        )
+        self.assertIsNotNone(get_result.context)
+        self.assertEqual(get_result.context.name, context_name)
+
+        print(f"✅ Existing context retrieved successfully")
+        print(f"   Context ID: {get_result.context.id}")
+        print(f"   Context Name: {get_result.context.name}")
+
+        # Clean up
+        await agent_bay.context.delete(get_result.context)
+
+    @pytest.mark.asyncio
+    async def test_session_and_context_workflow(self):
+        """Test complete workflow: create session with context sync using region_id"""
+        # Create AgentBay client with region_id in config
+        config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+        agent_bay = AsyncAgentBay(cfg=config)
+
+        # Create a context first
+        context_name = f"test-workflow-context-{int(asyncio.get_event_loop().time())}"
+        context_result = await agent_bay.context.get(context_name, create=True)
+        self.assertTrue(context_result.success)
+
+        # Create session with context sync
+        from agentbay import ContextSync
+        
+        params = CreateSessionParams()
+        params.context_syncs = [
+            ContextSync(
+                context_id=context_result.context.id, path="/tmp/test-region-sync"
+            )
+        ]
+
+        session_result = await agent_bay.create(params)
+        self.assertTrue(
+            session_result.success,
+            f"Session creation failed: {session_result.error_message}",
+        )
+
+        print(f"✅ Complete workflow succeeded with region_id=cn-hangzhou")
+        print(f"   Context ID: {context_result.context.id}")
+        print(f"   Session ID: {session_result.session.session_id}")
+
+        # Clean up
+        await session_result.session.delete()
+        await agent_bay.context.delete(context_result.context)
+
+    @pytest.mark.asyncio
+    async def test_agentbay_without_region_id(self):
+        """Test AgentBay works normally without region_id"""
+        # Create AgentBay client without region_id
+        agent_bay = AsyncAgentBay()
+
+        # Verify region_id is None
+        self.assertIsNone(agent_bay.region_id)
+
+        # Create session should still work
+        params = CreateSessionParams()
+        result = await agent_bay.create(params)
+
+        self.assertTrue(
+            result.success, f"Session creation failed: {result.error_message}"
+        )
+
+        print(f"✅ Session created successfully without region_id")
+        print(f"   Session ID: {result.session.session_id}")
+
+        # Clean up
+        await result.session.delete()
+
+
+if __name__ == "__main__":
+    unittest.main()

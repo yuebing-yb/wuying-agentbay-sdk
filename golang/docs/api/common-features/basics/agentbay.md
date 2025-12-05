@@ -19,9 +19,10 @@ AgentBayConfig holds optional configuration for the AgentBay client.
 
 ```go
 type AgentBay struct {
-	APIKey	string
-	Client	*mcp.Client
-	Context	*ContextService
+	APIKey		string
+	Client		*mcp.Client
+	Sessions	sync.Map
+	Context		*ContextService
 }
 ```
 

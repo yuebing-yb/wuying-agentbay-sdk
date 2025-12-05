@@ -4,15 +4,17 @@ import sys
 # Set environment variables for IDE testing
 os.environ["FORCE_COLOR"] = "1"
 os.environ["TERM"] = "xterm-256color"
-os.environ.setdefault("AGENTBAY_LOG_LEVEL", "INFO")
+os.environ.setdefault("AGENTBAY_LOG_LEVEL", "WARNING")
 os.environ["PYTHONUNBUFFERED"] = "1"
 
 
 def pytest_configure(config):
     """Configure pytest to apply color formatting to logs"""
     # Import after environment variables are set
-    from agentbay.logger import _colorize_log_message, AgentBayLogger
     from loguru import logger
+
+    from agentbay import AgentBayLogger
+    from agentbay import _colorize_log_message
 
     # Reset the logger initialization flag
     AgentBayLogger._initialized = False
@@ -24,16 +26,16 @@ def pytest_configure(config):
     logger.add(
         sys.stderr,
         format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
-               "<bold><blue>AgentBay</blue></bold> | "
-               "<level>{level}</level> | "
-               "<yellow>{process.id}:{thread.id}</yellow> | "
-               "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
-               "<level>{message}</level>",
-        level=os.getenv("AGENTBAY_LOG_LEVEL", "INFO"),
+        "<bold><blue>AgentBay</blue></bold> | "
+        "<level>{level}</level> | "
+        "<yellow>{process.id}:{thread.id}</yellow> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+        "<level>{message}</level>",
+        level=os.getenv("AGENTBAY_LOG_LEVEL", "WARNING"),
         filter=_colorize_log_message,
         colorize=True,
         backtrace=True,
-        diagnose=True
+        diagnose=True,
     )
 
     # Also add file handler without the color filter
@@ -47,9 +49,8 @@ def pytest_configure(config):
     logger.add(
         log_file,
         format="{time:YYYY-MM-DD HH:mm:ss.SSS} | AgentBay | {level: <8} | {process.id}:{thread.id} | {name}:{function}:{line} | {message}",
-        level=os.getenv("AGENTBAY_LOG_LEVEL", "INFO"),
+        level=os.getenv("AGENTBAY_LOG_LEVEL", "WARNING"),
         colorize=False,
         backtrace=True,
-        diagnose=True
+        diagnose=True,
     )
-

@@ -18,6 +18,14 @@ const (
 
 var mobileSimPersistenceContextID string
 
+func getInsecureClient(t *testing.T, apiKey string) *agentbay.AgentBay {
+	client, err := agentbay.NewAgentBay(apiKey)
+	if err != nil {
+		t.Fatalf("Failed to create AgentBay client: %v", err)
+	}
+	return client
+}
+
 // TestMobileSimulateForModelAIntegration test mobile simulate feature by model_a prop file
 // and check product model is "SM-A505F" after session created
 func TestMobileSimulateForModelAIntegration(t *testing.T) {
@@ -30,16 +38,19 @@ func TestMobileSimulateForModelAIntegration(t *testing.T) {
 		t.Skip("AGENTBAY_API_KEY not set, skipping integration test")
 	}
 
-	client, err := agentbay.NewAgentBay(apiKey, nil)
-	if err != nil {
-		t.Fatalf("Failed to create AgentBay client: %v", err)
-	}
+	client := getInsecureClient(t, apiKey)
 
 	t.Log("Upload mobile dev info file for model A...")
+	// Assuming the test is running from golang/tests/pkg/integration
 	mobileInfoFilePath := filepath.Join("..", "..", "..", "..", "resource", "mobile_info_model_a.json")
 	mobileInfoContent, err := os.ReadFile(mobileInfoFilePath)
 	if err != nil {
-		t.Fatalf("Failed to read mobile info file: %v", err)
+		// Try alternative path if running from root
+		mobileInfoFilePath = filepath.Join("resource", "mobile_info_model_a.json")
+		mobileInfoContent, err = os.ReadFile(mobileInfoFilePath)
+		if err != nil {
+			t.Fatalf("Failed to read mobile info file: %v", err)
+		}
 	}
 
 	// Create mobile simulate service and set simulate params
@@ -123,16 +134,18 @@ func TestMobileSimulateForModelBIntegration(t *testing.T) {
 		t.Skip("AGENTBAY_API_KEY not set, skipping integration test")
 	}
 
-	client, err := agentbay.NewAgentBay(apiKey, nil)
-	if err != nil {
-		t.Fatalf("Failed to create AgentBay client: %v", err)
-	}
+	client := getInsecureClient(t, apiKey)
 
 	t.Log("Upload mobile dev info file for model B...")
 	mobileInfoFilePath := filepath.Join("..", "..", "..", "..", "resource", "mobile_info_model_b.json")
 	mobileInfoContent, err := os.ReadFile(mobileInfoFilePath)
 	if err != nil {
-		t.Fatalf("Failed to read mobile info file: %v", err)
+		// Try alternative path if running from root
+		mobileInfoFilePath = filepath.Join("resource", "mobile_info_model_b.json")
+		mobileInfoContent, err = os.ReadFile(mobileInfoFilePath)
+		if err != nil {
+			t.Fatalf("Failed to read mobile info file: %v", err)
+		}
 	}
 
 	// Create mobile simulate service and set simulate params
@@ -216,10 +229,11 @@ func TestMobileSimulatePersistenceIntegration(t *testing.T) {
 		t.Skip("AGENTBAY_API_KEY not set, skipping integration test")
 	}
 
-	client, err := agentbay.NewAgentBay(apiKey, nil)
-	if err != nil {
-		t.Fatalf("Failed to create AgentBay client: %v", err)
+	if mobileSimPersistenceContextID == "" {
+		t.Skip("Skipping test: mobileSimPersistenceContextID not set (run Model A test first)")
 	}
+
+	client := getInsecureClient(t, apiKey)
 
 	t.Logf("Using a persistent mobild simulate context id: %s", mobileSimPersistenceContextID)
 

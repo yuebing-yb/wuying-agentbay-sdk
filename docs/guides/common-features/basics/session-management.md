@@ -1,6 +1,7 @@
 # Session Management Documentation
 
-This document provides comprehensive guidance on using the session management capabilities of the AgentBay SDK across all supported languages.
+This document provides comprehensive guidance on using the session management capabilities of the AgentBay SDK. Both synchronous and asynchronous APIs are fully supported.
+
 
 ## Overview
 
@@ -25,7 +26,10 @@ Before running the example programs in this guide, please ensure you have comple
 3. **Core Concepts**: Review [Core Concepts Guide](../../../quickstart/basic-concepts.md) to understand AgentBay fundamentals including sessions, images, and data persistence
 
 **Quick Verification:**
-After setup, verify everything works with this simple test:
+
+<details open>
+<summary>📘 <strong>Synchronous API</strong> (Recommended for beginners)</summary>
+
 ```python
 import os
 from agentbay import AgentBay
@@ -40,9 +44,41 @@ else:
     print(f"❌ Setup issue: {result.error_message}")
 ```
 
+**Best for**: Simple scripts, sequential operations
+
+</details>
+
+<details>
+<summary>⚡ <strong>Asynchronous API</strong> (Click to expand)</summary>
+
+```python
+import os
+import asyncio
+from agentbay import AsyncAgentBay
+
+async def main():
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    agent_bay = AsyncAgentBay(api_key=api_key)
+    result = await agent_bay.create()
+    if result.success:
+        print("✅ Setup successful - ready to use session management!")
+        await agent_bay.delete(result.session)
+    else:
+        print(f"❌ Setup issue: {result.error_message}")
+
+asyncio.run(main())
+```
+
+**Best for**: High concurrency, async projects, web applications
+
+</details>
+
 ### Creating a Session
 
-Creating a session is the first step in using the AgentBay SDK:
+Creating a session is the first step in using the AgentBay SDK.
+
+<details open>
+<summary>📘 <strong>Synchronous API</strong> (Recommended for beginners)</summary>
 
 ```python
 from agentbay import AgentBay
@@ -57,13 +93,42 @@ if session_result.success:
     print(f"Session created with ID: {session.session_id}")
 ```
 
+**Best for**: Simple scripts, sequential operations
+
+</details>
+
+<details>
+<summary>⚡ <strong>Asynchronous API</strong> (Click to expand)</summary>
+
+```python
+import asyncio
+from agentbay import AsyncAgentBay
+
+async def main():
+    # Initialize the SDK
+    agent_bay = AsyncAgentBay(api_key=api_key)
+
+    # Create a session with default parameters
+    session_result = await agent_bay.create()
+    if session_result.success:
+        session = session_result.session
+        print(f"Session created with ID: {session.session_id}")
+
+asyncio.run(main())
+```
+
+**Best for**: High concurrency, async projects, web applications
+
+
+</details>
+
 ## Creating Sessions with Custom Parameters
 
 You can customize sessions by specifying parameters such as [image ID](../../../quickstart/basic-concepts.md#image-types) and [labels](#session-label-management). For production environments, consider using [custom images](../advanced/custom-images.md) with fixed versions:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -447,7 +512,7 @@ Create sessions with comprehensive error handling:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 def create_session_safely(image_id="linux_latest"):
     agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
@@ -474,7 +539,7 @@ Implement automatic cleanup using Python's context manager protocol:
 ```python
 import os
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 class SessionManager:
     def __init__(self, image_id="linux_latest"):
@@ -507,10 +572,10 @@ except Exception as e:
 ## API Reference
 
 For detailed API documentation, see:
-- [Python Session API](../../../../python/docs/api/common-features/basics/session.md)
+- [Python Session API](../../../../python/docs/api/sync/session.md)
 - [TypeScript Session API](../../../../typescript/docs/api/common-features/basics/session.md)
 - [Golang Session API](../../../../golang/docs/api/common-features/basics/session.md)
-- [Python AgentBay API](../../../../python/docs/api/common-features/basics/agentbay.md)
+- [Python AgentBay API](../../../../python/docs/api/sync/agentbay.md)
 - [TypeScript AgentBay API](../../../../typescript/docs/api/common-features/basics/agentbay.md)
 - [Golang AgentBay API](../../../../golang/docs/api/common-features/basics/agentbay.md)
 
