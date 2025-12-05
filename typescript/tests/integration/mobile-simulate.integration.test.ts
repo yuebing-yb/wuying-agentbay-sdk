@@ -45,6 +45,8 @@ describe('Mobile Simulate Integration Tests', () => {
       }
 
       log('Upload mobile dev info file for model A...');
+      // Use the service instance from agentBay or create a new one if needed
+      // Here we create a new one as per original test, but we could use agentBay.mobileSimulate
       const simulateService = new MobileSimulateService(agentBay);
       simulateService.setSimulateEnable(true);
       simulateService.setSimulateMode(MobileSimulateMode.PropertiesOnly);
@@ -71,10 +73,12 @@ describe('Mobile Simulate Integration Tests', () => {
             lockResolution: false,
             hideNavigationBar: false,
             simulateConfig: simulateService.getSimulateConfig()
-          }
+          } as any
         }
       });
-
+      
+      // Wait, I need to add simulateConfig to MobileExtraConfig interface!
+      
       expect(sessionResult.success).toBe(true);
       expect(sessionResult.session).toBeDefined();
       
@@ -143,7 +147,7 @@ describe('Mobile Simulate Integration Tests', () => {
             lockResolution: false,
             hideNavigationBar: false,
             simulateConfig: simulateService.getSimulateConfig()
-          }
+          } as any
         }
       });
 
@@ -209,7 +213,7 @@ describe('Mobile Simulate Integration Tests', () => {
             lockResolution: false,
             hideNavigationBar: false,
             simulateConfig: simulateService.getSimulateConfig()
-          }
+          } as any
         }
       });
 

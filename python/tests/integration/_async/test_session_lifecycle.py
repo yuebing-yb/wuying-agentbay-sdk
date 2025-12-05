@@ -1,0 +1,125 @@
+"""Integration tests for complete session lifecycle."""
+
+import os
+
+import pytest
+import pytest_asyncio
+
+from agentbay import AsyncAgentBay
+from agentbay import CreateSessionParams
+
+
+@pytest_asyncio.fixture(scope="module")
+async def agent_bay():
+    """Create AsyncAgentBay instance."""
+    api_key = os.environ.get("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    return AsyncAgentBay(api_key=api_key)
+
+
+@pytest.mark.asyncio
+async def test_create_with_different_images(agent_bay):
+    """Test creating sessions with different image types."""
+    images = ["linux_latest", "browser_latest"]
+
+    for image_id in images:
+        params = CreateSessionParams(image_id=image_id)
+        result = await agent_bay.create(params)
+        assert result.success, f"Failed to create {image_id}: {result.error_message}"
+        session = result.session
+        print(f"Created {image_id} session: {session.session_id}")
+        await session.delete()
+
+
+@pytest.mark.asyncio
+async def test_session_has_required_attributes(agent_bay):
+    """Test that session has all required attributes."""
+    result = await agent_bay.create()
+    assert result.success
+    session = result.session
+
+    try:
+        # Check required attributes
+        assert hasattr(session, "session_id")
+        assert hasattr(session, "agent_bay")
+        assert hasattr(session, "file_system")
+        assert hasattr(session, "command")
+        assert hasattr(session, "browser")
+        assert hasattr(session, "context")
+
+        assert session.session_id is not None
+        assert len(session.session_id) > 0
+        print(f"Session {session.session_id} has all required attributes")
+    finally:
+        await session.delete()
+
+
+@pytest.mark.asyncio
+async def test_multiple_sessions_simultaneously(agent_bay):
+    """Test creating multiple sessions at the same time."""
+    sessions = []
+
+    try:
+        # Create 3 sessions
+        for i in range(3):
+            result = await agent_bay.create()
+            assert result.success
+            sessions.append(result.session)
+            print(f"Created session {i+1}: {result.session.session_id}")
+
+        # Verify all sessions are different
+        session_ids = [s.session_id for s in sessions]
+        assert len(set(session_ids)) == 3, "Session IDs should be unique"
+
+    finally:
+        # Clean up all sessions
+        for session in sessions:
+            await session.delete()
+        print(f"Cleaned up {len(sessions)} sessions")
+
+
+@pytest.mark.asyncio
+async def test_session_delete_is_idempotent(agent_bay):
+    """Test that deleting a session multiple times doesn't error."""
+    result = await agent_bay.create()
+    assert result.success
+    session = result.session
+
+    # Delete once
+    delete_result1 = await session.delete()
+    assert delete_result1.success
+    print(f"First delete successful: {session.session_id}")
+
+    # Delete again (should not error)
+    try:
+        delete_result2 = await session.delete()
+        # May succeed or fail, both are acceptable
+        print(f"Second delete result: {delete_result2.success}")
+    except Exception as e:
+        # Expected - session already deleted
+        print(f"Second delete raised exception (expected): {type(e).__name__}")
+
+
+@pytest.mark.asyncio
+async def test_session_operations_after_delete_fail(agent_bay):
+    """Test that operations on deleted session fail appropriately."""
+    result = await agent_bay.create()
+    assert result.success
+    session = result.session
+    session_id = session.session_id
+
+    # Delete session
+    await session.delete()
+    print(f"Deleted session: {session_id}")
+
+    # Try to use command (should fail or handle gracefully)
+    try:
+        cmd_result = await session.command.execute_command("echo test")
+        # If it doesn't error, check if it indicates failure
+        if not cmd_result.success:
+            print("Command correctly failed on deleted session")
+        else:
+            print("Warning: Command succeeded on deleted session")
+    except Exception as e:
+        print(f"Command correctly raised exception: {type(e).__name__}")

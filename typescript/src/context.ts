@@ -220,6 +220,11 @@ export class ContextService {
         authorization: `Bearer ${this.agentBay.getAPIKey()}`,
       });
 
+      // Add LoginRegionId only when creating (create=true)
+      if (create && this.agentBay.getRegionId()) {
+        request.loginRegionId = this.agentBay.getRegionId();
+      }
+
       // Log API request
       logAPICall("GetContext");
       logDebug(`Request: Name=${name}, AllowCreate=${create}`);

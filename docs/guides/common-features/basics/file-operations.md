@@ -1,6 +1,7 @@
 # Complete Guide to File Operations
 
-This guide provides a complete introduction to file operations in the AgentBay SDK, including basic file operations, directory management, batch operations, permission management, and performance optimization.
+This guide provides a complete introduction to file operations in the AgentBay SDK, including basic file operations, directory management, batch operations, permission management, and performance optimization. Both synchronous and asynchronous APIs are supported.
+
 
 ## 📋 Table of Contents
 
@@ -96,9 +97,14 @@ User: root
 <a id="api-quick-reference"></a>
 ## 🚀 API Quick Reference
 
-### Python
+<details open>
+<summary>📘 <strong>Synchronous API</strong> (Recommended for beginners)</summary>
+
 ```python
+from agentbay import AgentBay
+
 # Create session
+agent_bay = AgentBay()
 session = agent_bay.create().session
  #Create Directory
 session.file_system.create_directory("/path/to")
@@ -132,6 +138,59 @@ if result.success:
 agent_bay.delete(session)
 ```
 
+**Best for**: Simple scripts, sequential operations
+
+</details>
+
+<details>
+<summary>⚡ <strong>Asynchronous API</strong> (Click to expand)</summary>
+
+```python
+import asyncio
+from agentbay import AsyncAgentBay
+
+async def main():
+    # Create session
+    agent_bay = AsyncAgentBay()
+    session = (await agent_bay.create()).session
+
+    # Create Directory
+    session.file_system.create_directory("/path/to")
+    print("✅ Directory created successfully")
+
+    # Write text file (Note: write_file is currently synchronous in async sessions)
+    result = session.file_system.write_file("/path/to/file.txt", "Hello, World!")
+    if result.success:
+        print("Text file written successfully")
+
+    # Read text file (Note: read_file is currently synchronous in async sessions)
+    result = session.file_system.read_file("/path/to/file.txt")
+    if result.success:
+        content = result.content
+        print(f"File content: {content}")
+
+    # List directory
+    result = session.file_system.list_directory("/path/to")
+    if result.success:
+        entries = result.entries
+        for entry in entries:
+            print(f"Name: {entry['name']}")
+
+    # Get file info
+    result = session.file_system.get_file_info("/path/to/file.txt")
+    if result.success:
+        info = result.file_info
+        print(f"File info: {info}")
+
+    await agent_bay.delete(session)
+
+asyncio.run(main())
+```
+
+**Best for**: High concurrency, async projects, web applications
+
+
+</details>
 
 <a id="basic-file-operations"></a>
 ## 📝 Basic File Operations
@@ -255,7 +314,7 @@ import os
 import time
 import threading
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Initialize AgentBay
 api_key = os.getenv("AGENTBAY_API_KEY")

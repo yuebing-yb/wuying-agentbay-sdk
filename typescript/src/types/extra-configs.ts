@@ -20,63 +20,22 @@ export interface AppManagerRule {
 
 /**
  * Mobile simulate mode enum.
- * 
- * Defines the mode for mobile device simulation.
  */
 export enum MobileSimulateMode {
-  /**
-   * Only simulate device properties (build.prop).
-   */
   PropertiesOnly = "PropertiesOnly",
-  
-  /**
-   * Only simulate sensors information.
-   */
   SensorsOnly = "SensorsOnly",
-  
-  /**
-   * Only simulate installed packages.
-   */
   PackagesOnly = "PackagesOnly",
-  
-  /**
-   * Only simulate system services.
-   */
   ServicesOnly = "ServicesOnly",
-  
-  /**
-   * Simulate all aspects (properties, sensors, packages, and services).
-   */
-  All = "All"
+  All = "All",
 }
 
 /**
- * Mobile simulate configuration for session creation.
- * 
- * These settings allow simulation of different mobile devices by applying
- * device-specific properties and configurations.
+ * Mobile simulate configuration.
  */
 export interface MobileSimulateConfig {
-  /**
-   * Whether to enable mobile device simulation.
-   */
   simulate: boolean;
-  
-  /**
-   * Path to the mobile device information file.
-   */
   simulatePath?: string;
-  
-  /**
-   * Simulation mode - controls what aspects of the device are simulated.
-   * Defaults to PropertiesOnly if not specified.
-   */
-  simulateMode?: MobileSimulateMode;
-  
-  /**
-   * Context ID containing the mobile device information to simulate.
-   * This should be obtained from MobileSimulateService.uploadMobileInfo().
-   */
+  simulateMode: MobileSimulateMode;
   simulatedContextId?: string;
 }
 
@@ -84,8 +43,7 @@ export interface MobileSimulateConfig {
  * Mobile-specific configuration settings for session creation.
  * 
  * These settings allow control over mobile device behavior including
- * resolution locking, app access management, navigation bar visibility, uninstall protection,
- * and device simulation.
+ * resolution locking, app access management, navigation bar visibility, and uninstall protection.
  */
 export interface MobileExtraConfig {
   /**
@@ -114,10 +72,10 @@ export interface MobileExtraConfig {
    * Example: ["com.android.systemui", "com.android.settings"]
    */
   uninstallBlacklist?: string[];
-  
+
   /**
-   * Optional mobile device simulation configuration.
-   * Allows simulation of different mobile devices by applying device-specific properties.
+   * Configuration for mobile device simulation.
+   * Used to simulate specific device properties, sensors, etc.
    */
   simulateConfig?: MobileSimulateConfig;
 }
@@ -207,11 +165,16 @@ export function validateMobileSimulateConfig(config: MobileSimulateConfig): void
     throw new Error("MobileSimulateConfig simulate must be a boolean");
   }
   
-  if (config.simulateMode !== undefined) {
-    const validModes = Object.values(MobileSimulateMode);
-    if (!validModes.includes(config.simulateMode)) {
-      throw new Error(`Invalid simulateMode: ${config.simulateMode}. Must be one of: ${validModes.join(", ")}`);
-    }
+  if (!config.simulateMode) {
+    throw new Error("MobileSimulateConfig simulateMode is required");
+  }
+  
+  if (!Object.values(MobileSimulateMode).includes(config.simulateMode)) {
+    throw new Error(`Invalid simulateMode: ${config.simulateMode}`);
+  }
+  
+  if (config.simulatePath !== undefined && typeof config.simulatePath !== "string") {
+    throw new Error("MobileSimulateConfig simulatePath must be a string");
   }
   
   if (config.simulatedContextId !== undefined && typeof config.simulatedContextId !== "string") {
@@ -249,7 +212,7 @@ export function validateMobileExtraConfig(config: MobileExtraConfig): void {
       }
     }
   }
-  
+
   if (config.simulateConfig) {
     validateMobileSimulateConfig(config.simulateConfig);
   }

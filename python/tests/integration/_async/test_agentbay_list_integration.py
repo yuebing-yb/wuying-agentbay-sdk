@@ -1,0 +1,206 @@
+import os
+import random
+import sys
+import time
+import pytest
+
+from agentbay import AsyncAgentBay
+from agentbay import CreateSessionParams
+
+# Add the parent directory to the path so we can import the agentbay package
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def get_test_api_key():
+    """Get API key for testing"""
+    api_key = os.environ.get("AGENTBAY_API_KEY")
+    if not api_key:
+        api_key = "akm-xxx"  # Replace with your test API key
+        print(
+            "Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing."
+        )
+    return api_key
+
+
+def generate_unique_id():
+    """Create a unique identifier for test labels to avoid conflicts with existing data"""
+    timestamp = int(time.time() * 1000000)
+    random_part = random.randint(0, 10000)
+    return f"{timestamp}-{random_part}"
+
+
+# Global variables for test data
+sessions = []
+agent_bay = None
+unique_id = None
+
+
+@pytest.fixture(scope="module")
+async def setup_sessions():
+    """Set up test fixtures once for the entire test module."""
+    global sessions, agent_bay, unique_id
+    
+    api_key = get_test_api_key()
+    agent_bay = AsyncAgentBay(api_key=api_key)
+
+    # Generate a unique identifier for this test run
+    unique_id = generate_unique_id()
+    print(f"Using unique ID for test: {unique_id}")
+
+    # Create multiple sessions with different labels for testing
+    sessions = []
+
+    # Session 1: project=list-test, environment=dev
+    print("Creating session 1 with dev environment...")
+    params1 = CreateSessionParams(
+        labels={
+            "project": f"list-test-{unique_id}",
+            "environment": "dev",
+            "owner": f"test-{unique_id}",
+        }
+    )
+    result1 = await agent_bay.create(params1)
+    if result1.success:
+        sessions.append(result1.session)
+        print(f"Session 1 created: {result1.session.session_id}")
+        print(f"Request ID: {result1.request_id}")
+
+    # Session 2: project=list-test, environment=staging
+    print("Creating session 2 with staging environment...")
+    params2 = CreateSessionParams(
+        labels={
+            "project": f"list-test-{unique_id}",
+            "environment": "staging",
+            "owner": f"test-{unique_id}",
+        }
+    )
+    result2 = await agent_bay.create(params2)
+    if result2.success:
+        sessions.append(result2.session)
+        print(f"Session 2 created: {result2.session.session_id}")
+        print(f"Request ID: {result2.request_id}")
+
+    # Session 3: project=list-test, environment=prod
+    print("Creating session 3 with prod environment...")
+    params3 = CreateSessionParams(
+        labels={
+            "project": f"list-test-{unique_id}",
+            "environment": "prod",
+            "owner": f"test-{unique_id}",
+        }
+    )
+    # Retry logic for session 3 creation
+    max_retries = 3
+    for attempt in range(max_retries):
+        result3 = await agent_bay.create(params3)
+        if result3.success:
+            sessions.append(result3.session)
+            print(f"Session 3 created: {result3.session.session_id}")
+            print(f"Request ID: {result3.request_id}")
+            break
+        else:
+            print(
+                f"Attempt {attempt + 1} failed to create session 3: {result3.error_message}"
+            )
+            if attempt < max_retries - 1:
+                print("Waiting 15 seconds before retrying...")
+                time.sleep(15)
+
+    # Verify all sessions were created
+    if len(sessions) != 3:
+        raise RuntimeError(
+            f"Failed to create all 3 test sessions. Only created {len(sessions)} sessions."
+        )
+
+    # Wait a bit for sessions to be fully created and labels to propagate
+    time.sleep(5)
+    
+    yield
+    
+    # Cleanup
+    print("Cleaning up: Deleting all test sessions...")
+    for session in sessions:
+        try:
+            result = await agent_bay.delete(session)
+            print(
+                f"Session {session.session_id} deleted. Success: {result.success}, Request ID: {result.request_id}"
+            )
+        except Exception as e:
+            print(f"Warning: Error deleting session {session.session_id}: {e}")
+
+
+@pytest.mark.asyncio
+async def test_list_all_sessions(setup_sessions):
+    """Test listing all sessions without any label filter."""
+    print("\n=== Testing list() without labels ===")
+
+    result = await agent_bay.list()
+
+    # Verify the result
+    assert result.success, "list() should succeed"
+    assert result.request_id is not None, "Request ID should be present"
+    assert result.session_ids is not None, "Session IDs list should not be None"
+
+    print(f"Total sessions found: {result.total_count}")
+    print(f"Sessions in current page: {len(result.session_ids)}")
+    print(f"Request ID: {result.request_id}")
+
+
+@pytest.mark.asyncio
+async def test_list_with_single_label(setup_sessions):
+    """Test listing sessions with a single label filter."""
+    print("\n=== Testing list() with single label ===")
+
+    # List sessions with project label
+    result = await agent_bay.list(labels={"project": f"list-test-{unique_id}"})
+
+    # Verify the result
+    assert result.success, "list() with single label should succeed"
+    assert result.request_id is not None, "Request ID should be present"
+    assert len(result.session_ids) >= 3, "Should find at least 3 sessions"
+
+    # Verify all returned sessions have the expected label
+    session_ids = [s.session_id for s in sessions]
+    found_count = 0
+    for session_id in result.session_ids:
+        if session_id in session_ids:
+            found_count += 1
+
+    assert found_count == 3, "Should find exactly 3 test sessions"
+
+    print(f"Found {found_count} test sessions")
+    print(f"Total sessions with label: {len(result.session_ids)}")
+    print(f"Request ID: {result.request_id}")
+
+
+@pytest.mark.asyncio
+async def test_list_with_multiple_labels(setup_sessions):
+    """Test listing sessions with multiple label filters."""
+    print("\n=== Testing list() with multiple labels ===")
+
+    # List sessions with project and environment labels
+    result = await agent_bay.list(
+        labels={
+            "project": f"list-test-{unique_id}",
+            "environment": "dev",
+        }
+    )
+
+    # Verify the result
+    assert result.success, "list() with multiple labels should succeed"
+    assert result.request_id is not None, "Request ID should be present"
+    assert len(result.session_ids) >= 1, "Should find at least 1 session"
+
+    # Verify the dev session is in the results
+    dev_session_id = sessions[0].session_id
+    found = False
+    for session_id in result.session_ids:
+        if session_id == dev_session_id:
+            found = True
+            break
+
+    assert found, "Dev session should be in the results"
+
+    print(f"Found dev session: {found}")
+    print(f"Total matching sessions: {len(result.session_ids)}")
+    print(f"Request ID: {result.request_id}")

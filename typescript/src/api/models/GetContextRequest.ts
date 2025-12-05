@@ -7,12 +7,14 @@ export class GetContextRequest extends $dara.Model {
   authorization?: string;
   contextId?: string;
   name?: string;
+  loginRegionId?: string;
   static names(): { [key: string]: string } {
     return {
       allowCreate: 'AllowCreate',
       authorization: 'Authorization',
       contextId: 'ContextId',
       name: 'Name',
+      loginRegionId: 'LoginRegionId',
     };
   }
 
@@ -22,6 +24,7 @@ export class GetContextRequest extends $dara.Model {
       authorization: 'string',
       contextId: 'string',
       name: 'string',
+      loginRegionId: 'string',
     };
   }
 

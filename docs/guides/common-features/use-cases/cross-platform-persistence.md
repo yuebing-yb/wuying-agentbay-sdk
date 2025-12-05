@@ -89,7 +89,7 @@ func main() {
 
 ```python
 from agentbay import AgentBay
-from agentbay.context_sync import (
+from agentbay import (
     MappingPolicy,
     SyncPolicy,
     UploadPolicy,
@@ -97,7 +97,7 @@ from agentbay.context_sync import (
     DeletePolicy,
     ExtractPolicy
 )
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Initialize AgentBay client
 ab = AgentBay("your-api-key")

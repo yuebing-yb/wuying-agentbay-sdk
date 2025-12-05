@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from typing import List
-from agentbay.api import models as main_models
+
 from darabonba.model import DaraModel
+
+from agentbay.api import models as main_models
+
 
 class GetSessionResponseBody(DaraModel):
     def __init__(
@@ -33,47 +36,48 @@ class GetSessionResponseBody(DaraModel):
         if _map is not None:
             result = _map
         if self.code is not None:
-            result['Code'] = self.code
+            result["Code"] = self.code
 
         if self.data is not None:
-            result['Data'] = self.data.to_map()
+            result["Data"] = self.data.to_map()
 
         if self.http_status_code is not None:
-            result['HttpStatusCode'] = self.http_status_code
+            result["HttpStatusCode"] = self.http_status_code
 
         if self.message is not None:
-            result['Message'] = self.message
+            result["Message"] = self.message
 
         if self.request_id is not None:
-            result['RequestId'] = self.request_id
+            result["RequestId"] = self.request_id
 
         if self.success is not None:
-            result['Success'] = self.success
+            result["Success"] = self.success
 
         return result
 
     def from_map(self, m: dict = None):
         m = m or dict()
-        if m.get('Code') is not None:
-            self.code = m.get('Code')
+        if m.get("Code") is not None:
+            self.code = m.get("Code")
 
-        if m.get('Data') is not None:
+        if m.get("Data") is not None:
             temp_model = main_models.GetSessionResponseBodyData()
-            self.data = temp_model.from_map(m.get('Data'))
+            self.data = temp_model.from_map(m.get("Data"))
 
-        if m.get('HttpStatusCode') is not None:
-            self.http_status_code = m.get('HttpStatusCode')
+        if m.get("HttpStatusCode") is not None:
+            self.http_status_code = m.get("HttpStatusCode")
 
-        if m.get('Message') is not None:
-            self.message = m.get('Message')
+        if m.get("Message") is not None:
+            self.message = m.get("Message")
 
-        if m.get('RequestId') is not None:
-            self.request_id = m.get('RequestId')
+        if m.get("RequestId") is not None:
+            self.request_id = m.get("RequestId")
 
-        if m.get('Success') is not None:
-            self.success = m.get('Success')
+        if m.get("Success") is not None:
+            self.success = m.get("Success")
 
         return self
+
 
 class GetSessionResponseBodyData(DaraModel):
     def __init__(
@@ -103,7 +107,7 @@ class GetSessionResponseBodyData(DaraModel):
     def validate(self):
         if self.contexts:
             for v1 in self.contexts:
-                 if v1:
+                if v1:
                     v1.validate()
 
     def to_map(self):
@@ -112,75 +116,76 @@ class GetSessionResponseBodyData(DaraModel):
         if _map is not None:
             result = _map
         if self.app_instance_id is not None:
-            result['AppInstanceId'] = self.app_instance_id
+            result["AppInstanceId"] = self.app_instance_id
 
         if self.http_port is not None:
-            result['HttpPort'] = self.http_port
+            result["HttpPort"] = self.http_port
 
         if self.network_interface_ip is not None:
-            result['NetworkInterfaceIp'] = self.network_interface_ip
+            result["NetworkInterfaceIp"] = self.network_interface_ip
 
         if self.resource_id is not None:
-            result['ResourceId'] = self.resource_id
+            result["ResourceId"] = self.resource_id
 
         if self.resource_url is not None:
-            result['ResourceUrl'] = self.resource_url
+            result["ResourceUrl"] = self.resource_url
 
         if self.session_id is not None:
-            result['SessionId'] = self.session_id
+            result["SessionId"] = self.session_id
 
         if self.status is not None:
-            result['Status'] = self.status
+            result["Status"] = self.status
 
         if self.token is not None:
-            result['Token'] = self.token
+            result["Token"] = self.token
 
         if self.vpc_resource is not None:
-            result['VpcResource'] = self.vpc_resource
+            result["VpcResource"] = self.vpc_resource
 
-        result['contexts'] = []
+        result["contexts"] = []
         if self.contexts is not None:
             for k1 in self.contexts:
-                result['contexts'].append(k1.to_map() if k1 else None)
+                result["contexts"].append(k1.to_map() if k1 else None)
 
         return result
 
     def from_map(self, m: dict = None):
         m = m or dict()
-        if m.get('AppInstanceId') is not None:
-            self.app_instance_id = m.get('AppInstanceId')
+        if m.get("AppInstanceId") is not None:
+            self.app_instance_id = m.get("AppInstanceId")
 
-        if m.get('HttpPort') is not None:
-            self.http_port = m.get('HttpPort')
+        if m.get("HttpPort") is not None:
+            self.http_port = m.get("HttpPort")
 
-        if m.get('NetworkInterfaceIp') is not None:
-            self.network_interface_ip = m.get('NetworkInterfaceIp')
+        if m.get("NetworkInterfaceIp") is not None:
+            self.network_interface_ip = m.get("NetworkInterfaceIp")
 
-        if m.get('ResourceId') is not None:
-            self.resource_id = m.get('ResourceId')
+        if m.get("ResourceId") is not None:
+            self.resource_id = m.get("ResourceId")
 
-        if m.get('ResourceUrl') is not None:
-            self.resource_url = m.get('ResourceUrl')
+        if m.get("ResourceUrl") is not None:
+            self.resource_url = m.get("ResourceUrl")
 
-        if m.get('SessionId') is not None:
-            self.session_id = m.get('SessionId')
+        if m.get("SessionId") is not None:
+            self.session_id = m.get("SessionId")
 
-        if m.get('Status') is not None:
-            self.status = m.get('Status')
+        if m.get("Status") is not None:
+            self.status = m.get("Status")
 
-        if m.get('Token') is not None:
-            self.token = m.get('Token')
+        if m.get("Token") is not None:
+            self.token = m.get("Token")
 
-        if m.get('VpcResource') is not None:
-            self.vpc_resource = m.get('VpcResource')
+        if m.get("VpcResource") is not None:
+            self.vpc_resource = m.get("VpcResource")
 
         self.contexts = []
-        if m.get('contexts') is not None:
-            for k1 in m.get('contexts'):
+        if m.get("contexts") is not None:
+            for k1 in m.get("contexts"):
                 temp_model = main_models.GetSessionResponseBodyDataContexts()
                 self.contexts.append(temp_model.from_map(k1))
 
         return self
+
 
 class GetSessionResponseBodyDataContexts(DaraModel):
     def __init__(
@@ -200,20 +205,19 @@ class GetSessionResponseBodyDataContexts(DaraModel):
         if _map is not None:
             result = _map
         if self.id is not None:
-            result['id'] = self.id
+            result["id"] = self.id
 
         if self.name is not None:
-            result['name'] = self.name
+            result["name"] = self.name
 
         return result
 
     def from_map(self, m: dict = None):
         m = m or dict()
-        if m.get('id') is not None:
-            self.id = m.get('id')
+        if m.get("id") is not None:
+            self.id = m.get("id")
 
-        if m.get('name') is not None:
-            self.name = m.get('name')
+        if m.get("name") is not None:
+            self.name = m.get("name")
 
         return self
-

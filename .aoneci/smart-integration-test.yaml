@@ -1,0 +1,101 @@
+name: "Smart Integration Test"
+
+params:
+  test_type:
+    name: Test Type
+    type: string
+    default: "all"
+    options:
+      - "all"
+      - "python"
+      - "typescript"
+      - "golang"
+
+jobs:
+  smart-integration-test:
+    name: "Smart Integration Test"
+    runs-on:
+      - "4-16Gi"
+    image: alios-8u
+    timeout: 3h
+    retry:
+      max: 2
+      when:
+        - runner_system_failure
+        - stuck_or_timeout_failure
+    steps:
+      - uses: checkout
+      
+      - uses: setup-env
+        inputs:
+          python-version: '3.12'
+          
+      - id: run-smart-tests
+        name: "Run Smart Tests"
+        run: |
+          echo "🔄 Installing dependencies for Smart Test Runner..."
+          python -m pip config set global.timeout 600
+          python -m pip config set global.retries 5
+          python -m pip install --upgrade pip
+          
+          # Install dependencies similar to unit test job
+          pip install "darabonba-core>=1.0.0,<2.0.0" \
+                      "alibabacloud-tea-openapi>=0.4.0rc3" \
+                      "cryptography>=44.0.0" \
+                      "httpx>=0.28.1" \
+                      "alibabacloud-tea-util>=0.3.13" \
+                      "python-dotenv>=1.0.0" \
+                      "pydantic>=2.0" \
+                      "playwright>=1.5.0" \
+                      "loguru>=0.7.0"
+          
+          # Install test dependencies
+          pip install pytest pytest-cov pytest-asyncio
+          
+          # Install AI dependencies
+          pip install langchain-openai langgraph langchain-core
+          
+          # Install SDK in editable mode
+          pip install -e python/
+          
+          echo "🔧 Setting up environment..."
+          # Set PYTHONPATH similar to unit test job
+          export PYTHONPATH="${PYTHONPATH}:$(pwd)/python"
+          export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
+          export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
+          
+          echo "🚀 Starting Smart Test Runner..."
+          echo "Working directory: $(pwd)"
+          echo "Python path: $PYTHONPATH"
+          
+          # Run the smart test runner and capture exit code
+          if python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
+            echo "✅ Smart Test Runner completed successfully"
+            
+            # Check if test report was generated
+          if [ -f "test_report.md" ]; then
+            echo "✅ Test report generated successfully"
+            
+            # Display in CI Summary (Markdown format)
+            echo "## 🤖 Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
+            echo "" >> $AONE_CI_SUMMARY_MD
+            cat test_report.md >> $AONE_CI_SUMMARY_MD
+            
+            # Also show in console for immediate viewing
+            echo "📋 Test report preview:"
+            head -50 test_report.md
+            
+            # Archive as build artifact
+            mkdir -p artifacts
+            cp test_report.md artifacts/smart_test_report.md
+          else
+            echo "⚠️ No test report generated"
+            echo "## ❌ Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
+            echo "No test report was generated. Check the logs above for errors." >> $AONE_CI_SUMMARY_MD
+          fi
+          else
+            echo "❌ Smart Test Runner failed with exit code $?"
+            echo "❌ CI pipeline will now fail"
+            exit 1
+          fi
+

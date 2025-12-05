@@ -31,7 +31,7 @@ To enable browser replay, set `enable_browser_replay=True` when creating a sessi
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Create session with browser replay enabled
 params = CreateSessionParams(
@@ -48,7 +48,7 @@ session = result.session
 Once browser replay is enabled, all browser interactions will be automatically captured:
 
 ```python
-from agentbay.browser import BrowserOption
+from agentbay import BrowserOption
 from playwright.sync_api import sync_playwright
 
 # Initialize browser
@@ -233,8 +233,8 @@ Here's a complete example that demonstrates the full browser replay workflow:
 import os
 import time
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 from playwright.sync_api import sync_playwright
 
 def complete_replay_workflow():
