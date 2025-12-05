@@ -43,17 +43,25 @@ jobs:
               # Download and install Go 1.21 to local directory
               mkdir -p $HOME/go-install
               cd $HOME/go-install
-              wget -q https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
-              tar -xzf go1.21.0.linux-amd64.tar.gz
-              export PATH=$HOME/go-install/go/bin:$PATH
-              export GOROOT=$HOME/go-install/go
-              cd $GITHUB_WORKSPACE || cd /aoneci/runner/work/source
-              echo "✅ Go installed to local directory"
+              if [ ! -f go1.21.0.linux-amd64.tar.gz ]; then
+                echo "📥 Downloading Go..."
+                wget -O go1.21.0.linux-amd64.tar.gz https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+              fi
+              if [ -f go1.21.0.linux-amd64.tar.gz ]; then
+                echo "📦 Extracting Go..."
+                tar -xzf go1.21.0.linux-amd64.tar.gz
+                export PATH=$HOME/go-install/go/bin:$PATH
+                export GOROOT=$HOME/go-install/go
+                echo "✅ Go installed to local directory"
+              else
+                echo "❌ Failed to download Go"
+              fi
+              cd $(pwd)
             fi
             go version || echo "❌ Go installation failed"
             
             # Setup Golang dependencies
-            if command -v go &> /dev/null; then
+            if command -v go &> /dev/null && [ -d "golang" ]; then
               echo "📦 Setting up Golang dependencies..."
               cd golang
               go mod download || echo "⚠️ Go mod download failed"
@@ -69,17 +77,25 @@ jobs:
               # Install Node.js using NodeSource binary distribution (no sudo required)
               mkdir -p $HOME/nodejs
               cd $HOME/nodejs
-              wget -q https://nodejs.org/dist/v18.18.0/node-v18.18.0-linux-x64.tar.xz
-              tar -xf node-v18.18.0-linux-x64.tar.xz
-              export PATH=$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH
-              cd $GITHUB_WORKSPACE || cd /aoneci/runner/work/source
-              echo "✅ Node.js installed to local directory"
+              if [ ! -f node-v18.18.0-linux-x64.tar.xz ]; then
+                echo "📥 Downloading Node.js..."
+                wget -O node-v18.18.0-linux-x64.tar.xz https://nodejs.org/dist/v18.18.0/node-v18.18.0-linux-x64.tar.xz
+              fi
+              if [ -f node-v18.18.0-linux-x64.tar.xz ]; then
+                echo "📦 Extracting Node.js..."
+                tar -xf node-v18.18.0-linux-x64.tar.xz
+                export PATH=$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH
+                echo "✅ Node.js installed to local directory"
+              else
+                echo "❌ Failed to download Node.js"
+              fi
+              cd $(pwd)
             fi
             node --version || echo "❌ Node.js installation failed"
             npm --version || echo "❌ npm installation failed"
             
             # Setup TypeScript dependencies
-            if command -v npm &> /dev/null; then
+            if command -v npm &> /dev/null && [ -d "typescript" ]; then
               echo "📦 Setting up TypeScript dependencies..."
               cd typescript
               npm install || echo "⚠️ npm install failed"
@@ -109,26 +125,21 @@ jobs:
           # Install AI dependencies
           pip install langchain-openai langgraph langchain-core
           
-          # Install SDK in editable mode
-          pip install -e python/
-          
-          # Setup TypeScript environment (if needed)
-          if [ "${{params.test_type}}" = "typescript" ] || [ "${{params.test_type}}" = "all" ]; then
-            echo "📦 Setting up TypeScript environment..."
-            cd typescript
-            npm install
-            cd ..
-          fi
-          
-          # Setup Golang environment (if needed)
-          if [ "${{params.test_type}}" = "golang" ] || [ "${{params.test_type}}" = "all" ]; then
-            echo "🐹 Setting up Golang environment..."
-            cd golang
-            go mod download
-            cd ..
-          fi
-          
           echo "🔧 Setting up environment..."
+          # Ensure we're in the correct working directory
+          cd /aoneci/runner/work/source || exit 1
+          echo "📂 Current working directory: $(pwd)"
+          
+          # Install SDK in editable mode with correct path
+          if [ -d "python" ]; then
+            pip install -e ./python/
+            echo "✅ Python SDK installed successfully"
+          else
+            echo "❌ Python directory not found"
+            ls -la
+            exit 1
+          fi
+          
           # Set PYTHONPATH similar to unit test job
           export PYTHONPATH="${PYTHONPATH}:$(pwd)/python"
           export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
@@ -157,7 +168,13 @@ jobs:
           fi
           
           # Run the smart test runner and capture exit code with updated PATH
-          if PATH=$HOME/go-install/go/bin:$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
+          # Ensure we have the correct working directory
+          cd /aoneci/runner/work/source || exit 1
+          
+          # Set up comprehensive PATH with all installed tools
+          export PATH="$HOME/go-install/go/bin:$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH"
+          
+          if python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
             echo "✅ Smart Test Runner completed successfully"
             
             # Check if test report was generated
