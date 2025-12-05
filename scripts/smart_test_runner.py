@@ -326,28 +326,54 @@ def discover_typescript_tests(state: AgentState, pattern: Optional[str]) -> Agen
             "test_type": "typescript"
         }
     
-    # 使用Jest来发现集成测试
-    cmd = ["npm", "run", "test:integration", "--", "--listTests"]
+    # 直接查找集成测试文件而不是使用Jest --listTests
+    integration_test_dir = os.path.join(cwd, "tests", "integration")
+    test_ids = []
     
-    print(f"执行命令: {' '.join(cmd)} 在目录 {cwd}")
-    
-    try:
-        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=60)
-        
-        test_ids = []
-        if result.returncode == 0:
-            # 解析Jest的测试文件列表，只包含集成测试
-            for line in result.stdout.splitlines():
-                line = line.strip()
-                if (line.endswith('.test.ts') or line.endswith('.test.js')) and 'integration' in line:
-                    # 转换为相对路径
-                    if line.startswith(cwd):
-                        line = os.path.relpath(line, cwd)
+    if os.path.exists(integration_test_dir):
+        print(f"📂 扫描集成测试目录: {integration_test_dir}")
+        for root, dirs, files in os.walk(integration_test_dir):
+            for file in files:
+                if file.endswith('.test.ts') or file.endswith('.test.js'):
+                    # 获取相对于typescript目录的路径
+                    full_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(full_path, cwd)
+                    
                     # 如果有模式过滤，应用过滤
-                    if not pattern or pattern.lower() in line.lower():
-                        test_ids.append(f"typescript:{line}")
+                    if not pattern or pattern.lower() in rel_path.lower():
+                        test_ids.append(f"typescript:{rel_path}")
         
-        print(f"✅ 找到 {len(test_ids)} 个TypeScript集成测试。")
+        print(f"✅ 在目录扫描中找到 {len(test_ids)} 个TypeScript集成测试。")
+        if len(test_ids) > 0:
+            print("📋 测试文件列表:")
+            for test_id in test_ids[:5]:  # 只显示前5个
+                print(f"   - {test_id}")
+            if len(test_ids) > 5:
+                print(f"   ... 还有 {len(test_ids) - 5} 个测试文件")
+    else:
+        print(f"❌ 集成测试目录不存在: {integration_test_dir}")
+        # 尝试使用Jest命令作为备用方案
+        cmd = [npm_cmd, "run", "test:integration", "--", "--listTests"]
+        print(f"🔄 尝试Jest命令: {' '.join(cmd)}")
+        
+        try:
+            result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=60)
+            if result.returncode == 0:
+                for line in result.stdout.splitlines():
+                    line = line.strip()
+                    if (line.endswith('.test.ts') or line.endswith('.test.js')) and 'integration' in line:
+                        if line.startswith(cwd):
+                            line = os.path.relpath(line, cwd)
+                        if not pattern or pattern.lower() in line.lower():
+                            test_ids.append(f"typescript:{line}")
+                print(f"✅ 通过Jest命令找到 {len(test_ids)} 个TypeScript集成测试。")
+            else:
+                print(f"⚠️ Jest命令失败，返回码: {result.returncode}")
+                print(f"⚠️ 错误输出: {result.stderr}")
+        except Exception as e:
+            print(f"⚠️ Jest命令执行失败: {e}")
+    
+    print(f"✅ 总共找到 {len(test_ids)} 个TypeScript集成测试。")
         
         # Load SDK Context
         context = ""
