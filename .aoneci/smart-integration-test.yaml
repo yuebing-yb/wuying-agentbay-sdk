@@ -64,6 +64,11 @@ jobs:
       - id: run-smart-tests
         name: "Run Smart Tests"
         run: |
+          echo "🔄 Installing dependencies for Smart Test Runner..."
+          python -m pip install --upgrade pip
+          python -m pip install pytest langchain-openai langgraph langchain-core alibabacloud_tea_openapi alibabacloud_credentials alibabacloud_tea_util alibabacloud_endpoint_util
+          python -m pip install -e python/
+          
           echo "Starting Smart Test Runner..."
           export PYTHONPATH="${PYTHONPATH}:$(pwd)/python"
           export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
