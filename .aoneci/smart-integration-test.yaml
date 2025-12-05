@@ -30,37 +30,6 @@ jobs:
         inputs:
           python-version: '3.12'
           
-      - id: install-dependencies
-        name: "Install Dependencies"
-        run: |
-          echo "🔧 Installing Python dependencies..."
-          python -m pip install --upgrade pip
-          
-          echo "📦 Installing core dependencies..."
-          python -m pip install pytest
-          
-          echo "📦 Installing LangChain dependencies..."
-          python -m pip install langchain-openai langgraph langchain-core
-          
-          echo "📦 Installing Alibaba Cloud dependencies..."
-          python -m pip install alibabacloud_tea_openapi alibabacloud_credentials alibabacloud_tea_util alibabacloud_endpoint_util
-          
-          echo "📦 Installing SDK in editable mode..."
-          python -m pip install -e python/
-          
-          echo "✅ Verifying installations..."
-          echo "🔍 Checking installed langchain packages..."
-          pip show langchain-openai
-          pip show langgraph  
-          pip show langchain-core
-          
-          echo "🔍 Trying different import methods..."
-          python -c "import sys; print('Python paths:'); [print(p) for p in sys.path]"
-          python -c "import pkgutil; print('Available packages:'); [print(name) for _, name, _ in pkgutil.iter_modules() if 'langchain' in name]"
-          
-          echo "📋 Installed packages:"
-          pip list | grep -E "(langchain|langgraph)"
-          
       - id: run-smart-tests
         name: "Run Smart Tests"
         run: |
