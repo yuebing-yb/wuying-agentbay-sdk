@@ -46,9 +46,9 @@ async def take_agent_screenshots(session: AsyncSession):
         print(f"Raw response: {screenshot_b64}")
         return
     
-    with open("agent_screenshot.png", "wb") as f:
-        f.write(image_data)
-    print("✅ Agent screenshot saved as agent_screenshot.png")
+    with open("temp_agent_screenshot.png", "wb") as f:
+            f.write(agent_screenshot)
+        print("✅ Agent screenshot saved as temp_agent_screenshot.png")
     
     # Take a full page screenshot with custom quality
     full_page_b64 = await session.browser.agent.screenshot(
@@ -69,9 +69,9 @@ async def take_agent_screenshots(session: AsyncSession):
         print(f"Raw response: {full_page_b64}")
         return
     
-    with open("agent_full_page_screenshot.png", "wb") as f:
-        f.write(image_data)
-    print("✅ Agent full page screenshot saved as agent_full_page_screenshot.png")
+    with open("temp_agent_full_page_screenshot.png", "wb") as f:
+            f.write(agent_full_page_screenshot)
+        print("✅ Agent full page screenshot saved as temp_agent_full_page_screenshot.png")
 
 
 async def take_browser_screenshots(session: AsyncSession):
@@ -94,9 +94,9 @@ async def take_browser_screenshots(session: AsyncSession):
         print(f"✅ Browser screenshot captured ({len(screenshot_bytes)} bytes)")
         
         # Save the screenshot to a file
-        with open("browser_screenshot.png", "wb") as f:
-            f.write(screenshot_bytes)
-        print("✅ Browser screenshot saved as browser_screenshot.png")
+        with open("temp_browser_screenshot.png", "wb") as f:
+            f.write(browser_screenshot)
+        print("✅ Browser screenshot saved as temp_browser_screenshot.png")
         
         # Take a full page screenshot with custom options
         full_page_bytes = await session.browser.screenshot(
@@ -108,9 +108,9 @@ async def take_browser_screenshots(session: AsyncSession):
         print(f"✅ Browser full page screenshot captured ({len(full_page_bytes)} bytes)")
         
         # Save the full page screenshot
-        with open("browser_full_page_screenshot.jpg", "wb") as f:
-            f.write(full_page_bytes)
-        print("✅ Browser full page screenshot saved as browser_full_page_screenshot.jpg")
+        with open("temp_browser_full_page_screenshot.jpg", "wb") as f:
+            f.write(browser_full_page_screenshot)
+        print("✅ Browser full page screenshot saved as temp_browser_full_page_screenshot.jpg")
         
         # Take a screenshot with custom viewport settings
         custom_screenshot = await session.browser.screenshot(
