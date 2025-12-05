@@ -28,7 +28,7 @@ jobs:
       
       - uses: setup-env
         inputs:
-          python-version: '3.13'
+          python-version: '3.12'
           
       - id: install-dependencies
         name: "Install Dependencies"
