@@ -4428,7 +4428,7 @@ The Python SDK provides two screenshot methods:
 #### Example Usage
 - [Python Browser Screenshot Example](../../../../python/docs/examples/_async/browser-use/browser/browser_screenshot.py)
 - [Python Integration Tests](../../../../python/tests/integration/_async/test_browser_screenshot.py)
-- [Python Unit Tests](../../../../python/tests/unit/test_browser_screenshot.py)
+- [Python Unit Tests](../../../../python/tests/unit/shared/test_browser_screenshot.py)
 
 ### TypeScript Implementation
 
@@ -7946,7 +7946,6 @@ AgentBay SDK provides file compression capabilities to optimize storage space an
 ```python
 from agentbay import AgentBay, CreateSessionParams
 from agentbay import ContextSync, SyncPolicy, UploadPolicy, UploadMode
-import asyncio
 
 # Initialize AgentBay client
 agent_bay = AgentBay(api_key="your-api-key")
@@ -7982,11 +7981,8 @@ session = session_result.session
 session.file_system.write_file("/tmp/data/large-file.txt", large_content, mode="overwrite")
 session.file_system.write_file("/tmp/data/config.json", config_data, mode="overwrite")
 
-# Perform context sync before getting info (async operation)
-async def run_sync():
-    return await session.context.sync()
-
-sync_result = asyncio.run(run_sync())
+# Perform context sync before getting info (synchronous operation)
+sync_result = session.context.sync()
 if sync_result.success:
     print("Context sync successful!")
     
@@ -17280,28 +17276,10 @@ Alias for initialize.
 ### destroy
 
 ```python
-def destroy()
+async def destroy()
 ```
 
-Destroy the browser instance.
-
-**Example**:
-
-```python
-session = await agent_bay.create().session
-browser_option = BrowserOption()
-await session.browser.initialize(browser_option)
-session.browser.destroy()
-await session.delete()
-```
-
-### destroy\_async
-
-```python
-async def destroy_async()
-```
-
-Destroy the browser instance asynchronously.
+Destroy the browser instance manually.
 
 ### screenshot
 
@@ -18779,24 +18757,6 @@ get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 > ⚡ **Performance Advantage**: Async API enables concurrent operations with 4-6x performance improvements for parallel tasks.
 
 
-
-## ContextStatusData
-
-```python
-class ContextStatusData()
-```
-
-## ContextInfoResult
-
-```python
-class ContextInfoResult(ApiResponse)
-```
-
-## ContextSyncResult
-
-```python
-class ContextSyncResult(ApiResponse)
-```
 
 ## AsyncContextManager
 
@@ -22545,25 +22505,7 @@ Alias for initialize.
 def destroy()
 ```
 
-Destroy the browser instance.
-
-**Example**:
-
-```python
-session = agent_bay.create().session
-browser_option = BrowserOption()
-session.browser.initialize(browser_option)
-session.browser.destroy()
-session.delete()
-```
-
-### destroy\_async
-
-```python
-def destroy_async()
-```
-
-Destroy the browser instance synchronously.
+Destroy the browser instance manually.
 
 ### screenshot
 
@@ -24032,24 +23974,6 @@ get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 > **💡 Async Version**: This documentation covers the synchronous API. For async/await support, see [`AsyncContextManager`](../async/async-context-manager.md) which provides the same functionality with async methods.
 
 
-
-## ContextStatusData
-
-```python
-class ContextStatusData()
-```
-
-## ContextInfoResult
-
-```python
-class ContextInfoResult(ApiResponse)
-```
-
-## ContextSyncResult
-
-```python
-class ContextSyncResult(ApiResponse)
-```
 
 ## ContextManager
 
@@ -26923,112 +26847,22 @@ Automated extension testing:
 
 ## Quick Start
 
-### Basic Browser Automation
+```bash
+# Set your API key
+export AGENTBAY_API_KEY=your_api_key_here
 
-```python
-import asyncio
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-from agentbay import BrowserOption
-from playwright.async_api import async_playwright
-
-async def main():
-    # Create session
-    agent_bay = AgentBay(api_key="your_api_key")
-    params = CreateSessionParams(image_id="browser_latest")
-    result = agent_bay.create(params)
-    session = result.session
-    
-    # Initialize browser
-    option = BrowserOption()
-    await session.browser.initialize_async(option)
-    
-    # Connect Playwright
-    endpoint_url = session.browser.get_endpoint_url()
-    async with async_playwright() as p:
-        browser = await p.chromium.connect_over_cdp(endpoint_url)
-        context = browser.contexts[0]
-        page = await context.new_page()
-        
-        # Automate...
-        await page.goto("https://example.com")
-        
-        await browser.close()
-    
-    # Cleanup
-    agent_bay.delete(session)
-
-asyncio.run(main())
+# Run any example
+cd browser
+python browser_automation.py
 ```
 
-### AI-Powered Automation
+## Browser Configuration
 
-```python
-# Use Agent for intelligent automation
-result = await session.browser.agent.act_async(
-    "Search for AgentBay on the page and click the first result"
-)
-```
-
-## Browser Type Selection
-
-```python
-from agentbay import BrowserOption
-
-# Use Chrome
-option = BrowserOption(browser_type="chrome")
-await session.browser.initialize_async(option)
-
-# Use Chromium
-option = BrowserOption(browser_type="chromium")
-await session.browser.initialize_async(option)
-
-# Use default
-option = BrowserOption()
-await session.browser.initialize_async(option)
-```
-
-## Stealth Configuration
-
-```python
-from agentbay import (
-    BrowserOption,
-    BrowserViewport,
-    BrowserFingerprint
-)
-
-option = BrowserOption(
-    browser_type="chrome",
-    use_stealth=True,
-    viewport=BrowserViewport(1920, 1080),
-    fingerprint=BrowserFingerprint(
-        devices=["desktop"],
-        operating_systems=["windows", "macos"],
-        locales=["en-US"]
-    )
-)
-```
-
-## Cookie Persistence
-
-```python
-from agentbay import BrowserContext
-
-# Create browser context
-context_result = agent_bay.context.get("my-browser-context", create=True)
-
-browser_context = BrowserContext(
-    context_id=context_result.context.id,
-    auto_upload=True
-)
-
-params = CreateSessionParams(
-    image_id="browser_latest",
-    browser_context=browser_context
-)
-
-# Cookies will persist across sessions
-```
+- **Browser Types**: Chrome, Chromium, Default
+- **Stealth Mode**: Fingerprint randomization and anti-detection
+- **Cookie Persistence**: Browser Context for session continuity
+- **Proxy Support**: HTTP/HTTPS and SOCKS proxy configuration
+- **Extension Support**: Load and manage browser extensions
 
 ## Best Practices
 
@@ -27039,63 +26873,6 @@ params = CreateSessionParams(
 5. **Unique context names**: Use unique context names to avoid conflicts
 6. **Stealth mode**: Use stealth mode for production web scraping
 7. **Rate limiting**: Respect website rate limits and robots.txt
-
-## Common Patterns
-
-### Error Handling
-
-```python
-try:
-    success = await session.browser.initialize_async(option)
-    if not success:
-        raise RuntimeError("Initialization failed")
-    
-    # Use browser...
-    
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    agent_bay.delete(session)
-```
-
-### Waiting for Elements
-
-```python
-# Wait for element
-await page.wait_for_selector("#my-element", timeout=5000)
-
-# Wait for navigation
-await page.wait_for_load_state("networkidle")
-```
-
-### Taking Screenshots
-
-```python
-# Full page screenshot
-await page.screenshot(path="screenshot.png", full_page=True)
-
-# Element screenshot
-element = await page.query_selector("#my-element")
-await element.screenshot(path="element.png")
-```
-
-## Browser Context vs Regular Sessions
-
-| Feature | Regular Browser Session | Browser Context Session |
-|---------|------------------------|-------------------------|
-| Cookie Persistence | No, cookies lost after session ends | Yes, cookies persist across sessions |
-| Setup Complexity | Simple | Requires context creation |
-| Use Case | One-time automation | Multi-session workflows |
-| Data Synchronization | None | Automatic with `auto_upload=True` |
-
-## API Methods Used
-
-| Method | Purpose |
-|--------|---------|
-| `session.browser.initialize_async()` | Initialize browser with options |
-| `session.browser.get_endpoint_url()` | Get CDP endpoint for Playwright |
-| `session.browser.agent.act_async()` | AI-powered browser automation |
-| `session.browser.close()` | Close browser connection |
 
 ## Related Documentation
 
@@ -27138,8 +26915,6 @@ If websites detect automation:
 
 
 
-
-
 # Browser Examples
 
 This directory contains examples demonstrating various capabilities of the AgentBay browser automation system.
@@ -27171,11 +26946,11 @@ python browser_screenshot.py
 ```
 
 This will generate several screenshot files in the current directory:
-- `agent_screenshot.png` - Screenshot taken with browser agent
-- `agent_full_page_screenshot.png` - Full page screenshot taken with browser agent
-- `browser_screenshot.png` - Screenshot taken with direct Playwright integration
-- `browser_full_page_screenshot.jpg` - Full page screenshot in JPEG format
-- `browser_custom_screenshot.png` - Screenshot with custom options
+- `temp_agent_screenshot.png` - Screenshot taken with browser agent
+- `temp_agent_full_page_screenshot.png` - Full page screenshot taken with browser agent
+- `temp_browser_screenshot.png` - Screenshot taken with direct Playwright integration
+- `temp_browser_full_page_screenshot.jpg` - Full page screenshot in JPEG format
+- `temp_browser_custom_screenshot.png` - Screenshot with custom options
 
 ## Other Examples
 
@@ -27376,49 +27151,6 @@ python extension_testing_automation.py
 - Extensions must include a valid `manifest.json` file
 - Extensions are synchronized to `/tmp/extensions/{extension_id}/` in browser sessions
 
-## Usage Patterns
-
-### Basic Extension Management
-```python
-from agentbay import AgentBay
-from agentbay import ExtensionsService
-
-agent_bay = AgentBay(api_key="your_api_key")
-extensions_service = ExtensionsService(agent_bay)
-
-# Upload extension
-extension = extensions_service.create("/path/to/extension.zip")
-
-# Create browser session with extension
-ext_option = extensions_service.create_extension_option([extension.id])
-# ... use with BrowserContext
-```
-
-### Development Workflow
-```python
-from extension_development_workflow import ExtensionDevelopmentWorkflow
-
-workflow = ExtensionDevelopmentWorkflow("your_api_key", "my_project")
-workflow.upload_extension("/path/to/extension-v1.zip")
-session = workflow.create_test_session()
-# Test extension...
-workflow.update_extension("/path/to/extension-v2.zip")
-# Test updated version...
-```
-
-### Automated Testing
-```python
-from extension_testing_automation import ExtensionTestRunner, TestSuite
-
-test_runner = ExtensionTestRunner("your_api_key")
-test_suite = TestSuite(
-    name="my_tests",
-    extension_paths=["/path/to/test-extension.zip"],
-    test_cases=["extension_loaded", "manifest_valid"]
-)
-results = test_runner.run_test_suite(test_suite)
-```
-
 ## Best Practices
 
 1. **Context Management**:
@@ -27481,105 +27213,54 @@ Extensions are synchronized to browser sessions at:
 
 
 
-# CodeSpace Examples
+# Codespace Examples
 
 This directory contains examples demonstrating code execution capabilities in AgentBay SDK.
 
 ## Overview
 
-CodeSpace environment (`code_latest` image) provides a cloud-based development environment where you can:
-- Execute Python and JavaScript code
-- Perform file operations
-- Run shell commands
-- Manage packages (pip, npm)
+Codespace environment (`linux_latest` image) provides cloud-based code execution with:
+- Python and JavaScript runtime support
+- File system operations
+- Command execution
+- Package installation and management
+- Development environment setup
 
 ## Examples
 
-### code_execution_example.py
+### Code Execution
+- **code_execution_example.py**: Basic Python and JavaScript code execution
+- **python_development.py**: Python development workflow
+- **nodejs_development.py**: Node.js development setup
+- **web_server_setup.py**: Web server configuration
 
-Comprehensive example demonstrating:
-- **Python Code Execution**: Run Python scripts with full standard library access
-- **JavaScript Code Execution**: Execute Node.js code with npm packages
-- **File Operations**: Read, write, and manage files in the code environment
-- **Command Execution**: Run shell commands for system operations
+### File Operations
+- **file_compression.py**: File compression and archiving
+- **text_processing.py**: Text file processing operations
+
+### System Operations
+- **system_monitoring.py**: System resource monitoring
+- **git_operations.py**: Git repository management
+- **database_operations.py**: Database setup and operations
+
+### Build and Automation
+- **build_automation.py**: Automated build processes
 
 ## Prerequisites
 
 - Python 3.8 or later
+- AgentBay SDK installed: `pip install wuying-agentbay-sdk`
 - Valid `AGENTBAY_API_KEY` environment variable
-- AgentBay SDK installed
 
-## Installation
-
-```bash
-pip install wuying-agentbay-sdk
-```
-
-## Usage
+## Quick Start
 
 ```bash
 # Set your API key
 export AGENTBAY_API_KEY=your_api_key_here
 
-# Run the example
+# Run any example
 python code_execution_example.py
 ```
-
-## Features Demonstrated
-
-### Python Code Execution
-
-```python
-python_code = """
-import sys
-print(f"Python version: {sys.version}")
-"""
-
-result = session.code.run_code(python_code, "python")
-if result.success:
-    print(result.result)
-```
-
-### JavaScript Code Execution
-
-```python
-js_code = """
-const os = require('os');
-console.log(`Platform: ${os.platform()}`);
-"""
-
-result = session.code.run_code(js_code, "javascript")
-if result.success:
-    print(result.result)
-```
-
-### File Operations
-
-```python
-# Write file
-await session.file_system.write_file("/tmp/test.txt", "Hello World")
-
-# Read file
-result = await session.file_system.read_file("/tmp/test.txt")
-print(result.content)
-```
-
-### Command Execution
-
-```python
-# Execute shell command
-result = session.command.execute_command("python --version")
-if result.success:
-    print(result.output)
-```
-
-## Use Cases
-
-1. **Automated Testing**: Run test suites in isolated environments
-2. **Code Validation**: Validate code snippets before deployment
-3. **Data Processing**: Execute data transformation scripts
-4. **CI/CD Integration**: Integrate with continuous integration pipelines
-5. **Educational Tools**: Provide safe code execution environments for learning
 
 ## API Methods Used
 
@@ -27590,45 +27271,54 @@ if result.success:
 | `session.file_system.read_file()` | Read content from a file |
 | `session.command.execute_command()` | Execute shell commands |
 
+## Common Use Cases
+
+### Development Workflows
+- Set up development environments
+- Install packages and dependencies
+- Run automated tests
+- Build and deploy applications
+
+### Data Processing
+- Process large datasets
+- Run data analysis scripts
+- Generate reports and visualizations
+
+### Automation Tasks
+- Automated testing and CI/CD
+- System administration tasks
+- File processing and manipulation
+
 ## Best Practices
 
-1. **Error Handling**: Always check `result.success` before using output
-2. **Resource Cleanup**: Delete sessions when done to free resources
-3. **Timeout Management**: Set appropriate timeouts for long-running code
-4. **Security**: Never execute untrusted code without proper validation
-5. **Package Management**: Install required packages before code execution
+1. **Environment Setup**: Install required packages before running code
+2. **Error Handling**: Check execution results for errors
+3. **Resource Management**: Clean up temporary files and processes
+4. **Security**: Avoid executing untrusted code
+5. **Performance**: Consider memory and CPU usage for large operations
 
 ## Related Documentation
 
-- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md)
-- [Session Management](../../../../../docs/guides/common-features/basics/session-management.md)
-- [File Operations](../../../../../docs/guides/common-features/basics/file-operations.md)
+- [Codespace Guide](../../../../../docs/guides/codespace/code-execution.md)
+- [File Operations Guide](../../../../../docs/guides/common-features/basics/file-operations.md)
+- [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md)
 
 ## Troubleshooting
 
-### Code Execution Timeout
+### Code Execution Fails
+- Check syntax errors in the code
+- Verify required packages are installed
+- Check memory and timeout limits
 
-If your code takes too long to execute, consider:
-- Breaking it into smaller chunks
-- Increasing timeout settings
-- Using asynchronous execution patterns
+### Package Installation Issues
+- Use correct package manager (pip for Python, npm for Node.js)
+- Check network connectivity
+- Verify package names and versions
 
-### Package Not Found
-
-If you need additional packages:
-```python
-# Install Python package
-session.command.execute_command("pip install package-name")
-
-# Install Node.js package
-session.command.execute_command("npm install package-name")
-```
-
-### Permission Denied
-
-Ensure you're writing to accessible directories like `/tmp` or user home directory.
-
-
+### File Permission Issues
+- Ensure proper file permissions
+- Use appropriate file paths
+- Check disk space availability
 
 
 
@@ -27749,60 +27439,9 @@ cd ../file_system
 python main.py
 ```
 
-## Common Patterns
+## Usage
 
-### Basic Session Creation
-
-```python
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="linux_latest")
-result = agent_bay.create(params)
-
-if result.success:
-    session = result.session
-    # Use session...
-    agent_bay.delete(session)
-```
-
-### File Operations
-
-```python
-# Write file
-result = await session.file_system.write_file("/tmp/test.txt", "content")
-
-# Read file
-result = await session.file_system.read_file("/tmp/test.txt")
-if result.success:
-    print(result.content)
-```
-
-### Command Execution
-
-```python
-result = session.command.execute_command("ls -la")
-if result.success:
-    print(result.output)
-```
-
-### Context Management
-
-```python
-# Get or create context
-context_result = agent_bay.context.get("my-context", create=True)
-
-# Use context with session
-from agentbay import ContextSync, SyncPolicy
-
-context_sync = ContextSync.new(
-    context_id=context_result.context.id,
-    path="/tmp/data",
-    policy=SyncPolicy.default()
-)
-params = CreateSessionParams(context_syncs=[context_sync])
-```
+Each subdirectory contains specific examples with detailed documentation. Check the individual README files and Python scripts for complete usage examples.
 
 ## Best Practices
 
@@ -28067,7 +27706,7 @@ session_params = CreateSessionParams(
     context_syncs=[context_sync]
 )
 
-session_result = agent_bay.create(session_params)
+session_result = await agent_bay.create(session_params)
 ```
 
 ### File Operations
@@ -28103,7 +27742,7 @@ for index, status in enumerate(info_result.context_status_data):
 
 ```python
 # List files in context sync directory
-list_result = agent_bay.context.list_files(context_id, sync_dir_path, page_number=1, page_size=10)
+list_result = await agent_bay.context.list_files(context_id, sync_dir_path, page_number=1, page_size=10)
 
 # Display file entries
 for index, entry in enumerate(list_result.entries):
@@ -28698,36 +28337,12 @@ export AGENTBAY_API_KEY="your-api-key-here"
 python main.py
 ```
 
-## Code Example
-
-```python
-import os
-from agentbay import AgentBay
-
-# Initialize AgentBay client
-api_key = os.getenv("AGENTBAY_API_KEY")
-agentbay = AgentBay(api_key=api_key)
-
-# Retrieve a session by ID
-session_id = "your-session-id"
-result = agentbay.get(session_id)
-
-if result.success:
-    session = result.session
-    print(f"Retrieved session: {session.session_id}")
-    print(f"Request ID: {result.request_id}")
-    # Use the session for further operations
-    # ...
-else:
-    print(f"Failed to get session: {result.error_message}")
-```
-
 ## API Reference
 
 ### get
 
 ```python
-def get(session_id: str) -> SessionResult
+async def get(session_id: str) -> SessionResult
 ```
 
 Get a session by its ID.
@@ -28776,29 +28391,8 @@ Error message: Failed to get session: session not found or has been deleted
 The `get` method returns a `SessionResult` object with error information:
 
 1. **Empty session_id**: Result will have `success=False`
-   ```python
-   result = agentbay.get("")
-   if not result.success:
-       print(f"Error: {result.error_message}")  # "session_id is required"
-   ```
-
 2. **Non-existent session**: Result will have `success=False`
-   ```python
-   result = agentbay.get("non-existent-session-id")
-   if not result.success:
-       print(f"Error: {result.error_message}")  # "Failed to get session..."
-   ```
-
 3. **Deleted session**: Result will have `success=False`
-   ```python
-   # After deleting a session
-   session.delete()
-   result = agentbay.get(session_id)
-   if not result.success:
-       print(f"Error: {result.error_message}")  # "Failed to get session: session not found or has been deleted"
-   ```
-
-
 
 
 
@@ -28899,100 +28493,12 @@ cd /path/to/wuying-agentbay-sdk/python/docs/examples/list_sessions
 python main.py
 ```
 
-## Code Walkthrough
-
-### 1. List All Sessions
-
-```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key=api_key)
-
-# List all sessions without any filter
-result = agent_bay.list()
-
-if result.success:
-    print(f"Total sessions: {result.total_count}")
-    print(f"Sessions on this page: {len(result.sessions)}")
-    print(f"Request ID: {result.request_id}")
-```
-
-### 2. Filter by Single Label
-
-```python
-# Find all sessions with project='my-project'
-result = agent_bay.list(labels={"project": "my-project"})
-
-if result.success:
-    for session in result.sessions:
-        print(f"Session ID: {session.session_id}")
-```
-
-### 3. Filter by Multiple Labels
-
-```python
-# Find sessions that match ALL specified labels
-result = agent_bay.list(
-    labels={
-        "project": "my-project",
-        "environment": "production"
-    }
-)
-```
-
-### 4. Pagination
-
-```python
-# Get first page with 10 items per page
-result = agent_bay.list(
-    labels={"project": "my-project"},
-    page=1,
-    limit=10
-)
-
-# Get second page
-if result.next_token:
-    result_page2 = agent_bay.list(
-        labels={"project": "my-project"},
-        page=2,
-        limit=10
-    )
-```
-
-### 5. Iterate All Pages
-
-```python
-all_sessions = []
-page = 1
-limit = 10
-
-while True:
-    result = agent_bay.list(
-        labels={"project": "my-project"},
-        page=page,
-        limit=limit
-    )
-
-    if not result.success:
-        break
-
-    all_sessions.extend(result.sessions)
-
-    # Break if no more pages
-    if not result.next_token:
-        break
-
-    page += 1
-
-print(f"Total sessions: {len(all_sessions)}")
-```
-
 ## API Reference
 
 ### Method Signature
 
 ```python
-def list(
+async def list(
     labels: Optional[Dict[str, str]] = None,
     page: Optional[int] = None,
     limit: Optional[int] = None
@@ -29028,66 +28534,16 @@ Returns a `SessionListResult` object with:
 ## Use Cases
 
 ### 1. Session Inventory
-
-List all sessions to get an overview of your current session inventory:
-
-```python
-result = agent_bay.list()
-print(f"You have {result.total_count} active sessions")
-```
+List all sessions to get an overview of your current session inventory.
 
 ### 2. Project Management
-
-Find all sessions for a specific project:
-
-```python
-result = agent_bay.list(labels={"project": "website-automation"})
-for session in result.sessions:
-    print(f"Session: {session.session_id}")
-```
+Find all sessions for a specific project.
 
 ### 3. Environment-Specific Queries
-
-Query sessions by environment (dev, staging, prod):
-
-```python
-dev_sessions = agent_bay.list(labels={"environment": "dev"})
-prod_sessions = agent_bay.list(labels={"environment": "prod"})
-
-print(f"Dev sessions: {len(dev_sessions.sessions)}")
-print(f"Prod sessions: {len(prod_sessions.sessions)}")
-```
+Query sessions by environment (dev, staging, prod).
 
 ### 4. Bulk Operations
-
-Retrieve all matching sessions and perform batch operations:
-
-```python
-# Get all sessions for a project
-all_sessions = []
-page = 1
-
-while True:
-    result = agent_bay.list(
-        labels={"project": "old-project"},
-        page=page,
-        limit=50
-    )
-
-    if not result.success:
-        break
-
-    all_sessions.extend(result.sessions)
-
-    if not result.next_token:
-        break
-
-    page += 1
-
-# Perform bulk cleanup
-for session in all_sessions:
-    agent_bay.delete(session)
-```
+Retrieve all matching sessions and perform batch operations.
 
 ## Key Advantages over list_by_labels()
 
@@ -29098,29 +28554,6 @@ The new `list()` API offers several advantages:
 3. **Request Tracking**: All responses include `request_id` for debugging
 4. **Cleaner Code**: More readable and maintainable code
 5. **Type Safety**: Better IDE autocomplete support
-
-## Comparison with Deprecated API
-
-### Old way (list_by_labels):
-```python
-from agentbay import ListSessionParams
-
-params = ListSessionParams(
-    labels={"project": "demo"},
-    max_results=10,
-    next_token=""
-)
-result = agent_bay.list_by_labels(params)
-```
-
-### New way (list):
-```python
-result = agent_bay.list(
-    labels={"project": "demo"},
-    page=1,
-    limit=10
-)
-```
 
 ## Expected Output
 
@@ -29182,12 +28615,7 @@ Found 0 sessions with specified labels
 3. All specified labels must match (AND logic, not OR)
 
 ### Rate Limiting
-If you encounter rate limiting, add delays between requests:
-```python
-import time
-result = agent_bay.list(labels={"project": "demo"})
-time.sleep(1)  # Wait 1 second between requests
-```
+If you encounter rate limiting, add delays between requests.
 
 ## Related Documentation
 
@@ -29200,8 +28628,6 @@ time.sleep(1)  # Wait 1 second between requests
 For issues or questions:
 - GitHub Issues: https://github.com/aliyun/wuying-agentbay-sdk/issues
 - Documentation: https://github.com/aliyun/wuying-agentbay-sdk
-
-
 
 
 
@@ -29461,97 +28887,6 @@ cd computer
 python windows_app_management_example.py
 ```
 
-## Usage Examples
-
-### Basic Application Management
-
-```python
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-
-# Create Windows session
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="windows_latest")
-result = agent_bay.create(params)
-session = result.session
-
-# Get installed applications
-apps_result = session.computer.get_installed_apps(
-    start_menu=True,
-    desktop=False,
-    ignore_system_apps=True
-)
-
-if apps_result.success:
-    for app in apps_result.data:
-        print(f"App: {app.name}")
-        print(f"Command: {app.start_cmd}")
-
-# Start an application
-start_result = session.computer.start_app("C:\\Windows\\System32\\notepad.exe")
-if start_result.success:
-    for process in start_result.data:
-        print(f"Started: {process.pname} (PID: {process.pid})")
-
-# List visible applications
-visible_result = session.computer.list_visible_apps()
-if visible_result.success:
-    for app in visible_result.data:
-        print(f"Visible: {app.pname} (PID: {app.pid})")
-
-# Stop application by PID
-stop_result = session.computer.stop_app_by_pid(process.pid)
-
-# Stop application by name
-stop_result = session.computer.stop_app_by_pname("notepad.exe")
-
-# Cleanup
-agent_bay.delete(session)
-```
-
-### Window Management
-
-```python
-# List all windows
-windows_result = session.window.list_windows()
-if windows_result.success:
-    for window in windows_result.data:
-        print(f"Window: {window.title}")
-        print(f"Handle: {window.handle}")
-
-# Focus a window
-focus_result = session.window.focus_window(window_handle)
-
-# Maximize window
-maximize_result = session.window.maximize_window(window_handle)
-
-# Minimize window
-minimize_result = session.window.minimize_window(window_handle)
-
-# Close window
-close_result = session.window.close_window(window_handle)
-```
-
-### UI Automation
-
-```python
-# Take screenshot
-screenshot_result = session.ui.screenshot()
-if screenshot_result.success:
-    with open("screenshot.png", "wb") as f:
-        f.write(screenshot_result.data)
-
-# Click at coordinates
-click_result = session.ui.click(x=100, y=200)
-
-# Type text
-type_result = session.ui.type("Hello, World!")
-
-# Send key
-from agentbay import KeyCode
-key_result = session.ui.key(KeyCode.ENTER)
-```
-
 ## Features Demonstrated
 
 ### Application Discovery
@@ -29601,46 +28936,19 @@ key_result = session.ui.key(KeyCode.ENTER)
 ## Common Use Cases
 
 ### 1. Automated Testing
-```python
-# Start application
-session.computer.start_app("C:\\MyApp\\app.exe")
-
-# Wait for window
-import time
-time.sleep(2)
-
-# Interact with UI
-session.ui.click(x=200, y=300)
-session.ui.type("test data")
-session.ui.key(KeyCode.ENTER)
-
-# Verify results
-screenshot = session.ui.screenshot()
-```
+- Start application and wait for window
+- Interact with UI elements
+- Verify results with screenshots
 
 ### 2. Application Monitoring
-```python
-# Monitor running applications
-while True:
-    visible_apps = session.computer.list_visible_apps()
-    if visible_apps.success:
-        print(f"Running apps: {len(visible_apps.data)}")
-    time.sleep(60)
-```
+- Monitor running applications
+- Track application lifecycle
+- Performance monitoring
 
 ### 3. Automated Workflows
-```python
-# Open Excel
-session.computer.start_app("excel.exe")
-time.sleep(3)
-
-# Type data
-session.ui.type("=SUM(A1:A10)")
-session.ui.key(KeyCode.ENTER)
-
-# Save
-session.ui.key(KeyCode.CTRL, KeyCode.S)
-```
+- Open applications in sequence
+- Perform data entry tasks
+- Generate reports and save files
 
 ## Best Practices
 
@@ -29699,8 +29007,6 @@ If UI interactions fail:
 - Add delays between actions
 - Verify coordinates are correct
 - Check for popup dialogs blocking interaction
-
-
 
 
 
@@ -29993,129 +29299,6 @@ cd ..
 python mobile_get_adb_url_example.py
 ```
 
-## Usage Examples
-
-### Basic Mobile Automation
-
-```python
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-from agentbay import KeyCode
-
-# Create mobile session
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="mobile_latest")
-result = agent_bay.create(params)
-session = result.session
-
-# Get installed applications
-apps_result = session.mobile.get_installed_apps(
-    start_menu=True,
-    desktop=False,
-    ignore_system_apps=True
-)
-
-if apps_result.success:
-    print(f"Found {len(apps_result.data)} applications")
-
-# Start an application
-start_result = session.mobile.start_app(
-    "monkey -p com.android.settings -c android.intent.category.LAUNCHER 1"
-)
-
-# Get clickable UI elements
-elements_result = session.mobile.get_clickable_ui_elements()
-if elements_result.success:
-    for element in elements_result.elements:
-        print(f"Element: {element['text']}")
-
-# Tap on screen
-tap_result = session.mobile.tap(x=500, y=800)
-
-# Swipe gesture
-swipe_result = session.mobile.swipe(
-    start_x=100,
-    start_y=800,
-    end_x=900,
-    end_y=200,
-    duration_ms=500
-)
-
-# Input text
-input_result = session.mobile.input_text("Hello, AgentBay!")
-
-# Send key event
-key_result = session.mobile.send_key(KeyCode.HOME)
-
-# Take screenshot
-screenshot_result = session.mobile.screenshot()
-if screenshot_result.success:
-    with open("screenshot.png", "wb") as f:
-        f.write(screenshot_result.data)
-
-# Stop application
-stop_result = session.mobile.stop_app_by_cmd(
-    "am force-stop com.android.settings"
-)
-
-# Cleanup
-agent_bay.delete(session)
-```
-
-### UI Element Tree Navigation
-
-```python
-# Get all UI elements
-all_elements_result = session.mobile.get_all_ui_elements(timeout_ms=3000)
-
-if all_elements_result.success:
-    import json
-    elements = json.loads(all_elements_result.elements)
-    
-    def print_element(element, indent=0):
-        prefix = "  " * indent
-        print(f"{prefix}- {element['className']}")
-        print(f"{prefix}  text: '{element['text']}'")
-        print(f"{prefix}  resourceId: '{element['resourceId']}'")
-        
-        for child in element.get('children', []):
-            print_element(child, indent + 1)
-    
-    for element in elements:
-        print_element(element)
-```
-
-### Application with Specific Activity
-
-```python
-# Start app with specific activity
-app_package = "com.example.app"
-app_activity = "com.example.app.MainActivity"
-start_cmd = f"monkey -p {app_package} -c android.intent.category.LAUNCHER 1"
-
-start_result = session.mobile.start_app(
-    start_cmd=start_cmd,
-    activity=app_activity
-)
-
-if start_result.success:
-    for process in start_result.data:
-        print(f"Started: {process.pname} (PID: {process.pid})")
-```
-
-### ADB Connection
-
-```python
-# Get ADB URL for external tools
-adb_url_result = session.mobile.get_adb_url()
-if adb_url_result.success:
-    adb_url = adb_url_result.data
-    print(f"ADB URL: {adb_url}")
-    
-    # Use with adb command line:
-    # adb connect {adb_url}
-```
-
 ## Features Demonstrated
 
 ### Application Management
@@ -30171,82 +29354,20 @@ if adb_url_result.success:
 ## Common Use Cases
 
 ### 1. App Testing Automation
-
-```python
-# Start app
-session.mobile.start_app("monkey -p com.myapp -c android.intent.category.LAUNCHER 1")
-
-# Wait for app to load
-import time
-time.sleep(3)
-
-# Get UI elements
-elements = session.mobile.get_clickable_ui_elements()
-
-# Find and tap login button
-for element in elements.elements:
-    if element['text'] == 'Login':
-        session.mobile.tap(x=element['x'], y=element['y'])
-        break
-
-# Input credentials
-session.mobile.input_text("user@example.com")
-session.mobile.send_key(KeyCode.TAB)
-session.mobile.input_text("password123")
-
-# Submit
-session.mobile.send_key(KeyCode.ENTER)
-
-# Verify with screenshot
-screenshot = session.mobile.screenshot()
-```
+- Start app and wait for load
+- Get UI elements and find target elements
+- Input credentials and submit forms
+- Verify results with screenshots
 
 ### 2. UI Element Inspection
-
-```python
-# Get all elements
-all_elements = session.mobile.get_all_ui_elements()
-
-# Find specific element by text
-def find_element_by_text(elements, text):
-    for element in elements:
-        if element['text'] == text:
-            return element
-        if 'children' in element:
-            result = find_element_by_text(element['children'], text)
-            if result:
-                return result
-    return None
-
-target = find_element_by_text(all_elements.elements, "Settings")
-if target:
-    session.mobile.tap(x=target['x'], y=target['y'])
-```
+- Get all elements and find specific elements by text
+- Navigate UI hierarchy
+- Extract element properties
 
 ### 3. Gesture Automation
-
-```python
-# Swipe up (scroll down)
-session.mobile.swipe(
-    start_x=500,
-    start_y=1500,
-    end_x=500,
-    end_y=500,
-    duration_ms=300
-)
-
-# Swipe right (navigate)
-session.mobile.swipe(
-    start_x=100,
-    start_y=800,
-    end_x=900,
-    end_y=800,
-    duration_ms=200
-)
-
-# Long press
-session.mobile.tap(x=500, y=800)  # Hold for long press
-```
+- Swipe up/down for scrolling
+- Swipe left/right for navigation
+- Long press for context menus
 
 ## Best Practices
 
@@ -30306,8 +29427,6 @@ If screenshots fail or are corrupted:
 - Verify sufficient memory
 - Try smaller screen resolution
 - Handle base64 decoding correctly
-
-
 
 
 
@@ -30526,112 +29645,22 @@ Automated extension testing:
 
 ## Quick Start
 
-### Basic Browser Automation
+```bash
+# Set your API key
+export AGENTBAY_API_KEY=your_api_key_here
 
-```python
-import asyncio
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-from agentbay import BrowserOption
-from playwright.async_api import async_playwright
-
-async def main():
-    # Create session
-    agent_bay = AgentBay(api_key="your_api_key")
-    params = CreateSessionParams(image_id="browser_latest")
-    result = agent_bay.create(params)
-    session = result.session
-    
-    # Initialize browser
-    option = BrowserOption()
-    await session.browser.initialize_async(option)
-    
-    # Connect Playwright
-    endpoint_url = session.browser.get_endpoint_url()
-    async with async_playwright() as p:
-        browser = await p.chromium.connect_over_cdp(endpoint_url)
-        context = browser.contexts[0]
-        page = await context.new_page()
-        
-        # Automate...
-        await page.goto("https://example.com")
-        
-        await browser.close()
-    
-    # Cleanup
-    agent_bay.delete(session)
-
-asyncio.run(main())
+# Run any example
+cd browser
+python browser_automation.py
 ```
 
-### AI-Powered Automation
+## Browser Configuration
 
-```python
-# Use Agent for intelligent automation
-result = await session.browser.agent.act_async(
-    "Search for AgentBay on the page and click the first result"
-)
-```
-
-## Browser Type Selection
-
-```python
-from agentbay import BrowserOption
-
-# Use Chrome
-option = BrowserOption(browser_type="chrome")
-await session.browser.initialize_async(option)
-
-# Use Chromium
-option = BrowserOption(browser_type="chromium")
-await session.browser.initialize_async(option)
-
-# Use default
-option = BrowserOption()
-await session.browser.initialize_async(option)
-```
-
-## Stealth Configuration
-
-```python
-from agentbay import (
-    BrowserOption,
-    BrowserViewport,
-    BrowserFingerprint
-)
-
-option = BrowserOption(
-    browser_type="chrome",
-    use_stealth=True,
-    viewport=BrowserViewport(1920, 1080),
-    fingerprint=BrowserFingerprint(
-        devices=["desktop"],
-        operating_systems=["windows", "macos"],
-        locales=["en-US"]
-    )
-)
-```
-
-## Cookie Persistence
-
-```python
-from agentbay import BrowserContext
-
-# Create browser context
-context_result = agent_bay.context.get("my-browser-context", create=True)
-
-browser_context = BrowserContext(
-    context_id=context_result.context.id,
-    auto_upload=True
-)
-
-params = CreateSessionParams(
-    image_id="browser_latest",
-    browser_context=browser_context
-)
-
-# Cookies will persist across sessions
-```
+- **Browser Types**: Chrome, Chromium, Default
+- **Stealth Mode**: Fingerprint randomization and anti-detection
+- **Cookie Persistence**: Browser Context for session continuity
+- **Proxy Support**: HTTP/HTTPS and SOCKS proxy configuration
+- **Extension Support**: Load and manage browser extensions
 
 ## Best Practices
 
@@ -30642,63 +29671,6 @@ params = CreateSessionParams(
 5. **Unique context names**: Use unique context names to avoid conflicts
 6. **Stealth mode**: Use stealth mode for production web scraping
 7. **Rate limiting**: Respect website rate limits and robots.txt
-
-## Common Patterns
-
-### Error Handling
-
-```python
-try:
-    success = await session.browser.initialize_async(option)
-    if not success:
-        raise RuntimeError("Initialization failed")
-    
-    # Use browser...
-    
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    agent_bay.delete(session)
-```
-
-### Waiting for Elements
-
-```python
-# Wait for element
-await page.wait_for_selector("#my-element", timeout=5000)
-
-# Wait for navigation
-await page.wait_for_load_state("networkidle")
-```
-
-### Taking Screenshots
-
-```python
-# Full page screenshot
-await page.screenshot(path="screenshot.png", full_page=True)
-
-# Element screenshot
-element = await page.query_selector("#my-element")
-await element.screenshot(path="element.png")
-```
-
-## Browser Context vs Regular Sessions
-
-| Feature | Regular Browser Session | Browser Context Session |
-|---------|------------------------|-------------------------|
-| Cookie Persistence | No, cookies lost after session ends | Yes, cookies persist across sessions |
-| Setup Complexity | Simple | Requires context creation |
-| Use Case | One-time automation | Multi-session workflows |
-| Data Synchronization | None | Automatic with `auto_upload=True` |
-
-## API Methods Used
-
-| Method | Purpose |
-|--------|---------|
-| `session.browser.initialize_async()` | Initialize browser with options |
-| `session.browser.get_endpoint_url()` | Get CDP endpoint for Playwright |
-| `session.browser.agent.act_async()` | AI-powered browser automation |
-| `session.browser.close()` | Close browser connection |
 
 ## Related Documentation
 
@@ -30741,8 +29713,6 @@ If websites detect automation:
 
 
 
-
-
 # Browser Examples
 
 This directory contains examples demonstrating various capabilities of the AgentBay browser automation system.
@@ -30774,11 +29744,11 @@ python browser_screenshot.py
 ```
 
 This will generate several screenshot files in the current directory:
-- `agent_screenshot.png` - Screenshot taken with browser agent
-- `agent_full_page_screenshot.png` - Full page screenshot taken with browser agent
-- `browser_screenshot.png` - Screenshot taken with direct Playwright integration
-- `browser_full_page_screenshot.jpg` - Full page screenshot in JPEG format
-- `browser_custom_screenshot.png` - Screenshot with custom options
+- `temp_agent_screenshot.png` - Screenshot taken with browser agent
+- `temp_agent_full_page_screenshot.png` - Full page screenshot taken with browser agent
+- `temp_browser_screenshot.png` - Screenshot taken with direct Playwright integration
+- `temp_browser_full_page_screenshot.jpg` - Full page screenshot in JPEG format
+- `temp_browser_custom_screenshot.png` - Screenshot with custom options
 
 ## Other Examples
 
@@ -30979,49 +29949,6 @@ python extension_testing_automation.py
 - Extensions must include a valid `manifest.json` file
 - Extensions are synchronized to `/tmp/extensions/{extension_id}/` in browser sessions
 
-## Usage Patterns
-
-### Basic Extension Management
-```python
-from agentbay import AgentBay
-from agentbay import ExtensionsService
-
-agent_bay = AgentBay(api_key="your_api_key")
-extensions_service = ExtensionsService(agent_bay)
-
-# Upload extension
-extension = extensions_service.create("/path/to/extension.zip")
-
-# Create browser session with extension
-ext_option = extensions_service.create_extension_option([extension.id])
-# ... use with BrowserContext
-```
-
-### Development Workflow
-```python
-from extension_development_workflow import ExtensionDevelopmentWorkflow
-
-workflow = ExtensionDevelopmentWorkflow("your_api_key", "my_project")
-workflow.upload_extension("/path/to/extension-v1.zip")
-session = workflow.create_test_session()
-# Test extension...
-workflow.update_extension("/path/to/extension-v2.zip")
-# Test updated version...
-```
-
-### Automated Testing
-```python
-from extension_testing_automation import ExtensionTestRunner, TestSuite
-
-test_runner = ExtensionTestRunner("your_api_key")
-test_suite = TestSuite(
-    name="my_tests",
-    extension_paths=["/path/to/test-extension.zip"],
-    test_cases=["extension_loaded", "manifest_valid"]
-)
-results = test_runner.run_test_suite(test_suite)
-```
-
 ## Best Practices
 
 1. **Context Management**:
@@ -31084,105 +30011,54 @@ Extensions are synchronized to browser sessions at:
 
 
 
-# CodeSpace Examples
+# Codespace Examples
 
 This directory contains examples demonstrating code execution capabilities in AgentBay SDK.
 
 ## Overview
 
-CodeSpace environment (`code_latest` image) provides a cloud-based development environment where you can:
-- Execute Python and JavaScript code
-- Perform file operations
-- Run shell commands
-- Manage packages (pip, npm)
+Codespace environment (`linux_latest` image) provides cloud-based code execution with:
+- Python and JavaScript runtime support
+- File system operations
+- Command execution
+- Package installation and management
+- Development environment setup
 
 ## Examples
 
-### code_execution_example.py
+### Code Execution
+- **code_execution_example.py**: Basic Python and JavaScript code execution
+- **python_development.py**: Python development workflow
+- **nodejs_development.py**: Node.js development setup
+- **web_server_setup.py**: Web server configuration
 
-Comprehensive example demonstrating:
-- **Python Code Execution**: Run Python scripts with full standard library access
-- **JavaScript Code Execution**: Execute Node.js code with npm packages
-- **File Operations**: Read, write, and manage files in the code environment
-- **Command Execution**: Run shell commands for system operations
+### File Operations
+- **file_compression.py**: File compression and archiving
+- **text_processing.py**: Text file processing operations
+
+### System Operations
+- **system_monitoring.py**: System resource monitoring
+- **git_operations.py**: Git repository management
+- **database_operations.py**: Database setup and operations
+
+### Build and Automation
+- **build_automation.py**: Automated build processes
 
 ## Prerequisites
 
 - Python 3.8 or later
+- AgentBay SDK installed: `pip install wuying-agentbay-sdk`
 - Valid `AGENTBAY_API_KEY` environment variable
-- AgentBay SDK installed
 
-## Installation
-
-```bash
-pip install wuying-agentbay-sdk
-```
-
-## Usage
+## Quick Start
 
 ```bash
 # Set your API key
 export AGENTBAY_API_KEY=your_api_key_here
 
-# Run the example
+# Run any example
 python code_execution_example.py
 ```
-
-## Features Demonstrated
-
-### Python Code Execution
-
-```python
-python_code = """
-import sys
-print(f"Python version: {sys.version}")
-"""
-
-result = session.code.run_code(python_code, "python")
-if result.success:
-    print(result.result)
-```
-
-### JavaScript Code Execution
-
-```python
-js_code = """
-const os = require('os');
-console.log(`Platform: ${os.platform()}`);
-"""
-
-result = session.code.run_code(js_code, "javascript")
-if result.success:
-    print(result.result)
-```
-
-### File Operations
-
-```python
-# Write file
-await session.file_system.write_file("/tmp/test.txt", "Hello World")
-
-# Read file
-result = await session.file_system.read_file("/tmp/test.txt")
-print(result.content)
-```
-
-### Command Execution
-
-```python
-# Execute shell command
-result = session.command.execute_command("python --version")
-if result.success:
-    print(result.output)
-```
-
-## Use Cases
-
-1. **Automated Testing**: Run test suites in isolated environments
-2. **Code Validation**: Validate code snippets before deployment
-3. **Data Processing**: Execute data transformation scripts
-4. **CI/CD Integration**: Integrate with continuous integration pipelines
-5. **Educational Tools**: Provide safe code execution environments for learning
 
 ## API Methods Used
 
@@ -31193,45 +30069,54 @@ if result.success:
 | `session.file_system.read_file()` | Read content from a file |
 | `session.command.execute_command()` | Execute shell commands |
 
+## Common Use Cases
+
+### Development Workflows
+- Set up development environments
+- Install packages and dependencies
+- Run automated tests
+- Build and deploy applications
+
+### Data Processing
+- Process large datasets
+- Run data analysis scripts
+- Generate reports and visualizations
+
+### Automation Tasks
+- Automated testing and CI/CD
+- System administration tasks
+- File processing and manipulation
+
 ## Best Practices
 
-1. **Error Handling**: Always check `result.success` before using output
-2. **Resource Cleanup**: Delete sessions when done to free resources
-3. **Timeout Management**: Set appropriate timeouts for long-running code
-4. **Security**: Never execute untrusted code without proper validation
-5. **Package Management**: Install required packages before code execution
+1. **Environment Setup**: Install required packages before running code
+2. **Error Handling**: Check execution results for errors
+3. **Resource Management**: Clean up temporary files and processes
+4. **Security**: Avoid executing untrusted code
+5. **Performance**: Consider memory and CPU usage for large operations
 
 ## Related Documentation
 
-- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md)
-- [Session Management](../../../../../docs/guides/common-features/basics/session-management.md)
-- [File Operations](../../../../../docs/guides/common-features/basics/file-operations.md)
+- [Codespace Guide](../../../../../docs/guides/codespace/code-execution.md)
+- [File Operations Guide](../../../../../docs/guides/common-features/basics/file-operations.md)
+- [Command Execution Guide](../../../../../docs/guides/common-features/basics/command-execution.md)
 
 ## Troubleshooting
 
-### Code Execution Timeout
+### Code Execution Fails
+- Check syntax errors in the code
+- Verify required packages are installed
+- Check memory and timeout limits
 
-If your code takes too long to execute, consider:
-- Breaking it into smaller chunks
-- Increasing timeout settings
-- Using asynchronous execution patterns
+### Package Installation Issues
+- Use correct package manager (pip for Python, npm for Node.js)
+- Check network connectivity
+- Verify package names and versions
 
-### Package Not Found
-
-If you need additional packages:
-```python
-# Install Python package
-session.command.execute_command("pip install package-name")
-
-# Install Node.js package
-session.command.execute_command("npm install package-name")
-```
-
-### Permission Denied
-
-Ensure you're writing to accessible directories like `/tmp` or user home directory.
-
-
+### File Permission Issues
+- Ensure proper file permissions
+- Use appropriate file paths
+- Check disk space availability
 
 
 
@@ -31352,60 +30237,9 @@ cd ../file_system
 python main.py
 ```
 
-## Common Patterns
+## Usage
 
-### Basic Session Creation
-
-```python
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="linux_latest")
-result = agent_bay.create(params)
-
-if result.success:
-    session = result.session
-    # Use session...
-    agent_bay.delete(session)
-```
-
-### File Operations
-
-```python
-# Write file
-result = await session.file_system.write_file("/tmp/test.txt", "content")
-
-# Read file
-result = await session.file_system.read_file("/tmp/test.txt")
-if result.success:
-    print(result.content)
-```
-
-### Command Execution
-
-```python
-result = session.command.execute_command("ls -la")
-if result.success:
-    print(result.output)
-```
-
-### Context Management
-
-```python
-# Get or create context
-context_result = agent_bay.context.get("my-context", create=True)
-
-# Use context with session
-from agentbay import ContextSync, SyncPolicy
-
-context_sync = ContextSync.new(
-    context_id=context_result.context.id,
-    path="/tmp/data",
-    policy=SyncPolicy.default()
-)
-params = CreateSessionParams(context_syncs=[context_sync])
-```
+Each subdirectory contains specific examples with detailed documentation. Check the individual README files and Python scripts for complete usage examples.
 
 ## Best Practices
 
@@ -31686,8 +30520,8 @@ write_result = session.file_system.write_file(file_path, file_content, mode="ove
 # Call context sync before getting info (async operation)
 import asyncio
 
-async def run_sync():
-    return await session.context.sync()
+def run_sync():
+    return session.context.sync()
 
 sync_result = asyncio.run(run_sync())
 
@@ -32048,7 +30882,7 @@ The `session.context.sync()` method provides asynchronous context synchronizatio
 
 ```python
 # Async call - wait for completion
-sync_result = await session.context.sync()
+sync_result = session.context.sync()
 if sync_result.success:
     print("✅ Sync completed successfully")
     print(f"Duration: {sync_duration:.2f} seconds")
@@ -32082,10 +30916,10 @@ Demonstrates proper session lifecycle management:
 # Create session with context sync
 params = CreateSessionParams()
 params.context_syncs = [context_sync]
-session_result = await agent_bay.create(params)
+session_result = agent_bay.create(params)
 
 # Clean up session after use
-delete_result = await agent_bay.delete(session)
+delete_result = agent_bay.delete(session)
 ```
 
 ## Example Structure
@@ -32301,30 +31135,6 @@ export AGENTBAY_API_KEY="your-api-key-here"
 python main.py
 ```
 
-## Code Example
-
-```python
-import os
-from agentbay import AgentBay
-
-# Initialize AgentBay client
-api_key = os.getenv("AGENTBAY_API_KEY")
-agentbay = AgentBay(api_key=api_key)
-
-# Retrieve a session by ID
-session_id = "your-session-id"
-result = agentbay.get(session_id)
-
-if result.success:
-    session = result.session
-    print(f"Retrieved session: {session.session_id}")
-    print(f"Request ID: {result.request_id}")
-    # Use the session for further operations
-    # ...
-else:
-    print(f"Failed to get session: {result.error_message}")
-```
-
 ## API Reference
 
 ### get
@@ -32379,29 +31189,8 @@ Error message: Failed to get session: session not found or has been deleted
 The `get` method returns a `SessionResult` object with error information:
 
 1. **Empty session_id**: Result will have `success=False`
-   ```python
-   result = agentbay.get("")
-   if not result.success:
-       print(f"Error: {result.error_message}")  # "session_id is required"
-   ```
-
 2. **Non-existent session**: Result will have `success=False`
-   ```python
-   result = agentbay.get("non-existent-session-id")
-   if not result.success:
-       print(f"Error: {result.error_message}")  # "Failed to get session..."
-   ```
-
 3. **Deleted session**: Result will have `success=False`
-   ```python
-   # After deleting a session
-   session.delete()
-   result = agentbay.get(session_id)
-   if not result.success:
-       print(f"Error: {result.error_message}")  # "Failed to get session: session not found or has been deleted"
-   ```
-
-
 
 
 
@@ -32502,94 +31291,6 @@ cd /path/to/wuying-agentbay-sdk/python/docs/examples/list_sessions
 python main.py
 ```
 
-## Code Walkthrough
-
-### 1. List All Sessions
-
-```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay(api_key=api_key)
-
-# List all sessions without any filter
-result = agent_bay.list()
-
-if result.success:
-    print(f"Total sessions: {result.total_count}")
-    print(f"Sessions on this page: {len(result.sessions)}")
-    print(f"Request ID: {result.request_id}")
-```
-
-### 2. Filter by Single Label
-
-```python
-# Find all sessions with project='my-project'
-result = agent_bay.list(labels={"project": "my-project"})
-
-if result.success:
-    for session in result.sessions:
-        print(f"Session ID: {session.session_id}")
-```
-
-### 3. Filter by Multiple Labels
-
-```python
-# Find sessions that match ALL specified labels
-result = agent_bay.list(
-    labels={
-        "project": "my-project",
-        "environment": "production"
-    }
-)
-```
-
-### 4. Pagination
-
-```python
-# Get first page with 10 items per page
-result = agent_bay.list(
-    labels={"project": "my-project"},
-    page=1,
-    limit=10
-)
-
-# Get second page
-if result.next_token:
-    result_page2 = agent_bay.list(
-        labels={"project": "my-project"},
-        page=2,
-        limit=10
-    )
-```
-
-### 5. Iterate All Pages
-
-```python
-all_sessions = []
-page = 1
-limit = 10
-
-while True:
-    result = agent_bay.list(
-        labels={"project": "my-project"},
-        page=page,
-        limit=limit
-    )
-
-    if not result.success:
-        break
-
-    all_sessions.extend(result.sessions)
-
-    # Break if no more pages
-    if not result.next_token:
-        break
-
-    page += 1
-
-print(f"Total sessions: {len(all_sessions)}")
-```
-
 ## API Reference
 
 ### Method Signature
@@ -32631,66 +31332,16 @@ Returns a `SessionListResult` object with:
 ## Use Cases
 
 ### 1. Session Inventory
-
-List all sessions to get an overview of your current session inventory:
-
-```python
-result = agent_bay.list()
-print(f"You have {result.total_count} active sessions")
-```
+List all sessions to get an overview of your current session inventory.
 
 ### 2. Project Management
-
-Find all sessions for a specific project:
-
-```python
-result = agent_bay.list(labels={"project": "website-automation"})
-for session in result.sessions:
-    print(f"Session: {session.session_id}")
-```
+Find all sessions for a specific project.
 
 ### 3. Environment-Specific Queries
-
-Query sessions by environment (dev, staging, prod):
-
-```python
-dev_sessions = agent_bay.list(labels={"environment": "dev"})
-prod_sessions = agent_bay.list(labels={"environment": "prod"})
-
-print(f"Dev sessions: {len(dev_sessions.sessions)}")
-print(f"Prod sessions: {len(prod_sessions.sessions)}")
-```
+Query sessions by environment (dev, staging, prod).
 
 ### 4. Bulk Operations
-
-Retrieve all matching sessions and perform batch operations:
-
-```python
-# Get all sessions for a project
-all_sessions = []
-page = 1
-
-while True:
-    result = agent_bay.list(
-        labels={"project": "old-project"},
-        page=page,
-        limit=50
-    )
-
-    if not result.success:
-        break
-
-    all_sessions.extend(result.sessions)
-
-    if not result.next_token:
-        break
-
-    page += 1
-
-# Perform bulk cleanup
-for session in all_sessions:
-    agent_bay.delete(session)
-```
+Retrieve all matching sessions and perform batch operations.
 
 ## Key Advantages over list_by_labels()
 
@@ -32701,29 +31352,6 @@ The new `list()` API offers several advantages:
 3. **Request Tracking**: All responses include `request_id` for debugging
 4. **Cleaner Code**: More readable and maintainable code
 5. **Type Safety**: Better IDE autocomplete support
-
-## Comparison with Deprecated API
-
-### Old way (list_by_labels):
-```python
-from agentbay import ListSessionParams
-
-params = ListSessionParams(
-    labels={"project": "demo"},
-    max_results=10,
-    next_token=""
-)
-result = agent_bay.list_by_labels(params)
-```
-
-### New way (list):
-```python
-result = agent_bay.list(
-    labels={"project": "demo"},
-    page=1,
-    limit=10
-)
-```
 
 ## Expected Output
 
@@ -32785,12 +31413,7 @@ Found 0 sessions with specified labels
 3. All specified labels must match (AND logic, not OR)
 
 ### Rate Limiting
-If you encounter rate limiting, add delays between requests:
-```python
-import time
-result = agent_bay.list(labels={"project": "demo"})
-time.sleep(1)  # Wait 1 second between requests
-```
+If you encounter rate limiting, add delays between requests.
 
 ## Related Documentation
 
@@ -32803,8 +31426,6 @@ time.sleep(1)  # Wait 1 second between requests
 For issues or questions:
 - GitHub Issues: https://github.com/aliyun/wuying-agentbay-sdk/issues
 - Documentation: https://github.com/aliyun/wuying-agentbay-sdk
-
-
 
 
 
@@ -33064,97 +31685,6 @@ cd computer
 python windows_app_management_example.py
 ```
 
-## Usage Examples
-
-### Basic Application Management
-
-```python
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-
-# Create Windows session
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="windows_latest")
-result = agent_bay.create(params)
-session = result.session
-
-# Get installed applications
-apps_result = session.computer.get_installed_apps(
-    start_menu=True,
-    desktop=False,
-    ignore_system_apps=True
-)
-
-if apps_result.success:
-    for app in apps_result.data:
-        print(f"App: {app.name}")
-        print(f"Command: {app.start_cmd}")
-
-# Start an application
-start_result = session.computer.start_app("C:\\Windows\\System32\\notepad.exe")
-if start_result.success:
-    for process in start_result.data:
-        print(f"Started: {process.pname} (PID: {process.pid})")
-
-# List visible applications
-visible_result = session.computer.list_visible_apps()
-if visible_result.success:
-    for app in visible_result.data:
-        print(f"Visible: {app.pname} (PID: {app.pid})")
-
-# Stop application by PID
-stop_result = session.computer.stop_app_by_pid(process.pid)
-
-# Stop application by name
-stop_result = session.computer.stop_app_by_pname("notepad.exe")
-
-# Cleanup
-agent_bay.delete(session)
-```
-
-### Window Management
-
-```python
-# List all windows
-windows_result = session.window.list_windows()
-if windows_result.success:
-    for window in windows_result.data:
-        print(f"Window: {window.title}")
-        print(f"Handle: {window.handle}")
-
-# Focus a window
-focus_result = session.window.focus_window(window_handle)
-
-# Maximize window
-maximize_result = session.window.maximize_window(window_handle)
-
-# Minimize window
-minimize_result = session.window.minimize_window(window_handle)
-
-# Close window
-close_result = session.window.close_window(window_handle)
-```
-
-### UI Automation
-
-```python
-# Take screenshot
-screenshot_result = session.ui.screenshot()
-if screenshot_result.success:
-    with open("screenshot.png", "wb") as f:
-        f.write(screenshot_result.data)
-
-# Click at coordinates
-click_result = session.ui.click(x=100, y=200)
-
-# Type text
-type_result = session.ui.type("Hello, World!")
-
-# Send key
-from agentbay import KeyCode
-key_result = session.ui.key(KeyCode.ENTER)
-```
-
 ## Features Demonstrated
 
 ### Application Discovery
@@ -33204,46 +31734,19 @@ key_result = session.ui.key(KeyCode.ENTER)
 ## Common Use Cases
 
 ### 1. Automated Testing
-```python
-# Start application
-session.computer.start_app("C:\\MyApp\\app.exe")
-
-# Wait for window
-import time
-time.sleep(2)
-
-# Interact with UI
-session.ui.click(x=200, y=300)
-session.ui.type("test data")
-session.ui.key(KeyCode.ENTER)
-
-# Verify results
-screenshot = session.ui.screenshot()
-```
+- Start application and wait for window
+- Interact with UI elements
+- Verify results with screenshots
 
 ### 2. Application Monitoring
-```python
-# Monitor running applications
-while True:
-    visible_apps = session.computer.list_visible_apps()
-    if visible_apps.success:
-        print(f"Running apps: {len(visible_apps.data)}")
-    time.sleep(60)
-```
+- Monitor running applications
+- Track application lifecycle
+- Performance monitoring
 
 ### 3. Automated Workflows
-```python
-# Open Excel
-session.computer.start_app("excel.exe")
-time.sleep(3)
-
-# Type data
-session.ui.type("=SUM(A1:A10)")
-session.ui.key(KeyCode.ENTER)
-
-# Save
-session.ui.key(KeyCode.CTRL, KeyCode.S)
-```
+- Open applications in sequence
+- Perform data entry tasks
+- Generate reports and save files
 
 ## Best Practices
 
@@ -33302,8 +31805,6 @@ If UI interactions fail:
 - Add delays between actions
 - Verify coordinates are correct
 - Check for popup dialogs blocking interaction
-
-
 
 
 
@@ -33596,129 +32097,6 @@ cd ..
 python mobile_get_adb_url_example.py
 ```
 
-## Usage Examples
-
-### Basic Mobile Automation
-
-```python
-from agentbay import AgentBay
-from agentbay import CreateSessionParams
-from agentbay import KeyCode
-
-# Create mobile session
-agent_bay = AgentBay(api_key="your_api_key")
-params = CreateSessionParams(image_id="mobile_latest")
-result = agent_bay.create(params)
-session = result.session
-
-# Get installed applications
-apps_result = session.mobile.get_installed_apps(
-    start_menu=True,
-    desktop=False,
-    ignore_system_apps=True
-)
-
-if apps_result.success:
-    print(f"Found {len(apps_result.data)} applications")
-
-# Start an application
-start_result = session.mobile.start_app(
-    "monkey -p com.android.settings -c android.intent.category.LAUNCHER 1"
-)
-
-# Get clickable UI elements
-elements_result = session.mobile.get_clickable_ui_elements()
-if elements_result.success:
-    for element in elements_result.elements:
-        print(f"Element: {element['text']}")
-
-# Tap on screen
-tap_result = session.mobile.tap(x=500, y=800)
-
-# Swipe gesture
-swipe_result = session.mobile.swipe(
-    start_x=100,
-    start_y=800,
-    end_x=900,
-    end_y=200,
-    duration_ms=500
-)
-
-# Input text
-input_result = session.mobile.input_text("Hello, AgentBay!")
-
-# Send key event
-key_result = session.mobile.send_key(KeyCode.HOME)
-
-# Take screenshot
-screenshot_result = session.mobile.screenshot()
-if screenshot_result.success:
-    with open("screenshot.png", "wb") as f:
-        f.write(screenshot_result.data)
-
-# Stop application
-stop_result = session.mobile.stop_app_by_cmd(
-    "am force-stop com.android.settings"
-)
-
-# Cleanup
-agent_bay.delete(session)
-```
-
-### UI Element Tree Navigation
-
-```python
-# Get all UI elements
-all_elements_result = session.mobile.get_all_ui_elements(timeout_ms=3000)
-
-if all_elements_result.success:
-    import json
-    elements = json.loads(all_elements_result.elements)
-    
-    def print_element(element, indent=0):
-        prefix = "  " * indent
-        print(f"{prefix}- {element['className']}")
-        print(f"{prefix}  text: '{element['text']}'")
-        print(f"{prefix}  resourceId: '{element['resourceId']}'")
-        
-        for child in element.get('children', []):
-            print_element(child, indent + 1)
-    
-    for element in elements:
-        print_element(element)
-```
-
-### Application with Specific Activity
-
-```python
-# Start app with specific activity
-app_package = "com.example.app"
-app_activity = "com.example.app.MainActivity"
-start_cmd = f"monkey -p {app_package} -c android.intent.category.LAUNCHER 1"
-
-start_result = session.mobile.start_app(
-    start_cmd=start_cmd,
-    activity=app_activity
-)
-
-if start_result.success:
-    for process in start_result.data:
-        print(f"Started: {process.pname} (PID: {process.pid})")
-```
-
-### ADB Connection
-
-```python
-# Get ADB URL for external tools
-adb_url_result = session.mobile.get_adb_url()
-if adb_url_result.success:
-    adb_url = adb_url_result.data
-    print(f"ADB URL: {adb_url}")
-    
-    # Use with adb command line:
-    # adb connect {adb_url}
-```
-
 ## Features Demonstrated
 
 ### Application Management
@@ -33774,82 +32152,20 @@ if adb_url_result.success:
 ## Common Use Cases
 
 ### 1. App Testing Automation
-
-```python
-# Start app
-session.mobile.start_app("monkey -p com.myapp -c android.intent.category.LAUNCHER 1")
-
-# Wait for app to load
-import time
-time.sleep(3)
-
-# Get UI elements
-elements = session.mobile.get_clickable_ui_elements()
-
-# Find and tap login button
-for element in elements.elements:
-    if element['text'] == 'Login':
-        session.mobile.tap(x=element['x'], y=element['y'])
-        break
-
-# Input credentials
-session.mobile.input_text("user@example.com")
-session.mobile.send_key(KeyCode.TAB)
-session.mobile.input_text("password123")
-
-# Submit
-session.mobile.send_key(KeyCode.ENTER)
-
-# Verify with screenshot
-screenshot = session.mobile.screenshot()
-```
+- Start app and wait for load
+- Get UI elements and find target elements
+- Input credentials and submit forms
+- Verify results with screenshots
 
 ### 2. UI Element Inspection
-
-```python
-# Get all elements
-all_elements = session.mobile.get_all_ui_elements()
-
-# Find specific element by text
-def find_element_by_text(elements, text):
-    for element in elements:
-        if element['text'] == text:
-            return element
-        if 'children' in element:
-            result = find_element_by_text(element['children'], text)
-            if result:
-                return result
-    return None
-
-target = find_element_by_text(all_elements.elements, "Settings")
-if target:
-    session.mobile.tap(x=target['x'], y=target['y'])
-```
+- Get all elements and find specific elements by text
+- Navigate UI hierarchy
+- Extract element properties
 
 ### 3. Gesture Automation
-
-```python
-# Swipe up (scroll down)
-session.mobile.swipe(
-    start_x=500,
-    start_y=1500,
-    end_x=500,
-    end_y=500,
-    duration_ms=300
-)
-
-# Swipe right (navigate)
-session.mobile.swipe(
-    start_x=100,
-    start_y=800,
-    end_x=900,
-    end_y=800,
-    duration_ms=200
-)
-
-# Long press
-session.mobile.tap(x=500, y=800)  # Hold for long press
-```
+- Swipe up/down for scrolling
+- Swipe left/right for navigation
+- Long press for context menus
 
 ## Best Practices
 
@@ -33909,8 +32225,6 @@ If screenshots fail or are corrupted:
 - Verify sufficient memory
 - Try smaller screen resolution
 - Handle base64 decoding correctly
-
-
 
 
 
@@ -35816,8 +34130,8 @@ Synchronizes a context with the session. Supports both async and callback modes.
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `contextId?` | `string` | `undefined` | Optional context ID to synchronize |
-| `path?` | `string` | `undefined` | Optional path where the context should be mounted |
+| `contextId?` | `string` | `undefined` | Optional context ID to synchronize. If provided, `path` must also be provided. |
+| `path?` | `string` | `undefined` | Optional path where the context should be mounted. If provided, `contextId` must also be provided. |
 | `mode?` | `string` | `undefined` | Optional synchronization mode (e.g., "upload", "download") |
 | `callback?` | ``SyncCallback`` | `undefined` | Optional callback function. If provided, runs in background and calls callback when complete |
 | `maxRetries` | `number` | `150` | Maximum number of retries for polling completion status (default: 150) |
@@ -35833,8 +34147,27 @@ Promise resolving to ContextSyncResult with success status and request ID
 
 Error if the API call fails
 
+**`Throws`**
+
+Error if `contextId` or `path` is provided without the other parameter.
+              Both must be provided together, or both must be omitted.
+
 **`Example`**
 
+Sync all contexts (no parameters):
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+if (result.success) {
+  const syncResult = await result.session.context.sync();
+  console.log(`Sync: ${syncResult.success}`);
+  await result.session.delete();
+}
+```
+
+**`Example`**
+
+Sync specific context with path:
 ```typescript
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const result = await agentBay.create();
