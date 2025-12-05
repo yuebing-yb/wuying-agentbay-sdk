@@ -81,6 +81,7 @@ class AgentState(TypedDict):
     sdk_context: str
     is_finished: bool
     specific_test_pattern: Optional[str]
+    test_type: Optional[str]
 
 # --- Helper Functions ---
 
