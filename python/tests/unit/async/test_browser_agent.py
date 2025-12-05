@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from pydantic import BaseModel, Field
 
 from agentbay import AsyncBrowser
-from agentbay import ActOptions as AsyncActOptions
 from agentbay import AsyncBrowserAgent
-from agentbay import ExtractOptions as AsyncExtractOptions
-from agentbay import ObserveOptions as AsyncObserveOptions
+from agentbay import AsyncActOptions
+from agentbay import AsyncExtractOptions
+from agentbay import AsyncObserveOptions
 from agentbay import BrowserError
 from agentbay import (
     Browser,

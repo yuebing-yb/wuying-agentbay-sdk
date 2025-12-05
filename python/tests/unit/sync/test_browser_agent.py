@@ -7,10 +7,10 @@ from unittest.mock import MagicMock, MagicMock, patch
 from pydantic import BaseModel, Field
 
 from agentbay import Browser
-from agentbay import ActOptions as ActOptions
 from agentbay import BrowserAgent
-from agentbay import ExtractOptions as ExtractOptions
-from agentbay import ObserveOptions as ObserveOptions
+from agentbay._sync.browser_agent import ActOptions as ActOptions
+from agentbay._sync.browser_agent import ExtractOptions as ExtractOptions
+from agentbay._sync.browser_agent import ObserveOptions as ObserveOptions
 from agentbay import BrowserError
 from agentbay import (
     Browser,

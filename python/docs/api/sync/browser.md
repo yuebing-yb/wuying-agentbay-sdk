@@ -71,25 +71,7 @@ Alias for initialize.
 def destroy()
 ```
 
-Destroy the browser instance.
-
-**Example**:
-
-```python
-session = agent_bay.create().session
-browser_option = BrowserOption()
-session.browser.initialize(browser_option)
-session.browser.destroy()
-session.delete()
-```
-
-### destroy\_async
-
-```python
-def destroy_async()
-```
-
-Destroy the browser instance synchronously.
+Destroy the browser instance manually.
 
 ### screenshot
 

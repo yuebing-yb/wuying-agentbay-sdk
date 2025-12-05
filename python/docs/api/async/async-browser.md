@@ -70,28 +70,10 @@ Alias for initialize.
 ### destroy
 
 ```python
-def destroy()
+async def destroy()
 ```
 
-Destroy the browser instance.
-
-**Example**:
-
-```python
-session = await agent_bay.create().session
-browser_option = BrowserOption()
-await session.browser.initialize(browser_option)
-await session.browser.destroy()
-await session.delete()
-```
-
-### destroy\_async
-
-```python
-async def destroy_async()
-```
-
-Destroy the browser instance asynchronously.
+Destroy the browser instance manually.
 
 ### screenshot
 
