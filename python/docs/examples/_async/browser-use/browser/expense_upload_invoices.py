@@ -21,6 +21,11 @@ async def main():
 
     agent_bay = AsyncAgentBay(api_key=api_key)
     session_result = await agent_bay.create(CreateSessionParams(image_id="browser_latest"))
+    
+    if not session_result.success or session_result.session is None:
+        print(f"Failed to create session: {session_result.error_message}")
+        return
+    
     session = session_result.session
 
     try:
@@ -57,11 +62,12 @@ async def main():
         await agent.act(ActOptions(action="点击提交报销单"))
         await asyncio.sleep(3)
     finally:
-        try:
-            await session.browser.agent.close()
-        except Exception:
-            pass
-        await agent_bay.delete(session)
+        if session is not None:
+            try:
+                await session.browser.agent.close()
+            except Exception:
+                pass
+            await agent_bay.delete(session)
 
 
 if __name__ == "__main__":
