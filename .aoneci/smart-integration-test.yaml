@@ -17,7 +17,7 @@ jobs:
     runs-on:
       - "4-16Gi"
     image: alios-8u
-    timeout: 1h
+    timeout: 3h
     retry:
       max: 2
       when:
