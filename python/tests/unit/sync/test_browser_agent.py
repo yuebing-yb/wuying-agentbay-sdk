@@ -8,9 +8,9 @@ from pydantic import BaseModel, Field
 
 from agentbay import Browser
 from agentbay import BrowserAgent
-from agentbay._sync.browser_agent import ActOptions as ActOptions
-from agentbay._sync.browser_agent import ExtractOptions as ExtractOptions
-from agentbay._sync.browser_agent import ObserveOptions as ObserveOptions
+from agentbay import ActOptions
+from agentbay import ExtractOptions
+from agentbay import ObserveOptions
 from agentbay import BrowserError
 from agentbay import (
     Browser,

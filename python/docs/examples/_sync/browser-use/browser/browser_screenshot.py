@@ -48,9 +48,9 @@ def take_agent_screenshots(session: Session):
         print(f"Raw response: {screenshot_b64}")
         return
     
-    with open("agent_screenshot.png", "wb") as f:
-        f.write(image_data)
-    print("✅ Agent screenshot saved as agent_screenshot.png")
+    with open("temp_agent_screenshot.png", "wb") as f:
+        f.write(agent_screenshot)
+    print("✅ Agent screenshot saved as temp_agent_screenshot.png")
     
     # Take a full page screenshot with custom quality
     full_page_b64 = session.browser.agent.screenshot(
@@ -71,9 +71,9 @@ def take_agent_screenshots(session: Session):
         print(f"Raw response: {full_page_b64}")
         return
     
-    with open("agent_full_page_screenshot.png", "wb") as f:
+    with open("temp_agent_full_page_screenshot.png", "wb") as f:
         f.write(image_data)
-    print("✅ Agent full page screenshot saved as agent_full_page_screenshot.png")
+    print("✅ Agent full page screenshot saved as temp_agent_full_page_screenshot.png")
 
 
 def take_browser_screenshots(session: Session):
@@ -96,9 +96,9 @@ def take_browser_screenshots(session: Session):
         print(f"✅ Browser screenshot captured ({len(screenshot_bytes)} bytes)")
         
         # Save the screenshot to a file
-        with open("browser_screenshot.png", "wb") as f:
+        with open("temp_browser_screenshot.png", "wb") as f:
             f.write(screenshot_bytes)
-        print("✅ Browser screenshot saved as browser_screenshot.png")
+        print("✅ Browser screenshot saved as temp_browser_screenshot.png")
         
         # Take a full page screenshot with custom options
         full_page_bytes = session.browser.screenshot(
@@ -110,9 +110,9 @@ def take_browser_screenshots(session: Session):
         print(f"✅ Browser full page screenshot captured ({len(full_page_bytes)} bytes)")
         
         # Save the full page screenshot
-        with open("browser_full_page_screenshot.jpg", "wb") as f:
+        with open("temp_browser_full_page_screenshot.jpg", "wb") as f:
             f.write(full_page_bytes)
-        print("✅ Browser full page screenshot saved as browser_full_page_screenshot.jpg")
+        print("✅ Browser full page screenshot saved as temp_browser_full_page_screenshot.jpg")
         
         # Take a screenshot with custom viewport settings
         custom_screenshot = session.browser.screenshot(
@@ -124,9 +124,9 @@ def take_browser_screenshots(session: Session):
         print(f"✅ Browser custom screenshot captured ({len(custom_screenshot)} bytes)")
         
         # Save the custom screenshot
-        with open("browser_custom_screenshot.png", "wb") as f:
+        with open("temp_browser_custom_screenshot.png", "wb") as f:
             f.write(custom_screenshot)
-        print("✅ Browser custom screenshot saved as browser_custom_screenshot.png")
+        print("✅ Browser custom screenshot saved as temp_browser_custom_screenshot.png")
         
         browser.close()
 
@@ -178,11 +178,11 @@ def main():
         print("\n" + "="*50)
         print("✅ All screenshot demos completed successfully!")
         print("📁 Check the current directory for saved screenshot files:")
-        print("   - agent_screenshot.png")
-        print("   - agent_full_page_screenshot.png")
-        print("   - browser_screenshot.png")
-        print("   - browser_full_page_screenshot.jpg")
-        print("   - browser_custom_screenshot.png")
+        print("   - temp_agent_screenshot.png")
+        print("   - temp_agent_full_page_screenshot.png")
+        print("   - temp_browser_screenshot.png")
+        print("   - temp_browser_full_page_screenshot.jpg")
+        print("   - temp_browser_custom_screenshot.png")
 
     except Exception as e:
         print(f"Error during screenshot demo: {e}")
