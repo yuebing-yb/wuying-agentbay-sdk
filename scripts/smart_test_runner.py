@@ -6,14 +6,37 @@ from typing import List, Dict, Any, Optional, TypedDict
 import json
 
 # Ensure we can import standard libraries. Langchain/Langgraph availability depends on environment.
+print("🔍 Checking Python environment and dependencies...")
+print(f"Python executable: {sys.executable}")
+print(f"Python version: {sys.version}")
+print(f"Python path: {sys.path}")
+
+# Check each import individually for better error reporting
 try:
+    print("📦 Importing langchain_openai...")
     from langchain_openai import ChatOpenAI
-    from langgraph.graph import StateGraph, END
-    from langchain_core.prompts import ChatPromptTemplate
-except ImportError:
-    print("Error: Required libraries (langchain-openai, langgraph) not found.")
-    print("Please ensure you have installed the dependencies.")
+    print("✅ langchain_openai imported successfully")
+except ImportError as e:
+    print(f"❌ Failed to import langchain_openai: {e}")
     sys.exit(1)
+
+try:
+    print("📦 Importing langgraph...")
+    from langgraph.graph import StateGraph, END
+    print("✅ langgraph imported successfully")
+except ImportError as e:
+    print(f"❌ Failed to import langgraph: {e}")
+    sys.exit(1)
+
+try:
+    print("📦 Importing langchain_core...")
+    from langchain_core.prompts import ChatPromptTemplate
+    print("✅ langchain_core imported successfully")
+except ImportError as e:
+    print(f"❌ Failed to import langchain_core: {e}")
+    sys.exit(1)
+
+print("✅ All required libraries imported successfully!")
 
 # Configuration
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
