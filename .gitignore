@@ -76,3 +76,16 @@ CLAUDE.md
 .history
 IFLOW.md
 tmp/
+
+# Example result files
+**/results_*/
+**/screenshots/
+**/test_results/
+
+# Temporary files
+*.png
+*.jpg
+*.jpeg
+*.gif
+current_page.*
+after_wait.*
