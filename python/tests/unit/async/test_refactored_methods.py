@@ -43,7 +43,7 @@ class TestAsyncRefactoredMethods(unittest.IsolatedAsyncioTestCase):
             mock_session_class.return_value = mock_session
 
             # Call the method
-            result = self.agent_bay._build_session_from_response(response_data, params)
+            result = await self.agent_bay._build_session_from_response(response_data, params, None)
 
             # Verify session was created with correct parameters
             mock_session_class.assert_called_once_with(
