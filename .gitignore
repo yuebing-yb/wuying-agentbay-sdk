@@ -82,10 +82,12 @@ tmp/
 **/screenshots/
 **/test_results/
 
-# Temporary files
-*.png
-*.jpg
-*.jpeg
-*.gif
+# Temporary files (with specific prefixes to avoid ignoring legitimate images)
+temp_*.png
+temp_*.jpg
+temp_*.jpeg
+temp_*.gif
+screenshot_*.png
+result_*.png
 current_page.*
 after_wait.*
