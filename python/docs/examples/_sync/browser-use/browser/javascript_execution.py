@@ -41,6 +41,12 @@ def main():
         session_result = client.create(
             CreateSessionParams(image_id="browser_latest")
         )
+        
+        # Check if session creation was successful
+        if not session_result.success or session_result.session is None:
+            print(f"Failed to create session: {session_result.error_message}")
+            return
+            
         session = session_result.session
         print(f"Session created: {session.session_id}")
 
