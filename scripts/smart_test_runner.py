@@ -120,8 +120,15 @@ def discover_tests(state: AgentState) -> AgentState:
         if os.path.exists(cwd):
             print(f"📋 内容: {os.listdir(cwd)}") 
         
-        # Base command
-        cmd = [sys.executable, "-m", "pytest", "tests/integration", "--collect-only", "-q", "-c", "/dev/null"]
+        # Base command - 优化性能
+        cmd = [sys.executable, "-m", "pytest", "tests/integration", "--collect-only", "-q", 
+               "--tb=no",  # 不显示traceback
+               "--no-header",  # 不显示header
+               "--no-summary",  # 不显示summary
+               "-p", "no:warnings",  # 禁用warnings插件
+               "-p", "no:cacheprovider",  # 禁用cache
+               "--maxfail=1",  # 快速失败
+               "-c", "/dev/null"]
         
         # Add specific test pattern if provided (passed to pytest directly for filtering)
         if pattern:
@@ -129,6 +136,16 @@ def discover_tests(state: AgentState) -> AgentState:
             cmd.append("-k")
             cmd.append(pattern)
             
+        # 添加诊断信息
+        print(f"🔍 测试目录检查:")
+        print(f"   - 测试目录路径: {TEST_DIR}")
+        print(f"   - 测试目录存在: {os.path.exists(TEST_DIR)}")
+        if os.path.exists(TEST_DIR):
+            test_files = []
+            for root, dirs, files in os.walk(TEST_DIR):
+                test_files.extend([f for f in files if f.startswith('test_') and f.endswith('.py')])
+            print(f"   - 测试文件数量: {len(test_files)}")
+        
         print(f"执行命令: {' '.join(cmd)} 在目录 {cwd}")
         print("⏳ 正在运行pytest命令...")
         sys.stdout.flush()
@@ -138,15 +155,21 @@ def discover_tests(state: AgentState) -> AgentState:
         process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
         
         start_time = time.time()
-        timeout = 300  # 5分钟超时
+        timeout = 120  # 2分钟超时，如果pytest太慢就降级
         
         while process.poll() is None:  # 进程还在运行
             elapsed = time.time() - start_time
             if elapsed > timeout:
-                print(f"❌ pytest命令超时（{timeout}秒），终止进程")
+                print(f"❌ pytest命令超时（{timeout}秒），这表明CI环境有严重的性能问题")
+                print("🔍 诊断信息:")
+                print(f"   - 工作目录: {cwd}")
+                print(f"   - Python路径: {env.get('PYTHONPATH')}")
+                print(f"   - 执行命令: {' '.join(cmd)}")
                 process.kill()
                 sys.stdout.flush()
-                return {"test_queue": [], "current_test_index": 0, "results": [], "sdk_context": "", "is_finished": True, "specific_test_pattern": pattern}
+                
+                # 不使用降级方案，直接失败让问题暴露
+                raise Exception(f"pytest测试发现超时，CI环境性能问题需要解决。命令: {' '.join(cmd)}")
             
             # 每30秒输出一次心跳
             if int(elapsed) % 30 == 0 and int(elapsed) > 0:
