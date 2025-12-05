@@ -374,38 +374,26 @@ def discover_typescript_tests(state: AgentState, pattern: Optional[str]) -> Agen
             print(f"⚠️ Jest命令执行失败: {e}")
     
     print(f"✅ 总共找到 {len(test_ids)} 个TypeScript集成测试。")
-        
-        # Load SDK Context
-        context = ""
-        if os.path.exists(LLMS_FULL_PATH):
-            try:
-                with open(LLMS_FULL_PATH, "r", encoding="utf-8") as f:
-                    context = f.read()
-                print(f"📚 已加载SDK上下文 ({len(context)} 字符)")
-            except Exception as e:
-                print(f"⚠️ 读取llms-full.txt失败: {e}")
+    
+    # Load SDK Context
+    context = ""
+    if os.path.exists(LLMS_FULL_PATH):
+        try:
+            with open(LLMS_FULL_PATH, "r", encoding="utf-8") as f:
+                context = f.read()
+            print(f"📚 已加载SDK上下文 ({len(context)} 字符)")
+        except Exception as e:
+            print(f"⚠️ 读取llms-full.txt失败: {e}")
 
-        return {
-            "test_queue": test_ids,
-            "current_test_index": 0,
-            "results": [],
-            "sdk_context": context,
-            "is_finished": False,
-            "specific_test_pattern": pattern,
-            "test_type": "typescript"
-        }
-        
-    except Exception as e:
-        print(f"❌ TypeScript测试发现失败: {e}")
-        return {
-            "test_queue": [],
-            "current_test_index": 0,
-            "results": [],
-            "sdk_context": "",
-            "is_finished": True,
-            "specific_test_pattern": pattern,
-            "test_type": "typescript"
-        }
+    return {
+        "test_queue": test_ids,
+        "current_test_index": 0,
+        "results": [],
+        "sdk_context": context,
+        "is_finished": False,
+        "specific_test_pattern": pattern,
+        "test_type": "typescript"
+    }
 
 def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
     """发现Golang集成测试"""
