@@ -433,16 +433,21 @@ def main():
     args = parser.parse_args()
     
     print("🚀 Starting Smart Test Runner...")
+    sys.stdout.flush()  # 强制刷新输出
+    
     if args.keyword:
         print(f"🎯 Target Pattern: {args.keyword}")
+        sys.stdout.flush()
     
     if args.test_type:
         print(f"🎯 Test Type: {args.test_type}")
+        sys.stdout.flush()
     
     if args.report:
         REPORT_FILE = args.report
 
-    print("📋 Initializing state...")
+    print("📋 正在初始化状态...")
+    sys.stdout.flush()
     initial_state = {
         "test_queue": [], 
         "current_test_index": 0, 
@@ -452,15 +457,28 @@ def main():
         "specific_test_pattern": args.keyword
     }
     
-    print("🔧 Starting workflow execution...")
+    print("🔧 正在启动工作流执行...")
+    sys.stdout.flush()
+    
     try:
-        print("📍 About to invoke app...")
+        print("📍 即将调用app.invoke()...")
+        sys.stdout.flush()
+        
         # Set recursion limit to prevent infinite loops
-        config = {"recursion_limit": 100}
+        config = {"recursion_limit": 2000}
+        print(f"⚙️ 配置: {config}")
+        sys.stdout.flush()
+        
+        print("🔄 开始执行工作流...")
+        sys.stdout.flush()
+        
         result = app.invoke(initial_state, config=config)
-        print(f"✅ Workflow completed: {result}")
+        
+        print(f"✅ 工作流完成: {result}")
+        sys.stdout.flush()
     except Exception as e:
         print(f"\n💥 执行失败: {e}")
+        sys.stdout.flush()
         import traceback
         traceback.print_exc()
         sys.exit(1)

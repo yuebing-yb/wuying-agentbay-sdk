@@ -73,13 +73,26 @@ jobs:
             echo "✅ Smart Test Runner completed successfully"
             
             # Check if test report was generated
-            if [ -f "test_report.md" ]; then
-              echo "✅ Test report generated successfully"
-              echo "📋 Test report content:"
-              cat test_report.md
-            else
-              echo "⚠️ No test report generated"
-            fi
+          if [ -f "test_report.md" ]; then
+            echo "✅ Test report generated successfully"
+            
+            # Display in CI Summary (Markdown format)
+            echo "## 🤖 Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
+            echo "" >> $AONE_CI_SUMMARY_MD
+            cat test_report.md >> $AONE_CI_SUMMARY_MD
+            
+            # Also show in console for immediate viewing
+            echo "📋 Test report preview:"
+            head -50 test_report.md
+            
+            # Archive as build artifact
+            mkdir -p artifacts
+            cp test_report.md artifacts/smart_test_report.md
+          else
+            echo "⚠️ No test report generated"
+            echo "## ❌ Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
+            echo "No test report was generated. Check the logs above for errors." >> $AONE_CI_SUMMARY_MD
+          fi
           else
             echo "❌ Smart Test Runner failed with exit code $?"
             echo "❌ CI pipeline will now fail"
