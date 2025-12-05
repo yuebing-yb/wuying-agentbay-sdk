@@ -1,10 +1,8 @@
 stages:
   smart_test:
     name: Smart Integration Test
-
-jobs:
-  - name: Smart Integration Test
-    stage: smart_test
+    jobs:
+      - name: Smart Integration Test
     trigger: manual
     variables:
       PYTHON_VERSION: "3.13"
