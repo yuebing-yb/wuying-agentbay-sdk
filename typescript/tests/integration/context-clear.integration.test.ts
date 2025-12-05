@@ -4,12 +4,16 @@ import { APIError } from "../../src/exceptions";
 
 // Helper function to get test API key from environment
 function getTestAPIKey(): string {
-    return process.env.AGENTBAY_API_KEY || "akm-2a57ce50-6aeb-4bfe-b4cb-3089d551a317";
+    const apiKey = process.env.AGENTBAY_API_KEY;
+    if (!apiKey) {
+        throw new Error("AGENTBAY_API_KEY environment variable is required for integration tests");
+    }
+    return apiKey;
 }
 
 // Helper function to get test endpoint from environment
 function getTestEndpoint(): string {
-    return process.env.AGENTBAY_ENDPOINT || "wuyingai-pre.cn-hangzhou.aliyuncs.com";
+    return process.env.AGENTBAY_ENDPOINT || "";
 }
 
 describe("Context Clear Integration Tests", () => {
