@@ -110,7 +110,12 @@ jobs:
               echo "📦 Setting up TypeScript dependencies..."
               # Set npm registry to use faster mirror in China
               npm config set registry https://registry.npmmirror.com
-              cd typescript && npm install && cd .. || echo "⚠️ npm install failed"
+              cd typescript
+              # Install all dependencies including dev dependencies needed for testing
+              npm install
+              # Ensure ts-jest is available for TypeScript testing
+              npm install --save-dev ts-jest @types/jest typescript jest
+              cd .. || echo "⚠️ npm install failed"
             fi
           fi
           
