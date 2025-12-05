@@ -116,14 +116,27 @@ jobs:
               # Set npm registry to use faster mirror in China
               npm config set registry https://registry.npmmirror.com
               cd typescript
+              # Clean install to ensure fresh dependencies
+              echo "🧹 Cleaning npm cache and node_modules..."
+              npm cache clean --force || true
+              rm -rf node_modules package-lock.json || true
+              
               # Install all dependencies including dev dependencies needed for testing
+              echo "📦 Installing npm dependencies..."
               npm install
-              # Ensure ts-jest is available for TypeScript testing
+              
+              # Verify ts-jest installation
+              echo "🔍 Verifying ts-jest installation..."
+              npm list ts-jest || echo "⚠️ ts-jest not found, installing explicitly..."
               npm install --save-dev ts-jest @types/jest typescript jest
+              
+              # Verify installation again
+              npm list ts-jest
+              
               # Install Playwright browsers for TypeScript tests
               echo "🎭 Installing Playwright browsers for TypeScript..."
-              npx playwright install --with-deps
-              cd .. || echo "⚠️ npm install failed"
+              npx playwright install --with-deps || echo "⚠️ Playwright install failed"
+              cd .. || echo "⚠️ TypeScript setup failed"
             fi
           fi
           
