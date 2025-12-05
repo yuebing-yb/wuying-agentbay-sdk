@@ -6,56 +6,56 @@ from typing import List, Dict, Any, Optional, TypedDict
 import json
 
 # Ensure we can import standard libraries. Langchain/Langgraph availability depends on environment.
-    print("🔍 正在检查Python环境和依赖...")
-    print(f"Python可执行文件: {sys.executable}")
-    print(f"Python版本: {sys.version}")
-    print(f"Python路径: {sys.path}")
+print("🔍 正在检查Python环境和依赖...")
+print(f"Python可执行文件: {sys.executable}")
+print(f"Python版本: {sys.version}")
+print(f"Python路径: {sys.path}")
 
     # Check each import individually for better error reporting
+try:
+    print("📦 正在导入langchain_openai...")
+    from langchain_openai import ChatOpenAI
+    print("✅ langchain_openai导入成功")
+except ImportError as e:
+    print(f"❌ langchain_openai导入失败: {e}")
+    print("🔍 尝试替代导入方法...")
     try:
-        print("📦 正在导入langchain_openai...")
-        from langchain_openai import ChatOpenAI
-        print("✅ langchain_openai导入成功")
-    except ImportError as e:
-        print(f"❌ langchain_openai导入失败: {e}")
-        print("🔍 尝试替代导入方法...")
-        try:
-            import langchain_openai
-            print("✅ 替代导入成功: import langchain_openai")
-        except ImportError as e2:
-            print(f"❌ 替代导入也失败了: {e2}")
-            
-            # List available packages
-            import pkgutil
-            print("📋 包含'langchain'的可用包:")
-            for _, name, _ in pkgutil.iter_modules():
-                if 'langchain' in name.lower():
-                    print(f"  - {name}")
-            sys.exit(1)
-
-    try:
-        print("📦 正在导入langgraph...")
-        from langgraph.graph import StateGraph, END
-        print("✅ langgraph导入成功")
-    except ImportError as e:
-        print(f"❌ langgraph导入失败: {e}")
-        sys.exit(1)
-
-    try:
-        print("📦 正在导入langchain_core...")
-        from langchain_core.prompts import ChatPromptTemplate
-        print("✅ langchain_core导入成功")
-    except ImportError as e:
-        print(f"❌ langchain_core导入失败: {e}")
-        sys.exit(1)
-
-        print("✅ 所有必需的库都导入成功!")
+        import langchain_openai
+        print("✅ 替代导入成功: import langchain_openai")
+    except ImportError as e2:
+        print(f"❌ 替代导入也失败了: {e2}")
         
-        print("🔍 正在检查环境变量...")
-        agentbay_key = os.environ.get("AGENTBAY_API_KEY")
-        dashscope_key = os.environ.get("DASHSCOPE_API_KEY")
-        print(f"AGENTBAY_API_KEY: {'✅ 已设置' if agentbay_key else '❌ 缺失'}")
-        print(f"DASHSCOPE_API_KEY: {'✅ 已设置' if dashscope_key else '❌ 缺失'}")
+        # List available packages
+        import pkgutil
+        print("📋 包含'langchain'的可用包:")
+        for _, name, _ in pkgutil.iter_modules():
+            if 'langchain' in name.lower():
+                print(f"  - {name}")
+        sys.exit(1)
+
+try:
+    print("📦 正在导入langgraph...")
+    from langgraph.graph import StateGraph, END
+    print("✅ langgraph导入成功")
+except ImportError as e:
+    print(f"❌ langgraph导入失败: {e}")
+    sys.exit(1)
+
+try:
+    print("📦 正在导入langchain_core...")
+    from langchain_core.prompts import ChatPromptTemplate
+    print("✅ langchain_core导入成功")
+except ImportError as e:
+    print(f"❌ langchain_core导入失败: {e}")
+    sys.exit(1)
+
+print("✅ 所有必需的库都导入成功!")
+
+print("🔍 正在检查环境变量...")
+agentbay_key = os.environ.get("AGENTBAY_API_KEY")
+dashscope_key = os.environ.get("DASHSCOPE_API_KEY")
+print(f"AGENTBAY_API_KEY: {'✅ 已设置' if agentbay_key else '❌ 缺失'}")
+print(f"DASHSCOPE_API_KEY: {'✅ 已设置' if dashscope_key else '❌ 缺失'}")
 
 # Configuration
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -456,7 +456,7 @@ def main():
     try:
         print("📍 About to invoke app...")
         # Set recursion limit to prevent infinite loops
-        config = {"recursion_limit": 1000}
+        config = {"recursion_limit": 100}
         result = app.invoke(initial_state, config=config)
         print(f"✅ Workflow completed: {result}")
     except Exception as e:
