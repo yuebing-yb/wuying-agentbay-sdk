@@ -109,7 +109,14 @@ def discover_tests(state: AgentState) -> AgentState:
     try:
         cwd = os.path.join(PROJECT_ROOT, "python")
         env = os.environ.copy()
-        env["PYTHONPATH"] = cwd 
+        env["PYTHONPATH"] = cwd
+        
+        print(f"📂 PROJECT_ROOT: {PROJECT_ROOT}")
+        print(f"📂 Working directory: {cwd}")
+        print(f"📂 PYTHONPATH: {env.get('PYTHONPATH')}")
+        print(f"🔍 Directory exists: {os.path.exists(cwd)}")
+        if os.path.exists(cwd):
+            print(f"📋 Contents: {os.listdir(cwd)}") 
         
         # Base command
         cmd = [sys.executable, "-m", "pytest", "tests/integration", "--collect-only", "-q", "-c", "/dev/null"]
@@ -121,8 +128,12 @@ def discover_tests(state: AgentState) -> AgentState:
             cmd.append(pattern)
             
         print(f"Executing: {' '.join(cmd)} in {cwd}")
-        
+        print("⏳ Running pytest command...")
         result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
+        print(f"✅ Command completed with return code: {result.returncode}")
+        if result.stderr:
+            print(f"⚠️ Stderr: {result.stderr}")
+        print(f"📄 Stdout length: {len(result.stdout)} chars")
         
         test_ids = []
         for line in result.stdout.splitlines():
