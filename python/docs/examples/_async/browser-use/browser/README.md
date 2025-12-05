@@ -29,11 +29,11 @@ python browser_screenshot.py
 ```
 
 This will generate several screenshot files in the current directory:
-- `agent_screenshot.png` - Screenshot taken with browser agent
-- `agent_full_page_screenshot.png` - Full page screenshot taken with browser agent
-- `browser_screenshot.png` - Screenshot taken with direct Playwright integration
-- `browser_full_page_screenshot.jpg` - Full page screenshot in JPEG format
-- `browser_custom_screenshot.png` - Screenshot with custom options
+- `temp_agent_screenshot.png` - Screenshot taken with browser agent
+- `temp_agent_full_page_screenshot.png` - Full page screenshot taken with browser agent
+- `temp_browser_screenshot.png` - Screenshot taken with direct Playwright integration
+- `temp_browser_full_page_screenshot.jpg` - Full page screenshot in JPEG format
+- `temp_browser_custom_screenshot.png` - Screenshot with custom options
 
 ## Other Examples
 
