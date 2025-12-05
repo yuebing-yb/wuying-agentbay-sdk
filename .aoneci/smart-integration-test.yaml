@@ -73,7 +73,12 @@ jobs:
               # Set Go proxy to use faster mirror in China
               export GOPROXY=https://goproxy.cn,direct
               export GOSUMDB=sum.golang.google.cn
-              cd golang && go mod download && cd .. || echo "⚠️ Go mod download failed"
+              cd golang
+              go mod download
+              # Install Playwright browsers for Golang tests
+              echo "🎭 Installing Playwright browsers for Golang..."
+              go run github.com/playwright-community/playwright-go/cmd/playwright@latest install --with-deps
+              cd .. || echo "⚠️ Go setup failed"
             fi
           fi
           
@@ -115,6 +120,9 @@ jobs:
               npm install
               # Ensure ts-jest is available for TypeScript testing
               npm install --save-dev ts-jest @types/jest typescript jest
+              # Install Playwright browsers for TypeScript tests
+              echo "🎭 Installing Playwright browsers for TypeScript..."
+              npx playwright install --with-deps
               cd .. || echo "⚠️ npm install failed"
             fi
           fi
