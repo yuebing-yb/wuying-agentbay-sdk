@@ -39,7 +39,7 @@ The Python SDK provides two screenshot methods:
 #### Example Usage
 - [Python Browser Screenshot Example](../../../../python/docs/examples/_async/browser-use/browser/browser_screenshot.py)
 - [Python Integration Tests](../../../../python/tests/integration/_async/test_browser_screenshot.py)
-- [Python Unit Tests](../../../../python/tests/unit/test_browser_screenshot.py)
+- [Python Unit Tests](../../../../python/tests/unit/shared/test_browser_screenshot.py)
 
 ### TypeScript Implementation
 
