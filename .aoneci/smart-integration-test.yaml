@@ -47,8 +47,12 @@ jobs:
           export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
           python scripts/smart_test_runner.py --test-type="${{params.test_type}}"
           
-      - uses: archive
-        inputs:
-          path: test_report.md
-          name: Smart Test Report
+          # Check if test report was generated
+          if [ -f "test_report.md" ]; then
+            echo "✅ Test report generated successfully"
+            echo "📋 Test report content:"
+            cat test_report.md
+          else
+            echo "⚠️ No test report generated"
+          fi
 
