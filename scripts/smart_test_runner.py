@@ -131,11 +131,42 @@ def discover_tests(state: AgentState) -> AgentState:
             
         print(f"执行命令: {' '.join(cmd)} 在目录 {cwd}")
         print("⏳ 正在运行pytest命令...")
-        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
+        sys.stdout.flush()
+        
+        # 使用Popen来实现非阻塞执行和周期性输出
+        import time
+        process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+        
+        start_time = time.time()
+        timeout = 300  # 5分钟超时
+        
+        while process.poll() is None:  # 进程还在运行
+            elapsed = time.time() - start_time
+            if elapsed > timeout:
+                print(f"❌ pytest命令超时（{timeout}秒），终止进程")
+                process.kill()
+                sys.stdout.flush()
+                return {"test_queue": [], "current_test_index": 0, "results": [], "sdk_context": "", "is_finished": True, "specific_test_pattern": pattern}
+            
+            # 每30秒输出一次心跳
+            if int(elapsed) % 30 == 0 and int(elapsed) > 0:
+                print(f"💓 pytest运行中... 已用时{int(elapsed)}秒")
+                sys.stdout.flush()
+            
+            time.sleep(1)
+        
+        # 获取结果
+        stdout, stderr = process.communicate()
+        result = subprocess.CompletedProcess(cmd, process.returncode, stdout, stderr)
+        
         print(f"✅ 命令完成，返回码: {result.returncode}")
+        sys.stdout.flush()
+            
         if result.stderr:
             print(f"⚠️ 标准错误: {result.stderr}")
+            sys.stdout.flush()
         print(f"📄 标准输出长度: {len(result.stdout)} 字符")
+        sys.stdout.flush()
         
         test_ids = []
         for line in result.stdout.splitlines():
