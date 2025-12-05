@@ -1,5 +1,6 @@
 stages:
-  - smart_test
+  smart_test:
+    name: Smart Integration Test
 
 jobs:
   - name: Smart Integration Test
