@@ -33,10 +33,28 @@ jobs:
       - id: install-dependencies
         name: "Install Dependencies"
         run: |
+          echo "🔧 Installing Python dependencies..."
           python -m pip install --upgrade pip
-          python -m pip install pytest langchain-openai langgraph langchain-core alibabacloud_tea_openapi alibabacloud_credentials alibabacloud_tea_util alibabacloud_endpoint_util
-          # Install the SDK itself in editable mode
+          
+          echo "📦 Installing core dependencies..."
+          python -m pip install pytest
+          
+          echo "📦 Installing LangChain dependencies..."
+          python -m pip install langchain-openai langgraph langchain-core
+          
+          echo "📦 Installing Alibaba Cloud dependencies..."
+          python -m pip install alibabacloud_tea_openapi alibabacloud_credentials alibabacloud_tea_util alibabacloud_endpoint_util
+          
+          echo "📦 Installing SDK in editable mode..."
           python -m pip install -e python/
+          
+          echo "✅ Verifying installations..."
+          python -c "import langchain_openai; print('✅ langchain-openai imported successfully')"
+          python -c "import langgraph; print('✅ langgraph imported successfully')"
+          python -c "import langchain_core; print('✅ langchain-core imported successfully')"
+          
+          echo "📋 Installed packages:"
+          pip list | grep -E "(langchain|langgraph)"
           
       - id: run-smart-tests
         name: "Run Smart Tests"
