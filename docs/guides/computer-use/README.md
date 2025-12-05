@@ -2,6 +2,8 @@
 
 Computer Use is AgentBay's desktop automation environment for Windows and Linux systems.
 
+> **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
+
 ## Documentation
 
 - [Application Management](computer-application-management.md) - Desktop application lifecycle management

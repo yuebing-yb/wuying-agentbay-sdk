@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-from darabonba.model import DaraModel 
+
+from darabonba.model import DaraModel
 
 
 class GetLinkRequest(DaraModel):
@@ -28,38 +29,37 @@ class GetLinkRequest(DaraModel):
         if _map is not None:
             result = _map
         if self.authorization is not None:
-            result['Authorization'] = self.authorization
+            result["Authorization"] = self.authorization
 
         if self.port is not None:
-            result['Port'] = self.port
+            result["Port"] = self.port
 
         if self.protocol_type is not None:
-            result['ProtocolType'] = self.protocol_type
+            result["ProtocolType"] = self.protocol_type
 
         if self.session_id is not None:
-            result['SessionId'] = self.session_id
+            result["SessionId"] = self.session_id
 
         if self.options is not None:
-            result['option'] = self.options
+            result["option"] = self.options
 
         return result
 
     def from_map(self, m: dict = None):
         m = m or dict()
-        if m.get('Authorization') is not None:
-            self.authorization = m.get('Authorization')
+        if m.get("Authorization") is not None:
+            self.authorization = m.get("Authorization")
 
-        if m.get('Port') is not None:
-            self.port = m.get('Port')
+        if m.get("Port") is not None:
+            self.port = m.get("Port")
 
-        if m.get('ProtocolType') is not None:
-            self.protocol_type = m.get('ProtocolType')
+        if m.get("ProtocolType") is not None:
+            self.protocol_type = m.get("ProtocolType")
 
-        if m.get('SessionId') is not None:
-            self.session_id = m.get('SessionId')
+        if m.get("SessionId") is not None:
+            self.session_id = m.get("SessionId")
 
-        if m.get('option') is not None:
-            self.options = m.get('option')
+        if m.get("option") is not None:
+            self.options = m.get("option")
 
         return self
-

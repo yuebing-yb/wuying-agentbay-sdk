@@ -36,11 +36,15 @@ func WithEnvFile(envFile string) Option {
 	}
 }
 
+
+
 // AgentBay represents the main client for interacting with the AgentBay cloud runtime environment.
 type AgentBay struct {
-	APIKey  string
-	Client  *mcp.Client
-	Context *ContextService
+	APIKey         string
+	Client         *mcp.Client
+	Context        *ContextService
+	MobileSimulate *MobileSimulateService
+	config         Config
 }
 
 // NewAgentBay creates a new AgentBay client.
@@ -85,6 +89,7 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 		APIKey:  apiKey,
 		Client:  client,
 		Context: nil, // Will be initialized after creation
+		config:  config,
 	}
 
 	// Initialize context service
@@ -199,7 +204,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			if params.ContextSync == nil {
 				params.ContextSync = []*ContextSync{}
 			}
-			logInfoWithColor(fmt.Sprintf("Adding context sync for mobile simulate: %+v", mobileSimContextSync))
+			fmt.Printf("Adding context sync for mobile simulate: %+v\n", mobileSimContextSync)
 			params.ContextSync = append(params.ContextSync, mobileSimContextSync)
 		}
 
@@ -225,6 +230,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 	sdkStatsJSON := fmt.Sprintf(`{"source":"sdk","sdk_language":"golang","sdk_version":"%s","is_release":%t,"framework":"%s"}`, Version, isRelease, framework)
 	createSessionRequest.SdkStats = tea.String(sdkStatsJSON)
+
+	// Add LoginRegionId if region_id is set
+	if a.config.RegionID != "" {
+		createSessionRequest.LoginRegionId = tea.String(a.config.RegionID)
+	}
 
 	// Add image_id if provided
 	if params.ImageId != "" {
@@ -282,6 +292,33 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			}
 
 			persistenceDataList = append(persistenceDataList, persistenceItem)
+		}
+	}
+
+	// Add mobile simulate context sync if needed
+	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil &&
+		params.ExtraConfigs.Mobile.SimulateConfig != nil &&
+		params.ExtraConfigs.Mobile.SimulateConfig.Simulate &&
+		params.ExtraConfigs.Mobile.SimulateConfig.SimulatedContextID != "" {
+
+		simContextID := params.ExtraConfigs.Mobile.SimulateConfig.SimulatedContextID
+		fmt.Printf("ℹ️  Adding context sync for mobile simulate: &{ContextID:%s Path:%s Policy:<nil>}\n", simContextID, MobileInfoDefaultPath)
+
+		// Check if already exists in persistenceDataList
+		exists := false
+		for _, item := range persistenceDataList {
+			if tea.StringValue(item.ContextId) == simContextID {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			mobilePersistence := &mcp.CreateMcpSessionRequestPersistenceDataList{
+				ContextId: tea.String(simContextID),
+				Path:      tea.String(MobileInfoDefaultPath),
+			}
+			persistenceDataList = append(persistenceDataList, mobilePersistence)
 		}
 	}
 
@@ -483,10 +520,8 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// If we need to do mobile simulate by command, wait for it
-	if needsMobileSim {
-		if err := a.waitForMobileSimulate(session, mobileSimPath, mobileSimMode); err != nil {
-			logOperationError("MobileSimulate", err.Error(), false)
-		}
+	if needsMobileSim && mobileSimPath != "" {
+		a.waitForMobileSimulate(session, mobileSimPath, mobileSimMode)
 	}
 
 	// Return result with RequestID
@@ -497,6 +532,57 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		Session: session,
 		Success: true,
 	}, nil
+}
+
+// waitForMobileSimulate waits for mobile simulate command to complete.
+func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string, mobileSimMode models.MobileSimulateMode) error {
+	fmt.Println("⏳ Mobile simulate: Waiting for completion")
+
+	if session.Mobile == nil {
+		fmt.Println("Mobile module not found in session, skipping mobile simulate")
+		return nil
+	}
+	if session.Command == nil {
+		fmt.Println("Command module not found in session, skipping mobile simulate")
+		return nil
+	}
+	if mobileSimPath == "" {
+		fmt.Println("Mobile simulate path is empty, skipping mobile simulate")
+		return nil
+	}
+
+	// Run mobile simulate command
+	startTime := time.Now()
+	devInfoFilePath := mobileSimPath + "/" + MobileInfoFileName
+	wyaApplyOption := ""
+
+	switch mobileSimMode {
+	case models.MobileSimulateModePropertiesOnly, "":
+		wyaApplyOption = ""
+	case models.MobileSimulateModeSensorsOnly:
+		wyaApplyOption = " -sensors"
+	case models.MobileSimulateModePackagesOnly:
+		wyaApplyOption = " -packages"
+	case models.MobileSimulateModeServicesOnly:
+		wyaApplyOption = " -services"
+	case models.MobileSimulateModeAll:
+		wyaApplyOption = " -all"
+	}
+
+	command := fmt.Sprintf("chmod -R a+rwx %s; wya apply%s %s", mobileSimPath, wyaApplyOption, devInfoFilePath)
+	fmt.Printf("⏳ Waiting for mobile simulate completion, command: %s\n", command)
+
+	cmdResult, err := session.Command.ExecuteCommand(command)
+	if err != nil {
+		fmt.Printf("Failed to execute mobile simulate command: %v\n", err)
+		return nil
+	}
+
+	duration := time.Since(startTime)
+	fmt.Printf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds\n", mobileSimMode, duration.Seconds())
+	fmt.Printf("   Output: %s\n", cmdResult.Output)
+
+	return nil
 }
 
 // ListSessionParams contains parameters for listing sessions
@@ -1204,9 +1290,10 @@ func (a *AgentBay) updateBrowserReplayContext(responseData *mcp.CreateMcpSession
 		return
 	}
 
-	if updateResult.Success {
-		fmt.Printf("✅ Successfully updated browser replay context: %s\n", contextName)
-	} else {
-		fmt.Printf("⚠️  Failed to update browser replay context: %s\n", updateResult.ErrorMessage)
-	}
+	_ = updateResult // Ignore result
+}
+
+// GetRegionID returns the region ID from config
+func (a *AgentBay) GetRegionID() string {
+	return a.config.RegionID
 }

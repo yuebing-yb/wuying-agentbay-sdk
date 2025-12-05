@@ -2,6 +2,8 @@
 
 Mobile Use is AgentBay's mobile device automation environment for Android devices.
 
+> **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
+
 ## Documentation
 
 - [Application Management](mobile-application-management.md) - Mobile app lifecycle management

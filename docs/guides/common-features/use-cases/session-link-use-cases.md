@@ -39,7 +39,7 @@ Call `get_link()` **with no parameters**. It returns a browser control address (
 ```python
 import asyncio
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():
@@ -259,7 +259,7 @@ async def browser_automation_example():
         
         # 3. Initialize browser
         print("\nInitializing browser...")
-        from agentbay.browser.browser import BrowserOption
+        from agentbay import BrowserOption
         init_ok = await session.browser.initialize_async(BrowserOption())
         if not init_ok:
             print("❌ Browser initialization failed")

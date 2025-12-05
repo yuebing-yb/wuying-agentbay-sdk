@@ -2,9 +2,9 @@
 
 The AgentBay SDK Cookbook is a collection of practical examples and use cases demonstrating how to leverage the AgentBay SDK for various automation scenarios. Each cookbook showcases a specific application of the SDK, providing both basic implementations and integrations with popular frameworks like LangChain.
 
-## Session Environments (envs)
+## Session Environments
 
-The `envs` directory contains examples organized by session environments. A session environment in AgentBay refers to an isolated cloud computing environment where specific types of operations can be performed safely and efficiently. Each environment provides specialized capabilities for different use cases.
+Examples are organized by session environments. A session environment in AgentBay refers to an isolated cloud computing environment where specific types of operations can be performed safely and efficiently. Each environment provides specialized capabilities for different use cases.
 
 Currently, two distinct session environments are implemented:
 
@@ -15,14 +15,14 @@ Currently, two distinct session environments are implemented:
 
 ### Browser Environment
 
-1. [Form-Filling Agent](./envs/browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
-2. [E-commerce Inspector](./envs/browser/e-commerce-inspector/) - Automated product information extraction from e-commerce websites with AI-powered navigation
+1. [Form-Filling Agent](./browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
+2. [E-commerce Inspector](./browser/e-commerce-inspector/) - Automated product information extraction from e-commerce websites with AI-powered navigation
 
 ### Codespace Environment
 
-3. [Auto Testing Agent](./envs/codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
-4. [OpenAI Data Analysis](./envs/codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
-5. [AI Code Assistant](./envs/codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
+3. [Auto Testing Agent](./codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
+4. [OpenAI Data Analysis](./codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
+5. [AI Code Assistant](./codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
 
 ## Overview
 

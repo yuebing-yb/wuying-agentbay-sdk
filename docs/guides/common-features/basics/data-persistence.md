@@ -1,6 +1,7 @@
 # Complete Data Persistence Guide
 
-This guide covers AgentBay SDK's data persistence features, including context concepts, context management, and data synchronization strategies for maintaining state across sessions.
+This guide covers AgentBay SDK's data persistence features, including context concepts, context management, and data synchronization strategies for maintaining state across sessions. Both synchronous and asynchronous APIs are supported.
+
 
 ## 📋 Table of Contents
 
@@ -182,7 +183,7 @@ else:
     print(f"Failed to list contexts: {contexts_result.error_message}")
 
 # List contexts with pagination
-from agentbay.context import ContextListParams
+from agentbay import ContextListParams
 
 params = ContextListParams(max_results=20)
 result = agent_bay.context.list(params)
@@ -434,7 +435,7 @@ The simplest way to clear a context is using the synchronous `clear()` method, w
 
 ```python
 from agentbay import AgentBay
-from agentbay.exceptions import ClearanceTimeoutError
+from agentbay import ClearanceTimeoutError
 
 agent_bay = AgentBay()
 
@@ -523,7 +524,7 @@ The clearing operation follows this state machine:
 
 ```python
 from agentbay import AgentBay
-from agentbay.exceptions import ClearanceTimeoutError, AgentBayError
+from agentbay import ClearanceTimeoutError, AgentBayError
 
 agent_bay = AgentBay()
 
@@ -773,8 +774,7 @@ AgentBay SDK provides file compression capabilities to optimize storage space an
 
 ```python
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import ContextSync, SyncPolicy, UploadPolicy, UploadMode
-import asyncio
+from agentbay import ContextSync, SyncPolicy, UploadPolicy, UploadMode
 
 # Initialize AgentBay client
 agent_bay = AgentBay(api_key="your-api-key")
@@ -810,11 +810,8 @@ session = session_result.session
 session.file_system.write_file("/tmp/data/large-file.txt", large_content, mode="overwrite")
 session.file_system.write_file("/tmp/data/config.json", config_data, mode="overwrite")
 
-# Perform context sync before getting info (async operation)
-async def run_sync():
-    return await session.context.sync()
-
-sync_result = asyncio.run(run_sync())
+# Perform context sync before getting info (synchronous operation)
+sync_result = session.context.sync()
 if sync_result.success:
     print("Context sync successful!")
     
@@ -864,7 +861,7 @@ agent_bay.delete(session, sync_context=True)
 **Basic Usage:**
 
 ```python
-from agentbay.context_sync import RecyclePolicy, Lifecycle, SyncPolicy, ContextSync
+from agentbay import RecyclePolicy, Lifecycle, SyncPolicy, ContextSync
 
 # Example 1: Keep data for 1 day
 recycle_policy = RecyclePolicy(
@@ -925,7 +922,7 @@ recycle_policy = RecyclePolicy(
 
 ```python
 from agentbay import AgentBay, CreateSessionParams
-from agentbay.context_sync import (
+from agentbay import (
     ContextSync, SyncPolicy, RecyclePolicy, Lifecycle,
     UploadPolicy, DownloadPolicy, BWList, WhiteList
 )

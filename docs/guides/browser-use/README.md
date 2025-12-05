@@ -2,6 +2,8 @@
 
 Welcome to the AgentBay AIBrowser Guides! This provides complete functionality introduction and best practices for experienced developers.
 
+> **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
+
 ## 🎯 Quick Navigation
 
 - [Example](code-example.md) - Index for examples demonstrating core & advance features
@@ -37,8 +39,8 @@ Prerequisites:
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():
@@ -198,8 +200,8 @@ Sometimes the web needs a different mask and a different stage. By shaping the b
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserViewport
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserViewport
 from playwright.async_api import async_playwright
 
 CUSTOM_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
@@ -351,8 +353,8 @@ By default, the browser initializes with Chromium, but when using computer use i
 
 **Python:**
 ```python
-from agentbay.browser.browser import BrowserOption
-from agentbay.session_params import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import CreateSessionParams
 
 # Create session with computer use image
 params = CreateSessionParams(image_id="browser_latest")
@@ -445,9 +447,9 @@ Below we’ll search for a book on Google. First we bring a browser to life and 
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import ActOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import ActOptions
 from playwright.async_api import async_playwright
 
 BOOK_QUERY = "The Pragmatic Programmer"

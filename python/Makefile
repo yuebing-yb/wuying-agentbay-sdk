@@ -27,8 +27,13 @@ clean:
 	@find . -type d -name __pycache__ -delete
 	@find . -type f -name "*.pyc" -delete
 
+# Generate sync code from async code
+generate-sync:
+	@echo "Generating sync code and examples..."
+	poetry run python scripts/generate_sync.py
+
 # Build package
-build: clean format test
+build: clean generate-sync format test
 	@echo "Building package $(VERSION)..."
 	poetry build
 

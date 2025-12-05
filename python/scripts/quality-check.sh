@@ -124,9 +124,17 @@ run_tests() {
 
     print_section "Running unit tests"
 
-    # Run pytest with coverage report
-    echo "Running pytest with coverage..."
-    python -m pytest tests/unit -v --cov=agentbay --cov-report=term --cov-report=xml
+    # Run sync tests
+    echo "Running sync tests..."
+    python -m pytest tests/unit/sync -v --cov=agentbay --cov-report=term --cov-report=xml --cov-append
+
+    # Run async tests
+    echo "Running async tests..."
+    python -m pytest tests/unit/async -v --cov=agentbay --cov-report=term --cov-report=xml --cov-append
+
+    # Run shared tests
+    echo "Running shared tests..."
+    python -m pytest tests/unit/shared -v --cov=agentbay --cov-report=term --cov-report=xml --cov-append
 
     print_success "All tests passed!"
 }

@@ -31,7 +31,7 @@ Computer UI automation requires creating a session with a computer use system im
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 # Use windows_latest or linux_latest
@@ -47,7 +47,7 @@ session = agent_bay.create(session_params).session
 The `click_mouse()` method supports multiple click types. You can use the `MouseButton` enum for type safety:
 
 ```python
-from agentbay.computer import MouseButton
+from agentbay import MouseButton
 
 session_params = CreateSessionParams(image_id="windows_latest")
 session = agent_bay.create(session_params).session
@@ -102,7 +102,7 @@ agent_bay.delete(session)
 Drag the mouse from one point to another using the `MouseButton` enum:
 
 ```python
-from agentbay.computer import MouseButton
+from agentbay import MouseButton
 
 session_params = CreateSessionParams(image_id="windows_latest")
 session = agent_bay.create(session_params).session
@@ -129,7 +129,7 @@ agent_bay.delete(session)
 Scroll the mouse wheel at specific coordinates using the `ScrollDirection` enum:
 
 ```python
-from agentbay.computer import ScrollDirection
+from agentbay import ScrollDirection
 
 session_params = CreateSessionParams(image_id="windows_latest")
 session = agent_bay.create(session_params).session

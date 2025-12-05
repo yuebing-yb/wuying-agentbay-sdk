@@ -47,9 +47,9 @@ import os
 import asyncio
 from pydantic import BaseModel, Field
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.browser_agent import BrowserAgent, ActOptions, ExtractOptions
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import BrowserAgent, ActOptions, ExtractOptions
 
 class Product(BaseModel):
     name: str = Field(..., description="Product name")
@@ -304,7 +304,7 @@ async def close_async(self) -> bool
 
 ```python
 from pydantic import BaseModel, Field
-from agentbay.browser.browser_agent import ActOptions, ExtractOptions
+from agentbay import ActOptions, ExtractOptions
 
 class RecipeDetails(BaseModel):
     title: str = Field(..., description="Recipe title")
@@ -343,7 +343,7 @@ for a in actions:
 ### 3) Amazon Demo (Observe → Act → Assert)
 
 ```python
-from agentbay.browser.browser_agent import ObserveOptions
+from agentbay import ObserveOptions
 
 ok, obs1 = await agent.observe_async(
     options=ObserveOptions(instruction="Find and click the 'Add to Cart' button")

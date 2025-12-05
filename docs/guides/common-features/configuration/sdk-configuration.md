@@ -2,7 +2,9 @@
 
 This guide explains how to configure the AgentBay SDK for different environments and requirements.
 
-> **Important:** The `endpoint` configuration specifies the **API Gateway location** used for SDK-backend communication. This determines which regional gateway your SDK connects to, but does not necessarily determine where your cloud sessions will be created. A future feature may allow selecting the cloud environment region separately when creating sessions.
+> **💡 Async API Support**: Configuration works identically for both sync and async APIs. For async patterns, see:
+
+> **Important:** The `endpoint` configuration specifies the **API Gateway location** used for SDK-backend communication. This determines which regional gateway your SDK connects to. You can use the `region_id` configuration to specify where your cloud sessions will be created.
 
 ## Configuration Parameters
 
@@ -10,6 +12,7 @@ This guide explains how to configure the AgentBay SDK for different environments
 |-----------|---------------------|-------------|---------------|
 | API Key | `AGENTBAY_API_KEY` | Authentication key for API access | Required |
 | Endpoint | `AGENTBAY_ENDPOINT` | API Gateway endpoint URL (determines gateway location for SDK communication) | `wuyingai.cn-shanghai.aliyuncs.com` |
+| Region ID | `AGENTBAY_REGION_ID` | Cloud resource region for sessions and contexts (e.g., `cn-hangzhou`, `ap-southeast-1`) | `None` |
 
 ## Supported API Gateway Regions
 
@@ -49,12 +52,14 @@ Set configuration using shell commands:
 ```bash
 export AGENTBAY_API_KEY=your-api-key-here
 export AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
+export AGENTBAY_REGION_ID=ap-southeast-1
 ```
 
 **Windows:**
 ```cmd
 set AGENTBAY_API_KEY=your-api-key-here
 set AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
+set AGENTBAY_REGION_ID=ap-southeast-1
 ```
 
 ### Method 2: .env File
@@ -70,6 +75,7 @@ The SDK automatically searches for `.env` files using the following strategy:
 # .env file (can be placed in project root or any parent directory)
 AGENTBAY_API_KEY=your-api-key-here
 AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
+AGENTBAY_REGION_ID=ap-southeast-1
 ```
 
 **File locations examples:**
@@ -81,16 +87,31 @@ my-project/
         └── main.py         # Searches upward: app/ → src/ → my-project/ ✅
 ```
 
-**Custom .env file path:**
+**Custom .env file path (Sync):**
 
 ```python
 from agentbay import AgentBay
 client = AgentBay(env_file="/path/to/custom.env")
 ```
 
+**Custom .env file path (Async):**
+
+```python
+import asyncio
+from agentbay import AsyncAgentBay
+
+async def main():
+    client = AsyncAgentBay(env_file="/path/to/custom.env")
+    # Use client...
+
+asyncio.run(main())
+```
+
 ### Method 3: Hard-coded Configuration (Debug Only)
 
-For debugging purposes, you can pass configuration directly in code:
+For debugging purposes, you can pass configuration directly in code.
+
+**Sync API:**
 
 ```python
 from agentbay import AgentBay, Config
@@ -98,9 +119,27 @@ from agentbay import AgentBay, Config
 # Hard-coded configuration (not recommended for production)
 config = Config(
     endpoint="wuyingai.ap-southeast-1.aliyuncs.com",
-    timeout_ms=60000
+    region_id="ap-southeast-1"
 )
 agent_bay = AgentBay(api_key="your-api-key-here", cfg=config)
+```
+
+**Async API:**
+
+```python
+import asyncio
+from agentbay import AsyncAgentBay, Config
+
+async def main():
+    # Hard-coded configuration (not recommended for production)
+    config = Config(
+        endpoint="wuyingai.ap-southeast-1.aliyuncs.com",
+        region_id="ap-southeast-1"
+    )
+    agent_bay = AsyncAgentBay(api_key="your-api-key-here", cfg=config)
+    # Use agent_bay...
+
+asyncio.run(main())
 ```
 
 > **Warning:** Hard-coding API keys and configuration is not recommended for production environments due to security risks.
@@ -123,6 +162,23 @@ To use the Singapore API gateway for better network performance in Asia-Pacific 
 ```bash
 export AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
 ```
+
+### Configure Cloud Resource Region
+
+To specify the region where your AgentBay sessions and contexts will be created:
+
+```bash
+export AGENTBAY_REGION_ID=ap-southeast-1  # For Singapore region
+# or
+export AGENTBAY_REGION_ID=cn-hangzhou  # For Hangzhou region
+```
+
+**Important Notes:**
+- `region_id` is optional - if not specified, AgentBay will use the default region
+- This setting determines where your actual cloud sessions run, which can affect performance and data locality
+- Choose a region close to your users or data sources for optimal performance
+- Available region IDs can be found in the [AgentBay Console](https://agentbay.console.aliyun.com/)
+- The `region_id` is automatically passed to session and context creation APIs when configured
 
 
 ### Development vs Production
@@ -173,10 +229,11 @@ find . -name ".env" -o -name ".git" -type d 2>/dev/null | head -10
 **Example:** Error shows `'HostId': 'wuyingai.ap-southeast-1.aliyuncs.com'` but you expected to connect to Shanghai gateway.
 
 **Solution:**
-- Check if your API key belongs to the correct gateway region
-- Ensure `AGENTBAY_ENDPOINT` matches your API key's gateway region
-- Shanghai API keys work with `wuyingai.cn-shanghai.aliyuncs.com` gateway endpoint
-- Singapore API keys work with `wuyingai.ap-southeast-1.aliyuncs.com` gateway endpoint
+- Check if your API key matches the gateway region you're trying to use
+- Ensure `AGENTBAY_ENDPOINT` matches your API key's region
+- Domestic (China) API keys typically work with China mainland gateway endpoints (e.g., `wuyingai.cn-shanghai.aliyuncs.com`)
+- International API keys typically work with international gateway endpoints (e.g., `wuyingai.ap-southeast-1.aliyuncs.com`)
+- API keys are region-specific and cannot be used across different gateway regions
 
 #### 4. Wrong Endpoint/Network Issues
 **Error:** `Failed to resolve 'invalid-endpoint.com'` or `NameResolutionError`

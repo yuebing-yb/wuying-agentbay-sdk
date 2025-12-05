@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-from darabonba.model import DaraModel 
+
+from darabonba.model import DaraModel
 
 
 class DeleteContextFileRequest(DaraModel):
@@ -24,25 +25,25 @@ class DeleteContextFileRequest(DaraModel):
         if _map is not None:
             result = _map
         if self.authorization is not None:
-            result['Authorization'] = self.authorization
+            result["Authorization"] = self.authorization
 
         if self.context_id is not None:
-            result['ContextId'] = self.context_id
+            result["ContextId"] = self.context_id
 
         if self.file_path is not None:
-            result['FilePath'] = self.file_path
+            result["FilePath"] = self.file_path
 
         return result
 
     def from_map(self, m: dict = None):
         m = m or dict()
-        if m.get('Authorization') is not None:
-            self.authorization = m.get('Authorization')
+        if m.get("Authorization") is not None:
+            self.authorization = m.get("Authorization")
 
-        if m.get('ContextId') is not None:
-            self.context_id = m.get('ContextId')
+        if m.get("ContextId") is not None:
+            self.context_id = m.get("ContextId")
 
-        if m.get('FilePath') is not None:
-            self.file_path = m.get('FilePath')
+        if m.get("FilePath") is not None:
+            self.file_path = m.get("FilePath")
 
-        return self 
+        return self

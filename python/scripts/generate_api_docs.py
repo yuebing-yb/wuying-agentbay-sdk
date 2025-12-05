@@ -30,22 +30,46 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DOCS_ROOT = PROJECT_ROOT / "docs" / "api"
 METADATA_PATH = PROJECT_ROOT.parent / "scripts" / "doc-metadata.yaml"
 
+# Sync API docs
 DOC_MAPPINGS: Sequence[DocMapping] = (
-    DocMapping("common-features/basics/agentbay.md", "AgentBay", ("agentbay.agentbay",)),
-    DocMapping("common-features/basics/session.md", "Session", ("agentbay.session",)),
-    DocMapping("common-features/basics/command.md", "Command", ("agentbay.command.command",)),
-    DocMapping("common-features/basics/context.md", "Context", ("agentbay.context",)),
-    DocMapping("common-features/basics/context-manager.md", "Context Manager", ("agentbay.context_manager",)),
-    DocMapping("common-features/basics/filesystem.md", "File System", ("agentbay.filesystem.filesystem",)),
-    DocMapping("common-features/basics/context-sync.md", "Context Sync", ("agentbay.context_sync",)),
-    DocMapping("common-features/basics/logging.md", "Logging", ("agentbay.logger",)),
-    DocMapping("common-features/advanced/agent.md", "Agent", ("agentbay.agent.agent",)),
-    DocMapping("common-features/advanced/oss.md", "OSS", ("agentbay.oss.oss",)),
-    DocMapping("browser-use/browser.md", "Browser", ("agentbay.browser.browser", "agentbay.browser.browser_agent")),
-    DocMapping("browser-use/extension.md", "Extension", ("agentbay.extension",)),
-    DocMapping("codespace/code.md", "Code", ("agentbay.code.code",)),
-    DocMapping("computer-use/computer.md", "Computer", ("agentbay.computer.computer",)),
-    DocMapping("mobile-use/mobile.md", "Mobile", ("agentbay.mobile.mobile",)),
+    DocMapping("sync/agentbay.md", "AgentBay", ("agentbay._sync.agentbay",)),
+    DocMapping("sync/session.md", "Session", ("agentbay._sync.session",)),
+    DocMapping("sync/command.md", "Command", ("agentbay._sync.command",)),
+    DocMapping("sync/context.md", "Context", ("agentbay._sync.context",)),
+    DocMapping("sync/context-manager.md", "Context Manager", ("agentbay._sync.context_manager",)),
+    DocMapping("sync/filesystem.md", "File System", ("agentbay._sync.filesystem",)),
+    DocMapping("sync/agent.md", "Agent", ("agentbay._sync.agent",)),
+    DocMapping("sync/oss.md", "OSS", ("agentbay._sync.oss",)),
+    DocMapping("sync/browser.md", "Browser", ("agentbay._sync.browser",)),
+    DocMapping("sync/extension.md", "Extension", ("agentbay._sync.extension",)),
+    DocMapping("sync/code.md", "Code", ("agentbay._sync.code",)),
+    DocMapping("sync/computer.md", "Computer", ("agentbay._sync.computer",)),
+    DocMapping("sync/mobile.md", "Mobile", ("agentbay._sync.mobile",)),
+)
+
+# Async API docs
+ASYNC_DOC_MAPPINGS: Sequence[DocMapping] = (
+    DocMapping("async/async-agentbay.md", "AsyncAgentBay", ("agentbay._async.agentbay",)),
+    DocMapping("async/async-session.md", "AsyncSession", ("agentbay._async.session",)),
+    DocMapping("async/async-command.md", "AsyncCommand", ("agentbay._async.command",)),
+    DocMapping("async/async-context.md", "AsyncContext", ("agentbay._async.context",)),
+    DocMapping("async/async-context-manager.md", "AsyncContextManager", ("agentbay._async.context_manager",)),
+    DocMapping("async/async-filesystem.md", "AsyncFileSystem", ("agentbay._async.filesystem",)),
+    DocMapping("async/async-agent.md", "AsyncAgent", ("agentbay._async.agent",)),
+    DocMapping("async/async-oss.md", "AsyncOss", ("agentbay._async.oss",)),
+    DocMapping("async/async-browser.md", "AsyncBrowser", ("agentbay._async.browser",)),
+    DocMapping("async/async-extension.md", "AsyncExtension", ("agentbay._async.extension",)),
+    DocMapping("async/async-code.md", "AsyncCode", ("agentbay._async.code",)),
+    DocMapping("async/async-computer.md", "AsyncComputer", ("agentbay._async.computer",)),
+    DocMapping("async/async-mobile.md", "AsyncMobile", ("agentbay._async.mobile",)),
+)
+
+# Common/Shared docs (Config, Exceptions, etc.)
+COMMON_DOC_MAPPINGS: Sequence[DocMapping] = (
+    DocMapping("common/config.md", "Configuration", ("agentbay._common.config",)),
+    DocMapping("common/exceptions.md", "Exceptions", ("agentbay._common.exceptions",)),
+    DocMapping("common/logging.md", "Logging", ("agentbay._common.logger",)),
+    DocMapping("common/context-sync.md", "Context Sync", ("agentbay._common.params.context_sync",)),
 )
 
 
@@ -237,6 +261,68 @@ def get_module_name_from_path(module_path: str) -> str:
     return module_path.split('.')[-1]
 
 
+def get_async_note_section(module_name: str, metadata: dict[str, Any]) -> str:
+    """Generate async version note at the top of sync API docs with link to async docs."""
+    if module_name == "logger":
+        return ""
+
+    async_class_map = {
+        "agentbay": ("AsyncAgentBay", "../async/async-agentbay.md"),
+        "session": ("AsyncSession", "../async/async-session.md"),
+        "command": ("AsyncCommand", "../async/async-command.md"),
+        "context": ("AsyncContextService", "../async/async-context.md"),
+        "context_manager": ("AsyncContextManager", "../async/async-context-manager.md"),
+        "filesystem": ("AsyncFileSystem", "../async/async-filesystem.md"),
+        "agent": ("AsyncAgent", "../async/async-agent.md"),
+        "oss": ("AsyncOss", "../async/async-oss.md"),
+        "browser": ("AsyncBrowser", "../async/async-browser.md"),
+        "extension": ("AsyncExtensionsService", "../async/async-extension.md"),
+        "code": ("AsyncCode", "../async/async-code.md"),
+        "computer": ("AsyncComputer", "../async/async-computer.md"),
+        "mobile": ("AsyncMobile", "../async/async-mobile.md"),
+    }
+
+    async_info = async_class_map.get(module_name)
+    if not async_info:
+        return ""
+
+    async_class_name, async_doc_path = async_info
+    return f"""> **💡 Async Version**: This documentation covers the synchronous API. For async/await support, see [`{async_class_name}`]({async_doc_path}) which provides the same functionality with async methods.
+
+"""
+
+
+def get_sync_note_section(module_name: str, metadata: dict[str, Any]) -> str:
+    """Generate sync version note at the top of async API docs with link to sync docs."""
+    # Map async module names back to sync
+    sync_class_map = {
+        "agentbay": ("AgentBay", "../sync/agentbay.md"),
+        "session": ("Session", "../sync/session.md"),
+        "command": ("Command", "../sync/command.md"),
+        "context": ("ContextService", "../sync/context.md"),
+        "context_manager": ("ContextManager", "../sync/context-manager.md"),
+        "filesystem": ("FileSystem", "../sync/filesystem.md"),
+        "agent": ("Agent", "../sync/agent.md"),
+        "oss": ("Oss", "../sync/oss.md"),
+        "browser": ("Browser", "../sync/browser.md"),
+        "extension": ("ExtensionsService", "../sync/extension.md"),
+        "code": ("Code", "../sync/code.md"),
+        "computer": ("Computer", "../sync/computer.md"),
+        "mobile": ("Mobile", "../sync/mobile.md"),
+    }
+
+    sync_info = sync_class_map.get(module_name)
+    if not sync_info:
+        return ""
+
+    sync_class_name, sync_doc_path = sync_info
+    return f"""> **💡 Sync Version**: This documentation covers the asynchronous API. For synchronous operations, see [`{sync_class_name}`]({sync_doc_path}).
+>
+> ⚡ **Performance Advantage**: Async API enables concurrent operations with 4-6x performance improvements for parallel tasks.
+
+"""
+
+
 def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
     """Generate tutorial section markdown."""
     module_config = metadata.get('modules', {}).get(module_name, {})
@@ -246,13 +332,11 @@ def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
 
     emoji = module_config.get('emoji', '📖')
 
-    # Calculate correct relative path based on category depth
-    # From: python/docs/api/{category}/{file}.md
+    # Calculate correct relative path based on flat structure
+    # From: python/docs/api/sync/{file}.md or python/docs/api/async/{file}.md
     # To: project_root/docs/guides/...
-    # Need to go up: {category_depth} + 2 (api, docs) + 1 (python) = category_depth + 3
-    category = module_config.get('category', 'common-features/basics')
-    category_depth = len(category.split('/'))
-    depth = category_depth + 3  # +3 for api/docs/python
+    # Need to go up: 1 (sync/async) + 2 (api, docs) + 1 (python) = 4 levels
+    depth = 4
     up_levels = '../' * depth
 
     # Replace the hardcoded path with dynamically calculated one
@@ -382,6 +466,42 @@ def calculate_resource_path(resource: dict[str, Any], module_config: dict[str, A
     relative_path += '/'.join(target_parts) + '/' + module + '.md'
 
     return relative_path
+
+
+def get_see_also_section(module_name: str, metadata: dict[str, Any], is_async: bool = False) -> str:
+    """Generate See Also section with links to guides and related APIs."""
+    # Flat structure: api/sync/{file}.md or api/async/{file}.md
+    # Go up 4 levels to reach project root: sync/async -> api -> docs -> python -> root
+    depth = 4
+    up_levels = '../' * depth
+
+    lines = ["## See Also\n"]
+
+    # Add link to sync vs async guide
+    lines.append(f"- [Synchronous vs Asynchronous API]({up_levels}python/docs/guides/async-programming/sync-vs-async.md)")
+
+    # Add related resources (other API references)
+    module_config = metadata.get('modules', {}).get(module_name, {})
+    resources = module_config.get('related_resources', [])
+    if resources:
+        lines.append("")
+        lines.append("**Related APIs:**")
+        for resource in resources:
+            # Map simple module names to actual file names with prefixes
+            resource_module = resource.get("module", "")
+            # Determine correct file name based on whether this is async docs or not
+            if resource_module in ['session', 'command', 'filesystem', 'context', 'context-manager', 'browser', 'extension', 'oss', 'agent', 'code', 'computer', 'mobile']:
+                # These modules have both sync and async versions
+                if is_async:
+                    resource_path = f"./async-{resource_module}.md"
+                else:
+                    resource_path = f"./{resource_module}.md"
+            else:
+                # For other modules, use the path as specified or default
+                resource_path = resource.get("path", f"./{resource_module}.md")
+            lines.append(f"- [{resource['name']}]({resource_path})")
+
+    return "\n".join(lines) + "\n\n"
 
 
 def get_related_resources_section(module_name: str, metadata: dict[str, Any]) -> str:
@@ -827,7 +947,70 @@ def normalize_class_headers(content: str) -> str:
     return '\n'.join(fixed_lines)
 
 
-def format_markdown(raw_content: str, title: str, module_name: str, metadata: dict[str, Any]) -> str:
+def fix_async_references_in_sync_docs(content: str) -> str:
+    """
+    Fix async references in sync documentation.
+    Since sync code is generated from async code, docstrings still reference async classes.
+    This function replaces those references with sync equivalents.
+    """
+    import re
+
+    # Replace AsyncAgentBay -> AgentBay (but not in the async note section)
+    # We need to be careful not to replace it in the note at the top
+    lines = content.split('\n')
+    fixed_lines = []
+    in_async_note = False
+
+    for i, line in enumerate(lines):
+        # Detect async note section (starts with "> **💡 Async Version**")
+        if line.strip().startswith('> **💡 Async Version**'):
+            in_async_note = True
+            fixed_lines.append(line)
+            continue
+
+        # End of async note (empty line after the note)
+        if in_async_note and not line.strip():
+            in_async_note = False
+            fixed_lines.append(line)
+            continue
+
+        # Don't modify lines in async note section
+        if in_async_note:
+            fixed_lines.append(line)
+            continue
+
+        # Replace async class references with sync equivalents
+        # Use word boundaries to avoid partial matches
+        modified_line = line
+        modified_line = re.sub(r'AsyncAgentBay', 'AgentBay', modified_line)
+        modified_line = re.sub(r'AsyncSession', 'Session', modified_line)
+        modified_line = re.sub(r'AsyncCommand', 'Command', modified_line)
+        modified_line = re.sub(r'AsyncFileSystem', 'FileSystem', modified_line)
+        modified_line = re.sub(r'AsyncContextService', 'ContextService', modified_line)
+        modified_line = re.sub(r'AsyncContextManager', 'ContextManager', modified_line)
+        modified_line = re.sub(r'AsyncAgent', 'Agent', modified_line)
+        modified_line = re.sub(r'AsyncOss', 'Oss', modified_line)
+        modified_line = re.sub(r'AsyncBrowser', 'Browser', modified_line)
+        modified_line = re.sub(r'AsyncExtensionsService', 'ExtensionsService', modified_line)
+        modified_line = re.sub(r'AsyncCode', 'Code', modified_line)
+        modified_line = re.sub(r'AsyncComputer', 'Computer', modified_line)
+        modified_line = re.sub(r'AsyncMobile', 'Mobile', modified_line)
+
+        # Replace "asynchronously" -> "synchronously" in method descriptions
+        # But be careful with method names like "pause_async"
+        if not re.search(r'_async\b', modified_line):
+            modified_line = re.sub(r'\basynchronously\b', 'synchronously', modified_line)
+            modified_line = re.sub(r'\bAsynchronously\b', 'Synchronously', modified_line)
+
+        # Replace "await " in code examples
+        modified_line = re.sub(r'\bawait\s+', '', modified_line)
+
+        fixed_lines.append(modified_line)
+
+    return '\n'.join(fixed_lines)
+
+
+def format_markdown(raw_content: str, title: str, module_name: str, metadata: dict[str, Any], is_async: bool = False) -> str:
     """Enhanced markdown formatting with metadata injection."""
     content = raw_content.lstrip()
 
@@ -850,6 +1033,10 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
     # Normalize class headers to consistent format
     content = normalize_class_headers(content)
 
+    # Only fix async references for sync docs
+    if not is_async:
+        content = fix_async_references_in_sync_docs(content)
+
     # 1. Add title
     # Only replace if the first line is a level-1 header (starts with "# " not "##")
     if content.startswith("# ") and not content.startswith("## "):
@@ -861,6 +1048,16 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
 
     # 2. Collect all sections to insert after title
     sections_after_title = []
+
+    # Add appropriate note based on whether this is sync or async docs
+    if is_async:
+        sync_note = get_sync_note_section(module_name, metadata)
+        if sync_note:
+            sections_after_title.append(sync_note)
+    else:
+        async_note = get_async_note_section(module_name, metadata)
+        if async_note:
+            sections_after_title.append(async_note)
 
     # Tutorial section
     tutorial_section = get_tutorial_section(module_name, metadata)
@@ -901,15 +1098,15 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
             combined_sections = ''.join(sections_after_title)
             content = f"{title_line}\n\n{combined_sections}\n{rest_content}"
 
-    # Add best practices before related resources
+    # Add best practices before see also
     best_practices_section = get_best_practices_section(module_name, metadata)
     if best_practices_section:
         content = content.rstrip() + "\n\n" + best_practices_section
 
-    # Add related resources before footer
-    resources_section = get_related_resources_section(module_name, metadata)
-    if resources_section:
-        content = content.rstrip() + "\n\n" + resources_section
+    # Add see also section (replaces related resources)
+    see_also_section = get_see_also_section(module_name, metadata, is_async)
+    if see_also_section:
+        content = content.rstrip() + "\n\n" + see_also_section
 
     # Add footer
     content = content.rstrip() + "\n\n---\n\n*Documentation generated automatically from source code using pydoc-markdown.*\n"
@@ -920,21 +1117,71 @@ def write_readme() -> None:
     lines = [
         "# AgentBay Python SDK API Reference",
         "",
-        "This directory is generated. Run `python scripts/generate_api_docs.py` to refresh it.",
+        "This directory contains auto-generated API reference documentation.",
+        "",
+        "## Quick Links",
+        "",
+        "- [📁 Synchronous API (`sync/`)](#synchronous-api)",
+        "- [⚡ Asynchronous API (`async/`)](#asynchronous-api)",
+        "- [📦 Common Classes (`common/`)](#common-classes)",
+        "",
+        "## Synchronous vs Asynchronous",
+        "",
+        "AgentBay provides both synchronous and asynchronous APIs with identical interfaces:",
+        "",
+        "| Feature | Sync API | Async API |",
+        "|-|-|-|",
+        "| **Use Case** | Simple scripts, linear workflows | Concurrent operations, high performance |",
+        "| **Performance** | Sequential execution | 4-6x faster for parallel tasks |",
+        "| **Syntax** | `result = agent.create()` | `result = await agent.create()` |",
+        "| **Import** | `from agentbay import AgentBay` | `from agentbay import AsyncAgentBay` |",
+        "",
+        "See [Synchronous vs Asynchronous Guide](../guides/async-programming/sync-vs-async.md) for detailed comparison.",
+        "",
+        "---",
+        "",
+        "## Synchronous API",
+        "",
+        "All synchronous API classes are in the `sync/` directory:",
         "",
     ]
 
-    sections: dict[str, list[DocMapping]] = {}
+    # Add sync API list
     for mapping in DOC_MAPPINGS:
-        section = mapping.target.split("/")[0]
-        sections.setdefault(section, []).append(mapping)
+        class_name = mapping.modules[0].replace('agentbay._sync.', '')
+        lines.append(f"- [{mapping.title}]({mapping.target}) - `agentbay.{class_name}`")
 
-    for section_name in sorted(sections):
-        lines.append(f"## {section_name.replace('-', ' ').title()}")
-        lines.append("")
-        for mapping in sections[section_name]:
-            lines.append(f"- `{mapping.target}` – {mapping.title}")
-        lines.append("")
+    lines.extend([
+        "",
+        "## Asynchronous API",
+        "",
+        "All asynchronous API classes are in the `async/` directory:",
+        "",
+    ])
+
+    # Add async API list
+    for mapping in ASYNC_DOC_MAPPINGS:
+        class_name = mapping.modules[0].replace('agentbay._async.', '')
+        lines.append(f"- [{mapping.title}]({mapping.target}) - `agentbay.{class_name}`")
+
+    lines.extend([
+        "",
+        "## Common Classes",
+        "",
+        "Shared classes used by both sync and async APIs are in the `common/` directory:",
+        "",
+    ])
+
+    # Add common API list
+    for mapping in COMMON_DOC_MAPPINGS:
+        lines.append(f"- [{mapping.title}]({mapping.target}) - `{mapping.modules[0]}`")
+
+    lines.extend([
+        "",
+        "---",
+        "",
+        "**Note**: This documentation is auto-generated from source code. Run `python scripts/generate_api_docs.py` to regenerate.",
+    ])
 
     README = DOCS_ROOT / "README.md"
     README.write_text("\n".join(lines), encoding="utf-8")
@@ -944,23 +1191,53 @@ def main() -> None:
     metadata = load_metadata()
     ensure_clean_docs_root()
 
-    # Get global auto-filtering rules
     global_rules = metadata.get('global', {}).get('auto_filter_rules', {})
 
+    # Generate sync API docs
+    print("Generating sync API documentation...")
     for mapping in DOC_MAPPINGS:
         module_name = get_module_name_from_path(mapping.modules[0])
-
-        # Get module-specific exclude_methods list from metadata
         module_config = metadata.get('modules', {}).get(module_name, {})
         exclude_methods = module_config.get('exclude_methods', [])
 
-        # Render markdown with method exclusions (both global and module-specific)
         markdown = render_markdown(mapping.modules, exclude_methods, global_rules)
-        formatted = format_markdown(markdown, mapping.title, module_name, metadata)
+        formatted = format_markdown(markdown, mapping.title, module_name, metadata, is_async=False)
         output_path = DOCS_ROOT / mapping.target
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(formatted, encoding="utf-8")
+        print(f"  ✓ {mapping.target}")
+
+    # Generate async API docs
+    print("\nGenerating async API documentation...")
+    for mapping in ASYNC_DOC_MAPPINGS:
+        module_name = get_module_name_from_path(mapping.modules[0])
+        module_config = metadata.get('modules', {}).get(module_name, {})
+        exclude_methods = module_config.get('exclude_methods', [])
+
+        markdown = render_markdown(mapping.modules, exclude_methods, global_rules)
+        formatted = format_markdown(markdown, mapping.title, module_name, metadata, is_async=True)
+        output_path = DOCS_ROOT / mapping.target
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(formatted, encoding="utf-8")
+        print(f"  ✓ {mapping.target}")
+
+    # Generate common/shared docs
+    print("\nGenerating common API documentation...")
+    for mapping in COMMON_DOC_MAPPINGS:
+        module_name = get_module_name_from_path(mapping.modules[0])
+        module_config = metadata.get('modules', {}).get(module_name, {})
+        exclude_methods = module_config.get('exclude_methods', [])
+
+        markdown = render_markdown(mapping.modules, exclude_methods, global_rules)
+        # Common docs don't need sync/async notes (is_async=None will skip both notes)
+        formatted = format_markdown(markdown, mapping.title, module_name, metadata, is_async=False)
+        output_path = DOCS_ROOT / mapping.target
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(formatted, encoding="utf-8")
+        print(f"  ✓ {mapping.target}")
+
     write_readme()
+    print("\n✅ API documentation generation complete!")
 
 
 if __name__ == "__main__":

@@ -62,8 +62,8 @@ The navigation bar control feature allows you to create immersive mobile experie
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -104,8 +104,8 @@ The uninstall protection feature prevents critical applications from being accid
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -147,8 +147,8 @@ Use whitelists in production environments to ensure only approved applications c
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -204,8 +204,8 @@ Use blacklists in development and testing to block known problematic application
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")
@@ -260,8 +260,8 @@ This example demonstrates all available mobile configuration options working tog
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.api.models import ExtraConfigs, MobileExtraConfig, AppManagerRule
+from agentbay import CreateSessionParams
+from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Initialize the SDK
 agent_bay = AgentBay(api_key="your_api_key")

@@ -53,8 +53,8 @@ Provided by the Wuying Proxy Service integrated in AgentBay SDK
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserProxy
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserProxy
 from playwright.async_api import async_playwright
 
 async def proxy_example():

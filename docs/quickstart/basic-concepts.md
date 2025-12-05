@@ -147,7 +147,7 @@ The following table shows the latest official system images provided by AgentBay
 
 **Windows Environment Example:**
 ```python
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 # Create Windows environment and automate notepad
 params = CreateSessionParams(image_id="windows_latest")
@@ -171,7 +171,7 @@ params = CreateSessionParams(image_id="browser_latest")
 session = agent_bay.create(params).session
 
 # Initialize and navigate
-from agentbay.browser import BrowserOption
+from agentbay import BrowserOption
 session.browser.initialize(BrowserOption())
 session.browser.agent.navigate("https://www.baidu.com")
 print("Web navigation successful")
@@ -200,7 +200,7 @@ params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(params).session
 
 # Press HOME key to return to home screen
-from agentbay.mobile import KeyCode
+from agentbay import KeyCode
 session.mobile.send_key(KeyCode.HOME)
 # Returns: BoolResult with success status
 # Example: result.success = True (returns to Android home screen)

@@ -1,0 +1,34 @@
+# Python virtual environments
+venv/
+venv_*/
+env/
+ENV/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Generated data files
+common/data/*.csv
+
+# Generated visualizations
+openai/src/*.png
+*.png
+# Allow assets images
+!*/assets/*.png
+
+# Environment variables
+.env
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,138 @@
+import os
+import random
+import sys
+import time
+import pytest
+
+from agentbay import AsyncAgentBay
+
+# Add the parent directory to the path so we can import the agentbay package
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def get_test_api_key():
+    """Get API key for testing"""
+    api_key = os.environ.get("AGENTBAY_API_KEY")
+    if not api_key:
+        api_key = "akm-xxx"  # Replace with your test API key
+        print(
+            "Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing."
+        )
+    return api_key
+
+
+def generate_unique_id():
+    """Create a unique identifier for test labels to avoid conflicts with existing data"""
+    timestamp = int(time.time() * 1000000)
+    random_part = random.randint(0, 10000)
+    return f"{timestamp}-{random_part}"
+
+
+# Global variables for test data
+session = None
+agent_bay = None
+unique_id = None
+
+
+@pytest.fixture(scope="module")
+async def setup_session():
+    """Set up test fixtures once for the entire test module."""
+    global session, agent_bay, unique_id
+    
+    api_key = get_test_api_key()
+    agent_bay = AsyncAgentBay(api_key=api_key)
+
+    # Create a session
+    print("Creating a new session for labels testing...")
+    result = await agent_bay.create()
+
+    # Check if session creation was successful
+    if not result.success:
+        pytest.skip(f"Session creation failed: {result.error_message}")
+    if result.session is None:
+        pytest.skip("Session object is None")
+
+    session = result.session
+    print(f"Session created with ID: {session.session_id}")
+    print(f"Request ID: {result.request_id}")
+
+    # Generate a unique identifier for this test run
+    unique_id = generate_unique_id()
+    print(f"Using unique ID for test labels: {unique_id}")
+    
+    yield
+    
+    # Cleanup
+    print("Cleaning up: Deleting the session...")
+    try:
+        result = await agent_bay.delete(session)
+        print(
+            f"Session deleted. Success: {result.success}",
+            f"Request ID: {result.request_id}",
+        )
+    except Exception as e:
+        print(f"Warning: Error deleting session: {e}")
+
+
+@pytest.mark.asyncio
+async def test_set_get_labels(setup_session):
+    """Test setting and getting labels for a session."""
+    # Define test labels with unique values to avoid conflicts with existing data
+    test_labels = {
+        "environment": f"testing-{unique_id}",
+        "owner": f"test-team-{unique_id}",
+        "project": f"labels-test-{unique_id}",
+        "version": "1.0.0",
+    }
+
+    # Test 1: Set labels using set_labels
+    print("Setting labels for the session...")
+    set_result = await session.set_labels(test_labels)
+    assert set_result.success, "Failed to set labels"
+    print(f"Labels set successfully. Request ID: {set_result.request_id}")
+
+    # Test 2: Get labels using get_labels
+    print("Getting labels for the session...")
+    get_result = await session.get_labels()
+    print(f"Retrieved labels: {get_result.data}")
+    print(f"Request ID: {get_result.request_id}")
+
+    # Get the actual labels data from the result object
+    retrieved_labels = get_result.data
+
+    # Verify that all expected labels are present with correct values
+    for key, expected_value in test_labels.items():
+        assert key in retrieved_labels, f"Expected label '{key}' not found in retrieved labels"
+        assert expected_value == retrieved_labels[key], f"Label '{key}' value mismatch: expected '{expected_value}' got '{retrieved_labels[key]}'"
+
+
+@pytest.mark.asyncio
+async def test_empty_labels_handling(setup_session):
+    """2.4 Empty labels handling test - should handle setting empty labels object"""
+    # Prerequisites: Session instance has been created
+    # Test objective: Verify handling of setting empty labels object
+
+    empty_labels = {}
+    set_result = await session.set_labels(empty_labels)
+
+    # Verification points - based on validation logic, empty labels should fail
+    assert not set_result.success
+    assert "empty" in set_result.error_message.lower()
+
+    print(f"Empty labels handled correctly")
+
+
+@pytest.mark.asyncio
+async def test_set_labels_invalid_parameters(setup_session):
+    """5.1 setLabels invalid parameter handling test - should handle invalid parameters"""
+    # Prerequisites: Session instance has been created
+    # Test objective: Verify handling when invalid parameters are passed
+
+    # Test None parameter
+    null_result = await session.set_labels(None)
+    print(f"Null result: {null_result}")
+    assert not null_result.success
+    assert "null" in null_result.error_message.lower()
+    assert null_result.request_id == ""
+
+    print(f"setLabels invalid parameters: All invalid parameter types correctly rejected")

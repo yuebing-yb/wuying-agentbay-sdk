@@ -13,6 +13,7 @@ import (
 type Config struct {
 	Endpoint  string `json:"endpoint"`
 	TimeoutMs int    `json:"timeout_ms"`
+	RegionID  string `json:"region_id"`
 }
 
 // Mobile info path constants
@@ -27,6 +28,7 @@ func defaultConfig() Config {
 	return Config{
 		Endpoint:  "wuyingai.cn-shanghai.aliyuncs.com",
 		TimeoutMs: 60000,
+		RegionID:  "",
 	}
 }
 
@@ -136,6 +138,7 @@ func loadConfig(cfg *Config, customEnvPath string) Config {
 		return Config{
 			Endpoint:  cfg.Endpoint,
 			TimeoutMs: cfg.TimeoutMs,
+			RegionID:  cfg.RegionID,
 		}
 	}
 
@@ -151,8 +154,11 @@ func loadConfig(cfg *Config, customEnvPath string) Config {
 	if timeoutMS := os.Getenv("AGENTBAY_TIMEOUT_MS"); timeoutMS != "" {
 		_, err := fmt.Sscanf(timeoutMS, "%d", &config.TimeoutMs)
 		if err != nil {
-			fmt.Printf("Warning: Failed to parse AGENTBAY_TIMEOUT_MS as integer: %v, using default value %d\n", err, config.TimeoutMs)
+			// Warning: Failed to parse AGENTBAY_TIMEOUT_MS as integer, using default
 		}
+	}
+	if regionID := os.Getenv("AGENTBAY_REGION_ID"); regionID != "" {
+		config.RegionID = regionID
 	}
 
 	return config
@@ -165,7 +171,16 @@ func loadConfigCompat(cfg *Config) Config {
 
 // BrowserRecordPath is the path constant for browser recording data.
 // This path is used when syncing browser recording context during session deletion.
-const BrowserRecordPath = "/home/guest/record"
+const BrowserRecordPath = "/home/wuying/record"
+
+// MobileInfoDefaultPath is path constant for internal create context
+const MobileInfoDefaultPath = "/data/agentbay_mobile_info"
+
+// MobileInfoSubPath is mobile dev info sub path constant when append to user's context path
+const MobileInfoSubPath = "/agentbay_mobile_info/"
+
+// MobileInfoFileName is mobile dev info file name constant
+const MobileInfoFileName = "dev_info.json"
 
 // configManager implementation for backward compatibility
 type configManager struct{}

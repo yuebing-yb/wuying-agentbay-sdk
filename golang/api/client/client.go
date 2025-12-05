@@ -279,6 +279,10 @@ func (client *Client) CreateMcpSessionWithOptions(tmpReq *CreateMcpSessionReques
 		body["SdkStats"] = request.SdkStats
 	}
 
+	if !dara.IsNil(request.LoginRegionId) {
+		body["LoginRegionId"] = request.LoginRegionId
+	}
+
 	req := &openapiutil.OpenApiRequest{
 		Body: openapiutil.ParseToMap(body),
 	}
@@ -557,6 +561,10 @@ func (client *Client) GetContextWithOptions(request *GetContextRequest, runtime 
 
 	if !dara.IsNil(request.Name) {
 		body["Name"] = request.Name
+	}
+
+	if !dara.IsNil(request.LoginRegionId) {
+		body["LoginRegionId"] = request.LoginRegionId
 	}
 
 	req := &openapiutil.OpenApiRequest{
