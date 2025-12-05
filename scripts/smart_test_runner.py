@@ -261,39 +261,47 @@ def discover_typescript_tests(state: AgentState, pattern: Optional[str]) -> Agen
     print(f"📂 TypeScript工作目录: {cwd}")
     print(f"🔍 目录存在: {os.path.exists(cwd)}")
     
-    # 检查Node.js和npm是否安装
-    try:
-        node_version_result = subprocess.run(["node", "--version"], capture_output=True, text=True, timeout=10)
-        npm_version_result = subprocess.run(["npm", "--version"], capture_output=True, text=True, timeout=10)
-        if node_version_result.returncode != 0 or npm_version_result.returncode != 0:
-            print("❌ Node.js或npm未安装或不可用")
-            print("💡 提示: 当前CI环境不支持TypeScript测试，请使用python测试类型")
-            return {
-                "test_queue": [],
-                "current_test_index": 0,
-                "results": [],
-                "sdk_context": "",
-                "is_finished": True,
-                "specific_test_pattern": pattern,
-                "test_type": "typescript"
-            }
-        else:
-            print(f"✅ Node.js环境检查通过: {node_version_result.stdout.strip()}")
-            print(f"✅ npm环境检查通过: {npm_version_result.stdout.strip()}")
-    except FileNotFoundError:
+    # 检查Node.js和npm是否安装，包括常见的安装路径
+    node_paths = ["node", "/usr/bin/node", "/usr/local/bin/node"]
+    npm_paths = ["npm", "/usr/bin/npm", "/usr/local/bin/npm"]
+    node_cmd = None
+    npm_cmd = None
+    
+    # 查找Node.js
+    for node_path in node_paths:
+        try:
+            node_version_result = subprocess.run([node_path, "--version"], capture_output=True, text=True, timeout=10)
+            if node_version_result.returncode == 0:
+                node_cmd = node_path
+                print(f"✅ Node.js环境检查通过: {node_version_result.stdout.strip()}")
+                print(f"✅ Node.js路径: {node_cmd}")
+                break
+        except FileNotFoundError:
+            continue
+        except Exception as e:
+            print(f"⚠️ Node.js路径 {node_path} 检查失败: {e}")
+            continue
+    
+    # 查找npm
+    for npm_path in npm_paths:
+        try:
+            npm_version_result = subprocess.run([npm_path, "--version"], capture_output=True, text=True, timeout=10)
+            if npm_version_result.returncode == 0:
+                npm_cmd = npm_path
+                print(f"✅ npm环境检查通过: {npm_version_result.stdout.strip()}")
+                print(f"✅ npm路径: {npm_cmd}")
+                break
+        except FileNotFoundError:
+            continue
+        except Exception as e:
+            print(f"⚠️ npm路径 {npm_path} 检查失败: {e}")
+            continue
+    
+    if node_cmd is None or npm_cmd is None:
         print("❌ Node.js或npm命令未找到")
         print("💡 提示: 当前CI环境不支持TypeScript测试，请使用python测试类型")
-        return {
-            "test_queue": [],
-            "current_test_index": 0,
-            "results": [],
-            "sdk_context": "",
-            "is_finished": True,
-            "specific_test_pattern": pattern,
-            "test_type": "typescript"
-        }
-    except Exception as e:
-        print(f"❌ Node.js环境检查失败: {e}")
+        print("🔍 检查的Node.js路径: " + ", ".join(node_paths))
+        print("🔍 检查的npm路径: " + ", ".join(npm_paths))
         return {
             "test_queue": [],
             "current_test_index": 0,
@@ -382,37 +390,28 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
     print(f"📂 Golang工作目录: {cwd}")
     print(f"🔍 目录存在: {os.path.exists(cwd)}")
     
-    # 检查Go是否安装
-    try:
-        go_version_result = subprocess.run(["go", "version"], capture_output=True, text=True, timeout=10)
-        if go_version_result.returncode != 0:
-            print("❌ Go未安装或不可用")
-            print("💡 提示: 当前CI环境不支持Golang测试，请使用python或typescript测试类型")
-            return {
-                "test_queue": [],
-                "current_test_index": 0,
-                "results": [],
-                "sdk_context": "",
-                "is_finished": True,
-                "specific_test_pattern": pattern,
-                "test_type": "golang"
-            }
-        else:
-            print(f"✅ Go环境检查通过: {go_version_result.stdout.strip()}")
-    except FileNotFoundError:
+    # 检查Go是否安装，包括常见的安装路径
+    go_paths = ["go", "/usr/local/go/bin/go", "/usr/bin/go"]
+    go_cmd = None
+    
+    for go_path in go_paths:
+        try:
+            go_version_result = subprocess.run([go_path, "version"], capture_output=True, text=True, timeout=10)
+            if go_version_result.returncode == 0:
+                go_cmd = go_path
+                print(f"✅ Go环境检查通过: {go_version_result.stdout.strip()}")
+                print(f"✅ Go路径: {go_cmd}")
+                break
+        except FileNotFoundError:
+            continue
+        except Exception as e:
+            print(f"⚠️ Go路径 {go_path} 检查失败: {e}")
+            continue
+    
+    if go_cmd is None:
         print("❌ Go命令未找到")
         print("💡 提示: 当前CI环境不支持Golang测试，请使用python或typescript测试类型")
-        return {
-            "test_queue": [],
-            "current_test_index": 0,
-            "results": [],
-            "sdk_context": "",
-            "is_finished": True,
-            "specific_test_pattern": pattern,
-            "test_type": "golang"
-        }
-    except Exception as e:
-        print(f"❌ Go环境检查失败: {e}")
+        print("🔍 检查的路径: " + ", ".join(go_paths))
         return {
             "test_queue": [],
             "current_test_index": 0,
@@ -427,7 +426,7 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
     integration_package = "github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/integration"
     
     # 使用go test来发现集成测试函数
-    cmd = ["go", "test", "-list", ".", integration_package]
+    cmd = [go_cmd, "test", "-list", ".", integration_package]
     
     print(f"执行命令: {' '.join(cmd)} 在目录 {cwd}")
     
@@ -604,6 +603,22 @@ def execute_golang_test(test_id: str) -> Dict[str, Any]:
     """执行Golang测试"""
     print(f"🐹 执行Golang测试: {test_id}")
     
+    # 查找Go命令
+    go_paths = ["go", "/usr/local/go/bin/go", "/usr/bin/go"]
+    go_cmd = None
+    
+    for go_path in go_paths:
+        try:
+            subprocess.run([go_path, "version"], capture_output=True, text=True, timeout=5)
+            go_cmd = go_path
+            break
+        except:
+            continue
+    
+    if go_cmd is None:
+        print("❌ 执行测试时未找到Go命令")
+        return {"status": "failed", "output": "Go命令未找到，无法执行测试"}
+    
     # 移除golang:前缀并解析包和测试名
     actual_test_id = test_id[7:]  # len("golang:") = 7
     if "." in actual_test_id:
@@ -620,7 +635,7 @@ def execute_golang_test(test_id: str) -> Dict[str, Any]:
         print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
 
     # Run specific test using go test
-    cmd = ["go", "test", "-v", package_name]
+    cmd = [go_cmd, "test", "-v", package_name]
     if test_name:
         cmd.extend(["-run", test_name])
     

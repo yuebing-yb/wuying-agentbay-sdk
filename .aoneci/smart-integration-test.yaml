@@ -38,37 +38,53 @@ jobs:
           # Install Go if needed for golang or all test types
           if [ "${{params.test_type}}" = "golang" ] || [ "${{params.test_type}}" = "all" ]; then
             echo "🐹 Installing Go environment..."
-            # Download and install Go 1.21
-            wget -q https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
-            sudo rm -rf /usr/local/go
-            sudo tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
-            export PATH=$PATH:/usr/local/go/bin
-            echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
-            go version
-            echo "✅ Go installed successfully"
+            # Check if Go is already available
+            if ! command -v go &> /dev/null; then
+              # Download and install Go 1.21 to local directory
+              mkdir -p $HOME/go-install
+              cd $HOME/go-install
+              wget -q https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+              tar -xzf go1.21.0.linux-amd64.tar.gz
+              export PATH=$HOME/go-install/go/bin:$PATH
+              export GOROOT=$HOME/go-install/go
+              cd $GITHUB_WORKSPACE || cd /aoneci/runner/work/source
+              echo "✅ Go installed to local directory"
+            fi
+            go version || echo "❌ Go installation failed"
             
             # Setup Golang dependencies
-            echo "📦 Setting up Golang dependencies..."
-            cd golang
-            go mod download
-            cd ..
+            if command -v go &> /dev/null; then
+              echo "📦 Setting up Golang dependencies..."
+              cd golang
+              go mod download || echo "⚠️ Go mod download failed"
+              cd ..
+            fi
           fi
           
           # Install Node.js if needed for typescript or all test types
           if [ "${{params.test_type}}" = "typescript" ] || [ "${{params.test_type}}" = "all" ]; then
             echo "📜 Installing Node.js environment..."
-            # Install Node.js 18
-            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-            node --version
-            npm --version
-            echo "✅ Node.js installed successfully"
+            # Check if Node.js is already available
+            if ! command -v node &> /dev/null; then
+              # Install Node.js using NodeSource binary distribution (no sudo required)
+              mkdir -p $HOME/nodejs
+              cd $HOME/nodejs
+              wget -q https://nodejs.org/dist/v18.18.0/node-v18.18.0-linux-x64.tar.xz
+              tar -xf node-v18.18.0-linux-x64.tar.xz
+              export PATH=$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH
+              cd $GITHUB_WORKSPACE || cd /aoneci/runner/work/source
+              echo "✅ Node.js installed to local directory"
+            fi
+            node --version || echo "❌ Node.js installation failed"
+            npm --version || echo "❌ npm installation failed"
             
             # Setup TypeScript dependencies
-            echo "📦 Setting up TypeScript dependencies..."
-            cd typescript
-            npm install
-            cd ..
+            if command -v npm &> /dev/null; then
+              echo "📦 Setting up TypeScript dependencies..."
+              cd typescript
+              npm install || echo "⚠️ npm install failed"
+              cd ..
+            fi
           fi
           
           # Setup Python environment (always needed for the test runner itself)
@@ -122,8 +138,26 @@ jobs:
           echo "Working directory: $(pwd)"
           echo "Python path: $PYTHONPATH"
           
-          # Run the smart test runner and capture exit code
-          if python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
+          # Set up PATH for installed tools
+          if [ "${{params.test_type}}" = "golang" ] || [ "${{params.test_type}}" = "all" ]; then
+            export PATH=$HOME/go-install/go/bin:$PATH
+            export GOROOT=$HOME/go-install/go
+            echo "🔍 Checking Go installation..."
+            which go || echo "❌ Go not found in PATH"
+            go version || echo "❌ Go version check failed"
+          fi
+          
+          if [ "${{params.test_type}}" = "typescript" ] || [ "${{params.test_type}}" = "all" ]; then
+            export PATH=$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH
+            echo "🔍 Checking Node.js installation..."
+            which node || echo "❌ Node not found in PATH"
+            node --version || echo "❌ Node version check failed"
+            which npm || echo "❌ npm not found in PATH"
+            npm --version || echo "❌ npm version check failed"
+          fi
+          
+          # Run the smart test runner and capture exit code with updated PATH
+          if PATH=$HOME/go-install/go/bin:$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
             echo "✅ Smart Test Runner completed successfully"
             
             # Check if test report was generated
