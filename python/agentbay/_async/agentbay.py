@@ -159,7 +159,7 @@ class AsyncAgentBay:
         except:
             return str(obj)
 
-    def _build_session_from_response(
+    async def _build_session_from_response(
         self,
         response_data: dict,
         params: CreateSessionParams,
@@ -216,11 +216,10 @@ class AsyncAgentBay:
 
         # Process mobile configuration if provided
         if (
-            hasattr(params, "extra_configs")
-            and params.extra_configs
+            params.extra_configs
             and params.extra_configs.mobile
         ):
-            session.mobile.configure(params.extra_configs.mobile)
+            await session.mobile.configure(params.extra_configs.mobile)
 
         # Store session in cache
         with self._lock:
@@ -758,7 +757,7 @@ class AsyncAgentBay:
             )
 
             # Build Session object from response data
-            session = self._build_session_from_response(data, params, record_context_id)
+            session = await self._build_session_from_response(data, params, record_context_id)
 
             # Update browser replay context if enabled
             if (

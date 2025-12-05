@@ -218,8 +218,7 @@ class AgentBay:
 
         # Process mobile configuration if provided
         if (
-            hasattr(params, "extra_configs")
-            and params.extra_configs
+            params.extra_configs
             and params.extra_configs.mobile
         ):
             session.mobile.configure(params.extra_configs.mobile)
