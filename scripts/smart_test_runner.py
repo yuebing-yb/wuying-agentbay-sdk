@@ -49,7 +49,13 @@ except ImportError as e:
     print(f"❌ Failed to import langchain_core: {e}")
     sys.exit(1)
 
-print("✅ All required libraries imported successfully!")
+    print("✅ All required libraries imported successfully!")
+    
+    print("🔍 Checking environment variables...")
+    agentbay_key = os.environ.get("AGENTBAY_API_KEY")
+    dashscope_key = os.environ.get("DASHSCOPE_API_KEY")
+    print(f"AGENTBAY_API_KEY: {'✅ Set' if agentbay_key else '❌ Missing'}")
+    print(f"DASHSCOPE_API_KEY: {'✅ Set' if dashscope_key else '❌ Missing'}")
 
 # Configuration
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -405,9 +411,13 @@ def main():
     if args.keyword:
         print(f"🎯 Target Pattern: {args.keyword}")
     
+    if args.test_type:
+        print(f"🎯 Test Type: {args.test_type}")
+    
     if args.report:
         REPORT_FILE = args.report
 
+    print("📋 Initializing state...")
     initial_state = {
         "test_queue": [], 
         "current_test_index": 0, 
@@ -417,12 +427,16 @@ def main():
         "specific_test_pattern": args.keyword
     }
     
+    print("🔧 Starting workflow execution...")
     try:
-        app.invoke(initial_state)
+        print("📍 About to invoke app...")
+        result = app.invoke(initial_state)
+        print(f"✅ Workflow completed: {result}")
     except Exception as e:
         print(f"\n💥 Execution Failed: {e}")
         import traceback
         traceback.print_exc()
+        sys.exit(1)
         sys.exit(1)
 
 if __name__ == "__main__":
