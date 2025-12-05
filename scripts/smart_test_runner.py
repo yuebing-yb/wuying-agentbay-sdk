@@ -354,8 +354,15 @@ workflow.add_node("generate_report", generate_report)
 workflow.set_entry_point("discover_tests")
 
 def check_completion(state: AgentState):
-    if state["current_test_index"] >= len(state["test_queue"]):
+    current_idx = state["current_test_index"]
+    total_tests = len(state["test_queue"])
+    print(f"🔍 Check completion: {current_idx}/{total_tests}")
+    
+    if current_idx >= total_tests:
+        print("✅ All tests completed, generating report...")
         return "generate_report"
+    
+    print(f"➡️ Continue with next test ({current_idx + 1}/{total_tests})")
     return "execute_test"
 
 workflow.add_conditional_edges(
@@ -430,7 +437,9 @@ def main():
     print("🔧 Starting workflow execution...")
     try:
         print("📍 About to invoke app...")
-        result = app.invoke(initial_state)
+        # Set recursion limit to prevent infinite loops
+        config = {"recursion_limit": 50}
+        result = app.invoke(initial_state, config=config)
         print(f"✅ Workflow completed: {result}")
     except Exception as e:
         print(f"\n💥 Execution Failed: {e}")
