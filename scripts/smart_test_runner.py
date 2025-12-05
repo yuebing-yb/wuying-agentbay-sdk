@@ -238,31 +238,33 @@ def analyze_failure(state: AgentState) -> AgentState:
     error_log = last_result["output"][-5000:] # Last 5000 chars of log
 
     prompt = ChatPromptTemplate.from_template("""
-You are a senior Python SDK testing expert.
+你是一位资深的Python SDK测试专家。请用中文进行分析和回答。
 
 ### SDK Context (Documentation/Codebase)
 {sdk_context}
 
-### Task
-Analyze the failure of the following integration test.
-Determine if it's a test issue, an environment issue, or an SDK bug.
+### 任务
+分析以下集成测试的失败原因。
+判断这是测试问题、环境问题，还是SDK缺陷。
 
-### Test Information
-Test ID: {test_id}
+### 测试信息
+测试ID: {test_id}
 
-Test Code:
+测试代码:
 ```python
 {test_code}
 ```
 
-Error Log (Snippet):
+错误日志片段:
 {error_log}
 
 ### Output Instructions
-Provide a concise analysis in Markdown format (ALWAYS use Chinese):
-1. **Root Cause (根本原因)**: What caused the failure?
-2. **Classification (错误分类)**: [Test Issue / Environment Issue / SDK Bug]
-3. **Fix Suggestion (修复建议)**: How to fix it (code snippet if applicable).
+请用中文提供简洁的分析报告，使用Markdown格式：
+1. **根本原因**: 导致失败的具体原因是什么？
+2. **错误分类**: [测试问题 / 环境问题 / SDK缺陷]
+3. **修复建议**: 如何修复这个问题（如适用，请提供代码片段）
+
+IMPORTANT: 请务必使用中文回答，不要使用英文。
 """)
 
     try:
