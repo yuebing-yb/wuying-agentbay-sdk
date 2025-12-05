@@ -46,7 +46,7 @@ async def main():
 
         # Get ADB URL for the mobile device
         print("\nRetrieving ADB connection URL...")
-        adb_result = session.mobile.get_adb_url(adbkey_pub)
+        adb_result = await session.mobile.get_adb_url(adbkey_pub)
 
         if adb_result.success:
             print(f"✅ ADB URL retrieved successfully")

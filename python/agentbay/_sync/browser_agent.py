@@ -303,10 +303,24 @@ class BrowserAgent(BaseService):
             # Handle string input directly
             args["action"] = action_input
             task_name = action_input
+        # Ensure action parameter is present and not None/empty
+        if "action" not in args or args["action"] is None or args["action"] == "":
+            raise BrowserError("Action parameter is required and cannot be None or empty")
+            
         # Filter None values but preserve essential parameters
         filtered_args = {}
         for k, v in args.items():
-            if k in ["context_id", "page_id", "action"] or v is not None:
+            if k in ["context_id", "page_id"]:
+                # Always include context_id and page_id even if None
+                filtered_args[k] = v
+            elif k == "action":
+                # Only include action if it's not None and not empty
+                if v is not None and v != "":
+                    filtered_args[k] = v
+                else:
+                    raise BrowserError("Action parameter cannot be None or empty")
+            elif v is not None:
+                # Only include optional parameters if not None
                 filtered_args[k] = v
         args = filtered_args
         _logger.info(f"{task_name}")

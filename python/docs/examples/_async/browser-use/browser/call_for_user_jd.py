@@ -77,7 +77,7 @@ async def main():
             print("Browser initialized successfully")
             endpoint_url = await session.browser.get_endpoint_url()
             print("endpoint_url =", endpoint_url)
-            result = session.info()
+            result = await session.info()
             info = result.data
             print(f"session resource url is {info.resource_url}")
 

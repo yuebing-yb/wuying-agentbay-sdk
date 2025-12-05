@@ -96,7 +96,7 @@ def main():
             print(f"Matching session {i + 1} ID: {session_id}")
             session_result = agent_bay.get(session_id)
             if session_result.success:
-                labels_result = session.get_labels()
+                labels_result = session_result.session.get_labels()
                 print(f"Labels: {labels_result.data}")
 
         # Delete the sessions

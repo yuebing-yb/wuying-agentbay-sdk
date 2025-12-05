@@ -41,6 +41,8 @@ def main():
         session_result = client.create(
             CreateSessionParams(image_id="browser_latest")
         )
+        if not session_result.success or not session_result.session:
+            raise Exception(f"Failed to create session: {session_result.error_message}")
         session = session_result.session
         print(f"Session created: {session.session_id}")
 

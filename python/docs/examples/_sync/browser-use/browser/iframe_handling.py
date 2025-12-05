@@ -13,12 +13,18 @@ This example demonstrates:
 
 import os
 import sys
+from pydantic import BaseModel, Field
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AgentBay, CreateSessionParams
 from agentbay import BrowserOption, ActOptions as ActOptions, ExtractOptions as ExtractOptions
+
+
+class TextContent(BaseModel):
+    """Simple model to extract text content."""
+    content: str = Field(description="The extracted text content")
 
 
 def main():
@@ -35,6 +41,8 @@ def main():
         session_result = client.create(
             CreateSessionParams(image_id="browser_latest")
         )
+        if not session_result.success or not session_result.session:
+            raise Exception(f"Failed to create session: {session_result.error_message}")
         session = session_result.session
         print(f"Session created: {session.session_id}")
 
@@ -67,17 +75,25 @@ def main():
 
         # Detect iframes
         print("\n3. Detecting iframes on page...")
-        iframe_result = session.browser.agent.extract(ExtractOptions(
-            instruction="Are there any iframes on this page? How many?"
+        success, iframe_result = session.browser.agent.extract(ExtractOptions(
+            instruction="Are there any iframes on this page? How many?",
+            schema=TextContent
         ))
-        print(f"iFrame detection: {iframe_result.extracted_content}")
+        if success:
+            print(f"iFrame detection: {iframe_result.content}")
+        else:
+            print("Failed to detect iframes")
 
         # Get iframe information
         print("\n4. Getting iframe information...")
-        iframe_info = session.browser.agent.extract(ExtractOptions(
-            instruction="What is the source URL of the iframe?"
+        success, iframe_info = session.browser.agent.extract(ExtractOptions(
+            instruction="What is the source URL of the iframe?",
+            schema=TextContent
         ))
-        print(f"iFrame info: {iframe_info.extracted_content}")
+        if success:
+            print(f"iFrame info: {iframe_info.content}")
+        else:
+            print("Failed to get iframe information")
 
         # Switch to iframe context
         print("\n5. Switching to iframe context...")
@@ -86,10 +102,14 @@ def main():
 
         # Extract content from iframe
         print("\n6. Extracting content from iframe...")
-        iframe_content = session.browser.agent.extract(ExtractOptions(
-            instruction="What content is displayed inside the iframe?"
+        success, iframe_content = session.browser.agent.extract(ExtractOptions(
+            instruction="What content is displayed inside the iframe?",
+            schema=TextContent
         ))
-        print(f"iFrame content:\n{iframe_content.extracted_content}")
+        if success:
+            print(f"iFrame content:\n{iframe_content.content}")
+        else:
+            print("Failed to extract iframe content")
 
         # Interact with iframe content
         print("\n7. Interacting with iframe content...")
@@ -103,10 +123,14 @@ def main():
 
         # Verify we're back in main context
         print("\n9. Verifying main context...")
-        main_content = session.browser.agent.extract(
-            "What is the main page title (not the iframe)?"
-        )
-        print(f"Main page title: {main_content.extracted_content}")
+        success, main_content = session.browser.agent.extract(ExtractOptions(
+            instruction="What is the main page title (not the iframe)?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Main page title: {main_content.content}")
+        else:
+            print("Failed to get main page title")
 
         # Test nested iframes
         print("\n10. Testing nested iframes...")
@@ -125,10 +149,14 @@ def main():
 
         # Count total iframes
         print("\n11. Counting total iframes...")
-        total_iframes = session.browser.agent.extract(
-            "How many iframes are now on the page?"
-        )
-        print(f"Total iframes: {total_iframes.extracted_content}")
+        success, total_iframes = session.browser.agent.extract(ExtractOptions(
+            instruction="How many iframes are now on the page?",
+            schema=TextContent
+        ))
+        if success:
+            print(f"Total iframes: {total_iframes.content}")
+        else:
+            print("Failed to count iframes")
 
         print("\n=== Example completed successfully ===")
 

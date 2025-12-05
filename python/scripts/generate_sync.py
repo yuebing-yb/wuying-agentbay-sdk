@@ -254,8 +254,20 @@ def generate_sync():
                     content = content.replace("asyncio.gather(*tasks)", "[task for task in tasks]")
                     # Also handle asyncio.gather with return_exceptions parameter
                     content = content.replace("asyncio.gather(*tasks, return_exceptions=True)", "[task for task in tasks]")
-                    # Handle asyncio.gather with any variable name (e.g., *workers, *coroutines, etc.)
-                    content = re.sub(r'asyncio\.gather\(\*([^)]+)\)', r'[task for task in \1]', content)
+                    # Handle asyncio.gather with concurrent.futures for proper parallel execution
+                    if "concurrent_sessions.py" in file:
+                        # For concurrent sessions example, use ThreadPoolExecutor
+                        replacement = """with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            futures = [executor.submit(run_task_in_session, client, task_id, cmd) for task_id, cmd in tasks]
+            results = [future.result() for future in futures]"""
+                        content = re.sub(
+                            r'        # Run all tasks concurrently\s*\n\s*results = asyncio\.gather\(\s*\*\[run_task_in_session\(client, task_id, cmd\) for task_id, cmd in tasks\]\s*\)',
+                            f'        # Run all tasks concurrently\n        {replacement}',
+                            content
+                        )
+                    else:
+                        # For other cases, use sequential execution
+                        content = re.sub(r'asyncio\.gather\(\*([^)]+)\)', r'[task for task in \1]', content)
                     # Handle asyncio.run calls - use a more robust approach
                     # This will match asyncio.run( and find the matching closing parenthesis
                     def remove_asyncio_run(text):
@@ -330,6 +342,10 @@ def generate_sync():
                     # Add time import if time.sleep or time.time is used
                     if ('time.sleep' in content or 'time.time' in content) and 'import time' not in content:
                         content = "import time\n" + content
+                    
+                    # Add concurrent.futures import if ThreadPoolExecutor is used
+                    if 'concurrent.futures.ThreadPoolExecutor' in content and 'import concurrent.futures' not in content:
+                        content = "import concurrent.futures\n" + content
                     
                     # Fix import statements for sync versions
                     # Convert AsyncExtensionsService to ExtensionsService in imports

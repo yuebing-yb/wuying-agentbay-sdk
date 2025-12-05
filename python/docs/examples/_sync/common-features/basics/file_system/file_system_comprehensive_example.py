@@ -117,7 +117,7 @@ def main():
             entries = result.entries
             print(f"Found {len(entries)} entries in /tmp:")
             for entry in entries:
-                entry_type = "Directory" if entry.isDirectory else "File"
+                entry_type = "Directory" if entry.is_directory else "File"
                 print(f"  - {entry.name} ({entry_type})")
         else:
             print(f"Error listing directory: {result.error_message}")

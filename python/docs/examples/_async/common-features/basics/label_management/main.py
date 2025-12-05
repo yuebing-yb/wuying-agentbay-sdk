@@ -63,7 +63,7 @@ async def main():
 
         # Update labels for the second session
         print("\nUpdating labels for the second session...")
-        set_labels_result = session2.set_labels(
+        set_labels_result = await session2.set_labels(
             {
                 "purpose": "demo",
                 "feature": "label-management",
@@ -94,7 +94,7 @@ async def main():
             print(f"Matching session {i + 1} ID: {session_id}")
             session_result = agent_bay.get(session_id)
             if session_result.success:
-                labels_result = await session.get_labels()
+                labels_result = await session_result.session.get_labels()
                 print(f"Labels: {labels_result.data}")
 
         # Delete the sessions

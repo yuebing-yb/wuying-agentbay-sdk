@@ -69,12 +69,29 @@ async def main():
                 # Check user agent.
                 print("\n--- Check User Agent ---")
                 await page.goto("https://httpbin.org/user-agent")
+                
+                # Wait for page to load completely
+                await page.wait_for_load_state("networkidle")
 
-                response_text = await page.evaluate("() => document.body.innerText.trim()")
-                import json
-                response = json.loads(response_text)
-                user_agent = response.get("user-agent", "")
-                print(f"User Agent: {user_agent}")
+                # Get the response text more safely
+                try:
+                    response_text = await page.evaluate("() => document.body.innerText.trim()")
+                    print(f"Raw response: {response_text}")
+                    
+                    import json
+                    response = json.loads(response_text)
+                    user_agent = response.get("user-agent", "")
+                    print(f"User Agent: {user_agent}")
+                except json.JSONDecodeError as e:
+                    print(f"Failed to parse JSON response: {e}")
+                    print(f"Raw response content: {response_text}")
+                    # Fallback: try to get user agent directly
+                    user_agent = await page.evaluate("() => navigator.userAgent")
+                    print(f"Fallback User Agent: {user_agent}")
+                except Exception as e:
+                    print(f"Error getting user agent: {e}")
+                    user_agent = await page.evaluate("() => navigator.userAgent")
+                    print(f"Fallback User Agent: {user_agent}")
 
                 print("Please check if User Agent is synced correctly by visiting https://httpbin.org/user-agent in local chrome browser.")
 

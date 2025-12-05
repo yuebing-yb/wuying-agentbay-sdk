@@ -43,7 +43,11 @@ async def main():
     params = CreateSessionParams(
         image_id="browser_latest",
     )
-    session_result = await agent_bay.create(params)
+    try:
+        session_result = await agent_bay.create(params)
+    except Exception as e:
+        print(f"Failed to create session: {e}")
+        return
 
     if session_result.success:
         session = session_result.session
@@ -60,30 +64,67 @@ async def main():
             fingerprint_format=fingerprint_format
         )
 
-        if await session.browser.initialize(browser_option):
-            endpoint_url = await session.browser.get_endpoint_url()
-            print("endpoint_url =", endpoint_url)
+        try:
+            browser_init_result = await session.browser.initialize(browser_option)
+            if not browser_init_result:
+                print("Failed to initialize browser")
+                await agent_bay.delete(session)
+                return
+        except Exception as e:
+            print(f"Failed to initialize browser: {e}")
+            await agent_bay.delete(session)
+            return
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
-                context = browser.contexts[0]
-                page = await context.new_page()
+        endpoint_url = await session.browser.get_endpoint_url()
+        print("endpoint_url =", endpoint_url)
+
+        async with async_playwright() as p:
+            browser = await p.chromium.connect_over_cdp(endpoint_url)
+            context = browser.contexts[0]
+            page = await context.new_page()
+            
+            # Check user agent.
+            print("\n--- Check User Agent ---")
+            await page.goto("https://httpbin.org/user-agent")
+            
+            # Wait for page to load completely
+            await page.wait_for_load_state("networkidle")
+
+            # Get the response text more safely
+            try:
+                response_text = await page.evaluate("() => document.body.innerText.trim()")
+                print(f"Raw response: {response_text}")
                 
-                # Check user agent.
-                print("\n--- Check User Agent ---")
-                await page.goto("https://httpbin.org/user-agent")
-
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+                import json
+                response = json.loads(response_text)
                 user_agent = response.get("user-agent", "")
                 print(f"User Agent: {user_agent}")
                 assert user_agent == fingerprint_format.fingerprint.navigator.userAgent
                 print("User Agent constructed correctly")
+            except json.JSONDecodeError as e:
+                print(f"Failed to parse JSON response: {e}")
+                print(f"Raw response content: {response_text}")
+                # Fallback: try to get user agent directly
+                user_agent = await page.evaluate("() => navigator.userAgent")
+                print(f"Fallback User Agent: {user_agent}")
+                assert user_agent == fingerprint_format.fingerprint.navigator.userAgent
+                print("User Agent constructed correctly (fallback)")
+            except Exception as e:
+                print(f"Error getting user agent: {e}")
+                user_agent = await page.evaluate("() => navigator.userAgent")
+                print(f"Fallback User Agent: {user_agent}")
+                assert user_agent == fingerprint_format.fingerprint.navigator.userAgent
+                print("User Agent constructed correctly (fallback)")
 
-                await page.wait_for_timeout(3000)
-                await browser.close()
+            await page.wait_for_timeout(3000)
+            await browser.close()
 
         # Clean up session
         await agent_bay.delete(session)
+    else:
+        print(f"Failed to create session: {session_result}")
+        if hasattr(session_result, 'error_message'):
+            print(f"Error message: {session_result.error_message}")
     
 
 if __name__ == "__main__":

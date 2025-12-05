@@ -98,22 +98,28 @@ def main():
         else:
             print("Failed to extract current URL")
 
-        # Open third tab
-        print("\n5. Opening third tab (github.com)...")
-        session.browser.agent.act(ActOptions(action="Open a new tab and navigate to https://github.com"))
+        # Open third tab - use a more reliable site
+        print("\n5. Opening third tab (jsonplaceholder.typicode.com)...")
+        session.browser.agent.act(ActOptions(action="Open a new tab and navigate to https://jsonplaceholder.typicode.com"))
         success, tab3_result = session.browser.agent.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent))
         if success:
             print(f"Tab 3 title: {tab3_result.content}")
         else:
             print("Failed to extract tab 3 title")
 
-        # List all tabs
+        # List all tabs with timeout handling
         print("\n6. Listing all open tabs...")
-        success, tabs_result = session.browser.agent.extract(ExtractOptions(instruction="How many tabs are open and what are their URLs?", schema=TextContent))
-        if success:
-            print(f"Open tabs:\n{tabs_result.content}")
-        else:
-            print("Failed to extract tabs information")
+        try:
+            success, tabs_result = asyncio.wait_for(
+                session.browser.agent.extract(ExtractOptions(instruction="How many tabs are open and what are their URLs?", schema=TextContent)),
+                timeout=30.0  # 30 second timeout
+            )
+            if success:
+                print(f"Open tabs:\n{tabs_result.content}")
+            else:
+                print("Failed to extract tabs information")
+        except asyncio.TimeoutError:
+            print("Extract operation timed out after 30 seconds")
 
         # Close a specific tab
         print("\n7. Closing the second tab...")

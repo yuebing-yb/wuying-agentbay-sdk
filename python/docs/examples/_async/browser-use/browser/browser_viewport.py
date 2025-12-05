@@ -84,10 +84,25 @@ async def main():
                 # Check custom user agent.
                 print("\n--- Check User Agent ---")
                 await page.goto("https://httpbin.org/user-agent")
-
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
-                user_agent = response.get("user-agent", "")
-                print(f"User Agent: {user_agent}")
+                
+                # Wait for page to load completely
+                await page.wait_for_load_state('networkidle')
+                
+                # Get the text content and try to parse it as JSON
+                try:
+                    body_text = await page.evaluate("() => document.body.textContent")
+                    print(f"Raw body content: {body_text}")
+                    
+                    # Try to extract JSON from the text
+                    import json
+                    response = json.loads(body_text.strip())
+                    user_agent = response.get("user-agent", "")
+                    print(f"User Agent: {user_agent}")
+                except json.JSONDecodeError as e:
+                    print(f"JSON parsing error: {e}")
+                    print("Falling back to get user agent from navigator")
+                    user_agent = await page.evaluate("() => navigator.userAgent")
+                    print(f"User Agent: {user_agent}")
 
                 await page.wait_for_timeout(3000)
                 await browser.close()

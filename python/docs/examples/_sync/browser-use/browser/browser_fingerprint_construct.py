@@ -44,7 +44,11 @@ def main():
     params = CreateSessionParams(
         image_id="browser_latest",
     )
-    session_result = agent_bay.create(params)
+    try:
+        session_result = agent_bay.create(params)
+    except Exception as e:
+        print(f"Failed to create session: {e}")
+        return
 
     if session_result.success:
         session = session_result.session
@@ -61,30 +65,67 @@ def main():
             fingerprint_format=fingerprint_format
         )
 
-        if session.browser.initialize(browser_option):
-            endpoint_url = session.browser.get_endpoint_url()
-            print("endpoint_url =", endpoint_url)
+        try:
+            browser_init_result = session.browser.initialize(browser_option)
+            if not browser_init_result:
+                print("Failed to initialize browser")
+                agent_bay.delete(session)
+                return
+        except Exception as e:
+            print(f"Failed to initialize browser: {e}")
+            agent_bay.delete(session)
+            return
 
-            with sync_playwright() as p:
-                browser = p.chromium.connect_over_cdp(endpoint_url)
-                context = browser.contexts[0]
-                page = context.new_page()
+        endpoint_url = session.browser.get_endpoint_url()
+        print("endpoint_url =", endpoint_url)
+
+        with sync_playwright() as p:
+            browser = p.chromium.connect_over_cdp(endpoint_url)
+            context = browser.contexts[0]
+            page = context.new_page()
+            
+            # Check user agent.
+            print("\n--- Check User Agent ---")
+            page.goto("https://httpbin.org/user-agent")
+            
+            # Wait for page to load completely
+            page.wait_for_load_state("networkidle")
+
+            # Get the response text more safely
+            try:
+                response_text = page.evaluate("() => document.body.innerText.trim()")
+                print(f"Raw response: {response_text}")
                 
-                # Check user agent.
-                print("\n--- Check User Agent ---")
-                page.goto("https://httpbin.org/user-agent")
-
-                response = page.evaluate("() => JSON.parse(document.body.textContent)")
+                import json
+                response = json.loads(response_text)
                 user_agent = response.get("user-agent", "")
                 print(f"User Agent: {user_agent}")
                 assert user_agent == fingerprint_format.fingerprint.navigator.userAgent
                 print("User Agent constructed correctly")
+            except json.JSONDecodeError as e:
+                print(f"Failed to parse JSON response: {e}")
+                print(f"Raw response content: {response_text}")
+                # Fallback: try to get user agent directly
+                user_agent = page.evaluate("() => navigator.userAgent")
+                print(f"Fallback User Agent: {user_agent}")
+                assert user_agent == fingerprint_format.fingerprint.navigator.userAgent
+                print("User Agent constructed correctly (fallback)")
+            except Exception as e:
+                print(f"Error getting user agent: {e}")
+                user_agent = page.evaluate("() => navigator.userAgent")
+                print(f"Fallback User Agent: {user_agent}")
+                assert user_agent == fingerprint_format.fingerprint.navigator.userAgent
+                print("User Agent constructed correctly (fallback)")
 
-                page.wait_for_timeout(3000)
-                browser.close()
+            page.wait_for_timeout(3000)
+            browser.close()
 
         # Clean up session
         agent_bay.delete(session)
+    else:
+        print(f"Failed to create session: {session_result}")
+        if hasattr(session_result, 'error_message'):
+            print(f"Error message: {session_result.error_message}")
     
 
 if __name__ == "__main__":

@@ -20,6 +20,9 @@ def main():
         print("Error: AGENTBAY_API_KEY not set"); return
     agentbay = AgentBay(api_key=api_key)
     session_result = agentbay.create(CreateSessionParams(image_id="browser_latest"))
+    if not session_result.success:
+        print(f"Failed to create session: {session_result.error_message}")
+        return
     session = session_result.session
     try:
         if not session.browser.initialize(BrowserOption()):

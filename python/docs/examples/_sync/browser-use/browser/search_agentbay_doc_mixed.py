@@ -21,7 +21,14 @@ def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     agent_bay = AgentBay(api_key=api_key)
     session_result = agent_bay.create(CreateSessionParams(image_id="browser_latest"))
+    
+    if not session_result.success:
+        print(f"❌ Failed to create session: {session_result.error_message}")
+        return
+        
     session = session_result.session
+    print(f"✅ Session created successfully: {session.session_id}")
+    
     try:
         assert session.browser.initialize(BrowserOption())
         agent = session.browser.agent
@@ -37,7 +44,7 @@ def main():
             page = context.new_page()
 
             # 先用 Playwright 导航
-            page.goto("https://www.aliyun.com", wait_until="domcontentloaded")
+            page.goto("https://www.aliyun.com", wait_until="domcontentloaded", timeout=60000)
 
             # 让 Agent 跟上当前 Playwright 页面（显式传 page）
             agent.act(
@@ -63,7 +70,8 @@ def main():
 
             playwright_browser.close()
     finally:
-        agent_bay.delete(session)
+        if session:
+            agent_bay.delete(session)
 
 
 if __name__ == "__main__":

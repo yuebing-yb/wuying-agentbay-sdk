@@ -127,7 +127,7 @@ def run_as_first_time():
 
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
-            response = page.evaluate("() => JSON.parse(document.body.textContent)")
+            response = page.evaluate("() => JSON.parse(document.body.innerText)")
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
             is_windows = is_windows_user_agent(user_agent)
@@ -204,7 +204,7 @@ def run_as_second_time():
             context = browser.contexts[0] if browser.contexts else browser.new_context()
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
-            response = page.evaluate("() => JSON.parse(document.body.textContent)")
+            response = page.evaluate("() => JSON.parse(document.body.innerText)")
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
             is_windows = is_windows_user_agent(user_agent)

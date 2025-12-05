@@ -33,6 +33,8 @@ async def main():
         session_result = await client.create(
             CreateSessionParams(image_id="browser_latest")
         )
+        if not session_result.success or not session_result.session:
+            raise Exception(f"Failed to create session: {session_result.error_message}")
         session = session_result.session
         print(f"Session created: {session.session_id}")
 
@@ -103,7 +105,7 @@ async def main():
         # Verify modal is closed
         print("\n8. Verifying modal is closed...")
         verify_result = await session.browser.agent.extract(
-            ExtractOptions(instruction="Is there a modal dialog visible on the page?")
+            ExtractOptions(instruction="Is there a modal dialog visible on the page?", schema=bool)
         )
         print(f"Modal status: {verify_result.extracted_content}")
 
@@ -117,8 +119,8 @@ async def main():
 
         # Check for new windows
         print("\n10. Checking for new windows...")
-        windows_result = await session.browser.agent.extract(
-            ExtractOptions(instruction="How many browser windows or tabs are open?")
+        tab_count = await session.browser.agent.extract(
+            ExtractOptions(instruction="How many browser windows or tabs are open?", schema=int)
         )
         print(f"Open windows: {windows_result.extracted_content}")
 
