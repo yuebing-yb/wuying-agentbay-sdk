@@ -107,104 +107,195 @@ def discover_tests(state: AgentState) -> AgentState:
     print(f"📥 接收到状态: {state}")
     sys.stdout.flush()
     pattern = state.get("specific_test_pattern")
+    test_type = state.get("test_type", "python")
     
     try:
-        cwd = os.path.join(PROJECT_ROOT, "python")
-        env = os.environ.copy()
-        env["PYTHONPATH"] = cwd
-        
-        print(f"📂 项目根目录: {PROJECT_ROOT}")
-        print(f"📂 工作目录: {cwd}")
-        print(f"📂 PYTHONPATH: {env.get('PYTHONPATH')}")
-        print(f"🔍 目录存在: {os.path.exists(cwd)}")
-        if os.path.exists(cwd):
-            print(f"📋 内容: {os.listdir(cwd)}") 
-        
-        # Base command - 优化性能
-        cmd = [sys.executable, "-m", "pytest", "tests/integration", "--collect-only", "-q", 
-               "--tb=no",  # 不显示traceback
-               "--no-header",  # 不显示header
-               "--no-summary",  # 不显示summary
-               "-p", "no:warnings",  # 禁用warnings插件
-               "-p", "no:cacheprovider",  # 禁用cache
-               "--maxfail=1",  # 快速失败
-               "-c", "/dev/null"]
-        
-        # Add specific test pattern if provided (passed to pytest directly for filtering)
-        if pattern:
-            print(f"   使用模式过滤测试: {pattern}")
-            cmd.append("-k")
-            cmd.append(pattern)
+        # 根据test_type选择不同的测试发现策略
+        if test_type == "python":
+            return discover_python_tests(state, pattern)
+        elif test_type == "typescript":
+            return discover_typescript_tests(state, pattern)
+        elif test_type == "golang":
+            return discover_golang_tests(state, pattern)
+        elif test_type == "all":
+            return discover_all_tests(state, pattern)
+        else:
+            print(f"❌ 不支持的测试类型: {test_type}")
+            return {"test_queue": [], "current_test_index": 0, "results": [], "sdk_context": "", "is_finished": True, "specific_test_pattern": pattern, "test_type": test_type}
+            
+    except Exception as e:
+        print(f"❌ 发现测试时出错: {e}")
+        return {"test_queue": [], "current_test_index": 0, "results": [], "sdk_context": "", "is_finished": True, "specific_test_pattern": pattern, "test_type": test_type}
+
+def discover_python_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
+    """发现Python集成测试"""
+    print("🐍 正在发现Python测试...")
+    
+    cwd = os.path.join(PROJECT_ROOT, "python")
+    env = os.environ.copy()
+    env["PYTHONPATH"] = cwd
+    
+    print(f"📂 项目根目录: {PROJECT_ROOT}")
+    print(f"📂 工作目录: {cwd}")
+    print(f"📂 PYTHONPATH: {env.get('PYTHONPATH')}")
+    print(f"🔍 目录存在: {os.path.exists(cwd)}")
+    if os.path.exists(cwd):
+        print(f"📋 内容: {os.listdir(cwd)}") 
+    
+    # Base command - 优化性能
+    cmd = [sys.executable, "-m", "pytest", "tests/integration", "--collect-only", "-q", 
+           "--tb=no",  # 不显示traceback
+           "--no-header",  # 不显示header
+           "--no-summary",  # 不显示summary
+           "-p", "no:warnings",  # 禁用warnings插件
+           "-p", "no:cacheprovider",  # 禁用cache
+           "--maxfail=1",  # 快速失败
+           "-c", "/dev/null"]
+    
+    # Add specific test pattern if provided (passed to pytest directly for filtering)
+    if pattern:
+        print(f"   使用模式过滤测试: {pattern}")
+        cmd.append("-k")
+        cmd.append(pattern)
             
         # 添加诊断信息
-        print(f"🔍 测试目录检查:")
-        print(f"   - 测试目录路径: {TEST_DIR}")
-        print(f"   - 测试目录存在: {os.path.exists(TEST_DIR)}")
-        if os.path.exists(TEST_DIR):
-            test_files = []
-            for root, dirs, files in os.walk(TEST_DIR):
-                test_files.extend([f for f in files if f.startswith('test_') and f.endswith('.py')])
-            print(f"   - 测试文件数量: {len(test_files)}")
-        
-        print(f"执行命令: {' '.join(cmd)} 在目录 {cwd}")
-        print("⏳ 正在运行pytest命令...")
-        sys.stdout.flush()
-        
-        # 使用Popen来实现非阻塞执行和周期性输出
-        import time
-        process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
-        
-        start_time = time.time()
-        timeout = 120  # 2分钟超时，如果pytest太慢就降级
-        
-        while process.poll() is None:  # 进程还在运行
-            elapsed = time.time() - start_time
-            if elapsed > timeout:
-                print(f"❌ pytest命令超时（{timeout}秒），这表明CI环境有严重的性能问题")
-                print("🔍 诊断信息:")
-                print(f"   - 工作目录: {cwd}")
-                print(f"   - Python路径: {env.get('PYTHONPATH')}")
-                print(f"   - 执行命令: {' '.join(cmd)}")
-                process.kill()
-                sys.stdout.flush()
-                
-                # 不使用降级方案，直接失败让问题暴露
-                raise Exception(f"pytest测试发现超时，CI环境性能问题需要解决。命令: {' '.join(cmd)}")
-            
-            # 每30秒输出一次心跳
-            if int(elapsed) % 30 == 0 and int(elapsed) > 0:
-                print(f"💓 pytest运行中... 已用时{int(elapsed)}秒")
-                sys.stdout.flush()
-            
-            time.sleep(1)
-        
-        # 获取结果
-        stdout, stderr = process.communicate()
-        result = subprocess.CompletedProcess(cmd, process.returncode, stdout, stderr)
-        
-        print(f"✅ 命令完成，返回码: {result.returncode}")
-        sys.stdout.flush()
-            
-        if result.stderr:
-            print(f"⚠️ 标准错误: {result.stderr}")
+    test_dir = os.path.join(cwd, "tests", "integration")
+    print(f"🔍 测试目录检查:")
+    print(f"   - 测试目录路径: {test_dir}")
+    print(f"   - 测试目录存在: {os.path.exists(test_dir)}")
+    if os.path.exists(test_dir):
+        test_files = []
+        for root, dirs, files in os.walk(test_dir):
+            test_files.extend([f for f in files if f.startswith('test_') and f.endswith('.py')])
+        print(f"   - 测试文件数量: {len(test_files)}")
+    
+    print(f"执行命令: {' '.join(cmd)} 在目录 {cwd}")
+    print("⏳ 正在运行pytest命令...")
+    sys.stdout.flush()
+    
+    # 使用Popen来实现非阻塞执行和周期性输出
+    import time
+    process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+    
+    start_time = time.time()
+    timeout = 120  # 2分钟超时，如果pytest太慢就降级
+    
+    while process.poll() is None:  # 进程还在运行
+        elapsed = time.time() - start_time
+        if elapsed > timeout:
+            print(f"❌ pytest命令超时（{timeout}秒），这表明CI环境有严重的性能问题")
+            print("🔍 诊断信息:")
+            print(f"   - 工作目录: {cwd}")
+            print(f"   - Python路径: {env.get('PYTHONPATH')}")
+            print(f"   - 执行命令: {' '.join(cmd)}")
+            process.kill()
             sys.stdout.flush()
-        print(f"📄 标准输出长度: {len(result.stdout)} 字符")
+            
+            # 不使用降级方案，直接失败让问题暴露
+            raise Exception(f"pytest测试发现超时，CI环境性能问题需要解决。命令: {' '.join(cmd)}")
+        
+        # 每30秒输出一次心跳
+        if int(elapsed) % 30 == 0 and int(elapsed) > 0:
+            print(f"💓 pytest运行中... 已用时{int(elapsed)}秒")
+            sys.stdout.flush()
+        
+        time.sleep(1)
+    
+    # 获取结果
+    stdout, stderr = process.communicate()
+    result = subprocess.CompletedProcess(cmd, process.returncode, stdout, stderr)
+    
+    print(f"✅ 命令完成，返回码: {result.returncode}")
+    sys.stdout.flush()
+        
+    if result.stderr:
+        print(f"⚠️ 标准错误: {result.stderr}")
         sys.stdout.flush()
+    print(f"📄 标准输出长度: {len(result.stdout)} 字符")
+    sys.stdout.flush()
+    
+    test_ids = []
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        # Standard pytest -q output: tests/integration/path/to/test.py::test_name
+        if line and not line.startswith("no tests ran") and not line.startswith("===") and "::" in line:
+            test_id = line.split(" ")[0]
+            # Fix path if it's missing tests/integration prefix
+            if not test_id.startswith("tests/integration") and (test_id.startswith("_async") or test_id.startswith("_sync")):
+                test_id = os.path.join("tests", "integration", test_id)
+            test_ids.append(test_id)
+    
+    print(f"✅ 找到 {len(test_ids)} 个Python测试。")
+    if len(test_ids) == 0 and result.stderr:
+         print(f"调试输出:\n{result.stderr}")
+    
+    # Load SDK Context
+    context = ""
+    if os.path.exists(LLMS_FULL_PATH):
+        try:
+            with open(LLMS_FULL_PATH, "r", encoding="utf-8") as f:
+                context = f.read()
+            print(f"📚 已加载SDK上下文 ({len(context)} 字符)")
+        except Exception as e:
+            print(f"⚠️ 读取llms-full.txt失败: {e}")
+    else:
+        print(f"⚠️ 在 {LLMS_FULL_PATH} 未找到llms-full.txt")
+
+    return {
+        "test_queue": test_ids,
+        "current_test_index": 0,
+        "results": [],
+        "sdk_context": context,
+        "is_finished": False,
+        "specific_test_pattern": pattern,
+        "test_type": "python"
+    }
+
+def discover_typescript_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
+    """发现TypeScript集成测试"""
+    print("📜 正在发现TypeScript测试...")
+    
+    cwd = os.path.join(PROJECT_ROOT, "typescript")
+    
+    print(f"📂 TypeScript工作目录: {cwd}")
+    print(f"🔍 目录存在: {os.path.exists(cwd)}")
+    
+    # 检查是否有package.json和测试脚本
+    package_json_path = os.path.join(cwd, "package.json")
+    if not os.path.exists(package_json_path):
+        print("❌ 未找到package.json")
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "typescript"
+        }
+    
+    # 使用Jest来发现集成测试
+    cmd = ["npm", "run", "test:integration", "--", "--listTests"]
+    
+    print(f"执行命令: {' '.join(cmd)} 在目录 {cwd}")
+    
+    try:
+        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=60)
         
         test_ids = []
-        for line in result.stdout.splitlines():
-            line = line.strip()
-            # Standard pytest -q output: tests/integration/path/to/test.py::test_name
-            if line and not line.startswith("no tests ran") and not line.startswith("===") and "::" in line:
-                test_id = line.split(" ")[0]
-                # Fix path if it's missing tests/integration prefix
-                if not test_id.startswith("tests/integration") and (test_id.startswith("_async") or test_id.startswith("_sync")):
-                    test_id = os.path.join("tests", "integration", test_id)
-                test_ids.append(test_id)
+        if result.returncode == 0:
+            # 解析Jest的测试文件列表，只包含集成测试
+            for line in result.stdout.splitlines():
+                line = line.strip()
+                if (line.endswith('.test.ts') or line.endswith('.test.js')) and 'integration' in line:
+                    # 转换为相对路径
+                    if line.startswith(cwd):
+                        line = os.path.relpath(line, cwd)
+                    # 如果有模式过滤，应用过滤
+                    if not pattern or pattern.lower() in line.lower():
+                        test_ids.append(f"typescript:{line}")
         
-        print(f"✅ 找到 {len(test_ids)} 个测试。")
-        if len(test_ids) == 0 and result.stderr:
-             print(f"调试输出:\n{result.stderr}")
+        print(f"✅ 找到 {len(test_ids)} 个TypeScript集成测试。")
         
         # Load SDK Context
         context = ""
@@ -215,8 +306,6 @@ def discover_tests(state: AgentState) -> AgentState:
                 print(f"📚 已加载SDK上下文 ({len(context)} 字符)")
             except Exception as e:
                 print(f"⚠️ 读取llms-full.txt失败: {e}")
-        else:
-            print(f"⚠️ 在 {LLMS_FULL_PATH} 未找到llms-full.txt")
 
         return {
             "test_queue": test_ids,
@@ -224,11 +313,118 @@ def discover_tests(state: AgentState) -> AgentState:
             "results": [],
             "sdk_context": context,
             "is_finished": False,
-            "specific_test_pattern": pattern
+            "specific_test_pattern": pattern,
+            "test_type": "typescript"
+        }
+        
+    except Exception as e:
+        print(f"❌ TypeScript测试发现失败: {e}")
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "typescript"
+        }
+
+def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
+    """发现Golang集成测试"""
+    print("🐹 正在发现Golang测试...")
+    
+    cwd = os.path.join(PROJECT_ROOT, "golang")
+    
+    print(f"📂 Golang工作目录: {cwd}")
+    print(f"🔍 目录存在: {os.path.exists(cwd)}")
+    
+    # 专门针对集成测试包
+    integration_package = "github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/integration"
+    
+    # 使用go test来发现集成测试函数
+    cmd = ["go", "test", "-list", ".", integration_package]
+    
+    print(f"执行命令: {' '.join(cmd)} 在目录 {cwd}")
+    
+    try:
+        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=60)
+        
+        test_ids = []
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                line = line.strip()
+                if line.startswith("Test") and (not pattern or pattern.lower() in line.lower()):
+                    test_ids.append(f"golang:{integration_package}.{line}")
+        
+        print(f"✅ 找到 {len(test_ids)} 个Golang集成测试。")
+        
+        # Load SDK Context
+        context = ""
+        if os.path.exists(LLMS_FULL_PATH):
+            try:
+                with open(LLMS_FULL_PATH, "r", encoding="utf-8") as f:
+                    context = f.read()
+                print(f"📚 已加载SDK上下文 ({len(context)} 字符)")
+            except Exception as e:
+                print(f"⚠️ 读取llms-full.txt失败: {e}")
+
+        return {
+            "test_queue": test_ids,
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": context,
+            "is_finished": False,
+            "specific_test_pattern": pattern,
+            "test_type": "golang"
+        }
+        
+    except Exception as e:
+        print(f"❌ Golang测试发现失败: {e}")
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "golang"
+        }
+
+def discover_all_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
+    """发现所有语言的集成测试"""
+    print("🌍 正在发现所有语言的测试...")
+    
+    try:
+        all_test_ids = []
+        context = ""
+        
+        # 发现Python测试
+        python_state = discover_python_tests(state, pattern)
+        all_test_ids.extend(python_state["test_queue"])
+        context = python_state["sdk_context"]
+        
+        # 发现TypeScript测试
+        typescript_state = discover_typescript_tests(state, pattern)
+        all_test_ids.extend(typescript_state["test_queue"])
+        
+        # 发现Golang测试
+        golang_state = discover_golang_tests(state, pattern)
+        all_test_ids.extend(golang_state["test_queue"])
+        
+        print(f"✅ 总共找到 {len(all_test_ids)} 个测试。")
+        
+        return {
+            "test_queue": all_test_ids,
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": context,
+            "is_finished": False,
+            "specific_test_pattern": pattern,
+            "test_type": "all"
         }
     except Exception as e:
         print(f"❌ 发现测试时出错: {e}")
-        return {"test_queue": [], "current_test_index": 0, "results": [], "sdk_context": "", "is_finished": True, "specific_test_pattern": pattern}
+        return {"test_queue": [], "current_test_index": 0, "results": [], "sdk_context": "", "is_finished": True, "specific_test_pattern": pattern, "test_type": "all"}
 
 def execute_next_test(state: AgentState) -> AgentState:
     """Executes the next test in the queue."""
@@ -240,6 +436,36 @@ def execute_next_test(state: AgentState) -> AgentState:
 
     test_id = queue[idx]
     print(f"▶️ 正在运行测试 ({idx+1}/{len(queue)}): {test_id}")
+    
+    # 根据测试ID的前缀判断测试类型
+    if test_id.startswith("typescript:"):
+        result = execute_typescript_test(test_id)
+    elif test_id.startswith("golang:"):
+        result = execute_golang_test(test_id)
+    else:
+        # 默认为Python测试
+        result = execute_python_test(test_id)
+    
+    new_result: TestResult = {
+        "test_id": test_id,
+        "status": result["status"],
+        "output": result["output"],
+        "error_analysis": None
+    }
+    
+    return {
+        "results": state["results"] + [new_result],
+        "current_test_index": state["current_test_index"], # Keep current index, will be incremented later
+        "test_queue": state["test_queue"],
+        "sdk_context": state["sdk_context"],
+        "is_finished": state["is_finished"],
+        "specific_test_pattern": state["specific_test_pattern"],
+        "test_type": state.get("test_type", "python")
+    }
+
+def execute_python_test(test_id: str) -> Dict[str, Any]:
+    """执行Python测试"""
+    print(f"🐍 执行Python测试: {test_id}")
     
     cwd = os.path.join(PROJECT_ROOT, "python")
     env = os.environ.copy()
@@ -258,21 +484,65 @@ def execute_next_test(state: AgentState) -> AgentState:
     
     print(f"   结果: {status.upper()}")
     
-    new_result: TestResult = {
-        "test_id": test_id,
-        "status": status,
-        "output": output,
-        "error_analysis": None
-    }
+    return {"status": status, "output": output}
+
+def execute_typescript_test(test_id: str) -> Dict[str, Any]:
+    """执行TypeScript测试"""
+    print(f"📜 执行TypeScript测试: {test_id}")
     
-    return {
-        "results": state["results"] + [new_result],
-        "current_test_index": state["current_test_index"], # Keep current index, will be incremented later
-        "test_queue": state["test_queue"],
-        "sdk_context": state["sdk_context"],
-        "is_finished": state["is_finished"],
-        "specific_test_pattern": state["specific_test_pattern"]
-    }
+    # 移除typescript:前缀
+    actual_test_id = test_id[11:]  # len("typescript:") = 11
+    
+    cwd = os.path.join(PROJECT_ROOT, "typescript")
+    env = os.environ.copy()
+    
+    # Ensure AGENTBAY_API_KEY is present
+    if "AGENTBAY_API_KEY" not in env:
+        print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
+
+    # Run specific test using npm test
+    cmd = ["npm", "run", "test:integration", "--", actual_test_id]
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    
+    status = "passed" if result.returncode == 0 else "failed"
+    output = result.stdout + "\n" + result.stderr
+    
+    print(f"   结果: {status.upper()}")
+    
+    return {"status": status, "output": output}
+
+def execute_golang_test(test_id: str) -> Dict[str, Any]:
+    """执行Golang测试"""
+    print(f"🐹 执行Golang测试: {test_id}")
+    
+    # 移除golang:前缀并解析包和测试名
+    actual_test_id = test_id[7:]  # len("golang:") = 7
+    if "." in actual_test_id:
+        package_name, test_name = actual_test_id.rsplit(".", 1)
+    else:
+        package_name = actual_test_id
+        test_name = ""
+    
+    cwd = os.path.join(PROJECT_ROOT, "golang")
+    env = os.environ.copy()
+    
+    # Ensure AGENTBAY_API_KEY is present
+    if "AGENTBAY_API_KEY" not in env:
+        print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
+
+    # Run specific test using go test
+    cmd = ["go", "test", "-v", package_name]
+    if test_name:
+        cmd.extend(["-run", test_name])
+    
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
+    
+    status = "passed" if result.returncode == 0 else "failed"
+    output = result.stdout + "\n" + result.stderr
+    
+    print(f"   结果: {status.upper()}")
+    
+    return {"status": status, "output": output}
 
 def analyze_failure(state: AgentState) -> AgentState:
     """Analyzes the last failed test."""
@@ -364,7 +634,8 @@ IMPORTANT: 请务必使用中文回答，不要使用英文。
         "current_test_index": state["current_test_index"],
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
-        "specific_test_pattern": state["specific_test_pattern"]
+        "specific_test_pattern": state["specific_test_pattern"],
+        "test_type": state.get("test_type", "python")
     }
 
 def increment_index(state: AgentState) -> AgentState:
@@ -377,7 +648,8 @@ def increment_index(state: AgentState) -> AgentState:
         "test_queue": state["test_queue"],
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
-        "specific_test_pattern": state["specific_test_pattern"]
+        "specific_test_pattern": state["specific_test_pattern"],
+        "test_type": state.get("test_type", "python")
     }
 
 def generate_report(state: AgentState) -> AgentState:
@@ -387,20 +659,25 @@ def generate_report(state: AgentState) -> AgentState:
     
     passed = len([r for r in results if r["status"] == "passed"])
     failed = len([r for r in results if r["status"] == "failed"])
+    failed_results = [r for r in results if r["status"] == "failed"]
     
     content = f"# Smart Integration Test Report\n\n"
     content += f"**Summary**: {len(results)} Tests | ✅ {passed} Passed | ❌ {failed} Failed\n\n"
     
-    for res in results:
-        icon = "✅" if res["status"] == "passed" else "❌"
-        content += f"## {icon} {res['test_id']}\n\n"
-        
-        if res["status"] == "failed":
-            content += "### 🤖 AI Analysis\n"
-            content += f"{res['error_analysis']}\n\n"
+    if failed == 0:
+        content += "🎉 **All tests passed!** No issues to report.\n\n"
+    else:
+        content += f"## ❌ Failed Tests ({failed})\n\n"
+        for res in failed_results:
+            content += f"### ❌ {res['test_id']}\n\n"
             
-            content += "### 📄 Output (Snippet)\n"
+            content += "<details>\n<summary>🤖 AI Analysis</summary>\n\n"
+            content += f"{res['error_analysis']}\n\n"
+            content += "</details>\n\n"
+                
+            content += "<details>\n<summary>📄 Output (Snippet)</summary>\n\n"
             content += f"```\n{res['output'][-2000:]}\n```\n\n"
+            content += "</details>\n\n"
             
     try:
         # Save report to project root or specified artifacts dir
@@ -417,7 +694,8 @@ def generate_report(state: AgentState) -> AgentState:
         "test_queue": state["test_queue"],
         "current_test_index": state["current_test_index"],
         "sdk_context": state["sdk_context"],
-        "specific_test_pattern": state["specific_test_pattern"]
+        "specific_test_pattern": state["specific_test_pattern"],
+        "test_type": state.get("test_type", "python")
     }
 
 # --- Graph Construction ---
@@ -527,7 +805,8 @@ def main():
         "results": [], 
         "sdk_context": "",
         "is_finished": False,
-        "specific_test_pattern": args.keyword
+        "specific_test_pattern": args.keyword,
+        "test_type": args.test_type
     }
     
     print("🔧 正在启动工作流执行...")
