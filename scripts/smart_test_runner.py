@@ -356,6 +356,8 @@ workflow.add_edge("generate_report", END)
 app = workflow.compile()
 
 def main():
+    global REPORT_FILE
+    
     parser = argparse.ArgumentParser(description="Smart Integration Test Runner with AI Analysis")
     parser.add_argument("-k", "--keyword", help="Run tests which match the given substring expression (same as pytest -k)", type=str)
     parser.add_argument("--report", help="Path to save the report", default=REPORT_FILE)
@@ -367,7 +369,6 @@ def main():
         print(f"🎯 Target Pattern: {args.keyword}")
     
     if args.report:
-        global REPORT_FILE
         REPORT_FILE = args.report
 
     initial_state = {
