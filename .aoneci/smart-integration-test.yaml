@@ -63,14 +63,22 @@ jobs:
           export PYTHONPATH="${PYTHONPATH}:$(pwd)/python"
           export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
           export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
-          python scripts/smart_test_runner.py --test-type="${{params.test_type}}"
           
-          # Check if test report was generated
-          if [ -f "test_report.md" ]; then
-            echo "✅ Test report generated successfully"
-            echo "📋 Test report content:"
-            cat test_report.md
+          # Run the smart test runner and capture exit code
+          if python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
+            echo "✅ Smart Test Runner completed successfully"
+            
+            # Check if test report was generated
+            if [ -f "test_report.md" ]; then
+              echo "✅ Test report generated successfully"
+              echo "📋 Test report content:"
+              cat test_report.md
+            else
+              echo "⚠️ No test report generated"
+            fi
           else
-            echo "⚠️ No test report generated"
+            echo "❌ Smart Test Runner failed with exit code $?"
+            echo "❌ CI pipeline will now fail"
+            exit 1
           fi
 
