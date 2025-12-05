@@ -104,6 +104,8 @@ def get_model():
 def discover_tests(state: AgentState) -> AgentState:
     """Discover integration tests using pytest --collect-only."""
     print("🔍 正在发现测试...")
+    print(f"📥 接收到状态: {state}")
+    sys.stdout.flush()
     pattern = state.get("specific_test_pattern")
     
     try:
@@ -289,10 +291,18 @@ IMPORTANT: 请务必使用中文回答，不要使用英文。
         
         last_result["error_analysis"] = response.content
         print("   ✅ 分析完成。")
+        print("   📋 AI分析结果:")
+        print("   " + "="*60)
+        # 将多行分析结果缩进显示
+        for line in response.content.split('\n'):
+            print(f"   {line}")
+        print("   " + "="*60)
+        sys.stdout.flush()
         
     except Exception as e:
         print(f"   ❌ 分析失败: {e}")
         last_result["error_analysis"] = f"分析失败: {e}"
+        sys.stdout.flush()
 
     return {
         "results": state["results"][:-1] + [last_result],
@@ -420,7 +430,16 @@ workflow.add_conditional_edges(
 
 workflow.add_edge("generate_report", END)
 
-app = workflow.compile()
+print("🔧 正在编译工作流...")
+sys.stdout.flush()
+try:
+    app = workflow.compile()
+    print("✅ 工作流编译成功")
+    sys.stdout.flush()
+except Exception as e:
+    print(f"❌ 工作流编译失败: {e}")
+    sys.stdout.flush()
+    raise
 
 def main():
     global REPORT_FILE
