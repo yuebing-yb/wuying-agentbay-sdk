@@ -44,7 +44,10 @@ jobs:
               mkdir -p $HOME/go-install
               cd $HOME/go-install
               if [ ! -f go1.21.0.linux-amd64.tar.gz ]; then
-                echo "📥 Downloading Go..."
+                echo "📥 Downloading Go from mirror..."
+                # Try multiple mirrors for better connectivity in China
+                wget -O go1.21.0.linux-amd64.tar.gz https://golang.google.cn/dl/go1.21.0.linux-amd64.tar.gz || \
+                wget -O go1.21.0.linux-amd64.tar.gz https://mirrors.aliyun.com/golang/go1.21.0.linux-amd64.tar.gz || \
                 wget -O go1.21.0.linux-amd64.tar.gz https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
               fi
               if [ -f go1.21.0.linux-amd64.tar.gz ]; then
@@ -63,9 +66,10 @@ jobs:
             # Setup Golang dependencies
             if command -v go &> /dev/null && [ -d "golang" ]; then
               echo "📦 Setting up Golang dependencies..."
-              cd golang
-              go mod download || echo "⚠️ Go mod download failed"
-              cd ..
+              # Set Go proxy to use faster mirror in China
+              export GOPROXY=https://goproxy.cn,direct
+              export GOSUMDB=sum.golang.google.cn
+              cd golang && go mod download && cd .. || echo "⚠️ Go mod download failed"
             fi
           fi
           
@@ -78,7 +82,10 @@ jobs:
               mkdir -p $HOME/nodejs
               cd $HOME/nodejs
               if [ ! -f node-v18.18.0-linux-x64.tar.xz ]; then
-                echo "📥 Downloading Node.js..."
+                echo "📥 Downloading Node.js from mirror..."
+                # Try multiple mirrors for better connectivity in China
+                wget -O node-v18.18.0-linux-x64.tar.xz https://npmmirror.com/mirrors/node/v18.18.0/node-v18.18.0-linux-x64.tar.xz || \
+                wget -O node-v18.18.0-linux-x64.tar.xz https://mirrors.aliyun.com/nodejs-release/v18.18.0/node-v18.18.0-linux-x64.tar.xz || \
                 wget -O node-v18.18.0-linux-x64.tar.xz https://nodejs.org/dist/v18.18.0/node-v18.18.0-linux-x64.tar.xz
               fi
               if [ -f node-v18.18.0-linux-x64.tar.xz ]; then
@@ -97,9 +104,9 @@ jobs:
             # Setup TypeScript dependencies
             if command -v npm &> /dev/null && [ -d "typescript" ]; then
               echo "📦 Setting up TypeScript dependencies..."
-              cd typescript
-              npm install || echo "⚠️ npm install failed"
-              cd ..
+              # Set npm registry to use faster mirror in China
+              npm config set registry https://registry.npmmirror.com
+              cd typescript && npm install && cd .. || echo "⚠️ npm install failed"
             fi
           fi
           
