@@ -55,6 +55,10 @@ jobs:
                 tar -xzf go1.21.0.linux-amd64.tar.gz
                 export PATH=$HOME/go-install/go/bin:$PATH
                 export GOROOT=$HOME/go-install/go
+                # Set Go proxy immediately after installation
+                export GOPROXY=https://goproxy.cn,direct
+                export GOSUMDB=sum.golang.google.cn
+                export GOTOOLCHAIN=local
                 echo "✅ Go installed to local directory"
               else
                 echo "❌ Failed to download Go"
@@ -160,6 +164,9 @@ jobs:
           if [ "${{params.test_type}}" = "golang" ] || [ "${{params.test_type}}" = "all" ]; then
             export PATH=$HOME/go-install/go/bin:$PATH
             export GOROOT=$HOME/go-install/go
+            export GOPROXY=https://goproxy.cn,direct
+            export GOSUMDB=sum.golang.google.cn
+            export GOTOOLCHAIN=local
             echo "🔍 Checking Go installation..."
             which go || echo "❌ Go not found in PATH"
             go version || echo "❌ Go version check failed"
@@ -180,6 +187,11 @@ jobs:
           
           # Set up comprehensive PATH with all installed tools
           export PATH="$HOME/go-install/go/bin:$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH"
+          
+          # Set Go environment variables for China network
+          export GOPROXY=https://goproxy.cn,direct
+          export GOSUMDB=sum.golang.google.cn  
+          export GOTOOLCHAIN=local
           
           if python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
             echo "✅ Smart Test Runner completed successfully"
