@@ -261,6 +261,49 @@ def discover_typescript_tests(state: AgentState, pattern: Optional[str]) -> Agen
     print(f"📂 TypeScript工作目录: {cwd}")
     print(f"🔍 目录存在: {os.path.exists(cwd)}")
     
+    # 检查Node.js和npm是否安装
+    try:
+        node_version_result = subprocess.run(["node", "--version"], capture_output=True, text=True, timeout=10)
+        npm_version_result = subprocess.run(["npm", "--version"], capture_output=True, text=True, timeout=10)
+        if node_version_result.returncode != 0 or npm_version_result.returncode != 0:
+            print("❌ Node.js或npm未安装或不可用")
+            print("💡 提示: 当前CI环境不支持TypeScript测试，请使用python测试类型")
+            return {
+                "test_queue": [],
+                "current_test_index": 0,
+                "results": [],
+                "sdk_context": "",
+                "is_finished": True,
+                "specific_test_pattern": pattern,
+                "test_type": "typescript"
+            }
+        else:
+            print(f"✅ Node.js环境检查通过: {node_version_result.stdout.strip()}")
+            print(f"✅ npm环境检查通过: {npm_version_result.stdout.strip()}")
+    except FileNotFoundError:
+        print("❌ Node.js或npm命令未找到")
+        print("💡 提示: 当前CI环境不支持TypeScript测试，请使用python测试类型")
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "typescript"
+        }
+    except Exception as e:
+        print(f"❌ Node.js环境检查失败: {e}")
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "typescript"
+        }
+    
     # 检查是否有package.json和测试脚本
     package_json_path = os.path.join(cwd, "package.json")
     if not os.path.exists(package_json_path):
@@ -339,6 +382,47 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
     print(f"📂 Golang工作目录: {cwd}")
     print(f"🔍 目录存在: {os.path.exists(cwd)}")
     
+    # 检查Go是否安装
+    try:
+        go_version_result = subprocess.run(["go", "version"], capture_output=True, text=True, timeout=10)
+        if go_version_result.returncode != 0:
+            print("❌ Go未安装或不可用")
+            print("💡 提示: 当前CI环境不支持Golang测试，请使用python或typescript测试类型")
+            return {
+                "test_queue": [],
+                "current_test_index": 0,
+                "results": [],
+                "sdk_context": "",
+                "is_finished": True,
+                "specific_test_pattern": pattern,
+                "test_type": "golang"
+            }
+        else:
+            print(f"✅ Go环境检查通过: {go_version_result.stdout.strip()}")
+    except FileNotFoundError:
+        print("❌ Go命令未找到")
+        print("💡 提示: 当前CI环境不支持Golang测试，请使用python或typescript测试类型")
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "golang"
+        }
+    except Exception as e:
+        print(f"❌ Go环境检查失败: {e}")
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "golang"
+        }
+    
     # 专门针对集成测试包
     integration_package = "github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/integration"
     
@@ -356,6 +440,9 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
                 line = line.strip()
                 if line.startswith("Test") and (not pattern or pattern.lower() in line.lower()):
                     test_ids.append(f"golang:{integration_package}.{line}")
+        else:
+            print(f"⚠️ Go测试发现命令失败，返回码: {result.returncode}")
+            print(f"⚠️ 错误输出: {result.stderr}")
         
         print(f"✅ 找到 {len(test_ids)} 个Golang集成测试。")
         
@@ -381,6 +468,7 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
         
     except Exception as e:
         print(f"❌ Golang测试发现失败: {e}")
+        print("💡 提示: 当前CI环境可能不支持Golang测试，请使用python或typescript测试类型")
         return {
             "test_queue": [],
             "current_test_index": 0,

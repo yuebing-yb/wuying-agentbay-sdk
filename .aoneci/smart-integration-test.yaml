@@ -34,11 +34,49 @@ jobs:
         name: "Run Smart Tests"
         run: |
           echo "🔄 Installing dependencies for Smart Test Runner..."
+          
+          # Install Go if needed for golang or all test types
+          if [ "${{params.test_type}}" = "golang" ] || [ "${{params.test_type}}" = "all" ]; then
+            echo "🐹 Installing Go environment..."
+            # Download and install Go 1.21
+            wget -q https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+            sudo rm -rf /usr/local/go
+            sudo tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
+            export PATH=$PATH:/usr/local/go/bin
+            echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
+            go version
+            echo "✅ Go installed successfully"
+            
+            # Setup Golang dependencies
+            echo "📦 Setting up Golang dependencies..."
+            cd golang
+            go mod download
+            cd ..
+          fi
+          
+          # Install Node.js if needed for typescript or all test types
+          if [ "${{params.test_type}}" = "typescript" ] || [ "${{params.test_type}}" = "all" ]; then
+            echo "📜 Installing Node.js environment..."
+            # Install Node.js 18
+            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            node --version
+            npm --version
+            echo "✅ Node.js installed successfully"
+            
+            # Setup TypeScript dependencies
+            echo "📦 Setting up TypeScript dependencies..."
+            cd typescript
+            npm install
+            cd ..
+          fi
+          
+          # Setup Python environment (always needed for the test runner itself)
           python -m pip config set global.timeout 600
           python -m pip config set global.retries 5
           python -m pip install --upgrade pip
           
-          # Install dependencies similar to unit test job
+          # Install Python dependencies similar to unit test job
           pip install "darabonba-core>=1.0.0,<2.0.0" \
                       "alibabacloud-tea-openapi>=0.4.0rc3" \
                       "cryptography>=44.0.0" \
@@ -57,6 +95,22 @@ jobs:
           
           # Install SDK in editable mode
           pip install -e python/
+          
+          # Setup TypeScript environment (if needed)
+          if [ "${{params.test_type}}" = "typescript" ] || [ "${{params.test_type}}" = "all" ]; then
+            echo "📦 Setting up TypeScript environment..."
+            cd typescript
+            npm install
+            cd ..
+          fi
+          
+          # Setup Golang environment (if needed)
+          if [ "${{params.test_type}}" = "golang" ] || [ "${{params.test_type}}" = "all" ]; then
+            echo "🐹 Setting up Golang environment..."
+            cd golang
+            go mod download
+            cd ..
+          fi
           
           echo "🔧 Setting up environment..."
           # Set PYTHONPATH similar to unit test job
