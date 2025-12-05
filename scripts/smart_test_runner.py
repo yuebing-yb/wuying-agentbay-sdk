@@ -396,6 +396,7 @@ def main():
     
     parser = argparse.ArgumentParser(description="Smart Integration Test Runner with AI Analysis")
     parser.add_argument("-k", "--keyword", help="Run tests which match the given substring expression (same as pytest -k)", type=str)
+    parser.add_argument("--test-type", help="Test type to run (all, python, typescript, golang)", type=str, default="all")
     parser.add_argument("--report", help="Path to save the report", default=REPORT_FILE)
     
     args = parser.parse_args()
