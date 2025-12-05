@@ -29,129 +29,60 @@ jobs:
       - uses: setup-env
         inputs:
           python-version: '3.12'
+          node-version: '18'
+          npm-version: '10'
+          npm-cache: true
+          go-version: '1.24.3'
+          go-mod-cache: true
+          go-cache: true
           
       - id: run-smart-tests
         name: "Run Smart Tests"
         run: |
           echo "🔄 Installing dependencies for Smart Test Runner..."
           
-          # Install Go if needed for golang or all test types
+          # Setup Golang dependencies if needed
           if [ "${{params.test_type}}" = "golang" ] || [ "${{params.test_type}}" = "all" ]; then
-            echo "🐹 Installing Go environment..."
-            # Check if Go is already available
-            if ! command -v go &> /dev/null; then
-              # Download and install Go 1.21 to local directory
-              mkdir -p $HOME/go-install
-              cd $HOME/go-install
-              if [ ! -f go1.24.3.linux-amd64.tar.gz ]; then
-                echo "📥 Downloading Go 1.24.3 from mirror..."
-                # Try multiple mirrors for better connectivity in China
-                wget -O go1.24.3.linux-amd64.tar.gz https://golang.google.cn/dl/go1.24.3.linux-amd64.tar.gz || \
-                wget -O go1.24.3.linux-amd64.tar.gz https://mirrors.aliyun.com/golang/go1.24.3.linux-amd64.tar.gz || \
-                wget -O go1.24.3.linux-amd64.tar.gz https://go.dev/dl/go1.24.3.linux-amd64.tar.gz
-              fi
-              if [ -f go1.24.3.linux-amd64.tar.gz ]; then
-                echo "📦 Extracting Go 1.24.3..."
-                tar -xzf go1.24.3.linux-amd64.tar.gz
-                export PATH=$HOME/go-install/go/bin:$PATH
-                export GOROOT=$HOME/go-install/go
-                # Set Go proxy immediately after installation
-                export GOPROXY=https://goproxy.cn,direct
-                export GOSUMDB=sum.golang.google.cn
-                export GOTOOLCHAIN=local
-                echo "✅ Go installed to local directory"
-              else
-                echo "❌ Failed to download Go"
-              fi
-              cd $(pwd)
-            fi
-            go version || echo "❌ Go installation failed"
+            echo "🐹 Setting up Golang environment..."
+            # Configure Go environment (setup-env already installed Go)
+            go env -w GOPROXY=https://goproxy.cn,direct
+            go env -w GOSUMDB=sum.golang.google.cn
+            go env -w GOTOOLCHAIN=local
+            go version
             
-            # Setup Golang dependencies
-            if command -v go &> /dev/null && [ -d "golang" ]; then
-              echo "📦 Setting up Golang dependencies..."
-              # Set Go proxy to use faster mirror in China
-              export GOPROXY=https://goproxy.cn,direct
-              export GOSUMDB=sum.golang.google.cn
+            if [ -d "golang" ]; then
               cd golang
               go mod download
               # Install Playwright browsers for Golang tests
               echo "🎭 Installing Playwright browsers for Golang..."
               go run github.com/playwright-community/playwright-go/cmd/playwright@latest install --with-deps
-              cd .. || echo "⚠️ Go setup failed"
+              cd ..
             fi
           fi
           
-          # Install Node.js if needed for typescript or all test types
+          # Setup TypeScript dependencies if needed  
           if [ "${{params.test_type}}" = "typescript" ] || [ "${{params.test_type}}" = "all" ]; then
-            echo "📜 Installing Node.js environment..."
-            # Check if Node.js is already available
-            if ! command -v node &> /dev/null; then
-              # Install Node.js using NodeSource binary distribution (no sudo required)
-              mkdir -p $HOME/nodejs
-              cd $HOME/nodejs
-              if [ ! -f node-v18.18.0-linux-x64.tar.xz ]; then
-                echo "📥 Downloading Node.js from mirror..."
-                # Try multiple mirrors for better connectivity in China
-                wget -O node-v18.18.0-linux-x64.tar.xz https://npmmirror.com/mirrors/node/v18.18.0/node-v18.18.0-linux-x64.tar.xz || \
-                wget -O node-v18.18.0-linux-x64.tar.xz https://mirrors.aliyun.com/nodejs-release/v18.18.0/node-v18.18.0-linux-x64.tar.xz || \
-                wget -O node-v18.18.0-linux-x64.tar.xz https://nodejs.org/dist/v18.18.0/node-v18.18.0-linux-x64.tar.xz
-              fi
-              if [ -f node-v18.18.0-linux-x64.tar.xz ]; then
-                echo "📦 Extracting Node.js..."
-                tar -xf node-v18.18.0-linux-x64.tar.xz
-                export PATH=$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH
-                echo "✅ Node.js installed to local directory"
-              else
-                echo "❌ Failed to download Node.js"
-              fi
-              cd $(pwd)
-            fi
-            node --version || echo "❌ Node.js installation failed"
-            npm --version || echo "❌ npm installation failed"
+            echo "📜 Setting up TypeScript environment..."
+            # Node.js and npm already installed by setup-env
+            node --version
+            npm --version
             
-            # Setup TypeScript dependencies
-            if command -v npm &> /dev/null && [ -d "typescript" ]; then
-              echo "📦 Setting up TypeScript dependencies..."
-              # Set npm registry to use faster mirror in China
-              npm config set registry https://registry.npmmirror.com
+            if [ -d "typescript" ]; then
               cd typescript
-              # Clean install to ensure fresh dependencies
-              echo "🧹 Cleaning npm cache and node_modules..."
-              npm cache clean --force || true
-              rm -rf node_modules package-lock.json || true
-              
-              # Show package.json devDependencies for debugging
-              echo "📋 Checking package.json devDependencies..."
-              cat package.json | grep -A 20 '"devDependencies"' || echo "⚠️ No devDependencies found"
-              
-              # Install all dependencies including dev dependencies needed for testing
-              echo "📦 Installing npm dependencies..."
-              npm install --verbose
+              # Use npm ci like the working unit tests
+              npm config set fetch-timeout 300000
+              npm config set fetch-retry-mintimeout 20000
+              npm config set fetch-retry-maxtimeout 120000
+              npm ci --prefer-offline --no-audit
               
               # Verify ts-jest installation
               echo "🔍 Verifying ts-jest installation..."
-              npm list ts-jest || echo "⚠️ ts-jest not found in npm list"
-              
-              # Check if ts-jest exists in node_modules
-              echo "📂 Checking node_modules for ts-jest..."
-              ls -la node_modules/ | grep ts-jest || echo "⚠️ ts-jest not found in node_modules"
-              
-              # Try to require ts-jest
-              echo "🔍 Testing ts-jest require..."
-              node -e "try { require('ts-jest'); console.log('✅ ts-jest can be required'); } catch(e) { console.log('❌ ts-jest require failed:', e.message); }"
-              
-              # If still not found, install explicitly
-              if ! npm list ts-jest > /dev/null 2>&1; then
-                echo "⚠️ ts-jest not found, installing explicitly..."
-                npm install --save-dev ts-jest @types/jest typescript jest
-                npm list ts-jest
-              fi
+              npm list ts-jest || echo "⚠️ ts-jest not found"
               
               # Install Playwright browsers for TypeScript tests
               echo "🎭 Installing Playwright browsers for TypeScript..."
               npx playwright install --with-deps || echo "⚠️ Playwright install failed"
-              cd .. || echo "⚠️ TypeScript setup failed"
+              cd ..
             fi
           fi
           
@@ -201,12 +132,14 @@ jobs:
           echo "Working directory: $(pwd)"
           echo "Python path: $PYTHONPATH"
           
-          # Set up PATH for installed tools
+          # Set up environment for test execution
+          # Ensure we have the correct working directory
+          cd /aoneci/runner/work/source || exit 1
+          
+          # Set Go environment variables if needed
           if [ "${{params.test_type}}" = "golang" ] || [ "${{params.test_type}}" = "all" ]; then
-            export PATH=$HOME/go-install/go/bin:$PATH
-            export GOROOT=$HOME/go-install/go
             export GOPROXY=https://goproxy.cn,direct
-            export GOSUMDB=sum.golang.google.cn
+            export GOSUMDB=sum.golang.google.cn  
             export GOTOOLCHAIN=local
             echo "🔍 Checking Go installation..."
             which go || echo "❌ Go not found in PATH"
@@ -214,7 +147,6 @@ jobs:
           fi
           
           if [ "${{params.test_type}}" = "typescript" ] || [ "${{params.test_type}}" = "all" ]; then
-            export PATH=$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH
             echo "🔍 Checking Node.js installation..."
             which node || echo "❌ Node not found in PATH"
             node --version || echo "❌ Node version check failed"
@@ -222,18 +154,7 @@ jobs:
             npm --version || echo "❌ npm version check failed"
           fi
           
-          # Run the smart test runner and capture exit code with updated PATH
-          # Ensure we have the correct working directory
-          cd /aoneci/runner/work/source || exit 1
-          
-          # Set up comprehensive PATH with all installed tools
-          export PATH="$HOME/go-install/go/bin:$HOME/nodejs/node-v18.18.0-linux-x64/bin:$PATH"
-          
-          # Set Go environment variables for China network
-          export GOPROXY=https://goproxy.cn,direct
-          export GOSUMDB=sum.golang.google.cn  
-          export GOTOOLCHAIN=local
-          
+          # Run the smart test runner
           if python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
             echo "✅ Smart Test Runner completed successfully"
             
