@@ -47,8 +47,8 @@ async def take_agent_screenshots(session: AsyncSession):
         return
     
     with open("temp_agent_screenshot.png", "wb") as f:
-            f.write(agent_screenshot)
-        print("✅ Agent screenshot saved as temp_agent_screenshot.png")
+        f.write(agent_screenshot)
+    print("✅ Agent screenshot saved as temp_agent_screenshot.png")
     
     # Take a full page screenshot with custom quality
     full_page_b64 = await session.browser.agent.screenshot(
@@ -122,9 +122,9 @@ async def take_browser_screenshots(session: AsyncSession):
         print(f"✅ Browser custom screenshot captured ({len(custom_screenshot)} bytes)")
         
         # Save the custom screenshot
-        with open("browser_custom_screenshot.png", "wb") as f:
+        with open("temp_browser_custom_screenshot.png", "wb") as f:
             f.write(custom_screenshot)
-        print("✅ Browser custom screenshot saved as browser_custom_screenshot.png")
+        print("✅ Browser custom screenshot saved as temp_browser_custom_screenshot.png")
         
         await browser.close()
 
@@ -176,11 +176,11 @@ async def main():
         print("\n" + "="*50)
         print("✅ All screenshot demos completed successfully!")
         print("📁 Check the current directory for saved screenshot files:")
-        print("   - agent_screenshot.png")
-        print("   - agent_full_page_screenshot.png")
-        print("   - browser_screenshot.png")
-        print("   - browser_full_page_screenshot.jpg")
-        print("   - browser_custom_screenshot.png")
+        print("   - temp_agent_screenshot.png")
+        print("   - temp_agent_full_page_screenshot.png")
+        print("   - temp_browser_screenshot.png")
+        print("   - temp_browser_full_page_screenshot.jpg")
+        print("   - temp_browser_custom_screenshot.png")
 
     except Exception as e:
         print(f"Error during screenshot demo: {e}")
