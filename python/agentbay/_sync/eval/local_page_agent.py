@@ -304,8 +304,6 @@ class LocalBrowser(Browser):
                                 viewport={"width": 1280, "height": 1200},
                                 args=[
                                     f"--remote-debugging-port={self._cdp_port}",
-                                    "--disable-gpu",
-                                    "--disable-software-rasterizer",
                                 ],
                                 user_data_dir=user_data_dir,
                             )
