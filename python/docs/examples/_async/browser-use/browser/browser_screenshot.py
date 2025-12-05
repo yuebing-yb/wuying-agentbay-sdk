@@ -70,8 +70,8 @@ async def take_agent_screenshots(session: AsyncSession):
         return
     
     with open("temp_agent_full_page_screenshot.png", "wb") as f:
-            f.write(agent_full_page_screenshot)
-        print("✅ Agent full page screenshot saved as temp_agent_full_page_screenshot.png")
+        f.write(image_data)
+    print("✅ Agent full page screenshot saved as temp_agent_full_page_screenshot.png")
 
 
 async def take_browser_screenshots(session: AsyncSession):
@@ -95,7 +95,7 @@ async def take_browser_screenshots(session: AsyncSession):
         
         # Save the screenshot to a file
         with open("temp_browser_screenshot.png", "wb") as f:
-            f.write(browser_screenshot)
+            f.write(screenshot_bytes)
         print("✅ Browser screenshot saved as temp_browser_screenshot.png")
         
         # Take a full page screenshot with custom options
@@ -109,7 +109,7 @@ async def take_browser_screenshots(session: AsyncSession):
         
         # Save the full page screenshot
         with open("temp_browser_full_page_screenshot.jpg", "wb") as f:
-            f.write(browser_full_page_screenshot)
+            f.write(full_page_bytes)
         print("✅ Browser full page screenshot saved as temp_browser_full_page_screenshot.jpg")
         
         # Take a screenshot with custom viewport settings
