@@ -1,0 +1,47 @@
+stages:
+  - smart_test
+
+jobs:
+  - name: Smart Integration Test
+    stage: smart_test
+    trigger: manual
+    variables:
+      PYTHON_VERSION: "3.13"
+    steps:
+      - name: Checkout
+        step: Checkout
+        with:
+          ref: ${{ ctx.data.ref }}
+      
+      - name: Install Python
+        step: InstallPython
+        with:
+          version: ${{ vars.PYTHON_VERSION }}
+          
+      - name: Install Dependencies
+        step: Shell
+        with:
+          script: |
+            python -m pip install --upgrade pip
+            python -m pip install pytest langchain-openai langgraph langchain-core alibabacloud_tea_openapi alibabacloud_credentials alibabacloud_tea_util alibabacloud_endpoint_util
+            # Install the SDK itself in editable mode if needed, or just dependencies
+            python -m pip install -e python/
+            
+      - name: Run Smart Tests
+        step: Shell
+        env:
+          AGENTBAY_API_KEY: ${{ secrets.AGENTBAY_API_KEY }}
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+          PYTHONPATH: ${{ ctx.workspace }}/python
+        with:
+          script: |
+            echo "Starting Smart Test Runner..."
+            # Default runs all (or as logic defines). To run specific, modify command manually in Aone run parameters or code.
+            python scripts/smart_test_runner.py
+            
+      - name: Upload Report
+        step: Archive
+        with:
+          path: test_report.md
+          name: Smart Test Report
+
