@@ -944,7 +944,11 @@ def main():
         
         result = app.invoke(initial_state, config=config)
         
-        print(f"✅ 工作流完成: {result}")
+        # 创建一个不包含SDK上下文的结果副本用于显示
+        display_result = {k: v for k, v in result.items() if k != 'sdk_context'}
+        if 'sdk_context' in result:
+            display_result['sdk_context'] = f"<已加载 {len(result['sdk_context'])} 字符的SDK上下文>"
+        print(f"✅ 工作流完成: {display_result}")
         sys.stdout.flush()
     except Exception as e:
         print(f"\n💥 执行失败: {e}")
