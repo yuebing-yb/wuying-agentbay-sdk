@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
-from darabonba.model import DaraModel 
+
 from typing import Optional
+
+from darabonba.model import DaraModel
 
 
 class CreateMcpSessionShrinkRequest(DaraModel):
@@ -19,6 +21,7 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         vpc_resource: Optional[bool] = None,
         extra_configs: Optional[str] = None,
         sdk_stats: Optional[str] = None,
+        login_region_id: Optional[str] = None,
     ):
         self.authorization = authorization
         self.context_id = context_id
@@ -31,6 +34,7 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         self.vpc_resource = vpc_resource
         self.extra_configs = extra_configs
         self.sdk_stats = sdk_stats
+        self.login_region_id = login_region_id
 
     def validate(self):
         pass
@@ -41,74 +45,79 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         if _map is not None:
             result = _map
         if self.authorization is not None:
-            result['Authorization'] = self.authorization
+            result["Authorization"] = self.authorization
 
         if self.context_id is not None:
-            result['ContextId'] = self.context_id
+            result["ContextId"] = self.context_id
 
         if self.external_user_id is not None:
-            result['ExternalUserId'] = self.external_user_id
+            result["ExternalUserId"] = self.external_user_id
 
         if self.image_id is not None:
-            result['ImageId'] = self.image_id
+            result["ImageId"] = self.image_id
 
         if self.labels is not None:
-            result['Labels'] = self.labels
+            result["Labels"] = self.labels
 
         if self.mcp_policy_id is not None:
-            result['McpPolicyId'] = self.mcp_policy_id
+            result["McpPolicyId"] = self.mcp_policy_id
 
         if self.persistence_data_list_shrink is not None:
-            result['PersistenceDataList'] = self.persistence_data_list_shrink
+            result["PersistenceDataList"] = self.persistence_data_list_shrink
 
         if self.session_id is not None:
-            result['SessionId'] = self.session_id
+            result["SessionId"] = self.session_id
 
         if self.vpc_resource is not None:
-            result['VpcResource'] = self.vpc_resource
+            result["VpcResource"] = self.vpc_resource
 
         if self.extra_configs is not None:
-            result['ExtraConfigs'] = self.extra_configs
+            result["ExtraConfigs"] = self.extra_configs
 
         if self.sdk_stats is not None:
-            result['SdkStats'] = self.sdk_stats
+            result["SdkStats"] = self.sdk_stats
+
+        if self.login_region_id is not None:
+            result["LoginRegionId"] = self.login_region_id
 
         return result
 
     def from_map(self, m: Optional[dict] = None):
         m = m or dict()
-        if m.get('Authorization') is not None:
-            self.authorization = m.get('Authorization')
+        if m.get("Authorization") is not None:
+            self.authorization = m.get("Authorization")
 
-        if m.get('ContextId') is not None:
-            self.context_id = m.get('ContextId')
+        if m.get("ContextId") is not None:
+            self.context_id = m.get("ContextId")
 
-        if m.get('ExternalUserId') is not None:
-            self.external_user_id = m.get('ExternalUserId')
+        if m.get("ExternalUserId") is not None:
+            self.external_user_id = m.get("ExternalUserId")
 
-        if m.get('ImageId') is not None:
-            self.image_id = m.get('ImageId')
+        if m.get("ImageId") is not None:
+            self.image_id = m.get("ImageId")
 
-        if m.get('Labels') is not None:
-            self.labels = m.get('Labels')
+        if m.get("Labels") is not None:
+            self.labels = m.get("Labels")
 
-        if m.get('McpPolicyId') is not None:
-            self.mcp_policy_id = m.get('McpPolicyId')
+        if m.get("McpPolicyId") is not None:
+            self.mcp_policy_id = m.get("McpPolicyId")
 
-        if m.get('PersistenceDataList') is not None:
-            self.persistence_data_list_shrink = m.get('PersistenceDataList')
+        if m.get("PersistenceDataList") is not None:
+            self.persistence_data_list_shrink = m.get("PersistenceDataList")
 
-        if m.get('SessionId') is not None:
-            self.session_id = m.get('SessionId')
+        if m.get("SessionId") is not None:
+            self.session_id = m.get("SessionId")
 
-        if m.get('VpcResource') is not None:
-            self.vpc_resource = m.get('VpcResource')
+        if m.get("VpcResource") is not None:
+            self.vpc_resource = m.get("VpcResource")
 
-        if m.get('ExtraConfigs') is not None:
-            self.extra_configs = m.get('ExtraConfigs')
+        if m.get("ExtraConfigs") is not None:
+            self.extra_configs = m.get("ExtraConfigs")
 
-        if m.get('SdkStats') is not None:
-            self.sdk_stats = m.get('SdkStats')
+        if m.get("SdkStats") is not None:
+            self.sdk_stats = m.get("SdkStats")
+
+        if m.get("LoginRegionId") is not None:
+            self.login_region_id = m.get("LoginRegionId")
 
         return self
-

@@ -7,7 +7,7 @@ import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
 import { Client } from "./api/client";
 
-import { Config, BROWSER_RECORD_PATH } from "./config";
+import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
 import { ContextService } from "./context";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
@@ -15,7 +15,6 @@ import { Session } from "./session";
 import { BrowserContext } from "./session-params";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
-import { MobileSimulateService } from "./mobile-simulate";
 
 import {
   DeleteResult,
@@ -45,109 +44,9 @@ import { VERSION, IS_RELEASE } from "./version";
 // Browser data path constant (moved from config.ts)
 const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 
-/**
- * Returns the default configuration
- */
-function defaultConfig(): Config {
-  return {
-    endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
-    timeout_ms: 60000,
-  };
-}
 
-/**
- * Find .env file by searching upward from start_path.
- */
-function findDotEnvFile(startPath?: string): string | null {
-  const currentPath = startPath ? path.resolve(startPath) : process.cwd();
-  let searchPath = currentPath;
 
-  while (searchPath !== path.dirname(searchPath)) {
-    const envFile = path.join(searchPath, ".env");
-    if (fs.existsSync(envFile)) {
-      return envFile;
-    }
 
-    const gitDir = path.join(searchPath, ".git");
-    if (fs.existsSync(gitDir)) {
-      // Found git root, continue searching
-    }
-
-    searchPath = path.dirname(searchPath);
-  }
-
-  const rootEnv = path.join(searchPath, ".env");
-  if (fs.existsSync(rootEnv)) {
-    return rootEnv;
-  }
-
-  return null;
-}
-
-/**
- * Load .env file with improved search strategy.
- */
-function loadDotEnvWithFallback(customEnvPath?: string): void {
-  if (customEnvPath) {
-    if (fs.existsSync(customEnvPath)) {
-      try {
-        const envConfig = dotenv.parse(fs.readFileSync(customEnvPath));
-        for (const k in envConfig) {
-          if (!process.env.hasOwnProperty(k)) {
-            process.env[k] = envConfig[k];
-          }
-        }
-        return;
-      } catch (error) {
-        // Silently fail - .env loading is optional
-      }
-    }
-  }
-
-  const envFile = findDotEnvFile();
-  if (envFile) {
-    try {
-      const envConfig = dotenv.parse(fs.readFileSync(envFile));
-      for (const k in envConfig) {
-        if (!process.env.hasOwnProperty(k)) {
-          process.env[k] = envConfig[k];
-        }
-      }
-    } catch (error) {
-      // Silently fail - .env loading is optional
-    }
-  }
-}
-
-/**
- * Load configuration with improved .env file search.
- */
-function loadConfig(customConfig?: Config, customEnvPath?: string): Config {
-  if (customConfig) {
-    return customConfig;
-  }
-
-  const config = defaultConfig();
-
-  try {
-    loadDotEnvWithFallback(customEnvPath);
-  } catch (error) {
-    // Silently fail - .env loading is optional
-  }
-
-  if (process.env.AGENTBAY_ENDPOINT) {
-    config.endpoint = process.env.AGENTBAY_ENDPOINT;
-  }
-
-  if (process.env.AGENTBAY_TIMEOUT_MS) {
-    const timeout = parseInt(process.env.AGENTBAY_TIMEOUT_MS, 10);
-    if (!isNaN(timeout) && timeout > 0) {
-      config.timeout_ms = timeout;
-    }
-  }
-
-  return config;
-}
 
 /**
  * Generate a random context name using alphanumeric characters with timestamp.
@@ -188,6 +87,7 @@ export class AgentBay {
   private client: Client;
   private endpoint: string;
   private fileTransferContext: Context | null = null;
+  private config: Config;
 
   /**
    * Context service for managing persistent contexts.
@@ -220,6 +120,8 @@ export class AgentBay {
       );
     }
 
+    this.config = loadConfig(options.config, options.envFile);
+
     // Load configuration using the enhanced loadConfig function
     const configData = loadConfig(options.config, options.envFile);
     this.endpoint = configData.endpoint;
@@ -241,6 +143,14 @@ export class AgentBay {
       logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);
     }
+  }
+
+  /**
+   * Get the region ID.
+   * @returns The region ID or undefined if not set.
+   */
+  getRegionId(): string | undefined {
+    return this.config.region_id;
   }
 
   /**
@@ -289,7 +199,7 @@ export class AgentBay {
       }
 
       const command = `chmod -R a+rwx ${mobileSimPath}; wya apply ${wyaApplyOption} ${devInfoFilePath}`.trim();
-      logInfo(`ℹ️  ⏳ Waiting for mobile simulate completion, command: ${command}`);
+      logInfo(`ℹ️  ⏳ Waiting for mobile simulate completion, command: [${command}]`);
       
       const cmdResult = await (session as any).command.executeCommand(command);
       if (cmdResult.success) {
@@ -415,10 +325,9 @@ export class AgentBay {
           params.contextSync.push(mobileSimContextSync);
         }
       }
-      
+
       // Create a default context for file transfer operations if none provided
       // and no context_syncs are specified
-      logDebug(`Origin context syncs length: ${params.contextSync?.length}`);
       const contextName = `file-transfer-context-${Date.now()}`;
       const contextResult = await this.context.get(contextName, true);
       if (contextResult.success && contextResult.context) {
@@ -444,6 +353,11 @@ export class AgentBay {
       const sdkStatsJson = `{"source":"sdk","sdk_language":"typescript","sdk_version":"${VERSION}","is_release":${IS_RELEASE},"framework":"${framework}"}`;
       request.sdkStats = sdkStatsJson;
 
+      // Add LoginRegionId if region_id is set
+      if (this.config.region_id) {
+        request.loginRegionId = this.config.region_id;
+      }
+
       // Add labels if provided
       if (params.labels) {
         request.labels = JSON.stringify(params.labels);
@@ -464,7 +378,7 @@ export class AgentBay {
 
       // Flag to indicate if we need to wait for context synchronization
       let needsContextSync = false;
-      
+
       // Flag to indicate if we need to wait for mobile simulate
       let needsMobileSim = false;
       let mobileSimMode: string | undefined = undefined;

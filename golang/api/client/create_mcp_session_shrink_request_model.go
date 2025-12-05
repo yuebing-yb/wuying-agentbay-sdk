@@ -31,6 +31,8 @@ type iCreateMcpSessionShrinkRequest interface {
 	GetExtraConfigs() *string
 	SetSdkStats(v string) *CreateMcpSessionShrinkRequest
 	GetSdkStats() *string
+	SetLoginRegionId(v string) *CreateMcpSessionShrinkRequest
+	GetLoginRegionId() *string
 }
 
 type CreateMcpSessionShrinkRequest struct {
@@ -45,6 +47,7 @@ type CreateMcpSessionShrinkRequest struct {
 	VpcResource               *bool   `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
 	ExtraConfigs              *string `json:"ExtraConfigs,omitempty" xml:"ExtraConfigs,omitempty"`
 	SdkStats                  *string `json:"SdkStats,omitempty" xml:"SdkStats,omitempty"`
+	LoginRegionId             *string `json:"LoginRegionId,omitempty" xml:"LoginRegionId,omitempty"`
 }
 
 func (s CreateMcpSessionShrinkRequest) String() string {
@@ -151,6 +154,15 @@ func (s *CreateMcpSessionShrinkRequest) GetSdkStats() *string {
 
 func (s *CreateMcpSessionShrinkRequest) SetSdkStats(v string) *CreateMcpSessionShrinkRequest {
 	s.SdkStats = &v
+	return s
+}
+
+func (s *CreateMcpSessionShrinkRequest) GetLoginRegionId() *string {
+	return s.LoginRegionId
+}
+
+func (s *CreateMcpSessionShrinkRequest) SetLoginRegionId(v string) *CreateMcpSessionShrinkRequest {
+	s.LoginRegionId = &v
 	return s
 }
 

@@ -33,7 +33,7 @@ Mobile UI automation requires creating a session with a mobile system image (thi
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")
@@ -123,7 +123,7 @@ agent_bay.delete(session)
 Send Android hardware key events using KeyCode constants:
 
 ```python
-from agentbay.mobile.mobile import KeyCode
+from agentbay import KeyCode
 
 session_params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(session_params).session
@@ -264,7 +264,7 @@ else:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")
@@ -301,7 +301,7 @@ finally:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")
@@ -336,7 +336,7 @@ finally:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")
@@ -372,7 +372,7 @@ finally:
 
 ```python
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
+from agentbay import CreateSessionParams
 
 agent_bay = AgentBay()
 session_params = CreateSessionParams(image_id="mobile_latest")

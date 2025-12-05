@@ -39,6 +39,7 @@ describe("TestContextService", () => {
     mockAgentBay = {
       getAPIKey: sandbox.stub().returns("test-api-key"),
       getClient: sandbox.stub().returns(mockClient),
+      getRegionId: sandbox.stub().returns("test-region-id"),
     };
 
     mockContextService = new ContextService(mockAgentBay);
@@ -72,6 +73,7 @@ describe("TestContextService", () => {
             },
           ],
           requestId: "test-list-request-id",
+          success: true,
         },
         statusCode: 200,
       };
@@ -116,6 +118,7 @@ describe("TestContextService", () => {
         body: {
           data: { id: "context-1" },
           requestId: "test-get-request-id",
+          success: true,
         },
         statusCode: 200,
       };
@@ -135,6 +138,7 @@ describe("TestContextService", () => {
             },
           ],
           requestId: "test-list-request-id",
+          success: true,
         },
         statusCode: 200,
       };
@@ -179,6 +183,7 @@ describe("TestContextService", () => {
         body: {
           data: { id: "new-context-id" },
           requestId: "test-create-request-id",
+          success: true,
         },
         statusCode: 200,
       };
@@ -198,6 +203,7 @@ describe("TestContextService", () => {
             },
           ],
           requestId: "test-list-request-id",
+          success: true,
         },
         statusCode: 200,
       };
@@ -284,7 +290,7 @@ describe("TestContextService", () => {
         body: {
           code: "ok",
           httpStatusCode: 200,
-          Success: true,
+          success: true,
           requestId: "test-delete-request-id",
         },
         statusCode: 200,

@@ -28,8 +28,8 @@ Generate random fingerprints based on specified criteria such as device type, op
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption, BrowserFingerprint
 from playwright.async_api import async_playwright
 
 async def random_fingerprint_example():
@@ -211,9 +211,9 @@ Capture fingerprint characteristics from your local Chrome browser and apply the
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.fingerprint import BrowserFingerprintGenerator
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import BrowserFingerprintGenerator
 from playwright.async_api import async_playwright
 
 async def local_sync_fingerprint_example():
@@ -383,9 +383,9 @@ Load and apply custom fingerprint data from JSON files or construct fingerprints
 import os
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
-from agentbay.browser.fingerprint import FingerprintFormat
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
+from agentbay import FingerprintFormat
 from playwright.async_api import async_playwright
 
 async def custom_fingerprint_example():
@@ -584,8 +584,8 @@ import os
 import time
 import asyncio
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams, BrowserContext
-from agentbay.browser.browser import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
+from agentbay import CreateSessionParams, BrowserContext
+from agentbay import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
 from playwright.async_api import async_playwright
 
 async def fingerprint_persistence_example():

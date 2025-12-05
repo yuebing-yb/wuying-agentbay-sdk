@@ -244,6 +244,10 @@ export class Client extends OpenApi {
       body["SdkStats"] = request.sdkStats;
     }
 
+    if (!$dara.isNull(request.loginRegionId)) {
+      body["LoginRegionId"] = request.loginRegionId;
+    }
+
     const req = new $OpenApiUtil.OpenApiRequest({
       body: OpenApiUtil.parseToMap(body),
     });
@@ -358,6 +362,10 @@ export class Client extends OpenApi {
 
     if (!$dara.isNull(request.name)) {
       body["Name"] = request.name;
+    }
+
+    if (!$dara.isNull(request.loginRegionId)) {
+      body["LoginRegionId"] = request.loginRegionId;
     }
 
     const req = new $OpenApiUtil.OpenApiRequest({

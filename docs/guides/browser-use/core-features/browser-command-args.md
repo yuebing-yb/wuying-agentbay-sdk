@@ -129,8 +129,8 @@ import os
 import asyncio
 
 from agentbay import AgentBay
-from agentbay.session_params import CreateSessionParams
-from agentbay.browser.browser import BrowserOption
+from agentbay import CreateSessionParams
+from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():

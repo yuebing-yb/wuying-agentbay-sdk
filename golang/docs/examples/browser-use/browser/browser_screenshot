@@ -104,11 +104,11 @@ func main() {
 	// fmt.Printf("✅ Browser screenshot captured (%d bytes)\n", len(screenshotData))
 
 	// Save the screenshot to a file
-	// err = ioutil.WriteFile("browser_screenshot.png", screenshotData, 0644)
+	// err = ioutil.WriteFile("temp_browser_screenshot.png", screenshotData, 0644)
 	// if err != nil {
 	// 	log.Fatalf("Failed to save screenshot: %v", err)
 	// }
-	// fmt.Println("✅ Browser screenshot saved as browser_screenshot.png")
+	// fmt.Println("✅ Browser screenshot saved as temp_browser_screenshot.png")
 
 	fmt.Println("ℹ️  Note: Screenshot functionality requires Playwright Go integration")
 	fmt.Println("✅ Browser screenshot demo completed")
