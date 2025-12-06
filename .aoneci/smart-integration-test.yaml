@@ -31,16 +31,6 @@ traits:
         | 🧪 | ${{jobs.smart-integration-test.name}} |
         ${{jobs.smart-integration-test.outputs.failed_test_table}}
 
-stages:
-  stage1:
-    jobs:
-      hello:
-        name: "智能集成测试完成"
-        steps:
-          - id: test-notification
-            run:
-              - echo "Smart Integration Test completed"
-
 jobs:
   smart-integration-test:
     name: "Smart Integration Test"
