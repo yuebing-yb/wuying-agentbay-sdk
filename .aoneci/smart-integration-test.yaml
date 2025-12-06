@@ -188,36 +188,66 @@ jobs:
             echo "📋 失败测试概览："
             echo ""
             
-            # Extract and show failed test titles first
+            # Create individual collapsible sections for each failed test
             if grep -q "❌ 失败测试" test_report.md; then
-              # Extract all failed test IDs and show them with proper formatting
+              # Process each failed test and create separate collapsible sections
               awk '
               BEGIN { 
                 test_count = 0;
+                in_test = 0;
+                test_content = "";
+                test_id = "";
               }
+              
               /## ❌ 失败测试/ {
+                # If we have a previous test, output it
+                if (test_count > 0 && test_id != "") {
+                  print "::group::" test_count ". " test_id;
+                  print test_content;
+                  print "::endgroup::";
+                  print "";
+                }
+                
+                # Start new test
                 test_count++;
+                in_test = 1;
+                test_content = "";
+                test_id = "";
+                
                 # Skip empty lines and find the test ID line
                 while (getline > 0) {
                   if (/^\*\*测试ID\*\*:/) {
-                    # Extract test ID from **测试ID**: `test_id_here`
+                    # Extract test ID
                     gsub(/^\*\*测试ID\*\*: `/, "", $0);
                     gsub(/`$/, "", $0);
-                    print "### " test_count ". " $0;
-                    print "";
+                    test_id = $0;
+                    test_content = test_content "**测试ID**: " test_id "\n\n";
                     break;
                   }
                 }
                 next;
               }
-              ' test_report.md
               
-              echo ""
-              echo "::group::🔍 查看完整测试详情和AI分析"
-              echo "包含所有失败测试的详细信息、AI分析和修复建议："
-              echo ""
-              cat test_report.md
-              echo "::endgroup::"
+              /^---$/ && in_test {
+                # End of current test section
+                in_test = 0;
+                next;
+              }
+              
+              in_test {
+                # Collect test content
+                test_content = test_content $0 "\n";
+              }
+              
+              END {
+                # Output the last test if exists
+                if (test_count > 0 && test_id != "") {
+                  print "::group::" test_count ". " test_id;
+                  print test_content;
+                  print "::endgroup::";
+                }
+              }
+              ' test_report.md
               
             else
               echo "✅ 所有测试都通过了！"
