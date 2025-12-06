@@ -787,31 +787,26 @@ def generate_report(state: AgentState) -> AgentState:
     else:
         content += f"## ❌ Failed Tests ({failed})\n\n"
         for res in failed_results:
-            content += f"---\n\n## ❌ 失败测试\n\n**测试ID**: `{res['test_id']}`\n\n"
+            content += f"---\n\n❌ 失败测试\n测试ID: {res['test_id']}\n\n"
             
             # AI Analysis section
+            content += "🤖 AI Analysis\n"
             if res.get('error_analysis') and res['error_analysis'] != "未进行AI分析":
-                content += "<details>\n<summary>🤖 AI Analysis</summary>\n\n"
                 content += f"{res['error_analysis']}\n\n"
-                content += "</details>\n\n"
             else:
-                content += "<details>\n<summary>🤖 AI Analysis</summary>\n\n"
                 content += "AI分析跳过或失败。可能原因：缺少DASHSCOPE_API_KEY或分析过程出错。\n\n"
-                content += "</details>\n\n"
                 
             # Output section  
-            content += "<details>\n<summary>📄 Output (Snippet)</summary>\n\n"
+            content += "📄 Output (Snippet)\n"
             content += f"```\n{res['output'][-2000:]}\n```\n\n"
-            content += "</details>\n\n"
             
             # AI fix prompt section
             fix_prompt = generate_single_ai_fix_prompt(res, state["sdk_context"])
             if fix_prompt:
-                content += "<details>\n<summary>🛠️ AI修复提示词</summary>\n\n"
+                content += "🛠️ AI修复提示词\n"
                 content += "```\n"
                 content += fix_prompt
                 content += "\n```\n\n"
-                content += "</details>\n\n"
     
     
             
