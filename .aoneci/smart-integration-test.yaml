@@ -167,68 +167,6 @@ jobs:
             echo "" >> $AONE_CI_SUMMARY_MD
             cat test_report.md >> $AONE_CI_SUMMARY_MD
             
-            # Display test results with better formatting
-            echo ""
-            echo "📋 智能集成测试详细结果："
-            echo ""
-            
-            # Show summary first
-            if grep -q "## 📊 测试总结" test_report.md; then
-              echo "### 📊 测试总结"
-              sed -n '/## 📊 测试总结/,/^## /p' test_report.md | head -n -1 | tail -n +2
-              echo ""
-            fi
-            
-            # Show failed tests with better formatting
-            if grep -q "❌ 失败测试" test_report.md; then
-              echo "### ❌ 失败的测试"
-              echo ""
-              
-              # Extract and display failed test IDs and basic info
-              awk '
-              BEGIN { 
-                in_failed_test = 0;
-                test_count = 0;
-              }
-              /❌ 失败测试/ {
-                in_failed_test = 1;
-                test_count++;
-                next;
-              }
-              in_failed_test && /^\*\*测试ID\*\*:/ {
-                gsub(/^\*\*测试ID\*\*: `/, "", $0);
-                gsub(/`$/, "", $0);
-                print "#### " test_count ". " $0;
-                next;
-              }
-              in_failed_test && /^\*\*错误信息\*\*:/ {
-                print $0;
-                next;
-              }
-              in_failed_test && /^---$/ {
-                in_failed_test = 0;
-                print "";
-                next;
-              }
-              ' test_report.md
-              
-              echo ""
-              echo "::group::🔍 查看完整失败测试详情"
-              echo "完整的失败测试信息（包含AI分析和修复建议）："
-              echo ""
-              cat test_report.md
-              echo "::endgroup::"
-            else
-              echo "✅ 所有测试都通过了！"
-            fi
-            
-            # Show successful tests summary
-            if grep -q "✅ 成功测试" test_report.md; then
-              echo ""
-              echo "### ✅ 成功的测试"
-              grep -c "✅ 成功测试" test_report.md | xargs -I {} echo "共 {} 个测试成功通过"
-            fi
-            
             # Archive as build artifacts
             mkdir -p artifacts
             cp test_report.md artifacts/smart_test_report.md
@@ -241,5 +179,57 @@ jobs:
             echo "❌ Smart Test Runner failed with exit code $?"
             echo "❌ CI pipeline will now fail"
             exit 1
+          fi
+          
+      - id: display-test-results
+        name: "Display Test Results"
+        run: |
+          if [ -f "test_report.md" ]; then
+            echo "📋 失败测试概览："
+            echo ""
+            
+            # Extract and show failed test titles first
+            if grep -q "❌ 失败测试" test_report.md; then
+              # Extract all failed test IDs and show them with proper formatting
+              awk '
+              BEGIN { 
+                test_count = 0;
+              }
+              /## ❌ 失败测试/ {
+                test_count++;
+                # Skip empty lines and find the test ID line
+                while (getline > 0) {
+                  if (/^\*\*测试ID\*\*:/) {
+                    # Extract test ID from **测试ID**: `test_id_here`
+                    gsub(/^\*\*测试ID\*\*: `/, "", $0);
+                    gsub(/`$/, "", $0);
+                    print "### " test_count ". " $0;
+                    print "";
+                    break;
+                  }
+                }
+                next;
+              }
+              ' test_report.md
+              
+              echo ""
+              echo "::group::🔍 查看完整测试详情和AI分析"
+              echo "包含所有失败测试的详细信息、AI分析和修复建议："
+              echo ""
+              cat test_report.md
+              echo "::endgroup::"
+              
+            else
+              echo "✅ 所有测试都通过了！"
+            fi
+            
+            # Show success summary from the summary line
+            if grep -q "Tests |" test_report.md; then
+              SUMMARY_LINE=$(grep "Tests |" test_report.md | head -1)
+              echo ""
+              echo "📊 $SUMMARY_LINE"
+            fi
+          else
+            echo "⚠️ 测试报告文件不存在"
           fi
 
