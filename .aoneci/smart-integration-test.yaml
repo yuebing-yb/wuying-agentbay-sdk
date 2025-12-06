@@ -167,33 +167,18 @@ jobs:
             echo "" >> $AONE_CI_SUMMARY_MD
             cat test_report.md >> $AONE_CI_SUMMARY_MD
             
-            # Add AI fix prompts to CI summary if available
-            if [ -f "ai_fix_prompts.md" ]; then
-              echo "" >> $AONE_CI_SUMMARY_MD
-              echo "---" >> $AONE_CI_SUMMARY_MD
-              echo "" >> $AONE_CI_SUMMARY_MD
-              cat ai_fix_prompts.md >> $AONE_CI_SUMMARY_MD
-              echo "✅ AI fix prompts added to CI summary"
-            fi
+            # Display in CI Summary (Markdown format)
+            echo "## 🤖 Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
+            echo "" >> $AONE_CI_SUMMARY_MD
+            cat test_report.md >> $AONE_CI_SUMMARY_MD
             
             # Also show in console for immediate viewing
             echo "📋 Test report preview:"
             head -50 test_report.md
             
-            # Show AI fix prompts preview if available
-            if [ -f "ai_fix_prompts.md" ]; then
-              echo ""
-              echo "🤖 AI Fix Prompts preview:"
-              head -30 ai_fix_prompts.md
-            fi
-            
             # Archive as build artifacts
             mkdir -p artifacts
             cp test_report.md artifacts/smart_test_report.md
-            if [ -f "ai_fix_prompts.md" ]; then
-              cp ai_fix_prompts.md artifacts/ai_fix_prompts.md
-              echo "✅ AI fix prompts archived as build artifact"
-            fi
           else
             echo "⚠️ No test report generated"
             echo "## ❌ Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD

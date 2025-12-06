@@ -796,14 +796,17 @@ def generate_report(state: AgentState) -> AgentState:
             content += "<details>\n<summary>📄 Output (Snippet)</summary>\n\n"
             content += f"```\n{res['output'][-2000:]}\n```\n\n"
             content += "</details>\n\n"
+            
+            # Generate AI fix prompt for this specific test
+            fix_prompt = generate_single_ai_fix_prompt(res, state["sdk_context"])
+            if fix_prompt:
+                content += "<details>\n<summary>🛠️ AI修复提示词 (点击复制)</summary>\n\n"
+                content += "```\n"
+                content += fix_prompt
+                content += "\n```\n\n"
+                content += "</details>\n\n"
     
-    # Generate AI fix prompts for failed tests
-    if failed_results:
-        print("🤖 Generating AI fix prompts...")
-        try:
-            generate_ai_fix_prompts(failed_results, state["sdk_context"])
-        except Exception as e:
-            print(f"❌ Failed to generate AI fix prompts: {e}")
+    
             
     try:
         # Save report to project root or specified artifacts dir
@@ -824,109 +827,87 @@ def generate_report(state: AgentState) -> AgentState:
         "test_type": state.get("test_type", "python")
     }
 
-def generate_ai_fix_prompts(failed_results: List[TestResult], sdk_context: str):
-    """Generate targeted AI fix prompts for each failed test."""
-    fix_prompts_content = []
-    fix_prompts_content.append("# 🤖 AI工具修复提示词")
-    fix_prompts_content.append("")
-    fix_prompts_content.append("以下是针对每个失败测试的AI修复提示词，可以直接复制粘贴到Cursor、Claude Code等AI工具中使用。")
-    fix_prompts_content.append("")
-    fix_prompts_content.append("---")
-    fix_prompts_content.append("")
+def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
+    """Generate targeted AI fix prompt for a single failed test."""
+    test_id = result["test_id"]
+    error_analysis = result.get("error_analysis", "未进行AI分析")
+    output = result["output"]
     
-    for i, result in enumerate(failed_results, 1):
-        test_id = result["test_id"]
-        error_analysis = result.get("error_analysis", "未进行AI分析")
-        output = result["output"]
-        
-        # 获取测试文件内容
-        test_file_content = ""
-        if test_id.startswith("typescript:"):
-            # TypeScript测试
-            test_file_path = os.path.join(PROJECT_ROOT, "typescript", test_id[11:])
-        elif test_id.startswith("golang:"):
-            # Golang测试 - 需要特殊处理
-            test_file_content = "Golang测试文件内容需要从go test输出中提取"
-        else:
-            # Python测试
-            test_file_path = os.path.join(PROJECT_ROOT, "python", test_id.split("::")[0])
-        
-        if not test_id.startswith("golang:") and os.path.exists(test_file_path):
-            try:
-                with open(test_file_path, "r", encoding="utf-8") as f:
-                    test_file_content = f.read()
-            except Exception as e:
-                test_file_content = f"无法读取测试文件: {e}"
-        
-        # 生成针对性提示词
-        fix_prompts_content.append(f"## 修复提示词 {i}: {test_id}")
-        fix_prompts_content.append("")
-        fix_prompts_content.append("```")
-        fix_prompts_content.append("我需要修复一个集成测试失败的问题，请帮我分析并提供修复方案。")
-        fix_prompts_content.append("")
-        fix_prompts_content.append(f"**测试名称**: {test_id}")
-        fix_prompts_content.append("")
-        
-        if error_analysis and error_analysis != "未进行AI分析":
-            fix_prompts_content.append("**AI分析结果**:")
-            fix_prompts_content.append(error_analysis)
-            fix_prompts_content.append("")
-        
-        # 关键错误日志（最后1000字符，通常包含最重要的错误信息）
-        error_log = output[-1000:] if len(output) > 1000 else output
-        fix_prompts_content.append("**关键错误日志**:")
-        fix_prompts_content.append("```")
-        fix_prompts_content.append(error_log)
-        fix_prompts_content.append("```")
-        fix_prompts_content.append("")
-        
-        # 测试代码片段（如果文件不太大）
-        if test_file_content and len(test_file_content) < 5000:
-            fix_prompts_content.append("**测试代码**:")
-            fix_prompts_content.append("```python" if not test_id.startswith("typescript:") else "```typescript")
-            fix_prompts_content.append(test_file_content)
-            fix_prompts_content.append("```")
-            fix_prompts_content.append("")
-        elif test_file_content:
-            # 文件太大，只显示相关函数
-            lines = test_file_content.split('\n')
-            relevant_lines = []
-            for j, line in enumerate(lines):
-                if 'def test_' in line or 'async def test_' in line or 'it(' in line or 'test(' in line:
-                    # 提取测试函数（前后10行）
-                    start = max(0, j-5)
-                    end = min(len(lines), j+20)
-                    relevant_lines.extend(lines[start:end])
-                    relevant_lines.append("... (其他代码)")
-                    break
-            
-            if relevant_lines:
-                fix_prompts_content.append("**相关测试代码片段**:")
-                fix_prompts_content.append("```python" if not test_id.startswith("typescript:") else "```typescript")
-                fix_prompts_content.append('\n'.join(relevant_lines))
-                fix_prompts_content.append("```")
-                fix_prompts_content.append("")
-        
-        fix_prompts_content.append("**请帮我**:")
-        fix_prompts_content.append("1. 根据错误日志和AI分析，确定问题的根本原因")
-        fix_prompts_content.append("2. 提供具体的修复代码（如果是代码问题）")
-        fix_prompts_content.append("3. 如果是环境或配置问题，提供解决方案")
-        fix_prompts_content.append("4. 解释修复方案的原理和注意事项")
-        fix_prompts_content.append("")
-        fix_prompts_content.append("请确保修复方案符合项目的编码规范和最佳实践。")
-        fix_prompts_content.append("```")
-        fix_prompts_content.append("")
-        fix_prompts_content.append("---")
-        fix_prompts_content.append("")
+    # 获取测试文件内容
+    test_file_content = ""
+    if test_id.startswith("typescript:"):
+        # TypeScript测试
+        test_file_path = os.path.join(PROJECT_ROOT, "typescript", test_id[11:])
+    elif test_id.startswith("golang:"):
+        # Golang测试 - 需要特殊处理
+        test_file_content = "Golang测试文件内容需要从go test输出中提取"
+    else:
+        # Python测试
+        test_file_path = os.path.join(PROJECT_ROOT, "python", test_id.split("::")[0])
     
-    # 保存AI修复提示词文件
-    try:
-        fix_prompts_path = os.path.join(PROJECT_ROOT, "ai_fix_prompts.md")
-        with open(fix_prompts_path, "w", encoding="utf-8") as f:
-            f.write('\n'.join(fix_prompts_content))
-        print(f"✅ AI fix prompts saved to {fix_prompts_path}")
-    except Exception as e:
-        print(f"❌ Failed to save AI fix prompts: {e}")
+    if not test_id.startswith("golang:") and os.path.exists(test_file_path):
+        try:
+            with open(test_file_path, "r", encoding="utf-8") as f:
+                test_file_content = f.read()
+        except Exception as e:
+            test_file_content = f"无法读取测试文件: {e}"
+    
+    # 生成针对性提示词
+    prompt_lines = []
+    prompt_lines.append("我需要修复一个集成测试失败的问题，请帮我分析并提供修复方案。")
+    prompt_lines.append("")
+    prompt_lines.append(f"**测试名称**: {test_id}")
+    prompt_lines.append("")
+    
+    if error_analysis and error_analysis != "未进行AI分析":
+        prompt_lines.append("**AI分析结果**:")
+        prompt_lines.append(error_analysis)
+        prompt_lines.append("")
+    
+    # 关键错误日志（最后1000字符，通常包含最重要的错误信息）
+    error_log = output[-1000:] if len(output) > 1000 else output
+    prompt_lines.append("**关键错误日志**:")
+    prompt_lines.append("```")
+    prompt_lines.append(error_log)
+    prompt_lines.append("```")
+    prompt_lines.append("")
+    
+    # 测试代码片段（如果文件不太大）
+    if test_file_content and len(test_file_content) < 5000:
+        prompt_lines.append("**测试代码**:")
+        prompt_lines.append("```python" if not test_id.startswith("typescript:") else "```typescript")
+        prompt_lines.append(test_file_content)
+        prompt_lines.append("```")
+        prompt_lines.append("")
+    elif test_file_content:
+        # 文件太大，只显示相关函数
+        lines = test_file_content.split('\n')
+        relevant_lines = []
+        for j, line in enumerate(lines):
+            if 'def test_' in line or 'async def test_' in line or 'it(' in line or 'test(' in line:
+                # 提取测试函数（前后10行）
+                start = max(0, j-5)
+                end = min(len(lines), j+20)
+                relevant_lines.extend(lines[start:end])
+                relevant_lines.append("... (其他代码)")
+                break
+        
+        if relevant_lines:
+            prompt_lines.append("**相关测试代码片段**:")
+            prompt_lines.append("```python" if not test_id.startswith("typescript:") else "```typescript")
+            prompt_lines.append('\n'.join(relevant_lines))
+            prompt_lines.append("```")
+            prompt_lines.append("")
+    
+    prompt_lines.append("**请帮我**:")
+    prompt_lines.append("1. 根据错误日志和AI分析，确定问题的根本原因")
+    prompt_lines.append("2. 提供具体的修复代码（如果是代码问题）")
+    prompt_lines.append("3. 如果是环境或配置问题，提供解决方案")
+    prompt_lines.append("4. 解释修复方案的原理和注意事项")
+    prompt_lines.append("")
+    prompt_lines.append("请确保修复方案符合项目的编码规范和最佳实践。")
+    
+    return '\n'.join(prompt_lines)
 
 # --- Graph Construction ---
 
