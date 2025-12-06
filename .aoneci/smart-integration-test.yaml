@@ -11,6 +11,36 @@ params:
       - "typescript"
       - "golang"
 
+traits:
+  - type: notification
+    properties:
+      types: dingtalk
+      when: all
+      users: 187788
+      content: |
+        ---
+        - **Test Date**: ${{git.commitDate}}
+        - **Test Report**
+            - @${{git.repo}}
+            - **Branch**: ${{git.branch}}
+            - **Commit**: ${{git.shortSha}}
+            - **Changed By**: ${{git.employeeId}}
+                      
+        | 🔖 | Test Result |
+        | :-: | :-: |
+        | 🧪 | ${{jobs.smart-integration-test.name}} |
+        ${{jobs.smart-integration-test.outputs.failed_test_table}}
+
+stages:
+  stage1:
+    jobs:
+      hello:
+        name: "智能集成测试完成"
+        steps:
+          - id: test-notification
+            run:
+              - echo "Smart Integration Test completed"
+
 jobs:
   smart-integration-test:
     name: "Smart Integration Test"
@@ -168,9 +198,21 @@ jobs:
             PASSED_TESTS=$(grep -o "✅ [0-9]\+ Passed" test_report.md | grep -o "[0-9]\+" || echo "0")
             FAILED_TESTS=$(grep -o "❌ [0-9]\+ Failed" test_report.md | grep -o "[0-9]\+" || echo "0")
             
-            # Generate TEST_CASE 豆腐块
-            TEST_CASE_JSON="{\"name\": \"智能集成测试\", \"failed\": $FAILED_TESTS, \"skipped\": 0, \"passed\": $PASSED_TESTS}"
+            # Generate TEST_CASE 豆腐块 - ensure all required fields are present
+            SKIPPED_TESTS=0  # Default to 0 if no skipped tests
+            TEST_CASE_JSON="{\"name\": \"智能集成测试\", \"failed\": $FAILED_TESTS, \"skipped\": $SKIPPED_TESTS, \"passed\": $PASSED_TESTS}"
             echo "TEST_CASE=$TEST_CASE_JSON" >> $AONE_CI_SUMMARY
+            
+            # Extract failed test IDs for notification table format
+            FAILED_TEST_TABLE=""
+            if [ "$FAILED_TESTS" -gt 0 ]; then
+              FAILED_TEST_TABLE=$(grep -A1 "❌ 失败测试" test_report.md | grep "测试ID:" | sed 's/测试ID: //' | while read test_id; do
+                echo "| ❌ | $test_id |"
+              done)
+            fi
+            echo "failed_test_table<<EOF" >> $AONE_CI_JOB_OUTPUTS
+            echo "$FAILED_TEST_TABLE" >> $AONE_CI_JOB_OUTPUTS
+            echo "EOF" >> $AONE_CI_JOB_OUTPUTS
             
             # If there are failures, also add detailed results to Markdown summary
             if [ "$FAILED_TESTS" -gt 0 ]; then
@@ -183,127 +225,73 @@ jobs:
               echo "" >> $AONE_CI_SUMMARY_MD
               
               # Process each failed test and create collapsible sections
+              # Split the report by the separator and process each test individually
               awk '
               BEGIN { 
+                RS = "---\n\n❌ 失败测试\n";  # Record separator
                 test_count = 0;
-                in_test = 0;
-                test_id = "";
-                ai_analysis = "";
-                output_snippet = "";
-                fix_prompt = "";
-                current_section = "";
               }
               
-              /^❌ 失败测试/ {
-                # If we have a previous test, output it
-                if (test_count > 0 && test_id != "") {
-                  print "<details>";
-                  print "<summary>" test_count ". " test_id "</summary>";
-                  print "";
-                  
-                  # AI Analysis subsection
-                  if (ai_analysis != "") {
-                    print "<details>";
-                    print "<summary>🤖 AI分析</summary>";
-                    print "";
-                    print ai_analysis;
-                    print "</details>";
-                    print "";
-                  }
-                  
-                  # Output snippet subsection
-                  if (output_snippet != "") {
-                    print "<details>";
-                    print "<summary>📄 日志片段</summary>";
-                    print "";
-                    print "```";
-                    print output_snippet;
-                    print "```";
-                    print "</details>";
-                    print "";
-                  }
-                  
-                  # Fix prompt subsection
-                  if (fix_prompt != "") {
-                    print "<details>";
-                    print "<summary>🛠️ AI修复提示词</summary>";
-                    print "";
-                    print "```";
-                    print fix_prompt;
-                    print "```";
-                    print "</details>";
-                    print "";
-                  }
-                  
-                  print "</details>";
-                  print "";
-                }
-                
-                # Start new test
+              # Skip the first record (header content before first test)
+              NR == 1 { next; }
+              
+              # Process each failed test record
+              {
                 test_count++;
-                in_test = 1;
-                test_id = "";
-                ai_analysis = "";
-                output_snippet = "";
-                fix_prompt = "";
-                current_section = "";
                 
-                # Read next line which should contain the test ID
-                if (getline > 0 && /^测试ID:/) {
-                  # Extract test ID from "测试ID: test_id_here"
-                  gsub(/^测试ID: /, "", $0);
-                  test_id = $0;
+                # Extract test ID from first line
+                split($0, lines, "\n");
+                test_id = "";
+                content = "";
+                
+                for (i = 1; i <= length(lines); i++) {
+                  if (lines[i] ~ /^测试ID:/) {
+                    gsub(/^测试ID: /, "", lines[i]);
+                    test_id = lines[i];
+                  } else if (test_id != "" && lines[i] != "") {
+                    content = content lines[i] "\n";
+                  }
                 }
-                next;
-              }
-              
-              /^🤖 AI Analysis/ && in_test {
-                current_section = "ai_analysis";
-                next;
-              }
-              
-              /^📄 Output \(Snippet\)/ && in_test {
-                current_section = "output_snippet";
-                next;
-              }
-              
-              /^🛠️ AI修复提示词/ && in_test {
-                current_section = "fix_prompt";
-                next;
-              }
-              
-              /^```/ && in_test {
-                # Skip code block markers
-                next;
-              }
-              
-              /^---$/ && in_test {
-                # End of current test section
-                in_test = 0;
-                current_section = "";
-                next;
-              }
-              
-              in_test && current_section == "ai_analysis" {
-                ai_analysis = ai_analysis $0 "\n";
-              }
-              
-              in_test && current_section == "output_snippet" {
-                output_snippet = output_snippet $0 "\n";
-              }
-              
-              in_test && current_section == "fix_prompt" {
-                fix_prompt = fix_prompt $0 "\n";
-              }
-              
-              END {
-                # Output the last test if exists
-                if (test_count > 0 && test_id != "") {
+                
+                # Output the test with collapsible sections
+                if (test_id != "") {
                   print "<details>";
                   print "<summary>" test_count ". " test_id "</summary>";
                   print "";
                   
-                  # AI Analysis subsection
+                  # Parse content into sections
+                  ai_analysis = "";
+                  output_snippet = "";
+                  fix_prompt = "";
+                  current_section = "";
+                  
+                  split(content, content_lines, "\n");
+                  for (j = 1; j <= length(content_lines); j++) {
+                    line = content_lines[j];
+                    
+                    if (line ~ /^🤖 AI Analysis/) {
+                      current_section = "ai_analysis";
+                      continue;
+                    } else if (line ~ /^📄 Output/) {
+                      current_section = "output_snippet";  
+                      continue;
+                    } else if (line ~ /^🛠️ AI修复提示词/) {
+                      current_section = "fix_prompt";
+                      continue;
+                    } else if (line ~ /^```/) {
+                      continue;  # Skip code block markers
+                    }
+                    
+                    if (current_section == "ai_analysis" && line != "") {
+                      ai_analysis = ai_analysis line "\n";
+                    } else if (current_section == "output_snippet" && line != "") {
+                      output_snippet = output_snippet line "\n";
+                    } else if (current_section == "fix_prompt" && line != "") {
+                      fix_prompt = fix_prompt line "\n";
+                    }
+                  }
+                  
+                  # Output subsections
                   if (ai_analysis != "") {
                     print "<details>";
                     print "<summary>🤖 AI分析</summary>";
@@ -313,7 +301,6 @@ jobs:
                     print "";
                   }
                   
-                  # Output snippet subsection
                   if (output_snippet != "") {
                     print "<details>";
                     print "<summary>📄 日志片段</summary>";
@@ -325,7 +312,6 @@ jobs:
                     print "";
                   }
                   
-                  # Fix prompt subsection
                   if (fix_prompt != "") {
                     print "<details>";
                     print "<summary>🛠️ AI修复提示词</summary>";
@@ -338,6 +324,7 @@ jobs:
                   }
                   
                   print "</details>";
+                  print "";
                 }
               }
               ' test_report.md >> $AONE_CI_SUMMARY_MD
