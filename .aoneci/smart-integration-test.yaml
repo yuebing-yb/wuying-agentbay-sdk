@@ -231,13 +231,13 @@ jobs:
                 
                 # Detect language based on test ID patterns - fix the logic
                 if echo "$test_id" | grep -q "golang\|\.go\|github.com.*golang"; then
-                  lang="🐹 Golang"
+                  lang="Golang"
                 elif echo "$test_id" | grep -q "python\|\.py\|pytest"; then
-                  lang="🐍 Python"
+                  lang="Python"
                 elif echo "$test_id" | grep -q "typescript\|\.ts\|\.js\|npm\|jest"; then
-                  lang="📜 TypeScript"
+                  lang="TypeScript"
                 else
-                  lang="❓ 未知"
+                  lang="未知"
                 fi
                 
                 # Clean up test ID - remove common prefixes and paths
