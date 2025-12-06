@@ -15,7 +15,7 @@ jobs:
   smart-integration-test:
     name: "Smart Integration Test"
     runs-on:
-      - "4-16Gi"
+      - "16-64Gi"
     image: alios-8u
     timeout: 3h
     retry:
@@ -167,66 +167,66 @@ jobs:
             echo "" >> $AONE_CI_SUMMARY_MD
             cat test_report.md >> $AONE_CI_SUMMARY_MD
             
-            # Display full report in collapsible log section for easy copying
-            echo "::group::\e[32m📋 完整测试报告 (可复制)\e[0m"
-            echo "以下是完整的智能集成测试报告，包含AI修复提示词："
-            echo "----------------------------------------"
-            cat test_report.md
-            echo "----------------------------------------"
-            echo "::endgroup::"
+            # Display test results with better formatting
+            echo ""
+            echo "📋 智能集成测试详细结果："
+            echo ""
             
-            # Create separate collapsible sections for each failed test
-            if grep -q "❌ 失败测试" test_report.md; then
+            # Show summary first
+            if grep -q "## 📊 测试总结" test_report.md; then
+              echo "### 📊 测试总结"
+              sed -n '/## 📊 测试总结/,/^## /p' test_report.md | head -n -1 | tail -n +2
               echo ""
-              echo "📝 为每个失败测试创建单独的折叠区域："
+            fi
+            
+            # Show failed tests with better formatting
+            if grep -q "❌ 失败测试" test_report.md; then
+              echo "### ❌ 失败的测试"
               echo ""
               
-              # Extract failed test sections and create individual collapsible groups
+              # Extract and display failed test IDs and basic info
               awk '
               BEGIN { 
-                in_test = 0; 
-                test_content = ""; 
-                test_id = ""; 
+                in_failed_test = 0;
                 test_count = 0;
               }
-              /^---$/ && /❌ 失败测试/ { 
-                if (in_test && test_content != "") {
-                  # Output previous test
-                  print "echo \"::group::\\e[31m❌ 测试 " test_count ": " test_id "\\e[0m\""
-                  print "echo \"" test_content "\""
-                  print "echo \"::endgroup::\""
-                  print "echo \"\""
-                }
-                in_test = 1; 
-                test_content = ""; 
-                test_id = "";
+              /❌ 失败测试/ {
+                in_failed_test = 1;
                 test_count++;
                 next;
               }
-              in_test && /^\*\*测试ID\*\*:/ { 
+              in_failed_test && /^\*\*测试ID\*\*:/ {
                 gsub(/^\*\*测试ID\*\*: `/, "", $0);
                 gsub(/`$/, "", $0);
-                test_id = $0;
+                print "#### " test_count ". " $0;
+                next;
               }
-              in_test { 
-                if (test_content != "") test_content = test_content "\\n";
-                gsub(/"/, "\\\"", $0);  # Escape quotes
-                test_content = test_content $0;
+              in_failed_test && /^\*\*错误信息\*\*:/ {
+                print $0;
+                next;
               }
-              END {
-                if (in_test && test_content != "") {
-                  print "echo \"::group::\\e[31m❌ 测试 " test_count ": " test_id "\\e[0m\""
-                  print "echo \"" test_content "\""
-                  print "echo \"::endgroup::\""
-                }
+              in_failed_test && /^---$/ {
+                in_failed_test = 0;
+                print "";
+                next;
               }
-              ' test_report.md > temp_test_groups.sh
+              ' test_report.md
               
-              # Execute the generated commands
-              if [ -f temp_test_groups.sh ]; then
-                bash temp_test_groups.sh
-                rm -f temp_test_groups.sh
-              fi
+              echo ""
+              echo "::group::🔍 查看完整失败测试详情"
+              echo "完整的失败测试信息（包含AI分析和修复建议）："
+              echo ""
+              cat test_report.md
+              echo "::endgroup::"
+            else
+              echo "✅ 所有测试都通过了！"
+            fi
+            
+            # Show successful tests summary
+            if grep -q "✅ 成功测试" test_report.md; then
+              echo ""
+              echo "### ✅ 成功的测试"
+              grep -c "✅ 成功测试" test_report.md | xargs -I {} echo "共 {} 个测试成功通过"
             fi
             
             # Archive as build artifacts
