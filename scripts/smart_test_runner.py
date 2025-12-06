@@ -787,9 +787,7 @@ def generate_report(state: AgentState) -> AgentState:
     else:
         content += f"## ❌ Failed Tests ({failed})\n\n"
         for res in failed_results:
-            content += f"### ❌ `{res['test_id']}`
-
-"
+            content += f"### ❌ `{res['test_id']}`\n\n"
             
             # AI Analysis section
             if res.get('error_analysis') and res['error_analysis'] != "未进行AI分析":
