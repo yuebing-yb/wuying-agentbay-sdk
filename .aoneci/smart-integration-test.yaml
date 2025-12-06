@@ -17,7 +17,7 @@ jobs:
     runs-on:
       - "16-64Gi"
     image: alios-8u
-    timeout: 3h
+    timeout: 5h
     retry:
       max: 2
       when:
@@ -199,7 +199,7 @@ jobs:
                 test_id = "";
               }
               
-              /## ❌ 失败测试/ {
+              /^❌ 失败测试$/ {
                 # If we have a previous test, output it
                 if (test_count > 0 && test_id != "") {
                   print "::group::" test_count ". " test_id;
@@ -214,16 +214,12 @@ jobs:
                 test_content = "";
                 test_id = "";
                 
-                # Skip empty lines and find the test ID line
-                while (getline > 0) {
-                  if (/^\*\*测试ID\*\*:/) {
-                    # Extract test ID
-                    gsub(/^\*\*测试ID\*\*: `/, "", $0);
-                    gsub(/`$/, "", $0);
-                    test_id = $0;
-                    test_content = test_content "**测试ID**: " test_id "\n\n";
-                    break;
-                  }
+                # Read next line which should contain the test ID
+                if (getline > 0 && /^测试ID:/) {
+                  # Extract test ID from "测试ID: test_id_here"
+                  gsub(/^测试ID: /, "", $0);
+                  test_id = $0;
+                  test_content = test_content "**测试ID**: " test_id "\n\n";
                 }
                 next;
               }
