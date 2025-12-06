@@ -15,7 +15,7 @@ jobs:
   smart-integration-test:
     name: "Smart Integration Test"
     runs-on:
-      - "16-64Gi"
+      - "4-16Gi"
     image: alios-8u
     timeout: 5h
     retry:
@@ -162,10 +162,186 @@ jobs:
           if [ -f "test_report.md" ]; then
             echo "✅ Test report generated successfully"
             
-            # Display in CI Summary (Markdown format)
-            echo "## 🤖 Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
-            echo "" >> $AONE_CI_SUMMARY_MD
-            cat test_report.md >> $AONE_CI_SUMMARY_MD
+            # Display in CI Summary using 豆腐块 format
+            # Extract test statistics
+            TOTAL_TESTS=$(grep -o "[0-9]\+ Tests" test_report.md | grep -o "[0-9]\+" || echo "0")
+            PASSED_TESTS=$(grep -o "✅ [0-9]\+ Passed" test_report.md | grep -o "[0-9]\+" || echo "0")
+            FAILED_TESTS=$(grep -o "❌ [0-9]\+ Failed" test_report.md | grep -o "[0-9]\+" || echo "0")
+            
+            # Generate TEST_CASE 豆腐块
+            TEST_CASE_JSON="{\"name\": \"智能集成测试\", \"failed\": $FAILED_TESTS, \"skipped\": 0, \"passed\": $PASSED_TESTS}"
+            echo "TEST_CASE=$TEST_CASE_JSON" >> $AONE_CI_SUMMARY
+            
+            # If there are failures, also add detailed results to Markdown summary
+            if [ "$FAILED_TESTS" -gt 0 ]; then
+              # Also show detailed results in markdown format for failed tests
+              echo "## 🤖 Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
+              echo "" >> $AONE_CI_SUMMARY_MD
+              echo "📊 **Summary**: $TOTAL_TESTS Tests | ✅ $PASSED_TESTS Passed | ❌ $FAILED_TESTS Failed" >> $AONE_CI_SUMMARY_MD
+              echo "" >> $AONE_CI_SUMMARY_MD
+              echo "### 📋 失败测试详情" >> $AONE_CI_SUMMARY_MD
+              echo "" >> $AONE_CI_SUMMARY_MD
+              
+              # Process each failed test and create collapsible sections
+              awk '
+              BEGIN { 
+                test_count = 0;
+                in_test = 0;
+                test_id = "";
+                ai_analysis = "";
+                output_snippet = "";
+                fix_prompt = "";
+                current_section = "";
+              }
+              
+              /^❌ 失败测试/ {
+                # If we have a previous test, output it
+                if (test_count > 0 && test_id != "") {
+                  print "<details>";
+                  print "<summary>" test_count ". " test_id "</summary>";
+                  print "";
+                  
+                  # AI Analysis subsection
+                  if (ai_analysis != "") {
+                    print "<details>";
+                    print "<summary>🤖 AI分析</summary>";
+                    print "";
+                    print ai_analysis;
+                    print "</details>";
+                    print "";
+                  }
+                  
+                  # Output snippet subsection
+                  if (output_snippet != "") {
+                    print "<details>";
+                    print "<summary>📄 日志片段</summary>";
+                    print "";
+                    print "```";
+                    print output_snippet;
+                    print "```";
+                    print "</details>";
+                    print "";
+                  }
+                  
+                  # Fix prompt subsection
+                  if (fix_prompt != "") {
+                    print "<details>";
+                    print "<summary>🛠️ AI修复提示词</summary>";
+                    print "";
+                    print "```";
+                    print fix_prompt;
+                    print "```";
+                    print "</details>";
+                    print "";
+                  }
+                  
+                  print "</details>";
+                  print "";
+                }
+                
+                # Start new test
+                test_count++;
+                in_test = 1;
+                test_id = "";
+                ai_analysis = "";
+                output_snippet = "";
+                fix_prompt = "";
+                current_section = "";
+                
+                # Read next line which should contain the test ID
+                if (getline > 0 && /^测试ID:/) {
+                  # Extract test ID from "测试ID: test_id_here"
+                  gsub(/^测试ID: /, "", $0);
+                  test_id = $0;
+                }
+                next;
+              }
+              
+              /^🤖 AI Analysis/ && in_test {
+                current_section = "ai_analysis";
+                next;
+              }
+              
+              /^📄 Output \(Snippet\)/ && in_test {
+                current_section = "output_snippet";
+                next;
+              }
+              
+              /^🛠️ AI修复提示词/ && in_test {
+                current_section = "fix_prompt";
+                next;
+              }
+              
+              /^```/ && in_test {
+                # Skip code block markers
+                next;
+              }
+              
+              /^---$/ && in_test {
+                # End of current test section
+                in_test = 0;
+                current_section = "";
+                next;
+              }
+              
+              in_test && current_section == "ai_analysis" {
+                ai_analysis = ai_analysis $0 "\n";
+              }
+              
+              in_test && current_section == "output_snippet" {
+                output_snippet = output_snippet $0 "\n";
+              }
+              
+              in_test && current_section == "fix_prompt" {
+                fix_prompt = fix_prompt $0 "\n";
+              }
+              
+              END {
+                # Output the last test if exists
+                if (test_count > 0 && test_id != "") {
+                  print "<details>";
+                  print "<summary>" test_count ". " test_id "</summary>";
+                  print "";
+                  
+                  # AI Analysis subsection
+                  if (ai_analysis != "") {
+                    print "<details>";
+                    print "<summary>🤖 AI分析</summary>";
+                    print "";
+                    print ai_analysis;
+                    print "</details>";
+                    print "";
+                  }
+                  
+                  # Output snippet subsection
+                  if (output_snippet != "") {
+                    print "<details>";
+                    print "<summary>📄 日志片段</summary>";
+                    print "";
+                    print "```";
+                    print output_snippet;
+                    print "```";
+                    print "</details>";
+                    print "";
+                  }
+                  
+                  # Fix prompt subsection
+                  if (fix_prompt != "") {
+                    print "<details>";
+                    print "<summary>🛠️ AI修复提示词</summary>";
+                    print "";
+                    print "```";
+                    print fix_prompt;
+                    print "```";
+                    print "</details>";
+                    print "";
+                  }
+                  
+                  print "</details>";
+                }
+              }
+              ' test_report.md >> $AONE_CI_SUMMARY_MD
+            fi
             
             # Archive as build artifacts
             mkdir -p artifacts
@@ -190,20 +366,51 @@ jobs:
             
             # Create individual collapsible sections for each failed test
             if grep -q "❌ 失败测试" test_report.md; then
-              # Process each failed test and create separate collapsible sections
+              # Process each failed test and create separate collapsible sections with sub-sections
               awk '
               BEGIN { 
                 test_count = 0;
                 in_test = 0;
-                test_content = "";
                 test_id = "";
+                ai_analysis = "";
+                output_snippet = "";
+                fix_prompt = "";
+                current_section = "";
               }
               
               /^❌ 失败测试/ {
                 # If we have a previous test, output it
                 if (test_count > 0 && test_id != "") {
                   print "::group::" test_count ". " test_id;
-                  print test_content;
+                  
+                  # AI Analysis subsection
+                  if (ai_analysis != "") {
+                    print "::group::🤖 AI分析";
+                    print ai_analysis;
+                    print "::endgroup::";
+                    print "";
+                  }
+                  
+                  # Output snippet subsection
+                  if (output_snippet != "") {
+                    print "::group::📄 日志片段";
+                    print "```";
+                    print output_snippet;
+                    print "```";
+                    print "::endgroup::";
+                    print "";
+                  }
+                  
+                  # Fix prompt subsection
+                  if (fix_prompt != "") {
+                    print "::group::🛠️ AI修复提示词";
+                    print "```";
+                    print fix_prompt;
+                    print "```";
+                    print "::endgroup::";
+                    print "";
+                  }
+                  
                   print "::endgroup::";
                   print "";
                 }
@@ -211,35 +418,93 @@ jobs:
                 # Start new test
                 test_count++;
                 in_test = 1;
-                test_content = "";
                 test_id = "";
+                ai_analysis = "";
+                output_snippet = "";
+                fix_prompt = "";
+                current_section = "";
                 
                 # Read next line which should contain the test ID
                 if (getline > 0 && /^测试ID:/) {
                   # Extract test ID from "测试ID: test_id_here"
                   gsub(/^测试ID: /, "", $0);
                   test_id = $0;
-                  test_content = test_content "**测试ID**: " test_id "\n\n";
                 }
+                next;
+              }
+              
+              /^🤖 AI Analysis/ && in_test {
+                current_section = "ai_analysis";
+                next;
+              }
+              
+              /^📄 Output \(Snippet\)/ && in_test {
+                current_section = "output_snippet";
+                next;
+              }
+              
+              /^🛠️ AI修复提示词/ && in_test {
+                current_section = "fix_prompt";
+                next;
+              }
+              
+              /^```/ && in_test {
+                # Skip code block markers
                 next;
               }
               
               /^---$/ && in_test {
                 # End of current test section
                 in_test = 0;
+                current_section = "";
                 next;
               }
               
-              in_test {
-                # Collect test content
-                test_content = test_content $0 "\n";
+              in_test && current_section == "ai_analysis" {
+                ai_analysis = ai_analysis $0 "\n";
+              }
+              
+              in_test && current_section == "output_snippet" {
+                output_snippet = output_snippet $0 "\n";
+              }
+              
+              in_test && current_section == "fix_prompt" {
+                fix_prompt = fix_prompt $0 "\n";
               }
               
               END {
                 # Output the last test if exists
                 if (test_count > 0 && test_id != "") {
                   print "::group::" test_count ". " test_id;
-                  print test_content;
+                  
+                  # AI Analysis subsection
+                  if (ai_analysis != "") {
+                    print "::group::🤖 AI分析";
+                    print ai_analysis;
+                    print "::endgroup::";
+                    print "";
+                  }
+                  
+                  # Output snippet subsection
+                  if (output_snippet != "") {
+                    print "::group::📄 日志片段";
+                    print "```";
+                    print output_snippet;
+                    print "```";
+                    print "::endgroup::";
+                    print "";
+                  }
+                  
+                  # Fix prompt subsection
+                  if (fix_prompt != "") {
+                    print "::group::🛠️ AI修复提示词";
+                    print "```";
+                    print fix_prompt;
+                    print "```";
+                    print "::endgroup::";
+                    print "";
+                  }
+                  
                   print "::endgroup::";
                 }
               }
