@@ -162,18 +162,129 @@ jobs:
           if [ -f "test_report.md" ]; then
             echo "✅ Test report generated successfully"
             
+            # Generate AI Fix Prompts for failed tests
+            echo "🤖 Generating AI fix prompts..."
+            python -c "
+import re
+import os
+
+def generate_ai_fix_prompts():
+    try:
+        with open('test_report.md', 'r', encoding='utf-8') as f:
+            report_content = f.read()
+        
+        # Extract failed tests and their analyses
+        failed_tests = []
+        lines = report_content.split('\n')
+        current_test = None
+        current_analysis = []
+        in_analysis = False
+        
+        for line in lines:
+            if line.startswith('### ❌'):
+                if current_test and current_analysis:
+                    failed_tests.append({
+                        'test': current_test,
+                        'analysis': '\n'.join(current_analysis)
+                    })
+                current_test = line.replace('### ❌ ', '').strip()
+                current_analysis = []
+                in_analysis = False
+            elif '<summary>🤖 AI Analysis</summary>' in line:
+                in_analysis = True
+            elif '</details>' in line and in_analysis:
+                in_analysis = False
+            elif in_analysis and line.strip() and not line.startswith('<'):
+                current_analysis.append(line)
+        
+        # Add last test if exists
+        if current_test and current_analysis:
+            failed_tests.append({
+                'test': current_test,
+                'analysis': '\n'.join(current_analysis)
+            })
+        
+        if not failed_tests:
+            print('🎉 No failed tests found - no AI fix prompts needed!')
+            return
+        
+        # Generate fix prompts file
+        fix_prompts = []
+        fix_prompts.append('# 🤖 AI工具修复提示词')
+        fix_prompts.append('')
+        fix_prompts.append('以下是针对失败测试的AI修复提示词，可以直接复制粘贴到Cursor、Claude Code等AI工具中使用：')
+        fix_prompts.append('')
+        fix_prompts.append('---')
+        fix_prompts.append('')
+        
+        for i, test_info in enumerate(failed_tests, 1):
+            test_name = test_info['test']
+            analysis = test_info['analysis']
+            
+            fix_prompts.append(f'## 修复提示词 {i}: {test_name}')
+            fix_prompts.append('')
+            fix_prompts.append('```')
+            fix_prompts.append('我需要修复一个集成测试失败的问题。以下是测试信息和AI分析结果：')
+            fix_prompts.append('')
+            fix_prompts.append(f'**测试名称**: {test_name}')
+            fix_prompts.append('')
+            fix_prompts.append('**AI分析结果**:')
+            fix_prompts.append(analysis)
+            fix_prompts.append('')
+            fix_prompts.append('请帮我：')
+            fix_prompts.append('1. 分析问题的根本原因')
+            fix_prompts.append('2. 提供具体的修复代码')
+            fix_prompts.append('3. 解释修复方案的原理')
+            fix_prompts.append('4. 如果需要，提供相关的测试验证方法')
+            fix_prompts.append('')
+            fix_prompts.append('请确保修复方案符合项目的编码规范和最佳实践。')
+            fix_prompts.append('```')
+            fix_prompts.append('')
+            fix_prompts.append('---')
+            fix_prompts.append('')
+        
+        # Save fix prompts
+        with open('ai_fix_prompts.md', 'w', encoding='utf-8') as f:
+            f.write('\n'.join(fix_prompts))
+        
+        print(f'✅ Generated AI fix prompts for {len(failed_tests)} failed tests')
+        
+    except Exception as e:
+        print(f'❌ Error generating AI fix prompts: {e}')
+
+generate_ai_fix_prompts()
+"
+            
             # Display in CI Summary (Markdown format)
             echo "## 🤖 Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
             echo "" >> $AONE_CI_SUMMARY_MD
             cat test_report.md >> $AONE_CI_SUMMARY_MD
             
+            # Add AI fix prompts to CI summary if available
+            if [ -f "ai_fix_prompts.md" ]; then
+              echo "" >> $AONE_CI_SUMMARY_MD
+              echo "---" >> $AONE_CI_SUMMARY_MD
+              echo "" >> $AONE_CI_SUMMARY_MD
+              cat ai_fix_prompts.md >> $AONE_CI_SUMMARY_MD
+            fi
+            
             # Also show in console for immediate viewing
             echo "📋 Test report preview:"
             head -50 test_report.md
             
-            # Archive as build artifact
+            # Show AI fix prompts preview if available
+            if [ -f "ai_fix_prompts.md" ]; then
+              echo ""
+              echo "🤖 AI Fix Prompts preview:"
+              head -30 ai_fix_prompts.md
+            fi
+            
+            # Archive as build artifacts
             mkdir -p artifacts
             cp test_report.md artifacts/smart_test_report.md
+            if [ -f "ai_fix_prompts.md" ]; then
+              cp ai_fix_prompts.md artifacts/ai_fix_prompts.md
+            fi
           else
             echo "⚠️ No test report generated"
             echo "## ❌ Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
