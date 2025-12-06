@@ -167,14 +167,25 @@ jobs:
             echo "" >> $AONE_CI_SUMMARY_MD
             cat test_report.md >> $AONE_CI_SUMMARY_MD
             
-            # Display in CI Summary (Markdown format)
-            echo "## 🤖 Smart Integration Test Report" >> $AONE_CI_SUMMARY_MD
-            echo "" >> $AONE_CI_SUMMARY_MD
-            cat test_report.md >> $AONE_CI_SUMMARY_MD
+            # Display full report in collapsible log section for easy copying
+            echo "::group::\e[32m📋 完整测试报告 (可复制)\e[0m"
+            echo "以下是完整的智能集成测试报告，包含AI修复提示词："
+            echo "----------------------------------------"
+            cat test_report.md
+            echo "----------------------------------------"
+            echo "::endgroup::"
             
-            # Also show in console for immediate viewing
-            echo "📋 Test report preview:"
-            head -50 test_report.md
+            # Extract and display AI fix prompts separately for easy access
+            if grep -q "🛠️ AI修复提示词" test_report.md; then
+              echo "::group::\e[33m🤖 AI修复提示词汇总\e[0m"
+              echo "以下提示词可直接复制到Cursor、Claude Code等AI工具："
+              echo ""
+              
+              # Extract each AI fix prompt using sed to get content between code blocks
+              sed -n '/🛠️ AI修复提示词/,/```$/p' test_report.md | sed '/🛠️ AI修复提示词/d' | sed '/^```$/d' | sed '/^```/d'
+              
+              echo "::endgroup::"
+            fi
             
             # Archive as build artifacts
             mkdir -p artifacts
