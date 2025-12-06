@@ -199,7 +199,7 @@ jobs:
                 test_id = "";
               }
               
-              /^❌ 失败测试$/ {
+              /^❌ 失败测试/ {
                 # If we have a previous test, output it
                 if (test_count > 0 && test_id != "") {
                   print "::group::" test_count ". " test_id;
