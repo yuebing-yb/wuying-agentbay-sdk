@@ -244,7 +244,7 @@ jobs:
                 # Clean up test ID - remove common prefixes and paths
                 clean_test_id=$(echo "$test_id" | sed -e 's/^.*golang\/tests\/pkg\/integration\.//' -e 's/^.*\///' -e 's/^test_//' -e 's/^integration_//')
                 
-                echo "| $lang | $clean_test_id |" >> /tmp/failed_tests_table
+                echo "$lang | $clean_test_id |" >> /tmp/failed_tests_table
               done
               
               if [ -f /tmp/failed_tests_table ]; then
