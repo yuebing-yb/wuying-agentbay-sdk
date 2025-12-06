@@ -220,17 +220,14 @@ jobs:
             
             # Extract failed test IDs for notification with language info
             if [ "$FAILED_TESTS" -gt 0 ]; then
-              # Create proper table format with complete rows
-              {
-                echo "| 语言 | 测试用例 |"
-                echo "| :-: | :-: |"
-              } > /tmp/failed_tests_table
+              # Use simple list format
+              FAILED_TEST_LIST=""
               
               # Extract failed tests with language detection
               grep -A1 "❌ 失败测试" test_report.md | grep "测试ID:" | head -10 | while IFS= read -r line; do
                 test_id=$(echo "$line" | sed 's/测试ID: //')
                 
-                # Detect language based on test ID patterns - fix the logic
+                # Detect language based on test ID patterns
                 if echo "$test_id" | grep -q "golang\|\.go\|github.com.*golang"; then
                   lang="Golang"
                 elif echo "$test_id" | grep -q "python\|\.py\|pytest"; then
@@ -244,12 +241,12 @@ jobs:
                 # Clean up test ID - remove common prefixes and paths
                 clean_test_id=$(echo "$test_id" | sed -e 's/^.*golang\/tests\/pkg\/integration\.//' -e 's/^.*\///' -e 's/^test_//' -e 's/^integration_//')
                 
-                echo "$lang | $clean_test_id |" >> /tmp/failed_tests_table
+                echo "• [$lang] $clean_test_id" >> /tmp/failed_tests_list
               done
               
-              if [ -f /tmp/failed_tests_table ]; then
-                FAILED_TEST_LIST=$(cat /tmp/failed_tests_table | tr '\n' ' ')
-                rm -f /tmp/failed_tests_table
+              if [ -f /tmp/failed_tests_list ]; then
+                FAILED_TEST_LIST=$(cat /tmp/failed_tests_list | tr '\n' '\n')
+                rm -f /tmp/failed_tests_list
               fi
             else
               FAILED_TEST_LIST="✅ 所有测试都通过了！"
