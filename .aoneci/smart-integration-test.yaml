@@ -222,8 +222,10 @@ jobs:
             if [ "$FAILED_TESTS" -gt 0 ]; then
               # Initialize table with proper format
               FAILED_TEST_LIST=""
-              echo "| 语言 | 测试用例 |" > /tmp/failed_tests_table
-              echo "| :-: | :-: |" >> /tmp/failed_tests_table
+              {
+                echo "| 语言 | 测试用例 |"
+                echo "| :-: | :-: |"
+              } > /tmp/failed_tests_table
               
               # Extract failed tests with language detection
               grep -A1 "❌ 失败测试" test_report.md | grep "测试ID:" | head -10 | while IFS= read -r line; do
@@ -256,7 +258,7 @@ jobs:
             
             # Output to step outputs for notification access
             echo "$TEST_CASE_SUMMARY" > "${{outputs.test_summary.path}}"
-            echo "$FAILED_TEST_LIST" > "${{outputs.failed_tests.path}}"
+            printf "%s\n" "$FAILED_TEST_LIST" > "${{outputs.failed_tests.path}}"
             
             
             
