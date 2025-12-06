@@ -787,7 +787,7 @@ def generate_report(state: AgentState) -> AgentState:
     else:
         content += f"## ❌ Failed Tests ({failed})\n\n"
         for res in failed_results:
-            content += f"### ❌ `{res['test_id']}`\n\n"
+            content += f"---\n\n## ❌ 失败测试\n\n**测试ID**: `{res['test_id']}`\n\n"
             
             # AI Analysis section
             if res.get('error_analysis') and res['error_analysis'] != "未进行AI分析":
@@ -1044,11 +1044,12 @@ def main():
         
         result = app.invoke(initial_state, config=config)
         
-        # 创建一个不包含SDK上下文的结果副本用于显示
-        display_result = {k: v for k, v in result.items() if k != 'sdk_context'}
-        if 'sdk_context' in result:
-            display_result['sdk_context'] = f"<已加载 {len(result['sdk_context'])} 字符的SDK上下文>"
-        print(f"✅ 工作流完成: {display_result}")
+        # 简化输出，只显示关键统计信息
+        total_tests = len(result.get('results', []))
+        passed_tests = len([r for r in result.get('results', []) if r['status'] == 'passed'])
+        failed_tests = len([r for r in result.get('results', []) if r['status'] == 'failed'])
+        
+        print(f"✅ 智能集成测试完成: {total_tests} 测试 | ✅ {passed_tests} 通过 | ❌ {failed_tests} 失败")
         sys.stdout.flush()
     except Exception as e:
         print(f"\n💥 执行失败: {e}")

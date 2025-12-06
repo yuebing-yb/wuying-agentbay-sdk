@@ -175,16 +175,58 @@ jobs:
             echo "----------------------------------------"
             echo "::endgroup::"
             
-            # Extract and display AI fix prompts separately for easy access
-            if grep -q "🛠️ AI修复提示词" test_report.md; then
-              echo "::group::\e[33m🤖 AI修复提示词汇总\e[0m"
-              echo "以下提示词可直接复制到Cursor、Claude Code等AI工具："
+            # Create separate collapsible sections for each failed test
+            if grep -q "❌ 失败测试" test_report.md; then
+              echo ""
+              echo "📝 为每个失败测试创建单独的折叠区域："
               echo ""
               
-              # Extract each AI fix prompt using sed to get content between code blocks
-              sed -n '/🛠️ AI修复提示词/,/```$/p' test_report.md | sed '/🛠️ AI修复提示词/d' | sed '/^```$/d' | sed '/^```/d'
+              # Extract failed test sections and create individual collapsible groups
+              awk '
+              BEGIN { 
+                in_test = 0; 
+                test_content = ""; 
+                test_id = ""; 
+                test_count = 0;
+              }
+              /^---$/ && /❌ 失败测试/ { 
+                if (in_test && test_content != "") {
+                  # Output previous test
+                  print "echo \"::group::\\e[31m❌ 测试 " test_count ": " test_id "\\e[0m\""
+                  print "echo \"" test_content "\""
+                  print "echo \"::endgroup::\""
+                  print "echo \"\""
+                }
+                in_test = 1; 
+                test_content = ""; 
+                test_id = "";
+                test_count++;
+                next;
+              }
+              in_test && /^\*\*测试ID\*\*:/ { 
+                gsub(/^\*\*测试ID\*\*: `/, "", $0);
+                gsub(/`$/, "", $0);
+                test_id = $0;
+              }
+              in_test { 
+                if (test_content != "") test_content = test_content "\\n";
+                gsub(/"/, "\\\"", $0);  # Escape quotes
+                test_content = test_content $0;
+              }
+              END {
+                if (in_test && test_content != "") {
+                  print "echo \"::group::\\e[31m❌ 测试 " test_count ": " test_id "\\e[0m\""
+                  print "echo \"" test_content "\""
+                  print "echo \"::endgroup::\""
+                }
+              }
+              ' test_report.md > temp_test_groups.sh
               
-              echo "::endgroup::"
+              # Execute the generated commands
+              if [ -f temp_test_groups.sh ]; then
+                bash temp_test_groups.sh
+                rm -f temp_test_groups.sh
+              fi
             fi
             
             # Archive as build artifacts
