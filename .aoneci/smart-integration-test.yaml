@@ -220,33 +220,34 @@ jobs:
             
             # Extract failed test IDs for notification with language info
             if [ "$FAILED_TESTS" -gt 0 ]; then
-              # Create table format for failed tests
-              FAILED_TEST_LIST="| 语言 | 测试用例 |"
-              FAILED_TEST_LIST="${FAILED_TEST_LIST}"$'\n'"| :-: | :-: |"$'\n'
+              # Initialize table with proper format
+              FAILED_TEST_LIST=""
+              echo "| 语言 | 测试用例 |" > /tmp/failed_tests_table
+              echo "| :-: | :-: |" >> /tmp/failed_tests_table
               
               # Extract failed tests with language detection
               grep -A1 "❌ 失败测试" test_report.md | grep "测试ID:" | head -10 | while IFS= read -r line; do
                 test_id=$(echo "$line" | sed 's/测试ID: //')
                 
-                # Detect language based on test ID patterns
-                if echo "$test_id" | grep -q "python\|py\|\.py"; then
-                  lang="🐍 Python"
-                elif echo "$test_id" | grep -q "typescript\|ts\|\.ts\|\.js\|npm"; then
-                  lang="📜 TypeScript"
-                elif echo "$test_id" | grep -q "golang\|go\|\.go"; then
+                # Detect language based on test ID patterns - fix the logic
+                if echo "$test_id" | grep -q "golang\|\.go\|github.com.*golang"; then
                   lang="🐹 Golang"
+                elif echo "$test_id" | grep -q "python\|\.py\|pytest"; then
+                  lang="🐍 Python"
+                elif echo "$test_id" | grep -q "typescript\|\.ts\|\.js\|npm\|jest"; then
+                  lang="📜 TypeScript"
                 else
                   lang="❓ 未知"
                 fi
                 
-                # Clean up test ID - remove common prefixes
-                clean_test_id=$(echo "$test_id" | sed -e 's/^[^_]*_//' -e 's/^test_//' -e 's/^integration_//')
+                # Clean up test ID - remove common prefixes and paths
+                clean_test_id=$(echo "$test_id" | sed -e 's/^.*golang\/tests\/pkg\/integration\.//' -e 's/^.*\///' -e 's/^test_//' -e 's/^integration_//')
                 
                 echo "| $lang | $clean_test_id |" >> /tmp/failed_tests_table
               done
               
               if [ -f /tmp/failed_tests_table ]; then
-                FAILED_TEST_LIST="$FAILED_TEST_LIST$(cat /tmp/failed_tests_table)"
+                FAILED_TEST_LIST=$(cat /tmp/failed_tests_table)
                 rm -f /tmp/failed_tests_table
               fi
             else
