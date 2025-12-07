@@ -260,6 +260,14 @@ def check_python_examples(project_root: str, limit: int = 0) -> bool:
         else:
             status = "TIMEOUT" if result["timed_out"] else "FAILED"
             print(f"{RED}{status} ({result['duration']:.2f}s){RESET}")
+            # Print stderr to console for visibility in CI logs
+            if result['stderr']:
+                print(f"{RED}Stderr:{RESET}")
+                print(result['stderr'].strip())
+            elif result['stdout']:
+                print(f"{YELLOW}Stdout (no stderr):{RESET}")
+                print(result['stdout'].strip())
+                
             analysis = analyze_failure(file_path, output, result['duration'])
             
         results.append({
@@ -311,6 +319,14 @@ def check_golang_examples(project_root: str, limit: int = 0) -> bool:
         else:
             status = "TIMEOUT" if result["timed_out"] else "FAILED"
             print(f"{RED}{status} ({result['duration']:.2f}s){RESET}")
+            # Print stderr to console for visibility in CI logs
+            if result['stderr']:
+                print(f"{RED}Stderr:{RESET}")
+                print(result['stderr'].strip())
+            elif result['stdout']:
+                print(f"{YELLOW}Stdout (no stderr):{RESET}")
+                print(result['stdout'].strip())
+                
             # Identify main.go for analysis
             main_go_path = os.path.join(dir_path, "main.go")
             analysis = analyze_failure(main_go_path, output, result['duration'])
@@ -371,6 +387,14 @@ def check_typescript_examples(project_root: str, limit: int = 0) -> bool:
         else:
             status = "TIMEOUT" if result["timed_out"] else "FAILED"
             print(f"{RED}{status} ({result['duration']:.2f}s){RESET}")
+            # Print stderr to console for visibility in CI logs
+            if result['stderr']:
+                print(f"{RED}Stderr:{RESET}")
+                print(result['stderr'].strip())
+            elif result['stdout']:
+                print(f"{YELLOW}Stdout (no stderr):{RESET}")
+                print(result['stdout'].strip())
+                
             analysis = analyze_failure(file_path, output, result['duration'])
             
         results.append({
