@@ -1,8 +1,7 @@
 name: "Multi-Language Examples Inspection"
 
 triggers:
-  # Manual trigger or schedule
-  manual: []
+  # Manual trigger is implied, remove explicit manual config if it's invalid
   schedule:
     - cron: "0 2 * * *"  # Run daily at 2:00 AM
 
@@ -58,11 +57,10 @@ jobs:
           
       - id: run-examples
         name: "Run Python Examples"
-        env:
-          AGENTBAY_API_KEY: ${{secrets.AGENTBAY_API_KEY}}
-          DASHSCOPE_API_KEY: ${{secrets.DASHSCOPE_API_KEY}}
         run: |
           echo "🚀 Starting Python Examples Inspection..."
+          export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
+          export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
           python scripts/check_examples.py --lang python
 
   typescript-example-check:
@@ -102,10 +100,10 @@ jobs:
           
       - id: run-examples
         name: "Run TypeScript Examples"
-        env:
-          AGENTBAY_API_KEY: ${{secrets.AGENTBAY_API_KEY}}
         run: |
           echo "🚀 Starting TypeScript Examples Inspection..."
+          export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
+          export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
           python scripts/check_examples.py --lang typescript
 
   golang-example-check:
@@ -139,10 +137,10 @@ jobs:
           
       - id: run-examples
         name: "Run Golang Examples"
-        env:
-          AGENTBAY_API_KEY: ${{secrets.AGENTBAY_API_KEY}}
         run: |
           echo "🚀 Starting Golang Examples Inspection..."
+          export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
+          export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
           python scripts/check_examples.py --lang golang
 
   summary:
@@ -158,4 +156,3 @@ jobs:
           echo ""
           echo "All enabled language checks have finished."
           echo "Check individual job logs for details."
-
