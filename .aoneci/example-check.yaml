@@ -1,0 +1,161 @@
+name: "Multi-Language Examples Inspection"
+
+triggers:
+  # Manual trigger or schedule
+  manual: []
+  schedule:
+    - cron: "0 2 * * *"  # Run daily at 2:00 AM
+
+params:
+  python_enabled:
+    name: Enable Python Examples
+    type: boolean
+    default: true
+  typescript_enabled:
+    name: Enable TypeScript Examples
+    type: boolean
+    default: true
+  golang_enabled:
+    name: Enable Golang Examples
+    type: boolean
+    default: true
+
+jobs:
+  python-example-check:
+    name: "Python Examples Inspection"
+    when: "${{params.python_enabled}}"
+    runs-on:
+      - "4-16Gi"
+    image: alios-8u
+    timeout: 2h
+    retry:
+      max: 1
+      when:
+        - runner_system_failure
+    steps:
+      - uses: checkout
+      
+      - uses: setup-env
+        inputs:
+          python-version: '3.10'
+          
+      - id: install-deps
+        name: "Install Python Dependencies"
+        run: |
+          cd python
+          python -m pip install --upgrade pip
+          # Install SDK in editable mode
+          pip install -e .
+          # Install test dependencies (playwright etc.)
+          pip install pytest playwright
+          # Install AI dependencies for analysis
+          pip install langchain-openai langgraph langchain-core
+          playwright install --with-deps chromium
+          # Install other potential dependencies for examples
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          
+      - id: run-examples
+        name: "Run Python Examples"
+        env:
+          AGENTBAY_API_KEY: ${{secrets.AGENTBAY_API_KEY}}
+          DASHSCOPE_API_KEY: ${{secrets.DASHSCOPE_API_KEY}}
+        run: |
+          echo "🚀 Starting Python Examples Inspection..."
+          python scripts/check_examples.py --lang python
+
+  typescript-example-check:
+    name: "TypeScript Examples Inspection"
+    when: "${{params.typescript_enabled}}"
+    runs-on:
+      - "4-16Gi"
+    image: alios-8u
+    timeout: 2h
+    retry:
+      max: 1
+      when:
+        - runner_system_failure
+    steps:
+      - uses: checkout
+      
+      - uses: setup-env
+        inputs:
+          node-version: '18'
+          npm-version: '10'
+          
+      - id: install-deps
+        name: "Install TypeScript Dependencies"
+        run: |
+          cd typescript
+          npm ci
+          npm run build
+          # Link the package so examples can import it
+          npm link
+          npm link wuying-agentbay-sdk
+          # Install execution tool
+          npm install --no-save ts-node
+          # Install test dependencies
+          npx playwright install --with-deps chromium
+          # Install Python AI dependencies for analysis runner
+          python -m pip install langchain-openai langgraph langchain-core
+          
+      - id: run-examples
+        name: "Run TypeScript Examples"
+        env:
+          AGENTBAY_API_KEY: ${{secrets.AGENTBAY_API_KEY}}
+        run: |
+          echo "🚀 Starting TypeScript Examples Inspection..."
+          python scripts/check_examples.py --lang typescript
+
+  golang-example-check:
+    name: "Golang Examples Inspection"
+    when: "${{params.golang_enabled}}"
+    runs-on:
+      - "4-16Gi"
+    image: alios-8u
+    timeout: 2h
+    retry:
+      max: 1
+      when:
+        - runner_system_failure
+    steps:
+      - uses: checkout
+      
+      - uses: setup-env
+        inputs:
+          go-version: '1.24.3'
+          
+      - id: install-deps
+        name: "Install Golang Dependencies"
+        run: |
+          cd golang
+          go env -w GOPROXY=https://goproxy.cn,direct
+          go mod download
+          # Install playwright driver
+          go run github.com/playwright-community/playwright-go/cmd/playwright@latest install --with-deps
+          # Install Python AI dependencies for analysis runner
+          python -m pip install langchain-openai langgraph langchain-core
+          
+      - id: run-examples
+        name: "Run Golang Examples"
+        env:
+          AGENTBAY_API_KEY: ${{secrets.AGENTBAY_API_KEY}}
+        run: |
+          echo "🚀 Starting Golang Examples Inspection..."
+          python scripts/check_examples.py --lang golang
+
+  summary:
+    name: "Examples Inspection Summary"
+    needs: ["python-example-check", "typescript-example-check", "golang-example-check"]
+    runs-on:
+      - "4-16Gi"
+    steps:
+      - run: |
+          echo "=========================================="
+          echo "      Examples Inspection Completed"
+          echo "=========================================="
+          echo ""
+          echo "All enabled language checks have finished."
+          echo "Check individual job logs for details."
+

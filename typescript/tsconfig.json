@@ -10,7 +10,11 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "types": ["chai", "jest", "node"],
-    "lib": ["es2018", "es2019", "es2020"]
+    "lib": ["es2018", "es2019", "es2020"],
+    "baseUrl": ".",
+    "paths": {
+      "wuying-agentbay-sdk": ["src/index.ts"]
+    }
   },
   "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
