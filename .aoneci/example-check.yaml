@@ -38,29 +38,33 @@ jobs:
         inputs:
           python-version: '3.10'
           
-      - id: install-deps
-        name: "Install Python Dependencies"
+      - id: run-python-check
+        name: "Run Python Examples Inspection"
         run: |
-          cd python
+          echo "🔧 Setting up Python Environment..."
           python -m pip install --upgrade pip
+          
+          echo "📦 Installing Dependencies..."
           # Install SDK in editable mode
-          pip install -e .
-          # Install test dependencies (playwright etc.)
-          pip install pytest playwright
+          python -m pip install -e ./python/
+          
+          # Install test & project dependencies
+          python -m pip install pytest playwright python-dotenv
+          
           # Install AI dependencies for analysis
-          pip install langchain-openai langgraph langchain-core
-          # Install project dependencies
-          pip install python-dotenv
-          # Install playwright browsers (chromium only, no system deps as they require root/apt)
-          playwright install chromium || echo "⚠️ Playwright install failed, browser tests may fail"
-          # Install other potential dependencies for examples
-          if [ -f "requirements.txt" ]; then
-            pip install -r requirements.txt
+          python -m pip install langchain-openai langgraph langchain-core
+          
+          # Install playwright browsers
+          playwright install chromium || echo "⚠️ Playwright install failed"
+          
+          # Install extra requirements if they exist
+          if [ -f "python/requirements.txt" ]; then
+            python -m pip install -r python/requirements.txt
           fi
           
-      - id: run-examples
-        name: "Run Python Examples"
-        run: |
+          echo "📋 Verifying Installed Packages..."
+          python -m pip list | grep -E "agentbay|dotenv|langchain" || true
+          
           echo "🚀 Starting Python Examples Inspection..."
           export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
           export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
@@ -85,25 +89,27 @@ jobs:
           node-version: '18'
           npm-version: '10'
           
-      - id: install-deps
-        name: "Install TypeScript Dependencies"
+      - id: run-typescript-check
+        name: "Run TypeScript Examples Inspection"
         run: |
+          echo "🔧 Setting up TypeScript Environment..."
           cd typescript
           npm ci
           npm run build
-          # Link the package so examples can import it
+          
+          # Link the package
           npm link
           npm link wuying-agentbay-sdk
-          # Install execution tool
+          
+          # Install dependencies
           npm install --no-save ts-node
-          # Install test dependencies
           npx playwright install chromium || echo "⚠️ Playwright install failed"
+          
           # Install Python AI dependencies for analysis runner
+          echo "📦 Installing Python AI Dependencies..."
           python -m pip install langchain-openai langgraph langchain-core
           
-      - id: run-examples
-        name: "Run TypeScript Examples"
-        run: |
+          cd ..
           echo "🚀 Starting TypeScript Examples Inspection..."
           export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
           export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
@@ -127,20 +133,22 @@ jobs:
         inputs:
           go-version: '1.24.3'
           
-      - id: install-deps
-        name: "Install Golang Dependencies"
+      - id: run-golang-check
+        name: "Run Golang Examples Inspection"
         run: |
+          echo "🔧 Setting up Golang Environment..."
           cd golang
           go env -w GOPROXY=https://goproxy.cn,direct
           go mod download
-          # Install playwright driver (without deps)
+          
+          # Install playwright
           go run github.com/playwright-community/playwright-go/cmd/playwright@latest install chromium || echo "⚠️ Playwright install failed"
+          
+          cd ..
           # Install Python AI dependencies for analysis runner
+          echo "📦 Installing Python AI Dependencies..."
           python -m pip install langchain-openai langgraph langchain-core
           
-      - id: run-examples
-        name: "Run Golang Examples"
-        run: |
           echo "🚀 Starting Golang Examples Inspection..."
           export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
           export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
