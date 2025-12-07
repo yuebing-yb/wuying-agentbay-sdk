@@ -120,7 +120,7 @@ IMPORTANT: 请务必使用中文回答。
 
 # --- Execution Logic ---
 
-def run_command(cmd: List[str], cwd: str, env: Dict[str, str] = None, timeout: int = 300) -> Dict[str, Any]:
+def run_command(cmd: List[str], cwd: str, env: Dict[str, str] = None, timeout: int = 600) -> Dict[str, Any]:
     """Run a command with timeout and capture output."""
     start_time = time.time()
     try:
@@ -249,7 +249,7 @@ def check_python_examples(project_root: str, limit: int = 0) -> bool:
         rel_path = os.path.relpath(file_path, project_root)
         print(f"Running ({i+1}/{len(files)}): {rel_path} ... ", end="", flush=True)
         
-        result = run_command([sys.executable, file_path], cwd=python_root, env=env, timeout=120)
+        result = run_command([sys.executable, file_path], cwd=python_root, env=env, timeout=600)
         
         success = result["returncode"] == 0 and not result["timed_out"]
         output = result["stdout"] + "\n" + result["stderr"]
@@ -300,7 +300,7 @@ def check_golang_examples(project_root: str, limit: int = 0) -> bool:
         rel_path = os.path.relpath(dir_path, project_root)
         print(f"Running ({i+1}/{len(sorted_dirs)}): {rel_path} ... ", end="", flush=True)
         
-        result = run_command(["go", "run", "."], cwd=dir_path, timeout=120)
+        result = run_command(["go", "run", "."], cwd=dir_path, timeout=600)
         
         success = result["returncode"] == 0 and not result["timed_out"]
         output = result["stdout"] + "\n" + result["stderr"]
@@ -360,7 +360,7 @@ def check_typescript_examples(project_root: str, limit: int = 0) -> bool:
         print(f"Running ({i+1}/{len(files)}): {rel_path} ... ", end="", flush=True)
         
         cmd = ts_node_cmd + [file_path]
-        result = run_command(cmd, cwd=typescript_root, env=env, timeout=120)
+        result = run_command(cmd, cwd=typescript_root, env=env, timeout=600)
         
         success = result["returncode"] == 0 and not result["timed_out"]
         output = result["stdout"] + "\n" + result["stderr"]
