@@ -1,10 +1,5 @@
 name: "Smart Integration Test"
 
-triggers:
-  schedule:
-    - cron: '0 3 * * 1-5'  # 工作日（周一到周五）凌晨3点触发
-      always: false        # 相同commitId只执行一次
-
 params:
   test_type:
     name: Test Type
