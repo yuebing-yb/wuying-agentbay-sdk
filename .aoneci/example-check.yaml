@@ -49,6 +49,8 @@ jobs:
           pip install pytest playwright
           # Install AI dependencies for analysis
           pip install langchain-openai langgraph langchain-core
+          # Install project dependencies
+          pip install python-dotenv
           # Install playwright browsers (chromium only, no system deps as they require root/apt)
           playwright install chromium || echo "⚠️ Playwright install failed, browser tests may fail"
           # Install other potential dependencies for examples
