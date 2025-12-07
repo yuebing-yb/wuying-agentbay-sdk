@@ -20,7 +20,12 @@ describe("fileSystem", () => {
     // Create a session with linux_latest image
     log("Creating a new session for fileSystem testing...");
     const createResponse = await agentBay.create({ imageId: "linux_latest" });
-    session = createResponse.session!;
+    
+    if (!createResponse.success || !createResponse.session) {
+      throw new Error(`Failed to create session: ${createResponse.errorMessage || "Unknown error"}`);
+    }
+    
+    session = createResponse.session;
     log(`Session created with ID: ${session.sessionId}`);
     log(`Create Session RequestId: ${createResponse.requestId || "undefined"}`);
   });
