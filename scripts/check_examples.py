@@ -28,9 +28,9 @@ try:
     from langchain_openai import ChatOpenAI
     from langchain_core.prompts import ChatPromptTemplate
     AI_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     AI_AVAILABLE = False
-    print_warning("AI dependencies not found. AI analysis will be skipped.")
+    print_warning(f"AI dependencies not found ({e}). AI analysis will be skipped.")
 
 def get_model():
     """Initializes the Qwen model via ChatOpenAI interface compatible with DashScope."""
