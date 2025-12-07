@@ -602,8 +602,8 @@ def execute_typescript_test(test_id: str) -> Dict[str, Any]:
     if "AGENTBAY_API_KEY" not in env:
         print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
 
-    # Run specific test using npm test
-    cmd = ["npm", "run", "test:integration", "--", actual_test_id]
+    # Run specific test using npm test (avoid test:integration which runs all integration tests)
+    cmd = ["npm", "test", "--", actual_test_id]
     result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
     
     status = "passed" if result.returncode == 0 else "failed"
