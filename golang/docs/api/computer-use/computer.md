@@ -198,6 +198,23 @@ defer result.Session.Delete()
 position := result.Session.Computer.GetCursorPosition()
 ```
 
+### GetInstalledApps
+
+```go
+func (c *Computer) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *InstalledAppListResult
+```
+
+GetInstalledApps retrieves a list of installed applications
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+defer result.Session.Delete()
+appsResult := result.Session.Computer.GetInstalledApps(true, true, true)
+```
+
 ### GetScreenSize
 
 ```go
@@ -239,6 +256,23 @@ func (c *Computer) ListRootWindows(timeoutMs ...int) (*WindowListResult, error)
 ```
 
 ListRootWindows lists all root windows
+
+### ListVisibleApps
+
+```go
+func (c *Computer) ListVisibleApps() *ProcessListResult
+```
+
+ListVisibleApps lists all applications with visible windows
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+defer result.Session.Delete()
+processResult := result.Session.Computer.ListVisibleApps()
+```
 
 ### MaximizeWindow
 
@@ -378,6 +412,74 @@ defer result.Session.Delete()
 scrollResult := result.Session.Computer.Scroll(400, 300, computer.ScrollDirectionDown, 5)
 ```
 
+### StartApp
+
+```go
+func (c *Computer) StartApp(startCmd, workDirectory, activity string) *ProcessListResult
+```
+
+StartApp starts the specified application
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+defer result.Session.Delete()
+processResult := result.Session.Computer.StartApp("notepad.exe", "", "")
+```
+
+### StopAppByCmd
+
+```go
+func (c *Computer) StopAppByCmd(stopCmd string) *BoolResult
+```
+
+StopAppByCmd stops an application using the provided stop command
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+defer result.Session.Delete()
+stopResult := result.Session.Computer.StopAppByCmd("taskkill /F /IM notepad.exe")
+```
+
+### StopAppByPID
+
+```go
+func (c *Computer) StopAppByPID(pid int) *BoolResult
+```
+
+StopAppByPID stops an application by process ID
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+defer result.Session.Delete()
+stopResult := result.Session.Computer.StopAppByPID(1234)
+```
+
+### StopAppByPName
+
+```go
+func (c *Computer) StopAppByPName(pname string) *BoolResult
+```
+
+StopAppByPName stops an application by process name
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+defer result.Session.Delete()
+stopResult := result.Session.Computer.StopAppByPName("notepad.exe")
+```
+
 ### Related Functions
 
 ### NewComputer
@@ -410,6 +512,31 @@ type CursorPosition struct {
 
 CursorPosition represents the cursor position on screen
 
+## Type InstalledApp
+
+```go
+type InstalledApp struct {
+	Name		string	`json:"name"`
+	StartCmd	string	`json:"start_cmd"`
+	StopCmd		string	`json:"stop_cmd,omitempty"`
+	WorkDirectory	string	`json:"work_directory,omitempty"`
+}
+```
+
+InstalledApp represents an installed application
+
+## Type InstalledAppListResult
+
+```go
+type InstalledAppListResult struct {
+	models.ApiResponse
+	Apps		[]InstalledApp	`json:"apps"`
+	ErrorMessage	string		`json:"error_message"`
+}
+```
+
+InstalledAppListResult wraps installed app list and RequestID
+
 ## Type MouseButton
 
 ```go
@@ -417,6 +544,30 @@ type MouseButton string
 ```
 
 MouseButton represents mouse button types
+
+## Type Process
+
+```go
+type Process struct {
+	PName	string	`json:"pname"`
+	PID	int	`json:"pid"`
+	CmdLine	string	`json:"cmdline,omitempty"`
+}
+```
+
+Process represents a running process
+
+## Type ProcessListResult
+
+```go
+type ProcessListResult struct {
+	models.ApiResponse
+	Processes	[]Process	`json:"processes"`
+	ErrorMessage	string		`json:"error_message"`
+}
+```
+
+ProcessListResult wraps process list and RequestID
 
 ## Type ScreenSize
 

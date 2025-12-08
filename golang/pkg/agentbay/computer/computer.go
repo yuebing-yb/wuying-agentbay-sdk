@@ -132,10 +132,10 @@ func NewComputer(session interface {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    clickResult := result.Session.Computer.ClickMouse(500, 300, computer.MouseButtonLeft)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	clickResult := result.Session.Computer.ClickMouse(500, 300, computer.MouseButtonLeft)
 func (c *Computer) ClickMouse(x, y int, button MouseButton) *BoolResult {
 	// Validate button parameter
 	validButtons := []MouseButton{MouseButtonLeft, MouseButtonRight, MouseButtonMiddle, MouseButtonDoubleLeft}
@@ -186,10 +186,10 @@ func (c *Computer) ClickMouse(x, y int, button MouseButton) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    moveResult := result.Session.Computer.MoveMouse(300, 200)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	moveResult := result.Session.Computer.MoveMouse(300, 200)
 func (c *Computer) MoveMouse(x, y int) *BoolResult {
 	args := map[string]interface{}{
 		"x": x,
@@ -220,10 +220,10 @@ func (c *Computer) MoveMouse(x, y int) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    dragResult := result.Session.Computer.DragMouse(100, 100, 300, 300, computer.MouseButtonLeft)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	dragResult := result.Session.Computer.DragMouse(100, 100, 300, 300, computer.MouseButtonLeft)
 func (c *Computer) DragMouse(fromX, fromY, toX, toY int, button MouseButton) *BoolResult {
 	// Validate button parameter
 	validButtons := []MouseButton{MouseButtonLeft, MouseButtonRight, MouseButtonMiddle}
@@ -276,10 +276,10 @@ func (c *Computer) DragMouse(fromX, fromY, toX, toY int, button MouseButton) *Bo
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    scrollResult := result.Session.Computer.Scroll(400, 300, computer.ScrollDirectionDown, 5)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	scrollResult := result.Session.Computer.Scroll(400, 300, computer.ScrollDirectionDown, 5)
 func (c *Computer) Scroll(x, y int, direction ScrollDirection, amount int) *BoolResult {
 	// Validate direction parameter
 	validDirections := []ScrollDirection{ScrollDirectionUp, ScrollDirectionDown, ScrollDirectionLeft, ScrollDirectionRight}
@@ -331,10 +331,10 @@ func (c *Computer) Scroll(x, y int, direction ScrollDirection, amount int) *Bool
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    position := result.Session.Computer.GetCursorPosition()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	position := result.Session.Computer.GetCursorPosition()
 func (c *Computer) GetCursorPosition() *CursorPosition {
 	args := map[string]interface{}{}
 
@@ -385,10 +385,10 @@ func (c *Computer) GetCursorPosition() *CursorPosition {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    inputResult := result.Session.Computer.InputText("Hello World")
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	inputResult := result.Session.Computer.InputText("Hello World")
 func (c *Computer) InputText(text string) *BoolResult {
 	args := map[string]interface{}{
 		"text": text,
@@ -418,10 +418,10 @@ func (c *Computer) InputText(text string) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    pressResult := result.Session.Computer.PressKeys([]string{"Ctrl", "c"}, false)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	pressResult := result.Session.Computer.PressKeys([]string{"Ctrl", "c"}, false)
 func (c *Computer) PressKeys(keys []string, hold bool) *BoolResult {
 	args := map[string]interface{}{
 		"keys": keys,
@@ -452,11 +452,11 @@ func (c *Computer) PressKeys(keys []string, hold bool) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    result.Session.Computer.PressKeys([]string{"Shift"}, true)
-//    releaseResult := result.Session.Computer.ReleaseKeys([]string{"Shift"})
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	result.Session.Computer.PressKeys([]string{"Shift"}, true)
+//	releaseResult := result.Session.Computer.ReleaseKeys([]string{"Shift"})
 func (c *Computer) ReleaseKeys(keys []string) *BoolResult {
 	args := map[string]interface{}{
 		"keys": keys,
@@ -486,10 +486,10 @@ func (c *Computer) ReleaseKeys(keys []string) *BoolResult {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    screenSize := result.Session.Computer.GetScreenSize()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	screenSize := result.Session.Computer.GetScreenSize()
 func (c *Computer) GetScreenSize() *ScreenSize {
 	args := map[string]interface{}{}
 
@@ -542,10 +542,10 @@ func (c *Computer) GetScreenSize() *ScreenSize {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    screenshot := result.Session.Computer.Screenshot()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	screenshot := result.Session.Computer.Screenshot()
 func (c *Computer) Screenshot() *ScreenshotResult {
 	args := map[string]interface{}{}
 
@@ -598,10 +598,10 @@ func (c *Computer) ListRootWindows(timeoutMs ...int) (*WindowListResult, error) 
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    windowResult, _ := result.Session.Computer.GetActiveWindow()
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	windowResult, _ := result.Session.Computer.GetActiveWindow()
 func (c *Computer) GetActiveWindow(timeoutMs ...int) (*WindowDetailResult, error) {
 	args := map[string]interface{}{}
 
@@ -631,11 +631,11 @@ func (c *Computer) GetActiveWindow(timeoutMs ...int) (*WindowDetailResult, error
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    windowList, _ := result.Session.Computer.ListRootWindows()
-//    activateResult, _ := result.Session.Computer.ActivateWindow(windowList.Windows[0].WindowID)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	windowList, _ := result.Session.Computer.ListRootWindows()
+//	activateResult, _ := result.Session.Computer.ActivateWindow(windowList.Windows[0].WindowID)
 func (c *Computer) ActivateWindow(windowID int) (*WindowResult, error) {
 	args := map[string]interface{}{
 		"window_id": windowID,
@@ -658,11 +658,11 @@ func (c *Computer) ActivateWindow(windowID int) (*WindowResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    windowList, _ := result.Session.Computer.ListRootWindows()
-//    closeResult, _ := result.Session.Computer.CloseWindow(windowList.Windows[0].WindowID)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	windowList, _ := result.Session.Computer.ListRootWindows()
+//	closeResult, _ := result.Session.Computer.CloseWindow(windowList.Windows[0].WindowID)
 func (c *Computer) CloseWindow(windowID int) (*WindowResult, error) {
 	args := map[string]interface{}{
 		"window_id": windowID,
@@ -685,11 +685,11 @@ func (c *Computer) CloseWindow(windowID int) (*WindowResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    windowList, _ := result.Session.Computer.ListRootWindows()
-//    maxResult, _ := result.Session.Computer.MaximizeWindow(windowList.Windows[0].WindowID)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	windowList, _ := result.Session.Computer.ListRootWindows()
+//	maxResult, _ := result.Session.Computer.MaximizeWindow(windowList.Windows[0].WindowID)
 func (c *Computer) MaximizeWindow(windowID int) (*WindowResult, error) {
 	args := map[string]interface{}{
 		"window_id": windowID,
@@ -712,11 +712,11 @@ func (c *Computer) MaximizeWindow(windowID int) (*WindowResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    windowList, _ := result.Session.Computer.ListRootWindows()
-//    minResult, _ := result.Session.Computer.MinimizeWindow(windowList.Windows[0].WindowID)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	windowList, _ := result.Session.Computer.ListRootWindows()
+//	minResult, _ := result.Session.Computer.MinimizeWindow(windowList.Windows[0].WindowID)
 func (c *Computer) MinimizeWindow(windowID int) (*WindowResult, error) {
 	args := map[string]interface{}{
 		"window_id": windowID,
@@ -798,10 +798,10 @@ func (c *Computer) FullscreenWindow(windowID int) (*WindowResult, error) {
 //
 // Example:
 //
-//    client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//    result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//    defer result.Session.Delete()
-//    focusResult, _ := result.Session.Computer.FocusMode(true)
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	focusResult, _ := result.Session.Computer.FocusMode(true)
 func (c *Computer) FocusMode(on bool) (*WindowResult, error) {
 	args := map[string]interface{}{
 		"on": on,
@@ -818,4 +818,290 @@ func (c *Computer) FocusMode(on bool) (*WindowResult, error) {
 		},
 		Success: result.Success,
 	}, nil
+}
+
+// Process represents a running process
+type Process struct {
+	PName   string `json:"pname"`
+	PID     int    `json:"pid"`
+	CmdLine string `json:"cmdline,omitempty"`
+}
+
+// ProcessListResult wraps process list and RequestID
+type ProcessListResult struct {
+	models.ApiResponse
+	Processes    []Process `json:"processes"`
+	ErrorMessage string    `json:"error_message"`
+}
+
+// InstalledApp represents an installed application
+type InstalledApp struct {
+	Name          string `json:"name"`
+	StartCmd      string `json:"start_cmd"`
+	StopCmd       string `json:"stop_cmd,omitempty"`
+	WorkDirectory string `json:"work_directory,omitempty"`
+}
+
+// InstalledAppListResult wraps installed app list and RequestID
+type InstalledAppListResult struct {
+	models.ApiResponse
+	Apps         []InstalledApp `json:"apps"`
+	ErrorMessage string         `json:"error_message"`
+}
+
+// StartApp starts the specified application
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	processResult := result.Session.Computer.StartApp("notepad.exe", "", "")
+func (c *Computer) StartApp(startCmd, workDirectory, activity string) *ProcessListResult {
+	args := map[string]interface{}{
+		"start_cmd":      startCmd,
+		"work_directory": workDirectory,
+		"activity":       activity,
+	}
+
+	result, err := c.Session.CallMcpTool("start_app", args)
+	if err != nil {
+		return &ProcessListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			ErrorMessage: fmt.Sprintf("failed to call start_app: %v", err),
+		}
+	}
+
+	if !result.Success {
+		return &ProcessListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	// Parse processes from JSON
+	var processes []Process
+	if err := json.Unmarshal([]byte(result.Data), &processes); err != nil {
+		return &ProcessListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			ErrorMessage: fmt.Sprintf("failed to parse processes: %v", err),
+		}
+	}
+
+	return &ProcessListResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Processes:    processes,
+		ErrorMessage: result.ErrorMessage,
+	}
+}
+
+// GetInstalledApps retrieves a list of installed applications
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	appsResult := result.Session.Computer.GetInstalledApps(true, true, true)
+func (c *Computer) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *InstalledAppListResult {
+	args := map[string]interface{}{
+		"start_menu":         startMenu,
+		"desktop":            desktop,
+		"ignore_system_apps": ignoreSystemApps,
+	}
+
+	result, err := c.Session.CallMcpTool("get_installed_apps", args)
+	if err != nil {
+		return &InstalledAppListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			ErrorMessage: fmt.Sprintf("failed to call get_installed_apps: %v", err),
+		}
+	}
+
+	if !result.Success {
+		return &InstalledAppListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	// Parse installed apps from JSON
+	var apps []InstalledApp
+	if err := json.Unmarshal([]byte(result.Data), &apps); err != nil {
+		return &InstalledAppListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			ErrorMessage: fmt.Sprintf("failed to parse installed apps: %v", err),
+		}
+	}
+
+	return &InstalledAppListResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Apps:         apps,
+		ErrorMessage: result.ErrorMessage,
+	}
+}
+
+// ListVisibleApps lists all applications with visible windows
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	processResult := result.Session.Computer.ListVisibleApps()
+func (c *Computer) ListVisibleApps() *ProcessListResult {
+	args := map[string]interface{}{}
+
+	result, err := c.Session.CallMcpTool("list_visible_apps", args)
+	if err != nil {
+		return &ProcessListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			ErrorMessage: fmt.Sprintf("failed to call list_visible_apps: %v", err),
+		}
+	}
+
+	if !result.Success {
+		return &ProcessListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	// Parse processes from JSON
+	var processes []Process
+	if err := json.Unmarshal([]byte(result.Data), &processes); err != nil {
+		return &ProcessListResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			ErrorMessage: fmt.Sprintf("failed to parse processes: %v", err),
+		}
+	}
+
+	return &ProcessListResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Processes:    processes,
+		ErrorMessage: result.ErrorMessage,
+	}
+}
+
+// StopAppByPName stops an application by process name
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	stopResult := result.Session.Computer.StopAppByPName("notepad.exe")
+func (c *Computer) StopAppByPName(pname string) *BoolResult {
+	args := map[string]interface{}{
+		"pname": pname,
+	}
+
+	result, err := c.Session.CallMcpTool("stop_app_by_pname", args)
+	if err != nil {
+		return &BoolResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("failed to call stop_app_by_pname: %v", err),
+		}
+	}
+
+	return &BoolResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success:      result.Success,
+		ErrorMessage: result.ErrorMessage,
+	}
+}
+
+// StopAppByPID stops an application by process ID
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	stopResult := result.Session.Computer.StopAppByPID(1234)
+func (c *Computer) StopAppByPID(pid int) *BoolResult {
+	args := map[string]interface{}{
+		"pid": pid,
+	}
+
+	result, err := c.Session.CallMcpTool("stop_app_by_pid", args)
+	if err != nil {
+		return &BoolResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("failed to call stop_app_by_pid: %v", err),
+		}
+	}
+
+	return &BoolResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success:      result.Success,
+		ErrorMessage: result.ErrorMessage,
+	}
+}
+
+// StopAppByCmd stops an application using the provided stop command
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
+//	defer result.Session.Delete()
+//	stopResult := result.Session.Computer.StopAppByCmd("taskkill /F /IM notepad.exe")
+func (c *Computer) StopAppByCmd(stopCmd string) *BoolResult {
+	args := map[string]interface{}{
+		"stop_cmd": stopCmd,
+	}
+
+	result, err := c.Session.CallMcpTool("stop_app_by_cmd", args)
+	if err != nil {
+		return &BoolResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("failed to call stop_app_by_cmd: %v", err),
+		}
+	}
+
+	return &BoolResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		Success:      result.Success,
+		ErrorMessage: result.ErrorMessage,
+	}
 }

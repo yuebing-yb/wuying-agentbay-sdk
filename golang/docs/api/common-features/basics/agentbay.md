@@ -21,8 +21,9 @@ AgentBayConfig holds optional configuration for the AgentBay client.
 type AgentBay struct {
 	APIKey		string
 	Client		*mcp.Client
-	Sessions	sync.Map
 	Context		*ContextService
+	MobileSimulate	*MobileSimulateService
+	config		Config
 }
 ```
 
@@ -120,6 +121,14 @@ sessionID := createResult.Session.SessionID
 result, _ := client.Get(sessionID)
 defer result.Session.Delete()
 ```
+
+### GetRegionID
+
+```go
+func (a *AgentBay) GetRegionID() string
+```
+
+GetRegionID returns the region ID from config
 
 ### GetSession
 

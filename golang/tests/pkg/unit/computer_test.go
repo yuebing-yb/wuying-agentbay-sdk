@@ -413,6 +413,218 @@ func (suite *ComputerTestSuite) TestScreenshot_Success() {
 	assert.Empty(suite.T(), result.ErrorMessage)
 }
 
+// Test StartApp functionality
+func (suite *ComputerTestSuite) TestStartApp_Success() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-start-app-123",
+		Data:         `[{"pname": "notepad.exe", "pid": 1234, "cmdline": "notepad.exe"}]`,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "start_app", map[string]interface{}{
+		"start_cmd":      "notepad.exe",
+		"work_directory": "",
+		"activity":       "",
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.StartApp("notepad.exe", "", "")
+
+	// Assert
+	assert.Equal(suite.T(), "test-start-app-123", result.RequestID)
+	assert.Empty(suite.T(), result.ErrorMessage)
+	assert.Len(suite.T(), result.Processes, 1)
+	assert.Equal(suite.T(), "notepad.exe", result.Processes[0].PName)
+	assert.Equal(suite.T(), 1234, result.Processes[0].PID)
+}
+
+func (suite *ComputerTestSuite) TestStartApp_McpToolError() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      false,
+		RequestID:    "test-start-app-error",
+		ErrorMessage: "Failed to start app",
+	}
+
+	suite.mockSession.On("CallMcpTool", "start_app", map[string]interface{}{
+		"start_cmd":      "invalid.exe",
+		"work_directory": "",
+		"activity":       "",
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.StartApp("invalid.exe", "", "")
+
+	// Assert
+	// assert.False(suite.T(), result.Success) // ProcessListResult does not have Success field
+	assert.Equal(suite.T(), "test-start-app-error", result.RequestID)
+	assert.Equal(suite.T(), "Failed to start app", result.ErrorMessage)
+	assert.Empty(suite.T(), result.Processes)
+}
+
+func (suite *ComputerTestSuite) TestStartApp_WithWorkDirAndActivity() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-start-app-args",
+		Data:         `[]`,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "start_app", map[string]interface{}{
+		"start_cmd":      "cmd.exe",
+		"work_directory": "C:\\",
+		"activity":       "MainActivity",
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.StartApp("cmd.exe", "C:\\", "MainActivity")
+
+	// Assert
+	assert.Equal(suite.T(), "test-start-app-args", result.RequestID)
+	assert.Empty(suite.T(), result.ErrorMessage)
+}
+
+// Test GetInstalledApps functionality
+func (suite *ComputerTestSuite) TestGetInstalledApps_Success() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-get-apps-123",
+		Data:         `[{"name": "Notepad", "start_cmd": "notepad.exe", "stop_cmd": "taskkill /F /IM notepad.exe", "work_directory": ""}]`,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "get_installed_apps", map[string]interface{}{
+		"start_menu":         true,
+		"desktop":            false,
+		"ignore_system_apps": true,
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.GetInstalledApps(true, false, true)
+
+	// Assert
+	assert.Equal(suite.T(), "test-get-apps-123", result.RequestID)
+	assert.Empty(suite.T(), result.ErrorMessage)
+	assert.Len(suite.T(), result.Apps, 1)
+	assert.Equal(suite.T(), "Notepad", result.Apps[0].Name)
+	assert.Equal(suite.T(), "notepad.exe", result.Apps[0].StartCmd)
+}
+
+func (suite *ComputerTestSuite) TestGetInstalledApps_Error() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      false,
+		RequestID:    "test-get-apps-error",
+		ErrorMessage: "Failed to get apps",
+	}
+
+	suite.mockSession.On("CallMcpTool", "get_installed_apps", map[string]interface{}{
+		"start_menu":         true,
+		"desktop":            true,
+		"ignore_system_apps": true,
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.GetInstalledApps(true, true, true)
+
+	// Assert
+	assert.Equal(suite.T(), "test-get-apps-error", result.RequestID)
+	assert.Equal(suite.T(), "Failed to get apps", result.ErrorMessage)
+	assert.Empty(suite.T(), result.Apps)
+}
+
+// Test ListVisibleApps functionality
+func (suite *ComputerTestSuite) TestListVisibleApps_Success() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-visible-apps-123",
+		Data:         `[{"pname": "chrome.exe", "pid": 4567, "cmdline": "chrome.exe"}]`,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "list_visible_apps", map[string]interface{}{}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.ListVisibleApps()
+
+	// Assert
+	assert.Equal(suite.T(), "test-visible-apps-123", result.RequestID)
+	assert.Empty(suite.T(), result.ErrorMessage)
+	assert.Len(suite.T(), result.Processes, 1)
+	assert.Equal(suite.T(), "chrome.exe", result.Processes[0].PName)
+}
+
+// Test StopAppByPName functionality
+func (suite *ComputerTestSuite) TestStopAppByPName_Success() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-stop-pname-123",
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "stop_app_by_pname", map[string]interface{}{
+		"pname": "notepad.exe",
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.StopAppByPName("notepad.exe")
+
+	// Assert
+	assert.True(suite.T(), result.Success)
+	assert.Equal(suite.T(), "test-stop-pname-123", result.RequestID)
+	assert.Empty(suite.T(), result.ErrorMessage)
+}
+
+// Test StopAppByPID functionality
+func (suite *ComputerTestSuite) TestStopAppByPID_Success() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-stop-pid-123",
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "stop_app_by_pid", map[string]interface{}{
+		"pid": 1234,
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.StopAppByPID(1234)
+
+	// Assert
+	assert.True(suite.T(), result.Success)
+	assert.Equal(suite.T(), "test-stop-pid-123", result.RequestID)
+	assert.Empty(suite.T(), result.ErrorMessage)
+}
+
+// Test StopAppByCmd functionality
+func (suite *ComputerTestSuite) TestStopAppByCmd_Success() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-stop-cmd-123",
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "stop_app_by_cmd", map[string]interface{}{
+		"stop_cmd": "kill notepad",
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.StopAppByCmd("kill notepad")
+
+	// Assert
+	assert.True(suite.T(), result.Success)
+	assert.Equal(suite.T(), "test-stop-cmd-123", result.RequestID)
+	assert.Empty(suite.T(), result.ErrorMessage)
+}
+
 // Test edge cases and error scenarios
 func (suite *ComputerTestSuite) TestClickMouse_AllButtonTypes() {
 	testCases := []struct {
