@@ -248,13 +248,19 @@ def process_results(results: List[Dict], language: str):
                 report_content += f"---\n\n#### 📄 {rel_path}\n"
                 report_content += f"**耗时**: {res['duration']:.2f}s\n\n"
                 
-                # AI Analysis
-                report_content += f"**🤖 AI 智能分析**:\n\n{res['analysis']}\n\n"
+                # AI Analysis (Folded)
+                report_content += "<details>\n"
+                report_content += "<summary>🤖 AI 智能分析</summary>\n\n"
+                report_content += f"{res['analysis']}\n"
+                report_content += "</details>\n\n"
                 
-                # Log Snippet
+                # Log Snippet (Folded)
                 output = res['output']
                 snippet = output[-2000:] if len(output) > 2000 else output
-                report_content += f"**日志片段**:\n```\n{snippet}\n```\n\n"
+                report_content += "<details>\n"
+                report_content += "<summary>📄 日志片段</summary>\n\n"
+                report_content += f"```\n{snippet}\n```\n"
+                report_content += "</details>\n\n"
     
     # Write to report file (append mode)
     with open(REPORT_FILE, "a", encoding="utf-8") as f:
