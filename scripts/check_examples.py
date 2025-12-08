@@ -14,6 +14,14 @@ RESET = '\033[0m'
 # Report file path
 REPORT_FILE = "example_check_report.md"
 
+# List of examples to skip (relative path from project root or filename)
+SKIP_EXAMPLES = [
+    # Interactive examples requiring user input
+    "typescript/docs/examples/browser-use/browser/call_for_user_jd.ts",
+    # Long running examples
+    "typescript/docs/examples/browser-use/browser/run-2048.ts",
+]
+
 def print_success(msg):
     print(f"{GREEN}{msg}{RESET}")
 
@@ -248,6 +256,11 @@ def check_python_examples(project_root: str, limit: int = 0) -> bool:
     
     for i, file_path in enumerate(files):
         rel_path = os.path.relpath(file_path, project_root)
+        
+        if any(skip in rel_path for skip in SKIP_EXAMPLES):
+            print(f"Skipping ({i+1}/{len(files)}): {rel_path} (in skip list)")
+            continue
+
         print(f"Running ({i+1}/{len(files)}): {rel_path} ... ", end="", flush=True)
         
         # Set AGENTBAY_LOG_LEVEL to ERROR to reduce noise unless we're debugging a failure
@@ -311,6 +324,11 @@ def check_golang_examples(project_root: str, limit: int = 0) -> bool:
     
     for i, dir_path in enumerate(sorted_dirs):
         rel_path = os.path.relpath(dir_path, project_root)
+        
+        if any(skip in rel_path for skip in SKIP_EXAMPLES):
+            print(f"Skipping ({i+1}/{len(sorted_dirs)}): {rel_path} (in skip list)")
+            continue
+
         print(f"Running ({i+1}/{len(sorted_dirs)}): {rel_path} ... ", end="", flush=True)
         
         result = run_command(["go", "run", "."], cwd=dir_path, timeout=600)
@@ -378,6 +396,11 @@ def check_typescript_examples(project_root: str, limit: int = 0) -> bool:
     
     for i, file_path in enumerate(files):
         rel_path = os.path.relpath(file_path, project_root)
+        
+        if any(skip in rel_path for skip in SKIP_EXAMPLES):
+            print(f"Skipping ({i+1}/{len(files)}): {rel_path} (in skip list)")
+            continue
+
         print(f"Running ({i+1}/{len(files)}): {rel_path} ... ", end="", flush=True)
         
         cmd = ts_node_cmd + [file_path]
