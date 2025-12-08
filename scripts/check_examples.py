@@ -71,9 +71,10 @@ def analyze_failure(file_path: str, output: str, duration: float) -> str:
     except Exception as e:
         code_content = f"无法读取文件内容: {e}"
         
-    # Truncate output if too long
+        # Truncate output if too long
     error_log = output[-5000:] if len(output) > 5000 else output
     
+    # Use a simpler prompt to avoid potential encoding issues
     prompt = ChatPromptTemplate.from_template("""
 你是一位资深的SDK示例代码审查专家。请用中文进行分析和回答。
 
@@ -256,10 +257,10 @@ def check_python_examples(project_root: str, limit: int = 0) -> bool:
         analysis = ""
         
         if success:
-            print(f"{GREEN}PASSED ({result['duration']:.2f}s){RESET}")
+            print(f"\n{GREEN}PASSED ({result['duration']:.2f}s){RESET}")
         else:
             status = "TIMEOUT" if result["timed_out"] else "FAILED"
-            print(f"{RED}{status} ({result['duration']:.2f}s){RESET}")
+            print(f"\n{RED}{status} ({result['duration']:.2f}s){RESET}")
             # Print stderr to console for visibility in CI logs
             if result['stderr']:
                 print(f"{RED}Stderr:{RESET}")
@@ -315,10 +316,10 @@ def check_golang_examples(project_root: str, limit: int = 0) -> bool:
         analysis = ""
         
         if success:
-            print(f"{GREEN}PASSED ({result['duration']:.2f}s){RESET}")
+            print(f"\n{GREEN}PASSED ({result['duration']:.2f}s){RESET}")
         else:
             status = "TIMEOUT" if result["timed_out"] else "FAILED"
-            print(f"{RED}{status} ({result['duration']:.2f}s){RESET}")
+            print(f"\n{RED}{status} ({result['duration']:.2f}s){RESET}")
             # Print stderr to console for visibility in CI logs
             if result['stderr']:
                 print(f"{RED}Stderr:{RESET}")
@@ -383,10 +384,10 @@ def check_typescript_examples(project_root: str, limit: int = 0) -> bool:
         analysis = ""
         
         if success:
-            print(f"{GREEN}PASSED ({result['duration']:.2f}s){RESET}")
+            print(f"\n{GREEN}PASSED ({result['duration']:.2f}s){RESET}")
         else:
             status = "TIMEOUT" if result["timed_out"] else "FAILED"
-            print(f"{RED}{status} ({result['duration']:.2f}s){RESET}")
+            print(f"\n{RED}{status} ({result['duration']:.2f}s){RESET}")
             # Print stderr to console for visibility in CI logs
             if result['stderr']:
                 print(f"{RED}Stderr:{RESET}")
