@@ -18,8 +18,17 @@ REPORT_FILE = "example_check_report.md"
 SKIP_EXAMPLES = [
     # Interactive examples requiring user input
     "typescript/docs/examples/browser-use/browser/call_for_user_jd.ts",
-    # Long running examples
+    "python/docs/examples/_async/browser-use/browser/call_for_user_jd.py",
+    
+    # Long running examples / Infinite loops
     "typescript/docs/examples/browser-use/browser/run-2048.ts",
+    "python/docs/examples/_async/browser-use/browser/game_2048.py",
+    "typescript/docs/examples/browser-use/browser/run-sudoku.ts",
+    "python/docs/examples/_async/browser-use/browser/game_sudoku.py",
+    
+    # Examples with unstable external dependencies (Captchas, 3rd party sites)
+    "typescript/docs/examples/browser-use/browser/captcha_tongcheng.ts",
+    "python/docs/examples/_async/browser-use/browser/captcha_tongcheng.py",
 ]
 
 def print_success(msg):
