@@ -250,7 +250,11 @@ def check_python_examples(project_root: str, limit: int = 0) -> bool:
         rel_path = os.path.relpath(file_path, project_root)
         print(f"Running ({i+1}/{len(files)}): {rel_path} ... ", end="", flush=True)
         
-        result = run_command([sys.executable, file_path], cwd=python_root, env=env, timeout=600)
+        # Set AGENTBAY_LOG_LEVEL to ERROR to reduce noise unless we're debugging a failure
+        env_with_log = env.copy()
+        env_with_log["AGENTBAY_LOG_LEVEL"] = "ERROR"
+
+        result = run_command([sys.executable, file_path], cwd=python_root, env=env_with_log, timeout=600)
         
         success = result["returncode"] == 0 and not result["timed_out"]
         output = result["stdout"] + "\n" + result["stderr"]
