@@ -6,8 +6,8 @@
  * - Utilize PageUseAgent to run 2048 game
  */
 
-import { AgentBay, CreateSessionParams } from '../../../../typescript/src/agent-bay';
-import { BrowserOption, ExtractOptions, ActOptions } from '../../../../typescript/src/browser';
+import { AgentBay, CreateSessionParams } from 'wuying-agentbay-sdk';
+import { BrowserOption, ExtractOptions, ActOptions } from 'wuying-agentbay-sdk/dist/browser';
 // import { chromium } from 'playwright';
 
 class GameState {

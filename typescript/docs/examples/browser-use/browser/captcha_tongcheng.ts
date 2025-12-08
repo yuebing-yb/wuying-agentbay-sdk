@@ -7,8 +7,8 @@
  * - We will encounter a captcha and we will solve it automatically.
  */
 
-import { AgentBay, CreateSessionParams } from '../../../src/agent-bay';
-import { BrowserOption } from '../../../src/browser';
+import { AgentBay, CreateSessionParams } from 'wuying-agentbay-sdk';
+import { BrowserOption } from 'wuying-agentbay-sdk/dist/browser';
 import { chromium, Page, ConsoleMessage } from 'playwright';
 
 // Polling detection function, continuously checks until condition is met or timeout
