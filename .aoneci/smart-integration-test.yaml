@@ -10,7 +10,6 @@ params:
       - "python"
       - "typescript"
       - "golang"
-      - "doc_examples"
 
 traits:
   - type: notification
@@ -182,14 +181,8 @@ jobs:
           fi
           
           # Run the smart test runner
-          RUN_CMD="python scripts/smart_test_runner.py --test-type=${{params.test_type}}"
-          if [ "${{params.test_type}}" = "doc_examples" ]; then
-             echo "📚 Running Doc Example Verification..."
-             RUN_CMD="python scripts/verify_doc_examples.py --report test_report.md"
-          fi
-
-          if $RUN_CMD; then
-            echo "✅ Tests completed successfully"
+          if python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
+            echo "✅ Smart Test Runner completed successfully"
             
             # Check if test report was generated
           if [ -f "test_report.md" ]; then
@@ -433,7 +426,7 @@ jobs:
             echo "No test report was generated. Check the logs above for errors." >> $AONE_CI_SUMMARY_MD
           fi
           else
-            echo "❌ Tests failed with exit code $?"
+            echo "❌ Smart Test Runner failed with exit code $?"
             echo "❌ CI pipeline will now fail"
             exit 1
           fi
@@ -530,4 +523,3 @@ jobs:
           else
             echo "⚠️ 测试报告文件不存在"
           fi
-

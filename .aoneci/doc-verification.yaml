@@ -1,0 +1,181 @@
+name: "Doc Examples Verification"
+
+params:
+  pattern:
+    name: Filter Pattern
+    type: string
+    default: ""
+    description: "Only run verification on files matching this pattern"
+  limit:
+    name: Limit Examples
+    type: string
+    default: ""
+    description: "Limit the number of examples to verify (for testing)"
+
+traits:
+  - type: notification
+    properties:
+      types: dingtalk
+      when: all
+      users: 187788
+      content: |
+        ---
+        - **Doc Verification Report**
+            - @${{git.repo}}
+            - **Branch**: ${{git.branch}}
+            - **Commit**: ${{git.commitId}}
+            - **Changed By**: ${{git.employeeId}}
+                      
+        📚 **文档示例代码验证报告**
+        
+        📊 **验证结果：** ${{jobs.doc-verification.outputs.verification_summary}}
+        
+        **失败详情：**
+        ${{jobs.doc-verification.outputs.failed_items}}
+        
+        💡 请查看CI详情页面获取详细分析。
+
+jobs:
+  doc-verification:
+    name: "Doc Examples Verification"
+    runs-on:
+      - "4-16Gi"
+    image: alios-8u
+    timeout: 5h
+    retry:
+      max: 1
+      when:
+        - runner_system_failure
+    outputs:
+      verification_summary: ${{steps.run-verification.outputs.verification_summary}}
+      failed_items: ${{steps.run-verification.outputs.failed_items}}
+    steps:
+      - uses: checkout
+      
+      - uses: setup-env
+        inputs:
+          python-version: '3.12'
+          node-version: '18'
+          npm-version: '10'
+          npm-cache: true
+          
+      - id: run-verification
+        name: "Run Verification"
+        run: |
+          echo "🔄 Installing dependencies..."
+          
+          # Setup Python environment
+          python -m pip config set global.timeout 600
+          python -m pip config set global.retries 5
+          python -m pip install --upgrade pip
+          
+          # Install project dependencies
+          echo "🐍 Installing project dependencies..."
+          if [ -d "python" ]; then
+            pip install -e ./python/
+          else
+            echo "❌ Python directory not found"
+            ls -la
+            exit 1
+          fi
+          
+          # Install test and AI dependencies
+          pip install "darabonba-core>=1.0.0,<2.0.0" \
+                      "alibabacloud-tea-openapi>=0.4.0rc3" \
+                      "cryptography>=44.0.0" \
+                      "httpx>=0.28.1" \
+                      "alibabacloud-tea-util>=0.3.13" \
+                      "python-dotenv>=1.0.0" \
+                      "pydantic>=2.0" \
+                      "playwright>=1.5.0" \
+                      "loguru>=0.7.0" \
+                      pytest pytest-asyncio langchain-openai langgraph langchain-core
+          
+          # Install playwright browsers
+          echo "🎭 Installing Playwright browsers..."
+          playwright install chromium || echo "⚠️ Playwright install failed"
+          
+          echo "🔧 Setting up environment..."
+          cd /aoneci/runner/work/source || exit 1
+          
+          export PYTHONPATH="${PYTHONPATH}:$(pwd)/python"
+          export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
+          export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
+          
+          echo "🚀 Starting Doc Verification..."
+          
+          # Build command arguments
+          CMD="python scripts/verify_doc_examples.py --report test_report.md"
+          if [ -n "${{params.pattern}}" ]; then
+            CMD="$CMD --pattern ${{params.pattern}}"
+          fi
+          if [ -n "${{params.limit}}" ]; then
+            CMD="$CMD --limit ${{params.limit}}"
+          fi
+          
+          echo "Executing: $CMD"
+          
+          # Run verification
+          if $CMD; then
+            echo "✅ Verification script completed successfully"
+          else
+            echo "❌ Verification script failed"
+            # Don't exit immediately, we want to process the report
+          fi
+          
+          # Process report
+          if [ -f "test_report.md" ]; then
+            echo "✅ Report generated"
+            
+            # Extract statistics for summary
+            TOTAL=$(grep -o "[0-9]\+ Snippets" test_report.md | grep -o "[0-9]\+" || echo "0")
+            PASSED=$(grep -o "✅ [0-9]\+ Passed" test_report.md | grep -o "[0-9]\+" || echo "0")
+            DOC_ISSUES=$(grep -o "❌ [0-9]\+ Doc Issues" test_report.md | grep -o "[0-9]\+" || echo "0")
+            GEN_ISSUES=$(grep -o "⚠️ [0-9]\+ Script Issues" test_report.md | grep -o "[0-9]\+" || echo "0")
+            
+            SUMMARY="$TOTAL Snippets | ✅ $PASSED Passed | ❌ $DOC_ISSUES Doc Issues | ⚠️ $GEN_ISSUES Script Issues"
+            
+            # Generate failed list for notification (Doc issues only)
+            FAILED_LIST=""
+            if [ "$DOC_ISSUES" -gt 0 ]; then
+              grep -A1 "### 📄 文件:" test_report.md | grep "Line" | head -5 | while IFS= read -r line; do
+                 file=$(grep -B1 "$line" test_report.md | grep "### 📄 文件:" | sed 's/### 📄 文件: `//' | sed 's/`//')
+                 loc=$(echo "$line" | sed 's/**位置**: //')
+                 echo "- $file ($loc)" >> /tmp/failed_list
+              done
+              
+              if [ -f /tmp/failed_list ]; then
+                FAILED_LIST=$(cat /tmp/failed_list)
+                rm -f /tmp/failed_list
+              fi
+            else
+              if [ "$GEN_ISSUES" -gt 0 ]; then
+                FAILED_LIST="⚠️ 发现 $GEN_ISSUES 个脚本生成问题，请查看报告。"
+              else
+                FAILED_LIST="✅ 文档示例验证通过！"
+              fi
+            fi
+            
+            # Output to step outputs
+            echo "$SUMMARY" > "${{outputs.verification_summary.path}}"
+            printf "%s\n" "$FAILED_LIST" > "${{outputs.failed_items.path}}"
+            
+            # Add report to CI summary
+            echo "## 📚 Doc Verification Report" >> $AONE_CI_SUMMARY_MD
+            cat test_report.md >> $AONE_CI_SUMMARY_MD
+            
+            # Archive report
+            mkdir -p artifacts
+            cp test_report.md artifacts/doc_verification_report.md
+            
+            # Fail pipeline if doc issues found
+            if [ "$DOC_ISSUES" -gt 0 ]; then
+              echo "❌ Found documentation issues"
+              exit 1
+            fi
+          else
+            echo "⚠️ No report generated"
+            echo "Failed to generate verification report" > "${{outputs.verification_summary.path}}"
+            exit 1
+          fi
+
