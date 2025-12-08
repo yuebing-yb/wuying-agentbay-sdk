@@ -91,9 +91,25 @@ def analyze_failure(file_path: str, output: str, duration: float) -> str:
         # Truncate output if too long
     error_log = output[-5000:] if len(output) > 5000 else output
     
+    # Prepare context
+    sdk_context = ""
+    # Try to load llms-full.txt from project root
+    llms_full_path = os.path.join(os.getcwd(), "llms-full.txt")
+    if os.path.exists(llms_full_path):
+        try:
+            with open(llms_full_path, "r", encoding="utf-8") as f:
+                sdk_context = f.read()
+            # Limit context length to avoid token limits, prioritizing the beginning
+            sdk_context = sdk_context[:50000] + "...(truncated)" if len(sdk_context) > 50000 else sdk_context
+        except Exception as e:
+            print_warning(f"Failed to read llms-full.txt: {e}")
+    
     # Use a simpler prompt to avoid potential encoding issues
     prompt = ChatPromptTemplate.from_template("""
 你是一位资深的SDK示例代码审查专家。请用中文进行分析和回答。
+
+### SDK Context (Documentation/Codebase)
+{sdk_context}
 
 ### 任务
 分析以下SDK示例代码的运行失败原因。
@@ -123,6 +139,7 @@ IMPORTANT: 请务必使用中文回答。
     try:
         chain = prompt | model
         response = chain.invoke({
+            "sdk_context": sdk_context,
             "filename": os.path.basename(file_path),
             "duration": duration,
             "code_content": code_content,
