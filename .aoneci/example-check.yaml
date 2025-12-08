@@ -157,6 +157,8 @@ jobs:
   summary:
     name: "Examples Inspection Summary"
     needs: ["python-example-check", "typescript-example-check", "golang-example-check"]
+    # Ensure summary runs even if previous jobs failed
+    if: always()
     runs-on:
       - "4-16Gi"
     steps:
@@ -165,5 +167,20 @@ jobs:
           echo "      Examples Inspection Completed"
           echo "=========================================="
           echo ""
-          echo "All enabled language checks have finished."
-          echo "Check individual job logs for details."
+          
+          # Check status of each job
+          PYTHON_STATUS="${{jobs.python-example-check.status}}"
+          TS_STATUS="${{jobs.typescript-example-check.status}}"
+          GO_STATUS="${{jobs.golang-example-check.status}}"
+          
+          echo "Python Check: $PYTHON_STATUS"
+          echo "TypeScript Check: $TS_STATUS"
+          echo "Golang Check: $GO_STATUS"
+          
+          # Fail the summary job if any critical check failed
+          if [ "$PYTHON_STATUS" != "success" ] || [ "$TS_STATUS" != "success" ] || [ "$GO_STATUS" != "success" ]; then
+            echo "❌ One or more example checks failed."
+            exit 1
+          fi
+          
+          echo "✅ All checks passed successfully."
