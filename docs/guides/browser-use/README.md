@@ -478,13 +478,13 @@ async def main():
         await page.goto("https://www.google.com")
 
         # ask the agent to act: type the book name into the search box
-        act_result = await session.browser.agent.act_async(ActOptions(
+        act_result = await session.browser.agent.act(ActOptions(
             action=f"Type '{BOOK_QUERY}' into the search box and submit",
         ), page)
         print("act_result:", act_result.success, act_result.message)
 
         # let the agent open the first result
-        open_first = await session.browser.agent.act_async(ActOptions(
+        open_first = await session.browser.agent.act(ActOptions(
             action="Click the first result in the search results",
         ), page)
         print("open_first:", open_first.success, open_first.message)

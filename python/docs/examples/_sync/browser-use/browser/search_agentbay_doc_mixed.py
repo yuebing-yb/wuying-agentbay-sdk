@@ -10,7 +10,8 @@
 """
 
 import os
-from agentbay import AgentBay
+
+from agentbay import AgentBay as AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
 from agentbay import ActOptions
@@ -20,15 +21,10 @@ from playwright.sync_api import sync_playwright
 def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     agent_bay = AgentBay(api_key=api_key)
-    session_result = agent_bay.create(CreateSessionParams(image_id="browser_latest"))
-    
-    if not session_result.success:
-        print(f"❌ Failed to create session: {session_result.error_message}")
-        return
-        
+    params = CreateSessionParams(image_id="browser_latest")
+    session_result = agent_bay.create(params)
+    assert session_result.success and session_result.session is not None
     session = session_result.session
-    print(f"✅ Session created successfully: {session.session_id}")
-    
     try:
         assert session.browser.initialize(BrowserOption())
         agent = session.browser.agent
@@ -44,34 +40,36 @@ def main():
             page = context.new_page()
 
             # 先用 Playwright 导航
-            page.goto("https://www.aliyun.com", wait_until="domcontentloaded", timeout=60000)
+            page.goto(
+                "https://www.aliyun.com", wait_until="domcontentloaded", timeout=60000
+            )
 
             # 让 Agent 跟上当前 Playwright 页面（显式传 page）
             agent.act(
                 ActOptions(action="搜索框输入'AgentBay帮助文档'并回车"), page=page
             )
 
-            # 等待搜索结果加载
-            page.wait_for_timeout(2000)
+            # Playwright 等待新页面打开
+            with page.context.expect_page() as new_page_info:
+                # 在之前的页面上使用Agent
+                agent.act(
+                    ActOptions(action="点击搜索结果中的第一项"),
+                    page=page,
+                )
+                new_page = new_page_info.value
+                new_page.wait_for_load_state("domcontentloaded")
 
-            # 点击搜索结果（在同一页面导航）
-            agent.act(
-                ActOptions(action="点击搜索结果中的第一项"),
-                page=page,
-            )
+            # 方式一： 在新页面上继续用 Agent（传 page=new_page，确保焦点一致）
+            agent.act(ActOptions(action="点击'帮助文档'"), page=new_page)
+            agent.act(ActOptions(action="滚动页面到底部"), page=new_page)
 
-            # 等待页面导航完成
-            page.wait_for_load_state("domcontentloaded", timeout=60000)
-
-            # 在当前页面上继续用 Agent
-            agent.act(ActOptions(action="滚动页面到底部"), page=page)
-
-            print("Successfully completed browser automation with mixed Playwright and PageUse Agent")
+            # 方式二： 也可不传page参数， 因上一步动作由Agent发起，Agent默认将焦点切到新打开的页面
+            # await agent.act(ActOptions(action="点击'帮助文档'"))
+            # await agent.act(ActOptions(action="滚动页面到底部"))
 
             playwright_browser.close()
     finally:
-        if session:
-            agent_bay.delete(session)
+        agent_bay.delete(session)
 
 
 if __name__ == "__main__":

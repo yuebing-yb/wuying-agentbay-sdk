@@ -8,50 +8,44 @@ import time
 通过 Quick Buy 选择影院/日期/场次，进入选座并选择单个座位
 重点：复杂流程的自然语言分步动作；保持只选一个座位
 """
-import os, asyncio
-from agentbay import AgentBay
+
+import os
+from agentbay import AgentBay as AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
 from agentbay import ActOptions
 
+
 def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
-    if not api_key:
-        print("Error: AGENTBAY_API_KEY not set"); return
-    agentbay = AgentBay(api_key=api_key)
-    session_result = agentbay.create(CreateSessionParams(image_id="browser_latest"))
-    if not session_result.success:
-        print(f"Failed to create session: {session_result.error_message}")
-        return
+    agent_bay = AgentBay(api_key=api_key)
+    params = CreateSessionParams(image_id="browser_latest")
+    session_result = agent_bay.create(params)
+    assert session_result.success and session_result.session is not None
     session = session_result.session
     try:
-        if not session.browser.initialize(BrowserOption()):
-            print("Browser init failed"); 
-            return
+        assert session.browser.initialize(BrowserOption())
         agent = session.browser.agent
         agent.navigate("https://www.gv.com.sg/")
 
-        agent.act(ActOptions(
-            action='点击 "Quick Buy" 按钮', dom_settle_timeout_ms=3000
-        ))
-        agent.act(ActOptions(
-            action="在 Quick-Buy 面板中选择任意影院、任意影片，日期选择 2025-08-12", dom_settle_timeout_ms=4000
-        ))
-        agent.act(ActOptions(
-            action='点击 "Go" 进入选座页面', dom_settle_timeout_ms=4000
-        ))
-        agent.act(ActOptions(
-            action='点击 "12:55 PM" 的场次', dom_settle_timeout_ms=4000
-        ))
-        agent.act(ActOptions(
-            action="选择任意可用座位，确保只选择一个，如有两座被选中则取消多余的",
-            dom_settle_timeout_ms=5000
-        ))
+        agent.act(ActOptions(action='点击 "Quick Buy" 按钮'))
+        agent.act(
+            ActOptions(
+                action="在 Quick-Buy 面板中选择任意影院、任意影片，日期选择 2025-08-12"
+            )
+        )
+        agent.act(ActOptions(action='点击 "Go" 进入选座页面'))
+        agent.act(ActOptions(action='点击 "12:55 PM" 的场次'))
+        agent.act(
+            ActOptions(
+                action="选择任意可用座位，确保只选择一个，如有两座被选中则取消多余的"
+            )
+        )
         time.sleep(3)
+        agent.close()
     finally:
-        try: session.browser.agent.close()
-        except Exception: pass
-        agentbay.delete(session)
+        agent_bay.delete(session)
+
 
 if __name__ == "__main__":
     main()

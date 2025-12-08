@@ -18,7 +18,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AgentBay, CreateSessionParams
-from agentbay import BrowserOption, ActOptions as ActOptions, ExtractOptions as ExtractOptions
+from agentbay import BrowserOption, ActOptions, ExtractOptions
 
 
 def main():
@@ -128,4 +128,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

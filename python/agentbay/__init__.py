@@ -77,7 +77,7 @@ from ._common.models import (
     BrowserFingerprint,
     BrowserFingerprintContext,
 )
-from ._sync.browser_agent import (
+from ._common.models.browser_agent import (
     ActOptions,
     ActResult,
     ExtractOptions,
@@ -144,13 +144,6 @@ from ._async.context import AsyncContextService
 from ._async.extension import AsyncExtensionsService
 from ._async.code import AsyncCode
 from ._async.mobile_simulate import AsyncMobileSimulateService
-from ._async.browser_agent import (
-    ActOptions as AsyncActOptions,
-    ActResult as AsyncActResult,
-    ExtractOptions as AsyncExtractOptions,
-    ObserveResult as AsyncObserveResult,
-    ObserveOptions as AsyncObserveOptions,
-)
 
 __all__ = [
     # Core API
@@ -237,18 +230,13 @@ __all__ = [
     "ContextFileListResult",
     "ClearContextResult",
     "ContextStatusData",
-    # Action/Result types
+    # Browser Agent types BEGIN
     "ActOptions",
     "ActResult",
     "ExtractOptions",
     "ObserveResult",
     "ObserveOptions",
-    # Async versions
-    "AsyncActOptions",
-    "AsyncActResult",
-    "AsyncExtractOptions",
-    "AsyncObserveResult",
-    "AsyncObserveOptions",
+    # Browser Agent types END
     "ApiResponse",
     "OperationResult",
     "SessionResult",

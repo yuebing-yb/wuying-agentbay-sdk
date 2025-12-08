@@ -1,110 +1,27 @@
 import asyncio
 import json
-from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
-
+import time
+from typing import List, Dict, Union, Any, Optional, Tuple, TypeVar
 from pydantic import BaseModel
 
 from .._common.exceptions import AgentBayError, BrowserError
 from .._common.logger import get_logger
 from .._common.models import OperationResult
-from .base_service import AsyncBaseService
+from .._common.models.browser_agent import (
+    ActOptions,
+    ActResult,
+    ObserveOptions,
+    ObserveResult,
+    ExtractOptions,
+)
+from .base_service import AsyncBaseService as BaseService
 
 _logger = get_logger("browser_agent")
 
 T = TypeVar("T", bound=BaseModel)
 
 
-class ActOptions:
-    """
-    Options for configuring the behavior of the act method.
-    """
-
-    def __init__(
-        self,
-        action: str,
-        timeoutMS: Optional[int] = None,
-        iframes: Optional[bool] = None,
-        dom_settle_timeout_ms: Optional[int] = None,
-        variables: Optional[Dict[str, str]] = None,
-        use_vision: Optional[bool] = None,
-    ):
-        self.action = action
-        self.timeoutMS = timeoutMS
-        self.iframes = iframes
-        self.dom_settle_timeout_ms = dom_settle_timeout_ms
-        self.variables = variables
-        self.use_vision = use_vision
-
-
-class ActResult:
-    """
-    Result of the act method.
-    """
-
-    def __init__(self, success: bool, message: str, action: Optional[str] = None):
-        self.success = success
-        self.message = message
-        self.action = action
-
-
-class ObserveOptions:
-    """
-    Options for configuring the behavior of the observe method.
-    """
-
-    def __init__(
-        self,
-        instruction: str,
-        iframes: Optional[bool] = None,
-        dom_settle_timeout_ms: Optional[int] = None,
-        use_vision: Optional[bool] = None,
-    ):
-        self.instruction = instruction
-        self.iframes = iframes
-        self.dom_settle_timeout_ms = dom_settle_timeout_ms
-        self.use_vision = use_vision
-
-
-class ObserveResult:
-    """
-    Result of the observe method.
-    """
-
-    def __init__(self, selector: str, description: str, method: str, arguments: dict):
-        self.selector = selector
-        self.description = description
-        self.method = method
-        self.arguments = arguments
-
-
-
-
-
-class ExtractOptions(Generic[T]):
-    """
-    Options for configuring the behavior of the extract method.
-    """
-
-    def __init__(
-        self,
-        instruction: str,
-        schema: Type[T],
-        use_text_extract: Optional[bool] = None,
-        selector: Optional[str] = None,
-        iframe: Optional[bool] = None,
-        dom_settle_timeout_ms: Optional[int] = None,
-        use_vision: Optional[bool] = None,
-    ):
-        self.instruction = instruction
-        self.schema = schema
-        self.use_text_extract = use_text_extract
-        self.selector = selector
-        self.iframe = iframe
-        self.dom_settle_timeout_ms = dom_settle_timeout_ms
-        self.use_vision = use_vision
-
-
-class AsyncBrowserAgent(AsyncBaseService):
+class AsyncBrowserAgent(BaseService):
     """
     BrowserAgent handles browser automation and agent logic.
     """
@@ -115,37 +32,13 @@ class AsyncBrowserAgent(AsyncBaseService):
 
     async def navigate(self, url: str) -> str:
         """
-        Navigates the browser to the specified URL.
+        Navigates a specific page to the given URL.
 
         Args:
-            url (str): The URL to navigate to. Must be a valid HTTP/HTTPS URL.
+            url: The URL to navigate to.
 
         Returns:
-            str: A success message if navigation succeeds, or an error message if it fails.
-
-        Raises:
-            BrowserError: If the browser is not initialized or navigation fails.
-
-        Behavior:
-            - Calls the MCP tool `page_use_navigate` with the specified URL
-            - Waits for the page to load before returning
-            - Returns an error message if navigation fails (e.g., invalid URL, network error)
-
-        Example:
-
-        ```python
-        session = await agent_bay.create(image="browser_latest").session
-        await session.browser.agent.navigate("https://example.com")
-        await session.delete()
-        ```
-
-        Note:
-            - The browser must be initialized before calling this method
-            - This is an async method and must be awaited or run with `asyncio.run()`
-            - For synchronous usage, consider using browser automation frameworks directly
-
-        See Also:
-            screenshot, act, observe
+            A string indicating the result of the navigation.
         """
         if not self.browser.is_initialized():
             raise BrowserError("Browser must be initialized before calling navigate.")
@@ -157,7 +50,7 @@ class AsyncBrowserAgent(AsyncBaseService):
             else:
                 return f"Navigation failed: {response.error_message}"
         except Exception as e:
-            raise BrowserError(f"Failed to navigate: {e}")
+            raise BrowserError(f"Failed to navigate: {e}") from e
 
     async def screenshot(
         self,
@@ -176,7 +69,7 @@ class AsyncBrowserAgent(AsyncBaseService):
             full_page (bool): Whether to capture the full scrollable page.
             quality (int): The quality of the image (0-100), for JPEG format.
             clip (Optional[Dict[str, float]]): An object specifying the clipping region {x, y, width, height}.
-            timeout (Optional[int]): Custom timeout for the operation in milliseconds.
+            timeout (Optional[int]): Custom timeout for the operation in seconds.
 
         Returns:
             str: A base64 encoded data URL of the screenshot, or an error message.
@@ -257,7 +150,7 @@ class AsyncBrowserAgent(AsyncBaseService):
             page_id, context_id = await self._get_page_and_context_index(page)
             return await self._execute_act(action_input, context_id, page_id)
         except Exception as e:
-            raise BrowserError(f"Failed to act: {e}")
+            raise BrowserError(f"Failed to act: {e}") from e
 
     async def _execute_act(
         self,
@@ -272,18 +165,14 @@ class AsyncBrowserAgent(AsyncBaseService):
         }
         task_name = "act"
         if isinstance(action_input, ActOptions):
-            # Always include action parameter, filter others only if not None
-            args["action"] = action_input.action
-            if action_input.variables is not None:
-                args["variables"] = action_input.variables
-            if action_input.timeoutMS is not None:
-                args["timeout_ms"] = action_input.timeoutMS
-            if action_input.iframes is not None:
-                args["iframes"] = action_input.iframes
-            if action_input.dom_settle_timeout_ms is not None:
-                args["dom_settle_timeout_ms"] = action_input.dom_settle_timeout_ms
-            if action_input.use_vision is not None:
-                args["use_vision"] = action_input.use_vision
+            args.update(
+                {
+                    "action": action_input.action,
+                    "variables": action_input.variables,
+                    "use_vision": action_input.use_vision,
+                    "timeout": action_input.timeout,
+                }
+            )
             task_name = action_input.action
         elif isinstance(action_input, ObserveResult):
             action_dict = {
@@ -296,90 +185,24 @@ class AsyncBrowserAgent(AsyncBaseService):
             }
             args["action"] = json.dumps(action_dict)
             task_name = action_input.method
-        elif isinstance(action_input, str):
-            # Handle string input directly
-            args["action"] = action_input
-            task_name = action_input
-        # Ensure action parameter is present and not None/empty
-        if "action" not in args or args["action"] is None or args["action"] == "":
-            raise BrowserError("Action parameter is required and cannot be None or empty")
-            
-        # Filter None values but preserve essential parameters
-        filtered_args = {}
-        for k, v in args.items():
-            if k in ["context_id", "page_id"]:
-                # Always include context_id and page_id even if None
-                filtered_args[k] = v
-            elif k == "action":
-                # Only include action if it's not None and not empty
-                if v is not None and v != "":
-                    filtered_args[k] = v
-                else:
-                    raise BrowserError("Action parameter cannot be None or empty")
-            elif v is not None:
-                # Only include optional parameters if not None
-                filtered_args[k] = v
-        args = filtered_args
+        args = {k: v for k, v in args.items() if v is not None}
         _logger.info(f"{task_name}")
 
         response = await self._call_mcp_tool_timeout("page_use_act_async", args)
         if not response.success:
             raise BrowserError(f"Failed to start act task: {response.error_message}")
 
-        # Parse task_id from response
-        try:
-            response_data = (
-                json.loads(response.data)
-                if isinstance(response.data, str)
-                else response.data
-            )
-            if isinstance(response_data, dict):
-                task_id = response_data.get("task_id")
-                if not task_id:
-                    # If no task_id, the task might have completed immediately
-                    # Check if response contains steps directly
-                    if "steps" in response_data or "is_done" in response_data:
-                        steps = response_data.get("steps", [])
-                        success = bool(response_data.get("success", False))
-                        task_status = (
-                            steps
-                            if isinstance(steps, str)
-                            else json.dumps(steps, ensure_ascii=False)
-                        )
-                        _logger.info(
-                            f"Task {task_name} completed immediately. Success: {success}"
-                        )
-                        return ActResult(
-                            success=success, message=task_status, action=task_name
-                        )
-                    raise BrowserError(f"No task_id in response dict: {response_data}")
-            elif isinstance(response_data, list) and len(response_data) > 0:
-                # If response is a list of steps, the task completed immediately
-                task_status = json.dumps(response_data, ensure_ascii=False)
-                _logger.info(
-                    f"Task {task_name} completed immediately with steps: {task_status}"
-                )
-                return ActResult(success=True, message=task_status, action=task_name)
-            else:
-                raise BrowserError(
-                    f"Unexpected response format: {type(response_data)}, data: {response_data}"
-                )
-        except (KeyError, TypeError, IndexError) as e:
-            raise BrowserError(
-                f"Failed to parse task_id from response: {e}, data: {response.data}"
-            )
+        task_id = json.loads(response.data)["task_id"]
+        poll_interval_sec = 5.0
+        start_ts = time.monotonic()
+        client_timeout: Optional[int] = None
+        if isinstance(action_input, ActOptions):
+            client_timeout = action_input.timeout
 
-        max_retries = 30
-
-        while max_retries > 0:
-            await asyncio.sleep(5)
+        while True:
+            await asyncio.sleep(poll_interval_sec)
             if hasattr(self, "mcp_client") and self.mcp_client:
-                # This seems specific to some internal implementation, assuming _call_mcp_tool_async is available on BaseService/AsyncBaseService or session
-                # But base_service.py doesn't have _call_mcp_tool_async usually.
-                # In the original code, it called self._call_mcp_tool_async.
-                # AsyncBaseService should have it or I should use session.call_mcp_tool
-                # AsyncBaseService generally uses session.call_mcp_tool which is async.
-                result = await self.session.call_mcp_tool(
+                result = await self._call_mcp_tool_async(
                     "page_use_get_act_result", {"task_id": task_id}
                 )
             else:
@@ -392,19 +215,6 @@ class AsyncBrowserAgent(AsyncBaseService):
                     if isinstance(result.data, str)
                     else result.data
                 )
-                _logger.debug(f"Act result data type: {type(data)}, data: {data}")
-                # Handle case where data might be a list instead of dict
-                if isinstance(data, list):
-                    # If data is a list, it might be the steps directly
-                    _logger.warning(
-                        f"Received list data for act result, skipping this iteration"
-                    )
-                    max_retries -= 1
-                    continue
-                if not isinstance(data, dict):
-                    _logger.error(f"Unexpected data type: {type(data)}, data: {data}")
-                    max_retries -= 1
-                    continue
                 steps = data.get("steps", [])
                 is_done = data.get("is_done", False)
                 success = bool(data.get("success", False))
@@ -421,17 +231,19 @@ class AsyncBrowserAgent(AsyncBaseService):
                     _logger.info(
                         f"Task {task_id}:{task_name} is done. Success: {success}. {task_status}"
                     )
-                    return ActResult(
-                        success=success, message=task_status, action=task_name
-                    )
+                    return ActResult(success=success, message=task_status)
                 task_status = (
                     f"{len(steps)} steps done. Details: {steps}"
                     if steps
                     else no_action_msg
                 )
                 _logger.info(f"Task {task_id}:{task_name} in progress. {task_status}")
-            max_retries -= 1
-        raise BrowserError(f"Task {task_id}:{task_name} Act timed out")
+            elapsed = time.monotonic() - start_ts
+            timeout_s = client_timeout if client_timeout is not None else 300
+            if elapsed >= timeout_s:
+                raise BrowserError(
+                    f"Task {task_id}:{task_name} timeout after {timeout_s}s"
+                )
 
     async def observe(
         self,
@@ -456,7 +268,7 @@ class AsyncBrowserAgent(AsyncBaseService):
             page_id, context_id = await self._get_page_and_context_index(page)
             return await self._execute_observe(options, context_id, page_id)
         except Exception as e:
-            raise BrowserError(f"Failed to observe: {e}")
+            raise BrowserError(f"Failed to observe: {e}") from e
 
     async def _execute_observe(
         self,
@@ -469,40 +281,69 @@ class AsyncBrowserAgent(AsyncBaseService):
             "context_id": context_id,
             "page_id": page_id,
             "instruction": options.instruction,
-            "iframes": options.iframes,
-            "dom_settle_timeout_ms": options.dom_settle_timeout_ms,
             "use_vision": options.use_vision,
+            "selector": options.selector,
         }
         args = {k: v for k, v in args.items() if v is not None}
+        response = await self._call_mcp_tool_timeout("page_use_observe_async", args)
+        if not response.success:
+            raise BrowserError("Failed to start observe task")
 
-        response = await self._call_mcp_tool_timeout("page_use_observe", args)
-
-        if not response.success or not response.data:
-            _logger.warning(f"Failed to execute observe: {response.error_message}")
-            return False, []
-
-        data = (
+        task_info = (
             json.loads(response.data)
             if isinstance(response.data, str)
             else response.data
         )
-        _logger.info(f"observe results: {data}")
-        results = []
-        for item in data:
-            selector = item.get("selector", "")
-            description = item.get("description", "")
-            method = item.get("method", "")
-            arguments_str = item.get("arguments", "{}")
-            try:
-                arguments_dict = json.loads(arguments_str)
-            except json.JSONDecodeError:
-                _logger.warning(
-                    f"Warning: Could not parse arguments as JSON: {arguments_str}"
-                )
-                arguments_dict = arguments_str
-            results.append(ObserveResult(selector, description, method, arguments_dict))
+        task_id = task_info["task_id"]
 
-        return True, results
+        client_timeout: Optional[int] = options.timeout
+        poll_interval_sec = 5.0
+        start_ts = time.monotonic()
+
+        while True:
+            await asyncio.sleep(poll_interval_sec)
+            if hasattr(self, "mcp_client") and self.mcp_client:
+                result = await self._call_mcp_tool_async(
+                    "page_use_get_observe_result", {"task_id": task_id}
+                )
+            else:
+                result = await self._call_mcp_tool_timeout(
+                    "page_use_get_observe_result", {"task_id": task_id}
+                )
+            if result.success and result.data:
+                data = (
+                    json.loads(result.data)
+                    if isinstance(result.data, str)
+                    else result.data
+                )
+                _logger.info(f"observe results: {data}")
+                results: List[ObserveResult] = []
+                for item in data:
+                    selector = item.get("selector", "")
+                    description = item.get("description", "")
+                    method = item.get("method", "")
+                    arguments_str = item.get("arguments", "{}")
+                    try:
+                        arguments_dict = json.loads(arguments_str)
+                    except json.JSONDecodeError:
+                        _logger.warning(
+                            f"Warning: Could not parse arguments as JSON: {arguments_str}"
+                        )
+                        arguments_dict = arguments_str
+                    results.append(
+                        ObserveResult(selector, description, method, arguments_dict)
+                    )
+
+                return True, results
+            elapsed = time.monotonic() - start_ts
+            _logger.debug(
+                f"Task {task_id}: No observe result yet (elapsed={elapsed:.0f}s)"
+            )
+            timeout_s = client_timeout if client_timeout is not None else 300
+            if elapsed >= timeout_s:
+                raise BrowserError(
+                    f"Task {task_id}: Observe timeout after {timeout_s}s"
+                )
 
     async def extract(
         self,
@@ -527,9 +368,7 @@ class AsyncBrowserAgent(AsyncBaseService):
             page_id, context_id = await self._get_page_and_context_index(page)
             return await self._execute_extract(options, context_id, page_id)
         except Exception as e:
-            raise BrowserError(f"Failed to extract: {e}")
-
-    
+            raise BrowserError(f"Failed to extract: {e}") from e
 
     async def _execute_extract(
         self,
@@ -545,8 +384,6 @@ class AsyncBrowserAgent(AsyncBaseService):
             "use_text_extract": options.use_text_extract,
             "use_vision": options.use_vision,
             "selector": options.selector,
-            "iframe": options.iframe,
-            "dom_settle_timeout_ms": options.dom_settle_timeout_ms,
         }
         args = {k: v for k, v in args.items() if v is not None}
 
@@ -554,48 +391,16 @@ class AsyncBrowserAgent(AsyncBaseService):
         if not response.success:
             raise BrowserError("Failed to start extraction task")
 
-        # Parse task_id from response
-        try:
-            response_data = (
-                json.loads(response.data)
-                if isinstance(response.data, str)
-                else response.data
-            )
-            if isinstance(response_data, dict):
-                task_id = response_data.get("task_id")
-                if not task_id:
-                    # If no task_id, the extraction might have completed immediately
-                    # Try to validate the response data directly as the extracted result
-                    try:
-                        _logger.info(
-                            "Extract completed immediately, validating response"
-                        )
-                        return True, options.schema.model_validate(response_data)
-                    except Exception as e:
-                        raise BrowserError(
-                            f"No task_id and failed to validate response as result: {e}, data: {response_data}"
-                        )
-            elif isinstance(response_data, list):
-                # Unexpected list response
-                raise BrowserError(
-                    f"Unexpected list response for extract: {response_data}"
-                )
-            else:
-                raise BrowserError(
-                    f"Unexpected response format for extract: {type(response_data)}"
-                )
-        except (KeyError, TypeError, IndexError) as e:
-            raise BrowserError(
-                f"Failed to parse extract response: {e}, data: {response.data}"
-            )
+        task_id = json.loads(response.data)["task_id"]
+        client_timeout: Optional[int] = options.timeout
+        poll_interval_sec = 8.0
+        start_ts = time.monotonic()
 
-        max_retries = 20
-
-        while max_retries > 0:
-            await asyncio.sleep(8)
+        while True:
+            await asyncio.sleep(poll_interval_sec)
 
             if hasattr(self, "mcp_client") and self.mcp_client:
-                result = await self.session.call_mcp_tool(
+                result = await self._call_mcp_tool_async(
                     "page_use_get_extract_result", {"task_id": task_id}
                 )
             else:
@@ -609,12 +414,15 @@ class AsyncBrowserAgent(AsyncBaseService):
                     else result.data
                 )
                 return True, options.schema.model_validate(extract_result)
-            max_retries -= 1
+            elapsed = time.monotonic() - start_ts
             _logger.debug(
-                f"Task {task_id}: No extract result yet (attempt {20 - max_retries}/20)"
+                f"Task {task_id}: No extract result yet (elapsed={elapsed:.0f}s)"
             )
-
-        raise BrowserError(f"Task {task_id}: Extract timed out")
+            timeout_s = client_timeout if client_timeout is not None else 300
+            if elapsed >= timeout_s:
+                raise BrowserError(
+                    f"Task {task_id}: Extract timeout after {timeout_s}s"
+                )
 
     async def _get_page_and_context_index(self, page):
         """
@@ -637,9 +445,9 @@ class AsyncBrowserAgent(AsyncBaseService):
                 context_index = page.context.browser.contexts.index(page.context)
             else:
                 context_index = 0
-            return page_index, 0
+            return page_index, context_index
         except Exception as e:
-            raise BrowserError(f"Failed to get page/context index: {e}")
+            raise BrowserError(f"Failed to get page/context index: {e}") from e
 
     def _handle_error(self, e):
         """

@@ -12,115 +12,106 @@ import time
 import os
 from typing import List, Optional, Tuple
 
-from agentbay import AgentBay
+from agentbay import AgentBay as AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import ExtractOptions as ExtractOptions, ActOptions as ActOptions
+from agentbay import ExtractOptions
 
 from playwright.sync_api import sync_playwright
 from pydantic import BaseModel, Field
 
+
 class SudokuBoard(BaseModel):
     board: List[List[int]] = Field(..., description="9x9 sudoku board, 0 for empty")
+
 
 class SudokuSolution(BaseModel):
     solution: List[List[int]] = Field(..., description="9x9 solved sudoku board")
 
+
 def format_board_for_llm(board: List[List[int]]) -> str:
     return "\n".join(["  [" + ", ".join(map(str, row)) + "]" for row in board])
 
+
 def main():
-    # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
-    if not api_key:
-        print("Error: AGENTBAY_API_KEY environment variable not set")
-        return
-
-    # Initialize AgentBay client
-    print("Initializing AgentBay client...")
     agent_bay = AgentBay(api_key=api_key)
-
-    # Create a session
-    print("Creating a new session...")
-    params = CreateSessionParams(
-        image_id="browser_latest",  # Specify the image ID
-    )
+    params = CreateSessionParams(image_id="browser_latest")
     session_result = agent_bay.create(params)
+    assert session_result.success and session_result.session is not None
+    session = session_result.session
 
-    if session_result.success:
-        session = session_result.session
-        print(f"Session created with ID: {session.session_id}")
+    try:
+        assert session.browser.initialize(BrowserOption())
+        agent = session.browser.agent
 
-        if session.browser.initialize(BrowserOption()):
-            print("Browser initialized successfully")
-            endpoint_url = session.browser.get_endpoint_url()
-            print("endpoint_url =", endpoint_url)
+        endpoint_url = session.browser.get_endpoint_url()
+        print("endpoint_url =", endpoint_url)
 
-            with sync_playwright() as p:
-                browser = p.chromium.connect_over_cdp(endpoint_url)
-                try:
-                    context = browser.contexts[0]
-                    page = context.new_page()
-                    print("🌐 Navigating to Sudoku site...")
-                    url = "https://widget.websudoku.com/"
-                    page.goto(url)
-                    page.wait_for_selector("#puzzle_grid", timeout=10000)
+        with sync_playwright() as p:
+            playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
+            context = playwright_browser.contexts[0]
+            page = context.new_page()
+            print("🌐 Navigating to Sudoku site...")
+            url = "https://widget.websudoku.com/"
+            page.goto(url)
+            page.wait_for_selector("#puzzle_grid", timeout=10000)
 
-                    # 1. Extract the board
-                    success = False
-                    while not success:
-                        print("📊 Extracting sudoku board...")
-                        options = ExtractOptions(
-                            instruction="""
+            # 1. Extract the board
+            success = False
+            while not success:
+                print("📊 Extracting sudoku board...")
+                options = ExtractOptions(
+                    instruction="""
 Extract the current sudoku board as a 9x9 array. 
 Each cell should be a number (1-9) if filled, or 0 if empty.
 """,
-                            schema=SudokuBoard,
-                            use_text_extract=False,
-                        )
-                        success, board_obj = session.browser.agent.extract(options=options, page=page)
-                        if not success:
-                            print("❌ Failed to extract sudoku board, retry extracting")
-                            time.sleep(3)
-                    board = board_obj.board
-                    print(
-                        "Current Board:\n" + "\n".join([" ".join(map(str, row)) for row in board])
-                    )
-                    original_board = [row[:] for row in board]
+                    schema=SudokuBoard,
+                    use_text_extract=False,
+                )
+                success, board_obj = agent.extract(options=options, page=page)
+                if not success:
+                    print("❌ Failed to extract sudoku board, retry extracting")
+                    time.sleep(3)
+            board = board_obj.board
+            print(
+                "Current Board:\n"
+                + "\n".join([" ".join(map(str, row)) for row in board])
+            )
 
-                    # 2. Solve the sudoku
-                    print("🧠 Solving sudoku...")
-                    solver = SudokuSolver(board)
-                    if solver.solve():
-                        solution = solver.get_solution_board()
-                        filled_cells = solver.get_filled_cells()
+            # 2. Solve the sudoku
+            print("🧠 Solving sudoku...")
+            solver = SudokuSolver(board)
+            if solver.solve():
+                solution = solver.get_solution_board()
+                filled_cells = solver.get_filled_cells()
+                print(
+                    "Solved Board:\n"
+                    + "\n".join([" ".join(map(str, row)) for row in solution])
+                )
+                print(f"Number of cells to fill: {len(filled_cells)}")
+            else:
+                print(
+                    "No solution found for this Sudoku puzzle by the local algorithm."
+                )
+                return
+
+            # 3. Fill the solution (only first row for demo)
+            for row in range(9):
+                for col in range(9):
+                    if board[row][col] == 0:
+                        input_id = f"f{col}{row}"
                         print(
-                            "Solved Board:\n"
-                            + "\n".join([" ".join(map(str, row)) for row in solution])
+                            f"Type '{solution[row][col]}' into the cell with id '{input_id}'"
                         )
-                        print(f"Number of cells to fill: {len(filled_cells)}")
-                    else:
-                        print(
-                            "No solution found for this Sudoku puzzle by the local algorithm."
-                        )
-                        return
+                        input_element = page.locator(f"#f{col}{row}")
+                        input_element.fill(str(solution[row][col]))
+                        time.sleep(0.5)
 
-                    # 3. Fill the solution (only first row for demo)
-                    for row in range(9):
-                        for col in range(9):
-                            if board[row][col] == 0:
-                                input_id = f"f{col}{row}"
-                                print(f"Type '{solution[row][col]}' into the cell with id '{input_id}'")
-                                input_element = page.locator(f"#f{col}{row}")
-                                input_element.fill(str(solution[row][col]))
-                                time.sleep(0.5)
+            print("✅ Finished! The board has been solved and filled in the browser.")
+    finally:
+        agent_bay.delete(session)
 
-                    print("✅ Finished! The board has been solved and filled in the browser.")
-
-                except Exception as error:
-                    print(f"❌ Error in game loop: {error}")
-        else:
-            print("Failed to initialize browser")
 
 class SudokuSolver:
     def __init__(self, board: List[List[int]]):
@@ -193,6 +184,7 @@ class SudokuSolver:
                 if self.original_board_state[r][c] == 0 and self.board[r][c] != 0:
                     filled_cells.append((r, c, self.board[r][c]))
         return filled_cells
+
 
 if __name__ == "__main__":
     main()

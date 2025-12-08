@@ -11,7 +11,7 @@ from typing import List, Literal, Optional, Tuple, Deque
 from collections import deque
 import random
 
-from agentbay import AsyncAgentBay
+from agentbay import AsyncAgentBay as AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
 from agentbay import ExtractOptions
@@ -21,173 +21,120 @@ from pydantic import BaseModel, Field
 
 
 async def main():
-    # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
-    if not api_key:
-        print("Error: AGENTBAY_API_KEY environment variable not set")
-        return
-
-    # Initialize AgentBay client
-    print("Initializing AgentBay client...")
-    agent_bay = AsyncAgentBay(api_key=api_key)
-
-    # Create a session
-    print("Creating a new session...")
-    params = CreateSessionParams(
-        image_id="browser_latest",  # Specify the image ID
-    )
+    agent_bay = AgentBay(api_key=api_key)
+    params = CreateSessionParams(image_id="browser_latest")
     session_result = await agent_bay.create(params)
+    assert session_result.success and session_result.session is not None
+    session = session_result.session
+    try:
+        assert await session.browser.initialize(BrowserOption())
+        agent = session.browser.agent
 
-    if session_result.success:
-        session = session_result.session
-        print(f"Session created with ID: {session.session_id}")
-        if await session.browser.initialize(BrowserOption()):
-            print("Browser initialized successfully")
-            endpoint_url = await session.browser.get_endpoint_url()
-            print("endpoint_url =", endpoint_url)
-            page = None
+        endpoint_url = await session.browser.get_endpoint_url()
+        async with async_playwright() as p:
+            playwright_browser = await p.chromium.connect_over_cdp(endpoint_url)
+            context = playwright_browser.contexts[0]
+            page = await context.new_page()
+            print("🌐 Navigating to 2048...")
+            await page.goto(
+                "https://ovolve.github.io/2048-AI/",
+                wait_until="domcontentloaded",
+                timeout=180000,
+            )
+            print("🌐 Navigated to 2048 done")
+            await page.wait_for_selector(".grid-container", timeout=10000)
 
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
-                try:
-                    context = browser.contexts[0]
-                    page = await context.new_page()
-                    print("🌐 Navigating to 2048...")
-                    await page.goto(
-                        "https://ovolve.github.io/2048-AI/",
-                        wait_until="domcontentloaded",
-                        timeout=180000,
-                    )
-                    print("🌐 Navigated to 2048 done")
-                    await page.wait_for_selector(".grid-container", timeout=10000)
+            helper = MiniMax()
+            move_history: Deque[MoveHistoryEntry] = deque(maxlen=3)
+            last_grid_state = None
+            moves_map = {0: "left", 1: "up", 2: "right", 3: "down"}
+            all_possible_moves = ["left", "up", "right", "down"]
 
-                    helper = MiniMax()
-                    move_history: Deque[MoveHistoryEntry] = deque(maxlen=3)
-                    last_grid_state = None
-                    moves_map = {0: "left", 1: "up", 2: "right", 3: "down"}
-                    all_possible_moves = ["left", "up", "right", "down"]
+            while True:
+                print("🔄 Game loop iteration...")
+                await asyncio.sleep(0.3)
 
-                    while True:
-                        print("🔄 Game loop iteration...")
-                        await asyncio.sleep(0.3)
-
-                        # Get current game state
-                        print("📊 Extracting game state...")
-                        options = ExtractOptions(
-                            instruction="""
+                print("📊 Extracting game state...")
+                options = ExtractOptions(
+                    instruction="""
 Extract the current game state:
 1. Score from the score counter
-2. All tile values and their positions in the 4x4 grid must be extracted. 
-    Each tile's value and position can be obtained from the tile-position-x-y class, where x (1 to 4) is the column and y (1 to 4) is the row.
-    For example, tile-position-4-1 means the tile is in column 4, row 1.
-    The value of the tile is given by the number in the tile's class.
-    For example, <div class='tile tile-2 tile-position-1-4 tile-new'>2</div> means a tile with value 2 at column 1, row 4;
-    and <div class='tile tile-2 tile-position-4-1 tile-new'>2</div> means a tile with value 2 at column 4, row 1.
-    Empty spaces should be represented as 0 in the grid.
-    For instance, if the only tiles present are the two above, the grid should be:[[0, 0, 0, 2], [0, 0, 0, 0], [0, 0, 0, 0], [2, 0, 0, 0]]
+2. All tile values and their positions in the 4x4 grid must be extracted.
+   Each tile's value and position can be obtained from the tile-position-x-y class.
 3. Highest tile value present
 """,
-                            schema=GameState,
-                            use_text_extract=False,
+                    schema=GameState,
+                    use_text_extract=False,
+                )
+
+                success, game_state = await agent.extract(options=options, page=page)
+                if not success:
+                    print("❌ Failed to extract game state, retry observing")
+                    continue
+
+                transposed_grid = transpose_grid(game_state.grid)
+                print(f"transposed grid: {transposed_grid}")
+                print("🤔 Analyzing board for next move...")
+
+                current_grid_flat = tuple(
+                    tile for row in transposed_grid for tile in row
+                )
+                if last_grid_state is not None and current_grid_flat == last_grid_state:
+                    print("Grid has not changed from last iteration.")
+                last_grid_state = current_grid_flat
+
+                helper.grid = [tile for row in transposed_grid for tile in row]
+                helper.StartSearch()
+
+                moves_map = {0: "left", 1: "up", 2: "right", 3: "down"}
+                best_move_str = moves_map.get(helper.best_operation, "no_move")
+                selected_move = best_move_str
+
+                print(
+                    f"Calculated minimax move: {best_move_str} "
+                    f"(explored {helper.node} nodes, max_depth={helper.max_depth})."
+                )
+
+                current_grid_tuple = tuple(tuple(row) for row in game_state.grid)
+                move_history.append((current_grid_tuple, best_move_str))
+
+                if len(move_history) == 3:
+                    recent = list(move_history)
+                    if (
+                        all(item == recent[0] for item in recent)
+                        and best_move_str != "no_move"
+                    ):
+                        print(
+                            "Detected continuous cycle, breaking with alternative move."
                         )
-                        # Calculate time cost， average time cost, min & max time cost
-                        success, gameState = await session.browser.agent.extract(
-                            options=options, page=page
-                        )
-                        if success:
-                            transposed_grid = transpose_grid(gameState.grid)
-                            print(f"transposed grid: {transposed_grid}")
-                            print("🤔 Analyzing board for next move...")
-                            current_grid_flat = tuple(
-                                tile for row in transposed_grid for tile in row
-                            )
+                        move_history.clear()
+                        available_moves = [
+                            m
+                            for m in all_possible_moves
+                            if m != best_move_str and m != "no_move"
+                        ]
+                        if available_moves:
+                            selected_move = random.choice(available_moves)
 
-                            if (
-                                last_grid_state is not None
-                                and current_grid_flat == last_grid_state
-                            ):
-                                print(
-                                    "Grid has not changed from the last iteration. This might indicate a stuck state."
-                                )
-                            last_grid_state = current_grid_flat
+                move_key = {
+                    "up": "ArrowUp",
+                    "down": "ArrowDown",
+                    "left": "ArrowLeft",
+                    "right": "ArrowRight",
+                    "no_move": "Escape",
+                }[selected_move]
 
-                            helper.grid = [
-                                tile for row in transposed_grid for tile in row
-                            ]
-                            helper.StartSearch()
+                await page.keyboard.press(move_key)
 
-                            moves_map = {0: "left", 1: "up", 2: "right", 3: "down"}
-                            best_move_str = moves_map.get(
-                                helper.best_operation, "no_move"
-                            )
-                            selected_move = best_move_str
-                            print(
-                                f"Calculated mini max move: {best_move_str} (explored {helper.node} nodes, max_depth={helper.max_depth})."
-                            )
-                            current_grid_tuple = tuple(
-                                tuple(row) for row in gameState.grid
-                            )
-
-                            move_history.append((current_grid_tuple, best_move_str))
-
-                            if len(move_history) == 3:
-                                recent_combinations = list(move_history)
-                                is_cycling = False
-                                if (
-                                    all(
-                                        item == recent_combinations[0]
-                                        for item in recent_combinations
-                                    )
-                                    and best_move_str != "no_move"
-                                ):
-                                    is_cycling = True
-                                    print(
-                                        f"Detected a continuous cycle! The pattern {recent_combinations[0]} repeated {3} times."
-                                    )
-
-                                if is_cycling:
-                                    print(
-                                        "Breaking out of cycle with alternative moves!"
-                                    )
-                                    move_history.clear()
-
-                                    available_moves = [
-                                        m
-                                        for m in all_possible_moves
-                                        if m != best_move_str and m != "no_move"
-                                    ]
-                                    if available_moves:
-                                        selected_move = random.choice(available_moves)
-
-                            move_key = {
-                                "up": "ArrowUp",
-                                "down": "ArrowDown",
-                                "left": "ArrowLeft",
-                                "right": "ArrowRight",
-                                "no_move": "Escape",
-                            }[selected_move]
-                            # }[analysis.move]
-
-                            await page.keyboard.press(move_key)
-                        else:
-                            print("❌ Failed to extract game state, retry observing")
-
-                except Exception as error:
-                    print(f"❌ Error in game loop: {error}")
-                    try:
-                        if page is not None:
-                            is_game_over = await page.evaluate(
-                                "() => document.querySelector('.game-over') !== null"
-                            )
-                            if is_game_over:
-                                print("🏁 Game Over!")
-                                return
-
-                    except Exception as inner_e:
-                        print(f"Could not check game over status: {inner_e}")
-                    raise
-        else:
-            print("Failed to initialize browser")
+                is_game_over = await page.evaluate(
+                    "() => document.querySelector('.game-over') !== null"
+                )
+                if is_game_over:
+                    print("🏁 Game Over!")
+                    break
+    finally:
+        await agent_bay.delete(session)
 
 
 class GameState(BaseModel):

@@ -9,22 +9,19 @@ import time
 重点：ExtractOptions + Pydantic schema
 """
 
-import os, asyncio, json
+import base64
+import json
+import os
+
 from datetime import datetime
 from typing import List, Optional
 from urllib.parse import urlparse, urljoin
-import base64
 from pydantic import BaseModel, Field
 
-from agentbay import AgentBay
+from agentbay import AgentBay as AgentBay
 from agentbay import CreateSessionParams
-from agentbay import (
-    BrowserOption,
-    BrowserScreen,
-    BrowserProxy,
-)
-from agentbay import ActOptions as ActOptions, ExtractOptions as ExtractOptions
-from agentbay import SessionResult
+from agentbay import BrowserOption, BrowserScreen, BrowserProxy
+from agentbay import ActOptions, ExtractOptions
 
 
 class ProductInfo(BaseModel):
@@ -85,15 +82,20 @@ def act(agent, instruction: str) -> bool:
 
 def take_and_save_screenshot(agent, base_url: str, out_dir: str) -> Optional[str]:
     try:
-        s = agent.screenshot()
+        s = agent.screenshot(full_page=False)
         if not isinstance(s, str):
             raise RuntimeError(f"Screenshot failed: non-string response: {type(s)}")
 
         s = s.strip()
-        if s.startswith("data:"):
-            header, encoded = s.split(",", 1)
-            if ";base64" not in header:
-                raise RuntimeError(f"Unsupported data URL (not base64): {header[:64]}")
+        print(f"Screenshot for {s}")
+        if not s.startswith("data:"):
+            raise RuntimeError(
+                f"Unsupported screenshot format (not data URL): {s[:32]}"
+            )
+
+        header, encoded = s.split(",", 1)
+        if ";base64" not in header:
+            raise RuntimeError(f"Unsupported data URL (not base64): {header[:64]}")
 
         image_data = base64.b64decode(encoded)
         if not image_data:
@@ -208,20 +210,10 @@ CAPTURE_DETECT_URL = [
 
 def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
-    if not api_key:
-        print("Error: AGENTBAY_API_KEY is not set")
-        return
-
-    session_result = SessionResult(success=False)
-
-    date_str = datetime.now().strftime("%Y-%m-%d")
     agent_bay = AgentBay(api_key=api_key)
     params = CreateSessionParams(image_id="browser_latest")
     session_result = agent_bay.create(params)
-    if not session_result.success:
-        print(f"Failed to create session: {session_result.error_message}")
-        return
-
+    assert session_result.success and session_result.session is not None
     session = session_result.session
     try:
         screen_option = BrowserScreen(width=1920, height=1080)
@@ -229,10 +221,7 @@ def main():
             screen=screen_option,
             solve_captchas=True,
         )
-        ok = session.browser.initialize(browser_init_options)
-        if not ok:
-            print("Failed to initialize browser")
-            return
+        assert session.browser.initialize(browser_init_options)
         date_str = datetime.now().strftime("%Y-%m-%d")
         for url in SITES:
             try:
@@ -241,12 +230,8 @@ def main():
                 )
             except Exception as e:
                 print(f"[ERR] {domain_of(url)} -> {e}")
-
     finally:
-        try:
-            agent_bay.delete(session)
-        except Exception:
-            pass
+        agent_bay.delete(session)
 
 
 if __name__ == "__main__":

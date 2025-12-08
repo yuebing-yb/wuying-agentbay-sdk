@@ -163,7 +163,7 @@ Framework-specific directories (like `sync/langchain/` and `async/langchain/`) c
 
 ### AI-Powered Extraction
 
-The agent uses AgentBay's `extract_async` method with Pydantic schemas to extract structured data:
+The agent uses AgentBay's `extract` method with Pydantic schemas to extract structured data:
 
 ```python
 class ProductInfo(BaseModel):

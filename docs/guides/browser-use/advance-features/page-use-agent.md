@@ -29,6 +29,8 @@ An AI-powered, natural-language web agent that performs precise, reliable page o
   - [Error Handling and Debug](#error-handling-and-debug)
   - [Best Practices](#best-practices)
   - [FAQ](#faq)
+  - [📚 Related Guides](#-related-guides)
+  - [🆘 Getting Help](#-getting-help)
 
 ---
 
@@ -82,10 +84,10 @@ async def main():
     print(await agent.navigate_async("https://example.com"))
 
     # Act (natural language)
-    await agent.act_async(action_input=ActOptions(action="go to products or shop page"))
+    await agent.act(action_input=ActOptions(action="go to products or shop page"))
 
     # Extract structured data
-    ok, data = await agent.extract_async(
+    ok, data = await agent.extract(
         options=ExtractOptions(
             instruction="Extract all products with name, optional price, and relative link",
             schema=ProductList,
@@ -98,7 +100,7 @@ async def main():
         print("Extraction failed")
 
     # Clean up
-    await agent.close_async()
+    await agent.close()
     session.delete()
 
 if __name__ == "__main__":
@@ -185,15 +187,15 @@ else:
 ```python
 # Options
 class ObserveOptions:
-    def __init__(self, instruction: str, iframes: bool | None = None, dom_settle_timeout_ms: int | None = None)
+    def __init__(self, instruction: str, selector: str | None = None, timeout: int | None = None)
 
 # Result
 class ObserveResult:
     def __init__(self, selector: str, description: str, method: str, arguments: dict)
 
 # APIs
-def observe(self, page, options: ObserveOptions) -> tuple[bool, list[ObserveResult]]
-async def observe_async(self, page, options: ObserveOptions) -> tuple[bool, list[ObserveResult]]
+def observe(self, options: ObserveOptions, page) -> tuple[bool, list[ObserveResult]]
+async def observe(self, options: ObserveOptions, page) -> tuple[bool, list[ObserveResult]]
 ```
 
 - Description: Finds elements or actionable targets based on natural language.
@@ -201,7 +203,7 @@ async def observe_async(self, page, options: ObserveOptions) -> tuple[bool, list
 
 Example:
 ```python
-ok, items = await agent.observe_async(
+ok, items = await agent.observe(
     options=ObserveOptions(
         instruction="find the Add to Cart button",
     )
@@ -224,7 +226,7 @@ class ActResult:
 
 # APIs
 def act(self, action_input: Union[ObserveResult, ActOptions], page) -> ActResult
-async def act_async(self, action_input: Union[ObserveResult, ActOptions], page) -> ActResult
+async def act(self, action_input: Union[ObserveResult, ActOptions], page) -> ActResult
 ```
 
 - Description: Performs an action with NL instruction or using an `ObserveResult`.
@@ -233,12 +235,12 @@ async def act_async(self, action_input: Union[ObserveResult, ActOptions], page) 
 Examples:
 ```python
 # Natural language
-await agent.act_async(action_input=ActOptions(action="type 'ipad' in the search bar and press enter"))
+await agent.act(action_input=ActOptions(action="type 'ipad' in the search bar and press enter"))
 
 # Act on observed element
-ok, items = await agent.observe_async(options=ObserveOptions(instruction="find the sign in button"))
+ok, items = await agent.observe(options=ObserveOptions(instruction="find the sign in button"))
 if ok and items:
-    await agent.act_async(action_input=items[0])
+    await agent.act(action_input=items[0])
 ```
 
 ---
@@ -249,12 +251,12 @@ if ok and items:
 # Generic Options
 class ExtractOptions(Generic[T]):
     def __init__(self, instruction: str, schema: Type[T], use_text_extract: bool | None = None,
-                 selector: str | None = None, iframe: bool | None = None,
-                 dom_settle_timeout_ms: int | None = None, use_vision: bool | None = None)
+                 selector: str | None = None,
+                 timeout: int | None = None, use_vision: bool | None = None)
 
 # APIs
 def extract(self, options: ExtractOptions[T], page) -> tuple[bool, T]
-async def extract_async(self, options: ExtractOptions[T], page) -> tuple[bool, T]
+async def extract(self, options: ExtractOptions[T], page) -> tuple[bool, T]
 ```
 
 - Description: Extracts structured data as a Pydantic model instance.
@@ -262,7 +264,7 @@ async def extract_async(self, options: ExtractOptions[T], page) -> tuple[bool, T
 - Options:
   - use_text_extract (bool): Prefer text-based parsing when true (useful for text-heavy pages).
   - use_vision (bool): Attach a viewport screenshot to help the model interpret visually-indicated states (optional).
-  - selector, iframe, dom_settle_timeout_ms: Narrow scope or tune stability.
+  - selector, timeout: Narrow scope or tune stability.
 
 Example:
 ```python
@@ -276,7 +278,7 @@ class Item(BaseModel):
 class ItemList(BaseModel):
     products: list[Item]
 
-ok, result = await agent.extract_async(
+ok, result = await agent.extract(
     options=ExtractOptions(
         instruction="extract all products with name, price and link",
         schema=ItemList,
@@ -291,7 +293,7 @@ ok, result = await agent.extract_async(
 ### Close Session
 
 ```python
-async def close_async(self) -> bool
+async def close(self) -> bool
 ```
 
 - Gracefully closes the remote browser agent session.
@@ -311,10 +313,10 @@ class RecipeDetails(BaseModel):
     total_ratings: int | None
 
 await agent.navigate_async("https://www.allrecipes.com/")
-await agent.act_async(action_input=ActOptions(action='type "chocolate chip cookies" in the search bar'))
-await agent.act_async(action_input=ActOptions(action="press enter"))
+await agent.act(action_input=ActOptions(action='type "chocolate chip cookies" in the search bar'))
+await agent.act(action_input=ActOptions(action="press enter"))
 
-ok, data = await agent.extract_async(
+ok, data = await agent.extract(
     options=ExtractOptions(
         instruction="extract the title and the total number of ratings from the first recipe",
         schema=RecipeDetails,
@@ -337,7 +339,7 @@ actions = [
 ]
 
 for a in actions:
-    await agent.act_async(action_input=ActOptions(action=a))
+    await agent.act(action_input=ActOptions(action=a))
 ```
 
 ### 3) Amazon Demo (Observe → Act → Assert)
@@ -345,17 +347,17 @@ for a in actions:
 ```python
 from agentbay import ObserveOptions
 
-ok, obs1 = await agent.observe_async(
+ok, obs1 = await agent.observe(
     options=ObserveOptions(instruction="Find and click the 'Add to Cart' button")
 )
 if ok and obs1:
-    await agent.act_async(action_input=obs1[0])
+    await agent.act(action_input=obs1[0])
 
-ok, obs2 = await agent.observe_async(
+ok, obs2 = await agent.observe(
     options=ObserveOptions(instruction="Find and click the 'Proceed to checkout' button")
 )
 if ok and obs2:
-    await agent.act_async(action_input=obs2[0])
+    await agent.act(action_input=obs2[0])
 ```
 
 ---

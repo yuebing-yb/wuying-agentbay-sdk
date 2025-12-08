@@ -62,13 +62,6 @@ def generate_sync():
         "AsyncMobileSimulateService": "MobileSimulateService",
         "AsyncExtensionsService": "ExtensionsService",
         
-        # Browser Agent Options and Results
-        "AsyncActOptions": "ActOptions",
-        "AsyncActResult": "ActResult", 
-        "AsyncExtractOptions": "ExtractOptions",
-        "AsyncObserveResult": "ObserveResult",
-        "AsyncObserveOptions": "ObserveOptions",
-
         # Variable/Attribute Renames
         "init_browser_async": "init_browser",
         "initialize_async": "initialize",
@@ -124,9 +117,9 @@ def generate_sync():
         "_get_page_and_context_index_async": "_get_page_and_context_index",
         "_scroll_to_load_all_content_async": "_scroll_to_load_all_content",
         # "page_use_act_async": "page_use_act",  # Keep async API for compatibility
-        "page_use_extract_async": "page_use_extract",
-        "page_use_observe_async": "page_use_observe",
-        "page_use_screenshot_async": "page_use_screenshot",
+        # "page_use_extract_async": "page_use_extract",
+        # "page_use_observe_async": "page_use_observe",
+        # "page_use_screenshot_async": "page_use_screenshot",
 
         # Agent specific
         "async_execute_task": "async_execute_task",

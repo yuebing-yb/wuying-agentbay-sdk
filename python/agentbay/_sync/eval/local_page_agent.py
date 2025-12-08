@@ -7,17 +7,17 @@ import concurrent.futures
 import json
 import os
 import sys
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from mcp import ClientSession, StdioServerParameters, stdio_client
 from playwright.sync_api import sync_playwright
 
 from agentbay import get_logger
-from agentbay import Browser as Browser, BrowserOption
-from agentbay import Session
+from agentbay import Browser as Browser
+from agentbay import Session as Session
 from agentbay.api.base_service import OperationResult
-from agentbay import BrowserAgent
-from agentbay import ActOptions
+from agentbay import BrowserAgent as BrowserAgent
+from agentbay import BrowserOption
 
 # Use the AgentBay _logger instead of the standard _logger
 _logger = get_logger("local_page_agent")
@@ -177,68 +177,6 @@ class LocalPageAgent(BrowserAgent):
         if self.mcp_client:
             self.mcp_client.connect()
 
-    def act(self, action_input, page=None):
-        """Async wrapper for the act method"""
-        # For local execution, we use direct Playwright calls if browser is available
-        # Otherwise fallback to the standard synchronous act method
-        try:
-            if isinstance(action_input, str):
-                action_options = ActOptions(action=action_input)
-            else:
-                action_options = action_input
-
-            result = self.act(action_options, page)
-            return result
-        except Exception as e:
-            # Fallback to synchronous method
-            _logger.warning(f"act_async fallback due to error: {e}")
-            if isinstance(action_input, str):
-                action_options = ActOptions(action=action_input)
-            else:
-                action_options = action_input
-            result = self.act(action_options, page)
-            return result
-
-    def navigate(self, url: str) -> str:
-        """Async wrapper for navigate method"""
-        try:
-            result = self.navigate(url)
-            return result
-        except Exception as e:
-            _logger.warning(f"navigate_async fallback due to error: {e}")
-            result = self.navigate(url)
-            return result
-
-    def extract(self, options, page=None):
-        """Async wrapper for extract method"""
-        try:
-            result = self.extract(options, page)
-            return result
-        except Exception as e:
-            _logger.warning(f"extract_async fallback due to error: {e}")
-            result = self.extract(options, page)
-            return result
-
-    def observe(self, options, page=None):
-        """Async wrapper for observe method"""
-        try:
-            result = self.observe(options, page)
-            return result
-        except Exception as e:
-            _logger.warning(f"observe_async fallback due to error: {e}")
-            result = self.observe(options, page)
-            return result
-
-    def screenshot(self, page=None):
-        """Async wrapper for screenshot method"""
-        try:
-            result = self.screenshot(page)
-            return result
-        except Exception as e:
-            _logger.warning(f"screenshot_async fallback due to error: {e}")
-            result = self.screenshot(page)
-            return result
-
     def _call_mcp_tool(
         self,
         name: str,
@@ -329,11 +267,8 @@ class LocalBrowser(Browser):
         self.agent.initialize()
         return True
 
-    def initialize(self, option: Optional["BrowserOption"] = None) -> bool:
-        return self.initialize(option)
-
     def is_initialized(self) -> bool:
-        return self._worker_thread is not None
+        return True
 
     def get_endpoint_url(self) -> str:
         return f"http://localhost:{self._cdp_port}"

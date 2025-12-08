@@ -353,7 +353,6 @@ class PageAgent:
         instruction: str,
         schema: Type[T],
         use_text_extract: Optional[bool] = False,
-        dom_settle_timeout_ms: Optional[int] = 5000,
         use_vision: Optional[bool] = False,
         selector: Optional[str] = None,
     ) -> T:
@@ -364,7 +363,6 @@ class PageAgent:
             instruction (str): The natural language instruction for extraction.
             schema (Type[T]): The Pydantic schema for the expected output data structure.
             use_text_extract (Optional[bool]): If True, uses text-based extraction; otherwise, uses DOM-based.
-            dom_settle_timeout_ms (Optional[int]): Max time to wait for DOM stability.
             use_vision (Optional[bool]): If True, uses visual (screenshot) information for extraction.
             selector (Optional[str]): Optional CSS selector to narrow down extraction area.
 
@@ -381,12 +379,11 @@ class PageAgent:
                 instruction=instruction,
                 schema=schema,
                 use_text_extract=use_text_extract,
-                dom_settle_timeout_ms=dom_settle_timeout_ms,
                 use_vision=use_vision,
                 selector=selector,
             )
 
-            success, extracted_data = await self.session.browser.agent.extract_async(
+            success, extracted_data = await self.session.browser.agent.extract(
                 options=options, page=self.current_page
             )
             if not success or extracted_data is None:
@@ -399,7 +396,6 @@ class PageAgent:
     async def observe(
         self,
         instruction: str,
-        dom_settle_timeout_ms: Optional[int] = None,
         use_vision: bool = False,
     ) -> List[ObserveResult]:
         """
@@ -407,7 +403,6 @@ class PageAgent:
 
         Args:
             instruction (Optional[str]): Natural language goal for observation.
-            dom_settle_timeout_ms (Optional[int]): Max time to wait for DOM stability.
             use_vision (bool): If True, uses visual (screenshot) information for observation.
 
         Returns:
@@ -422,7 +417,6 @@ class PageAgent:
             _logger.info("Starting observation...")
             options = ObserveOptions(
                 instruction=instruction,
-                dom_settle_timeout_ms=dom_settle_timeout_ms,
                 use_vision=use_vision,
             )
             success, observed_elements = await self.session.browser.agent.observe_async(

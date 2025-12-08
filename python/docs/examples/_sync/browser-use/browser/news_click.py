@@ -13,10 +13,11 @@ import logging
 from playwright.sync_api import sync_playwright
 from pydantic import BaseModel
 
-from agentbay import AgentBay
+from agentbay import AgentBay as AgentBay
+from agentbay import Browser as Browser
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import ActOptions as ActOptions, ActResult as ActResult, ExtractOptions as ExtractOptions
+from agentbay import ActOptions, ActResult, ExtractOptions
 
 
 class DummySchema(BaseModel):
@@ -31,7 +32,7 @@ class TestRunner:
     def test_click_action(self):
         """测试点击动作"""
         browser = self.session.browser
-        # assert isinstance(browser, Browser), "浏览器实例类型错误"
+        assert isinstance(browser, Browser), "浏览器实例类型错误"
         assert browser.initialize(BrowserOption()), "浏览器初始化失败"
 
         endpoint_url = browser.get_endpoint_url()
@@ -77,24 +78,17 @@ class TestRunner:
 
 def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
-    if not api_key:
-        print("Error: AGENTBAY_API_KEY not set")
-        return
-
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("runner")
 
     agent_bay = AgentBay(api_key=api_key)
     params = CreateSessionParams(image_id="browser_latest")
     session_result = agent_bay.create(params)
-    if not session_result.success:
-        print("Create session failed")
-        return
+    assert session_result.success and session_result.session is not None
     session = session_result.session
 
     try:
-        session.browser.initialize(BrowserOption())
-
+        assert session.browser.initialize(BrowserOption())
         runner = TestRunner(session=session, logger=logger)
         runner.test_click_action()
     finally:

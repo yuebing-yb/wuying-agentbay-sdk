@@ -16,7 +16,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from agentbay import AsyncAgentBay, CreateSessionParams
-from agentbay import BrowserOption, AsyncActOptions as ActOptions, AsyncExtractOptions as ExtractOptions
+from agentbay import BrowserOption, ActOptions, ExtractOptions
 
 
 async def main():
@@ -126,4 +126,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

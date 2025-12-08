@@ -31,12 +31,7 @@ def run_single_task(
     browser_setup_s += open_end - open_start
 
     try:
-        try:
-            task_module = importlib.import_module(
-                f"agentbay._sync.eval.page_tasks.{task_name}"
-            )
-        except ImportError:
-            task_module = importlib.import_module(f"page_tasks.{task_name}")
+        task_module = importlib.import_module(f"agentbay._sync.eval.page_tasks.{task_name}")
 
         # result = await task_module.run(agent, _logger, task_config)
         result = agent.run_task(task_module, _logger, task_config)

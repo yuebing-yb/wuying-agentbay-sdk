@@ -9,8 +9,8 @@ import time
 重点：变量注入（用户名/密码）、模糊指令、弹窗处理
 """
 
-import os, asyncio
-from agentbay import AgentBay
+import os
+from agentbay import AgentBay as AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
 from agentbay import ActOptions
@@ -18,20 +18,13 @@ from agentbay import ActOptions
 
 def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
-    if not api_key:
-        print("Error: AGENTBAY_API_KEY not set")
-        return
     agent_bay = AgentBay(api_key=api_key)
-
-    session_result = agent_bay.create(CreateSessionParams(image_id="browser_latest"))
-    if not session_result.success or session_result.session is None:
-        print(f"Failed to create session: {session_result.error_message}")
-        return
+    params = CreateSessionParams(image_id="browser_latest")
+    session_result = agent_bay.create(params)
+    assert session_result.success and session_result.session is not None
     session = session_result.session
     try:
-        if not session.browser.initialize(BrowserOption()):
-            print("Browser init failed")
-            return
+        assert session.browser.initialize(BrowserOption())
         agent = session.browser.agent
         agent.navigate("https://meeting.alibaba-inc.com/")
         agent.act(
@@ -47,10 +40,7 @@ def main():
         )
         time.sleep(2)
     finally:
-        try:
-            session.browser.agent.close()
-        except Exception:
-            pass
+        session.browser.agent.close()
         agent_bay.delete(session)
 
 

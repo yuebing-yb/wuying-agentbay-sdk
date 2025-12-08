@@ -1,17 +1,13 @@
 import json
 import os
 import unittest
-from typing import List, Optional
-from unittest.mock import MagicMock, MagicMock, patch
+from typing import Optional
+from unittest.mock import MagicMock, MagicMock
 
 from pydantic import BaseModel, Field
 
 from agentbay import Browser
-from agentbay import BrowserAgent
-from agentbay import ActOptions
-from agentbay import ExtractOptions
-from agentbay import ObserveOptions
-from agentbay import BrowserError
+from agentbay import ActOptions, ExtractOptions, ObserveOptions
 from agentbay import (
     Browser,
     BrowserFingerprint,
@@ -19,14 +15,6 @@ from agentbay import (
     BrowserProxy,
     BrowserScreen,
     BrowserViewport,
-)
-from agentbay import (
-    ActOptions,
-    ActResult,
-    BrowserAgent,
-    ExtractOptions,
-    ObserveOptions,
-    ObserveResult,
 )
 from agentbay import FingerprintFormat
 
@@ -370,7 +358,9 @@ class TestAsyncBrowser(unittest.TestCase):
 
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        self.browser.agent.act(ActOptions(action="Click search button"), page)
+        
+            self.browser.agent.act(ActOptions(action="Click search button"), page)
+        
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_observe_async(self):
@@ -384,7 +374,11 @@ class TestAsyncBrowser(unittest.TestCase):
             success=True, data=json.dumps([{"selector": "#search"}])
         )
 
-        self.browser.agent.observe(ObserveOptions(instruction="Find the search button"), page)
+        
+            self.browser.agent.observe(
+                ObserveOptions(instruction="Find the search button"), page
+            )
+        
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_extract_async(self):
@@ -403,8 +397,12 @@ class TestAsyncBrowser(unittest.TestCase):
 
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        self.browser.agent.extract(
-            ExtractOptions(instruction="Extract the title", schema=SchemaForTest), page)
+        
+            self.browser.agent.extract(
+                ExtractOptions(instruction="Extract the title", schema=SchemaForTest),
+                page,
+            )
+        
         self.mock_session.call_mcp_tool.assert_called()
 
 

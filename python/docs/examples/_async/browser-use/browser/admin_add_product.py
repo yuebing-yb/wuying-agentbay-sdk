@@ -7,7 +7,7 @@
 
 import asyncio
 import os
-from agentbay import AsyncAgentBay
+from agentbay import AsyncAgentBay as AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
 from agentbay import ActOptions
@@ -15,42 +15,34 @@ from agentbay import ActOptions
 
 async def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
-    if not api_key:
-        print("Error: AGENTBAY_API_KEY not set")
-        return
-    agentbay = AsyncAgentBay(api_key=api_key)
-    session_result = await agentbay.create(CreateSessionParams(image_id="browser_latest"))
-    if not session_result.success or not session_result.session:
-        print(f"Failed to create session: {session_result.error_message}")
-        return
+    agent_bay = AgentBay(api_key=api_key)
+    params = CreateSessionParams(image_id="browser_latest")
+    session_result = await agent_bay.create(params)
+    assert session_result.success and session_result.session is not None
     session = session_result.session
     try:
-        if not await session.browser.initialize(BrowserOption()):
-            print("Browser init failed")
-            return
+        assert await session.browser.initialize(BrowserOption())
         agent = session.browser.agent
 
-        await agent.navigate("https://httpbin.org/forms/post")
+        await agent.navigate("http://116.62.195.152:3000")
         await agent.act(
             ActOptions(
-                action="填写披萨订单表单并提交",
+                action="填写表单",
                 variables={
-                    "Customer name": "John Doe",
-                    "Telephone": "1234567890", 
-                    "E-mail address": "john@example.com",
-                    "Pizza Size": "large",
-                    "Pizza Toppings": "bacon,cheese",
-                    "Delivery instructions": "Please ring the doorbell",
+                    "商品": "iPhone 16 Pro",
+                    "品牌": "iphone",
+                    "价格": "7999.0",
+                    "URL": "https://streaming-tests-h5.oss-cn-hangzhou.aliyuncs.com/image/iPhone-16-Pro.jpg",
+                    "描述": "6.3英寸显示，A18 Pro，4800万像素摄像头，120Hz ProMotion",
+                    "库存": "230.0",
                 },
             )
         )
+        await agent.act(ActOptions(action="点击提交/保存按钮"))
         await asyncio.sleep(2)
+        await agent.close()
     finally:
-        try:
-            await session.browser.agent.close()
-        except Exception:
-            pass
-        await agentbay.delete(session)
+        await agent_bay.delete(session)
 
 
 if __name__ == "__main__":

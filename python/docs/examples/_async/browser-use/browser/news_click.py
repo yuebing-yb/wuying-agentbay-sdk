@@ -4,17 +4,18 @@
 重点：演示 PageUse Agent 与 Playwright 混排；通过显式传入 page 保持两者对齐，验证导航期间的焦点同步
 """
 
-import os
 import asyncio
+import os
 import logging
 
 from playwright.async_api import async_playwright
 from pydantic import BaseModel
 
-from agentbay import AsyncAgentBay
+from agentbay import AsyncAgentBay as AgentBay
+from agentbay import AsyncBrowser as Browser
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import AsyncActOptions as ActOptions, AsyncActResult as ActResult, AsyncExtractOptions as ExtractOptions
+from agentbay import ActOptions, ActResult, ExtractOptions
 
 
 class DummySchema(BaseModel):
@@ -29,8 +30,8 @@ class TestRunner:
     async def test_click_action(self):
         """测试点击动作"""
         browser = self.session.browser
-        # assert isinstance(browser, Browser), "浏览器实例类型错误"
-        assert browser.initialize(BrowserOption()), "浏览器初始化失败"
+        assert isinstance(browser, Browser), "浏览器实例类型错误"
+        assert await browser.initialize(BrowserOption()), "浏览器初始化失败"
 
         endpoint_url = await browser.get_endpoint_url()
         assert endpoint_url is not None, "无法获取浏览器端点URL"
@@ -75,24 +76,17 @@ class TestRunner:
 
 async def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
-    if not api_key:
-        print("Error: AGENTBAY_API_KEY not set")
-        return
-
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("runner")
 
-    agent_bay = AsyncAgentBay(api_key=api_key)
+    agent_bay = AgentBay(api_key=api_key)
     params = CreateSessionParams(image_id="browser_latest")
     session_result = await agent_bay.create(params)
-    if not session_result.success:
-        print("Create session failed")
-        return
+    assert session_result.success and session_result.session is not None
     session = session_result.session
 
     try:
-        await session.browser.initialize(BrowserOption())
-
+        assert await session.browser.initialize(BrowserOption())
         runner = TestRunner(session=session, logger=logger)
         await runner.test_click_action()
     finally:

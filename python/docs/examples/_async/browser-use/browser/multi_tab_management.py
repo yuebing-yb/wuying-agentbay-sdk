@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import AsyncExtractOptions, AsyncActOptions
+from agentbay import ExtractOptions, ActOptions
 from pydantic import BaseModel, Field
 
 
@@ -58,7 +58,7 @@ async def main():
         # Open first tab
         print("\n1. Opening first tab (example.com)...")
         await session.browser.agent.navigate("https://example.com")
-        success, tab1_result = await session.browser.agent.extract(AsyncExtractOptions(
+        success, tab1_result = await session.browser.agent.extract(ExtractOptions(
             instruction="What is the page title?",
             schema=TextContent
         ))
@@ -69,8 +69,8 @@ async def main():
 
         # Open second tab by navigating to a new URL
         print("\n2. Opening second tab (httpbin.org)...)")
-        await session.browser.agent.act(AsyncActOptions(action="Open a new tab and navigate to https://httpbin.org"))
-        success, tab2_result = await session.browser.agent.extract(AsyncExtractOptions(
+        await session.browser.agent.act(ActOptions(action="Open a new tab and navigate to https://httpbin.org"))
+        success, tab2_result = await session.browser.agent.extract(ExtractOptions(
             instruction="What is the page title?",
             schema=TextContent
         ))
@@ -81,7 +81,7 @@ async def main():
 
         # Extract information from current tab
         print("\n3. Extracting information from current tab...")
-        success, info_result = await session.browser.agent.extract(AsyncExtractOptions(instruction="What HTTP testing endpoints are available?", schema=TextContent))
+        success, info_result = await session.browser.agent.extract(ExtractOptions(instruction="What HTTP testing endpoints are available?", schema=TextContent))
         if success:
             print(f"Available endpoints:\n{info_result.content}")
         else:
@@ -89,8 +89,8 @@ async def main():
 
         # Switch back to first tab
         print("\n4. Switching back to first tab...")
-        await session.browser.agent.act(AsyncActOptions(action="Switch to the first tab"))
-        success, current_result = await session.browser.agent.extract(AsyncExtractOptions(instruction="What is the current page URL?", schema=TextContent))
+        await session.browser.agent.act(ActOptions(action="Switch to the first tab"))
+        success, current_result = await session.browser.agent.extract(ExtractOptions(instruction="What is the current page URL?", schema=TextContent))
         if success:
             print(f"Current URL: {current_result.content}")
         else:
@@ -98,8 +98,8 @@ async def main():
 
         # Open third tab - use a more reliable site
         print("\n5. Opening third tab (jsonplaceholder.typicode.com)...")
-        await session.browser.agent.act(AsyncActOptions(action="Open a new tab and navigate to https://jsonplaceholder.typicode.com"))
-        success, tab3_result = await session.browser.agent.extract(AsyncExtractOptions(instruction="What is the page title?", schema=TextContent))
+        await session.browser.agent.act(ActOptions(action="Open a new tab and navigate to https://jsonplaceholder.typicode.com"))
+        success, tab3_result = await session.browser.agent.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent))
         if success:
             print(f"Tab 3 title: {tab3_result.content}")
         else:
@@ -109,7 +109,7 @@ async def main():
         print("\n6. Listing all open tabs...")
         try:
             success, tabs_result = await asyncio.wait_for(
-                session.browser.agent.extract(AsyncExtractOptions(instruction="How many tabs are open and what are their URLs?", schema=TextContent)),
+                session.browser.agent.extract(ExtractOptions(instruction="How many tabs are open and what are their URLs?", schema=TextContent)),
                 timeout=30.0  # 30 second timeout
             )
             if success:
@@ -121,8 +121,8 @@ async def main():
 
         # Close a specific tab
         print("\n7. Closing the second tab...")
-        await session.browser.agent.act(AsyncActOptions(action="Close the tab with httpbin.org"))
-        success, remaining_result = await session.browser.agent.extract(AsyncExtractOptions(instruction="How many tabs are now open?", schema=TextContent))
+        await session.browser.agent.act(ActOptions(action="Close the tab with httpbin.org"))
+        success, remaining_result = await session.browser.agent.extract(ExtractOptions(instruction="How many tabs are now open?", schema=TextContent))
         if success:
             print(f"Remaining tabs: {remaining_result.content}")
         else:
