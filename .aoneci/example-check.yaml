@@ -243,6 +243,11 @@ jobs:
           # Fail the summary job if any critical check failed
           if [ "$PYTHON_RES" == "failure" ] || [ "$TS_RES" == "failure" ] || [ "$GO_RES" == "failure" ]; then
             echo "❌ One or more example checks failed."
+            
+            # Display the report content if available (it might be on the runner, 
+            # but since jobs run on different runners, we can't easily access the file directly 
+            # unless we use artifacts. Ideally we should use artifacts, but for now relying on logs)
+            echo "Please check the logs of the failed jobs for the detailed report and AI analysis."
             exit 1
           fi
           
