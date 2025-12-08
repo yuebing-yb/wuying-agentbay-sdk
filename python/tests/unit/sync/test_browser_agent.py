@@ -367,10 +367,14 @@ class TestAsyncBrowser(unittest.TestCase):
         page.context.new_cdp_session = MagicMock()
 
         self.browser.initialize(BrowserOption())
-        # observe calls page_use_observe -> returns list of items
-        self.mock_session.call_mcp_tool.return_value = MagicMock(
+        # observe calls page_use_observe_async -> returns task_id
+        # Second call: page_use_get_observe_result -> returns result
+        response1 = MagicMock(success=True, data=json.dumps({"task_id": "123"}))
+        response2 = MagicMock(
             success=True, data=json.dumps([{"selector": "#search"}])
         )
+        
+        self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
         self.browser.agent.observe(ObserveOptions(instruction="Find the search button"), page)
         self.mock_session.call_mcp_tool.assert_called()
