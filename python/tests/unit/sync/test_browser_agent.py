@@ -358,9 +358,7 @@ class TestAsyncBrowser(unittest.TestCase):
 
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        
-            self.browser.agent.act(ActOptions(action="Click search button"), page)
-        
+        self.browser.agent.act(ActOptions(action="Click search button"), page)
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_observe_async(self):
@@ -374,11 +372,7 @@ class TestAsyncBrowser(unittest.TestCase):
             success=True, data=json.dumps([{"selector": "#search"}])
         )
 
-        
-            self.browser.agent.observe(
-                ObserveOptions(instruction="Find the search button"), page
-            )
-        
+        self.browser.agent.observe(ObserveOptions(instruction="Find the search button"), page)
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_extract_async(self):
@@ -397,12 +391,7 @@ class TestAsyncBrowser(unittest.TestCase):
 
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        
-            self.browser.agent.extract(
-                ExtractOptions(instruction="Extract the title", schema=SchemaForTest),
-                page,
-            )
-        
+        self.browser.agent.extract(ExtractOptions(instruction="Extract the title", schema=SchemaForTest), page)
         self.mock_session.call_mcp_tool.assert_called()
 
 
