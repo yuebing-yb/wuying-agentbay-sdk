@@ -29,8 +29,8 @@ An AI-powered, natural-language web agent that performs precise, reliable page o
   - [Error Handling and Debug](#error-handling-and-debug)
   - [Best Practices](#best-practices)
   - [FAQ](#faq)
-  - [📚 Related Guides](#-related-guides)
-  - [🆘 Getting Help](#-getting-help)
+  - [📚 Related Guides](#related-guides)
+  - [🆘 Getting Help](#getting-help)
 
 ---
 
