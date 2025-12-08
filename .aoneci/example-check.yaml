@@ -22,7 +22,6 @@ params:
 jobs:
   python-example-check:
     name: "Python Examples Inspection"
-    when: "${{params.python_enabled}}"
     runs-on:
       - "4-16Gi"
     image: alios-8u
@@ -32,6 +31,8 @@ jobs:
       max: 1
       when:
         - runner_system_failure
+    outputs:
+      result: ${{ steps.run-python-check.outputs.result }}
     steps:
       - uses: checkout
       
@@ -42,6 +43,12 @@ jobs:
       - id: run-python-check
         name: "Run Python Examples Inspection"
         run: |
+          if [ "${{params.python_enabled}}" != "true" ]; then
+            echo "⚠️ Python examples check is disabled via parameters."
+            echo "skipped" > "${{outputs.result.path}}"
+            exit 0
+          fi
+          
           echo "🔧 Setting up Python Environment..."
           python -m pip install --upgrade pip
           
@@ -69,11 +76,23 @@ jobs:
           echo "🚀 Starting Python Examples Inspection..."
           export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
           export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
+          
+          set +e
           python scripts/check_examples.py --lang python
+          EXIT_CODE=$?
+          set -e
+          
+          if [ $EXIT_CODE -eq 0 ]; then
+             echo "success" > "${{outputs.result.path}}"
+             echo "✅ Python check passed"
+          else
+             echo "failure" > "${{outputs.result.path}}"
+             echo "❌ Python check failed"
+             exit 1
+          fi
 
   typescript-example-check:
     name: "TypeScript Examples Inspection"
-    when: "${{params.typescript_enabled}}"
     runs-on:
       - "4-16Gi"
     image: alios-8u
@@ -83,6 +102,8 @@ jobs:
       max: 1
       when:
         - runner_system_failure
+    outputs:
+      result: ${{ steps.run-typescript-check.outputs.result }}
     steps:
       - uses: checkout
       
@@ -94,6 +115,12 @@ jobs:
       - id: run-typescript-check
         name: "Run TypeScript Examples Inspection"
         run: |
+          if [ "${{params.typescript_enabled}}" != "true" ]; then
+             echo "⚠️ TypeScript examples check is disabled via parameters."
+             echo "skipped" > "${{outputs.result.path}}"
+             exit 0
+          fi
+          
           echo "🔧 Setting up TypeScript Environment..."
           cd typescript
           npm ci
@@ -115,11 +142,23 @@ jobs:
           echo "🚀 Starting TypeScript Examples Inspection..."
           export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
           export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
+          
+          set +e
           python scripts/check_examples.py --lang typescript
+          EXIT_CODE=$?
+          set -e
+          
+          if [ $EXIT_CODE -eq 0 ]; then
+             echo "success" > "${{outputs.result.path}}"
+             echo "✅ TypeScript check passed"
+          else
+             echo "failure" > "${{outputs.result.path}}"
+             echo "❌ TypeScript check failed"
+             exit 1
+          fi
 
   golang-example-check:
     name: "Golang Examples Inspection"
-    when: "${{params.golang_enabled}}"
     runs-on:
       - "4-16Gi"
     image: alios-8u
@@ -129,6 +168,8 @@ jobs:
       max: 1
       when:
         - runner_system_failure
+    outputs:
+      result: ${{ steps.run-golang-check.outputs.result }}
     steps:
       - uses: checkout
       
@@ -139,6 +180,12 @@ jobs:
       - id: run-golang-check
         name: "Run Golang Examples Inspection"
         run: |
+          if [ "${{params.golang_enabled}}" != "true" ]; then
+             echo "⚠️ Golang examples check is disabled via parameters."
+             echo "skipped" > "${{outputs.result.path}}"
+             exit 0
+          fi
+
           echo "🔧 Setting up Golang Environment..."
           cd golang
           go env -w GOPROXY=https://goproxy.cn,direct
@@ -155,7 +202,20 @@ jobs:
           echo "🚀 Starting Golang Examples Inspection..."
           export AGENTBAY_API_KEY="${{secrets.AGENTBAY_API_KEY}}"
           export DASHSCOPE_API_KEY="${{secrets.DASHSCOPE_API_KEY}}"
+          
+          set +e
           python scripts/check_examples.py --lang golang
+          EXIT_CODE=$?
+          set -e
+          
+          if [ $EXIT_CODE -eq 0 ]; then
+             echo "success" > "${{outputs.result.path}}"
+             echo "✅ Golang check passed"
+          else
+             echo "failure" > "${{outputs.result.path}}"
+             echo "❌ Golang check failed"
+             exit 1
+          fi
 
   summary:
     name: "Examples Inspection Summary"
@@ -171,19 +231,19 @@ jobs:
           echo "=========================================="
           echo ""
           
-          # Check status of each job
-          PYTHON_STATUS="${{jobs.python-example-check.status}}"
-          TS_STATUS="${{jobs.typescript-example-check.status}}"
-          GO_STATUS="${{jobs.golang-example-check.status}}"
+          # Check outputs of each job
+          PYTHON_RES="${{needs.python-example-check.outputs.result}}"
+          TS_RES="${{needs.typescript-example-check.outputs.result}}"
+          GO_RES="${{needs.golang-example-check.outputs.result}}"
           
-          echo "Python Check: $PYTHON_STATUS"
-          echo "TypeScript Check: $TS_STATUS"
-          echo "Golang Check: $GO_STATUS"
+          echo "Python Check Result: $PYTHON_RES"
+          echo "TypeScript Check Result: $TS_RES"
+          echo "Golang Check Result: $GO_RES"
           
           # Fail the summary job if any critical check failed
-          if [ "$PYTHON_STATUS" != "success" ] || [ "$TS_STATUS" != "success" ] || [ "$GO_STATUS" != "success" ]; then
+          if [ "$PYTHON_RES" == "failure" ] || [ "$TS_RES" == "failure" ] || [ "$GO_RES" == "failure" ]; then
             echo "❌ One or more example checks failed."
             exit 1
           fi
           
-          echo "✅ All checks passed successfully."
+          echo "✅ All enabled checks passed successfully."
