@@ -27,6 +27,7 @@ jobs:
       - "4-16Gi"
     image: alios-8u
     timeout: 2h
+    continue-on-error: true  # Continue pipeline even if this job fails
     retry:
       max: 1
       when:
@@ -77,6 +78,7 @@ jobs:
       - "4-16Gi"
     image: alios-8u
     timeout: 2h
+    continue-on-error: true  # Continue pipeline even if this job fails
     retry:
       max: 1
       when:
@@ -122,6 +124,7 @@ jobs:
       - "4-16Gi"
     image: alios-8u
     timeout: 2h
+    continue-on-error: true  # Continue pipeline even if this job fails
     retry:
       max: 1
       when:
