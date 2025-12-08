@@ -99,7 +99,7 @@ class ExtensionTestRunner:
             print(f"🌐 Creating test session: {session_name}")
             
             # Create extension option
-            ext_option = self.extensions_service.create_extension_option(extension_ids)
+            ext_option = await self.extensions_service.create_extension_option(extension_ids)
             
             # Create session parameters
             session_params = CreateSessionParams(

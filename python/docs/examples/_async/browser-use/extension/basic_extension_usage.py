@@ -38,7 +38,7 @@ async def basic_extension_example():
         
         # Create extension option for browser session
         print("🔧 Creating extension configuration...")
-        ext_option = extensions_service.create_extension_option([extension.id])
+        ext_option = await extensions_service.create_extension_option([extension.id])
         print(f"✅ Extension option created: {ext_option}")
         
         # Create browser session with extension
@@ -115,7 +115,7 @@ async def multiple_extensions_example():
         
         # Create session with all extensions
         print("🔧 Creating configuration for all extensions...")
-        ext_option = extensions_service.create_extension_option(extension_ids)
+        ext_option = await extensions_service.create_extension_option(extension_ids)
         
         session_params = CreateSessionParams(
             labels={"purpose": "multiple_extensions", "count": str(len(extension_ids))},

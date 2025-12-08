@@ -487,7 +487,7 @@ class AsyncExtensionsService:
             )
             return False
 
-    def create_extension_option(self, extension_ids: List[str]) -> ExtensionOption:
+    async def create_extension_option(self, extension_ids: List[str]) -> ExtensionOption:
         """
         Create an ExtensionOption for the current context with specified extension IDs.
 
@@ -508,25 +508,12 @@ class AsyncExtensionsService:
         Example:
             ```python
             extensions_service = AsyncExtensionsService(agent_bay, "my-extensions")
-            ext_option = extensions_service.create_extension_option(["ext1.zip", "ext2.zip"])
+            ext_option = await extensions_service.create_extension_option(["ext1.zip", "ext2.zip"])
             print(f"Extension option: {ext_option}")
             ```
         """
-        # Warning: This method assumes context_id is available. If _ensure_context hasn't been called
-        # (via another method), context_id might be None or just the provided string.
-        # Ideally, one should use this after ensure_context, or we check if we have an ID.
+        await self._ensure_context()
 
         cid = self.context_id or self._provided_context_id
-        if not cid:
-            # This is a corner case where init was called with empty string and no async method called yet.
-            # We cannot validly create ExtensionOption without a context ID.
-            # But we cannot await here.
-            # For now, we can rely on the user providing an ID or calling an async method first.
-            # Or we can raise an error suggesting they await something or provide an ID.
-            # However, backward compatibility with Sync might expect immediate return.
-            # In Sync version, init does IO, so context_id is always set.
-            # In Async version, we deferred IO.
-            # So users MUST await something before getting context_id if they relied on auto-gen.
-            pass
-
+        
         return ExtensionOption(context_id=cid, extension_ids=extension_ids)

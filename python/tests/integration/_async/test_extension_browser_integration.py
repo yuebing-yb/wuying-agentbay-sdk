@@ -20,24 +20,17 @@ import json
 import os
 import tempfile
 import time
-import unittest
 import zipfile
 from typing import List, Optional
 from urllib.parse import urlparse
 
-from agentbay import AgentBay
-from agentbay import (
-    BWList,
-    ContextSync,
-    ExtractPolicy,
-    SyncPolicy,
-    UploadPolicy,
-    WhiteList,
-)
+import pytest
+import pytest_asyncio
+from agentbay import AsyncAgentBay
 from agentbay import (
     Extension,
     ExtensionOption,
-    ExtensionsService,
+    AsyncExtensionsService,
 )
 from agentbay import BrowserContext, CreateSessionParams
 from agentbay import BrowserOption
@@ -60,7 +53,7 @@ def get_test_api_key():
     api_key = os.environ.get("AGENTBAY_API_KEY")
     print(f"Get API key for testing {api_key}")
     if not api_key:
-        raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
     return api_key
 
 
@@ -107,67 +100,66 @@ async def list_loaded_extensions(cdp_ws_url: str):
         return extensions
 
 
-class TestExtensionBrowserIntegration(unittest.TestCase):
+@pytest.mark.asyncio
+class TestExtensionBrowserIntegration:
     """Integration tests for browser extension management using ExtensionsService public API."""
 
-    @classmethod
-    def setUpClass(cls):
+    @pytest_asyncio.fixture(autouse=True)
+    async def setup_teardown(self):
         """Set up test environment with AgentBay client and create test extensions."""
         # Skip if no API key or in CI
         api_key = get_test_api_key()
         if not api_key or os.environ.get("CI"):
-            raise unittest.SkipTest(
-                "Skipping integration test: No API key or running in CI"
-            )
+            pytest.skip("Skipping integration test: No API key or running in CI")
 
-        cls.agent_bay = AgentBay(api_key)
+        self.agent_bay = AsyncAgentBay(api_key)
 
         # Initialize ExtensionsService with auto-detected context
-        cls.context_name = f"test-extensions-{int(time.time())}"
-        cls.extensions_service = ExtensionsService(cls.agent_bay, cls.context_name)
-        cls.context_id = cls.extensions_service.context_id
-        print(f"Created extension context: {cls.context_name} (ID: {cls.context_id})")
+        self.context_name = f"test-extensions-{int(time.time())}"
+        self.extensions_service = AsyncExtensionsService(self.agent_bay, self.context_name)
+        # context_id is available after initialization (it's a property that derives from name)
+        self.context_id = self.extensions_service.context_id
+        print(f"Created extension context: {self.context_name} (ID: {self.context_id})")
 
         # Create browser context for data persistence
-        cls.browser_context_name = f"test-browser-{int(time.time())}"
-        browser_context_result = cls.agent_bay.context.get(
-            cls.browser_context_name, create=True
+        self.browser_context_name = f"test-browser-{int(time.time())}"
+        browser_context_result = await self.agent_bay.context.get(
+            self.browser_context_name, create=True
         )
         if not browser_context_result.success or not browser_context_result.context:
-            raise unittest.SkipTest("Failed to create browser context")
+            pytest.skip("Failed to create browser context")
 
-        cls.browser_data_context = browser_context_result.context
-        cls.browser_context_id = cls.browser_data_context.id
+        self.browser_data_context = browser_context_result.context
+        self.browser_context_id = self.browser_data_context.id
         print(
-            f"Created browser context: {cls.browser_context_name} (ID: {cls.browser_context_id})"
+            f"Created browser context: {self.browser_context_name} (ID: {self.browser_context_id})"
         )
 
         # Create sample extensions
-        cls.sample_extensions = cls._create_sample_extensions()
-        print(f"Created {len(cls.sample_extensions)} sample extension files")
+        self.sample_extensions = self._create_sample_extensions()
+        print(f"Created {len(self.sample_extensions)} sample extension files")
 
         # Pre-upload extensions for reuse in tests
-        cls.uploaded_extensions = []
-        for ext_path in cls.sample_extensions:
-            extension = cls.extensions_service.create(local_path=ext_path)
+        self.uploaded_extensions = []
+        for ext_path in self.sample_extensions:
+            extension = await self.extensions_service.create(local_path=ext_path)
             print(f"extension: {extension.id}")
-            cls.uploaded_extensions.append(extension)
-        print(f"Pre-uploaded {len(cls.uploaded_extensions)} extensions for testing")
+            self.uploaded_extensions.append(extension)
+        print(f"Pre-uploaded {len(self.uploaded_extensions)} extensions for testing")
 
-    @classmethod
-    def tearDownClass(cls):
-        """Clean up test environment."""
+        yield
+
         # Clean up uploaded extensions
-        if hasattr(cls, "uploaded_extensions"):
-            for extension in cls.uploaded_extensions:
+        if hasattr(self, "uploaded_extensions"):
+            for extension in self.uploaded_extensions:
                 try:
-                    cls.extensions_service.delete(extension.id)
+                    await self.extensions_service.delete(extension.id)
                 except Exception as e:
                     print(f"Warning: Failed to delete extension {extension.id}: {e}")
-            print(f"Cleaned up {len(cls.uploaded_extensions)} uploaded extensions")
+            print(f"Cleaned up {len(self.uploaded_extensions)} uploaded extensions")
 
         # Clean up sample files
-        for ext_path in cls.sample_extensions:
+        for ext_path in self.sample_extensions:
             if os.path.exists(ext_path):
                 os.unlink(ext_path)
                 temp_dir = os.path.dirname(ext_path)
@@ -177,19 +169,18 @@ class TestExtensionBrowserIntegration(unittest.TestCase):
                     pass
 
         # Clean up contexts
-        if hasattr(cls, "extensions_service"):
+        if hasattr(self, "extensions_service"):
             # Use the service's cleanup method for auto-created context
-            cls.extensions_service.cleanup()
+            await self.extensions_service.cleanup()
 
-        if hasattr(cls, "browser_data_context"):
+        if hasattr(self, "browser_data_context"):
             try:
-                cls.agent_bay.context.delete(cls.browser_data_context)
-                print(f"Browser context deleted: {cls.browser_context_id}")
+                await self.agent_bay.context.delete(self.browser_data_context)
+                print(f"Browser context deleted: {self.browser_context_id}")
             except Exception as e:
                 print(f"Warning: Failed to delete browser context: {e}")
 
-    @classmethod
-    def _create_sample_extensions(cls) -> List[str]:
+    def _create_sample_extensions(self) -> List[str]:
         """Create sample browser extension packages for testing."""
         extensions = []
 
@@ -236,14 +227,13 @@ class TestExtensionBrowserIntegration(unittest.TestCase):
         ]
 
         for i, manifest in enumerate(manifests, 1):
-            ext_path = cls._create_extension_zip(f"test_ext_{i}", manifest)
+            ext_path = self._create_extension_zip(f"test_ext_{i}", manifest)
             extensions.append(ext_path)
 
         return extensions
 
-    @classmethod
     def _create_extension_zip(
-        cls, name: str, manifest: dict, use_directory_structure: bool = False
+        self, name: str, manifest: dict, use_directory_structure: bool = False
     ) -> str:
         """Create a sample browser extension ZIP file with directory-based structure.
 
@@ -531,7 +521,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
         return zip_path
 
-    def test_extension_crud_operations(self):
+    async def test_extension_crud_operations(self):
         """Test complete CRUD workflow using public API methods."""
         print("\n=== Extension CRUD Operations Test ===")
 
@@ -540,12 +530,12 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
         # Test List - Retrieve extensions
         print("\nTesting list() method...")
-        extension_list = self.extensions_service.list()
+        extension_list = await self.extensions_service.list()
         test_ids = {ext.id for ext in test_extensions}
         listed_ids = {ext.id for ext in extension_list}
 
-        self.assertGreaterEqual(len(extension_list), len(test_extensions))
-        self.assertTrue(test_ids.issubset(listed_ids))
+        assert len(extension_list) >= len(test_extensions)
+        assert test_ids.issubset(listed_ids)
         print(f"  ✅ Listed {len(extension_list)} extensions")
 
         # Test Update - Modify extension
@@ -553,68 +543,85 @@ console.log('Content script fully initialized for {manifest['name']} on', window
         extension_to_update = test_extensions[0]
         update_source = self.sample_extensions[2]
 
-        updated_extension = self.extensions_service.update(
+        updated_extension = await self.extensions_service.update(
             extension_id=extension_to_update.id, new_local_path=update_source
         )
 
-        self.assertEqual(updated_extension.id, extension_to_update.id)
+        assert updated_extension.id == extension_to_update.id
         print(f"  ✅ Updated extension: {updated_extension.id}")
 
         print("\n🎉 CRUD operations completed successfully!")
 
-    def test_extension_delete_operation(self):
+    async def test_extension_delete_operation(self):
         """Test extension deletion using public API method."""
         print("\n=== Extension Delete Operation Test ===")
 
         # Create a new extension specifically for deletion testing
-        test_extension = self.extensions_service.create(
+        test_extension = await self.extensions_service.create(
             local_path=self.sample_extensions[0]
         )
-        self.assertIsNotNone(test_extension.id)
+        assert test_extension.id is not None
         print(f"  ✅ Created test extension: {test_extension.id}")
 
         # Test Delete - Remove extension
         print("\nTesting delete() method...")
-        delete_success = self.extensions_service.delete(test_extension.id)
-        self.assertTrue(delete_success)
+        delete_success = await self.extensions_service.delete(test_extension.id)
+        assert delete_success is True
         print(f"  ✅ Deleted extension: {test_extension.id}")
 
         # Verify deletion by listing extensions
-        extension_list = self.extensions_service.list()
+        extension_list = await self.extensions_service.list()
         deleted_ids = {ext.id for ext in extension_list if ext.id == test_extension.id}
-        self.assertEqual(
-            len(deleted_ids), 0, "Extension should not exist after deletion"
-        )
+        assert len(deleted_ids) == 0, "Extension should not exist after deletion"
 
         print("\n🎉 Delete operation completed successfully!")
 
-    def test_extension_create_operation(self):
+    async def test_extension_create_operation(self):
         """Test extension creation using public API method."""
         print("\n=== Extension Create Operation Test ===")
 
         # Test Create - Upload new extension
         print("\nTesting create() method...")
-        new_extension = self.extensions_service.create(
+        new_extension = await self.extensions_service.create(
             local_path=self.sample_extensions[0]
         )
 
-        self.assertIsNotNone(new_extension.id, "Extension ID should not be None")
-        self.assertIsNotNone(new_extension.name, "Extension name should not be None")
+        assert new_extension.id is not None, "Extension ID should not be None"
+        assert new_extension.name is not None, "Extension name should not be None"
         print(f"  ✅ Created extension: {new_extension.id}")
 
         # Verify creation by listing extensions
-        extension_list = self.extensions_service.list()
+        extension_list = await self.extensions_service.list()
         created_ids = {ext.id for ext in extension_list if ext.id == new_extension.id}
-        self.assertEqual(len(created_ids), 1, "Extension should exist after creation")
+        assert len(created_ids) == 1, "Extension should exist after creation"
 
         # Clean up the test extension
-        delete_success = self.extensions_service.delete(new_extension.id)
-        self.assertTrue(delete_success)
+        delete_success = await self.extensions_service.delete(new_extension.id)
+        assert delete_success is True
 
         print("\n🎉 Create operation completed successfully!")
 
-    @unittest.skipIf(not PLAYWRIGHT_AVAILABLE, "Playwright not available")
-    def test_extension_browser_integration(self):
+    async def test_create_extension_option(self):
+        """Test creation of extension option."""
+        print("\n=== Extension Option Creation Test ===")
+        if not self.uploaded_extensions:
+            pytest.skip("No uploaded extensions available")
+            
+        test_extension = self.uploaded_extensions[0]
+        extension_ids = [test_extension.id]
+        
+        print(f"Creating option for extensions: {extension_ids}")
+        extension_option = await self.extensions_service.create_extension_option(extension_ids)
+        
+        assert extension_option is not None
+        # Verify attributes instead of strict isinstance check due to async/sync class duplication
+        assert hasattr(extension_option, 'context_id')
+        assert hasattr(extension_option, 'extension_ids')
+        assert extension_option.extension_ids == extension_ids
+        print(f"  ✅ Created extension option: {extension_option}")
+
+    @pytest.mark.skipif(not PLAYWRIGHT_AVAILABLE, reason="Playwright not available")
+    async def test_extension_browser_integration(self):
         """Test comprehensive browser extension integration with real extension ID extraction.
 
         This test validates:
@@ -628,9 +635,6 @@ console.log('Content script fully initialized for {manifest['name']} on', window
         Key Feature: Uses real extension IDs extracted from browser instead of mocked IDs
         Core feature: Use real extension IDs extracted from browser, not simulated IDs
         """
-        if not PLAYWRIGHT_AVAILABLE:
-            self.skipTest("Playwright not available")
-
         print("\n=== Comprehensive Browser Extension Integration Test ===")
 
         # Use first two pre-uploaded extensions for comprehensive testing
@@ -639,21 +643,19 @@ console.log('Content script fully initialized for {manifest['name']} on', window
         print(f"Target extensions for browser integration: {extension_ids}")
 
         # Configure and create browser session with extensions
-        session = self._create_browser_session(extension_ids)
+        session = await self._create_browser_session(extension_ids)
 
         try:
             # Phase 1: Extension Synchronization
             print("\nPhase 1: Extension Synchronization")
-            self._wait_for_sync(session)
+            await self._wait_for_sync(session)
 
             # Phase 2: Browser Initialization with Extensions
             print("\nPhase 2: Browser Initialization with Extensions")
-            browser_initialized = asyncio.run(self._initialize_browser_with_extensions(session))
-            self.assertTrue(
-                browser_initialized, "Browser initialization with extensions failed"
-            )
+            browser_initialized = await self._initialize_browser_with_extensions(session)
+            assert browser_initialized is True, "Browser initialization with extensions failed"
 
-            ls_result = session.command.execute_command("ls -la /tmp/extensions/")
+            ls_result = await session.command.execute_command("ls -la /tmp/extensions/")
             if not ls_result.success:
                 print("    ❌ Extensions directory not found")
                 return False
@@ -663,12 +665,8 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
             # Phase 3: Real Extension ID Extraction via CDP
             print("\nPhase 3: Real Extension ID Extraction (CDP-based)")
-            real_extension_ids = asyncio.run(self._extract_and_validate_real_extension_ids(session))
-            self.assertGreater(
-                len(real_extension_ids),
-                0,
-                "At least one real extension ID should be extracted",
-            )
+            real_extension_ids = await self._extract_and_validate_real_extension_ids(session)
+            assert len(real_extension_ids) > 0, "At least one real extension ID should be extracted"
 
             print(
                 f"✅ Successfully extracted {len(real_extension_ids)} real extension ID(s):"
@@ -678,29 +676,14 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
             # Phase 4: Comprehensive Extension Verification using Real IDs
             print("\nPhase 4: Extension Verification with Real IDs")
-            verification_results = asyncio.run(self._comprehensive_browser_extension_verification_with_real_ids(session, extension_ids, real_extension_ids))
+            verification_results = await self._comprehensive_browser_extension_verification_with_real_ids(session, extension_ids, real_extension_ids)
 
             # Validate verification results
-            self.assertTrue(
-                verification_results["file_system_check"],
-                "Extension files not found in file system",
-            )
-            self.assertTrue(
-                verification_results["real_id_extraction"],
-                "Real extension ID extraction failed",
-            )
-            self.assertTrue(
-                verification_results["browser_api_detection"],
-                "Extensions not detected via browser API",
-            )
-            self.assertTrue(
-                verification_results["extension_context_validation"],
-                "Extension context validation failed",
-            )
-            self.assertTrue(
-                verification_results["functional_validation"],
-                "Extension functionality validation failed",
-            )
+            assert verification_results["file_system_check"], "Extension files not found in file system"
+            assert verification_results["real_id_extraction"], "Real extension ID extraction failed"
+            assert verification_results["browser_api_detection"], "Extensions not detected via browser API"
+            assert verification_results["extension_context_validation"], "Extension context validation failed"
+            assert verification_results["functional_validation"], "Extension functionality validation failed"
 
             print(f"\n✅ All verification phases passed:")
             print(
@@ -724,11 +707,11 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             )
 
         finally:
-            self._cleanup_session(session)
+            await self._cleanup_session(session)
 
     # Helper Methods
 
-    def _create_browser_session(self, extension_ids: List[str]):
+    async def _create_browser_session(self, extension_ids: List[str]):
         """Create browser session with simplified extension synchronization using BrowserContext.
 
         This method demonstrates the preferred approach using ExtensionsService.create_extension_option()
@@ -738,7 +721,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
         # Create session with extension sync via enhanced BrowserContext
         # Use ExtensionsService.create_extension_option() to avoid exposing context_id
-        extension_option = self.extensions_service.create_extension_option(
+        extension_option = await self.extensions_service.create_extension_option(
             extension_ids
         )
 
@@ -753,21 +736,24 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             is_vpc=False,
         )
 
-        session_result = self.agent_bay.create(session_params)
-        self.assertTrue(session_result.success)
+        session_result = await self.agent_bay.create(session_params)
+        assert session_result.success is True
         session = session_result.session
-        self.assertIsNotNone(session)
+        assert session is not None
 
         session_id = getattr(session, "session_id", "unknown")
         print(f"  ✅ Browser session created with extension support: {session_id}")
         print(f"  ✅ Extension IDs configured: {extension_ids}")
         return session
 
-    def _wait_for_sync(self, session):
+    async def _wait_for_sync(self, session):
         """Wait for extension synchronization to complete."""
         max_retries = 15  # Reduced from 30 for faster timeout
         for retry in range(max_retries):
-            context_info = session.context.info()
+            # session.context.info() returns a result object or the info?
+            # In Sync it returns ContextInfoResult or similar.
+            # In Async it should return Coroutine.
+            context_info = await session.context.info()
 
             for item in context_info.context_status_data:
                 if (
@@ -778,13 +764,13 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                         print("  ✅ Extension synchronization completed")
                         return
                     elif item.status == "Failed":
-                        self.fail(f"Sync failed: {item.error_message}")
+                        pytest.fail(f"Sync failed: {item.error_message}")
 
             print(f"  Waiting for sync, attempt {retry+1}/{max_retries}")
-            time.sleep(1)  # Reduced from 2 seconds
+            await asyncio.sleep(1)  # Reduced from 2 seconds
 
         # Skip test instead of failing for timeout to avoid blocking CI
-        self.skipTest("Extension synchronization timeout - may be due to network or service issues")
+        pytest.skip("Extension synchronization timeout - may be due to network or service issues")
 
     async def _initialize_browser_with_extensions(self, session) -> bool:
         """Initialize browser session with extension loading capability."""
@@ -792,13 +778,13 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             # Initialize browser with extensions directory explicitly set
             browser_option = BrowserOption(extension_path="/tmp/extensions/")
 
-            init_success = await session.browser.initialize_async(browser_option)
+            init_success = await session.browser.initialize(browser_option)
 
             if not init_success:
                 print("  ❌ Browser initialization failed")
                 return False
 
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             if not endpoint_url:
                 print("  ❌ Failed to get browser endpoint URL")
                 return False
@@ -824,7 +810,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
         """
         try:
             # Get CDP WebSocket URL
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             if not endpoint_url:
                 print("    ❌ No browser endpoint available for real ID extraction")
                 return []
@@ -887,7 +873,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
         try:
             # Phase 1: File System Verification
             print("    Phase 1: File System Verification")
-            results["file_system_check"] = self._verify_extension_files(
+            results["file_system_check"] = await self._verify_extension_files(
                 session, original_extension_ids
             )
 
@@ -939,7 +925,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             return False
 
         try:
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             if not endpoint_url:
                 print("      ❌ No browser endpoint available")
                 return False
@@ -1005,14 +991,14 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             print(f"      ❌ Extension context validation error: {e}")
             return False
 
-    def _verify_extension_files(self, session, extension_ids: List[str]) -> bool:
+    async def _verify_extension_files(self, session, extension_ids: List[str]) -> bool:
         """Verify extension folders exist in the browser session file system.
 
         Checks for folder name matches and manifest files within those folders.
         """
         try:
             # Check extensions directory exists and is readable
-            ls_result = session.command.execute_command("ls -la /tmp/extensions/")
+            ls_result = await session.command.execute_command("ls -la /tmp/extensions/")
             if not ls_result.success:
                 print("    ❌ Extensions directory not found")
                 return False
@@ -1026,14 +1012,14 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                 base_ext_id = ext_id.rsplit(".", 1)[0] if "." in ext_id else ext_id
 
                 # Check if extension folder exists
-                folder_check = session.command.execute_command(
+                folder_check = await session.command.execute_command(
                     f"test -d /tmp/extensions/{base_ext_id}"
                 )
                 if folder_check.success:
                     print(f"    ✅ Found extension folder: {base_ext_id}")
 
                     # Check if manifest.json exists in the folder
-                    manifest_check = session.command.execute_command(
+                    manifest_check = await session.command.execute_command(
                         f"test -f /tmp/extensions/{base_ext_id}/manifest.json"
                     )
                     if manifest_check.success:
@@ -1064,7 +1050,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
         extracted_ids = []
 
         try:
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             if not endpoint_url:
                 print(
                     "    ❌ No browser endpoint available for extension ID extraction"
@@ -1161,7 +1147,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             return True  # Skip this check if Playwright unavailable
 
         try:
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             if not endpoint_url:
                 print("    ❌ No browser endpoint available")
                 return False
@@ -1393,13 +1379,13 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                         extensionFlags: []
                     };
                     
-                    // Check for extension-related flags in user agent or other indicators
+                    # Check for extension-related flags in user agent or other indicators
                     if (navigator.userAgent.includes('--load-extension') || 
                         navigator.userAgent.includes('--extension-dir')) {
                         info.extensionFlags.push('extension-flags-detected');
                     }
                     
-                    // Check window properties for extension indicators
+                    # Check window properties for extension indicators
                     const windowKeys = Object.keys(window);
                     const extensionKeys = windowKeys.filter(key => 
                         key.toLowerCase().includes('extension') || 
@@ -1465,7 +1451,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             return True
 
         try:
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             if not endpoint_url:
                 print("    ❌ No browser endpoint available")
                 return False
@@ -1517,7 +1503,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             return True
 
         try:
-            endpoint_url = session.browser.get_endpoint_url()
+            endpoint_url = await session.browser.get_endpoint_url()
             if not endpoint_url:
                 print("    ❌ No browser endpoint available")
                 return False
@@ -1586,13 +1572,13 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             print(f"    ❌ Extension-webpage interaction test error: {e}")
             return False
 
-    def _cleanup_session(self, session):
+    async def _cleanup_session(self, session):
         """Clean up browser session."""
         if session is None:
             return
         session_id = getattr(session, "session_id", "unknown")
         try:
-            delete_result = session.delete(sync_context=True)
+            delete_result = await session.delete(sync_context=True)
             if delete_result.success:
                 print(f"  ✅ Session deleted: {session_id}")
             else:
@@ -1602,4 +1588,4 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main([__file__])
