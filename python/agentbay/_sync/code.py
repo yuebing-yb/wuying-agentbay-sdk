@@ -306,11 +306,26 @@ class Code(BaseService):
                     success=False,
                     error_message=result.error_message or "Failed to run code",
                 )
-        except CommandError as e:
+        except AgentBayError as e:
+            # Handle AgentBayError specifically - these are SDK-level errors
+            handled_error = self._handle_error(e)
+            _logger.error(f"AgentBay error during code execution: {e}")
             return EnhancedCodeExecutionResult(
-                request_id="", success=False, error_message=str(e)
+                request_id="", 
+                success=False, 
+                error_message=f"AgentBay error: {handled_error}"
+            )
+        except CommandError as e:
+            # Handle CommandError - these are command execution specific errors
+            _logger.error(f"Command error during code execution: {e}")
+            return EnhancedCodeExecutionResult(
+                request_id="", 
+                success=False, 
+                error_message=f"Command error: {e}"
             )
         except Exception as e:
+            # Handle any other unexpected exceptions
+            _logger.exception(f"Unexpected error during code execution: {e}")
             return EnhancedCodeExecutionResult(
                 request_id="",
                 success=False,

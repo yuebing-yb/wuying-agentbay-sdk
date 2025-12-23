@@ -353,7 +353,7 @@ print(undefined_variable)
 
         runtime_result = await code.run_code(runtime_error_code, "python")
         assert not runtime_result.success
-        assert "NameError" in runtime_result.error_message
+        assert "name 'nonexistent_variable' is not defined" in runtime_result.error_message
     finally:
         # Cleanup session
         await session.delete()

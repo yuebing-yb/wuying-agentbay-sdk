@@ -10,7 +10,7 @@ import {
 import { UploadResult, DownloadResult } from "./file-transfer";
 import { FileTransfer } from "./file-transfer";
 import { Session } from "../session";
-import { log, logWarn } from "../utils/logger";
+import { log, logInfo, logWarn } from "../utils/logger";
 
 // Default chunk size for large file operations (60KB)
 const DEFAULT_CHUNK_SIZE = 60 * 1024;
@@ -1432,7 +1432,7 @@ export class FileSystem {
 
       // Perform download
       const result = await fileTransfer.download(remotePath, localPath, options);
-
+      logInfo(`Download result....: ${JSON.stringify(result)}`);
       // If download was successful, delete the file from OSS
       if (result.success) {
         const contextId = (fileTransfer as any).contextId;

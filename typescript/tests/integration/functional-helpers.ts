@@ -239,28 +239,45 @@ export async function safeScreenshot(
 ): Promise<[string | null, Error | null]> {
   try {
     if (!computerOrMobile) {
-      return [null, null];
+      return [null, new Error('computerOrMobile is null or undefined')];
     }
 
     const result = await computerOrMobile.screenshot();
     if (!result) {
-      return [null, null];
+      return [null, new Error('Screenshot method returned null or undefined')];
     }
 
     if (result.errorMessage) {
       return [null, new Error(result.errorMessage)];
     }
 
-    if (result.data) {
-      return [result.data, null];
+    // Check for data in different possible fields
+    // The callMcpTool method extracts content[0].text into result.data field
+    let screenshotData = null;
+    
+    if (result.data && result.data.trim() !== '') {
+      screenshotData = result.data;
+    } else if (result.url) {
+      screenshotData = result.url;
+    } else if (result.content && Array.isArray(result.content) && result.content[0]?.text) {
+      screenshotData = result.content[0].text;
+    } else if (typeof result === 'string') {
+      screenshotData = result;
+    } else {
+      console.log(`[${testName}] safeScreenshot: No screenshot data found in any expected field`);
+      console.log(`[${testName}] safeScreenshot: result.data type: ${typeof result.data}, value: "${result.data}"`);
     }
 
-    return [null, null];
+    if (screenshotData) {
+      return [screenshotData, null];
+    }
+
+    return [null, new Error('No screenshot data found in result')];
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
     return [null, error instanceof Error ? error : new Error(String(error))];
   }
 }
-
 export async function waitWithTimeout(
   conditionFunc: () => boolean,
   timeout: number,
