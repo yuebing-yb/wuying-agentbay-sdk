@@ -61,9 +61,16 @@ async def main():
         # Demonstrate task status checking (conceptual)
         print("\n4. Task status monitoring pattern...")
         print("In real implementation:")
-        print("  - result = await session.agent.async_execute_task(task)")
-        print("  - status = await session.agent.get_task_status(result.task_id)")
+        print("  - result = await session.agent.browser.execute_task(task)")
+        print("  - status = await session.agent.browser.get_task_status(result.task_id)")
         print("  - Poll until status indicates completion")
+
+        # Demonstrate Mobile Agent usage (conceptual)
+        print("\n5. Mobile Agent usage pattern...")
+        print("For mobile device automation:")
+        print("  - Create session with image_id='mobile_latest'")
+        print("  - result = await session.agent.mobile.execute_task('Open WeChat app', max_steps=100, max_step_retries=3)")
+        print("  - Or use blocking: result = await session.agent.mobile.execute_task_and_wait('Open WeChat app', max_steps=100, max_step_retries=3, max_try_times=200)")
 
         print("\n=== Example completed successfully ===")
 

@@ -5,9 +5,10 @@
 - [Agent Modules Guide](../../../../../docs/guides/common-features/advanced/agent-modules.md) - Learn about agent modules and custom agents
 
 An Agent to manipulate applications to complete specific tasks.
-According to the use scenary, The agent can a browser use agent which is
-specialized for browser automation tasks, The agent also can be  a computer
-use agent which is specialized for multiple applications automation tasks.
+According to the use scenary, The agent can be a browser use agent which is
+specialized for browser automation tasks, a computer use agent which is
+specialized for multiple applications automation tasks, or a mobile use agent
+which is specialized for mobile device automation tasks.
 
 ## Table of contents
 
@@ -20,6 +21,7 @@ use agent which is specialized for multiple applications automation tasks.
 ```typescript
 browser: [`BrowserUseAgent`](browser-use-agent.md)
 computer: [`ComputerUseAgent`](computer-use-agent.md)
+mobile: [`MobileUseAgent`](mobile-use-agent.md)
 ```
 
 ## Related Resources
