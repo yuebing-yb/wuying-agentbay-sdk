@@ -103,10 +103,12 @@ type FileReadResult struct {
 
 // BinaryFileReadResult wraps binary file read operation result and RequestID
 type BinaryFileReadResult struct {
-	models.ApiResponse // Embedded ApiResponse
-	Content            []byte  // Binary file content
-	ContentType        string  // MIME type (optional)
-	Size               int64   // File size in bytes (optional)
+	models.ApiResponse        // Embedded ApiResponse
+	Success            bool   // Whether the operation was successful
+	Content            []byte // Binary file content
+	ContentType        string // MIME type (optional)
+	Size               int64  // File size in bytes (optional)
+	ErrorMessage       string // Error message if the operation failed
 }
 
 // FileWriteResult wraps file write operation result and RequestID
@@ -626,7 +628,9 @@ func (fs *FileSystem) readFileChunk(path string, formatType string, optionalPara
 				ApiResponse: models.ApiResponse{
 					RequestID: "",
 				},
-				Content: []byte{},
+				Success:      false,
+				Content:      []byte{},
+				ErrorMessage: err.Error(),
 			}, fmt.Errorf("failed to read file: %w", err)
 		}
 		return nil, nil, fmt.Errorf("failed to read file: %w", err)
@@ -638,7 +642,9 @@ func (fs *FileSystem) readFileChunk(path string, formatType string, optionalPara
 				ApiResponse: models.ApiResponse{
 					RequestID: result.RequestID,
 				},
-				Content: []byte{},
+				Success:      false,
+				Content:      []byte{},
+				ErrorMessage: result.ErrorMessage,
 			}, fmt.Errorf("read file failed: %s", result.ErrorMessage)
 		}
 		return nil, nil, fmt.Errorf("read file failed: %s", result.ErrorMessage)
@@ -652,13 +658,16 @@ func (fs *FileSystem) readFileChunk(path string, formatType string, optionalPara
 				ApiResponse: models.ApiResponse{
 					RequestID: result.RequestID,
 				},
-				Content: []byte{},
+				Success:      false,
+				Content:      []byte{},
+				ErrorMessage: err.Error(),
 			}, fmt.Errorf("failed to decode base64: %w", err)
 		}
 		return nil, &BinaryFileReadResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: result.RequestID,
 			},
+			Success: true,
 			Content: binaryContent,
 		}, nil
 	}
@@ -905,7 +914,9 @@ func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadR
 				ApiResponse: models.ApiResponse{
 					RequestID: "",
 				},
-				Content: []byte{},
+				Success:      false,
+				Content:      []byte{},
+				ErrorMessage: err.Error(),
 			}, fmt.Errorf("failed to get file info: %w", err)
 		}
 		return nil, nil, fmt.Errorf("failed to get file info: %w", err)
@@ -920,6 +931,7 @@ func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadR
 				ApiResponse: models.ApiResponse{
 					RequestID: fileInfoResult.RequestID,
 				},
+				Success: true,
 				Content: []byte{},
 				Size:    0,
 			}, nil
@@ -981,6 +993,7 @@ func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadR
 			ApiResponse: models.ApiResponse{
 				RequestID: lastRequestID,
 			},
+			Success: true,
 			Content: finalContent,
 			Size:    int64(len(finalContent)),
 		}, nil
