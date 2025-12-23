@@ -338,6 +338,11 @@ func (fs *FileSystem) CreateDirectory(path string) (*FileDirectoryResult, error)
 		return nil, fmt.Errorf("failed to create directory: %w", err)
 	}
 
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("create_directory returned nil result")
+	}
+
 	if !result.Success {
 		return nil, fmt.Errorf("create directory failed: %s", result.ErrorMessage)
 	}
@@ -379,6 +384,11 @@ func (fs *FileSystem) DeleteFile(path string) (*FileWriteResult, error) {
 	result, err := fs.Session.CallMcpTool("delete_file", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete file: %w", err)
+	}
+
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("delete_file returned nil result")
 	}
 
 	if !result.Success {
@@ -430,6 +440,11 @@ func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bo
 		return nil, fmt.Errorf("failed to edit file: %w", err)
 	}
 
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("edit_file returned nil result")
+	}
+
 	if !result.Success {
 		return nil, fmt.Errorf("edit file failed: %s", result.ErrorMessage)
 	}
@@ -475,6 +490,11 @@ func (fs *FileSystem) GetFileInfo(path string) (*FileInfoResult, error) {
 			return nil, fmt.Errorf("file not found: %s", path)
 		}
 		return nil, fmt.Errorf("failed to get file info: %w", err)
+	}
+
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("get_file_info returned nil result")
 	}
 
 	if !result.Success {
@@ -526,6 +546,11 @@ func (fs *FileSystem) ListDirectory(path string) (*DirectoryListResult, error) {
 		return nil, fmt.Errorf("failed to list directory: %w", err)
 	}
 
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("list_directory returned nil result")
+	}
+
 	if !result.Success {
 		return nil, fmt.Errorf("list directory failed: %s", result.ErrorMessage)
 	}
@@ -575,6 +600,11 @@ func (fs *FileSystem) MoveFile(source, destination string) (*FileWriteResult, er
 	result, err := fs.Session.CallMcpTool("move_file", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to move file: %w", err)
+	}
+
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("move_file returned nil result")
 	}
 
 	if !result.Success {
@@ -634,6 +664,21 @@ func (fs *FileSystem) readFileChunk(path string, formatType string, optionalPara
 			}, fmt.Errorf("failed to read file: %w", err)
 		}
 		return nil, nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	// Check for nil result
+	if result == nil {
+		if formatType == "binary" {
+			return nil, &BinaryFileReadResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				Success:      false,
+				Content:      []byte{},
+				ErrorMessage: "read_file returned nil result",
+			}, fmt.Errorf("read_file returned nil result")
+		}
+		return nil, nil, fmt.Errorf("read_file returned nil result")
 	}
 
 	if !result.Success {
@@ -713,6 +758,11 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, erro
 		return nil, fmt.Errorf("failed to read multiple files: %w", err)
 	}
 
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("read_multiple_files returned nil result")
+	}
+
 	if !result.Success {
 		return nil, fmt.Errorf("read multiple files failed: %s", result.ErrorMessage)
 	}
@@ -786,6 +836,11 @@ func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string
 		return nil, fmt.Errorf("failed to search files: %w", err)
 	}
 
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("search_files returned nil result")
+	}
+
 	if !result.Success {
 		return nil, fmt.Errorf("search files failed: %s", result.ErrorMessage)
 	}
@@ -825,6 +880,11 @@ func (fs *FileSystem) writeFileChunk(path, content string, mode string) (*FileWr
 	result, err := fs.Session.CallMcpTool("write_file", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to write file: %w", err)
+	}
+
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("write_file returned nil result")
 	}
 
 	if !result.Success {
@@ -938,6 +998,21 @@ func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadR
 			}, fmt.Errorf("failed to get file info: %w", err)
 		}
 		return nil, nil, fmt.Errorf("failed to get file info: %w", err)
+	}
+
+	// Check for nil result
+	if mcpResult == nil {
+		if format == "binary" {
+			return nil, &BinaryFileReadResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				Success:      false,
+				Content:      []byte{},
+				ErrorMessage: "get_file_info returned nil result",
+			}, fmt.Errorf("get_file_info returned nil result")
+		}
+		return nil, nil, fmt.Errorf("get_file_info returned nil result")
 	}
 
 	if !mcpResult.Success {
@@ -1283,6 +1358,11 @@ func (fs *FileSystem) GetFileChange(path string) (*FileChangeResult, error) {
 	result, err := fs.Session.CallMcpTool("get_file_change", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file change: %w", err)
+	}
+
+	// Check for nil result
+	if result == nil {
+		return nil, fmt.Errorf("get_file_change returned nil result")
 	}
 
 	if !result.Success {
