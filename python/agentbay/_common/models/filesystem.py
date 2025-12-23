@@ -299,6 +299,40 @@ class FileContentResult(ApiResponse):
         self.error_message = error_message
 
 
+class BinaryFileContentResult(ApiResponse):
+    """Result of binary file read operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        content: bytes = b"",
+        error_message: str = "",
+        content_type: Optional[str] = None,
+        size: Optional[int] = None,
+    ):
+        """
+        Initialize a BinaryFileContentResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the operation was successful.
+                Defaults to False.
+            content (bytes, optional): Binary file content. Defaults to b"".
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+            content_type (str, optional): MIME type of the file. Defaults to None.
+            size (int, optional): Size of the file in bytes. Defaults to None.
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.content = content
+        self.error_message = error_message
+        self.content_type = content_type
+        self.size = size
+
+
 class MultipleFileContentResult(ApiResponse):
     """Result of multiple file read operations."""
 
