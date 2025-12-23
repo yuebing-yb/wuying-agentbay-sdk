@@ -152,13 +152,15 @@ agent_bay.delete(session)
 <a id="basic-file-operations"></a>
 ## 📝 Basic File Operations
 
-**⚠️ Important: Text Files Only**: The `read_file()` and `write_file()` methods are designed specifically for **text files** (UTF-8 encoded). They cannot handle binary files such as images, executables, archives, or other non-text formats. For binary file operations, use command-line tools through the `session.command` interface or context synchronization features.
+**File Format Support**: 
+- **Text files**: The `read_file()` method supports text files (UTF-8 encoded) by default. Use `read_file(path)` or `read_file(path, format="text")` to read text files.
+- **Binary files**: The `read_file()` method now supports binary files! Use `read_file(path, format="bytes")` to read binary files such as images, executables, archives, etc. The method returns `BinaryFileContentResult` with `content` as `bytes` (Python) or `Uint8Array` (TypeScript/JavaScript).
 
-**File Size Support**: Both `read_file()` and `write_file()` methods support text files of any size through automatic chunked transfer. You don't need to worry about file size limitations - the SDK handles large text files transparently.
+**File Size Support**: Both `read_file()` and `write_file()` methods support files of any size through automatic chunked transfer. You don't need to worry about file size limitations - the SDK handles large files transparently.
 
 **Supported File Types**:
-- ✅ Text files: `.txt`, `.json`, `.py`, `.html`, etc.
-- ❌ Binary files: `.jpg`, `.pdf`, `.exe`, `.zip`, etc.
+- ✅ Text files: `.txt`, `.json`, `.py`, `.html`, etc. (use default or `format="text"`)
+- ✅ Binary files: `.jpg`, `.png`, `.pdf`, `.exe`, `.zip`, etc. (use `format="bytes"`)
 
 ### Reading Files
 
@@ -168,13 +170,26 @@ from agentbay import AgentBay
 agent_bay = AgentBay()
 session = agent_bay.create().session
 
-# Read text file
-result = session.fs.read("/tmp/sample.txt")
+# Read text file (default format)
+result = session.file_system.read_file("/tmp/sample.txt")
 if result.success:
-    content = result.content
+    content = result.content  # str
     print(f"File content: {content}")
 else:
     print(f"Failed to read file: {result.error_message}")
+
+# Read text file (explicit format)
+result = session.file_system.read_file("/tmp/sample.txt", format="text")
+if result.success:
+    content = result.content  # str
+    print(f"File content: {content}")
+
+# Read binary file
+binary_result = session.file_system.read_file("/tmp/image.png", format="bytes")
+if binary_result.success:
+    content = binary_result.content  # bytes
+    print(f"File size: {len(content)} bytes")
+    print(f"Content type: {binary_result.content_type}")
     
 agent_bay.delete(session)
 ```
@@ -206,9 +221,30 @@ agent_bay.delete(session)
 
 ### Handling Binary Files
 
-Since `read_file()` and `write_file()` only support text files, **use `upload_file()` and `download_file()` APIs for binary file operations**.
+The `read_file()` method now supports binary files! Use `format="bytes"` to read binary files:
 
-For detailed examples and usage, see [File Transfer Operations](#file-transfer-operations) section.
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
+session = agent_bay.create().session
+
+# Read binary file (e.g., image, PDF, executable)
+binary_result = session.file_system.read_file("/tmp/image.png", format="bytes")
+if binary_result.success:
+    image_data = binary_result.content  # bytes
+    print(f"Image size: {len(image_data)} bytes")
+    
+    # Save to local file
+    with open("downloaded_image.png", "wb") as f:
+        f.write(image_data)
+    
+agent_bay.delete(session)
+```
+
+**Note**: The `write_file()` method still only supports text files. For writing binary files, use `upload_file()` and `download_file()` APIs or command-line tools through the `session.command` interface.
+
+For detailed examples of file transfer operations, see [File Transfer Operations](#file-transfer-operations) section.
 
 
 <a id="directory-management"></a>
@@ -640,7 +676,7 @@ agent_bay.delete(session)
 
 ### Binary File Transfer
 
-Unlike `read_file()` and `write_file()`, the transfer methods work seamlessly with binary files:
+The `read_file()` method now supports binary files using `format="bytes"`. However, `write_file()` still only supports text files. For writing binary files, use the transfer methods which work seamlessly with binary files:
 
 ```python
 from agentbay import AgentBay
@@ -674,11 +710,12 @@ agent_bay.delete(session)
 
 | Feature | `upload_file()` / `download_file()` | `read_file()` / `write_file()` |
 |---------|-----------------------------------|------------------------------|
-| **File Types** | ✅ Text and Binary | ❌ Text only (UTF-8) |
-| **Use Case** | Local ↔ Cloud transfer | Cloud-side text processing |
+| **File Types** | ✅ Text and Binary | ✅ Text (default) and Binary (`format="bytes"` for read) |
+| **Use Case** | Local ↔ Cloud transfer | Cloud-side file processing |
 | **Size Limit** | ✅ No practical limit | ✅ No limit (chunked) |
 | **Progress Tracking** | ✅ Available | ❌ Not available |
-| **Binary Support** | ✅ Full support | ❌ Not supported |
+| **Binary Read Support** | ✅ Full support | ✅ Full support (`format="bytes"`) |
+| **Binary Write Support** | ✅ Full support | ❌ Not supported (text only) |
 
 ### When to Use Each Method
 
@@ -691,8 +728,11 @@ agent_bay.delete(session)
 **Use `read_file()` / `write_file()` for:**
 - Processing text content within the cloud environment
 - Reading configuration files for analysis
+- Reading binary files (images, PDFs, etc.) using `format="bytes"`
 - Generating reports and logs
 - Text manipulation and editing tasks
+
+**Note**: `write_file()` only supports text files. For writing binary files, use `upload_file()` or command-line tools.
 
 
 
@@ -700,26 +740,45 @@ agent_bay.delete(session)
 <a id="error-handling"></a>
 ## ❌ Error Handling
 
-### Binary File Error Handling
+### Binary File Handling
 
-When attempting to read or write binary files with text methods, you'll encounter specific errors. Here are the actual error messages and how to handle them:
+The `read_file()` method now supports binary files using `format="bytes"`. Here's how to properly handle binary files:
 
 ```python
 from agentbay import AgentBay
-import base64
 
 agent_bay = AgentBay()
 session = agent_bay.create().session
 
-# ❌ Binary data write will fail with JSON serialization error
+# ✅ Read binary file using format="bytes"
+try:
+    binary_result = session.file_system.read_file("/tmp/image.png", format="bytes")
+    if binary_result.success:
+        image_data = binary_result.content  # bytes
+        print(f"✅ Binary file read successfully: {len(image_data)} bytes")
+        print(f"Content type: {binary_result.content_type}")
+        print(f"File size: {binary_result.size} bytes")
+        
+        # Save to local file
+        with open("downloaded_image.png", "wb") as f:
+            f.write(image_data)
+    else:
+        print(f"❌ Failed to read binary file: {binary_result.error_message}")
+except Exception as e:
+    print(f"Exception reading binary file: {e}")
+
+# ❌ Binary data write still requires alternative methods
+# write_file() only supports text files
 try:
     binary_data = b'\x89PNG\r\n\x1a\n'  # PNG header example
+    # This will fail - write_file() only supports text
     result = session.file_system.write_file("/tmp/image.png", binary_data)
     if not result.success:
-        # Actual error: "Failed to call MCP tool write_file: Object of type bytes is not JSON serializable"
         print(f"Binary data write error: {result.error_message}")
         
-        # ✅ Use alternative method: base64 encoding
+        # ✅ Use upload_file() for writing binary files
+        # Or use command-line tools
+        import base64
         base64_content = base64.b64encode(binary_data).decode('utf-8')
         session.file_system.write_file("/tmp/binary_b64.txt", base64_content)
         result = session.command.execute_command("base64 -d /tmp/binary_b64.txt > /tmp/image.png")
@@ -728,22 +787,6 @@ try:
             
 except Exception as e:
     print(f"Exception during binary write: {e}")
-
-# ⚠️ Note: Binary file reads may unexpectedly succeed
-# Some binary files might be read as text, but the content will be corrupted
-try:
-    result = session.file_system.read_file("/bin/ls")  # Binary executable
-    if result.success:
-        print("⚠️ Binary file read succeeded, but content may be corrupted")
-        print(f"Content preview: {repr(result.content[:50])}...")
-        
-        # ✅ Use command-line tools for proper binary handling
-        cmd_result = session.command.execute_command("file /bin/ls")
-        if cmd_result.success:
-            print(f"File type: {cmd_result.output}")
-            
-except Exception as e:
-    print(f"Exception reading binary file: {e}")
 
 # 📁 File not found errors
 try:
@@ -762,7 +805,8 @@ agent_bay.delete(session)
 
 | Use Case | Recommended Method | Notes |
 |----------|-------------------|-------|
-| Read text file | `read_file()` | **Text files only**, supports any size via chunked transfer |
+| Read text file | `read_file()` or `read_file(path, format="text")` | **Text files**, supports any size via chunked transfer |
+| Read binary file | `read_file(path, format="bytes")` | **Binary files** (images, PDFs, etc.), returns `BinaryFileContentResult` with `bytes` content |
 | Read multiple text files | `read_multiple_files()` | **Text files only**, more efficient than individual reads |
 | Write text content | `write_file()` | **Text files only**, supports any size via chunked transfer |
 | Upload file (local → cloud) | `upload_file()` | Supports all file types, with progress tracking |

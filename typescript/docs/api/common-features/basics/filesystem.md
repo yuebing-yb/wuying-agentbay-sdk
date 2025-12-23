@@ -336,7 +336,7 @@ ___
 
 ▸ **readFile**(`path`): `Promise`\<`FileContentResult`\>
 
-Reads the entire content of a file.
+Reads the entire content of a file (text format, default).
 
 #### Parameters
 
@@ -354,6 +354,52 @@ Promise resolving to FileContentResult containing:
          - requestId: Unique identifier for this API request
          - errorMessage: Error description if read failed
 
+▸ **readFile**(`path`, `opts`): `Promise`\<`FileContentResult`\>
+
+Reads the entire content of a file with explicit text format.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `path` | `string` | Absolute path to the file to read. |
+| `opts` | `Object` | Options object with format set to "text". |
+| `opts.format` | `"text"` | Format to read the file in. |
+
+#### Returns
+
+`Promise`\<`FileContentResult`\>
+
+Promise resolving to FileContentResult containing:
+         - success: Whether the read operation succeeded
+         - content: String content of the file
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if read failed
+
+▸ **readFile**(`path`, `opts`): `Promise`\<`BinaryFileContentResult`\>
+
+Reads the entire content of a file in binary format.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `path` | `string` | Absolute path to the file to read. |
+| `opts` | `Object` | Options object with format set to "bytes". |
+| `opts.format` | `"bytes"` | Format to read the file in. |
+
+#### Returns
+
+`Promise`\<`BinaryFileContentResult`\>
+
+Promise resolving to BinaryFileContentResult containing:
+         - success: Whether the read operation succeeded
+         - content: Uint8Array binary content of the file
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if read failed
+         - contentType: Optional MIME type of the file
+         - size: Optional size of the file in bytes
+
 **`Throws`**
 
 Error if the API call fails.
@@ -369,11 +415,17 @@ const result = await agentBay.create();
 if (result.success) {
   const session = result.session;
 
-  // Read a text file
+  // Read a text file (default)
   const fileResult = await session.fileSystem.readFile('/etc/hostname');
   if (fileResult.success) {
     console.log(`Content: ${fileResult.content}`);
     // Output: Content: agentbay-session-xyz
+  }
+
+  // Read a binary file
+  const binaryResult = await session.fileSystem.readFile('/tmp/image.png', { format: 'bytes' });
+  if (binaryResult.success) {
+    console.log(`File size: ${binaryResult.content.length} bytes`);
   }
 
   await session.delete();
@@ -384,9 +436,10 @@ if (result.success) {
 
 **Behavior:**
 - Automatically handles large files by reading in 60KB chunks
-- Returns empty string for empty files
+- Returns empty string/Uint8Array for empty files
 - Fails if path is a directory or doesn't exist
-- Content is returned as UTF-8 string
+- Text format: Content is returned as UTF-8 string
+- Binary format: Content is returned as Uint8Array (backend uses base64 encoding internally)
 
 **`See`**
 

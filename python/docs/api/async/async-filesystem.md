@@ -411,7 +411,7 @@ await session.delete()
 ### read\_file
 
 ```python
-async def read_file(path: str) -> FileContentResult
+async def read_file(path: str, *, format: str = "text") -> Union[FileContentResult, BinaryFileContentResult]
 ```
 
 Read the contents of a file. Automatically handles large files by chunking.
@@ -419,16 +419,27 @@ Read the contents of a file. Automatically handles large files by chunking.
 **Arguments**:
 
 - `path` _str_ - The path of the file to read.
-  
+- `format` _str, optional_ - Format to read the file in. Defaults to "text".
+  - "text": Returns FileContentResult with content as string (UTF-8)
+  - "bytes": Returns BinaryFileContentResult with content as bytes
 
 **Returns**:
 
-    FileContentResult: Result object containing file content and error message if any.
+    FileContentResult: For text format, contains file content as string.
+    BinaryFileContentResult: For bytes format, contains file content as bytes.
+  
+  Common fields:
   - success (bool): True if the operation succeeded
-  - content (str): The file content (if success is True)
   - request_id (str): Unique identifier for this API request
   - error_message (str): Error description (if success is False)
   
+  FileContentResult fields:
+  - content (str): The file content as string (if success is True)
+  
+  BinaryFileContentResult fields:
+  - content (bytes): The file content as bytes (if success is True)
+  - content_type (str, optional): MIME type of the file
+  - size (int, optional): Size of the file in bytes
 
 **Raises**:
 
@@ -439,9 +450,16 @@ Read the contents of a file. Automatically handles large files by chunking.
 
 ```python
 session = (await agent_bay.create()).session
-write_result = await session.file_system.write_file("/tmp/test.txt", "Hello, World!")
-read_result = await session.file_system.read_file("/tmp/test.txt")
-print(read_result.content)
+
+# Read text file (default)
+text_result = await session.file_system.read_file("/tmp/test.txt")
+print(text_result.content)  # str
+
+# Read binary file
+binary_result = await session.file_system.read_file("/tmp/image.png", format="bytes")
+print(binary_result.content)  # bytes
+print(f"File size: {len(binary_result.content)} bytes")
+
 await session.delete()
 ```
 
@@ -449,8 +467,9 @@ await session.delete()
 **Notes**:
 
 - Automatically handles large files by reading in chunks (default 50KB per chunk)
-- Returns empty string for empty files
+- Returns empty string/bytes for empty files
 - Returns error if path is a directory
+- Binary files are returned as bytes (backend uses base64 encoding internally)
 
 
 **See Also**:
