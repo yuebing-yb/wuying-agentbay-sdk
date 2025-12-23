@@ -243,7 +243,7 @@ describe("Agent", () => {
                 `${result.taskResult}`);
             expect(result.success).toBe(true);
             expect(result.taskId).toBeTruthy();
-            expect(result.taskStatus).toBe("finished");
+            expect(result.taskStatus).toBe("completed");
           }
         } catch (error) {
           log(`Note: Mobile Agent task execution failed: ${error}`);

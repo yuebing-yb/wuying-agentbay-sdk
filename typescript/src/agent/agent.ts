@@ -118,7 +118,7 @@ abstract class BaseTaskAgent {
         };
       }
 
-      const taskId = content.task_id;
+      const taskId = content.taskId || content.task_id;
       if (!taskId) {
         return {
           requestId: result.requestId,
@@ -146,13 +146,13 @@ abstract class BaseTaskAgent {
         }
 
         switch (query.taskStatus) {
-          case 'finished':
+          case 'completed':
             return {
               requestId: query.requestId,
               success: true,
               errorMessage: '',
               taskId: taskId,
-              taskStatus: 'finished',
+              taskStatus: 'completed',
               taskResult: query.taskProduct,
             };
           case 'failed':
@@ -437,7 +437,7 @@ export class MobileUseAgent extends BaseTaskAgent {
             };
           }
 
-          const taskId = content.task_id;
+          const taskId = content.taskId || content.task_id;
           if (!taskId) {
             return {
               requestId: result.requestId,
@@ -575,7 +575,7 @@ export class MobileUseAgent extends BaseTaskAgent {
             };
           }
 
-          taskId = content.task_id;
+          taskId = content.taskId || content.task_id;
           if (!taskId) {
             return {
               requestId: result.requestId,
@@ -653,13 +653,13 @@ export class MobileUseAgent extends BaseTaskAgent {
       }
 
       switch (query.taskStatus) {
-        case 'finished':
+        case 'completed':
           return {
             requestId: query.requestId,
             success: true,
             errorMessage: '',
             taskId: taskId,
-            taskStatus: 'finished',
+            taskStatus: 'completed',
             taskResult: query.taskProduct,
           };
         case 'failed':

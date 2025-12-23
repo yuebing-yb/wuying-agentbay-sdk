@@ -114,7 +114,10 @@ func (b *baseTaskAgent) executeTask(task string) *ExecutionResult {
 		}
 	}
 
-	taskID, ok := content["task_id"].(string)
+	taskID, ok := content["taskId"].(string)
+	if !ok {
+		taskID, ok = content["task_id"].(string)
+	}
 	if !ok {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -181,7 +184,10 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 		}
 	}
 
-	taskID, ok := content["task_id"].(string)
+	taskID, ok := content["taskId"].(string)
+	if !ok {
+		taskID, ok = content["task_id"].(string)
+	}
 	if !ok {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -209,7 +215,7 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 
 		taskStatus := query.TaskStatus
 		switch taskStatus {
-		case "finished":
+		case "completed":
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      true,
@@ -295,14 +301,17 @@ func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
 	}
 
 	// Safely extract fields with defaults
-	taskIDFromResult, ok := queryResult["task_id"].(string)
+	taskIDFromResult, ok := queryResult["taskId"].(string)
+	if !ok {
+		taskIDFromResult, ok = queryResult["task_id"].(string)
+	}
 	if !ok {
 		taskIDFromResult = taskID
 	}
 
 	status, ok := queryResult["status"].(string)
 	if !ok {
-		status = "finished"
+		status = "completed"
 	}
 
 	action, ok := queryResult["action"].(string)
@@ -359,13 +368,15 @@ func (b *baseTaskAgent) terminateTask(taskID string) *ExecutionResult {
 
 	terminatedTaskID := taskID
 	if content != nil {
-		if tid, ok := content["task_id"].(string); ok {
+		if tid, ok := content["taskId"].(string); ok {
+			terminatedTaskID = tid
+		} else if tid, ok := content["task_id"].(string); ok {
 			terminatedTaskID = tid
 		}
 	}
 
 	if result.Success {
-		status := "finished"
+		status := "completed"
 		if content != nil {
 			if s, ok := content["status"].(string); ok {
 				status = s
@@ -712,7 +723,10 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int, maxStepRetries i
 			}
 		}
 
-		taskID, ok := content["task_id"].(string)
+		taskID, ok := content["taskId"].(string)
+		if !ok {
+			taskID, ok = content["task_id"].(string)
+		}
 		if !ok {
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -812,7 +826,10 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 		}
 
 		var ok bool
-		taskID, ok = content["task_id"].(string)
+		taskID, ok = content["taskId"].(string)
+		if !ok {
+			taskID, ok = content["task_id"].(string)
+		}
 		if !ok {
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -852,7 +869,7 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 
 		taskStatus := query.TaskStatus
 		switch taskStatus {
-		case "finished":
+		case "completed":
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      true,
