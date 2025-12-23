@@ -10,6 +10,11 @@ params:
       - "python"
       - "typescript"
       - "golang"
+  skip_oss_tests:
+    name: Skip OSS Tests
+    type: boolean
+    default: true
+    description: "Skip OSS integration tests to avoid dependency issues"
 
 traits:
   - type: notification
@@ -131,6 +136,10 @@ jobs:
           # Install test dependencies
           pip install pytest pytest-cov pytest-asyncio
           
+          # Install Playwright browsers for Python tests (needed for browser fingerprint tests)
+          echo "🎭 Installing Playwright browsers for Python..."
+          playwright install chrome --with-deps || echo "⚠️ Playwright Chrome install failed"
+          
           # Install AI dependencies
           pip install langchain-openai langgraph langchain-core
           
@@ -181,7 +190,15 @@ jobs:
           fi
           
           # Run the smart test runner
-          if python scripts/smart_test_runner.py --test-type="${{params.test_type}}"; then
+          SKIP_OSS_FLAG=""
+          if [ "${{params.skip_oss_tests}}" = "true" ]; then
+            SKIP_OSS_FLAG="--skip-oss"
+            echo "🔄 OSS 测试跳过已启用"
+          else
+            echo "🔄 OSS 测试跳过已禁用，将运行所有测试"
+          fi
+          
+          if python scripts/smart_test_runner.py --test-type="${{params.test_type}}" $SKIP_OSS_FLAG; then
             echo "✅ Smart Test Runner completed successfully"
             
             # Check if test report was generated

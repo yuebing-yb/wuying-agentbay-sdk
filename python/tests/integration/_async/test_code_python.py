@@ -127,7 +127,6 @@ async def test_python_error_handling(session):
         print(f"Error in output: {result.result}")
         assert "ZeroDivisionError" in result.result or "Error" in result.result
 
-
 @pytest.mark.asyncio
 async def test_python_with_timeout(session):
     """Test Python execution with reasonable timeout."""

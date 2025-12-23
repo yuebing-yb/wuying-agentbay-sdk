@@ -54,6 +54,7 @@ async def test_list_sessions(agent_bay):
     # Create a session
     create_result = await agent_bay.create()
     assert create_result.success
+    session = create_result.session
     session_id = create_result.session.session_id
 
     # List sessions
@@ -67,7 +68,7 @@ async def test_list_sessions(agent_bay):
     print(f"Found {len(list_result.session_ids)} sessions")
 
     # Clean up
-    await create_result.session.delete()
+    await session.delete()
 
 
 @pytest.mark.asyncio

@@ -496,7 +496,6 @@ export class Computer {
   async screenshot(): Promise<ScreenshotResult> {
     try {
       const result = await this.session.callMcpTool('system_screenshot', {});
-      
       if (!result.success) {
         return {
           success: false,
@@ -505,8 +504,15 @@ export class Computer {
           data: ''
         };
       }
-
-      const screenshotUrl = result.content?.[0]?.text || '';
+      if(!result.data){
+        return {
+          success: false,
+          requestId: result.requestId || '',
+          errorMessage: result.errorMessage || 'Failed to take screenshot',
+          data: ''
+        };
+      }
+      const screenshotUrl = result.data || '';
       return {
         success: true,
         requestId: result.requestId || '',
