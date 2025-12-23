@@ -232,6 +232,14 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 				TaskID:       taskID,
 				TaskStatus:   taskStatus,
 			}
+		case "cancelled":
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: "Task was cancelled.",
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+			}
 		case "unsupported":
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
@@ -376,7 +384,7 @@ func (b *baseTaskAgent) terminateTask(taskID string) *ExecutionResult {
 	}
 
 	if result.Success {
-		status := "completed"
+		status := "cancelling"
 		if content != nil {
 			if s, ok := content["status"].(string); ok {
 				status = s
@@ -883,6 +891,14 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      false,
 				ErrorMessage: "Failed to execute task.",
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+			}
+		case "cancelled":
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: "Task was cancelled.",
 				TaskID:       taskID,
 				TaskStatus:   taskStatus,
 			}

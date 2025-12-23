@@ -211,7 +211,7 @@ def test_mobile_execute_task_and_wait_success(mobile_agent_session):
                     retry_times = 0
                     while retry_times < max_try_times:
                         status = agent.mobile.get_task_status(task_id)
-                        if status.task_status in ["completed", "finished", "failed", "unsupported"]:
+                        if status.task_status in ["completed", "finished", "failed", "cancelled", "unsupported"]:
                             logger.info(f"✅ Task completed: {status.task_status}")
                             break
                         retry_times += 1
@@ -278,7 +278,7 @@ def test_mobile_get_task_status_success(mobile_agent_session):
             logger.info(f"✅ Query #{retry_times + 1}: status={status_result.task_status}, action={status_result.task_action}")
             
             # If task finished, we can stop querying
-            if status_result.task_status in ["completed", "finished", "failed", "unsupported"]:
+            if status_result.task_status in ["completed", "finished", "failed", "cancelled", "unsupported"]:
                 logger.info(f"✅ Task reached final status: {status_result.task_status}")
                 break
             
@@ -360,7 +360,7 @@ def test_mobile_terminate_task_success(mobile_agent_session):
             logger.info(f"📋 Task status after termination (attempt {retry_times + 1}): {status_after.task_status}")
             
             # Task should be terminated, finished, or failed
-            if status_after.task_status in ["completed", "finished", "failed", "unsupported"]:
+            if status_after.task_status in ["completed", "finished", "failed", "cancelled", "unsupported"]:
                 logger.info(f"✅ Task confirmed in final status: {status_after.task_status}")
                 break
             
@@ -390,7 +390,7 @@ def test_mobile_terminate_task_success(mobile_agent_session):
                         retry_times = 0
                         while retry_times < max_try_times:
                             status = agent.mobile.get_task_status(task_id)
-                            if status.task_status in ["completed", "finished", "failed", "unsupported"]:
+                            if status.task_status in ["completed", "finished", "failed", "cancelled", "unsupported"]:
                                 logger.info(f"✅ Task completed in cleanup: {status.task_status}")
                                 break
                             retry_times += 1

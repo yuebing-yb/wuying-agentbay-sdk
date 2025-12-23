@@ -164,6 +164,15 @@ abstract class BaseTaskAgent {
               taskStatus: 'failed',
               taskResult: '',
             };
+          case 'cancelled':
+            return {
+              requestId: query.requestId,
+              success: false,
+              errorMessage: query.errorMessage || 'Task was cancelled.',
+              taskId: taskId,
+              taskStatus: 'cancelled',
+              taskResult: '',
+            };
           case 'unsupported':
             return {
               requestId: query.requestId,
@@ -277,8 +286,8 @@ abstract class BaseTaskAgent {
         };
       }
 
-      const terminatedTaskId = content.task_id || taskId;
-      const status = content.status || 'unknown';
+      const terminatedTaskId = content.taskId || content.task_id || taskId;
+      const status = content.status || 'cancelling';
 
       if (result.success) {
         return {
@@ -669,6 +678,15 @@ export class MobileUseAgent extends BaseTaskAgent {
             errorMessage: query.errorMessage || 'Failed to execute task.',
             taskId: taskId,
             taskStatus: 'failed',
+            taskResult: '',
+          };
+        case 'cancelled':
+          return {
+            requestId: query.requestId,
+            success: false,
+            errorMessage: query.errorMessage || 'Task was cancelled.',
+            taskId: taskId,
+            taskStatus: 'cancelled',
             taskResult: '',
           };
         case 'unsupported':
