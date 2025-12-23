@@ -374,7 +374,7 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 
 	// Poll for session deletion status
 	LogInfo(fmt.Sprintf("Waiting for session %s to be deleted...", s.SessionID))
-	pollTimeout := 50 * time.Second // 50 seconds timeout
+	pollTimeout := 5 * time.Minute  // 5 minutes timeout
 	pollInterval := 1 * time.Second // Poll every 1 second
 	pollStartTime := time.Now()
 
