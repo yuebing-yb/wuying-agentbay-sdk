@@ -9,6 +9,12 @@ export {
   type ApiResponse,
   type ApiResponseWithData,
   type DeleteResult,
+  type BinaryFileContentResult,
+  type FileContentResult,
+  type FileInfoResult,
+  type DirectoryListResult,
+  type MultipleFileContentResult,
+  type FileSearchResult,
 } from "./api-response";
 
 export {
