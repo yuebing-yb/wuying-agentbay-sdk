@@ -58,10 +58,10 @@ func TestFileSystem_ReadFileBinaryFormatSuccess(t *testing.T) {
 	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
-				RequestID:     "test-request-id",
-				Success:       true,
-				Data:          "name: image.jpeg\npath: /path/to/image.jpeg\nsize: 1024\nisDirectory: false",
-				ErrorMessage:  "",
+				RequestID:    "test-request-id",
+				Success:      true,
+				Data:         "name: image.jpeg\npath: /path/to/image.jpeg\nsize: 1024\nisDirectory: false",
+				ErrorMessage: "",
 			}, nil
 		}
 
@@ -104,10 +104,10 @@ func TestFileSystem_ReadFileBinaryFormatLargeFile(t *testing.T) {
 	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
-				RequestID:     "test-request-id",
-				Success:       true,
-				Data:          "name: large_binary.bin\npath: /path/to/large_binary.bin\nsize: 150000\nisDirectory: false",
-				ErrorMessage:  "",
+				RequestID:    "test-request-id",
+				Success:      true,
+				Data:         "name: large_binary.bin\npath: /path/to/large_binary.bin\nsize: 150000\nisDirectory: false",
+				ErrorMessage: "",
 			}, nil
 		}
 
@@ -193,10 +193,10 @@ func TestFileSystem_ReadFileBinaryFormatChunkError(t *testing.T) {
 	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
-				RequestID:     "test-request-id",
-				Success:       true,
-				Data:          "name: image.jpeg\npath: /path/to/image.jpeg\nsize: 1024\nisDirectory: false",
-				ErrorMessage:  "",
+				RequestID:    "test-request-id",
+				Success:      true,
+				Data:         "name: image.jpeg\npath: /path/to/image.jpeg\nsize: 1024\nisDirectory: false",
+				ErrorMessage: "",
 			}, nil
 		}
 
@@ -232,10 +232,10 @@ func TestFileSystem_ReadFileBinaryFormatEmptyFile(t *testing.T) {
 	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
-				RequestID:     "test-request-id",
-				Success:       true,
-				Data:          "name: empty.bin\npath: /path/to/empty.bin\nsize: 0\nisDirectory: false",
-				ErrorMessage:  "",
+				RequestID:    "test-request-id",
+				Success:      true,
+				Data:         "name: empty.bin\npath: /path/to/empty.bin\nsize: 0\nisDirectory: false",
+				ErrorMessage: "",
 			}, nil
 		}
 		return nil, nil
@@ -261,10 +261,10 @@ func TestFileSystem_ReadFileTextFormatExplicit(t *testing.T) {
 	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
-				RequestID:     "test-request-id",
-				Success:       true,
-				Data:          "name: file.txt\npath: /path/to/file.txt\nsize: 1024\nisDirectory: false",
-				ErrorMessage:  "",
+				RequestID:    "test-request-id",
+				Success:      true,
+				Data:         "name: file.txt\npath: /path/to/file.txt\nsize: 1024\nisDirectory: false",
+				ErrorMessage: "",
 			}, nil
 		}
 
@@ -327,10 +327,10 @@ func TestFileSystem_ReadFileChunkBinaryFormat(t *testing.T) {
 	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
-				RequestID:     "test-request-id",
-				Success:       true,
-				Data:          "name: image.jpeg\npath: /path/to/image.jpeg\nsize: 1024\nisDirectory: false",
-				ErrorMessage:  "",
+				RequestID:    "test-request-id",
+				Success:      true,
+				Data:         "name: image.jpeg\npath: /path/to/image.jpeg\nsize: 1024\nisDirectory: false",
+				ErrorMessage: "",
 			}, nil
 		}
 
@@ -376,10 +376,10 @@ func TestFileSystem_ReadFileChunkBinaryFormatBase64DecodeError(t *testing.T) {
 	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
-				RequestID:     "test-request-id",
-				Success:       true,
-				Data:          "name: image.jpeg\npath: /path/to/image.jpeg\nsize: 1024\nisDirectory: false",
-				ErrorMessage:  "",
+				RequestID:    "test-request-id",
+				Success:      true,
+				Data:         "name: image.jpeg\npath: /path/to/image.jpeg\nsize: 1024\nisDirectory: false",
+				ErrorMessage: "",
 			}, nil
 		}
 
@@ -411,10 +411,10 @@ func TestFileSystem_ReadFileChunkTextFormatNoFormatParam(t *testing.T) {
 	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
-				RequestID:     "test-request-id",
-				Success:       true,
-				Data:          "name: file.txt\npath: /path/to/file.txt\nsize: 1024\nisDirectory: false",
-				ErrorMessage:  "",
+				RequestID:    "test-request-id",
+				Success:      true,
+				Data:         "name: file.txt\npath: /path/to/file.txt\nsize: 1024\nisDirectory: false",
+				ErrorMessage: "",
 			}, nil
 		}
 
@@ -445,4 +445,3 @@ func TestFileSystem_ReadFileChunkTextFormatNoFormatParam(t *testing.T) {
 	assert.Equal(t, "test-request-id", result.RequestID)
 	assert.Equal(t, "file content", result.Content)
 }
-
