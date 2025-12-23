@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from agentbay import McpToolResult, OperationResult
 from agentbay import AsyncFileSystem, BoolResult
 from agentbay import (
+    BinaryFileContentResult,
     DirectoryListResult,
     FileContentResult,
     FileInfoResult,
@@ -674,6 +675,276 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(result, BoolResult)
         self.assertFalse(result.success)
         self.assertIn("Invalid write mode", result.error_message)
+
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
+    @pytest.mark.asyncio
+    async def test_read_file_binary_format_success(
+        self, mock_read_file_chunk, mock_get_file_info
+    ):
+        """
+        Test read_file method with format='bytes' for binary files.
+        """
+        import base64
+
+        # Mock file info for binary file
+        file_info_result = FileInfoResult(
+            request_id="request-123",
+            success=True,
+            file_info={"size": 1024, "isDirectory": False},  # 1KB file
+        )
+        mock_get_file_info.return_value = file_info_result
+
+        # Mock binary chunk read - backend returns base64, SDK decodes to bytes
+        binary_data = b'\xff\xd8\xff\xe0\x00\x10JFIF'  # JPEG header
+        base64_data = base64.b64encode(binary_data).decode('ascii')
+        
+        mock_read_file_chunk.return_value = BinaryFileContentResult(
+            request_id="request-123",
+            success=True,
+            content=binary_data,
+            size=len(binary_data),
+        )
+
+        result = await self.fs.read_file("/path/to/image.jpeg", format="bytes")
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertTrue(result.success)
+        self.assertIsInstance(result.content, bytes)
+        self.assertEqual(result.content, binary_data)
+        self.assertEqual(result.request_id, "request-123")
+        # Verify JPEG header
+        self.assertEqual(result.content[:3], b'\xff\xd8\xff')
+
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
+    @pytest.mark.asyncio
+    async def test_read_file_binary_format_large_file(
+        self, mock_read_file_chunk, mock_get_file_info
+    ):
+        """
+        Test read_file method with format='bytes' for large binary files (chunking).
+        """
+        import base64
+
+        # Mock file info for large binary file (150KB)
+        file_info_result = FileInfoResult(
+            request_id="request-123",
+            success=True,
+            file_info={"size": 150 * 1024, "isDirectory": False},
+        )
+        mock_get_file_info.return_value = file_info_result
+
+        # Mock chunked binary reads (3 chunks of 50KB each)
+        chunk1 = b'\x00' * (50 * 1024)
+        chunk2 = b'\x01' * (50 * 1024)
+        chunk3 = b'\x02' * (50 * 1024)
+        
+        mock_read_file_chunk.side_effect = [
+            BinaryFileContentResult(
+                request_id="request-123-1", success=True, content=chunk1
+            ),
+            BinaryFileContentResult(
+                request_id="request-123-2", success=True, content=chunk2
+            ),
+            BinaryFileContentResult(
+                request_id="request-123-3", success=True, content=chunk3
+            ),
+        ]
+
+        result = await self.fs.read_file("/path/to/large_binary.bin", format="bytes")
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertTrue(result.success)
+        self.assertIsInstance(result.content, bytes)
+        # Verify all chunks are concatenated correctly
+        expected_content = chunk1 + chunk2 + chunk3
+        self.assertEqual(result.content, expected_content)
+        self.assertEqual(len(result.content), 150 * 1024)
+        self.assertEqual(mock_read_file_chunk.call_count, 3)
+
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @pytest.mark.asyncio
+    async def test_read_file_binary_format_get_info_error(self, mock_get_file_info):
+        """
+        Test read_file method with format='bytes' when get_file_info fails.
+        """
+        error_result = FileInfoResult(
+            request_id="request-123",
+            success=False,
+            error_message="File not found",
+        )
+        mock_get_file_info.return_value = error_result
+
+        result = await self.fs.read_file("/path/to/image.jpeg", format="bytes")
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertFalse(result.success)
+        self.assertEqual(result.request_id, "request-123")
+        self.assertEqual(result.error_message, "File not found")
+        self.assertEqual(result.content, b"")
+
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
+    @pytest.mark.asyncio
+    async def test_read_file_binary_format_chunk_error(
+        self, mock_read_file_chunk, mock_get_file_info
+    ):
+        """
+        Test read_file method with format='bytes' when chunk reading fails.
+        """
+        # Mock file info
+        file_info_result = FileInfoResult(
+            request_id="request-123",
+            success=True,
+            file_info={"size": 1024, "isDirectory": False},
+        )
+        mock_get_file_info.return_value = file_info_result
+
+        # Mock chunk read error
+        mock_read_file_chunk.return_value = BinaryFileContentResult(
+            request_id="request-123",
+            success=False,
+            content=b"",
+            error_message="Failed to decode base64",
+        )
+
+        result = await self.fs.read_file("/path/to/image.jpeg", format="bytes")
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertFalse(result.success)
+        self.assertEqual(result.error_message, "Failed to decode base64")
+        self.assertEqual(result.content, b"")
+
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @pytest.mark.asyncio
+    async def test_read_file_binary_format_empty_file(self, mock_get_file_info):
+        """
+        Test read_file method with format='bytes' for empty file.
+        """
+        file_info_result = FileInfoResult(
+            request_id="request-123",
+            success=True,
+            file_info={"size": 0, "isDirectory": False},
+        )
+        mock_get_file_info.return_value = file_info_result
+
+        result = await self.fs.read_file("/path/to/empty.bin", format="bytes")
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertTrue(result.success)
+        self.assertEqual(result.content, b"")
+        self.assertEqual(result.size, 0)
+
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @patch("agentbay._async.filesystem.AsyncFileSystem._read_file_chunk")
+    @pytest.mark.asyncio
+    async def test_read_file_text_format_explicit(
+        self, mock_read_file_chunk, mock_get_file_info
+    ):
+        """
+        Test read_file method with explicit format='text' (should work same as default).
+        """
+        file_info_result = FileInfoResult(
+            request_id="request-123",
+            success=True,
+            file_info={"size": 1024, "isDirectory": False},
+        )
+        mock_get_file_info.return_value = file_info_result
+
+        mock_read_file_chunk.return_value = FileContentResult(
+            request_id="request-123", success=True, content="file content"
+        )
+
+        result = await self.fs.read_file("/path/to/file.txt", format="text")
+        self.assertIsInstance(result, FileContentResult)
+        self.assertTrue(result.success)
+        self.assertEqual(result.content, "file content")
+        self.assertIsInstance(result.content, str)
+
+    @pytest.mark.asyncio
+    async def test_read_file_chunk_binary_format(self):
+        """
+        Test _read_file_chunk method with format='binary'.
+        """
+        import base64
+        from agentbay import McpToolResult
+
+        # Mock MCP tool call returning base64-encoded string
+        binary_data = b'\xff\xd8\xff\xe0\x00\x10JFIF'
+        base64_data = base64.b64encode(binary_data).decode('ascii')
+        
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data=base64_data,
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+
+        result = await self.fs._read_file_chunk(
+            "/path/to/image.jpeg", offset=0, length=1024, format_type="binary"
+        )
+        
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertTrue(result.success)
+        self.assertIsInstance(result.content, bytes)
+        self.assertEqual(result.content, binary_data)
+        
+        # Verify MCP tool was called with format='binary'
+        self.session.call_mcp_tool.assert_awaited_once()
+        call_args = self.session.call_mcp_tool.call_args
+        self.assertEqual(call_args[0][0], "read_file")
+        self.assertEqual(call_args[0][1]["format"], "binary")
+        self.assertEqual(call_args[0][1]["path"], "/path/to/image.jpeg")
+        self.assertEqual(call_args[0][1]["offset"], 0)
+        self.assertEqual(call_args[0][1]["length"], 1024)
+
+    @pytest.mark.asyncio
+    async def test_read_file_chunk_binary_format_base64_decode_error(self):
+        """
+        Test _read_file_chunk method with format='binary' when base64 decode fails.
+        """
+        from agentbay import McpToolResult
+
+        # Mock MCP tool call returning invalid base64 string
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data="invalid-base64!!!",  # Invalid base64
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+
+        result = await self.fs._read_file_chunk(
+            "/path/to/image.jpeg", offset=0, length=1024, format_type="binary"
+        )
+        
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertFalse(result.success)
+        self.assertEqual(result.content, b"")
+        self.assertIn("Failed to decode base64", result.error_message)
+
+    @pytest.mark.asyncio
+    async def test_read_file_chunk_text_format_no_format_param(self):
+        """
+        Test _read_file_chunk method with format='text' (default) - should not pass format param.
+        """
+        from agentbay import McpToolResult
+
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data="text content",
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+
+        result = await self.fs._read_file_chunk(
+            "/path/to/file.txt", offset=0, length=1024, format_type="text"
+        )
+        
+        self.assertIsInstance(result, FileContentResult)
+        self.assertTrue(result.success)
+        self.assertEqual(result.content, "text content")
+        
+        # Verify MCP tool was called WITHOUT format parameter (default text)
+        self.session.call_mcp_tool.assert_awaited_once()
+        call_args = self.session.call_mcp_tool.call_args
+        self.assertEqual(call_args[0][0], "read_file")
+        self.assertNotIn("format", call_args[0][1])  # format should not be in args for text
 
 
 if __name__ == "__main__":
