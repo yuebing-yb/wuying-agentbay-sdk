@@ -192,7 +192,7 @@ class AsyncAgent(AsyncBaseService):
                     tried_time: int = 0
                     while tried_time < max_try_times:
                         query = await self.get_task_status(task_id)
-                        if query.task_status == "finished":
+                        if query.task_status == "completed":
                             return ExecutionResult(
                                 request_id=result.request_id,
                                 success=True,
@@ -221,7 +221,7 @@ class AsyncAgent(AsyncBaseService):
                             f"⏳ Task {task_id} running 🚀: {query.task_action}."
                         )
                         # keep waiting unit timeout if the status is running
-                        # task_status {running, finished, failed, unsupported}
+                        # task_status {running, completed, finished, failed, unsupported}
                         await asyncio.sleep(3)
                         tried_time += 1
                     _logger.warning("⚠️ task execution timeout!")
@@ -297,7 +297,7 @@ class AsyncAgent(AsyncBaseService):
                         request_id=result.request_id,
                         error_message="",
                         task_id=content.get("task_id", task_id),
-                        task_status=content.get("status", "finished"),
+                        task_status=content.get("status", "completed"),
                         task_action=content.get("action", ""),
                         task_product=content.get("product", ""),
                     )
@@ -364,7 +364,7 @@ class AsyncAgent(AsyncBaseService):
                         success=True,
                         error_message="",
                         task_id=task_id,
-                        task_status=content.get("status", "finished"),
+                        task_status=content.get("status", "completed"),
                     )
                 else:
                     content = json.loads(result.data) if result.data else {}
@@ -765,7 +765,7 @@ class AsyncAgent(AsyncBaseService):
             tried_time: int = 0
             while tried_time < max_try_times:
                 query = await self.get_task_status(task_id)
-                if query.task_status == "finished":
+                if query.task_status == "completed":
                     return ExecutionResult(
                         request_id=last_request_id,
                         success=True,

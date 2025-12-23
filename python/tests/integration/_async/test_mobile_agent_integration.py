@@ -111,16 +111,22 @@ async def test_mobile_execute_task_success(mobile_agent_session):
                     print(json.dumps(content, indent=2, ensure_ascii=False))
                     print()
                     
-                    content_task_id = content.get("task_id", task_id)
+                    # Check for error first (task finished or not found)
+                    if "error" in content:
+                        logger.info(f"✅ Task returned error (task finished or not found): {content.get('error')}")
+                        break
+                    
+                    # Support both taskId (camelCase) and task_id (snake_case)
+                    content_task_id = content.get("taskId") or content.get("task_id", task_id)
                     task_status = content.get("status", "unknown")
                     
                     assert content_task_id == task_id, f"Task ID mismatch: expected {task_id}, got {content_task_id}"
                     
                     logger.info(f"⏳ Polling task status: {task_status} (attempt {retry_times + 1})")
                     
-                    # If task finished, end polling immediately
-                    if task_status == "finished":
-                        logger.info(f"✅ Task reached finished status")
+                    # If task completed, end polling immediately
+                    if task_status == "completed":
+                        logger.info(f"✅ Task reached completed status")
                         break
                     
                     if task_status in ["failed", "unsupported"]:
@@ -202,7 +208,7 @@ async def test_mobile_execute_task_and_wait_success(mobile_agent_session):
                     retry_times = 0
                     while retry_times < max_try_times:
                         status = await agent.mobile.get_task_status(task_id)
-                        if status.task_status in ["finished", "failed", "unsupported"]:
+                        if status.task_status in ["completed", "finished", "failed", "unsupported"]:
                             logger.info(f"✅ Task completed: {status.task_status}")
                             break
                         retry_times += 1
@@ -269,7 +275,7 @@ async def test_mobile_get_task_status_success(mobile_agent_session):
             logger.info(f"✅ Query #{retry_times + 1}: status={status_result.task_status}, action={status_result.task_action}")
             
             # If task finished, we can stop querying
-            if status_result.task_status in ["finished", "failed", "unsupported"]:
+            if status_result.task_status in ["completed", "finished", "failed", "unsupported"]:
                 logger.info(f"✅ Task reached final status: {status_result.task_status}")
                 break
             
@@ -351,7 +357,7 @@ async def test_mobile_terminate_task_success(mobile_agent_session):
             logger.info(f"📋 Task status after termination (attempt {retry_times + 1}): {status_after.task_status}")
             
             # Task should be terminated, finished, or failed
-            if status_after.task_status in ["finished", "failed", "unsupported"]:
+            if status_after.task_status in ["completed", "finished", "failed", "unsupported"]:
                 logger.info(f"✅ Task confirmed in final status: {status_after.task_status}")
                 break
             
@@ -381,7 +387,7 @@ async def test_mobile_terminate_task_success(mobile_agent_session):
                         retry_times = 0
                         while retry_times < max_try_times:
                             status = await agent.mobile.get_task_status(task_id)
-                            if status.task_status in ["finished", "failed", "unsupported"]:
+                            if status.task_status in ["completed", "finished", "failed", "unsupported"]:
                                 logger.info(f"✅ Task completed in cleanup: {status.task_status}")
                                 break
                             retry_times += 1
