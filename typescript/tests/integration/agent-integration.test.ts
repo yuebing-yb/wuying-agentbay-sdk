@@ -184,76 +184,73 @@ describe("Agent", () => {
       if (session.agent) {
         const task = "Open WeChat app";
         const maxSteps = 100;
-        const maxTryTimes = 5;
+        const maxStepRetries = 5;
 
         try {
           log(`Executing mobile agent task (non-blocking): ${task}`);
-          const result = await session.agent.mobile.executeTask(task, maxSteps, maxTryTimes);
-          
-          log(`Mobile Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`);
+          const result = await session.agent.mobile.executeTask(
+              task, maxSteps, maxStepRetries);
+
+          log(`Mobile Agent task result: Success=${result.success}, ` +
+              `TaskID=${result.taskId}, Status=${result.taskStatus}`);
           log(`Mobile Agent Task RequestId: ${result.requestId || "undefined"}`);
 
-          // Verify that the response contains requestId
           expect(result.requestId).toBeDefined();
           expect(typeof result.requestId).toBe("string");
 
           if (!result.success) {
-            log(`Note: Mobile Agent task execution failed: ${result.errorMessage}`);
-            // Don't fail the test if task execution is not supported in test environment
+            log(`Note: Mobile Agent task execution failed: ` +
+                `${result.errorMessage}`);
           } else {
-            log(`Mobile Agent task executed successfully, TaskID: ${result.taskId}`);
+            log(`Mobile Agent task executed successfully, ` +
+                `TaskID: ${result.taskId}`);
             expect(result.success).toBe(true);
             expect(result.taskId).toBeTruthy();
             expect(result.taskStatus).toBe("running");
           }
         } catch (error) {
           log(`Note: Mobile Agent task execution failed: ${error}`);
-          // Don't fail the test if agent execution is not supported
         }
       } else {
         log("Note: Agent interface is nil, skipping mobile agent test");
       }
-    }, 120000); // Set a long timeout for the task execution
+    }, 120000);
 
     it("should execute task and wait successfully (blocking)", async () => {
       if (session.agent) {
         const task = "Open WeChat app";
         const maxSteps = 100;
-        const maxTryTimes = 5;
-        const maxPollTimes = 300; // default value
+        const maxStepRetries = 3;
+        const maxTryTimes = 300;
 
         try {
           log(`Executing mobile agent task (blocking): ${task}`);
           const result = await session.agent.mobile.executeTaskAndWait(
-            task,
-            maxSteps,
-            maxTryTimes,
-            maxPollTimes
-          );
-          
-          log(`Mobile Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`);
+              task, maxSteps, maxStepRetries, maxTryTimes);
+
+          log(`Mobile Agent task result: Success=${result.success}, ` +
+              `TaskID=${result.taskId}, Status=${result.taskStatus}`);
           log(`Mobile Agent Task RequestId: ${result.requestId || "undefined"}`);
 
-          // Verify that the response contains requestId
           expect(result.requestId).toBeDefined();
           expect(typeof result.requestId).toBe("string");
 
           if (!result.success) {
-            log(`Note: Mobile Agent task execution failed: ${result.errorMessage}`);
-            // Don't fail the test if task execution is not supported in test environment
+            log(`Note: Mobile Agent task execution failed: ` +
+                `${result.errorMessage}`);
           } else {
-            log(`Mobile Agent task executed successfully with result: ${result.taskResult}`);
+            log(`Mobile Agent task executed successfully with result: ` +
+                `${result.taskResult}`);
             expect(result.success).toBe(true);
             expect(result.taskId).toBeTruthy();
             expect(result.taskStatus).toBe("finished");
           }
         } catch (error) {
           log(`Note: Mobile Agent task execution failed: ${error}`);
-          // Don't fail the test if agent execution is not supported
         }
       } else {
         log("Note: Agent interface is nil, skipping mobile agent test");
       }
-    }, 120000); // Set a long timeout for the task execution
+    }, 120000);
   });
 }); 

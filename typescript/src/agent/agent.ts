@@ -71,11 +71,15 @@ abstract class BaseTaskAgent {
    */
   protected getToolName(action: string): string {
     const toolMap: Record<string, string> = {
-      execute: `${this.toolPrefix}_execute_task`,
-      get_status: `${this.toolPrefix}_get_task_status`,
-      terminate: `${this.toolPrefix}_terminate_task`,
+      execute: 'execute_task',
+      get_status: 'get_task_status',
+      terminate: 'terminate_task',
     };
-    return toolMap[action] || action;
+    const baseName = toolMap[action] || action;
+    if (this.toolPrefix) {
+      return `${this.toolPrefix}_${baseName}`;
+    }
+    return baseName;
   }
 
   /**
@@ -369,18 +373,20 @@ export class BrowserUseAgent extends BaseTaskAgent {
  * An Agent to perform tasks on mobile devices.
  */
 export class MobileUseAgent extends BaseTaskAgent {
-  protected toolPrefix = 'mobile_use';
+  protected toolPrefix = '';
 
   /**
-   * Execute a task in human language without waiting for completion (non-blocking).
-   * This is a fire-and-return interface that immediately provides a task ID.
-   * Call getTaskStatus to check the task status.
+   * Execute a task in human language without waiting for completion
+   * (non-blocking). This is a fire-and-return interface that immediately
+   * provides a task ID. Call getTaskStatus to check the task status.
    *
    * @param task - Task description in human language.
    * @param maxSteps - Maximum number of steps (clicks/swipes/etc.) allowed.
-   *                   Used to prevent infinite loops or excessive resource consumption.
-   *                   Default is 50.
-   * @param maxTryTimes - Maximum retry times for step-level retries. Default is 3.
+   *                   Used to prevent infinite loops or excessive resource
+   *                   consumption. Default is 50.
+   * @param maxStepRetries - Maximum retry times for MCP tool call failures
+   *                         at SDK level. Used to retry when callMcpTool fails
+   *                         (e.g., network errors, timeouts). Default is 3.
    * @returns ExecutionResult containing success status, task ID, task status,
    *     and error message if any.
    *
@@ -400,86 +406,123 @@ export class MobileUseAgent extends BaseTaskAgent {
   async executeTask(
       task: string,
       maxSteps: number = 50,
-      maxTryTimes: number = 3): Promise<ExecutionResult> {
-    try {
-      const args = {
-        task,
-        max_steps: maxSteps,
-        max_try_times: maxTryTimes,
-      };
-      const result = await this.session.callMcpTool(
-          this.getToolName('execute'), args);
+      maxStepRetries: number = 3): Promise<ExecutionResult> {
+    const args = {
+      task,
+      max_steps: maxSteps,
+    };
 
-      if (!result.success) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: result.errorMessage || 'Failed to execute task',
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Task Failed',
-        };
-      }
+    let lastError: string | undefined;
+    let lastRequestId = '';
 
-      // Parse task ID from response
-      let content: any;
+    for (let attempt = 0; attempt < maxStepRetries; attempt++) {
       try {
-        content = JSON.parse(result.data);
-      } catch (err) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: `Failed to parse response: ${err}`,
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Invalid execution response.',
-        };
-      }
+        const result = await this.session.callMcpTool(
+            this.getToolName('execute'), args);
 
-      const taskId = content.task_id;
-      if (!taskId) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: 'Task ID not found in response',
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Invalid task ID.',
-        };
-      }
+        lastRequestId = result.requestId;
 
-      return {
-        requestId: result.requestId,
-        success: true,
-        errorMessage: '',
-        taskId: taskId,
-        taskStatus: 'running',
-        taskResult: '',
-      };
-    } catch (error) {
-      return {
-        requestId: '',
-        success: false,
-        errorMessage: `Failed to execute: ${error}`,
-        taskStatus: 'failed',
-        taskId: '',
-        taskResult: 'Task Failed',
-      };
+        if (result.success) {
+          let content: any;
+          try {
+            content = JSON.parse(result.data);
+          } catch (err) {
+            return {
+              requestId: result.requestId,
+              success: false,
+              errorMessage: `Failed to parse response: ${err}`,
+              taskStatus: 'failed',
+              taskId: '',
+              taskResult: 'Invalid execution response.',
+            };
+          }
+
+          const taskId = content.task_id;
+          if (!taskId) {
+            return {
+              requestId: result.requestId,
+              success: false,
+              errorMessage: 'Task ID not found in response',
+              taskStatus: 'failed',
+              taskId: '',
+              taskResult: 'Invalid task ID.',
+            };
+          }
+
+          return {
+            requestId: result.requestId,
+            success: true,
+            errorMessage: '',
+            taskId: taskId,
+            taskStatus: 'running',
+            taskResult: '',
+          };
+        } else {
+          lastError = result.errorMessage || 'Failed to execute task';
+          if (attempt < maxStepRetries - 1) {
+            logDebug(
+                `Attempt ${attempt + 1}/${maxStepRetries} failed, retrying...`);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            continue;
+          } else {
+            return {
+              requestId: result.requestId,
+              success: false,
+              errorMessage: lastError,
+              taskStatus: 'failed',
+              taskId: '',
+              taskResult: 'Task Failed',
+            };
+          }
+        }
+      } catch (error) {
+        lastError = `Failed to execute: ${error}`;
+        if (attempt < maxStepRetries - 1) {
+          logDebug(
+              `Attempt ${attempt + 1}/${maxStepRetries} raised exception, ` +
+              'retrying...');
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        } else {
+          return {
+            requestId: lastRequestId,
+            success: false,
+            errorMessage: lastError,
+            taskStatus: 'failed',
+            taskId: '',
+            taskResult: 'Task Failed',
+          };
+        }
+      }
     }
+
+    return {
+      requestId: lastRequestId,
+      success: false,
+      errorMessage: `Failed after ${maxStepRetries} attempts: ${
+          lastError || 'Unknown error'}`,
+      taskStatus: 'failed',
+      taskId: '',
+      taskResult: 'Task Failed',
+    };
   }
 
   /**
    * Execute a specific task described in human language synchronously.
    * This is a synchronous interface that blocks until the task is completed or
-   * an error occurs, or timeout happens. The default polling interval is 3 seconds.
+   * an error occurs, or timeout happens. The default polling interval is
+   * 3 seconds.
    *
    * @param task - Task description in human language.
    * @param maxSteps - Maximum number of steps (clicks/swipes/etc.) allowed.
-   *                   Used to prevent infinite loops or excessive resource consumption.
-   *                   Default is 50.
-   * @param maxTryTimes - Maximum retry times for step-level retries. Default is 3.
-   * @param maxPollTimes - Maximum number of polling attempts (each 3 seconds).
-   *                       Default is 300 (about 15 minutes).
+   *                   Used to prevent infinite loops or excessive resource
+   *                   consumption. Default is 50.
+   * @param maxStepRetries - Maximum retry times for MCP tool call failures
+   *                         at SDK level. Used to retry when callMcpTool fails
+   *                         (e.g., network errors, timeouts). Default is 3.
+   * @param maxTryTimes - Maximum number of polling attempts (each 3 seconds).
+   *                      Used to control how long to wait for task completion.
+   *                      Default is 300 (about 15 minutes).
    * @returns ExecutionResult containing success status, task ID, task status,
    *     and error message if any.
    *
@@ -489,7 +532,7 @@ export class MobileUseAgent extends BaseTaskAgent {
    * const result = await agentBay.create({ imageId: 'mobile_latest' });
    * if (result.success) {
    *   const execResult = await result.session.agent.mobile.executeTaskAndWait(
-   *     'Open WeChat app', 100, 5, 200
+   *     'Open WeChat app', 100, 3, 200
    *   );
    *   console.log(`Task result: ${execResult.taskResult}`);
    *   await result.session.delete();
@@ -499,124 +542,160 @@ export class MobileUseAgent extends BaseTaskAgent {
   async executeTaskAndWait(
       task: string,
       maxSteps: number = 50,
-      maxTryTimes: number = 3,
-      maxPollTimes: number = 300): Promise<ExecutionResult> {
-    try {
-      const args = {
-        task,
-        max_steps: maxSteps,
-        max_try_times: maxTryTimes,
-      };
-      const result = await this.session.callMcpTool(
-          this.getToolName('execute'), args);
+      maxStepRetries: number = 3,
+      maxTryTimes: number = 300): Promise<ExecutionResult> {
+    const args = {
+      task,
+      max_steps: maxSteps,
+    };
 
-      if (!result.success) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: result.errorMessage || 'Failed to execute task',
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Task Failed',
-        };
-      }
+    let taskId: string | undefined;
+    let lastError: string | undefined;
+    let lastRequestId = '';
 
-      // Parse task ID from response
-      let content: any;
+    for (let attempt = 0; attempt < maxStepRetries; attempt++) {
       try {
-        content = JSON.parse(result.data);
-      } catch (err) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: `Failed to parse response: ${err}`,
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Invalid execution response.',
-        };
-      }
+        const result = await this.session.callMcpTool(
+            this.getToolName('execute'), args);
 
-      const taskId = content.task_id;
-      if (!taskId) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: 'Task ID not found in response',
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Invalid task ID.',
-        };
-      }
+        lastRequestId = result.requestId;
 
-      // Poll for task completion
-      let triedTime = 0;
-      while (triedTime < maxPollTimes) {
-        const query = await this.getTaskStatus(taskId);
-        if (!query.success) {
+        if (result.success) {
+          let content: any;
+          try {
+            content = JSON.parse(result.data);
+          } catch (err) {
+            return {
+              requestId: result.requestId,
+              success: false,
+              errorMessage: `Failed to parse response: ${err}`,
+              taskStatus: 'failed',
+              taskId: '',
+              taskResult: 'Invalid execution response.',
+            };
+          }
+
+          taskId = content.task_id;
+          if (!taskId) {
+            return {
+              requestId: result.requestId,
+              success: false,
+              errorMessage: 'Task ID not found in response',
+              taskStatus: 'failed',
+              taskId: '',
+              taskResult: 'Invalid task ID.',
+            };
+          }
+          break;
+        } else {
+          lastError = result.errorMessage || 'Failed to execute task';
+          if (attempt < maxStepRetries - 1) {
+            logDebug(
+                `Attempt ${attempt + 1}/${maxStepRetries} failed, retrying...`);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            continue;
+          } else {
+            return {
+              requestId: result.requestId,
+              success: false,
+              errorMessage: lastError,
+              taskStatus: 'failed',
+              taskId: '',
+              taskResult: 'Task Failed',
+            };
+          }
+        }
+      } catch (error) {
+        lastError = `Failed to execute: ${error}`;
+        if (attempt < maxStepRetries - 1) {
+          logDebug(
+              `Attempt ${attempt + 1}/${maxStepRetries} raised exception, ` +
+              'retrying...');
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        } else {
           return {
-            requestId: query.requestId,
+            requestId: lastRequestId,
             success: false,
-            errorMessage: query.errorMessage,
+            errorMessage: lastError,
             taskStatus: 'failed',
-            taskId: taskId,
-            taskResult: '',
+            taskId: '',
+            taskResult: 'Task Failed',
           };
         }
-
-        switch (query.taskStatus) {
-          case 'finished':
-            return {
-              requestId: query.requestId,
-              success: true,
-              errorMessage: '',
-              taskId: taskId,
-              taskStatus: 'finished',
-              taskResult: query.taskProduct,
-            };
-          case 'failed':
-            return {
-              requestId: query.requestId,
-              success: false,
-              errorMessage: query.errorMessage || 'Failed to execute task.',
-              taskId: taskId,
-              taskStatus: 'failed',
-              taskResult: '',
-            };
-          case 'unsupported':
-            return {
-              requestId: query.requestId,
-              success: false,
-              errorMessage: query.errorMessage || 'Unsupported task.',
-              taskId: taskId,
-              taskStatus: 'unsupported',
-              taskResult: '',
-            };
-        }
-
-        logDebug(`⏳ Task ${taskId} running 🚀: ${query.taskAction}.`);
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        triedTime++;
       }
+    }
 
-      logDebug('⚠️ task execution timeout!');
+    if (!taskId) {
       return {
-        requestId: result.requestId,
+        requestId: lastRequestId,
         success: false,
-        errorMessage: 'Task timeout.',
-        taskStatus: 'failed',
-        taskId: taskId,
-        taskResult: 'Task timeout.',
-      };
-    } catch (error) {
-      return {
-        requestId: '',
-        success: false,
-        errorMessage: `Failed to execute: ${error}`,
+        errorMessage: `Failed to get task_id after ${maxStepRetries} ` +
+            `attempts: ${lastError || 'Unknown error'}`,
         taskStatus: 'failed',
         taskId: '',
         taskResult: 'Task Failed',
       };
     }
+
+    let triedTime = 0;
+    while (triedTime < maxTryTimes) {
+      const query = await this.getTaskStatus(taskId);
+      if (!query.success) {
+        return {
+          requestId: query.requestId,
+          success: false,
+          errorMessage: query.errorMessage,
+          taskStatus: 'failed',
+          taskId: taskId,
+          taskResult: '',
+        };
+      }
+
+      switch (query.taskStatus) {
+        case 'finished':
+          return {
+            requestId: query.requestId,
+            success: true,
+            errorMessage: '',
+            taskId: taskId,
+            taskStatus: 'finished',
+            taskResult: query.taskProduct,
+          };
+        case 'failed':
+          return {
+            requestId: query.requestId,
+            success: false,
+            errorMessage: query.errorMessage || 'Failed to execute task.',
+            taskId: taskId,
+            taskStatus: 'failed',
+            taskResult: '',
+          };
+        case 'unsupported':
+          return {
+            requestId: query.requestId,
+            success: false,
+            errorMessage: query.errorMessage || 'Unsupported task.',
+            taskId: taskId,
+            taskStatus: 'unsupported',
+            taskResult: '',
+          };
+      }
+
+      logDebug(`⏳ Task ${taskId} running 🚀: ${query.taskAction}.`);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      triedTime++;
+    }
+
+    logDebug('⚠️ task execution timeout!');
+    return {
+      requestId: lastRequestId,
+      success: false,
+      errorMessage: 'Task timeout.',
+      taskStatus: 'failed',
+      taskId: taskId,
+      taskResult: 'Task timeout.',
+    };
   }
 }
 
