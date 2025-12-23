@@ -303,11 +303,13 @@ class Agent(BaseService):
                 )
                 if result.success:
                     content = json.loads(result.data)
+                    # Support both taskId (camelCase) and task_id (snake_case)
+                    content_task_id = content.get("taskId") or content.get("task_id", task_id)
                     return QueryResult(
                         success=True,
                         request_id=result.request_id,
                         error_message="",
-                        task_id=content.get("task_id", task_id),
+                        task_id=content_task_id,
                         task_status=content.get("status", "completed"),
                         task_action=content.get("action", ""),
                         task_product=content.get("product", ""),

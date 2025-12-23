@@ -14,6 +14,7 @@ export interface ExecutionResult extends ApiResponse {
  * Result of query operations.
  */
 export interface QueryResult extends ApiResponse {
+  taskId: string;
   taskStatus: string;
   taskAction: string;
   taskProduct: string;
@@ -223,6 +224,7 @@ abstract class BaseTaskAgent {
           requestId: result.requestId,
           success: false,
           errorMessage: result.errorMessage,
+          taskId: taskId,
           taskAction: '',
           taskProduct: '',
           taskStatus: 'failed',
@@ -231,19 +233,23 @@ abstract class BaseTaskAgent {
       let queryResult: any;
       try {
         queryResult = JSON.parse(result.data);
+        // Support both taskId (camelCase) and task_id (snake_case)
+        const contentTaskId = queryResult.taskId || queryResult.task_id || taskId;
         return {
           requestId: result.requestId,
           success: true,
           errorMessage: '',
+          taskId: contentTaskId,
           taskAction: queryResult.action || '',
           taskProduct: queryResult.product || '',
-          taskStatus: queryResult.status || 'failed',
+          taskStatus: queryResult.status || 'completed',
         };
       } catch (error) {
         return {
           requestId: result.requestId,
           success: false,
           errorMessage: `Failed to get task status: ${error}`,
+          taskId: taskId,
           taskAction: '',
           taskProduct: '',
           taskStatus: 'failed',
@@ -254,6 +260,7 @@ abstract class BaseTaskAgent {
         requestId: '',
         success: false,
         errorMessage: `Failed to get task status: ${error}`,
+        taskId: taskId,
         taskAction: '',
         taskProduct: '',
         taskStatus: 'failed',
