@@ -66,11 +66,14 @@ class Agent(BaseService):
         def _get_tool_name(self, action: str) -> str:
             """Get the full MCP tool name based on prefix and action."""
             tool_map = {
-                "execute": f"{self.tool_prefix}_execute_task",
-                "get_status": f"{self.tool_prefix}_get_task_status",
-                "terminate": f"{self.tool_prefix}_terminate_task",
+                "execute": "execute_task",
+                "get_status": "get_task_status",
+                "terminate": "terminate_task",
             }
-            return tool_map.get(action, action)
+            base_name = tool_map.get(action, action)
+            if self.tool_prefix:
+                return f"{self.tool_prefix}_{base_name}"
+            return base_name
 
         def _handle_error(self, e):
             """
@@ -478,26 +481,31 @@ class Agent(BaseService):
         """
 
         def __init__(self, session: "Session"):
-            super().__init__(session, tool_prefix="mobile_use")
+            super().__init__(session, tool_prefix="")
 
         def execute_task(
-            self, task: str, max_steps: int = 50, max_try_times: int = 3
+            self,
+            task: str,
+            max_steps: int = 50,
+            max_step_retries: int = 3,
         ) -> ExecutionResult:
             """
-            Execute a task in human language without waiting for completion (non-blocking).
+            Execute a task in human language without waiting for completion
+            (non-blocking).
 
             This is a fire-and-return interface that immediately provides a task ID.
             Call get_task_status to check the task status. You can control the timeout
             of the task execution in your own code by setting the frequency of calling
-            get_task_status and the max_try_times.
+            get_task_status.
 
             Args:
                 task: Task description in human language.
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
                     Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
-                max_try_times: Maximum retry times for step-level retries.
-                    Default is 3.
+                max_step_retries: Maximum retry times for MCP tool call failures
+                    at SDK level. Used to retry when call_mcp_tool fails
+                    (e.g., network errors, timeouts). Default is 3.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -508,7 +516,7 @@ class Agent(BaseService):
                 session_result = agent_bay.create()
                 session = session_result.session
                 result = session.agent.mobile.execute_task(
-                    "Open WeChat app", max_steps=100, max_try_times=5
+                    "Open WeChat app", max_steps=100, max_step_retries=5
                 )
                 print(f"Task ID: {result.task_id}, Status: {result.task_status}")
                 status = session.agent.mobile.get_task_status(result.task_id)
@@ -516,71 +524,129 @@ class Agent(BaseService):
                 session.delete()
                 ```
             """
-            try:
-                args = {
-                    "task": task,
-                    "max_steps": max_steps,
-                    "max_try_times": max_try_times,
-                }
-                result = self.session.call_mcp_tool(
-                    self._get_tool_name("execute"), args
-                )
-                if result.success:
-                    content = json.loads(result.data)
-                    task_id = content.get("task_id", "")
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=True,
-                        error_message="",
-                        task_id=task_id,
-                        task_status="running",
+            args = {
+                "task": task,
+                "max_steps": max_steps,
+            }
+
+            last_error = None
+            last_request_id = ""
+
+            for attempt in range(max_step_retries):
+                try:
+                    result = self.session.call_mcp_tool(
+                        self._get_tool_name("execute"), args
                     )
-                else:
-                    _logger.error("task execute failed")
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=False,
-                        error_message=result.error_message or "Failed to execute task",
-                        task_status="failed",
-                        task_id="",
-                    )
-            except AgentError as e:
-                handled_error = self._handle_error(e)
-                return ExecutionResult(
-                    request_id="", success=False, error_message=str(handled_error)
-                )
-            except Exception as e:
-                handled_error = self._handle_error(AgentBayError(str(e)))
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"Failed to execute: {handled_error}",
-                    task_status="failed",
-                    task_id="",
-                )
+                    last_request_id = result.request_id
+
+                    if result.success:
+                        content = json.loads(result.data)
+                        task_id = content.get("task_id", "")
+                        return ExecutionResult(
+                            request_id=result.request_id,
+                            success=True,
+                            error_message="",
+                            task_id=task_id,
+                            task_status="running",
+                        )
+                    else:
+                        last_error = (
+                            result.error_message or "Failed to execute task"
+                        )
+                        if attempt < max_step_retries - 1:
+                            _logger.warning(
+                                f"Attempt {attempt + 1}/{max_step_retries} "
+                                "failed, retrying..."
+                            )
+                            time.sleep(1)
+                            continue
+                        else:
+                            _logger.error(
+                                "task execute failed after all retries"
+                            )
+                            return ExecutionResult(
+                                request_id=result.request_id,
+                                success=False,
+                                error_message=last_error,
+                                task_status="failed",
+                                task_id="",
+                            )
+                except AgentError as e:
+                    handled_error = self._handle_error(e)
+                    last_error = str(handled_error)
+                    if attempt < max_step_retries - 1:
+                        _logger.warning(
+                            f"Attempt {attempt + 1}/{max_step_retries} "
+                            "raised exception, retrying..."
+                        )
+                        time.sleep(1)
+                        continue
+                    else:
+                        return ExecutionResult(
+                            request_id=last_request_id,
+                            success=False,
+                            error_message=str(handled_error),
+                            task_status="failed",
+                            task_id="",
+                        )
+                except Exception as e:
+                    handled_error = self._handle_error(AgentBayError(str(e)))
+                    last_error = f"Failed to execute: {handled_error}"
+                    if attempt < max_step_retries - 1:
+                        _logger.warning(
+                            f"Attempt {attempt + 1}/{max_step_retries} "
+                            "raised exception, retrying..."
+                        )
+                        time.sleep(1)
+                        continue
+                    else:
+                        return ExecutionResult(
+                            request_id=last_request_id,
+                            success=False,
+                            error_message=(
+                                f"Failed after {max_step_retries} attempts: "
+                                f"{handled_error}"
+                            ),
+                            task_status="failed",
+                            task_id="",
+                        )
+
+            return ExecutionResult(
+                request_id=last_request_id,
+                success=False,
+                error_message=(
+                    f"Failed after {max_step_retries} attempts: "
+                    f"{last_error or 'Unknown error'}"
+                ),
+                task_status="failed",
+                task_id="",
+            )
 
         def execute_task_and_wait(
             self,
             task: str,
             max_steps: int = 50,
-            max_try_times: int = 3,
-            max_poll_times: int = 300,
+            max_step_retries: int = 3,
+            max_try_times: int = 300,
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
 
-            This is a synchronous interface that blocks until the task is completed or
-            an error occurs, or timeout happens. The default polling interval is 3 seconds,
-            so set a proper max_poll_times according to your task complexity.
+            This is a synchronous interface that blocks until the task is
+            completed or an error occurs, or timeout happens. The default
+            polling interval is 3 seconds, so set a proper max_try_times
+            according to your task complexity.
 
             Args:
                 task: Task description in human language.
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
                     Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
-                max_try_times: Maximum retry times for step-level retries.
-                    Default is 3.
-                max_poll_times: Maximum number of polling attempts (each 3 seconds).
+                max_step_retries: Maximum retry times for MCP tool call
+                    failures at SDK level. Used to retry when call_mcp_tool
+                    fails (e.g., network errors, timeouts). Default is 3.
+                max_try_times: Maximum number of polling attempts (each 3 seconds).
+                    Used to control how long to wait for task completion.
                     Default is 300 (about 15 minutes).
 
             Returns:
@@ -594,96 +660,151 @@ class Agent(BaseService):
                 result = session.agent.mobile.execute_task_and_wait(
                     "Open WeChat app and send a message",
                     max_steps=100,
-                    max_try_times=5,
-                    max_poll_times=200
+                    max_step_retries=3,
+                    max_try_times=200
                 )
                 print(f"Task result: {result.task_result}")
                 session.delete()
                 ```
             """
-            try:
-                args = {
-                    "task": task,
-                    "max_steps": max_steps,
-                    "max_try_times": max_try_times,
-                }
-                result = self.session.call_mcp_tool(
-                    self._get_tool_name("execute"), args
-                )
-                if result.success:
-                    content = json.loads(result.data)
-                    task_id = content.get("task_id", "")
-                    tried_time: int = 0
-                    while tried_time < max_poll_times:
-                        query = self.get_task_status(task_id)
-                        if query.task_status == "finished":
-                            return ExecutionResult(
-                                request_id=result.request_id,
-                                success=True,
-                                error_message="",
-                                task_id=task_id,
-                                task_status=query.task_status,
-                                task_result=query.task_product,
-                            )
-                        elif query.task_status == "failed":
-                            return ExecutionResult(
-                                request_id=result.request_id,
-                                success=False,
-                                error_message="Failed to execute task.",
-                                task_id=task_id,
-                                task_status=query.task_status,
-                            )
-                        elif query.task_status == "unsupported":
-                            return ExecutionResult(
-                                request_id=result.request_id,
-                                success=False,
-                                error_message="Unsupported task.",
-                                task_id=task_id,
-                                task_status=query.task_status,
-                            )
-                        _logger.info(
-                            f"⏳ Task {task_id} running 🚀: {query.task_action}."
+            args = {
+                "task": task,
+                "max_steps": max_steps,
+            }
+
+            task_id = None
+            last_error = None
+            last_request_id = ""
+
+            for attempt in range(max_step_retries):
+                try:
+                    result = self.session.call_mcp_tool(
+                        self._get_tool_name("execute"), args
+                    )
+                    last_request_id = result.request_id
+
+                    if result.success:
+                        content = json.loads(result.data)
+                        task_id = content.get("task_id", "")
+                        break
+                    else:
+                        last_error = (
+                            result.error_message or "Failed to execute task"
                         )
-                        # keep waiting unit timeout if the status is running
-                        # task_status {running, finished, failed, unsupported}
-                        time.sleep(3)
-                        tried_time += 1
-                    _logger.warning("⚠️ task execution timeout!")
+                        if attempt < max_step_retries - 1:
+                            _logger.warning(
+                                f"Attempt {attempt + 1}/{max_step_retries} "
+                                "failed, retrying..."
+                            )
+                            time.sleep(1)
+                            continue
+                        else:
+                            _logger.error(
+                                "Task execution failed after all retries"
+                            )
+                            return ExecutionResult(
+                                request_id=result.request_id,
+                                success=False,
+                                error_message=last_error,
+                                task_status="failed",
+                                task_id="",
+                                task_result="Task Failed",
+                            )
+                except AgentError as e:
+                    handled_error = self._handle_error(e)
+                    last_error = str(handled_error)
+                    if attempt < max_step_retries - 1:
+                        _logger.warning(
+                            f"Attempt {attempt + 1}/{max_step_retries} "
+                            "raised exception, retrying..."
+                        )
+                        time.sleep(1)
+                        continue
+                    else:
+                        return ExecutionResult(
+                            request_id=last_request_id,
+                            success=False,
+                            error_message=str(handled_error),
+                            task_status="failed",
+                            task_id="",
+                            task_result="Task Failed",
+                        )
+                except Exception as e:
+                    handled_error = self._handle_error(AgentBayError(str(e)))
+                    last_error = f"Failed to execute: {handled_error}"
+                    if attempt < max_step_retries - 1:
+                        _logger.warning(
+                            f"Attempt {attempt + 1}/{max_step_retries} "
+                            "raised exception, retrying..."
+                        )
+                        time.sleep(1)
+                        continue
+                    else:
+                        return ExecutionResult(
+                            request_id=last_request_id,
+                            success=False,
+                            error_message=(
+                                f"Failed after {max_step_retries} attempts: "
+                                f"{handled_error}"
+                            ),
+                            task_status="failed",
+                            task_id="",
+                            task_result="Task Failed",
+                        )
+
+            if not task_id:
+                return ExecutionResult(
+                    request_id=last_request_id,
+                    success=False,
+                    error_message=(
+                        f"Failed to get task_id after {max_step_retries} "
+                        f"attempts: {last_error or 'Unknown error'}"
+                    ),
+                    task_status="failed",
+                    task_id="",
+                    task_result="Task Failed",
+                )
+
+            tried_time: int = 0
+            while tried_time < max_try_times:
+                query = self.get_task_status(task_id)
+                if query.task_status == "finished":
                     return ExecutionResult(
-                        request_id=result.request_id,
-                        success=False,
-                        error_message="Task timeout.",
+                        request_id=last_request_id,
+                        success=True,
+                        error_message="",
                         task_id=task_id,
-                        task_status="failed",
-                        task_result="Task timeout.",
+                        task_status=query.task_status,
+                        task_result=query.task_product,
                     )
-                else:
-                    _logger.error("❌ Task execution failed")
+                elif query.task_status == "failed":
                     return ExecutionResult(
-                        request_id=result.request_id,
+                        request_id=last_request_id,
                         success=False,
-                        error_message=result.error_message or "Failed to execute task",
-                        task_status="failed",
-                        task_id="",
-                        task_result="Task Failed",
+                        error_message="Failed to execute task.",
+                        task_id=task_id,
+                        task_status=query.task_status,
                     )
-            except AgentError as e:
-                handled_error = self._handle_error(e)
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=str(handled_error),
-                    task_status="failed",
-                    task_id="",
-                    task_result="Task Failed",
+                elif query.task_status == "unsupported":
+                    return ExecutionResult(
+                        request_id=last_request_id,
+                        success=False,
+                        error_message="Unsupported task.",
+                        task_id=task_id,
+                        task_status=query.task_status,
+                    )
+                _logger.info(
+                    f"⏳ Task {task_id} running 🚀: {query.task_action}."
                 )
-            except Exception as e:
-                handled_error = self._handle_error(AgentBayError(str(e)))
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"Failed to execute: {handled_error}",
-                    task_status="failed",
-                    task_id="",
-                    task_result="Task Failed",
-                )
+                time.sleep(3)
+                tried_time += 1
+
+            _logger.warning("⚠️ task execution timeout!")
+            return ExecutionResult(
+                request_id=last_request_id,
+                success=False,
+                error_message="Task timeout.",
+                task_id=task_id,
+                task_status="failed",
+                task_result="Task timeout.",
+            )
