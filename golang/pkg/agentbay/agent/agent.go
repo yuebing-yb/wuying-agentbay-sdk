@@ -18,15 +18,24 @@ type ExecutionResult struct {
 	TaskResult   string `json:"task_result"`
 }
 
+// StreamItem represents a single stream fragment
+type StreamItem struct {
+	Content     string `json:"content,omitempty"`
+	Reasoning   string `json:"reasoning,omitempty"`
+	TimestampMs *int64 `json:"timestamp_ms,omitempty"`
+}
+
 // QueryResult represents the result of query operations
 type QueryResult struct {
 	models.ApiResponse
-	Success      bool   `json:"success"`
-	ErrorMessage string `json:"error_message"`
-	TaskID       string `json:"task_id"`
-	TaskStatus   string `json:"task_status"`
-	TaskAction   string `json:"task_action"`
-	TaskProduct  string `json:"task_product"`
+	Success      bool         `json:"success"`
+	ErrorMessage string       `json:"error_message"`
+	TaskID       string       `json:"task_id"`
+	TaskStatus   string       `json:"task_status"`
+	TaskAction   string       `json:"task_action"`
+	TaskProduct  string       `json:"task_product"`
+	Stream       []StreamItem `json:"stream,omitempty"`
+	Error        string       `json:"error,omitempty"`
 }
 
 // InitializationResult represents the result of agent initialization
@@ -201,6 +210,7 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 
 	// Poll for task completion
 	triedTime := 0
+	processedTimestamps := make(map[int64]bool) // Track processed stream fragments by timestamp_ms
 	for triedTime < maxTryTimes {
 		query := b.getTaskStatus(taskID)
 		if !query.Success {
@@ -211,6 +221,32 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 				TaskStatus:   "failed",
 				TaskID:       taskID,
 			}
+		}
+
+		// Process new stream fragments for real-time output
+		if len(query.Stream) > 0 {
+			for _, streamItem := range query.Stream {
+				if streamItem.TimestampMs != nil {
+					timestamp := *streamItem.TimestampMs
+					// Use timestamp_ms to identify new fragments (handles backend returning snapshots)
+					if !processedTimestamps[timestamp] {
+						processedTimestamps[timestamp] = true // Mark as processed immediately
+
+						// Output immediately for true streaming effect
+						if streamItem.Content != "" {
+							// Use fmt.Print for streaming output without automatic newlines
+							fmt.Print(streamItem.Content)
+						}
+						// Note: reasoning can be logged at debug level if needed
+					}
+				}
+			}
+		}
+
+		// Check for error field
+		if query.Error != "" {
+			// Log error if needed
+			// logWarning(fmt.Sprintf("⚠️ Task error: %s", query.Error))
 		}
 
 		taskStatus := query.TaskStatus
@@ -338,6 +374,35 @@ func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
 		product = ""
 	}
 
+	// Extract stream and error fields
+	var stream []StreamItem
+	if streamValue, ok := queryResult["stream"]; ok {
+		if streamArray, ok := streamValue.([]interface{}); ok {
+			stream = make([]StreamItem, 0, len(streamArray))
+			for _, item := range streamArray {
+				if itemMap, ok := item.(map[string]interface{}); ok {
+					streamItem := StreamItem{}
+					if content, ok := itemMap["content"].(string); ok {
+						streamItem.Content = content
+					}
+					if reasoning, ok := itemMap["reasoning"].(string); ok {
+						streamItem.Reasoning = reasoning
+					}
+					if timestampMs, ok := itemMap["timestamp_ms"].(float64); ok {
+						timestampInt := int64(timestampMs)
+						streamItem.TimestampMs = &timestampInt
+					}
+					stream = append(stream, streamItem)
+				}
+			}
+		}
+	}
+
+	var errorMsg string
+	if errorValue, ok := queryResult["error"].(string); ok {
+		errorMsg = errorValue
+	}
+
 	return &QueryResult{
 		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
 		Success:     true,
@@ -345,6 +410,8 @@ func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
 		TaskStatus:  status,
 		TaskAction:  action,
 		TaskProduct: product,
+		Stream:      stream,
+		Error:       errorMsg,
 	}
 }
 
@@ -869,6 +936,7 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 	}
 
 	triedTime := 0
+	processedTimestamps := make(map[int64]bool) // Track processed stream fragments by timestamp_ms
 	for triedTime < maxTryTimes {
 		query := a.baseTaskAgent.getTaskStatus(taskID)
 		if !query.Success {
@@ -879,6 +947,32 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 				TaskStatus:   "failed",
 				TaskID:       taskID,
 			}
+		}
+
+		// Process new stream fragments for real-time output
+		if len(query.Stream) > 0 {
+			for _, streamItem := range query.Stream {
+				if streamItem.TimestampMs != nil {
+					timestamp := *streamItem.TimestampMs
+					// Use timestamp_ms to identify new fragments (handles backend returning snapshots)
+					if !processedTimestamps[timestamp] {
+						processedTimestamps[timestamp] = true // Mark as processed immediately
+
+						// Output immediately for true streaming effect
+						if streamItem.Content != "" {
+							// Use fmt.Print for streaming output without automatic newlines
+							fmt.Print(streamItem.Content)
+						}
+						// Note: reasoning can be logged at debug level if needed
+					}
+				}
+			}
+		}
+
+		// Check for error field
+		if query.Error != "" {
+			// Log error if needed
+			// logWarning(fmt.Sprintf("⚠️ Task error: %s", query.Error))
 		}
 
 		taskStatus := query.TaskStatus

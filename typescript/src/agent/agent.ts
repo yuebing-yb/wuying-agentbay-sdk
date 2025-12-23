@@ -18,6 +18,8 @@ export interface QueryResult extends ApiResponse {
   taskStatus: string;
   taskAction: string;
   taskProduct: string;
+  stream?: Array<{content?: string; reasoning?: string; timestamp_ms?: number}>;
+  error?: string;
 }
 
 /**
@@ -238,6 +240,9 @@ abstract class BaseTaskAgent {
         // Mobile Agent returns "result", other agents return "product"
         // Support both for compatibility, prefer "result"
         const taskProduct = queryResult.result || queryResult.product || '';
+        // Extract stream and error fields
+        const stream = Array.isArray(queryResult.stream) ? queryResult.stream : undefined;
+        const error = queryResult.error || undefined;
         return {
           requestId: result.requestId,
           success: true,
@@ -246,6 +251,8 @@ abstract class BaseTaskAgent {
           taskAction: queryResult.action || '',
           taskProduct: taskProduct,
           taskStatus: queryResult.status || 'completed',
+          stream: stream,
+          error: error,
         };
       } catch (error) {
         return {
@@ -658,6 +665,7 @@ export class MobileUseAgent extends BaseTaskAgent {
     }
 
     let triedTime = 0;
+    const processedTimestamps = new Set<number>(); // Track processed stream fragments by timestamp_ms
     while (triedTime < maxTryTimes) {
       const query = await this.getTaskStatus(taskId);
       if (!query.success) {
@@ -669,6 +677,35 @@ export class MobileUseAgent extends BaseTaskAgent {
           taskId: taskId,
           taskResult: '',
         };
+      }
+
+      // Process new stream fragments for real-time output
+      if (query.stream) {
+        for (const streamItem of query.stream) {
+          const timestamp = streamItem.timestamp_ms;
+          // Use timestamp_ms to identify new fragments (handles backend returning snapshots)
+          if (timestamp !== undefined && !processedTimestamps.has(timestamp)) {
+            processedTimestamps.add(timestamp); // Mark as processed immediately
+            
+            // Output immediately for true streaming effect
+            const content = streamItem.content || '';
+            const reasoning = streamItem.reasoning || '';
+            if (content) {
+              // Use process.stdout.write for streaming output without automatic newlines
+              process.stdout.write(content);
+            }
+            if (reasoning) {
+              // Log reasoning at debug level if needed
+              // logDebug(`💭 ${reasoning}`);
+            }
+          }
+        }
+      }
+
+      // Check for error field
+      if (query.error) {
+        // Log error if needed
+        // logWarning(`⚠️ Task error: ${query.error}`);
       }
 
       switch (query.taskStatus) {
