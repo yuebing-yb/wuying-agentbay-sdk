@@ -906,13 +906,31 @@ func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadR
 
 	chunkSize := ChunkSize
 
-	// First get the file size
-	fileInfoResult, err := fs.GetFileInfo(path)
+	// First get the file size - call MCP directly to get RequestID even on failure
+	args := map[string]string{
+		"path": path,
+	}
+	mcpResult, err := fs.Session.CallMcpTool("get_file_info", args)
 	if err != nil {
+		// Check if it's a "file not found" error
+		var requestID string
+		if strings.Contains(err.Error(), "No such file or directory") {
+			if format == "binary" {
+				return nil, &BinaryFileReadResult{
+					ApiResponse: models.ApiResponse{
+						RequestID: requestID,
+					},
+					Success:      false,
+					Content:      []byte{},
+					ErrorMessage: fmt.Sprintf("file not found: %s", path),
+				}, fmt.Errorf("file not found: %s", path)
+			}
+			return nil, nil, fmt.Errorf("file not found: %s", path)
+		}
 		if format == "binary" {
 			return nil, &BinaryFileReadResult{
 				ApiResponse: models.ApiResponse{
-					RequestID: "",
+					RequestID: requestID,
 				},
 				Success:      false,
 				Content:      []byte{},
@@ -922,14 +940,47 @@ func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadR
 		return nil, nil, fmt.Errorf("failed to get file info: %w", err)
 	}
 
+	if !mcpResult.Success {
+		requestID := mcpResult.RequestID
+		errMsg := fmt.Sprintf("get file info failed: %s", mcpResult.ErrorMessage)
+		if format == "binary" {
+			return nil, &BinaryFileReadResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: requestID,
+				},
+				Success:      false,
+				Content:      []byte{},
+				ErrorMessage: errMsg,
+			}, fmt.Errorf("get file info failed: %s", mcpResult.ErrorMessage)
+		}
+		return nil, nil, fmt.Errorf("get file info failed: %s", mcpResult.ErrorMessage)
+	}
+
+	fileInfo, err := parseFileInfo(mcpResult.Data)
+	if err != nil {
+		requestID := mcpResult.RequestID
+		if format == "binary" {
+			return nil, &BinaryFileReadResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: requestID,
+				},
+				Success:      false,
+				Content:      []byte{},
+				ErrorMessage: err.Error(),
+			}, fmt.Errorf("error parsing file info: %w", err)
+		}
+		return nil, nil, fmt.Errorf("error parsing file info: %w", err)
+	}
+
 	// Get size from the fileInfo struct
-	size := fileInfoResult.FileInfo.Size
+	size := fileInfo.Size
+	requestID := mcpResult.RequestID
 
 	if size == 0 {
 		if format == "binary" {
 			return nil, &BinaryFileReadResult{
 				ApiResponse: models.ApiResponse{
-					RequestID: fileInfoResult.RequestID,
+					RequestID: requestID,
 				},
 				Success: true,
 				Content: []byte{},
@@ -938,7 +989,7 @@ func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadR
 		}
 		return &FileReadResult{
 			ApiResponse: models.ApiResponse{
-				RequestID: fileInfoResult.RequestID,
+				RequestID: requestID,
 			},
 			Content: "",
 		}, nil, nil

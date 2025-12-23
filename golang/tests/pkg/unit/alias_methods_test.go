@@ -82,6 +82,7 @@ func TestCode_RunAndExecuteAliases(t *testing.T) {
 
 func TestFileSystem_Aliases(t *testing.T) {
 	callCount := 0
+	fileDeleted := false
 	s := &aliasTestSession{}
 	s.callMcpToolFunc = func(toolName string, args interface{}, _ ...bool) (*models.McpToolResult, error) {
 		callCount++
@@ -89,10 +90,16 @@ func TestFileSystem_Aliases(t *testing.T) {
 		case "list_directory":
 			return &models.McpToolResult{Success: true, Data: "[FILE] a.txt", RequestID: "request-123"}, nil
 		case "delete_file":
+			fileDeleted = true
 			return &models.McpToolResult{Success: true, Data: "True", RequestID: "request-123"}, nil
 		case "get_file_info":
+			// After file is deleted, get_file_info should fail
+			if fileDeleted {
+				return &models.McpToolResult{Success: false, ErrorMessage: "File not found", RequestID: "request-123"}, nil
+			}
 			return &models.McpToolResult{Success: true, Data: "size: 0\nisDirectory: false", RequestID: "request-123"}, nil
 		case "write_file":
+			fileDeleted = false // File is recreated
 			return &models.McpToolResult{Success: true, Data: "True", RequestID: "request-123"}, nil
 		default:
 			return &models.McpToolResult{Success: false, ErrorMessage: "unexpected tool", RequestID: "request-123"}, nil

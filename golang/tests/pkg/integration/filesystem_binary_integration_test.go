@@ -2,7 +2,6 @@ package integration
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
@@ -75,7 +74,7 @@ func TestFileSystem_ReadBinaryFileWithPattern(t *testing.T) {
 
 	// Read binary file using ReadFileWithFormat with binary format
 	fmt.Println("\n2. Reading binary file...")
-	binaryResult, err := session.FileSystem.ReadFileWithFormat("/tmp/binary_pattern_test", "binary")
+	_, binaryResult, err := session.FileSystem.ReadFileWithFormat("/tmp/binary_pattern_test", "binary")
 	if err != nil {
 		t.Fatalf("Failed to read binary file: %v", err)
 	}
@@ -305,7 +304,7 @@ func TestFileSystem_ReadTextFileStillWorks(t *testing.T) {
 		t.Fatalf("Failed to write text file: %v", err)
 	}
 	if !writeResult.Success {
-		t.Fatalf("Failed to write text file: %s", writeResult.ErrorMessage)
+		t.Fatalf("Failed to write text file")
 	}
 	fmt.Println("✅ Text file written")
 

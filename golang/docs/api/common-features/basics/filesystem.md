@@ -4,6 +4,21 @@
 
 - [File Operations Guide](../../../../../docs/guides/common-features/basics/file-operations.md) - Complete guide to file system operations
 
+## Type BinaryFileReadResult
+
+```go
+type BinaryFileReadResult struct {
+	models.ApiResponse		// Embedded ApiResponse
+	Success			bool	// Whether the operation was successful
+	Content			[]byte	// Binary file content
+	ContentType		string	// MIME type (optional)
+	Size			int64	// File size in bytes (optional)
+	ErrorMessage		string	// Error message if the operation failed
+}
+```
+
+BinaryFileReadResult wraps binary file read operation result and RequestID
+
 ## Type ContextFileUrlResult
 
 ```go
@@ -279,21 +294,6 @@ type FileReadResult struct {
 ```
 
 FileReadResult wraps file read operation result and RequestID
-
-## Type BinaryFileReadResult
-
-```go
-type BinaryFileReadResult struct {
-	models.ApiResponse	// Embedded ApiResponse
-	Success			bool
-	Content			[]byte	// Binary file content
-	ContentType		string	// MIME type (optional)
-	Size			int64	// File size in bytes (optional)
-	ErrorMessage		string	// Error message if the operation failed
-}
-```
-
-BinaryFileReadResult wraps binary file read operation result and RequestID
 
 ## Type FileSystem
 
@@ -628,7 +628,8 @@ Read is an alias of ReadFile.
 func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error)
 ```
 
-ReadFile reads the contents of a file in text format (default). Automatically handles large files by chunking.
+ReadFile reads the contents of a file. Automatically handles large files by chunking. ReadFile reads
+the entire content of a file in text format (default).
 
 Parameters:
   - path: Absolute path to the file to read
@@ -649,45 +650,6 @@ client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Create(nil)
 defer result.Session.Delete()
 fileResult, _ := result.Session.FileSystem.ReadFile("/etc/hostname")
-```
-
-### ReadFileWithFormat
-
-```go
-func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadResult, *BinaryFileReadResult, error)
-```
-
-ReadFileWithFormat reads the contents of a file with specified format.
-
-Parameters:
-  - path: Absolute path to the file to read
-  - format: Format to read the file in. "text" (default) or "binary"
-
-Returns:
-  - *FileReadResult: For text format, contains file content as string
-  - *BinaryFileReadResult: For binary format, contains file content as []byte
-  - error: Error if the operation fails
-
-Behavior:
-
-- Automatically handles large files by reading in 50KB chunks
-- Returns empty string/bytes for empty files
-- Fails if path is a directory or doesn't exist
-- Binary files are returned as []byte (backend uses base64 encoding internally)
-
-**Example:**
-
-```go
-client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-result, _ := client.Create(nil)
-defer result.Session.Delete()
-
-// Read text file
-textResult, _, _ := result.Session.FileSystem.ReadFileWithFormat("/tmp/test.txt", "text")
-
-// Read binary file
-_, binaryResult, _ := result.Session.FileSystem.ReadFileWithFormat("/tmp/image.png", "binary")
-fmt.Printf("File size: %d bytes\n", len(binaryResult.Content))
 ```
 
 ### ReadFileBinary
@@ -712,7 +674,6 @@ client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Create(nil)
 defer result.Session.Delete()
 binaryResult, _ := result.Session.FileSystem.ReadFileBinary("/tmp/image.png")
-fmt.Printf("File size: %d bytes\n", len(binaryResult.Content))
 ```
 
 ### ReadMultipleFiles

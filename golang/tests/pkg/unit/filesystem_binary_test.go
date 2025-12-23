@@ -221,7 +221,7 @@ func TestFileSystem_ReadFileBinaryFormatChunkError(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.False(t, result.Success)
 	assert.Equal(t, 0, len(result.Content))
-	assert.Contains(t, err.Error(), "Failed to decode base64")
+	assert.Contains(t, err.Error(), "failed to decode base64")
 }
 
 func TestFileSystem_ReadFileBinaryFormatEmptyFile(t *testing.T) {
@@ -400,7 +400,7 @@ func TestFileSystem_ReadFileChunkBinaryFormatBase64DecodeError(t *testing.T) {
 	// Test ReadFileBinary which will trigger base64 decode error
 	_, err := fs.ReadFileBinary("/path/to/image.jpeg")
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "Failed to decode base64")
+	assert.Contains(t, err.Error(), "failed to decode base64")
 }
 
 func TestFileSystem_ReadFileChunkTextFormatNoFormatParam(t *testing.T) {
