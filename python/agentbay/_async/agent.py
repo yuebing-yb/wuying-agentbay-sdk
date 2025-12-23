@@ -302,6 +302,14 @@ class AsyncAgent(AsyncBaseService):
                     content = json.loads(result.data)
                     # Support both taskId (camelCase) and task_id (snake_case)
                     content_task_id = content.get("taskId") or content.get("task_id", task_id)
+                    # Mobile Agent returns "result", other agents return "product"
+                    # Support both for compatibility, prefer "result"
+                    task_product = content.get("result") or content.get("product", "")
+                    # Extract stream and error fields
+                    stream = content.get("stream", [])
+                    if not isinstance(stream, list):
+                        stream = []
+                    error = content.get("error", "")
                     return QueryResult(
                         success=True,
                         request_id=result.request_id,
@@ -309,7 +317,9 @@ class AsyncAgent(AsyncBaseService):
                         task_id=content_task_id,
                         task_status=content.get("status", "completed"),
                         task_action=content.get("action", ""),
-                        task_product=content.get("product", ""),
+                        task_product=task_product,
+                        stream=stream,
+                        error=error,
                     )
                 else:
                     return QueryResult(
@@ -774,8 +784,27 @@ class AsyncAgent(AsyncBaseService):
                 )
 
             tried_time: int = 0
+            last_stream_index = -1  # Track processed stream fragments
             while tried_time < max_try_times:
                 query = await self.get_task_status(task_id)
+                
+                # Process new stream fragments for real-time output
+                if query.stream and len(query.stream) > last_stream_index + 1:
+                    new_streams = query.stream[last_stream_index + 1:]
+                    for stream_item in new_streams:
+                        if isinstance(stream_item, dict):
+                            content = stream_item.get("content", "")
+                            reasoning = stream_item.get("reasoning", "")
+                            if content:
+                                _logger.info(f"📝 {content}")
+                            if reasoning:
+                                _logger.debug(f"💭 {reasoning}")
+                    last_stream_index = len(query.stream) - 1
+                
+                # Check for error field
+                if query.error:
+                    _logger.warning(f"⚠️ Task error: {query.error}")
+                
                 if query.task_status == "completed":
                     return ExecutionResult(
                         request_id=last_request_id,
@@ -786,26 +815,29 @@ class AsyncAgent(AsyncBaseService):
                         task_result=query.task_product,
                     )
                 elif query.task_status == "failed":
+                    error_msg = query.error or "Failed to execute task."
                     return ExecutionResult(
                         request_id=last_request_id,
                         success=False,
-                        error_message="Failed to execute task.",
+                        error_message=error_msg,
                         task_id=task_id,
                         task_status=query.task_status,
                     )
                 elif query.task_status == "cancelled":
+                    error_msg = query.error or "Task was cancelled."
                     return ExecutionResult(
                         request_id=last_request_id,
                         success=False,
-                        error_message="Task was cancelled.",
+                        error_message=error_msg,
                         task_id=task_id,
                         task_status=query.task_status,
                     )
                 elif query.task_status == "unsupported":
+                    error_msg = query.error or "Unsupported task."
                     return ExecutionResult(
                         request_id=last_request_id,
                         success=False,
-                        error_message="Unsupported task.",
+                        error_message=error_msg,
                         task_id=task_id,
                         task_status=query.task_status,
                     )

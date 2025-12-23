@@ -55,6 +55,8 @@ class QueryResult(ApiResponse):
         task_status: str = "",
         task_action: str = "",
         task_product: str = "",
+        stream: list = None,
+        error: str = "",
     ):
         """
         Initialize a QueryResult..
@@ -67,6 +69,8 @@ class QueryResult(ApiResponse):
             task_status (str, optional): The status of the task.
             task_action (str, optional): The current action of the task.
             task_product (str, optional): The product of the task.
+            stream (list, optional): Stream fragments array containing incremental updates.
+            error (str, optional): Error description from the task response.
         """
         super().__init__(request_id)
         self.success = success
@@ -75,6 +79,8 @@ class QueryResult(ApiResponse):
         self.task_status = task_status
         self.task_action = task_action
         self.task_product = task_product
+        self.stream = stream if stream is not None else []
+        self.error = error
 
 
 class ExecutionResult(ApiResponse):

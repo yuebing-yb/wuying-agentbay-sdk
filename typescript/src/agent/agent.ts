@@ -235,13 +235,16 @@ abstract class BaseTaskAgent {
         queryResult = JSON.parse(result.data);
         // Support both taskId (camelCase) and task_id (snake_case)
         const contentTaskId = queryResult.taskId || queryResult.task_id || taskId;
+        // Mobile Agent returns "result", other agents return "product"
+        // Support both for compatibility, prefer "result"
+        const taskProduct = queryResult.result || queryResult.product || '';
         return {
           requestId: result.requestId,
           success: true,
           errorMessage: '',
           taskId: contentTaskId,
           taskAction: queryResult.action || '',
-          taskProduct: queryResult.product || '',
+          taskProduct: taskProduct,
           taskStatus: queryResult.status || 'completed',
         };
       } catch (error) {

@@ -327,8 +327,14 @@ func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
 		action = ""
 	}
 
-	product, ok := queryResult["product"].(string)
-	if !ok {
+	// Mobile Agent returns "result", other agents return "product"
+	// Support both for compatibility, prefer "result"
+	var product string
+	if resultValue, ok := queryResult["result"].(string); ok && resultValue != "" {
+		product = resultValue
+	} else if productValue, ok := queryResult["product"].(string); ok {
+		product = productValue
+	} else {
 		product = ""
 	}
 
