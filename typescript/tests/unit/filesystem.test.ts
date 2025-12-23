@@ -1,5 +1,6 @@
 import { FileSystem } from "../../src/filesystem/filesystem";
 import { APIError } from "../../src/exceptions";
+import { BinaryFileContentResult } from "../../src/types/api-response";
 import * as sinon from "sinon";
 
 describe("TestFileSystem", () => {
@@ -606,6 +607,313 @@ describe("TestFileSystem", () => {
       expect(result.requestId).toBe("");
       expect(result.data).toBeUndefined(); // data is undefined in error cases
       expect(result.errorMessage).toContain("Write failed");
+    });
+  });
+
+  describe("test_read_file_binary_format_success", () => {
+    it("should read binary file successfully", async () => {
+      // Mock getFileInfo to return file info
+      const getFileInfoStub = sandbox.stub(mockFileSystem, "getFileInfo").resolves({
+        success: true,
+        requestId: "test-request-id",
+        fileInfo: {
+          name: "image.jpeg",
+          path: "/path/to/image.jpeg",
+          size: 1024,
+          isDirectory: false,
+          modTime: "2023-01-01T00:00:00Z",
+          mode: "rw-r--r--",
+        },
+      });
+
+      // Mock binary chunk read - backend returns base64, SDK decodes to Uint8Array
+      const binaryData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]); // JPEG header
+      const readFileChunkStub = sandbox.stub(mockFileSystem as any, "readFileChunk").resolves({
+        success: true,
+        requestId: "test-request-id",
+        content: binaryData,
+      });
+
+      const result = await mockFileSystem.readFile("/path/to/image.jpeg", { format: "bytes" });
+
+      // Verify BinaryFileContentResult structure
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe("test-request-id");
+      expect(result.content).toBeInstanceOf(Uint8Array);
+      expect(result.content).toEqual(binaryData);
+      expect(result.errorMessage).toBeUndefined();
+
+      expect(getFileInfoStub.calledOnce).toBe(true);
+      expect(readFileChunkStub.calledOnce).toBe(true);
+      expect(readFileChunkStub.calledWith("/path/to/image.jpeg", 0, 1024, "binary")).toBe(true);
+    });
+  });
+
+  describe("test_read_file_binary_format_large_file", () => {
+    it("should read large binary file successfully with chunking", async () => {
+      // Mock getFileInfo to return large file size (150KB)
+      const getFileInfoStub = sandbox.stub(mockFileSystem, "getFileInfo").resolves({
+        success: true,
+        requestId: "test-request-id",
+        fileInfo: {
+          name: "large_binary.bin",
+          path: "/path/to/large_binary.bin",
+          size: 150 * 1024, // 150KB
+          isDirectory: false,
+          modTime: "2023-01-01T00:00:00Z",
+          mode: "rw-r--r--",
+        },
+      });
+
+      // Mock chunked binary reads (3 chunks of 60KB each)
+      const chunk1 = new Uint8Array(60 * 1024).fill(0x00);
+      const chunk2 = new Uint8Array(60 * 1024).fill(0x01);
+      const chunk3 = new Uint8Array(30 * 1024).fill(0x02); // Last chunk is smaller
+
+      const readFileChunkStub = sandbox.stub(mockFileSystem as any, "readFileChunk");
+      readFileChunkStub.onFirstCall().resolves({
+        success: true,
+        requestId: "test-request-id-1",
+        content: chunk1,
+      });
+      readFileChunkStub.onSecondCall().resolves({
+        success: true,
+        requestId: "test-request-id-2",
+        content: chunk2,
+      });
+      readFileChunkStub.onThirdCall().resolves({
+        success: true,
+        requestId: "test-request-id-3",
+        content: chunk3,
+      });
+
+      const result = await mockFileSystem.readFile("/path/to/large_binary.bin", { format: "bytes" });
+
+      // Verify BinaryFileContentResult structure
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe("test-request-id");
+      expect(result.content).toBeInstanceOf(Uint8Array);
+      expect(result.content.length).toBe(150 * 1024);
+      expect(result.size).toBe(150 * 1024);
+      expect(result.errorMessage).toBeUndefined();
+
+      expect(getFileInfoStub.calledOnce).toBe(true);
+      expect(readFileChunkStub.callCount).toBe(3);
+    });
+  });
+
+  describe("test_read_file_binary_format_get_info_error", () => {
+    it("should handle get_file_info error for binary format", async () => {
+      const getFileInfoStub = sandbox.stub(mockFileSystem, "getFileInfo").resolves({
+        success: false,
+        requestId: "test-request-id",
+        errorMessage: "File not found",
+      });
+
+      const result = await mockFileSystem.readFile("/path/to/image.jpeg", { format: "bytes" });
+
+      // Verify error result structure
+      expect(result.success).toBe(false);
+      expect(result.requestId).toBe("test-request-id");
+      expect(result.content).toBeInstanceOf(Uint8Array);
+      expect((result.content as Uint8Array).length).toBe(0);
+      expect(result.errorMessage).toBe("File not found");
+
+      expect(getFileInfoStub.calledOnce).toBe(true);
+    });
+  });
+
+  describe("test_read_file_binary_format_chunk_error", () => {
+    it("should handle chunk reading error for binary format", async () => {
+      const getFileInfoStub = sandbox.stub(mockFileSystem, "getFileInfo").resolves({
+        success: true,
+        requestId: "test-request-id",
+        fileInfo: {
+          name: "image.jpeg",
+          path: "/path/to/image.jpeg",
+          size: 1024,
+          isDirectory: false,
+          modTime: "2023-01-01T00:00:00Z",
+          mode: "rw-r--r--",
+        },
+      });
+
+      // Mock chunk read error
+      const readFileChunkStub = sandbox.stub(mockFileSystem as any, "readFileChunk").resolves({
+        success: false,
+        requestId: "test-request-id",
+        content: new Uint8Array(0),
+        errorMessage: "Failed to decode base64",
+      });
+
+      const result = await mockFileSystem.readFile("/path/to/image.jpeg", { format: "bytes" });
+
+      // Verify error result structure
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toBe("Failed to decode base64");
+      expect(result.content).toBeInstanceOf(Uint8Array);
+      expect((result.content as Uint8Array).length).toBe(0);
+
+      expect(getFileInfoStub.calledOnce).toBe(true);
+      expect(readFileChunkStub.calledOnce).toBe(true);
+    });
+  });
+
+  describe("test_read_file_binary_format_empty_file", () => {
+    it("should handle empty binary file", async () => {
+      const getFileInfoStub = sandbox.stub(mockFileSystem, "getFileInfo").resolves({
+        success: true,
+        requestId: "test-request-id",
+        fileInfo: {
+          name: "empty.bin",
+          path: "/path/to/empty.bin",
+          size: 0,
+          isDirectory: false,
+          modTime: "2023-01-01T00:00:00Z",
+          mode: "rw-r--r--",
+        },
+      });
+
+      const result = await mockFileSystem.readFile("/path/to/empty.bin", { format: "bytes" });
+
+      // Verify empty file result
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe("test-request-id");
+      expect(result.content).toBeInstanceOf(Uint8Array);
+      expect((result.content as Uint8Array).length).toBe(0);
+      expect(result.size).toBe(0);
+
+      expect(getFileInfoStub.calledOnce).toBe(true);
+    });
+  });
+
+  describe("test_read_file_text_format_explicit", () => {
+    it("should read text file with explicit format='text'", async () => {
+      const getFileInfoStub = sandbox.stub(mockFileSystem, "getFileInfo").resolves({
+        success: true,
+        requestId: "test-request-id",
+        fileInfo: {
+          name: "file.txt",
+          path: "/path/to/file.txt",
+          size: 1024,
+          isDirectory: false,
+          modTime: "2023-01-01T00:00:00Z",
+          mode: "rw-r--r--",
+        },
+      });
+
+      const readFileChunkStub = sandbox.stub(mockFileSystem as any, "readFileChunk").resolves({
+        success: true,
+        requestId: "test-request-id",
+        content: "file content",
+      });
+
+      const result = await mockFileSystem.readFile("/path/to/file.txt", { format: "text" });
+
+      // Verify FileContentResult structure
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe("test-request-id");
+      expect(typeof result.content).toBe("string");
+      expect(result.content).toBe("file content");
+      expect(result.errorMessage).toBeUndefined();
+
+      expect(getFileInfoStub.calledOnce).toBe(true);
+      expect(readFileChunkStub.calledOnce).toBe(true);
+      expect(readFileChunkStub.calledWith("/path/to/file.txt", 0, 1024, "text")).toBe(true);
+    });
+  });
+
+  describe("test_read_file_chunk_binary_format", () => {
+    it("should read file chunk in binary format", async () => {
+      // Mock MCP tool call returning base64-encoded string
+      const binaryData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+      const base64Data = Buffer.from(binaryData).toString("base64");
+
+      callMcpToolStub.resolves({
+        success: true,
+        data: base64Data,
+        errorMessage: "",
+        requestId: "test-request-id",
+      });
+
+      const result = await (mockFileSystem as any).readFileChunk(
+        "/path/to/image.jpeg",
+        0,
+        1024,
+        "binary"
+      );
+
+      // Verify BinaryFileContentResult structure
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe("test-request-id");
+      expect(result.content).toBeInstanceOf(Uint8Array);
+      expect(result.content).toEqual(binaryData);
+      expect(result.errorMessage).toBeUndefined();
+
+      // Verify MCP tool was called with format='binary'
+      expect(callMcpToolStub.calledOnce).toBe(true);
+      const callArgs = callMcpToolStub.getCall(0).args;
+      expect(callArgs[0]).toBe("read_file");
+      expect(callArgs[1].format).toBe("binary");
+      expect(callArgs[1].path).toBe("/path/to/image.jpeg");
+      expect(callArgs[1].offset).toBe(0);
+      expect(callArgs[1].length).toBe(1024);
+    });
+  });
+
+  describe("test_read_file_chunk_binary_format_base64_decode_error", () => {
+    it("should handle base64 decode error", async () => {
+      // Mock MCP tool call returning invalid base64 string
+      callMcpToolStub.resolves({
+        success: true,
+        data: "invalid-base64!!!", // Invalid base64
+        errorMessage: "",
+        requestId: "test-request-id",
+      });
+
+      const result = await (mockFileSystem as any).readFileChunk(
+        "/path/to/image.jpeg",
+        0,
+        1024,
+        "binary"
+      );
+
+      // Verify error result structure
+      expect(result.success).toBe(false);
+      expect(result.content).toBeInstanceOf(Uint8Array);
+      expect((result.content as Uint8Array).length).toBe(0);
+      expect(result.errorMessage).toContain("Failed to decode base64");
+    });
+  });
+
+  describe("test_read_file_chunk_text_format_no_format_param", () => {
+    it("should read file chunk in text format without format param", async () => {
+      callMcpToolStub.resolves({
+        success: true,
+        data: "file content",
+        errorMessage: "",
+        requestId: "test-request-id",
+      });
+
+      const result = await (mockFileSystem as any).readFileChunk(
+        "/path/to/file.txt",
+        0,
+        1024,
+        "text"
+      );
+
+      // Verify FileContentResult structure
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe("test-request-id");
+      expect(typeof result.content).toBe("string");
+      expect(result.content).toBe("file content");
+
+      // Verify MCP tool was called without format parameter
+      expect(callMcpToolStub.calledOnce).toBe(true);
+      const callArgs = callMcpToolStub.getCall(0).args;
+      expect(callArgs[0]).toBe("read_file");
+      expect(callArgs[1].format).toBeUndefined();
+      expect(callArgs[1].path).toBe("/path/to/file.txt");
     });
   });
 });
