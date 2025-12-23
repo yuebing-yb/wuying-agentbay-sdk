@@ -28,6 +28,11 @@ type CreateSessionParams struct {
 
 	// EnableBrowserReplay specifies whether to enable browser recording for this session.
 	EnableBrowserReplay	bool
+
+	// BrowserContext specifies persistent browser context configuration for this session.
+	// When set, the session will be bound to the given cloud context and browser state will
+	// persist across sessions.
+	BrowserContext	*BrowserContext
 }
 ```
 
@@ -67,6 +72,14 @@ func (p *CreateSessionParams) GetLabelsJSON() (string, error)
 ```
 
 GetLabelsJSON returns the labels as a JSON string.
+
+### WithBrowserContext
+
+```go
+func (p *CreateSessionParams) WithBrowserContext(browserContext *BrowserContext) *CreateSessionParams
+```
+
+WithBrowserContext sets the browser context configuration for the session parameters.
 
 ### WithContextSync
 

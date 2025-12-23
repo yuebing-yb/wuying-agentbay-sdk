@@ -422,7 +422,7 @@ export class Session {
 
       // Poll for session deletion status
       logInfo(`🔄 Waiting for session ${this.sessionId} to be deleted...`);
-      const pollTimeout = 50000; // 50 seconds timeout
+      const pollTimeout = 300000; // 5 minutes timeout
       const pollInterval = 1000; // Poll every 1 second
       const pollStartTime = Date.now();
 

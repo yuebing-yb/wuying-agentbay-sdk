@@ -72,4 +72,17 @@ func TestCreateSessionParams(t *testing.T) {
 	if params.PolicyId != policyId {
 		t.Errorf("Expected PolicyId=%s, got %s", policyId, params.PolicyId)
 	}
+
+	// Test WithBrowserContext
+	bc := agentbay.NewBrowserContext("ctx-test").WithAutoUpload(false)
+	params = agentbay.NewCreateSessionParams().WithBrowserContext(bc)
+	if params.BrowserContext == nil {
+		t.Fatalf("expected BrowserContext to be set")
+	}
+	if params.BrowserContext.ContextID != "ctx-test" {
+		t.Fatalf("expected BrowserContext.ContextID=ctx-test, got %s", params.BrowserContext.ContextID)
+	}
+	if params.BrowserContext.AutoUpload != false {
+		t.Fatalf("expected BrowserContext.AutoUpload=false, got %v", params.BrowserContext.AutoUpload)
+	}
 }

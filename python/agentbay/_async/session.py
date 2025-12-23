@@ -238,7 +238,7 @@ class AsyncSession:
 
             # Poll for session deletion status
             _logger.info(f"🔄 Waiting for session {self.session_id} to be deleted...")
-            poll_timeout = 50.0  # 50 seconds timeout
+            poll_timeout = 300.0  # 5 minutes timeout
             poll_interval = 1.0  # Poll every 1 second
             poll_start_time = time.time()
 
