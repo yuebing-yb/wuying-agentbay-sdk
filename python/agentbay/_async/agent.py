@@ -122,7 +122,7 @@ class AsyncAgent(AsyncBaseService):
                 )
                 if result.success:
                     content = json.loads(result.data)
-                    task_id = content.get("task_id", "")
+                    task_id = content.get("taskId") or content.get("task_id", "")
                     return ExecutionResult(
                         request_id=result.request_id,
                         success=True,
@@ -188,7 +188,7 @@ class AsyncAgent(AsyncBaseService):
                 )
                 if result.success:
                     content = json.loads(result.data)
-                    task_id = content.get("task_id", "")
+                    task_id = content.get("taskId") or content.get("task_id", "")
                     tried_time: int = 0
                     while tried_time < max_try_times:
                         query = await self.get_task_status(task_id)
@@ -538,7 +538,7 @@ class AsyncAgent(AsyncBaseService):
 
                     if result.success:
                         content = json.loads(result.data)
-                        task_id = content.get("task_id", "")
+                        task_id = content.get("taskId") or content.get("task_id", "")
                         return ExecutionResult(
                             request_id=result.request_id,
                             success=True,
@@ -682,7 +682,7 @@ class AsyncAgent(AsyncBaseService):
 
                     if result.success:
                         content = json.loads(result.data)
-                        task_id = content.get("task_id", "")
+                        task_id = content.get("taskId") or content.get("task_id", "")
                         break
                     else:
                         last_error = (
