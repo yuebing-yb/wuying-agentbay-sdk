@@ -408,10 +408,16 @@ type BrowserUseAgent struct {
 	*baseTaskAgent
 }
 
+// MobileUseAgent represents an agent to perform tasks on mobile devices
+type MobileUseAgent struct {
+	*baseTaskAgent
+}
+
 // Agent represents an agent to manipulate applications to complete specific tasks
 type Agent struct {
 	Browser  *BrowserUseAgent
 	Computer *ComputerUseAgent
+	Mobile   *MobileUseAgent
 }
 
 // McpSession interface defines the methods needed by Agent
@@ -439,11 +445,21 @@ func NewComputerUseAgent(session McpSession) *ComputerUseAgent {
 	}
 }
 
+func NewMobileUseAgent(session McpSession) *MobileUseAgent {
+	return &MobileUseAgent{
+		baseTaskAgent: &baseTaskAgent{
+			Session:    session,
+			ToolPrefix: "mobile_use",
+		},
+	}
+}
+
 // NewAgent creates a new Agent instance
 func NewAgent(session McpSession) *Agent {
 	return &Agent{
 		Browser:  NewBrowserUseAgent(session),
 		Computer: NewComputerUseAgent(session),
+		Mobile:   NewMobileUseAgent(session),
 	}
 }
 
@@ -622,5 +638,219 @@ func (a *BrowserUseAgent) GetTaskStatus(taskID string) *QueryResult {
 //	execResult := sessionResult.Session.Agent.Browser.ExecuteTask("Find weather in NYC", 10)
 //	terminateResult := sessionResult.Session.Agent.Browser.TerminateTask(execResult.TaskID)
 func (a *BrowserUseAgent) TerminateTask(taskID string) *ExecutionResult {
+	return a.baseTaskAgent.terminateTask(taskID)
+}
+
+// ExecuteTask executes a task in human language without waiting for completion (non-blocking).
+// This is a fire-and-return interface that immediately provides a task ID.
+// Call GetTaskStatus to check the task status.
+//
+// Example:
+//
+//	result := sessionResult.Session.Agent.Mobile.ExecuteTask("Open WeChat app", 100, 5)
+//	status := sessionResult.Session.Agent.Mobile.GetTaskStatus(result.TaskID)
+func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int, maxTryTimes int) *ExecutionResult {
+	args := map[string]interface{}{
+		"task":          task,
+		"max_steps":     maxSteps,
+		"max_try_times": maxTryTimes,
+	}
+
+	result, err := a.baseTaskAgent.Session.CallMcpTool(a.baseTaskAgent.getToolName("execute"), args)
+	if err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to execute: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to execute task"
+		}
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	// Parse task ID from response
+	var content map[string]interface{}
+	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	taskID, ok := content["task_id"].(string)
+	if !ok {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: "Task ID not found in response",
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	return &ExecutionResult{
+		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
+		Success:     true,
+		TaskID:      taskID,
+		TaskStatus:  "running",
+	}
+}
+
+// ExecuteTaskAndWait executes a specific task described in human language synchronously.
+// This is a synchronous interface that blocks until the task is completed or
+// an error occurs, or timeout happens. The default polling interval is 3 seconds.
+//
+// Example:
+//
+//	result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWait("Open WeChat app", 100, 5, 200)
+func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxTryTimes int, maxPollTimes int) *ExecutionResult {
+	args := map[string]interface{}{
+		"task":          task,
+		"max_steps":     maxSteps,
+		"max_try_times": maxTryTimes,
+	}
+
+	result, err := a.baseTaskAgent.Session.CallMcpTool(a.baseTaskAgent.getToolName("execute"), args)
+	if err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to execute: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
+		}
+	}
+
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to execute task"
+		}
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
+		}
+	}
+
+	// Parse task ID from response
+	var content map[string]interface{}
+	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Invalid execution response.",
+		}
+	}
+
+	taskID, ok := content["task_id"].(string)
+	if !ok {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: "Task ID not found in response",
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Invalid task ID.",
+		}
+	}
+
+	// Poll for task completion
+	triedTime := 0
+	for triedTime < maxPollTimes {
+		query := a.baseTaskAgent.getTaskStatus(taskID)
+		if !query.Success {
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: query.ErrorMessage,
+				TaskStatus:   "failed",
+				TaskID:       taskID,
+			}
+		}
+
+		taskStatus := query.TaskStatus
+		switch taskStatus {
+		case "finished":
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      true,
+				ErrorMessage: "",
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+				TaskResult:   query.TaskProduct,
+			}
+		case "failed":
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: "Failed to execute task.",
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+			}
+		case "unsupported":
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: "Unsupported task.",
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+			}
+		}
+
+		fmt.Printf("⏳ Task %s running 🚀: %s.\n", taskID, query.TaskAction)
+		time.Sleep(3 * time.Second)
+		triedTime++
+	}
+
+	fmt.Println("⚠️ task execution timeout!")
+	return &ExecutionResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      false,
+		ErrorMessage: "Task timeout.",
+		TaskStatus:   "failed",
+		TaskID:       taskID,
+		TaskResult:   "Task timeout.",
+	}
+}
+
+// GetTaskStatus gets the status of the task with the given task ID
+//
+// Example:
+//
+//	statusResult := sessionResult.Session.Agent.Mobile.GetTaskStatus(execResult.TaskID)
+func (a *MobileUseAgent) GetTaskStatus(taskID string) *QueryResult {
+	return a.baseTaskAgent.getTaskStatus(taskID)
+}
+
+// TerminateTask terminates a task with a specified task ID
+//
+// Example:
+//
+//	terminateResult := sessionResult.Session.Agent.Mobile.TerminateTask(execResult.TaskID)
+func (a *MobileUseAgent) TerminateTask(taskID string) *ExecutionResult {
 	return a.baseTaskAgent.terminateTask(taskID)
 }
